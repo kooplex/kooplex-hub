@@ -1,0 +1,5 @@
+.vs
+bin
+obj
+settings.py
+__pycache__

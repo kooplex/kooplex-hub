@@ -1,0 +1,13 @@
+{% extends "app/layout.html" %}
+
+{% block content %}
+
+<h2>{{ title }}.</h2>
+<h3>{{ message }}</h3>
+
+{% for item in projects %}
+    <p><b>{{ item.name }}</b></p>
+    <p>spawn as <a href="http://grail06.elte.hu:8000/koopi/spawn?image=jupyter/scipy-notebook&repo={{ item.path_with_namespace }}">jupyter</a> | spawn as worksheet</p>
+{% endfor %}
+
+{% endblock %}
