@@ -7,10 +7,10 @@ from importlib import import_module
 class Gitlab:
     """description of class"""
 
-    base_url = settings.GITLAB_BASEURL or 'http://www.gitlab.com/'
+    base_url = settings.GITLAB['base_url'] or 'http://www.gitlab.com/'
 
-    admin_username = settings.GITLAB_ADMINUSERNAME or ''
-    admin_password = settings.GITLAB_ADMINPASSWORD or ''
+    admin_username = settings.GITLAB['admin_username'] or ''
+    admin_password = settings.GITLAB['admin_password'] or ''
     admin_private_token = None
 
     def __init__(self, request=None):

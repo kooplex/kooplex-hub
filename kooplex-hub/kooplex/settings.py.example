@@ -31,9 +31,11 @@ DATABASES = {
 }
 
 
-GITLAB_BASEURL = 'http://****/gitlab/api/v3'
-GITLAB_ADMINUSERNAME = '****'
-GITLAB_ADMINPASSWORD = '****'
+GITLAB = {
+    'base_url': 'http://****/gitlab/api/v3',
+    'admin_username': '****',
+    'admin_password': '****',
+}
 
 # AllAuth authentication backend
 TEMPLATES =  [
