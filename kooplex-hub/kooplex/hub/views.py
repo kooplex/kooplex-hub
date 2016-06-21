@@ -8,6 +8,7 @@ from django.template import RequestContext
 from datetime import datetime
 
 from kooplex.lib.gitlab import Gitlab
+from kooplex.lib.spawner import Spawner
 
 def home(request):
     """Renders the home page."""
@@ -65,5 +66,41 @@ def projects(request):
             'title':'Projects',
             'message':'',
             'projects': p,
+        })
+    )
+
+def containers(request):
+    """Renders the containers page"""
+    assert isinstance(request, HttpRequest)
+
+    s = Spawner(request.user.username)
+    c = s.list_containers()
+
+    return render(
+        request,
+        'app/containers.html',
+        context_instance = RequestContext(request,
+        {
+            'title':'Running containers',
+            'message':'',
+            'containers': c,
+        })
+    )
+
+def spawn(request):
+    """Renders the containers page"""
+    assert isinstance(request, HttpRequest)
+
+    s = Spawner(request.user.username)
+    c = [ s.spawn_container('debian:jessie', '4', '/bin/bash', 8111) ]
+         
+    return render(
+        request,
+        'app/containers.html',
+        context_instance = RequestContext(request,
+        {
+            'title':'Running containers',
+            'message':'',
+            'containers': None,
         })
     )

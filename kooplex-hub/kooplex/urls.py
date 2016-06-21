@@ -9,6 +9,7 @@ from django.contrib.auth.views import logout
 from django.contrib.auth.views import login
 from django.contrib import admin
 from django.conf.urls import patterns, url, include
+from django.conf import settings
 
 import kooplex
 import kooplex.hub
@@ -57,4 +58,6 @@ urlpatterns = (
     # url(r'^oauth2/', include('oauth2_provider.urls', namespace='oauth2_provider')),
 
     url(r'^projects', kooplex.hub.views.projects, name='projects'),
+    url(r'^containers', kooplex.hub.views.containers, name='containers'),
+    url(r'^spawn', kooplex.hub.views.spawn, name='spawn'),
 )

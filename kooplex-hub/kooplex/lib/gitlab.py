@@ -1,28 +1,17 @@
 ﻿import json
 import requests
 from django.conf import settings
-from threadlocals.threadlocals import get_current_request
 from importlib import import_module
+from kooplex.lib.libbase import LibBase
 
-class Gitlab:
+class Gitlab(LibBase):
     """description of class"""
 
-    base_url = settings.GITLAB['base_url'] or 'http://www.gitlab.com/'
+    base_url = settings.KOOPLEX_GITLAB['base_url'] or 'http://www.gitlab.com/'
 
-    admin_username = settings.GITLAB['admin_username'] or ''
-    admin_password = settings.GITLAB['admin_password'] or ''
+    admin_username = settings.KOOPLEX_GITLAB['admin_username'] or ''
+    admin_password = settings.KOOPLEX_GITLAB['admin_password'] or ''
     admin_private_token = None
-
-    def __init__(self, request=None):
-        self.request = request
-        return None
-    
-    def get_session_store(self):
-        if self.request is not None:
-            return self.request.session
-        else:
-            request = get_current_request()
-            return request.session
 
     def get_user_private_token(self):
         s = self.get_session_store()
@@ -39,13 +28,6 @@ class Gitlab:
 
     def http_prepare_url(self, url):
         return Gitlab.base_url + url
-
-    def http_prepare_headers(self, headers=None, token=None):
-        if headers is None:
-            headers = {}
-        if token is not None:
-            headers['PRIVATE-TOKEN'] = token
-        return headers
 
     def http_get(self, url, params=None, headers=None, token=None):
         headers = self.http_prepare_headers(headers, token)

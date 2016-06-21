@@ -6,6 +6,7 @@
     <RootNamespace>kooplexhub</RootNamespace>
     <PythonRunWebServerCommandArguments>runserver --settings kooplex.settings %SERVER_PORT% $(CommandLineArguments)</PythonRunWebServerCommandArguments>
     <PythonDebugWebServerCommandArguments>runserver --noreload --settings kooplex.settings %SERVER_PORT% $(CommandLineArguments)</PythonDebugWebServerCommandArguments>
+    <DjangoSettingsModule>kooplex.settings</DjangoSettingsModule>
   </PropertyGroup>
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -43,7 +44,16 @@
     <Compile Include="kooplex\lib\gitlab.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="kooplex\lib\libbase.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="kooplex\lib\spawner.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="kooplex\lib\__init__.py" />
+    <Compile Include="kooplex\tests\spawner.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="manage.py" />
     <Compile Include="kooplex\__init__.py" />
     <Compile Include="kooplex\settings.py" />
@@ -61,6 +71,7 @@
     <Folder Include="kooplex\" />
     <Folder Include="kooplex\hub\" />
     <Folder Include="kooplex\lib\" />
+    <Folder Include="kooplex\tests\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="kooplex\hub\static\app\content\bootstrap.css" />
@@ -85,6 +96,7 @@
     <Content Include="kooplex\hub\static\app\scripts\respond.js" />
     <Content Include="kooplex\hub\static\app\scripts\respond.min.js" />
     <None Include="kooplex\hub\static\app\scripts\_references.js" />
+    <Content Include="kooplex\hub\templates\app\containers.html" />
     <Content Include="kooplex\hub\templates\app\projects.html" />
     <Content Include="kooplex\hub\templates\app\about.html" />
     <Content Include="kooplex\hub\templates\app\contact.html" />
@@ -92,6 +104,9 @@
     <Content Include="kooplex\hub\templates\app\layout.html" />
     <Content Include="kooplex\hub\templates\app\login.html" />
     <Content Include="kooplex\hub\templates\app\loginpartial.html" />
+    <Content Include="kooplex\lib\spawner.py.aside">
+      <SubType>Code</SubType>
+    </Content>
     <Content Include="requirements.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.Django.targets" />
