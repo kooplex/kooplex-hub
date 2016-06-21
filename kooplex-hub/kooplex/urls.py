@@ -57,7 +57,5 @@ urlpatterns = (
     # OAuth2 provider
     # url(r'^oauth2/', include('oauth2_provider.urls', namespace='oauth2_provider')),
 
-    url(r'^projects', kooplex.hub.views.projects, name='projects'),
-    url(r'^containers', kooplex.hub.views.containers, name='containers'),
-    url(r'^spawn', kooplex.hub.views.spawn, name='spawn'),
+    url(r'^hub/', include('kooplex.hub.urls')),
 )

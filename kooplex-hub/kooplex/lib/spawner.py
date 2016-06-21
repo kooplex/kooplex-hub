@@ -12,6 +12,7 @@ from time import sleep
 from io import BytesIO
 from kooplex.lib.libbase import LibBase
 from kooplex.lib.libbase import get_settings
+from kooplex.hub.models import Kernel
 
 class Spawner(LibBase):
        
@@ -240,24 +241,35 @@ class Spawner(LibBase):
         }
         return data
 
-    def spawn_kernel(self):
+    def init_kernel(self):
         id = str(uuid.uuid4())
-        host = self.docker_host
-        port = self.get_random_port()
         container = self.get_kernel_container()
         path = self.get_kernel_path(id)
+        port = self.get_random_port()
         command = self.get_kernel_command(path, port)
         url = self.get_external_url(path)
-        
-        self.ensure_container_running(container)
-        self.exec_container(container, command)
 
-        ip = self.get_container_ip(container)
-        
-        self.remove_route(path)
-        self.add_route(path, ip, port)
+        kernel = Kernel(
+            id = id,
+            username = self.username,
+            host = self.docker_host,
+            port = port,
+            container = container,
+            path = path,
+            command = command,
+            url = url,
+        )
+        return kernel
 
-        return self.get_kernel_info(self.username, id, host, container, ip, port, path, url)
+    def spawn_kernel(self):
+        kernel = self.init_kernel()
+        self.ensure_container_running(kernel.container)
+        self.exec_container(kernel.container, kernel.command)
+        kernel.ip = self.get_container_ip(kernel.container)
+        self.remove_route(kernel.path)
+        self.add_route(kernel.path, kernel.ip, kernel.port)
+        kernel.save()
+        return kernel
 
-    def stop_kernel(self):
+    def stop_kernel(self, id):
         raise NotImplementedError
