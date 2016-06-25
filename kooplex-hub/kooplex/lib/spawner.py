@@ -111,6 +111,13 @@ class Spawner(LibBase):
         notebook.set_ports([self.port])
         return notebook
 
+    def get_notebook(self):
+        notebooks = Notebook.objects.filter(username=self.username)
+        if notebooks.count() > 0:
+            return notebooks[0]
+        else:
+            return None
+
     def start_notebook(self, notebook):
         self.docli.ensure_container_running(notebook)
         self.pxcli.add_route(notebook.proxy_path, notebook.ip, notebook.port)
@@ -118,13 +125,38 @@ class Spawner(LibBase):
         return notebook
 
     def ensure_notebook_running(self):
-        raise NotImplementedError
+        notebook = self.get_notebook()
+        if not notebook:
+            notebook = self.make_notebook()
+            notebook = self.start_notebook(notebook)
+        else:
+            # TODO: verify if accessible, restart if necessary
+            container = self.docli.get_container(notebook)
+            if not container:
+                notebook.delete()
+                notebook = self.make_notebook()
+                notebook = self.start_notebook(notebook)
+            elif container.state != 'running':
+                self.docli.ensure_container_removed(container)
+                notebook.delete()
+                notebook = self.make_notebook()
+                notebook = self.start_notebook(notebook)
+        return notebook
 
     def stop_notebook(self, notebook):
-        raise NotImplementedError
+        self.docli.ensure_container_removed(notebook)
+        notebook.delete()
 
     def ensure_notebook_stopped(self):
-        raise NotImplementedError
+        notebook = self.get_notebook()
+        if not notebook:
+            return
+        else:
+            container = self.docli.get_container(notebook)
+            if not container:
+                notebook.delete()
+            else:
+                self.stop_notebook(notebook)
 
     def start_kernel(self, notebook, kernel):
         raise NotImplementedError

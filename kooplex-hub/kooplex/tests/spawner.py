@@ -58,37 +58,33 @@ class Test_spawner(unittest.TestCase):
         self.assertIsNotNone(nb.port)
         self.assertIsNotNone(nb.proxy_path)
         self.assertIsNotNone(nb.external_url)
-
-    def test_start_notebook(self):
+    
+    def test_start_stop(self):
         s = Spawner(Test_spawner.TEST_USERNAME)
-        nb = s.make_notebook()
-        nb = s.start_notebook(nb)
+
+        s.ensure_notebook_stopped()
+
+        nb = s.ensure_notebook_running()
         url = nb.external_url
         time.sleep(2)   # wait for notebook and proxy to start
         res = requests.get(url)
         self.assertEqual(200, res.status_code)
-        
-    
 
+        nb = s.ensure_notebook_running()
+        url = nb.external_url
+        time.sleep(2)   # wait for notebook and proxy to start
+        res = requests.get(url)
+        self.assertEqual(200, res.status_code)
 
+        s.ensure_notebook_stopped()
 
+        nb = s.ensure_notebook_running()
+        url = nb.external_url
+        time.sleep(2)   # wait for notebook and proxy to start
+        res = requests.get(url)
+        self.assertEqual(200, res.status_code)
 
-
-
-
-
-
-
-    def test_get_container(self):
-        s = self.create_spawner()
-        name = s.get_notebook_container()
-        self.assertEqual(name, 'kooplex-jupyter-test')
-   
-
-    
-
-    def stop_notebook(self, notebook):
-        raise NotImplementedError
+        s.ensure_notebook_stopped()
 
     def start_kernel(self, notebook, kernel):
         raise NotImplementedError
