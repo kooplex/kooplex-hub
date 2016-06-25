@@ -15,123 +15,83 @@ class Test_spawner(unittest.TestCase):
     - configurable-http-proxy running with access to docker subnet
     """
 
-    if django.VERSION[:2] >= (1, 7):
-        # Django 1.7 requires an explicit setup() when running tests in PTVS
-        @classmethod
-        def setUpClass(cls):
-            django.setup()
+    TEST_USERNAME = 'test'
+    TEST_IMAGE = 'jupyter/minimal-notebook:latest'
+    TEST_CONTAINER_NAME = 'test-notebook-{$username}'
     
-    def create_spawner(self):
-        s = Spawner('test', 'jupyter/minimal-notebook:latest')
+    def make_spawner(self):
+        image = 'jupyter/minimal-notebook:latest'
+        s = Spawner(username=Test_spawner.TEST_USERNAME,
+                    image=Test_spawner.TEST_IMAGE,
+                    container_name=Test_spawner.TEST_CONTAINER_NAME)
         return s
 
-    def test_spawner_init(self):
-        self.create_spawner()
+    def test_pick_random_ip(self):
+        s = self.make_spawner()
+        ip = s.pick_random_ip()
 
-    ### -------------------------------------------------------
-    ### Utility functions
+    def test_get_container_name(self):
+        s = self.make_spawner()
+        n = s.get_container_name()
+        self.assertEqual('test-notebook-test', n)
 
-    def test_spawner_get_random_ip(self):
-        s = self.create_spawner()
-        ip = s.get_random_ip()
+    def test_get_proxy_path(self):
+        s = self.make_spawner()
+        p = s.get_proxy_path('1')
+        self.assertEqual('/notebook/test/1', p)
 
-    def test_spawner_get_random_port(self):
-        s = self.create_spawner()
-        port = s.get_random_port()
+    def test_get_external_url(self):
+        s = self.make_spawner()
+        path = s.get_proxy_path('1')
+        url = s.get_external_url(path)
+        self.assertEqual('http://pollux-ubuntu:8000/notebook/test/1', url)
 
-    ### -------------------------------------------------------
-    ### Docker setup
+    def test_make_notebook(self):
+        s = self.make_spawner()
+        nb = s.make_notebook()
+        self.assertIsNotNone(nb.id)
+        self.assertEqual(Test_spawner.TEST_USERNAME, nb.username)
+        self.assertIsNotNone(nb.docker_url)
+        self.assertIsNotNone(nb.container_name)
+        self.assertIsNotNone(nb.container_ip)
+        self.assertEqual(Test_spawner.TEST_IMAGE, nb.image)
+        self.assertIsNotNone(nb.port)
+        self.assertIsNotNone(nb.proxy_path)
+        self.assertIsNotNone(nb.external_url)
 
-    def test_spawner_get_network(self):
-        s = self.create_spawner()
-        net = s.get_network()
-
-    def test_spawner_pull_image(self):
-        s = self.create_spawner()
-        img = s.pull_image()
-        self.assertEqual(img['Id'], 'sha256:fd00230f33b54163ac4637f39bf57039beb19c75972af868762589507d705e5e')
-
-    def test_spawner_ensure_image_exists(self):
-        s = self.create_spawner()
-        img = s.ensure_image_exists()
-        self.assertEqual(img['Id'], 'sha256:fd00230f33b54163ac4637f39bf57039beb19c75972af868762589507d705e5e')
-
-    def test_spawner_create_get_remove_container(self):
-        s = self.create_spawner()
-        s.ensure_container_removed('test')
-
-        c = s.create_container('test')
-        self.assertEqual(c['State'], 'created')
-        s.remove_container('test')
-        c = s.get_container('test')
-        self.assertIsNone(c)
-
-        s.ensure_container_removed('test')
-
-    def test_spawner_ensure_container_exists(self):
-        s = self.create_spawner()
-        s.ensure_container_removed('test')
-
-        c = s.ensure_container_exists('test')
-        self.assertEqual(c['State'], 'created')
-        s.remove_container('test')
-        c = s.get_container('test')
-        self.assertIsNone(c)
-
-        s.ensure_container_removed('test')
-
-    def test_spawner_list_containers(self):
-        raise NotImplementedError
-
-    def test_spawner_start_container(self):
-        s = self.create_spawner()
-        s.ensure_container_removed('test')
-
-        c = s.start_container('test')
-        self.assertEqual(c['State'], 'running')
-
-        s.ensure_container_removed('test')
-
-    def test_spawner_ensure_container_running(self):
-        s = self.create_spawner()
-        s.ensure_container_removed('test')
-        
-        c = s.ensure_container_running('test')
-        self.assertEqual(c['State'], 'running')
-        
-        s.ensure_container_removed('test')
-
-    ### -------------------------------------------------------
-    ### Proxy setup
-
-    def test_spawner_create_route(self):
-        s = self.create_spawner()
-
-        url, data = s.create_route('test', 'host', 16888,)
-        self.assertGreaterEqual(url.find('/api/routes/test'), 0)
-        self.assertGreaterEqual(data.find(':16888'), 0)
-
-    def test_spawner_add_get_remove_route(self):
-        s = self.create_spawner()
-
-        s.add_route('test', 'host', 8081)
-        s.get_route('test')
-        s.remove_route('test')
-
-    ### -------------------------------------------------------
-    ### Notebook spawner
-
-    def test_spawner_get_notebook_container(self):
-        s = self.create_spawner()
-        name = s.get_notebook_container()
-        self.assertEqual(name, 'kooplex-jupyter-test')
-
-    def test_spawner_start_notebook(self):
-        s = self.create_spawner()
-        k = s.start_notebook()
-        url = k.url
+    def test_start_notebook(self):
+        s = Spawner(Test_spawner.TEST_USERNAME)
+        nb = s.make_notebook()
+        nb = s.start_notebook(nb)
+        url = nb.external_url
         time.sleep(2)   # wait for notebook and proxy to start
         res = requests.get(url)
         self.assertEqual(200, res.status_code)
         s.stop_notebook(k.id)
+
+
+
+
+
+
+
+
+
+
+    def test_get_container(self):
+        s = self.create_spawner()
+        name = s.get_notebook_container()
+        self.assertEqual(name, 'kooplex-jupyter-test')
+   
+
+    
+
+    def stop_notebook(self, notebook):
+        raise NotImplementedError
+
+    def start_kernel(self, notebook, kernel):
+        raise NotImplementedError
+
+    def stop_kernel(self, notebook, kernel):
+        raise NotImplementedError
 

@@ -1,5 +1,6 @@
 ﻿from docker.client import Client
 from kooplex.lib import LibBase, get_settings
+from kooplex.hub.models import Container
 
 class Docker(LibBase):
 
@@ -15,11 +16,15 @@ class Docker(LibBase):
 
         self.docli = self.make_docker_client()
 
-    def make_docker_client(self):
+    def get_docker_url(self):
         if self.host is None or self.port is None:
             url = 'unix:///var/run/docker.sock'
         else:
             url = 'tcp://%s:%d' % (self.host, self.port)
+        return url
+
+    def make_docker_client(self):
+        url = self.get_docker_url()
         cli = Client(base_url=url)
         return cli
 
@@ -30,7 +35,15 @@ class Docker(LibBase):
         else:
             return None
 
-    def get_image(self, name):
+    def get_image_name(self, image):
+        if type(image) is str:
+            name = image
+        elif type(image) is Container:
+            name = image.image
+        return name
+
+    def get_image(self, image):
+        name = self.get_image_name(image)
         imgs = self.docli.images(name=name)
         if imgs and len(imgs) == 1:
             return imgs[0]
@@ -45,60 +58,59 @@ class Docker(LibBase):
     def build_image(self):
         raise NotImplementedError
 
-    def ensure_image_exists(self, name):
-        img = self.get_image(name)
+    def ensure_image_exists(self, image):
+        img = self.get_image(image)
         if img is None:
-            img = self.pull_image(name)
+            img = self.pull_image(image)
         return img
 
-    def remove_image(self, name):
-        self.docli.remove_image(name)
+    def remove_image(self, image):
+        self.docli.remove_image(image)
 
-    def create_container(self, name, image, command=None, ip=None, environment=None, ports=None, volumes=None):
-        self.ensure_image_exists(image)
-        host_config = {}
-        networking_config = {
-            'EndpointsConfig': {
-                self.network: {
-                    'IPAMConfig': {
-                        'IPv4Address': ip,
-                        #'IPv6Address': '...',
-                    }
-                }
-            }
-        }
-        container = self.docli.create_container(
-            name=name,
-            image=image,
+    def ensure_network_configured(self, container):
+        if not container.network:
+            container.network = self.network
+
+    def create_container(self, container):
+        self.ensure_image_exists(container.image)
+        self.ensure_network_configured(container)
+        host_config = container.get_host_config()
+        networking_config = container.get_networking_config()
+        c = self.docli.create_container(
+            name=container.name,
+            image=container.image,
             detach=True,
-            hostname=name,
+            hostname=container.name,
             host_config=host_config,
             networking_config=networking_config,
-            environment=environment,
-            ports=ports,
-            volumes=volumes,
-            command=command
+            command=container.command,
+            environment=container.get_environment(),
+            volumes=container.get_volumes(),
+            ports=container.get_ports()
         )
         #TODO: convey UID to container so that permissions on NFS are correct
-        return self.get_container(name)
+        return self.get_container(container)
 
-    def get_container(self, name):
+    def get_container_name(self, container):
+        if type(container) is str:
+            name = container
+        else:
+            name = container.name
+        return name
+
+    def get_container(self, container):
+        name = self.get_container_name(container)
         conts = self.docli.containers(all=True, filters={'name': name})
         if conts and len(conts) == 1:
-            return conts[0]
+            return Container.from_docker_dict(self, conts[0])
         else:
             return None
 
-    def get_container_ip(self, name):
-        container = self.get_container(name)
-        ip = container['NetworkSettings']['Networks'][self.network]['IPAMConfig']['IPv4Address']
-        return ip
-
-    def ensure_container_exists(self, name, image, command=None, ip=None, environment=None, ports=None, volumes=None):
-        container = self.get_container(name)
-        if container is None:
-            container = self.create_container(name, image, command, ip, environment, ports, volumes)
-        return container
+    def ensure_container_exists(self, container):
+        c = self.get_container(container)
+        if c is None:
+            c = self.create_container(container)
+        return c
 
     def list_containers(self):
         containers = docli.containers(all=True)
@@ -107,45 +119,44 @@ class Docker(LibBase):
         #Spawner.container_prefix in c['Names'][0] ]
         return containers
 
-    def start_container(self, name):
-        container = self.get_container(name)
-        self.docli.start(container)
-        return self.get_container(name)
+    def start_container(self, container):
+        name = self.get_container_name(container)
+        self.docli.start(name)
+        return self.get_container(container)
 
-    def ensure_container_running(self, name, image=None, command=None, ip=None, environment=None, ports=None, volumes=None):
-        if image:
-            container = self.ensure_container_exists(name, image, command, ip, environment, ports, volumes)
-        else:
-            container = self.get_container(name)
-        # created|restarting|running|paused|exited|dead
-        if container['State'] in ('created', 'exited') :
-            container = self.start_container(name)
+    def ensure_container_running(self, container):
+        container = self.ensure_container_exists(container)
+        if container.state in ('created', 'exited') :
+            container = self.start_container(container)
         return container
 
-    def stop_container(self, id):
-        self.docli.stop(container=id)
+    def stop_container(self, container):
+        name = self.get_container_name(container)
+        self.docli.stop(name)
 
-    def kill_container(self, id):
-        self.docli.kill(container=id)
+    def kill_container(self, container):
+        name = self.get_container_name(container)
+        self.docli.kill(name)
 
-    def ensure_container_stopped(self, name):
-        container = self.get_container(name)
-        if container and container['State'] not in ('created', 'exited'):
-            self.stop_container(container['Id'])
+    def ensure_container_stopped(self, container):
+        container = self.get_container(container)
+        if container and container.state not in ('created', 'exited'):
+            self.stop_container(container)
         # TODO: kill if stop isn't working
 
-    def remove_container(self, id):
-        self.docli.remove_container(id)
+    def remove_container(self, container):
+        name = self.get_container_name(container)
+        self.docli.remove_container(container=name)
 
-    def ensure_container_removed(self, name):
-        container = self.get_container(name)
+    def ensure_container_removed(self, container):
+        container = self.get_container(container)
         if container:
-            self.ensure_container_stopped(name)
-            self.remove_container(container['Id'])
+            self.ensure_container_stopped(container)
+            self.remove_container(container)
 
-    def exec_container(self, name, command):
+    def exec_container(self, container, command):
         exec = self.docli.exec_create(
-            container=name, 
+            container=container.name, 
             cmd=command, 
             #user=self.username,
         )

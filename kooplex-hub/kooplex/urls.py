@@ -22,10 +22,6 @@ from kooplex.hub.views import home
 # admin.autodiscover()
 
 urlpatterns = (
-    # Examples:
-    url(r'^$', kooplex.hub.views.home, name='home'),
-    url(r'^contact$', kooplex.hub.views.contact, name='contact'),
-    url(r'^about', kooplex.hub.views.about, name='about'),
     url(r'^login/$',
         django.contrib.auth.views.login,
         {

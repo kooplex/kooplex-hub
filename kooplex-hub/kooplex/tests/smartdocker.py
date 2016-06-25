@@ -1,11 +1,29 @@
 ﻿import unittest
 from kooplex.lib import Docker
+from kooplex.hub.models import Container
 
 class Test_docker(unittest.TestCase):
 
     TEST_CONTAINER = 'test-busybox'
     TEST_IMAGE = 'busybox:latest'
     TEST_COMMAND = '/bin/busybox sleep 1000' # keep container running
+
+    def make_test_container(self):
+        container = Container(
+            name=Test_docker.TEST_CONTAINER, 
+            image=Test_docker.TEST_IMAGE,
+            command=Test_docker.TEST_COMMAND,
+        )
+        return container
+
+    def test_get_docker_url(self):
+        d = Docker(socket=True)
+        url = d.get_docker_url()
+        self.assertEqual('unix:///var/run/docker.sock', url)
+
+        d = Docker(host='test', port=5555)
+        url = d.get_docker_url()
+        self.assertEqual('tcp://test:5555', url)
 
     def test_make_docker_client(self):
         d = Docker(socket=True)
@@ -52,123 +70,107 @@ class Test_docker(unittest.TestCase):
 
     def test_create_get_container(self):
         d = Docker()
-        d.ensure_image_exists(Test_docker.TEST_IMAGE)
-        d.ensure_container_removed(Test_docker.TEST_CONTAINER)
-        d.create_container(Test_docker.TEST_CONTAINER, Test_docker.TEST_IMAGE)
-        c = d.get_container(Test_docker.TEST_CONTAINER)
-        self.assertEqual('created', c['State'])
-    
-    def test_get_container_ip(self):
-        d = Docker()
-        d.ensure_image_exists(Test_docker.TEST_IMAGE)
-        d.ensure_container_removed(Test_docker.TEST_CONTAINER)
-        d.create_container(Test_docker.TEST_CONTAINER, Test_docker.TEST_IMAGE, ip='172.18.0.1')
-        ip = d.get_container_ip(Test_docker.TEST_CONTAINER)
-        self.assertEqual('172.18.0.1', ip)
+        c = self.make_test_container()
+        d.ensure_image_exists(c.name)
+        d.ensure_container_removed(c.name)
+        d.create_container(c)
+        c = d.get_container(c)
+        self.assertEqual('created', c.state)
+        c = d.get_container(c.name)
+        self.assertEqual('created', c.state)
         
     def test_list_containers(self):
         pass
 
     def test_ensure_container_exists(self):
         d = Docker()
-        d.ensure_container_removed(Test_docker.TEST_CONTAINER)
-        d.ensure_container_exists(Test_docker.TEST_CONTAINER, Test_docker.TEST_IMAGE)
-        d.ensure_container_exists(Test_docker.TEST_CONTAINER, Test_docker.TEST_IMAGE)
+        c = self.make_test_container()
+        d.ensure_container_removed(c)
+        d.ensure_container_exists(c)
+        d.ensure_container_exists(c)
 
     def test_start_container(self):
         d = Docker()
-        d.ensure_container_exists(
-            Test_docker.TEST_CONTAINER, 
-            Test_docker.TEST_IMAGE,
-            command=Test_docker.TEST_COMMAND)
-        d.start_container(Test_docker.TEST_CONTAINER)
-        c = d.get_container(Test_docker.TEST_CONTAINER)
-        self.assertEqual('running', c['State'])
-        d.kill_container(Test_docker.TEST_CONTAINER)
+        c = self.make_test_container()
+        d.ensure_container_exists(c)
+        d.start_container(c)
+        c = d.get_container(c)
+        self.assertEqual('running', c.state)
+        d.kill_container(c)
 
     def test_ensure_container_running(self):
         d = Docker()
-        d.ensure_container_removed(Test_docker.TEST_CONTAINER)
-        d.ensure_container_running(Test_docker.TEST_CONTAINER, 
-            Test_docker.TEST_IMAGE,
-            command=Test_docker.TEST_COMMAND)
-        c = d.get_container(Test_docker.TEST_CONTAINER)
-        self.assertEqual('running', c['State'])
-        d.stop_container(Test_docker.TEST_CONTAINER)
-        c = d.get_container(Test_docker.TEST_CONTAINER)
-        self.assertEqual('exited', c['State'])
-        d.ensure_container_running(Test_docker.TEST_CONTAINER)
-        c = d.get_container(Test_docker.TEST_CONTAINER)
-        self.assertEqual('running', c['State'])
+        c = self.make_test_container()
+        d.ensure_container_removed(c)
+        d.ensure_container_running(c)
+        c = d.get_container(c)
+        self.assertEqual('running', c.state)
+        d.stop_container(c)
+        c = d.get_container(c)
+        self.assertEqual('exited', c.state)
+        d.ensure_container_running(c)
+        c = d.get_container(c)
+        self.assertEqual('running', c.state)
 
     def test_stop_container(self):
         d = Docker()
-        d.ensure_container_running(Test_docker.TEST_CONTAINER, 
-            Test_docker.TEST_IMAGE,
-            command=Test_docker.TEST_COMMAND)
-        c = d.get_container(Test_docker.TEST_CONTAINER)
-        self.assertEqual('running', c['State'])
-        d.stop_container(Test_docker.TEST_CONTAINER)
-        c = d.get_container(Test_docker.TEST_CONTAINER)
-        self.assertEqual('exited', c['State'])
+        c = self.make_test_container()
+        d.ensure_container_running(c)
+        c = d.get_container(c)
+        self.assertEqual('running', c.state)
+        d.stop_container(c)
+        c = d.get_container(c)
+        self.assertEqual('exited', c.state)
 
     def test_kill_container(self):
         d = Docker()
-        d.ensure_container_running(Test_docker.TEST_CONTAINER, 
-            Test_docker.TEST_IMAGE,
-            command=Test_docker.TEST_COMMAND)
-        c = d.get_container(Test_docker.TEST_CONTAINER)
-        self.assertEqual('running', c['State'])
-        d.kill_container(Test_docker.TEST_CONTAINER)
-        c = d.get_container(Test_docker.TEST_CONTAINER)
-        self.assertEqual('exited', c['State'])
+        c = self.make_test_container()
+        d.ensure_container_running(c)
+        c = d.get_container(c)
+        self.assertEqual('running', c.state)
+        d.kill_container(c)
+        c = d.get_container(c)
+        self.assertEqual('exited', c.state)
 
     def test_ensure_container_stopped(self):
         d = Docker()
-        d.ensure_container_running(Test_docker.TEST_CONTAINER, 
-            Test_docker.TEST_IMAGE,
-            command=Test_docker.TEST_COMMAND)
-        c = d.get_container(Test_docker.TEST_CONTAINER)
-        self.assertEqual('running', c['State'])
-        d.ensure_container_stopped(Test_docker.TEST_CONTAINER)
-        c = d.get_container(Test_docker.TEST_CONTAINER)
-        self.assertEqual('exited', c['State'])
-        c = d.get_container(Test_docker.TEST_CONTAINER)
-        self.assertEqual('exited', c['State'])
+        c = self.make_test_container()
+        d.ensure_container_running(c)
+        c = d.get_container(c)
+        self.assertEqual('running', c.state)
+        d.ensure_container_stopped(c)
+        c = d.get_container(c)
+        self.assertEqual('exited', c.state)
+        c = d.get_container(c)
+        self.assertEqual('exited', c.state)
         # TODO: kill on timeout
 
     def test_remove_container(self):
         d = Docker()
-        d.ensure_container_removed(Test_docker.TEST_CONTAINER)
-        d.ensure_container_exists(Test_docker.TEST_CONTAINER, Test_docker.TEST_IMAGE)
-        d.remove_container(Test_docker.TEST_CONTAINER)
-        c = d.get_container(Test_docker.TEST_CONTAINER)
+        c = self.make_test_container()
+        d.ensure_container_removed(c)
+        d.ensure_container_exists(c)
+        d.remove_container(c)
+        c = d.get_container(c)
         self.assertIsNone(c)
 
     def test_ensure_container_removed(self):
         d = Docker()
-        d.ensure_container_removed(Test_docker.TEST_CONTAINER)
-        d.ensure_container_exists(
-            Test_docker.TEST_CONTAINER, 
-            Test_docker.TEST_IMAGE,
-            command=Test_docker.TEST_COMMAND)
-        d.ensure_container_removed(Test_docker.TEST_CONTAINER)
-        d.ensure_container_running(
-            Test_docker.TEST_CONTAINER, 
-            Test_docker.TEST_IMAGE,
-            command=Test_docker.TEST_COMMAND)
-        d.ensure_container_removed(Test_docker.TEST_CONTAINER)
-        d.ensure_container_removed(Test_docker.TEST_CONTAINER)
+        c = self.make_test_container()
+        d.ensure_container_removed(c)
+        d.ensure_container_exists(c)
+        d.ensure_container_removed(c)
+        d.ensure_container_running(c)
+        d.ensure_container_removed(c)
+        d.ensure_container_removed(c)
 
     def test_exec_container(self):
         d = Docker()
-        d.ensure_container_running(
-            Test_docker.TEST_CONTAINER, 
-            Test_docker.TEST_IMAGE,
-            command=Test_docker.TEST_COMMAND)
-        c = d.get_container(Test_docker.TEST_CONTAINER)
-        self.assertEqual('running', c['State'])
-        d.exec_container(Test_docker.TEST_CONTAINER, 'ls')
+        c = self.make_test_container()
+        d.ensure_container_running(c)
+        c = d.get_container(c)
+        self.assertEqual('running', c.state)
+        d.exec_container(c, 'ls')
 
 
 if __name__ == '__main__':

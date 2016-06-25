@@ -1,9 +1,13 @@
-from django.conf.urls import url
+﻿from django.conf.urls import url
 
-from . import views
+from .views import *
 
 urlpatterns = [
-    url(r'^projects', views.projects, name='projects'),
-    url(r'^containers', views.containers, name='containers'),
-    url(r'^spawn', views.spawn, name='spawn'),
+    url(r'^$', home.index, name='home'),
+    url(r'^contact$', home.contact, name='contact'),
+    url(r'^about', home.about, name='about'),
+
+    #url(r'^projects', projects, name='projects'),
+    #url(r'^containers', containers, name='containers'),
+    #url(r'^spawn', spawn, name='spawn'),
 ]

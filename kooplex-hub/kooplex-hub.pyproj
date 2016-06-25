@@ -33,18 +33,43 @@
   <ItemGroup>
     <Compile Include="kooplex\hub\admin.py" />
     <Compile Include="kooplex\hub\apps.py" />
+    <Compile Include="kooplex\hub\controllers\spawner.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="kooplex\hub\forms.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="kooplex\hub\migrations\__init__.py" />
-    <Compile Include="kooplex\hub\models.py" />
+    <Compile Include="kooplex\hub\models\notebook.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="kooplex\hub\models\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="kooplex\hub\tests.py" />
     <Compile Include="kooplex\hub\urls.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="kooplex\hub\views.py" />
+    <Compile Include="kooplex\hub\views\home.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="kooplex\hub\views\notebooks.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="kooplex\hub\views\projects.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="kooplex\hub\views\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="kooplex\hub\__init__.py" />
     <Compile Include="kooplex\lib\auth.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="kooplex\hub\models\container.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="kooplex\lib\modelbase.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="kooplex\lib\smartdocker.py">
@@ -86,6 +111,9 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="kooplex\hub\migrations\" />
+    <Folder Include="kooplex\hub\controllers\" />
+    <Folder Include="kooplex\hub\models\" />
+    <Folder Include="kooplex\hub\views\" />
     <Folder Include="kooplex\hub\static\" />
     <Folder Include="kooplex\hub\static\app\" />
     <Folder Include="kooplex\hub\static\app\content\" />
