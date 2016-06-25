@@ -59,8 +59,9 @@ class Container(models.Model, ModelBase):
     def get_volumes(self):
         volumes = []
         binds = self.get_binds()
-        for key in binds:
-            volumes.append(binds[key]['bind'])
+        if binds:
+            for key in binds:
+                volumes.append(binds[key]['bind'])
         return volumes
 
     def get_networking_config(self):
