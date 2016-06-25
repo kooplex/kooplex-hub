@@ -1,5 +1,7 @@
 .vs
+*.user
 bin
 obj
 settings.py
 __pycache__
+TestResults

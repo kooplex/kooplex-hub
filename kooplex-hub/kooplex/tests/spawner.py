@@ -4,6 +4,8 @@ import requests
 import time
 from kooplex.lib.spawner import Spawner
 
+if __name__ == '__main__':
+    unittest.main()
 
 class Test_spawner(unittest.TestCase):
     """
@@ -117,23 +119,19 @@ class Test_spawner(unittest.TestCase):
         s.remove_route('test')
 
     ### -------------------------------------------------------
-    ### Kernel spawner
+    ### Notebook spawner
 
-    def test_spawner_get_kernel_container(self):
+    def test_spawner_get_notebook_container(self):
         s = self.create_spawner()
-        name = s.get_kernel_container()
+        name = s.get_notebook_container()
         self.assertEqual(name, 'kooplex-jupyter-test')
 
-    def test_spawner_spawn_kernel(self):
+    def test_spawner_start_notebook(self):
         s = self.create_spawner()
-        k = s.spawn_kernel()
+        k = s.start_notebook()
         url = k.url
-        time.sleep(2)   # wait for kernel and proxy to start
+        time.sleep(2)   # wait for notebook and proxy to start
         res = requests.get(url)
         self.assertEqual(200, res.status_code)
+        s.stop_notebook(k.id)
 
-
-
-
-if __name__ == '__main__':
-    unittest.main()

@@ -36,7 +36,6 @@
     <Compile Include="kooplex\hub\forms.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="kooplex\hub\migrations\0001_initial.py" />
     <Compile Include="kooplex\hub\migrations\__init__.py" />
     <Compile Include="kooplex\hub\models.py" />
     <Compile Include="kooplex\hub\tests.py" />
@@ -48,17 +47,35 @@
     <Compile Include="kooplex\lib\auth.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="kooplex\lib\smartdocker.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="kooplex\lib\gitlab.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="kooplex\lib\libbase.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="kooplex\lib\proxy.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="kooplex\lib\restclient.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="kooplex\lib\spawner.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="kooplex\lib\__init__.py" />
+    <Compile Include="kooplex\tests\smartdocker.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="kooplex\tests\proxy.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="kooplex\tests\spawner.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="kooplex\tests\restclient.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="manage.py" />
@@ -112,9 +129,6 @@
     <Content Include="kooplex\hub\templates\app\layout.html" />
     <Content Include="kooplex\hub\templates\app\login.html" />
     <Content Include="kooplex\hub\templates\app\loginpartial.html" />
-    <Content Include="kooplex\lib\spawner.py.aside">
-      <SubType>Code</SubType>
-    </Content>
     <Content Include="requirements.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.Django.targets" />
