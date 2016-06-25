@@ -21,11 +21,11 @@ class Proxy(RestClient):
         return headers
 
     def get_external_url(self, path):
-        url = RestClient.join_url(self.external_url, path)
+        url = RestClient.join_path(self.external_url, path)
         return url
 
     def make_path(self, path):
-        path = RestClient.join_url('/api/routes/', path)
+        path = RestClient.join_path('/api/routes/', path)
         return path
 
     def make_route(self, path, host=None, port=None, https=None):

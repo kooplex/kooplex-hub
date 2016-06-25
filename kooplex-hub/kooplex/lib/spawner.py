@@ -6,6 +6,7 @@ import uuid
 import random
 import docker
 import requests as req
+from os import path
 
 from netaddr import IPAddress
 from time import sleep
@@ -23,8 +24,9 @@ class Spawner(LibBase):
         self.container_name = get_settings('KOOPLEX_SPAWNER', 'notebook_container_name', container_name, 'kooplex-notebook-{$username}')
         self.image = get_settings('KOOPLEX_SPAWNER', 'notebook_image', image, 'kooplex-notebook')
         self.proxy_path = get_settings('KOOPLEX_SPAWNER', 'notebook_proxy_path', proxy_path, '/notebook/{$username}/{$notebook.id}')
-        self.ip_pool = get_settings('KOOPLEX_SPAWNER', 'notebook_ip_pool', ['172.18.20.1', '172.18.20.255'])
-        self.port = get_settings('KOOPLEX_SPAWNER', 'notebook_port', 8000)
+        self.ip_pool = get_settings('KOOPLEX_SPAWNER', 'notebook_ip_pool', None, ['172.18.20.1', '172.18.20.255'])
+        self.port = get_settings('KOOPLEX_SPAWNER', 'notebook_port', None, 8000)
+        self.service_path = get_settings('KOOPLEX_SPAWNER', 'service_path', None, '/srv/kooplex')
         
         self.docli = self.make_docker_client()
         self.pxcli = self.make_proxy_client()      
@@ -67,20 +69,51 @@ class Spawner(LibBase):
 
         notebook = Notebook(
             id=id,
-            username=self.username,
-            docker_url=self.docli.get_docker_url,
-            container_name=container_name,
-            container_ip=ip,
+            docker_host=self.docli.host,
+            docker_port=self.docli.port,
+            name=container_name,
             image=self.image,
+            network=self.docli.network,
+            ip=ip,
+            privileged=True,
+            command=None,
+            username=self.username,
             port=self.port,
             proxy_path=proxy_path,
             external_url=external_url,
         )
+        notebook.set_environment({
+                'NB_USER': self.username,
+                'NB_UID': 10002,     # TODO
+                'NB_GID': 10002,     # TODO
+                'NB_URL': proxy_path,
+                'NB_PORT': self.port
+            })
+        notebook.set_binds({
+                LibBase.join_path(self.service_path, 'notebook/etc/ldap/ldap.conf'): {
+                    'bind': '/etc/ldap.conf',
+                    'mode': 'rw'
+                },
+                LibBase.join_path(self.service_path, 'notebook/etc/nslcd.conf'): {
+                    'bind': '/etc/nslcd.conf',
+                    'mode': 'rw'
+                    },
+                LibBase.join_path(self.service_path, 'notebook/etc/nsswitch.conf'): {
+                    'bind': '/etc/nsswitch.conf',
+                    'mode': 'rw'
+                    },
+                LibBase.join_path(self.service_path, 'notebook/init'): {
+                    'bind': '/init',
+                    'mode': 'rw'
+                    }
+            })
+        # TODO: make binds read-only once config is fixed
+        notebook.set_ports([self.port])
         return notebook
 
     def start_notebook(self, notebook):
-        self.docli.ensure_container_running(notebook.container_name, notebook.image, ip=notebook.container_ip)
-        self.pxcli.add_route(notebook.proxy_path, notebook.container_ip, notebook.port)
+        self.docli.ensure_container_running(notebook)
+        self.pxcli.add_route(notebook.proxy_path, notebook.ip, notebook.port)
         notebook.save()
         return notebook
 

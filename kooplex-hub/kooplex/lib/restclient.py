@@ -1,7 +1,9 @@
 ﻿import json
 import requests
 
-class RestClient():
+from kooplex.lib.libbase import LibBase
+
+class RestClient(LibBase):
 
     def __init__(self, host='localhost', port=None, https=False):
         self.https = https
@@ -10,23 +12,6 @@ class RestClient():
             self.port = https if 443 else 80
         else:
             self.port = port
-
-    def join_url(a, b):
-        if not b or len(b) == 0:
-            url = a
-        elif a[-1] != '/' and b[0] != '/':
-            url = a + '/' + b
-        elif a[-1] == '/' and b[0] == '/':
-            url = a + b[1:]
-        else:
-            url = a + b
-        return url
-
-    def make_url(host='localhost', path=None, port=None, https=False):
-        proto = 'https://' if https else 'http://'
-        port = '' if (not port or not https and port == 80 or https and port == 443) else ':' + str(port)
-        url = RestClient.join_url(proto + host + port, path)
-        return url
 
     def http_prepare_url(self, path):
         return RestClient.make_url(self.host, path, self.port, self.https)

@@ -1,20 +1,21 @@
 import json
 from django.db import models
 
-from kooplex.lib.modelbase import ModelBase
+from .modelbase import ModelBase
 
 class Container(models.Model, ModelBase):
     id =  models.UUIDField(primary_key=True)
-    docker_host = models.URLField()
-    docker_port = models.URLField()
+    docker_host = models.CharField(max_length=200, null=True)
+    docker_port = models.IntegerField(null=True)
     name = models.CharField(max_length=200)
     image = models.CharField(max_length=200)
     network = models.CharField(max_length=200)
     ip = models.GenericIPAddressField()
-    command = models.TextField()
-    environment = models.TextField()
-    volumes = models.TextField()
-    ports = models.TextField()
+    privileged = models.BooleanField()
+    command = models.TextField(null=True)
+    environment = models.TextField(null=True)
+    binds = models.TextField(null=True)
+    ports = models.TextField(null=True)
     state = models.CharField(max_length=15)
 
     def from_docker_dict(docker, dict):
@@ -43,11 +44,11 @@ class Container(models.Model, ModelBase):
     def set_environment(self, value):
         self.environment = self.save_json(value)
 
-    def get_volumes(self):
-        return self.load_json(self.volumes)
+    def get_binds(self):
+        return self.load_json(self.binds)
 
-    def set_volumes(self, value):
-        self.volumens = self.save_json(value)
+    def set_binds(self, value):
+        self.binds = self.save_json(value)
 
     def get_ports(self):
         return self.load_json(self.ports)
@@ -55,19 +56,22 @@ class Container(models.Model, ModelBase):
     def set_ports(self, value):
         self.ports = self.save_json(value)
 
-    def get_host_config(self):
-        host_config = {}
-        return host_config
+    def get_volumes(self):
+        volumes = []
+        binds = self.get_binds()
+        for key in binds:
+            volumes.append(binds[key]['bind'])
+        return volumes
 
     def get_networking_config(self):
         networking_config = None
-        if not self.network:
+        if self.network:
             networking_config = {
                 'EndpointsConfig': {
                     self.network: {}
                     }
-                }
-            if not self.ip:
+               }
+            if self.ip:
                 networking_config['EndpointsConfig'][self.network] = {
                         'IPAMConfig': {
                             'IPv4Address': self.ip,

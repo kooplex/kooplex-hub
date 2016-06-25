@@ -1,6 +1,6 @@
 ﻿from docker.client import Client
 from kooplex.lib import LibBase, get_settings
-from kooplex.hub.models import Container
+from kooplex.hub.models.container import Container
 
 class Docker(LibBase):
 
@@ -74,8 +74,15 @@ class Docker(LibBase):
     def create_container(self, container):
         self.ensure_image_exists(container.image)
         self.ensure_network_configured(container)
-        host_config = container.get_host_config()
+        volumes = container.get_volumes()
+        binds = container.get_binds()
+        host_config = self.docli.create_host_config(
+            binds=binds,
+            privileged=container.privileged
+            )
         networking_config = container.get_networking_config()
+        environment = container.get_environment()
+        ports = container.get_ports()
         c = self.docli.create_container(
             name=container.name,
             image=container.image,
@@ -84,9 +91,9 @@ class Docker(LibBase):
             host_config=host_config,
             networking_config=networking_config,
             command=container.command,
-            environment=container.get_environment(),
-            volumes=container.get_volumes(),
-            ports=container.get_ports()
+            environment=environment,
+            volumes=volumes,
+            ports=ports
         )
         #TODO: convey UID to container so that permissions on NFS are correct
         return self.get_container(container)

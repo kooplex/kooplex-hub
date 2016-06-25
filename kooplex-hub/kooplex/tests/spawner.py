@@ -44,16 +44,16 @@ class Test_spawner(unittest.TestCase):
         s = self.make_spawner()
         path = s.get_proxy_path('1')
         url = s.get_external_url(path)
-        self.assertEqual('http://pollux-ubuntu:8000/notebook/test/1', url)
+        self.assertEqual('http://dobos.compare.vo.elte.hu/notebook/test/1', url)    # TODO: make URL in test generic
 
     def test_make_notebook(self):
         s = self.make_spawner()
         nb = s.make_notebook()
         self.assertIsNotNone(nb.id)
         self.assertEqual(Test_spawner.TEST_USERNAME, nb.username)
-        self.assertIsNotNone(nb.docker_url)
-        self.assertIsNotNone(nb.container_name)
-        self.assertIsNotNone(nb.container_ip)
+        self.assertIsNotNone(nb.docker_host)
+        self.assertIsNotNone(nb.name)
+        self.assertIsNotNone(nb.ip)
         self.assertEqual(Test_spawner.TEST_IMAGE, nb.image)
         self.assertIsNotNone(nb.port)
         self.assertIsNotNone(nb.proxy_path)
@@ -67,7 +67,8 @@ class Test_spawner(unittest.TestCase):
         time.sleep(2)   # wait for notebook and proxy to start
         res = requests.get(url)
         self.assertEqual(200, res.status_code)
-        s.stop_notebook(k.id)
+        
+    
 
 
 
