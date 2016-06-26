@@ -1,7 +1,6 @@
 ﻿import json
 import requests
 from django.conf import settings
-from threadlocals.threadlocals import get_current_request
 
 def get_settings(block, value, override, default=None):
     if override:
@@ -35,11 +34,3 @@ class LibBase:
         port = '' if (not port or not https and port == 80 or https and port == 443) else ':' + str(port)
         url = LibBase.join_path(proto + host + port, path)
         return url
-
-    
-    def get_session_store(self):
-        if self.request is not None:
-            return self.request.session
-        else:
-            request = get_current_request()
-            return request.session

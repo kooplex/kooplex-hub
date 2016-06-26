@@ -1,4 +1,5 @@
-﻿from django.shortcuts import render
+﻿from django.conf.urls import patterns, url, include
+from django.shortcuts import render
 from django.http import HttpRequest
 from django.template import RequestContext
 from datetime import datetime
@@ -44,3 +45,10 @@ def about(request):
             'year':datetime.now().year,
         })
     )
+
+
+urlpatterns = [
+    url(r'^$', index, name='home'),
+    url(r'^contact$', contact, name='contact'),
+    url(r'^about', about, name='about'),
+]

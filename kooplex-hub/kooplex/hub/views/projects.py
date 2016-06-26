@@ -1,3 +1,4 @@
+﻿from django.conf.urls import patterns, url, include
 from django.shortcuts import render
 from django.http import HttpRequest
 from django.template import RequestContext
@@ -5,7 +6,7 @@ from datetime import datetime
 
 from kooplex.lib.gitlab import Gitlab
 
-def projects(request):
+def index(request):
     """Renders the projects page"""
     assert isinstance(request, HttpRequest)
 
@@ -14,7 +15,7 @@ def projects(request):
 
     return render(
         request,
-        'app/projects.html',
+        'projects/index.html',
         context_instance = RequestContext(request,
         {
             'title':'Projects',
@@ -22,3 +23,9 @@ def projects(request):
             'projects': p,
         })
     )
+
+urlpatterns = [
+    url(r'^$', index),
+    #url(r'^/contact$', contact, name='contact'),
+    #url(r'^/about', about, name='about'),
+]

@@ -7,10 +7,12 @@ import random
 import docker
 import requests as req
 from os import path
-
 from netaddr import IPAddress
 from time import sleep
 from io import BytesIO
+
+from git import Repo
+
 from kooplex.lib.libbase import LibBase
 from kooplex.lib.libbase import get_settings
 from kooplex.lib.smartdocker import Docker
