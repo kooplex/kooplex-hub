@@ -60,13 +60,31 @@ class Spawner(LibBase):
         url = self.pxcli.get_external_url(path)
         return url
 
+    def append_ldap_binds(self, binds, svc):
+        basepath = LibBase.join_path(self.service_path, svc)
+        binds[LibBase.join_path(basepath, 'etc/ldap/ldap.conf')] = {'bind': '/etc/ldap/ldap.conf', 'mode': 'rw'}
+        binds[LibBase.join_path(basepath, 'etc/nslcd.conf')] = {'bind': '/etc/nslcd.conf', 'mode': 'rw'}
+        binds[LibBase.join_path(basepath, 'etc/nsswitch.conf')] = {'bind': '/etc/nsswitch.conf', 'mode': 'rw'}
+
+    def append_home_binds(self, binds, svc):
+        binds[LibBase.join_path(self.service_path, 'home')] = {'bind': '/home', 'mode': 'rw'}
+
+    def append_init_binds(self, binds, svc):
+        basepath = LibBase.join_path(self.service_path, svc)
+        binds[LibBase.join_path(basepath, '/init')] = {'bind': '/init', 'mode': 'rw'}
+
     def make_notebook(self):
         id = str(uuid.uuid4())
         container_name = self.get_container_name()
         proxy_path = self.get_proxy_path(id)
         external_url = self.get_external_url(proxy_path)
         ip = self.pick_random_ip()
-
+        binds = {}
+        self.append_ldap_binds(binds, 'notebook')
+        self.append_home_binds(binds, 'notebook')
+        self.append_init_binds(binds, 'notebook')
+        binds[LibBase.join_path(self.service_path, 'notebook/etc/jupyter_notebook_config.py')] = {'bind': '/etc/jupyter_notebook_config.py', 'mode': 'rw' }
+            
         notebook = Notebook(
             id=id,
             docker_host=self.docli.host,
@@ -89,28 +107,7 @@ class Spawner(LibBase):
                 'NB_URL': proxy_path,
                 'NB_PORT': self.port
             })
-        notebook.set_binds({
-                LibBase.join_path(self.service_path, 'notebook/etc/ldap/ldap.conf'): {
-                    'bind': '/etc/ldap.conf',
-                    'mode': 'rw'
-                },
-                LibBase.join_path(self.service_path, 'notebook/etc/nslcd.conf'): {
-                    'bind': '/etc/nslcd.conf',
-                    'mode': 'rw'
-                    },
-                LibBase.join_path(self.service_path, 'notebook/etc/nsswitch.conf'): {
-                    'bind': '/etc/nsswitch.conf',
-                    'mode': 'rw'
-                    },
-                LibBase.join_path(self.service_path, 'notebook/etc/jupyter_notebook_config.py'): {
-                    'bind': '/etc/jupyter_notebook_config.py',
-                    'mode': 'rw'
-                    },
-                LibBase.join_path(self.service_path, 'notebook/init'): {
-                    'bind': '/init',
-                    'mode': 'rw'
-                    }
-            })
+        notebook.set_binds(binds)
         # TODO: make binds read-only once config is fixed
         notebook.set_ports([self.port])
         return notebook
