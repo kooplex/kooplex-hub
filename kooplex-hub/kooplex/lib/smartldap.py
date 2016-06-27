@@ -118,6 +118,8 @@ class Ldap(LibBase):
         dn, object_class, attributes = self.user_to_ldap(user)
         if not self.ldapconn.add(dn, object_class, attributes):
             raise LdapException(self.ldapconn.result['description'])
+        group = self.make_user_group(user)
+        self.ensure_group_added(group)
         return user
 
     def ensure_user_added(self, user):
@@ -153,6 +155,8 @@ class Ldap(LibBase):
         return user
 
     def delete_user(self, user):
+        group = self.make_user_group(user)
+        self.ensure_group_deleted(group)
         dn = self.get_user_dn(user)
         if not self.ldapconn.delete(dn):
             raise LdapException(self.ldapconn.last_error)
@@ -171,6 +175,19 @@ class Ldap(LibBase):
             return group
         else:
             return group.name
+
+    def make_user_group(self, user):
+        """Creates posix group associated with the user, using same gid"""
+        g = Group(name = user.username)
+        if hasattr(user, 'gid'):
+            g.gid = user.gid
+        else:
+            g.gid = None
+        if hasattr(user, 'members'):
+            g.members = [ user.username ]
+        else:
+            g.members = []
+        return g
 
     def get_group_dn(self, group):
         name = self.get_group_name(group)
