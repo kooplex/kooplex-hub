@@ -2,7 +2,7 @@
 import requests
 from django.conf import settings
 
-def get_settings(block, value, override, default=None):
+def get_settings(block, value, override=None, default=None):
     if override:
         return override
     else:

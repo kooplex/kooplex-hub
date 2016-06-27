@@ -90,6 +90,12 @@
     <Compile Include="kooplex\lib\restclient.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="kooplex\lib\smartgit.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="kooplex\lib\smartldap.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="kooplex\lib\spawner.py">
       <SubType>Code</SubType>
     </Compile>
@@ -104,6 +110,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="kooplex\tests\proxy.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="kooplex\tests\smartldap.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="kooplex\tests\spawner.py">
@@ -122,6 +131,7 @@
     <Folder Include="kooplex\hub\migrations\" />
     <Folder Include="kooplex\hub\controllers\" />
     <Folder Include="kooplex\hub\models\" />
+    <Folder Include="kooplex\hub\tests\" />
     <Folder Include="kooplex\hub\templates\projects\" />
     <Folder Include="kooplex\hub\views\" />
     <Folder Include="kooplex\hub\static\" />
