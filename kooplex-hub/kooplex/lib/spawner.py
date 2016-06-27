@@ -102,6 +102,10 @@ class Spawner(LibBase):
                     'bind': '/etc/nsswitch.conf',
                     'mode': 'rw'
                     },
+                LibBase.join_path(self.service_path, 'notebook/etc/jupyter_notebook_config.py'): {
+                    'bind': '/etc/jupyter_notebook_config.py',
+                    'mode': 'rw'
+                    },
                 LibBase.join_path(self.service_path, 'notebook/init'): {
                     'bind': '/init',
                     'mode': 'rw'
