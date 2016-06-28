@@ -3,7 +3,7 @@
 from .views import *
 
 urlpatterns = [
-    url(r'^home', include('kooplex.hub.views.home')),
+    url(r'^', include('kooplex.hub.views.home')),
     url(r'^projects', include('kooplex.hub.views.projects')),
     
     #url(r'^containers', containers, name='containers'),

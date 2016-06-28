@@ -53,5 +53,5 @@ urlpatterns = (
     # OAuth2 provider
     # url(r'^oauth2/', include('oauth2_provider.urls', namespace='oauth2_provider')),
 
-    url(r'^hub/', include('kooplex.hub.urls')),
+    url(r'^', include('kooplex.hub.urls')),
 )

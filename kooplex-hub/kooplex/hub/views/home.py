@@ -46,7 +46,6 @@ def about(request):
         })
     )
 
-
 urlpatterns = [
     url(r'^$', index, name='home'),
     url(r'^contact$', contact, name='contact'),

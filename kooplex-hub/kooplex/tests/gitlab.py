@@ -1,9 +1,10 @@
-﻿import unittest
+﻿import django
+from django.test import TestCase
 
 from kooplex.lib.gitlab import Gitlab
 
-class Test_gitlab(unittest.TestCase):
-    
+class Test_gitlab(TestCase):
+
     TEST_USER = 'test'
     TEST_PASSWORD = 'almafa137'
 
@@ -20,7 +21,6 @@ class Test_gitlab(unittest.TestCase):
     def test_get_projects(self):
         g = self.make_gitlab_client()
         pp = g.get_projects()
-        pass
 
 
 if __name__ == '__main__':
