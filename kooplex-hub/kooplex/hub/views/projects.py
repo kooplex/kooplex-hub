@@ -6,7 +6,7 @@ from datetime import datetime
 
 from kooplex.lib.gitlab import Gitlab
 
-def index(request):
+def projects(request):
     """Renders the projects page"""
     assert isinstance(request, HttpRequest)
 
@@ -15,7 +15,7 @@ def index(request):
 
     return render(
         request,
-        'projects/index.html',
+        'app/projects.html',
         context_instance = RequestContext(request,
         {
             'title':'Projects',
@@ -25,7 +25,5 @@ def index(request):
     )
 
 urlpatterns = [
-    url(r'^$', index),
-    #url(r'^/contact$', contact, name='contact'),
-    #url(r'^/about', about, name='about'),
+    url(r'^$', projects, name='projects'),
 ]

@@ -130,8 +130,8 @@
     <Folder Include="kooplex\hub\migrations\" />
     <Folder Include="kooplex\hub\controllers\" />
     <Folder Include="kooplex\hub\models\" />
+    <Folder Include="kooplex\hub\templates\app\" />
     <Folder Include="kooplex\hub\tests\" />
-    <Folder Include="kooplex\hub\templates\projects\" />
     <Folder Include="kooplex\hub\views\" />
     <Folder Include="kooplex\hub\static\" />
     <Folder Include="kooplex\hub\static\app\" />
@@ -139,7 +139,6 @@
     <Folder Include="kooplex\hub\static\app\fonts\" />
     <Folder Include="kooplex\hub\static\app\scripts\" />
     <Folder Include="kooplex\hub\templates\" />
-    <Folder Include="kooplex\hub\templates\app\" />
     <Folder Include="kooplex\" />
     <Folder Include="kooplex\hub\" />
     <Folder Include="kooplex\lib\" />
@@ -169,7 +168,7 @@
     <Content Include="kooplex\hub\static\app\scripts\respond.min.js" />
     <None Include="kooplex\hub\static\app\scripts\_references.js" />
     <Content Include="kooplex\hub\templates\app\containers.html" />
-    <Content Include="kooplex\hub\templates\projects\index.html" />
+    <Content Include="kooplex\hub\templates\app\projects.html" />
     <Content Include="kooplex\hub\templates\app\about.html" />
     <Content Include="kooplex\hub\templates\app\contact.html" />
     <Content Include="kooplex\hub\templates\app\index.html" />

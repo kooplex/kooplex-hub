@@ -1,3 +1,4 @@
+﻿from django.conf.urls import patterns, url, include
 from django.shortcuts import render
 from django.http import HttpRequest
 from django.template import RequestContext
@@ -23,3 +24,7 @@ def notebooks(request):
             'containers': c,
         })
     )
+
+urlpatterns = [
+    url(r'^$', notebooks, name='notebooks'),
+]
