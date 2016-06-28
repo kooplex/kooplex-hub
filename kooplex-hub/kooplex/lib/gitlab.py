@@ -58,7 +58,7 @@ class Gitlab(RestClient):
     # Django authentication hooks
 
     def authenticate(self, username=None, password=None):
-        res = self.http_post("/session", params={'login': username, 'password': password})
+        res = self.http_post("api/v3/session", params={'login': username, 'password': password})
         if res.status_code == 201:
             u = res.json()
             return res, u
@@ -78,5 +78,5 @@ class Gitlab(RestClient):
     # Projects
 
     def get_projects(self):
-        res = self.http_get('/projects')
+        res = self.http_get('api/v3/projects')
         return res.json()

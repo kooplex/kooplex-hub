@@ -1,4 +1,5 @@
-﻿import json
+﻿import os
+import json
 import requests
 from django.conf import settings
 
@@ -34,3 +35,16 @@ class LibBase:
         port = '' if (not port or not https and port == 80 or https and port == 443) else ':' + str(port)
         url = LibBase.join_path(proto + host + port, path)
         return url
+
+    def clean_dir(path):        
+        for root, dirs, files in os.walk(top, topdown=False):
+            for name in files:
+                os.remove(os.path.join(root, name))
+        for name in dirs:
+            os.rmdir(os.path.join(root, name))
+
+    def ensure_dir(path):
+        dir = os.path.dirname(path)
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+        return dir
