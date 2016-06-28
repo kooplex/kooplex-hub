@@ -37,14 +37,13 @@ class LibBase:
         return url
 
     def clean_dir(path):        
-        for root, dirs, files in os.walk(top, topdown=False):
+        for root, dirs, files in os.walk(path, topdown=False):
             for name in files:
                 os.remove(os.path.join(root, name))
-        for name in dirs:
-            os.rmdir(os.path.join(root, name))
+            for name in dirs:
+                os.rmdir(os.path.join(root, name))
 
-    def ensure_dir(path):
-        dir = os.path.dirname(path)
+    def ensure_dir(dir):
         if not os.path.exists(dir):
             os.makedirs(dir)
         return dir

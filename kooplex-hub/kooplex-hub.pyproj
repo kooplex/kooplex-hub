@@ -90,12 +90,10 @@
     <Compile Include="kooplex\lib\restclient.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="kooplex\lib\smartgit.py">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="kooplex\lib\smartldap.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="kooplex\lib\smartrepo.py" />
     <Compile Include="kooplex\lib\spawner.py">
       <SubType>Code</SubType>
     </Compile>
@@ -112,12 +110,10 @@
     <Compile Include="kooplex\tests\proxy.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="kooplex\tests\smartgit.py">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="kooplex\tests\smartldap.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="kooplex\tests\smartrepo.py" />
     <Compile Include="kooplex\tests\spawner.py">
       <SubType>Code</SubType>
     </Compile>
