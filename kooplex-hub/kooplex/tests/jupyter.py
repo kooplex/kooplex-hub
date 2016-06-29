@@ -14,35 +14,25 @@ class Test_jupyter(unittest.TestCase):
         sp = Spawner(username=Test_jupyter.TEST_USERNAME)
         return sp
 
-    def make_notebook(self, spawner):
-        assert isinstance(spawner, Spawner)
-
-        nb = spawner.ensure_notebook_running()
-        return nb
-
     def make_jupyter(self):
         sp = self.make_spawner()
-        nb = self.make_notebook(sp)
-        j = Jupyter(nb)
+        sp.ensure_notebook_stopped()
+        nb = sp.ensure_notebook_running()
+        j = j = Jupyter(nb)
         return sp, nb, j
-
-    def make_session(self, notebook):
-        assert isinstance(notebook, Notebook)
-
-        s = Session(
-            notebook_path=Test_jupyter.TEST_NOTEBOOK_PATH,
-            kernel_name=Test_jupyter.TEST_NOTEBOOK_KERNEL
-        )
-        return s
 
     def test_start_stop_session(self):
         sp, nb, j = self.make_jupyter()
-        s = self.make_session(nb)
+        s = sp.make_session(
+            Test_jupyter.TEST_NOTEBOOK_PATH,
+            Test_jupyter.TEST_NOTEBOOK_KERNEL)
         s = j.start_session(s)
-        
         j.stop_session(s)
         sp.ensure_notebook_stopped()
 
+    def test_create_notebook(self):
+        sp, nb, j = self.make_jupyter()
+        j.create_notebook('test.ipynb')
 
 if __name__ == '__main__':
     unittest.main()

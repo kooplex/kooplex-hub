@@ -5,8 +5,11 @@ from django.template import RequestContext
 from datetime import datetime
 
 from kooplex.hub.models.notebook import Notebook
+from kooplex.hub.models.session import Session
+from kooplex.lib.libbase import LibBase
 from kooplex.lib.gitlab import Gitlab
 from kooplex.lib.spawner import Spawner
+from kooplex.lib.jupyter import Jupyter
 
 def notebooks(request):
     """Renders the notebooks page"""
@@ -31,9 +34,16 @@ def notebooks_new(request):
     assert isinstance(request, HttpRequest)
 
     username = request.user.username
+    notebook_name = request.POST['notebook.name']
+    notebook_name = notebook_name + '.ipynb'
+    ## TODO: remove hardcoding!
+    notebook_path = LibBase.join_path('notebooks', notebook_name)
     spawner = Spawner(username)
     notebook = spawner.ensure_notebook_running()
-    url = notebook.external_url
+    jupyter = Jupyter(notebook)
+    jupyter.create_notebook(notebook_path)
+    session = spawner.start_session(notebook_path, 'python3')
+    url = session.external_url
     return HttpResponseRedirect(url)
 
 def notebooks_spawn(request):

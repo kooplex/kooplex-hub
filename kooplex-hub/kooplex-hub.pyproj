@@ -73,6 +73,9 @@
     <Compile Include="kooplex\hub\models\modelbase.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="kooplex\lib\extra_context.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="kooplex\lib\gitlabadmin.py">
       <SubType>Code</SubType>
     </Compile>
@@ -174,6 +177,7 @@
     <Content Include="kooplex\hub\static\app\scripts\respond.js" />
     <Content Include="kooplex\hub\static\app\scripts\respond.min.js" />
     <None Include="kooplex\hub\static\app\scripts\_references.js" />
+    <Content Include="kooplex\hub\templates\app\notebooks-new-partial.html" />
     <Content Include="kooplex\hub\templates\app\notebooks.html" />
     <Content Include="kooplex\hub\templates\app\projects.html" />
     <Content Include="kooplex\hub\templates\app\about.html" />

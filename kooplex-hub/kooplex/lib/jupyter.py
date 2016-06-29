@@ -1,4 +1,4 @@
-from kooplex.lib.libbase import LibBase
+﻿from kooplex.lib.libbase import LibBase
 from kooplex.lib.libbase import get_settings
 from kooplex.lib.restclient import RestClient
 
@@ -41,9 +41,53 @@ class Jupyter(RestClient):
         # PATCH /contents/{path}
         pass
 
-    def create_content(self, path, name, newpath, type, format, content):
-        # PUT /contents/{path}
-        pass
+    def make_empty_notebook_python3(self):
+        return {
+            "cells": [{
+                "cell_type": "code",
+                "execution_count": None,
+                "metadata": {
+                    "collapsed": True
+                },
+                "outputs": [],
+                "source": []
+            }],
+            "metadata": {
+                "kernelspec": {
+                    "display_name": "Python 3",
+                    "language": "python",
+                    "name": "python3"
+                },
+                "language_info": {
+                    "codemirror_mode": {
+                        "name": "ipython",
+                        "version": 3
+                    },
+                    "file_extension": ".py",
+                    "mimetype": "text/x-python",
+                    "name": "python",
+                    "nbconvert_exporter": "python",
+                    "pygments_lexer": "ipython3",
+                    "version": "3.5.1"
+                }
+            },
+            "nbformat": 4,
+            "nbformat_minor": 0
+        }
+
+    def create_notebook(self, name):
+        return self.upload_file(name, name, 'notebook', 'json', self.make_empty_notebook_python3())
+
+    def upload_file(self, path, name=None, type=None, format=None, content=None):
+        data = {
+            'name': name,
+            'path': path,
+            'type': type,
+            'format': format,
+            'content': content
+        }
+        res = self.http_put('/contents/%s' % path, data=data, expect=[200, 201])
+        return res.json()
 
     def delete_content(self, path):
         # DELETE /contents/{path}
@@ -76,7 +120,6 @@ class Jupyter(RestClient):
         res = self.http_post('/sessions', data=data)
         session = Session.from_jupyter_dict(self.notebook, res.json())
         session.notebook = self.notebook
-        session.save()
         return session
 
     def stop_session(self, session):

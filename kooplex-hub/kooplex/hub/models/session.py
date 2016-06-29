@@ -11,14 +11,15 @@ class Session(models.Model, ModelBase):
     notebook_path = models.CharField(max_length=200)
     kernel_id = models.UUIDField()
     kernel_name = models.CharField(max_length=15)
+    external_url = models.CharField(max_length=200)
     
     def from_jupyter_dict(notebook, dict):
         s = Session()
-        s.id = dict['id']
+        s.id = ModelBase.get_from_dict(dict, 'id')
         s.notebook_id = notebook.id
-        s.notebook_path = dict['notebook']['path']
-        s.kernel_id = dict['kernel']['id']
-        s.kernel_name = dict['kernel']['name']
+        s.notebook_path = ModelBase.get_from_dict(dict, ['notebook', 'path'])
+        s.kernel_id = ModelBase.get_from_dict(dict, ['kernel', 'id'])
+        s.kernel_name = ModelBase.get_from_dict(dict, ['kernel', 'name'])
         return s
 
     def to_jupyter_dict(self):

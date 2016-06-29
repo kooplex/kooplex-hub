@@ -1,7 +1,11 @@
 ﻿import json
 import requests
+import time
 
 from kooplex.lib.libbase import LibBase
+
+class RestClientError(Exception):
+    pass
 
 class RestClient(LibBase):
 
@@ -37,24 +41,42 @@ class RestClient(LibBase):
         headers = self.http_prepare_headers(headers)
         return url, params, headers
 
-    def http_get(self, path, params=None, headers=None):
-        url, params, headers = self.http_prepare_request(path, params, headers)
-        res = requests.get(url=url, params=params, headers=headers)
-        return res
+    def http_prepare_data(self, data):
+        if not data:
+            return None
+        elif type(data) is dict:
+            return json.dumps(data)
+        else:
+            return data
 
-    def http_post(self, path, params=None, headers=None, data=None):
+    def http_action(self, path, params, headers, data, expect, action):
         url, params, headers = self.http_prepare_request(path, params, headers)
-        res = requests.post(url=url, params=params, headers=headers, data=json.dumps(data))
-        return res
+        data = self.http_prepare_data(data)
+        if expect and type(expect) is not list:
+            expect = [ expect ]
+        s = 0.1
+        while s < 2:
+            res = action(url=url, params=params, headers=headers, data=data)
+            if res.status_code == 503:
+                s *= 2
+                time.sleep(s)
+            else:
+                if expect and res.status_code not in expect:
+                    raise RestClientError(res.reason)
+                return res
+        raise RestClientError(res.reason)
 
-    def http_patch(self, path, params=None, headers=None, data=None):
-        url, params, headers = self.http_prepare_request(path, params, headers)
-        res = requests.patch(url=url, params=params, headers=headers, data=json.dumps(data))
-        return res
+    def http_get(self, path, params=None, headers=None, expect=None):
+        return self.http_action(path, params, headers, None, expect, requests.get)
 
-    def http_delete(self, path, params=None, headers=None):
-        url, params, headers = self.http_prepare_request(path, params, headers)
-        res = requests.delete(self.http_prepare_url(url),
-                             params=params,
-                             headers=headers)
-        return res
+    def http_post(self, path, params=None, headers=None, data=None, expect=None):
+        return self.http_action(path, params, headers, data, expect, requests.post)
+
+    def http_put(self, path, params=None, headers=None, data=None, expect=None):
+        return self.http_action(path, params, headers, data, expect, requests.put)
+
+    def http_patch(self, path, params=None, headers=None, data=None, expect=None):
+        return self.http_action(path, params, headers, data, expect, requests.patch)
+
+    def http_delete(self, path, params=None, headers=None, expect=None):
+        return self.http_action(path, params, headers, None, expect, requests.delete)

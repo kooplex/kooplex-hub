@@ -7,6 +7,8 @@
     <p class="lead">Infrastructure for flexible collaboration</p>
 </div>
 
+{% include 'app/notebooks-new-partial.html' %}
+
 <div class="row">
     <div class="col-md-4">
         <h2>Worksheets</h2>
@@ -23,7 +25,7 @@
             or author your own notebooks and share with others.
         </p>
         <p><a class="btn btn-default" href="{% url 'notebooks' %}">Browse notebooks &raquo;</a></p>
-        <p><a class="btn btn-default" href="{% url 'notebooks-new' %}">Start new notebook &raquo;</a></p>
+        <p><button type="button" class="btn btn-default" data-toggle="modal" data-target="#notebooks-new">Start new notebook &raquo;</button></p>
     </div>
     <div class="col-md-4">
         <h2>Are you a programmer?</h2>
@@ -32,8 +34,8 @@
         direction.</p>
         <p>A project system centred around python and gitlab allows you to share
         your work and collaborate on problems with the whole community.</p>
-        <p><a class="btn btn-default" href="/gitlab">Browse projects &raquo;</a></p>
-        <p><a class="btn btn-default" href="/gitlab">Start new project &raquo;</a></p>
+        <p><a class="btn btn-default" href="{{ base_url }}/gitlab">Browse projects &raquo;</a></p>
+        <p><a class="btn btn-default" href="{{ base_url }}/gitlab/projects/new">Start new project &raquo;</a></p>
     </div>
 </div>
 
