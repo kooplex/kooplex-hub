@@ -1,0 +1,20 @@
+{% extends "app/layout.html" %}
+
+{% block content %}
+
+<h2>My running notebooks</h2>
+{% for item in notebooks %}
+    <p><b>{{ item.name }}</b></p>
+    <p>open | shut down</p>
+{% endfor %}
+
+<h2>Start new notebook</h2>
+<p><a class="btn btn-default" href="{% url 'notebooks-new' %}">Start notebook &raquo;</a></p>
+
+<h2>Public notebooks</h2>
+{% for item in projects %}
+    <p><b>{{ item.name }}</b></p>
+    <p><a href="">start</a> | <a href="">view in Gitlab</a></p>
+{% endfor %}
+
+{% endblock %}

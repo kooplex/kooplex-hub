@@ -11,13 +11,13 @@ from netaddr import IPAddress
 from time import sleep
 from io import BytesIO
 
-from kooplex.lib.libbase import LibBase
-from kooplex.lib.libbase import get_settings
+from kooplex.lib.libbase import LibBase, get_settings
+from kooplex.lib.restclient import RestClient
 from kooplex.lib.smartdocker import Docker
 from kooplex.lib.proxy import Proxy
-from kooplex.hub.models import Notebook
+from kooplex.hub.models import Container, Notebook
 
-class Spawner(LibBase):
+class Spawner(RestClient):
        
     def __init__(self, username, container_name=None, image=None, proxy_path=None):
         self.username = username
@@ -158,6 +158,9 @@ class Spawner(LibBase):
                 notebook.delete()
             else:
                 self.stop_notebook(notebook)
+
+    def list_kernels(self, container):
+        pass
 
     def start_kernel(self, notebook, kernel):
         raise NotImplementedError

@@ -53,10 +53,8 @@
     <Compile Include="kooplex\hub\views\home.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="kooplex\hub\views\worksheets.py" />
     <Compile Include="kooplex\hub\views\notebooks.py">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="kooplex\hub\views\projects.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="kooplex\hub\views\__init__.py">
@@ -167,7 +165,7 @@
     <Content Include="kooplex\hub\static\app\scripts\respond.js" />
     <Content Include="kooplex\hub\static\app\scripts\respond.min.js" />
     <None Include="kooplex\hub\static\app\scripts\_references.js" />
-    <Content Include="kooplex\hub\templates\app\containers.html" />
+    <Content Include="kooplex\hub\templates\app\notebooks.html" />
     <Content Include="kooplex\hub\templates\app\projects.html" />
     <Content Include="kooplex\hub\templates\app\about.html" />
     <Content Include="kooplex\hub\templates\app\contact.html" />

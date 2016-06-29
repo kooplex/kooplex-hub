@@ -5,25 +5,23 @@ from django.template import RequestContext
 from datetime import datetime
 
 from kooplex.lib.gitlab import Gitlab
+from kooplex.lib.spawner import Spawner
 
-def projects(request):
-    """Renders the projects page"""
+def worksheets(request):
+    """Renders the worksheets page"""
     assert isinstance(request, HttpRequest)
-
-    g = Gitlab()
-    p = g.get_projects()
 
     return render(
         request,
-        'app/projects.html',
+        'app/worksheets.html',
         context_instance = RequestContext(request,
         {
-            'title':'Projects',
+            'title':'Browse worksheets',
             'message':'',
-            'projects': p,
+            'items': items,
         })
     )
 
 urlpatterns = [
-    url(r'^$', projects, name='projects'),
+    url(r'^$', worksheets, name='worksheets'),
 ]
