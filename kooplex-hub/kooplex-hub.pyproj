@@ -40,6 +40,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="kooplex\hub\migrations\__init__.py" />
+    <Compile Include="kooplex\hub\models\session.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="kooplex\hub\models\notebook.py">
       <SubType>Code</SubType>
     </Compile>
@@ -73,6 +76,9 @@
     <Compile Include="kooplex\lib\gitlabadmin.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="kooplex\lib\jupyter.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="kooplex\lib\smartdocker.py">
       <SubType>Code</SubType>
     </Compile>
@@ -97,6 +103,9 @@
     </Compile>
     <Compile Include="kooplex\lib\__init__.py" />
     <Compile Include="kooplex\tests\gitlab.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="kooplex\tests\jupyter.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="kooplex\tests\libbase.py">

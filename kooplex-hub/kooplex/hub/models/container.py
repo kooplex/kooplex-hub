@@ -1,10 +1,10 @@
-import json
+﻿import json
 from django.db import models
 
 from .modelbase import ModelBase
 
 class Container(models.Model, ModelBase):
-    id =  models.UUIDField(primary_key=True)
+    id = models.UUIDField(primary_key=True)
     docker_host = models.CharField(max_length=200, null=True)
     docker_port = models.IntegerField(null=True)
     name = models.CharField(max_length=200)

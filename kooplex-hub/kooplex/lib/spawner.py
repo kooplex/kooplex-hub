@@ -26,10 +26,10 @@ class Spawner(RestClient):
         self.proxy_path = get_settings('KOOPLEX_SPAWNER', 'notebook_proxy_path', proxy_path, '/notebook/{$username}/{$notebook.id}')
         self.ip_pool = get_settings('KOOPLEX_SPAWNER', 'notebook_ip_pool', None, ['172.18.20.1', '172.18.20.255'])
         self.port = get_settings('KOOPLEX_SPAWNER', 'notebook_port', None, 8000)
-        self.service_path = get_settings('KOOPLEX_SPAWNER', 'service_path', None, '/srv/kooplex')
+        self.srv_path = get_settings('KOOPLEX_SPAWNER', 'srv_path', None, '/srv/kooplex')
         
         self.docli = self.make_docker_client()
-        self.pxcli = self.make_proxy_client()      
+        self.pxcli = self.make_proxy_client()
 
     def make_docker_client(self):
         return Docker()
@@ -61,16 +61,16 @@ class Spawner(RestClient):
         return url
 
     def append_ldap_binds(self, binds, svc):
-        basepath = LibBase.join_path(self.service_path, svc)
+        basepath = LibBase.join_path(self.srv_path, svc)
         binds[LibBase.join_path(basepath, 'etc/ldap/ldap.conf')] = {'bind': '/etc/ldap/ldap.conf', 'mode': 'rw'}
         binds[LibBase.join_path(basepath, 'etc/nslcd.conf')] = {'bind': '/etc/nslcd.conf', 'mode': 'rw'}
         binds[LibBase.join_path(basepath, 'etc/nsswitch.conf')] = {'bind': '/etc/nsswitch.conf', 'mode': 'rw'}
 
     def append_home_binds(self, binds, svc):
-        binds[LibBase.join_path(self.service_path, 'home')] = {'bind': '/home', 'mode': 'rw'}
+        binds[LibBase.join_path(self.srv_path, 'home')] = {'bind': '/home', 'mode': 'rw'}
 
     def append_init_binds(self, binds, svc):
-        basepath = LibBase.join_path(self.service_path, svc)
+        basepath = LibBase.join_path(self.srv_path, svc)
         binds[LibBase.join_path(basepath, '/init')] = {'bind': '/init', 'mode': 'rw'}
 
     def make_notebook(self):
@@ -83,7 +83,7 @@ class Spawner(RestClient):
         self.append_ldap_binds(binds, 'notebook')
         self.append_home_binds(binds, 'notebook')
         self.append_init_binds(binds, 'notebook')
-        binds[LibBase.join_path(self.service_path, 'notebook/etc/jupyter_notebook_config.py')] = {'bind': '/etc/jupyter_notebook_config.py', 'mode': 'rw' }
+        binds[LibBase.join_path(self.srv_path, 'notebook/etc/jupyter_notebook_config.py')] = {'bind': '/etc/jupyter_notebook_config.py', 'mode': 'rw' }
             
         notebook = Notebook(
             id=id,
@@ -113,8 +113,11 @@ class Spawner(RestClient):
         return notebook
 
     def get_notebook(self):
-        notebooks = Notebook.objects.filter(username=self.username)
+        notebooks = Notebook.objects.filter(
+            username=self.username,
+            image=self.image)
         if notebooks.count() > 0:
+            # TODO: verify if container is there and proxy works
             return notebooks[0]
         else:
             return None

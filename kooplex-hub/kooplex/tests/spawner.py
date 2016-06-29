@@ -20,7 +20,6 @@ class Test_spawner(unittest.TestCase):
     TEST_CONTAINER_NAME = 'test-notebook-{$username}'
     
     def make_spawner(self):
-        image = 'jupyter/minimal-notebook:latest'
         s = Spawner(username=Test_spawner.TEST_USERNAME,
                     image=Test_spawner.TEST_IMAGE,
                     container_name=Test_spawner.TEST_CONTAINER_NAME)
