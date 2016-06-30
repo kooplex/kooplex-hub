@@ -22,7 +22,7 @@ from kooplex.hub.views import home
 # admin.autodiscover()
 
 urlpatterns = (
-    url(r'^login/$',
+    url(r'^hub/login/$',
         django.contrib.auth.views.login,
         {
             'template_name': 'app/login.html',
@@ -34,7 +34,7 @@ urlpatterns = (
             }
         },
         name='login'),
-    url(r'^logout$',
+    url(r'^hub/logout$',
         django.contrib.auth.views.logout,
         {
             'next_page': '/',
@@ -53,5 +53,5 @@ urlpatterns = (
     # OAuth2 provider
     # url(r'^oauth2/', include('oauth2_provider.urls', namespace='oauth2_provider')),
 
-    url(r'^', include('kooplex.hub.urls')),
+    url(r'^hub/', include('kooplex.hub.urls')),
 )
