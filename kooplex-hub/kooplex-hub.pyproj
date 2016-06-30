@@ -179,6 +179,7 @@
     <None Include="kooplex\hub\static\app\scripts\_references.js" />
     <Content Include="kooplex\hub\templates\app\notebooks-new-partial.html" />
     <Content Include="kooplex\hub\templates\app\notebooks.html" />
+    <Content Include="kooplex\hub\templates\app\project-partial.html" />
     <Content Include="kooplex\hub\templates\app\projects.html" />
     <Content Include="kooplex\hub\templates\app\about.html" />
     <Content Include="kooplex\hub\templates\app\contact.html" />

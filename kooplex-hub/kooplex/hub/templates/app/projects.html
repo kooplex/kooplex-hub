@@ -6,30 +6,7 @@
 <h3>{{ message }}</h3>
 
 {% for item in projects %}
-
-    <div style="display:inline; width:128px; height:128px">
-        {% if item.avatar_url %}
-        <img src="{{ item.avatar_url }}" style="width:128px; height:128px" />
-        {% endif %}
-    </div>
-    <div style="display:inline; width:auto; height:128px">
-        <p><b>{{ item.name }}</b></p>
-        <p>{{ item.description }}</p>
-
-        <p>
-        {% if 'notebook' in item.tag_list %}
-        spawn as <a>notebook</a>
-        {% endif %}
-
-        {% if 'worksheet' in item.tag_list %}
-        | spawn as <a>worksheet</a>
-        {% endif %}
-
-        | view in <a href="/gitlab/{{ item.path_with_namespace }}">Gitlab</a>
-
-        </p>
-    </div>
-
+    {% include 'app/project-partial.html' %}
 {% endfor %}
 
 {% endblock %}

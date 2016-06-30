@@ -4,17 +4,24 @@
 
 <h2>My running notebooks</h2>
 {% for item in notebooks %}
-    <p><b>{{ item.name }}</b></p>
-    <p>open | shut down</p>
+    <p>Container: <b>{{ item.name }}</b></p>
+    <p>shut down</p>
+{% endfor %}
+
+{% for item in sessions %}
+    <p><b>{{ item.notebook_path }}</b></p>
+    <p><a href="{{ item.external_url }}">open</a> | shut down</p>
 {% endfor %}
 
 <h2>Start new notebook</h2>
-<p><a class="btn btn-default" href="{% url 'notebooks-new' %}">Start notebook &raquo;</a></p>
+
+{% include 'app/notebooks-new-partial.html' %}
+
+<p><button type="button" class="btn btn-default" data-toggle="modal" data-target="#notebooks-new">Start new notebook &raquo;</button></p>
 
 <h2>Public notebooks</h2>
 {% for item in projects %}
-    <p><b>{{ item.name }}</b></p>
-    <p><a href="">start</a> | <a href="">view in Gitlab</a></p>
+    {% include 'app/project-partial.html'  %}
 {% endfor %}
 
 {% endblock %}
