@@ -102,7 +102,7 @@
     <Compile Include="kooplex\lib\smartldap.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="kooplex\lib\smartrepo.py" />
+    <Compile Include="kooplex\lib\repo.py" />
     <Compile Include="kooplex\lib\spawner.py">
       <SubType>Code</SubType>
     </Compile>

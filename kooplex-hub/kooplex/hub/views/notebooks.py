@@ -8,7 +8,7 @@ from kooplex.hub.models.notebook import Notebook
 from kooplex.hub.models.session import Session
 from kooplex.lib.libbase import LibBase
 from kooplex.lib.gitlab import Gitlab
-from kooplex.lib.smartrepo import Repo
+from kooplex.lib.repo import Repo
 from kooplex.lib.spawner import Spawner
 from kooplex.lib.jupyter import Jupyter
 
