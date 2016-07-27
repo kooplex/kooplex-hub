@@ -1,4 +1,5 @@
 ﻿import os
+import stat
 import json
 import requests
 from django.conf import settings
@@ -39,9 +40,18 @@ class LibBase:
     def clean_dir(path):        
         for root, dirs, files in os.walk(path, topdown=False):
             for name in files:
-                os.remove(os.path.join(root, name))
+                path = os.path.join(root, name)
+                LibBase.chmod(path)
+                os.remove(path)
             for name in dirs:
+                path = os.path.join(root, name)
+                LibBase.chmod(path)
                 os.rmdir(os.path.join(root, name))
+
+    def chmod(path):
+        if not os.access(path, os.W_OK):
+            # Is the error an access error ?
+            os.chmod(path, stat.S_IWUSR)
 
     def ensure_dir(dir):
         if not os.path.exists(dir):
