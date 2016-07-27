@@ -8,7 +8,7 @@ def get_settings(block, value, override=None, default=None):
     if override:
         return override
     else:
-        s = getattr(settings, block)
+        s = settings.KOOPLEX[block]
         if s and value in s:
             return s[value]
         else:

@@ -14,7 +14,7 @@ class Gitlab(RestClient):
     HEADER_PRIVATE_TOKEN_KEY = 'PRIVATE-TOKEN'
     URL_PRIVATE_TOKEN_KEY = 'private_token'
 
-    base_url = get_settings('KOOPLEX_GITLAB', 'base_url', None, 'http://www.gitlab.com/')
+    base_url = get_settings('gitlab', 'base_url', None, 'http://www.gitlab.com/')
 
     def __init__(self, request=None):
         self.request = request

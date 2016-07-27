@@ -9,8 +9,8 @@ from kooplex.lib.libbase import get_settings
 
 class GitlabAdmin(Gitlab):
 
-    admin_username = get_settings('KOOPLEX_GITLAB', 'admin_username', None, None)
-    admin_password = get_settings('KOOPLEX_GITLAB', 'admin_password', None, None)
+    admin_username = get_settings('gitlab', 'admin_username', None, None)
+    admin_password = get_settings('gitlab', 'admin_password', None, None)
     admin_private_token = None
 
     def http_prepare_headers(self, headers):

@@ -7,7 +7,6 @@ from os import path
 PROJECT_ROOT = path.dirname(path.abspath(path.dirname(__file__)))
 
 DEBUG = True
-TEMPLATE_DEBUG = DEBUG
 
 ALLOWED_HOSTS = (
     'localhost',
@@ -22,19 +21,57 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'compare-kooplex',
+        'NAME': 'kooplex',
         'USER': 'kooplex',
-        'PASSWORD': '****',
+        'PASSWORD': '******',
         'HOST': 'localhost',
         'PORT': '3306',
     }
 }
 
+KOOPLEX_EXTERNAL_HOST = 'kooplex.org'
+KOOPLEX_BASE_URL = 'http://' + KOOPLEX_EXTERNAL_HOST
+KOOPLEX_HUB_PREFIX = 'hub'
 
-GITLAB = {
-    'base_url': 'http://****/gitlab/api/v3',
-    'admin_username': '****',
-    'admin_password': '****',
+KOOPLEX = {
+    'hub': {
+    },
+    'users': {
+        'srv_dir': '/srv/kooplex',
+        'home_dir': 'home/{$username}',
+    },
+    'ldap': {
+        'host': '192.168.137.100',
+        'port': 666,
+        'base_dn': 'dc=kooplex,dc=org',
+        'bind_username': 'admin',
+        'bind_password': '******',
+    },
+    'gitlab': {
+        'base_url': 'http://%s/gitlab/' % KOOPLEX_EXTERNAL_HOST,
+        'ssh_cmd': r'/bin/ssh',
+        'ssh_host': 'localhost',
+        'ssh_port': 23,
+        'admin_username': 'gitlabadmin',
+        'admin_password': '******',
+        'ssh_key_password': '******'
+    },
+    'docker': {
+        'host': 'localhost',
+        'port': 5555,
+        'network': 'kooplex-net',
+    },
+    'spawner': {
+        'notebook_container_name': 'kooplex-notebook-{$username}',
+        'notebook_ip_pool': ['172.20.20.1', '172.20.20.255'],
+        'srv_path': '/srv/kooplex'
+    },
+    'proxy': {
+        'host': KOOPLEX_EXTERNAL_HOST,
+        'port': 8001,   # api port
+        'auth_token': '******',
+        'external_url': 'http://%s/' % KOOPLEX_EXTERNAL_HOST,
+    }
 }
 
 # AllAuth authentication backend
@@ -42,17 +79,28 @@ TEMPLATES =  [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [],
-        'APP_DIRS': True,
+         #'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
                 'django.contrib.auth.context_processors.auth',
+
+                # `allauth` needs this from django
+                # 'django.template.context_processors.request',
+
+                'kooplex.lib.extra_context.extra_context',
+                
             ],
+            'debug': DEBUG,
+            'loaders': [
+                'django.template.loaders.filesystem.Loader',
+                'django.template.loaders.app_directories.Loader',
+                #     'django.template.loaders.eggs.Loader',
+            ]
         },
     },
 ]
 
 AUTHENTICATION_BACKENDS = (
-    # Needed to login by username in Django admin, regardless of `allauth`
     'django.contrib.auth.backends.ModelBackend',
     'kooplex.lib.auth.Auth',
 )
@@ -120,14 +168,7 @@ STATICFILES_FINDERS = (
 )
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = '****'
-
-# List of callables that know how to import templates from various sources.
-TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.Loader',
-    'django.template.loaders.app_directories.Loader',
-#     'django.template.loaders.eggs.Loader',
-)
+SECRET_KEY = 'n(bd1f1c%e8=_xad02x5qtfn%wgwpi492e$8_erx+d)!tpeoim'
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
@@ -135,11 +176,13 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'threadlocals.middleware.ThreadLocalMiddleware',
 
     # Uncomment the next line for simple clickjacking protection:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    
-    'threadlocals.middleware.ThreadLocalMiddleware',
+
+    # For oaut2 provider
+    #'corsheaders.middleware.CorsMiddleware', 
 )
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
@@ -150,13 +193,6 @@ ROOT_URLCONF = 'kooplex.urls'
 # Python dotted path to the WSGI application used by Django's runserver.
 WSGI_APPLICATION = 'kooplex.wsgi.application'
 
-TEMPLATE_DIRS = (
-    # Put strings here, like "/home/html/django_templates" or
-    # "C:/www/django/templates".
-    # Always use forward slashes, even on Windows.
-    # Don't forget to use absolute paths, not relative paths.
-)
-
 INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -164,13 +200,31 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
     # Uncomment the next line to enable the admin:
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     'django.contrib.admindocs',
-    
-    'kooplex.hub',
+
+    # AllAuth
+    #'allauth',
+    #'allauth.account',
+    #'allauth.socialaccount',
+    #'allauth.socialaccount.providers.gitlab',
+
+    # OAuth2 provider
+    #'corsheaders',
+    #'oauth2_provider',
+
+    'kooplex.hub.apps.HubConfig',
 )
+
+# Required by oauth2 provider
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'oauth2_provider.ext.rest_framework.OAuth2Authentication',
+    )
+}
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to

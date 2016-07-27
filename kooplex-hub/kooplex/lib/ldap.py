@@ -8,12 +8,12 @@ class LdapException(Exception):
 class Ldap(LibBase):
     
     def __init__(self):
-        self.host = get_settings('KOOPLEX_LDAP', 'host')
-        self.port = get_settings('KOOPLEX_LDAP', 'port', None, 389)
-        self.base_dn = get_settings('KOOPLEX_LDAP', 'base_dn')
-        self.bind_username = get_settings('KOOPLEX_LDAP', 'bind_username')
-        self.bind_password = get_settings('KOOPLEX_LDAP', 'bind_password')
-        self.user_home_dir = get_settings('KOOPLEX_USERS', 'home_dir')
+        self.host = get_settings('ldap', 'host')
+        self.port = get_settings('ldap', 'port', None, 389)
+        self.base_dn = get_settings('ldap', 'base_dn')
+        self.bind_username = get_settings('ldap', 'bind_username')
+        self.bind_password = get_settings('ldap', 'bind_password')
+        self.user_home_dir = get_settings('users', 'home_dir')
 
         self.ldapconn = self.make_ldap_client()
 

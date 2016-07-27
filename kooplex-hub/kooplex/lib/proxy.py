@@ -8,13 +8,13 @@ class ProxyError(Exception):
 class Proxy(RestClient):
 
     def __init__(self, host=None, port=None, auth_token=None, https=None, external_url=None):
-        host = get_settings('KOOPLEX_PROXY', 'host', host, '127.0.0.1')
-        port = get_settings('KOOPLEX_PROXY', 'port', port, 8001)
-        https = get_settings('KOOPLEX_PROXY', 'https', https, False)
+        host = get_settings('proxy', 'host', host, '127.0.0.1')
+        port = get_settings('proxy', 'port', port, 8001)
+        https = get_settings('proxy', 'https', https, False)
         RestClient.__init__(self, host, port, https)
         
-        self.auth_token = get_settings('KOOPLEX_PROXY', 'auth_token', auth_token, None)
-        self.external_url = get_settings('KOOPLEX_PROXY', 'external_url', external_url, 'http://localhost')
+        self.auth_token = get_settings('proxy', 'auth_token', auth_token, None)
+        self.external_url = get_settings('proxy', 'external_url', external_url, 'http://localhost')
 
     def http_prepare_headers(self, headers):
         headers = RestClient.http_prepare_headers(self, headers)

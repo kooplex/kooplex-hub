@@ -10,14 +10,14 @@ class Repo(LibBase):
 
     def __init__(self, username, name, proto='ssh'):
 
-        self.user_home_dir = get_settings('KOOPLEX_USERS', 'home_dir')
-        self.srv_dir = get_settings('KOOPLEX_USERS', 'srv_dir')
-        self.base_url = get_settings('KOOPLEX_GITLAB', 'base_url')
-        self.ssh_cmd = get_settings('KOOPLEX_GITLAB', 'ssh_cmd', None, 'ssh')
-        self.ssh_host = get_settings('KOOPLEX_GITLAB', 'ssh_host')
-        self.ssh_port = get_settings('KOOPLEX_GITLAB', 'ssh_port', None, 22)
-        self.ssh_key = get_settings('KOOPLEX_GITLAB', 'ssh_key', None, '.ssh/gitlab.key')
-        self.ssh_key_password = get_settings('KOOPLEX_GITLAB', 'ssh_key_password')
+        self.user_home_dir = get_settings('users', 'home_dir')
+        self.srv_dir = get_settings('users', 'srv_dir')
+        self.base_url = get_settings('gitlab', 'base_url')
+        self.ssh_cmd = get_settings('gitlab', 'ssh_cmd', None, 'ssh')
+        self.ssh_host = get_settings('gitlab', 'ssh_host')
+        self.ssh_port = get_settings('gitlab', 'ssh_port', None, 22)
+        self.ssh_key = get_settings('gitlab', 'ssh_key', None, '.ssh/gitlab.key')
+        self.ssh_key_password = get_settings('gitlab', 'ssh_key_password')
 
         self.username = username
         self.name = name

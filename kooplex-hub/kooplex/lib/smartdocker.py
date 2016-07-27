@@ -10,9 +10,9 @@ class Docker(LibBase):
             self.port = None
             self.network = None
         else:
-            self.host = get_settings('KOOPLEX_DOCKER', 'host', host)
-            self.port = get_settings('KOOPLEX_DOCKER', 'port', port)
-            self.network = get_settings('KOOPLEX_DOCKER', 'network', network, 'kooplex')
+            self.host = get_settings('docker', 'host', host)
+            self.port = get_settings('docker', 'port', port)
+            self.network = get_settings('docker', 'network', network, 'kooplex')
 
         self.docli = self.make_docker_client()
 
