@@ -7,6 +7,8 @@
     <PythonRunWebServerCommandArguments>runserver --settings kooplex.settings %SERVER_PORT% $(CommandLineArguments)</PythonRunWebServerCommandArguments>
     <PythonDebugWebServerCommandArguments>runserver --noreload --settings kooplex.settings %SERVER_PORT% $(CommandLineArguments)</PythonDebugWebServerCommandArguments>
     <DjangoSettingsModule>kooplex.settings</DjangoSettingsModule>
+    <WebBrowserUrl>http://localhost:8810/hub</WebBrowserUrl>
+    <WebBrowserPort>8810</WebBrowserPort>
   </PropertyGroup>
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>

@@ -7,3 +7,6 @@ class Notebook(Container):
     port = models.IntegerField()
     proxy_path = models.CharField(max_length=200)
     external_url = models.CharField(max_length=200)
+
+    class Meta:
+        db_table = "kooplex_hub_notebook"

@@ -18,6 +18,9 @@ class Container(models.Model, ModelBase):
     ports = models.TextField(null=True)
     state = models.CharField(max_length=15)
 
+    class Meta:
+        db_table = "kooplex_hub_container"
+
     def from_docker_dict(docker, dict):
         c = Container()
         c.id=dict['Id']
