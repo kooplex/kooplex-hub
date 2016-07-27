@@ -34,17 +34,6 @@ class Test_spawner(unittest.TestCase):
         n = s.get_container_name()
         self.assertEqual('test-notebook-test', n)
 
-    def test_get_proxy_path(self):
-        s = self.make_spawner()
-        p = s.get_proxy_path('1')
-        self.assertEqual('/notebook/test/1', p)
-
-    def test_get_external_url(self):
-        s = self.make_spawner()
-        path = s.get_proxy_path('1')
-        url = s.get_external_url(path)
-        self.assertEqual('http://dobos.compare.vo.elte.hu/notebook/test/1', url)    # TODO: make URL in test generic
-
     def test_make_notebook(self):
         s = self.make_spawner()
         nb = s.make_notebook()

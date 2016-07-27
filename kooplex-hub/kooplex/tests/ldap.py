@@ -1,5 +1,5 @@
 ﻿import unittest
-from kooplex.lib.smartldap import Ldap, LdapException
+from kooplex.lib.ldap import Ldap, LdapException
 from django.contrib.auth.models import User, Group
 
 class Test_ldap(unittest.TestCase):
