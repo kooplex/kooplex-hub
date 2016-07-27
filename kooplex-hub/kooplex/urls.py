@@ -37,7 +37,7 @@ urlpatterns = (
     url(r'^hub/logout$',
         django.contrib.auth.views.logout,
         {
-            'next_page': '/',
+            'next_page': '/hub',
         },
         name='logout'),
 
