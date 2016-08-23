@@ -78,6 +78,7 @@ class Test_docker(unittest.TestCase):
         self.assertEqual('created', c.state)
         c = d.get_container(c.name)
         self.assertEqual('created', c.state)
+        d.ensure_container_removed(c)
         
     def test_list_containers(self):
         pass
@@ -88,6 +89,7 @@ class Test_docker(unittest.TestCase):
         d.ensure_container_removed(c)
         d.ensure_container_exists(c)
         d.ensure_container_exists(c)
+        d.ensure_container_removed(c)
 
     def test_start_container(self):
         d = Docker()
@@ -97,6 +99,7 @@ class Test_docker(unittest.TestCase):
         c = d.get_container(c)
         self.assertEqual('running', c.state)
         d.kill_container(c)
+        d.ensure_container_removed(c)
 
     def test_ensure_container_running(self):
         d = Docker()
@@ -111,6 +114,7 @@ class Test_docker(unittest.TestCase):
         d.ensure_container_running(c)
         c = d.get_container(c)
         self.assertEqual('running', c.state)
+        d.ensure_container_removed(c)
 
     def test_stop_container(self):
         d = Docker()
@@ -121,6 +125,7 @@ class Test_docker(unittest.TestCase):
         d.stop_container(c)
         c = d.get_container(c)
         self.assertEqual('exited', c.state)
+        d.ensure_container_removed(c)
 
     def test_kill_container(self):
         d = Docker()
@@ -131,6 +136,7 @@ class Test_docker(unittest.TestCase):
         d.kill_container(c)
         c = d.get_container(c)
         self.assertEqual('exited', c.state)
+        d.ensure_container_removed(c)
 
     def test_ensure_container_stopped(self):
         d = Docker()
@@ -143,6 +149,7 @@ class Test_docker(unittest.TestCase):
         self.assertEqual('exited', c.state)
         c = d.get_container(c)
         self.assertEqual('exited', c.state)
+        d.ensure_container_removed(c)
         # TODO: kill on timeout
 
     def test_remove_container(self):
@@ -171,6 +178,7 @@ class Test_docker(unittest.TestCase):
         c = d.get_container(c)
         self.assertEqual('running', c.state)
         d.exec_container(c, 'ls')
+        d.ensure_container_removed(c)
 
 
 if __name__ == '__main__':
