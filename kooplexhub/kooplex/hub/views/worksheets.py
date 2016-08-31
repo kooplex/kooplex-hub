@@ -13,14 +13,22 @@ def worksheets(request):
 
     return render(
         request,
-        'app/worksheets.html',
-        context_instance = RequestContext(request,
+        'app/error.html',
+        context_instance=RequestContext(request,
         {
-            'title':'Browse worksheets',
-            'message':'',
-            'items': items,
+            'error_title': 'This page is under construction',
         })
     )
+#    return render(
+#        request,
+#        'app/worksheets.html',
+#        context_instance = RequestContext(request,
+#        {
+#            'title':'Browse worksheets',
+#            'message':'',
+#            'items': items,
+#        })
+#    )
 
 urlpatterns = [
     url(r'^$', worksheets, name='worksheets'),

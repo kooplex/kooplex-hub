@@ -14,7 +14,7 @@ class Auth(object):
                 # Create a new user. Note that we can set password
                 # to anything, because it won't be checked; the password
                 # from settings.py will.
-                user = User(username=username, password='get from settings.py')
+                user = User(username=username, password='get from settings.py', email=u['email'])
                 user.is_staff = True
                 user.is_superuser = u['is_admin']
                 user.save()

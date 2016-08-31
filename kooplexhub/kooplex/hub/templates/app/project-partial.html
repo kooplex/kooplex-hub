@@ -4,19 +4,39 @@
     {% endif %}
 </div>
 <div style="display:inline; width:auto; height:128px">
-    <p><b>{{ item.name }}</b></p>
-    <p>{{ item.description }}</p>
+    <p>
+        <b>{{ item.name }}</b>
+        {% if 'forked_from_project' in item %}
+            : forked from
+            <a href="{{ base_url }}/gitlab/{{ item.forked_from_project.path_with_namespace }}">
+                {{ item.forked_from_project.path_with_namespace }}
+            </a>
+        {% endif %}
+    </p>
+    <p>{{ item.description|cut:'#notebook'|cut:'#worksheet' }}</p>
 
     <p>
-    {% if 'notebook' in item.tag_list %}
-    spawn as <a href="{% url 'notebooks-clone' %}?repo={{ item.path_with_namespace }}">notebook</a>
+    {% if '#notebook' in item.description %}
+    spawn as <a href="{% url 'notebooks-clone' %}?repo={{ item.path_with_namespace }}{% if 'forked_from_project' in item %}&is_forked=True&project_id={{ item.id }}&target_id={{ item.forked_from_project.id }}{% else %}&is_forked=False{% endif %}">notebook</a>
     {% endif %}
 
-    {% if 'worksheet' in item.tag_list %}
+    {% if '#worksheet' in item.description %}
     | spawn as <a>worksheet</a>
     {% endif %}
 
     | view in <a href="{{ base_url }}/gitlab/{{ item.path_with_namespace }}">Gitlab</a>
 
+    {%  if publicvar %}
+        {% if item.forkable %}
+            | fork this <a href="{% url 'project-fork' %}?itemid={{ item.id }}">project</a>
+        {% else %}
+            | it has been forked
+        {% endif %}
+    {%  endif %}
     </p>
+    {%  if not publicvar and item.forks_count > 0 %}
+    <p>
+        See the opened <a href="{% url 'notebooks-mergerequestlist' %}?itemid={{ item.id }}&path_with_namespace={{ item.path_with_namespace }}">merge requests</a>
+    </p>
+    {% endif %}
 </div>

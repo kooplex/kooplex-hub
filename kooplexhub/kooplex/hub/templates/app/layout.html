@@ -19,7 +19,7 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a href="/" class="navbar-brand">Kooplex Hub</a>
+                <a href="{% url 'home' %}" class="navbar-brand">Kooplex Hub</a>
             </div>
             <div class="navbar-collapse collapse">
                 <ul class="nav navbar-nav">
@@ -27,7 +27,7 @@
                     <li><a href="{% url 'worksheets' %}">Worksheets</a></li>
                     <li><a href="{% url 'notebooks' %}">Notebooks</a></li>
                     <li><a href="{{ base_url }}/gitlab">Projects</a></li>
-                    <li><a href="/nextcloud">Files</a></li>
+                    <li><a href="/owncloud">Files</a></li>
                     <li><a href="{% url 'about' %}">About</a></li>
                     <li><a href="{% url 'contact' %}">Contact</a></li>
                 </ul>

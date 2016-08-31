@@ -53,10 +53,11 @@ class Repo(LibBase):
         else:
             raise NotImplementedError
 
-    def get_local_dir(self):
+    def get_local_dir(self, with_projects=True):
         home = self.user_home_dir.replace('{$username}', self.username)
         dir = LibBase.join_path(self.srv_dir, home)
-        dir = LibBase.join_path(dir, 'projects')
+        if with_projects:
+            dir = LibBase.join_path(dir, 'projects')
         dir = LibBase.join_path(dir, self.name)
         dir = dir.replace('/', os.path.sep)
         return dir        
@@ -110,3 +111,21 @@ class Repo(LibBase):
         dir = self.get_local_dir()
         self.ensure_local_dir_empty()
         os.rmdir(dir)
+
+    def commit_and_push(self, commit_message, email):
+        dir = self.get_local_dir(with_projects=False)
+        cmd = self.get_git_ssh_command()
+        repo = git.Repo(dir)
+        #Adding all modified files to stage for commit
+        repo.git.add(u=True)
+        untracted_list = []
+        #Adding nonhidden, untracted files to version control automatically
+        for untracted_file in repo.untracked_files:
+            if untracted_file[0]!=".":
+                untracted_list.append(untracted_file)
+        repo.index.add(untracted_list)
+        author = git.Actor(self.username, email)
+        repo.index.commit(message=commit_message, author=author, committer=author)
+        origin = repo.remote()
+        with repo.git.custom_environment(GIT_SSH_COMMAND=cmd):
+            origin.push()

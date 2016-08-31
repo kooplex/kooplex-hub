@@ -173,23 +173,27 @@ class Spawner(RestClient):
     def make_session(self, notebook_path, kernel):
         session = Session(
             notebook_path=notebook_path,
-            kernel_name=kernel
+            kernel_name=kernel,
         )
         return session
 
-    def start_session(self, notebook_path, kernel):
+    def start_session(self, notebook_path, kernel, is_forked=False, project_id=0, target_id=0):
         notebook = self.ensure_notebook_running()
         session = self.make_session(notebook_path, kernel)
         jpcli = Jupyter(notebook)
         session = jpcli.start_session(session)
         proxy_path = self.get_session_path(notebook, session)
         session.external_url = self.get_external_url(proxy_path)
+        session.is_forked = is_forked
+        session.project_id = project_id
+        session.target_id = target_id
         session.save()
         return session
-        
 
-    def stop_session(self, notebook, kernel):
-        raise NotImplementedError
+
+    def stop_session(self, session):
+        jpcli = Jupyter(session.notebook)
+        jpcli.stop_session(session)
 
     def list_sessions(self, container):
         raise NotImplementedError

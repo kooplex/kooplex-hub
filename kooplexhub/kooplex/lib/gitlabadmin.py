@@ -9,27 +9,30 @@ from kooplex.lib.libbase import get_settings
 
 class GitlabAdmin(Gitlab):
 
-    admin_username = get_settings('gitlab', 'admin_username', None, None)
-    admin_password = get_settings('gitlab', 'admin_password', None, None)
-    admin_private_token = None
+    ADMIN_USERNAME = get_settings('gitlab', 'admin_username', None, None)
+    ADMIN_PASSWORD= get_settings('gitlab', 'admin_password', None, None)
+    ADMIN_PRIVATE_TOKEN = None
 
     def http_prepare_headers(self, headers):
         headers = RestClient.http_prepare_headers(self, headers)
-        token = get_admin_private_token()
+        token = self.get_admin_private_token()
         if token:
-            headers['PRIVATE-TOKEN'] = token
+            headers[Gitlab.HEADER_PRIVATE_TOKEN_KEY] = token
         return headers
 
     def authenticate_admin(self):
-        res, user = self.authenticate(admin_username, admin_password)
+        res, user = self.authenticate(GitlabAdmin.ADMIN_USERNAME, GitlabAdmin.ADMIN_PASSWORD)
         if user is not None:
-            Gitlab.admin_private_token = user['private_token']
+            GitlabAdmin.ADMIN_PRIVATE_TOKEN = user[Gitlab.URL_PRIVATE_TOKEN_KEY]
         return res, user
 
     def get_admin_private_token(self):
-        if Gitlab.admin_private_token is None:
+        if GitlabAdmin.ADMIN_PRIVATE_TOKEN is None:
+            # the following is needed to avoid infinite calls of the method http_prepare_headers
+            # by the method self.authenticate:
+            GitlabAdmin.ADMIN_PRIVATE_TOKEN = 'in progress'
             self.authenticate_admin()
-        return Gitlab.admin_private_token
+        return GitlabAdmin.ADMIN_PRIVATE_TOKEN
 
     ###########################################################
     # User management
@@ -38,3 +41,20 @@ class GitlabAdmin(Gitlab):
         # TODO: create external user in gitlab via REST API and set
         # identity to point to LDAP
         return None
+
+    ###########################################################
+    # Projects
+
+    def get_all_public_projects(self, unforkable_projectids):
+        res = self.http_get('api/v3/projects/all?visibility=public')
+        public_projects_json = res.json()
+        self.identify_unforkable_projects(public_projects_json, unforkable_projectids)
+        return public_projects_json
+
+    def identify_unforkable_projects(self, public_projects_json, unforkable_projectids):
+        for project in public_projects_json:
+            if project['id'] in unforkable_projectids:
+                project['forkable'] = False
+            else:
+                project['forkable'] = True
+        return public_projects_json

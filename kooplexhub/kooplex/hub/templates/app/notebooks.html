@@ -5,12 +5,26 @@
 <h2>My running notebooks</h2>
 {% for item in notebooks %}
     <p>Container: <b>{{ item.name }}</b></p>
-    <p>shut down</p>
+    <p><a href="{% url 'container-shutdown' %}?notebook_id={{ item.id }}">shut down</a></p>
 {% endfor %}
 
 {% for item in sessions %}
-    <p><b>{{ item.notebook_path }}</b></p>
-    <p><a href="{{ item.external_url }}">open</a> | shut down</p>
+    <p><b>{{ item.notebook_path|cut:entry_notebook_name }}</b></p>
+    <p>
+    {% if notebook_dir_name in item.notebook_path %}
+        <a href="{{ item.external_url }}">open</a>
+    {% else %}
+        <a href="{{ item.external_url }}">open {{ entry_notebook_name }}</a>
+        {% if item.is_forked %}
+            | <a href="{% url 'notebooks-commit' %}?notebook_path_dir={{ item.notebook_path|cut:entry_notebook_name }}&is_forked={{ item.is_forked }}&project_id={{ item.project_id }}&target_id={{ item.target_id }}">
+            commit and create merge request</a>
+        {% else %}
+            | <a href="{% url 'notebooks-commit' %}?notebook_path_dir={{ item.notebook_path|cut:entry_notebook_name }}&is_forked={{ item.is_forked }}">
+            commit</a>
+        {% endif %}
+    {% endif %}
+        | <a href="{% url 'notebooks-shutdown' %}?session_id={{ item.id }}">shut down</a>
+    </p>
 {% endfor %}
 
 <h2>Start new notebook</h2>
@@ -19,9 +33,16 @@
 
 <p><button type="button" class="btn btn-default" data-toggle="modal" data-target="#notebooks-new">Start new notebook &raquo;</button></p>
 
-<h2>Public notebooks</h2>
+<h2>User's projects</h2>
 {% for item in projects %}
     {% include 'app/project-partial.html'  %}
+{% endfor %}
+
+<h2>Other public projects</h2>
+{% for item in public_projects %}
+    {% if item.owner.username != username %}
+        {% include 'app/project-partial.html' with publicvar=True %}
+    {% endif %}
 {% endfor %}
 
 {% endblock %}

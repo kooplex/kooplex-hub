@@ -118,6 +118,7 @@ class Jupyter(RestClient):
 
         data = session.to_jupyter_dict()
         res = self.http_post('/sessions', data=data)
+        print(res.json())
         session = Session.from_jupyter_dict(self.notebook, res.json())
         session.notebook = self.notebook
         return session

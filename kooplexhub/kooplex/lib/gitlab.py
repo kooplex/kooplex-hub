@@ -21,7 +21,7 @@ class Gitlab(RestClient):
         self.session = {}       # local session used for unit tests
     
     ###########################################################
-    # HTTP reuqest authentication
+    # HTTP request authentication
 
     def get_session_store(self):
         if self.request:
@@ -79,4 +79,52 @@ class Gitlab(RestClient):
 
     def get_projects(self):
         res = self.http_get('api/v3/projects')
+        projects_json = res.json()
+        unforkable_projectids = self.get_unforkable_projectids(projects_json)
+        return projects_json, unforkable_projectids
+
+    def get_unforkable_projectids(self, projects_json):
+        result = set()
+        for project in projects_json:
+            if 'forked_from_project' in project:
+                result.add(project['forked_from_project']['id'])
+        return result
+
+    def fork_project(self, itemid):
+        res = self.http_post("api/v3/projects/fork/" + itemid)
+        message = ""
+        if res.status_code == 409:
+            message = res.json()["message"]["base"][0]
+        return message
+
+    def create_mergerequest(self, project_id, target_id, title, description):
+        url = "api/v3/projects/"
+        url += project_id
+        url += "/merge_requests?source_branch=master&target_branch=master"
+        url += "&target_project_id=" + target_id
+        url += "&title=" + title
+        url += "&description=" + description
+        res = self.http_post(url)
+        message = ""
+        if res.status_code != 201:
+            message = res.json()
+        return message
+
+    def list_mergerequests(self, itemid):
+        url = "api/v3/projects/"
+        url += itemid
+        url += "/merge_requests?state=opened"
+        res = self.http_get(url)
         return res.json()
+
+    def accept_mergerequest(self, project_id, mergerequestid):
+        url = "api/v3/projects/"
+        url += project_id
+        url += "/merge_requests/"
+        url += mergerequestid
+        url += "/merge"
+        res = self.http_put(url)
+        message = ""
+        if res.status_code != 200:
+            message = res.json()
+        return message
