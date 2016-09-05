@@ -24,7 +24,7 @@ class Repo(LibBase):
         self.proto = proto # 'http|ssh'
 
     def get_gitlab_url(self):
-        url = LibBase.join_path(self.base_url, self.name + '.git')
+        url = LibBase.join_path(self.base_repourl, self.name + '.git')
         return url
 
     def get_gitlab_ssh(self):
