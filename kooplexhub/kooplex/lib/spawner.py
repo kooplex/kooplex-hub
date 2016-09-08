@@ -20,10 +20,9 @@ from kooplex.hub.models import Container, Notebook, Session
 
 class Spawner(RestClient):
        
-    def __init__(self, username, repo_name, container_name=None, image=None):
+    def __init__(self, username, container_name=None, image=None):
         self.username = username
         self.container_name = get_settings('spawner', 'notebook_container_name', container_name, 'kooplex-notebook-{$username}')
-        self.container_name += "-"+repo_name
         self.image = get_settings('spawner', 'notebook_image', image, 'kooplex-notebook')
         self.notebook_path = get_settings('spawner', 'notebook_proxy_path', None, '/notebook/{$username}/{$notebook.id}')
         self.session_path = get_settings('spawner', 'session_proxy_path', None, '/notebook/{$username}/{$notebook.id}/notebooks/{$session.notebook_path}')

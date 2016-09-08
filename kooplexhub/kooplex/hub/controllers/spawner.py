@@ -12,7 +12,6 @@ def spawn(request):
 
     s = Spawner(request.user.username)
     c = [ s.spawn_container('debian:jessie', '4', '/bin/bash', 8111) ]
-    #TODO  enter more containers
          
     return render(
         request,
