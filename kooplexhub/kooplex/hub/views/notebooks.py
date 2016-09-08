@@ -55,9 +55,10 @@ def notebooks_new(request):
     assert isinstance(request, HttpRequest)
     notebook_name = request.POST['notebook.name']
     notebook_name = notebook_name + '.ipynb'
+    repo_name = request.POST['project.name']
 
     username = request.user.username
-    spawner = Spawner(username)
+    spawner = Spawner(username,repo_name)
     notebook = spawner.ensure_notebook_running()
     jupyter = Jupyter(notebook)
 
@@ -72,18 +73,20 @@ def notebooks_new(request):
 def notebooks_shutdown(request):
     assert isinstance(request, HttpRequest)
     session_id = request.GET['session_id']
+    repo_name = request.GET['repo']
     session = Session.objects.filter(id=session_id)[0]
     username = request.user.username
-    spawner = Spawner(username)
+    spawner = Spawner(username,repo_name)
     spawner.stop_session(session)
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
 def container_shutdown(request):
     assert isinstance(request, HttpRequest)
     notebook_id = request.GET['notebook_id']
+    repo_name = request.GET['repo']
     notebook = Notebook.objects.filter(id=notebook_id)[0]
     username = request.user.username
-    spawner = Spawner(username)
+    spawner = Spawner(username,repo_name)
     spawner.stop_notebook(notebook)
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
@@ -99,7 +102,7 @@ def notebooks_clone(request):
     notebook_name = notebook_name + '.ipynb'
 
     username = request.user.username
-    spawner = Spawner(username)
+    spawner = Spawner(username,repo_name)
     notebook = spawner.ensure_notebook_running()
     jupyter = Jupyter(notebook)
 
