@@ -15,6 +15,7 @@ import kooplex
 import kooplex.hub
 from kooplex.hub.forms import BootstrapAuthenticationForm
 from kooplex.hub.views import home
+from kooplex.hub.views import changepassword
 
 # Uncomment the next lines to enable the admin:
 # from django.conf.urls import include
@@ -55,4 +56,10 @@ urlpatterns = (
     # url(r'^oauth2/', include('oauth2_provider.urls', namespace='oauth2_provider')),
 
     url(r'^hub/', include('kooplex.hub.urls')),
+    
+    #url(r'^pform',include('kooplex.hub.views.changepassword')),
+    url(r'^changepassword/', include('kooplex.hub.views.changepassword')),
+    #url(r'^changepassword', changepassword.change_password),
+    
+
 )
