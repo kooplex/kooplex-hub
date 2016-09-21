@@ -1,6 +1,7 @@
 ﻿import ldap3
 from kooplex.lib import LibBase, get_settings
 from django.contrib.auth.models import User, Group
+from django.core.exceptions import ValidationError
 
 class LdapException(Exception):
     pass
@@ -85,6 +86,26 @@ class Ldap(LibBase):
             'userPassword': user.password
         }
         return dn, object_class, attributes
+
+    def validate_user(self,username,password):
+
+        bind_dn = 'uid=%s,ou=users,%s' % (username, self.base_dn)
+        ldapsrv = ldap3.Server(host=self.host, port=self.port)
+        ldapcon = ldap3.Connection(ldapsrv, bind_dn, password)
+        success = ldapcon.bind()
+        if not success:
+            raise ValidationError("Password doesn't match!")
+        return ldapcon
+
+
+
+    def changepassword(self,user, oldpassword,newpassword):
+        self.validate_user(user.username, oldpassword)
+        user=self.get_user(user)
+        user.password = newpassword
+        user = self.modify_user(user)
+        print(user)
+        #user.save()
 
     def ldap_to_user(self, entry):
         user = User(

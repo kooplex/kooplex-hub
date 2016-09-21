@@ -58,7 +58,7 @@ urlpatterns = (
     url(r'^hub/', include('kooplex.hub.urls')),
     
     #url(r'^pform',include('kooplex.hub.views.changepassword')),
-    url(r'^changepassword/', include('kooplex.hub.views.changepassword')),
+    #url(r'^changepassword/', include('kooplex.hub.views.changepassword')),
     #url(r'^changepassword', changepassword.change_password),
     
 

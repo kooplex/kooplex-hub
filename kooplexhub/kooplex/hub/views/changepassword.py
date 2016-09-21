@@ -4,8 +4,12 @@ from django.http import HttpRequest
 from django.template import RequestContext
 from datetime import datetime
 from django.contrib.auth.models import User
-from django.contrib.auth import password_validation
 from kooplex.lib.ldap import Ldap
+from django.http import HttpRequest, HttpResponseRedirect
+from django.shortcuts import render_to_response
+from django.core.exceptions import ValidationError
+
+
 
 HUB_URL = '/hub'
 
@@ -30,19 +34,30 @@ def change_password_form(request):
     oldpassword = request.POST['oldpassword']
     newpassword = request.POST['newpassword']
 
-    user = User.objects.get(username=username)
-    if user.password != oldpassword:
-        raise ValidationError("Password doesn't match!")
-    else:
-        l = Ldap()
-        user.password = newpassword
-        user = l.modify_user(user)
-        user.save()
+    l = Ldap()
+    uu=request.user
+    print(uu.password)
+    uu.set_password(newpassword)
+    try:
+        l.changepassword(request.user,oldpassword,newpassword)
+    except ValidationError:
+        print(oldpassword)
+        return render(
+            request,
+            'app/password-form.html',
+            context_instance=RequestContext(request,
+            {
+            'errors' : True,
+            'title': 'Change Password',
+            'next_page': '/hub',
+        })
+        )
 
     return HttpResponseRedirect(HUB_URL)
 
 urlpatterns = [
-    url(r'^pform', change_password_form, name='pform'),
     url(r'^$', change_password, name='changepassword'),
+    url(r'^/pform', change_password_form, name='pform'),
+    #
 
 ]
