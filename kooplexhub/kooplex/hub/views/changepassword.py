@@ -36,12 +36,12 @@ def change_password_form(request):
 
     l = Ldap()
     uu=request.user
-    print(uu.password)
+    #print(uu.password)
     uu.set_password(newpassword)
     try:
         l.changepassword(request.user,oldpassword,newpassword)
     except ValidationError:
-        print(oldpassword)
+        #print(oldpassword)
         return render(
             request,
             'app/password-form.html',
