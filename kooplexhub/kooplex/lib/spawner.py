@@ -20,8 +20,9 @@ from kooplex.hub.models import Container, Notebook, Session
 
 class Spawner(RestClient):
        
-    def __init__(self, username, container_name=None, image=None):
+    def __init__(self, username, project_name, container_name=None, image=None):
         self.username = username
+        self.project_name = project_name
         self.container_name = get_settings('spawner', 'notebook_container_name', container_name, 'kooplex-notebook-{$username}')
         self.image = get_settings('spawner', 'notebook_image', image, 'kooplex-notebook')
         self.notebook_path = get_settings('spawner', 'notebook_proxy_path', None, '/notebook/{$username}/{$notebook.id}')
@@ -50,6 +51,7 @@ class Spawner(RestClient):
     def get_container_name(self):
         name = self.container_name
         name = name.replace('{$username}', self.username)
+        name = name.replace('{$project_name}', self.project_name)
         return name
 
     def get_external_url(self, path):
@@ -63,7 +65,15 @@ class Spawner(RestClient):
         binds[LibBase.join_path(basepath, 'etc/nsswitch.conf')] = {'bind': '/etc/nsswitch.conf', 'mode': 'rw'}
 
     def append_home_binds(self, binds, svc):
-        binds[LibBase.join_path(self.srv_path, 'home')] = {'bind': '/home', 'mode': 'rw'}
+        #container_home=LibBase.join_path('/home', self.username + '/' + self.project_name)
+        host_home = '/home/' + self.username
+        container_home = '/home/' + self.username
+        binds[LibBase.join_path(self.srv_path, host_home)] = {'bind': container_home, 'mode': 'rw'}
+
+    def append_ownclouddata_binds(self, binds, svc):
+        container_data_home = LibBase.join_path('/home', self.username + '/' + self.project_name + '/data')
+        host_data_path = 'ownCloud/' + self.username + '/files'
+        binds[LibBase.join_path(self.srv_path, host_data_path)] = {'bind': container_data_home, 'mode': 'rw'}
 
     def append_init_binds(self, binds, svc):
         basepath = LibBase.join_path(self.srv_path, svc)
@@ -84,6 +94,7 @@ class Spawner(RestClient):
         binds = {}
         self.append_ldap_binds(binds, 'notebook')
         self.append_home_binds(binds, 'notebook')
+        self.append_ownclouddata_binds(binds, 'notebook')
         self.append_init_binds(binds, 'notebook')
         # TODO: remove hardcoding!
         binds[LibBase.join_path(self.srv_path, 'notebook/etc/jupyter_notebook_config.py')] = {'bind': '/etc/jupyter_notebook_config.py', 'mode': 'rw' }
@@ -110,6 +121,7 @@ class Spawner(RestClient):
                 'NB_URL': notebook_path,
                 'NB_PORT': self.port
             })
+        print(notebook_path)
         notebook.set_binds(binds)
         # TODO: make binds read-only once config is fixed
         notebook.set_ports([self.port])
@@ -119,6 +131,7 @@ class Spawner(RestClient):
         notebooks = Notebook.objects.filter(
             username=self.username,
             image=self.image)
+            #image = self.image)
         if notebooks.count() > 0:
             # TODO: verify if container is there and proxy works
             return notebooks[0]
@@ -177,7 +190,7 @@ class Spawner(RestClient):
         )
         return session
 
-    def start_session(self, notebook_path, kernel, is_forked=False, project_id=0, target_id=0):
+    def start_session(self, notebook_path, kernel, repo_name, is_forked=False, project_id=0, target_id=0):
         notebook = self.ensure_notebook_running()
         session = self.make_session(notebook_path, kernel)
         jpcli = Jupyter(notebook)
@@ -187,6 +200,7 @@ class Spawner(RestClient):
         session.is_forked = is_forked
         session.project_id = project_id
         session.target_id = target_id
+        session.repo_name = repo_name
         session.save()
         return session
 

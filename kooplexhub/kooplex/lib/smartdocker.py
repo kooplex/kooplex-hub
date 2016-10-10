@@ -49,6 +49,21 @@ class Docker(LibBase):
             return imgs[0]
         else:
             return None
+            
+    def get_allnotebook_images(self):
+        imgs = self.docli.images(all=True)
+        project_name = get_settings('project', 'name')
+        notebook_images=[]
+        for img in imgs:
+            if img['RepoTags']:
+                print(img['RepoTags'][0])
+                if img['RepoTags'][0].rfind(project_name + '-notebook')>-1:
+                        notebook_images.append(img['RepoTags'][0].split(":")[0])
+        print(notebook_images)
+        if notebook_images and len(notebook_images) > 0:
+            return notebook_images
+        else:
+            return None
 
     def pull_image(self, name):
         self.docli.pull(name)

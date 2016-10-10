@@ -1,42 +1,48 @@
-﻿<div style="display:inline; width:128px; height:128px">
+﻿<!--<div style="display:inline; width:128px; height:128px">
     {% if item.avatar_url %}
     <img src="{{ item.avatar_url }}" style="width:128px; height:128px" />
     {% endif %}
-</div>
-<div style="display:inline; width:auto; height:128px">
-    <p>
+</div> -->
+
+<div class="project users">
+    <div class="project-details"><p>
         <b>{{ item.name }}</b>
         {% if 'forked_from_project' in item %}
             : forked from
-            <a href="{{ base_url }}/gitlab/{{ item.forked_from_project.path_with_namespace }}">
+            <a href="{{ base_url }}/gitlab/{{ item.forked_from_project.path_with_namespace }}" target="_blank">
                 {{ item.forked_from_project.path_with_namespace }}
             </a>
         {% endif %}
     </p>
     <p>{{ item.description|cut:'#notebook'|cut:'#worksheet' }}</p>
-
-    <p>
+    </div>
+    <div class="project-buttons">
+    <!--<span class="readmore"><button>More</button></span>-->
+    <span class="project-button open">
     {% if '#notebook' in item.description %}
-    spawn as <a href="{% url 'notebooks-clone' %}?repo={{ item.path_with_namespace }}{% if 'forked_from_project' in item %}&is_forked=True&project_id={{ item.id }}&target_id={{ item.forked_from_project.id }}{% else %}&is_forked=False{% endif %}">notebook</a>
+    <a href="{% url 'notebooks-clone' %}?repo={{ item.path_with_namespace }}{% if 'forked_from_project' in item %}&is_forked=True&project_id={{ item.id }}&target_id={{ item.forked_from_project.id }}{% else %}&is_forked=False{% endif %}" target="_blank">
+        <span class="button open">open</span></a>
     {% endif %}
 
     {% if '#worksheet' in item.description %}
-    | spawn as <a>worksheet</a>
+     <a><span class="button view">view</span></a>
     {% endif %}
 
-    | view in <a href="{{ base_url }}/gitlab/{{ item.path_with_namespace }}">Gitlab</a>
+    <!-- | view in <a href="{{ base_url }}/gitlab/{{ item.path_with_namespace }}" target="_blank">Gitlab</a> -->
 
     {%  if publicvar %}
         {% if item.forkable %}
-            | fork this <a href="{% url 'project-fork' %}?itemid={{ item.id }}">project</a>
+            | fork this <a href="{% url 'project-fork' %}?itemid={{ item.id }}" target="_blank">project</a>
         {% else %}
             | it has been forked
         {% endif %}
     {%  endif %}
-    </p>
+    </span>
     {%  if not publicvar and item.forks_count > 0 %}
     <p>
-        See the opened <a href="{% url 'notebooks-mergerequestlist' %}?itemid={{ item.id }}&path_with_namespace={{ item.path_with_namespace }}">merge requests</a>
+        See the opened <a href="{% url 'notebooks-mergerequestlist' %}?itemid={{ item.id }}&path_with_namespace={{ item.path_with_namespace }}" target="_blank">merge requests</a>
     </p>
     {% endif %}
+    </div>
+
 </div>
