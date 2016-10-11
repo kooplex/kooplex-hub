@@ -56,7 +56,6 @@ class Docker(LibBase):
         notebook_images=[]
         for img in imgs:
             if img['RepoTags']:
-                print(img['RepoTags'][0])
                 if img['RepoTags'][0].rfind(project_name + '-notebook')>-1:
                         notebook_images.append(img['RepoTags'][0].split(":")[0])
         print(notebook_images)

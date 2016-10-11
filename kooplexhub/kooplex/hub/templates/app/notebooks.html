@@ -11,8 +11,7 @@
 <h2>My running notebooks</h2>
 {% for item in notebooks %}
     <p>Container: <b>{{ item.name }}</b></p>
-   <p> <a href="{% url 'container-shutdown' %}?notebook_id={{ item.id }}&session_id={{ item.id
-    }}"><span class="button shutdown">shut
+   <p> <a href="{% url 'container-shutdown' %}?notebook_id={{ item.id }}&session_id={{ item.id }}"><span class="button shutdown">shut
     down</span></a></p>
 {% endfor %}
 

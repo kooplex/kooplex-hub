@@ -20,13 +20,13 @@ from kooplex.hub.models import Container, Notebook, Session
 
 class Spawner(RestClient):
        
-    def __init__(self, username, project_name, container_name=None, image=None):
+    def __init__(self, username, project_name=None, container_name=None, image=None):
         self.username = username
         self.project_name = project_name
         self.container_name = get_settings('spawner', 'notebook_container_name', container_name, 'kooplex-notebook-{$username}')
         self.image = get_settings('spawner', 'notebook_image', image, 'kooplex-notebook')
         self.notebook_path = get_settings('spawner', 'notebook_proxy_path', None, '/notebook/{$username}/{$notebook.id}')
-        self.session_path = get_settings('spawner', 'session_proxy_path', None, '/notebook/{$username}/{$notebook.id}/notebooks/{$session.notebook_path}')
+        self.session_path = get_settings('spawner', 'session_proxy_path', None, '/notebook/{$username}/{$notebook.id}/tree/{$username}/{$session.notebook_path}')
         self.ip_pool = get_settings('spawner', 'notebook_ip_pool', None, ['172.18.20.1', '172.18.20.255'])
         self.port = get_settings('spawner', 'notebook_port', None, 8000)
         self.srv_path = get_settings('spawner', 'srv_path', None, '/srv/kooplex')
@@ -71,8 +71,9 @@ class Spawner(RestClient):
         binds[LibBase.join_path(self.srv_path, host_home)] = {'bind': container_home, 'mode': 'rw'}
 
     def append_ownclouddata_binds(self, binds, svc):
-        container_data_home = LibBase.join_path('/home', self.username + '/' + self.project_name + '/data')
+        container_data_home = LibBase.join_path('/home', self.username + '/projects/' + 'data')
         host_data_path = 'ownCloud/' + self.username + '/files'
+        print(host_data_path,container_data_home)
         binds[LibBase.join_path(self.srv_path, host_data_path)] = {'bind': container_data_home, 'mode': 'rw'}
 
     def append_init_binds(self, binds, svc):

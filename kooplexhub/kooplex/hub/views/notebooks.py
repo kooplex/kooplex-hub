@@ -14,8 +14,8 @@ from kooplex.lib.gitlabadmin import GitlabAdmin
 from kooplex.lib.repo import Repo
 from kooplex.lib.spawner import Spawner
 from kooplex.lib.jupyter import Jupyter
+from kooplex.lib.smartdocker import Docker
 
-ENTRY_NOTEBOOK_NAME = 'index.ipynb'
 NOTEBOOK_DIR_NAME = 'notebooks'
 HUB_NOTEBOOKS_URL = '/hub/notebooks'
 
@@ -35,6 +35,9 @@ def notebooks(request):
 
     gadmin = GitlabAdmin(request)
     public_projects = gadmin.get_all_public_projects(unforkable_projectids)
+    d = Docker()
+    notebook_images = d.get_allnotebook_images()
+    #print(len(notebook_images))
 
     return render(
         request,
@@ -46,8 +49,8 @@ def notebooks(request):
             'projects': projects,
             'public_projects': public_projects,
             'username': username,
-            'entry_notebook_name': ENTRY_NOTEBOOK_NAME,
             'notebook_dir_name': NOTEBOOK_DIR_NAME,
+            'notebook_images' : notebook_images,
         })
     )
 
@@ -72,10 +75,16 @@ def notebooks_new(request):
 def notebooks_shutdown(request):
     assert isinstance(request, HttpRequest)
     session_id = request.GET['session_id']
+    print(session_id)
     session = Session.objects.filter(id=session_id)[0]
+
     username = request.user.username
-    spawner = Spawner(username)
+    repo_name = session.repo_name
+
+    #repo_name = ""
+    spawner = Spawner(username,repo_name)
     spawner.stop_session(session)
+
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
 def container_shutdown(request):
@@ -83,6 +92,10 @@ def container_shutdown(request):
     notebook_id = request.GET['notebook_id']
     notebook = Notebook.objects.filter(id=notebook_id)[0]
     username = request.user.username
+    #session_id = request.GET['session_id']
+    #session = Session.objects.filter(id=session_id)[0]
+    #repo_name = session.repo_name
+    #repo_name=""
     spawner = Spawner(username)
     spawner.stop_notebook(notebook)
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
@@ -90,29 +103,27 @@ def container_shutdown(request):
 def notebooks_clone(request):
     assert isinstance(request, HttpRequest)
     repo_name = request.GET['repo']
+    repo_project_name = request.GET['repo'].split('/')[1]
     repo = Repo(request.user.username, repo_name)
     repo.ensure_local_dir_empty()
     repo.clone()
 
     assert isinstance(request, HttpRequest)
-    notebook_name = 'index'
-    notebook_name = notebook_name + '.ipynb'
 
     username = request.user.username
-    spawner = Spawner(username)
+    spawner = Spawner(username,repo_project_name)
     notebook = spawner.ensure_notebook_running()
     jupyter = Jupyter(notebook)
 
-    notebook_path = LibBase.join_path('projects/', repo_name)
-    notebook_path = LibBase.join_path(notebook_path, ENTRY_NOTEBOOK_NAME)
+    notebook_path = LibBase.join_path('projects/',repo_name)
 
     is_forked = eval(request.GET['is_forked'])
     if is_forked:
         project_id = int(request.GET['project_id'])
         target_id = int(request.GET['target_id'])
-        session = spawner.start_session(notebook_path, 'python3', is_forked, project_id, target_id)
+        session = spawner.start_session(notebook_path, 'python3', repo_name, is_forked, project_id, target_id)
     else:
-        session = spawner.start_session(notebook_path, 'python3')
+        session = spawner.start_session(notebook_path, 'python3', repo_name)
     url = session.external_url
     return HttpResponseRedirect(url)
 
