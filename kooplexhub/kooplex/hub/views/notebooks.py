@@ -103,15 +103,15 @@ def container_shutdown(request):
 def notebooks_clone(request):
     assert isinstance(request, HttpRequest)
     repo_name = request.GET['repo']
-    repo_project_name = request.GET['repo'].split('/')[1]
     repo = Repo(request.user.username, repo_name)
     repo.ensure_local_dir_empty()
     repo.clone()
 
     assert isinstance(request, HttpRequest)
-
+    project_owner = request.GET['project_owner']
+    project_name = request.GET['project_name']
     username = request.user.username
-    spawner = Spawner(username,repo_project_name)
+    spawner = Spawner(username,project_owner, project_name)
     notebook = spawner.ensure_notebook_running()
     jupyter = Jupyter(notebook)
 

@@ -20,8 +20,9 @@ from kooplex.hub.models import Container, Notebook, Session
 
 class Spawner(RestClient):
        
-    def __init__(self, username, project_name=None, container_name=None, image=None):
+    def __init__(self, username, project_owner=None, project_name=None, container_name=None, image=None):
         self.username = username
+        self.project_owner = project_owner
         self.project_name = project_name
         self.container_name = get_settings('spawner', 'notebook_container_name', container_name, 'kooplex-notebook-{$username}')
         self.image = get_settings('spawner', 'notebook_image', image, 'kooplex-notebook')
@@ -51,6 +52,7 @@ class Spawner(RestClient):
     def get_container_name(self):
         name = self.container_name
         name = name.replace('{$username}', self.username)
+        name = name.replace('{$project_owner}', self.project_owner)
         name = name.replace('{$project_name}', self.project_name)
         return name
 
@@ -114,6 +116,8 @@ class Spawner(RestClient):
             port=self.port,
             proxy_path=notebook_path,
             external_url=external_url,
+            project_owner=self.project_owner,
+            project_name = self.project_name,
         )
         notebook.set_environment({
                 'NB_USER': self.username,
@@ -131,7 +135,9 @@ class Spawner(RestClient):
     def get_notebook(self):
         notebooks = Notebook.objects.filter(
             username=self.username,
-            image=self.image)
+            image=self.image,
+            project_owner=self.project_owner,
+            project_name=self.project_name,)
             #image = self.image)
         if notebooks.count() > 0:
             # TODO: verify if container is there and proxy works
