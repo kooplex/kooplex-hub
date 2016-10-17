@@ -55,7 +55,7 @@ class RestClient(LibBase):
         if expect and type(expect) is not list:
             expect = [ expect ]
         s = 0.1
-        while s < 10:
+        while s < 100:
             res = action(url=url, params=params, headers=headers, data=data)
             if res.status_code == 503:
                 s *= 2

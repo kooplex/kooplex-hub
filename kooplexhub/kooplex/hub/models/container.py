@@ -19,6 +19,7 @@ class Container(models.Model, ModelBase):
     state = models.CharField(max_length=15)
     project_owner = models.CharField(max_length=200)
     project_name = models.CharField(max_length=200)
+    is_stopped = models.BooleanField()
 
     class Meta:
         db_table = "kooplex_hub_container"

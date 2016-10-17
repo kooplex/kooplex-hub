@@ -51,5 +51,7 @@ class Proxy(RestClient):
         return res.json()
 
     def remove_route(self, path):
-        url, data = self.make_route(path)
+        #url, data = self.make_route(path)
+        res = self.get_route(path)
+        url = res[path]['target']
         res = self.http_delete(url)

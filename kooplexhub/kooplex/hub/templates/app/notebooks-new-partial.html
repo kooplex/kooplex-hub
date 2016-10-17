@@ -1,21 +1,21 @@
 ﻿<!-- Modal -->
-<div id="notebooks-new" class="modal fade" role="dialog">
+<div id="project-new" class="modal fade" role="dialog">
   <div class="modal-dialog">
 
     <!-- Modal content-->
     <div class="modal-content">
-        <form class="form-horizontal" action="{% url 'notebooks-new' %}" method="post">
+        <form class="form-horizontal" action="{% url 'project-new' %}" method="post">
             {% csrf_token %}
             <div class="modal-header">
               <button type="button" class="close" data-dismiss="modal">&times;</button>
-                 <h4 class="modal-title">New notebook</h4>
+                 <h4 class="modal-title">New project</h4>
               </div>
               <div class="modal-body">
-                <p>Enter a new name for the notebook.</p>
+                <p>Enter a new name for the project.</p>
                 <fieldset>
                     <div class="form-group">
-                        <label for="notebook.name">Notebook name:</label>
-                        <input type="text" class="form-control" id="notebook.name" name="notebook.name" placeholder="Enter Name">
+                        <label for="project.name">Project name:</label>
+                        <input type="text" class="form-control" id="project.name" name="project.name" placeholder="Enter Name">
                     </div>
                 </fieldset>
               </div>

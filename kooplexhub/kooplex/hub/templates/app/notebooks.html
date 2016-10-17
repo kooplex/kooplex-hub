@@ -8,11 +8,16 @@
     {% endfor %}
     </select>
 
-<h2>My running notebooks</h2>
+<h2>My running containers</h2>
 {% for item in notebooks %}
     <p>Container: <b>{{ item.name }}</b></p>
-   <p> <a href="{% url 'container-shutdown' %}?notebook_id={{ item.id }}&session_id={{ item.id }}"><span class="button shutdown">shut
-    down</span></a></p>
+   <p>{% if item.is_stopped %}
+            <a href="{% url 'container-start' %}?notebook_id={{ item.id }}&session_id={{ item.id }}"><span class="button start">Start</span></a>
+       {%  else %}
+            <a href="{% url 'container-stop' %}?notebook_id={{ item.id }}&session_id={{ item.id }}"><span class="button stop">Stop</span></a>
+       {% endif %}
+       <a href="{% url 'container-delete' %}?notebook_id={{ item.id }}&session_id={{ item.id }}"><span class="button delete">Delete</span></a>
+   </p>
 {% endfor %}
 
 {% for item in sessions %}
@@ -31,19 +36,19 @@
             commit</a>
         {% endif %}
     {% endif %}
-        | <a href="{% url 'notebooks-shutdown' %}?session_id={{ item.id }}&repo={{ item. }}">shut down</a>
+        <!-- | <a href="{% url 'notebooks-shutdown' %}?session_id={{ item.id }}">shut down</a> -->
     </p>
     </div>
 {% endfor %}
 
 {% comment %} Nem vilagos, hogy hova krealodnak. Majd le sz a projektekhez kulon try gomb...
-
-<h2>Start new notebook</h2>
-
-{#{% include 'app/notebooks-new-partial.html' %}#}
-
-<p><button type="button" class="btn btn-default" data-toggle="modal" data-target="#notebooks-new">Start new notebook &raquo;</button></p>
 {% endcomment %}
+<h2>Start new project</h2>
+
+{% include 'app/notebooks-new-partial.html' %}
+
+<p><button type="button" class="btn btn-default" data-toggle="modal" data-target="#project-new">Start new project &raquo;</button></p>
+
 
 <h2>User's projects</h2>
 {% for item in projects %}

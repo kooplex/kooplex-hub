@@ -15,6 +15,7 @@ from kooplex.lib.repo import Repo
 from kooplex.lib.spawner import Spawner
 from kooplex.lib.jupyter import Jupyter
 from kooplex.lib.smartdocker import Docker
+import git
 
 NOTEBOOK_DIR_NAME = 'notebooks'
 HUB_NOTEBOOKS_URL = '/hub/notebooks'
@@ -32,12 +33,13 @@ def notebooks(request):
             sessions.append(s)
     g = Gitlab(request)
     projects, unforkable_projectids = g.get_projects()
+    print("If something is odd, may you forgot to init hub, otherwise no error comes here :|")
+    #TODO: get uid and gid from projects json
 
     gadmin = GitlabAdmin(request)
     public_projects = gadmin.get_all_public_projects(unforkable_projectids)
     d = Docker()
     notebook_images = d.get_allnotebook_images()
-    #print(len(notebook_images))
 
     return render(
         request,
@@ -71,6 +73,26 @@ def notebooks_new(request):
     session = spawner.start_session(notebook_path, 'python3')
     url = session.external_url
     return HttpResponseRedirect(url)
+    
+def project_new(request):
+    assert isinstance(request, HttpRequest)
+    project_name = request.POST['project.name']
+    g = Gitlab(request)
+    public='true'
+    description='%23notebook'
+    message_json = g.create_project(project_name,public,description)
+    if message_json == "":
+        return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
+    else:
+        return render(
+            request,
+            'app/error.html',
+            context_instance=RequestContext(request,
+                                            {
+                                                'error_title': 'Error',
+                                                'error_message': message_json,
+                                            })
+        )
 
 def notebooks_shutdown(request):
     assert isinstance(request, HttpRequest)
@@ -87,18 +109,35 @@ def notebooks_shutdown(request):
 
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
-def container_shutdown(request):
+
+def container_start(request):
     assert isinstance(request, HttpRequest)
     notebook_id = request.GET['notebook_id']
     notebook = Notebook.objects.filter(id=notebook_id)[0]
     username = request.user.username
-    #session_id = request.GET['session_id']
-    #session = Session.objects.filter(id=session_id)[0]
-    #repo_name = session.repo_name
-    #repo_name=""
+    spawner = Spawner(username)
+    spawner.start_notebook(notebook)
+    return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
+
+def container_stop(request):
+    assert isinstance(request, HttpRequest)
+    notebook_id = request.GET['notebook_id']
+    notebook = Notebook.objects.filter(id=notebook_id)[0]
+    username = request.user.username
     spawner = Spawner(username)
     spawner.stop_notebook(notebook)
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
+
+
+def container_delete(request):
+    assert isinstance(request, HttpRequest)
+    notebook_id = request.GET['notebook_id']
+    notebook = Notebook.objects.filter(id=notebook_id)[0]
+    username = request.user.username
+    spawner = Spawner(username)
+    spawner.delete_notebook(notebook)
+    return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
+
 
 def notebooks_clone(request):
     assert isinstance(request, HttpRequest)
@@ -250,9 +289,12 @@ def project_fork(request):
 
 urlpatterns = [
     url(r'^$', notebooks, name='notebooks'),
-    url(r'^/new$', notebooks_new, name='notebooks-new'),
+    url(r'^/new$', project_new, name='project-new'),
     url(r'^/shutdown$', notebooks_shutdown, name='notebooks-shutdown'),
-    url(r'^/containershutdown$', container_shutdown, name='container-shutdown'),
+    url(r'^/start', container_start, name='container-start'),
+    url(r'^/stop', container_stop, name='container-stop'),
+    url(r'^/delete$', container_delete, name='container-delete'),
+    #url(r'^/containershutdown$', container_shutdown, name='container-shutdown'),
     url(r'^/clone$', notebooks_clone, name = 'notebooks-clone'),
     url(r'^/commit$', notebooks_commit, name='notebooks-commit'),
     url(r'^/commitform$', notebooks_commitform, name='notebooks-commitform'),

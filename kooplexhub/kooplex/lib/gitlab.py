@@ -64,8 +64,9 @@ class Gitlab(RestClient):
             return res, u
         return res, None
 
-    def get_user(self, username):
-        return None
+    def get_user(self):
+        res = self.http_get('api/v3/user')
+        return res.json()
 
     def authenticate_user(self, username=None, password=None):
         res, user = self.authenticate(username, password)
@@ -126,5 +127,16 @@ class Gitlab(RestClient):
         res = self.http_put(url)
         message = ""
         if res.status_code != 200:
+            message = res.json()
+        return message
+
+    def create_project(self,project_name,public='false',description=""):
+        url = "api/v3/projects"
+        url += "?name=%s"%project_name
+        url += "&public=%s"%public
+        url += "&description=%s"%description
+        res = self.http_post(url)
+        message = ""
+        if res.status_code != 201:
             message = res.json()
         return message

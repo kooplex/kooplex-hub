@@ -15,7 +15,7 @@ class Test_spawner(unittest.TestCase):
     - configurable-http-proxy running with access to docker subnet
     """
 
-    TEST_USERNAME = 'test'
+    TEST_USERNAME = 'jeges2'
     TEST_IMAGE = 'jupyter/minimal-notebook:latest'
     TEST_CONTAINER_NAME = 'test-notebook-{$username}'
     

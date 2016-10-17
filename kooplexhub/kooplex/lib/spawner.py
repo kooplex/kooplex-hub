@@ -75,7 +75,6 @@ class Spawner(RestClient):
     def append_ownclouddata_binds(self, binds, svc):
         container_data_home = LibBase.join_path('/home', self.username + '/projects/' + 'data')
         host_data_path = 'ownCloud/' + self.username + '/files'
-        print(host_data_path,container_data_home)
         binds[LibBase.join_path(self.srv_path, host_data_path)] = {'bind': container_data_home, 'mode': 'rw'}
 
     def append_init_binds(self, binds, svc):
@@ -101,7 +100,6 @@ class Spawner(RestClient):
         self.append_init_binds(binds, 'notebook')
         # TODO: remove hardcoding!
         binds[LibBase.join_path(self.srv_path, 'notebook/etc/jupyter_notebook_config.py')] = {'bind': '/etc/jupyter_notebook_config.py', 'mode': 'rw' }
-            
         notebook = Notebook(
             id=id,
             docker_host=self.docli.host,
@@ -118,6 +116,7 @@ class Spawner(RestClient):
             external_url=external_url,
             project_owner=self.project_owner,
             project_name = self.project_name,
+            is_stopped=False,
         )
         notebook.set_environment({
                 'NB_USER': self.username,
@@ -126,10 +125,11 @@ class Spawner(RestClient):
                 'NB_URL': notebook_path,
                 'NB_PORT': self.port
             })
-        print(notebook_path)
+        #print(notebook_path)
         notebook.set_binds(binds)
         # TODO: make binds read-only once config is fixed
         notebook.set_ports([self.port])
+        #print('notebookrunnng')
         return notebook
 
     def get_notebook(self):
@@ -147,7 +147,10 @@ class Spawner(RestClient):
 
     def start_notebook(self, notebook):
         self.docli.ensure_container_running(notebook)
+        #print('container running')
+        notebook.is_stopped = False
         self.pxcli.add_route(notebook.proxy_path, notebook.ip, notebook.port)
+        #print('proxy running')
         notebook.save()
         return notebook
 
@@ -171,6 +174,13 @@ class Spawner(RestClient):
         return notebook
 
     def stop_notebook(self, notebook):
+        self.docli.ensure_container_stopped(notebook)
+        notebook.is_stopped=True
+        print(notebook.proxy_path)
+        self.pxcli.remove_route(notebook.proxy_path)
+        notebook.save()
+
+    def delete_notebook(self, notebook):
         self.docli.ensure_container_removed(notebook)
         notebook.delete()
 
