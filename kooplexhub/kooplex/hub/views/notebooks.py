@@ -70,16 +70,18 @@ def notebooks_new(request):
     notebook_path = LibBase.join_path(NOTEBOOK_DIR_NAME, notebook_name)
     jupyter.create_notebook(notebook_path)
 
-    session = spawner.start_session(notebook_path, 'python3')
+    session = spawner.start_session(notebook_path, 'python3', container_name)
     url = session.external_url
     return HttpResponseRedirect(url)
     
 def project_new(request):
     assert isinstance(request, HttpRequest)
     project_name = request.POST['project.name']
+    project_image = request.POST['project.image']
+    public = request.POST['project.public']
     g = Gitlab(request)
-    public='true'
-    description='%23notebook'
+
+    description='%23notebook %23IMG:' + '%s:IMG'%project_image
     message_json = g.create_project(project_name,public,description)
     if message_json == "":
         return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
@@ -115,6 +117,8 @@ def container_start(request):
     notebook_id = request.GET['notebook_id']
     notebook = Notebook.objects.filter(id=notebook_id)[0]
     username = request.user.username
+    
+    
     spawner = Spawner(username)
     spawner.start_notebook(notebook)
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
@@ -149,8 +153,11 @@ def notebooks_clone(request):
     assert isinstance(request, HttpRequest)
     project_owner = request.GET['project_owner']
     project_name = request.GET['project_name']
+    description = request.GET['description']
+    LL,RR = description.rfind("IMG:"), description.rfind(":IMG")
+    image_name = description[LL+4:RR]
     username = request.user.username
-    spawner = Spawner(username,project_owner, project_name)
+    spawner = Spawner(username,project_owner, project_name, image=image_name)
     notebook = spawner.ensure_notebook_running()
     jupyter = Jupyter(notebook)
 
@@ -160,9 +167,9 @@ def notebooks_clone(request):
     if is_forked:
         project_id = int(request.GET['project_id'])
         target_id = int(request.GET['target_id'])
-        session = spawner.start_session(notebook_path, 'python3', repo_name, is_forked, project_id, target_id)
+        session = spawner.start_session(notebook_path, 'python3', repo_name, notebook.name, is_forked, project_id, target_id)
     else:
-        session = spawner.start_session(notebook_path, 'python3', repo_name)
+        session = spawner.start_session(notebook_path, 'python3', repo_name, notebook.name)
     url = session.external_url
     return HttpResponseRedirect(url)
 

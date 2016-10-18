@@ -25,7 +25,8 @@ class Spawner(RestClient):
         self.project_owner = project_owner
         self.project_name = project_name
         self.container_name = get_settings('spawner', 'notebook_container_name', container_name, 'kooplex-notebook-{$username}')
-        self.image = get_settings('spawner', 'notebook_image', image, 'kooplex-notebook')
+#        self.image = get_settings('spawner', 'notebook_image', image, 'kooplex-notebook')
+        self.image=image
         self.notebook_path = get_settings('spawner', 'notebook_proxy_path', None, '/notebook/{$username}/{$notebook.id}')
         self.session_path = get_settings('spawner', 'session_proxy_path', None, '/notebook/{$username}/{$notebook.id}/tree/{$username}/{$session.notebook_path}')
         self.ip_pool = get_settings('spawner', 'notebook_ip_pool', None, ['172.18.20.1', '172.18.20.255'])
@@ -207,7 +208,7 @@ class Spawner(RestClient):
         )
         return session
 
-    def start_session(self, notebook_path, kernel, repo_name, is_forked=False, project_id=0, target_id=0):
+    def start_session(self, notebook_path, kernel, repo_name, container_name, is_forked=False, project_id=0, target_id=0):
         notebook = self.ensure_notebook_running()
         session = self.make_session(notebook_path, kernel)
         jpcli = Jupyter(notebook)
@@ -218,6 +219,7 @@ class Spawner(RestClient):
         session.project_id = project_id
         session.target_id = target_id
         session.repo_name = repo_name
+        session.container_name = container_name
         session.save()
         return session
 

@@ -1,12 +1,6 @@
 {% extends "app/layout.html" %}
 
 {% block content %}
-<h2> Existing notebook Images</h2>
-     <select name="Images">
-    {% for image in notebook_images %}
-    <option value=" {{ image }}">{{ image }}</option>
-    {% endfor %}
-    </select>
 
 <h2>My running containers</h2>
 {% for item in notebooks %}
