@@ -20,7 +20,7 @@
     <!--<span class="readmore"><button>More</button></span>-->
     <span class="project-button open">
     {% if '#notebook' in item.description %}
-    <a href="{% url 'notebooks-clone' %}?project_owner={{ item.owner.username }}&project_name={{ item.name }}&repo={{ item.path_with_namespace }}{% if 'forked_from_project' in item %}&is_forked=True&project_id={{ item.id }}&target_id={{ item.forked_from_project.id }}{% else %}&is_forked=False{% endif %}" target="_blank">
+    <a href="{% url 'notebooks-clone' %}?project_owner={{ item.owner.username }}&project_name={{ item.name }}&repo={{ item.path_with_namespace }}{% if 'forked_from_project' in item %}&is_forked=True&project_id={{ item.id }}&target_id={{ item.forked_from_project.id }}{% else %}&is_forked=False{% endif %}&description={{ item.description|cut:'#notebook'|cut:'#worksheet'|cut:'#' }}" target="_blank">
         <span class="button open">open</span></a>
     {% endif %}
 
