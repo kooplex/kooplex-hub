@@ -31,6 +31,9 @@ class Migration(migrations.Migration):
                 ('binds', models.TextField(null=True)),
                 ('ports', models.TextField(null=True)),
                 ('state', models.CharField(max_length=15)),
+                ('project_owner', models.CharField(max_length=200)),
+                ('project_name', models.CharField(max_length=200)),
+                ('is_stopped', models.BooleanField()),
             ],
             options={
                 'db_table': 'kooplex_hub_container',
