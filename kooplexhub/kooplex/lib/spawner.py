@@ -24,14 +24,14 @@ class Spawner(RestClient):
         self.username = username
         self.project_owner = project_owner
         self.project_name = project_name
-        self.container_name = get_settings('spawner', 'notebook_container_name', container_name, 'kooplex-notebook-{$username}')
-#        self.image = get_settings('spawner', 'notebook_image', image, 'kooplex-notebook')
-        self.image=image
+        prefix = get_settings('prefix', 'name')
+        self.container_name = get_settings('spawner', 'notebook_container_name', container_name, prefix+'-notebook-{$username}')
+        self.image = get_settings('spawner', 'notebook_image', image, prefix + '-notebook')
         self.notebook_path = get_settings('spawner', 'notebook_proxy_path', None, '/notebook/{$username}/{$notebook.id}')
         self.session_path = get_settings('spawner', 'session_proxy_path', None, '/notebook/{$username}/{$notebook.id}/tree/{$username}/{$session.notebook_path}')
         self.ip_pool = get_settings('spawner', 'notebook_ip_pool', None, ['172.18.20.1', '172.18.20.255'])
         self.port = get_settings('spawner', 'notebook_port', None, 8000)
-        self.srv_path = get_settings('spawner', 'srv_path', None, '/srv/kooplex')
+        self.srv_path = get_settings('spawner', 'srv_path', None, '/srv/' + prefix)
         
         self.docli = self.make_docker_client()
         self.pxcli = self.make_proxy_client()
