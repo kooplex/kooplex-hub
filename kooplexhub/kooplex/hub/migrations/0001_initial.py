@@ -48,6 +48,8 @@ class Migration(migrations.Migration):
                 ('kernel_id', models.UUIDField()),
                 ('kernel_name', models.CharField(max_length=15)),
                 ('external_url', models.CharField(max_length=200)),
+                ('repo_name', models.CharField(max_length=200)),
+                ('container_name', models.CharField(max_length=200)),
                 ('is_forked', models.BooleanField()),
                 ('project_id', models.IntegerField()),
                 ('target_id', models.IntegerField()),
