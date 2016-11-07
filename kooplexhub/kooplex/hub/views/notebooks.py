@@ -143,12 +143,12 @@ def container_delete(request):
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
 
-def notebooks_clone(request):
+def notebooks_open(request):
     assert isinstance(request, HttpRequest)
     repo_name = request.GET['repo']
     repo = Repo(request.user.username, repo_name)
-    repo.ensure_local_dir_empty()
-    repo.clone()
+    if not repo.is_local_existing():
+        repo.clone()
 
     assert isinstance(request, HttpRequest)
     project_owner = request.GET['project_owner']
@@ -177,6 +177,11 @@ def notebooks_commit(request):
     assert isinstance(request, HttpRequest)
     notebook_path_dir = request.GET['notebook_path_dir']
     is_forked = request.GET['is_forked']
+    project_owner = request.GET['project_owner']
+    project_name = request.GET['project_name']
+    repo = Repo(request.user.username, notebook_path_dir)
+    committable_dict = repo.list_committable_files(
+        project_owner, project_name)
     project_id = 0
     target_id = 0
     if is_forked:
@@ -191,6 +196,9 @@ def notebooks_commit(request):
             'is_forked': is_forked,
             'project_id': project_id,
             'target_id': target_id,
+            'project_owner' : project_owner,
+            'project_name' : project_name,
+            'committable_dict' : committable_dict,
         })
     )
 
@@ -199,9 +207,22 @@ def notebooks_commitform(request):
     notebook_path_dir = request.POST['notebook_path_dir']
     message = request.POST['message']
     is_forked = request.POST['is_forked']
+    project_owner = request.POST['project_owner']
+    project_name = request.POST['project_name']
+    modified_files = request.POST['modified_files']
+    modified_file_list = []
+    if(modified_files != ''):
+        modified_files = modified_files.replace("'", "")
+        modified_file_list = modified_files.split(',')
+    deleted_files = request.POST['deleted_files']
+    deleted_file_list = []
+    if(deleted_files != ''):
+        deleted_files = deleted_files.replace("'", "")
+        deleted_file_list = deleted_files.split(',')
     next_page = HUB_NOTEBOOKS_URL
     repo = Repo(request.user.username, notebook_path_dir)
-    repo.commit_and_push(message, request.user.email)
+    repo.commit_and_push(message, request.user.email, project_owner, project_name,
+                         modified_file_list, deleted_file_list)
     if is_forked:
         project_id = request.POST['project_id']
         target_id = request.POST['target_id']
@@ -302,7 +323,7 @@ urlpatterns = [
     url(r'^/stop', container_stop, name='container-stop'),
     url(r'^/delete$', container_delete, name='container-delete'),
     #url(r'^/containershutdown$', container_shutdown, name='container-shutdown'),
-    url(r'^/clone$', notebooks_clone, name = 'notebooks-clone'),
+    url(r'^/open$', notebooks_open, name = 'notebooks-open'),
     url(r'^/commit$', notebooks_commit, name='notebooks-commit'),
     url(r'^/commitform$', notebooks_commitform, name='notebooks-commitform'),
     url(r'^/mergerequestform$', notebooks_mergerequestform, name='notebooks-mergerequestform'),

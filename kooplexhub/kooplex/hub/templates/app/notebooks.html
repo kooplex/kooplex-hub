@@ -2,9 +2,6 @@
 
 {% block content %}
 <!-- <h2>Image creation</h2>-->
-{% include 'app/notebooks-new-partial.html' %}
-
-<p><button type="button" class="btn btn-default" data-toggle="modal" data-target="#project-new">Start new project &raquo;</button></p>
 
 <h2>My running containers</h2>
 {% for item in notebooks %}
@@ -21,9 +18,12 @@
 {% for item in sessions %}
 <div class="project running">
     <p><b>{{ item.notebook_path }}</b></p>
-    
+
+    <p><a href="{{ item.external_url }}" target="_blank"><span class="button open">open</span></a><p>
+{% comment %}
+TODO: This will be moved (commit, merge request) to project-partial.html
     {% if notebook_dir_name in item.notebook_path %}
-<p>        <a href="{{ item.external_url }}" target="_blank"><span class="button open">open</span></a><p>
+        <!-- This branch will be removed -->
     {% else %}
         <a href="{{ item.external_url }}" target="_blank">open </a>
         {% if item.is_forked %}
@@ -34,6 +34,7 @@
             commit</a>
         {% endif %}
     {% endif %}
+{% endcomment %}
         <!-- | <a href="{% url 'notebooks-shutdown' %}?session_id={{ item.id }}">shut down</a> -->
     </p>
     </div>

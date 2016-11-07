@@ -53,11 +53,10 @@ class Repo(LibBase):
         else:
             raise NotImplementedError
 
-    def get_local_dir(self, with_projects=True):
+    def get_local_dir(self):
         home = self.user_home_dir.replace('{$username}', self.username)
         dir = LibBase.join_path(self.srv_dir, home)
-        if with_projects:
-            dir = LibBase.join_path(dir, 'projects')
+        dir = LibBase.join_path(dir, 'projects')
         dir = LibBase.join_path(dir, self.name)
         dir = dir.replace('/', os.path.sep)
         return dir        
@@ -112,8 +111,11 @@ class Repo(LibBase):
         self.ensure_local_dir_empty()
         os.rmdir(dir)
 
-    def commit_and_push(self, commit_message, email):
-        dir = self.get_local_dir(with_projects=False)
+    def commit_and_push_default(self, commit_message, email, project_owner, project_name):
+        dir = self.get_local_dir()
+        dir = LibBase.join_path(dir, project_owner)
+        dir = LibBase.join_path(dir, project_name)
+        dir = dir.replace('/', os.path.sep)
         cmd = self.get_git_ssh_command()
         repo = git.Repo(dir)
         #Adding all modified files to stage for commit
@@ -129,3 +131,60 @@ class Repo(LibBase):
         origin = repo.remote()
         with repo.git.custom_environment(GIT_SSH_COMMAND=cmd):
             origin.push()
+
+    def commit_and_push(self, commit_message, email, project_owner, project_name,
+                        modified_file_list, deleted_file_list):
+        dir = self.get_local_dir()
+        dir = LibBase.join_path(dir, project_owner)
+        dir = LibBase.join_path(dir, project_name)
+        dir = dir.replace('/', os.path.sep)
+        cmd = self.get_git_ssh_command()
+        repo = git.Repo(dir)
+        if(len(modified_file_list) > 0):
+            repo.index.add(modified_file_list)
+        if(len(deleted_file_list) > 0):
+            print(deleted_file_list[0])
+            # TODO: the deleted file commit does not work
+            #repo.git.checkout(deleted_file_list[0])
+            #repo.git.checkout(".git/index")
+            #repo.index.remove(deleted_file_list)
+            #repo.git.checkout("--", deleted_file_list[0])
+            #repo.index.checkout(deleted_file_list[0], force = True)
+            #repo.git.rm(deleted_file_list[0])
+        author = git.Actor(self.username, email)
+        repo.index.commit(message=commit_message, author=author, committer=author)
+        origin = repo.remote()
+        with repo.git.custom_environment(GIT_SSH_COMMAND=cmd):
+            origin.push()
+
+    def list_committable_files(self, project_owner, project_name):
+        dir = self.get_local_dir()
+        dir = LibBase.join_path(dir, project_owner)
+        dir = LibBase.join_path(dir, project_name)
+        dir = dir.replace('/', os.path.sep)
+        repo = git.Repo(dir)
+        deleted_list = []
+# Important note: the recently added (new) and renamed files will appear as untrackted files
+# because we cannot use adding or renameing function via git on jupyter UI
+# so this file types are commented out.
+#        new_list = []
+#        renamed_list = []
+        modified_list = []
+        for file in repo.index.diff(None):
+            if file.deleted_file:
+                deleted_list.append(file.a_path)
+#            elif file.new_file:
+#                new_list.append(file.b_path)
+#            elif file.renamed:
+#                renamed_list.append(file.b_path)
+            else:
+                modified_list.append(file.b_path)
+        untracted_list = []
+        # Adding nonhidden, untracted files
+        for untracted_file in repo.untracked_files:
+            if untracted_file[0] != ".":
+                untracted_list.append(untracted_file)
+#        committable_dict = {"n":new_list,"d":deleted_list,"r":renamed_list,
+#                            "m":modified_list,"u":untracted_list}
+        committable_dict = {"d": deleted_list, "m": modified_list, "u": untracted_list}
+        return committable_dict

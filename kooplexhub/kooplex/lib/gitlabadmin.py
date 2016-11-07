@@ -47,6 +47,7 @@ class GitlabAdmin(Gitlab):
 
     def get_all_public_projects(self, unforkable_projectids):
         res = self.http_get('api/v3/projects/all?visibility=public')
+        print(res)
         public_projects_json = res.json()
         self.identify_unforkable_projects(public_projects_json, unforkable_projectids)
         return public_projects_json
