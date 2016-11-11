@@ -5,6 +5,7 @@
 
 <h2>My running containers</h2>
 {% for item in notebooks %}
+    <div>
     <p>Container: <b>{{ item.name }}</b></p>
    <p>{% if item.is_stopped %}
             <a href="{% url 'container-start' %}?notebook_id={{ item.id }}&session_id={{ item.id }}"><span class="button start">Start</span></a>
@@ -13,6 +14,16 @@
        {% endif %}
        <a href="{% url 'container-delete' %}?notebook_id={{ item.id }}&session_id={{ item.id }}"><span class="button delete">Delete</span></a>
    </p>
+    {% for session in sessions %}
+        {%  if session.container_name == item.name %}
+            <div class="project running">
+                <p><b>{{ session.notebook_path }}</b></p>
+                <p><a href="{{ session.external_url }}" target="_blank"><span class="button open">open</span></a><p>
+                </p>
+            </div>
+        {% endif %}
+    {% endfor %}
+    </div>
 {% endfor %}
 
 {% for item in sessions %}
