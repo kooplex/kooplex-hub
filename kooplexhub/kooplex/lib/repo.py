@@ -94,8 +94,9 @@ class Repo(LibBase):
         dir = self.get_local_dir()
         cmd = self.get_git_ssh_command()
         repo = git.Repo.clone_from(url, dir, env=dict(GIT_SSH_COMMAND=cmd))
+        
         return repo
-            
+
 
         #g = git.Git()
         #remote = repo.create_remote('origin', url)

@@ -19,19 +19,7 @@
             <div class="project running">
                 <p><b>{{ session.notebook_path }}</b></p>
                 <p><a href="{{ session.external_url }}" target="_blank"><span class="button open">open</span></a><p>
-                </p>
-            </div>
-        {% endif %}
-    {% endfor %}
-    </div>
-{% endfor %}
-
-{% for item in sessions %}
-<div class="project running">
-    <p><b>{{ item.notebook_path }}</b></p>
-
-    <p><a href="{{ item.external_url }}" target="_blank"><span class="button open">open</span></a><p>
-{% comment %}
+            {% comment %}
 TODO: This will be moved (commit, merge request) to project-partial.html
     {% if notebook_dir_name in item.notebook_path %}
         <!-- This branch will be removed -->
@@ -47,7 +35,10 @@ TODO: This will be moved (commit, merge request) to project-partial.html
     {% endif %}
 {% endcomment %}
         <!-- | <a href="{% url 'notebooks-shutdown' %}?session_id={{ item.id }}">shut down</a> -->
-    </p>
+            </p>
+            </div>
+        {% endif %}
+    {% endfor %}
     </div>
 {% endfor %}
 

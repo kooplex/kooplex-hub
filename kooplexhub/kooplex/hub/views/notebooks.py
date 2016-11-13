@@ -142,7 +142,6 @@ def container_delete(request):
     spawner.delete_notebook(notebook)
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
-
 def notebooks_open(request):
     assert isinstance(request, HttpRequest)
     repo_name = request.GET['repo']
@@ -172,6 +171,29 @@ def notebooks_open(request):
         session = spawner.start_session(notebook_path, 'python3', repo_name, notebook.name)
     url = session.external_url
     return HttpResponseRedirect(url)
+
+def notebooks_clone(request):
+    assert isinstance(request, HttpRequest)
+    repo_name = request.GET['repo']
+    repo = Repo(request.user.username, repo_name)
+    if not repo.is_local_existing():
+        repo.clone()
+
+    return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
+
+
+def notebooks_pull_confirm(request):
+    assert isinstance(request, HttpRequest)
+    repo_name = request.GET['repo']
+    repo = Repo(request.user.username, repo_name)
+    print(repo_name)
+    # Popup ablak kell
+    repo.ensure_local_dir_empty()
+    repo.clone()
+
+    return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
+
+
 
 def notebooks_commit(request):
     assert isinstance(request, HttpRequest)
@@ -324,6 +346,8 @@ urlpatterns = [
     url(r'^/delete$', container_delete, name='container-delete'),
     #url(r'^/containershutdown$', container_shutdown, name='container-shutdown'),
     url(r'^/open$', notebooks_open, name = 'notebooks-open'),
+    url(r'^/clone$', notebooks_clone, name = 'notebooks-clone'),
+    url(r'^/pull-confirm$', notebooks_pull_confirm, name = 'notebooks-pull-confirm'),
     url(r'^/commit$', notebooks_commit, name='notebooks-commit'),
     url(r'^/commitform$', notebooks_commitform, name='notebooks-commitform'),
     url(r'^/mergerequestform$', notebooks_mergerequestform, name='notebooks-mergerequestform'),
