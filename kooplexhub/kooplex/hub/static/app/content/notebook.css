@@ -1,22 +1,32 @@
 
 
-div.users {
-background-color: #dddddd;
+div.my {
+background-color: #dda7a7;;
     border-color: black;
 }
 
-div.running {
-background-color: #ddddff;
+div.public {
+background-color: #e0c393;
+    border-color: black;
 }
 
-div.project{
+div.running-containers{
+  background-color: #dde4d4;
+    border-color: black;
+}
+
+div.new-project{
+  background-color: #9abde4;
+    border-color: black;
+}
+
+div.projects{
     border-width: 2px;
     border-color: aliceblue;
     border-style: solid;
     border-radius: 10px;
     padding: 10px;
     width:auto;
-    height:78px;
     transition:height 0.5s;
     -moz-transition:height 0.5s; /* Firefox 4 */
     -webkit-transition:height 0.5s; /* Safari and Chrome */
@@ -24,7 +34,28 @@ div.project{
     display:block;
 }
 
-div.project-details{
+div.running {
+background-color: #ddddff;
+}
+
+div.session{
+    border-width: 2px;
+    border-color: aliceblue;
+    border-style: solid;
+    border-radius: 10px;
+    background-color: #dddddd;
+//    border-color: black;
+    padding: 10px;
+    margin-left: 40px;
+    width:auto;
+    transition:height 0.5s;
+    -moz-transition:height 0.5s; /* Firefox 4 */
+    -webkit-transition:height 0.5s; /* Safari and Chrome */
+    -o-transition:height 0.5s; /* Opera */
+    display:block;
+}
+
+div.session-details{
     display: inline-block;
     /*float: left;*/
     overflow: hidden;
@@ -32,7 +63,7 @@ div.project-details{
     height:100%;
 }
 
-div.project-buttons{
+div.session-buttons{
     display: inline-block;
     float: right;
 }

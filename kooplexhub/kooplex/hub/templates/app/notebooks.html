@@ -2,23 +2,36 @@
 
 {% block content %}
 <!-- <h2>Image creation</h2>-->
-
+<div class="projects">
+<div class="projects running-containers">
 <h2>My running containers</h2>
 {% for item in notebooks %}
-    <div>
-    <p>Container: <b>{{ item.name }}</b></p>
-   <p>{% if item.is_stopped %}
+
+    <p><span  style="padding-right: 50px;">Container: <b>{{ item.name }}</b></span>
+   {% if item.is_stopped %}
             <a href="{% url 'container-start' %}?notebook_id={{ item.id }}&session_id={{ item.id }}"><span class="button start">Start</span></a>
        {%  else %}
             <a href="{% url 'container-stop' %}?notebook_id={{ item.id }}&session_id={{ item.id }}"><span class="button stop">Stop</span></a>
        {% endif %}
        <a href="{% url 'container-delete' %}?notebook_id={{ item.id }}&session_id={{ item.id }}"><span class="button delete">Delete</span></a>
+   {% if item.is_stopped %}       
+       <b> Container is stopped </b>
+   {% else %}
+       <b> Container is running </b>
+   {% endif %}
    </p>
     {% for session in sessions %}
         {%  if session.container_name == item.name %}
-            <div class="project running">
-                <p><b>{{ session.notebook_path }}</b></p>
-                <p><a href="{{ session.external_url }}" target="_blank"><span class="button open">open</span></a><p>
+            <div class="session running">
+                <p><span  style="padding-right: 50px;"><b>{{ session.notebook_path }}</b></span>
+                
+                {% if item.is_stopped %}
+                   <span class="button  stop">container stopped</span>
+                {% else %}
+                  <a href="{{ session.external_url }}" target="_blank"><span class="button open">open</span></a>
+                {% endif %}
+                </p>
+                
             {% comment %}
 TODO: This will be moved (commit, merge request) to project-partial.html
     {% if notebook_dir_name in item.notebook_path %}
@@ -39,28 +52,31 @@ TODO: This will be moved (commit, merge request) to project-partial.html
             </div>
         {% endif %}
     {% endfor %}
-    </div>
 {% endfor %}
+    </div>
+<div>
 
 {% comment %} Nem vilagos, hogy hova krealodnak. Majd le sz a projektekhez kulon try gomb...
 {% endcomment %}
+<div class="projects new-project">
 <h2>Start new project</h2>
 
-{% include 'app/notebooks-new-partial.html' %}
+{% include 'app/notebooks-new-partial.html' with myprojects=True %}
 
 <p><button type="button" class="btn btn-default" data-toggle="modal" data-target="#project-new">Start new project &raquo;</button></p>
-
-
-<h2>User's projects</h2>
+</div>
+<div class="projects my">
+<h2>My projects</h2>
 {% for item in projects %}
     {% include 'app/project-partial.html'  %}
 {% endfor %}
-
+</div>
+<div class="projects public">
 <h2>Other public projects</h2>
 {% for item in public_projects %}
     {% if item.owner.username != username %}
         {% include 'app/project-partial.html' with publicvar=True %}
     {% endif %}
 {% endfor %}
-
+</div>
 {% endblock %}

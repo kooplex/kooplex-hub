@@ -4,8 +4,8 @@
     {% endif %}
 </div> -->
 
-<div class="project users">
-    <div class="project-details"><p>
+<div class="session">
+    <div class="session-details"><p>
         <b>{{ item.name }}</b>
         {% if 'forked_from_project' in item %}
             : forked from
@@ -16,16 +16,20 @@
     </p>
     <p>{{ item.description|cut:'#notebook'|cut:'#worksheet' }}</p>
     </div>
-    <div class="project-buttons">
+    <div class="session-buttons">
     <!--<span class="readmore"><button>More</button></span>-->
-    <span class="project-button open">
+    <span class="session-button">
     {% if '#notebook' in item.description %}
+            {% if not publicvar %}
         {% include 'app/notebooks-repo-pull-really.html' %}
+
         <button type="button" class="btn btn-default" data-toggle="modal" data-target="#repo-pull-{{ item.name }}">revert</button>
+        {% endif %}
      <!-- <a href="{% url 'notebooks-pull-confirm' %}?project_owner={{ item.owner.username }}&project_name={{ item.name }}&repo={{ item.path_with_namespace }}{% if 'forked_from_project' in item %}&is_forked=True&project_id={{ item.id }}&target_id={{ item.forked_from_project.id }}{% else %}&is_forked=False{% endif %}&description={{ item.description|cut:'#notebook'|cut:'#worksheet'|cut:'#' }}">
         <span class="button pull">pull</span></a> -->
+        
     <a href="{% url 'notebooks-open' %}?project_owner={{ item.owner.username }}&project_name={{ item.name }}&repo={{ item.path_with_namespace }}{% if 'forked_from_project' in item %}&is_forked=True&project_id={{ item.id }}&target_id={{ item.forked_from_project.id }}{% else %}&is_forked=False{% endif %}&description={{ item.description|cut:'#notebook'|cut:'#worksheet'|cut:'#' }}" target="_blank">
-        <span class="button open">open</span></a>
+        <span class="button start">start</span></a>
     <a href="{% url 'notebooks-commit' %}?project_owner={{ item.owner.username }}&project_name={{ item.name }}&notebook_path_dir={{ item.notebook_path }}&is_forked={{ item.is_forked }}" target="_blank">
         <span class="button commit">commit</span></a>
     {% endif %}
