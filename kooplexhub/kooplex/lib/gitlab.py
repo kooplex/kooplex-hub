@@ -158,16 +158,8 @@ class Gitlab(RestClient):
         url = "api/v3/projects/"
         url += "%d/"%project_id
         url += "variables "
-        #url += "'key=%s' "%variable_key
-        #url += "'value=%s'"%variable_value
-        #data = "{ 'key' : '%s', 'value' : '%s' }" % (variable_key,variable_value)
-        data = json.dumps({'key' : variable_key, 'value' : variable_value})
-        print(url)
-        res = self.http_get(url)
-        print(res.json)
-        res = self.http_get(url,params="rr")
-        print(res.json)
-        res = self.http_post(url,params=data)
+        data = dict(key=variable_key ,value =  variable_value)
+        res = self.http_post(url,formdata=data)
         print(dir(json))
         message = ""
         if res.status_code != 201:

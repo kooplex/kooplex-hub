@@ -90,11 +90,10 @@ def project_new(request):
     if len(res)>1:
         "Error to the log: there more than 1 project which is not acceptable!!!!"
     else:
-        1==1
-#        project_id=res[0]['id']
+        project_id=res[0]['id']
 #    print(project_image_name)
     #add image_name to project
-#    g.create_project_variable(project_id,'container_image', project_image_name)
+    g.create_project_variable(project_id,'container_image', project_image_name)
 
     if message_json == "":
         return HttpResponseRedirect(HUB_NOTEBOOKS_URL)

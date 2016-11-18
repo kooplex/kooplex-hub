@@ -49,14 +49,18 @@ class RestClient(LibBase):
         else:
             return data
 
-    def http_action(self, path, params, headers, data, expect, action):
+    def http_action(self, path, params, headers, data, expect, action, formdata=None):
         url, params, headers = self.http_prepare_request(path, params, headers)
         data = self.http_prepare_data(data)
         if expect and type(expect) is not list:
             expect = [ expect ]
         s = 0.1
         while s < 100:
-            res = action(url=url, params=params, headers=headers, data=data)
+            if formdata:
+                res = action(url=url, params=params, headers=headers, data=data, files=formdata)
+            else:
+                res = action(url=url, params=params, headers=headers, data=data)
+
             if res.status_code == 503:
                 s *= 2
                 time.sleep(s)
@@ -69,8 +73,8 @@ class RestClient(LibBase):
     def http_get(self, path, params=None, headers=None, expect=None):
         return self.http_action(path, params, headers, None, expect, requests.get)
 
-    def http_post(self, path, params=None, headers=None, data=None, expect=None):
-        return self.http_action(path, params, headers, data, expect, requests.post)
+    def http_post(self, path, params=None, headers=None, data=None, expect=None, formdata=None):
+        return self.http_action(path, params, headers, data, expect, requests.post, formdata)
 
     def http_put(self, path, params=None, headers=None, data=None, expect=None):
         return self.http_action(path, params, headers, data, expect, requests.put)
