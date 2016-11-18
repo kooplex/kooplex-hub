@@ -35,7 +35,9 @@ def notebooks(request):
     projects, unforkable_projectids = g.get_projects()
     print("If something is odd, may you forgot to init hub, otherwise no error comes here :|")
     #TODO: get uid and gid from projects json
-
+#    print(projects[0])
+#    print(projects[2]['id'])
+#    print(projects[0].keys())
     gadmin = GitlabAdmin(request)
     public_projects = gadmin.get_all_public_projects(unforkable_projectids)
     d = Docker()
@@ -77,12 +79,23 @@ def notebooks_new(request):
 def project_new(request):
     assert isinstance(request, HttpRequest)
     project_name = request.POST['project.name']
-    project_image = request.POST['project.image']
+    project_image_name = request.POST['project.image']
     public = request.POST['project.public']
     g = Gitlab(request)
 
-    description='%23notebook %23IMG:' + '%s:IMG'%project_image
+    description='%23notebook %23IMG:' + '%s:IMG'%project_image_name
     message_json = g.create_project(project_name,public,description)
+    res = g.get_project_by_name(project_name)
+    print(res)
+    if len(res)>1:
+        "Error to the log: there more than 1 project which is not acceptable!!!!"
+    else:
+        1==1
+#        project_id=res[0]['id']
+#    print(project_image_name)
+    #add image_name to project
+#    g.create_project_variable(project_id,'container_image', project_image_name)
+
     if message_json == "":
         return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
     else:

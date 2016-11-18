@@ -6,7 +6,7 @@
 
 <div class="session">
     <div class="session-details"><p>
-        <b>{{ item.name }}</b>
+        <b>{{ item.name }} {% if item.owner.username != username %} ( owned by {{ item.owner.username }} ) {%  endif  %}</b>
         {% if 'forked_from_project' in item %}
             : forked from
             <a href="{{ base_url }}/gitlab/{{ item.forked_from_project.path_with_namespace }}" target="_blank">

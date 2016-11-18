@@ -68,6 +68,10 @@ class Gitlab(RestClient):
         res = self.http_get('api/v3/user')
         return res.json()
 
+    def get_project_by_name(self,project_name):
+        res = self.http_get('api/v3/projects/search/%s'%project_name)
+        return res.json()
+
     def authenticate_user(self, username=None, password=None):
         res, user = self.authenticate(username, password)
         if user is not None:
@@ -82,6 +86,10 @@ class Gitlab(RestClient):
         res = self.http_get('api/v3/projects')
         projects_json = res.json()
         unforkable_projectids = self.get_unforkable_projectids(projects_json)
+
+        print(self.get_project_variables(1))
+        print(self.get_project_variables(2))
+        print(self.get_project_variables(3))
         return projects_json, unforkable_projectids
 
     def get_unforkable_projectids(self, projects_json):
@@ -90,6 +98,11 @@ class Gitlab(RestClient):
             if 'forked_from_project' in project:
                 result.add(project['forked_from_project']['id'])
         return result
+
+    def get_project_variables(self,project_id):
+        res = self.http_get('api/v3/projects/%d/variables'%(project_id))
+        project_variables = res.json()
+        return project_variables
 
     def fork_project(self, itemid):
         res = self.http_post("api/v3/projects/fork/" + itemid)
@@ -136,6 +149,26 @@ class Gitlab(RestClient):
         url += "&public=%s"%public
         url += "&description=%s"%description
         res = self.http_post(url)
+        message = ""
+        if res.status_code != 201:
+            message = res.json()
+        return message
+
+    def create_project_variable(self,project_id,variable_key,variable_value):
+        url = "api/v3/projects/"
+        url += "%d/"%project_id
+        url += "variables "
+        #url += "'key=%s' "%variable_key
+        #url += "'value=%s'"%variable_value
+        #data = "{ 'key' : '%s', 'value' : '%s' }" % (variable_key,variable_value)
+        data = json.dumps({'key' : variable_key, 'value' : variable_value})
+        print(url)
+        res = self.http_get(url)
+        print(res.json)
+        res = self.http_get(url,params="rr")
+        print(res.json)
+        res = self.http_post(url,params=data)
+        print(dir(json))
         message = ""
         if res.status_code != 201:
             message = res.json()
