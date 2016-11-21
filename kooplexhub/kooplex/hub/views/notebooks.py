@@ -25,24 +25,29 @@ def notebooks(request):
     assert isinstance(request, HttpRequest)
 
     username = request.user.username
+    print("debug=1")
     notebooks = Notebook.objects.filter(username=username)
     sessions = []
     for n in notebooks:
         ss = Session.objects.filter(notebook=n)
         for s in ss:
             sessions.append(s)
+    print("debug=2")
     g = Gitlab(request)
     projects, unforkable_projectids = g.get_projects()
+    print("debug=3")
     for project in projects:
         variables=g.get_project_variables(project['id'])
         project['variables']=variables
+    print("debug=4")
     print("If something is odd, may you forgot to init hub, otherwise no error comes here :|")
     #TODO: get uid and gid from projects json
     gadmin = GitlabAdmin(request)
     public_projects = gadmin.get_all_public_projects(unforkable_projectids)
+    print("debug=5")
     d = Docker()
     notebook_images = d.get_allnotebook_images()
-
+    print("debug=6")
     return render(
         request,
         'app/notebooks.html',

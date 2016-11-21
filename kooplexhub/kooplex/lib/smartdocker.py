@@ -58,7 +58,7 @@ class Docker(LibBase):
             if img['RepoTags']:
                 if img['RepoTags'][0].rfind(prefix + '-notebook')>-1:
                         notebook_images.append(img['RepoTags'][0].split(":")[0])
-        print(notebook_images)
+        print("notebook_images",notebook_images)
         if notebook_images and len(notebook_images) > 0:
             return notebook_images
         else:
