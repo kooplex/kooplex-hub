@@ -25,10 +25,10 @@
 
         <button type="button" class="btn btn-default" data-toggle="modal" data-target="#repo-pull-{{ item.name }}">revert</button>
         {% endif %}
-     <!-- <a href="{% url 'notebooks-pull-confirm' %}?project_owner={{ item.owner.username }}&project_name={{ item.name }}&repo={{ item.path_with_namespace }}{% if 'forked_from_project' in item %}&is_forked=True&project_id={{ item.id }}&target_id={{ item.forked_from_project.id }}{% else %}&is_forked=False{% endif %}&description={{ item.description|cut:'#notebook'|cut:'#worksheet'|cut:'#' }}">
+     <!-- <a href="{% url 'notebooks-pull-confirm' %}?project_id={{ item.id }}&project_owner={{ item.owner.username }}&project_name={{ item.name }}&repo={{ item.path_with_namespace }}{% if 'forked_from_project' in item %}&is_forked=True&project_id={{ item.id }}&target_id={{ item.forked_from_project.id }}{% else %}&is_forked=False{% endif %}&description={{ item.description|cut:'#notebook'|cut:'#worksheet'|cut:'#' }}">
         <span class="button pull">pull</span></a> -->
         
-    <a href="{% url 'notebooks-open' %}?project_owner={{ item.owner.username }}&project_name={{ item.name }}&repo={{ item.path_with_namespace }}{% if 'forked_from_project' in item %}&is_forked=True&project_id={{ item.id }}&target_id={{ item.forked_from_project.id }}{% else %}&is_forked=False{% endif %}&description={{ item.description|cut:'#notebook'|cut:'#worksheet'|cut:'#' }}" target="_blank">
+    <a href="{% url 'notebooks-open' %}?project_id={{ item.id }}&project_owner={{ item.owner.username }}&project_name={{ item.name }}&repo={{ item.path_with_namespace }}{% if 'forked_from_project' in item %}&is_forked=True&project_id={{ item.id }}&target_id={{ item.forked_from_project.id }}{% else %}&is_forked=False{% endif %}&description={{ item.description|cut:'#notebook'|cut:'#worksheet'|cut:'#' }}" target="_blank">
         <span class="button start">start</span></a>
     <a href="{% url 'notebooks-commit' %}?project_owner={{ item.owner.username }}&project_name={{ item.name }}&notebook_path_dir={{ item.notebook_path }}&is_forked={{ item.is_forked }}" target="_blank">
         <span class="button commit">commit</span></a>
@@ -53,6 +53,20 @@
         See the opened <a href="{% url 'notebooks-mergerequestlist' %}?itemid={{ item.id }}&path_with_namespace={{ item.path_with_namespace }}" target="_blank">merge requests</a>
     </p>
     {% endif %}
+    </div>
+    <div class="session-container">
+    image: <strong> 
+    {% for var in item.variables %}
+    {% if var.key == 'container_image' %}
+        {{ var.value }}
+    {% endif %}
+    {% endfor %}    
+    </strong>
+            {% if not publicvar %}
+    {% include 'app/notebooks-change-image.html' %}
+    <button type="button" class="btn btn-default" data-toggle="modal"  data-target="#change-image-{{ item.name }}">change</button>
+    {% endif %}
+
     </div>
 
 </div>

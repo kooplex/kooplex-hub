@@ -33,11 +33,11 @@ def notebooks(request):
             sessions.append(s)
     g = Gitlab(request)
     projects, unforkable_projectids = g.get_projects()
+    for project in projects:
+        variables=g.get_project_variables(project['id'])
+        project['variables']=variables
     print("If something is odd, may you forgot to init hub, otherwise no error comes here :|")
     #TODO: get uid and gid from projects json
-#    print(projects[0])
-#    print(projects[2]['id'])
-#    print(projects[0].keys())
     gadmin = GitlabAdmin(request)
     public_projects = gadmin.get_all_public_projects(unforkable_projectids)
     d = Docker()
@@ -81,17 +81,17 @@ def project_new(request):
     project_name = request.POST['project.name']
     project_image_name = request.POST['project.image']
     public = request.POST['project.public']
+    description = request.POST['project.public']
     g = Gitlab(request)
 
-    description='%23notebook %23IMG:' + '%s:IMG'%project_image_name
     message_json = g.create_project(project_name,public,description)
     res = g.get_project_by_name(project_name)
-    print(res)
     if len(res)>1:
         "Error to the log: there more than 1 project which is not acceptable!!!!"
     else:
         project_id=res[0]['id']
-#    print(project_image_name)
+    print(project_image_name)
+
     #add image_name to project
     g.create_project_variable(project_id,'container_image', project_image_name)
 
@@ -165,10 +165,11 @@ def notebooks_open(request):
     project_owner = request.GET['project_owner']
     project_name = request.GET['project_name']
     description = request.GET['description']
-    LL,RR = description.rfind("IMG:"), description.rfind(":IMG")
-    image_name = description[LL+4:RR]
+    project_id = request.GET['project_id']
+    g = Gitlab(request)
+    project_image = g.get_project_variable(project_id, 'container_image')
     username = request.user.username
-    spawner = Spawner(username,project_owner, project_name, image=image_name)
+    spawner = Spawner(username,project_owner, project_name, image=project_image)
     notebook = spawner.ensure_notebook_running()
     jupyter = Jupyter(notebook)
 
@@ -203,6 +204,15 @@ def notebooks_pull_confirm(request):
     repo.ensure_local_dir_empty()
     repo.clone()
 
+    return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
+    
+def notebooks_change_image(request):
+    assert isinstance(request, HttpRequest)
+    project_id = request.GET['project_id']
+    project_image = request.POST['project.image']
+    print("PP",project_id,project_image)
+    g = Gitlab(request)
+    g.change_variable_value(project_id,'container_image',project_image)
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
 
@@ -360,6 +370,7 @@ urlpatterns = [
     url(r'^/open$', notebooks_open, name = 'notebooks-open'),
     url(r'^/clone$', notebooks_clone, name = 'notebooks-clone'),
     url(r'^/pull-confirm$', notebooks_pull_confirm, name = 'notebooks-pull-confirm'),
+    url(r'^/change-image$', notebooks_change_image, name = 'notebooks-change-image'),
     url(r'^/commit$', notebooks_commit, name='notebooks-commit'),
     url(r'^/commitform$', notebooks_commitform, name='notebooks-commitform'),
     url(r'^/mergerequestform$', notebooks_mergerequestform, name='notebooks-mergerequestform'),

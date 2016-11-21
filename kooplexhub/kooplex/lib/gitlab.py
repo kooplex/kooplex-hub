@@ -86,10 +86,6 @@ class Gitlab(RestClient):
         res = self.http_get('api/v3/projects')
         projects_json = res.json()
         unforkable_projectids = self.get_unforkable_projectids(projects_json)
-
-        print(self.get_project_variables(1))
-        print(self.get_project_variables(2))
-        print(self.get_project_variables(3))
         return projects_json, unforkable_projectids
 
     def get_unforkable_projectids(self, projects_json):
@@ -103,6 +99,11 @@ class Gitlab(RestClient):
         res = self.http_get('api/v3/projects/%d/variables'%(project_id))
         project_variables = res.json()
         return project_variables
+
+    def get_project_variable(self,project_id, key):
+        res = self.http_get('api/v3/projects/%s/variables/%s'%(project_id, key))
+        variable = res.json()
+        return variable['value']
 
     def fork_project(self, itemid):
         res = self.http_post("api/v3/projects/fork/" + itemid)
@@ -154,14 +155,36 @@ class Gitlab(RestClient):
             message = res.json()
         return message
 
-    def create_project_variable(self,project_id,variable_key,variable_value):
+    def create_project_variable(self,project_id,key,value):
         url = "api/v3/projects/"
-        url += "%d/"%project_id
-        url += "variables "
-        data = dict(key=variable_key ,value =  variable_value)
-        res = self.http_post(url,formdata=data)
-        print(dir(json))
-        message = ""
-        if res.status_code != 201:
+        url += "%d"%project_id
+        url += "/variables"
+        data = dict(key=key, value=value)
+        res = self.http_post(url,params=data)
+        if res.status_code != 404:
             message = res.json()
+        return message
+
+    #def ensure_variable_exists(self, project_id, key, value):
+    #    url = "api/v3/projects/"
+    #    url += "%s" % project_id
+    #    url += "/variables/%s" % key
+    #    data = dict(value=value)
+
+    def change_variable_value(self,project_id,key,value):
+        url = "api/v3/projects/"
+        url += "%s"%project_id
+        url += "/variables"
+        data = dict(value=value)
+        #Check first whether it exists
+        res = self.http_post(url+"/%s"% key, params=data)
+        if res.status_code != 404:
+            message = res.json()
+        else:
+            #if it doesn't exist, then create it
+            data = dict(key=key, value=value)
+            res = self.http_post(url, params=data)
+            if res.status_code != 404:
+                message = res.json()
+
         return message
