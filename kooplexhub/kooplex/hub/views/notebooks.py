@@ -38,7 +38,11 @@ def notebooks(request):
     print("debug=3")
     for project in projects:
         variables=g.get_project_variables(project['id'])
-        project['variables']=variables
+        new_variables={}
+        for  var in variables:
+            new_variables[var['key']] = var['value']
+        project['variables']=new_variables
+
     print("debug=4")
     print("If something is odd, may you forgot to init hub, otherwise no error comes here :|")
     #TODO: get uid and gid from projects json
@@ -86,7 +90,8 @@ def project_new(request):
     project_name = request.POST['project.name']
     project_image_name = request.POST['project.image']
     public = request.POST['project.public']
-    description = request.POST['project.public']
+    description = request.POST['project.description']
+
     g = Gitlab(request)
 
     message_json = g.create_project(project_name,public,description)
@@ -95,12 +100,30 @@ def project_new(request):
         "Error to the log: there more than 1 project which is not acceptable!!!!"
     else:
         project_id=res[0]['id']
-    print(project_image_name)
 
     #add image_name to project
     g.create_project_variable(project_id,'container_image', project_image_name)
+    g.create_project_variable(project_id, 'notebook', 'True')
 
     if message_json == "":
+        return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
+    else:
+        return render(
+            request,
+            'app/error.html',
+            context_instance=RequestContext(request,
+                                            {
+                                                'error_title': 'Error',
+                                                'error_message': message_json,
+                                            })
+        )
+
+def project_delete(request):
+    assert isinstance(request, HttpRequest)
+    project_id = request.GET['project_id']
+    g = Gitlab(request)
+    message_json = g.delete_project(project_id)
+    if message_json:
         return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
     else:
         return render(
@@ -376,6 +399,7 @@ urlpatterns = [
     url(r'^/clone$', notebooks_clone, name = 'notebooks-clone'),
     url(r'^/pull-confirm$', notebooks_pull_confirm, name = 'notebooks-pull-confirm'),
     url(r'^/change-image$', notebooks_change_image, name = 'notebooks-change-image'),
+    url(r'^/delete-project$', project_delete, name = 'notebooks-delete-project'),
     url(r'^/commit$', notebooks_commit, name='notebooks-commit'),
     url(r'^/commitform$', notebooks_commitform, name='notebooks-commitform'),
     url(r'^/mergerequestform$', notebooks_mergerequestform, name='notebooks-mergerequestform'),

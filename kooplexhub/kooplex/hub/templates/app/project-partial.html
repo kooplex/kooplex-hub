@@ -14,28 +14,35 @@
             </a>
         {% endif %}
     </p>
-    <p>{{ item.description|cut:'#notebook'|cut:'#worksheet' }}</p>
+    <p>{{ item.description }}</p>
     </div>
     <div class="session-buttons">
     <!--<span class="readmore"><button>More</button></span>-->
-    <span class="session-button">
-    {% if '#notebook' in item.description %}
+    <span class="session-button"
+          {% comment %}
+    {% if 'notebook' in item.variables %}
+    {% endcomment %}
             {% if not publicvar %}
         {% include 'app/notebooks-repo-pull-really.html' %}
 
         <button type="button" class="btn btn-default" data-toggle="modal" data-target="#repo-pull-{{ item.name }}">revert</button>
-        {% endif %}
-     <!-- <a href="{% url 'notebooks-pull-confirm' %}?project_id={{ item.id }}&project_owner={{ item.owner.username }}&project_name={{ item.name }}&repo={{ item.path_with_namespace }}{% if 'forked_from_project' in item %}&is_forked=True&project_id={{ item.id }}&target_id={{ item.forked_from_project.id }}{% else %}&is_forked=False{% endif %}&description={{ item.description|cut:'#notebook'|cut:'#worksheet'|cut:'#' }}">
+        
+     <!-- <a href="{% url 'notebooks-pull-confirm' %}?project_id={{ item.id }}&project_owner={{ item.owner.username }}&project_name={{ item.name }}&repo={{ item.path_with_namespace }}{% if 'forked_from_project' in item %}&is_forked=True&project_id={{ item.id }}&target_id={{ item.forked_from_project.id }}{% else %}&is_forked=False{% endif %}">
         <span class="button pull">pull</span></a> -->
         
-    <a href="{% url 'notebooks-open' %}?project_id={{ item.id }}&project_owner={{ item.owner.username }}&project_name={{ item.name }}&repo={{ item.path_with_namespace }}{% if 'forked_from_project' in item %}&is_forked=True&project_id={{ item.id }}&target_id={{ item.forked_from_project.id }}{% else %}&is_forked=False{% endif %}&description={{ item.description|cut:'#notebook'|cut:'#worksheet'|cut:'#' }}" target="_blank">
+    <a href="{% url 'notebooks-open' %}?project_id={{ item.id }}&project_owner={{ item.owner.username }}&project_name={{ item.name }}&repo={{ item.path_with_namespace }}{% if 'forked_from_project' in item %}&is_forked=True&project_id={{ item.id }}&target_id={{ item.forked_from_project.id }}{% else %}&is_forked=False{% endif %}" target="_blank">
         <span class="button start">start</span></a>
+
     <a href="{% url 'notebooks-commit' %}?project_owner={{ item.owner.username }}&project_name={{ item.name }}&notebook_path_dir={{ item.notebook_path }}&is_forked={{ item.is_forked }}" target="_blank">
         <span class="button commit">commit</span></a>
     {% endif %}
+    {% comment %}
+    {% endif %}
+    {% endcomment %}
 
-    {% if '#worksheet' in item.description %}
+    {% if 'worksheet' in item.variables %}
      <a><span class="button view">view</span></a>
+
     {% endif %}
 
     <!-- | view in <a href="{{ base_url }}/gitlab/{{ item.path_with_namespace }}" target="_blank">Gitlab</a> -->
@@ -56,17 +63,18 @@
     </div>
     <div class="session-container">
     image: <strong> 
-    {% for var in item.variables %}
-    {% if var.key == 'container_image' %}
-        {{ var.value }}
+    {% if 'container_image' in item.variables %}
+        {{ item.variables.container_image }}
     {% endif %}
-    {% endfor %}    
     </strong>
             {% if not publicvar %}
     {% include 'app/notebooks-change-image.html' %}
     <button type="button" class="btn btn-default" data-toggle="modal"  data-target="#change-image-{{ item.name }}">change</button>
+    {% include 'app/notebooks-delete-project.html' %}
+    <button type="button" class="btn btn-default" data-toggle="modal"  data-target="#delete-project-{{ item.name }}">Delete project</button>
     {% endif %}
 
     </div>
+
 
 </div>

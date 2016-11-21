@@ -155,6 +155,14 @@ class Gitlab(RestClient):
             message = res.json()
         return message
 
+    def delete_project(self, project_id):
+        url = "api/v3/projects/%s"% project_id
+        res = self.http_delete(url)
+        message = ""
+        if res.status_code != 201:
+            message = res.json()
+        return message
+
     def create_project_variable(self,project_id,key,value):
         url = "api/v3/projects/"
         url += "%d"%project_id
