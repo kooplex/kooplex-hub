@@ -192,7 +192,6 @@ def notebooks_open(request):
     assert isinstance(request, HttpRequest)
     project_owner = request.GET['project_owner']
     project_name = request.GET['project_name']
-    description = request.GET['description']
     project_id = request.GET['project_id']
     g = Gitlab(request)
     project_image = g.get_project_variable(project_id, 'container_image')
