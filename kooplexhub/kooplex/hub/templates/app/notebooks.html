@@ -1,7 +1,16 @@
 {% extends "app/layout.html" %}
 
 {% block content %}
+
 <!-- <h2>Image creation</h2>-->
+{% if username %}
+<div class="projects new-project">
+
+{% include 'app/notebooks-new-partial.html' with myprojects=True %}
+<p><button type="button" class="btn btn-default" data-toggle="modal" data-target="#project-new">Start new project &raquo;</button></p>
+
+</div>
+
 <div class="projects">
 <div class="projects running-containers">
 <h2>My running containers</h2>
@@ -58,19 +67,14 @@ TODO: This will be moved (commit, merge request) to project-partial.html
 
 {% comment %} Nem vilagos, hogy hova krealodnak. Majd le sz a projektekhez kulon try gomb...
 {% endcomment %}
-<div class="projects new-project">
-<h2>Start new project</h2>
 
-{% include 'app/notebooks-new-partial.html' with myprojects=True %}
-
-<p><button type="button" class="btn btn-default" data-toggle="modal" data-target="#project-new">Start new project &raquo;</button></p>
-</div>
 <div class="projects my">
 <h2>My projects</h2>
 {% for item in projects %}
     {% include 'app/project-partial.html'  %}
 {% endfor %}
 </div>
+{% endif %}
 <div class="projects public">
 <h2>Other public projects</h2>
 {% for item in public_projects %}
