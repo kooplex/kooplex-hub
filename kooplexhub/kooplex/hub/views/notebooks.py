@@ -6,6 +6,8 @@ from django.http import HttpRequest, HttpResponseRedirect
 from django.template import RequestContext
 from datetime import datetime
 
+from kooplex.lib.debug import *
+
 from kooplex.hub.models.notebook import Notebook
 from kooplex.hub.models.session import Session
 from kooplex.lib.libbase import LibBase
@@ -19,39 +21,50 @@ import git
 
 NOTEBOOK_DIR_NAME = 'notebooks'
 HUB_NOTEBOOKS_URL = '/hub/notebooks'
+DEBUG = True
 
 def notebooks(request):
     """Renders the notebooks page"""
+    print_debug(DEBUG,"Rendering notebook page")
     assert isinstance(request, HttpRequest)
 
     username = request.user.username
-    print("debug=1")
+    
+    print_debug(DEBUG,"Rendering notebook page, getting sessions")
     notebooks = Notebook.objects.filter(username=username)
     sessions = []
     for n in notebooks:
         ss = Session.objects.filter(notebook=n)
         for s in ss:
             sessions.append(s)
-    print("debug=2")
+    print_debug(DEBUG,"Rendering notebook page, projects from gitlab")
     g = Gitlab(request)
     projects, unforkable_projectids = g.get_projects()
-    print("debug=3")
-    for project in projects:
-        variables=g.get_project_variables(project['id'])
-        new_variables={}
-        for  var in variables:
-            new_variables[var['key']] = var['value']
-        project['variables']=new_variables
+    if type(projects) != dict:
+    #A redirect to homepage
+#    if type(projects) == dict:
+#        return render(request,
+#        'app/index.html',
+#        context_instance = RequestContext(request,
+#        { 'title':'Home Page','year':datetime.now().year,})
+#        )
 
-    print("debug=4")
+        print_debug(DEBUG,"Rendering notebook page, project variables from gitlab")
+        for project in projects:
+            variables=g.get_project_variables(project['id'])
+            new_variables={}
+            for  var in variables:
+                new_variables[var['key']] = var['value']
+            project['variables']=new_variables
+
     print("If something is odd, may you forgot to init hub, otherwise no error comes here :|")
-    #TODO: get uid and gid from projects json
+	    #TODO: get uid and gid from projects json
+    print_debug(DEBUG,"Rendering notebook page, unforkable project  from gitlab")
     gadmin = GitlabAdmin(request)
     public_projects = gadmin.get_all_public_projects(unforkable_projectids)
-    print("debug=5")
+    print_debug(DEBUG,"Rendering notebook page, images from docker")
     d = Docker()
     notebook_images = d.get_allnotebook_images()
-    print("debug=6")
     return render(
         request,
         'app/notebooks.html',
@@ -91,9 +104,9 @@ def project_new(request):
     project_image_name = request.POST['project.image']
     public = request.POST['project.public']
     description = request.POST['project.description']
+    print_debug(DEBUG,"Creating new project, create in gitlab")
 
     g = Gitlab(request)
-
     message_json = g.create_project(project_name,public,description)
     res = g.get_project_by_name(project_name)
     if len(res)>1:
@@ -101,10 +114,13 @@ def project_new(request):
     else:
         project_id=res[0]['id']
 
+    print_debug(DEBUG,"Creating new project, add variables in gitlab")
     #add image_name to project
     g.create_project_variable(project_id,'container_image', project_image_name)
     g.create_project_variable(project_id, 'notebook', 'True')
 
+    #Create a README
+    g.create_project_readme(project_id,"README","proba","Created a default README")
     if message_json == "":
         return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
     else:
@@ -120,6 +136,8 @@ def project_new(request):
 
 def project_delete(request):
     assert isinstance(request, HttpRequest)
+    print_debug(DEBUG,"Delettning project, ")
+
     project_id = request.GET['project_id']
     g = Gitlab(request)
     message_json = g.delete_project(project_id)
@@ -154,36 +172,47 @@ def notebooks_shutdown(request):
 
 def container_start(request):
     assert isinstance(request, HttpRequest)
+    print_debug(DEBUG,"Starting container,")
+
     notebook_id = request.GET['notebook_id']
     notebook = Notebook.objects.filter(id=notebook_id)[0]
     username = request.user.username
     
-    
+    print_debug(DEBUG,"Starting container,Spawning")    
     spawner = Spawner(username)
     spawner.start_notebook(notebook)
+    print_debug(DEBUG,"notebook","Starting container, Finished")
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
 def container_stop(request):
     assert isinstance(request, HttpRequest)
+    print_debug(DEBUG,"Stopping container,")
+
     notebook_id = request.GET['notebook_id']
     notebook = Notebook.objects.filter(id=notebook_id)[0]
     username = request.user.username
     spawner = Spawner(username)
     spawner.stop_notebook(notebook)
+    print_debug(DEBUG,"Starting container, Finished")
+
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
 
 def container_delete(request):
     assert isinstance(request, HttpRequest)
+    print_debug(DEBUG,"Deleting container,")
+
     notebook_id = request.GET['notebook_id']
     notebook = Notebook.objects.filter(id=notebook_id)[0]
     username = request.user.username
     spawner = Spawner(username)
     spawner.delete_notebook(notebook)
+    print_debug(DEBUG,"Starting container, Finished")
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
 def notebooks_open(request):
     assert isinstance(request, HttpRequest)
+    print_debug(DEBUG,"Opening session,")
     repo_name = request.GET['repo']
     repo = Repo(request.user.username, repo_name)
     if not repo.is_local_existing():
@@ -193,9 +222,11 @@ def notebooks_open(request):
     project_owner = request.GET['project_owner']
     project_name = request.GET['project_name']
     project_id = request.GET['project_id']
+    print_debug(DEBUG,"Opening session, gitlab")
     g = Gitlab(request)
     project_image = g.get_project_variable(project_id, 'container_image')
     username = request.user.username
+    print_debug(DEBUG,"Opening session, spawning")
     spawner = Spawner(username,project_owner, project_name, image=project_image)
     notebook = spawner.ensure_notebook_running()
     jupyter = Jupyter(notebook)
@@ -210,26 +241,32 @@ def notebooks_open(request):
     else:
         session = spawner.start_session(notebook_path, 'python3', repo_name, notebook.name)
     url = session.external_url
-    return HttpResponseRedirect(url)
+    print_debug(DEBUG,"Opening session, Finished")
+    #return HttpResponseRedirect(url)
+    return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
 def notebooks_clone(request):
     assert isinstance(request, HttpRequest)
+    print_debug(DEBUG,"Cloning project,")
     repo_name = request.GET['repo']
     repo = Repo(request.user.username, repo_name)
     if not repo.is_local_existing():
         repo.clone()
 
+    print_debug(DEBUG,"Cloning project, Finished")
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
 
 def notebooks_pull_confirm(request):
     assert isinstance(request, HttpRequest)
+    print_debug(DEBUG,"Reverting project,")
     repo_name = request.GET['repo']
     repo = Repo(request.user.username, repo_name)
     print(repo_name)
     # Popup ablak kell
     repo.ensure_local_dir_empty()
     repo.clone()
+    print_debug(DEBUG,"Reverting project, Finished")
 
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
     
@@ -237,7 +274,6 @@ def notebooks_change_image(request):
     assert isinstance(request, HttpRequest)
     project_id = request.GET['project_id']
     project_image = request.POST['project.image']
-    print("PP",project_id,project_image)
     g = Gitlab(request)
     g.change_variable_value(project_id,'container_image',project_image)
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)

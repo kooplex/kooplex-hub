@@ -18,9 +18,13 @@ from kooplex.lib.proxy import Proxy
 from kooplex.lib.jupyter import Jupyter
 from kooplex.hub.models import Container, Notebook, Session
 
+from kooplex.lib.debug import *
+DEBUG = True
+
 class Spawner(RestClient):
        
     def __init__(self, username, project_owner=None, project_name=None, container_name=None, image=None):
+        print_debug(DEBUG,"")
         self.username = username
         self.project_owner = project_owner
         self.project_name = project_name
@@ -37,12 +41,14 @@ class Spawner(RestClient):
         self.pxcli = self.make_proxy_client()
 
     def make_docker_client(self):
+        print_debug(DEBUG,"")
         return Docker()
 
     def make_proxy_client(self):
         return Proxy()
 
     def pick_random_ip(self):
+        print_debug(DEBUG,"")
         # TODO: modify to return available ip address
         # TODO: skip invalid addresses (.0, .255 etc)
         fromip = int(IPAddress(self.ip_pool[0]))
@@ -51,6 +57,7 @@ class Spawner(RestClient):
         return ip
     
     def get_container_name(self):
+        print_debug(DEBUG,"")
         name = self.container_name
         name = name.replace('{$username}', self.username)
         name = name.replace('{$project_owner}', self.project_owner)
@@ -58,37 +65,44 @@ class Spawner(RestClient):
         return name
 
     def get_external_url(self, path):
+        print_debug(DEBUG,"")
         url = self.pxcli.get_external_url(path)
         return url
 
     def append_ldap_binds(self, binds, svc):
+        print_debug(DEBUG,"")
         basepath = LibBase.join_path(self.srv_path, svc)
         binds[LibBase.join_path(basepath, 'etc/ldap/ldap.conf')] = {'bind': '/etc/ldap/ldap.conf', 'mode': 'rw'}
         binds[LibBase.join_path(basepath, 'etc/nslcd.conf')] = {'bind': '/etc/nslcd.conf', 'mode': 'rw'}
         binds[LibBase.join_path(basepath, 'etc/nsswitch.conf')] = {'bind': '/etc/nsswitch.conf', 'mode': 'rw'}
 
     def append_home_binds(self, binds, svc):
+        print_debug(DEBUG,"")
         #container_home=LibBase.join_path('/home', self.username + '/' + self.project_name)
         host_home = '/home/' + self.username
         container_home = '/home/' + self.username
         binds[LibBase.join_path(self.srv_path, host_home)] = {'bind': container_home, 'mode': 'rw'}
 
     def append_ownclouddata_binds(self, binds, svc):
+        print_debug(DEBUG,"")
         container_data_home = LibBase.join_path('/home', self.username + '/projects/' + 'data')
         host_data_path = 'ownCloud/' + self.username + '/files'
         binds[LibBase.join_path(self.srv_path, host_data_path)] = {'bind': container_data_home, 'mode': 'rw'}
 
     def append_init_binds(self, binds, svc):
+        print_debug(DEBUG,"")
         basepath = LibBase.join_path(self.srv_path, svc)
         binds[LibBase.join_path(basepath, '/init')] = {'bind': '/init', 'mode': 'rw'}
 
     def get_notebook_path(self, id):
+        print_debug(DEBUG,"")
         path = self.notebook_path
         path = path.replace('{$username}', self.username)
         path = path.replace('{$notebook.id}', id)
         return path
 
     def make_notebook(self):
+        print_debug(DEBUG,"")
         id = str(uuid.uuid4())
         container_name = self.get_container_name()
         notebook_path = self.get_notebook_path(id)
@@ -134,6 +148,7 @@ class Spawner(RestClient):
         return notebook
 
     def get_notebook(self):
+        print_debug(DEBUG,"")
         notebooks = Notebook.objects.filter(
             username=self.username,
             image=self.image,
@@ -147,6 +162,7 @@ class Spawner(RestClient):
             return None
 
     def start_notebook(self, notebook):
+        print_debug(DEBUG,"")
         self.docli.ensure_container_running(notebook)
         #print('container running')
         notebook.is_stopped = False
@@ -156,6 +172,7 @@ class Spawner(RestClient):
         return notebook
 
     def ensure_notebook_running(self):
+        print_debug(DEBUG,"")
         notebook = self.get_notebook()
         if not notebook:
             notebook = self.make_notebook()
@@ -175,6 +192,7 @@ class Spawner(RestClient):
         return notebook
 
     def stop_notebook(self, notebook):
+        print_debug(DEBUG,"")
         self.docli.ensure_container_stopped(notebook)
         notebook.is_stopped=True
         print(notebook.proxy_path)
@@ -182,10 +200,12 @@ class Spawner(RestClient):
         notebook.save()
 
     def delete_notebook(self, notebook):
+        print_debug(DEBUG,"")
         self.docli.ensure_container_removed(notebook)
         notebook.delete()
 
     def ensure_notebook_stopped(self):
+        print_debug(DEBUG,"")
         notebook = self.get_notebook()
         if notebook:
             self.stop_notebook(notebook)
@@ -195,6 +215,7 @@ class Spawner(RestClient):
             self.docli.ensure_container_removed(notebook)
 
     def get_session_path(self, notebook, session):
+        print_debug(DEBUG,"")
         path = self.session_path
         path = path.replace('{$username}', self.username)
         path = path.replace('{$notebook.id}', str(notebook.id))
@@ -202,6 +223,7 @@ class Spawner(RestClient):
         return path
 
     def make_session(self, notebook_path, kernel):
+        print_debug(DEBUG,"")
         session = Session(
             notebook_path=notebook_path,
             kernel_name=kernel,
@@ -209,6 +231,7 @@ class Spawner(RestClient):
         return session
 
     def start_session(self, notebook_path, kernel, repo_name, container_name, is_forked=False, project_id=0, target_id=0):
+        print_debug(DEBUG,"")
         notebook = self.ensure_notebook_running()
         session = self.make_session(notebook_path, kernel)
         jpcli = Jupyter(notebook)
@@ -225,8 +248,11 @@ class Spawner(RestClient):
 
 
     def stop_session(self, session):
+        print_debug(DEBUG,"")
         jpcli = Jupyter(session.notebook)
         jpcli.stop_session(session)
 
     def list_sessions(self, container):
+        print_debug(DEBUG,"")
         raise NotImplementedError
+        
