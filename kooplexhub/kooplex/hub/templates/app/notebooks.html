@@ -22,7 +22,14 @@
        {%  else %}
             <a href="{% url 'container-stop' %}?notebook_id={{ item.id }}&session_id={{ item.id }}"><span class="button stop">Stop</span></a>
        {% endif %}
-       <a href="{% url 'container-delete' %}?notebook_id={{ item.id }}&session_id={{ item.id }}"><span class="button delete">Delete</span></a>
+       <a href="{% url 'container-delete' %}?notebook_id={{ item.id }}&session_id={{ item.id }}"><span class="button delete">Delete
+{% comment %}
+       {% if process %}
+       <img
+       src="https://media.giphy.com/media/7eygrJEkHFHEY/giphy.gif"  width="30px">
+       {% endif %}
+    {% endcomment %}
+        </span></a>
    {% if item.is_stopped %}       
        <b> Container is stopped </b>
    {% else %}

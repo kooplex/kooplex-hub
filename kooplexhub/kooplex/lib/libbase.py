@@ -3,8 +3,11 @@ import stat
 import json
 import requests
 from django.conf import settings
+from kooplex.lib.debug import *
+DEBUG = True
 
 def get_settings(block, value, override=None, default=None):
+    print_debug(DEBUG,"")
     if override:
         return override
     else:
@@ -32,12 +35,14 @@ class LibBase:
         return url
 
     def make_url(host='localhost', path=None, port=None, https=False):
+        print_debug(DEBUG,"")
         proto = 'https://' if https else 'http://'
         port = '' if (not port or not https and port == 80 or https and port == 443) else ':' + str(port)
         url = LibBase.join_path(proto + host + port, path)
         return url
 
     def clean_dir(path):        
+        print_debug(DEBUG,"")
         for root, dirs, files in os.walk(path, topdown=False):
             for name in files:
                 path = os.path.join(root, name)
@@ -49,11 +54,13 @@ class LibBase:
                 os.rmdir(os.path.join(root, name))
 
     def chmod(path):
+        print_debug(DEBUG,"")
         if not os.access(path, os.W_OK):
             # Is the error an access error ?
             os.chmod(path, stat.S_IWUSR)
 
     def ensure_dir(dir):
+        print_debug(DEBUG,"")
         if not os.path.exists(dir):
             os.makedirs(dir)
         return dir

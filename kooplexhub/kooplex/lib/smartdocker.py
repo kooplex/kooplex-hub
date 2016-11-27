@@ -1,10 +1,13 @@
 ﻿from docker.client import Client
 from kooplex.lib import LibBase, get_settings
 from kooplex.hub.models.container import Container
+from kooplex.lib.debug import *
+DEBUG = True
 
 class Docker(LibBase):
 
     def __init__(self, host=None, port=None, network=None, socket=False):
+        print_debug(DEBUG,"")
         if socket:
             self.host = None
             self.port = None
@@ -17,6 +20,7 @@ class Docker(LibBase):
         self.docli = self.make_docker_client()
 
     def get_docker_url(self):
+        print_debug(DEBUG,"")
         if self.host is None or self.port is None:
             url = 'unix:///var/run/docker.sock'
         else:
@@ -24,11 +28,13 @@ class Docker(LibBase):
         return url
 
     def make_docker_client(self):
+        print_debug(DEBUG,"")
         url = self.get_docker_url()
         cli = Client(base_url=url)
         return cli
 
     def get_network(self):
+        print_debug(DEBUG,"")
         nets = self.docli.networks(names = (self.network,))
         if nets and len(nets) == 1:
             return nets[0]
@@ -36,6 +42,7 @@ class Docker(LibBase):
             return None
 
     def get_image_name(self, image):
+        print_debug(DEBUG,"")
         if type(image) is str:
             name = image
         elif type(image) is Container:
@@ -43,6 +50,7 @@ class Docker(LibBase):
         return name
 
     def get_image(self, image):
+        print_debug(DEBUG,"")
         name = self.get_image_name(image)
         imgs = self.docli.images(name=name)
         if imgs and len(imgs) == 1:
@@ -51,6 +59,7 @@ class Docker(LibBase):
             return None
             
     def get_allnotebook_images(self):
+        print_debug(DEBUG,"")
         imgs = self.docli.images(all=True)
         prefix = get_settings('prefix', 'name')
         notebook_images=[]
@@ -65,27 +74,33 @@ class Docker(LibBase):
             return None
 
     def pull_image(self, name):
+        print_debug(DEBUG,"")
         self.docli.pull(name)
         img = self.get_image(name)
         return img
 
     def build_image(self):
+        print_debug(DEBUG,"")
         raise NotImplementedError
 
     def ensure_image_exists(self, image):
+        print_debug(DEBUG,"")
         img = self.get_image(image)
         if img is None:
             img = self.pull_image(image)
         return img
 
     def remove_image(self, image):
+        print_debug(DEBUG,"")
         self.docli.remove_image(image)
 
     def ensure_network_configured(self, container):
+        print_debug(DEBUG,"")
         if not container.network:
             container.network = self.network
 
     def create_container(self, container):
+        print_debug(DEBUG,"")
         self.ensure_image_exists(container.image)
         self.ensure_network_configured(container)
         volumes = container.get_volumes()
@@ -113,6 +128,7 @@ class Docker(LibBase):
         return self.get_container(container)
 
     def get_container_name(self, container):
+        print_debug(DEBUG,"")
         if type(container) is str:
             name = container
         else:
@@ -120,6 +136,7 @@ class Docker(LibBase):
         return name
 
     def get_container(self, container):
+        print_debug(DEBUG,"")
         name = self.get_container_name(container)
         conts = self.docli.containers(all=True, filters={'name': name})
         if conts and len(conts) == 1:
@@ -128,12 +145,14 @@ class Docker(LibBase):
             return None
 
     def ensure_container_exists(self, container):
+        print_debug(DEBUG,"")
         c = self.get_container(container)
         if c is None:
             c = self.create_container(container)
         return c
 
     def list_containers(self):
+        print_debug(DEBUG,"")
         containers = docli.containers(all=True)
         # TODO: modify to return user's containers only
         #containers = [ c for c in docli.containers() if
@@ -141,41 +160,49 @@ class Docker(LibBase):
         return containers
 
     def start_container(self, container):
+        print_debug(DEBUG,"")
         name = self.get_container_name(container)
         self.docli.start(name)
         return self.get_container(container)
 
     def ensure_container_running(self, container):
+        print_debug(DEBUG,"")
         container = self.ensure_container_exists(container)
         if container.state in ('created', 'exited') :
             container = self.start_container(container)
         return container
 
     def stop_container(self, container):
+        print_debug(DEBUG,"")
         name = self.get_container_name(container)
         self.docli.stop(name)
 
     def kill_container(self, container):
+        print_debug(DEBUG,"")
         name = self.get_container_name(container)
         self.docli.kill(name)
 
     def ensure_container_stopped(self, container):
+        print_debug(DEBUG,"")
         container = self.get_container(container)
         if container and container.state not in ('created', 'exited'):
             self.stop_container(container)
         # TODO: kill if stop isn't working
 
     def remove_container(self, container):
+        print_debug(DEBUG,"")
         name = self.get_container_name(container)
         self.docli.remove_container(container=name)
 
     def ensure_container_removed(self, container):
+        print_debug(DEBUG,"")
         container = self.get_container(container)
         if container:
             self.ensure_container_stopped(container)
             self.remove_container(container)
 
     def exec_container(self, container, command):
+        print_debug(DEBUG,"")
         exec = self.docli.exec_create(
             container=container.name, 
             cmd=command, 

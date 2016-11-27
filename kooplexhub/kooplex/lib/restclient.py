@@ -3,6 +3,8 @@ import requests
 import time
 
 from kooplex.lib.libbase import LibBase
+from kooplex.lib.debug import *
+DEBUG = True
 
 class RestClientError(Exception):
     pass
@@ -10,6 +12,7 @@ class RestClientError(Exception):
 class RestClient(LibBase):
 
     def __init__(self, host='localhost', port=None, https=False, base_url=None):
+        print_debug(DEBUG,"")
         self.https = https
         self.host = host
         if not port:
@@ -19,6 +22,7 @@ class RestClient(LibBase):
         self.base_url = base_url
 
     def http_prepare_url(self, path):
+        print_debug(DEBUG,"")
         if self.base_url:
             url = LibBase.join_path(self.base_url, path)
         else:
@@ -36,12 +40,14 @@ class RestClient(LibBase):
         return headers
 
     def http_prepare_request(self, url, params, headers):
+        print_debug(DEBUG,"")
         url = self.http_prepare_url(url)
         params = self.http_prepare_parameters(params)
         headers = self.http_prepare_headers(headers)
         return url, params, headers
 
     def http_prepare_data(self, data):
+        print_debug(DEBUG,data)
         if not data:
             return None
         elif type(data) is dict:
@@ -50,6 +56,7 @@ class RestClient(LibBase):
             return data
 
     def http_action(self, path, params, headers, data, expect, action, formdata=None):
+        print_debug(DEBUG,"")
         url, params, headers = self.http_prepare_request(path, params, headers)
         data = self.http_prepare_data(data)
         if expect and type(expect) is not list:
@@ -71,16 +78,21 @@ class RestClient(LibBase):
         raise RestClientError(res.reason)
 
     def http_get(self, path, params=None, headers=None, expect=None):
+        print_debug(DEBUG,"")
         return self.http_action(path, params, headers, None, expect, requests.get)
 
     def http_post(self, path, params=None, headers=None, data=None, expect=None, formdata=None):
+        print_debug(DEBUG,path)
         return self.http_action(path, params, headers, data, expect, requests.post, formdata)
 
     def http_put(self, path, params=None, headers=None, data=None, expect=None):
+        print_debug(DEBUG,"")
         return self.http_action(path, params, headers, data, expect, requests.put)
 
     def http_patch(self, path, params=None, headers=None, data=None, expect=None):
+        print_debug(DEBUG,"")
         return self.http_action(path, params, headers, data, expect, requests.patch)
 
     def http_delete(self, path, params=None, headers=None, expect=None):
+        print_debug(DEBUG,"")
         return self.http_action(path, params, headers, None, expect, requests.delete)

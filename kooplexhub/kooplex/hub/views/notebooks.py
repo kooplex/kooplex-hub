@@ -172,7 +172,7 @@ def notebooks_shutdown(request):
 
 def container_start(request):
     assert isinstance(request, HttpRequest)
-    print_debug(DEBUG,"Starting container,")
+    print_debug(DEBUG,"Starting container")
 
     notebook_id = request.GET['notebook_id']
     notebook = Notebook.objects.filter(id=notebook_id)[0]
@@ -181,7 +181,7 @@ def container_start(request):
     print_debug(DEBUG,"Starting container,Spawning")    
     spawner = Spawner(username)
     spawner.start_notebook(notebook)
-    print_debug(DEBUG,"notebook","Starting container, Finished")
+    print_debug(DEBUG,"Starting container, Finished")
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
 def container_stop(request):

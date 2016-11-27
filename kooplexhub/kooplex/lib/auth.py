@@ -1,10 +1,13 @@
 ﻿from django.contrib.auth.models import User
 from kooplex.lib.gitlab import Gitlab
+from kooplex.lib.debug import *
+DEBUG = True
 
 class Auth(object):
     """description of class"""
 
     def authenticate(self, username=None, password=None):
+        print_debug(DEBUG,"")
         g = Gitlab()
         res, u = g.authenticate_user(username, password)
         if u is not None:
@@ -22,4 +25,5 @@ class Auth(object):
         return None
 
     def get_user(self, user_id):
+        print_debug(DEBUG,"")
         return User.objects.get(pk=user_id)

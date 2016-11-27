@@ -36,6 +36,8 @@ class Spawner(RestClient):
         self.ip_pool = get_settings('spawner', 'notebook_ip_pool', None, ['172.18.20.1', '172.18.20.255'])
         self.port = get_settings('spawner', 'notebook_port', None, 8000)
         self.srv_path = get_settings('spawner', 'srv_path', None, '/srv/' + prefix)
+        self.dashboards_url = get_settings('dashboards', 'base_url','')
+
         
         self.docli = self.make_docker_client()
         self.pxcli = self.make_proxy_client()
@@ -138,7 +140,9 @@ class Spawner(RestClient):
                 'NB_UID': 10002,     # TODO
                 'NB_GID': 10002,     # TODO
                 'NB_URL': notebook_path,
-                'NB_PORT': self.port
+                'NB_PORT': self.port,
+                'DASHBOARD_SERVER_URL' : self.dashboards_url,
+                'DASHBOARD_SERVER_AUTH_TOKEN' : 'notebook_to_dashboard_secret'
             })
         #print(notebook_path)
         notebook.set_binds(binds)

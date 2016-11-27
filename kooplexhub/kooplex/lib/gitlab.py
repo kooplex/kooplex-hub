@@ -73,9 +73,9 @@ class Gitlab(RestClient):
             return res, u
         return res, None
 
-    def get_user(self):
+    def get_user(self,username):
         print_debug(DEBUG,"")
-        res = self.http_get('api/v3/user')
+        res = self.http_get('api/v3/users?username=%s'%username)
         return res.json()
 
     def get_project_by_name(self,project_name):

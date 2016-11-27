@@ -4,6 +4,8 @@ from kooplex.lib.restclient import RestClient
 
 from kooplex.hub.models.notebook import Notebook
 from kooplex.hub.models.session import Session
+from kooplex.lib.debug import *
+DEBUG = True
 
 class JupyterError(Exception):
     pass
@@ -14,6 +16,7 @@ class Jupyter(RestClient):
     """
     
     def __init__(self, notebook):
+        print_debug(DEBUG,"")
         assert isinstance(notebook, Notebook)
 
         self.notebook = notebook
@@ -23,6 +26,7 @@ class Jupyter(RestClient):
         RestClient.__init__(self, base_url=base_url)
 
     def http_prepare_url(self, path):
+        print_debug(DEBUG,"")
         url = LibBase.join_path(self.base_url, '/api')
         url = LibBase.join_path(url, path)
         return url
@@ -76,9 +80,11 @@ class Jupyter(RestClient):
         }
 
     def create_notebook(self, name):
+        print_debug(DEBUG,"")
         return self.upload_file(name, name, 'notebook', 'json', self.make_empty_notebook_python3())
 
     def upload_file(self, path, name=None, type=None, format=None, content=None):
+        print_debug(DEBUG,"")
         data = {
             'name': name,
             'path': path,
@@ -114,6 +120,7 @@ class Jupyter(RestClient):
     # Sessions
 
     def start_session(self, session):
+        print_debug(DEBUG,"")
         assert isinstance(session, Session)
 
         data = session.to_jupyter_dict()
@@ -123,18 +130,21 @@ class Jupyter(RestClient):
         return session
 
     def stop_session(self, session):
+        print_debug(DEBUG,"")
         assert isinstance(session, Session)
 
         self.http_delete('/sessions/%s' % session.id)
         session.delete()
 
     def get_session(self, session):
+        print_debug(DEBUG,"")
         assert isinstance(session, Session)
 
         res = self.http_get('/sessions/%s' % session)
         return res.json()
 
     def rename_session(self, path, newpath):
+        print_debug(DEBUG,"")
         assert isinstance(session, Session)
 
         data = {
@@ -148,36 +158,44 @@ class Jupyter(RestClient):
         return res.json()
 
     def list_sessions(self):
+        print_debug(DEBUG,"")
         res = self.http_get('/sessions')
         return res.json()
 
     # Kernels
 
     def list_kernels(self):
+        print_debug(DEBUG,"")
         res = self.http_get('/kernels')
         return res.json()
 
     def start_kernel(self, name):
+        print_debug(DEBUG,"")
         params = {'name': name}
         res = self.http_post('/kernels', data=data)
         return res.json()
 
     def get_kernel(self, kernel_id):
+        print_debug(DEBUG,"")
         res = self.http_get('/kernels/%s' % kernel_id)
         return res.json()
 
     def stop_kernel(self, kernel_id):
+        print_debug(DEBUG,"")
         self.http_delete('/kernels/%s' % kernel_id)
 
     def interrupt_kernel(self, kernel_id):
+        print_debug(DEBUG,"")
         self.http_post('/kernels/%s/interrupt' % kernel_id)
 
     def restart_kernel(self, kernel_id):
+        print_debug(DEBUG,"")
         self.http_post('/kernels/%s/restart' % kernel_id)
 
     # Kernel Specifications
 
     def list_kernelspecs(self):
+        print_debug(DEBUG,"")
         res = self.http_get('/kernelspecs')
         return res.json()
 
