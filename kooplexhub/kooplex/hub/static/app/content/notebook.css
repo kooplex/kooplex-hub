@@ -16,15 +16,17 @@ div.running-containers{
 }
 
 div.new-project{
-  background-color: #9abde4;
+//  background-color: #9abde4;
+float: right;
     border-color: black;
+    margin-top:5px;
 }
 
 div.projects{
     border-width: 2px;
     border-color: aliceblue;
     border-style: solid;
-    border-radius: 10px;
+#    border-radius: 10px;
     padding: 10px;
     width:auto;
     transition:height 0.5s;
@@ -42,7 +44,7 @@ div.session{
     border-width: 2px;
     border-color: aliceblue;
     border-style: solid;
-    border-radius: 10px;
+//    border-radius: 10px;
     background-color: #dddddd;
 //    border-color: black;
     padding: 10px;
@@ -75,26 +77,37 @@ padding: 5px;
       border-width: 2px;
     border-color: aliceblue;
     border-style: solid;
-    border-radius: 10px;
+//    border-radius: 10px;
 }
 span.shutdown {
-background-color: #ff7377;
+//background-color: #ff7377;
+background-color: white;
 }
 span.stop {
-background-color: #ff7377;
+//background-color: #ff7377;
+background-color: white;
 }
 span.start {
-background-color: green;
+//background-color: green;
+background-color: white;
 }
 span.delete {
-background-color: #6d7cff;
+//background-color: #6d7cff;
+background-color: white;
 }
 span.open {
-background-color: #5bc0de;
+//background-color: #5bc0de;
+background-color: white;
 }
 
 span.commit {
-background-color: gold;
+//background-color: gold;
+background-color: white;
+}
+
+span.commit {
+//background-color: gold;
+background-color: white;
 }
 
 span.view {
@@ -144,3 +157,7 @@ span.view {
 
 /* Show the dropdown menu (use JS to add this class to the .dropdown-content container when the user clicks on the dropdown button) */
 .show {display:block;}
+
+ul.nav-tabs {
+    background-color: #f9f9f9;
+}
