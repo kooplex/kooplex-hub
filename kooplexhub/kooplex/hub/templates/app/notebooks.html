@@ -28,6 +28,9 @@
   {% endif %}
  <li><a data-toggle="tab" href="#menu2">Other public projects</a></li>    
 
+ {% if username %}
+  <li><a data-toggle="tab" href="#menu3">Create New Image</a></li>    
+ {% endif %}
 
  </ul>  
  <div class="tab-content">    
@@ -109,6 +112,9 @@ TODO: This will be moved (commit, merge request) to project-partial.html
  </div>
  
  <div id="menu1" class="tab-pane fade projects my">     
+     <h2> My projects </h2>
+
+
  {% for item in projects %}
     {% include 'app/project-partial.html'  %}
     {% endfor %}
@@ -120,12 +126,23 @@ TODO: This will be moved (commit, merge request) to project-partial.html
  {% else %}
  <div id="menu2" class="tab-pane fade projects public in active"> 
  {% endif %}
+
+ <h2> Public projects </h2>
  {% for item in public_projects %}
     {% if item.owner.username != username %}
         {% include 'app/project-partial.html' with publicvar=True %}
     {% endif %}
     {% endfor %}
  </div>    
+ 
+  {% if username %}
+ <div id="menu3" class="tab-pane fade projects public"> 
+
+ <h2> Create new image </h2>
+ Upload file ....
+ </div>
+ {% endif %}
+
 
  </div>
 </div>

@@ -6,6 +6,7 @@
 
 <div class="session">
     <div class="session-details"><p>
+
         <b>{{ item.name }} {% if item.owner.username != username %} ( owned by {{ item.owner.username }} ) {%  endif  %}</b>
         {% if 'forked_from_project' in item %}
             : forked from
@@ -35,6 +36,8 @@
 
     <a href="{% url 'notebooks-commit' %}?project_owner={{ item.owner.username }}&project_name={{ item.name }}&notebook_path_dir={{ item.notebook_path }}&is_forked={{ item.is_forked }}" target="_blank">
         <span class="button commit">Commit</span></a>
+   <a href="{% url 'notebooks-deploy' %}?project_owner={{ item.owner.username }}&project_name={{ item.name }}&notebook_path_dir={{ item.notebook_path }}&is_forked={{ item.is_forked }}">
+        <span class="button commit">Deploy</span></a>
     {% endif %}
     {% comment %}
     {% endif %}

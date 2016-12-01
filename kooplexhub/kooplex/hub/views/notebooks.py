@@ -13,6 +13,7 @@ from kooplex.hub.models.session import Session
 from kooplex.lib.libbase import LibBase
 from kooplex.lib.gitlab import Gitlab
 from kooplex.lib.gitlabadmin import GitlabAdmin
+from kooplex.lib.dashboards import Dashboards
 from kooplex.lib.repo import Repo
 from kooplex.lib.spawner import Spawner
 from kooplex.lib.jupyter import Jupyter
@@ -256,6 +257,22 @@ def notebooks_clone(request):
     print_debug(DEBUG,"Cloning project, Finished")
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
+def notebooks_deploy(request):
+    assert isinstance(request, HttpRequest)
+    print_debug(DEBUG,"Deployin notebook,")
+    project_name = request.GET['project_name']
+    g = Gitlab(request)
+    res = g.get_project_by_name(project_name)
+    if len(res)>1:
+        "Error to the log: there more than 1 project which is not acceptable!!!!"
+    else:
+        project_id=res[0]['id']
+    d = Dashboards()
+    filename = '/srv/kooplex/compare/home/gitlabadmin/projects/gitlabadmin/readmes/index.ipynb'
+    print(project_name)
+    res = d.deploy(project_name,filename)
+    print(res.json())
+    return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
 def notebooks_pull_confirm(request):
     assert isinstance(request, HttpRequest)
@@ -432,6 +449,7 @@ urlpatterns = [
     #url(r'^/containershutdown$', container_shutdown, name='container-shutdown'),
     url(r'^/open$', notebooks_open, name = 'notebooks-open'),
     url(r'^/clone$', notebooks_clone, name = 'notebooks-clone'),
+    url(r'^/deploy$', notebooks_deploy, name = 'notebooks-deploy'),
     url(r'^/pull-confirm$', notebooks_pull_confirm, name = 'notebooks-pull-confirm'),
     url(r'^/change-image$', notebooks_change_image, name = 'notebooks-change-image'),
     url(r'^/delete-project$', project_delete, name = 'notebooks-delete-project'),
