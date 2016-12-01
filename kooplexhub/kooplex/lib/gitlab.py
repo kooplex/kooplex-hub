@@ -97,6 +97,7 @@ class Gitlab(RestClient):
     def get_projects(self):
         print_debug(DEBUG,"")
         res = self.http_get('api/v3/projects')
+#        print(res)
         projects_json = res.json()
         unforkable_projectids = self.get_unforkable_projectids(projects_json)
         return projects_json, unforkable_projectids

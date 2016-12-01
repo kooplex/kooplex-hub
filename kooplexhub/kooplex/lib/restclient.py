@@ -1,6 +1,7 @@
 ﻿import json
 import requests
 import time
+import logging
 
 from kooplex.lib.libbase import LibBase
 from kooplex.lib.debug import *
@@ -12,6 +13,7 @@ class RestClientError(Exception):
 class RestClient(LibBase):
 
     def __init__(self, host='localhost', port=None, https=False, base_url=None):
+        logging.basicConfig(level=logging.DEBUG)
         print_debug(DEBUG,"")
         self.https = https
         self.host = host
@@ -27,6 +29,7 @@ class RestClient(LibBase):
             url = LibBase.join_path(self.base_url, path)
         else:
             url = RestClient.make_url(self.host, path, self.port, self.https)
+        print("GF",url)
         return url
 
     def http_prepare_parameters(self, params):
@@ -47,25 +50,41 @@ class RestClient(LibBase):
         return url, params, headers
 
     def http_prepare_data(self, data):
-        print_debug(DEBUG,data)
+        print_debug(DEBUG,'')
         if not data:
+            print_debug(DEBUG,'not data')
             return None
         elif type(data) is dict:
+            print_debug(DEBUG,'isdict')
             return json.dumps(data)
         else:
+            print_debug(DEBUG,'notdict')
             return data
+            
+    def http_prepare_formdata(self, formdata):
+        print_debug(DEBUG,'')
+        if not formdata:
+            return None
+        elif type(formdata) is dict:
+            return json.dumps(formdata)
+        else:
+            return formdata
 
     def http_action(self, path, params, headers, data, expect, action, formdata=None):
         print_debug(DEBUG,"")
         url, params, headers = self.http_prepare_request(path, params, headers)
+        print("DDFDFDF",headers)
         data = self.http_prepare_data(data)
+#        formdata = self.http_prepare_formdata(formdata)
         if expect and type(expect) is not list:
             expect = [ expect ]
         s = 0.1
-        while s < 100:
+        while s < 10:
             if formdata:
+                print_debug(DEBUG,"tryingF "+str(s))
                 res = action(url=url, params=params, headers=headers, data=data, files=formdata)
             else:
+                print_debug(DEBUG,"trying "+str(s))
                 res = action(url=url, params=params, headers=headers, data=data)
 
             if res.status_code == 503:
@@ -82,7 +101,7 @@ class RestClient(LibBase):
         return self.http_action(path, params, headers, None, expect, requests.get)
 
     def http_post(self, path, params=None, headers=None, data=None, expect=None, formdata=None):
-        print_debug(DEBUG,path)
+        print_debug(DEBUG,"")
         return self.http_action(path, params, headers, data, expect, requests.post, formdata)
 
     def http_put(self, path, params=None, headers=None, data=None, expect=None):
