@@ -55,6 +55,8 @@ class GitlabAdmin(Gitlab):
         print_debug(DEBUG,"")
         res = self.http_get('api/v3/projects/all?visibility=public')
         public_projects_json = res.json()
+        if 'message' in public_projects_json:
+            raise ValueError("MESSAGE: %s"%(public_projects_json['message']))
         self.identify_unforkable_projects(public_projects_json, unforkable_projectids)
         return public_projects_json
 
