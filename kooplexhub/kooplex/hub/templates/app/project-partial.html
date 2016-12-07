@@ -36,7 +36,7 @@
 
     <a href="{% url 'notebooks-commit' %}?project_owner={{ item.owner.username }}&project_name={{ item.name }}&notebook_path_dir={{ item.notebook_path }}&is_forked={{ item.is_forked }}" target="_blank">
         <span class="button commit">Commit</span></a>
-   <a href="{% url 'notebooks-deploy' %}?project_owner={{ item.owner.username }}&project_name={{ item.name }}&notebook_path_dir={{ item.notebook_path }}&is_forked={{ item.is_forked }}">
+   <a href="{% url 'notebooks-deploy' %}?project_owner={{ item.owner.username }}&project_name={{ item.name }}&project_id={{ item.id }}">
         <span class="button commit">Deploy</span></a>
     {% endif %}
     {% comment %}

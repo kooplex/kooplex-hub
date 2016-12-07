@@ -1,0 +1,45 @@
+{% extends "app/layout.html" %}
+
+{% block content %}
+
+<!-- <h2>Image creation</h2>-->
+
+
+
+{% if username %}
+<div class="new-project">
+{% include 'app/notebooks-new-partial.html' with myprojects=True %}
+<button type="button" class="btn btn-default" data-toggle="modal" data-target="#project-new">Start new project &raquo;</button>
+</div>
+{% endif %}
+
+
+<div class="container">  
+ <ul class="nav nav-tabs">    
+ <li class="active"><a data-toggle="tab" href="#menu2">Public worksheets</a></li>    
+ </ul>  
+
+ <div class="tab-content">    
+
+  <div id="menu2" class="tab-pane fade in active">      
+
+   <div class="projects">
+
+    <h2>Public worksheets</h2>
+    {% for item in dashboards %}
+     <div class="projects worksheet">
+     <a href="{% url 'worksheet-open' %}?project_owner={{ item.owner  }}&project_name={{ item.name  }}" target="_blank">
+     <img src="{{ dashboard_url }}/dashboards/hqdefault.jpg" width="300px">
+ <p><span  style="padding-right: 50px;"><b>{{ item.owner }}</b> - <b>{{ item.name  }}</b></span></a>
+     </p>
+     <p> {{ item.description }} </p>
+    </div>
+    {% endfor %}
+   </div>
+
+  </div>    
+ </div>
+ 
+</div>
+
+{% endblock %}

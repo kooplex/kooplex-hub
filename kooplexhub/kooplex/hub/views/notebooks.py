@@ -6,8 +6,8 @@ from django.http import HttpRequest, HttpResponseRedirect
 from django.template import RequestContext
 from datetime import datetime
 
-from kooplex.lib.debug import *
 
+from kooplex.lib.libbase import get_settings
 from kooplex.hub.models.notebook import Notebook
 from kooplex.hub.models.session import Session
 from kooplex.lib.libbase import LibBase
@@ -22,6 +22,8 @@ import git
 
 NOTEBOOK_DIR_NAME = 'notebooks'
 HUB_NOTEBOOKS_URL = '/hub/notebooks'
+
+from kooplex.lib.debug import *
 DEBUG = True
 
 def notebooks(request):
@@ -64,8 +66,10 @@ def notebooks(request):
     gadmin = GitlabAdmin(request)
     public_projects = gadmin.get_all_public_projects(unforkable_projectids)
     print_debug(DEBUG,"Rendering notebook page, images from docker")
+
     d = Docker()
     notebook_images = d.get_allnotebook_images()
+    # TODO unittest to check if port is accessible (ufw allow "5555")
     return render(
         request,
         'app/notebooks.html',
@@ -111,7 +115,11 @@ def project_new(request):
     message_json = g.create_project(project_name,public,description)
     res = g.get_project_by_name(project_name)
     if len(res)>1:
-        "Error to the log: there more than 1 project which is not acceptable!!!!"
+        print("Warning to the log: there more than 1 project which is not acceptable!!!!")
+        for project in res:
+            if project_name==project['name']:
+                project_id=project['id']
+                break
     else:
         project_id=res[0]['id']
 
@@ -257,21 +265,42 @@ def notebooks_clone(request):
     print_debug(DEBUG,"Cloning project, Finished")
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
+def notebooks_deploy_api(request):
+    assert isinstance(request, HttpRequest)
+    print_debug(DEBUG,"Deploying notebook,")
+    project_name = request.GET['project_name']
+    project_owner = request.GET['project_owner']
+    home_dir = get_settings('users', 'home_dir', None, '')
+    file = LibBase.join_path(home_dir,'projects')
+    file = LibBase.join_path(file, project_owner)
+    file = LibBase.join_path(file, project_name)
+    file = LibBase.join_path(file, 'index.ipynb')
+    print(file)
+    d = Dashboards()
+    res2 = d.deploy(project_name,file)
+    print(res2.json())
+    return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
+
 def notebooks_deploy(request):
     assert isinstance(request, HttpRequest)
-    print_debug(DEBUG,"Deployin notebook,")
+    print_debug(DEBUG,"Deploying notebook,")
     project_name = request.GET['project_name']
-    g = Gitlab(request)
-    res = g.get_project_by_name(project_name)
-    if len(res)>1:
-        "Error to the log: there more than 1 project which is not acceptable!!!!"
-    else:
-        project_id=res[0]['id']
+    project_owner = request.GET['project_owner']
+    project_id = request.GET['project_id']
+    username = request.user.username
+    srv_dir = get_settings('users', 'srv_dir', None, '')
+    file = LibBase.join_path(srv_dir,'home')
+    file = LibBase.join_path(file,username)
+    file = LibBase.join_path(file,'projects')
+    file = LibBase.join_path(file, project_owner)
+    file = LibBase.join_path(file, project_name)
+    file = LibBase.join_path(file, 'index.ipynb')
+    print(file)
+    g=Gitlab(request)
+    g.create_project_variable(project_id, 'worksheet', 'True')
+    g.create_project_variable(project_id, 'worksheet_picture', srv_dir+"/dashboards/hqdefault.jpg")
     d = Dashboards()
-    filename = '/srv/kooplex/compare/home/gitlabadmin/projects/gitlabadmin/readmes/index.ipynb'
-    print(project_name)
-    res = d.deploy(project_name,filename)
-    print(res.json())
+    res2 = d.deploy(username, project_owner, project_name, file)
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
 def notebooks_pull_confirm(request):
