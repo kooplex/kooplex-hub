@@ -81,8 +81,11 @@ class RestClient(LibBase):
         s = 0.1
         while s < 10:
             if formdata:
-                print_debug(DEBUG,"tryingF "+str(s))
+                print_debug(DEBUG,"tryingF "+str(s)+" "+url)
+                print(headers)
+                print(formdata)
                 res = action(url=url, params=params, headers=headers, data=data, files=formdata)
+                print(res)
             else:
                 print_debug(DEBUG,"trying "+str(s))
                 res = action(url=url, params=params, headers=headers, data=data)

@@ -120,7 +120,10 @@ class Gitlab(RestClient):
         print_debug(DEBUG,"")
         res = self.http_get('api/v3/projects/%s/variables/%s'%(project_id, key))
         variable = res.json()
-        return variable['value']
+        if 'value' in variable:
+          return variable['value']
+        else:
+          return None
 
     def fork_project(self, itemid):
         print_debug(DEBUG,"")
@@ -189,7 +192,7 @@ class Gitlab(RestClient):
     def create_project_variable(self,project_id,key,value):
         print_debug(DEBUG,"")
         url = "api/v3/projects/"
-        url += "%d"%project_id
+        url += "%s"%str(project_id)
         url += "/variables"
         data = dict(key=key, value=value)
         res = self.http_post(url,params=data)
