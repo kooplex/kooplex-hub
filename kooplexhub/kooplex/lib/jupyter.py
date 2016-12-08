@@ -22,12 +22,13 @@ class Jupyter(RestClient):
         self.notebook = notebook
         # TODO: use external URL for debug but otherwise could just
         # switch to internal IP addresses and bypass the proxy
-        base_url = notebook.external_url
+        base_url = get_settings('session', 'base_url', None, '')
         RestClient.__init__(self, base_url=base_url)
 
     def http_prepare_url(self, path):
         print_debug(DEBUG,"")
-        url = LibBase.join_path(self.base_url, '/api')
+        url = LibBase.join_path(self.base_url, self.notebook.proxy_path)
+        url = LibBase.join_path(url, '/api')
         url = LibBase.join_path(url, path)
         return url
 
@@ -125,6 +126,7 @@ class Jupyter(RestClient):
 
         data = session.to_jupyter_dict()
         res = self.http_post('/sessions', data=data)
+        print(res)
         session = Session.from_jupyter_dict(self.notebook, res.json())
         session.notebook = self.notebook
         return session
