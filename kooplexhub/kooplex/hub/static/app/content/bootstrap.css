@@ -5641,7 +5641,9 @@ body.modal-open,
 .modal-dialog {
   z-index: 1050;
   width: auto;
-  padding: 10px;
+//  display: inline-block;
+  padding-top: 130px;
+//padding: 10px;
   margin-right: auto;
   margin-left: auto;
 }
