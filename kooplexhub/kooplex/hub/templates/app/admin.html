@@ -79,7 +79,27 @@
 
      {% for user in users %}
      <div style="margin: 10px;">
-       {{ user }}
+       
+       <div class="panel-group">
+        <div class="panel panel-default">
+         <div class="panel-heading">
+          <h4 class="panel-title">
+           <a data-toggle="collapse" href="#{{ user.id }}"> {{ user.username }}
+           - {{ user.id }} </a>
+          </h4>
+         </div>
+        <div id="{{ user.id }}" class="panel-collapse collapse">
+         <div class="panel-body">
+             {{ user }}
+         </div>
+         <div class="panel-footer">
+                <h4> Is admin: {{ user.is_admin }}</h4>
+              <h4> Last sign in: {{ user.last_sign_in_at }}</h4>
+         </div>
+        </div>
+       </div>
+      </div>
+
      </div>
      {% endfor %}
     </div>    
@@ -91,18 +111,32 @@
 
      {% for project in projects %}
      <div style="margin: 10px;">
-       {{ projects }}
-       <div> 
-       <h4> Project members: </h4>
-       {% for member in project.members %} 
-        <p>Name: {{ member.name }}, Id: {{ member.id }}, Access Level: {{ member.access }}  </p>
-       {% endfor %}
-       <h4> Membergroups </h4>
-       {% for group in project.shared_with_groups %} 
-        <p><strong>Name: {{ group.group_name }}, Id: {{ group.group_id }}, Access Level: {{ group.group_access_level }}
-              </strong></p>
-       {% endfor %}
+       
+       <div class="panel-group">
+        <div class="panel panel-default">
+         <div class="panel-heading">
+          <h4 class="panel-title">
+           <a data-toggle="collapse" href="#{{ project.id }}"> {{ project.name }} </a>
+          </h4>
+         </div>
+        <div id="{{ project.id }}" class="panel-collapse collapse">
+         <div class="panel-body">
+             {{ project }}        
+         </div>
+         <div class="panel-footer">
+                <h4> Project members: </h4>
+           {% for member in project.members %} 
+           <p>Name: {{ member.name }}, Id: {{ member.id }}, Access Level: {{ member.access }}  </p>
+           {% endfor %}
+              <h4> Membergroups </h4>
+           {% for group in project.shared_with_groups %} 
+           <p><strong>Name: {{ group.group_name }}, Id: {{ group.group_id }}, Access Level: {{ group.group_access_level }}
+               </strong></p>
+          {% endfor %}
+         </div>
+        </div>
        </div>
+      </div>
 
     </div>    
     {% endfor %}
@@ -114,13 +148,30 @@
 
      {% for group in groups %}
      <div style="margin: 10px;">
-       {{ group }}
-       <div> Group members:
-       {% for member in group.members %} 
-        <p>Name: {{ member.name }}, Id: {{ member.id }}, Access Level: {{ member.access }}  </p>
-       {% endfor %}
-     </div>
-    </div>    
+ 
+      <div class="panel-group">
+       <div class="panel panel-default">
+        <div class="panel-heading">
+          <h4 class="panel-title">
+           <a data-toggle="collapse" href="#{{ group.id }}"> {{ group.name }} - {{ group.id }} </a>
+          </h4>
+         </div>
+        <div id="{{ group.id }}" class="panel-collapse collapse">
+         <div class="panel-body">
+             {{ group }}
+         </div>
+         <div class="panel-footer">
+            <h4> Group members:: </h4>
+            {% for member in group.members %} 
+            <p>Name: {{ member.name }}, Id: {{ member.id }}, Access Level: {{ member.access }}  </p>
+            {% endfor %}
+         
+         </div>
+        </div>
+       </div>
+      </div>
+
+     </div>    
      {% endfor %}
    </div>
 

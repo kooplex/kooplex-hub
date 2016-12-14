@@ -129,7 +129,7 @@ def project_new(request):
     g.create_project_variable(project_id, 'notebook', 'True')
 
     #Create a README
-    g.create_project_readme(project_id,"README","proba","Created a default README")
+    g.create_project_readme(project_id,"README.md","* proba","Created a default README")
     if message_json == "":
         return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
     else:

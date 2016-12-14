@@ -48,7 +48,7 @@ class GitlabAdmin(Gitlab):
         # identity to point to LDAP
         return None
 
-    def get_allusers(self):
+    def get_all_users(self):
         print_debug("")
         res = self.http_get('api/v3/users')
         return res.json()
@@ -75,7 +75,7 @@ class GitlabAdmin(Gitlab):
     ###########################################################
     # Group management
         
-    def get_allgroups(self):
+    def get_all_groups(self):
         print_debug("")
         res = self.http_get('api/v3/groups')
         return res.json()
@@ -89,6 +89,14 @@ class GitlabAdmin(Gitlab):
     ###########################################################
     # Projects
 
+    def get_all_projects(self):
+        print_debug("")
+        res = self.http_get('api/v3/projects/all')
+        projects_json = res.json()
+        if 'message' in projects_json:
+            raise ValueError("MESSAGE: %s"%(projects_json['message']))
+        return projects_json
+        
     def get_all_public_projects(self, unforkable_projectids):
         print_debug("")
         res = self.http_get('api/v3/projects/all?visibility=public')

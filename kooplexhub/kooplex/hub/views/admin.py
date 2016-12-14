@@ -29,18 +29,19 @@ def admin_home(request):
     username = request.user.username
 
     users=[]
-    g = Gitlab(request)
-    projects, unforkable_projectids = g.get_projects()
+#    g = Gitlab(request)
+#    projects, unforkable_projectids = g.get_projects()
     gadmin = GitlabAdmin(request)
+    projects = gadmin.get_all_projects()
     isadmin = gadmin.check_useradmin(username)
-    users = gadmin.get_allusers()
+    users = gadmin.get_all_users()
     for project in projects:
         members = gadmin.get_project_members(project['id'])
         project['members'] = []
         for member in members:
             project['members'].append({'name':member['username'],'id':member['id'], 'access':ACCESS_LEVELS[member['access_level']]})
 
-    groups = gadmin.get_allgroups()    
+    groups = gadmin.get_all_groups()    
     
     for group in groups:
         print(group)
