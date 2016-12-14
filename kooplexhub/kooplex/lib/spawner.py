@@ -112,7 +112,7 @@ class Spawner(RestClient):
         binds = {}
         self.append_ldap_binds(binds, 'notebook')
         self.append_home_binds(binds, 'notebook')
-        self.append_ownclouddata_binds(binds, 'notebook')
+        #self.append_ownclouddata_binds(binds, 'notebook')
         self.append_init_binds(binds, 'notebook')
         # TODO: remove hardcoding!
         binds[LibBase.join_path(self.srv_path, 'notebook/etc/jupyter_notebook_config.py')] = {'bind': '/etc/jupyter_notebook_config.py', 'mode': 'rw' }
