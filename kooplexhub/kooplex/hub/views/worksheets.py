@@ -11,7 +11,6 @@ from kooplex.lib.gitlab import Gitlab
 from kooplex.lib.spawner import Spawner
 from kooplex.lib.dashboards import Dashboards
 from kooplex.lib.debug import *
-DEBUG = True
 
 
 def worksheets(request):

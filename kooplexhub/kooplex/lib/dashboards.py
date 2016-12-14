@@ -11,7 +11,6 @@ from kooplex.lib.gitlab import Gitlab
 
 from kooplex.lib.debug import *
 
-DEBUG = True
 
 
 class Dashboards(RestClient):
@@ -33,11 +32,11 @@ class Dashboards(RestClient):
         # HTTP request authentication
 
     def http_prepare_url(self, url):
-        print_debug(DEBUG,"")
+        print_debug("")
         return RestClient.join_path(Dashboards.base_url, url)
 
     def http_prepare_headers(self, headers):
-        print_debug(DEBUG,"")
+        print_debug("")
         headers = RestClient.http_prepare_headers(self, headers)
         token = Dashboards.DASHBOARD_SERVER_AUTH_TOKEN
         if token:

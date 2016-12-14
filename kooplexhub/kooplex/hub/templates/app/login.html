@@ -29,6 +29,7 @@
                     </div>
                 </div>
                 {% if form.errors %}
+                    {{ form.errors }}
                 <p class="validation-summary-errors">Please enter a correct user name and password.</p>
                 {% endif %}
             </form>

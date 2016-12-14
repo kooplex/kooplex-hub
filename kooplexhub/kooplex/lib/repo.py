@@ -4,7 +4,6 @@ import git
 from kooplex.lib.debug import *
 from kooplex.lib import LibBase, get_settings
 
-DEBUG = True
 
 
 class RepoException(Exception):
@@ -28,18 +27,18 @@ class Repo(LibBase):
         self.proto = proto # 'http|ssh'
 
     def get_gitlab_url(self):
-        print_debug(DEBUG,"")
+        print_debug("")
         url = LibBase.join_path(self.base_repourl, self.name + '.git')
         return url
 
     def get_gitlab_ssh(self):
-        print_debug(DEBUG,"")
+        print_debug("")
 
         ssh = 'ssh://git@%s:/%s.git' % (self.ssh_host, self.name)
         return ssh
 
     def get_gitlab_key(self):
-        print_debug(DEBUG,"")
+        print_debug("")
 
         home = self.user_home_dir.replace('{$username}', self.username)
         key = os.path.join(self.srv_dir, home)
@@ -47,7 +46,7 @@ class Repo(LibBase):
         return key
 
     def get_git_ssh_command(self):
-        print_debug(DEBUG,"")
+        print_debug("")
 
         key = self.get_gitlab_key()
         key = key.replace('\\', '/')
@@ -57,7 +56,7 @@ class Repo(LibBase):
         return cmd
 
     def get_remote_url(self):
-        print_debug(DEBUG,"")
+        print_debug("")
         if self.proto == 'http':
             return self.get_gitlab_url()
         elif self.proto == 'ssh':
@@ -66,7 +65,7 @@ class Repo(LibBase):
             raise NotImplementedError
 
     def get_local_dir(self):
-        print_debug(DEBUG,"")
+        print_debug("")
         home = self.user_home_dir.replace('{$username}', self.username)
         dir = LibBase.join_path(self.srv_dir, home)
         dir = LibBase.join_path(dir, 'projects')
@@ -75,32 +74,32 @@ class Repo(LibBase):
         return dir        
 
     def ensure_local_dir_empty(self):
-        print_debug(DEBUG,"")
+        print_debug("")
         dir = self.get_local_dir()
         LibBase.ensure_dir(dir)
         LibBase.clean_dir(dir)
 
     def is_local_existing(self):
-        print_debug(DEBUG,"")
+        print_debug("")
         dir = self.get_local_dir()
         path = os.path.join(dir, '.git')
         res = os.path.exists(path)
         return res
 
     def get_local(self):
-        print_debug(DEBUG,"")
+        print_debug("")
         dir = self.get_local_dir()
         repo = git.Repo(dir)
         return repo
 
     def init_local(self):
-        print_debug(DEBUG,"")
+        print_debug("")
         dir = self.get_local_dir()
         repo = git.Repo.init(dir)
         return repo
 
     def ensure_local(self):
-        print_debug(DEBUG,"")
+        print_debug("")
         dir = self.get_local_dir()
         LibBase.ensure_dir(dir)
         if not is_local_repo():
@@ -108,7 +107,7 @@ class Repo(LibBase):
             self.init_local_repo()
 
     def clone(self):
-        print_debug(DEBUG,"")
+        print_debug("")
         url = self.get_remote_url()
         dir = self.get_local_dir()
         cmd = self.get_git_ssh_command()
@@ -127,13 +126,13 @@ class Repo(LibBase):
         #    return repo
 
     def delete_local(self):
-        print_debug(DEBUG,"")
+        print_debug("")
         dir = self.get_local_dir()
         self.ensure_local_dir_empty()
         os.rmdir(dir)
 
     def commit_and_push_default(self, commit_message, email, project_owner, project_name):
-        print_debug(DEBUG,"")
+        print_debug("")
         dir = self.get_local_dir()
         dir = LibBase.join_path(dir, project_owner)
         dir = LibBase.join_path(dir, project_name)
@@ -156,7 +155,7 @@ class Repo(LibBase):
 
     def commit_and_push(self, commit_message, email, project_owner, project_name,
                         modified_file_list, deleted_file_list):
-        print_debug(DEBUG,"")
+        print_debug("")
         dir = self.get_local_dir()
         dir = LibBase.join_path(dir, project_owner)
         dir = LibBase.join_path(dir, project_name)
@@ -181,7 +180,7 @@ class Repo(LibBase):
             origin.push()
 
     def list_committable_files(self, project_owner, project_name):
-        print_debug(DEBUG,"")
+        print_debug("")
         dir = self.get_local_dir()
         dir = LibBase.join_path(dir, project_owner)
         dir = LibBase.join_path(dir, project_name)

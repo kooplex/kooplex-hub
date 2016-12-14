@@ -1,8 +1,20 @@
 import datetime as dt
 import inspect
+from django.conf import settings
 
-def print_debug(debug,msg):
-    if debug:
+def get_settings(block, value, override=None, default=None):
+    if override:
+        return override
+    else:
+        s = settings.KOOPLEX[block]
+        if s and value in s:
+            return s[value]
+        else:
+            return default
+
+
+def print_debug(msg=""):
+    if get_settings('debug', 'debug', None, ''):
         section = inspect.getouterframes(inspect.currentframe())[1].filename[:-3]
         subsection = inspect.getouterframes(inspect.currentframe())[1].frame.f_code.co_name
         now=dt.datetime.now()

@@ -3,7 +3,6 @@ from kooplex.lib import LibBase, get_settings
 from django.contrib.auth.models import User, Group
 from django.core.exceptions import ValidationError
 from kooplex.lib.debug import *
-DEBUG = True
 
 class LdapException(Exception):
     pass
@@ -11,7 +10,7 @@ class LdapException(Exception):
 class Ldap(LibBase):
     
     def __init__(self):
-        print_debug(DEBUG,"")
+        print_debug("")
         self.host = get_settings('ldap', 'host')
         self.port = get_settings('ldap', 'port', None, 389)
         self.base_dn = get_settings('ldap', 'base_dn')
@@ -22,7 +21,7 @@ class Ldap(LibBase):
         self.ldapconn = self.make_ldap_client()
 
     def make_ldap_client(self):
-        print_debug(DEBUG,"")
+        print_debug("")
         bind_dn = 'cn=%s,%s' % (self.bind_username, self.base_dn)
         ldapsrv = ldap3.Server(host=self.host, port=self.port)
         ldapcon = ldap3.Connection(ldapsrv, bind_dn, self.bind_password)
@@ -32,7 +31,7 @@ class Ldap(LibBase):
         return ldapcon
 
     def get_attribute(self, entry, attribute):
-        print_debug(DEBUG,"")
+        print_debug("")
         attrs = entry['attributes']
         if attribute in attrs:
             return attrs[attribute][0]
@@ -40,7 +39,7 @@ class Ldap(LibBase):
             return None
 
     def get_attribute_list(self, entry, attribute):
-        print_debug(DEBUG,"")
+        print_debug("")
         attrs = entry['attributes']
         if attribute in attrs:
             return attrs[attribute]
@@ -51,20 +50,20 @@ class Ldap(LibBase):
     # User manipulation
 
     def get_user_name(self, user):
-        print_debug(DEBUG,"")
+        print_debug("")
         if type(user) is str:
             return user
         else:
             return user.username
 
     def get_user_dn(self, user):
-        print_debug(DEBUG,"")
+        print_debug("")
         username = self.get_user_name(user)
         dn = 'uid=%s,ou=users,%s' % (username, self.base_dn)
         return dn
 
     def user_to_ldap(self, user):
-        print_debug(DEBUG,"")
+        print_debug("")
         dn = self.get_user_dn(user)
         object_class = [
             'top',
@@ -97,7 +96,7 @@ class Ldap(LibBase):
         return dn, object_class, attributes
 
     def validate_user(self,username,password):
-        print_debug(DEBUG,"")
+        print_debug("")
 
         bind_dn = 'uid=%s,ou=users,%s' % (username, self.base_dn)
         ldapsrv = ldap3.Server(host=self.host, port=self.port)
@@ -110,7 +109,7 @@ class Ldap(LibBase):
 
 
     def changepassword(self,user, oldpassword,newpassword):
-        print_debug(DEBUG,"")
+        print_debug("")
         self.validate_user(user.username, oldpassword)
         user=self.get_user(user)
         user.password = newpassword
@@ -119,7 +118,7 @@ class Ldap(LibBase):
         #user.save()
 
     def ldap_to_user(self, entry):
-        print_debug(DEBUG,"")
+        print_debug("")
         user = User(
             username=self.get_attribute(entry, 'uid'),
             first_name=self.get_attribute(entry, 'givenName'),
@@ -131,7 +130,7 @@ class Ldap(LibBase):
         return user
 
     def get_max_uid(self):
-        print_debug(DEBUG,"")
+        print_debug("")
         filter = '(objectClass=posixAccount)'
         attributes = ['uidNumber']
         self.ldapconn.search(
@@ -146,7 +145,7 @@ class Ldap(LibBase):
         return max(uids)
 
     def add_user(self, user):
-        print_debug(DEBUG,"")
+        print_debug("")
         if not hasattr(user, 'uid') or not user.uid:
             user.uid = self.get_max_gid() + 1
             user.gid = user.uid
@@ -158,7 +157,7 @@ class Ldap(LibBase):
         return user
 
     def ensure_user_added(self, user):
-        print_debug(DEBUG,"")
+        print_debug("")
         try:
             u = self.get_user(user)
         except LdapException:
@@ -166,7 +165,7 @@ class Ldap(LibBase):
         return u
 
     def get_user(self, user):
-        print_debug(DEBUG,"")
+        print_debug("")
         username = self.get_user_name(user)
         filter = '(&(objectClass=posixAccount)(uid=%s))' % username
         search_base = 'ou=users,%s' % self.base_dn
@@ -183,7 +182,7 @@ class Ldap(LibBase):
             return user
 
     def modify_user(self, user):
-        print_debug(DEBUG,"")
+        print_debug("")
         dn, _, attributes = self.user_to_ldap(user)
         changes = {}
         for key in attributes:
@@ -193,7 +192,7 @@ class Ldap(LibBase):
         return user
 
     def delete_user(self, user):
-        print_debug(DEBUG,"")
+        print_debug("")
         group = self.make_user_group(user)
         self.ensure_group_deleted(group)
         dn = self.get_user_dn(user)
@@ -201,7 +200,7 @@ class Ldap(LibBase):
             raise LdapException(self.ldapconn.last_error)
 
     def ensure_user_deleted(self, user):
-        print_debug(DEBUG,"")
+        print_debug("")
         try:
             self.delete_user(user)
         except LdapException:
@@ -211,14 +210,14 @@ class Ldap(LibBase):
     # Group manipulation
 
     def get_group_name(self, group):
-        print_debug(DEBUG,"")
+        print_debug("")
         if type(group) is str:
             return group
         else:
             return group.name
 
     def make_user_group(self, user):
-        print_debug(DEBUG,"")
+        print_debug("")
         """Creates posix group associated with the user, using same gid"""
         g = Group(name = user.username)
         if hasattr(user, 'gid'):
@@ -232,13 +231,13 @@ class Ldap(LibBase):
         return g
 
     def get_group_dn(self, group):
-        print_debug(DEBUG,"")
+        print_debug("")
         name = self.get_group_name(group)
         dn = 'cn=%s,ou=groups,%s' % (name, self.base_dn)
         return dn
 
     def group_to_ldap(self, group):
-        print_debug(DEBUG,"")
+        print_debug("")
         dn = self.get_group_dn(group)
         object_class = [
             'top',
@@ -253,7 +252,7 @@ class Ldap(LibBase):
         return dn, object_class, attributes
 
     def ldap_to_group(self, entry):
-        print_debug(DEBUG,"")
+        print_debug("")
         group = Group(
             name=self.get_attribute(entry, 'cn')
         )
@@ -262,7 +261,7 @@ class Ldap(LibBase):
         return group
 
     def get_max_gid(self):
-        print_debug(DEBUG,"")
+        print_debug("")
         filter = '(|(objectClass=posixAccount)(objectClass=posixGroup))'
         attributes = ['gidNumber']
         self.ldapconn.search(
@@ -277,7 +276,7 @@ class Ldap(LibBase):
         return max(gids)
 
     def add_group(self, group):
-        print_debug(DEBUG,"")
+        print_debug("")
         if not hasattr(group, 'gid') or not group.gid:
             group.gid = self.get_max_gid() + 1
         dn, object_class, attributes = self.group_to_ldap(group)
@@ -286,7 +285,7 @@ class Ldap(LibBase):
         return group
 
     def ensure_group_added(self, group):
-        print_debug(DEBUG,"")
+        print_debug("")
         try:
             u = self.get_group(group)
         except LdapException:
@@ -294,7 +293,7 @@ class Ldap(LibBase):
         return u
 
     def get_group(self, group):
-        print_debug(DEBUG,"")
+        print_debug("")
         name = self.get_group_name(group)
         filter = '(&(objectClass=posixGroup)(cn=%s))' % name
         search_base = 'ou=groups,%s' % self.base_dn
@@ -314,13 +313,13 @@ class Ldap(LibBase):
         pass
 
     def delete_group(self, group):
-        print_debug(DEBUG,"")
+        print_debug("")
         dn = self.get_group_dn(group)
         if not self.ldapconn.delete(dn):
             raise LdapException(self.ldapconn.last_error)
 
     def ensure_group_deleted(self, group):
-        print_debug(DEBUG,"")
+        print_debug("")
         try:
             self.delete_group(group)
         except LdapException:

@@ -4,9 +4,15 @@ from django.http import HttpRequest
 from django.template import RequestContext
 from datetime import datetime
 
+from kooplex.lib.gitlabadmin import GitlabAdmin
+
 def index(request):
     """Renders the home page."""
     assert isinstance(request, HttpRequest)
+    username = request.user.username
+    gadmin = GitlabAdmin(request)
+    print("U"+username)
+    isadmin = gadmin.check_useradmin(username)
     return render(
         request,
         'app/index.html',
@@ -14,6 +20,8 @@ def index(request):
         {
             'title':'Home Page',
             'year':datetime.now().year,
+            'username': username,
+            'admin': isadmin,
         })
     )
 

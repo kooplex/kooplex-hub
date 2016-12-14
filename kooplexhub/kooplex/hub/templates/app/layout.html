@@ -32,6 +32,9 @@
                     <li><a href="/owncloud" target="_blank">Files</a></li>
                     <li><a href="{% url 'about' %}">About</a></li>
                     <li><a href="{% url 'contact' %}">Contact</a></li>
+                    {% if admin %}
+                     <li><a href="{% url 'admin' %}">ADMIN</a></li>
+                    {% endif %}
                 </ul>
                 {% include 'app/loginpartial.html' %}
             </div>
