@@ -17,7 +17,7 @@ class Ldap(LibBase):
         self.bind_username = get_settings('ldap', 'bind_username')
         self.bind_password = get_settings('ldap', 'bind_password')
         self.user_home_dir = get_settings('users', 'home_dir')
-
+        print(self.bind_username,self.base_dn,self.host)
         self.ldapconn = self.make_ldap_client()
 
     def make_ldap_client(self):

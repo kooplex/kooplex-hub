@@ -86,9 +86,9 @@ class Spawner(RestClient):
 
     def append_ownclouddata_binds(self, binds, svc):
         print_debug("")
-        container_data_home = LibBase.join_path('/home', self.username + '/projects/' + 'data')
-        host_data_path = 'ownCloud/' + self.username + '/files'
-        binds[LibBase.join_path(self.srv_path, host_data_path)] = {'bind': container_data_home, 'mode': 'rw'}
+        #container_data_home = LibBase.join_path('/home', self.username + '/projects/' + 'data')
+        #host_data_path = 'ownCloud/' + self.username + '/files'
+        #binds[LibBase.join_path(self.srv_path, host_data_path)] = {'bind': container_data_home, 'mode': 'rw'}
 
     def append_init_binds(self, binds, svc):
         print_debug("")
@@ -112,7 +112,7 @@ class Spawner(RestClient):
         binds = {}
         self.append_ldap_binds(binds, 'notebook')
         self.append_home_binds(binds, 'notebook')
-        #self.append_ownclouddata_binds(binds, 'notebook')
+        self.append_ownclouddata_binds(binds, 'notebook')
         self.append_init_binds(binds, 'notebook')
         # TODO: remove hardcoding!
         binds[LibBase.join_path(self.srv_path, 'notebook/etc/jupyter_notebook_config.py')] = {'bind': '/etc/jupyter_notebook_config.py', 'mode': 'rw' }

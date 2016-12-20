@@ -91,6 +91,7 @@ class RestClient(LibBase):
                 if expect and res.status_code not in expect:
                     raise RestClientError(res.reason)
                 return res
+
         raise RestClientError(res.reason)
 
     def http_get(self, path, params=None, headers=None, expect=None):

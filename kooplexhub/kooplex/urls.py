@@ -13,9 +13,11 @@ from django.conf import settings
 
 import kooplex
 import kooplex.hub
-from kooplex.hub.forms import BootstrapAuthenticationForm
+from kooplex.hub.forms import BootstrapAuthenticationForm, BootstrapPasswordChangeForm
 from kooplex.hub.views import home
 from kooplex.hub.views import changepassword
+
+from django.contrib.auth.forms import PasswordChangeForm
 
 # Uncomment the next lines to enable the admin:
 # from django.conf.urls import include
@@ -36,6 +38,20 @@ urlpatterns = (
             }
         },
         name='login'),
+    url(r'^hub/chan/$',
+        django.contrib.auth.views.password_change,
+        {
+            'template_name': 'app/change-password.html',
+            'password_change_form': BootstrapPasswordChangeForm,
+            'post_change_redirect': '/hub',
+            'extra_context':
+            {
+                'title':'Change Password',
+                'year':datetime.now().year,
+                'next_page': '/hub',
+            }
+        },
+        name='chan'),
     url(r'^hub/logout$',
         django.contrib.auth.views.logout,
         {

@@ -9,25 +9,30 @@ from django.http import HttpRequest, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.core.exceptions import ValidationError
 from kooplex.lib.gitlabadmin import GitlabAdmin
+from kooplex.lib.debug import *
 
 
 HUB_URL = '/hub'
 
 
 def change_password(request):
+    print_debug("")
     """Renders the Change password page."""
     assert isinstance(request, HttpRequest)
+    user=request.user
     return render(
         request,
         'app/password-form.html',
         context_instance = RequestContext(request,
         {
             'title':'Change Password',
+            'user': user,
             'next_page': '/hub',
         })
     )
 
 def change_password_form(request):
+    print_debug("")
     """Checks password in ldap and changes it"""
     assert isinstance(request, HttpRequest)
     username = request.POST['username']
@@ -52,6 +57,7 @@ def change_password_form(request):
     return HttpResponseRedirect(HUB_URL)
 
 def change_password_form_ldap(request):
+    print_debug("")
     """Checks password in ldap and changes it"""
     assert isinstance(request, HttpRequest)
     username = request.POST['username']
@@ -82,7 +88,7 @@ def change_password_form_ldap(request):
 
 urlpatterns = [
     url(r'^$', change_password, name='changepassword'),
-    url(r'^/pform', change_password_form, name='pform'),
+    url(r'^/pform', change_password_form_ldap, name='pform'),
     #
 
 ]

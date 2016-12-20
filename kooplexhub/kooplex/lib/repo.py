@@ -165,14 +165,14 @@ class Repo(LibBase):
         if(len(modified_file_list) > 0):
             repo.index.add(modified_file_list)
         if(len(deleted_file_list) > 0):
-            print(deleted_file_list[0])
+            print("DEL",deleted_file_list[0])
             # TODO: the deleted file commit does not work
             #repo.git.checkout(deleted_file_list[0])
             #repo.git.checkout(".git/index")
-            #repo.index.remove(deleted_file_list)
+            repo.index.remove(deleted_file_list)
             #repo.git.checkout("--", deleted_file_list[0])
             #repo.index.checkout(deleted_file_list[0], force = True)
-            #repo.git.rm(deleted_file_list[0])
+            repo.git.rm(deleted_file_list[0])
         author = git.Actor(self.username, email)
         repo.index.commit(message=commit_message, author=author, committer=author)
         origin = repo.remote()
