@@ -53,7 +53,8 @@ def notebooks(request):
 
         print_debug("Rendering notebook page, project variables from gitlab")
         for project in projects:
-            variables=g.get_project_variables(project['id'])
+            variables = g.get_project_variables(project['id'])
+            project['commits'] =  g.get_repository_commits(project['id'])
             new_variables={}
             if 'message' not in variables:
                 for  var in variables:
@@ -315,6 +316,20 @@ def notebooks_pull_confirm(request):
     print_debug("Reverting project, Finished")
 
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
+    
+def notebooks_revert(request):
+    assert isinstance(request, HttpRequest)
+    print_debug("Reverting project,")
+    repo_name = request.GET['repo']
+    repo = Repo(request.user.username, repo_name)
+    print(repo_name)
+    # Popup ablak kell
+    repo.ensure_local_dir_empty()
+    repo.clone()
+    print_debug("Reverting project, Finished")
+
+    return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
+    
     
 def notebooks_change_image(request):
     assert isinstance(request, HttpRequest)

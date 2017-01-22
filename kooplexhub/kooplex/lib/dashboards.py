@@ -46,7 +46,7 @@ class Dashboards(RestClient):
         return headers
 
     def deploy_api(self,path,filename):
-        print_debug(DEBUG, "")
+        print_debug( "")
         url = "_api/notebooks/"
 #        url= ''
         url += "%s/" % path
@@ -65,7 +65,7 @@ class Dashboards(RestClient):
 #curl -X POST --header  "Authorization: notebook_to_dashboard_secret" "172.20.0.21:3000/_api/notebooks/dashboards/yyy"  -F file=@/srv/kooplex/compare/home/gitlabadmin/projects/gitlabadmin/readmes/index.ipynb
          
     def deploy(self,username, owner, project_name, file):
-        print_debug(DEBUG, "")
+        print_debug( "")
         from shutil import copyfile as cp
         from os import mkdir
         path = get_settings('dashboards', 'base_dir', None, '')
@@ -82,11 +82,11 @@ class Dashboards(RestClient):
         try:
           Err = cp(file,path)
         except  IOError: 
-          print_debug(DEBUG, "ERROR: file cannot be written to %s"%path)
+          print_debug( "ERROR: file cannot be written to %s"%path)
           #return Err         
          
     def delete(self,path):
-        print_debug(DEBUG, "")
+        print_debug( "")
         url = "_api/notebooks/"
         url += "%s/" % path
         res = self.http_delete(url, )
@@ -96,7 +96,7 @@ class Dashboards(RestClient):
         
         
     def clear_cached(self,path):
-        print_debug(DEBUG, "")
+        print_debug( "")
         url = "/_api/cache/"
         url += "%s/" % path
         res = self.http_delete(url, )

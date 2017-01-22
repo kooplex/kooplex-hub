@@ -1,4 +1,4 @@
-﻿import os
+import os
 import git
 
 from kooplex.lib.debug import *
@@ -211,3 +211,5 @@ class Repo(LibBase):
 #                            "m":modified_list,"u":untracted_list}
         committable_dict = {"d": deleted_list, "m": modified_list, "u": untracted_list}
         return committable_dict
+
+

@@ -247,3 +247,12 @@ class Gitlab(RestClient):
 
 
 
+
+    def get_repository_commits(self,project_id):
+        print_debug("")
+        url = "api/v3/projects/"
+        url += "%s/repository/commits"%str(project_id)
+        res = self.http_get(url)
+        if res.status_code != 404:
+            message = res.json()
+        return message

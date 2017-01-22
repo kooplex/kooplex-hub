@@ -15,7 +15,7 @@
             </a>
         {% endif %}
     </p>
-    <p>{{ item.description }}</p>
+    <p>{{ item.description }}</p>    
     </div>
     <div class="session-buttons">
     <!--<span class="readmore"><button>More</button></span>-->
@@ -26,7 +26,7 @@
             {% if not publicvar %}
         {% include 'app/notebooks-repo-pull-really.html' %}
 
-        <button type="button" class="btn btn-default" data-toggle="modal" data-target="#repo-pull-{{ item.name }}">Revert</button>
+
 
      <!-- <a href="{% url 'notebooks-pull-confirm' %}?project_id={{ item.id }}&project_owner={{ item.owner.username }}&project_name={{ item.name }}&repo={{ item.path_with_namespace }}{% if 'forked_from_project' in item %}&is_forked=True&project_id={{ item.id }}&target_id={{ item.forked_from_project.id }}{% else %}&is_forked=False{% endif %}">
         <span class="button pull">pull</span></a> -->
@@ -65,6 +65,18 @@
     {% endif %}
     </div>
     <div class="session-container">
+    
+     <div class="form-group">
+                        <label for="project.image">Revert your project</label><br>
+                        <select id="project.images" name="project.image">
+                            {% for commit in  item.commits   %}
+                            <option value="{{ commit.short_id }}">{{ commit.short_id }}
+                            {{ commit.author_name }} {{ commit.created_at }}  {{ commit.title }}  </option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="btn btn-default" data-toggle="modal" data-target="#repo-pull-{{ item.name }}">Revert</button>
+                    </div>
+
     image: <strong> 
     {% if 'container_image' in item.variables %}
         {{ item.variables.container_image }}

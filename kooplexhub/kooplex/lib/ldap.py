@@ -34,7 +34,10 @@ class Ldap(LibBase):
         print_debug("")
         attrs = entry['attributes']
         if attribute in attrs:
-            return attrs[attribute][0]
+            try:
+                return attrs[attribute][0]
+            except TypeError:
+                return attrs[attribute]
         else:
             return None
 
