@@ -1,4 +1,4 @@
-{% extends "app/layout.html" %}
+{% extends "app/index_layout.html" %}
 
 {% block content %}
 
@@ -9,35 +9,78 @@
 
 {% include 'app/notebooks-new-partial.html' %}
 
+
 <div class="row">
-    <div class="col-md-4">
-        <h2>Worksheets</h2>
+
+  <div class="col-md-3 col-sm-4 col-xs-6">
+    <div class="thumbnail">
+  <img
+    src="https://s-media-cache-ak0.pinimg.com/736x/8e/e8/c8/8ee8c89916b2f9d9348bdbd4dea9240a.jpg" style="height: 80px;padding-top:10px;"
+    alt="Worksheets" >
+      <div class="caption">
+        <h3> Worksheets</h3>
         <p>Run pre-compiled worksheets to hide program code and
         focus on the problem.</p>
         <p>Worksheets hide the complexity of notebooks from end users
         interested in scientific output.</p>
-        <p><a class="btn btn-default" href="{% url 'worksheets' %}">Browse worksheets &raquo;</a></p>
+        <p><a href="{% url 'worksheets' %}" class="btn btn-primary" role="button">
+          <span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span>  to worksheets</a>
+            </p>
+      </div>
     </div>
-    <div class="col-md-4">
-        <h2>Jupyter notebooks</h2>
-        <p>
-            Run existing Jupyter notebooks from existing projects to process your data
-            or author your own notebooks and share with others.
-        </p>
-        <p><a class="btn btn-default" href="{% url 'notebooks' %}">Browse notebooks &raquo;</a></p>
-        <p><button type="button" class="btn btn-default" data-toggle="modal" data-target="#notebooks-new">Start new notebook &raquo;</button></p>
+  </div>
+
+      <div class="col-md-3 col-sm-4 col-xs-6">
+    <div class="thumbnail">
+      <img src="https://jupyter.readthedocs.io/en/latest/_static/_images/jupyter.svg" style="height: 80px;padding-top:10px;" alt="Jupyter Notebook">
+      <div class="caption">
+        <h3> Jupyter notebooks</h3>
+        <p>Run existing Jupyter notebooks from existing projects to process your data
+            or author your own notebooks and share with others.</p>
+        <p><a href="{% url 'notebooks' %}" class="btn btn-primary" role="button"><span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span> Browse notebooks</a>
+            </p>
+      </div>
+    </div>
+  </div>
+
+        <div class="col-md-3 col-sm-4 col-xs-6">
+    <div class="thumbnail">
+      <img src="https://about.gitlab.com/images/logo.png" style="height: 80px;padding-top:10px;" alt="GitLab">
+      <div class="caption">
+        <h3> Gitlab</h3>
+        <p>Gitlab szoveg.</p>
+        <p><a href="/gitlab" target="_blank" class="btn btn-primary" role="button">
+        <span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span> to Gitlab</a>
+            </p>
+      </div>
+    </div>
+  </div>
+
+        <div class="col-md-3 col-sm-4 col-xs-6">
+    <div class="thumbnail">
+      <img src="https://doc.owncloud.org/server/8.0/admin_manual/_static/img/logo_owncloud.svg" style="height: 80px;padding-top:10px;background-color: #1d2d44;" alt="OwnCLoud Fileserver">
+      <div class="caption">
+        <h3> Owncloud</h3>
+        <p>Manage easily your data files through the owncloud... (just as easy as in Dropbox! :) )</p>
+        <p><a href="/owncloud" target="_blank" class="btn btn-primary" role="button">
+        <span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span> to Owncloud</a>
+            </p>
+      </div>
+    </div>
+  </div>
 
     </div>
-    <div class="col-md-4">
-        <h2>Are you a programmer?</h2>
-        <p>Start new projects, implement new notebooks and
-        create worksheets, or fork from other's work and continue in a different
-        direction.</p>
-        <p>A project system centred around python and gitlab allows you to share
-        your work and collaborate on problems with the whole community.</p>
-        <p><a class="btn btn-default" href="{{ base_url }}/gitlab">Browse projects &raquo;</a></p>
-        <p><a class="btn btn-default" href="{{ base_url }}/gitlab/projects/new">Start new project &raquo;</a></p>
+<div class="row">
+<footer class="bs-docs-footer" style="padding-top: 50px;padding-bottom: 50px;margin-top: 100px;color: #99979c;text-align: center;background-color: #2a2730;"> <div class="container"> 
+<ul class="bs-docs-footer-links"> 
+<li>  <a href="{% url 'about' %}">About</a></li>
+ <li> <a href="{% url 'contact' %}">Contact</a></li> 
+ </ul> 
+ <p>Designed and built with all the love in the world by the <b>Kooplex
+ Team</b>. We try to maintain it too! :)
+ </div> </footer>
+
+    
     </div>
-</div>
 
 {% endblock %}

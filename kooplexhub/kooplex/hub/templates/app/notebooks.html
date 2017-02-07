@@ -1,5 +1,6 @@
 {% extends "app/layout.html" %}
 
+
 {% block content %}
 
 <!-- <h2>Image creation</h2>-->
@@ -10,7 +11,17 @@
 <div class="new-project">
 {% include 'app/notebooks-new-partial.html' with myprojects=True %}
 <button type="button" class="btn btn-default" data-toggle="modal" data-target="#project-new">Start new project &raquo;</button>
+{%  if errors %}
+<script>
+$(document).ready(function () {
+
+    $('#project-new').modal('show');
+
+});
+</script>
+    {% endif %}
 </div>
+
 {% endif %}
 
 

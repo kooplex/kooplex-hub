@@ -165,19 +165,25 @@ class Repo(LibBase):
         if(len(modified_file_list) > 0):
             repo.index.add(modified_file_list)
         if(len(deleted_file_list) > 0):
-            print("DEL",deleted_file_list[0])
+            print("DEL",deleted_file_list)
+            repo.git.add(all=True)
+            
+            commit_message+=" Deleted: "
+            for f in deleted_file_list:
+                print(f)
+                #commit_message+=f.b_path+" "
             # TODO: the deleted file commit does not work
             #repo.git.checkout(deleted_file_list[0])
             #repo.git.checkout(".git/index")
-            repo.index.remove(deleted_file_list)
+#            repo.index.remove(deleted_file_list)
             #repo.git.checkout("--", deleted_file_list[0])
             #repo.index.checkout(deleted_file_list[0], force = True)
-            repo.git.rm(deleted_file_list[0])
+            #repo.git.rm(deleted_file_list[0])
         author = git.Actor(self.username, email)
         repo.index.commit(message=commit_message, author=author, committer=author)
         origin = repo.remote()
         with repo.git.custom_environment(GIT_SSH_COMMAND=cmd):
-            origin.push()
+            print(dir(origin.push()))
 
     def list_committable_files(self, project_owner, project_name):
         print_debug("")

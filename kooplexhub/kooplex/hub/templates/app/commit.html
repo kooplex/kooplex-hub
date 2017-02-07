@@ -16,13 +16,19 @@
                 </div>
                 <div class="form-group">
                     {% for item in committable_dict.d %}
-                        <input type="checkbox" value="deleted" name="{{ item }}"> {{ item }} (deleted)<br>
+                        <!-- <input type="checkbox" value="deleted" name="{{ item }}">
+                        -->
+                        {{ item }} (deleted)<br>
                     {% endfor %}
                     {% for item in committable_dict.m %}
-                        <input type="checkbox" value="modified" name="{{ item }}"> {{ item }} (modified)<br>
+                        <!-- <input type="checkbox" value="modified" name="{{ item }}">
+                        -->
+                        {{ item }} (modified)<br>
                     {% endfor %}
                     {% for item in committable_dict.u %}
-                        <input type="checkbox" value="untracted" name="{{ item }}"> {{ item }} (untracted/renamed/new)<br>
+                        <!-- <input type="checkbox" value="untracted" name="{{ item }}">
+                        -->
+                        {{ item }} (untracted/renamed/new)<br>
                     {% endfor %}
                 </div>
                 <div class="form-group">

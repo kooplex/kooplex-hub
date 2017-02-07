@@ -119,3 +119,9 @@ class GitlabAdmin(Gitlab):
         print_debug("")
         res = self.http_get('api/v3/projects/%s/members'%str(id))
         return res.json()
+        
+    def get_project_variables(self,project_id):
+        print_debug("")
+        res = self.http_get('api/v3/projects/%d/variables'%(project_id))
+        project_variables = res.json()
+        return project_variables

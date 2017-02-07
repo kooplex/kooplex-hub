@@ -1,11 +1,13 @@
 ﻿import os.path
+import re
 
 from django.conf.urls import patterns, url, include
 from django.shortcuts import render
-from django.http import HttpRequest, HttpResponseRedirect
+from django.http import HttpRequest, HttpResponseRedirect,HttpResponse
 from django.template import RequestContext
+from django.template.response import TemplateResponse
 from datetime import datetime
-
+import json
 
 from kooplex.lib.libbase import get_settings
 from kooplex.hub.models.notebook import Notebook
@@ -25,9 +27,10 @@ HUB_NOTEBOOKS_URL = '/hub/notebooks'
 
 from kooplex.lib.debug import *
 
-def notebooks(request):
+def notebooks(request,errors=[], ):
     """Renders the notebooks page"""
     print_debug("Rendering notebook page")
+
     assert isinstance(request, HttpRequest)
 
     username = request.user.username
@@ -66,6 +69,14 @@ def notebooks(request):
     print_debug("Rendering notebook page, unforkable project  from gitlab")
     gadmin = GitlabAdmin(request)
     public_projects = gadmin.get_all_public_projects(unforkable_projectids)
+    for project in public_projects:
+            variables = gadmin.get_project_variables(project['id'])
+            new_variables={}
+            if 'message' not in variables:
+                for  var in variables:
+                    new_variables[var['key']] = var['value']
+                project['variables']=new_variables
+
     print_debug("Rendering notebook page, images from docker")
 
     d = Docker()
@@ -83,6 +94,7 @@ def notebooks(request):
             'username': username,
             'notebook_dir_name': NOTEBOOK_DIR_NAME,
             'notebook_images' : notebook_images,
+            'errors' : errors,
         })
     )
 
@@ -111,6 +123,15 @@ def project_new(request):
     public = request.POST['project.public']
     description = request.POST['project.description']
     print_debug("Creating new project, create in gitlab")
+
+    unwanted_characters = re.compile('[a-z]([0-9]|[a-z]|-)*')
+    matchObj = unwanted_characters.match(project_name)
+    try:
+        if matchObj.end()!=len(project_name):
+            raise IndexError
+    except:
+        return notebooks(request,errors=['UseOnlyLowerLetters'])#,description=description)
+
 
     g = Gitlab(request)
     message_json = g.create_project(project_name,public,description)
@@ -304,6 +325,30 @@ def notebooks_deploy(request):
     res2 = d.deploy(username, project_owner, project_name, file)
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
+def notebooks_convert_html(request):
+    assert isinstance(request, HttpRequest)
+    print_debug("Deploying notebook,")
+    project_name = request.GET['project_name']
+    project_owner = request.GET['project_owner']
+    project_id = request.GET['project_id']
+    container_name = request.GET['container_name']
+    username = request.user.username
+    srv_dir = get_settings('users', 'srv_dir', None, '')
+    file = LibBase.join_path(srv_dir,'home')
+    file = LibBase.join_path(file,username)
+    file = LibBase.join_path(file,'projects')
+    file = LibBase.join_path(file, project_owner)
+    file = LibBase.join_path(file, project_name)
+    file = LibBase.join_path(file, 'index.ipynb')
+    print(file)
+    g=Gitlab(request)
+    g.create_project_variable(project_id, 'worksheet', ipynb)
+    g.create_project_variable(project_id, 'worksheet_picture', srv_dir+"/dashboards/hqdefault.jpg")
+
+    command=" jupyter-nbconvert --to html %s " %(ipynb)
+    exec_container(container, command)
+    return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
+
 def notebooks_pull_confirm(request):
     assert isinstance(request, HttpRequest)
     print_debug("Reverting project,")
@@ -389,8 +434,9 @@ def notebooks_commitform(request):
         deleted_file_list = deleted_files.split(',')
     next_page = HUB_NOTEBOOKS_URL
     repo = Repo(request.user.username, notebook_path_dir)
-    repo.commit_and_push(message, request.user.email, project_owner, project_name,
-                         modified_file_list, deleted_file_list)
+#    repo.commit_and_push(message, request.user.email, project_owner, project_name,
+#                         modified_file_list, deleted_file_list)
+    repo.commit_and_push_default(message, request.user.email, project_owner, project_name)
     if is_forked:
         project_id = request.POST['project_id']
         target_id = request.POST['target_id']
@@ -429,6 +475,7 @@ def notebooks_mergerequestform(request):
                     'error_message': message_json,
             })
         )
+        
 
 def notebooks_mergerequestlist(request):
     assert isinstance(request, HttpRequest)
