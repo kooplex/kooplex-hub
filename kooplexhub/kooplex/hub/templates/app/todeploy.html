@@ -1,0 +1,56 @@
+{% extends "app/layout.html" %}
+
+{% block content %}
+
+<h2>Convert notebooks to html</h2>
+<div class="row">
+    <div class="col-md-8">
+        <section id="toconvertForm">
+            <form action="{% url 'notebooks-convert-html' %}" method="post" class="form-horizontal" onsubmit="collectCheckedElements()">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="id_message" class="col-md-2 control-label">Description: </label>
+                    <div class="col-md-10">
+                        <input id="id_message" type="text" name="message"
+                        value="A great project">
+                    </div>
+                </div>
+                <div class="form-group">
+                    {% for item in ipynbs %}
+                        <input type="checkbox" value="toconvert" name="{{ item }}">{{ item }}<br>
+                    {% endfor %}
+                </div>
+                <div class="form-group">
+                    <div class="col-md-offset-2 col-md-10">
+                        <input type="hidden" name="project_owner" value="{{ project_owner }}" />
+                        <input type="hidden" name="project_name" value="{{ project_name }}" />
+                        <input type="hidden" name="project_id" value="{{ project_id }}" />
+                        <input type="hidden" name="notebook_path_dir" value="{{ notebook_path_dir }}" />
+                        <input type="submit" value="Convert to html" class="btn btn-default" />
+                    </div>
+                </div>
+            </form>
+        </section>
+    </div>
+</div>
+
+    <script>
+        function collectCheckedElements() {
+            var inputs = document.getElementsByTagName("input");
+            var toconvert_files = "'"
+            for (var i = 1; i < inputs.length; i++) {
+                if (inputs[i].type == "checkbox") {
+                    if (inputs[i].checked) {
+                            toconvert_files += inputs[i].name + ",";
+                    }
+                    
+                }
+            }
+            if(toconvert_files.length > 0) {
+                toconvert_files = toconvert_files.substring(0, toconvert_files.length - 1);
+            }
+            document.getElementsByName("toconvert_files")[0].value = toconvert_files;
+        }
+    </script>
+
+{% endblock %}
