@@ -130,7 +130,7 @@ def project_new(request):
         if matchObj.end()!=len(project_name):
             raise IndexError
     except:
-        return notebooks(request,errors=['UseOnlyLowerLetters'])#,description=description)
+        return notebooks(request,errors=['UseOnlyLowerLetters'])  #,description=description)
 
 
     g = Gitlab(request)
@@ -270,7 +270,7 @@ def notebooks_open(request):
         target_id = int(request.GET['target_id'])
         session = spawner.start_session(notebook_path, 'python3', repo_name, notebook.name, is_forked, project_id, target_id)
     else:
-        session = spawner.start_session(notebook_path, 'python3', repo_name, notebook.name)
+        session = spawner.start_session(notebook_path, 'python3', repo_name, notebook.name,project_id=project_id)
     url = session.external_url
     print_debug("Opening session, Finished")
     #return HttpResponseRedirect(url)
@@ -325,13 +325,12 @@ def notebooks_deploy(request):
     res2 = d.deploy(username, project_owner, project_name, file)
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
-def notebooks_convert_html(request):
+def notebooks_view_deploy(request):
     assert isinstance(request, HttpRequest)
     print_debug("Deploying notebook,")
     project_name = request.GET['project_name']
     project_owner = request.GET['project_owner']
     project_id = request.GET['project_id']
-    container_name = request.GET['container_name']
     username = request.user.username
     srv_dir = get_settings('users', 'srv_dir', None, '')
     file = LibBase.join_path(srv_dir,'home')
@@ -342,11 +341,72 @@ def notebooks_convert_html(request):
     file = LibBase.join_path(file, 'index.ipynb')
     print(file)
     g=Gitlab(request)
-    g.create_project_variable(project_id, 'worksheet', ipynb)
+    g.create_project_variable(project_id, 'worksheet', 'True')
     g.create_project_variable(project_id, 'worksheet_picture', srv_dir+"/dashboards/hqdefault.jpg")
+    d = Dashboards()
+    res2 = d.deploy(username, project_owner, project_name, file)
+    return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
-    command=" jupyter-nbconvert --to html %s " %(ipynb)
-    exec_container(container, command)
+def notebooks_prepare_to_convert_html(request):
+    assert isinstance(request, HttpRequest)
+    notebook_path = request.GET['notebook_path']
+    notebook_path = request.GET['notebook_path']
+    project_owner = request.GET['project_owner']
+    project_name = request.GET['project_name']
+    project_id = request.GET['project_id']
+    notebook_id = request.GET['notebook_id']
+    container_name = request.GET['container_name']
+    #SHOULD DO OTHERWAY!!!!
+    srv_dir=get_settings('users', 'srv_dir')
+    home_dir = get_settings('users', 'home_dir')
+    home_dir = home_dir.replace('{$username}', project_owner)
+    notebook_path_dir = LibBase.join_path(home_dir, notebook_path)
+    local_path_dir = LibBase.join_path(srv_dir, notebook_path_dir)
+
+    files = os.listdir(local_path_dir)
+    ipynbs=[]
+    for file in files:
+        if file[-5:]=="ipynb":
+            ipynbs.append(file)
+    return render(
+        request,
+        'app/todeploy.html',
+        context_instance=RequestContext(request,
+        {
+            'notebook_path_dir': notebook_path_dir,
+            'ipynbs': ipynbs,
+            'project_id': project_id,
+            'project_owner' : project_owner,
+            'project_name' : project_name,
+            'notebook_id' : notebook_id,
+        })
+    )
+
+def notebooks_convert_html(request):
+    assert isinstance(request, HttpRequest)
+    print_debug("Deploying notebook,")
+    project_name = request.POST['project_name']
+    project_owner = request.POST['project_owner']
+    username = request.user.username
+    project_id = request.POST['project_id']
+    notebook_path_dir = request.POST['notebook_path_dir']
+    #container_name = request.POST['container_name']
+    toconvert_files = request.POST['toconvert_files']
+    g=Gitlab(request)
+    notebook_id = request.POST['notebook_id']
+    notebook = Notebook.objects.filter(id=notebook_id)[0]
+    srv_dir=get_settings('users', 'srv_dir')
+    
+    docli = Docker()
+    for ipynb in [toconvert_files]:
+        file = ipynb[:-6]
+        command=" jupyter-nbconvert --to html /%s/%s " %(notebook_path_dir,ipynb)
+        docli.exec_container(notebook, command)
+        dashb = Dashboards()
+        dashb.deploy_html(username, project_owner, project_name, request.user.email, notebook_path_dir, file+".html")
+        g.create_project_variable(project_id, 'worksheet_%s'%file, file + ".html")
+        print(project_id, 'worksheet_%s'%file, file + ".html")
+        g.create_project_variable(project_id, 'picture_%s'%file, srv_dir + "/dashboards/stars.png")
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
 def notebooks_pull_confirm(request):
@@ -541,6 +601,9 @@ urlpatterns = [
     url(r'^/open$', notebooks_open, name = 'notebooks-open'),
     url(r'^/clone$', notebooks_clone, name = 'notebooks-clone'),
     url(r'^/deploy$', notebooks_deploy, name = 'notebooks-deploy'),
+    url(r'^/viewdeploy$', notebooks_view_deploy, name = 'notebooks-view-deploy'),
+    url(r'^/preparetoconverthtml$', notebooks_prepare_to_convert_html, name = 'notebooks-prepare-to-convert-html'),
+    url(r'^/converthtml$', notebooks_convert_html, name = 'notebooks-convert-html'),
     url(r'^/pull-confirm$', notebooks_pull_confirm, name = 'notebooks-pull-confirm'),
     url(r'^/change-image$', notebooks_change_image, name = 'notebooks-change-image'),
     url(r'^/delete-project$', project_delete, name = 'notebooks-delete-project'),

@@ -3,6 +3,10 @@
 {% block content %}
 
 <h2>Commit Changes</h2>
+    <p style="color: red;"><b>Only "Commit all" works for now!</b></p>
+    <p style="padding:20px;">All files in this project directory will be committed to the GitLab repository. In case you'll need a previous version of your project you will be able to revert it on the project panel.</pstyle>
+
+
 <div class="row">
     <div class="col-md-8">
         <section id="commitForm">
@@ -41,7 +45,11 @@
                         <input type="hidden" name="notebook_path_dir" value="{{ notebook_path_dir }}" />
                         <input type="hidden" name="modified_files" value="" />
                         <input type="hidden" name="deleted_files" value="" />
-                        <input type="submit" value="Commit and push" class="btn btn-default" />
+                        <input type="hidden" name="commitall" value="false" />
+                        <!--input type="submit" value="Commit and push" class="btn btn-default" /-->
+                        <a href="#" class="btn btn-default" role="button">
+            <span style="color: lightgray;"> Commit and push</span></a>
+                        <input type="submit" name="commitall" value="Commit All and push" class="btn btn-default" />
                     </div>
                 </div>
             </form>
@@ -53,28 +61,30 @@
         function collectCheckedElements() {
             var inputs = document.getElementsByTagName("input");
             var modified_files = "'";
-            var deleted_files = "'"
-            for (var i = 1; i < inputs.length; i++) {
-                if (inputs[i].type == "checkbox") {
-                    if (inputs[i].checked) {
-                        if(inputs[i].value == "deleted") {
-                            deleted_files += inputs[i].name + ",";
-                        } else {
-                            modified_files += inputs[i].name + ",";
+            var deleted_files = "'";
+            if (1==2) {
+                for (var i = 1; i < inputs.length; i++) {
+                    if (inputs[i].type == "checkbox") {
+                        if (inputs[i].checked) {
+                            if (inputs[i].value == "deleted") {
+                                deleted_files += inputs[i].name + ",";
+                            } else {
+                                modified_files += inputs[i].name + ",";
+                            }
+                            inputs[i].disabled = true;
                         }
-                        inputs[i].disabled = true;
                     }
                 }
+                if (modified_files.length > 0) {
+                    modified_files = modified_files.substring(0, modified_files.length - 1);
+                }
+                if (deleted_files.length > 0) {
+                    deleted_files = deleted_files.substring(0, deleted_files.length - 1);
+                }
+                modified_files += "'";
+                document.getElementsByName("modified_files")[0].value = modified_files;
+                document.getElementsByName("deleted_files")[0].value = deleted_files;
             }
-            if(modified_files.length > 0) {
-                modified_files = modified_files.substring(0, modified_files.length - 1);
-            }
-            if(deleted_files.length > 0) {
-                deleted_files = deleted_files.substring(0, deleted_files.length - 1);
-            }
-            modified_files += "'";
-            document.getElementsByName("modified_files")[0].value = modified_files;
-            document.getElementsByName("deleted_files")[0].value = deleted_files;
         }
     </script>
 

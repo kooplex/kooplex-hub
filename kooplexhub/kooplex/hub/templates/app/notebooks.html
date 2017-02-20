@@ -54,22 +54,25 @@ $(document).ready(function () {
     <div class="projects running-containers">
     <h2>My running containers</h2>
     {% for item in notebooks %}
+        <div class="row">
+            <div class="col-md-5 col-sm-4 col-xs-6">
+                <p><span  style="padding-right: 50px;"><b>{{ item.name }}</b></span>
+            </div>
+            <div class="col-md-4 col-sm-4 col-xs-6">
 
-    <p><span  style="padding-right: 50px;"><b>{{ item.name }}</b></span>
     {% if item.is_stopped %}
-            <a href="{% url 'container-start' %}?notebook_id={{ item.id }}&session_id={{ item.id }}"><span class="button start">
-            <img src="http://findicons.com/files/icons/811/developer_kit/128/play.png" width="21px">
-            Start</span></a>
+            <a href="{% url 'container-start' %}?notebook_id={{ item.id }}&session_id={{ item.id }}" class="btn btn-success" role="button">
+            <span class="glyphicon glyphicon-play" aria-hidden="true"></span> Start</a>
+
+
        {%  else %}
-            <a href="{% url 'container-stop' %}?notebook_id={{ item.id }}&session_id={{ item.id }}"><span class="button stop">
-            <img src="http://www.iconshock.com/img_jpg/PLASTICXP/general/jpg/128/stop_icon.jpg" width="21px"> Stop</span></a>
+        <a href="{% url 'container-stop' %}?notebook_id={{ item.id }}&session_id={{ item.id }}" class="btn btn-warning" role="button">
+            <span class="glyphicon glyphicon-stop" aria-hidden="true"></span> Stop</a>
        {% endif %}
 
-    <a href="{% url 'container-delete' %}?notebook_id={{ item.id }}&session_id={{ item.id }}">
-    <span class="button
-       delete" style="margin-right:15px;">
-       <img src="http://image.flaticon.com/icons/png/128/61/61391.png"
-       width="21px">Delete
+        <a href="{% url 'container-delete' %}?notebook_id={{ item.id }}&session_id={{ item.id }}" class="btn btn-danger" role="button">
+            <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Delete</a>
+
     {% comment %}
        {% if process %}
        <img
@@ -83,19 +86,34 @@ $(document).ready(function () {
        <b> Container is running </b>
    {% endif %}
    </p>
+        </div>
+
+        </div>
+
     {% for session in sessions %}
         {%  if session.container_name == item.name %}
             <div class="session running">
-                <p><span  style="padding-right: 50px;"><b>{{ session.notebook_path }}</b></span>
-                
+                 <div class="row">
+                    <div class="col-md-4 col-sm-4 col-xs-6">
+                        <p><span  style="padding-right: 50px;"><b>{{ session.notebook_path }}</b></span>
+                    </div>
+                    <div class="col-md-4 col-sm-4 col-xs-6">
                 {% if item.is_stopped %}
-                   <span class="button  stop">container stopped</span>
+                    <a href="#" class="btn btn-default" role="button">
+            <span class="glyphicon glyphicon-tree-conifer" aria-hidden="true"></span> Container stopped</a>
                 {% else %}
-                  <a href="{{ session.external_url }}" target="_blank"><span class="button open"><img src="http://findicons.com/files/icons/1938/xp_icandy_1/128/open_folder_yellow.png"
-                  width="21px">Open</span></a>
+                     <a href="{{ session.external_url }}" target="_blank" class="btn btn-info" role="button">
+            <span class="glyphicon glyphicon-record" aria-hidden="true"></span> Open</a>
+
                 {% endif %}
                 </p>
-                
+                    </div>
+                 <div class="col-md-3 col-sm-6 col-xs-6">
+        <a role="button" href="{% url 'notebooks-prepare-to-convert-html' %}?notebook_path={{ session.notebook_path }}&notebook_id={{ item.id }}&project_owner={{ item.project_owner }}&project_name={{ item.project_name }}&project_id={{ session.project_id  }}&container_name={{ session.container_name }}">
+          <button role="button" type="button" class="btn btn-default">Deploy</button></a>
+        </div>
+                    </div>
+
             {% comment %}
 TODO: This will be moved (commit, merge request) to project-partial.html
     {% if notebook_dir_name in item.notebook_path %}

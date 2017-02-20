@@ -26,29 +26,19 @@
             {% if not publicvar %}
         {% include 'app/notebooks-repo-pull-really.html' %}
 
+       <a role="button" href="{% url 'notebooks-open' %}?project_id={{ item.id }}&project_owner={{ item.owner.username }}&project_name={{ item.name }}&repo={{ item.path_with_namespace }}{% if 'forked_from_project' in item %}&is_forked=True&project_id={{ item.id }}&target_id={{ item.forked_from_project.id }}{% else%}&is_forked=False{% endif %}">
+          <button role="button" type="button" class="btn btn-default" >Start</button></a>
+       <a role="button" href="{% url 'notebooks-commit' %}?project_owner={{ item.owner.username }}&project_name={{ item.name }}&notebook_path_dir={{ item.notebook_path }}&is_forked={{ item.is_forked }}">
+          <button role="button" type="button" class="btn btn-default">Commit</button></a>
 
-
-     <!-- <a href="{% url 'notebooks-pull-confirm' %}?project_id={{ item.id }}&project_owner={{ item.owner.username }}&project_name={{ item.name }}&repo={{ item.path_with_namespace }}{% if 'forked_from_project' in item %}&is_forked=True&project_id={{ item.id }}&target_id={{ item.forked_from_project.id }}{% else %}&is_forked=False{% endif %}">
-        <span class="button pull">pull</span></a> -->
-        
-    <!--<a href="{% url 'notebooks-open' %}?project_id={{ item.id }}&project_owner={{ item.owner.username }}&project_name={{ item.name }}&repo={{ item.path_with_namespace }}{% if 'forked_from_project' in item %}&is_forked=True&project_id={{ item.id }}&target_id={{ item.forked_from_project.id }}{% else %}&is_forked=False{% endif %}">
-        <span class="button start">Start</span></a>
-    -->
-                <a role="button" href="{% url 'notebooks-open' %}?project_id={{ item.id }}&project_owner={{ item.owner.username }}&project_name={{ item.name }}&repo={{ item.path_with_namespace }}{% if 'forked_from_project' in item %}&is_forked=True&project_id={{ item.id }}&target_id={{ item.forked_from_project.id }}{% else %}&is_forked=False{% endif %}">
-                    <button role="button" type="button" class="btn btn-default" >Start</button></a>
-
-    <a href="{% url 'notebooks-commit' %}?project_owner={{ item.owner.username }}&project_name={{ item.name }}&notebook_path_dir={{ item.notebook_path }}&is_forked={{ item.is_forked }}" target="_blank">
-        <span class="button commit">Commit</span></a>
-   <a href="{% url 'notebooks-deploy' %}?project_owner={{ item.owner.username }}&project_name={{ item.name }}&project_id={{ item.id }}">
-        <span class="button commit">Deploy</span></a>
     {% endif %}
     {% comment %}
     {% endif %}
     {% endcomment %}
 
     {% if 'worksheet' in item.variables %}
-     <a><span class="button view">view</span></a>
-
+     <a role="button" href="{% url 'notebooks-view-deploy' %}?project_owner={{ item.owner.username }}&project_name={{ item.name }}&project_id={{ item.id}}">
+          <button role="button" type="button" class="btn btn-default">View deployed</button></a>
     {% endif %}
 
     <!-- | view in <a href="{{ base_url }}/gitlab/{{ item.path_with_namespace }}" target="_blank">Gitlab</a> -->
@@ -68,7 +58,7 @@
     {% endif %}
     </div>
     <div class="session-container">
-    
+    {%  if not publicvar %}
      <div class="form-group">
                         <label for="project.image">Revert your project</label><br>
                         <select id="project.images" name="project.image">
@@ -79,6 +69,7 @@
                         </select>
                         <button type="button" class="btn btn-default" data-toggle="modal" data-target="#repo-pull-{{ item.name }}">Revert</button>
                     </div>
+    {% endif %}
 
     image: <strong> 
     {% if 'container_image' in item.variables %}

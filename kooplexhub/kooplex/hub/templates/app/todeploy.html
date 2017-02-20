@@ -26,6 +26,8 @@
                         <input type="hidden" name="project_name" value="{{ project_name }}" />
                         <input type="hidden" name="project_id" value="{{ project_id }}" />
                         <input type="hidden" name="notebook_path_dir" value="{{ notebook_path_dir }}" />
+                        <input type="hidden" name="notebook_id" value="{{ notebook_id }}" />
+                        <input type="hidden" name="toconvert_files" value="" />
                         <input type="submit" value="Convert to html" class="btn btn-default" />
                     </div>
                 </div>
@@ -47,7 +49,7 @@
                 }
             }
             if(toconvert_files.length > 0) {
-                toconvert_files = toconvert_files.substring(0, toconvert_files.length - 1);
+                toconvert_files = toconvert_files.substring(1, toconvert_files.length - 1);
             }
             document.getElementsByName("toconvert_files")[0].value = toconvert_files;
         }

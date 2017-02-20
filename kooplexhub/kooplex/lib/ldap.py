@@ -117,7 +117,6 @@ class Ldap(LibBase):
         user=self.get_user(user)
         user.password = newpassword
         user = self.modify_user(user)
-        print(user)
         #user.save()
 
     def ldap_to_user(self, entry):

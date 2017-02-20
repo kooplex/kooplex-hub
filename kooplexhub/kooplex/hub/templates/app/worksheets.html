@@ -28,8 +28,9 @@
     <h2>Public worksheets</h2>
     {% for item in dashboards %}
      <div class="projects worksheet">
-     <a href="{% url 'worksheet-open' %}?project_owner={{ item.owner  }}&project_name={{ item.name  }}" target="_blank">
-     <img src="{{ dashboard_url }}/dashboards/hqdefault.jpg" width="300px">
+<!--     <a href="{% url 'worksheet-open' %}?project_owner={{ item.owner  }}&project_name={{ item.name  }}" target="_blank">     -->
+       <a href="{% url 'worksheet-open' %}?project_owner={{ item.owner }}&project_name={{ item.name  }}&project_id={{ item.project_id }}&file={{ item.file }}" target="_blank">
+     <img src="{{ item.picture }}" width="300px">
  <p><span  style="padding-right: 50px;"><b>{{ item.owner }}</b> - <b>{{ item.name  }}</b></span></a>
      </p>
      <p> {{ item.description }} </p>

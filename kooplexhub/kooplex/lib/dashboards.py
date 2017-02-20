@@ -1,4 +1,4 @@
-import json
+import json, os
 import requests
 from django.conf import settings
 from threadlocals.threadlocals import get_current_request
@@ -8,9 +8,12 @@ from kooplex.lib.libbase import LibBase
 from kooplex.lib.restclient import RestClient
 from kooplex.lib.libbase import get_settings
 from kooplex.lib.gitlab import Gitlab
+from kooplex.lib.gitlabadmin import GitlabAdmin
+from kooplex.lib.repo import Repo
 
 from kooplex.lib.debug import *
-
+from html.parser import HTMLParser
+import base64
 
 
 class Dashboards(RestClient):
@@ -142,4 +145,64 @@ class Dashboards(RestClient):
        except:
         pass
       return list_of_existing_dashboards
-      
+
+    def list_dashboards_html(self, request):
+          # Check whether we acces to it ?
+          dashboards_dir = get_settings('dashboards', 'base_dir', None, '')
+          # Get all projects, check for worksheetness
+          gadmin = GitlabAdmin(request)
+          projects = gadmin.get_all_projects()
+          list_of_dashboards = []
+          for project in projects:
+              variables = gadmin.get_project_variables(project['id'])
+              for var in variables:
+                  if var['key'].rfind('worksheet_')>-1:
+                      file = var['value']
+                      file_vmi = gadmin.get_file(project['id'], file)
+                      html_content = base64.b64decode(file_vmi['content'])
+                      first_image = Find_first_img_inhtml(html_content.decode('ascii'))
+                      list_of_dashboards.append({'owner': project['owner']['username'], 'name': project['name'], \
+                                             'description': project['description'], 'picture': first_image,'file':file,
+                                             'project_id':project['id']})
+
+          return list_of_dashboards
+
+    def deploy_html(self, username, owner, project_name, email, notebook_path_dir, file):
+        print_debug("")
+        from shutil import copyfile as cp
+        from os import mkdir
+        path = get_settings('dashboards', 'base_dir', None, '')
+        srv_dir = get_settings('users', 'srv_dir')
+        for det in [username, owner, project_name]:
+            path = LibBase.join_path(path, det)
+            try:
+                mkdir(path)
+            except FileExistsError:
+                pass
+
+        repo = Repo(username, owner + "/" + project_name)
+        repo.commit_and_push(" %s as worksheet uploaded"%file, email, owner, project_name,[file],[])
+        fromfile = LibBase.join_path(srv_dir, notebook_path_dir)
+        fromfile = LibBase.join_path(fromfile, file)
+        tofile = LibBase.join_path(path, file)
+        print(file, fromfile, tofile)
+        try:
+            Err = cp(fromfile, tofile)
+        except  IOError:
+            print_debug("ERROR: file cannot be written to %s" % tofile)
+            # return Err
+
+
+def Find_first_img_inhtml(content):
+        class MyHTMLParser(HTMLParser):
+            def handle_starttag(self, tag, attrs):
+                if tag == "img":
+                    raise Exception('img', attrs[0][1])
+
+        parser = MyHTMLParser()
+        try:
+            parser.feed(content)
+        except Exception as inst:
+            return(inst.args[1])
+
+

@@ -82,6 +82,7 @@ class Repo(LibBase):
     def is_local_existing(self):
         print_debug("")
         dir = self.get_local_dir()
+        print("TTT2", dir)
         path = os.path.join(dir, '.git')
         res = os.path.exists(path)
         return res
@@ -110,6 +111,7 @@ class Repo(LibBase):
         print_debug("")
         url = self.get_remote_url()
         dir = self.get_local_dir()
+        print("TTT",dir)
         cmd = self.get_git_ssh_command()
         repo = git.Repo.clone_from(url, dir, env=dict(GIT_SSH_COMMAND=cmd))
         
@@ -134,6 +136,7 @@ class Repo(LibBase):
     def commit_and_push_default(self, commit_message, email, project_owner, project_name):
         print_debug("")
         dir = self.get_local_dir()
+        print(dir)
         dir = LibBase.join_path(dir, project_owner)
         dir = LibBase.join_path(dir, project_name)
         dir = dir.replace('/', os.path.sep)
@@ -157,20 +160,20 @@ class Repo(LibBase):
                         modified_file_list, deleted_file_list):
         print_debug("")
         dir = self.get_local_dir()
-        dir = LibBase.join_path(dir, project_owner)
-        dir = LibBase.join_path(dir, project_name)
-        dir = dir.replace('/', os.path.sep)
+        #print(dir)
+        #dir = LibBase.join_path(dir, project_owner)
+        #dir = LibBase.join_path(dir, project_name)
+        #dir = dir.replace('/', os.path.sep)
         cmd = self.get_git_ssh_command()
         repo = git.Repo(dir)
         if(len(modified_file_list) > 0):
             repo.index.add(modified_file_list)
         if(len(deleted_file_list) > 0):
-            print("DEL",deleted_file_list)
             repo.git.add(all=True)
             
             commit_message+=" Deleted: "
-            for f in deleted_file_list:
-                print(f)
+            #for f in deleted_file_list:
+
                 #commit_message+=f.b_path+" "
             # TODO: the deleted file commit does not work
             #repo.git.checkout(deleted_file_list[0])
@@ -183,7 +186,7 @@ class Repo(LibBase):
         repo.index.commit(message=commit_message, author=author, committer=author)
         origin = repo.remote()
         with repo.git.custom_environment(GIT_SSH_COMMAND=cmd):
-            print(dir(origin.push()))
+            origin.push()
 
     def list_committable_files(self, project_owner, project_name):
         print_debug("")

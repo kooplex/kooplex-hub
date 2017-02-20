@@ -11,7 +11,7 @@ def index(request):
     assert isinstance(request, HttpRequest)
     username = request.user.username
     gadmin = GitlabAdmin(request)
-    print("U"+username)
+
     isadmin = False
     if username:
         isadmin = gadmin.check_useradmin(username)

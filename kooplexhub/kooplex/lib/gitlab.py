@@ -1,4 +1,5 @@
 ﻿import json
+import base64
 import requests
 from django.conf import settings
 from threadlocals.threadlocals import get_current_request
@@ -67,7 +68,6 @@ class Gitlab(RestClient):
     def authenticate(self, username=None, password=None):
         print_debug("")
         res = self.http_post("api/v3/session", params={'login': username, 'password': password})
-        print(res.json())
         if res.status_code == 201:
             u = res.json()
             return res, u
@@ -129,6 +129,12 @@ class Gitlab(RestClient):
           return variable['value']
         else:
           return None
+
+    def get_file(self,project_id,file):
+        print_debug("")
+        res = self.http_get('api/v3/projects/%s/repository/files?file_path=%s&ref=master'%(project_id,file))
+        return res.json()
+
 
     def fork_project(self, itemid):
         print_debug("")
