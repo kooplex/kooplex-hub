@@ -31,7 +31,6 @@ def worksheets(request):
     dashboard_url="http://polc.elte.hu:3000"
     D = Dashboards()
     list_of_dashboards = D.list_dashboards_html(request)
-    print(list_of_dashboards)
  #   list_of_dashboards  = [{'path':'user/project_owner/project_name'},{'path':'user2/project_owner/project_name'}]
     return render(
         request,

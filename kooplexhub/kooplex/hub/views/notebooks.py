@@ -320,7 +320,6 @@ def notebooks_deploy(request):
     print(file)
     g=Gitlab(request)
     g.create_project_variable(project_id, 'worksheet', 'True')
-    g.create_project_variable(project_id, 'worksheet_picture', srv_dir+"/dashboards/hqdefault.jpg")
     d = Dashboards()
     res2 = d.deploy(username, project_owner, project_name, file)
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
@@ -342,7 +341,6 @@ def notebooks_view_deploy(request):
     print(file)
     g=Gitlab(request)
     g.create_project_variable(project_id, 'worksheet', 'True')
-    g.create_project_variable(project_id, 'worksheet_picture', srv_dir+"/dashboards/hqdefault.jpg")
     d = Dashboards()
     res2 = d.deploy(username, project_owner, project_name, file)
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
@@ -406,7 +404,6 @@ def notebooks_convert_html(request):
         dashb.deploy_html(username, project_owner, project_name, request.user.email, notebook_path_dir, file+".html")
         g.create_project_variable(project_id, 'worksheet_%s'%file, file + ".html")
         print(project_id, 'worksheet_%s'%file, file + ".html")
-        g.create_project_variable(project_id, 'picture_%s'%file, srv_dir + "/dashboards/stars.png")
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
 def notebooks_pull_confirm(request):

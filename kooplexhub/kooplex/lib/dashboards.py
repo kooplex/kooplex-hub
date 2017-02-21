@@ -156,11 +156,11 @@ class Dashboards(RestClient):
           for project in projects:
               variables = gadmin.get_project_variables(project['id'])
               for var in variables:
-                  if var['key'].rfind('worksheet_')>-1:
+                  if var['key'].rfind('worksheet_')>-1 and var['value'].rfind('html')>-1:
                       file = var['value']
                       file_vmi = gadmin.get_file(project['id'], file)
                       html_content = base64.b64decode(file_vmi['content'])
-                      first_image = Find_first_img_inhtml(html_content.decode('ascii'))
+                      first_image = Find_first_img_inhtml(html_content.decode('utf-8'))
                       list_of_dashboards.append({'owner': project['owner']['username'], 'name': project['name'], \
                                              'description': project['description'], 'picture': first_image,'file':file,
                                              'project_id':project['id']})
