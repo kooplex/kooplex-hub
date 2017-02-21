@@ -15,6 +15,7 @@ from kooplex.lib.debug import *
 from html.parser import HTMLParser
 import base64
 
+DEBUG_LOCAL=True
 
 class Dashboards(RestClient):
     """description of class"""
@@ -35,11 +36,11 @@ class Dashboards(RestClient):
         # HTTP request authentication
 
     def http_prepare_url(self, url):
-        print_debug("")
+        print_debug("",DEBUG_LOCAL)
         return RestClient.join_path(Dashboards.base_url, url)
 
     def http_prepare_headers(self, headers):
-        print_debug("")
+        print_debug("",DEBUG_LOCAL)
         headers = RestClient.http_prepare_headers(self, headers)
         token = Dashboards.DASHBOARD_SERVER_AUTH_TOKEN
         if token:
@@ -49,7 +50,7 @@ class Dashboards(RestClient):
         return headers
 
     def deploy_api(self,path,filename):
-        print_debug( "")
+        print_debug("", DEBUG_LOCAL)
         url = "_api/notebooks/"
 #        url= ''
         url += "%s/" % path
@@ -68,7 +69,7 @@ class Dashboards(RestClient):
 #curl -X POST --header  "Authorization: notebook_to_dashboard_secret" "172.20.0.21:3000/_api/notebooks/dashboards/yyy"  -F file=@/srv/kooplex/compare/home/gitlabadmin/projects/gitlabadmin/readmes/index.ipynb
          
     def deploy(self,username, owner, project_name, file):
-        print_debug( "")
+        print_debug("", DEBUG_LOCAL)
         from shutil import copyfile as cp
         from os import mkdir
         path = get_settings('dashboards', 'base_dir', None, '')
@@ -89,7 +90,7 @@ class Dashboards(RestClient):
           #return Err         
          
     def delete(self,path):
-        print_debug( "")
+        print_debug("", DEBUG_LOCAL)
         url = "_api/notebooks/"
         url += "%s/" % path
         res = self.http_delete(url, )
@@ -99,7 +100,7 @@ class Dashboards(RestClient):
         
         
     def clear_cached(self,path):
-        print_debug( "")
+        print_debug("", DEBUG_LOCAL)
         url = "/_api/cache/"
         url += "%s/" % path
         res = self.http_delete(url, )
@@ -168,7 +169,7 @@ class Dashboards(RestClient):
           return list_of_dashboards
 
     def deploy_html(self, username, owner, project_name, email, notebook_path_dir, file):
-        print_debug("")
+        print_debug("",DEBUG_LOCAL)
         from shutil import copyfile as cp
         from os import mkdir
         path = get_settings('dashboards', 'base_dir', None, '')
