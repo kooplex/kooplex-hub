@@ -9,6 +9,8 @@ from kooplex.lib.libbase import get_settings
 from kooplex.lib.debug import *
 from django.core.exceptions import ValidationError
 
+DEBUG_LOCAL=False
+
 class GitlabAdmin(Gitlab):
 
     ADMIN_USERNAME = get_settings('gitlab', 'admin_username', None, None)
@@ -16,7 +18,7 @@ class GitlabAdmin(Gitlab):
     ADMIN_PRIVATE_TOKEN = None
 
     def http_prepare_headers(self, headers):
-        print_debug("")
+        print_debug("",DEBUG_LOCAL)
         headers = RestClient.http_prepare_headers(self, headers)
         token = self.get_admin_private_token()
         if token:
@@ -24,14 +26,14 @@ class GitlabAdmin(Gitlab):
         return headers
 
     def authenticate_admin(self):
-        print_debug("")
+        print_debug("",DEBUG_LOCAL)
         res, user = self.authenticate(GitlabAdmin.ADMIN_USERNAME, GitlabAdmin.ADMIN_PASSWORD)
         if user is not None:
             GitlabAdmin.ADMIN_PRIVATE_TOKEN = user[Gitlab.URL_PRIVATE_TOKEN_KEY]
         return res, user
 
     def get_admin_private_token(self):
-        print_debug("")
+        print_debug("",DEBUG_LOCAL)
         if GitlabAdmin.ADMIN_PRIVATE_TOKEN is None:
             # the following is needed to avoid infinite calls of the method http_prepare_headers
             # by the method self.authenticate:
@@ -43,25 +45,25 @@ class GitlabAdmin(Gitlab):
     # User management
 
     def create_user(self, user):
-        print_debug("")
+        print_debug("",DEBUG_LOCAL)
         # TODO: create external user in gitlab via REST API and set
         # identity to point to LDAP
         return None
 
     def get_all_users(self):
-        print_debug("")
+        print_debug("",DEBUG_LOCAL)
         res = self.http_get('api/v3/users')
         return res.json()
 
     def check_useradmin(self,username):
-        print_debug("")
+        print_debug("",DEBUG_LOCAL)
         res = self.http_get('api/v3/users?username=%s'%username)
 #        res = self.http_get('api/v3/users?search=%s'%username)
         user = res.json()
         return user[0]['is_admin']
 
     def modify_user(self, userid, property, value):
-        print_debug("")
+        print_debug("",DEBUG_LOCAL)
         url = "api/v3/users/%s" % str(userid)
         data = {property:value}
         res = self.http_put(url, params=data)
@@ -76,12 +78,12 @@ class GitlabAdmin(Gitlab):
     # Group management
         
     def get_all_groups(self):
-        print_debug("")
+        print_debug("",DEBUG_LOCAL)
         res = self.http_get('api/v3/groups')
         return res.json()
         
     def get_group_members(self,id):
-        print_debug("")
+        print_debug("",DEBUG_LOCAL)
         res = self.http_get('api/v3/groups/%s/members'%str(id))
         return res.json()
 
@@ -90,7 +92,7 @@ class GitlabAdmin(Gitlab):
     # Projects
 
     def get_all_projects(self):
-        print_debug("")
+        print_debug("",DEBUG_LOCAL)
         res = self.http_get('api/v3/projects/all')
         projects_json = res.json()
         if 'message' in projects_json:
@@ -98,7 +100,7 @@ class GitlabAdmin(Gitlab):
         return projects_json
         
     def get_all_public_projects(self, unforkable_projectids):
-        print_debug("")
+        print_debug("",DEBUG_LOCAL)
         res = self.http_get('api/v3/projects/all?visibility=public')
         public_projects_json = res.json()
         if 'message' in public_projects_json:
@@ -107,7 +109,7 @@ class GitlabAdmin(Gitlab):
         return public_projects_json
 
     def identify_unforkable_projects(self, public_projects_json, unforkable_projectids):
-        print_debug("")
+        print_debug("",DEBUG_LOCAL)
         for project in public_projects_json:
             if project['id'] in unforkable_projectids:
                 project['forkable'] = False
@@ -116,12 +118,12 @@ class GitlabAdmin(Gitlab):
         return public_projects_json
         
     def get_project_members(self,id):
-        print_debug("")
+        print_debug("",DEBUG_LOCAL)
         res = self.http_get('api/v3/projects/%s/members'%str(id))
         return res.json()
         
     def get_project_variables(self,project_id):
-        print_debug("")
+        print_debug("",DEBUG_LOCAL)
         res = self.http_get('api/v3/projects/%d/variables'%(project_id))
         project_variables = res.json()
         return project_variables

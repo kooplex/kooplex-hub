@@ -13,8 +13,8 @@ def get_settings(block, value, override=None, default=None):
             return default
 
 
-def print_debug(msg=""):
-    if get_settings('debug', 'debug', None, ''):
+def print_debug(msg="",debug_local=True):
+    if get_settings('debug', 'debug', None, '') and debug_local:
         section = inspect.getouterframes(inspect.currentframe())[1].filename[:-3]
         subsection = inspect.getouterframes(inspect.currentframe())[1].frame.f_code.co_name
         now=dt.datetime.now()
