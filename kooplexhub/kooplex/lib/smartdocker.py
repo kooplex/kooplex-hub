@@ -199,7 +199,7 @@ class Docker(LibBase):
             self.ensure_container_stopped(container)
             self.remove_container(container)
 
-    def exec_container(self, container, command):
+    def exec_container(self, container, command, detach=True):
         print_debug("")
         exec = self.docli.exec_create(
             container=container.name, 
@@ -207,5 +207,5 @@ class Docker(LibBase):
             #user=self.username,
         )
         # TODO: use real user once LDAP and PAM are set up inside image
-        res = self.docli.exec_start(exec, detach=True)
+        res = self.docli.exec_start(exec, detach=detach)
         return res

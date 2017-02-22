@@ -325,6 +325,7 @@ def notebooks_deploy(request):
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
 def notebooks_view_deploy(request):
+    """Not used """
     assert isinstance(request, HttpRequest)
     print_debug("Deploying notebook,")
     project_name = request.GET['project_name']
@@ -338,7 +339,6 @@ def notebooks_view_deploy(request):
     file = LibBase.join_path(file, project_owner)
     file = LibBase.join_path(file, project_name)
     file = LibBase.join_path(file, 'index.ipynb')
-    print(file)
     g=Gitlab(request)
     g.create_project_variable(project_id, 'worksheet', 'True')
     d = Dashboards()
@@ -346,15 +346,14 @@ def notebooks_view_deploy(request):
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
 def notebooks_prepare_to_convert_html(request):
+    """Lists files """
     assert isinstance(request, HttpRequest)
-    notebook_path = request.GET['notebook_path']
     notebook_path = request.GET['notebook_path']
     project_owner = request.GET['project_owner']
     project_name = request.GET['project_name']
     project_id = request.GET['project_id']
     notebook_id = request.GET['notebook_id']
-    container_name = request.GET['container_name']
-    #SHOULD DO OTHERWAY!!!!
+    container_name = request.GET['container_name']   #SHOULD DO OTHERWAY!!!!
     srv_dir=get_settings('users', 'srv_dir')
     home_dir = get_settings('users', 'home_dir')
     home_dir = home_dir.replace('{$username}', project_owner)
@@ -381,6 +380,7 @@ def notebooks_prepare_to_convert_html(request):
     )
 
 def notebooks_convert_html(request):
+    """ Converts ipynb to html in the opened container, creates variable in gitlab, commits file in gitlab"""
     assert isinstance(request, HttpRequest)
     print_debug("Deploying notebook,")
     project_name = request.POST['project_name']
@@ -399,11 +399,10 @@ def notebooks_convert_html(request):
     for ipynb in [toconvert_files]:
         file = ipynb[:-6]
         command=" jupyter-nbconvert --to html /%s/%s " %(notebook_path_dir,ipynb)
-        docli.exec_container(notebook, command)
+        docli.exec_container(notebook, command, detach=False)
         dashb = Dashboards()
         dashb.deploy_html(username, project_owner, project_name, request.user.email, notebook_path_dir, file+".html")
         g.create_project_variable(project_id, 'worksheet_%s'%file, file + ".html")
-        print(project_id, 'worksheet_%s'%file, file + ".html")
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
 def notebooks_pull_confirm(request):

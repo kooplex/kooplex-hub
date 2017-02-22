@@ -13,8 +13,8 @@ def index(request):
     gadmin = GitlabAdmin(request)
 
     isadmin = False
-    if username:
-        isadmin = gadmin.check_useradmin(username)
+    #if username:
+    #    isadmin = gadmin.check_useradmin(username)
     return render(
         request,
         'app/index.html',
