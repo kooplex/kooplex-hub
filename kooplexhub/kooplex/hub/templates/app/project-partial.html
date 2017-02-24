@@ -9,11 +9,11 @@
     {% if item.running %}
         <div class="panel  panel-success">
         <div class="panel-heading ">
-            <strong>{{ item.name }}</strong> - Running {% if item.owner.username != username %} ( owned by {{ item.owner.username }} ) {%  endif  %}
+            <h4> <strong>{{ item.name }}</strong> </h4> Running {% if item.owner.username != username %} ( owned by {{ item.owner.username }} ) {%  endif  %}
     {% else %}
         <div class="panel panel-default ">
         <div class="panel-heading">
-            <strong>{{ item.name }}</strong> {% if item.owner.username != username %} ( owned by {{ item.owner.username }} ) {%  endif  %}
+           <h4> <strong>{{ item.name }}</strong> </h4>{% if item.owner.username != username %} ( owned by {{ item.owner.username }} ) {%  endif  %}
     {% endif %}
 
             {% if 'forked_from_project' in item %} : forked from
@@ -49,19 +49,16 @@
                             <a role="button" href="{% url 'notebooks-prepare-to-convert-html' %}?notebook_path={{ item.session.notebook_path }}&notebook_id={{ item.notebook.notebook.id }}&project_owner={{ item.owner.username }}&project_name={{ item.notebook.project_name }}&project_id={{ item.session.project_id  }}&container_name={{ item.session.container_name }}">
                             <button role="button" type="button" class="btn btn-default">Publish</button></a>
                         {% endif %}
-                    </div>
-
 
                     {% if not item.running %}
-                        <div class="row">
                             {% if not publicvar %}
                                 <button type="button" class="btn btn-info" data-toggle="modal"  data-target="#change-image-{{ item.name  }}">Change image</button>
                                 {% include 'app/notebooks-change-image.html' %}
                             {% endif %}
                             <p><strong>{% if 'container_image' in item.variables %} {{ item.variables.container_image }} {% endif %} </strong></p>
-                        </div>
-                    {% endif %}
 
+                    {% endif %}
+                    </div>
                 </div>
 
             <!-- GIT RELATED STUFF -->
@@ -71,15 +68,16 @@
                         <div class="row">
                             <a role="button" href="{% url 'notebooks-commit' %}?project_owner={{ item.owner.username }}&project_name={{ item.name }}&notebook_path_dir={{ item.notebook_path }}&is_forked={{ item.is_forked }}">
                             <button role="button" type="button" class="btn btn-warning">Commit</button></a>
-                        </div>
-                        <div class="row">
+                        {% if item.commits|length > 0 %}
                             <button type="button" class="btn btn-info" data-toggle="modal" data-target="#repo-pull-{{ item.name }}">Revert</button>
                             {% include 'app/notebooks-revert.html' %}
+
                             {%  with lastcommit=item.commits|last %}
                                     <p><strong>Last commited at: </strong>{{ lastcommit.created_at|slice:":10" }} {{ lastcommit.created_at|slice:"11:-10" }}</p>
                                     <!--<p><strong>Commit message: </strong>{{ lastcommit.title }}</p>
                                     <p><strong>Commited by: </strong>{{ lastcommit.author_name }}   </p>-->
                             {% endwith %}
+                                {% endif %}
                         </div>
                         {%  if  item.forks_count > 0 %}
                             <div class="row">
@@ -104,9 +102,11 @@
 
                 <div class=" col-md-2 col-sm-2 col-xs-3">
                     {% if not publicvar %}
+                        {% if not item.running %}
                         {% include 'app/notebooks-delete-project.html' %}
                         <button type="button" class="btn btn-danger" data-toggle="modal"  data-target="#delete-project-{{ item.name }}">Delete project</button>
                     {% endif %}
+                {% endif %}
                 </div>
 
             </div>

@@ -85,7 +85,6 @@ def notebooks(request,errors=[] ):
     for project in projects:
         for session in sessions:
             if project['id']==session.project_id:
-                print('id', project['id'], session.project_id)
                 project['running']=True
                 project['session'] = session
                 project['notebook'] = session.notebook
@@ -424,7 +423,6 @@ def notebooks_pull_confirm(request):
     print_debug("Reverting project,")
     repo_name = request.GET['repo']
     repo = Repo(request.user.username, repo_name)
-    print(repo_name)
     # Popup ablak kell
     repo.ensure_local_dir_empty()
     repo.clone()
@@ -588,6 +586,12 @@ def project_fork(request):
     g = Gitlab(request)
     message = g.fork_project(itemid)
     #TODO gadmin get image variable
+    print_debug(message)
+    gadmin = GitlabAdmin(request)
+    forked_project_image = gadmin.get_project_variable(itemid, 'container_image')
+    forked_project = gadmin.get_project(itemid)
+    project = g.get_project_by_name(forked_project['name'])
+    g.change_variable_value(project[0]['id'], 'container_image', forked_project_image)
     if message == "":
         return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
     else:

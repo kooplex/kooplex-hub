@@ -98,7 +98,15 @@ class GitlabAdmin(Gitlab):
         if 'message' in projects_json:
             raise ValueError("MESSAGE: %s"%(projects_json['message']))
         return projects_json
-        
+
+    def get_project(self, project_id):
+        print_debug("",DEBUG_LOCAL)
+        res = self.http_get('api/v3/projects/%s'%project_id)
+        project_json = res.json()
+        if 'message' in project_json:
+            raise ValueError("MESSAGE: %s"%(projects_json['message']))
+        return project_json
+
     def get_all_public_projects(self, unforkable_projectids):
         print_debug("",DEBUG_LOCAL)
         res = self.http_get('api/v3/projects/all?visibility=public')

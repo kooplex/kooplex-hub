@@ -4,14 +4,14 @@
 
     <!-- Modal content-->
     <div class="modal-content">
-        <form class="form-horizontal" action="{% url 'notebooks-pull-confirm'%}?project_id={{ item.id }}&repo={{ item.path_with_namespace }}&project_owner={{ item.owner.username }}&project_name={{ item.name }}&repo={{ item.path_with_namespace }}{% if 'forked_from_project' in item %}&is_forked=True&project_id={{ item.id }}&target_id={{ item.forked_from_project.id }}{% else %}&is_forked=False{% endif %}&description={{ item.description|cut:'#notebook'|cut:'#worksheet'|cut:'#' }}" method="post">
+        <form class="form-horizontal" action="{% url 'notebooks-pull-confirm'%}?project_id={{ item.id }}&repo={{ item.path_with_namespace }}&project_owner={{ item.owner.username }}&project_name={{ item.name }}&repo={{ item.path_with_namespace }}&project_id={{ item.id }}" method="post">
             {% csrf_token %}
             <div class="modal-header">
               <button type="button" class="close" data-dismiss="modal">&times;</button>
                  <h4 class="modal-title">To which state do you want to revert the project?</h4>
               </div>
               <div  class="modal-body">
-              <select id="project.images" name="project.image">
+              <select id="commitid" name="commitid">
                             {% for commit in  item.commits   %}
                             <option value="{{ commit.short_id }}">{{ commit.author_name }} {{ commit.created_at }}  {{ commit.title }}  </option>
                             {% endfor %}
