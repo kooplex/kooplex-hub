@@ -63,6 +63,9 @@ def worksheets_open_html(request):
     content=base64.b64decode(file_vmi['content'])
     return HttpResponse(content)
 
+def remove_deploy(project_id):
+    #Cehck user /././
+    1==1
 
 urlpatterns = [
     url(r'^$', worksheets, name='worksheets'),

@@ -34,136 +34,97 @@ $(document).ready(function () {
  <ul class="nav nav-tabs">    
  {% if username %}
 
- <li class="active"><a data-toggle="tab" href="#home">Running containers</a></li>    
- <li><a data-toggle="tab" href="#menu1">My projects</a></li> 
+ <li class="active"><a data-toggle="tab" href="#running">Running containers</a></li>
+ <li><a data-toggle="tab" href="#myprojects">My projects</a></li>
   {% endif %}
- <li><a data-toggle="tab" href="#menu2">Other public projects</a></li>    
+ <li><a data-toggle="tab" href="#otherprojects">Other public projects</a></li>
 
- {% if username %}
+<!--
+{% if username %}
   <li><a data-toggle="tab" href="#menu3">Create New Image</a></li>    
  {% endif %}
+-->
 
  </ul>  
  <div class="tab-content">    
 
   {% if username %}
 
-  <div id="home" class="tab-pane fade in active">      
+  <div id="running" class="tab-pane fade in active ">
+      <div class="page-header">
+        <h2>My running containers <small>with jupyter notebooks</small></h2>
+      </div>
+      <div class=" col-md-6 col-sm-6 col-xs-12">
 
-   <div class="projects">
-    <div class="projects running-containers">
-    <h2>My running containers</h2>
-    {% for item in notebooks %}
-        <div class="row">
-            <div class="col-md-5 col-sm-4 col-xs-6">
-                <p><span  style="padding-right: 50px;"><b>{{ item.name }}</b></span>
-            </div>
-            <div class="col-md-4 col-sm-4 col-xs-6">
+        {% for item in notebooks %}
+            <div class="panel panel-default ">
 
-    {% if item.is_stopped %}
-            <a href="{% url 'container-start' %}?notebook_id={{ item.id }}&session_id={{ item.id }}" class="btn btn-success" role="button">
-            <span class="glyphicon glyphicon-play" aria-hidden="true"></span> Start</a>
+               <div class="panel-heading">
+                        {{ item.name }}
+               </div>
+                <div class="panel-body">
+                <div class="row">
+                    <div class="col-md-12 col-sm-12 col-xs-12">
+                        {% if item.is_stopped %}
+                        <a href="{% url 'container-start' %}?notebook_id={{ item.id }}&session_id={{ item.id }}" class="btn btn-success" role="button">
+                        <span class="glyphicon glyphicon-play" aria-hidden="true"></span> Start</a>
+                        {%  else %}
+                            <a href="{% url 'container-stop' %}?notebook_id={{ item.id }}&session_id={{ item.id }}" class="btn btn-warning" role="button">
+                            <span class="glyphicon glyphicon-stop" aria-hidden="true"></span> Stop</a>
+                        {% endif %}
 
+                        <a href="{% url 'container-delete' %}?notebook_id={{ item.id }}&session_id={{ item.id }}" class="btn btn-danger" role="button">
+                        <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Delete</span></a>
 
-       {%  else %}
-        <a href="{% url 'container-stop' %}?notebook_id={{ item.id }}&session_id={{ item.id }}" class="btn btn-warning" role="button">
-            <span class="glyphicon glyphicon-stop" aria-hidden="true"></span> Stop</a>
-       {% endif %}
+                        {% for session in sessions %}
+                        {%  if session.container_name == item.name %}
+                            {% if item.is_stopped %}
+                                <a href="#" class="btn btn-default" role="button">
+                                <span class="glyphicon glyphicon-tree-conifer" aria-hidden="true"></span> Container stopped</a>
+                            {% else %}
+                                <a href="{{ session.external_url }}" target="_blank" class="btn btn-info" role="button">
+                                <span class="glyphicon glyphicon-record" aria-hidden="true"></span> Open</a>
+                            {% endif %}
 
-        <a href="{% url 'container-delete' %}?notebook_id={{ item.id }}&session_id={{ item.id }}" class="btn btn-danger" role="button">
-            <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Delete</a>
+                            <a role="button" href="{% url 'notebooks-prepare-to-convert-html' %}?notebook_path={{ session.notebook_path }}&notebook_id={{ item.id }}&project_owner={{ item.project_owner }}&project_name={{ item.project_name }}&project_id={{ session.project_id  }}&container_name={{ session.container_name }}">
+                            <button role="button" type="button" class="btn btn-default">Deploy</button></a>
 
-    {% comment %}
-       {% if process %}
-       <img
-       src="https://media.giphy.com/media/7eygrJEkHFHEY/giphy.gif"  width="30px">
-       {% endif %}
-    {% endcomment %}
-        </span></a>
-   {% if item.is_stopped %}       
-       <b> Container is stopped </b>
-   {% else %}
-       <b> Container is running </b>
-   {% endif %}
-   </p>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                </div>
+                </div>
+
+      {% endfor %}
         </div>
 
-        </div>
-
-    {% for session in sessions %}
-        {%  if session.container_name == item.name %}
-            <div class="session running">
-                 <div class="row">
-                    <div class="col-md-4 col-sm-4 col-xs-6">
-                        <p><span  style="padding-right: 50px;"><b>{{ session.notebook_path }}</b></span>
-                    </div>
-                    <div class="col-md-4 col-sm-4 col-xs-6">
-                {% if item.is_stopped %}
-                    <a href="#" class="btn btn-default" role="button">
-            <span class="glyphicon glyphicon-tree-conifer" aria-hidden="true"></span> Container stopped</a>
-                {% else %}
-                     <a href="{{ session.external_url }}" target="_blank" class="btn btn-info" role="button">
-            <span class="glyphicon glyphicon-record" aria-hidden="true"></span> Open</a>
-
-                {% endif %}
-                </p>
-                    </div>
-                 <div class="col-md-3 col-sm-6 col-xs-6">
-        <a role="button" href="{% url 'notebooks-prepare-to-convert-html' %}?notebook_path={{ session.notebook_path }}&notebook_id={{ item.id }}&project_owner={{ item.project_owner }}&project_name={{ item.project_name }}&project_id={{ session.project_id  }}&container_name={{ session.container_name }}">
-          <button role="button" type="button" class="btn btn-default">Deploy</button></a>
-        </div>
-                    </div>
-
-            {% comment %}
-TODO: This will be moved (commit, merge request) to project-partial.html
-    {% if notebook_dir_name in item.notebook_path %}
-        <!-- This branch will be removed -->
-    {% else %}
-        <a href="{{ item.external_url }}" target="_blank">open </a>
-        {% if item.is_forked %}
-            | <a href="{% url 'notebooks-commit' %}?notebook_path_dir={{ item.notebook_path }}&is_forked={{ item.is_forked }}&project_id={{ item.project_id }}&target_id={{ item.target_id }}">
-            commit and create merge request</a>
-        {% else %}
-            | <a href="{% url 'notebooks-commit' %}?notebook_path_dir={{ item.notebook_path }}&is_forked={{ item.is_forked }}">
-            commit</a>
-        {% endif %}
-    {% endif %}
-{% endcomment %}
-        <!-- | <a href="{% url 'notebooks-shutdown' %}?session_id={{ item.id }}">shut down</a> -->
-    </p>
-    </div>
-        {% endif %}
-    {% endfor %}
-{% endfor %}
-   </div>
-
-  </div>    
  </div>
  
- <div id="menu1" class="tab-pane fade projects my">     
-     <h2> My projects </h2>
-
-
- {% for item in projects %}
-    {% include 'app/project-partial.html'  %}
+ <div id="myprojects" class="tab-pane fade projects">
+    <div class="page-header">
+        <h2>My projects </h2>
+    </div>
+    {% for item in projects %}
+        {% include 'app/project-partial.html'  %}
     {% endfor %}
- </div>    
- {% endif %}
- 
- {% if username %}
- <div id="menu2" class="tab-pane fade projects public"> 
- {% else %}
- <div id="menu2" class="tab-pane fade projects public in active"> 
- {% endif %}
+ </div>
 
- <h2> Public projects </h2>
- {% for item in public_projects %}
+  {% endif %}
+ 
+
+ <div id="otherprojects" class="tab-pane fade projects ">
+   <div class="page-header">
+        <h2>Public projects </h2>
+    </div>
+     {% for item in public_projects %}
     {% if item.owner.username != username %}
         {% include 'app/project-partial.html' with publicvar=True %}
     {% endif %}
     {% endfor %}
- </div>    
- 
+    </div>
+
+ <!--
   {% if username %}
  <div id="menu3" class="tab-pane fade projects public"> 
 
@@ -171,7 +132,7 @@ TODO: This will be moved (commit, merge request) to project-partial.html
  Upload file ....
  </div>
  {% endif %}
-
+-->
 
  </div>
 </div>
