@@ -3,120 +3,73 @@
 
 {% block content %}
 
-<!-- <h2>Image creation</h2>-->
-
-
-
-{% if username %}
-<div class="new-project">
-{% include 'app/notebooks-new-partial.html' with myprojects=True %}
-<button type="button" class="btn btn-default" data-toggle="modal" data-target="#project-new">Start new project &raquo;</button>
-{%  if errors %}
-<script>
-$(document).ready(function () {
-
-    $('#project-new').modal('show');
-
-});
-</script>
-    {% endif %}
-</div>
-
-{% endif %}
-
-
-
-
-{% comment %} Nem vilagos, hogy hova krealodnak. Majd le sz a projektekhez kulon try gomb...
-{% endcomment %}
 
 <div class="container">  
- <ul class="nav nav-tabs">    
- {% if username %}
 
- <li class="active"><a data-toggle="tab" href="#running">Running containers</a></li>
- <li><a data-toggle="tab" href="#myprojects">My projects</a></li>
-  {% endif %}
- <li><a data-toggle="tab" href="#otherprojects">Other public projects</a></li>
+<div class="row">
+<div class=" col-md-9 col-sm-9 col-xs-9">
+<nav class="navbar navbar-default">
+ <div class="container-fluid">
 
-<!--
-{% if username %}
-  <li><a data-toggle="tab" href="#menu3">Create New Image</a></li>    
- {% endif %}
--->
 
- </ul>  
+    <!-- Collect the nav links, forms, and other content for toggling -->
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+      <ul class="nav navbar-nav">
+          {% if username %}
+            <li class="active" data-toggle="tab" href="#running"><a href="#running">Running containers </a></li>
+            <li><a href="#myprojects" data-toggle="tab" href="#myprojects">My projects</a></li>
+            <li><a href="#otherprojects" data-toggle="tab" href="#otherprojects">Other public projects</a></li>
+          {% endif %}
+
+      </ul>
+    </div><!-- /.navbar-collapse -->
+  </div><!-- /.container-fluid -->
+</nav>
+</div>
+<div class=" col-md-3 col-sm-3 col-xs-3">
+      {% if username %}
+          {% include 'app/notebooks-new-partial.html' with myprojects=True %}
+        <a href="#" data-toggle="modal" data-target="#project-new"><button type="button" class="btn btn-lg  btn-primary navbar-btn">Start new project </button></a>
+        {%  if errors %}
+        <script>
+        $(document).ready(function () {
+
+        $('#project-new').modal('show');
+        });
+        </script>
+        {% endif %}
+      {% endif %}
+</div>
+</div>
+
+
  <div class="tab-content">    
 
   {% if username %}
 
   <div id="running" class="tab-pane fade in active ">
-      <div class="page-header">
-        <h2>My running containers <small>with jupyter notebooks</small></h2>
-      </div>
-      <div class=" col-md-6 col-sm-6 col-xs-12">
 
-        {% for item in notebooks %}
-            <div class="panel panel-default ">
-
-               <div class="panel-heading">
-                        {{ item.name }}
-               </div>
-                <div class="panel-body">
-                <div class="row">
-                    <div class="col-md-12 col-sm-12 col-xs-12">
-                        {% if item.is_stopped %}
-                        <a href="{% url 'container-start' %}?notebook_id={{ item.id }}&session_id={{ item.id }}" class="btn btn-success" role="button">
-                        <span class="glyphicon glyphicon-play" aria-hidden="true"></span> Start</a>
-                        {%  else %}
-                            <a href="{% url 'container-stop' %}?notebook_id={{ item.id }}&session_id={{ item.id }}" class="btn btn-warning" role="button">
-                            <span class="glyphicon glyphicon-stop" aria-hidden="true"></span> Stop</a>
-                        {% endif %}
-
-                        <a href="{% url 'container-delete' %}?notebook_id={{ item.id }}&session_id={{ item.id }}" class="btn btn-danger" role="button">
-                        <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Delete</span></a>
-
-                        {% for session in sessions %}
-                        {%  if session.container_name == item.name %}
-                            {% if item.is_stopped %}
-                                <a href="#" class="btn btn-default" role="button">
-                                <span class="glyphicon glyphicon-tree-conifer" aria-hidden="true"></span> Container stopped</a>
-                            {% else %}
-                                <a href="{{ session.external_url }}" target="_blank" class="btn btn-info" role="button">
-                                <span class="glyphicon glyphicon-record" aria-hidden="true"></span> Open</a>
-                            {% endif %}
-
-                            <a role="button" href="{% url 'notebooks-prepare-to-convert-html' %}?notebook_path={{ session.notebook_path }}&notebook_id={{ item.id }}&project_owner={{ item.project_owner }}&project_name={{ item.project_name }}&project_id={{ session.project_id  }}&container_name={{ session.container_name }}">
-                            <button role="button" type="button" class="btn btn-default">Deploy</button></a>
-
-                        {% endif %}
-                        {% endfor %}
-                    </div>
-                </div>
-                </div>
-                </div>
-
-      {% endfor %}
-        </div>
-
- </div>
- 
- <div id="myprojects" class="tab-pane fade projects">
-    <div class="page-header">
-        <h2>My projects </h2>
-    </div>
     {% for item in projects %}
-        {% include 'app/project-partial.html'  %}
+        {% if item.running %}
+            {% include 'app/project-partial.html'  with onlyrunning=True %}
+        {% endif %}
     {% endfor %}
+
+  </div>
+ 
+ <div id="myprojects" class="tab-pane fade">
+
+    {% for item in projects %}
+        {% include 'app/project-partial.html' %}
+    {% endfor %}
+
  </div>
 
   {% endif %}
  
 
  <div id="otherprojects" class="tab-pane fade projects ">
-   <div class="page-header">
-        <h2>Public projects </h2>
-    </div>
+
      {% for item in public_projects %}
     {% if item.owner.username != username %}
         {% include 'app/project-partial.html' with publicvar=True %}

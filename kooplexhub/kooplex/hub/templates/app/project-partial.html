@@ -6,93 +6,114 @@
 </div> -->
 
 <div class=" col-md-12 col-sm-12 col-xs-12">
-    <div class="panel panel-primary ">
+    {% if item.running %}
+        <div class="panel  panel-success">
+        <div class="panel-heading ">
+            <strong>{{ item.name }}</strong> - Running {% if item.owner.username != username %} ( owned by {{ item.owner.username }} ) {%  endif  %}
+    {% else %}
+        <div class="panel panel-default ">
         <div class="panel-heading">
             <strong>{{ item.name }}</strong> {% if item.owner.username != username %} ( owned by {{ item.owner.username }} ) {%  endif  %}
+    {% endif %}
+
             {% if 'forked_from_project' in item %} : forked from
                 <a href="{{ base_url }}/gitlab/{{ item.forked_from_project.path_with_namespace }}" target="_blank">{{ item.forked_from_project.path_with_namespace }}</a>
             {% endif %}
         </div>
+
         <div class="panel-body">
-            <div class="row">
-                <div class=" col-md-4 col-sm-4 col-xs-12">
+
+                <div class=" col-md-3 col-sm-3 col-xs-12">
                     {{ item.description }}
                 </div>
+
+            <!-- CONTAINER RELATED STUFF -->
+
                 <div class=" col-md-3 col-sm-3 col-xs-12">
-                    {% if not publicvar %}
+                    <div class="row">
+                        {% if not publicvar %}
+                            {% if item.running %}
+                                <a href="{% url 'container-delete' %}?notebook_id={{ item.notebook.id }}&session_id={{ item.session.id }}" class="btn btn-danger" role="button">
+                                <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Stop</span></a>
 
-                    <a role="button" href="{% url 'notebooks-open' %}?project_id={{ item.id }}&project_owner={{ item.owner.username }}&project_name={{ item.name }}&repo={{ item.path_with_namespace }}{% if 'forked_from_project' in item %}&is_forked=True&project_id={{ item.id }}&target_id={{ item.forked_from_project.id }}{% else%}&is_forked=False{% endif %}">
-                        <button role="button" type="button" class="btn btn-success" >Start</button></a>
-                    <a role="button" href="{% url 'notebooks-commit' %}?project_owner={{ item.owner.username }}&project_name={{ item.name }}&notebook_path_dir={{ item.notebook_path }}&is_forked={{ item.is_forked }}">
-                        <button role="button" type="button" class="btn btn-warning">Commit</button></a>
+                            {% else %}
+                                <a role="button" href="{% url 'notebooks-open' %}?project_id={{ item.id }}&project_owner={{ item.owner.username }}&project_name={{ item.name }}&repo={{ item.path_with_namespace }}{% if 'forked_from_project' in item %}&is_forked=True&project_id={{ item.id }}&target_id={{ item.forked_from_project.id }}{% else%}&is_forked=False{% endif %}">
+                                <button role="button" type="button" class="btn btn-success" >Start</button></a>
 
-                    {%  if publicvar %}
-                        <!-- {% if item.forkable %}-->
-                            <a href="{% url 'project-fork' %}?itemid={{ item.id }}" target="_blank"><span class="button commit">Fork it</span> </a>
-                        <!--{% else %}
-                            | it has been forked
-                        {% endif %}-->
-                    {%  endif %}
-                    {% endif %}
+                            {% endif %}
+                        {% endif %}
 
-                    {%  if not publicvar and item.forks_count > 0 %}
-                        <p> See the opened <a href="{% url 'notebooks-mergerequestlist' %}?itemid={{ item.id }}&path_with_namespace={{ item.path_with_namespace }}" target="_blank">merge requests</a>    </p>
+                        {% if item.running %}
+                            <a href="{{ item.session.external_url }}" target="_blank" class="btn btn-info" role="button">
+                            <span class="glyphicon glyphicon-record" aria-hidden="true"></span> Open</a>
+                            <a role="button" href="{% url 'notebooks-prepare-to-convert-html' %}?notebook_path={{ item.session.notebook_path }}&notebook_id={{ item.notebook.notebook.id }}&project_owner={{ item.owner.username }}&project_name={{ item.notebook.project_name }}&project_id={{ item.session.project_id  }}&container_name={{ item.session.container_name }}">
+                            <button role="button" type="button" class="btn btn-default">Publish</button></a>
+                        {% endif %}
+                    </div>
+
+
+                    {% if not item.running %}
+                        <div class="row">
+                            {% if not publicvar %}
+                                <button type="button" class="btn btn-info" data-toggle="modal"  data-target="#change-image-{{ item.name  }}">Change image</button>
+                                {% include 'app/notebooks-change-image.html' %}
+                            {% endif %}
+                            <p><strong>{% if 'container_image' in item.variables %} {{ item.variables.container_image }} {% endif %} </strong></p>
+                        </div>
                     {% endif %}
 
                 </div>
-                <div class=" col-md-5 col-sm-5 col-xs-12">
 
+            <!-- GIT RELATED STUFF -->
 
-                        {%  if not publicvar %}
+                <div class=" col-md-3 col-sm-3 col-xs-12">
+                    {%  if not publicvar %}
                         <div class="row">
-                            <div class=" col-md-3 col-sm-3 col-xs-3">
+                            <a role="button" href="{% url 'notebooks-commit' %}?project_owner={{ item.owner.username }}&project_name={{ item.name }}&notebook_path_dir={{ item.notebook_path }}&is_forked={{ item.is_forked }}">
+                            <button role="button" type="button" class="btn btn-warning">Commit</button></a>
+                        </div>
+                        <div class="row">
                             <button type="button" class="btn btn-info" data-toggle="modal" data-target="#repo-pull-{{ item.name }}">Revert</button>
                             {% include 'app/notebooks-revert.html' %}
-                            </div>
-                            <div class=" col-md-9 col-sm-9 col-xs-9">
                             {%  with lastcommit=item.commits|last %}
-                                <p><strong>Message: </strong>{{ lastcommit.title }}</p>
-                                <p><strong>Created at: </strong>{{ lastcommit.created_at }}</p>
-                                <p><strong>Author: </strong>{{ lastcommit.author_name }}   </p>
+                                    <p><strong>Last commited at: </strong>{{ lastcommit.created_at|slice:":10" }} {{ lastcommit.created_at|slice:"11:-10" }}</p>
+                                    <!--<p><strong>Commit message: </strong>{{ lastcommit.title }}</p>
+                                    <p><strong>Commited by: </strong>{{ lastcommit.author_name }}   </p>-->
                             {% endwith %}
-                            </div>
                         </div>
-                        {% endif %}
-
-                        <div class="row">
-                        {% if not publicvar %}
-
-                            <div class=" col-md-3 col-sm-3 col-xs-3">
-                            <button type="button" class="btn btn-info" data-toggle="modal"  data-target="#change-image-{{ item.name  }}">Change</button>
-                            {% include 'app/notebooks-change-image.html' %}
-                            </div>
-
-                        {% endif %}
-                        <div class=" col-md-9 col-sm-9 col-xs-9">
-                            image: <strong>
-                            {% if 'container_image' in item.variables %}
-                                {{ item.variables.container_image }}
-                            {% endif %}
-                        </div>
-                        </strong>
-                        </div>
-
-
-                        {% if not publicvar %}
+                        {%  if  item.forks_count > 0 %}
                             <div class="row">
-                            {% include 'app/notebooks-delete-project.html' %}
-                            <div class=" col-md-8 col-sm-8 col-xs-8">
-                            </div>
-                            <div class=" col-md-4 col-sm-4 col-xs-4">
-                            <button type="button" class="btn btn-danger" data-toggle="modal"  data-target="#delete-project-{{ item.name }}">Delete project</button>
-                            </div>
+                            <p> See the opened <a href="{% url 'notebooks-mergerequestlist' %}?itemid={{ item.id }}&path_with_namespace={{ item.path_with_namespace }}" target="_blank">merge requests</a>    </p>
                             </div>
                         {% endif %}
+                    {% endif %}
 
-                </div>
+                    {%  if publicvar %}
+                            <div class="row">
+                                {% if item.forkable %}
+                                    <a href="{% url 'project-fork' %}?itemid={{ item.id }}" target="_blank"><span class="btn btn-success">Fork it</span> </a>
+                                {% else %}
+                                     <button role="button" type="button" class="btn btn-warning">it has been forked</button>
+                                {% endif %}
+                            </div>
+                    {%  endif %}
+
             </div>
-        </div>
-        </div>
+
+            <!-- PROJECT RELATED STUFF -->
+
+                <div class=" col-md-2 col-sm-2 col-xs-3">
+                    {% if not publicvar %}
+                        {% include 'app/notebooks-delete-project.html' %}
+                        <button type="button" class="btn btn-danger" data-toggle="modal"  data-target="#delete-project-{{ item.name }}">Delete project</button>
+                    {% endif %}
+                </div>
+
+            </div>
+            </div>
+
+
 
 
 </div>
+

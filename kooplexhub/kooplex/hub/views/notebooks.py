@@ -27,7 +27,7 @@ HUB_NOTEBOOKS_URL = '/hub/notebooks'
 
 from kooplex.lib.debug import *
 
-def notebooks(request,errors=[], ):
+def notebooks(request,errors=[] ):
     """Renders the notebooks page"""
     print_debug("Rendering notebook page")
 
@@ -81,6 +81,19 @@ def notebooks(request,errors=[], ):
 
     d = Docker()
     notebook_images = d.get_allnotebook_images()
+
+    for project in projects:
+        for session in sessions:
+            if project['id']==session.project_id:
+                print('id', project['id'], session.project_id)
+                project['running']=True
+                project['session'] = session
+                project['notebook'] = session.notebook
+                break
+            else:
+                project['running'] = False
+
+
     # TODO unittest to check if port is accessible (ufw allow "5555")
     return render(
         request,
@@ -109,6 +122,7 @@ def notebooks_new(request):
     jupyter = Jupyter(notebook)
 
     ## TODO: remove hardcoding!
+
     notebook_path = LibBase.join_path(NOTEBOOK_DIR_NAME, notebook_name)
     jupyter.create_notebook(notebook_path)
 
@@ -263,7 +277,7 @@ def notebooks_open(request):
     jupyter = Jupyter(notebook)
 
     notebook_path = LibBase.join_path('projects/',repo_name)
-
+    print("YYY", notebook_path)
     is_forked = eval(request.GET['is_forked'])
     if is_forked:
         project_id = int(request.GET['project_id'])
@@ -573,6 +587,7 @@ def project_fork(request):
     itemid = request.GET['itemid']
     g = Gitlab(request)
     message = g.fork_project(itemid)
+    #TODO gadmin get image variable
     if message == "":
         return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
     else:
