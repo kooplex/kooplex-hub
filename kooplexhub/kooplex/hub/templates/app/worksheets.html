@@ -32,17 +32,11 @@
  <div class="tab-content">
 
      <div id="my" class="tab-pane fade in active">
-       {% if username %}
-              {% include 'app/worksheet-partial.html' %}
-       {% endif %}
+              {% include 'app/worksheet-partial.html' with publicvar=False %}
      </div>
 
      <div id="public" class="tab-pane fade">
-     {% for item in projects %}
-        {% if item.running %}
-            {% include 'app/worksheet-partial.html' %}
-        {% endif %}
-     {% endfor %}
+            {% include 'app/worksheet-partial.html' with publicvar=True %}
      </div>
  </div>
  
