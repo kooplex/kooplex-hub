@@ -2,44 +2,48 @@
 
 {% block content %}
 
-<!-- <h2>Image creation</h2>-->
+<div class="container">
+
+<div class="row">
+<div class="col-md-9 col-sm-9 col-xs-9">
+<nav class="navbar navbar-default">
+ <div class="container-fluid">
 
 
+    <!-- Collect the nav links, forms, and other content for toggling -->
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+      <ul class="nav navbar-nav">
+          {% if username %}
 
-{% if username %}
-<div class="new-project">
-{% include 'app/notebooks-new-partial.html' with myprojects=True %}
-<button type="button" class="btn btn-default" data-toggle="modal" data-target="#project-new">Start new project &raquo;</button>
+                <li class="active" ><a href="#my" data-toggle="tab">My reports</a></li>
+                <li><a href="#public" data-toggle="tab" >Public reports </a></li>
+          {% else %}
+                <li class="active" ><a href="#public" data-toggle="tab" >Public reports </a></li>
+
+          {% endif %}
+      </ul>
+    </div><!-- /.navbar-collapse -->
+  </div><!-- /.container-fluid -->
+</nav>
 </div>
-{% endif %}
+</div>
 
 
-<div class="container">  
- <ul class="nav nav-tabs">    
- <li class="active"><a data-toggle="tab" href="#menu2">Public worksheets</a></li>    
- </ul>  
+ <div class="tab-content">
 
- <div class="tab-content">    
+     <div id="my" class="tab-pane fade in active">
+       {% if username %}
+              {% include 'app/worksheet-partial.html' %}
+       {% endif %}
+     </div>
 
-  <div id="menu2" class="tab-pane fade in active">      
-
-   <div class="projects">
-
-    <h2>Public worksheets</h2>
-    {% for item in dashboards %}
-     <div class="projects worksheet">
-<!--     <a href="{% url 'worksheet-open' %}?project_owner={{ item.owner  }}&project_name={{ item.name  }}" target="_blank">     -->
-       <a href="{% url 'worksheet-open' %}?project_owner={{ item.owner }}&project_name={{ item.name  }}&project_id={{ item.project_id }}&file={{ item.file }}" target="_blank">
-     <img src="{{ item.picture }}" width="300px">
- <p><span  style="padding-right: 50px;"><b>{{ item.owner }}</b> - <b>{{ item.name  }}</b></span></a>
-     </p>
-     <p> {{ item.description }} </p>
-    </div>
-        <!-- REMOVE DEPLOY check if user and owner the same -->
-    {% endfor %}
-   </div>
-
-  </div>    
+     <div id="public" class="tab-pane fade">
+     {% for item in projects %}
+        {% if item.running %}
+            {% include 'app/worksheet-partial.html' %}
+        {% endif %}
+     {% endfor %}
+     </div>
  </div>
  
 </div>

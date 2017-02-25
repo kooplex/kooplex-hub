@@ -192,6 +192,16 @@ class Dashboards(RestClient):
         except  IOError:
             print_debug("ERROR: file cannot be written to %s" % tofile)
             # return Err
+    def unpublish(self, id,username,owner,name,file):
+        path = get_settings('dashboards', 'base_dir', None, '')
+        g = Gitlab()
+        if file[-4:] == "html":
+            g.delete_project_variable(id, "worksheet_%s" % file[:-5])
+            file_to_delete = LibBase.join_path(path, username)
+            file_to_delete = LibBase.join_path(file_to_delete, owner)
+            file_to_delete = LibBase.join_path(file_to_delete, name)
+            file_to_delete = LibBase.join_path(file_to_delete, file)
+            Err = os.remove(file_to_delete)
 
 
 def Find_first_img_inhtml(content):

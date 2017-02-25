@@ -253,6 +253,17 @@ class Gitlab(RestClient):
 
         return message
 
+    def delete_project_variable(self,project_id,key):
+        print_debug("",DEBUG_LOCAL)
+        url = "api/v3/projects/"
+        url += "%s"%project_id
+        url += "/variables/%s"%key
+        res = self.http_delete(url)
+        if res.status_code != 404:
+            return res.json()
+        else:
+            return "404"
+
 
 
 

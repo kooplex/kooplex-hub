@@ -34,27 +34,30 @@
                         {% if not publicvar %}
                             {% if item.running %}
                                 <a href="{% url 'container-delete' %}?notebook_id={{ item.notebook.id }}&session_id={{ item.session.id }}" class="btn btn-danger" role="button">
-                                <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Stop</span></a>
+                                <span class="glyphicon glyphicon-remove-circle" aria-hidden="true"></span> Stop</a>
 
                             {% else %}
                                 <a role="button" href="{% url 'notebooks-open' %}?project_id={{ item.id }}&project_owner={{ item.owner.username }}&project_name={{ item.name }}&repo={{ item.path_with_namespace }}{% if 'forked_from_project' in item %}&is_forked=True&project_id={{ item.id }}&target_id={{ item.forked_from_project.id }}{% else%}&is_forked=False{% endif %}">
-                                <button role="button" type="button" class="btn btn-success" >Start</button></a>
+                                <button role="button" type="button" class="btn btn-success" >
+                                    <span class="glyphicon glyphicon-play" aria-hidden="true"></span> Start</button></a>
 
                             {% endif %}
                         {% endif %}
 
                         {% if item.running %}
                             <a href="{{ item.session.external_url }}" target="_blank" class="btn btn-info" role="button">
-                            <span class="glyphicon glyphicon-record" aria-hidden="true"></span> Open</a>
+                            <span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span> Open</a>
                             <a role="button" href="{% url 'notebooks-prepare-to-convert-html' %}?notebook_path={{ item.session.notebook_path }}&notebook_id={{ item.notebook.notebook.id }}&project_owner={{ item.owner.username }}&project_name={{ item.notebook.project_name }}&project_id={{ item.session.project_id  }}&container_name={{ item.session.container_name }}">
-                            <button role="button" type="button" class="btn btn-default">Publish</button></a>
+                            <button role="button" type="button" class="btn btn-default">
+                                <span class="glyphicon glyphicon-flag" aria-hidden="true"></span> Publish</button></a>
                         {% endif %}
 
                     {% if not publicvar %}
                         {% if item.running %}
                             Using image:
                         {% else %}
-                                <button type="button" class="btn btn-info" data-toggle="modal"  data-target="#change-image-{{ item.name  }}">Change image</button>
+                                <button type="button" class="btn btn-info" data-toggle="modal"  data-target="#change-image-{{ item.name  }}">
+                                    <span class="glyphicon glyphicon-hdd" aria-hidden="true"></span> Change image</button>
                                 {% include 'app/notebooks-change-image.html' %}
                         {% endif %}
                             <p><strong>{% if 'container_image' in item.variables %} {{ item.variables.container_image }} {% endif %} </strong></p>
@@ -69,9 +72,11 @@
                     {%  if not publicvar %}
                         <div class="row">
                             <a role="button" href="{% url 'notebooks-commit' %}?project_owner={{ item.owner.username }}&project_name={{ item.name }}&notebook_path_dir={{ item.notebook_path }}&is_forked={{ item.is_forked }}">
-                            <button role="button" type="button" class="btn btn-warning">Commit</button></a>
+                            <button role="button" type="button" class="btn btn-warning">
+                                <span class="glyphicon glyphicon-save" aria-hidden="true"></span> Commit</button></a>
                         {% if item.commits|length > 0 %}
-                            <button type="button" class="btn btn-info" data-toggle="modal" data-target="#repo-pull-{{ item.name }}">Revert</button>
+                            <button type="button" class="btn btn-info" data-toggle="modal" data-target="#repo-pull-{{ item.name }}">
+                                <span class="glyphicon glyphicon-thumbs-down" aria-hidden="true"></span> Revert</button>
                             {% include 'app/notebooks-revert.html' %}
 
                             {%  with lastcommit=item.commits|last %}
@@ -91,7 +96,8 @@
                     {%  if publicvar %}
                             <div class="row">
                                 {% if item.forkable %}
-                                    <a href="{% url 'project-fork' %}?itemid={{ item.id }}" target="_blank"><span class="btn btn-success">Fork it</span> </a>
+                                    <a href="{% url 'project-fork' %}?itemid={{ item.id }}" target="_blank"><span class="btn btn-success">
+                                        <span class="glyphicon glyphicon-magnet" aria-hidden="true"></span> Fork it</span> </a>
                                 {% else %}
                                      <button role="button" type="button" class="btn btn-warning">it has been forked</button>
                                 {% endif %}
@@ -106,7 +112,8 @@
                     {% if not publicvar %}
                         {% if not item.running %}
                         {% include 'app/notebooks-delete-project.html' %}
-                        <button type="button" class="btn btn-danger" data-toggle="modal"  data-target="#delete-project-{{ item.name }}">Delete project</button>
+                        <button type="button" class="btn btn-danger" data-toggle="modal"  data-target="#delete-project-{{ item.name }}">
+                            <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Delete project</button>
                     {% endif %}
                 {% endif %}
                 </div>

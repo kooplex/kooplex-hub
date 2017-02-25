@@ -14,20 +14,13 @@ from kooplex.lib.spawner import Spawner
 from kooplex.lib.dashboards import Dashboards
 from kooplex.lib.debug import *
 
+HUB_REPORTS_URL = '/hub/worksheets'
 
 def worksheets(request):
     """Renders the worksheets page"""
     assert isinstance(request, HttpRequest)
 
-#    return render(
-#        request,
-#        'app/error.html',
-#        context_instance=RequestContext(request,
-#        {
-#            'error_title': 'This page is under construction',
-#        })
-#    )
-    #base_url = get_settings('dashboards', 'base_url', None, '')
+    username = request.user.username
     dashboard_url="http://polc.elte.hu:3000"
     D = Dashboards()
     list_of_dashboards = D.list_dashboards_html(request)
@@ -41,6 +34,7 @@ def worksheets(request):
             'message':'',
             'dashboard_url': dashboard_url,
             'dashboards': list_of_dashboards,
+            'username' : username,
        })
     )
 
@@ -63,11 +57,19 @@ def worksheets_open_html(request):
     content=base64.b64decode(file_vmi['content'])
     return HttpResponse(content)
 
-def remove_deploy(project_id):
-    #Cehck user /././
-    1==1
+def reports_unpublish(request):
+    username = request.user.username
+    project_id = request.GET['project_id']
+    project_owner = request.GET['project_owner']
+    project_name = request.GET['project_name']
+    file = request.GET['file']
+    d = Dashboards()
+    d.unpublish(project_id,username,project_owner,project_name,file)
+
+    return HttpResponseRedirect(HUB_REPORTS_URL)
 
 urlpatterns = [
     url(r'^$', worksheets, name='worksheets'),
     url(r'^/open$', worksheets_open_html, name='worksheet-open'),
+    url(r'^/unpublish$', reports_unpublish, name='worksheet-unpublish'),
 ]
