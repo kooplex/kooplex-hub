@@ -50,11 +50,13 @@
                             <button role="button" type="button" class="btn btn-default">Publish</button></a>
                         {% endif %}
 
-                    {% if not item.running %}
-                            {% if not publicvar %}
+                    {% if not publicvar %}
+                        {% if item.running %}
+                            Using image:
+                        {% else %}
                                 <button type="button" class="btn btn-info" data-toggle="modal"  data-target="#change-image-{{ item.name  }}">Change image</button>
                                 {% include 'app/notebooks-change-image.html' %}
-                            {% endif %}
+                        {% endif %}
                             <p><strong>{% if 'container_image' in item.variables %} {{ item.variables.container_image }} {% endif %} </strong></p>
 
                     {% endif %}

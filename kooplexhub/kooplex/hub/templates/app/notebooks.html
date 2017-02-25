@@ -16,9 +16,9 @@
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
       <ul class="nav navbar-nav">
           {% if username %}
-            <li class="active" data-toggle="tab" href="#running"><a href="#running">Running containers </a></li>
-            <li><a href="#myprojects" data-toggle="tab" href="#myprojects">My projects</a></li>
-            <li><a href="#otherprojects" data-toggle="tab" href="#otherprojects">Other public projects</a></li>
+              <li class="active" ><a href="#myprojects" data-toggle="tab" href="#myprojects">My projects</a></li>
+              <li><a href="#running" data-toggle="tab" href="#running">Running containers </a></li>
+              <li><a href="#otherprojects" data-toggle="tab" href="#otherprojects">Other public projects</a></li>
           {% endif %}
 
       </ul>
@@ -46,7 +46,14 @@
  <div class="tab-content">
 
   {% if username %}
-    <div id="running" class="tab-pane fade in active ">
+
+    <div id="myprojects" class="tab-pane fade in active">
+        {% for item in projects %}
+            {% include 'app/project-partial.html' %}
+        {% endfor %}
+    </div>
+
+    <div id="running" class="tab-pane fade ">
         {% for item in projects %}
             {% if item.running %}
                 {% include 'app/project-partial.html' %}
@@ -54,11 +61,6 @@
         {% endfor %}
     </div>
 
-    <div id="myprojects" class="tab-pane fade">
-        {% for item in projects %}
-            {% include 'app/project-partial.html' %}
-        {% endfor %}
-    </div>
  {% endif %}
 
 
@@ -70,7 +72,6 @@
     {% endif %}
     {% endfor %}
     </div>
-
 
  </div>
 </div>
