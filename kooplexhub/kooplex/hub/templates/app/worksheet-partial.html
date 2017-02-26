@@ -12,7 +12,7 @@
                 {% else %}
                     <a href="{% url 'worksheet-open' %}?project_owner={{ item.owner }}&project_name={{ item.name  }}&project_id={{ item.project_id }}&file={{ item.file }}" target="_blank">
                 {% endif %}
-                    <img src="{{ item.picture }}"  style="max-height: 200px;"></a>
+                    <img src="{{ item.picture }}"  style="max-height: 200px; max-width: 100%;"></a>
 
                     <p> {{ item.description }} </p>
                     <div>
