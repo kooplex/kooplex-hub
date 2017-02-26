@@ -10,6 +10,7 @@ from kooplex.lib.libbase import get_settings
 from kooplex.lib.gitlab import Gitlab
 from kooplex.lib.gitlabadmin import GitlabAdmin
 from kooplex.lib.repo import Repo
+from kooplex.lib.smartdocker import Docker
 
 from kooplex.lib.debug import *
 from html.parser import HTMLParser
@@ -117,39 +118,38 @@ class Dashboards(RestClient):
 #	GET|POST|PUT|DELETE /api/*
 #    Proxies Jupyter Kernel requests to the appropriate kernel gateway.
 #    For execute_request messages, only a cell index is allowed in the code field. If actual code or non-numeric are specified, the entire message is not proxied to the kernel gateway.
-
+    def find_dashboard_server(self, image):
+        docli = Docker()
+        all_containers = docli.list_containers()
+        for container in all_containers:
+            container_name = container['Names'][0]
+            if container_name.rfind("dashboards-") > -1:
+                if container_name.split("dashboards-")[1] == image.split("kooplex-notebook-")[1]:
+                    for P in container['Ports']:
+                        if "PublicPort" in P.keys():
+                            port = P["PublicPort"]
+                            return container_name, port
 
     def list_dashboards(self,request):
-      # Check whether we acces to it ?
-      dashboards_dir = get_settings('dashboards', 'base_dir', None, '')
-      
-      #Get all projects, check for worksheetness
-      g = Gitlab(request)
-      projects, unforkable_projectids = g.get_projects()
+      gadmin = GitlabAdmin(request)
+      projects = gadmin.get_all_projects()
       list_of_dashboards = []
       for project in projects:
-            worksheet=g.get_project_variable(project['id'],'worksheet')
-            print(worksheet)
-            if worksheet:
-              picture = g.get_project_variable(project['id'],'worksheet_picture')
-              picture = "hqdefault.jpg"
-              list_of_dashboards.append({'owner':project['owner']['username'],'name':project['name'],\
-              'description': project['description'],'worksheet_picture': picture})
-              
-      
-      #Check whether they really exist or not
-      list_of_existing_dashboards = []
-      for d in list_of_dashboards:
-       try:
-#        open(d,'r')
-        list_of_existing_dashboards.append(d)
-       except:
-        pass
-      return list_of_existing_dashboards
+          variables = gadmin.get_project_variables(project['id'])
+          for var in variables:
+              if var['key'].rfind('dashboard_') > -1:
+                  image_name = var['value']
+                  name, port = self.find_dashboard_server(image_name)
+                  file = var['key'].split("dashboard_")[1]
+                  url_to_file = get_settings('dashboards', 'base_url')
+                  url_to_file += ":%d/%d/%d/%s/%s"%(port,project['owner']['id'],project['creator_id'],project['name'],file)
 
-    def list_dashboards_html(self, request):
-          # Check whether we acces to it ?
-          dashboards_dir = get_settings('dashboards', 'base_dir', None, '')
+                  list_of_dashboards.append({'owner':project['owner']['username'],'name':project['name'],\
+                    'description': project['description'],'url': url_to_file, 'file': file, 'project_id':project['id']})
+
+      return list_of_dashboards
+
+    def list_reports_html(self, request):
           # Get all projects, check for worksheetness
           gadmin = GitlabAdmin(request)
           projects = gadmin.get_all_projects()
@@ -163,7 +163,7 @@ class Dashboards(RestClient):
                       html_content = base64.b64decode(file_vmi['content'])
                       first_image = Find_first_img_inhtml(html_content.decode('utf-8'))
                       list_of_dashboards.append({'owner': project['owner']['username'], 'name': project['name'], \
-                                             'description': project['description'], 'picture': first_image,'file':file,
+                                             'description': project['description'], 'picture': first_image,'file':file, \
                                              'project_id':project['id']})
 
           return list_of_dashboards
@@ -188,19 +188,61 @@ class Dashboards(RestClient):
         tofile = LibBase.join_path(path, file)
         print(file, fromfile, tofile)
         try:
+            #Err = cp(fromfile, tofile)
+            Err = os.remove(fromfile)
+        except  IOError:
+            print_debug("ERROR: file cannot be written to %s" % tofile)
+            # return Err
+
+    def deploy_data(self, project, notebook_path_dir, file):
+        print_debug("",DEBUG_LOCAL)
+        from shutil import copyfile as cp
+        from os import mkdir
+        path = get_settings('dashboards', 'base_dir', None, '')
+        srv_dir = get_settings('users', 'srv_dir')
+        for det in [str(project['owner']['id']),str(project['creator_id']),project['name']]:
+            path = LibBase.join_path(path, det)
+            try:
+                mkdir(path)
+            except FileExistsError:
+                pass
+
+        fromfile = LibBase.join_path(srv_dir, notebook_path_dir)
+        fromfile = LibBase.join_path(fromfile, file)
+        tofile = LibBase.join_path(path, file)
+        print(file, fromfile, tofile)
+        try:
             Err = cp(fromfile, tofile)
         except  IOError:
             print_debug("ERROR: file cannot be written to %s" % tofile)
             # return Err
-    def unpublish(self, id,username,owner,name,file):
-        path = get_settings('dashboards', 'base_dir', None, '')
+
+    def unpublish(self, id,project,file):
         g = Gitlab()
         if file[-4:] == "html":
             g.delete_project_variable(id, "worksheet_%s" % file[:-5])
+        else:
+            file += ".ipynb"
+            path = get_settings('dashboards', 'base_dir', None, '')
+            file_to_delete = path + "%d/%d/%s/%s"%(project['owner']['id'],project['creator_id'],project['name'],file)
+            Err = os.remove(file_to_delete)
+            g.delete_project_variable(id, "dashboard_%s" % file)
+
+
+    def unpublish_dashboard(self, id, name, file):
+        path = get_settings('dashboards', 'base_dir', None, '')
+        g = Gitlab()
+        dsd
+        if file[-4:] == "html":
+            g.delete_project_variable(id, "worksheet_%s" % file[:-5])
+
+        else:
+            file += ".ipynb"
             file_to_delete = LibBase.join_path(path, username)
             file_to_delete = LibBase.join_path(file_to_delete, owner)
             file_to_delete = LibBase.join_path(file_to_delete, name)
             file_to_delete = LibBase.join_path(file_to_delete, file)
+            g.delete_project_variable(id, "dashboard_%s" % file)
             Err = os.remove(file_to_delete)
 
 

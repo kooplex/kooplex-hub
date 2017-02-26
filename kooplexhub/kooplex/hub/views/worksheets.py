@@ -23,8 +23,8 @@ def worksheets(request):
     username = request.user.username
     dashboard_url="http://polc.elte.hu:3000"
     D = Dashboards()
-    list_of_dashboards = D.list_dashboards_html(request)
- #   list_of_dashboards  = [{'path':'user/project_owner/project_name'},{'path':'user2/project_owner/project_name'}]
+    list_of_reports = D.list_reports_html(request)
+    list_of_dashboards = D.list_dashboards(request)
     return render(
         request,
         'app/worksheets.html',
@@ -33,21 +33,15 @@ def worksheets(request):
             'title':'Browse worksheets',
             'message':'',
             'dashboard_url': dashboard_url,
+            'reports': list_of_reports,
             'dashboards': list_of_dashboards,
             'username' : username,
        })
     )
 
-def worksheets_open(request):
-    base_url = get_settings('dashboards', 'base_dir', None, '')
-    project_name = request.GET['project_name']
-    project_owner = request.GET['project_owner']
-    username = request.user.username
-    to_worksheet = base_url+"/dashboards/%s/%s/%s"%(username,project_owner,project_name)
-
-    #return HttpResponseRedirect(to_worksheet)
-    #return HttpResponse(to_worksheet)
-    return HttpResponse("<p>Here's the text of the Web page.</p>")
+def worksheets_open_as_dashboard(request):
+    url = request.GET['url']
+    return HttpResponseRedirect(url)
 
 def worksheets_open_html(request):
     project_id = request.GET['project_id']
@@ -58,18 +52,29 @@ def worksheets_open_html(request):
     return HttpResponse(content)
 
 def reports_unpublish(request):
-    username = request.user.username
     project_id = request.GET['project_id']
-    project_owner = request.GET['project_owner']
+    project_name = request.GET['project_name']
+    file = request.GET['file']
+    g = Gitlab()
+    project = g.get_project_by_name(project_name)[0]
+    d = Dashboards()
+    d.unpublish(project_id,project,file)
+
+    return HttpResponseRedirect(HUB_REPORTS_URL)
+
+def reports_unpublish_dashboard(request):
+    project_id = request.GET['project_id']
     project_name = request.GET['project_name']
     file = request.GET['file']
     d = Dashboards()
-    d.unpublish(project_id,username,project_owner,project_name,file)
+    d.unpublish_dashboard(project_id,project_name,file)
 
     return HttpResponseRedirect(HUB_REPORTS_URL)
 
 urlpatterns = [
     url(r'^$', worksheets, name='worksheets'),
     url(r'^/open$', worksheets_open_html, name='worksheet-open'),
+    url(r'^/opendashboard$', worksheets_open_as_dashboard, name='worksheet-open-as-dashboard'),
     url(r'^/unpublish$', reports_unpublish, name='worksheet-unpublish'),
+
 ]

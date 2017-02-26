@@ -1,22 +1,36 @@
 
-<div class="projects">
 
-
-    {% for item in dashboards %}
-        {%  if username == item.owner or  publicvar %}
-            <div class="projects worksheet">
-                <a href="{% url 'worksheet-open' %}?project_owner={{ item.owner }}&project_name={{ item.name  }}&project_id={{ item.project_id }}&file={{ item.file }}" target="_blank">
-                <img src="{{ item.picture }}" width="300px">
-                <p><span  style="padding-right: 50px;"><b>{{ item.owner }}</b> - <b>{{ item.name  }}</b></span></a>
-                </p>
-                <p> {{ item.description }} </p>
-                {%  if username == item.owner %}
-                <div>
-                    <a href="{% url 'worksheet-unpublish' %}?project_owner={{ item.owner }}&project_name={{ item.name  }}&project_id={{ item.project_id }}&file={{ item.file }}"
-                    <button type="button" class="btn btn-danger"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Unpublish</button></a>
-                </div>
+<div class=" col-md-6 col-sm-6 col-xs-12">
+<div class="panel panel-default ">
+    <div class="panel-heading">
+        <h4><strong>{{ item.name  }}</strong> - {{ item.owner }} - {{ item.file }}</h4>
+    </div>
+    <div class="panel-body">
+                <div class="projects worksheet" style="text-align: center;">
+                {% if item.url %}
+                    <a href="{% url 'worksheet-open-as-dashboard' %}?url={{ item.url }}" target="_blank">
+                {% else %}
+                    <a href="{% url 'worksheet-open' %}?project_owner={{ item.owner }}&project_name={{ item.name  }}&project_id={{ item.project_id }}&file={{ item.file }}" target="_blank">
                 {% endif %}
-            </div>
-        {% endif  %}
-    {% endfor %}
-   </div>
+                    <img src="{{ item.picture }}"  style="max-height: 200px;"></a>
+
+                    <p> {{ item.description }} </p>
+                    <div>
+                    {% if item.url %}
+                        <a href="{% url 'worksheet-open-as-dashboard' %}?url={{ item.url }}" target="_blank">
+                    {% else %}
+                        <a href="{% url 'worksheet-open' %}?project_owner={{ item.owner }}&project_name={{ item.name  }}&project_id={{ item.project_id }}&file={{ item.file }}" target="_blank">
+                    {% endif %}
+                        <button type="button" class="btn btn-info"><span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span> Open</button></a>
+                        {%  if not publicvar %}
+
+                                <a href="{% url 'worksheet-unpublish' %}?project_owner={{ item.owner }}&project_name={{ item.name  }}&project_id={{ item.project_id }}&file={{ item.file }}"
+
+                            <button type="button" class="btn btn-danger"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Unpublish</button></a>
+                        {% endif  %}
+                    </div>
+                </div>
+    </div>
+</div>
+</div>
+

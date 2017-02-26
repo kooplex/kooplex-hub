@@ -5,7 +5,7 @@
 <div class="container">
 
 <div class="row">
-<div class="col-md-9 col-sm-9 col-xs-9">
+<div class="col-md-12 col-sm-12 col-xs-12">
 <nav class="navbar navbar-default">
  <div class="container-fluid">
 
@@ -14,10 +14,18 @@
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
       <ul class="nav navbar-nav">
           {% if username %}
+                <li class="active" ><a href="#myreports" data-toggle="tab">My reports</a></li>
+                <li><a href="#mydashboards" data-toggle="tab">My dashboards</a></li>
+          {% endif %}
 
-                <li class="active" ><a href="#my" data-toggle="tab">My reports</a></li>
-                <li><a href="#public" data-toggle="tab" >Public reports </a></li>
+
+          {% if username %}
+              <li><a href="#publicreports" data-toggle="tab" >Public reports </a></li>
+              <li><a href="#publicdashboards" data-toggle="tab" >Public dashboards </a></li>
           {% else %}
+              <li></li>
+              <li></li>
+              <li></li>
                 <li class="active" ><a href="#public" data-toggle="tab" >Public reports </a></li>
 
           {% endif %}
@@ -31,12 +39,42 @@
 
  <div class="tab-content">
 
-     <div id="my" class="tab-pane fade in active">
-              {% include 'app/worksheet-partial.html' with publicvar=False %}
+     <div id="myreports" class="tab-pane fade in active">
+     <div class="row">
+         {% for item in reports %}
+             {% if username == item.owner %}
+                {% include 'app/worksheet-partial.html' with publicvar=False %}
+             {% endif %}
+         {% endfor %}
+     </div>
+     </div>
+     <div id="mydashboards" class="tab-pane fade">
+     <div class="row">
+         {% for item in dashboards %}
+            {% if username == item.owner %}
+                {% include 'app/worksheet-partial.html' with publicvar=False %}
+            {% endif %}
+         {% endfor %}
+     </div>
      </div>
 
-     <div id="public" class="tab-pane fade">
-            {% include 'app/worksheet-partial.html' with publicvar=True %}
+     <div id="publicreports" class="tab-pane fade">
+     <div class="row">
+         {% for item in reports %}
+             {% if username != item.owner %}
+                {% include 'app/worksheet-partial.html' with publicvar=True %}
+             {% endif %}
+         {% endfor %}
+     </div>
+     </div>
+     <div id="publicdashboards" class="tab-pane fade">
+     <div class="row">
+         {% for item in dashboards %}
+             {% if username != item.owner %}
+                {% include 'app/worksheet-partial.html' with publicvar=True %}
+             {% endif %}
+         {% endfor %}
+     </div>
      </div>
  </div>
  

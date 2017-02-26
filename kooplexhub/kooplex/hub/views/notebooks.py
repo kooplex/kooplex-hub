@@ -374,10 +374,14 @@ def notebooks_prepare_to_convert_html(request):
     local_path_dir = LibBase.join_path(srv_dir, notebook_path_dir)
 
     files = os.listdir(local_path_dir)
-    ipynbs=[]
+    ipynbs=[]; other_files=[]
     for file in files:
         if file[-5:]=="ipynb":
             ipynbs.append(file)
+        else:
+            if file[0]!=".":
+                other_files.append(file)
+
     return render(
         request,
         'app/todeploy.html',
@@ -385,6 +389,7 @@ def notebooks_prepare_to_convert_html(request):
         {
             'notebook_path_dir': notebook_path_dir,
             'ipynbs': ipynbs,
+            'other_files': other_files,
             'project_id': project_id,
             'project_owner' : project_owner,
             'project_name' : project_name,
@@ -401,21 +406,36 @@ def notebooks_convert_html(request):
     username = request.user.username
     project_id = request.POST['project_id']
     notebook_path_dir = request.POST['notebook_path_dir']
-    #container_name = request.POST['container_name']
-    toconvert_files = request.POST['toconvert_files']
-    g=Gitlab(request)
+    ipynb_files = request.POST['ipynb_files']
+    other_files = request.POST['other_files']
     notebook_id = request.POST['notebook_id']
+    g=Gitlab(request)
     notebook = Notebook.objects.filter(id=notebook_id)[0]
-    srv_dir=get_settings('users', 'srv_dir')
-    
-    docli = Docker()
-    for ipynb in [toconvert_files]:
-        file = ipynb[:-6]
-        command=" jupyter-nbconvert --to html /%s/%s " %(notebook_path_dir,ipynb)
-        docli.exec_container(notebook, command, detach=False)
-        dashb = Dashboards()
-        dashb.deploy_html(username, project_owner, project_name, request.user.email, notebook_path_dir, file+".html")
-        g.create_project_variable(project_id, 'worksheet_%s'%file, file + ".html")
+    ipynb_files=ipynb_files.split(",")
+    other_files=other_files.split(",")
+
+    project = g.get_project_by_name(project_name)[0]
+
+    dashb = Dashboards()
+    if 'html' in request.POST.keys() and ipynb_files[0]!="'":
+        docli = Docker()
+        for ipynb in ipynb_files:
+            file = ipynb[:-6]
+            command=" jupyter-nbconvert --to html /%s/%s " %(notebook_path_dir,ipynb)
+            docli.exec_container(notebook, command, detach=False)
+
+            dashb.deploy_html(username, project_owner, project_name, request.user.email, notebook_path_dir, file+".html")
+            g.create_project_variable(project_id, 'worksheet_%s'%file, file + ".html")
+
+    elif 'dashboard' in request.POST.keys():
+        for file in ipynb_files:
+            dashb.deploy_data(project, notebook_path_dir, file)
+            g.create_project_variable(project_id, 'dashboard_%s'%file[:-6], notebook.image)
+
+    if other_files[0] != "'":
+        for file in other_files:
+            dashb.deploy_data(project, notebook_path_dir, file)
+
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
 def notebooks_pull_confirm(request):

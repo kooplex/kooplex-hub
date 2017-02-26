@@ -151,7 +151,7 @@ class Docker(LibBase):
 
     def list_containers(self):
         print_debug("")
-        containers = docli.containers(all=True)
+        containers = self.docli.containers(all=True)
         # TODO: modify to return user's containers only
         #containers = [ c for c in docli.containers() if
         #Spawner.container_prefix in c['Names'][0] ]
