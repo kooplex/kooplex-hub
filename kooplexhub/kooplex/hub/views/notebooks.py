@@ -397,7 +397,7 @@ def notebooks_prepare_to_convert_html(request):
         })
     )
 
-def notebooks_convert_html(request):
+def notebooks_publish(request):
     """ Converts ipynb to html in the opened container, creates variable in gitlab, commits file in gitlab"""
     assert isinstance(request, HttpRequest)
     print_debug("Deploying notebook,")
@@ -638,7 +638,7 @@ urlpatterns = [
     url(r'^/deploy$', notebooks_deploy, name = 'notebooks-deploy'),
     url(r'^/viewdeploy$', notebooks_view_deploy, name = 'notebooks-view-deploy'),
     url(r'^/preparetoconverthtml$', notebooks_prepare_to_convert_html, name = 'notebooks-prepare-to-convert-html'),
-    url(r'^/converthtml$', notebooks_convert_html, name = 'notebooks-convert-html'),
+    url(r'^/converthtml$', notebooks_publish, name = 'notebooks-convert-html'),
     url(r'^/pull-confirm$', notebooks_pull_confirm, name = 'notebooks-pull-confirm'),
     url(r'^/change-image$', notebooks_change_image, name = 'notebooks-change-image'),
     url(r'^/delete-project$', project_delete, name = 'notebooks-delete-project'),
