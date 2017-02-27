@@ -45,7 +45,6 @@ def notebooks(request,errors=[] ):
     print_debug("Rendering notebook page, projects from gitlab")
     g = Gitlab(request)
     projects, unforkable_projectids = g.get_projects()
-    print(projects)
     if type(projects) != dict:
     #A redirect to homepage
 #    if type(projects) == dict:
