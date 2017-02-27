@@ -107,6 +107,16 @@ class GitlabAdmin(Gitlab):
             raise ValueError("MESSAGE: %s"%(projects_json['message']))
         return project_json
 
+    #THERE IS A PROBLEM IN NAMING WITH THE TWO FOLLOWING
+    def get_public_projects(self, unforkable_projectids):
+        print_debug("",DEBUG_LOCAL)
+        res = self.http_get('api/v3/projects/all?visibility=public')
+        public_projects_json = res.json()
+        if 'message' in public_projects_json:
+            raise ValueError("MESSAGE: %s"%(public_projects_json['message']))
+        self.identify_unforkable_projects(public_projects_json, unforkable_projectids)
+        return public_projects_json
+
     def get_all_public_projects(self, unforkable_projectids):
         print_debug("",DEBUG_LOCAL)
         res = self.http_get('api/v3/projects/all?visibility=public')

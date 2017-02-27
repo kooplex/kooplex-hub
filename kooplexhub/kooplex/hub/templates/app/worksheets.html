@@ -21,14 +21,10 @@
 
           {% if username %}
               <li><a href="#publicreports" data-toggle="tab" >Public reports </a></li>
-              <li><a href="#publicdashboards" data-toggle="tab" >Public dashboards </a></li>
           {% else %}
-              <li></li>
-              <li></li>
-              <li></li>
-                <li class="active" ><a href="#public" data-toggle="tab" >Public reports </a></li>
-
+              <li class="active"><a href="#publicreports" data-toggle="tab" >Public reports </a></li>
           {% endif %}
+          <li><a href="#publicdashboards" data-toggle="tab" >Public dashboards </a></li>
       </ul>
     </div><!-- /.navbar-collapse -->
   </div><!-- /.container-fluid -->
@@ -58,11 +54,17 @@
      </div>
      </div>
 
-     <div id="publicreports" class="tab-pane fade">
+     {% if username %}
+        <div id="publicreports" class="tab-pane fade">
+     {% else %}
+        <div id="publicreports" class="tab-pane fade in active">
+     {% endif %}
      <div class="row">
          {% for item in reports %}
-             {% if username != item.owner %}
-                {% include 'app/worksheet-partial.html' with publicvar=True %}
+             {% if item.public %}
+                {% if username != item.owner %}
+                    {% include 'app/worksheet-partial.html' with publicvar=True %}
+                 {% endif %}
              {% endif %}
          {% endfor %}
      </div>
@@ -70,8 +72,10 @@
      <div id="publicdashboards" class="tab-pane fade">
      <div class="row">
          {% for item in dashboards %}
-             {% if username != item.owner %}
-                {% include 'app/worksheet-partial.html' with publicvar=True %}
+             {% if item.public %}
+                {% if username != item.owner %}
+                    {% include 'app/worksheet-partial.html' with publicvar=True %}
+                {% endif %}
              {% endif %}
          {% endfor %}
      </div>

@@ -99,7 +99,7 @@ class Dashboards(RestClient):
         message = res.json()
         return message
         
-        
+
     def clear_cached(self,path):
         print_debug("", DEBUG_LOCAL)
         url = "/_api/cache/"
@@ -145,9 +145,8 @@ class Dashboards(RestClient):
                   if url_to_file[-1]=="/":
                       url_to_file=url_to_file[:-1]
                   url_to_file += ":%d/%d/%d/%s/%s"%(port,project['owner']['id'],project['creator_id'],project['name'],file)
-
                   list_of_dashboards.append({'owner':project['owner']['username'],'name':project['name'],\
-                    'description': project['description'],'url': url_to_file, 'file': file, 'project_id':project['id']})
+                    'description': project['description'],'url': url_to_file, 'file': file, 'project_id':project['id'], 'public': project['public']})
 
       return list_of_dashboards
 
@@ -166,7 +165,7 @@ class Dashboards(RestClient):
                       first_image = Find_first_img_inhtml(html_content.decode('utf-8'))
                       list_of_dashboards.append({'owner': project['owner']['username'], 'name': project['name'], \
                                              'description': project['description'], 'picture': first_image,'file':file, \
-                                             'project_id':project['id']})
+                                             'project_id':project['id'], 'public': project['public']})
 
           return list_of_dashboards
 
