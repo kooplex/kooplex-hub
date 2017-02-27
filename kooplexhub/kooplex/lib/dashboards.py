@@ -142,6 +142,8 @@ class Dashboards(RestClient):
                   name, port = self.find_dashboard_server(image_name)
                   file = var['key'].split("dashboard_")[1]
                   url_to_file = get_settings('dashboards', 'base_url')
+                  if url_to_file[-1]=="/":
+                      url_to_file=url_to_file[:-1]
                   url_to_file += ":%d/%d/%d/%s/%s"%(port,project['owner']['id'],project['creator_id'],project['name'],file)
 
                   list_of_dashboards.append({'owner':project['owner']['username'],'name':project['name'],\
