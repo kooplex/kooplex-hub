@@ -13,7 +13,8 @@ class Jupyter(RestClient):
     """Jupyter notebook api client.
     based on: https://gist.github.com/blink1073/ecae5130dfe138ea2aff
     """
-    
+    TOKEN="T"
+
     def __init__(self, notebook):
         print_debug("")
         assert isinstance(notebook, Notebook)
@@ -31,6 +32,11 @@ class Jupyter(RestClient):
         url = LibBase.join_path(url, path)
         return url
 
+    def http_prepare_headers(self, headers):
+        print_debug("")
+        headers = RestClient.http_prepare_headers(self, headers)
+        headers['X-XSRFToken'] = Jupyter.TOKEN
+        return headers
     # Contents
 
     def list_contents(self, path, type, format, content):
@@ -124,6 +130,7 @@ class Jupyter(RestClient):
         assert isinstance(session, Session)
 
         data = session.to_jupyter_dict()
+
         res = self.http_post('/sessions', data=data)
         print(res)
         session = Session.from_jupyter_dict(self.notebook, res.json())
