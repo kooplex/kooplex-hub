@@ -188,11 +188,11 @@ class Dashboards(RestClient):
         fromfile = LibBase.join_path(fromfile, file)
         tofile = LibBase.join_path(path, file)
         print(file, fromfile, tofile)
-        try:
+        #try:
             #Err = cp(fromfile, tofile)
-            Err = os.remove(fromfile)
-        except  IOError:
-            print_debug("ERROR: file cannot be written to %s" % tofile)
+            #Err = os.remove(fromfile)
+        #except  IOError:
+        #    print_debug("ERROR: file cannot be written to %s" % tofile)
             # return Err
 
     def deploy_data(self, project, notebook_path_dir, file):
