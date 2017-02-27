@@ -226,13 +226,15 @@ class Dashboards(RestClient):
         else:
             file += ".ipynb"
             path = get_settings('dashboards', 'base_dir', None, '')
-            file_to_delete = path + "%d/%d/%s/%s"%(project['owner']['id'],project['creator_id'],project['name'],file)
+            file_to_delete = path + "/%d/%d/%s/%s"%(project['owner']['id'],project['creator_id'],project['name'],file)
             Err = os.remove(file_to_delete)
             g.delete_project_variable(id, "dashboard_%s" % file)
 
 
     def unpublish_dashboard(self, id, name, file):
         path = get_settings('dashboards', 'base_dir', None, '')
+        if path[-1]!="/":
+            path += "/"
         g = Gitlab()
         dsd
         if file[-4:] == "html":
