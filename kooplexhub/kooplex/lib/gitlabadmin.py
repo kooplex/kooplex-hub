@@ -93,7 +93,7 @@ class GitlabAdmin(Gitlab):
 
     def get_all_projects(self):
         print_debug("",DEBUG_LOCAL)
-        res = self.http_get('api/v3/projects/all')
+        res = self.http_get('api/v3/projects/all?page=1&per_page=1000')
         projects_json = res.json()
         if 'message' in projects_json:
             raise ValueError("MESSAGE: %s"%(projects_json['message']))
