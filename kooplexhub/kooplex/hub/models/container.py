@@ -40,7 +40,7 @@ class Container(models.Model, ModelBase):
         c.command = dict['Command']
         c.environment = None    # not returned by api
         c.volumes = None        # TODO
-        c.ports = None          # TODO
+        c.ports = dict['Ports']          # TODO
         c.state = dict['State']    # created|restarting|running|paused|exited|dead
         return c
 
