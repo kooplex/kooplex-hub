@@ -123,7 +123,7 @@ class Dashboards(RestClient):
       gadmin = GitlabAdmin(request)
       projects = gadmin.get_all_projects()
       docli = Docker()
-      internal_host = get_settings('hub', 'internal_host')
+      outer_host = get_settings('hub', 'outer_host')
       list_of_dashboards = []
       for project in projects:
           variables = gadmin.get_project_variables(project['id'])
@@ -146,7 +146,7 @@ class Dashboards(RestClient):
                   if url_to_file[-1]=="/":
                       url_to_file=url_to_file[:-1]
                   #url_to_file += "/dashboard:%d/%a/%d/%s/%s"%(dashboard_port,kernel_gateway_ip,project['owner']['id'],project['creator_id'],project['name'],file)
-                  url_to_file += "/dashboard/%s:%d/%s:8888/%d/%s/%s/%s"%(internal_host, dashboard_port,kernel_gateway_container.ip,project['owner']['id'],project['creator_id'],project['name'],file)
+                  url_to_file += "/dashboard/%s:%d/%s:8888/%d/%s/%s/%s"%(outer_host, dashboard_port,kernel_gateway_container.ip,project['owner']['id'],project['creator_id'],project['name'],file)
                   list_of_dashboards.append({'owner':project['owner']['username'],'name':project['name'],\
                     'description': project['description'],'url': url_to_file, 'file': file, 'project_id':project['id'], 'public': project['public']})
 
