@@ -118,33 +118,30 @@ class Dashboards(RestClient):
 #	GET|POST|PUT|DELETE /api/*
 #    Proxies Jupyter Kernel requests to the appropriate kernel gateway.
 #    For execute_request messages, only a cell index is allowed in the code field. If actual code or non-numeric are specified, the entire message is not proxied to the kernel gateway.
-    def find_dashboard_server(self, image):
-        docli = Docker()
-        all_containers = docli.list_containers()
-        for container in all_containers:
-            container_name = container['Names'][0]
-            if container_name.rfind("dashboards-") > -1:
-                if container_name.split("dashboards-")[1] == image.split("kooplex-notebook-")[1]:
-                    for P in container['Ports']:
-                        if "PublicPort" in P.keys():
-                            port = P["PublicPort"]
-                            return container_name, port
 
     def list_dashboards(self,request):
       gadmin = GitlabAdmin(request)
       projects = gadmin.get_all_projects()
+      docli = Docker()
+      internal_host = get_settings('hub', 'internal_host')
       list_of_dashboards = []
       for project in projects:
           variables = gadmin.get_project_variables(project['id'])
           for var in variables:
               if var['key'].rfind('dashboard_') > -1:
                   image_name = var['value']
-                  name, port = self.find_dashboard_server(image_name)
+                  #name, port = self.find_dashboard_server(image_name)
+
+                  name = "dashboards-" + image_name.split("kooplex-notebook-")[1]
+                  dashboard_container = docli.get_container(name)
+
+                  kernel_gateway_container = docli.get_container(name)
                   file = var['key'].split("dashboard_")[1]
                   url_to_file = get_settings('dashboards', 'base_url')
                   if url_to_file[-1]=="/":
                       url_to_file=url_to_file[:-1]
-                  url_to_file += ":%d/%d/%d/%s/%s"%(port,project['owner']['id'],project['creator_id'],project['name'],file)
+                  #url_to_file += "/dashboard:%d/%a/%d/%s/%s"%(dashboard_port,kernel_gateway_ip,project['owner']['id'],project['creator_id'],project['name'],file)
+                  url_to_file += "/dashboard/%s:%d/%s/%d/%s/%s/%s"%(internal_host, dashboard_container.docker_port,kernel_gateway_container.ip,project['owner']['id'],project['creator_id'],project['name'],file)
                   list_of_dashboards.append({'owner':project['owner']['username'],'name':project['name'],\
                     'description': project['description'],'url': url_to_file, 'file': file, 'project_id':project['id'], 'public': project['public']})
 
