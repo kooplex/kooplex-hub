@@ -143,11 +143,16 @@ class Dashboards(RestClient):
                   name = "kernel-gateway-" + image_name.split("kooplex-notebook-")[1]
                   kernel_gateway_container = docli.get_container(name)
                   file = var['key'].split("dashboard_")[1]
+                  g = Gitlab()
+                  creator = g.get_user_by_id(project['creator_id'])
+                  creator_name = creator['username']
                   #url_to_file = get_settings('dashboards', 'base_url')
                   #if url_to_file[-1]=="/":
                   #    url_to_file=url_to_file[:-1]
                   #url_to_file += "/dashboard:%d/%a/%d/%s/%s"%(dashboard_port,kernel_gateway_ip,project['owner']['id'],project['creator_id'],project['name'],file)
-                  url_to_file = "http://%s/dashboard/%s:%d/%s:8888/%d/%s/%s/%s"%(outer_host,internal_host, dashboard_port,kernel_gateway_container.ip,project['owner']['id'],project['creator_id'],project['name'],file)
+                  #url_to_file = "http://%s/dashboard/%s:%d/%s:8888/%d/%s/%s/%s"%(outer_host,internal_host, dashboard_port,kernel_gateway_container.ip,project['owner']['id'],project['creator_id'],project['name'],file)
+                  url_to_file = "http://%s/dashboard/%s:%d/%s:8888/" % (outer_host, internal_host, dashboard_port, kernel_gateway_container.ip)
+                  url_to_file +="%s/projects/%s/%s/%s"% (project['owner']['username'], creator_name, project['name'], file)
                   list_of_dashboards.append({'owner':project['owner']['username'],'name':project['name'],\
                     'description': project['description'],'url': url_to_file, 'file': file, 'project_id':project['id'], 'public': project['public']})
 
@@ -204,7 +209,11 @@ class Dashboards(RestClient):
         from os import mkdir
         path = get_settings('dashboards', 'base_dir', None, '')
         srv_dir = get_settings('users', 'srv_dir')
-        for det in [str(project['owner']['id']),str(project['creator_id']),project['name']]:
+        #for det in [str(project['owner']['id']),str(project['creator_id']),project['name']]:
+        g = Gitlab()
+        creator = g.get_user_by_id(project['creator_id'])
+        creator_name = creator['username']
+        for det in [project['owner']['username'], 'projects', creator_name, project['name']]:
             path = LibBase.join_path(path, det)
             try:
                 mkdir(path)

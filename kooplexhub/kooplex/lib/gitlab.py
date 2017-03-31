@@ -79,7 +79,12 @@ class Gitlab(RestClient):
         print_debug("",DEBUG_LOCAL)
         res = self.http_get('api/v3/users?username=%s'%username)
         return res.json()
-    
+
+    def get_user_by_id(self,id):
+        print_debug("",DEBUG_LOCAL)
+        res = self.http_get('api/v3/users/%d'%id)
+        return res.json()
+
     def get_alluser(self):
         print_debug("",DEBUG_LOCAL)
         res = self.http_get('api/v3/users')
