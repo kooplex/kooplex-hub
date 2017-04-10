@@ -415,7 +415,7 @@ def notebooks_publish(request):
     other_files=other_files.split(",")
 
     project = g.get_project_by_name(project_name)[0]
-
+    prefix = get_settings('prefix', 'name')
     dashb = Dashboards()
     if 'html' in request.POST.keys() and ipynb_files[0]!="'":
         docli = Docker()
@@ -424,17 +424,17 @@ def notebooks_publish(request):
             command=" jupyter-nbconvert --to html /%s/%s " %(notebook_path_dir,ipynb)
             docli.exec_container(notebook, command, detach=False)
 
-            dashb.deploy_html(username, project_owner, project_name, request.user.email, notebook_path_dir, file+".html")
+            dashb.deploy_html(notebook.image.split("%s-notebook-"%prefix)[1]+"-html",username, project_owner, project_name, request.user.email, notebook_path_dir, file+".html")
             g.create_project_variable(project_id, 'worksheet_%s'%file, file + ".html")
 
     elif 'dashboard' in request.POST.keys():
         for file in ipynb_files:
-            dashb.deploy_data(project, notebook_path_dir, file)
+            dashb.deploy_data(notebook.image.split("%s-notebook-"%prefix)[1], project, notebook_path_dir, file)
             g.create_project_variable(project_id, 'dashboard_%s'%file[:-6], notebook.image)
 
     if other_files[0] != "'":
         for file in other_files:
-            dashb.deploy_data(project, notebook_path_dir, file)
+            dashb.deploy_data(notebook.image.split("%s-notebook-"%prefix)[1],project, notebook_path_dir, file)
 
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 

@@ -100,7 +100,7 @@ class Dashboards(RestClient):
         return message
         
 
-    def clear_cached(self,path):
+    def clear_cache(self,path):
         print_debug("", DEBUG_LOCAL)
         url = "/_api/cache/"
         url += "%s/" % path
@@ -151,8 +151,9 @@ class Dashboards(RestClient):
                   #    url_to_file=url_to_file[:-1]
                   #url_to_file += "/dashboard:%d/%a/%d/%s/%s"%(dashboard_port,kernel_gateway_ip,project['owner']['id'],project['creator_id'],project['name'],file)
                   #url_to_file = "http://%s/dashboard/%s:%d/%s:8888/%d/%s/%s/%s"%(outer_host,internal_host, dashboard_port,kernel_gateway_container.ip,project['owner']['id'],project['creator_id'],project['name'],file)
-                  url_to_file = "http://%s/dashboard/%s:%d/%s:8888/" % (outer_host, internal_host, dashboard_port, kernel_gateway_container.ip)
-                  url_to_file +="%s/projects/%s/%s/%s"% (project['owner']['username'], creator_name, project['name'], file)
+                  #url_to_file = "http://%s/dashboard/%s:%d/%s:8888/" % (outer_host, internal_host, dashboard_port, kernel_gateway_container.ip)
+                  #url_to_file +="%s/projects/%s/%s/%s"% (project['owner']['username'], creator_name, project['name'], file)
+                  url_to_file ="http://%s/db/%d/%s-%s/%s"% (outer_host, dashboard_port, project['owner']['username'], project['name'], file)
                   list_of_dashboards.append({'owner':project['owner']['username'],'name':project['name'],\
                     'description': project['description'],'url': url_to_file, 'file': file, 'project_id':project['id'], 'public': project['public']})
 
@@ -177,13 +178,14 @@ class Dashboards(RestClient):
 
           return list_of_dashboards
 
-    def deploy_html(self, username, owner, project_name, email, notebook_path_dir, file):
+    def deploy_html(self, imagename,username, owner, project_name, email, notebook_path_dir, file):
         print_debug("",DEBUG_LOCAL)
         from shutil import copyfile as cp
         from os import mkdir
         path = get_settings('dashboards', 'base_dir', None, '')
         srv_dir = get_settings('users', 'srv_dir')
-        for det in [username, owner, project_name]:
+        #for det in [username, owner, project_name]:
+        for det in [imagename + "-html", username + "-" + project_name]:
             path = LibBase.join_path(path, det)
             try:
                 mkdir(path)
@@ -203,17 +205,19 @@ class Dashboards(RestClient):
         #    print_debug("ERROR: file cannot be written to %s" % tofile)
             # return Err
 
-    def deploy_data(self, project, notebook_path_dir, file):
+    def deploy_data(self, imagename, project, notebook_path_dir, file):
         print_debug("",DEBUG_LOCAL)
-        from shutil import copyfile as cp
+        from shutil import copyfile as cpt
         from os import mkdir
+        prefix = get_settings('hub', 'outer_host')
         path = get_settings('dashboards', 'base_dir', None, '')
         srv_dir = get_settings('users', 'srv_dir')
         #for det in [str(project['owner']['id']),str(project['creator_id']),project['name']]:
         g = Gitlab()
         creator = g.get_user_by_id(project['creator_id'])
         creator_name = creator['username']
-        for det in [project['owner']['username'], 'projects', creator_name, project['name']]:
+        #for det in [project['owner']['username'], 'projects', creator_name, project['name']]:
+        for det in [imagename, project['owner']['username'] + "-" + project['name']]:
             path = LibBase.join_path(path, det)
             try:
                 mkdir(path)
@@ -225,7 +229,7 @@ class Dashboards(RestClient):
         tofile = LibBase.join_path(path, file)
         print(file, fromfile, tofile)
         try:
-            Err = cp(fromfile, tofile)
+            Err = cpt(fromfile, tofile)
         except  IOError:
             print_debug("ERROR: file cannot be written to %s" % tofile)
             # return Err

@@ -38,23 +38,37 @@ class Spawner(RestClient):
         self.dashboards_url = get_settings('dashboards', 'base_url','')
 
         
-        self.docli = self.make_docker_client()
+        self.docli = Docker()         #self.make_docker_client()
         self.pxcli = self.make_proxy_client()
 
     def make_docker_client(self):
         print_debug("")
-        return Docker()
+        d = Docker()
+        url = d.get_docker_url()
+        cli = docker.client.Client(base_url=url)
+        return cli
 
     def make_proxy_client(self):
         return Proxy()
 
     def pick_random_ip(self):
         print_debug("")
-        # TODO: modify to return available ip address
-        # TODO: skip invalid addresses (.0, .255 etc)
+        network_name = get_settings('docker', 'network','')
+        client = self.docli.make_docker_client()
+        network_inspect = client.inspect_network(network_name)
+        used_ips = [ network_inspect['Containers'][l]['IPv4Address'] for l in network_inspect['Containers']]
+
         fromip = int(IPAddress(self.ip_pool[0]))
         toip = int(IPAddress(self.ip_pool[1]))
-        ip = str(IPAddress(random.randint(fromip, toip)))
+        
+        new = False        
+        while not new:
+            ip = str(IPAddress(random.randint(fromip, toip)))
+            new = True
+            for uip in used_ips:
+                if IPAddress(ip) == IPAddress(uip[0].split("/")[0]):
+                    new = False
+        
         return ip
     
     def get_container_name(self):
