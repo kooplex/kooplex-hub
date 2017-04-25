@@ -35,13 +35,13 @@
       <img src="https://jupyter.readthedocs.io/en/latest/_static/_images/jupyter.svg" style="height: 60px;padding-top: 10px 0px 10px;" alt="Jupyter Notebook">
             </div>
       <div class="caption">
-        <h3> Notebook </h3>
-        <p>Manage private jupyter notebooks, meant for the individual reseracher.</p>
+        <h3> Notebook projects </h3>
+        <p>Manage private jupyter notebook projects, meant for the individual reseracher.</p>
             {% if user.is_authenticated %}
-        <p><a href="{% url 'notebooks' %}" class="btn btn-primary" role="button"><span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span> Browse notebooks</a>
+        <p><a href="{% url 'notebooks' %}" class="btn btn-primary" role="button"><span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span> Browse projects</a>
             </p>
                 {%  else %}
-                <p><a href="{% url 'login' %}" class="btn btn-default" > Login to browse notebooks</a></p>
+                <p><a href="{% url 'login' %}" class="btn btn-default" > Login to browse projects</a></p>
             {% endif %}
       </div>
     </div>
