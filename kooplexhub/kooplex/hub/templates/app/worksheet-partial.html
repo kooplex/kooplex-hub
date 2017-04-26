@@ -18,6 +18,7 @@
                     <div>
                     {% if item.url %}
                         <a href="{% url 'worksheet-open-as-dashboard' %}?url={{ item.url }}" target="_blank">
+                        <a href="{% url 'worksheet-open-as-dashboard' %}?url={{ item.url }}&cache_url={{ item.cache_url }}" target="_blank">
                     {% else %}
                         <a href="{% url 'worksheet-open' %}?project_owner={{ item.owner }}&project_name={{ item.name  }}&project_id={{ item.project_id }}&file={{ item.file }}" target="_blank">
                     {% endif %}

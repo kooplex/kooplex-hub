@@ -41,6 +41,9 @@ def worksheets(request):
 
 def worksheets_open_as_dashboard(request):
     url = request.GET['url']
+    cache_url = request.GET['cache_url']^M
+    D = Dashboards()^M
+    D.clear_cache_temp(cache_url)^M
     return HttpResponseRedirect(url)
 
 def worksheets_open_html(request):

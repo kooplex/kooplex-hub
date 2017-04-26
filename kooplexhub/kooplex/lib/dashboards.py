@@ -109,6 +109,14 @@ class Dashboards(RestClient):
         message = res.json()
         return message
 
+    def clear_cache_temp(self, cache_url):
+        res = self.http_delete(cache_url)   
+        message = "OK"
+        if res.status_code != 404 and res.status_code != 200:
+          message = res.json()
+        return message 
+
+
 #TODO
 
 # CSS 
@@ -145,7 +153,7 @@ class Dashboards(RestClient):
                   file = var['key'].split("dashboard_")[1]
                   g = Gitlab()
                   creator = g.get_user_by_id(project['creator_id'])
-                  creator_name = creator['username']
+                  #creator_name = creator['username']
                   #url_to_file = get_settings('dashboards', 'base_url')
                   #if url_to_file[-1]=="/":
                   #    url_to_file=url_to_file[:-1]
@@ -154,8 +162,11 @@ class Dashboards(RestClient):
                   #url_to_file = "http://%s/dashboard/%s:%d/%s:8888/" % (outer_host, internal_host, dashboard_port, kernel_gateway_container.ip)
                   #url_to_file +="%s/projects/%s/%s/%s"% (project['owner']['username'], creator_name, project['name'], file)
                   url_to_file ="http://%s/db/%d/%s-%s/%s"% (outer_host, dashboard_port, project['owner']['username'], project['name'], file)
+                  cache_url ="/db/%d/_api/cache/%s-%s/%s"% (dashboard_port, project['owner']['username'], project['name'], file)
                   list_of_dashboards.append({'owner':project['owner']['username'],'name':project['name'],\
-                    'description': project['description'],'url': url_to_file, 'file': file, 'project_id':project['id'], 'public': project['public']})
+                    'description': project['description'],'url': url_to_file, 'file': file, 'project_id':project['id'], 'public': project['public'],\
+                    'cache_url': cache_url})
+
 
       return list_of_dashboards
 
