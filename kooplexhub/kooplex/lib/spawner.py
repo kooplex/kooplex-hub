@@ -66,7 +66,7 @@ class Spawner(RestClient):
             ip = str(IPAddress(random.randint(fromip, toip)))
             new = True
             for uip in used_ips:
-                if IPAddress(ip) == IPAddress(uip[0].split("/")[0]):
+                if str(IPAddress(ip)) == str(IPAddress(uip[0].split("/")[0])):
                     new = False
         
         return ip
