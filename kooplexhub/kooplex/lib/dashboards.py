@@ -153,16 +153,10 @@ class Dashboards(RestClient):
                   file = var['key'].split("dashboard_")[1]
                   g = Gitlab()
                   creator = g.get_user_by_id(project['creator_id'])
-                  #creator_name = creator['username']
-                  #url_to_file = get_settings('dashboards', 'base_url')
-                  #if url_to_file[-1]=="/":
-                  #    url_to_file=url_to_file[:-1]
-                  #url_to_file += "/dashboard:%d/%a/%d/%s/%s"%(dashboard_port,kernel_gateway_ip,project['owner']['id'],project['creator_id'],project['name'],file)
-                  #url_to_file = "http://%s/dashboard/%s:%d/%s:8888/%d/%s/%s/%s"%(outer_host,internal_host, dashboard_port,kernel_gateway_container.ip,project['owner']['id'],project['creator_id'],project['name'],file)
-                  #url_to_file = "http://%s/dashboard/%s:%d/%s:8888/" % (outer_host, internal_host, dashboard_port, kernel_gateway_container.ip)
-                  #url_to_file +="%s/projects/%s/%s/%s"% (project['owner']['username'], creator_name, project['name'], file)
-                  url_to_file ="http://%s/db/%d/%s-%s/%s"% (outer_host, dashboard_port, project['owner']['username'], project['name'], file)
-                  cache_url ="/db/%d/_api/cache/%s-%s/%s"% (dashboard_port, project['owner']['username'], project['name'], file)
+                  url_ending ="%s/projects/%s/%s/%s"% (project['owner']['username'], creator_name, project['name'], file)
+                  url_to_file ="https://%s/db/%d/dashboards/%s"% (outer_host, dashboard_port, url_ending)
+                  cache_url ="/db/%d/_api/cache/%s"% (dashboard_port, url_ending)
+
                   list_of_dashboards.append({'owner':project['owner']['username'],'name':project['name'],\
                     'description': project['description'],'url': url_to_file, 'file': file, 'project_id':project['id'], 'public': project['public'],\
                     'cache_url': cache_url})
@@ -227,8 +221,7 @@ class Dashboards(RestClient):
         g = Gitlab()
         creator = g.get_user_by_id(project['creator_id'])
         creator_name = creator['username']
-        #for det in [project['owner']['username'], 'projects', creator_name, project['name']]:
-        for det in [imagename, project['owner']['username'] + "-" + project['name']]:
+        for det in [imagename, project['owner']['username'], "projects", creator_name, project['name']]:
             path = LibBase.join_path(path, det)
             try:
                 mkdir(path)
@@ -257,12 +250,13 @@ class Dashboards(RestClient):
             g.delete_project_variable(id, "dashboard_%s" % file)
 
 
+#FIXME: inconsistent file system structure
     def unpublish_dashboard(self, id, name, file):
         path = get_settings('dashboards', 'base_dir', None, '')
         if path[-1]!="/":
             path += "/"
         g = Gitlab()
-        dsd
+#        dsd
         if file[-4:] == "html":
             g.delete_project_variable(id, "worksheet_%s" % file[:-5])
 
