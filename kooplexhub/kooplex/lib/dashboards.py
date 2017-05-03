@@ -211,32 +211,28 @@ class Dashboards(RestClient):
             # return Err
 
     def deploy_data(self, imagename, project, notebook_path_dir, file):
+        from shutil import copyfile 
+        from distutils import dir_util
+
         print_debug("",DEBUG_LOCAL)
-        from shutil import copyfile as cpt
-        from os import mkdir
+        sroot = get_settings('dashboards', 'base_dir', None, '')
         prefix = get_settings('hub', 'outer_host')
-        path = get_settings('dashboards', 'base_dir', None, '')
         srv_dir = get_settings('users', 'srv_dir')
-        #for det in [str(project['owner']['id']),str(project['creator_id']),project['name']]:
         g = Gitlab()
         creator = g.get_user_by_id(project['creator_id'])
         creator_name = creator['username']
-        for det in [imagename, project['owner']['username'], "projects", creator_name, project['name']]:
-            path = LibBase.join_path(path, det)
+        path = os.path.join(sroot, imagename, project['owner']['username'], "projects", creator_name, project['name'])
+        dir_util.mkpath(path)
+        source = os.path.join(srv_dir, notebook_path_dir, file)
+        destination = os.path.join(path, file)
+        if os.path.isdir(source):
+            dir_util.copy_tree(source, destination)
+        else:
             try:
-                mkdir(path)
-            except FileExistsError:
-                pass
-
-        fromfile = LibBase.join_path(srv_dir, notebook_path_dir)
-        fromfile = LibBase.join_path(fromfile, file)
-        tofile = LibBase.join_path(path, file)
-        print(file, fromfile, tofile)
-        try:
-            Err = cpt(fromfile, tofile)
-        except  IOError:
-            print_debug("ERROR: file cannot be written to %s" % tofile)
-            # return Err
+                Err = copyfile(source, destination)
+            except  IOError:
+                print_debug("ERROR: file cannot be written to %s" % destination)
+                # return Err
 
     def unpublish(self, id,project,file):
         g = Gitlab()
