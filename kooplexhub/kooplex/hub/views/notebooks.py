@@ -522,9 +522,9 @@ def notebooks_commitform(request):
         deleted_file_list = deleted_files.split(',')
     next_page = HUB_NOTEBOOKS_URL
     repo = Repo(request.user.username, notebook_path_dir)
-#    repo.commit_and_push(message, request.user.email, project_owner, project_name,
-#                         modified_file_list, deleted_file_list)
-    repo.commit_and_push_default(message, request.user.email, project_owner, project_name)
+    repo.commit_and_push(message, request.user.email, project_owner, project_name,
+                         modified_file_list, deleted_file_list)
+#    repo.commit_and_push_default(message, request.user.email, project_owner, project_name)
     if is_forked:
         project_id = request.POST['project_id']
         target_id = request.POST['target_id']

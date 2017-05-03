@@ -158,35 +158,25 @@ class Repo(LibBase):
 
     def commit_and_push(self, commit_message, email, project_owner, project_name,
                         modified_file_list, deleted_file_list):
-        print_debug("")
-        dir = self.get_local_dir()
-        #print(dir)
-        #dir = LibBase.join_path(dir, project_owner)
-        #dir = LibBase.join_path(dir, project_name)
-        #dir = dir.replace('/', os.path.sep)
+        print_debug("commit and push ...")
+        dir = os.path.join(self.get_local_dir(), project_owner, project_name)
         cmd = self.get_git_ssh_command()
         repo = git.Repo(dir)
-        if(len(modified_file_list) > 0):
-            repo.index.add(modified_file_list)
-        if(len(deleted_file_list) > 0):
-            repo.git.add(all=True)
-            
-            commit_message+=" Deleted: "
-            #for f in deleted_file_list:
-
-                #commit_message+=f.b_path+" "
-            # TODO: the deleted file commit does not work
-            #repo.git.checkout(deleted_file_list[0])
-            #repo.git.checkout(".git/index")
-#            repo.index.remove(deleted_file_list)
-            #repo.git.checkout("--", deleted_file_list[0])
-            #repo.index.checkout(deleted_file_list[0], force = True)
-            #repo.git.rm(deleted_file_list[0])
         author = git.Actor(self.username, email)
-        repo.index.commit(message=commit_message, author=author, committer=author)
         origin = repo.remote()
-        with repo.git.custom_environment(GIT_SSH_COMMAND=cmd):
-            origin.push()
+        if len(modified_file_list):
+              repo.index.add(modified_file_list)
+              repo.index.commit(message = commit_message, author = author, committer = author)
+              print_debug("modified: " + str(modified_file_list))
+              with repo.git.custom_environment(GIT_SSH_COMMAND=cmd):
+                  origin.push()
+        if len(deleted_file_list):
+              commit_message += "\nDeleted: \n\t" + "\n\t".join(deleted_file_list)
+              repo.index.remove(deleted_file_list)
+              print_debug("removed:" + str(deleted_file_list))
+              repo.index.commit(message = commit_message, author = author, committer = author)
+              with repo.git.custom_environment(GIT_SSH_COMMAND=cmd):
+                  origin.push()
 
     def list_committable_files(self, project_owner, project_name):
         print_debug("")
