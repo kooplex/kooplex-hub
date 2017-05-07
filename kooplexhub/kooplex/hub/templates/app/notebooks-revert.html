@@ -13,7 +13,7 @@
               <div  class="modal-body">
               <select id="commitid" name="commitid">
                             {% for commit in  item.commits   %}
-                            <option value="{{ commit.short_id }}">{{ commit.author_name }} {{ commit.created_at }}  {{ commit.title }}  </option>
+                            <option value="{{ commit.short_id }}">{{ commit.author_name }} {{ commit.kdate }} {{ commit.ktime }} {{ commit.ktime_zone }}  {{ commit.title }}  </option>
                             {% endfor %}
                         </select>
               </div>

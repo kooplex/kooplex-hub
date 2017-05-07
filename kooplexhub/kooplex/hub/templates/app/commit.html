@@ -3,22 +3,16 @@
 {% block content %}
 
 <h2>Commit Changes</h2>
-    <p style="color: red;"><b>Only "Commit all" works for now!</b></p>
+    <!-- <p style="color: red;"><b>Only "Commit all" works for now!</b></p>
     <p style="padding:20px;">All files in this project directory will be committed to the GitLab repository. In case you'll need a previous version of your project you will be able to revert it on the project panel.</pstyle>
+-->
 
-
-<div class="row">
-    <div class="col-md-8">
+    <div class="row">
         <section id="commitForm">
-            <form action="{% url 'notebooks-commitform' %}" method="post" class="form-horizontal" onsubmit="collectCheckedElements()">
-                {% csrf_token %}
-                <div class="form-group">
-                    <label for="id_message" class="col-md-2 control-label">Message: </label>
-                    <div class="col-md-10">
-                        <input id="id_message" type="text" name="message" value="Update the project file(s)">
-                    </div>
-                </div>
-                <div class="form-group">
+            <form action="{% url 'notebooks-commit' %}" method="post" class="form-horizontal" onsubmit="collectCheckedElements()">
+            {% csrf_token %}
+                <div class="col-md-6">
+                    <div class="form-group">
                     {% for item in committable_dict.d %}
                         <input type="checkbox" value="deleted" name="{{ item }}">
                         {{ item }} (deleted)<br>
@@ -31,27 +25,34 @@
                         <input type="checkbox" value="untracted" name="{{ item }}">
                         {{ item }} (untracted/renamed/new)<br>
                     {% endfor %}
-                </div>
-                <div class="form-group">
-                    <div class="col-md-offset-2 col-md-10">
-                        <input type="hidden" name="project_owner" value="{{ project_owner }}" />
-                        <input type="hidden" name="project_name" value="{{ project_name }}" />
-                        <input type="hidden" name="is_forked" value="{{ is_forked }}" />
-                        <input type="hidden" name="project_id" value="{{ project_id }}" />
-                        <input type="hidden" name="target_id" value="{{ target_id }}" />
-                        <input type="hidden" name="notebook_path_dir" value="{{ notebook_path_dir }}" />
-                        <input type="hidden" name="modified_files" value="" />
-                        <input type="hidden" name="deleted_files" value="" />
-                        <input type="hidden" name="commitall" value="false" />
-                        <!--input type="submit" value="Commit and push" class="btn btn-default" /-->
-                        <a href="#" class="btn btn-default" role="button">
-            <span style="color: lightgray;"> Commit and push</span></a>
-                        <input type="submit" name="commitall" value="Commit All and push" class="btn btn-default" />
                     </div>
+                    <div class="form-group">
+                        <div class="col-md-offset-2 col-md-10">
+                            <input type="hidden" name="project_owner" value="{{ project_owner }}" />
+                            <input type="hidden" name="project_name" value="{{ project_name }}" />
+                            <input type="hidden" name="is_forked" value="{{ is_forked }}" />
+                            <input type="hidden" name="project_id" value="{{ project_id }}" />
+                            <input type="hidden" name="target_id" value="{{ target_id }}" />
+                            <input type="hidden" name="notebook_path_dir" value="{{ notebook_path_dir }}" />
+                            <input type="hidden" name="modified_files" value="" />
+                            <input type="hidden" name="deleted_files" value="" />
+                            <input type="hidden" name="commitall" value="false" />
+
+                            <input type="submit" name="cancel" value="Cancel" class="btn btn-default" />
+                            <input type="submit" name="commitall" value="Commit and push" class="btn btn-default" />
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                    <label for="id_message" class="col-md-2 control-label">Message: </label>
+                    <div class="col-md-10">
+                        <input id="id_message" type="text" name="message" value="Update the project file(s)">
+                    </div>
+                </div>
                 </div>
             </form>
         </section>
-    </div>
 </div>
 
     <script>

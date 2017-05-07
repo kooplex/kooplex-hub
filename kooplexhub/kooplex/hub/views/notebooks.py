@@ -27,6 +27,14 @@ HUB_NOTEBOOKS_URL = '/hub/notebooks'
 
 from kooplex.lib.debug import *
 
+def commit_style(project):
+    for commit in project['commits']:
+        commit['kdate']=commit['committed_date'][:10]
+        commit['ktime']=commit['committed_date'][11:19]
+        commit['ktime_zone']=commit['committed_date'][-6:]
+
+    return project
+
 def notebooks(request,errors=[] ):
     """Renders the notebooks page"""
     print_debug("Rendering notebook page")
@@ -45,14 +53,13 @@ def notebooks(request,errors=[] ):
     print_debug("Rendering notebook page, projects from gitlab")
     g = Gitlab(request)
     projects, unforkable_projectids = g.get_projects()
-    if type(projects) != dict:
-    #A redirect to homepage
-#    if type(projects) == dict:
-#        return render(request,
-#        'app/index.html',
-#        context_instance = RequestContext(request,
-#        { 'title':'Home Page','year':datetime.now().year,})
-#        )
+
+    access_error=[]
+    if 'message' in projects:
+        if projects['message']=='401 Unauthorized':
+            access_error=["Can't read prpjects (401 Unauthorized) !!! "]
+    else:        
+#    if type(projects) != dict:
 
         print_debug("Rendering notebook page, project variables from gitlab")
         for project in projects:
@@ -64,7 +71,6 @@ def notebooks(request,errors=[] ):
                     new_variables[var['key']] = var['value']
                 project['variables']=new_variables
 
-    print_debug("If something is odd, may you forgot to init hub, otherwise no error comes here :|")
 	    #TODO: get uid and gid from projects json
     print_debug("Rendering notebook page, unforkable project  from gitlab")
     gadmin = GitlabAdmin(request)
@@ -92,6 +98,9 @@ def notebooks(request,errors=[] ):
             else:
                 project['running'] = False
 
+        project = commit_style(project)
+        print(project['commits'])
+
 
     # TODO unittest to check if port is accessible (ufw allow "5555")
     return render(
@@ -107,6 +116,7 @@ def notebooks(request,errors=[] ):
             'notebook_dir_name': NOTEBOOK_DIR_NAME,
             'notebook_images' : notebook_images,
             'errors' : errors,
+            'access_error' : access_error,
         })
     )
 
@@ -150,7 +160,7 @@ def project_new(request):
     message_json = g.create_project(project_name,public,description)
     res = g.get_project_by_name(project_name)
     if len(res)>1:
-        print("Warning to the log: there more than 1 project which is not acceptable!!!!")
+        print_debug("Warning to the log: there are more than 1 project which is not acceptable!!!!")
         for project in res:
             if project_name==project['name']:
                 project_id=project['id']
@@ -474,7 +484,7 @@ def notebooks_change_image(request):
 
 
 
-def notebooks_commit(request):
+def notebooks_commitform(request):
     assert isinstance(request, HttpRequest)
     notebook_path_dir = request.GET['notebook_path_dir']
     is_forked = request.GET['is_forked']
@@ -503,7 +513,7 @@ def notebooks_commit(request):
         })
     )
 
-def notebooks_commitform(request):
+def notebooks_commit(request):
     assert isinstance(request, HttpRequest)
     notebook_path_dir = request.POST['notebook_path_dir']
     message = request.POST['message']
@@ -627,25 +637,25 @@ def project_fork(request):
 
 urlpatterns = [
     url(r'^$', notebooks, name='notebooks'),
-    url(r'^/new$', project_new, name='project-new'),
-    url(r'^/shutdown$', notebooks_shutdown, name='notebooks-shutdown'),
-    url(r'^/start', container_start, name='container-start'),
-    url(r'^/stop', container_stop, name='container-stop'),
-    url(r'^/delete$', container_delete, name='container-delete'),
-    #url(r'^/containershutdown$', container_shutdown, name='container-shutdown'),
-    url(r'^/open$', notebooks_open, name = 'notebooks-open'),
-    url(r'^/clone$', notebooks_clone, name = 'notebooks-clone'),
-    url(r'^/deploy$', notebooks_deploy, name = 'notebooks-deploy'),
-    url(r'^/viewdeploy$', notebooks_view_deploy, name = 'notebooks-view-deploy'),
-    url(r'^/preparetoconverthtml$', notebooks_prepare_to_convert_html, name = 'notebooks-prepare-to-convert-html'),
-    url(r'^/converthtml$', notebooks_publish, name = 'notebooks-convert-html'),
-    url(r'^/pull-confirm$', notebooks_pull_confirm, name = 'notebooks-pull-confirm'),
-    url(r'^/change-image$', notebooks_change_image, name = 'notebooks-change-image'),
-    url(r'^/delete-project$', project_delete, name = 'notebooks-delete-project'),
-    url(r'^/commit$', notebooks_commit, name='notebooks-commit'),
-    url(r'^/commitform$', notebooks_commitform, name='notebooks-commitform'),
-    url(r'^/mergerequestform$', notebooks_mergerequestform, name='notebooks-mergerequestform'),
-    url(r'^/mergerequestlist', notebooks_mergerequestlist, name='notebooks-mergerequestlist'),
-    url(r'^/acceptmergerequest', notebooks_acceptmergerequest, name='notebooks-acceptmergerequest'),
-    url(r'^/fork$', project_fork, name = 'project-fork'),
+    url(r'^new$', project_new, name='project-new'),
+    url(r'^shutdown$', notebooks_shutdown, name='notebooks-shutdown'),
+    url(r'^start', container_start, name='container-start'),
+    url(r'^stop', container_stop, name='container-stop'),
+    url(r'^delete$', container_delete, name='container-delete'),
+    #url(r'^containershutdown$', container_shutdown, name='container-shutdown'),
+    url(r'^open$', notebooks_open, name = 'notebooks-open'),
+    url(r'^clone$', notebooks_clone, name = 'notebooks-clone'),
+    url(r'^deploy$', notebooks_deploy, name = 'notebooks-deploy'),
+    url(r'^viewdeploy$', notebooks_view_deploy, name = 'notebooks-view-deploy'),
+    url(r'^preparetoconverthtml$', notebooks_prepare_to_convert_html, name = 'notebooks-prepare-to-convert-html'),
+    url(r'^converthtml$', notebooks_publish, name = 'notebooks-convert-html'),
+    url(r'^pull-confirm$', notebooks_pull_confirm, name = 'notebooks-pull-confirm'),
+    url(r'^change-image$', notebooks_change_image, name = 'notebooks-change-image'),
+    url(r'^delete-project$', project_delete, name = 'notebooks-delete-project'),
+    url(r'^commit$', notebooks_commit, name='notebooks-commit'),
+    url(r'^commitform$', notebooks_commitform, name='notebooks-commitform'),
+    url(r'^mergerequestform$', notebooks_mergerequestform, name='notebooks-mergerequestform'),
+    url(r'^mergerequestlist', notebooks_mergerequestlist, name='notebooks-mergerequestlist'),
+    url(r'^acceptmergerequest', notebooks_acceptmergerequest, name='notebooks-acceptmergerequest'),
+    url(r'^fork$', project_fork, name = 'project-fork'),
 ]
