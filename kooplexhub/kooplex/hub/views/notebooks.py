@@ -31,7 +31,8 @@ def commit_style(project):
     for commit in project['commits']:
         commit['kdate']=commit['committed_date'][:10]
         commit['ktime']=commit['committed_date'][11:19]
-        commit['ktime_zone']=commit['committed_date'][-6:]
+        #commit['ktime_zone']=commit['committed_date'][-6:]
+        commit['ktime_zone']='CET'
 
     return project
 
@@ -99,7 +100,9 @@ def notebooks(request,errors=[] ):
                 project['running'] = False
 
         project = commit_style(project)
-        print(project['commits'])
+        project['committable_dict'] = Collect_commitables(username, project['name'], project['owner']['username'], "")# project['notebook_path'])
+        print_debug("C")
+        print_debug(project['committable_dict'])
 
 
     # TODO unittest to check if port is accessible (ufw allow "5555")
@@ -482,7 +485,11 @@ def notebooks_change_image(request):
     g.change_variable_value(project_id,'container_image',project_image)
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
-
+def Collect_commitables(username, project_name, project_owner, notebook_path_dir):
+    repo = Repo(username, notebook_path_dir)
+    committable_dict = repo.list_committable_files(project_owner, project_name)
+    print(committable_dict )
+    return committable_dict
 
 def notebooks_commitform(request):
     assert isinstance(request, HttpRequest)
@@ -491,8 +498,7 @@ def notebooks_commitform(request):
     project_owner = request.GET['project_owner']
     project_name = request.GET['project_name']
     repo = Repo(request.user.username, notebook_path_dir)
-    committable_dict = repo.list_committable_files(
-        project_owner, project_name)
+    committable_dict = repo.list_committable_files(project_owner, project_name)
     project_id = 0
     target_id = 0
     if is_forked:
@@ -521,6 +527,9 @@ def notebooks_commit(request):
     project_owner = request.POST['project_owner']
     project_name = request.POST['project_name']
     modified_files = request.POST['modified_files']
+    #if 'cancel' in request.POST:
+    #    return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
+
     modified_file_list = []
     if(modified_files != ''):
         modified_files = modified_files.replace("'", "")
