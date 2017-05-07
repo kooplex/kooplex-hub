@@ -9,7 +9,8 @@ from kooplex.lib.gitlabadmin import GitlabAdmin
 def index(request):
     """Renders the home page."""
     assert isinstance(request, HttpRequest)
-    username = request.user.username
+
+#    username = request.user.username
     gadmin = GitlabAdmin(request)
 
     isadmin = False
@@ -22,7 +23,7 @@ def index(request):
         {
             'title':'Home Page',
             'year':datetime.now().year,
-            'username': username,
+ #           'username': username,
             'admin': isadmin,
         })
     )

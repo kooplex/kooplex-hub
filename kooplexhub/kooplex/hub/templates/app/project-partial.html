@@ -71,7 +71,7 @@
                 <div class=" col-md-3 col-sm-3 col-xs-12">
                     {%  if not publicvar %}
                         <div class="row">
-                            <a role="button" href="{% url 'notebooks-commit' %}?project_owner={{ item.owner.username }}&project_name={{ item.name }}&notebook_path_dir={{ item.notebook_path }}&is_forked={{ item.is_forked }}">
+                            <a role="button" href="{% url 'notebooks-commitform' %}?project_owner={{ item.owner.username }}&project_name={{ item.name }}&notebook_path_dir={{ item.notebook_path }}&is_forked={{ item.is_forked }}">
                             <button role="button" type="button" class="btn btn-warning">
                                 <span class="glyphicon glyphicon-save" aria-hidden="true"></span> Commit</button></a>
                         {% if item.commits|length > 0 %}
@@ -79,8 +79,9 @@
                                 <span class="glyphicon glyphicon-thumbs-down" aria-hidden="true"></span> Revert</button>
                             {% include 'app/notebooks-revert.html' %}
 
-                            {%  with lastcommit=item.commits|last %}
-                                    <p><strong>Last commited at: </strong>{{ lastcommit.created_at|slice:":10" }} {{ lastcommit.created_at|slice:"11:-10" }}</p>
+                            {%  with lastcommit=item.commits|first %}
+                                    <!-- <p><strong>Last commited at: </strong>{{ lastcommit.committed_at|slice:":10" }} {{ lastcommit.committed_at|slice:"11:-10" }}</p> -->
+                                    <p><strong>Last commited at: </strong>{{ lastcommit.kdate }} {{ lastcommit.ktime }} {{ lastcommit.ktime_zone }}</p>
                                     <!--<p><strong>Commit message: </strong>{{ lastcommit.title }}</p>
                                     <p><strong>Commited by: </strong>{{ lastcommit.author_name }}   </p>-->
                             {% endwith %}

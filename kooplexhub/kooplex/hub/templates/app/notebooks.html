@@ -41,8 +41,9 @@
       {% endif %}
 </div>
 </div>
-
-
+{%  if access_error %}
+<div class="alert alert-danger" role="alert">{{ access_error }}</div>
+{% endif %}
  <div class="tab-content">
 
   {% if username %}

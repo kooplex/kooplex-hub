@@ -76,8 +76,8 @@ def reports_unpublish_dashboard(request):
 
 urlpatterns = [
     url(r'^$', worksheets, name='worksheets'),
-    url(r'^/open$', worksheets_open_html, name='worksheet-open'),
-    url(r'^/opendashboard$', worksheets_open_as_dashboard, name='worksheet-open-as-dashboard'),
-    url(r'^/unpublish$', reports_unpublish, name='worksheet-unpublish'),
+    url(r'^open$', worksheets_open_html, name='worksheet-open'),
+    url(r'^opendashboard$', worksheets_open_as_dashboard, name='worksheet-open-as-dashboard'),
+    url(r'^unpublish$', reports_unpublish, name='worksheet-unpublish'),
 
 ]
