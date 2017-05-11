@@ -13,17 +13,20 @@ class Docker(LibBase):
             self.network = None
         else:
             self.host = get_settings('docker', 'host', host)
-            self.port = get_settings('docker', 'port', port)
+            self.protocol = get_settings('docker', 'protocol', host)
+            self.port = get_settings('docker', 'port', port, 2375)
             self.network = get_settings('docker', 'network', network, 'kooplex')
 
         self.docli = self.make_docker_client()
 
     def get_docker_url(self):
         print_debug("")
-        if self.host is None or self.port is None:
+        if self.host is None:
             url = 'unix:///var/run/docker.sock'
         else:
-            url = 'tcp://%s:%d' % (self.host, self.port)
+            url = '%s://%s' % (self.protocol, self.host)
+        if self.protocol=='tcp' and self.port:
+            url += ":%s" % str(self.port)
         return url
 
     def make_docker_client(self):

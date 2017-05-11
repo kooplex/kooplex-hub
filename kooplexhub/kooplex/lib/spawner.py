@@ -126,7 +126,9 @@ class Spawner(RestClient):
         notebook = Notebook(
             id=id,
             docker_host=self.docli.host,
-            docker_port=self.docli.port,
+#TODO if we use socket for docker then how should this be done???? Change model?
+#            docker_port=self.docli.port,
+            docker_port = 2375 if not self.docli.port else self.docli.port,
             name=container_name,
             image=self.image,
             network=self.docli.network,

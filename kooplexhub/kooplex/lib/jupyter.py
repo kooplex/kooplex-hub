@@ -35,7 +35,7 @@ class Jupyter(RestClient):
     def http_prepare_headers(self, headers):
         print_debug("")
         headers = RestClient.http_prepare_headers(self, headers)
-        headers['X-XSRFToken'] = Jupyter.TOKEN
+        headers['X-XSRF-Token'] = self.TOKEN
         return headers
     # Contents
 
@@ -130,7 +130,6 @@ class Jupyter(RestClient):
         assert isinstance(session, Session)
 
         data = session.to_jupyter_dict()
-
         res = self.http_post('/sessions', data=data)
         print(res)
         session = Session.from_jupyter_dict(self.notebook, res.json())

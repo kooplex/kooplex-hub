@@ -15,8 +15,20 @@
                         <h4 class="modal-title">Commit Changes</h4>
                     </div>
                     <div class="panel-body">
+
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="id_message" class="col-md-4 control-label">Commit message: </label>
+                                    <div class="col-md-8">
+                                        <input id="id_message" type="text" name="message" value="Update the project file(s)">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h4> Files to commit:</h4>
                                 <div class="form-group">
                                     {% for committable in item.committable_dict.d %}
                                         <input type="checkbox" value="deleted" name="{{ committable }}">
@@ -32,15 +44,7 @@
                                     {% endfor %}
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="id_message" class="col-md-2 control-label">Message: </label>
-                                    <div class="col-md-10">
-                                        <input id="id_message" type="text" name="message" value="Update the project file(s)">
-                                    </div>
-                                </div>
                             </div>
-                        </div>
 
                         <div class="modal-footer">
 
