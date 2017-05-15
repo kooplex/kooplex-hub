@@ -88,6 +88,7 @@ def notebooks(request,errors=[] ):
 
     d = Docker()
     notebook_images = d.get_allnotebook_images()
+    #notebook_images=[]
 
     for project in projects:
         for session in sessions:
@@ -414,18 +415,18 @@ def notebooks_publish(request):
     """ Converts ipynb to html in the opened container, creates variable in gitlab, commits file in gitlab"""
     assert isinstance(request, HttpRequest)
     print_debug("Deploying notebook,")
+    print(request.POST)
     project_name = request.POST['project_name']
     project_owner = request.POST['project_owner']
     username = request.user.username
     project_id = request.POST['project_id']
     notebook_path_dir = request.POST['notebook_path_dir']
-    ipynb_files = request.POST['ipynb_files']
-    other_files = request.POST['other_files']
+    ipynb_file = request.POST['ipynb_file']
+    ipynb_dir = ipynb_file[:-6]
+    other_files = request.POST.getlist('other_files')
     notebook_id = request.POST['notebook_id']
     g=Gitlab(request)
     notebook = Notebook.objects.filter(id=notebook_id)[0]
-    ipynb_files=ipynb_files.split(",")
-    other_files=other_files.split(",")
 
     project = g.get_project_by_name(project_name)[0]
     prefix = get_settings('prefix', 'name')
@@ -437,17 +438,16 @@ def notebooks_publish(request):
             command=" jupyter-nbconvert --to html /%s/%s " %(notebook_path_dir,ipynb)
             docli.exec_container(notebook, command, detach=False)
 
-            dashb.deploy_html(notebook.image.split("%s-notebook-"%prefix)[1]+"-html",username, project_owner, project_name, request.user.email, notebook_path_dir, file+".html")
+            dashb.deploy_html(notebook.image.split("%s-notebook-"%prefix)[1]+"-html",username, project_owner, project_name, request.user.email, file+".html")
             g.create_project_variable(project_id, 'worksheet_%s'%file, file + ".html")
 
     elif 'dashboard' in request.POST.keys():
-        for file in ipynb_files:
-            dashb.deploy_data(notebook.image.split("%s-notebook-"%prefix)[1], project, notebook_path_dir, file)
-            g.create_project_variable(project_id, 'dashboard_%s'%file[:-6], notebook.image)
-
-    if other_files[0] != "'":
-        for file in other_files:
-            dashb.deploy_data(notebook.image.split("%s-notebook-"%prefix)[1],project, notebook_path_dir, file)
+        dashb.deploy_data(notebook.image.split("%s-notebook-"%prefix)[1], project, notebook_path_dir, ipynb_file, extradir=ipynb_dir)
+        g.create_project_variable(project_id, 'dashboard_%s'%ipynb_dir, notebook.image)
+        print(other_files)
+        if len(other_files) > 0:
+            for file in other_files:
+                dashb.deploy_data(notebook.image.split("%s-notebook-"%prefix)[1],project, notebook_path_dir, file, extradir=ipynb_dir)
 
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
@@ -486,9 +486,12 @@ def notebooks_change_image(request):
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
 def Collect_commitables(username, project_name, project_owner, notebook_path_dir):
-    repo = Repo(username, notebook_path_dir)
-    committable_dict = repo.list_committable_files(project_owner, project_name)
-    print(committable_dict )
+    try:
+        repo = Repo(username, notebook_path_dir)
+        committable_dict = repo.list_committable_files(project_owner, project_name)
+        print("committable",committable_dict )
+    except:
+        committable_dict = []
     return committable_dict
 
 def notebooks_commitform(request):
@@ -527,6 +530,7 @@ def notebooks_commit(request):
     project_owner = request.POST['project_owner']
     project_name = request.POST['project_name']
     modified_files = request.POST['modified_files']
+    print(request.POST)
     #if 'cancel' in request.POST:
     #    return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 

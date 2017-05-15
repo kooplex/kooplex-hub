@@ -49,10 +49,10 @@
                         <div class="modal-footer">
 
                             <div class="form-group">
-                                    <input type="hidden" name="project_owner" value="{{ project_owner }}" />
-                                    <input type="hidden" name="project_name" value="{{ project_name }}" />
+                                    <input type="hidden" name="project_owner" value="{{ item.owner.username }}" />
+                                    <input type="hidden" name="project_name" value="{{ item.notebook.project_name }}" />
                                     <input type="hidden" name="is_forked" value="{{ is_forked }}" />
-                                    <input type="hidden" name="project_id" value="{{ project_id }}" />
+                                    <input type="hidden" name="project_id" value="{{ item.notebook.project_id }}" />
                                     <input type="hidden" name="target_id" value="{{ target_id }}" />
                                     <input type="hidden" name="notebook_path_dir" value="{{ notebook_path_dir }}" />
                                     <input type="hidden" name="modified_files" value="" />

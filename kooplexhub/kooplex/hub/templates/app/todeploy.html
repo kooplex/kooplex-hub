@@ -20,13 +20,13 @@
                         <div class="well"> <strong>Notebooks</strong> These notebooks will be converted to html and accessible in the <a href="/hub/worksheets" target="_blank" >Reports</a> section</div>
                         <div class="form-group">
                             {% for item in ipynbs %}
-                                <input type="checkbox" value="ipynb_file" name="{{ item }}"> {{ item }}<br>
+                                <input type="radio" name="ipynb_file" value="{{ item }}"> {{ item }}<br>
                             {% endfor %}
                         </div>
                         <div class="well"> <strong>Data files</strong> These files will be copied next to the deployed notebooks</div>
                         <div class="form-group">
                             {% for item in other_files %}
-                                <input type="checkbox" value="other_file" name="{{ item }}"> {{ item }}<br>
+                                <input type="checkbox" name="other_files" value="{{ item }}"> {{ item }}<br>
                             {% endfor %}
                         </div>
                         <div class="form-group">
@@ -37,8 +37,7 @@
                                 <input type="hidden" name="notebook_path_dir" value="{{ notebook_path_dir }}" />
                                 <input type="hidden" name="notebook_id" value="{{ notebook_id }}" />
                                 <input type="hidden" name="toconvert_files" value="" />
-                                <input type="hidden" name="ipynb_files" value="" />
-                                <input type="hidden" name="other_files" value="" />
+
                                 <input type="submit" name="html" value="Convert to html" class="btn btn-default" />
                                 <input type="submit" name="dashboard" value="Deploy as dashboard" class="btn btn-default" />
                             </div>
@@ -55,49 +54,21 @@
     <script>
         function collectCheckedElements() {
             var inputs = document.getElementsByTagName("input");
-            var ipynb_files = "'"
             var other_files = "'"
             for (var i = 1; i < inputs.length; i++) {
                 if (inputs[i].type == "checkbox") {
-                    if (inputs[i].value == "ipynb_file") {
+                    if (inputs[i].name == "other_files") {
                         if (inputs[i].checked) {
-                            ipynb_files += inputs[i].name + ",";
-                        }
-
-                    }
-                    if (inputs[i].value == "other_file") {
-                        if (inputs[i].checked) {
-                            other_files += inputs[i].name + ",";
+                            other_files += inputs[i].value + ",";
                         }
 
                     }
                 }
-            }
-            if(ipynb_files.length > 0) {
-                ipynb_files = ipynb_files.substring(1, ipynb_files.length - 1);
             }
             if(other_files.length > 0) {
                 other_files = other_files.substring(1, other_files.length - 1);
             }
-            document.getElementsByName("ipynb_files")[0].value = ipynb_files;
             document.getElementsByName("other_files")[0].value = other_files;
-        }
-
-         function collectCheckedElements22() {
-            var inputs = document.getElementsByTagName("input");
-            var toconvert_files = "'"
-            for (var i = 1; i < inputs.length; i++) {
-                if (inputs[i].type == "checkbox") {
-                    if (inputs[i].checked) {
-                            toconvert_files += inputs[i].name + ",";
-                    }
-
-                }
-            }
-            if(toconvert_files.length > 0) {
-                toconvert_files = toconvert_files.substring(1, toconvert_files.length - 1);
-            }
-            document.getElementsByName("toconvert_files")[0].value = toconvert_files;
         }
     </script>
 

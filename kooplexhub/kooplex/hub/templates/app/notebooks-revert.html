@@ -17,7 +17,9 @@
                         This will delete the directory, roll back to the last commit and pull it from the repository!}
                     </div>
 
-
+                        {% if item.commits|length < 2 %}
+                            Only initial commit yet
+                        {% endif %}
                     <!--select id="commitid" name="commitid">
                                 {% for commit in  item.commits   %}
                                 <option value="{{ commit.short_id }}">{{ commit.author_name }} {{ commit.kdate }} {{ commit.ktime }} {{ commit.ktime_zone }}  {{ commit.title }}  </option>

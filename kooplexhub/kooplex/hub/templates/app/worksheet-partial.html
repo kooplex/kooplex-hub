@@ -24,8 +24,7 @@
                     {% endif %}
                         <button type="button" class="btn btn-info"><span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span> Open</button></a>
                         {%  if not publicvar %}
-
-                                <a href="{% url 'worksheet-unpublish' %}?project_owner={{ item.owner }}&project_name={{ item.name  }}&project_id={{ item.project_id }}&file={{ item.file }}"
+                                <a href="{% url 'worksheet-unpublish' %}?project_owner={{ item.owner }}&project_name={{ item.name  }}&project_id={{ item.project_id }}&file={{ item.file }}&creator_name={{ item.creator_name }}&image_type={{ item.image_type }}&report_type={{ item.report_type }}"
 
                             <button type="button" class="btn btn-danger"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Unpublish</button></a>
                         {% endif  %}

@@ -41,9 +41,9 @@ def worksheets(request):
 
 def worksheets_open_as_dashboard(request):
     url = request.GET['url']
-    cache_url = request.GET['cache_url']^M
-    D = Dashboards()^M
-    D.clear_cache_temp(cache_url)^M
+    cache_url = request.GET['cache_url']
+    D = Dashboards()
+    D.clear_cache_temp(cache_url)
     return HttpResponseRedirect(url)
 
 def worksheets_open_html(request):
@@ -56,21 +56,18 @@ def worksheets_open_html(request):
 
 def reports_unpublish(request):
     project_id = request.GET['project_id']
-    project_name = request.GET['project_name']
-    file = request.GET['file']
-    g = Gitlab()
-    project = g.get_project_by_name(project_name)[0]
-    d = Dashboards()
-    d.unpublish(project_id,project,file)
-
-    return HttpResponseRedirect(HUB_REPORTS_URL)
-
-def reports_unpublish_dashboard(request):
-    project_id = request.GET['project_id']
-    project_name = request.GET['project_name']
+    report_type = request.GET['report_type']
     file = request.GET['file']
     d = Dashboards()
-    d.unpublish_dashboard(project_id,project_name,file)
+    if report_type=="html":
+        d.unpublish_html(project_id,file)
+
+    if report_type == "dashboard":
+        project_name = request.GET['project_name']
+        image_type = request.GET['image_type']
+        creator_name = request.GET['creator_name']
+        username = request.user.username
+        d.unpublish_dashboard(project_id, image_type, username, creator_name, project_name, file)
 
     return HttpResponseRedirect(HUB_REPORTS_URL)
 

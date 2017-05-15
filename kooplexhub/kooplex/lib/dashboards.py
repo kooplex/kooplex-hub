@@ -133,33 +133,32 @@ class Dashboards(RestClient):
       docli = Docker()
       internal_host = get_settings('hub', 'internal_host')
       outer_host = get_settings('hub', 'outer_host')
+      proto = get_settings('hub', 'protocol')
       list_of_dashboards = []
       for project in projects:
           variables = gadmin.get_project_variables(project['id'])
           for var in variables:
               if var['key'].rfind('dashboard_') > -1:
                   image_name = var['value']
-                  #name, port = self.find_dashboard_server(image_name)
-
-                  name = "dashboards-" + image_name.split("kooplex-notebook-")[1]
+                  image_type = image_name.split("kooplex-notebook-")[1]
+                  name = "dashboards-" + image_type
                   dashboard_container = docli.get_container(name)
                   ports=dashboard_container.ports
                   for P in ports:
                       if "PublicPort" in P.keys():
                           dashboard_port = P["PublicPort"]
 
-                  name = "kernel-gateway-" + image_name.split("kooplex-notebook-")[1]
-                  kernel_gateway_container = docli.get_container(name)
                   file = var['key'].split("dashboard_")[1]
                   g = Gitlab()
                   creator = g.get_user_by_id(project['creator_id'])
-                  url_ending ="%s/projects/%s/%s/%s"% (project['owner']['username'], creator_name, project['name'], file)
-                  url_to_file ="https://%s/db/%d/dashboards/%s"% (outer_host, dashboard_port, url_ending)
+                  creator_name = creator['username']
+                  url_ending ="%s/projects/%s/%s/%s/%s"% (project['owner']['username'], creator_name, project['name'], file,file)
+                  url_to_file ="%s://%s/db/%d/dashboards/%s"% (proto, outer_host, dashboard_port, url_ending)
                   cache_url ="/db/%d/_api/cache/%s"% (dashboard_port, url_ending)
 
                   list_of_dashboards.append({'owner':project['owner']['username'],'name':project['name'],\
                     'description': project['description'],'url': url_to_file, 'file': file, 'project_id':project['id'], 'public': project['public'],\
-                    'cache_url': cache_url})
+                    'cache_url': cache_url, 'image_type': image_type, 'creator_name' : creator_name, 'report_type': "dashboard"})
 
 
       return list_of_dashboards
@@ -179,52 +178,34 @@ class Dashboards(RestClient):
                       first_image = Find_first_img_inhtml(html_content.decode('utf-8'))
                       list_of_dashboards.append({'owner': project['owner']['username'], 'name': project['name'], \
                                              'description': project['description'], 'picture': first_image,'file':file, \
-                                             'project_id':project['id'], 'public': project['public']})
+                                             'project_id':project['id'], 'public': project['public'], 'report_type': "html"})
 
           return list_of_dashboards
 
-    def deploy_html(self, imagename,username, owner, project_name, email, notebook_path_dir, file):
+    def deploy_html(self, imagename,username, owner, project_name, email, file):
         print_debug("",DEBUG_LOCAL)
-        from shutil import copyfile as cp
-        from os import mkdir
-        path = get_settings('dashboards', 'base_dir', None, '')
-        srv_dir = get_settings('users', 'srv_dir')
-        #for det in [username, owner, project_name]:
-        for det in [imagename + "-html", username + "-" + project_name]:
-            path = LibBase.join_path(path, det)
-            try:
-                mkdir(path)
-            except FileExistsError:
-                pass
-
-        repo = Repo(username, owner + "/" + project_name)
+        repo = Repo(username, name="")
         repo.commit_and_push(" %s as worksheet uploaded"%file, email, owner, project_name,[file],[])
-        fromfile = LibBase.join_path(srv_dir, notebook_path_dir)
-        fromfile = LibBase.join_path(fromfile, file)
-        tofile = LibBase.join_path(path, file)
-        print(file, fromfile, tofile)
-        #try:
-            #Err = cp(fromfile, tofile)
-            #Err = os.remove(fromfile)
-        #except  IOError:
-        #    print_debug("ERROR: file cannot be written to %s" % tofile)
-            # return Err
 
-    def deploy_data(self, imagename, project, notebook_path_dir, file):
+
+    def deploy_data(self, imagename, project, notebook_path_dir, file, extradir=''):
         from shutil import copyfile 
         from distutils import dir_util
 
         print_debug("",DEBUG_LOCAL)
         sroot = get_settings('dashboards', 'base_dir', None, '')
-        prefix = get_settings('hub', 'outer_host')
         srv_dir = get_settings('users', 'srv_dir')
         g = Gitlab()
         creator = g.get_user_by_id(project['creator_id'])
         creator_name = creator['username']
-        path = os.path.join(sroot, imagename, project['owner']['username'], "projects", creator_name, project['name'])
+        path = os.path.join(sroot, imagename, project['owner']['username'], "projects", creator_name, project['name'], extradir)
         dir_util.mkpath(path)
         source = os.path.join(srv_dir, notebook_path_dir, file)
         destination = os.path.join(path, file)
+        print("path", path)
+        print("source", source, file)
+        print("destination", destination)
+        print("extradir", extradir)
         if os.path.isdir(source):
             dir_util.copy_tree(source, destination)
         else:
@@ -234,36 +215,24 @@ class Dashboards(RestClient):
                 print_debug("ERROR: file cannot be written to %s" % destination)
                 # return Err
 
-    def unpublish(self, id,project,file):
+    def unpublish_html(self, id,file):
         g = Gitlab()
-        if file[-4:] == "html":
-            g.delete_project_variable(id, "worksheet_%s" % file[:-5])
-        else:
-            file += ".ipynb"
-            path = get_settings('dashboards', 'base_dir', None, '')
-            file_to_delete = path + "/%d/%d/%s/%s"%(project['owner']['id'],project['creator_id'],project['name'],file)
-            Err = os.remove(file_to_delete)
-            g.delete_project_variable(id, "dashboard_%s" % file)
+        res = g.delete_project_variable(id, "worksheet_%s" % file[:-5])
+        print(res)
+
 
 
 #FIXME: inconsistent file system structure
-    def unpublish_dashboard(self, id, name, file):
-        path = get_settings('dashboards', 'base_dir', None, '')
-        if path[-1]!="/":
-            path += "/"
+    def unpublish_dashboard(self, id, image_type, username, creator_name, project_name, dirname):
+        from distutils import dir_util
+        file = dirname+".ipynb"
         g = Gitlab()
-#        dsd
-        if file[-4:] == "html":
-            g.delete_project_variable(id, "worksheet_%s" % file[:-5])
+        g.delete_project_variable(id, "dashboard_%s" % file)
 
-        else:
-            file += ".ipynb"
-            file_to_delete = LibBase.join_path(path, username)
-            file_to_delete = LibBase.join_path(file_to_delete, owner)
-            file_to_delete = LibBase.join_path(file_to_delete, name)
-            file_to_delete = LibBase.join_path(file_to_delete, file)
-            g.delete_project_variable(id, "dashboard_%s" % file)
-            Err = os.remove(file_to_delete)
+        sroot = get_settings('dashboards', 'base_dir', None, '')
+        path = os.path.join(sroot, image_type, username, "projects", creator_name, project_name, dirname)
+        Err = dir_util.remove_tree(path)
+        print(Err)
 
 
 def Find_first_img_inhtml(content):
