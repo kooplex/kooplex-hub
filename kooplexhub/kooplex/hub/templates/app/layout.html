@@ -27,13 +27,15 @@
                 <ul class="nav navbar-nav">
                     <!-- <li><a href="{% url 'home' %}">Home</a></li> -->
                     <li><a href="{% url 'worksheets' %}">Reports</a></li>
-                    <li><a href="{% url 'notebooks' %}">Notebooks</a></li>
-                    <li><a href="/gitlab" target="_blank">Gitlab</a></li>
-                    <li><a href="/owncloud" target="_blank">Owncloud</a></li>
-                    <!--<li><a href="{% url 'about' %}">About</a></li>
-                    <li><a href="{% url 'contact' %}">Contact</a></li> -->
-                    {% if admin %}
-                     <li><a href="{% url 'admin' %}">ADMIN</a></li>
+                    {% if username %}
+                        <li><a href="{% url 'notebooks' %}">Notebooks</a></li>
+                        <li><a href="/gitlab" target="_blank">Gitlab</a></li>
+                        <li><a href="/owncloud" target="_blank">Owncloud</a></li>
+                        <!--<li><a href="{% url 'about' %}">About</a></li>
+                        <li><a href="{% url 'contact' %}">Contact</a></li> -->
+                        {% if admin %}
+                            <li><a href="{% url 'admin' %}">ADMIN</a></li>
+                        {% endif %}
                     {% endif %}
                 </ul>
                 {% include 'app/loginpartial.html' %}

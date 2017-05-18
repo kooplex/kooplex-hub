@@ -30,10 +30,11 @@ class Spawner(RestClient):
         prefix = get_settings('prefix', 'name')
         self.container_name = get_settings('spawner', 'notebook_container_name', container_name, prefix+'-notebook-{$username}')
         self.image = get_settings('spawner', 'notebook_image', image, prefix + '-notebook')
-        self.notebook_path = get_settings('spawner', 'notebook_proxy_path', None, '/notebook/{$username}/{$notebook.id}')
+        self.notebook_path = get_settings('spawner', 'notebook_proxy_path', None, '{$host_port}/notebook/{$username}/{$notebook.id}')
         self.session_path = get_settings('spawner', 'session_proxy_path', None, '/notebook/{$username}/{$notebook.id}/tree/{$username}/{$session.notebook_path}')
         self.ip_pool = get_settings('spawner', 'notebook_ip_pool', None, ['172.18.20.1', '172.18.20.255'])
         self.port = get_settings('spawner', 'notebook_port', None, 8000)
+
         self.srv_path = get_settings('spawner', 'srv_path', None, '/srv/' + prefix)
         self.dashboards_url = get_settings('dashboards', 'base_url','')
 
@@ -55,14 +56,18 @@ class Spawner(RestClient):
         network_name = get_settings('docker', 'network','')
         client = self.docli.make_docker_client()
         network_inspect = client.inspect_network(network_name)
-        used_ips = [ int(IPAddress(network_inspect['Containers'][l]['IPv4Address'].split("/")[0])) for l in network_inspect['Containers']]
-        fromip = int(IPAddress(self.ip_pool[0]))
-        toip = int(IPAddress(self.ip_pool[1]))
-        while True:
-            ip = IPAddress(random.randint(fromip, toip))
-            if not int(ip) in used_ips:
-                break
+        used_ips = [ IPAddress(network_inspect['Containers'][l]['IPv4Address'].split("/")[0]).value for l in network_inspect['Containers']]
+        ip_pool = list(range(IPAddress(self.ip_pool[0]).value, IPAddress(self.ip_pool[1]).value))
+        for i in used_ips:
+            try:
+                ip_pool.remove(i)
+            except ValueError:
+                1==1
+
+        ip = IPAddress(ip_pool[random.randint(0,len(ip_pool))])
+
         return str(ip)
+
 
     def get_container_name(self):
         print_debug("")
@@ -76,6 +81,10 @@ class Spawner(RestClient):
         print_debug("")
         url = self.pxcli.get_external_url(path)
         return url
+
+    def append_binds_for_right_timezone(self, binds):
+        print_debug("")
+        binds['/etc/localtime'] = {'bind': '/etc/localtime', 'mode': 'ro'}
 
     def append_ldap_binds(self, binds, svc):
         print_debug("")
@@ -121,6 +130,7 @@ class Spawner(RestClient):
         self.append_home_binds(binds, 'notebook')
         self.append_ownclouddata_binds(binds, 'notebook')
         self.append_init_binds(binds, 'notebook')
+        self.append_binds_for_right_timezone(binds)
         # TODO: remove hardcoding!
         binds[LibBase.join_path(self.srv_path, 'notebook/etc/jupyter_notebook_config.py')] = {'bind': '/etc/jupyter_notebook_config.py', 'mode': 'rw' }
         notebook = Notebook(
@@ -176,10 +186,8 @@ class Spawner(RestClient):
     def start_notebook(self, notebook):
         print_debug("")
         self.docli.ensure_container_running(notebook)
-        #print('container running')
         notebook.is_stopped = False
         self.pxcli.add_route(notebook.proxy_path, notebook.ip, notebook.port)
-        #print('proxy running')
         notebook.save()
         return notebook
 
