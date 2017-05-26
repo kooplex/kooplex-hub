@@ -8,7 +8,7 @@ class LdapException(Exception):
     pass
 
 class Ldap(LibBase):
-    
+
     def __init__(self):
         print_debug("")
         self.host = get_settings('ldap', 'host')
@@ -16,7 +16,6 @@ class Ldap(LibBase):
         self.base_dn = get_settings('ldap', 'base_dn')
         self.bind_username = get_settings('ldap', 'bind_username')
         self.bind_password = get_settings('ldap', 'bind_password')
-        self.user_home_dir = get_settings('users', 'home_dir')
         print(self.bind_username,self.base_dn,self.host)
         self.ldapconn = self.make_ldap_client()
 
@@ -33,21 +32,15 @@ class Ldap(LibBase):
     def get_attribute(self, entry, attribute):
         print_debug("")
         attrs = entry['attributes']
-        if attribute in attrs:
-            try:
-                return attrs[attribute][0]
-            except TypeError:
-                return attrs[attribute]
-        else:
+        if not attribute in attrs:
             return None
+        a = attrs[attribute]
+        return a[0] if isinstance(a, list) else a
 
     def get_attribute_list(self, entry, attribute):
         print_debug("")
         attrs = entry['attributes']
-        if attribute in attrs:
-            return attrs[attribute]
-        else:
-            return []
+        return attrs[attribute][:] if attribute in attrs else []
 
     ###########################################################
     # User manipulation
@@ -82,7 +75,7 @@ class Ldap(LibBase):
             'uid': user.username,
             'uidNumber': user.uid,
             'gidNumber': user.gid,
-            'homeDirectory': self.user_home_dir.replace('{$username}', user.username),
+            'homeDirectory': user.home,
             'sn': user.last_name,
             'displayName': '%s %s' % (user.first_name, user.last_name),
             'givenName': user.first_name,
@@ -129,6 +122,7 @@ class Ldap(LibBase):
         )
         user.uid = self.get_attribute(entry, 'uidNumber')
         user.gid = self.get_attribute(entry, 'gidNumber')
+        user.home = self.get_attribute(entry, 'homeDirectory')
         return user
 
     def get_max_uid(self):
@@ -141,10 +135,11 @@ class Ldap(LibBase):
             search_scope=ldap3.SUBTREE,
             attributes=attributes)
         entries = self.ldapconn.response
-        uids = ()
-        for entry in entries:
-            uids = uids + (int(self.get_attribute(entry, 'uidNumber')), )
-        return max(uids)
+#        uids = ()
+#        for entry in entries:
+#            uids = uids + (int(self.get_attribute(entry, 'uidNumber')), )
+#        return max(uids)
+        return max([ int(self.get_attribute(e, 'uidNumber')) for e in entries ])
 
     def add_user(self, user):
         print_debug("")
