@@ -18,6 +18,8 @@ from kooplex.lib.proxy import Proxy
 from kooplex.lib.jupyter import Jupyter
 from kooplex.hub.models import Container, Notebook, Session
 
+from kooplex.lib import ldap
+
 from kooplex.lib.debug import *
 
 class Spawner(RestClient):
@@ -153,10 +155,12 @@ class Spawner(RestClient):
             project_name = self.project_name,
             is_stopped=False,
         )
+        ldp = ldap.Ldap()
+        U = ldp.get_user(self.username) 
         notebook.set_environment({
                 'NB_USER': self.username,
-                'NB_UID': 10002,     # TODO
-                'NB_GID': 10002,     # TODO
+                'NB_UID': U.uid,
+                'NB_GID': U.gid,
                 'NB_URL': notebook_path,
                 'NB_PORT': self.port,
                 'DASHBOARD_SERVER_URL' : self.dashboards_url,
