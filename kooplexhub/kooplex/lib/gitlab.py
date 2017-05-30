@@ -62,6 +62,7 @@ class Gitlab(RestClient):
         token = self.get_user_private_token()
         if token:
             headers[Gitlab.HEADER_PRIVATE_TOKEN_KEY] = token
+        print("HEADERS",headers)
         return headers
 
     ###########################################################
@@ -89,6 +90,14 @@ class Gitlab(RestClient):
         print_debug("",DEBUG_LOCAL)
         res = self.http_get('api/v3/users')
         return res
+
+    def get_project(self, project_id):
+        print_debug("",DEBUG_LOCAL)
+        res = self.http_get('api/v3/projects/%s'%project_id)
+        project_json = res.json()
+        if 'message' in project_json:
+            raise ValueError("MESSAGE: %s"%(projects_json['message']))
+        return project_json
 
     def get_project_by_name(self,project_name):
         print_debug("",DEBUG_LOCAL)

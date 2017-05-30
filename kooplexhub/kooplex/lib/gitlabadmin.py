@@ -60,6 +60,7 @@ class GitlabAdmin(Gitlab):
         res = self.http_get('api/v3/users?username=%s'%username)
 #        res = self.http_get('api/v3/users?search=%s'%username)
         user = res.json()
+        
         return user[0]['is_admin']
 
     def modify_user(self, userid, property, value):
@@ -99,13 +100,13 @@ class GitlabAdmin(Gitlab):
             raise ValueError("MESSAGE: %s"%(projects_json['message']))
         return projects_json
 
-    def get_project(self, project_id):
-        print_debug("",DEBUG_LOCAL)
-        res = self.http_get('api/v3/projects/%s'%project_id)
-        project_json = res.json()
-        if 'message' in project_json:
-            raise ValueError("MESSAGE: %s"%(projects_json['message']))
-        return project_json
+#    def get_project(self, project_id):
+#        print_debug("",DEBUG_LOCAL)
+#        res = self.http_get('api/v3/projects/%s'%project_id)
+#        project_json = res.json()
+#        if 'message' in project_json:
+#            raise ValueError("MESSAGE: %s"%(projects_json['message']))
+#        return project_json
 
     #THERE IS A PROBLEM IN NAMING WITH THE TWO FOLLOWING
     def get_public_projects(self, unforkable_projectids):

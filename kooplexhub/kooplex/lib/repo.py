@@ -71,6 +71,7 @@ class Repo(LibBase):
         dir = LibBase.join_path(dir, 'projects')
         dir = LibBase.join_path(dir, self.name)
         dir = dir.replace('/', os.path.sep)
+        print(dir,self.name)
         return dir        
 
     def ensure_local_dir_empty(self):
@@ -156,10 +157,11 @@ class Repo(LibBase):
         with repo.git.custom_environment(GIT_SSH_COMMAND=cmd):
             origin.push()
 
-    def commit_and_push(self, commit_message, email, project_owner, project_name,
+    def commit_and_push(self, commit_message, email, project_owner, project_name, creator_name,
                         modified_file_list, deleted_file_list):
         print_debug("commit and push ...")
         dir = os.path.join(self.get_local_dir(), project_owner, project_name)
+
         cmd = self.get_git_ssh_command()
         repo = git.Repo(dir)
         author = git.Actor(self.username, email)

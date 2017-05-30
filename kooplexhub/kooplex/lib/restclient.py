@@ -28,6 +28,8 @@ class RestClient(LibBase):
         if self.base_url:
             url = LibBase.join_path(self.base_url, path)
         else:
+            # TODO separate host into ip and port!
+            #self.host = self.host.split(":")[0]
             url = RestClient.make_url(self.host, path, self.port, self.https)
         return url
 
@@ -69,12 +71,15 @@ class RestClient(LibBase):
     def http_action(self, path, params, headers, data, expect, action, formdata=None):
         print_debug("",DEBUG_LOCAL)
         url, params, headers = self.http_prepare_request(path, params, headers)
+        print("HEADERS",headers)
+        print("P",params)
         data = self.http_prepare_data(data)
+        print(action, path)
 #        formdata = self.http_prepare_formdata(formdata)
         if expect and type(expect) is not list:
             expect = [ expect ]
         s = 0.1
-        while s < 10:
+        while s < 30:
             if formdata:
                 res = action(url=url, params=params, headers=headers, data=data, files=formdata)
             else:

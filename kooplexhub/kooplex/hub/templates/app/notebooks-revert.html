@@ -17,7 +17,7 @@
                         This will delete the directory, roll back to the last commit and pull it from the repository!}
                     </div>
 
-                        {% if item.commits|length < 2 %}
+                        {% if item.commits|length < 0 %}
                             Only initial commit yet
                         {% endif %}
                     <!--select id="commitid" name="commitid">

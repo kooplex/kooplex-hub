@@ -29,8 +29,16 @@ from kooplex.lib.debug import *
 
 def commit_style(project):
     for commit in project['commits']:
-        commit['kdate']=commit['committed_date'][:10]
-        commit['ktime']=commit['committed_date'][11:19]
+        if "committed_date" in commit.keys():
+            commit['kdate']=commit['committed_date'][:10]
+            commit['ktime']=commit['committed_date'][11:19]
+        elif "created_at" in commit.keys():
+            commit['kdate'] = commit['created_at'][:10]
+            commit['ktime'] = commit['created_at'][11:19]
+        else:
+            commit['kdate'] = "NULL"
+            commit['ktime'] = "NULL"
+
         #commit['ktime_zone']=commit['committed_date'][-6:]
         commit['ktime_zone']='CET'
 
@@ -527,8 +535,13 @@ def notebooks_commit(request):
     notebook_path_dir = request.POST['notebook_path_dir']
     message = request.POST['message']
     is_forked = request.POST['is_forked']
-    project_owner = request.POST['project_owner']
-    project_name = request.POST['project_name']
+    project_id = int(request.POST['project_id'])
+    g = Gitlab()
+    project = g.get_project(project_id)
+    project_name = project['name']
+    project_owner = project['owner']['username']
+    creator = g.get_user_by_id(project['creator_id'])
+    creator_name = creator['username']
     modified_files = request.POST['modified_files']
     print(request.POST)
     #if 'cancel' in request.POST:
@@ -545,7 +558,7 @@ def notebooks_commit(request):
         deleted_file_list = deleted_files.split(',')
     next_page = HUB_NOTEBOOKS_URL
     repo = Repo(request.user.username, notebook_path_dir)
-    repo.commit_and_push(message, request.user.email, project_owner, project_name,
+    repo.commit_and_push(message, request.user.email, project_owner, project_name, creator_name,
                          modified_file_list, deleted_file_list)
 #    repo.commit_and_push_default(message, request.user.email, project_owner, project_name)
     if is_forked:
