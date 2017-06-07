@@ -16,13 +16,17 @@
 
                     <p> {{ item.description }} </p>
                     <div>
-                    {% if item.url %}
-                        <a href="{% url 'worksheet-open-as-dashboard' %}?url={{ item.url }}" target="_blank">
-                        <a href="{% url 'worksheet-open-as-dashboard' %}?url={{ item.url }}&cache_url={{ item.cache_url }}" target="_blank">
-                    {% else %}
-                        <a href="{% url 'worksheet-open' %}?project_owner={{ item.owner }}&project_name={{ item.name  }}&project_id={{ item.project_id }}&file={{ item.file }}" target="_blank">
-                    {% endif %}
-                        <button type="button" class="btn btn-info"><span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span> Open</button></a>
+                        {% if item.report_type == "dashboard" %}
+                            {% if item.url %}
+                                <a href="{% url 'worksheet-open-as-dashboard' %}?url={{ item.url }}&cache_url={{ item.cache_url }}" target="_blank">
+                                    <button type="button" class="btn btn-info"><span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span> Open</button></a>
+                            {% else %}
+                                <button type="button" class="btn btn-info"><span class="glyphicon glyphicon-remove-circle" aria-hidden="true"></span> No Dashboard Server for this</button>
+                            {% endif %}
+                        {% else %}
+                            <a href="{% url 'worksheet-open' %}?project_owner={{ item.owner }}&project_name={{ item.name  }}&project_id={{ item.project_id }}&file={{ item.file }}" target="_blank">
+                            <button type="button" class="btn btn-info"><span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span> Open</button></a>
+                        {% endif %}
                         {%  if not publicvar %}
                                 <a href="{% url 'worksheet-unpublish' %}?project_owner={{ item.owner }}&project_name={{ item.name  }}&project_id={{ item.project_id }}&file={{ item.file }}&creator_name={{ item.creator_name }}&image_type={{ item.image_type }}&report_type={{ item.report_type }}"
 

@@ -6,6 +6,9 @@ from django.contrib import admin
 from kooplex.hub.models.notebook import Notebook
 from kooplex.hub.models.session import Session
 from kooplex.hub.models.container import Container
+from kooplex.hub.models.dockerimage import DockerImage
+from kooplex.hub.models.project import Project
+from kooplex.hub.models.report import Report
 
 
 # Register your models here.
@@ -20,6 +23,23 @@ class SessionAdmin(admin.ModelAdmin):
 @admin.register(Container)
 class ContainerAdmin(admin.ModelAdmin):
     pass
+
+@admin.register(DockerImage)
+class DockerImageAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name')
+    pass
+
+@admin.register(Project)
+class ProjectAdmin(admin.ModelAdmin):
+    list_display = ('id', 'owner_username','owner_name', 'path', 'visibility')
+    pass
+
+@admin.register(Report)
+class ReportAdmin(admin.ModelAdmin):
+    list_display = ('project_id', 'creator_name', 'file_name')
+    pass
+
+
 
 def admin_main(request):
     print("Hello")

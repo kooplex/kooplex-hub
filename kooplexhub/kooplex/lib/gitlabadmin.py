@@ -52,12 +52,12 @@ class GitlabAdmin(Gitlab):
 
     def get_all_users(self):
         print_debug("",DEBUG_LOCAL)
-        res = self.http_get('api/v3/users')
+        res = self.http_get(self.api_version+'/users')
         return res.json()
 
     def check_useradmin(self,username):
         print_debug("",DEBUG_LOCAL)
-        res = self.http_get('api/v3/users?username=%s'%username)
+        res = self.http_get(self.api_version+'/users?username=%s'%username)
 #        res = self.http_get('api/v3/users?search=%s'%username)
         user = res.json()
         
@@ -65,7 +65,7 @@ class GitlabAdmin(Gitlab):
 
     def modify_user(self, userid, property, value):
         print_debug("",DEBUG_LOCAL)
-        url = "api/v3/users/%s" % str(userid)
+        url = self.api_version+"/users/%s" % str(userid)
         data = {property:value}
         res = self.http_put(url, params=data)
         if res.status_code > 400:
@@ -80,12 +80,12 @@ class GitlabAdmin(Gitlab):
         
     def get_all_groups(self):
         print_debug("",DEBUG_LOCAL)
-        res = self.http_get('api/v3/groups')
+        res = self.http_get(self.api_version+'/groups')
         return res.json()
         
     def get_group_members(self,id):
         print_debug("",DEBUG_LOCAL)
-        res = self.http_get('api/v3/groups/%s/members'%str(id))
+        res = self.http_get(self.api_version+'/groups/%s/members'%str(id))
         return res.json()
 
 
@@ -94,7 +94,7 @@ class GitlabAdmin(Gitlab):
 
     def get_all_projects(self):
         print_debug("",DEBUG_LOCAL)
-        res = self.http_get('api/v3/projects/all?page=1&per_page=1000')
+        res = self.http_get(self.api_version+'/projects?page=1&per_page=1000')
         projects_json = res.json()
         if 'message' in projects_json:
             raise ValueError("MESSAGE: %s"%(projects_json['message']))
@@ -111,7 +111,7 @@ class GitlabAdmin(Gitlab):
     #THERE IS A PROBLEM IN NAMING WITH THE TWO FOLLOWING
     def get_public_projects(self, unforkable_projectids):
         print_debug("",DEBUG_LOCAL)
-        res = self.http_get('api/v3/projects/all?visibility=public')
+        res = self.http_get(self.api_version+'/projects')
         public_projects_json = res.json()
         if 'message' in public_projects_json:
             raise ValueError("MESSAGE: %s"%(public_projects_json['message']))
@@ -120,7 +120,8 @@ class GitlabAdmin(Gitlab):
 
     def get_all_public_projects(self, unforkable_projectids):
         print_debug("",DEBUG_LOCAL)
-        res = self.http_get('api/v3/projects/all?visibility=public')
+        #res = self.http_get(self.api_version+'/projects/all?visibility=public')
+        res = self.http_get(self.api_version+'/projects/')
         public_projects_json = res.json()
         if 'message' in public_projects_json:
             raise ValueError("MESSAGE: %s"%(public_projects_json['message']))
@@ -136,13 +137,8 @@ class GitlabAdmin(Gitlab):
                 project['forkable'] = True
         return public_projects_json
         
-    def get_project_members(self,id):
-        print_debug("",DEBUG_LOCAL)
-        res = self.http_get('api/v3/projects/%s/members'%str(id))
-        return res.json()
-        
     def get_project_variables(self,project_id):
         print_debug("",DEBUG_LOCAL)
-        res = self.http_get('api/v3/projects/%d/variables'%(project_id))
+        res = self.http_get(self.api_version+'/projects/%d/variables'%(project_id))
         project_variables = res.json()
         return project_variables

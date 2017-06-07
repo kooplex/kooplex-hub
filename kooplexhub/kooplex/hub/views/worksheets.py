@@ -11,7 +11,6 @@ from django.http import HttpRequest, HttpResponseRedirect
 from kooplex.lib.libbase import get_settings
 from kooplex.lib.gitlab import Gitlab
 from kooplex.lib.spawner import Spawner
-from kooplex.lib.dashboards import Dashboards
 from kooplex.lib.debug import *
 
 HUB_REPORTS_URL = '/hub/worksheets'

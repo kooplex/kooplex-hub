@@ -7,7 +7,7 @@
 <div class="container">
 
 <div class="row">
-<div class=" col-md-9 col-sm-9 col-xs-9">
+<div class=" col-md-6 col-sm-6 col-xs-6">
 <nav class="navbar navbar-default">
  <div class="container-fluid">
 
@@ -26,7 +26,8 @@
   </div><!-- /.container-fluid -->
 </nav>
 </div>
-<div class=" col-md-3 col-sm-3 col-xs-3">
+<div class=" col-md-6 col-sm-6 col-xs-6">
+    <a href="{% url 'refresh-db' %}"><button type="button" class="btn btn-lg  btn-primary navbar-btn">Refresh </button></a>
       {% if username %}
           {% include 'app/notebooks-new-partial.html' with myprojects=True %}
         <a href="#" data-toggle="modal" data-target="#project-new"><button type="button" class="btn btn-lg  btn-primary navbar-btn">Start new project </button></a>
@@ -49,15 +50,15 @@
   {% if username %}
 
     <div id="myprojects" class="tab-pane fade in active">
-        {% for item in projects %}
-            {% include 'app/project-partial.html' %}
+        {% for item in shared_with_me_projects %}
+            {% include 'app/notebooks-project-partial.html' %}
         {% endfor %}
     </div>
 
     <div id="running" class="tab-pane fade ">
-        {% for item in projects %}
-            {% if item.running %}
-                {% include 'app/project-partial.html' %}
+        {% for item in shared_with_me_projects %}
+            {% if item.id in running %}
+                {% include 'app/notebooks-project-partial.html' %}
             {% endif %}
         {% endfor %}
     </div>
@@ -69,7 +70,7 @@
 
      {% for item in public_projects %}
     {% if item.owner.username != username %}
-        {% include 'app/project-partial.html' with publicvar=True %}
+        {% include 'app/notebooks-project-partial.html' with publicvar=True %}
     {% endif %}
     {% endfor %}
     </div>

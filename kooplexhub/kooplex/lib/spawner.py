@@ -16,7 +16,7 @@ from kooplex.lib.restclient import RestClient
 from kooplex.lib.smartdocker import Docker
 from kooplex.lib.proxy import Proxy
 from kooplex.lib.jupyter import Jupyter
-from kooplex.hub.models import Container, Notebook, Session
+from kooplex.hub.models import Container, Notebook, Session, Project
 
 from kooplex.lib import ldap
 
@@ -24,11 +24,13 @@ from kooplex.lib.debug import *
 
 class Spawner(RestClient):
        
-    def __init__(self, username, project_owner=None, project_name=None, container_name=None, image=None):
+    def __init__(self, username, project_id=None, container_name=None, image=None):
         print_debug("")
         self.username = username
-        self.project_owner = project_owner
-        self.project_name = project_name
+        self.project_id = project_id
+        project = Project.objects.filter(id__exact=project_id)[0]
+        self.project_owner = project.owner_username
+        self.project_name = project.name
         prefix = get_settings('prefix', 'name')
         self.container_name = get_settings('spawner', 'notebook_container_name', container_name, prefix+'-notebook-{$username}')
         self.image = get_settings('spawner', 'notebook_image', image, prefix + '-notebook')
@@ -77,6 +79,9 @@ class Spawner(RestClient):
         name = name.replace('{$username}', self.username)
         name = name.replace('{$project_owner}', self.project_owner)
         name = name.replace('{$project_name}', self.project_name)
+        # To handle spaces in names
+        name = name.replace(" ", "-")
+        name = name.replace("_", "-")
         return name
 
     def get_external_url(self, path):

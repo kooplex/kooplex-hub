@@ -160,10 +160,9 @@ class Repo(LibBase):
     def commit_and_push(self, commit_message, email, project_owner, project_name, creator_name,
                         modified_file_list, deleted_file_list):
         print_debug("commit and push ...")
-        dir = os.path.join(self.get_local_dir(), project_owner, project_name)
 
         cmd = self.get_git_ssh_command()
-        repo = git.Repo(dir)
+        repo = git.Repo(self.get_local_dir())
         author = git.Actor(self.username, email)
         origin = repo.remote()
         if len(modified_file_list):
@@ -180,11 +179,9 @@ class Repo(LibBase):
               with repo.git.custom_environment(GIT_SSH_COMMAND=cmd):
                   origin.push()
 
-    def list_committable_files(self, project_owner, project_name):
+    def list_committable_files(self, path_with_namespace):
         print_debug("")
         dir = self.get_local_dir()
-        dir = LibBase.join_path(dir, project_owner)
-        dir = LibBase.join_path(dir, project_name)
         dir = dir.replace('/', os.path.sep)
         repo = git.Repo(dir)
         deleted_list = []

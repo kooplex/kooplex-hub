@@ -15,30 +15,30 @@
                 <p>Enter a new name for the project.</p>
                 <fieldset>
                     <div class="form-group has-error">
-                        <label for="project.name">Project name:</label>
-                        <input type="text" class="form-control" id="project.name" name="project.name" placeholder="Enter Name">
+                        <label for="project_name">Project name:</label>
+                        <input type="text" class="form-control" id="project_name" name="project_name" placeholder="Enter Name">
                     </div>
                      {% if errors %}
-                        <p class="validation-summary-errors">Please use only lower case letters and hyphens</p>
+                        <p class="validation-summary-errors">Please use only lower/Upper case letters, hyphens, spaces and underscores </p>
                     {% endif %}
                     <div class="form-group">
-                        <label for="project.image">Choose an image for your project</label><br>
-                        <select id="project.images" name="project.image">
+                        <label for="project_image">Choose an image for your project</label><br>
+                        <select id="project_images" name="project_image">
                             {% for image in notebook_images %}
                             <option value="{{ image }}">{{ image }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="project.description">Description of the project</label><br>
-                        <textarea rows="6" cols="50" id="project.description" name="project.description">
+                        <label for="project_description">Description of the project</label><br>
+                        <textarea rows="6" cols="50" id="project_description" name="project_description">
                         Description here
                         </textarea>
                     </div>
                     <div class="form-group">
-                        <label for="project.public">Make it public?</label><br>
-                        <input type="radio" name="project.public" value="true" checked> Yes<br>
-                        <input type="radio" name="project.public" value="false" > No<br>
+                        <label for="project_public">Make it public?</label><br>
+                        <input type="radio" name="project_public" value="public" checked> Yes<br>
+                        <input type="radio" name="project_public" value="private" > No<br>
                     </div>
                 </fieldset>
               </div>

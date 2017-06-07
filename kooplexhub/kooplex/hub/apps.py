@@ -2,3 +2,4 @@
 
 class HubConfig(AppConfig):
     name = 'kooplex.hub'
+

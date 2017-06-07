@@ -24,6 +24,7 @@ class Gitlab(RestClient):
     def __init__(self, request=None):
         self.request = request
         self.session = {}       # local session used for unit tests
+        self.api_version = "api/v4"
     
     ###########################################################
     # HTTP request authentication
@@ -70,7 +71,7 @@ class Gitlab(RestClient):
 
     def authenticate(self, username=None, password=None):
         print_debug("",DEBUG_LOCAL)
-        res = self.http_post("api/v3/session", params={'login': username, 'password': password})
+        res = self.http_post(self.api_version+"/session", params={'login': username, 'password': password})
         if res.status_code == 201:
             u = res.json()
             return res, u
@@ -78,22 +79,22 @@ class Gitlab(RestClient):
 
     def get_user(self,username):
         print_debug("",DEBUG_LOCAL)
-        res = self.http_get('api/v3/users?username=%s'%username)
+        res = self.http_get(self.api_version+'/users?username=%s'%username)
         return res.json()
 
     def get_user_by_id(self,id):
         print_debug("",DEBUG_LOCAL)
-        res = self.http_get('api/v3/users/%d'%id)
+        res = self.http_get(self.api_version+'/users/%d'%id)
         return res.json()
 
     def get_alluser(self):
         print_debug("",DEBUG_LOCAL)
-        res = self.http_get('api/v3/users')
+        res = self.http_get(self.api_version+'/users')
         return res
 
     def get_project(self, project_id):
         print_debug("",DEBUG_LOCAL)
-        res = self.http_get('api/v3/projects/%s'%project_id)
+        res = self.http_get(self.api_version+'/projects/%s'%project_id)
         project_json = res.json()
         if 'message' in project_json:
             raise ValueError("MESSAGE: %s"%(projects_json['message']))
@@ -101,7 +102,7 @@ class Gitlab(RestClient):
 
     def get_project_by_name(self,project_name):
         print_debug("",DEBUG_LOCAL)
-        res = self.http_get('api/v3/projects/search/%s'%project_name)
+        res = self.http_get(self.api_version+'/projects?search=%s'%project_name)
         return res.json()
 
     def authenticate_user(self, username=None, password=None):
@@ -117,12 +118,20 @@ class Gitlab(RestClient):
 
     def get_projects(self):
         print_debug("",DEBUG_LOCAL)
-        res = self.http_get('api/v3/projects')
+        res = self.http_get(self.api_version+'/projects')
         print_debug("ITT")
         print(res)
         projects_json = res.json()
         unforkable_projectids = self.get_unforkable_projectids(projects_json)
         return projects_json, unforkable_projectids
+
+    def get_my_projects(self):
+        print_debug("",DEBUG_LOCAL)
+        res = self.http_get(self.api_version+'/projects?membership=true')
+        print_debug("ITT")
+        print(res)
+        projects_json = res.json()
+        return projects_json
 
     def get_unforkable_projectids(self, projects_json):
         print_debug("",DEBUG_LOCAL)
@@ -134,28 +143,33 @@ class Gitlab(RestClient):
 
     def get_project_variables(self,project_id):
         print_debug("",DEBUG_LOCAL)
-        res = self.http_get('api/v3/projects/%d/variables'%(project_id))
+        res = self.http_get('api/v4/projects/%d/variables'%(project_id))
         project_variables = res.json()
         return project_variables
 
     def get_project_variable(self,project_id, key):
         print_debug("",DEBUG_LOCAL)
-        res = self.http_get('api/v3/projects/%s/variables/%s'%(project_id, key))
+        res = self.http_get('api/v4/projects/%s/variables/%s'%(project_id, key))
         variable = res.json()
         if 'value' in variable:
           return variable['value']
         else:
           return None
 
+    def get_project_members(self,id):
+        print_debug("",DEBUG_LOCAL)
+        res = self.http_get(self.api_version+'/projects/%s/members'%str(id))
+        return res.json()
+
     def get_file(self,project_id,file):
         print_debug("",DEBUG_LOCAL)
-        res = self.http_get('api/v3/projects/%s/repository/files?file_path=%s&ref=master'%(project_id,file))
+        res = self.http_get('api/v4/projects/%s/repository/files?file_path=%s&ref=master'%(project_id,file))
         return res.json()
 
 
     def fork_project(self, itemid):
         print_debug("",DEBUG_LOCAL)
-        res = self.http_post("api/v3/projects/fork/" + itemid)
+        res = self.http_post("api/v4/projects/fork/" + itemid)
         message = ""
         if res.status_code == 409:
             message = res.json()["message"]["base"][0]
@@ -163,7 +177,7 @@ class Gitlab(RestClient):
 
     def create_mergerequest(self, project_id, target_id, title, description):
         print_debug("",DEBUG_LOCAL)
-        url = "api/v3/projects/"
+        url = "api/v4/projects/"
         url += project_id
         url += "/merge_requests?source_branch=master&target_branch=master"
         url += "&target_project_id=" + target_id
@@ -177,7 +191,7 @@ class Gitlab(RestClient):
 
     def list_mergerequests(self, itemid):
         print_debug("",DEBUG_LOCAL)
-        url = "api/v3/projects/"
+        url = "api/v4/projects/"
         url += itemid
         url += "/merge_requests?state=opened"
         res = self.http_get(url)
@@ -185,10 +199,8 @@ class Gitlab(RestClient):
 
     def accept_mergerequest(self, project_id, mergerequestid):
         print_debug("",DEBUG_LOCAL)
-        url = "api/v3/projects/"
-        url += project_id
-        url += "/merge_requests/"
-        url += mergerequestid
+        url = self.api_version+"/projects/%d" % project_id
+        url += "/merge_requests/" + mergerequestid
         url += "/merge"
         res = self.http_put(url)
         message = ""
@@ -198,10 +210,8 @@ class Gitlab(RestClient):
 
     def create_project(self,project_name,public='false',description=""):
         print_debug("",DEBUG_LOCAL)
-        url = "api/v3/projects"
-        url += "?name=%s"%project_name
-        url += "&public=%s"%public
-        url += "&description=%s"%description
+        url = self.api_version+"/projects"
+        url += "?name=%s&visibility=%s&description=%s" % (project_name, public, description)
         res = self.http_post(url)
         message = ""
         if res.status_code != 201:
@@ -210,7 +220,7 @@ class Gitlab(RestClient):
 
     def delete_project(self, project_id):
         print_debug("",DEBUG_LOCAL)
-        url = "api/v3/projects/%s"% project_id
+        url = self.api_version+"/projects/%s"% project_id
         res = self.http_delete(url)
         message = ""
         if res.status_code != 201:
@@ -219,7 +229,7 @@ class Gitlab(RestClient):
 
     def create_project_variable(self,project_id,key,value):
         print_debug("",DEBUG_LOCAL)
-        url = "api/v3/projects/"
+        url = self.api_version+"/projects/"
         url += "%s"%str(project_id)
         url += "/variables"
         data = dict(key=key, value=value)
@@ -230,13 +240,10 @@ class Gitlab(RestClient):
 
     def create_project_readme(self,project_id,file,content,commitmsg):
         print_debug("",DEBUG_LOCAL)
-        url = "api/v3/projects/"
+        url = self.api_version+"/projects/"
         url += "%d"%project_id
-        url += "/repository/files"
-#        url += "?file_path=app/project.rb&branch_name=master&author_email=author%40example.com&author_name=Firstname%20Lastname&content=some%20content&commit_message=create%20a%20new%20file
-        url += "?file_path=%s"%file
-        url += "&branch_name=master&content=%s"%content
-        url += "&commit_message=%s"%commitmsg
+        url += "/repository/files/"
+        url += "%s?branch=master&content=%s&commit_message=%s"%(file, content, commitmsg)
         res = self.http_post(url)
         print(res)
         if res.status_code != 404:
@@ -244,14 +251,14 @@ class Gitlab(RestClient):
         return message
         
     #def ensure_variable_exists(self, project_id, key, value):
-    #    url = "api/v3/projects/"
+    #    url = self.api_version+"/projects/"
     #    url += "%s" % project_id
     #    url += "/variables/%s" % key
     #    data = dict(value=value)
 
     def change_variable_value(self,project_id,key,value):
         print_debug("",DEBUG_LOCAL)
-        url = "api/v3/projects/"
+        url = self.api_version+"/projects/"
         url += "%s"%project_id
         url += "/variables"
         data = dict(value=value)
@@ -270,7 +277,7 @@ class Gitlab(RestClient):
 
     def delete_project_variable(self,project_id,key):
         print_debug("",DEBUG_LOCAL)
-        url = "api/v3/projects/"
+        url = self.api_version+"/projects/"
         url += "%s"%project_id
         url += "/variables/%s"%key
         res = self.http_delete(url)
@@ -284,7 +291,7 @@ class Gitlab(RestClient):
 
     def get_repository_commits(self,project_id):
         print_debug("",DEBUG_LOCAL)
-        url = "api/v3/projects/"
+        url = self.api_version+"/projects/"
         url += "%s/repository/commits"%str(project_id)
         res = self.http_get(url)
         if res.status_code != 404:

@@ -51,26 +51,47 @@ class Docker(LibBase):
             name = image.image
         return name
 
+    def get_images(self, image=""):
+        print_debug("")
+        if image:
+            name = self.get_image_name(image)
+            imgs = self.docli.images(name=name,all=True)
+            return imgs
+        else:
+            imgs = self.docli.images(all=True)
+            return imgs
+            
     def get_image(self, image):
         print_debug("")
-        name = self.get_image_name(image)
-        imgs = self.docli.images(name=name)
+        imgs = self.get_images(image)
         if imgs and len(imgs) == 1:
             return imgs[0]
         else:
             return None
-            
-    def get_allnotebook_images(self):
-        print_debug("")
-        imgs = self.docli.images(all=True)
+
+    def get_all_notebook_images(self):
         prefix = get_settings('prefix', 'name')
+        imgs = self.get_images()
         notebook_images=[]
         for img in imgs:
             if img['RepoTags']:
                 if img['RepoTags'][0].rfind(prefix + '-notebook')>-1:
-                        notebook_images.append(img['RepoTags'][0].split(":")[0])
+                        notebook_images.append(img)
         if notebook_images and len(notebook_images) > 0:
             return notebook_images
+        else:
+            return None
+
+    def get_all_dashboard_iamges(self):
+        prefix = get_settings('dashboards', 'prefix')
+        imgs = self.get_images()
+        dashboard_images=[]
+        for img in imgs:
+            if img['RepoTags']:
+                if img['RepoTags'][0].rfind(prefix+'_')>-1:
+                    dashboard_images.append(img)
+        if dashboard_images and len(dashboard_images) > 0:
+            return dashboard_images
         else:
             return None
 

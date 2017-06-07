@@ -1,0 +1,39 @@
+﻿{% extends "app/layout.html" %}
+
+{% block content %}
+
+<div class="row">
+     <div class="panel panel-default">
+        <div class="panel-heading">
+            <h4>Restore "{{ project.name }}" project's last committed state?</h4>
+        </div>
+        <div class="panel-body">
+            <form class="form-horizontal" action="{% url 'notebooks-revert'%}?project_id={{ project.id }}" method="post">
+                {% csrf_token %}
+                <!--div class="modal-header"-->
+
+                <div class="panel-body">
+                    <div class="alert alert-danger" role="alert">
+                        This will delete the directory, roll back to the last commit and pull it from the repository!}
+                    </div>
+
+                        {% if commits|length < 0 %}
+                            Only initial commit yet
+                        {% endif %}
+                    <!--select id="commitid" name="commitid">
+                                {% for commit in  commits   %}
+                                <option value="{{ commit.short_id }}">{{ commit.author_name }} {{ commit.kdate }} {{ commit.ktime }} {{ commit.ktime_zone }}  {{ commit.title }}  </option>
+                                {% endfor %}
+                    </select-->
+                </div>
+                <div >
+                    <input type="submit" name="revert" value="Revert" class="btn btn-primary" />
+                    <input type="submit" name="cancel" value="Cancel" class="btn btn-secondary" />
+                </div>
+            </form>
+        </div>
+     </div>
+
+</div>
+
+{% endblock %}
