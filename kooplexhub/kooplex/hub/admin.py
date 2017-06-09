@@ -6,6 +6,7 @@ from django.contrib import admin
 from kooplex.hub.models.notebook import Notebook
 from kooplex.hub.models.session import Session
 from kooplex.hub.models.container import Container
+from kooplex.hub.models.dashboard_server import Dashboard_server
 from kooplex.hub.models.dockerimage import DockerImage
 from kooplex.hub.models.project import Project
 from kooplex.hub.models.report import Report
@@ -22,11 +23,17 @@ class SessionAdmin(admin.ModelAdmin):
 
 @admin.register(Container)
 class ContainerAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name')
     pass
 
 @admin.register(DockerImage)
 class DockerImageAdmin(admin.ModelAdmin):
     list_display = ('id', 'name')
+    pass
+
+@admin.register(Dashboard_server)
+class Dashboard_serverAdmin(admin.ModelAdmin):
+    list_display = ('name', 'docker_port')
     pass
 
 @admin.register(Project)

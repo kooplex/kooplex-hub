@@ -12,12 +12,14 @@ from kooplex.lib.libbase import get_settings
 class Report(models.Model, ModelBase):
     id = models.IntegerField(primary_key=True)
     project_id = models.IntegerField(null=True)
-    dashboard_server = models.ForeignKey(Dashboard_server, null=True)
+    #dashboard_server = models.ForeignKey(Dashboard_server, null=True)
     name = models.CharField(max_length=200, null=True)
-    creator_name = models.CharField(max_length=200, null=True)
     file_name = models.CharField(max_length=200, null=True)
-    from_dir = models.CharField(max_length=200, null=True)
-    from_dir_full = models.CharField(max_length=200, null=True)
+    dir_name = models.CharField(max_length=200, null=True)
+    creator_name = models.CharField(max_length=200, null=True)
+    path = models.CharField(max_length=200, null=True)
+    url = models.CharField(max_length=200, null=True)
+    cache_url = models.CharField(max_length=200, null=True)
 
     binds = models.TextField(null=True)
     type = models.CharField(max_length=15)
@@ -25,17 +27,18 @@ class Report(models.Model, ModelBase):
     class Meta:
         db_table = "kooplex_hub_report"
 
-    def __init__(self, Dashboard_server, project_id, file_name, name="", type=""):
-        self.file_name = file_name
-        self.name = file_name.split(".ipynb")[0]
-        self.from_dir = os.path.dirname(file_name)
+    def __init__(self, Dashboard_server, project_id, file_path, name="", type=""):
+        self.file_name = os.path.split(file_name)[1]
+        self.name = os.path.splitext(self.file_name)[0]
         self.type = type
         self.dashboard_server = Dashboard_server
 
         self.project_id = project_id
         project = Project.objects.get(id=project_id)
-        self.from_dir_full = os.path.join(project.home, self.from_dir)
+        self.path = os.path.join(project.home, file_path)
         self.creator_name = project.owner_username
+        self.url = os.path.join(self.dashboard_server.url, self.path)
+        self.cache_url = os.path.join(self.dashboard_server.cache_url, self.path)
 
 
     def get_environment(self):
@@ -54,6 +57,7 @@ class Report(models.Model, ModelBase):
     def deploy(self, other_files):
         from shutil import copyfile as cp
         from os import mkdir
+        srv_dir = get_settings('users', 'srv_dir', None, '')
 
         if self.type=='html':
             docli = Docker()
@@ -61,12 +65,11 @@ class Report(models.Model, ModelBase):
             docli.exec_container(notebook, command, detach=False)
 
             file_to_deploy = self.name + ".html"
-            self.copy(file_to_deploy)
+            print("dir_util.copy_tree(dir_from, D.dir_to)")
+            print("dir_util.copy_tree(%s, %s)"%(dir_from, dir_to))
 
         elif self.type=='dashboard':
-            dashb.deploy_data(notebook.image.split("%s-notebook-" % prefix)[1], project, notebook_path_dir, ipynb_file,
-                              extradir=ipynb_dir)
-            g.create_project_variable(project_id, 'dashboard_%s' % ipynb_dir, notebook.image)
+
             print(other_files)
             if len(other_files) > 0:
                 for file in other_files:

@@ -7,18 +7,18 @@ class Container(models.Model, ModelBase):
     id = models.UUIDField(primary_key=True)
     docker_host = models.CharField(max_length=200, null=True)
     docker_port = models.IntegerField(null=True)
-    name = models.CharField(max_length=200)
-    image = models.CharField(max_length=200)
-    network = models.CharField(max_length=200)
+    name = models.CharField(max_length=200, null=True)
+    image = models.CharField(max_length=200, null=True)
+    network = models.CharField(max_length=200, null=True)
     ip = models.GenericIPAddressField()
     privileged = models.BooleanField()
     command = models.TextField(null=True)
     environment = models.TextField(null=True)
     binds = models.TextField(null=True)
     ports = models.TextField(null=True)
-    state = models.CharField(max_length=15)
-    project_owner = models.CharField(max_length=200)
-    project_name = models.CharField(max_length=200)
+    state = models.CharField(max_length=15, null=True)
+    project_owner = models.CharField(max_length=200, null=True)
+    project_name = models.CharField(max_length=200, null=True)
     is_stopped = models.BooleanField()
 
     class Meta:
@@ -30,7 +30,10 @@ class Container(models.Model, ModelBase):
         c.name=dict['Names'][0][1:]
         if docker:
             c.docker_host = docker.host
-            c.docker_port = docker.port
+            if docker.port:
+                c.docker_port = docker.port
+            else:
+                c.docker_port = 0
         c.image=dict['Image']
         try:
             c.network = list(dict['NetworkSettings']['Networks'].keys())[0]

@@ -82,16 +82,16 @@ class Docker(LibBase):
         else:
             return None
 
-    def get_all_dashboard_iamges(self):
+    def get_all_dashboard_containers(self):
         prefix = get_settings('dashboards', 'prefix')
         imgs = self.get_images()
-        dashboard_images=[]
+        dashboard_containers=[]
         for img in imgs:
             if img['RepoTags']:
                 if img['RepoTags'][0].rfind(prefix+'_')>-1:
-                    dashboard_images.append(img)
-        if dashboard_images and len(dashboard_images) > 0:
-            return dashboard_images
+                    dashboard_containers.append(img)
+        if dashboard_containers and len(dashboard_containers) > 0:
+            return dashboard_containers
         else:
             return None
 
@@ -157,12 +157,15 @@ class Docker(LibBase):
             name = container.name
         return name
 
-    def get_container(self, container):
+    def get_container(self, container, original=False):
         print_debug("")
         name = self.get_container_name(container)
         conts = self.docli.containers(all=True, filters={'name': name})
         if conts and len(conts) == 1:
-            return Container.from_docker_dict(self, conts[0])
+            if original:
+                return conts[0]
+            else:
+                return Container.from_docker_dict(self, conts[0])
         else:
             return None
 

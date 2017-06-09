@@ -246,12 +246,7 @@ def notebooks_deploy(request):
     project_id = request.GET['project_id']
     username = request.user.username
     srv_dir = get_settings('users', 'srv_dir', None, '')
-    file = LibBase.join_path(srv_dir,'home')
-    file = LibBase.join_path(file,username)
-    file = LibBase.join_path(file,'projects')
-    file = LibBase.join_path(file, project_owner)
-    file = LibBase.join_path(file, project_name)
-    file = LibBase.join_path(file, 'index.ipynb')
+    file = os.path.join(srv_dir,'home', username,'projects', project_owner, project_name, 'index.ipynb')
     print(file)
     g=Gitlab(request)
     g.create_project_variable(project_id, 'worksheet', 'True')
@@ -318,26 +313,31 @@ def notebooks_pull_confirm(request):
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
 def Refresh_database(request):
+    # Get Docker image names
+    d = Docker()
+    notebook_images = d.get_all_notebook_images()
+    for image in notebook_images:
+        i = DockerImage()
+        i = i.from_docker_dict(image)
+        i.save()
+        dashboards_prefix = get_settings('dashboards', 'prefix', None, '')
+        notebook_prefix = get_settings('prefix', 'name', None, '')
+        dashboard_container_name = dashboards_prefix + "_dashboards-" + i.name.split(notebook_prefix + "-notebook-")[1]
+        docker_container = d.get_container(dashboard_container_name, original=True)
+        #container, docker_container = d.get_container(dashboard_container_name)
+        if docker_container:
+            D = Dashboard_server.from_docker_dict(d, docker_container)
+            D.save()
+
     g = Gitlab()
     gitlab_projects = g.get_my_projects()
+    gitlab_projects = []
     for gitlab_project in gitlab_projects:
         p = Project()
         p.init(gitlab_project)
         m = g.get_project_members(p.id)
         p.from_gitlab_dict_projectmembers(m)
         p.save()
-
-    # Get Docker image names
-    d = Docker()
-    notebook_images = d.get_all_notebook_images()
-    for image in notebook_images:
-        i = DockerImage()
-        i=i.from_docker_dict(image)
-        i.save()
-    dashboard_images = d.get_all_dashboard_iamges()
-    for image in dashboard_images:
-        D = Dashboard_server(image)
-        D.save()
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
 def notebooks_revert(request):

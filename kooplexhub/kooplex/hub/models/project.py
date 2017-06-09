@@ -13,14 +13,17 @@ class Project(models.Model, ModelBase):
     name = models.TextField(max_length=200, null=True)
     path = models.TextField(max_length=200, null=True)
     path_with_namespace = models.TextField(max_length=200, null=True)
-    home = models.CharField(max_length=200, null=True)
+    creator_id = models.IntegerField(null=True)
+    description = models.TextField(null=True)
+    visibility = models.TextField(null=True)
+
     owner_name = models.CharField(max_length=200, null=True)
     owner_username = models.CharField(max_length=200, null=True)
     owner_id = models.IntegerField(null=True)
-    creator_id = models.IntegerField(null=True)
+
+    #almost
     creator_name = models.CharField(max_length=200, null=True)
-    description = models.TextField(null=True)
-    visibility = models.TextField(null=True)
+    home = models.CharField(max_length=200, null=True)
 
     # From gitlab api projectmembers
     gids = models.CharField(max_length=300,null=True)
@@ -36,10 +39,11 @@ class Project(models.Model, ModelBase):
         db_table = "kooplex_hub_project"
 
     def init(self, gitlab_dict):
-        p = Project.objects.get(id=gitlab_dict['id'])
-        if 1==2:
-           self = p
-        else:
+        #try:
+        #    p = Project.objects.get(id=gitlab_dict['id'])
+        #if 1==2:
+        #   self = p
+        #else:
 
             self.id=gitlab_dict['id']
             self.name=gitlab_dict['name']
@@ -57,12 +61,9 @@ class Project(models.Model, ModelBase):
             self.description=gitlab_dict['description']
             self.visibility=gitlab_dict['visibility']
 
-            srv_dir = get_settings('users', 'srv_dir')
-            home_dir = get_settings('users', 'home_dir')
-            home_dir = home_dir.replace('${username}', self.creator_name)
             project_dir = get_settings('users', 'project_dir')
-            project_dir = project_dir.replace('${path_with_namespace}', p.path_with_namespace)
-            self.home = os.path.join(srv_dir, home_dir, project_dir)
+            project_dir = project_dir.replace('${username}', self.owner_username)
+            self.home = project_dir.replace('${path_with_namespace}', self.path_with_namespace)
 
     def from_gitlab_dict_projectmembers(self, list_of_members):
         self.gids = ""
