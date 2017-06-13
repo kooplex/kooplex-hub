@@ -2,7 +2,6 @@
 from django.db import models
 
 from .modelbase import ModelBase
-from .session import Session
 
 from kooplex.lib.gitlab import Gitlab
 from kooplex.lib.libbase import get_settings
@@ -24,6 +23,8 @@ class Project(models.Model, ModelBase):
     #almost
     creator_name = models.CharField(max_length=200, null=True)
     home = models.CharField(max_length=200, null=True)
+
+    shared_directory = models.CharField(max_length=200, null=True)
 
     # From gitlab api projectmembers
     gids = models.CharField(max_length=300,null=True)
@@ -62,13 +63,24 @@ class Project(models.Model, ModelBase):
             self.visibility=gitlab_dict['visibility']
 
             project_dir = get_settings('users', 'project_dir')
-            project_dir = project_dir.replace('${username}', self.owner_username)
-            self.home = project_dir.replace('${path_with_namespace}', self.path_with_namespace)
+            #project_dir = project_dir.replace('{$username}', self.owner_username)
+            self.home = project_dir.replace('{$path_with_namespace}', self.path_with_namespace)
 
     def from_gitlab_dict_projectmembers(self, list_of_members):
         self.gids = ""
         for E in list_of_members:
             self.gids +="%d,"%E['id']
+
+    def get_full_home(self):
+        srv_dir = get_settings('users', 'srv_dir')
+        user_home = get_settings('users', 'home_dir')
+        user_home = user_home.replace('{$username}', self.owner_username)
+        return os.path.join(srv_dir, user_home, self.home)
+
+    def get_relative_home(self):
+        user_home = get_settings('users', 'home_dir')
+        user_home = user_home.replace('{$username}', self.owner_username)
+        return os.path.join(user_home, self.home)
 
     def get_member(self):
         return self.load_json(self.environment)

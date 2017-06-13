@@ -10,6 +10,7 @@ from kooplex.hub.models.dashboard_server import Dashboard_server
 from kooplex.hub.models.dockerimage import DockerImage
 from kooplex.hub.models.project import Project
 from kooplex.hub.models.report import Report
+from kooplex.hub.models.mountpoints import MountPoints
 
 
 # Register your models here.
@@ -43,9 +44,13 @@ class ProjectAdmin(admin.ModelAdmin):
 
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
-    list_display = ('project_id', 'creator_name', 'file_name')
+    list_display = ('id', 'creator_name', 'file_name', 'type')
     pass
 
+@admin.register(MountPoints)
+class MountPoints(admin.ModelAdmin):
+    list_display = ('id', 'name', 'project_id', 'type', 'host_mountpoint', 'container_mountpoint')
+    pass
 
 
 def admin_main(request):
