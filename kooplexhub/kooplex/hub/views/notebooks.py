@@ -18,7 +18,10 @@ from kooplex.hub.models.project import Project
 from kooplex.hub.models.mountpoints import MountPoints
 from kooplex.hub.models.dockerimage import DockerImage
 from kooplex.hub.models.report import Report
+from kooplex.hub.models.user import HubUser
 from kooplex.hub.models.dashboard_server import Dashboard_server
+from django.contrib.auth.models import User
+
 from kooplex.lib.libbase import LibBase
 from kooplex.lib.gitlab import Gitlab
 from kooplex.lib.gitlabadmin import GitlabAdmin
@@ -41,15 +44,19 @@ def notebooks(request,errors=[], commits=[] ):
 
     assert isinstance(request, HttpRequest)
 
-    username = request.user.username
     # Todo we need to know the user's id. Not from gitlab?
-    #user_id = request.user.id
-    g = Gitlab()
-    gitlab_user = g.get_user(username)[0]
-    user_id = gitlab_user['id']
+    if not HubUser.objects.filter(user=request.user):
+        h = HubUser()
+        g = Gitlab()
+        gitlab_user = g.get_user(request.user.username)[0]
+        h.init(gitlab_user['id'], request.user)
+        h.save()
+
+    user = HubUser.objects.get(user=request.user)
+
 
     print_debug("Rendering notebook page, getting sessions")
-    notebooks = Notebook.objects.filter(username=username)
+    notebooks = Notebook.objects.filter(username=user.user.username)
     sessions = []
     running = []
     for n in notebooks:
@@ -62,7 +69,7 @@ def notebooks(request,errors=[], commits=[] ):
     #my_projects = Project.objects.filter(owner_username=username)
 
     all_projects = Project.objects.all()
-    shared_with_me_projects = [project for project in all_projects for i in project.gids.split(",") if i  and int(i) == user_id ]
+    shared_with_me_projects = [project for project in all_projects for i in project.gids.split(",") if i  and int(i) == user.gitlab_id ]
 
     #projects, unforkable_projectids = g.get_projects()
 
@@ -70,7 +77,7 @@ def notebooks(request,errors=[], commits=[] ):
 
 	#TODO: get uid and gid from projects json
     print_debug("Rendering notebook page, unforkable project  from gitlab")
-    public_projects = Project.objects.filter(visibility="public").exclude(owner_username=username)
+    public_projects = Project.objects.filter(visibility="public").exclude(owner_username=user.user.username)
 
     print_debug("Rendering notebook page, images from docker")
 
@@ -90,7 +97,7 @@ def notebooks(request,errors=[], commits=[] ):
             'commits': commits,
             'public_projects': public_projects,
             'my_projects': public_projects,
-            'username': username,
+            'username': user.user.username,
             'notebook_dir_name': NOTEBOOK_DIR_NAME,
             'notebook_images' : notebook_images,
             'errors' : errors,
@@ -313,6 +320,15 @@ def notebooks_pull_confirm(request):
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
 def Refresh_database(request):
+    #Users
+    g = Gitlab()
+    for user in User.objects.all():
+        h = HubUser()
+        gitlab_user = g.get_user(user.username)[0]
+        user_id = gitlab_user['id']
+        h.init(user_id, user)
+        h.save()
+
     # Get Docker image names
     d = Docker()
     notebook_images = d.get_all_notebook_images()

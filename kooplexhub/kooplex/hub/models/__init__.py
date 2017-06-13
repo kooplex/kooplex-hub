@@ -7,4 +7,5 @@ from .report import Report
 from .dockerimage import DockerImage
 from .dashboard_server import Dashboard_server
 from .mountpoints import MountPoints
+from .user import HubUser
 

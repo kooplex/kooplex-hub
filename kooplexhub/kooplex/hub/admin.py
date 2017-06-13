@@ -11,6 +11,7 @@ from kooplex.hub.models.dockerimage import DockerImage
 from kooplex.hub.models.project import Project
 from kooplex.hub.models.report import Report
 from kooplex.hub.models.mountpoints import MountPoints
+from kooplex.hub.models.user import HubUser
 
 
 # Register your models here.
@@ -52,6 +53,11 @@ class MountPoints(admin.ModelAdmin):
     list_display = ('id', 'name', 'project_id', 'type', 'host_mountpoint', 'container_mountpoint')
     pass
 
+@admin.register(HubUser)
+class HubUserAdmin(admin.ModelAdmin):
+    #list_display = ('gitlab_id','get_username')
+    list_display = ('gitlab_id','gitlab_id')
+    pass
 
 def admin_main(request):
     print("Hello")
