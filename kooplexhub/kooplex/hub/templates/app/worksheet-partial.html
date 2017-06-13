@@ -3,32 +3,28 @@
 <div class=" col-md-6 col-sm-6 col-xs-12">
 <div class="panel panel-default ">
     <div class="panel-heading">
-        <h4><strong>{{ item.name  }}</strong> - {{ item.owner }} - {{ item.file }}</h4>
+        <h4><strong>{{ item.name  }}</strong> - {{ item.creator_name }} - {{ item.file_name }}</h4>
     </div>
     <div class="panel-body">
                 <div class="projects worksheet" style="text-align: center;">
-                {% if item.url %}
-                    <a href="{% url 'worksheet-open-as-dashboard' %}?url={{ item.url }}" target="_blank">
-                {% else %}
-                    <a href="{% url 'worksheet-open' %}?project_owner={{ item.owner }}&project_name={{ item.name  }}&project_id={{ item.project_id }}&file={{ item.file }}" target="_blank">
-                {% endif %}
+                <a href="{{ item.url }}" target="_blank">
                     <img src="{{ item.picture }}"  style="max-height: 200px; max-width: 100%;"></a>
 
                     <p> {{ item.description }} </p>
                     <div>
                         {% if item.report_type == "dashboard" %}
                             {% if item.url %}
-                                <a href="{% url 'worksheet-open-as-dashboard' %}?url={{ item.url }}&cache_url={{ item.cache_url }}" target="_blank">
+                                <a href="{{ item.url }}" target="_blank">
                                     <button type="button" class="btn btn-info"><span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span> Open</button></a>
                             {% else %}
                                 <button type="button" class="btn btn-info"><span class="glyphicon glyphicon-remove-circle" aria-hidden="true"></span> No Dashboard Server for this</button>
                             {% endif %}
                         {% else %}
-                            <a href="{% url 'worksheet-open' %}?project_owner={{ item.owner }}&project_name={{ item.name  }}&project_id={{ item.project_id }}&file={{ item.file }}" target="_blank">
+                            <a href="{{ item.url }}" target="_blank">
                             <button type="button" class="btn btn-info"><span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span> Open</button></a>
                         {% endif %}
                         {%  if not publicvar %}
-                                <a href="{% url 'worksheet-unpublish' %}?project_owner={{ item.owner }}&project_name={{ item.name  }}&project_id={{ item.project_id }}&file={{ item.file }}&creator_name={{ item.creator_name }}&image_type={{ item.image_type }}&report_type={{ item.report_type }}"
+                                <a href="{% url 'worksheet-unpublish' %}?report_id={{ item.id }}">
 
                             <button type="button" class="btn btn-danger"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Unpublish</button></a>
                         {% endif  %}

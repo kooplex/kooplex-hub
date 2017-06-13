@@ -1,4 +1,4 @@
-﻿import sys
+﻿import sys, os
 import getopt
 import json
 import string
@@ -16,7 +16,7 @@ from kooplex.lib.restclient import RestClient
 from kooplex.lib.smartdocker import Docker
 from kooplex.lib.proxy import Proxy
 from kooplex.lib.jupyter import Jupyter
-from kooplex.hub.models import Container, Notebook, Session, Project
+from kooplex.hub.models import Container, Notebook, Session, Project, MountPoints
 
 from kooplex.lib import ldap
 
@@ -24,11 +24,11 @@ from kooplex.lib.debug import *
 
 class Spawner(RestClient):
        
-    def __init__(self, username, project_id=None, container_name=None, image=None):
+    def __init__(self, username, project, container_name=None, image=None):
         print_debug("")
         self.username = username
-        self.project_id = project_id
-        project = Project.objects.filter(id__exact=project_id)[0]
+        #self.project_id = project_id
+        self.project = project
         self.project_owner = project.owner_username
         self.project_name = project.name
         prefix = get_settings('prefix', 'name')
@@ -77,8 +77,8 @@ class Spawner(RestClient):
         print_debug("")
         name = self.container_name
         name = name.replace('{$username}', self.username)
-        name = name.replace('{$project_owner}', self.project_owner)
-        name = name.replace('{$project_name}', self.project_name)
+        name = name.replace('{$project_owner}', self.project.owner_username)
+        name = name.replace('{$project_name}', self.project.name)
         # To handle spaces in names
         name = name.replace(" ", "-")
         name = name.replace("_", "-")
@@ -89,34 +89,27 @@ class Spawner(RestClient):
         url = self.pxcli.get_external_url(path)
         return url
 
-    def append_binds_for_right_timezone(self, binds):
-        print_debug("")
+    def define_binds(self):
+        binds = {}
+        svc = 'notebook'
+        notebook_path = os.path.join(self.srv_path, svc)
+        binds[os.path.join(notebook_path, 'init')] = {'bind': '/init', 'mode': 'rw'}
+        binds[os.path.join(notebook_path, 'etc/ldap/ldap.conf')] = {'bind': '/etc/ldap/ldap.conf', 'mode': 'rw'}
+        binds[os.path.join(notebook_path, 'etc/nslcd.conf')] = {'bind': '/etc/nslcd.conf', 'mode': 'rw'}
+        binds[os.path.join(notebook_path, 'etc/nsswitch.conf')] = {'bind': '/etc/nsswitch.conf', 'mode': 'rw'}
+        # TODO: remove hardcoding!
+        binds[os.path.join(notebook_path, 'etc/jupyter_notebook_config.py')] = {
+            'bind': '/etc/jupyter_notebook_config.py', 'mode': 'rw'}
         binds['/etc/localtime'] = {'bind': '/etc/localtime', 'mode': 'ro'}
+        home_dir = os.path.join('home', self.username)
+        binds[os.path.join(self.srv_path, home_dir)] = {'bind': "/" + home_dir, 'mode': 'rw'}
 
-    def append_ldap_binds(self, binds, svc):
-        print_debug("")
-        basepath = LibBase.join_path(self.srv_path, svc)
-        binds[LibBase.join_path(basepath, 'etc/ldap/ldap.conf')] = {'bind': '/etc/ldap/ldap.conf', 'mode': 'rw'}
-        binds[LibBase.join_path(basepath, 'etc/nslcd.conf')] = {'bind': '/etc/nslcd.conf', 'mode': 'rw'}
-        binds[LibBase.join_path(basepath, 'etc/nsswitch.conf')] = {'bind': '/etc/nsswitch.conf', 'mode': 'rw'}
+        for mountpoint in MountPoints.objects.filter(project_id=self.project.id):
+            binds[os.path.join(self.srv_path, mountpoint.host_mountpoint)] = {'bind': mountpoint.container_mountpoint, 'mode': 'rw'}
 
-    def append_home_binds(self, binds, svc):
-        print_debug("")
-        #container_home=LibBase.join_path('/home', self.username + '/' + self.project_name)
-        host_home = '/home/' + self.username
-        container_home = '/home/' + self.username
-        binds[LibBase.join_path(self.srv_path, host_home)] = {'bind': container_home, 'mode': 'rw'}
+        return binds
 
-    def append_ownclouddata_binds(self, binds, svc):
-        print_debug("")
-        #container_data_home = LibBase.join_path('/home', self.username + '/projects/' + 'data')
-        #host_data_path = 'ownCloud/' + self.username + '/files'
-        #binds[LibBase.join_path(self.srv_path, host_data_path)] = {'bind': container_data_home, 'mode': 'rw'}
 
-    def append_init_binds(self, binds, svc):
-        print_debug("")
-        basepath = LibBase.join_path(self.srv_path, svc)
-        binds[LibBase.join_path(basepath, '/init')] = {'bind': '/init', 'mode': 'rw'}
 
     def get_notebook_path(self, id):
         print_debug("")
@@ -132,14 +125,8 @@ class Spawner(RestClient):
         notebook_path = self.get_notebook_path(id)
         external_url = self.get_external_url(notebook_path)
         ip = self.pick_random_ip()
-        binds = {}
-        self.append_ldap_binds(binds, 'notebook')
-        self.append_home_binds(binds, 'notebook')
-        self.append_ownclouddata_binds(binds, 'notebook')
-        self.append_init_binds(binds, 'notebook')
-        self.append_binds_for_right_timezone(binds)
-        # TODO: remove hardcoding!
-        binds[LibBase.join_path(self.srv_path, 'notebook/etc/jupyter_notebook_config.py')] = {'bind': '/etc/jupyter_notebook_config.py', 'mode': 'rw' }
+        binds = self.define_binds()
+
         notebook = Notebook(
             id=id,
             docker_host=self.docli.host,
@@ -156,8 +143,9 @@ class Spawner(RestClient):
             port=self.port,
             proxy_path=notebook_path,
             external_url=external_url,
-            project_owner=self.project_owner,
-            project_name = self.project_name,
+            project_owner=self.project.owner_username,
+            project_name = self.project.name,
+            project_id = self.project.id,
             is_stopped=False,
         )
         ldp = ldap.Ldap()
@@ -183,8 +171,8 @@ class Spawner(RestClient):
         notebooks = Notebook.objects.filter(
             username=self.username,
             image=self.image,
-            project_owner=self.project_owner,
-            project_name=self.project_name,)
+            project_owner=self.project.owner_username,
+            project_name=self.project.name,)
             #image = self.image)
         if notebooks.count() > 0:
             # TODO: verify if container is there and proxy works

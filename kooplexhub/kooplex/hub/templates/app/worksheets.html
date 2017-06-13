@@ -38,7 +38,7 @@
      <div id="myreports" class="tab-pane fade in active">
      <div class="row">
          {% for item in reports %}
-             {% if username == item.owner %}
+             {% if username == item.creator_name %}
                 {% include 'app/worksheet-partial.html' with publicvar=False %}
              {% endif %}
          {% endfor %}
@@ -47,7 +47,7 @@
      <div id="mydashboards" class="tab-pane fade">
      <div class="row">
          {% for item in dashboards %}
-            {% if username == item.owner %}
+            {% if username == item.creator_name %}
                 {% include 'app/worksheet-partial.html' with publicvar=False %}
             {% endif %}
          {% endfor %}
@@ -62,7 +62,7 @@
      <div class="row">
          {% for item in reports %}
              {% if item.public %}
-                {% if username != item.owner %}
+                {% if username != item.creator_name %}
                     {% include 'app/worksheet-partial.html' with publicvar=True %}
                  {% endif %}
              {% endif %}
@@ -73,7 +73,7 @@
      <div class="row">
          {% for item in dashboards %}
              {% if item.public %}
-                {% if username != item.owner %}
+                {% if username != item.creator_name %}
                     {% include 'app/worksheet-partial.html' with publicvar=True %}
                 {% endif %}
              {% endif %}

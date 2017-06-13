@@ -15,6 +15,7 @@ from kooplex.lib.libbase import get_settings
 from kooplex.hub.models.notebook import Notebook
 from kooplex.hub.models.session import Session
 from kooplex.hub.models.project import Project
+from kooplex.hub.models.mountpoints import MountPoints
 from kooplex.hub.models.dockerimage import DockerImage
 from kooplex.hub.models.report import Report
 from kooplex.hub.models.dashboard_server import Dashboard_server
@@ -58,7 +59,7 @@ def notebooks(request,errors=[], commits=[] ):
             running.append(s.project_id)
 
     print_debug("Rendering notebook page, projects from gitlab")
-    my_projects = Project.objects.filter(owner_username=username)
+    #my_projects = Project.objects.filter(owner_username=username)
 
     all_projects = Project.objects.all()
     shared_with_me_projects = [project for project in all_projects for i in project.gids.split(",") if i  and int(i) == user_id ]
@@ -121,12 +122,22 @@ def project_new(request):
     # TODO for failure
     #if res
     p = Project()
-    p = p.from_gitlab_dict_projects(res[0])
+    p.init(res[0])
     m = g.get_project_members(p.id)
-    p = p.from_gitlab_dict_projectmembers(m)
+    p.from_gitlab_dict_projectmembers(m)
 
-    #add image_name to project
+    #Add image_name to project
     p.image = project_image_name
+
+    #Shared storage
+    if len(MountPoints.objects.filter(name=p.name)) == 0:
+        m = MountPoints()
+        srv_dir = get_settings('users', 'srv_dir', None, '')
+        host_mountpoint = os.path.join(srv_dir, 'share', p.owner_username, p.path_with_namespace)
+        container_mountpoint = os.path.join(p.get_relative_home(), '/share', p.name)
+        m.init(name=p.name, type="local", host_mountpoint=host_mountpoint, container_mountpoint=container_mountpoint, project=p)
+        m.save()
+
     p.save()
 
     #Create a README
@@ -182,7 +193,7 @@ def container_start(request):
     print_debug("Opening session, gitlab")
     username = request.user.username
     print_debug("Opening session, spawning")
-    spawner = Spawner(username,project.id, image=project.image)
+    spawner = Spawner(username, project, image=project.image)
     notebook = spawner.ensure_notebook_running()
     #jupyter = Jupyter(notebook)
 
@@ -237,29 +248,11 @@ def notebooks_clone(request):
     print_debug("Cloning project, Finished")
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
-
-def notebooks_deploy(request):
-    assert isinstance(request, HttpRequest)
-    print_debug("Deploying notebook,")
-    project_name = request.GET['project_name']
-    project_owner = request.GET['project_owner']
-    project_id = request.GET['project_id']
-    username = request.user.username
-    srv_dir = get_settings('users', 'srv_dir', None, '')
-    file = os.path.join(srv_dir,'home', username,'projects', project_owner, project_name, 'index.ipynb')
-    print(file)
-    g=Gitlab(request)
-    g.create_project_variable(project_id, 'worksheet', 'True')
-    d = Dashboards()
-    res2 = d.deploy(username, project_owner, project_name, file)
-    return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
-
 def notebooks_publishform(request):
     assert isinstance(request, HttpRequest)
     project_id = request.GET['project_id']
     project = Project.objects.get(id=project_id)
-
-    files = os.listdir(project.home)
+    files = os.listdir(project.get_full_home())
     ipynbs = [];
     other_files = []
     for file in files:
@@ -287,16 +280,23 @@ def notebooks_publish(request):
 
     username = request.user.username
     project_id = request.POST['project_id']
-    type = request.POST.keys()
+    if 'html' in request.POST.keys():
+        type = 'html'
+    if 'dashboard' in request.POST.keys():
+        type = 'dashboard'
     # TODO here and elsewhere: does the filter give more than 1?
     project = Project.objects.get(id=project_id)
-    notebook = Notebook.objects.filter(username=username, project_name=project.name)[0]
 
     ipynb_file = request.POST['ipynb_file']
     other_files = request.POST.getlist('other_files')
-    D = Dashboard_server.objects.get(from_image=project.image)
-    R = Report(D, file_name=ipynb_file, type=type)
+    prefix = get_settings('prefix', 'name', None, '')
+    image_type = project.image.split(prefix + "-notebook-")[1]
+    D = Dashboard_server.objects.get(type=image_type)
+    R = Report()
+    R.init(D, project, file=ipynb_file, type=type)
     R.deploy(other_files)
+    if len(Report.objects.filter(file_name=R.file_name))==0:
+        R.save()
 
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
@@ -326,7 +326,8 @@ def Refresh_database(request):
         docker_container = d.get_container(dashboard_container_name, original=True)
         #container, docker_container = d.get_container(dashboard_container_name)
         if docker_container:
-            D = Dashboard_server.from_docker_dict(d, docker_container)
+            D = Dashboard_server()
+            D.init(d, docker_container)
             D.save()
 
     g = Gitlab()
@@ -567,7 +568,6 @@ urlpatterns = [
     url(r'^delete_container$', container_delete, name= 'container-delete'),
     url(r'^open_container$', container_start, name = 'container-start'),
     url(r'^clone$', notebooks_clone, name = 'notebooks-clone'),
-    url(r'^deploy$', notebooks_deploy, name = 'notebooks-deploy'),
     url(r'^preparetoconverthtml$', notebooks_publishform, name = 'notebooks-publishform'),
     url(r'^converthtml$', notebooks_publish, name = 'notebooks-convert-html'),
     url(r'^change-image$', notebooks_change_image, name = 'notebooks-change-image'),

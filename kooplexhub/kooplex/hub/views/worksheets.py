@@ -7,7 +7,8 @@ from django.template import RequestContext
 from datetime import datetime
 from django.http import HttpRequest, HttpResponseRedirect
 
-
+from kooplex.hub.models.report import Report
+from kooplex.hub.models.dashboard_server import Dashboard_server
 from kooplex.lib.libbase import get_settings
 from kooplex.lib.gitlab import Gitlab
 from kooplex.lib.spawner import Spawner
@@ -20,10 +21,13 @@ def worksheets(request):
     assert isinstance(request, HttpRequest)
 
     username = request.user.username
-    dashboard_url="http://polc.elte.hu:3000"
-    D = Dashboards()
-    list_of_reports = D.list_reports_html(request)
-    list_of_dashboards = D.list_dashboards(request)
+    list_of_html_reports = Report.objects.filter(type='html')
+    list_of_dashboards = Report.objects.filter(type='dashboard')
+    for dashboard in list_of_dashboards:
+        #if type(dashboard.dashboard_server) == type(Dashboard_server):
+            dashboard.url = dashboard.get_url()
+            dashboard.cache_url = dashboard.get_cache_url()
+
     return render(
         request,
         'app/worksheets.html',
@@ -31,8 +35,7 @@ def worksheets(request):
         {
             'title':'Browse worksheets',
             'message':'',
-            'dashboard_url': dashboard_url,
-            'reports': list_of_reports,
+            'reports': list_of_html_reports,
             'dashboards': list_of_dashboards,
             'username' : username,
        })
@@ -54,20 +57,9 @@ def worksheets_open_html(request):
     return HttpResponse(content)
 
 def reports_unpublish(request):
-    project_id = request.GET['project_id']
-    report_type = request.GET['report_type']
-    file = request.GET['file']
-    d = Dashboards()
-    if report_type=="html":
-        d.unpublish_html(project_id,file)
-
-    if report_type == "dashboard":
-        project_name = request.GET['project_name']
-        image_type = request.GET['image_type']
-        creator_name = request.GET['creator_name']
-        username = request.user.username
-        d.unpublish_dashboard(project_id, image_type, username, creator_name, project_name, file)
-
+    report_id = int(request.GET['report_id'])
+    r = Report.objects.get(id=report_id)
+    r.delete()
     return HttpResponseRedirect(HUB_REPORTS_URL)
 
 urlpatterns = [
