@@ -10,6 +10,7 @@ class Project(models.Model, ModelBase):
     # From gitlab api projects
     id = models.IntegerField(primary_key=True)
     name = models.TextField(max_length=200, null=True)
+    safename = models.TextField(max_length=200, null=True)
     path = models.TextField(max_length=200, null=True)
     path_with_namespace = models.TextField(max_length=200, null=True)
     creator_id = models.IntegerField(null=True)
@@ -46,25 +47,29 @@ class Project(models.Model, ModelBase):
         #   self = p
         #else:
 
-            self.id=gitlab_dict['id']
-            self.name=gitlab_dict['name']
-            self.path=gitlab_dict['path']
-            self.path_with_namespace=gitlab_dict['path_with_namespace']
-            self.owner_name=gitlab_dict['owner']['username']
-            self.owner_username=gitlab_dict['owner']['username']
-            self.owner_id=gitlab_dict['owner']['id']
-            self.creator_id=gitlab_dict['creator_id']
+        self.id=gitlab_dict['id']
+        self.name=gitlab_dict['name']
+        self.safename = self.get_safename()
+        self.path=gitlab_dict['path']
+        self.path_with_namespace=gitlab_dict['path_with_namespace']
+        self.owner_name=gitlab_dict['owner']['username']
+        self.owner_username=gitlab_dict['owner']['username']
+        self.owner_id=gitlab_dict['owner']['id']
+        self.creator_id=gitlab_dict['creator_id']
 
-            g = Gitlab()
-            creator = g.get_user_by_id(self.creator_id)
-            self.creator_name = creator['username']
+        g = Gitlab()
+        creator = g.get_user_by_id(self.creator_id)
+        self.creator_name = creator['username']
 
-            self.description=gitlab_dict['description']
-            self.visibility=gitlab_dict['visibility']
+        self.description=gitlab_dict['description']
+        self.visibility=gitlab_dict['visibility']
 
-            project_dir = get_settings('users', 'project_dir')
-            #project_dir = project_dir.replace('{$username}', self.owner_username)
-            self.home = project_dir.replace('{$path_with_namespace}', self.path_with_namespace)
+        project_dir = get_settings('users', 'project_dir')
+        #project_dir = project_dir.replace('{$username}', self.owner_username)
+        self.home = project_dir.replace('{$path_with_namespace}', self.path_with_namespace)
+
+    def get_safename(self):
+        return self.name.replace(" ",'-')
 
     def from_gitlab_dict_projectmembers(self, list_of_members):
         self.gids = ""

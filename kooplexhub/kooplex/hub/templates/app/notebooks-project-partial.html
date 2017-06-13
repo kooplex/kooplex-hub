@@ -61,7 +61,7 @@
                         {% if item.id in running  %}
                             Using image:
                         {% else %}
-                                <button type="button" class="btn btn-info" data-toggle="modal"  data-target="#change-image-{{ item.name  }}">
+                                <button type="button" class="btn btn-info" data-toggle="modal"  data-target="#change-image-{{ item.safename  }}">
                                     <span class="glyphicon glyphicon-hdd" aria-hidden="true"></span> Change image</button>
                                 {% include 'app/notebooks-change-image.html' %}
                         {% endif %}

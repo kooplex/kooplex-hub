@@ -2,3 +2,5 @@
 
 def extra_context(request):
     return {'base_url': settings.KOOPLEX_BASE_URL}
+
+

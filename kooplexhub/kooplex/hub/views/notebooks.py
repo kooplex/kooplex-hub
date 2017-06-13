@@ -140,7 +140,7 @@ def project_new(request):
     if len(MountPoints.objects.filter(name=p.name)) == 0:
         m = MountPoints()
         srv_dir = get_settings('users', 'srv_dir', None, '')
-        host_mountpoint = os.path.join(srv_dir, 'share', p.owner_username, p.path_with_namespace)
+        host_mountpoint = os.path.join('share', p.owner_username, p.path_with_namespace)
         container_mountpoint = os.path.join(p.get_relative_home(), '/share', p.name)
         m.init(name=p.name, type="local", host_mountpoint=host_mountpoint, container_mountpoint=container_mountpoint, project=p)
         m.save()
@@ -234,7 +234,7 @@ def container_delete(request):
     #notebook_id = session.notebook.id
     notebook = Notebook.objects.filter(username=username, project_name=project.name)[0]
 
-    spawner = Spawner(username, project_id)
+    spawner = Spawner(username, project)
     spawner.delete_notebook(notebook)
     # Change/Save project status
     #project.session = None
@@ -320,14 +320,6 @@ def notebooks_pull_confirm(request):
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
 def Refresh_database(request):
-    #Users
-    g = Gitlab()
-    for user in User.objects.all():
-        h = HubUser()
-        gitlab_user = g.get_user(user.username)[0]
-        user_id = gitlab_user['id']
-        h.init(user_id, user)
-        h.save()
 
     # Get Docker image names
     d = Docker()
@@ -348,7 +340,7 @@ def Refresh_database(request):
 
     g = Gitlab()
     gitlab_projects = g.get_my_projects()
-    gitlab_projects = []
+    #gitlab_projects = []
     for gitlab_project in gitlab_projects:
         p = Project()
         p.init(gitlab_project)
