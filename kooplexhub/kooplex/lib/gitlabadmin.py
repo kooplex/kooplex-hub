@@ -48,7 +48,13 @@ class GitlabAdmin(Gitlab):
         print_debug("",DEBUG_LOCAL)
         # TODO: create external user in gitlab via REST API and set
         # identity to point to LDAP
-        return None
+        url = self.api_version+"/projects"
+        url += "?name=%s&visibility=%s&description=%s" % (project_name, public, description)
+        res = self.http_post(url)
+        message = ""
+        if res.status_code != 201:
+            message = res.json()
+        return message
 
     def get_all_users(self):
         print_debug("",DEBUG_LOCAL)

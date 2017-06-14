@@ -141,7 +141,7 @@ def project_new(request):
         m = MountPoints()
         srv_dir = get_settings('users', 'srv_dir', None, '')
         host_mountpoint = os.path.join('share', p.owner_username, p.path_with_namespace)
-        container_mountpoint = os.path.join(p.get_relative_home(), '/share', p.name)
+        container_mountpoint = os.path.join(p.get_relative_home(), '{$username}', 'projects', '{$path_with_namespace}', '/share', p.name)
         m.init(name=p.name, type="local", host_mountpoint=host_mountpoint, container_mountpoint=container_mountpoint, project=p)
         m.save()
 
@@ -466,7 +466,7 @@ def notebooks_commit(request):
         deleted_file_list = deleted_files.split(',')
     next_page = HUB_NOTEBOOKS_URL
     repo = Repo(request.user.username, project.path_with_namespace)
-    repo.commit_and_push(message, request.user.email, project.owner_username, project.name, creator_name,
+    repo.commit_and_push(message, request.user.email, project.owner_username, project.name, project.creator_name,
                          modified_file_list, deleted_file_list)
 #    repo.commit_and_push_default(message, request.user.email, project_owner, project_name)
     # TODO megcsinalni ezt is

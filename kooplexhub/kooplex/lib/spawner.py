@@ -104,12 +104,14 @@ class Spawner(RestClient):
         home_dir = os.path.join('home', self.username)
         binds[os.path.join(self.srv_path, home_dir)] = {'bind': "/" + home_dir, 'mode': 'rw'}
 
+        # TODO if type is not local!!!
         for mountpoint in MountPoints.objects.filter(project_id=self.project.id):
-            binds[os.path.join(self.srv_path, mountpoint.host_mountpoint)] = {'bind': mountpoint.container_mountpoint, 'mode': 'rw'}
+            host_point = mountpoint.host_mountpoint.replace('{$username}', self.username)
+            container_point = mountpoint.container_mountpoint.replace('{$username}', self.username)
+            container_point = container_point.replace('{$path_with_namespace}', self.project.path_with_namespace)
+            binds[os.path.join(self.srv_path, host_point)] = {'bind': container_point, 'mode': 'rw'}
 
         return binds
-
-
 
     def get_notebook_path(self, id):
         print_debug("")

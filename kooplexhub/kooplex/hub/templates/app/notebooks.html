@@ -27,7 +27,6 @@
 </nav>
 </div>
 <div class=" col-md-6 col-sm-6 col-xs-6">
-    <a href="{% url 'refresh-db' %}"><button type="button" class="btn btn-lg  btn-primary navbar-btn">Refresh </button></a>
       {% if username %}
           {% include 'app/notebooks-new-partial.html' with myprojects=True %}
         <a href="#" data-toggle="modal" data-target="#project-new"><button type="button" class="btn btn-lg  btn-primary navbar-btn">Start new project </button></a>
