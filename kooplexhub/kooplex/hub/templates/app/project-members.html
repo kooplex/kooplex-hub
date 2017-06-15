@@ -1,0 +1,79 @@
+{% extends "app/layout.html" %}
+
+{% block content %}
+
+ <div class="row">
+
+        <section id="commitForm">
+            <form action="{% url 'project-members' %}" method="post" class="form-horizontal" onsubmit="collectCheckedElements()">
+                {% csrf_token %}
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4>Add/Modify/Remove mebers of {{ project.name }}</h4>
+                    </div>
+                    <div class="panel-body">
+
+
+                        <div class="row">
+                            <div class="col-md-12">
+
+                                <h4> Members</h4>
+                                <div class="form-group">
+                                    {% for member in currentmembers %}
+                                        <input type="checkbox" value="current" name="{{ member.gitlab_id }}">
+                                        {{ member.gitlab_id }}
+                                        <br>
+                                    {% endfor %}
+
+                                </div>
+                            </div>
+                            </div>
+
+                        <div>
+
+                            <div class="form-group" style="text-align: left;">
+
+                                    <input type="hidden" name="current" value="" />
+                                    <input type="hidden" name="new" value="" />
+
+                                    <input type="submit" name="commitall" value="Add " class="btn btn-primary" />
+                                    <input type="submit" name="cancel" value="Cancel" class="btn btn-secondary" />
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </form>
+        </section>
+    </div>
+
+
+    <!--<script>
+        function collectCheckedElements() {
+            var inputs = document.getElementsByTagName("input");
+            var modified_files = "";
+            var deleted_files = "";
+            for (var i = 1; i < inputs.length; i++) {
+                if (inputs[i].type == "checkbox") {
+                    if (inputs[i].checked) {
+                        if (inputs[i].value == "deleted") {
+                            deleted_files += "'" + inputs[i].name + "',";
+                        } else {
+                            modified_files += "'" + inputs[i].name + "',";
+                        }
+                        inputs[i].disabled = true;
+                    }
+                }
+            }
+            if (modified_files.length > 0) {
+                modified_files = modified_files.substring(0, modified_files.length - 1);
+            }
+            if (deleted_files.length > 0) {
+                deleted_files = deleted_files.substring(0, deleted_files.length - 1);
+            }
+            document.getElementsByName("modified_files")[0].value = modified_files;
+            document.getElementsByName("deleted_files")[0].value = deleted_files;
+        }
+    </script> -->
+
+{% endblock %}

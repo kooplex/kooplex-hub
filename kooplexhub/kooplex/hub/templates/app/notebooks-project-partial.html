@@ -120,8 +120,7 @@
                 <div class=" col-md-2 col-sm-2 col-xs-3">
                     {% if not publicvar %}
                         {% comment  %}{% include 'app/notebooks-delete-project.html' %} {% endcomment %}
-                        <button type="button" class="btn btn-default" data-toggle="modal"  data-target="#addmembers-{{ item.id }}">
-                            <span class="glyphicon glyphicon-man" aria-hidden="true"></span> Members</button>
+                        <p><a href="{% url 'project-members' %}?project_id={{ item.id }}" class="btn btn-primary" role="button"><span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span> Members</a></p>
                         {% if item.id not in running  %}
                         {% include 'app/notebooks-delete-project.html' %}
                         <button type="button" class="btn btn-danger" data-toggle="modal"  data-target="#delete-project-{{ item.id }}">

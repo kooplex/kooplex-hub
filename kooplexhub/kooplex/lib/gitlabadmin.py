@@ -1,7 +1,7 @@
 import json
 import requests
 from django.conf import settings
-
+import datetime
 from kooplex.lib.libbase import LibBase
 from kooplex.lib.restclient import RestClient
 from kooplex.lib.gitlab import Gitlab
@@ -48,8 +48,12 @@ class GitlabAdmin(Gitlab):
         print_debug("",DEBUG_LOCAL)
         # TODO: create external user in gitlab via REST API and set
         # identity to point to LDAP
-        url = self.api_version+"/projects"
-        url += "?name=%s&visibility=%s&description=%s" % (project_name, public, description)
+        url = self.api_version+"/users"
+        url += '?name="%s %s"' % (user['firstname'], user['lastname'])
+        url += "&username=%s" % (user['username'])
+        url += "&email=%s" % (user['email'])
+        url += "&password=almaalma"
+        #url += "&confirmed_at=%s" % (strdatetime.time(1))
         res = self.http_post(url)
         message = ""
         if res.status_code != 201:

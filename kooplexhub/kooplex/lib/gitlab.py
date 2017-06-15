@@ -161,6 +161,16 @@ class Gitlab(RestClient):
         res = self.http_get(self.api_version+'/projects/%s/members'%str(id))
         return res.json()
 
+    def add_project_members(self,project_id, user_id):
+        print_debug("",DEBUG_LOCAL)
+        res = self.http_post(self.api_version+'/projects/%d/members?user_id=%d&access_level=40'%(project_id, user_id))
+        return res.json()
+
+    def delete_project_members(self,project_id, user_id):
+        print_debug("",DEBUG_LOCAL)
+        res = self.http_delete(self.api_version+'/projects/%d/members/%d'%(project_id, user_id))
+        return res.json()
+
     def get_file(self,project_id,file):
         print_debug("",DEBUG_LOCAL)
         res = self.http_get('api/v4/projects/%s/repository/files?file_path=%s&ref=master'%(project_id,file))

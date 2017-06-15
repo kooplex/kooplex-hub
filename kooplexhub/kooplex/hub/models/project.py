@@ -87,11 +87,10 @@ class Project(models.Model, ModelBase):
         user_home = user_home.replace('{$username}', self.owner_username)
         return os.path.join(user_home, self.home)
 
-    def get_member(self):
-        return self.load_json(self.environment)
+    def get_members(self):
+        return self.gids.split(",")[:-1]
 
-    def set_member(self, value):
-        self.environment = self.save_json(value)
+
 
     def get_binds(self):
         return self.load_json(self.binds)

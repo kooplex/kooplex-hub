@@ -570,6 +570,108 @@ def project_fork(request):
             })
         )
 
+def usermanagementForm(request):
+    return render(
+        request,
+        'app/usermanagement.html',
+        context_instance=RequestContext(request,
+        {})
+    )
+
+
+from kooplex.lib.ldap import Ldap
+
+class myuser:
+    def __init__(self):
+        self._data = dict( [ (k, None) for k in ['firstname', 'lastname', 'username', 'email', 'password', 'isadmin'] ])
+
+    def __str__(self):
+        return str(self._data)
+
+    def __getitem__(self, k):
+        if not k in self._data:
+            raise Exception("Unknown attribute %s" % k)
+        if self._data[k] is None:
+            raise Exception("Unset attribute %s" % k)
+        return self._data[k]
+    
+
+    def setattribute(self, **kw):
+        for k, v in kw.items():
+            if not k in self._data.keys():
+               raise Exception("Unknown attribute: %s" % k)
+            self._data[k] = v
+
+    def create(self):
+        dj_user = User(
+            username = self['username'],
+            first_name = self['firstname'],
+            last_name = self['lastname'],
+            email = self['email']
+        )
+        dj_user.home = "/home/" + self['username'] #FIXME: this is ugly
+        l = Ldap()
+        l.add_user(dj_user)
+
+
+USERMANAGEMENT_URL = '/hub/notebooksusermanagement'
+def usermanagement(request):
+#FIXME: do the thing
+    #pw generalni
+
+#FIXME: wrong value
+    isadmin = request.POST['isadmin'] if 'isadmin' in request.POST.keys() else False
+    U = myuser()
+    U.setattribute(username = request.POST['username'], 
+         firstname = request.POST['firstname'], 
+         lastname = request.POST['lastname'], 
+         email = request.POST['email'], 
+         isadmin = isadmin, 
+         password = "almafa123")
+    try:
+        gad = GitlabAdmin()
+        gad.create_user(U)
+        U.create()
+        return HttpResponseRedirect(USERMANAGEMENT_URL)
+    except Exception as e: 
+        return render(
+            request,
+            'app/error.html',
+            context_instance=RequestContext(request,
+            {
+                    'error_title': 'Error',
+                    'error_message': str(e),
+            })
+        )
+
+def project_membersForm(request):
+    p = Project.objects.get(id=request.GET['project_id'])
+    current_members_ids = p.get_members()
+    current_members=[]
+    for id in current_members_ids:
+        current_members.append(HubUser.objects.get(gitlab_id=id))
+    return render(
+        request,
+        'app/project-members.html',
+        context_instance=RequestContext(request,
+                                        {
+                                            'currentmembers': current_members,
+                                            'project': p,
+                                        })
+    )
+
+def addmember(request):
+    g = Gitlab()
+    g.add_project_members(request.POST['project_id'], request.POST['user_id'])
+    return HttpResponseRedirect(USERMANAGEMENT_URL)
+
+def deletemember(request):
+    g = Gitlab()
+    g.delete_project_members(request.POST['project_id'], request.POST['user_id'])
+    return HttpResponseRedirect(USERMANAGEMENT_URL)
+
+
+
 urlpatterns = [
     url(r'^$', notebooks, name='notebooks'),
     url(r'^new$', project_new, name='project-new'),
@@ -587,7 +689,11 @@ urlpatterns = [
     url(r'^mergerequestform$', notebooks_mergerequestform, name='notebooks-mergerequestform'),
     url(r'^mergerequestlist', notebooks_mergerequestlist, name='notebooks-mergerequestlist'),
     url(r'^acceptmergerequest', notebooks_acceptmergerequest, name='notebooks-acceptmergerequest'),
-    url(r'^fork$', project_fork, name = 'project-fork'),
-    url(r'^refresh$', Refresh_database, name = 'refresh-db'),
+    url(r'^fork$', project_fork, name='project-fork'),
+    url(r'^refresh$', Refresh_database, name='refresh-db'),
 
+    url(r'^usermanagement$', usermanagementForm, name='usermanagement-form'),
+    url(r'^adduser$', usermanagement, name='usermanagement-add'),
+
+    url(r'^projectmembers', project_membersForm, name='project-members'),
 ]
