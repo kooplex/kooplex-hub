@@ -580,6 +580,9 @@ def usermanagementForm(request):
 
 
 from kooplex.lib.ldap import Ldap
+import subprocess
+from distutils.dir_util import mkpath
+
 
 class myuser:
     def __init__(self):
@@ -611,13 +614,32 @@ class myuser:
         )
         dj_user.home = "/home/" + self['username'] #FIXME: this is ugly
         l = Ldap()
-        l.add_user(dj_user)
+        dj_user = l.add_user(dj_user) # FIXME:
 
+        gad = GitlabAdmin()
+        gad.create_user(self)
+
+        srv_dir = get_settings('users', 'srv_dir', None, '')
+        home_dir = get_settings('users', 'home_dir', None, '')
+        home_dir = os.path.join(srv_dir, home_dir.replace('{$username}', self['username']))
+
+        mkpath("%s/.ssh" % home_dir)
+        os.chown(home_dir, dj_user.uid, dj_user.gid)
+        os.chown("%s/.ssh" % home_dir, dj_user.uid, dj_user.gid)
+        subprocess.call(['/usr/bin/ssh-keygen', '-N', '', '-f', "%s/.ssh/gitlab.key" % home_dir])
+        os.chown("%s/.ssh/gitlab.key" % home_dir, dj_user.uid, dj_user.gid)
+        os.chown("%s/.ssh/gitlab.key.pub" % home_dir, dj_user.uid, dj_user.gid)
+
+        print("GONNAREAD")
+        key = open("%s/.ssh/gitlab.key.pub" % home_dir).read()
+        print("READ", key)
+        msg = gad.upload_userkey(self, key)
+
+        raise Exception(msg)
 
 USERMANAGEMENT_URL = '/hub/notebooksusermanagement'
 def usermanagement(request):
 #FIXME: do the thing
-    #pw generalni
 
 #FIXME: wrong value
     isadmin = request.POST['isadmin'] if 'isadmin' in request.POST.keys() else False
@@ -627,10 +649,9 @@ def usermanagement(request):
          lastname = request.POST['lastname'], 
          email = request.POST['email'], 
          isadmin = isadmin, 
+    #FIXME:pw generalni
          password = "almafa123")
     try:
-        gad = GitlabAdmin()
-        gad.create_user(U)
         U.create()
         return HttpResponseRedirect(USERMANAGEMENT_URL)
     except Exception as e: 
