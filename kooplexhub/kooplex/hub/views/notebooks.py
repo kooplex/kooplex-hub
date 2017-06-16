@@ -137,13 +137,13 @@ def project_new(request):
     p.image = project_image_name
 
     #Shared storage
-    if len(MountPoints.objects.filter(name=p.name)) == 0:
-        m = MountPoints()
-        srv_dir = get_settings('users', 'srv_dir', None, '')
-        host_mountpoint = os.path.join('share', p.owner_username, p.path_with_namespace)
-        container_mountpoint = os.path.join(p.get_relative_home(), '{$username}', 'projects', '{$path_with_namespace}', '/share', p.name)
-        m.init(name=p.name, type="local", host_mountpoint=host_mountpoint, container_mountpoint=container_mountpoint, project=p)
-        m.save()
+#    if len(MountPoints.objects.filter(name=p.name)) == 0:
+#        m = MountPoints()
+#        srv_dir = get_settings('users', 'srv_dir', None, '')
+#        host_mountpoint = os.path.join('share', p.owner_username, p.path_with_namespace)
+#        container_mountpoint = os.path.join(p.get_relative_home(), '{$username}', 'projects', '{$path_with_namespace}', '/share', p.name)
+#        m.init(name=p.name, type="local", host_mountpoint=host_mountpoint, container_mountpoint=container_mountpoint, project=p)
+#        m.save()
 
     p.save()
 

@@ -66,13 +66,7 @@ class Repo(LibBase):
 
     def get_local_dir(self):
         print_debug("")
-        home = self.user_home_dir.replace('{$username}', self.username)
-        dir = LibBase.join_path(self.srv_dir, home)
-        dir = LibBase.join_path(dir, 'projects')
-        dir = LibBase.join_path(dir, self.name)
-        dir = dir.replace('/', os.path.sep)
-        print(dir,self.name)
-        return dir        
+        return os.path.join(self.srv_dir, '_git', self.username, self.name.replace('/', '_'))
 
     def ensure_local_dir_empty(self):
         print_debug("")

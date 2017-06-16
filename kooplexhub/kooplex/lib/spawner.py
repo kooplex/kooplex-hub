@@ -101,15 +101,26 @@ class Spawner(RestClient):
         binds[os.path.join(notebook_path, 'etc/jupyter_notebook_config.py')] = {
             'bind': '/etc/jupyter_notebook_config.py', 'mode': 'rw'}
         binds['/etc/localtime'] = {'bind': '/etc/localtime', 'mode': 'ro'}
-        home_dir = os.path.join('home', self.username)
-        binds[os.path.join(self.srv_path, home_dir)] = {'bind': "/" + home_dir, 'mode': 'rw'}
+        # constant definitions: home (for user), oc (for user), git (for user / project), share (common / project)
+        projectname = self.project.path_with_namespace.replace('/', '_')
+        home_host = os.path.join(self.srv_path, 'home', self.username)        
+        home_container = os.path.join('/home', self.username)        
+        oc_host = os.path.join(self.srv_path, '_oc', self.username)
+        oc_container = os.path.join('/home', self.username, 'oc')        
+        git_host = os.path.join(self.srv_path, '_git', self.username, projectname)
+        git_container = os.path.join('/home', self.username, 'git')        
+        share_host = os.path.join(self.srv_path, '_share', projectname)
+        share_container = os.path.join('/home', self.username, 'share')        
 
+        binds[home_host] = {'bind': home_container, 'mode': 'rw'}
+        binds[oc_host] = {'bind': oc_container, 'mode': 'rw'}
+        binds[git_host] = {'bind': git_container, 'mode': 'rw'}
+        binds[share_host] = {'bind': share_container, 'mode': 'rw'}
+
+        # dynamically added data sources
         # TODO if type is not local!!!
         for mountpoint in MountPoints.objects.filter(project_id=self.project.id):
-            host_point = mountpoint.host_mountpoint.replace('{$username}', self.username)
-            container_point = mountpoint.container_mountpoint.replace('{$username}', self.username)
-            container_point = container_point.replace('{$path_with_namespace}', self.project.path_with_namespace)
-            binds[os.path.join(self.srv_path, host_point)] = {'bind': container_point, 'mode': 'rw'}
+            binds[mountpoint.host_mountpoint] = {'bind': os.path.join('/mnt', mountpoint.name), 'mode': 'rw'}
 
         return binds
 
