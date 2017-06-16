@@ -611,6 +611,7 @@ class myuser:
             os.chown(d, uid, gid)
             os.chmod(d, mode) 
 
+        ooops = []
         dj_user = User(
             username = self['username'],
             first_name = self['firstname'],
@@ -619,10 +620,18 @@ class myuser:
         )
         dj_user.home = "/home/" + self['username'] #FIXME: this is ugly
         l = Ldap()
-        dj_user = l.add_user(dj_user) # FIXME:
+        try:
+            dj_user = l.add_user(dj_user) # FIXME:
+        except Exception as e:
+            ooops.append("ldap: %s" % e)
 
         gad = GitlabAdmin()
-        gad.create_user(self)
+        try:
+            msg = gad.create_user(self)
+            if len(msg):
+                ooops.append("gitcreate: %s" % msg)
+        except Exception as e:
+            ooops.append("gitcreate2: %s" % e)
 
         srv_dir = get_settings('users', 'srv_dir', None, '')
         home_dir = get_settings('users', 'home_dir', None, '')
@@ -640,12 +649,19 @@ class myuser:
         subprocess.call(['/usr/bin/ssh-keygen', '-N', '', '-f', key_fn])
         os.chown(key_fn, dj_user.uid, dj_user.gid)
         os.chown(key_fn + ".pub", dj_user.uid, dj_user.gid)
-        key = open(key_fn + ".pub").read()#.strip()
-        msg = gad.upload_userkey(self, key)
+        key = open(key_fn + ".pub").read().strip()
+        
+        try:
+            msg = gad.upload_userkey(self, key)
+            if len(msg):
+                ooops.append("gitkeyadd: %s" % msg)
+        except Exception as e:
+            ooops.append("gitadd2: %s" % e)
 
         dj_user.save()
 
-        raise Exception(msg if len(msg) else "Nincs is hiba, hehe")
+        if len(ooops):
+            raise Exception(",".join(ooops))
 
     def delete(self):
         ooops = []
