@@ -641,9 +641,9 @@ class myuser:
     def delete(self):
         dj_user = User.objects.get(username = self['username'])
         l = Ldap()
-#        l.delete_user(dj_user)
+        l.delete_user(dj_user)
         gad = GitlabAdmin()
-#        gad.delete_user(self['username'])
+        gad.delete_user(self['username'])
         dj_user.delete()
 
 USERMANAGEMENT_URL = '/hub/notebooksusermanagement'
