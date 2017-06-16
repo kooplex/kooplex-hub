@@ -53,10 +53,8 @@ class GitlabAdmin(Gitlab):
 #FIXME: LDAPORG HARDCODED
         url = self.api_version + "/users?name='%(firstname)s %(lastname)s'&username=%(username)s&email=%(email)s&password=%(password)s&confirm=false" % user
 #&extern_uid='uid=%(username)s,ou=users,dc=novo1,dc=complex,dc=elte,dc=hu'
-        print("URL", url)
         #url += "&confirmed_at=%s" % (strdatetime.time(1))
         res = self.http_post(url)
-        print("VVVVVVVVVVVVVVVVVV", res.json())
         message = ""
         if res.status_code != 201:
             message = res.json()
@@ -64,10 +62,7 @@ class GitlabAdmin(Gitlab):
 
     def upload_userkey(self, user, key):
         print_debug("",DEBUG_LOCAL)
-        print ("HHHHHHHHHHHHHHHH", user)
-        print ("HHHHHHHHHHHHHHHH", user['username'])
         resp = self.get_user(user['username'])[0]
-        print ("HHHHHHHHHHHHHHHH", resp)
         data = urlencode( { 'key': key.strip() } )
         url = self.api_version + "/users/%d/keys?title=gitlabkey" % (resp['id'])
         res = self.http_post( url, data = data )
@@ -75,6 +70,17 @@ class GitlabAdmin(Gitlab):
         if res.status_code != 201:
             message = res.json()
         return message
+
+    def delete_user(self, username):
+        print_debug("",DEBUG_LOCAL)
+        respdict = self.get_user(username)[0]
+        url = self.api_version + "/users/%d?hard_delete=true" % respdict['id']
+        res = self.http_delete(url)
+        message = ""
+        if res.status_code != 201:
+            message = res.json()
+        return message
+
 
     def get_all_users(self):
         print_debug("",DEBUG_LOCAL)

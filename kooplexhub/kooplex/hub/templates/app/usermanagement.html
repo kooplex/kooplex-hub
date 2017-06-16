@@ -34,32 +34,34 @@
     </div>
 
 
-    <!-- script>
-        function collectCheckedElements() {
-            var inputs = document.getElementsByTagName("input");
-            var modified_files = "";
-            var deleted_files = "";
-            for (var i = 1; i < inputs.length; i++) {
-                if (inputs[i].type == "checkbox") {
-                    if (inputs[i].checked) {
-                        if (inputs[i].value == "deleted") {
-                            deleted_files += "'" + inputs[i].name + "',";
-                        } else {
-                            modified_files += "'" + inputs[i].name + "',";
-                        }
-                        inputs[i].disabled = true;
-                    }
-                }
-            }
-            if (modified_files.length > 0) {
-                modified_files = modified_files.substring(0, modified_files.length - 1);
-            }
-            if (deleted_files.length > 0) {
-                deleted_files = deleted_files.substring(0, deleted_files.length - 1);
-            }
-            document.getElementsByName("modified_files")[0].value = modified_files;
-            document.getElementsByName("deleted_files")[0].value = deleted_files;
-        }
-    </script -->
+ <div class="row">
+
+        <section id="commitForm">
+            <form action="{% url 'usermanagement-delete' %}" method="post" class="form-horizontal">
+                {% csrf_token %}
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4>Delete a new user</h4>
+                    </div>
+                    <div class="panel-body">
+
+                        <div class="row">
+                            <div class="col-md-12">
+
+                                <h4> User details:</h4>
+                                <div class="form-group">
+                                  {% for user in users %}
+                                    {{ user.first_name }} {{ user.last_name }}
+                                    <input type="submit" name="button" value="{{ user.username }}" class="btn btn-primary" />
+<br>
+                                  {% endfor %}
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </form>
+        </section>
+    </div>
 
 {% endblock %}

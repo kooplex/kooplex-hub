@@ -575,7 +575,7 @@ def usermanagementForm(request):
         request,
         'app/usermanagement.html',
         context_instance=RequestContext(request,
-        {})
+        { 'users': User.objects.all()  })
     )
 
 
@@ -635,12 +635,19 @@ class myuser:
         print("READ", key)
         msg = gad.upload_userkey(self, key)
 
+        dj_user.save()
         raise Exception(msg if len(msg) else "Nincs is hiba, hehe")
+
+    def delete(self):
+        dj_user = User.objects.get(username = self['username'])
+        l = Ldap()
+#        l.delete_user(dj_user)
+        gad = GitlabAdmin()
+#        gad.delete_user(self['username'])
+        dj_user.delete()
 
 USERMANAGEMENT_URL = '/hub/notebooksusermanagement'
 def usermanagement(request):
-#FIXME: do the thing
-
 #FIXME: wrong value
     isadmin = request.POST['isadmin'] if 'isadmin' in request.POST.keys() else False
     U = myuser()
@@ -653,6 +660,23 @@ def usermanagement(request):
          password = "almafa123")
     try:
         U.create()
+        return HttpResponseRedirect(USERMANAGEMENT_URL)
+    except Exception as e: 
+        return render(
+            request,
+            'app/error.html',
+            context_instance=RequestContext(request,
+            {
+                    'error_title': 'Error',
+                    'error_message': str(e),
+            })
+        )
+
+def usermanagement2(request):
+    U = myuser()
+    U.setattribute(username = request.POST['button'])
+    try:
+        U.delete()
         return HttpResponseRedirect(USERMANAGEMENT_URL)
     except Exception as e: 
         return render(
@@ -715,6 +739,7 @@ urlpatterns = [
 
     url(r'^usermanagement$', usermanagementForm, name='usermanagement-form'),
     url(r'^adduser$', usermanagement, name='usermanagement-add'),
+    url(r'^deleteuser$', usermanagement2, name='usermanagement-delete'),
 
     url(r'^projectmembers', project_membersForm, name='project-members'),
 ]
