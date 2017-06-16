@@ -606,6 +606,11 @@ class myuser:
             self._data[k] = v
 
     def create(self):
+        def mkdir(d, uid = 0, gid = 0, mode = 0b111101000):
+            mkpath(d)
+            os.chown(d, uid, gid)
+            os.chmod(d, mode) 
+
         dj_user = User(
             username = self['username'],
             first_name = self['firstname'],
@@ -622,29 +627,43 @@ class myuser:
         srv_dir = get_settings('users', 'srv_dir', None, '')
         home_dir = get_settings('users', 'home_dir', None, '')
         home_dir = os.path.join(srv_dir, home_dir.replace('{$username}', self['username']))
+        ssh_dir = os.path.join(home_dir, '.ssh')
+        oc_dir = os.path.join(srv_dir, '_oc', self['username'])
+        git_dir = os.path.join(srv_dir, '_git', self['username'])
 
-        mkpath("%s/.ssh" % home_dir)
-        os.chown(home_dir, dj_user.uid, dj_user.gid)
-        os.chown("%s/.ssh" % home_dir, dj_user.uid, dj_user.gid)
-        subprocess.call(['/usr/bin/ssh-keygen', '-N', '', '-f', "%s/.ssh/gitlab.key" % home_dir])
-        os.chown("%s/.ssh/gitlab.key" % home_dir, dj_user.uid, dj_user.gid)
-        os.chown("%s/.ssh/gitlab.key.pub" % home_dir, dj_user.uid, dj_user.gid)
+        mkdir(home_dir, uid = dj_user.uid, gid = dj_user.gid)
+        mkdir(ssh_dir, uid = dj_user.uid, gid = dj_user.gid, mode = 0b111000000)
+        mkdir(oc_dir, uid = dj_user.uid, gid = dj_user.gid, mode = 0b111000000)
+        mkdir(git_dir, uid = dj_user.uid, gid = dj_user.gid)
 
-        print("GONNAREAD")
-        key = open("%s/.ssh/gitlab.key.pub" % home_dir).read()
-        print("READ", key)
+        key_fn = os.path.join(ssh_dir, "gitlab.key")
+        subprocess.call(['/usr/bin/ssh-keygen', '-N', '', '-f', key_fn])
+        os.chown(key_fn, dj_user.uid, dj_user.gid)
+        os.chown(key_fn + ".pub", dj_user.uid, dj_user.gid)
+        key = open(key_fn + ".pub").read()#.strip()
         msg = gad.upload_userkey(self, key)
 
         dj_user.save()
+
         raise Exception(msg if len(msg) else "Nincs is hiba, hehe")
 
     def delete(self):
+        ooops = []
         dj_user = User.objects.get(username = self['username'])
         l = Ldap()
-        l.delete_user(dj_user)
+        try:
+            l.delete_user(dj_user)
+        except Exception as e:
+            ooops.append("ldap: %s" % e)
         gad = GitlabAdmin()
-        gad.delete_user(self['username'])
+        try:
+            gad.delete_user(self['username'])
+        except Exception as e:
+            ooops.append("git: %s" % e)
         dj_user.delete()
+#TODO: remove appropriate directories from the filesystem
+        if len(ooops):
+            raise Exception(",".join(ooops))
 
 USERMANAGEMENT_URL = '/hub/notebooksusermanagement'
 def usermanagement(request):
