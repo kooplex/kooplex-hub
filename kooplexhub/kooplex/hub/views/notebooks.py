@@ -124,41 +124,43 @@ def project_new(request):
 
     g = Gitlab(request)
     print_debug("Creating new project, add variables")
-    message_json = g.create_project(project_name, public, description)
-    res = g.get_project_by_name(project_name)
-    # TODO for failure
-    #if res
-    p = Project()
-    p.init(res[0])
-    m = g.get_project_members(p.id)
-    p.from_gitlab_dict_projectmembers(m)
-
-    #Add image_name to project
-    p.image = project_image_name
-
-    #Shared storage
-#    if len(MountPoints.objects.filter(name=p.name)) == 0:
-#        m = MountPoints()
-#        srv_dir = get_settings('users', 'srv_dir', None, '')
-#        host_mountpoint = os.path.join('share', p.owner_username, p.path_with_namespace)
-#        container_mountpoint = os.path.join(p.get_relative_home(), '{$username}', 'projects', '{$path_with_namespace}', '/share', p.name)
-#        m.init(name=p.name, type="local", host_mountpoint=host_mountpoint, container_mountpoint=container_mountpoint, project=p)
-#        m.save()
-
-    p.save()
-
-    #Create a README
-    g.create_project_readme(p.id,"README.md","* proba","Created a default README")
-    if message_json == "":
+    try:
+        message_json = g.create_project(project_name, public, description)
+        if len(message_json):
+            raise Exception(message_json)
+        res = g.get_project_by_name(project_name)
+# # #          # TODO for failure
+# # #          #if res
+        p = Project()
+        p.init(res[0])
+        m = g.get_project_members(p.id)
+        p.from_gitlab_dict_projectmembers(m)
+    
+        #Add image_name to project
+        p.image = project_image_name
+    
+        #Shared storage
+    #    if len(MountPoints.objects.filter(name=p.name)) == 0:
+    #        m = MountPoints()
+    #        srv_dir = get_settings('users', 'srv_dir', None, '')
+    #        host_mountpoint = os.path.join('share', p.owner_username, p.path_with_namespace)
+    #        container_mountpoint = os.path.join(p.get_relative_home(), '{$username}', 'projects', '{$path_with_namespace}', '/share', p.name)
+    #        m.init(name=p.name, type="local", host_mountpoint=host_mountpoint, container_mountpoint=container_mountpoint, project=p)
+    #        m.save()
+    
+        p.save()
+    
+        #Create a README
+        g.create_project_readme(p.id,"README.md","* proba","Created a default README")
         return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
-    else:
+    except Exception as e:
         return render(
             request,
             'app/error.html',
             context_instance=RequestContext(request,
                                             {
                                                 'error_title': 'Error',
-                                                'error_message': message_json,
+                                                'error_message': str(e),
                                             })
         )
 
