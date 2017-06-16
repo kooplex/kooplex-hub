@@ -635,7 +635,7 @@ class myuser:
         print("READ", key)
         msg = gad.upload_userkey(self, key)
 
-        raise Exception(msg)
+        raise Exception(msg if len(msg) else "Nincs is hiba, hehe")
 
 USERMANAGEMENT_URL = '/hub/notebooksusermanagement'
 def usermanagement(request):

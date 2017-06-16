@@ -9,6 +9,8 @@ from kooplex.lib.libbase import get_settings
 from kooplex.lib.debug import *
 from django.core.exceptions import ValidationError
 
+from urllib.parse import quote, urlencode
+
 DEBUG_LOCAL=False
 
 class GitlabAdmin(Gitlab):
@@ -66,8 +68,9 @@ class GitlabAdmin(Gitlab):
         print ("HHHHHHHHHHHHHHHH", user['username'])
         resp = self.get_user(user['username'])[0]
         print ("HHHHHHHHHHHHHHHH", resp)
-        url = self.api_version + "/users/%d/keys?title=gitlabkey&key='%s'" % (resp['id'], key.strip())
-        res = self.http_post(url)
+        data = urlencode( { 'key': key.strip() } )
+        url = self.api_version + "/users/%d/keys?title=gitlabkey" % (resp['id'])
+        res = self.http_post( url, data = data )
         message = ""
         if res.status_code != 201:
             message = res.json()
