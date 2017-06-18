@@ -124,41 +124,43 @@ def project_new(request):
 
     g = Gitlab(request)
     print_debug("Creating new project, add variables")
-    message_json = g.create_project(project_name, public, description)
-    res = g.get_project_by_name(project_name)
-    # TODO for failure
-    #if res
-    p = Project()
-    p.init(res[0])
-    m = g.get_project_members(p.id)
-    p.from_gitlab_dict_projectmembers(m)
-
-    #Add image_name to project
-    p.image = project_image_name
-
-    #Shared storage
-#    if len(MountPoints.objects.filter(name=p.name)) == 0:
-#        m = MountPoints()
-#        srv_dir = get_settings('users', 'srv_dir', None, '')
-#        host_mountpoint = os.path.join('share', p.owner_username, p.path_with_namespace)
-#        container_mountpoint = os.path.join(p.get_relative_home(), '{$username}', 'projects', '{$path_with_namespace}', '/share', p.name)
-#        m.init(name=p.name, type="local", host_mountpoint=host_mountpoint, container_mountpoint=container_mountpoint, project=p)
-#        m.save()
-
-    p.save()
-
-    #Create a README
-    g.create_project_readme(p.id,"README.md","* proba","Created a default README")
-    if message_json == "":
+    try:
+        message_json = g.create_project(project_name, public, description)
+        if len(message_json):
+            raise Exception(message_json)
+        res = g.get_project_by_name(project_name)
+# # #          # TODO for failure
+# # #          #if res
+        p = Project()
+        p.init(res[0])
+        m = g.get_project_members(p.id)
+        p.from_gitlab_dict_projectmembers(m)
+    
+        #Add image_name to project
+        p.image = project_image_name
+    
+        #Shared storage
+    #    if len(MountPoints.objects.filter(name=p.name)) == 0:
+    #        m = MountPoints()
+    #        srv_dir = get_settings('users', 'srv_dir', None, '')
+    #        host_mountpoint = os.path.join('share', p.owner_username, p.path_with_namespace)
+    #        container_mountpoint = os.path.join(p.get_relative_home(), '{$username}', 'projects', '{$path_with_namespace}', '/share', p.name)
+    #        m.init(name=p.name, type="local", host_mountpoint=host_mountpoint, container_mountpoint=container_mountpoint, project=p)
+    #        m.save()
+    
+        p.save()
+    
+        #Create a README
+        g.create_project_readme(p.id,"README.md","* proba","Created a default README")
         return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
-    else:
+    except Exception as e:
         return render(
             request,
             'app/error.html',
             context_instance=RequestContext(request,
                                             {
                                                 'error_title': 'Error',
-                                                'error_message': message_json,
+                                                'error_message': str(e),
                                             })
         )
 
@@ -606,6 +608,12 @@ class myuser:
             self._data[k] = v
 
     def create(self):
+        def mkdir(d, uid = 0, gid = 0, mode = 0b111101000):
+            mkpath(d)
+            os.chown(d, uid, gid)
+            os.chmod(d, mode) 
+
+        ooops = []
         dj_user = User(
             username = self['username'],
             first_name = self['firstname'],
@@ -614,37 +622,66 @@ class myuser:
         )
         dj_user.home = "/home/" + self['username'] #FIXME: this is ugly
         l = Ldap()
-        dj_user = l.add_user(dj_user) # FIXME:
+        try:
+            dj_user = l.add_user(dj_user) # FIXME:
+        except Exception as e:
+            ooops.append("ldap: %s" % e)
 
         gad = GitlabAdmin()
-        gad.create_user(self)
+        try:
+            msg = gad.create_user(self)
+            if len(msg):
+                ooops.append("gitcreate: %s" % msg)
+        except Exception as e:
+            ooops.append("gitcreate2: %s" % e)
 
         srv_dir = get_settings('users', 'srv_dir', None, '')
         home_dir = get_settings('users', 'home_dir', None, '')
         home_dir = os.path.join(srv_dir, home_dir.replace('{$username}', self['username']))
+        ssh_dir = os.path.join(home_dir, '.ssh')
+        oc_dir = os.path.join(srv_dir, '_oc', self['username'])
+        git_dir = os.path.join(srv_dir, '_git', self['username'])
 
-        mkpath("%s/.ssh" % home_dir)
-        os.chown(home_dir, dj_user.uid, dj_user.gid)
-        os.chown("%s/.ssh" % home_dir, dj_user.uid, dj_user.gid)
-        subprocess.call(['/usr/bin/ssh-keygen', '-N', '', '-f', "%s/.ssh/gitlab.key" % home_dir])
-        os.chown("%s/.ssh/gitlab.key" % home_dir, dj_user.uid, dj_user.gid)
-        os.chown("%s/.ssh/gitlab.key.pub" % home_dir, dj_user.uid, dj_user.gid)
+        mkdir(home_dir, uid = dj_user.uid, gid = dj_user.gid)
+        mkdir(ssh_dir, uid = dj_user.uid, gid = dj_user.gid, mode = 0b111000000)
+        mkdir(oc_dir, uid = dj_user.uid, gid = dj_user.gid, mode = 0b111000000)
+        mkdir(git_dir, uid = dj_user.uid, gid = dj_user.gid)
 
-        print("GONNAREAD")
-        key = open("%s/.ssh/gitlab.key.pub" % home_dir).read()
-        print("READ", key)
-        msg = gad.upload_userkey(self, key)
+        key_fn = os.path.join(ssh_dir, "gitlab.key")
+        subprocess.call(['/usr/bin/ssh-keygen', '-N', '', '-f', key_fn])
+        os.chown(key_fn, dj_user.uid, dj_user.gid)
+        os.chown(key_fn + ".pub", dj_user.uid, dj_user.gid)
+        key = open(key_fn + ".pub").read().strip()
+        
+        try:
+            msg = gad.upload_userkey(self, key)
+            if len(msg):
+                ooops.append("gitkeyadd: %s" % msg)
+        except Exception as e:
+            ooops.append("gitadd2: %s" % e)
 
         dj_user.save()
-        raise Exception(msg if len(msg) else "Nincs is hiba, hehe")
+
+        if len(ooops):
+            raise Exception(",".join(ooops))
 
     def delete(self):
+        ooops = []
         dj_user = User.objects.get(username = self['username'])
         l = Ldap()
-        l.delete_user(dj_user)
+        try:
+            l.delete_user(dj_user)
+        except Exception as e:
+            ooops.append("ldap: %s" % e)
         gad = GitlabAdmin()
-        gad.delete_user(self['username'])
+        try:
+            gad.delete_user(self['username'])
+        except Exception as e:
+            ooops.append("git: %s" % e)
         dj_user.delete()
+#TODO: remove appropriate directories from the filesystem
+        if len(ooops):
+            raise Exception(",".join(ooops))
 
 USERMANAGEMENT_URL = '/hub/notebooksusermanagement'
 def usermanagement(request):
