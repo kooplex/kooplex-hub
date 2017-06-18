@@ -35,7 +35,7 @@ class Spawner(RestClient):
         self.container_name = get_settings('spawner', 'notebook_container_name', container_name, prefix+'-notebook-{$username}')
         self.image = get_settings('spawner', 'notebook_image', image, prefix + '-notebook')
         self.notebook_path = get_settings('spawner', 'notebook_proxy_path', None, '{$host_port}/notebook/{$username}/{$notebook.id}')
-        self.session_path = get_settings('spawner', 'session_proxy_path', None, '/notebook/{$username}/{$notebook.id}/tree/{$username}/{$session.notebook_path}')
+        self.session_path = get_settings('spawner', 'session_proxy_path', None, '/notebook/{$username}/{$notebook.id}/tree/{$username}')
         self.ip_pool = get_settings('spawner', 'notebook_ip_pool', None, ['172.18.20.1', '172.18.20.255'])
         self.port = get_settings('spawner', 'notebook_port', None, 8000)
 
