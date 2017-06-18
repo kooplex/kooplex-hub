@@ -1,6 +1,6 @@
 ﻿from django.conf.urls import patterns, url, include
 from django.shortcuts import render
-from django.http import HttpRequest
+from django.http import HttpRequest, HttpResponseRedirect
 from django.template import RequestContext
 from datetime import datetime
 
@@ -9,13 +9,10 @@ from kooplex.lib.gitlabadmin import GitlabAdmin
 def index(request):
     """Renders the home page."""
     assert isinstance(request, HttpRequest)
+    if request.user.is_active:
+       return HttpResponseRedirect('/hub/notebooks')
+    is_admin = request.user.is_superuser
 
-#    username = request.user.username
-    gadmin = GitlabAdmin(request)
-
-    isadmin = False
-    #if username:
-    #    isadmin = gadmin.check_useradmin(username)
     return render(
         request,
         'app/index.html',
@@ -24,7 +21,7 @@ def index(request):
             'title':'Home Page',
             'year':datetime.now().year,
  #           'username': username,
-            'admin': isadmin,
+            'is_admin': is_admin,
         })
     )
 
