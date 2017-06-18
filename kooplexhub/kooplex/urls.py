@@ -34,7 +34,7 @@ urlpatterns = (
             {
                 'title':'Log in',
                 'year':datetime.now().year,
-                'next_page': '/hub',
+                'next_page': '/hub/notebooks',
             }
         },
         name='login'),

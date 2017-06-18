@@ -3,13 +3,12 @@
 {% block content %}
 
  <div class="row">
-
-        <section id="commitForm">
-            <form action="{% url 'project-members' %}" method="post" class="form-horizontal" onsubmit="collectCheckedElements()">
+    <section id="commitForm">
+        <form action="{% url 'project-members-modify' %}" method="post" class="form-horizontal" onsubmit="collectCheckedElements()">
                 {% csrf_token %}
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <h4>Add/Modify/Remove mebers of {{ project.name }}</h4>
+                        <h4>Add/Remove members of {{ project.name }}</h4>
                     </div>
                     <div class="panel-body">
 
@@ -20,8 +19,8 @@
                                 <h4> Members</h4>
                                 <div class="form-group">
                                     {% for member in currentmembers %}
-                                        <input type="checkbox" value="current" name="{{ member.gitlab_id }}">
-                                        {{ member.gitlab_id }}
+                                        <input type="checkbox" name="user_id" value="{{ member.gitlab_id }}">
+                                        {{ member.gitlab_id }} {{ member.user.firstname }} {{ member.user.lastname }} {{ member.user.username }}
                                         <br>
                                     {% endfor %}
 
@@ -29,21 +28,63 @@
                             </div>
                             </div>
 
+
                         <div>
 
                             <div class="form-group" style="text-align: left;">
 
                                     <input type="hidden" name="current" value="" />
-                                    <input type="hidden" name="new" value="" />
+                                    <input type="hidden" name="project_id" value="{{ project.id }}" />
 
-                                    <input type="submit" name="commitall" value="Add " class="btn btn-primary" />
-                                    <input type="submit" name="cancel" value="Cancel" class="btn btn-secondary" />
+                                    <input type="submit" name="button" value="Remove" class="btn btn-primary" />
+                                    <input type="submit" name="button" value="Cancel" class="btn btn-secondary" />
                             </div>
                         </div>
 
                     </div>
                 </div>
-            </form>
+        </form>
+        <form action="{% url 'project-members-modify' %}" method="post" class="form-horizontal" onsubmit="collectCheckedElements()">
+                {% csrf_token %}
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4>Add users to {{ project.name }}</h4>
+                    </div>
+                    <div class="panel-body">
+
+
+                        <div class="row">
+                            <div class="col-md-12">
+
+                                <h4> Members</h4>
+                                <div class="form-group">
+                                    {% for user in otherusers %}
+                                        <input type="checkbox" name="user_id" value="{{ user.id }}">
+                                        {{ user.id }} {{ user.firstname }} {{ user.lastname }} {{ user.username }}
+                                        <br>
+                                    {% endfor %}
+
+                                </div>
+                            </div>
+                            </div>
+
+
+                        <div>
+
+                            <div class="form-group" style="text-align: left;">
+
+                                    <input type="hidden" name="current" value="" />
+                                    <input type="hidden" name="project_id" value="{{ project.id }}" />
+
+                                    <input type="submit" name="button" value="Add" class="btn btn-primary" />
+                                    <input type="submit" name="button" value="Cancel" class="btn btn-secondary" />
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+        </form>
+
         </section>
     </div>
 

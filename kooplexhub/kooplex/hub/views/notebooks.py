@@ -97,7 +97,7 @@ def notebooks(request,errors=[], commits=[] ):
             'commits': commits,
             'public_projects': public_projects,
             'my_projects': public_projects,
-            'username': user.user.username,
+            'user': user.user,
             'notebook_dir_name': NOTEBOOK_DIR_NAME,
             'notebook_images' : notebook_images,
             'errors' : errors,
@@ -577,7 +577,8 @@ def usermanagementForm(request):
         request,
         'app/usermanagement.html',
         context_instance=RequestContext(request,
-        { 'users': User.objects.all()  })
+        { 'users': User.objects.all(),
+          'user': request.user })
     )
 
 
@@ -618,7 +619,8 @@ class myuser:
             username = self['username'],
             first_name = self['firstname'],
             last_name = self['lastname'],
-            email = self['email']
+            email = self['email'],
+            is_superuser = self.is_admin
         )
         dj_user.home = "/home/" + self['username'] #FIXME: this is ugly
         l = Ldap()
@@ -732,6 +734,13 @@ def project_membersForm(request):
     current_members=[]
     for id in current_members_ids:
         current_members.append(HubUser.objects.get(gitlab_id=id))
+    allusers = User.objects.all()
+    other_users = []
+    for user in allusers:
+        for cuser in current_members:
+            if user==cuser.user:
+                break
+        other_users.append(user)
     return render(
         request,
         'app/project-members.html',
@@ -739,18 +748,26 @@ def project_membersForm(request):
                                         {
                                             'currentmembers': current_members,
                                             'project': p,
+                                            'otherusers': other_users,
                                         })
     )
 
-def addmember(request):
+def project_members_modify(request):
+    if  request.POST['button']=='cancel':
+        return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
+    p = Project.objects.get(id=request.POST['project_id'])
     g = Gitlab()
-    g.add_project_members(request.POST['project_id'], request.POST['user_id'])
-    return HttpResponseRedirect(USERMANAGEMENT_URL)
+    if request.POST['button']=='Add':
+        g.add_project_members(p.id, int(request.POST['user_id']))
+    elif request.POST['button']=='Remove':
+        g.delete_project_members(p.id, int(request.POST['user_id']))
 
-def deletemember(request):
-    g = Gitlab()
-    g.delete_project_members(request.POST['project_id'], request.POST['user_id'])
-    return HttpResponseRedirect(USERMANAGEMENT_URL)
+    m = g.get_project_members(p.id)
+    p.from_gitlab_dict_projectmembers(m)
+    p.save()
+    return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
+
+
 
 
 
@@ -778,5 +795,7 @@ urlpatterns = [
     url(r'^adduser$', usermanagement, name='usermanagement-add'),
     url(r'^deleteuser$', usermanagement2, name='usermanagement-delete'),
 
-    url(r'^projectmembers', project_membersForm, name='project-members'),
+    url(r'^projectmembersform', project_membersForm, name='project-members-form'),
+    url(r'^projectmembersmodify', project_members_modify, name='project-members-modify'),
+
 ]
