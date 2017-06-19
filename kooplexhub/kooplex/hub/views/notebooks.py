@@ -639,6 +639,11 @@ class myuser:
         except Exception as e:
             ooops.append("gitcreate2: %s" % e)
 
+        gg = gad.get_user(dj_user.username)[0]
+        dj_user.gitlab_id = gg['id']
+        dj_user.uid = gg['id']
+        dj_user.gid = gg['id']
+
         srv_dir = get_settings('users', 'srv_dir', None, '')
         home_dir = get_settings('users', 'home_dir', None, '')
         home_dir = os.path.join(srv_dir, home_dir.replace('{$username}', self['username']))
@@ -664,8 +669,7 @@ class myuser:
         except Exception as e:
             ooops.append("gitadd2: %s" % e)
 
-        gg = gad.get_user(dj_user.username)[0]
-        dj_user.gitlab_id = gg['id']
+
         dj_user.save()
 
         if len(ooops):
@@ -687,7 +691,7 @@ class myuser:
         dj_user.delete()
 #TODO: remove appropriate directories from the filesystem
         if len(ooops):
-            raise Exception(",".join(ooops))
+            raise Exception(",RR".join(ooops))
 
 USERMANAGEMENT_URL = '/hub/notebooksusermanagement'
 def usermanagement(request):

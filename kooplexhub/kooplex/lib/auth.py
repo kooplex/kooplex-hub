@@ -28,7 +28,10 @@ class Auth(object):
 
     def get_user(self, user_id):
         print_debug("%d"%user_id)
-        return User.objects.get(pk=user_id)
+        try:
+            return User.objects.get(pk=user_id)
+        except:
+            return None
 
     def add_user(self, username, password, name, email, projects_limi=100):
         gad = GitlabAdmin()
