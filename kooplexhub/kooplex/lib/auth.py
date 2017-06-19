@@ -2,6 +2,7 @@
 from kooplex.lib.gitlab import Gitlab
 from kooplex.lib.gitlabadmin import GitlabAdmin
 from kooplex.lib.debug import *
+from kooplex.hub.models.user import HubUser
 
 class Auth(object):
     """description of class"""
@@ -12,14 +13,15 @@ class Auth(object):
         res, u = g.authenticate_user(username, password)
         if u is not None:
             try:
-                user = User.objects.get(username=username)
+                user = HubUser.objects.get(username=username)
             except User.DoesNotExist:
                 # Create a new user. Note that we can set password
                 # to anything, because it won't be checked; the password
                 # from settings.py will.
-                user = User(username=username, password='get from settings.py', email=u['email'])
+                user = HubUser(username=username, password='get from settings.py', email=u['email'])
                 user.is_staff = True
                 user.is_superuser = u['is_admin']
+                user.gitlab_id = u['id']
                 user.save()
             return user
         return None
