@@ -10,13 +10,14 @@ from os import path
 from netaddr import IPAddress
 from time import sleep
 from io import BytesIO
+from distutils.dir_util import mkpath
 
 from kooplex.lib.libbase import LibBase, get_settings
 from kooplex.lib.restclient import RestClient
 from kooplex.lib.smartdocker import Docker
 from kooplex.lib.proxy import Proxy
 from kooplex.lib.jupyter import Jupyter
-from kooplex.hub.models import Container, Notebook, Session, Project, MountPoints
+from kooplex.hub.models import Container, Notebook, Session, Project, MountPoints, HubUser
 
 from kooplex.lib import ldap
 
@@ -35,7 +36,7 @@ class Spawner(RestClient):
         self.container_name = get_settings('spawner', 'notebook_container_name', container_name, prefix+'-notebook-{$username}')
         self.image = get_settings('spawner', 'notebook_image', image, prefix + '-notebook')
         self.notebook_path = get_settings('spawner', 'notebook_proxy_path', None, '{$host_port}/notebook/{$username}/{$notebook.id}')
-        self.session_path = get_settings('spawner', 'session_proxy_path', None, '/notebook/{$username}/{$notebook.id}/tree/{$username}/{$session.notebook_path}')
+        self.session_path = get_settings('spawner', 'session_proxy_path', None, '/notebook/{$username}/{$notebook.id}/tree')
         self.ip_pool = get_settings('spawner', 'notebook_ip_pool', None, ['172.18.20.1', '172.18.20.255'])
         self.port = get_settings('spawner', 'notebook_port', None, 8000)
 
@@ -94,6 +95,7 @@ class Spawner(RestClient):
         svc = 'notebook'
         notebook_path = os.path.join(self.srv_path, svc)
         binds[os.path.join(notebook_path, 'init')] = {'bind': '/init', 'mode': 'rw'}
+        binds[os.path.join(notebook_path, 'etc/hosts')] = {'bind': '/etc/hosts', 'mode': 'ro'}
         binds[os.path.join(notebook_path, 'etc/ldap/ldap.conf')] = {'bind': '/etc/ldap/ldap.conf', 'mode': 'rw'}
         binds[os.path.join(notebook_path, 'etc/nslcd.conf')] = {'bind': '/etc/nslcd.conf', 'mode': 'rw'}
         binds[os.path.join(notebook_path, 'etc/nsswitch.conf')] = {'bind': '/etc/nsswitch.conf', 'mode': 'rw'}
@@ -132,6 +134,14 @@ class Spawner(RestClient):
         return path
 
     def make_notebook(self):
+
+        def mkdir(d, uid = 0, gid = 0, mode = 0b111101000):
+            mkpath(d)
+            os.chown(d, uid, gid)
+            os.chmod(d, mode)
+#TODO: gsuid set
+
+
         print_debug("")
         id = str(uuid.uuid4())
         container_name = self.get_container_name()
@@ -163,20 +173,37 @@ class Spawner(RestClient):
         )
         ldp = ldap.Ldap()
         U = ldp.get_user(self.username) 
+        projectname = self.project.path_with_namespace.replace('/', '_')
+        gitlabids = self.project.gids.strip()
+        lst = -1 if gitlabids[-1] == ',' else 0
+        projectmembers = [ HubUser.objects.get(gitlab_id = int(x)).username for x in gitlabids[:lst].split(',') ]
+        projectowner = self.project.owner_username
+#NOTE: offset is hardcoded here!
+        G_OFFSET = 20000
         notebook.set_environment({
                 'NB_USER': self.username,
                 'NB_UID': U.uid,
                 'NB_GID': U.gid,
                 'NB_URL': notebook_path,
                 'NB_PORT': self.port,
-                'DASHBOARD_SERVER_URL' : self.dashboards_url,
-                'DASHBOARD_SERVER_AUTH_TOKEN' : 'notebook_to_dashboard_secret'
+                'PR_ID': self.project.id,
+                'PR_NAME': self.project.safename,
+                'PR_MEMBERS': ",".join(projectmembers),
+                'PR_URL': "ssh://git@%s/%s.git" % (get_settings('gitlab', 'ssh_host'), self.project.path_with_namespace),
+                'GID_OFFSET': G_OFFSET
             })
+        #create folders here and set ownership
+        git_host = os.path.join(self.srv_path, '_git', self.username, projectname)
+        mkdir(git_host, HubUser.objects.get(username = projectowner).uid, G_OFFSET + self.project.id, 0b111100000)
+        share_host = os.path.join(self.srv_path, '_share', projectname)
+        mkdir(share_host, HubUser.objects.get(username = projectowner).uid, G_OFFSET + self.project.id, 0b111111101)
         #print(notebook_path)
         notebook.set_binds(binds)
         # TODO: make binds read-only once config is fixed
         notebook.set_ports([self.port])
         #print('notebookrunnng')
+
+
         return notebook
 
     def get_notebook(self):
