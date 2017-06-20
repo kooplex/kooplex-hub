@@ -54,7 +54,7 @@ def notebooks(request,errors=[], commits=[] ):
 
     #user = HubUser.objects.get(user=request.user)
     user = request.user
-
+    hubuser = HubUser.objects.get(username=user.username)
 
     print_debug("Rendering notebook page, getting sessions")
     notebooks = Notebook.objects.filter(username=user.username)
@@ -70,7 +70,7 @@ def notebooks(request,errors=[], commits=[] ):
     #my_projects = Project.objects.filter(owner_username=username)
 
     all_projects = Project.objects.all()
-    shared_with_me_projects = [project for project in all_projects for i in project.gids.split(",") if i  and int(i) == user.gitlab_id ]
+    shared_with_me_projects = [project for project in all_projects for i in project.gids.split(",") if i  and int(i) == hubuser.gitlab_id ]
 
     #projects, unforkable_projectids = g.get_projects()
 
@@ -209,12 +209,14 @@ def container_start(request):
 
     notebook_path = LibBase.join_path('projects/',project.path_with_namespace)
     print("YYY", notebook_path)
-    is_forked = eval(request.GET['is_forked'])
-    if is_forked:
-        target_id = int(request.GET['target_id'])
-        session = spawner.start_session(notebook_path, 'python3', project.path_with_namespace, notebook.name, is_forked, project.id, target_id)
-    else:
-        session = spawner.start_session(notebook_path, 'python3', project.path_with_namespace, notebook.name, project_id=project.id)
+    #is_forked = eval(request.GET['is_forked'])
+    #if is_forked:
+    #    target_id = int(request.GET['target_id'])
+    #    session = spawner.start_session(notebook_path, 'python3', project.path_with_namespace, notebook.name, is_forked, project.id, target_id)
+    #else:
+    #    session = spawner.start_session(notebook_path, 'python3', project.path_with_namespace, notebook.name, project_id=project.id)
+    session = spawner.start_session(notebook_path, 'python3', project.path_with_namespace, notebook.name,
+                                    project_id=project.id)
 
     #project.session = session
     #project.save()
