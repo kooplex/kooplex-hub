@@ -194,7 +194,7 @@ class Spawner(RestClient):
             })
         #create folders here and set ownership
         git_host = os.path.join(self.srv_path, '_git', self.username, projectname)
-        mkdir(git_host, HubUser.objects.get(username = projectowner).uid, G_OFFSET + self.project.id, 0b111100000)
+        mkdir(git_host, U.uid, G_OFFSET + self.project.id, 0b111100000)
         share_host = os.path.join(self.srv_path, '_share', projectname)
         mkdir(share_host, HubUser.objects.get(username = projectowner).uid, G_OFFSET + self.project.id, 0b111111101)
         #print(notebook_path)
