@@ -6,15 +6,15 @@
     {% endif %}
 </div> -->
 
-<div class=" col-md-12 col-sm-12 col-xs-12">
+<div class=" col-md-12 col-sm-12 col-xs-12" xmlns="http://www.w3.org/1999/html">
     {% if item.id in running  %}
         <div class="panel  panel-success">
         <div class="panel-heading ">
-            <h4> <strong>{{ item.name }}</strong> </h4> Running {% if item.owner_username != username %} ( owned by {{ item.owner_username }} ) {%  endif  %}
+            <h4> <strong>{{ item.name }}</strong> </h4> Running {% if item.owner_username != user.username %} ( owned by {{ item.owner_username }} ) {%  endif  %}
     {% else %}
         <div class="panel panel-default ">
         <div class="panel-heading">
-           <h4> <strong>{{ item.name }}</strong> </h4>{% if item.owner_username != username %} ( owned by {{ item.owner_username }} ) {%  endif  %}
+           <h4> <strong>{{ item.name }}</strong> </h4>{% if item.owner_username != user.username %} ( owned by {{ item.owner_username }} ) {%  endif  %}
     {% endif %}
 
             {% if 'forked_from_project' in item %} : forked from
@@ -24,13 +24,13 @@
 
         <div class="panel-body">
 
-                <div class=" col-md-3 col-sm-3 col-xs-12">
+                <div class=" col-md-2 col-sm-2 col-xs-12">
                     {{ item.description }}
                 </div>
 
             <!-- CONTAINER RELATED STUFF -->
 
-                <div class=" col-md-3 col-sm-3 col-xs-12">
+                <div class=" col-md-6 col-sm-6 col-xs-12">
                     <div class="row">
                         {% if not publicvar %}
                             {% if item.id in running  %}
@@ -38,34 +38,42 @@
                                 <span class="glyphicon glyphicon-remove-circle" aria-hidden="true"></span> Stop</a>
 
                             {% else %}
-                                <a role="button" href="{% url 'container-start' %}?project_id={{ item.id }}{% if 'forked_from_project' in item %}&is_forked=True&project_id={{ item.id }}&target_id={{ item.forked_from_project.id }}{% else%}&is_forked=False{% endif %}">
+                                <!--a role="button" href="{% url 'container-start' %}?project_id={{ item.id }}{% if 'forked_from_project' in item %}&is_forked=True&project_id={{ item.id }}&target_id={{ item.forked_from_project.id }}{% else%}&is_forked=False{% endif %}"-->
+                                <a role="button" href="{% url 'container-start' %}?project_id={{ item.id }}">
                                 <button role="button" type="button" class="btn btn-success" >
                                     <span class="glyphicon glyphicon-play" aria-hidden="true"></span> Start</button></a>
 
                             {% endif %}
                         {% endif %}
 
+                        {% if not publicvar %}
                         {% if item.id in running  %}
                             {% resolve sessions item.id as session %}
 
 
-                            <a href="{{ session.external_url }}" target="_blank" class="btn btn-info" role="button">
+                            <a href="{{ session.external_url }}" target="_blank" class="btn btn-success" role="button">
                             <span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span> Open</a>
                             <a role="button" href="{% url 'notebooks-publishform' %}?project_id={{ item.id  }}">
-                            <button role="button" type="button" class="btn btn-default">
+                            <button role="button" type="button" class="btn btn-warning">
                                 <span class="glyphicon glyphicon-flag" aria-hidden="true"></span> Publish</button></a>
-
+                        {% else %}
+                            <button role="button" type="button" class="btn btn-default" data-toggle="modal"  data-target="#notebook-warning-start">
+                                    <span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span> Open</button>
+                            <button role="button" type="button" class="btn btn-default" data-toggle="modal"  data-target="#notebook-warning-start">
+                                    <span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span> Publish</button>
+                        {% endif %}
                         {% endif %}
 
                     {% if not publicvar %}
                         {% if item.id in running  %}
-                            Using image:
+                            <button type="button" class="btn btn-default" data-toggle="modal"  data-target="#notebook-warning-stop">
+                            <span class="glyphicon glyphicon-hdd" aria-hidden="true"></span>Using image:<p><strong> {{ item.image }}  </strong></p></button>
                         {% else %}
                                 <button type="button" class="btn btn-info" data-toggle="modal"  data-target="#change-image-{{ item.safename  }}">
-                                    <span class="glyphicon glyphicon-hdd" aria-hidden="true"></span> Change image</button>
+                                    <span class="glyphicon glyphicon-hdd" aria-hidden="true"></span> Change image <p><strong> {{ item.image }}  </strong></p></button>
                                 {% include 'app/notebooks-change-image.html' %}
                         {% endif %}
-                            <p><strong> {{ item.image }}  </strong></p>
+
 
                     {% endif %}
                     </div>
@@ -73,12 +81,12 @@
 
             <!-- GIT RELATED STUFF -->
 
-                <div class=" col-md-4 col-sm-3 col-xs-12">
+                <div class=" col-md-1 col-sm-1 col-xs-12">
                     {%  if not publicvar %}
                         <div class="row">
                             <a role="button" href="{% url 'notebooks-commitform' %}?project_id={{ item.id }}">
                             <button role="button" type="button" class="btn btn-warning">
-                                <span class="glyphicon glyphicon-save" aria-hidden="true"></span> Commit</button></a>
+                                <span class="glyphicon glyphicon-thumbs-up" aria-hidden="true"></span> Commit</button></a>
 
                             <!--<button type="button" class="btn btn-warning" data-toggle="modal" data-target="#repo-commit-{{ item.name }}">
                                 <span class="glyphicon glyphicon-thumbs-up" aria-hidden="true"></span> Commit </button>
@@ -95,13 +103,15 @@
                                 <span class="glyphicon glyphicon-thumbs-down" aria-hidden="true"></span> Restore</button></a>
 
                         </div>
+                        {% comment %}
                         {%  if  item.forks_count > 0 %}
                             <div class="row">
                             <p> See the opened <a href="{% url 'notebooks-mergerequestlist' %}?itemid={{ item.id }}&path_with_namespace={{ item.path_with_namespace }}" target="_blank">merge requests</a>    </p>
                             </div>
                         {% endif %}
+                        {% endcomment %}
                     {% endif %}
-
+                    {% comment %}
                     {%  if publicvar %}
                             <div class="row">
                                 {% if item.forkable %}
@@ -112,21 +122,28 @@
                                 {% endif %}
                             </div>
                     {%  endif %}
+                    {% endcomment %}
 
             </div>
 
             <!-- PROJECT RELATED STUFF -->
 
-                <div class=" col-md-2 col-sm-2 col-xs-3">
+                <div class=" col-md-3 col-sm-3 col-xs-3">
                     {% if not publicvar %}
                         {% comment  %}{% include 'app/notebooks-delete-project.html' %} {% endcomment %}
-                        <p><a href="{% url 'project-members' %}?project_id={{ item.id }}" class="btn btn-primary" role="button"><span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span> Members</a></p>
+                        <p><a href="{% url 'project-members-form' %}?project_id={{ item.id }}" class="btn btn-primary" role="button">
+                            <span class="glyphicon glyphicon-user" aria-hidden="true"></span> Members</a></p>
                         {% if item.id not in running  %}
-                        {% include 'app/notebooks-delete-project.html' %}
-                        <button type="button" class="btn btn-danger" data-toggle="modal"  data-target="#delete-project-{{ item.id }}">
+                            {% include 'app/notebooks-delete-project.html' %}
+                            <button type="button" class="btn btn-danger" data-toggle="modal"  data-target="#delete-project-{{ item.id }}">
                             <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Delete project</button>
+                        {% else %}
+                            {% include 'app/notebooks-warning.html' %}
+                            <button type="button" class="btn btn-default" data-toggle="modal"  data-target="#notebook-warning-stop">
+                            <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Delete project</button>
+                        {% endif %}
+
                     {% endif %}
-                {% endif %}
                 </div>
 
             </div>

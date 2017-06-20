@@ -1,7 +1,7 @@
 {% extends "app/layout.html" %}
 
 {% block content %}
-
+{% if user.is_superuser %}
  <div class="row">
 
         <section id="commitForm">
@@ -63,5 +63,5 @@
             </form>
         </section>
     </div>
-
+{% endif %}
 {% endblock %}

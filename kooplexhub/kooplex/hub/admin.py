@@ -55,8 +55,7 @@ class MountPoints(admin.ModelAdmin):
 
 @admin.register(HubUser)
 class HubUserAdmin(admin.ModelAdmin):
-    #list_display = ('gitlab_id','get_username')
-    list_display = ('gitlab_id','gitlab_id')
+    list_display = ('gitlab_id','username')
     pass
 
 def admin_main(request):

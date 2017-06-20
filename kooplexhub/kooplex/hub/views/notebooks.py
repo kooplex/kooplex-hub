@@ -45,18 +45,19 @@ def notebooks(request,errors=[], commits=[] ):
     assert isinstance(request, HttpRequest)
 
     # Todo we need to know the user's id. Not from gitlab?
-    if not HubUser.objects.filter(user=request.user):
-        h = HubUser()
-        g = Gitlab()
-        gitlab_user = g.get_user(request.user.username)[0]
-        h.init(gitlab_user['id'], request.user)
-        h.save()
+#   if not HubUser.objects.filter(user=request.user):
+#       h = HubUser()
+#        g = Gitlab()
+#        gitlab_user = g.get_user(request.user.username)[0]
+#        h.init(gitlab_user['id'], request.user)
+#        h.save()
 
-    user = HubUser.objects.get(user=request.user)
-
+    #user = HubUser.objects.get(user=request.user)
+    user = request.user
+    hubuser = HubUser.objects.get(username=user.username)
 
     print_debug("Rendering notebook page, getting sessions")
-    notebooks = Notebook.objects.filter(username=user.user.username)
+    notebooks = Notebook.objects.filter(username=user.username)
     sessions = []
     running = []
     for n in notebooks:
@@ -69,7 +70,7 @@ def notebooks(request,errors=[], commits=[] ):
     #my_projects = Project.objects.filter(owner_username=username)
 
     all_projects = Project.objects.all()
-    shared_with_me_projects = [project for project in all_projects for i in project.gids.split(",") if i  and int(i) == user.gitlab_id ]
+    shared_with_me_projects = [project for project in all_projects for i in project.gids.split(",") if i  and int(i) == hubuser.gitlab_id ]
 
     #projects, unforkable_projectids = g.get_projects()
 
@@ -77,7 +78,7 @@ def notebooks(request,errors=[], commits=[] ):
 
 	#TODO: get uid and gid from projects json
     print_debug("Rendering notebook page, unforkable project  from gitlab")
-    public_projects = Project.objects.filter(visibility="public").exclude(owner_username=user.user.username)
+    public_projects = Project.objects.filter(visibility="public").exclude(owner_username=user.username)
 
     print_debug("Rendering notebook page, images from docker")
 
@@ -97,7 +98,7 @@ def notebooks(request,errors=[], commits=[] ):
             'commits': commits,
             'public_projects': public_projects,
             'my_projects': public_projects,
-            'username': user.user.username,
+            'user': user,
             'notebook_dir_name': NOTEBOOK_DIR_NAME,
             'notebook_images' : notebook_images,
             'errors' : errors,
@@ -208,12 +209,14 @@ def container_start(request):
 
     notebook_path = LibBase.join_path('projects/',project.path_with_namespace)
     print("YYY", notebook_path)
-    is_forked = eval(request.GET['is_forked'])
-    if is_forked:
-        target_id = int(request.GET['target_id'])
-        session = spawner.start_session(notebook_path, 'python3', project.path_with_namespace, notebook.name, is_forked, project.id, target_id)
-    else:
-        session = spawner.start_session(notebook_path, 'python3', project.path_with_namespace, notebook.name, project_id=project.id)
+    #is_forked = eval(request.GET['is_forked'])
+    #if is_forked:
+    #    target_id = int(request.GET['target_id'])
+    #    session = spawner.start_session(notebook_path, 'python3', project.path_with_namespace, notebook.name, is_forked, project.id, target_id)
+    #else:
+    #    session = spawner.start_session(notebook_path, 'python3', project.path_with_namespace, notebook.name, project_id=project.id)
+    session = spawner.start_session(notebook_path, 'python3', project.path_with_namespace, notebook.name,
+                                    project_id=project.id)
 
     #project.session = session
     #project.save()
@@ -342,7 +345,7 @@ def Refresh_database(request):
 
     g = Gitlab()
     gitlab_projects = g.get_my_projects()
-    #gitlab_projects = []
+    gitlab_projects = []
     for gitlab_project in gitlab_projects:
         p = Project()
         p.init(gitlab_project)
@@ -577,7 +580,8 @@ def usermanagementForm(request):
         request,
         'app/usermanagement.html',
         context_instance=RequestContext(request,
-        { 'users': User.objects.all()  })
+        { 'users': User.objects.all(),
+          'user': request.user })
     )
 
 
@@ -587,8 +591,9 @@ from distutils.dir_util import mkpath
 
 
 class myuser:
+    is_superuser = False
     def __init__(self):
-        self._data = dict( [ (k, None) for k in ['firstname', 'lastname', 'username', 'email', 'password', 'isadmin'] ])
+        self._data = dict( [ (k, None) for k in ['firstname', 'lastname', 'username', 'email', 'password', 'is_superuser'] ])
 
     def __str__(self):
         return str(self._data)
@@ -614,11 +619,12 @@ class myuser:
             os.chmod(d, mode) 
 
         ooops = []
-        dj_user = User(
+        dj_user = HubUser(
             username = self['username'],
             first_name = self['firstname'],
             last_name = self['lastname'],
-            email = self['email']
+            email = self['email'],
+            is_superuser = self.is_superuser
         )
         dj_user.home = "/home/" + self['username'] #FIXME: this is ugly
         l = Ldap()
@@ -634,6 +640,11 @@ class myuser:
                 ooops.append("gitcreate: %s" % msg)
         except Exception as e:
             ooops.append("gitcreate2: %s" % e)
+
+        gg = gad.get_user(dj_user.username)[0]
+        dj_user.gitlab_id = gg['id']
+        dj_user.uid = gg['id']
+        dj_user.gid = gg['id']
 
         srv_dir = get_settings('users', 'srv_dir', None, '')
         home_dir = get_settings('users', 'home_dir', None, '')
@@ -660,6 +671,7 @@ class myuser:
         except Exception as e:
             ooops.append("gitadd2: %s" % e)
 
+
         dj_user.save()
 
         if len(ooops):
@@ -681,18 +693,18 @@ class myuser:
         dj_user.delete()
 #TODO: remove appropriate directories from the filesystem
         if len(ooops):
-            raise Exception(",".join(ooops))
+            raise Exception(",RR".join(ooops))
 
 USERMANAGEMENT_URL = '/hub/notebooksusermanagement'
 def usermanagement(request):
 #FIXME: wrong value
-    isadmin = request.POST['isadmin'] if 'isadmin' in request.POST.keys() else False
+    is_superuser = request.POST['isadmin'] if 'isadmin' in request.POST.keys() else False
     U = myuser()
     U.setattribute(username = request.POST['username'], 
          firstname = request.POST['firstname'], 
          lastname = request.POST['lastname'], 
          email = request.POST['email'], 
-         isadmin = isadmin, 
+         is_superuser = is_superuser,
     #FIXME:pw generalni
          password = "almafa123")
     try:
@@ -732,6 +744,13 @@ def project_membersForm(request):
     current_members=[]
     for id in current_members_ids:
         current_members.append(HubUser.objects.get(gitlab_id=id))
+    allusers = User.objects.all()
+    other_users = []
+    for user in allusers:
+        for cuser in current_members:
+            if user==cuser.user:
+                break
+        other_users.append(user)
     return render(
         request,
         'app/project-members.html',
@@ -739,18 +758,26 @@ def project_membersForm(request):
                                         {
                                             'currentmembers': current_members,
                                             'project': p,
+                                            'otherusers': other_users,
                                         })
     )
 
-def addmember(request):
+def project_members_modify(request):
+    if  request.POST['button']=='cancel':
+        return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
+    p = Project.objects.get(id=request.POST['project_id'])
     g = Gitlab()
-    g.add_project_members(request.POST['project_id'], request.POST['user_id'])
-    return HttpResponseRedirect(USERMANAGEMENT_URL)
+    if request.POST['button']=='Add':
+        g.add_project_members(p.id, int(request.POST['user_id']))
+    elif request.POST['button']=='Remove':
+        g.delete_project_members(p.id, int(request.POST['user_id']))
 
-def deletemember(request):
-    g = Gitlab()
-    g.delete_project_members(request.POST['project_id'], request.POST['user_id'])
-    return HttpResponseRedirect(USERMANAGEMENT_URL)
+    m = g.get_project_members(p.id)
+    p.from_gitlab_dict_projectmembers(m)
+    p.save()
+    return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
+
+
 
 
 
@@ -778,5 +805,7 @@ urlpatterns = [
     url(r'^adduser$', usermanagement, name='usermanagement-add'),
     url(r'^deleteuser$', usermanagement2, name='usermanagement-delete'),
 
-    url(r'^projectmembers', project_membersForm, name='project-members'),
+    url(r'^projectmembersform', project_membersForm, name='project-members-form'),
+    url(r'^projectmembersmodify', project_members_modify, name='project-members-modify'),
+
 ]
