@@ -643,8 +643,8 @@ class myuser:
 
         gg = gad.get_user(dj_user.username)[0]
         dj_user.gitlab_id = gg['id']
-        dj_user.uid = gg['id']
-        dj_user.gid = gg['id']
+#        dj_user.uid = gg['id']
+#        dj_user.gid = gg['id']
 
         srv_dir = get_settings('users', 'srv_dir', None, '')
         home_dir = get_settings('users', 'home_dir', None, '')
