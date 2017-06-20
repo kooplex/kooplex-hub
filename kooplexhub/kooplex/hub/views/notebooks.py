@@ -193,9 +193,10 @@ def container_start(request):
     project_id = request.GET['project_id']
     project = Project.objects.get(id=project_id)
 
-    repo = Repo(request.user.username, project.path_with_namespace)
-    if not repo.is_local_existing():
-        repo.clone()
+#obsoleted by notebook startup script
+#    repo = Repo(request.user.username, project.path_with_namespace)
+#    if not repo.is_local_existing():
+#        repo.clone()
 
     assert isinstance(request, HttpRequest)
     project_id = request.GET['project_id']
@@ -744,12 +745,14 @@ def project_membersForm(request):
     current_members=[]
     for id in current_members_ids:
         current_members.append(HubUser.objects.get(gitlab_id=id))
-    allusers = User.objects.all()
+    allusers = HubUser.objects.all()
     other_users = []
     for user in allusers:
-        for cuser in current_members:
-            if user==cuser.user:
-                break
+#FIXME: gitlabadmin still appears in the list!
+        if user.gitlab_id == 2:
+            continue
+        if user in current_members:
+            continue
         other_users.append(user)
     return render(
         request,
