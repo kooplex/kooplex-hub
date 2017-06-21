@@ -781,6 +781,21 @@ def project_members_modify(request):
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
 
+def toggle_oc(request):
+    assert isinstance(request, HttpRequest)
+#    project_name = request.POST['project_name']
+#    try:
+#        return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
+#    except Exception as e:
+    return render(
+            request,
+            'app/error.html',
+            context_instance=RequestContext(request,
+                                            {
+                                                'error_title': 'Error',
+                                                'error_message': "Toggle_oc is not implemented yet",
+                                            })
+        )
 
 
 
@@ -803,6 +818,8 @@ urlpatterns = [
     url(r'^acceptmergerequest', notebooks_acceptmergerequest, name='notebooks-acceptmergerequest'),
     url(r'^fork$', project_fork, name='project-fork'),
     url(r'^refresh$', Refresh_database, name='refresh-db'),
+
+    url(r'^oc$', toggle_oc, name='toggle-oc'),
 
     url(r'^usermanagement$', usermanagementForm, name='usermanagement-form'),
     url(r'^adduser$', usermanagement, name='usermanagement-add'),
