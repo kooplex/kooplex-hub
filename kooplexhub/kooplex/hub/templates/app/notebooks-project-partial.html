@@ -1,9 +1,12 @@
 ﻿{% load custom_tags %}
+{% include 'app/notebooks-change-image.html' %}
+{% include 'app/notebooks-delete-project.html' %}
 
-<div class=" col-md-1 col-sm-1 col-xs-1" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
+<div class="row">
+<div class=" col-md-1 col-sm-1 col-xs-1">
 
-               {% if item.id in running  %}
-                        {% resolve sessions item.id as session %}
+{% if item.id in running  %}
+    {% resolve sessions item.id as session %}
 
   <a href="{{ session.external_url }}" target="_blank">
     <button role="button" type="button" class="btn btn-success">
@@ -11,7 +14,7 @@
     </button>
   </a>
 
-               {% else %}
+{% else %}
 
  <a href="{% url 'container-start' %}?project_id={{ item.id }}">
    <button role="button" type="button" class="btn btn-default">
@@ -19,110 +22,93 @@
    </button>
  </a>
 
-               {% endif %}
+{% endif %}
 
 </div>
 
-<div class=" col-md-11 col-sm-11 col-xs-11" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
-  <a data-toggle="collapse"  href="#collapse{{ item.id }}" style="text-decoration: none">
+<div class=" col-md-11 col-sm-11 col-xs-11">
 
-               {% if item.id in running  %}
+{% if item.id in running  %}
 
-    <div class="panel  panel-success panel-sm">
+  <div class="panel panel-success">
       <div class="panel-heading ">
+    <a data-toggle="collapse"  href="#collapse{{ item.id }}" style="text-decoration: none; color: gray">
         <strong data-toggle="tooltip" title="Running" data-placement="bottom">{{ item.name }}</strong>
 
-                       {% if item.owner_username != user.username %} ( owned by {{ item.owner_username }} ) {%  endif  %}
-               {% else %}
+{% else %}
 
-    <div class="panel panel-default panel-sm">
+  <div class="panel panel-default">
       <div class="panel-heading">
+    <a data-toggle="collapse"  href="#collapse{{ item.id }}" style="text-decoration: none; color: gray">
         <strong>{{ item.name }}</strong>
 
-                       {% if item.owner_username != user.username %} ( owned by {{ item.owner_username }} ) {%  endif  %}
-               {% endif %}
-               {% if 'forked_from_project' in item %} : forked from
-
-        <a href="{{ base_url }}/gitlab/{{ item.forked_from_project.path_with_namespace }}" target="_blank">{{ item.forked_from_project.path_with_namespace }}</a>
-
-               {% endif %}
+{% endif %}
+{% if item.owner_username != user.username %} ( owned by {{ item.owner_username }} ) {%  endif  %}
 
         <span style="padding-left:50px;"> Using image:<strong>{{ item.image }}</strong></span>
+    </a>
       </div>
-    </div>      
-  </a>
 
-  <div id="collapse{{ item.id }}" class="panel-collapse collapse">
-    <div class="panel-body">
-       <div class=" col-md-7 col-sm-7 col-xs-7">{{ item.description }}</div>
+    <div id="collapse{{ item.id }}" class="panel-collapse collapse">
+      <div class="panel-body">
+         <div class=" col-md-7 col-sm-7 col-xs-7">{{ item.description }}</div>
 
             <!-- CONTAINER RELATED STUFF -->
 
-       <div class=" col-md-5 col-sm-5 col-xs-5">
-          <div class="row">
+         <div class=" col-md-5 col-sm-5 col-xs-5">
 
-               {% if not publicvar %}
-                       {% if item.id in running  %}
+{% if not publicvar %}
+      {% if item.id in running  %}
 
-            <a href="{% url 'container-delete' %}?project_id={{ item.id }}">
-              <button role="button" type="button" class="btn btn-danger" data-toggle="tooltip" title="Stop project container {{ item.name }}" data-placement="top">
-                <span class="glyphicon glyphicon-remove-circle" aria-hidden="true"></span>
-              </button>
-            </a>
+           <a href="{% url 'container-delete' %}?project_id={{ item.id }}">
+             <button role="button" type="button" class="btn btn-danger" data-toggle="tooltip" title="Stop project container {{ item.name }}" data-placement="top">
+               <span class="glyphicon glyphicon-remove-circle" aria-hidden="true"></span>
+             </button>
+           </a>
+           <a href="{{ session.external_url }}" target="_blank">
+             <button role="button" type="button" class="btn btn-success" data-toggle="tooltip" title="Open project container: {{ item.name }}" data-placement="top">
+               <span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span>
+             </button>
+           </a>
+           <a href="{% url 'notebooks-publishform' %}?project_id={{ item.id  }}">
+             <button role="button" type="button" class="btn btn-warning" data-toggle="tooltip" title="Publish project: {{ item.name }}" data-placement="top">
+               <span class="glyphicon glyphicon-flag" aria-hidden="true"></span>
+             </button>
+           </a>
+           <a href="#">
+             <button type="button" class="btn btn-default" data-toggle="tooltip" title="Changing image is disabled, stop project container {{ item.name }} to enable this button" data-placement="top">
+               <span class="glyphicon glyphicon-hdd" aria-hidden="true"></span>
+             </button>
+           </a>
 
-                       {% else %}
+      {% else %}
 
-            <a href="{% url 'container-start' %}?project_id={{ item.id }}">
-              <button role="button" type="button" class="btn btn-success" data-toggle="tooltip" title="Start project container {{ item.name }}" data-placement="top">
-                <span class="glyphicon glyphicon-play" aria-hidden="true"></span>
-              </button>
-            </a>
+           <a href="{% url 'container-start' %}?project_id={{ item.id }}">
+             <button role="button" type="button" class="btn btn-success" data-toggle="tooltip" title="Start project container {{ item.name }}" data-placement="top">
+               <span class="glyphicon glyphicon-play" aria-hidden="true"></span>
+             </button>
+           </a>
+           <a href="#">
+             <button role="button" type="button" class="btn btn-default" data-toggle="tooltip" title="Start project container {{ item.name }} to enable this button" data-placement="top">
+               <span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span>
+             </button>
+           </a>
+           <a href="#">
+             <button role="button" type="button" class="btn btn-default" data-toggle="tooltip" title="Start project container {{ item.name }} to enable this button" data-placement="top">
+               <span class="glyphicon glyphicon-flag" aria-hidden="true"></span>
+             </button>
+           </a>
+           <a href="#" data-toggle="modal" data-target="#change-image-{{ item.safename  }}">
+             <button role="button" type="button" class="btn btn-info" data-toggle="tooltip" title="Change container image for project {{ item.name }}" data-placement="top">
+               <span class="glyphicon glyphicon-hdd" aria-hidden="true"></span>
+             </button>
+           </a>
 
-                       {% endif %}
-
-                       {% if item.id in running  %}
-
-            <a href="{{ session.external_url }}" target="_blank">
-              <button role="button" type="button" class="btn btn-success" data-toggle="tooltip" title="Open project container: {{ item.name }}" data-placement="top">
-                <span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span>
-              </button>
-            </a>
-            <a href="{% url 'notebooks-publishform' %}?project_id={{ item.id  }}">
-              <button role="button" type="button" class="btn btn-warning" data-toggle="tooltip" title="Publish project: {{ item.name }}" data-placement="top">
-                <span class="glyphicon glyphicon-flag" aria-hidden="true"></span>
-              </button>
-            </a>
-            <a href="#">
-              <button type="button" class="btn btn-default" data-toggle="tooltip" title="Changing image is disabled, stop project container {{ item.name }} to enable this button" data-placement="top">
-                <span class="glyphicon glyphicon-hdd" aria-hidden="true"></span>
-              </button>
-            </a>
-
-                       {% else %}
-
-            <a href="#">
-              <button role="button" type="button" class="btn btn-default" data-toggle="tooltip" title="Start project container {{ item.name }} to enable this button" data-placement="top">
-                <span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span>
-              </button>
-            </a>
-            <a href="#">
-              <button role="button" type="button" class="btn btn-default" data-toggle="tooltip" title="Start project container {{ item.name }} to enable this button" data-placement="top">
-                <span class="glyphicon glyphicon-flag" aria-hidden="true"></span>
-              </button>
-            </a>
-            <a href="#" data-toggle="modal" data-target="#change-image-{{ item.safename  }}">
-              <button role="button" type="button" class="btn btn-info" data-toggle="tooltip" title="Change container image for project {{ item.name }}" data-placement="top">
-                <span class="glyphicon glyphicon-hdd" aria-hidden="true"></span>
-              </button>
-            </a>
-
-                       {% endif %}
-               {% endif %}
+      {% endif %}  <!-- if running //-->
 
 
             <!-- GIT RELATED STUFF -->
 
-               {%  if not publicvar %}
 
             <a href="{% url 'notebooks-commitform' %}?project_id={{ item.id }}">
               <button role="button" type="button" class="btn btn-warning" data-toggle="tooltip" title="Commit your changes to project {{ item.name }}" data-placement="top">
@@ -135,11 +121,7 @@
               </button>
             </a>
 
-               {% endif %}
-
             <!-- PROJECT RELATED STUFF -->
-
-               {% if not publicvar %}
 
             <a href="{% url 'project-members-form' %}?project_id={{ item.id }}">
               <button role="button" type="button" class="btn btn-primary" data-toggle="tooltip" title="Manage the users of the project {{ item.name }}" data-placement="top">
@@ -147,7 +129,7 @@
               </button>
             </a>
 
-                       {% if item.id not in running  %}
+      {% if item.id not in running  %}
 
             <a href="#" data-toggle="modal" data-target="#delete-project-{{ item.id }}">
               <button type="button" class="btn btn-danger" data-toggle="tooltip" title="Delete the project {{ item.name }}" data-placement="top">
@@ -155,7 +137,7 @@
               </button>
             </a>
 
-                       {% else %}
+      {% else %}
 
             <a href="#">
               <button type="button" class="btn btn-default" data-toggle="tooltip" title="Deletion of project {{ item.name }} is disabled. Stop the container to enable it" data-placement="top">
@@ -163,17 +145,15 @@
               </button>
             </a>
 
-                       {% endif %}
-               {% endif %}
+       {% endif %}
+{% endif %}  <!-- if publicvar //-->
 
-          </div>
 
-               {% include 'app/notebooks-change-image.html' %}
-               {% include 'app/notebooks-delete-project.html' %}
 
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+        </div>  <!-- col 5 //-->
+      </div>    <!-- panel-body //-->
+    </div>      <!-- collapse //-->
+  </div>        <!-- panel //-->
+</div>          <!-- col 11 //-->
 
+</div>          <!-- row //-->

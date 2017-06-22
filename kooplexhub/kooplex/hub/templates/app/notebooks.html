@@ -1,85 +1,68 @@
 {% extends "app/layout.html" %}
 
-
 {% block content %}
 
-
-
-
-
 <div class="row">
-<nav class="navbar navbar-default">
-  <div class="container-fluid">
-    <!-- Brand and toggle get grouped for better mobile display -->
-    <div class="navbar-header">
-      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
-        <span class="sr-only">Toggle navigation</span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-      </button>
-    </div>
+  <nav class="navbar navbar-default">
+    <div class="container-fluid">
+      <!-- Brand and toggle get grouped for better mobile display -->
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+      </div>
 
-    <!-- Collect the nav links, forms, and other content for toggling -->
-    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-      <ul class="nav navbar-nav">
-          <li class="active" ><a href="#myprojects" data-toggle="tab">My projects</a></li>
-          <li><a href="#running" data-toggle="tab">Running containers </a></li>
-          <li><a href="#otherprojects" data-toggle="tab">Other public projects</a></li>
-      </ul>
+      <!-- Collect the nav links, forms, and other content for toggling -->
+      <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+        <ul class="nav navbar-nav">
+            <li class="active" ><a href="#myprojects" data-toggle="tab">My projects</a></li>
+            <li><a href="#otherprojects" data-toggle="tab">Other public projects</a></li>
+        </ul>
 
-      <ul class="nav navbar-nav navbar-right">
-        <li>
-          <a href="{% url 'toggle-oc' %}">
-            <button type="button" class="btn btn-lg  btn-primary navbar-btn" data-toggle="tooltip" title="Synchronize your files found in ~/oc/ with your owncloud storage" data-placement="bottom">
-              <span class="glyphicon glyphicon-cloud" aria-hidden="true"></span>
-            </button>
-          </a>
-        </li>
-        <li><a href="#" data-toggle="modal" data-target="#project-new"><button type="button" class="btn btn-lg  btn-primary navbar-btn">Start new project </button></a></li>
+        <ul class="nav navbar-nav navbar-right">
+          <li>
+            <a href="{% url 'toggle-oc' %}">
+              <button type="button" class="btn btn-lg  btn-primary navbar-btn" data-toggle="tooltip" title="Synchronize your files found in ~/oc/ with your owncloud storage" data-placement="bottom">
+                <span class="glyphicon glyphicon-cloud" aria-hidden="true"></span>
+              </button>
+            </a>
+          </li>
+          <li><a href="#" data-toggle="modal" data-target="#project-new"><button type="button" class="btn btn-lg  btn-primary navbar-btn">Start new project </button></a></li>
 
-      </ul>
-    </div><!-- /.navbar-collapse -->
-  </div><!-- /.container-fluid -->
-</nav>
+        </ul>
+      </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+  </nav>
+
 {% include 'app/notebooks-new-partial.html' with myprojects=True %}
+
 </div>
 
 {%  if access_error %}
+
 <div class="alert alert-danger" role="alert">{{ access_error }}</div>
+
 {% endif %}
- <div class="tab-content">
 
-  {% if user.is_authenticated %}
+<div class="tab-content">
+  <div id="myprojects" class="tab-pane fade in active">
 
-    <div id="myprojects" class="tab-pane fade in active">
         {% for item in shared_with_me_projects %}
             {% include 'app/notebooks-project-partial.html' %}
         {% endfor %}
-    </div>
 
-{% comment %}
-#FIXME: why loop over the same set of containers?
-    <div id="running" class="tab-pane fade ">
-        {% for item in shared_with_me_projects %}
-            {% if item.id in running %}
-                {% include 'app/notebooks-project-partial.html' %}
-            {% endif %}
-        {% endfor %}
-    </div>
-{% endcomment %}
+  </div>
+  <div id="otherprojects" class="tab-pane fade">
 
- {% endif %}
-
-    <div id="otherprojects" class="tab-pane fade projects ">
-
-    {% for item in public_projects %}
+        {% for item in public_projects %}
             {% include 'app/notebooks-project-partial.html' with publicvar=True %}
-    {% endfor %}
+        {% endfor %}
 
-    </div>
-
- </div>
+  </div>
+</div><!-- /.tab-content -->
 
 
 {% endblock %}
