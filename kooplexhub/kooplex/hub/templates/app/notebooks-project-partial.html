@@ -1,6 +1,22 @@
 ﻿{% load custom_tags %}
 
-<div class=" col-md-12 col-sm-12 col-xs-12" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
+<div class=" col-md-1 col-sm-1 col-xs-1" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
+               {% if item.id in running  %}
+  <a href="{{ session.external_url }}" target="_blank">
+    <button role="button" type="button" class="btn btn-success">
+      <span class="glyphicon glyphicon-folder-open" aria-hidden="true"> Open</span>
+    </button>
+  </a>
+               {% else %}
+ <a href="{% url 'container-start' %}?project_id={{ item.id }}">
+   <button role="button" type="button" class="btn btn-default">
+     <span class="glyphicon glyphicon-play" aria-hidden="true"> Start</span>
+   </button>
+ </a>
+               {% endif %}
+</div>
+
+<div class=" col-md-11 col-sm-11 col-xs-11" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
   <a data-toggle="collapse"  href="#collapse{{ item.id }}" style="text-decoration: none">
 
                {% if item.id in running  %}
