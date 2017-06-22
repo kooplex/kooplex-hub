@@ -29,7 +29,13 @@
       </ul>
 
       <ul class="nav navbar-nav navbar-right">
-        <li><a href="{% url 'toggle-oc' %}"><button type="button" class="btn btn-lg  btn-primary navbar-btn">Folder synchronisation </button></a></li>
+        <li>
+          <a href="{% url 'toggle-oc' %}">
+            <button type="button" class="btn btn-lg  btn-primary navbar-btn" data-toggle="tooltip" title="Synchronize your files found in ~/oc/ with your owncloud storage" data-placement="bottom">
+              <span class="glyphicon glyphicon-cloud" aria-hidden="true"></span>
+            </button>
+          </a>
+        </li>
         <li><a href="#" data-toggle="modal" data-target="#project-new"><button type="button" class="btn btn-lg  btn-primary navbar-btn">Start new project </button></a></li>
 
       </ul>
