@@ -52,6 +52,8 @@
         {% endfor %}
     </div>
 
+{% comment %}
+#FIXME: why loop over the same set of containers?
     <div id="running" class="tab-pane fade ">
         {% for item in shared_with_me_projects %}
             {% if item.id in running %}
@@ -59,15 +61,16 @@
             {% endif %}
         {% endfor %}
     </div>
+{% endcomment %}
 
  {% endif %}
 
+    <div id="otherprojects" class="tab-pane fade projects ">
 
- <div id="otherprojects" class="tab-pane fade projects ">
-
-     {% for item in public_projects %}
-        {% include 'app/notebooks-project-partial.html' with publicvar=True %}
+    {% for item in public_projects %}
+            {% include 'app/notebooks-project-partial.html' with publicvar=True %}
     {% endfor %}
+
     </div>
 
  </div>
