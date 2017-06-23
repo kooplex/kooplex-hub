@@ -592,7 +592,7 @@ from distutils.dir_util import mkpath
 
 
 class myuser:
-    is_superuser = False
+
     def __init__(self):
         self._data = dict( [ (k, None) for k in ['firstname', 'lastname', 'username', 'email', 'password', 'is_superuser'] ])
 
@@ -622,10 +622,11 @@ class myuser:
         ooops = []
         dj_user = HubUser(
             username = self['username'],
+            password = self['password'],
             first_name = self['firstname'],
             last_name = self['lastname'],
             email = self['email'],
-            is_superuser = self.is_superuser
+            is_superuser = self['is_superuser']
         )
         dj_user.home = "/home/" + self['username'] #FIXME: this is ugly
         l = Ldap()
@@ -644,8 +645,6 @@ class myuser:
 
         gg = gad.get_user(dj_user.username)[0]
         dj_user.gitlab_id = gg['id']
-#        dj_user.uid = gg['id']
-#        dj_user.gid = gg['id']
 
         srv_dir = get_settings('users', 'srv_dir', None, '')
         home_dir = get_settings('users', 'home_dir', None, '')
@@ -699,13 +698,13 @@ class myuser:
 USERMANAGEMENT_URL = '/hub/notebooksusermanagement'
 def usermanagement(request):
 #FIXME: wrong value
-    is_superuser = request.POST['isadmin'] if 'isadmin' in request.POST.keys() else False
+    is_admin = bool(request.POST['isadmin']) if 'isadmin' in request.POST.keys() else False
     U = myuser()
     U.setattribute(username = request.POST['username'], 
          firstname = request.POST['firstname'], 
          lastname = request.POST['lastname'], 
          email = request.POST['email'], 
-         is_superuser = is_superuser,
+         is_superuser = is_admin,
     #FIXME:pw generalni
          password = "almafa123")
     try:
