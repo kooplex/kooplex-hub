@@ -31,30 +31,31 @@ def change_password(request):
         })
     )
 
-def change_password_form(request):
-    print_debug("")
-    """Checks password in ldap and changes it"""
-    assert isinstance(request, HttpRequest)
-    username = request.POST['username']
-    oldpassword = request.POST['oldpassword']
-    newpassword = request.POST['newpassword']
-    gadmin = GitlabAdmin(request)
-    userid = request.user.id
-    try:
-        msg = gadmin.modify_user(userid, 'password', newpassword)
-    except ValidationError:
-        return render(
-            request,
-            'app/password-form.html',
-            context_instance=RequestContext(request,
-            {
-            'errors' : True,
-            'title': 'Change Password',
-            'next_page': '/hub',
-        })
-        )
-
-    return HttpResponseRedirect(HUB_URL)
+#OBSOLETED
+#def change_password_form(request):
+#    print_debug("")
+#    """Checks password in ldap and changes it"""
+#    assert isinstance(request, HttpRequest)
+#    username = request.POST['username']
+#    oldpassword = request.POST['oldpassword']
+#    newpassword = request.POST['newpassword']
+#    gadmin = GitlabAdmin(request)
+#    userid = request.user.id
+#    try:
+#        msg = gadmin.modify_user(userid, 'password', newpassword)
+#    except ValidationError:
+#        return render(
+#            request,
+#            'app/password-form.html',
+#            context_instance=RequestContext(request,
+#            {
+#            'errors' : True,
+#            'title': 'Change Password',
+#            'next_page': '/hub',
+#        })
+#        )
+#
+#    return HttpResponseRedirect(HUB_URL)
 
 def change_password_form_ldap(request):
     print_debug("")
@@ -66,13 +67,10 @@ def change_password_form_ldap(request):
 
     l = Ldap()
     uu=request.user
-    #print(uu.password)
-    uu.set_password(newpassword)
+    uu.set_password(newpassword)            #FIXME: should not be here
     try:
         l.changepassword(request.user,oldpassword,newpassword)
-        #l.modify_user(uu)
     except ValidationError:
-        #print(oldpassword)
         return render(
             request,
             'app/password-form.html',
@@ -88,7 +86,6 @@ def change_password_form_ldap(request):
 
 urlpatterns = [
     url(r'^$', change_password, name='changepassword'),
-    url(r'^/pform', change_password_form_ldap, name='pform'),
-    #
-
+    url(r'^pform', change_password_form_ldap, name='pform'),
 ]
+
