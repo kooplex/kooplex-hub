@@ -265,7 +265,12 @@ def notebooks_publishform(request):
     assert isinstance(request, HttpRequest)
     project_id = request.GET['project_id']
     project = Project.objects.get(id=project_id)
-    files = os.listdir(project.get_full_home())
+
+    #DEPRECATED
+    #files = os.listdir(project.get_full_home())
+    folder = os.path.join(get_settings('users', 'srv_dir', None, ''), '_git', project.creator_name, project.path_with_namespace.replace('/', '_'))
+    files = os.listdir(folder)
+
     ipynbs = [];
     other_files = []
     for file in files:
@@ -297,6 +302,7 @@ def notebooks_publish(request):
         type = 'html'
     if 'dashboard' in request.POST.keys():
         type = 'dashboard'
+
     # TODO here and elsewhere: does the filter give more than 1?
     project = Project.objects.get(id=project_id)
 
@@ -304,14 +310,26 @@ def notebooks_publish(request):
     other_files = request.POST.getlist('other_files')
     prefix = get_settings('prefix', 'name', None, '')
     image_type = project.image.split(prefix + "-notebook-")[1]
-    D = Dashboard_server.objects.get(type=image_type)
-    R = Report()
-    R.init(D, project, file=ipynb_file, type=type)
-    R.deploy(other_files)
-    if len(Report.objects.filter(file_name=R.file_name))==0:
-        R.save()
 
-    return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
+    try:
+        D = Dashboard_server.objects.get(type=image_type)
+        R = Report()
+        R.init(D, project, file=ipynb_file, type=type)
+        R.deploy(other_files)
+        if len(Report.objects.filter(file_name=R.file_name))==0:
+            R.save()
+
+        return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
+    except Exception as e:
+        return render(
+            request,
+            'app/error.html',
+            context_instance=RequestContext(request,
+                                            {
+                                                'error_title': 'Error',
+                                                'error_message': str(e),
+                                            })
+        )
 
 def notebooks_pull_confirm(request):
     assert isinstance(request, HttpRequest)

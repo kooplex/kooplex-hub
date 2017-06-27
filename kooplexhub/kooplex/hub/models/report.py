@@ -71,7 +71,10 @@ class Report(models.Model, ModelBase):
 
     def convert_to_html(self, notebook):
         docli = Docker()
-        command = " jupyter-nbconvert --to html /%s " % (os.path.join(self.project.get_relative_home(), self.path, self.name))
+        #OBSOLETE
+        #command = " jupyter-nbconvert --to html /%s " % (os.path.join(self.project.get_relative_home(), self.path, self.name))
+        nb = os.path.join('home', self.project.owner_name, 'git', self.path, self.name)
+        command = " jupyter-nbconvert --to html /%s.ipynb " % nb
         docli.exec_container(notebook, command, detach=False)
 
 
@@ -86,18 +89,24 @@ class Report(models.Model, ModelBase):
             notebook = Notebook.objects.get(project_id=self.project.id, username=self.project.owner_username)
             self.convert_to_html(notebook)
             self.file_name = os.path.splitext(self.file_name)[0] + ".html"
-            file_to_deploy = self.get_full_from_path()
+#FIXME:
+            #OBSOLETE
+            #file_to_deploy = self.get_full_from_path()
+            file_to_deploy = os.path.join(get_settings('users', 'srv_dir', None, ''), '_git', self.project.owner_name, self.project.path_with_namespace.replace('/', '_'), self.path, self.file_name)
             file_to_create = self.get_full_to_path()
-            dir_util.mkpath(os.path.split(file_to_create)[0])
+            dir_util.mkpath(os.path.dirname(file_to_create))
             try:
                 file_util.move_file(file_to_deploy, file_to_create)
             except:
                 os.remove(file_to_deploy)
+                raise
 
         elif self.type=='dashboard':
             other_files.append(os.path.join(self.path, self.file_name))
             for file in other_files:
-                file_to_deploy = self.get_full_from_path(file)
+                #OBSOLETE
+                #file_to_deploy = self.get_full_from_path(file)
+                file_to_deploy = os.path.join(get_settings('users', 'srv_dir', None, ''), '_git', self.project.owner_name, self.project.path_with_namespace.replace('/', '_'), self.path, file)
                 file_to_create = self.get_full_to_path(file)
                 dir_util.mkpath(os.path.split(file_to_create)[0])
                 try:
