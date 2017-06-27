@@ -11,6 +11,8 @@ import logging.config
 from datetime import datetime
 import json
 
+import pwgen
+
 from kooplex.lib.libbase import get_settings
 from kooplex.hub.models.notebook import Notebook
 from kooplex.hub.models.session import Session
@@ -29,6 +31,7 @@ from kooplex.lib.repo import Repo
 from kooplex.lib.spawner import Spawner
 from kooplex.lib.jupyter import Jupyter
 from kooplex.lib.smartdocker import Docker
+from kooplex.lib.sendemail import send_new_password
 import git
 
 NOTEBOOK_DIR_NAME = 'notebooks'
@@ -718,15 +721,19 @@ def usermanagement(request):
 #FIXME: wrong value
     is_admin = bool(request.POST['isadmin']) if 'isadmin' in request.POST.keys() else False
     U = myuser()
+    pw = pwgen.pwgen(12)
     U.setattribute(username = request.POST['username'], 
          firstname = request.POST['firstname'], 
          lastname = request.POST['lastname'], 
          email = request.POST['email'], 
          is_superuser = is_admin,
-    #FIXME:pw generalni
-         password = "almafa123")
+         password = pw)
     try:
         U.create()
+        send_new_password(name = "%s %s" % (request.POST['firstname'], request.POST['lastname']), 
+           username = request.POST['username'], 
+           to = request.POST['email'], 
+           pw = pw)
         return HttpResponseRedirect(USERMANAGEMENT_URL)
     except Exception as e: 
         return render(
