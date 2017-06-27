@@ -13,6 +13,9 @@ from kooplex.lib.libbase import get_settings
 from kooplex.lib.gitlab import Gitlab
 from kooplex.lib.spawner import Spawner
 from kooplex.lib.debug import *
+from kooplex.hub.models.project import Project
+
+import os
 
 HUB_REPORTS_URL = '/hub/worksheets'
 
@@ -49,11 +52,18 @@ def worksheets_open_as_dashboard(request):
     return HttpResponseRedirect(url)
 
 def worksheets_open_html(request):
+    #OBSOLETE
+    #project_id = request.GET['project_id']
+    #file = request.GET['file']
+    #g = Gitlab()
+    #file_vmi = g.get_file(project_id,file)
+    #content=base64.b64decode(file_vmi['content'])
     project_id = request.GET['project_id']
     file = request.GET['file']
-    g = Gitlab()
-    file_vmi = g.get_file(project_id,file)
-    content=base64.b64decode(file_vmi['content'])
+#FIXME: path tokens hard coded
+    project = Project.objects.get(id=project_id)
+    filename = os.path.join(get_settings('users', 'srv_dir', None, ''), 'dashboards', project.image.split('-')[-1], project.home, file)
+    content = open(filename).read()
     return HttpResponse(content)
 
 def reports_unpublish(request):

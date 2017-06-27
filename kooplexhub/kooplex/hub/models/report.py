@@ -35,8 +35,14 @@ class Report(models.Model, ModelBase):
 
         self.project = project
         self.creator_name = self.project.owner_username
-        self.url = os.path.join(self.dashboard_server.url, self.path)
-        self.cache_url = os.path.join(self.dashboard_server.cache_url, self.path)
+        if type == 'html':
+            self.url = "/hub/worksheetsopen?project_id=%d&file=%s.html" %  (project.id, self.name)
+            self.cache_url = 'na'
+        elif type == 'dashboard':
+            self.url = os.path.join(self.dashboard_server.url, self.path)
+            self.cache_url = os.path.join(self.dashboard_server.cache_url, self.path)
+        else:
+            NotImplementedError("Unknown type %s" % type)
 
     def get_full_from_path(self, file=""):
         if file:
@@ -95,6 +101,8 @@ class Report(models.Model, ModelBase):
             file_to_deploy = os.path.join(get_settings('users', 'srv_dir', None, ''), '_git', self.project.owner_name, self.project.path_with_namespace.replace('/', '_'), self.path, self.file_name)
             file_to_create = self.get_full_to_path()
             dir_util.mkpath(os.path.dirname(file_to_create))
+            if os.path.exists(file_to_create):
+                os.unlink(file_to_create)
             try:
                 file_util.move_file(file_to_deploy, file_to_create)
             except:
