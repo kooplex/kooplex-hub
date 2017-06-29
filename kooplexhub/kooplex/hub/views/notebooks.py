@@ -87,6 +87,8 @@ def notebooks(request,errors=[], commits=[] ):
 
     notebook_images = [image.name for image in DockerImage.objects.all()]
 
+    netrc_exists = os.path.exists(os.path.join(get_settings('users', 'srv_dir', None, ''), 'home', user.username, '.netrc' ))
+
     # TODO unittest to check if port is accessible (ufw allow "5555")
     return render(
         request,
@@ -106,6 +108,8 @@ def notebooks(request,errors=[], commits=[] ):
             'notebook_images' : notebook_images,
             'errors' : errors,
             'access_error' : access_error,
+            'oc_running': False,
+            'netrc_exists': netrc_exists,
         })
     )
 
@@ -599,11 +603,12 @@ def project_fork(request):
         )
 
 def usermanagementForm(request):
+    users = filter(lambda x: x.username != 'gitlabadmin', User.objects.all())
     return render(
         request,
         'app/usermanagement.html',
         context_instance=RequestContext(request,
-        { 'users': User.objects.all(),
+        { 'users': users,
           'user': request.user })
     )
 
@@ -699,6 +704,17 @@ class myuser:
         if len(ooops):
             raise Exception(",".join(ooops))
 
+    def pwgen(self):
+        pw = pwgen.pwgen(12)
+        l = Ldap()
+        dj_user = User.objects.get(username = self['username'])
+        l.changepassword(dj_user, 'doesntmatter', pw, validate_old_password = False)
+
+        send_new_password(name = "%s %s" % (dj_user.first_name, dj_user.last_name), 
+           username = dj_user.username, 
+           to = dj_user.email, 
+           pw = pw)
+
     def delete(self):
         ooops = []
         dj_user = User.objects.get(username = self['username'])
@@ -748,10 +764,16 @@ def usermanagement(request):
         )
 
 def usermanagement2(request):
-    U = myuser()
-    U.setattribute(username = request.POST['button'])
     try:
-        U.delete()
+        U = myuser()
+        if 'delete' in request.POST:
+            U.setattribute(username = request.POST['delete'])
+#            U.delete()
+        elif 'pwgen' in request.POST:
+            U.setattribute(username = request.POST['pwgen'])
+            U.pwgen()
+        else:
+            raise Exception("should not reach this point")
         return HttpResponseRedirect(USERMANAGEMENT_URL)
     except Exception as e: 
         return render(
@@ -808,19 +830,48 @@ def project_members_modify(request):
 
 def toggle_oc(request):
     assert isinstance(request, HttpRequest)
-#    project_name = request.POST['project_name']
-#    try:
-#        return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
-#    except Exception as e:
-    return render(
+    try:
+        pw = request.POST['password']
+        netrc_exists = request.POST['netrc_exists'] == 'True'
+        user = request.user
+        hubuser = HubUser.objects.get(username=user.username)
+        if not netrc_exists and (len(pw) == 0):
+            raise Exception("Please provide a password so the synchronization daemon can access your owncloud storage")
+
+#FIXME: machine name hardcoded
+        if len(pw):
+            fn = os.path.join(get_settings('users', 'srv_dir', None, ''), 'home', user.username, '.netrc' )
+            netrc = """
+machine %s
+login %s
+password %s
+""" % ('kooplex-nginx', user.username, pw)
+            with open(fn, 'w') as f:
+                f.write(netrc)
+            os.chown(fn, hubuser.uid, hubuser.gid)
+            os.chmod(fn, 0b111000000)
+            
+        return render(
             request,
             'app/error.html',
             context_instance=RequestContext(request,
                                             {
                                                 'error_title': 'Error',
-                                                'error_message': "Toggle_oc is not implemented yet",
+                                                'error_message': "not implemented",
                                             })
         )
+        return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
+    except Exception as e:
+        return render(
+            request,
+            'app/error.html',
+            context_instance=RequestContext(request,
+                                            {
+                                                'error_title': 'Error',
+                                                'error_message': str(e),
+                                            })
+        )
+
 
 
 
@@ -844,13 +895,13 @@ urlpatterns = [
     url(r'^fork$', project_fork, name='project-fork'),
     url(r'^refresh$', Refresh_database, name='refresh-db'),
 
-    url(r'^oc$', toggle_oc, name='toggle-oc'),
-
     url(r'^usermanagement$', usermanagementForm, name='usermanagement-form'),
     url(r'^adduser$', usermanagement, name='usermanagement-add'),
     url(r'^deleteuser$', usermanagement2, name='usermanagement-delete'),
 
     url(r'^projectmembersform', project_membersForm, name='project-members-form'),
     url(r'^projectmembersmodify', project_members_modify, name='project-members-modify'),
+
+    url(r'^oc$', toggle_oc, name='oc'),
 
 ]
