@@ -105,9 +105,10 @@ class Ldap(LibBase):
 
 
 
-    def changepassword(self,user, oldpassword,newpassword):
+    def changepassword(self, user, oldpassword, newpassword, validate_old_password = True):
         print_debug("")
-        self.validate_user(user.username, oldpassword)
+        if validate_old_password:
+            self.validate_user(user.username, oldpassword)
         user=self.get_user(user)
         user.password = newpassword
         user = self.modify_user(user)
