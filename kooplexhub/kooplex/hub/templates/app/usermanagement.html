@@ -41,7 +41,7 @@
                 {% csrf_token %}
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <h4>Delete a user</h4>
+                        <h4>Delete a user or generate a new password</h4>
                     </div>
                     <div class="panel-body">
 
@@ -51,8 +51,9 @@
                                 <h4> User details:</h4>
                                 <div class="form-group">
                                   {% for user in users %}
-                                    {{ user.first_name }} {{ user.last_name }}
-                                    <input type="submit" name="button" value="{{ user.username }}" class="btn btn-primary" />
+                                    {{ user.first_name }} {{ user.last_name }} ({{ user.username }})
+                                    <button type="submit" class="btn btn-warning" name="pwgen" value="{{ user.username }}">Generate new password</button>
+                                    <button type="submit" class="btn btn-danger" name="delete" value="{{ user.username }}">Delete user</button>
 <br>
                                   {% endfor %}
                             </div>
