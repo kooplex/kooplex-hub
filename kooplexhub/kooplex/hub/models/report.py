@@ -57,11 +57,12 @@ class Report(models.Model, ModelBase):
         else:
             return os.path.join(self.dashboard_server.get_full_dir_to(), self.project.home, self.path, self.file_name)
 
+#FIXME: this is ugly
     def get_url(self):
-        return os.path.join(self.dashboard_server.url, self.dashboard_server.dir, self.project.home, self.path, self.name)
+        return os.path.join(self.dashboard_server.url, self.dashboard_server.dir, self.project.home, self.name).replace('//', '/')
 
     def get_cache_url(self):
-        return os.path.join(self.dashboard_server.cache_url, self.project.get_relative_home(), self.path, self.name)
+        return os.path.join(self.dashboard_server.cache_url, self.project.get_relative_home(), self.name).replace('//', '/')
 
     def get_environment(self):
         return self.load_json(self.environment)
