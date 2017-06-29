@@ -24,12 +24,13 @@ def worksheets(request):
     assert isinstance(request, HttpRequest)
 
     username = request.user.username
-    list_of_html_reports = Report.objects.filter(type='html')
-    list_of_dashboards = Report.objects.filter(type='dashboard')
-    for dashboard in list_of_dashboards:
-        #if type(dashboard.dashboard_server) == type(Dashboard_server):
-            dashboard.url = dashboard.get_url()
-            dashboard.cache_url = dashboard.get_cache_url()
+    myreports = Report.objects.filter(creator_name = username)
+    publicreports = Report.objects.filter(scope = 'public') #TODO: internal not so trivial
+    for rv in [myreports, publicreports]:
+        for r in rv:
+            if r.type == 'dashboard':
+                r.url = r.get_url()
+                r.cache_url = r.get_cache_url()
 
     return render(
         request,
@@ -38,8 +39,8 @@ def worksheets(request):
         {
             'title':'Browse worksheets',
             'message':'',
-            'reports': list_of_html_reports,
-            'dashboards': list_of_dashboards,
+            'myreports': myreports,
+            'publicreports': publicreports,
             'username' : username,
        })
     )
@@ -72,10 +73,18 @@ def reports_unpublish(request):
     r.delete()
     return HttpResponseRedirect(HUB_REPORTS_URL)
 
+def report_changescope(request):
+    report_id = int(request.POST['reportid'])
+    r = Report.objects.get(id=report_id)
+    r.scope = request.POST['scope']
+    r.save()
+    return HttpResponseRedirect(HUB_REPORTS_URL)
+
 urlpatterns = [
     url(r'^$', worksheets, name='worksheets'),
     url(r'^open$', worksheets_open_html, name='worksheet-open'),
     url(r'^opendashboard$', worksheets_open_as_dashboard, name='worksheet-open-as-dashboard'),
     url(r'^unpublish$', reports_unpublish, name='worksheet-unpublish'),
+    url(r'^changescope$', report_changescope, name='reportschangescope'),
 
 ]

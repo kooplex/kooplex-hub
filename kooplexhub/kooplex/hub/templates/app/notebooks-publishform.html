@@ -20,7 +20,7 @@
                         <div class="well"> <strong>Notebooks</strong> These notebooks will be converted to html and accessible in the <a href="/hub/worksheets" target="_blank" >Reports</a> section</div>
                         <div class="form-group">
                             {% for item in ipynbs %}
-                                <input type="radio" name="ipynb_file" value="{{ item }}"> {{ item }}<br>
+                                <input type="radio" name="ipynb_file" value="{{ item }}" {% if forloop.first %} checked {% endif %} > {{ item }}<br>
                             {% endfor %}
                         </div>
                         <div class="well"> <strong>Data files</strong> These files will be copied next to the deployed notebooks</div>
@@ -31,6 +31,11 @@
                         </div>
                         <div class="form-group">
                             <div class="col-md-offset-2 col-md-10">
+                        <select name = "scope" class = "btn btn-default">
+                            <option value="private">private</option>
+                            <option value="internal">internal</option>
+                            <option value="public">public</option>
+                        </select>
                                 <input type="hidden" name="project_id" value="{{ project_id }}" />
                                 <input type="hidden" name="toconvert_files" value="" />
 

@@ -20,6 +20,7 @@ class Report(models.Model, ModelBase):
     path = models.CharField(max_length=200, null=True)
     url = models.CharField(max_length=200, null=True)
     cache_url = models.CharField(max_length=200, null=True)
+    scope = models.CharField(max_length = 16, null = True)
 
     binds = models.TextField(null=True)
     type = models.CharField(max_length=15)

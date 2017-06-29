@@ -15,16 +15,10 @@
       <ul class="nav navbar-nav">
           {% if username %}
                 <li class="active" ><a href="#myreports" data-toggle="tab">My reports</a></li>
-                <li><a href="#mydashboards" data-toggle="tab">My dashboards</a></li>
-          {% endif %}
-
-
-          {% if username %}
-              <li><a href="#publicreports" data-toggle="tab" >Public reports </a></li>
+                <li><a href="#publicreports" data-toggle="tab" >Public reports </a></li>
           {% else %}
               <li class="active"><a href="#publicreports" data-toggle="tab" >Public reports </a></li>
           {% endif %}
-          <li><a href="#publicdashboards" data-toggle="tab" >Public dashboards </a></li>
       </ul>
     </div><!-- /.navbar-collapse -->
   </div><!-- /.container-fluid -->
@@ -37,19 +31,8 @@
 
      <div id="myreports" class="tab-pane fade in active">
      <div class="row">
-         {% for item in reports %}
-             {% if username == item.creator_name %}
-                {% include 'app/worksheet-partial.html' with publicvar=False %}
-             {% endif %}
-         {% endfor %}
-     </div>
-     </div>
-     <div id="mydashboards" class="tab-pane fade">
-     <div class="row">
-         {% for item in dashboards %}
-            {% if username == item.creator_name %}
-                {% include 'app/worksheet-partial.html' with publicvar=False %}
-            {% endif %}
+         {% for item in myreports %}
+            {% include 'app/worksheet-partial.html' with pane='mine' %}
          {% endfor %}
      </div>
      </div>
@@ -60,23 +43,8 @@
         <div id="publicreports" class="tab-pane fade in active">
      {% endif %}
      <div class="row">
-         {% for item in reports %}
-             {% if item.public %}
-                {% if username != item.creator_name %}
-                    {% include 'app/worksheet-partial.html' with publicvar=True %}
-                 {% endif %}
-             {% endif %}
-         {% endfor %}
-     </div>
-     </div>
-     <div id="publicdashboards" class="tab-pane fade">
-     <div class="row">
-         {% for item in dashboards %}
-             {% if item.public %}
-                {% if username != item.creator_name %}
-                    {% include 'app/worksheet-partial.html' with publicvar=True %}
-                {% endif %}
-             {% endif %}
+         {% for item in publicreports %}
+            {% include 'app/worksheet-partial.html' with pane='public' %}
          {% endfor %}
      </div>
      </div>

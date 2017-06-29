@@ -271,7 +271,7 @@ def notebooks_publishform(request):
 
     #DEPRECATED
     #files = os.listdir(project.get_full_home())
-    folder = os.path.join(get_settings('users', 'srv_dir', None, ''), '_git', project.creator_name, project.path_with_namespace.replace('/', '_'))
+    folder = os.path.join(get_settings('users', 'srv_dir', None, ''), '_git', request.user.username, project.path_with_namespace.replace('/', '_'))
     files = os.listdir(folder)
 
     ipynbs = [];
@@ -319,6 +319,7 @@ def notebooks_publish(request):
         R = Report()
         R.init(D, project, file=ipynb_file, type=type)
         R.deploy(other_files)
+        R.scope = request.POST['scope']
         if len(Report.objects.filter(file_name=R.file_name))==0:
             R.save()
 
