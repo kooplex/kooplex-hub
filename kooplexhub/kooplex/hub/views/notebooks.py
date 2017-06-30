@@ -1,4 +1,4 @@
-﻿import os.path
+import os.path
 import re
 
 from django.conf.urls import patterns, url, include
@@ -618,6 +618,7 @@ import subprocess
 from distutils.dir_util import mkpath
 
 
+#FIXME: put functionality in HubUser model
 class myuser:
 
     def __init__(self):

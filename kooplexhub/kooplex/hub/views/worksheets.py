@@ -1,4 +1,4 @@
-﻿import base64
+import base64
 
 from django.conf.urls import patterns, url, include
 from django.shortcuts import render
@@ -17,6 +17,8 @@ from kooplex.hub.models.project import Project
 
 import os
 
+#TODO: rename worksheet -> report
+
 HUB_REPORTS_URL = '/hub/worksheets'
 
 def worksheets(request):
@@ -25,12 +27,7 @@ def worksheets(request):
 
     username = request.user.username
     myreports = Report.objects.filter(creator_name = username)
-    publicreports = Report.objects.filter(scope = 'public') #TODO: internal not so trivial
-    for rv in [myreports, publicreports]:
-        for r in rv:
-            if r.type == 'dashboard':
-                r.url = r.get_url()
-                r.cache_url = r.get_cache_url()
+    publicreports = Report.objects.filter(scope = 'public') #TODO: MISSING the list of internal reports (not so trivial filter)
 
     return render(
         request,
@@ -53,29 +50,20 @@ def worksheets_open_as_dashboard(request):
     return HttpResponseRedirect(url)
 
 def worksheets_open_html(request):
-    #OBSOLETE
-    #project_id = request.GET['project_id']
-    #file = request.GET['file']
-    #g = Gitlab()
-    #file_vmi = g.get_file(project_id,file)
-    #content=base64.b64decode(file_vmi['content'])
-    project_id = request.GET['project_id']
-    file = request.GET['file']
-#FIXME: path tokens hard coded
-    project = Project.objects.get(id=project_id)
-    filename = os.path.join(get_settings('users', 'srv_dir', None, ''), 'dashboards', project.image.split('-')[-1], project.home, file)
-    content = open(filename).read()
+    report_id = request.GET['report_id']
+    report = Report.objects.get(id = report_id)
+    content = open(report.entry_).read()
     return HttpResponse(content)
 
 def reports_unpublish(request):
     report_id = int(request.GET['report_id'])
-    r = Report.objects.get(id=report_id)
-    r.delete()
+    r = Report.objects.get(id = report_id)
+    r.remove()
     return HttpResponseRedirect(HUB_REPORTS_URL)
 
 def report_changescope(request):
-    report_id = int(request.POST['reportid'])
-    r = Report.objects.get(id=report_id)
+    report_id = int(request.POST['report_id'])
+    r = Report.objects.get(id = report_id)
     r.scope = request.POST['scope']
     r.save()
     return HttpResponseRedirect(HUB_REPORTS_URL)
@@ -86,5 +74,5 @@ urlpatterns = [
     url(r'^opendashboard$', worksheets_open_as_dashboard, name='worksheet-open-as-dashboard'),
     url(r'^unpublish$', reports_unpublish, name='worksheet-unpublish'),
     url(r'^changescope$', report_changescope, name='reportschangescope'),
-
 ]
+
