@@ -12,7 +12,8 @@
       <strong>{{ item.name  }} [{{ item.ts_ }}]</strong> - {{ item.creator_name }} - {{ item.file_name }}
     </a>
   </div>
-  <div id="collapse{{ item.id }}{{ pane }}" class="panel-collapse collapse panel-body">
+  <div id="collapse{{ item.id }}{{ pane }}" class="panel-collapse collapse">
+  <div class="panel-body">
     <div class="projects worksheet" style="text-align: center;">
       <a href="{{ item.url_ }}" target="_blank">
         <img src="{{ item.picture }}"  style="max-height: 200px; max-width: 100%;">
@@ -40,5 +41,6 @@
       {% endif  %}
     </div>    <!-- projects -->
   </div>      <!-- panel body -->
+  </div>      <!-- collapse -->
 </div>        <!-- panel -->
 
