@@ -9,12 +9,11 @@
                 {% csrf_token %}
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <h4>Add users to {{ project.name }}</h4>
+                        <h4>Add members to {{ project.name }}</h4>
                     </div>
                     <div class="panel-body">
                         <div class="row">
                             <div class="col-md-12">
-                                <h4> Members</h4>
                                 <div class="form-group">
                                     {% for user in otherusers %}
                                         <input type="checkbox" name="user_id[{{ user.gitlab_id }}]" value="True">
@@ -43,7 +42,6 @@
                     <div class="panel-body">
                         <div class="row">
                             <div class="col-md-12">
-                                <h4> Members</h4>
                                 <div class="form-group">
                                     {% for member in currentmembers %}
                                         <input type="checkbox" name="user_id[{{ member.gitlab_id }}]" value="True" />
