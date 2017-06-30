@@ -35,6 +35,7 @@ class Project(models.Model, ModelBase):
     environment = models.TextField(null=True)
     binds = models.TextField(null=True)
 
+    gitwd = '_git'
 
 
     class Meta:
@@ -76,6 +77,15 @@ class Project(models.Model, ModelBase):
         for E in list_of_members:
             self.gids +="%d,"%E['id']
 
+    @property
+    def image_(self):
+        return self.image.split('-')[-1]
+
+    @property
+    def gitdir_(self):
+        return os.path.join(get_settings('users', 'srv_dir'), self.gitwd, self.owner_username, self.path_with_namespace.replace('/', '_'))
+
+#TODO: do wee need these?
     def get_full_home(self):
         srv_dir = get_settings('users', 'srv_dir')
         user_home = get_settings('users', 'home_dir')
