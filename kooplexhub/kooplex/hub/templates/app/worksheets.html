@@ -30,23 +30,23 @@
  <div class="tab-content">
 
      <div id="myreports" class="tab-pane fade in active">
-     <div class="row">
-         {% for item in myreports %}
+       {% for item in myreports %}
+         <div class="row">
             {% include 'app/worksheet-partial.html' with pane='mine' %}
-         {% endfor %}
-     </div>
+         </div>
+       {% endfor %}
      </div>
 
      {% if username %}
-        <div id="publicreports" class="tab-pane fade">
+     <div id="publicreports" class="tab-pane fade">
      {% else %}
-        <div id="publicreports" class="tab-pane fade in active">
+     <div id="publicreports" class="tab-pane fade in active">
      {% endif %}
-     <div class="row">
-         {% for item in publicreports %}
+     {% for item in publicreports %}
+         <div class="row">
             {% include 'app/worksheet-partial.html' with pane='public' %}
-         {% endfor %}
-     </div>
+         </div>
+     {% endfor %}
      </div>
  </div>
  

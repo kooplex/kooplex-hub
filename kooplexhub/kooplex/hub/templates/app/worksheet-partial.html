@@ -1,35 +1,44 @@
-<div class=" col-md-6 col-sm-6 col-xs-12">
+<!--div class=" col-md-6 col-sm-6 col-xs-12"-->
+{% if item.type == 'dashboard' %}
+<div class="panel panel-success ">
+{% else %}
 <div class="panel panel-default ">
-    <div class="panel-heading">
-        <h4><strong>{{ item.name  }} [{{ item.ts_ }}]</strong> - {{ item.creator_name }} - {{ item.file_name }}</h4>
-    </div>
-    <div class="panel-body">
-                <div class="projects worksheet" style="text-align: center;">
-                <a href="{{ item.url_ }}" target="_blank">
-                    <img src="{{ item.picture }}"  style="max-height: 200px; max-width: 100%;"></a>
-
-                    <p> {{ item.description }} </p>
-                    <div>
-                        <a href="{{ item.url_ }}" target="_blank">
-                                    <button type="button" class="btn btn-info"><span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span> Open</button></a>
-                        {%  if pane == 'mine' %}
-                                <a href="{% url 'worksheet-unpublish' %}?report_id={{ item.id }}">
-
-                            <button type="button" class="btn btn-danger"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Unpublish</button></a>
-                       <form class="form-horizontal" action="{% url 'reportschangescope' %}" method = "post">
+{% endif %}
+  <div class="panel-heading">
+    <a href="{{ item.url_ }}" target="_blank">
+      <button type="button" class="btn btn-info"><span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span> Open</button>
+    </a>
+    <a data-toggle="collapse" href="#collapse{{ item.id }}{{ pane }}" style="text-decoration: none; color: gray">
+      <strong>{{ item.name  }} [{{ item.ts_ }}]</strong> - {{ item.creator_name }} - {{ item.file_name }}
+    </a>
+  </div>
+  <div id="collapse{{ item.id }}{{ pane }}" class="panel-collapse collapse panel-body">
+    <div class="projects worksheet" style="text-align: center;">
+      <a href="{{ item.url_ }}" target="_blank">
+        <img src="{{ item.picture }}"  style="max-height: 200px; max-width: 100%;">
+      </a>
+      <p> {{ item.description }} </p>
+      {%  if pane == 'mine' %}
+        <form action="{% url 'reportschangescope' %}" method = "post">
+      {% endif  %}
+          <a href="{{ item.url_ }}" target="_blank">
+            <button type="button" class="btn btn-info" data-toggle="tooltip" title="Open report" data-placement="top"><span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span></button>
+          </a>
+      {%  if pane == 'mine' %}
+          <a href="{% url 'worksheet-unpublish' %}?report_id={{ item.id }}">
+            <button type="button" class="btn btn-danger" data-toggle="tooltip" title="Unpublish this report" data-placement="top"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span></button>
+          </a>
 {% csrf_token %}
-                        <select name = "scope">
-                            <option value="private" {% if item.scope == 'private' %} selected {% endif %}>private</option>
-                            <option value="internal" {% if item.scope == 'internal' %} selected {% endif %}>internal</option>
-                            <option value="public" {% if item.scope == 'public' %} selected {% endif %}>public</option>
-                        </select>
-                            <input type = "hidden"  name = "report_id" value = "{{ item.id }}">
-                            <button type="submit" class="btn btn-warning"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Apply scope</button>
-</form>
-                        {% endif  %}
-                    </div>
-                </div>
-    </div>
-</div>
-</div>
+          <select name = "scope">
+            <option value="private" {% if item.scope == 'private' %} selected {% endif %}>private</option>
+            <option value="internal" {% if item.scope == 'internal' %} selected {% endif %}>internal</option>
+            <option value="public" {% if item.scope == 'public' %} selected {% endif %}>public</option>
+          </select>
+          <input type = "hidden"  name = "report_id" value = "{{ item.id }}">
+          <button type="submit" class="btn btn-warning" data-toggle="tooltip" title="Apply the new scope to this report" data-placement="top"><span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span></button>
+        </form>
+      {% endif  %}
+    </div>    <!-- projects -->
+  </div>      <!-- panel body -->
+</div>        <!-- panel -->
 
