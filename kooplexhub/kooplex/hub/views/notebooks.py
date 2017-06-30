@@ -812,20 +812,46 @@ def project_membersForm(request):
     )
 
 def project_members_modify(request):
-    if  request.POST['button']=='cancel':
+    if  request.POST['button'] == 'Cancel':
         return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
-    p = Project.objects.get(id=request.POST['project_id'])
+    project = Project.objects.get(id = request.POST['project_id'])
+    gids = []
+    for k in request.POST.keys():
+        try:
+            _, gid, _ = re.split('^user_id\[(\d+)\]', k)
+            gids.append(int(gid))
+        except:
+            pass
+    if len(gids) == 0:
+        # nobody was ticked
+        return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
     g = Gitlab()
-    if request.POST['button']=='Add':
-        g.add_project_members(p.id, int(request.POST['user_id']))
-    elif request.POST['button']=='Remove':
-        g.delete_project_members(p.id, int(request.POST['user_id']))
-
-    m = g.get_project_members(p.id)
-    p.from_gitlab_dict_projectmembers(m)
-    p.save()
+    ooops = []
+    for gid in gids:
+        try:
+            if request.POST['button'] == 'Add':
+                g.add_project_members(project.id, gid)
+            elif request.POST['button'] == 'Remove':
+                g.delete_project_members(project.id, gid)
+        except Exception as e:
+            ooops.append(str(e))
+    try:
+        m = g.get_project_members(project.id)
+        project.from_gitlab_dict_projectmembers(m)
+        project.save()
+    except Exception as e:
+        ooops.append(str(e))
+    if len(ooops):
+        return render(
+            request,
+            'app/error.html',
+            context_instance=RequestContext(request,
+                                            {
+                                                'error_title': 'Error',
+                                                'error_message': ",".join(ooops),
+                                            })
+        )
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
-
 
 def toggle_oc(request):
     assert isinstance(request, HttpRequest)

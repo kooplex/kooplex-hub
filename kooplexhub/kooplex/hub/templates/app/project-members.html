@@ -4,117 +4,65 @@
 
  <div class="row">
     <section id="commitForm">
-        <form action="{% url 'project-members-modify' %}" method="post" class="form-horizontal" onsubmit="collectCheckedElements()">
-                {% csrf_token %}
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <h4>Add/Remove members of {{ project.name }}</h4>
-                    </div>
-                    <div class="panel-body">
-
-
-                        <div class="row">
-                            <div class="col-md-12">
-
-                                <h4> Members</h4>
-                                <div class="form-group">
-                                    {% for member in currentmembers %}
-                                        <input type="checkbox" name="user_id" value="{{ member.gitlab_id }}">
-                                        {{ member.gitlab_id }} {{ member.first_name }} {{ member.last_name }} ({{ member.username }})
-                                        <br>
-                                    {% endfor %}
-
-                                </div>
-                            </div>
-                            </div>
-
-
-                        <div>
-
-                            <div class="form-group" style="text-align: left;">
-
-                                    <input type="hidden" name="current" value="" />
-                                    <input type="hidden" name="project_id" value="{{ project.id }}" />
-
-                                    <input type="submit" name="button" value="Remove" class="btn btn-primary" />
-                                    <input type="submit" name="button" value="Cancel" class="btn btn-secondary" />
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-        </form>
-        <form action="{% url 'project-members-modify' %}" method="post" class="form-horizontal" onsubmit="collectCheckedElements()">
+        {% if otherusers %}
+        <form action="{% url 'project-members-modify' %}" method="post" class="form-horizontal">
                 {% csrf_token %}
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         <h4>Add users to {{ project.name }}</h4>
                     </div>
                     <div class="panel-body">
-
-
                         <div class="row">
                             <div class="col-md-12">
-
                                 <h4> Members</h4>
                                 <div class="form-group">
                                     {% for user in otherusers %}
-                                        <input type="checkbox" name="user_id" value="{{ user.gitlab_id }}">
+                                        <input type="checkbox" name="user_id[{{ user.gitlab_id }}]" value="True">
                                         {{ user.gitlab_id }} {{ user.first_name }} {{ user.last_name }} ({{ user.username }})
                                         <br>
                                     {% endfor %}
-
                                 </div>
                             </div>
-                            </div>
-
-
-                        <div>
-
-                            <div class="form-group" style="text-align: left;">
-
-                                    <input type="hidden" name="current" value="" />
-                                    <input type="hidden" name="project_id" value="{{ project.id }}" />
-
-                                    <input type="submit" name="button" value="Add" class="btn btn-primary" />
-                                    <input type="submit" name="button" value="Cancel" class="btn btn-secondary" />
-                            </div>
                         </div>
-
+                        <div class="form-group" style="text-align: left;">
+                                <input type="hidden" name="project_id" value="{{ project.id }}" />
+                                <input type="submit" name="button" value="Add" class="btn btn-primary" />
+                                <input type="submit" name="button" value="Cancel" class="btn btn-secondary" />
+                        </div>
                     </div>
                 </div>
         </form>
-
+        {% endif %}
+        {% if currentmembers %}
+        <form action="{% url 'project-members-modify' %}" method="post" class="form-horizontal">
+                {% csrf_token %}
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4>Remove members from {{ project.name }}</h4>
+                    </div>
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h4> Members</h4>
+                                <div class="form-group">
+                                    {% for member in currentmembers %}
+                                        <input type="checkbox" name="user_id[{{ member.gitlab_id }}]" value="True" />
+                                        {{ member.gitlab_id }} {{ member.first_name }} {{ member.last_name }} ({{ member.username }})
+                                        <br>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group" style="text-align: left;">
+                                <input type="hidden" name="project_id" value="{{ project.id }}" />
+                                <input type="submit" name="button" value="Remove" class="btn btn-primary" />
+                                <input type="submit" name="button" value="Cancel" class="btn btn-secondary" />
+                        </div>
+                    </div>
+                </div>
+        </form>
+        {% endif %}
         </section>
     </div>
-
-
-    <!--<script>
-        function collectCheckedElements() {
-            var inputs = document.getElementsByTagName("input");
-            var modified_files = "";
-            var deleted_files = "";
-            for (var i = 1; i < inputs.length; i++) {
-                if (inputs[i].type == "checkbox") {
-                    if (inputs[i].checked) {
-                        if (inputs[i].value == "deleted") {
-                            deleted_files += "'" + inputs[i].name + "',";
-                        } else {
-                            modified_files += "'" + inputs[i].name + "',";
-                        }
-                        inputs[i].disabled = true;
-                    }
-                }
-            }
-            if (modified_files.length > 0) {
-                modified_files = modified_files.substring(0, modified_files.length - 1);
-            }
-            if (deleted_files.length > 0) {
-                deleted_files = deleted_files.substring(0, deleted_files.length - 1);
-            }
-            document.getElementsByName("modified_files")[0].value = modified_files;
-            document.getElementsByName("deleted_files")[0].value = deleted_files;
-        }
-    </script> -->
 
 {% endblock %}
