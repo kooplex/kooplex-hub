@@ -117,7 +117,7 @@ class Report(models.Model, ModelBase):
             ooops = []
             other_files.append(os.path.join(self.path, self.file_name))
             for file in other_files:
-                file_to_deploy = os.path.join(self.project.gitdir_, self.path, file)
+                file_to_deploy = os.path.join(self.gitdir_, self.path, file)
                 file_to_create = os.path.join(self.target_, file)
                 dir_util.mkpath(os.path.split(file_to_create)[0])
                 try:

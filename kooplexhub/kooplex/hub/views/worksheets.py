@@ -27,12 +27,21 @@ def worksheets(request):
     assert isinstance(request, HttpRequest)
 
     username = request.user.username
-    my_gitlab_id = str( HubUser.objects.get(username = username).gitlab_id )
-    myreports = Report.objects.filter(creator_name = username)
+    try:
+        me = HubUser.objects.get(username = username)
+        my_gitlab_id = str( HubUser.objects.get(username = username).gitlab_id )
+        myreports = Report.objects.filter(creator = me)
+    except:
+        # unauthenticated
+        myreports = []
     publicreports = list( Report.objects.filter(scope = 'public') )
-    internal_ = Report.objects.filter(scope = 'internal')
-    internal_good_ = filter(lambda x: my_gitlab_id in x.project.gids.split(','), internal_)
-    publicreports.extend(internal_good_)
+    try:
+        internal_ = Report.objects.filter(scope = 'internal')
+        internal_good_ = filter(lambda x: my_gitlab_id in x.project.gids.split(','), internal_)
+        publicreports.extend(internal_good_)
+    except:
+        # unauthenticated
+        pass
 
     return render(
         request,
