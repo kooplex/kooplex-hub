@@ -5,12 +5,12 @@
     </div>
     <div class="panel-body">
                 <div class="projects worksheet" style="text-align: center;">
-                <a href="{{ item.url }}" target="_blank">
+                <a href="{{ item.url_ }}" target="_blank">
                     <img src="{{ item.picture }}"  style="max-height: 200px; max-width: 100%;"></a>
 
                     <p> {{ item.description }} </p>
                     <div>
-                        <a href="{{ item.url }}" target="_blank">
+                        <a href="{{ item.url_ }}" target="_blank">
                                     <button type="button" class="btn btn-info"><span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span> Open</button></a>
                         {%  if pane == 'mine' %}
                                 <a href="{% url 'worksheet-unpublish' %}?report_id={{ item.id }}">
@@ -23,7 +23,7 @@
                             <option value="internal" {% if item.scope == 'internal' %} selected {% endif %}>internal</option>
                             <option value="public" {% if item.scope == 'public' %} selected {% endif %}>public</option>
                         </select>
-                            <input type = "hidden"  name = "reportid" value = "{{ item.id }}">
+                            <input type = "hidden"  name = "report_id" value = "{{ item.id }}">
                             <button type="submit" class="btn btn-warning"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Apply scope</button>
 </form>
                         {% endif  %}
