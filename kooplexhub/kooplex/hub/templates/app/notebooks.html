@@ -19,7 +19,7 @@
       <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
         <ul class="nav navbar-nav">
             <li class="active" ><a href="#myprojects" data-toggle="tab">My projects</a></li>
-            <li><a href="#otherprojects" data-toggle="tab">Other public projects</a></li>
+            <li><a href="#otherprojects" data-toggle="tab">Public projects</a></li>
         </ul>
 
         <ul class="nav navbar-nav navbar-right">
@@ -46,14 +46,18 @@
   <div id="myprojects" class="tab-pane fade in active">
 
         {% for item in shared_with_me_projects %}
+          <div class="row">
             {% include 'app/notebooks-project-partial.html' %}
+          </div>
         {% endfor %}
 
   </div>
   <div id="otherprojects" class="tab-pane fade">
 
         {% for item in public_projects %}
+          <div class="row">
             {% include 'app/notebooks-project-partial.html' with publicvar=True %}
+          </div>
         {% endfor %}
 
   </div>
