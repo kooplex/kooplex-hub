@@ -271,11 +271,8 @@ def notebooks_clone(request):
 def notebooks_publishform(request):
     assert isinstance(request, HttpRequest)
     project_id = request.GET['project_id']
-    project = Project.objects.get(id=project_id)
-
-    #DEPRECATED
-    #files = os.listdir(project.get_full_home())
-    folder = os.path.join(get_settings('users', 'srv_dir', None, ''), '_git', request.user.username, project.path_with_namespace.replace('/', '_'))
+    project = Project.objects.get(id = project_id)
+    folder = project.gitdir(username = request.user.username)
     files = os.listdir(folder)
 
     ipynbs = [];
@@ -311,7 +308,7 @@ def notebooks_publish(request):
         type = 'dashboard'
 
     # TODO here and elsewhere: does the filter give more than 1?
-    project = Project.objects.get(id=project_id)
+    project = Project.objects.get(id = project_id)
 
     ipynb_file = request.POST['ipynb_file']
     other_files = request.POST.getlist('other_files')
@@ -319,13 +316,13 @@ def notebooks_publish(request):
     image_type = project.image.split(prefix + "-notebook-")[1]
 
     try:
-        D = Dashboard_server.objects.get(type=image_type)
-        R = Report()
-        R.init(D, project, file=ipynb_file, type=type)
-        R.deploy(other_files)
-        R.scope = request.POST['scope']
-        if len(Report.objects.filter(file_name=R.file_name))==0:
-            R.save()
+        dashboard_server = Dashboard_server.objects.get(type = image_type)
+        creator = HubUser.objects.get(username = request.user.username)
+        report = Report()
+        report.init(dashboard_server, project, creator, file = ipynb_file, type = type)
+        report.deploy(other_files)
+        report.scope = request.POST['scope']
+        report.save()
 
         return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
     except Exception as e:

@@ -13,6 +13,7 @@ from kooplex.lib.libbase import get_settings
 from kooplex.lib.gitlab import Gitlab
 from kooplex.lib.spawner import Spawner
 from kooplex.lib.debug import *
+from kooplex.hub.models.user import HubUser
 from kooplex.hub.models.project import Project
 
 import os
@@ -26,8 +27,12 @@ def worksheets(request):
     assert isinstance(request, HttpRequest)
 
     username = request.user.username
+    my_gitlab_id = str( HubUser.objects.get(username = username).gitlab_id )
     myreports = Report.objects.filter(creator_name = username)
-    publicreports = Report.objects.filter(scope = 'public') #TODO: MISSING the list of internal reports (not so trivial filter)
+    publicreports = list( Report.objects.filter(scope = 'public') )
+    internal_ = Report.objects.filter(scope = 'internal')
+    internal_good_ = filter(lambda x: my_gitlab_id in x.project.gids.split(','), internal_)
+    publicreports.extend(internal_good_)
 
     return render(
         request,

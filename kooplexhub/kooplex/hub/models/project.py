@@ -65,9 +65,7 @@ class Project(models.Model, ModelBase):
         self.description=gitlab_dict['description']
         self.visibility=gitlab_dict['visibility']
 
-        project_dir = get_settings('users', 'project_dir')
-        #project_dir = project_dir.replace('{$username}', self.owner_username)
-        self.home = project_dir.replace('{$path_with_namespace}', self.path_with_namespace)
+        self.home = self.path_with_namespace.replace('/', '_')
 
     def get_safename(self):
         return self.name.replace(" ",'-')
@@ -84,6 +82,9 @@ class Project(models.Model, ModelBase):
     @property
     def gitdir_(self):
         return os.path.join(get_settings('users', 'srv_dir'), self.gitwd, self.owner_username, self.path_with_namespace.replace('/', '_'))
+ 
+    def gitdir(self, username):
+        return os.path.join(get_settings('users', 'srv_dir'), self.gitwd, username, self.path_with_namespace.replace('/', '_'))
 
 #TODO: do wee need these?
     def get_full_home(self):
