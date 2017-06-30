@@ -49,7 +49,10 @@ class Dashboard_server(models.Model, ModelBase):
         self.command = dict['Command']
         self.environment = None  # not returned by api
         self.volumes = None  # TODO
-        self.ports = dict['Ports'][0]['PrivatePort']
+        for mappings in dict['Ports']:
+            if 'PublicPort' in mappings:
+                self.ports = mappings['PublicPort']
+                break
         self.state = dict['State']  # created|restarting|running|paused|exited|dead
         prefix = get_settings('dashboards', 'prefix', None, '')
         self.type = self.image.split(prefix + "_dashboards-")[1]
@@ -63,7 +66,8 @@ class Dashboard_server(models.Model, ModelBase):
 
         outer_host = get_settings('hub', 'outer_host')
         proto = get_settings('hub', 'protocol')
-        self.url = "%s://%s/%s/" % (proto, outer_host, url_prefix)
+        url_wo_proto = ("%s/%s" % (outer_host, url_prefix)).replace('//', '/')
+        self.url = "%s://%s" % (proto, url_wo_proto)
         self.cache_url = "%s/_api/cache/" % (self.url)
 
 

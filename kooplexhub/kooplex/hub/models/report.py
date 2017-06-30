@@ -47,8 +47,8 @@ class Report(models.Model, ModelBase):
         if self.type == 'html':
             return "/hub/worksheetsopen?report_id=%d" %  (self.id)
         elif self.type == 'dashboard':
-#FIXME: path is not fully determined
-            return os.path.join(self.dashboard_server.url, self.path)
+#FIXME: why dashboard here
+            return os.path.join(self.dashboard_server.url, self.path, 'dashboards', self.project.home, self.name)
         else:
             assert False, "Unhandled type %s" % self.type
 
