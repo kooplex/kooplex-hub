@@ -5,6 +5,7 @@ from .modelbase import ModelBase
 
 from kooplex.lib.gitlab import Gitlab
 from kooplex.lib.libbase import get_settings
+from .user import HubUser
 
 class Project(models.Model, ModelBase):
     # From gitlab api projects
@@ -98,9 +99,11 @@ class Project(models.Model, ModelBase):
         user_home = user_home.replace('{$username}', self.owner_username)
         return os.path.join(user_home, self.home)
 
-    def get_members(self):
-        return self.gids.split(",")[:-1]
-
+    @property
+    def members_(self):
+        for gid in self.gids.split(","):
+            if len(gid):
+                yield HubUser.objects.get(gitlab_id = gid)
 
 
     def get_binds(self):

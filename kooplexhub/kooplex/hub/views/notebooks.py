@@ -785,18 +785,19 @@ def usermanagement2(request):
         )
 
 def project_membersForm(request):
-    p = Project.objects.get(id=request.GET['project_id'])
-    current_members_ids = p.get_members()
-    current_members=[]
-    for id in current_members_ids:
-        current_members.append(HubUser.objects.get(gitlab_id=id))
+    me = HubUser.objects.get(username = request.user.username)
+    project = Project.objects.get(id = request.GET['project_id'])
+    current_members = list( project.members_ )
+    current_members.pop( current_members.index(me) )
     allusers = HubUser.objects.all()
     other_users = []
     for user in allusers:
-#FIXME: gitlabadmin still appears in the list!
         if user.gitlab_id == 2:
+            # skip gitlabadmin
             continue
         if user in current_members:
+            continue
+        if user == me:
             continue
         other_users.append(user)
     return render(
@@ -805,7 +806,7 @@ def project_membersForm(request):
         context_instance=RequestContext(request,
                                         {
                                             'currentmembers': current_members,
-                                            'project': p,
+                                            'project': project,
                                             'otherusers': other_users,
                                         })
     )
