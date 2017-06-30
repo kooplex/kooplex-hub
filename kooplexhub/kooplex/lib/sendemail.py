@@ -34,7 +34,7 @@ Best regards,
     except Exception as e:
         pass
     finally:
-        with open('/tmp/%s', 'w') as f:
+        with open('/tmp/%s' % username, 'w') as f:
             f.write(pw)
 
     content = """
