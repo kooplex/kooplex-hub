@@ -17,7 +17,7 @@ from kooplex.lib.restclient import RestClient
 from kooplex.lib.smartdocker import Docker
 from kooplex.lib.proxy import Proxy
 from kooplex.lib.jupyter import Jupyter
-from kooplex.hub.models import Container, Notebook, Session, Project, MountPoints, HubUser
+from kooplex.hub.models import Container, Notebook, Session, Project, MountPointProjectBinding, HubUser
 
 from kooplex.lib import ldap
 
@@ -120,9 +120,21 @@ class Spawner(RestClient):
         binds[share_host] = {'bind': share_container, 'mode': 'rw'}
 
         # dynamically added data sources
-        # TODO if type is not local!!!
-        for mountpoint in MountPoints.objects.filter(project_id=self.project.id):
-            binds[mountpoint.host_mountpoint] = {'bind': os.path.join('/mnt', mountpoint.name), 'mode': 'rw'}
+        dockerclient = self.make_docker_client()
+        for mpb in MountPointProjectBinding.objects.filter(project = self.project):
+            if mpb.mountpoint.type == 'local':
+                binds[mpb.mountpoint.mountpoint_] = {'bind': os.path.join('/mnt', mpb.mountpoint.name), 'mode': mpb.mountpoint.accessrights_}
+            elif mpb.mountpoint.type == 'nfs':
+                mp = mpb.mountpoint
+                volname = "%s-%s-%s" % (mp.name, mp.server_, mp.mountpoint_.replace('/', '_'))
+                if not volname in [ v['Name'] for v in dockerclient.volumes()['Volumes'] ]:
+                    dockerclient.create_volume(
+                       name = volname, 
+                       driver='local', 
+                       driver_opts = { 'type': 'nfs', 'o': 'addr=%s,%s' % (mp.server_, mp.accessrights_), 'device': ':' + mp.mountpoint_ },
+                       labels = {}
+                    )
+                binds[volname] = { 'bind': os.path.join('/mnt', mp.name), 'mode': mpb.mountpoint.accessrights_ }
 
         return binds
 
@@ -178,6 +190,12 @@ class Spawner(RestClient):
         lst = -1 if gitlabids[-1] == ',' else 0
         projectmembers = [ HubUser.objects.get(gitlab_id = int(x)).username for x in gitlabids[:lst].split(',') ]
         projectowner = self.project.owner_username
+
+        mpgids = []
+        for mpb in MountPointProjectBinding.objects.filter(project = self.project):
+            if mpb.mountpoint.type == 'nfs' and mpb.mountpoint.host_groupid > 0:
+                mpgids.append("%s:%d" % (mpb.mountpoint.name, mpb.mountpoint.host_groupid))
+
 #NOTE: offset is hardcoded here!
         G_OFFSET = 20000
         notebook.set_environment({
@@ -190,19 +208,19 @@ class Spawner(RestClient):
                 'PR_NAME': self.project.safename,
                 'PR_MEMBERS': ",".join(projectmembers),
                 'PR_URL': "ssh://git@%s/%s.git" % (get_settings('gitlab', 'ssh_host'), self.project.path_with_namespace),
-                'GID_OFFSET': G_OFFSET
+                'GID_OFFSET': G_OFFSET,
+                'MNT_GIDS': ",".join(mpgids)
             })
+
         #create folders here and set ownership
         git_host = os.path.join(self.srv_path, '_git', self.username, projectname)
         mkdir(git_host, U.uid, G_OFFSET + self.project.id, 0b111100000)
         share_host = os.path.join(self.srv_path, '_share', projectname)
         mkdir(share_host, HubUser.objects.get(username = projectowner).uid, G_OFFSET + self.project.id, 0b111111101)
-        #print(notebook_path)
+
         notebook.set_binds(binds)
         # TODO: make binds read-only once config is fixed
         notebook.set_ports([self.port])
-        #print('notebookrunnng')
-
 
         return notebook
 
@@ -213,7 +231,6 @@ class Spawner(RestClient):
             image=self.image,
             project_owner=self.project.owner_username,
             project_name=self.project.name,)
-            #image = self.image)
         if notebooks.count() > 0:
             # TODO: verify if container is there and proxy works
             return notebooks[0]

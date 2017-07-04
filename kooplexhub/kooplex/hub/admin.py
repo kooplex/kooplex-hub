@@ -10,7 +10,7 @@ from kooplex.hub.models.dashboard_server import Dashboard_server
 from kooplex.hub.models.dockerimage import DockerImage
 from kooplex.hub.models.project import Project
 from kooplex.hub.models.report import Report
-from kooplex.hub.models.mountpoints import MountPoints
+from kooplex.hub.models.mountpoints import MountPoints, MountPointProjectBinding, MountPointPrivilegeBinding
 from kooplex.hub.models.user import HubUser
 
 
@@ -50,7 +50,17 @@ class ReportAdmin(admin.ModelAdmin):
 
 @admin.register(MountPoints)
 class MountPoints(admin.ModelAdmin):
-    list_display = ('id', 'name', 'project_id', 'type', 'host_mountpoint', 'container_mountpoint')
+    list_display = ('id', 'name', 'type', 'host_mountpoint', 'host_groupid')
+    pass
+
+@admin.register(MountPointProjectBinding)
+class MountPointProjectBinding(admin.ModelAdmin):
+    list_display = ('id', 'mountpoint', 'project', 'readwrite')
+    pass
+
+@admin.register(MountPointPrivilegeBinding)
+class MountPointPrivilegeBinding(admin.ModelAdmin):
+    list_display = ('id', 'mountpoint', 'user', 'accessrights')
     pass
 
 @admin.register(HubUser)

@@ -1,51 +1,57 @@
 ﻿<!-- Modal -->
 <div id="project-new" class="modal fade modal-dialog" role="dialog">
-
-
-    <!-- Modal content-->
-    <div class="modal-content">
-        <form id="newproject" class="form-horizontal" action="{% url 'project-new' %}" method="post">
-            {% csrf_token %}
-            <div class="modal-header">
-              <button type="button" class="close" data-dismiss="modal">&times;</button>
-                 <h4 class="modal-title">New project</h4>
-              </div>
-              <div class="modal-body">
-                <p>Enter a new name for the project.</p>
-                <fieldset>
-                    <div class="form-group has-error">
-                        <label for="project_name">Project name:</label>
-                        <input type="text" class="form-control" id="project_name" name="project_name" placeholder="Enter Name">
-                    </div>
-                     {% if errors %}
-                        <p class="validation-summary-errors">Please use only lower/Upper case letters, hyphens, spaces and underscores </p>
-                    {% endif %}
-                    <div class="form-group">
-                        <label for="project_image">Choose an image for your project</label><br>
-                        <select id="project_images" name="project_image">
-                            {% for image in notebook_images %}
-                            <option value="{{ image }}">{{ image }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="project_description">Description of the project</label><br>
-                        <textarea rows="6" cols="50" id="project_description" name="project_description">
-                        Description here
-                        </textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="project_public">Make it public?</label><br>
-                        <input type="radio" name="project_public" value="public" > Yes<br>
-                        <input type="radio" name="project_public" value="private" checked> No<br>
-                    </div>
-                </fieldset>
-              </div>
-              <div class="modal-footer">
-                <button type="submit" class="btn btn-default" title="OK"> Create</button>
-                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-              </div>
-        </form>
-    </div>
-
+  <!-- Modal content-->
+  <div class="modal-content">
+    <form id="newproject" class="form-horizontal" action="{% url 'project-new' %}" method="post">
+      {% csrf_token %}
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">Create a new project</h4>
+      </div>
+      <div class="modal-body">
+        <fieldset>
+          <div class="form-group has-error">
+            <label for="project_name">Enter the name of your new project:</label>
+            <input type="text" class="form-control" id="project_name" name="project_name" placeholder="Enter Name">
+          </div>
+          {% if errors %}
+          <p class="validation-summary-errors">Please use only lower/Upper case letters, hyphens, spaces and underscores </p>
+          {% endif %}
+          <div class="form-group">
+            <label for="project_image">Choose an image for your project</label><br>
+            <select id="project_images" name="project_image">
+              {% for image in notebook_images %}
+              <option value="{{ image }}">{{ image }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="project_description">Describe your project</label><br>
+            <textarea rows="6" cols="50" id="project_description" name="project_description">
+ Description here
+            </textarea>
+          </div>
+          {% if bindings %}
+          <div class="form-group">
+            <label for="project_storages">Select shared storages to associate with your project</label><br>
+            {% for binding in bindings %}
+            <input type="checkbox" name="mp{{ binding.mountpoint.id }}" value="{{ binding.mountpoint.id }}">{{ binding.mountpoint.name }} 
+              {% if binding.rw_ %}
+            (grant write access <input type="checkbox" name="mprw{{ binding.mountpoint.id }}" value="{{ binding.mountpoint.id }}">)
+              {% else %}
+            (read only access)
+              {% endif %}<br>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </fieldset>
+      </div>
+      <div class="modal-footer">
+        <label for="footer">Create your project:</label>
+        <button type="submit" class="btn btn-default" name="button" value="public"> Public</button>
+        <button type="submit" class="btn btn-default" name="button" value="private"> Private</button>
+        <button class="btn btn-default" data-dismiss="modal">Cancel</button>
+      </div>
+    </form>
   </div>
+</div>

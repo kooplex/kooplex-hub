@@ -17,7 +17,7 @@ from kooplex.lib.libbase import get_settings
 from kooplex.hub.models.notebook import Notebook
 from kooplex.hub.models.session import Session
 from kooplex.hub.models.project import Project
-from kooplex.hub.models.mountpoints import MountPoints
+from kooplex.hub.models.mountpoints import MountPoints, MountPointProjectBinding, MountPointPrivilegeBinding
 from kooplex.hub.models.dockerimage import DockerImage
 from kooplex.hub.models.report import Report
 from kooplex.hub.models.user import HubUser
@@ -47,47 +47,36 @@ def notebooks(request,errors=[], commits=[] ):
 
     assert isinstance(request, HttpRequest)
 
-    # Todo we need to know the user's id. Not from gitlab?
-#   if not HubUser.objects.filter(user=request.user):
-#       h = HubUser()
-#        g = Gitlab()
-#        gitlab_user = g.get_user(request.user.username)[0]
-#        h.init(gitlab_user['id'], request.user)
-#        h.save()
-
-    #user = HubUser.objects.get(user=request.user)
     user = request.user
-    hubuser = HubUser.objects.get(username=user.username)
+    hubuser = HubUser.objects.get(username = user.username)
 
     print_debug("Rendering notebook page, getting sessions")
-    notebooks = Notebook.objects.filter(username=user.username)
+    notebooks = Notebook.objects.filter(username = user.username)
     sessions = []
     running = []
     for n in notebooks:
-        ss = Session.objects.filter(notebook=n)
+        ss = Session.objects.filter(notebook = n)
         for s in ss:
             sessions.append(s)
             running.append(s.project_id)
 
     print_debug("Rendering notebook page, projects from gitlab")
-    #my_projects = Project.objects.filter(owner_username=username)
 
     all_projects = Project.objects.all()
-    shared_with_me_projects = [project for project in all_projects for i in project.gids.split(",") if i  and int(i) == hubuser.gitlab_id ]
-
-    #projects, unforkable_projectids = g.get_projects()
+    shared_with_me_projects = [ project for project in all_projects for i in project.gids.split(",") if i  and int(i) == hubuser.gitlab_id ]
 
     access_error=[]
 
 	#TODO: get uid and gid from projects json
     print_debug("Rendering notebook page, unforkable project  from gitlab")
-    public_projects = Project.objects.filter(visibility="public").exclude(owner_username=user.username)
+    public_projects = Project.objects.filter(visibility = "public").exclude(owner_username = user.username)
 
     print_debug("Rendering notebook page, images from docker")
 
-    notebook_images = [image.name for image in DockerImage.objects.all()]
-
+    notebook_images = [ image.name for image in DockerImage.objects.all() ]
     netrc_exists = os.path.exists(os.path.join(get_settings('users', 'srv_dir', None, ''), 'home', user.username, '.netrc' ))
+
+    bindings = [ mppb for mppb in MountPointPrivilegeBinding.objects.filter(user = hubuser) ]
 
     # TODO unittest to check if port is accessible (ufw allow "5555")
     return render(
@@ -110,6 +99,7 @@ def notebooks(request,errors=[], commits=[] ):
             'access_error' : access_error,
             'oc_running': False,
             'netrc_exists': netrc_exists,
+            'bindings': bindings,
         })
     )
 
@@ -117,19 +107,25 @@ def project_new(request):
     assert isinstance(request, HttpRequest)
     project_name = request.POST['project_name']
     project_image_name = request.POST['project_image']
-    public = request.POST['project_public']
     description = request.POST['project_description']
-    print_debug("Creating new project, create in gitlab")
+    public = request.POST['button'] #== 'public'
 
     unwanted_characters = re.compile('[a-zA-Z]([0-9]|[a-zA-Z]|-|_| )*')
     matchObj = unwanted_characters.match(project_name)
-    try:
-        if matchObj.end()!=len(project_name):
+    try:  #FIXME: not nice
+        if matchObj.end() != len(project_name):
             raise IndexError
     except:
-        return notebooks(request,errors=['UseOnlyLowerLetters'])  #,description=description)
+        return notebooks(request, errors=['UseOnlyLowerLetters'])  #,description=description)
 
-
+    # prepare shares
+    mp = []
+    mprw = []
+    for k, v in request.POST.items():
+        if re.match('^mp\d+', k):
+            mp.append(int(v))
+        if re.match('^mprw\d+', k):
+            mprw.append(int(v))
     g = Gitlab(request)
     print_debug("Creating new project, add variables")
     try:
@@ -146,18 +142,17 @@ def project_new(request):
     
         #Add image_name to project
         p.image = project_image_name
-    
-        #Shared storage
-    #    if len(MountPoints.objects.filter(name=p.name)) == 0:
-    #        m = MountPoints()
-    #        srv_dir = get_settings('users', 'srv_dir', None, '')
-    #        host_mountpoint = os.path.join('share', p.owner_username, p.path_with_namespace)
-    #        container_mountpoint = os.path.join(p.get_relative_home(), '{$username}', 'projects', '{$path_with_namespace}', '/share', p.name)
-    #        m.init(name=p.name, type="local", host_mountpoint=host_mountpoint, container_mountpoint=container_mountpoint, project=p)
-    #        m.save()
-    
         p.save()
-    
+
+        # manage shares
+        while len(mp):
+            mpid = mp.pop()
+            mpb = MountPointProjectBinding()
+            mpb.project = p
+            mpb.mountpoint = MountPoints.objects.get(id = mpid)
+            mpb.readwrite = mpid in mprw
+            mpb.save()
+
         #Create a README
         g.create_project_readme(p.id,"README.md","* proba","Created a default README")
         return HttpResponseRedirect(HUB_NOTEBOOKS_URL)

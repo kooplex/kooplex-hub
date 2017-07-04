@@ -30,16 +30,13 @@
       </div><!-- /.navbar-collapse -->
     </div><!-- /.container-fluid -->
   </nav>
-
-{% include 'app/notebooks-owncloud.html' %}
-{% include 'app/notebooks-new-partial.html' with myprojects=True %}
-
 </div>
 
+{% include 'app/notebooks-owncloud.html' %}
+{% include 'app/notebooks-new-partial.html' %}
+
 {%  if access_error %}
-
 <div class="alert alert-danger" role="alert">{{ access_error }}</div>
-
 {% endif %}
 
 <div class="tab-content">
