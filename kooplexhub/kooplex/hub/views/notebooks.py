@@ -293,6 +293,8 @@ def notebooks_publishform(request):
 def notebooks_publish(request):
     """ Converts ipynb to html in the opened container, creates variable in gitlab, commits file in gitlab"""
     assert isinstance(request, HttpRequest)
+    if 'cancel' in request.POST.keys():
+        return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
     print_debug("Deploying notebook,")
 
     username = request.user.username
