@@ -29,6 +29,7 @@ from kooplex.lib.gitlab import Gitlab
 from kooplex.lib.gitlabadmin import GitlabAdmin
 from kooplex.lib.repo import Repo
 from kooplex.lib.spawner import Spawner
+from kooplex.lib.ocspawner import OCSpawner
 from kooplex.lib.jupyter import Jupyter
 from kooplex.lib.smartdocker import Docker
 from kooplex.lib.sendemail import send_new_password
@@ -74,9 +75,11 @@ def notebooks(request,errors=[], commits=[] ):
     print_debug("Rendering notebook page, images from docker")
 
     notebook_images = [ image.name for image in DockerImage.objects.all() ]
-    netrc_exists = os.path.exists(os.path.join(get_settings('users', 'srv_dir', None, ''), 'home', user.username, '.netrc' ))
 
     bindings = [ mppb for mppb in MountPointPrivilegeBinding.objects.filter(user = hubuser) ]
+
+    ocspawner = OCSpawner(hubuser)
+    oc_running = ocspawner.state_ == 'running'
 
     # TODO unittest to check if port is accessible (ufw allow "5555")
     return render(
@@ -97,8 +100,8 @@ def notebooks(request,errors=[], commits=[] ):
             'notebook_images' : notebook_images,
             'errors' : errors,
             'access_error' : access_error,
-            'oc_running': False,
-            'netrc_exists': netrc_exists,
+            'oc_running': oc_running,
+            'netrc_exists': hubuser.file_netrc_exists_,
             'bindings': bindings,
         })
     )
@@ -853,35 +856,30 @@ def project_members_modify(request):
 def toggle_oc(request):
     assert isinstance(request, HttpRequest)
     try:
-        pw = request.POST['password']
-        netrc_exists = request.POST['netrc_exists'] == 'True'
         user = request.user
-        hubuser = HubUser.objects.get(username=user.username)
-        if not netrc_exists and (len(pw) == 0):
-            raise Exception("Please provide a password so the synchronization daemon can access your owncloud storage")
+        hubuser = HubUser.objects.get(username = user.username)
+        ocspawner = OCSpawner(hubuser)
+        if request.POST['button'] == 'Start':
+            pw = request.POST['password']
+            netrc_exists = request.POST['netrc_exists'] == 'True'
+            if not netrc_exists and (len(pw) == 0):
+                raise Exception("Please provide a password so the synchronization daemon can access your owncloud storage")
 
 #FIXME: machine name hardcoded
-        if len(pw):
-            fn = os.path.join(get_settings('users', 'srv_dir', None, ''), 'home', user.username, '.netrc' )
-            netrc = """
-machine %s
-login %s
-password %s
-""" % ('kooplex-nginx', user.username, pw)
-            with open(fn, 'w') as f:
-                f.write(netrc)
-            os.chown(fn, hubuser.uid, hubuser.gid)
-            os.chmod(fn, 0b111000000)
-            
-        return render(
-            request,
-            'app/error.html',
-            context_instance=RequestContext(request,
-                                            {
-                                                'error_title': 'Error',
-                                                'error_message': "not implemented",
-                                            })
-        )
+            if len(pw):
+                fn_netrc = hubuser.file_netrc_
+                netrc = """
+mach    ine %s
+logi    n %s
+pass    word %s
+"""     % ('kooplex-nginx', user.username, pw)
+                with open(fn_netrc, 'w') as f:
+                    f.write(netrc)
+                os.chown(fn_netrc, hubuser.uid, hubuser.gid)
+                os.chmod(fn_netrc, 0b111000000)
+            ocspawner.start()
+        elif request.POST['button'] == 'Stop':
+            ocspawner.stop()
         return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
     except Exception as e:
         return render(
