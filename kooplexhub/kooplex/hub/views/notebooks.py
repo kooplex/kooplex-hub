@@ -869,9 +869,9 @@ def toggle_oc(request):
             if len(pw):
                 fn_netrc = hubuser.file_netrc_
                 netrc = """
-mach    ine %s
-logi    n %s
-pass    word %s
+machine %s
+login %s
+password %s
 """     % ('kooplex-nginx', user.username, pw)
                 with open(fn_netrc, 'w') as f:
                     f.write(netrc)
