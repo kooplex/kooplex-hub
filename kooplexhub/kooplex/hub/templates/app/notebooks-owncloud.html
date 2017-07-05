@@ -11,7 +11,7 @@
               </div>
               <div  class="modal-body">
 
-              {% if oc_isrunning %}
+              {% if oc_running %}
                <p>The daemon process is running.</p>
               {% else %}
                   {% if netrc_exists %}
@@ -21,17 +21,16 @@
                   {% else %}
                     <p>The daemon process needs to access your owncloud storage, thus a <code>~/.netrc</code> file is generated for you with your password.</p>
                   {% endif %}
-               <p>
+               <p>Password: <input type="password" name="password"></p>
               {% endif %}
-              Password: <input type="password" name="password">
               </div>
               <div class="modal-footer">
                 <input type="hidden" name="netrc_exists" value="{{ netrc_exists }}">
-                {% if oc_isrunning %}
-                <button type="submit" class="btn btn-default" title="Stop">Stop</button>
+                {% if oc_running %}
+                <button type="submit" class="btn btn-default" name="button" value="Stop">Stop</button>
                 {% else %}
-                <button type="submit" class="btn btn-default" title="Start">Start</button>
-                <button type="submit" class="btn btn-default" title="Single">Single</button>
+                <button type="submit" class="btn btn-default" name="button" value="Start">Start</button>
+                <button type="submit" class="btn btn-default" name="button" value="Single">Single</button>
                 {% endif %}
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
               </div>
