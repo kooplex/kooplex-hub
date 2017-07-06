@@ -87,11 +87,19 @@
             <span class="glyphicon glyphicon-flag" aria-hidden="true"></span>
           </button>
         </a>
+{% if item.owner_username == user.username %} 
         <a href="#" data-toggle="modal" data-target="#change-image-{{ item.safename  }}">
           <button role="button" type="button" class="btn btn-info" data-toggle="tooltip" title="Change container image for project {{ item.name }}" data-placement="top">
             <span class="glyphicon glyphicon-hdd" aria-hidden="true"></span>
           </button>
         </a>
+{% else %}
+        <a href="#">
+          <button role="button" type="button" class="btn btn-default" data-toggle="tooltip" title="Changing the container image for project {{ item.name }} is disabled. Please ask the project owner ({{ item.owner_username }}) to change it." data-placement="top">
+            <span class="glyphicon glyphicon-hdd" aria-hidden="true"></span>
+          </button>
+        </a>
+{% endif %}
 
       {% endif %}  <!-- if running //-->
 
@@ -112,6 +120,7 @@
 
             <!-- PROJECT RELATED STUFF -->
 
+{% if item.owner_username == user.username %} 
         <a href="{% url 'project-members-form' %}?project_id={{ item.id }}">
           <button role="button" type="button" class="btn btn-primary" data-toggle="tooltip" title="Manage the users of the project {{ item.name }}" data-placement="top">
             <span class="glyphicon glyphicon-user" aria-hidden="true"></span>
@@ -135,6 +144,19 @@
         </a>
 
        {% endif %}
+{% else %}
+        <a href="#">
+          <button role="button" type="button" class="btn btn-default" data-toggle="tooltip" title="Ask the owner of project {{ item.name }} ({{ item.owner_username }}) to remove you or add someone else to this project (Leave the project functionality is gonna be implmented soon.)" data-placement="top">
+            <span class="glyphicon glyphicon-user" aria-hidden="true"></span>
+          </button>
+        </a>
+
+        <a href="#">
+          <button type="button" class="btn btn-default" data-toggle="tooltip" title="Deletion of project {{ item.name }} is disabled. (Soon it's gonna be implemented)" data-placement="top">
+            <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+          </button>
+        </a>
+{% endif %}
 {% endif %}  <!-- if publicvar //-->
 
       </div>  <!-- col 5 //-->
