@@ -55,3 +55,27 @@ Failure to deliver mail: %s
         s.quit()
     except:
         pass
+
+
+def send_token(user, token):
+    content = """
+Dear %s %s,
+
+a kooplex account password reset request for your account (%s) is issued.
+
+Provide the token %s along with the new password to be set at the dashboard.
+
+Best regards,
+ Kooplex team
+    """ % (user.first_name, user.last_name, user.username, token)
+
+    smtp_server = 'mail.elte.hu' #FIXME: hardcoded
+
+    msg = MIMEText(content)
+    msg['Subject'] = 'Kooplex account password reset request'
+    msg['From'] = 'kooplex@complex.elte.hu'
+    msg['To'] = user.email
+
+    s = smtplib.SMTP(smtp_server)
+    s.send_message(msg)
+    s.quit()
