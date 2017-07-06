@@ -14,78 +14,52 @@ from kooplex.lib.debug import *
 
 HUB_URL = '/hub'
 
-
 def change_password(request):
-    print_debug("")
     """Renders the Change password page."""
     assert isinstance(request, HttpRequest)
-    user=request.user
+    user = request.user
     return render(
         request,
         'app/password-form.html',
         context_instance = RequestContext(request,
         {
-            'title':'Change Password',
             'user': user,
-            'next_page': '/hub',
+            'next_page': HUB_URL,
         })
     )
 
-#OBSOLETED
-#def change_password_form(request):
-#    print_debug("")
-#    """Checks password in ldap and changes it"""
-#    assert isinstance(request, HttpRequest)
-#    username = request.POST['username']
-#    oldpassword = request.POST['oldpassword']
-#    newpassword = request.POST['newpassword']
-#    gadmin = GitlabAdmin(request)
-#    userid = request.user.id
-#    try:
-#        msg = gadmin.modify_user(userid, 'password', newpassword)
-#    except ValidationError:
-#        return render(
-#            request,
-#            'app/password-form.html',
-#            context_instance=RequestContext(request,
-#            {
-#            'errors' : True,
-#            'title': 'Change Password',
-#            'next_page': '/hub',
-#        })
-#        )
-#
-#    return HttpResponseRedirect(HUB_URL)
-
 def change_password_form_ldap(request):
-    print_debug("")
     """Checks password in ldap and changes it"""
     assert isinstance(request, HttpRequest)
     username = request.POST['username']
-    oldpassword = request.POST['oldpassword']
-    newpassword = request.POST['newpassword']
-
-    l = Ldap()
-    uu=request.user
-    uu.set_password(newpassword)            #FIXME: should not be here
     try:
-        l.changepassword(request.user,oldpassword,newpassword)
-    except ValidationError:
+        oldpassword = request.POST['oldpassword']
+        newpassword = request.POST['newpassword']
+        newpassword2 = request.POST['newpassword2']
+        assert len(oldpassword), "Don't forget to type your old password"
+        assert len(newpassword), "Don't forget to type your new password"
+        assert newpassword == newpassword2, "Make sure you type your new password twice the same"
+
+        l = Ldap()
+        uu = request.user
+        uu.set_password(newpassword)            #FIXME: should not be here
+        l.changepassword(request.user, oldpassword, newpassword)
+    except Exception as e:
         return render(
             request,
             'app/password-form.html',
             context_instance=RequestContext(request,
             {
-            'errors' : True,
+            'errors' : str(e),
             'title': 'Change Password',
-            'next_page': '/hub',
+            'next_page': HUB_URL,
         })
         )
 
     return HttpResponseRedirect(HUB_URL)
 
 urlpatterns = [
-    url(r'^$', change_password, name='changepassword'),
-    url(r'^pform', change_password_form_ldap, name='pform'),
+    url(r'^$', change_password, name = 'changepassword'),
+    url(r'^pform', change_password_form_ldap, name = 'pform'),
 ]
 

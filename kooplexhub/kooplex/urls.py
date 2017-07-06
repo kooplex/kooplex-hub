@@ -38,20 +38,21 @@ urlpatterns = (
             }
         },
         name='login'),
-    url(r'^hub/chan/$',
-        django.contrib.auth.views.password_change,
-        {
-            'template_name': 'app/change-password.html',
-            'password_change_form': BootstrapPasswordChangeForm,
-            'post_change_redirect': '/hub',
-            'extra_context':
-            {
-                'title':'Change Password',
-                'year':datetime.now().year,
-                'next_page': '/hub',
-            }
-        },
-        name='chan'),
+#OBSOLETED
+#    url(r'^hub/chan/$',
+#        django.contrib.auth.views.password_change,
+#        {
+#            'template_name': 'app/change-password.html',
+#            'password_change_form': BootstrapPasswordChangeForm,
+#            'post_change_redirect': '/hub',
+#            'extra_context':
+#            {
+#                'title':'Change Password',
+#                'year':datetime.now().year,
+#                'next_page': '/hub',
+#            }
+#        },
+#        name='chan'),
     url(r'^hub/logout$',
         django.contrib.auth.views.logout,
         {
