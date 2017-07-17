@@ -70,7 +70,7 @@
           </button>
         </a>
 
-      {% else %}
+      {% else %}  <!-- if running //-->
 
         <a href="{% url 'container-start' %}?project_id={{ item.id }}">
           <button role="button" type="button" class="btn btn-success" data-toggle="tooltip" title="Start project container {{ item.name }}" data-placement="top">
@@ -157,6 +157,31 @@
           </button>
         </a>
 {% endif %}
+{% else %} 
+      {% if item.id in running  %}
+
+        <a href="{% url 'container-delete' %}?project_id={{ item.id }}">
+          <button role="button" type="button" class="btn btn-danger" data-toggle="tooltip" title="Stop project container {{ item.name }}" data-placement="top">
+            <span class="glyphicon glyphicon-remove-circle" aria-hidden="true"></span>
+          </button>
+        </a>
+        <a href="{{ session.external_url }}" target="_blank">
+          <button role="button" type="button" class="btn btn-success" data-toggle="tooltip" title="Open project container: {{ item.name }}" data-placement="top">
+            <span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span>
+          </button>
+        </a>
+      {% else %}  <!-- if running //-->
+        <a href="{% url 'container-start' %}?project_id={{ item.id }}">
+          <button role="button" type="button" class="btn btn-success" data-toggle="tooltip" title="Start project container {{ item.name }}" data-placement="top">
+            <span class="glyphicon glyphicon-play" aria-hidden="true"></span>
+          </button>
+        </a>
+        <a href="#">
+          <button role="button" type="button" class="btn btn-default" data-toggle="tooltip" title="Start project container {{ item.name }} to enable this button" data-placement="top">
+            <span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span>
+          </button>
+        </a>
+     {% endif %}  <!-- if running //-->
 {% endif %}  <!-- if publicvar //-->
 
       </div>  <!-- col 5 //-->
