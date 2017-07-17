@@ -4,11 +4,12 @@
 
 
 {% if item.id in running  %}
-    {% resolve sessions item.id as session %}
+    <!-- {% resolve sessions item.id as session %} -->
 
 <div class="panel panel-success">
   <div class="panel-heading ">
-    <a href="{{ session.external_url }}" target="_blank">
+    <!-- a href="{{ session.external_url }}" target="_blank" -->
+    <a href="{% url 'container-open' %}?project_id={{ item.id }}" target="_blank">
       <button role="button" type="button" class="btn btn-success">
         <span class="glyphicon glyphicon-folder-open" aria-hidden="true"> Open</span>
       </button>
@@ -54,7 +55,8 @@
             <span class="glyphicon glyphicon-remove-circle" aria-hidden="true"></span>
           </button>
         </a>
-        <a href="{{ session.external_url }}" target="_blank">
+        <!--a href="{{ session.external_url }}" target="_blank"-->
+        <a href="{% url 'container-open' %}?project_id={{ item.id }}" target="_blank">
           <button role="button" type="button" class="btn btn-success" data-toggle="tooltip" title="Open project container: {{ item.name }}" data-placement="top">
             <span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span>
           </button>

@@ -1,5 +1,6 @@
 import os.path
 import re
+#from urllib.request import urlopen
 
 from django.conf.urls import patterns, url, include
 from django.shortcuts import render
@@ -53,12 +54,12 @@ def notebooks(request,errors=[], commits=[] ):
 
     print_debug("Rendering notebook page, getting sessions")
     notebooks = Notebook.objects.filter(username = user.username)
-    sessions = []
+ #   sessions = []
     running = []
     for n in notebooks:
         ss = Session.objects.filter(notebook = n)
         for s in ss:
-            sessions.append(s)
+ #           sessions.append(s)
             running.append(s.project_id)
 
     print_debug("Rendering notebook page, projects from gitlab")
@@ -88,7 +89,7 @@ def notebooks(request,errors=[], commits=[] ):
         context_instance = RequestContext(request,
         {
             'notebooks': notebooks,
-            'sessions': sessions,
+#            'sessions': sessions,
             'running': running,
             'projects': all_projects,
             'shared_with_me_projects': shared_with_me_projects,
@@ -231,6 +232,17 @@ def container_start(request):
     print_debug("Opening session, Finished")
     #return HttpResponseRedirect(url)
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
+
+def container_open(request):
+    assert isinstance(request, HttpRequest)
+    print_debug("Redirect to notebook server")
+    user = request.user
+    project_id = request.GET['project_id']
+    notebooks = Notebook.objects.filter(username = user.username, project_id = project_id)
+    assert len(notebooks) == 1
+    session = Session.objects.get(notebook = notebooks[0])
+    url_w_token = session.external_url + '/?token=aiSiga1aiFai2AiZu1veeWein5gijei8yeLay2Iecae3ahkiekeisheegh2ahgee'
+    return HttpResponseRedirect(url_w_token)
 
 def container_delete(request):
     assert isinstance(request, HttpRequest)
@@ -899,7 +911,8 @@ urlpatterns = [
     url(r'^$', notebooks, name='notebooks'),
     url(r'^new$', project_new, name='project-new'),
     url(r'^delete_container$', container_delete, name= 'container-delete'),
-    url(r'^open_container$', container_start, name = 'container-start'),
+    url(r'^start_container$', container_start, name = 'container-start'),
+    url(r'^open_container$', container_open, name = 'container-open'),
     url(r'^clone$', notebooks_clone, name = 'notebooks-clone'),
     url(r'^preparetoconverthtml$', notebooks_publishform, name = 'notebooks-publishform'),
     url(r'^converthtml$', notebooks_publish, name = 'notebooks-convert-html'),
