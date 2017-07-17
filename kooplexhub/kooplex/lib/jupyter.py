@@ -13,12 +13,11 @@ class Jupyter(RestClient):
     """Jupyter notebook api client.
     based on: https://gist.github.com/blink1073/ecae5130dfe138ea2aff
     """
-    TOKEN="T"
+    token = "aiSiga1aiFai2AiZu1veeWein5gijei8yeLay2Iecae3ahkiekeisheegh2ahgee"
 
     def __init__(self, notebook):
         print_debug("")
         assert isinstance(notebook, Notebook)
-
         self.notebook = notebook
         # TODO: use external URL for debug but otherwise could just
         # switch to internal IP addresses and bypass the proxy
@@ -35,7 +34,7 @@ class Jupyter(RestClient):
     def http_prepare_headers(self, headers):
         print_debug("")
         headers = RestClient.http_prepare_headers(self, headers)
-        headers['X-XSRF-Token'] = self.TOKEN
+        headers['Authorization'] = "token %s" % self.token
         return headers
     # Contents
 
