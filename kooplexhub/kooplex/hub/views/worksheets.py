@@ -1,4 +1,5 @@
 import base64
+import codecs
 
 from django.conf.urls import patterns, url, include
 from django.shortcuts import render
@@ -66,7 +67,8 @@ def worksheets_open_as_dashboard(request):
 def worksheets_open_html(request):
     report_id = request.GET['report_id']
     report = Report.objects.get(id = report_id)
-    content = open(report.entry_).read()
+    with codecs.open(report.entry_, 'r', 'utf-8') as f:
+        content = f.read()
     return HttpResponse(content)
 
 def reports_unpublish(request):
