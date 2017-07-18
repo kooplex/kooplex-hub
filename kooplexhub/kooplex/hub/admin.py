@@ -12,6 +12,7 @@ from kooplex.hub.models.project import Project
 from kooplex.hub.models.report import Report
 from kooplex.hub.models.mountpoints import MountPoints, MountPointProjectBinding, MountPointPrivilegeBinding
 from kooplex.hub.models.user import HubUser
+from kooplex.hub.models.volume import Volume, VolumeProjectBinding
 
 
 # Register your models here.
@@ -66,6 +67,15 @@ class MountPointPrivilegeBinding(admin.ModelAdmin):
 @admin.register(HubUser)
 class HubUserAdmin(admin.ModelAdmin):
     list_display = ('gitlab_id','username')
+    pass
+
+@admin.register(Volume)
+class VolumeAdmin(admin.ModelAdmin):
+    list_display = ('name', )
+    pass
+
+@admin.register(VolumeProjectBinding)
+class VolumeProjectBindingAdmin(admin.ModelAdmin):
     pass
 
 def admin_main(request):

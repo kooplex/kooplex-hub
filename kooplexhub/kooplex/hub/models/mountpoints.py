@@ -14,6 +14,9 @@ class MountPoints(models.Model, ModelBase):
     host_mountpoint = models.CharField(max_length = 200)
     host_groupid = models.IntegerField(null = True)
 
+    def __str__(self):
+        return self.name
+
     def init(self, name, type, host_mountpoint, container_mountpoint, project):
         self.name = name
         self.type = type
@@ -49,6 +52,9 @@ class MountPointProjectBinding(models.Model, ModelBase):
     mountpoint = models.ForeignKey(MountPoints, null = True)
     project = models.ForeignKey(Project, null = True)
     readwrite = models.BooleanField(default = False)
+
+    def __str__(self):
+        return "%s:%s" % (self.project, self.mountpoint)
     
 class MountPointPrivilegeBinding(models.Model, ModelBase):
     id = models.AutoField(primary_key = True)
@@ -56,6 +62,8 @@ class MountPointPrivilegeBinding(models.Model, ModelBase):
     user = models.ForeignKey(HubUser, null = True)
     accessrights = models.CharField(max_length = 16)
 
+    def __str__(self):
+        return "%s@%s" % (self.user, self.mountpoint)
 
     @property
     def rw_(self):

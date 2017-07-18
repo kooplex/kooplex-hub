@@ -38,6 +38,8 @@ class Project(models.Model, ModelBase):
 
     gitwd = '_git'
 
+    def __str__(self):
+        return "%s@%s" % (self.name, self.owner_username)
 
     class Meta:
         db_table = "kooplex_hub_project"

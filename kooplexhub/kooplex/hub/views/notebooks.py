@@ -22,6 +22,7 @@ from kooplex.hub.models.mountpoints import MountPoints, MountPointProjectBinding
 from kooplex.hub.models.dockerimage import DockerImage
 from kooplex.hub.models.report import Report
 from kooplex.hub.models.user import HubUser
+from kooplex.hub.models.volume import Volume
 from kooplex.hub.models.dashboard_server import Dashboard_server
 from django.contrib.auth.models import User
 
@@ -906,6 +907,11 @@ password %s
 
 
 
+def addvolume(request):
+    v = Volume(name = 'tesztvolume')
+    resp = v.create()
+    return HttpResponse(resp)
+
 
 urlpatterns = [
     url(r'^$', notebooks, name='notebooks'),
@@ -937,4 +943,5 @@ urlpatterns = [
 
     url(r'^oc$', toggle_oc, name='oc'),
 
+    url(r'^addvolume$', addvolume, name='addvolume'),
 ]

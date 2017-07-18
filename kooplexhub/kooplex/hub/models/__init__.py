@@ -8,4 +8,4 @@ from .dockerimage import DockerImage
 from .dashboard_server import Dashboard_server
 from .mountpoints import MountPoints, MountPointProjectBinding, MountPointPrivilegeBinding
 from .user import HubUser
-
+from .volume import Volume, VolumeProjectBinding

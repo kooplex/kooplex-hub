@@ -17,7 +17,8 @@ from kooplex.lib.restclient import RestClient
 from kooplex.lib.smartdocker import Docker
 from kooplex.lib.proxy import Proxy
 from kooplex.lib.jupyter import Jupyter
-from kooplex.hub.models import Container, Notebook, Session, Project, MountPointProjectBinding, HubUser
+#TODO: from kooplex.hub.models import *
+from kooplex.hub.models import Container, Notebook, Session, Project, MountPointProjectBinding, HubUser, VolumeProjectBinding, Volume
 
 from kooplex.lib import ldap
 
@@ -135,6 +136,10 @@ class Spawner(RestClient):
                        labels = {}
                     )
                 binds[volname] = { 'bind': os.path.join('/mnt', mp.name), 'mode': mpb.mountpoint.accessrights_ }
+
+        for vpb in VolumeProjectBinding.objects.filter(project = self.project):
+            binds[vpb.volume.name] = { 'bind': vpb.volume.container_mountpoint_, 'mode': vpb.accessrights_ }
+
 
         return binds
 
