@@ -1,0 +1,23 @@
+<label for="project_name">Enter the name of your new project:</label><br>
+<input type="text" class="form-control" id="project_name" name="project_name" placeholder="Enter Name">
+{% if errors %}
+<p class="validation-summary-errors">Please use only lower/Upper case letters, hyphens, spaces and underscores </p>
+{% endif %}
+
+<label for="project_template">Choose a template for your project</label><br>
+<select id="project_template" name="project_templatee">
+  {% for image in notebook_images %}
+  <option value="image={{ image }}" style="background-color: silver">{{ image }} (empty)</option>
+  {% endfor %}
+  {% for project in shared_with_me_projects %}
+  <option value="clonable_project={{ project }}" style="background-color: gray">{{ project }}</option>
+  {% endfor %}
+  {% for project in public_projects %}
+  <option value="clonable_project={{ project }}" style="background-color: lightgray">{{ project }}</option>
+  {% endfor %}
+</select><br>
+
+<label for="project_description">Describe your project</label><br>
+<textarea rows="6" cols="50" id="project_description" name="project_description">
+Description here
+</textarea>

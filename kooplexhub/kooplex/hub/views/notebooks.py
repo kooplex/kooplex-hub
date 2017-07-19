@@ -19,6 +19,7 @@ from kooplex.hub.models.notebook import Notebook
 from kooplex.hub.models.session import Session
 from kooplex.hub.models.project import Project
 from kooplex.hub.models.mountpoints import MountPoints, MountPointProjectBinding, MountPointPrivilegeBinding
+from kooplex.hub.models.volume import Volume, VolumeProjectBinding
 from kooplex.hub.models.dockerimage import DockerImage
 from kooplex.hub.models.report import Report
 from kooplex.hub.models.user import HubUser
@@ -79,6 +80,7 @@ def notebooks(request,errors=[], commits=[] ):
     notebook_images = [ image.name for image in DockerImage.objects.all() ]
 
     bindings = [ mppb for mppb in MountPointPrivilegeBinding.objects.filter(user = hubuser) ]
+    volumes = Volume.objects.all()
 
     ocspawner = OCSpawner(hubuser)
     oc_running = ocspawner.state_ == 'running'
@@ -90,13 +92,10 @@ def notebooks(request,errors=[], commits=[] ):
         context_instance = RequestContext(request,
         {
             'notebooks': notebooks,
-#            'sessions': sessions,
             'running': running,
-            'projects': all_projects,
             'shared_with_me_projects': shared_with_me_projects,
             'commits': commits,
             'public_projects': public_projects,
-            'my_projects': public_projects,
             'user': user,
             'notebook_dir_name': NOTEBOOK_DIR_NAME,
             'notebook_images' : notebook_images,
@@ -105,6 +104,7 @@ def notebooks(request,errors=[], commits=[] ):
             'oc_running': oc_running,
             'netrc_exists': hubuser.file_netrc_exists_,
             'bindings': bindings,
+            'volumes': volumes,
         })
     )
 
