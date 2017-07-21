@@ -1,4 +1,4 @@
-﻿<form class="form-horizontal" action="{% url 'notebooks-revert'%}?project_id={{ project.id }}" method="post">
+<form action="{% url 'notebooks-revert' %}" method="post" class="form-horizontal">
   {% csrf_token %}
   <div class="panel-heading">
     <h4>Restore your project <strong>{{ project.name }}</strong> to a former state</h4>
@@ -16,6 +16,7 @@
         {% endfor %}
       </select>
       {% endcomment %}
+      <input type="hidden" name="project_id" value="{{ project.id }}" />
     </div>    <!-- panel.body -->
     <div class="panel-footer">
       <input type="submit" name="revert" value="Revert" class="btn btn-primary" />

@@ -192,12 +192,6 @@ def container_start(request):
     print_debug("Opening session,")
     project_id = request.GET['project_id']
     project = Project.objects.get(id=project_id)
-
-#obsoleted by notebook startup script
-#    repo = Repo(request.user.username, project.path_with_namespace)
-#    if not repo.is_local_existing():
-#        repo.clone()
-
     assert isinstance(request, HttpRequest)
     project_id = request.GET['project_id']
     project = Project.objects.get(id=project_id)
@@ -218,13 +212,9 @@ def container_start(request):
     #    session = spawner.start_session(notebook_path, 'python3', project.path_with_namespace, notebook.name, project_id=project.id)
     session = spawner.start_session(notebook_path, 'python3', project.path_with_namespace, notebook.name,
                                     project_id=project.id)
-
-    #project.session = session
-    #project.save()
     session.project_id = project.id
     session.save()
     print_debug("Opening session, Finished")
-    #return HttpResponseRedirect(url)
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
 def container_open(request):
@@ -386,16 +376,16 @@ def Refresh_database(request):
 
 def notebooks_revert(request):
     assert isinstance(request, HttpRequest)
-    if 'cancel' not in request.POST.keys():
-        print_debug("Reverting project,")
-        repo_name = request.GET['repo']
-        repo = Repo(request.user.username, repo_name)
-        print(repo_name)
-        # Popup ablak kell
-        repo.ensure_local_dir_empty()
-        repo.clone()
-        print_debug("Reverting project, Finished")
-
+    if 'cancel' in request.POST.keys():
+        return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
+    print_debug("Reverting project,")
+    project_id = request.POST['project_id']
+    project = Project.objects.get(id = project_id)
+    repo_name = project.path_with_namespace
+    repo = Repo(request.user.username, repo_name)
+    repo.ensure_local_dir_empty()
+    repo.clone()
+    print_debug("Reverting project, Finished")
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
     
     
@@ -462,8 +452,8 @@ def notebooks_commit(request):
     if 'cancel' in request.POST.keys():
         return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
-    project_id = int(request.POST['project_id'])
-    project = Project.objects.get(id=project_id)
+    project_id = request.POST['project_id']
+    project = Project.objects.get(id = project_id)
     message = request.POST['message']
     is_forked = False #request.POST['is_forked']
 
@@ -934,7 +924,6 @@ urlpatterns = [
     url(r'^converthtml$', notebooks_publish, name = 'notebooks-convert-html'),
     url(r'^commit$', notebooks_commit, name='notebooks-commit'),
     url(r'^commitform$', notebooks_commitform, name='notebooks-commitform'),
-#    url(r'^revertform$', notebooks_revertform, name='notebooks-revertform'),
     url(r'^revert$', notebooks_revert, name='notebooks-revert'),
     url(r'^mergerequestform$', notebooks_mergerequestform, name='notebooks-mergerequestform'),
     url(r'^mergerequestlist', notebooks_mergerequestlist, name='notebooks-mergerequestlist'),
