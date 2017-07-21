@@ -1,10 +1,15 @@
 {% if volumes %}
 <label>Select volumes to attach to your project</label><br>
 {% for volume in volumes %}
-<input type="checkbox" name="vol={{ volume }}" value="{{ volume }}">{{ volume }}
+<input type="checkbox" name="vol={{ volume }}" value="{{ volume }}"
+  {% for p, vs in volumes_attached.items %}
+    {% if p = item  and volume in vs %}
+      checked
+    {% endif %}
+  {% endfor %}>{{ volume }}
+
 <br>
 {% endfor %}
-
 {% endif %}
 
 {% if vlomues and bindings %}
@@ -14,12 +19,20 @@
 {% if bindings %}
 <label>Select shared storages to associate with your project</label><br>
 {% for binding in bindings %}
-<input type="checkbox" name="mp={{ binding.mountpoint.id }}" value="{{ binding.mountpoint.id }}">{{ binding.mountpoint.name }}
+<input type="checkbox" name="mp={{ binding.mountpoint.id }}" value="{{ binding.mountpoint.id }}"
+  {% for p, pbs in shares_attached.items %}
+    {% if p = item and binding in pbs %}
+      checked
+    {% endif %}
+  {% endfor %}>{{ binding.mountpoint.name }}
+{% comment %}
   {% if binding.rw_ %}
 (grant write access <input type="checkbox" name="mprw={{ binding.mountpoint.id }}" value="{{ binding.mountpoint.id }}">)
   {% else %}
 (read only access)
-  {% endif %}<br>
+  {% endif %}
+{% endcomment %}
+<br>
 {% endfor %}
 {% endif %}
 

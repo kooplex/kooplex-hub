@@ -1,7 +1,4 @@
-﻿<!-- Modal -->
-<div id="owncloud" class="modal fade modal-dialog" role="dialog">
-
-    <!-- Modal content-->
+<div id="owncloud" class="modal fade modal-dialog" role="dialog" style="position: fixed; top: 0px; ">
     <div class="modal-content">
         <form class="form-horizontal" action="{% url 'oc' %}" method="post">
             {% csrf_token %}
@@ -35,6 +32,5 @@
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
               </div>
         </form>
-    </div>
-
-</div>
+    </div>      <!-- Modal content -->
+</div>          <!-- owncloud -->

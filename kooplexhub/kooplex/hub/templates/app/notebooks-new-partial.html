@@ -1,4 +1,4 @@
-﻿<div id="project-new" class="modal fade modal-dialog" role="dialog" style="position: fixed; top: 0px; ">
+<div id="project-new" class="modal fade modal-dialog" role="dialog" style="position: fixed; top: 0px; ">
   <div class="modal-content">
     <form id="newproject" class="form-horizontal" action="{% url 'project-new' %}" method="post">
       {% csrf_token %}
@@ -7,7 +7,7 @@
         <h4>Create new project</h4>
         <ul class="nav nav-tabs">
           <li class="active"><a href="#pane_template" data-toggle="tab">Template</a></li>
-          <li><a href="#pane_volume" data-toggle="tab">Storage ans volumes</a></li>
+          <li><a href="#pane_volume" data-toggle="tab">Storage and volumes</a></li>
         </ul>
         <div class="tab-content">
           <div id="pane_template" class="tab-pane fade in active">

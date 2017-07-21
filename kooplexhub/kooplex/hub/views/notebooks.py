@@ -55,31 +55,23 @@ def notebooks(request,errors=[], commits=[] ):
 
     print_debug("Rendering notebook page, getting sessions")
     notebooks = Notebook.objects.filter(username = user.username)
- #   sessions = []
     running = []
     for n in notebooks:
         ss = Session.objects.filter(notebook = n)
         for s in ss:
- #           sessions.append(s)
             running.append(s.project_id)
 
-    print_debug("Rendering notebook page, projects from gitlab")
-
-    all_projects = Project.objects.all()
-    shared_with_me_projects = [ project for project in all_projects for i in project.gids.split(",") if i  and int(i) == hubuser.gitlab_id ]
-
-    access_error=[]
-
-	#TODO: get uid and gid from projects json
-    print_debug("Rendering notebook page, unforkable project  from gitlab")
-    public_projects = Project.objects.filter(visibility = "public").exclude(owner_username = user.username)
-
-    print_debug("Rendering notebook page, images from docker")
+    projects_all = Project.objects.all()
+    projects_sharedwithme = [ project for project in projects_all for i in project.gids.split(",") if i  and int(i) == hubuser.gitlab_id ]
+    projects_public = Project.objects.filter(visibility = "public").exclude(owner_username = user.username)
 
     notebook_images = [ image.name for image in DockerImage.objects.all() ]
 
-    bindings = [ mppb for mppb in MountPointPrivilegeBinding.objects.filter(user = hubuser) ]
+    shares = [ mppb for mppb in MountPointPrivilegeBinding.objects.filter(user = hubuser) ]
+    shares_attached = dict( map(lambda p: (p, MountPointProjectBinding.objects.filter( project = p )), projects_sharedwithme) )
+
     volumes = Volume.objects.all()
+    volumes_attached = dict( map(lambda p: (p, [ vpb.volume for vpb in VolumeProjectBinding.objects.filter(project = p) ]), projects_sharedwithme) )
 
     ocspawner = OCSpawner(hubuser)
     oc_running = ocspawner.state_ == 'running'
@@ -90,20 +82,22 @@ def notebooks(request,errors=[], commits=[] ):
         'app/notebooks.html',
         context_instance = RequestContext(request,
         {
+            'user': user,
             'notebooks': notebooks,
             'running': running,
-            'shared_with_me_projects': shared_with_me_projects,
             'commits': commits,
-            'public_projects': public_projects,
-            'user': user,
+
+            'shared_with_me_projects': projects_sharedwithme,
+            'public_projects': projects_public,
             'notebook_dir_name': NOTEBOOK_DIR_NAME,
             'notebook_images' : notebook_images,
             'errors' : errors,
-            'access_error' : access_error,
             'oc_running': oc_running,
             'netrc_exists': hubuser.file_netrc_exists_,
-            'bindings': bindings,
+            'bindings': shares,
+            'shares_attached': shares_attached,
             'volumes': volumes,
+            'volumes_attached': volumes_attached,
         })
     )
 
@@ -929,6 +923,9 @@ def addvolume(request):
     resp = v.create()
     return HttpResponse(resp)
 
+def project_settings(request):
+    return HttpResponse(str(request))
+
 
 urlpatterns = [
     url(r'^$', notebooks, name='notebooks'),
@@ -961,4 +958,7 @@ urlpatterns = [
     url(r'^oc$', toggle_oc, name='oc'),
 
     url(r'^addvolume$', addvolume, name='addvolume'),
+
+    
+    url(r'^project_settings$', project_settings, name='project-settings'),
 ]

@@ -27,17 +27,13 @@
           <li><a href="#" data-toggle="modal" data-target="#project-new"><button type="button" class="btn btn-lg  btn-primary navbar-btn">Start new project </button></a></li>
 
         </ul>
-      </div><!-- /.navbar-collapse -->
-    </div><!-- /.container-fluid -->
+      </div>            <!-- /.navbar-collapse -->
+    </div>              <!-- /.container-fluid -->
   </nav>
-</div>
+</div>                  <!-- row -->
 
 {% include 'app/notebooks-owncloud.html' %}
 {% include 'app/notebooks-new-partial.html' %}
-
-{%  if access_error %}
-<div class="alert alert-danger" role="alert">{{ access_error }}</div>
-{% endif %}
 
 {% if errors %}
 <div class="alert alert-danger" role="alert">
@@ -46,7 +42,6 @@
   {% endfor %}
 </div>
 {% endif %}
-
 
 <div class="tab-content">
   <div id="myprojects" class="tab-pane fade in active">
@@ -68,6 +63,5 @@
 
   </div>
 </div><!-- /.tab-content -->
-
 
 {% endblock %}
