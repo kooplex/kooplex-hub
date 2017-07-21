@@ -4,7 +4,7 @@
     <h4>Restore your project <strong>{{ project.name }}</strong> to a former state</h4>
   </div>
   <div class="panel-body">
-  {% if commits|length < 0 %}
+  {% if commits %}
     <div class="panel-body">
       <div class="alert alert-danger" role="alert">
         This action will delete your ~/git folder, roll back your project to the latest commit and clone it from the repository!
