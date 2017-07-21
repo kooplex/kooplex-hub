@@ -104,15 +104,9 @@
 
             <!-- GIT RELATED STUFF -->
 
-
         <a href="{% url 'notebooks-commitform' %}?project_id={{ item.id }}">
-          <button role="button" type="button" class="btn btn-warning" data-toggle="tooltip" title="Commit your changes to project {{ item.name }}" data-placement="top">
-            <span class="glyphicon glyphicon-thumbs-up" aria-hidden="true"></span>
-          </button>
-        </a>
-        <a href="{% url 'notebooks-revertform' %}?project_id={{ item.id }}">
-          <button role="button" type="button" class="btn btn-info" data-toggle="tooltip" title="Revert changes to project {{ item.name }} to a former version" data-placement="top">
-            <span class="glyphicon glyphicon-thumbs-down" aria-hidden="true"></span>
+          <button role="button" type="button" class="btn btn-warning" data-toggle="tooltip" title="Commit your changes to project {{ item.name }} or revert to a former commited state" data-placement="top">
+            <span class="glyphicon glyphicon-pushpin" aria-hidden="true"></span>
           </button>
         </a>
 

@@ -1,0 +1,18 @@
+{% extends "app/layout.html" %}
+
+{% block content %}
+
+<ul class="nav nav-tabs">
+  <li class="active"><a href="#pane_commit" data-toggle="tab">Commit</a></li>
+  <li><a href="#pane_revert" data-toggle="tab">Revert</a></li>
+</ul>
+<div class="tab-content">
+  <div id="pane_commit" class="tab-pane fade in active">
+    {% include 'app/notebooks-commitform.html' %}
+  </div>
+  <div id="pane_revert" class="tab-pane fade">
+    {% include 'app/notebooks-revertform.html' %}
+  </div>
+</div>   <!-- tab-content -->
+
+{% endblock %}

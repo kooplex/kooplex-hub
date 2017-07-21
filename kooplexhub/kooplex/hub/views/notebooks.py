@@ -428,29 +428,15 @@ def commit_style(commits):
 
     return commits
 
-def notebooks_revertform(request):
-    project_id = request.GET['project_id']
-    project = Project.objects.get(id=project_id)
-    g = Gitlab(request)
-    commits = g.get_repository_commits(project.id)
-    commits = commit_style(commits)
-    return render(
-        request,
-        'app/notebooks-revertform.html',
-        context_instance=RequestContext(request,
-        {
-            'project': project,
-            'commits' : commits,
-        })
-    )
-
-
 def notebooks_commitform(request):
     assert isinstance(request, HttpRequest)
     project_id = request.GET['project_id']
+    project = Project.objects.get(id = project_id)
+    g = Gitlab(request)
     target_id = 0
     username = request.user.username
-    project = Project.objects.get(id=project_id)
+    commits = g.get_repository_commits(project.id)
+    commits = commit_style(commits)
 
     try:
         repo = Repo(username, project.path_with_namespace)
@@ -461,12 +447,13 @@ def notebooks_commitform(request):
 
     return render(
         request,
-        'app/notebooks-commitform.html',
+        'app/notebooks-gitform.html',
         context_instance=RequestContext(request,
         {
             'project': project,
             'target_id': target_id,
             'committable_dict' : committable_dict,
+            'commits' : commits,
         })
     )
 
@@ -947,7 +934,7 @@ urlpatterns = [
     url(r'^converthtml$', notebooks_publish, name = 'notebooks-convert-html'),
     url(r'^commit$', notebooks_commit, name='notebooks-commit'),
     url(r'^commitform$', notebooks_commitform, name='notebooks-commitform'),
-    url(r'^revertform$', notebooks_revertform, name='notebooks-revertform'),
+#    url(r'^revertform$', notebooks_revertform, name='notebooks-revertform'),
     url(r'^revert$', notebooks_revert, name='notebooks-revert'),
     url(r'^mergerequestform$', notebooks_mergerequestform, name='notebooks-mergerequestform'),
     url(r'^mergerequestlist', notebooks_mergerequestlist, name='notebooks-mergerequestlist'),
