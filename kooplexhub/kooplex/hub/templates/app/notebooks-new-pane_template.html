@@ -1,11 +1,8 @@
 <label for="project_name">Enter the name of your new project:</label><br>
 <input type="text" class="form-control" id="project_name" name="project_name" placeholder="Enter Name">
-{% if errors %}
-<p class="validation-summary-errors">Please use only lower/Upper case letters, hyphens, spaces and underscores </p>
-{% endif %}
 
 <label for="project_template">Choose a template for your project</label><br>
-<select id="project_template" name="project_templatee">
+<select id="project_template" name="project_template">
   {% for image in notebook_images %}
   <option value="image={{ image }}" style="background-color: silver">{{ image }} (empty)</option>
   {% endfor %}

@@ -39,6 +39,15 @@
 <div class="alert alert-danger" role="alert">{{ access_error }}</div>
 {% endif %}
 
+{% if errors %}
+<div class="alert alert-danger" role="alert">
+  {% for error in errors %}
+  <p class="validation-summary-errors">{{ error }}</p>
+  {% endfor %}
+</div>
+{% endif %}
+
+
 <div class="tab-content">
   <div id="myprojects" class="tab-pane fade in active">
 

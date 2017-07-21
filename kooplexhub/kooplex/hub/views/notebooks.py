@@ -23,7 +23,6 @@ from kooplex.hub.models.volume import Volume, VolumeProjectBinding
 from kooplex.hub.models.dockerimage import DockerImage
 from kooplex.hub.models.report import Report
 from kooplex.hub.models.user import HubUser
-from kooplex.hub.models.volume import Volume
 from kooplex.hub.models.dashboard_server import Dashboard_server
 from django.contrib.auth.models import User
 
@@ -110,36 +109,48 @@ def notebooks(request,errors=[], commits=[] ):
 
 def project_new(request):
     assert isinstance(request, HttpRequest)
-    project_name = request.POST['project_name']
-    project_image_name = request.POST['project_image']
-    description = request.POST['project_description']
-    public = request.POST['button'] #== 'public'
+    ooops = []
+    project_name = request.POST['project_name'].strip()
+#TODO: nicer regexp
+    if not re.match(r'^[a-zA-Z]([0-9]|[a-zA-Z]|-|_| )*$', project_name):
+        ooops.append('For project name specification please use only Upper/lower case letters, hyphens, spaces and underscores.')
+    description = request.POST['project_description'].strip()
+#FIXME: regexp
+#    if not re.match(r'^[a-zA-Z]([0-9]|[a-zA-Z]|-|_| |\n)*$', description):
+#        ooops.append('In your project description use only Upper/lower case letters, hyphens, spaces and underscores.')
+    if len(ooops):
+        return notebooks(request, errors = ooops)
+    scope = request.POST['button']
+    template = request.POST['project_template']
 
-    unwanted_characters = re.compile('[a-zA-Z]([0-9]|[a-zA-Z]|-|_| )*')
-    matchObj = unwanted_characters.match(project_name)
-    try:  #FIXME: not nice
-        if matchObj.end() != len(project_name):
-            raise IndexError
-    except:
-        return notebooks(request, errors=['UseOnlyLowerLetters'])  #,description=description)
+    if template.startswith('clonable_project='):
+        return notebooks(request, errors = [ 'This part of the code is not implemented yed.' ])
+        # project_image_name =
+    elif template.startswith('image='):
+        project_image_name = template.split('=')[-1]
 
-    # prepare shares
+    # parse shares and volumes
     mp = []
     mprw = []
+    vols = []
     for k, v in request.POST.items():
-        if re.match('^mp\d+', k):
+        if re.match('^mp=\d+', k):
             mp.append(int(v))
-        if re.match('^mprw\d+', k):
+        elif re.match('^mprw=\d+', k):
             mprw.append(int(v))
+        elif re.match('^vol=', k):
+            V = Volume.objects.filter(name = v)[0]  #FIXME: use id here and sg like get
+            vols.append(V)
+
+#FIXME: PREPARE THE APPROPRIATE GIT FOLDER HERE: image= case: git clone, clonable_project= case: git clone the 2, copy files, git add, git push, rm temp
     g = Gitlab(request)
     print_debug("Creating new project, add variables")
     try:
-        message_json = g.create_project(project_name, public, description)
+        message_json = g.create_project(project_name, scope, description)
         if len(message_json):
             raise Exception(message_json)
+#FIXME: check failure
         res = g.get_project_by_name(project_name)
-# # #          # TODO for failure
-# # #          #if res
         p = Project()
         p.init(res[0])
         m = g.get_project_members(p.id)
@@ -158,8 +169,14 @@ def project_new(request):
             mpb.readwrite = mpid in mprw
             mpb.save()
 
-        #Create a README
-        g.create_project_readme(p.id,"README.md","* proba","Created a default README")
+        # manage volumes
+        while len(vols):
+            vol = vols.pop()
+            vpb = VolumeProjectBinding(volume = vol, project = p)
+            vpb.save()
+
+        #Create a README (FIXME only for empty)
+        g.create_project_readme(p.id, "README.md", "* proba", "Created a default README")
         return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
     except Exception as e:
         return render(
