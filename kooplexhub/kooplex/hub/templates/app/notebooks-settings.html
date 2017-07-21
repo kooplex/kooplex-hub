@@ -2,6 +2,7 @@
   <div class="modal-content">
     <form id="project-settings-form-{{ item.id }}" class="form-horizontal" action="{% url 'project-settings' %}" method="post">
       {% csrf_token %}
+      <input type="hidden" name="project_id" value="{{ item.id }}">
       <div class="modal-body">
         <button type="button" class="close" data-dismiss="modal">&times;</button>
         <h4>Setting of project <span style="font-weight: bold">{{ item.name }}</span></h4>

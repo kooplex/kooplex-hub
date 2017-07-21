@@ -1,6 +1,5 @@
 import os.path
 import re
-#from urllib.request import urlopen
 
 from django.conf.urls import patterns, url, include
 from django.shortcuts import render
@@ -52,7 +51,7 @@ def notebooks(request,errors=[], commits=[] ):
 
     user = request.user
     hubuser = HubUser.objects.get(username = user.username)
-
+#FIXME: login if exception raised
     print_debug("Rendering notebook page, getting sessions")
     notebooks = Notebook.objects.filter(username = user.username)
     running = []
@@ -101,6 +100,21 @@ def notebooks(request,errors=[], commits=[] ):
         })
     )
 
+def parse_shares_and_volumes(request):
+    mp = []
+    mprw = []
+    vols = []
+    for k, v in request.POST.items():
+        if re.match('^mp=\d+', k):
+            mp.append(int(v))
+        elif re.match('^mprw=\d+', k):
+            mprw.append(int(v))
+        elif re.match('^vol=', k):
+            #V = Volume.objects.filter(name = v)[0]  #FIXME: use id here and sg like get
+            V = Volume.objects.get(name = v)
+            vols.append(V)
+    return mp, mprw, vols
+
 def project_new(request):
     assert isinstance(request, HttpRequest)
     ooops = []
@@ -124,17 +138,7 @@ def project_new(request):
         project_image_name = template.split('=')[-1]
 
     # parse shares and volumes
-    mp = []
-    mprw = []
-    vols = []
-    for k, v in request.POST.items():
-        if re.match('^mp=\d+', k):
-            mp.append(int(v))
-        elif re.match('^mprw=\d+', k):
-            mprw.append(int(v))
-        elif re.match('^vol=', k):
-            V = Volume.objects.filter(name = v)[0]  #FIXME: use id here and sg like get
-            vols.append(V)
+    mp, mprw, vols = parse_shares_and_volumes(request)
 
 #FIXME: PREPARE THE APPROPRIATE GIT FOLDER HERE: image= case: git clone, clonable_project= case: git clone the 2, copy files, git add, git push, rm temp
     g = Gitlab(request)
@@ -180,28 +184,6 @@ def project_new(request):
                                             {
                                                 'error_title': 'Error',
                                                 'error_message': str(e),
-                                            })
-        )
-
-def project_delete(request):
-    assert isinstance(request, HttpRequest)
-    print_debug("Delettning project, ")
-
-    project_id = request.GET['project_id']
-    g = Gitlab(request)
-    message_json = g.delete_project(project_id)
-    if message_json:
-        project = Project.objects.get(id=project_id)
-        project.delete()
-        return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
-    else:
-        return render(
-            request,
-            'app/error.html',
-            context_instance=RequestContext(request,
-                                            {
-                                                'error_title': 'Error',
-                                                'error_message': message_json,
                                             })
         )
 
@@ -417,14 +399,6 @@ def notebooks_revert(request):
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
     
     
-def notebooks_change_image(request):
-    assert isinstance(request, HttpRequest)
-    project_id = request.GET['project_id']
-    project = Project.objects.get(id=project_id)
-    project.image = request.POST['project.image']
-    project.save()
-    return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
-
 def Refresh_project(request):
     project_id = request.GET['project_id']
     username = request.user.username
@@ -924,7 +898,42 @@ def addvolume(request):
     return HttpResponse(resp)
 
 def project_settings(request):
-    return HttpResponse(str(request))
+    assert isinstance(request, HttpRequest)
+    project_id = request.POST['project_id']
+    project = Project.objects.get(id = project_id)
+    button = request.POST['button']
+    if button == 'delete':
+        g = Gitlab(request)   #FIXME: why request passed???
+        message_json = g.delete_project(project_id)
+        if message_json:
+            project.delete()
+            return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
+    assert button == 'apply'
+    for k, v in request.POST.items():
+        if k.startswith('project_image-'):
+            project.image = v
+            project.save()
+    # parse shares and volumes
+    mp2add, mprw, vols2add = parse_shares_and_volumes(request) #NOTE: mprw is now not rendered until nfs4 acls are working
+    # update volumes if necessary
+    for vpb in VolumeProjectBinding.objects.filter(project = project):
+        if vpb.volume in vols2add:
+            vols2add.remove(vpb.volume)
+        else:
+            vpb.delete()
+    for vol in vols2add:
+        vpb = VolumeProjectBinding(project = project, volume = vol)
+        vpb.save()
+    # update shares if necessary
+    for mpb in MountPointProjectBinding.objects.filter(project = project):
+        if mpb.mountpoint.id in mp2add:
+            mp2add.remove(mpb.mountpoint.id)
+        else:
+            mpb.delete()
+    for mpid in mp2add:
+        mpb = MountPointProjectBinding(project = project, mountpoint = MountPoints.objects.get(id = mpid), readwrite = 'ro') #FIXME: hardcoded
+        mpb.save()
+    return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
 
 urlpatterns = [
@@ -936,8 +945,6 @@ urlpatterns = [
     url(r'^clone$', notebooks_clone, name = 'notebooks-clone'),
     url(r'^preparetoconverthtml$', notebooks_publishform, name = 'notebooks-publishform'),
     url(r'^converthtml$', notebooks_publish, name = 'notebooks-convert-html'),
-    url(r'^change-image$', notebooks_change_image, name = 'notebooks-change-image'),
-    url(r'^delete-project$', project_delete, name = 'notebooks-delete-project'),
     url(r'^commit$', notebooks_commit, name='notebooks-commit'),
     url(r'^commitform$', notebooks_commitform, name='notebooks-commitform'),
     url(r'^revertform$', notebooks_revertform, name='notebooks-revertform'),

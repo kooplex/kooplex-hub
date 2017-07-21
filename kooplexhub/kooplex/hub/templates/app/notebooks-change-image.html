@@ -10,6 +10,6 @@
 <label>Your choice for the new image:
 <select id="project_images-{{ item.id }}" name="project_image-{{ item.id }}">
   {% for image in notebook_images %}
-    <option value="{{ image }}">{{ image }}</option>
+    <option value="{{ image }}" {% if image = item.image %} selected {% endif %}>{{ image }}</option>
   {% endfor %}
 </select>

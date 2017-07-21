@@ -12,7 +12,7 @@
 {% endfor %}
 {% endif %}
 
-{% if vlomues and bindings %}
+{% if volumes and bindings %}
 <hr>
 {% endif %}
 
@@ -21,8 +21,12 @@
 {% for binding in bindings %}
 <input type="checkbox" name="mp={{ binding.mountpoint.id }}" value="{{ binding.mountpoint.id }}"
   {% for p, pbs in shares_attached.items %}
-    {% if p = item and binding in pbs %}
-      checked
+    {% if p = item %}
+      {% for pb in pbs %}
+        {% if pb.mountpoint = binding.mountpoint %}
+          checked
+        {% endif %}
+      {% endfor %}
     {% endif %}
   {% endfor %}>{{ binding.mountpoint.name }}
 {% comment %}
