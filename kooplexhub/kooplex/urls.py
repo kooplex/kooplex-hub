@@ -11,6 +11,7 @@ from django.contrib import admin
 from django.conf.urls import patterns, url, include
 from django.conf import settings
 
+
 import kooplex
 import kooplex.hub
 from kooplex.hub.forms import BootstrapAuthenticationForm, BootstrapPasswordChangeForm
@@ -24,9 +25,9 @@ from django.template import RequestContext
 
 
 # Uncomment the next lines to enable the admin:
-# from django.conf.urls import include
-# from django.contrib import admin
-# admin.autodiscover()
+from django.conf.urls import include
+from django.contrib import admin
+admin.autodiscover()
 
 from kooplex.hub.models.user import HubUser
 import pwgen
@@ -142,8 +143,10 @@ urlpatterns = (
     url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
 
     # Uncomment the next line to enable the admin:
-#    url(r'^admin/', include(admin.site.urls)),
-    url(r'^admin/', include('kooplex.hub.urls')),
+    url(r'^admin/', include(admin.site.urls)),
+    url(r'^admin/', include('kooplex.hub.admin')),
+
+
 
     # AllAuth
     # url(r'^accounts/', include('allauth.urls')),

@@ -13,7 +13,7 @@ from kooplex.hub.models.report import Report
 from kooplex.hub.models.mountpoints import MountPoints, MountPointProjectBinding, MountPointPrivilegeBinding
 from kooplex.hub.models.user import HubUser
 from kooplex.hub.models.volume import Volume, VolumeProjectBinding
-
+from kooplex.hub.views.notebooks import Refresh_database
 
 # Register your models here.
 @admin.register(Notebook)
@@ -32,7 +32,29 @@ class ContainerAdmin(admin.ModelAdmin):
 @admin.register(DockerImage)
 class DockerImageAdmin(admin.ModelAdmin):
     list_display = ('id', 'name')
-    pass
+
+    def Refresh_database(self, request='', *args, **kwargs):
+         from kooplex.lib.smartdocker import Docker
+         from kooplex.hub.models.dashboard_server import Dashboard_server
+         from kooplex.lib.libbase import get_settings
+
+         d = Docker()
+         notebook_images = d.get_all_notebook_images()
+         for image in notebook_images:
+             i = DockerImage()
+             i = i.from_docker_dict(image)
+             i.save()
+             dashboards_prefix = get_settings('dashboards', 'prefix', None, '')
+             notebook_prefix = get_settings('prefix', 'name', None, '')
+             dashboard_container_name = dashboards_prefix + "_dashboards-" + \
+                                        i.name.split(notebook_prefix + "-notebook-")[1]
+             docker_container = d.get_container(dashboard_container_name, original=True)
+             # container, docker_container = d.get_container(dashboard_container_name)
+             if docker_container:
+                 D = Dashboard_server()
+                 D.init(d, docker_container)
+                 D.save()
+         return HttpResponseRedirect("/admin")
 
 @admin.register(Dashboard_server)
 class Dashboard_serverAdmin(admin.ModelAdmin):
@@ -79,18 +101,8 @@ class VolumeProjectBindingAdmin(admin.ModelAdmin):
     pass
 
 def admin_main(request):
-    print("Hello")
-    vmi=[]
-    return render(
-        request,
-        'app/admin.html',
-        context_instance=RequestContext(request,
-                                        {
-                                            'vmi' : vmi,
-                                        })
-    )
-
+   pass
 
 urlpatterns = [
- url(r'^', admin_main, name='admin_main'),
+ url(r'^refresh_images', DockerImageAdmin.Refresh_database, name='refresh_images'),
 ]
