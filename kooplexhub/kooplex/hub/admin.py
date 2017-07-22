@@ -65,8 +65,11 @@ class MountPointPrivilegeBinding(admin.ModelAdmin):
 
 @admin.register(HubUser)
 class HubUserAdmin(admin.ModelAdmin):
-    list_display = ('gitlab_id','username')
-    pass
+    list_display = ('username', 'first_name', 'last_name', 'gitlab_id')
+    fieldsets = ( (None, { 'fields': ('username', ( 'first_name', 'last_name'), 'email', 'user_permissions')     }),    )
+    change_list_template = "admin/change_list_hubuser.html"
+
+
 
 @admin.register(Volume)
 class VolumeAdmin(admin.ModelAdmin):

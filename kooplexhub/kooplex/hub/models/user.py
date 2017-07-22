@@ -31,3 +31,23 @@ class HubUser(User):
     @property
     def file_netrc_exists_(self):
         return os.path.exists(self.file_netrc_)
+
+    def save(self, *args, **kwargs):
+        super(HubUser, self).save( *args, **kwargs)
+        # pw = pwgen.pwgen(12)
+        # try:
+        #     send_new_password(name="%s %s" % (request.POST['firstname'], request.POST['lastname']),
+        #                       username=request.POST['username'],
+        #                       to=request.POST['email'],
+        #                       pw=pw)
+        #     return HttpResponseRedirect(USERMANAGEMENT_URL)
+        # except Exception as e:
+        #     return render(
+        #         request,
+        #         'app/error.html',
+        #         context_instance=RequestContext(request,
+        #                                         {
+        #                                             'error_title': 'Error',
+        #                                             'error_message': str(e),
+        #                                         })
+        #     )
