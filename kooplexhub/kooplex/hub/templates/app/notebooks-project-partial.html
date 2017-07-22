@@ -1,14 +1,11 @@
-﻿{% load custom_tags %}
-{% include 'app/notebooks-change-image.html' %}
-{% include 'app/notebooks-delete-project.html' %}
-
+{% load custom_tags %}
+{% include 'app/notebooks-settings.html' %}
 
 {% if item.id in running  %}
     <!-- {% resolve sessions item.id as session %} -->
 
 <div class="panel panel-success">
   <div class="panel-heading ">
-    <!-- a href="{{ session.external_url }}" target="_blank" -->
     <a href="{% url 'container-open' %}?project_id={{ item.id }}" target="_blank">
       <button role="button" type="button" class="btn btn-success">
         <span class="glyphicon glyphicon-folder-open" aria-hidden="true"> Open</span>
@@ -55,7 +52,6 @@
             <span class="glyphicon glyphicon-remove-circle" aria-hidden="true"></span>
           </button>
         </a>
-        <!--a href="{{ session.external_url }}" target="_blank"-->
         <a href="{% url 'container-open' %}?project_id={{ item.id }}" target="_blank">
           <button role="button" type="button" class="btn btn-success" data-toggle="tooltip" title="Open project container: {{ item.name }}" data-placement="top">
             <span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span>
@@ -67,8 +63,8 @@
           </button>
         </a>
         <a href="#">
-          <button type="button" class="btn btn-default" data-toggle="tooltip" title="Changing image is disabled, stop project container {{ item.name }} to enable this button" data-placement="top">
-            <span class="glyphicon glyphicon-hdd" aria-hidden="true"></span>
+          <button type="button" class="btn btn-default" data-toggle="tooltip" title="Project settings for running project {{ item.name }} is disabled" data-placement="top">
+            <span class="glyphicon glyphicon-cog" aria-hidden="true"></span>
           </button>
         </a>
 
@@ -90,15 +86,15 @@
           </button>
         </a>
 {% if item.owner_username == user.username %} 
-        <a href="#" data-toggle="modal" data-target="#change-image-{{ item.safename  }}">
-          <button role="button" type="button" class="btn btn-info" data-toggle="tooltip" title="Change container image for project {{ item.name }}" data-placement="top">
-            <span class="glyphicon glyphicon-hdd" aria-hidden="true"></span>
+        <a href="#" data-toggle="modal" data-target="#project-settings-{{ item.id  }}">
+          <button role="button" type="button" class="btn btn-info" data-toggle="tooltip" title="Settings of project {{ item.name }}. You can change the image, modify volume attachments or delete the project here." data-placement="top">
+            <span class="glyphicon glyphicon-cog" aria-hidden="true"></span>
           </button>
         </a>
 {% else %}
         <a href="#">
-          <button role="button" type="button" class="btn btn-default" data-toggle="tooltip" title="Changing the container image for project {{ item.name }} is disabled. Please ask the project owner ({{ item.owner_username }}) to change it." data-placement="top">
-            <span class="glyphicon glyphicon-hdd" aria-hidden="true"></span>
+          <button role="button" type="button" class="btn btn-default" data-toggle="tooltip" title="Project setting for running {{ item.name }} is disabled." data-placement="top">
+            <span class="glyphicon glyphicon-cog" aria-hidden="true"></span>
           </button>
         </a>
 {% endif %}
@@ -108,15 +104,9 @@
 
             <!-- GIT RELATED STUFF -->
 
-
         <a href="{% url 'notebooks-commitform' %}?project_id={{ item.id }}">
-          <button role="button" type="button" class="btn btn-warning" data-toggle="tooltip" title="Commit your changes to project {{ item.name }}" data-placement="top">
-            <span class="glyphicon glyphicon-thumbs-up" aria-hidden="true"></span>
-          </button>
-        </a>
-        <a href="{% url 'notebooks-revertform' %}?project_id={{ item.id }}">
-          <button role="button" type="button" class="btn btn-info" data-toggle="tooltip" title="Revert changes to project {{ item.name }} to a former version" data-placement="top">
-            <span class="glyphicon glyphicon-thumbs-down" aria-hidden="true"></span>
+          <button role="button" type="button" class="btn btn-warning" data-toggle="tooltip" title="Commit your changes to project {{ item.name }} or revert to a former commited state" data-placement="top">
+            <span class="glyphicon glyphicon-pushpin" aria-hidden="true"></span>
           </button>
         </a>
 
@@ -129,33 +119,10 @@
           </button>
         </a>
 
-      {% if item.id not in running  %}
-
-        <a href="#" data-toggle="modal" data-target="#delete-project-{{ item.id }}">
-          <button type="button" class="btn btn-danger" data-toggle="tooltip" title="Delete the project {{ item.name }}" data-placement="top">
-            <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
-          </button>
-        </a>
-
-      {% else %}
-
-        <a href="#">
-          <button type="button" class="btn btn-default" data-toggle="tooltip" title="Deletion of project {{ item.name }} is disabled. Stop the container to enable it" data-placement="top">
-            <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
-          </button>
-        </a>
-
-       {% endif %}
 {% else %}
         <a href="#">
           <button role="button" type="button" class="btn btn-default" data-toggle="tooltip" title="Ask the owner of project {{ item.name }} ({{ item.owner_username }}) to remove you or add someone else to this project (Leave the project functionality is gonna be implmented soon.)" data-placement="top">
             <span class="glyphicon glyphicon-user" aria-hidden="true"></span>
-          </button>
-        </a>
-
-        <a href="#">
-          <button type="button" class="btn btn-default" data-toggle="tooltip" title="Deletion of project {{ item.name }} is disabled. (Soon it's gonna be implemented)" data-placement="top">
-            <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
           </button>
         </a>
 {% endif %}
