@@ -63,11 +63,18 @@ class MountPointPrivilegeBinding(admin.ModelAdmin):
     list_display = ('id', 'mountpoint', 'user', 'accessrights')
     pass
 
+def reset_password(modeladmin, request, queryset):
+    for hubuser in queryset:
+        hubuser.last_name = 'Lajos'
+        hubuser.save()
+reset_password.short_description = 'Reset Password'
+
 @admin.register(HubUser)
 class HubUserAdmin(admin.ModelAdmin):
     list_display = ('username', 'first_name', 'last_name', 'gitlab_id')
     fieldsets = ( (None, { 'fields': ('username', ( 'first_name', 'last_name'), 'email', 'user_permissions')     }),    )
     change_list_template = "admin/change_list_hubuser.html"
+    actions = [reset_password, ]
 
 
 
