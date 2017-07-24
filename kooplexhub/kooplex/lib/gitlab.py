@@ -300,10 +300,29 @@ class Gitlab(RestClient):
 
 
     def get_repository_commits(self,project_id):
+        def extract_info(record):
+            keep_tags = [ 'id', 'committer_name', 'title', 'committed_date' ]
+            parent_ids = record['parent_ids']
+#            assert len(parent_ids) < 2, "More than one parent commit"
+            R = dict(map(lambda x: (x, record[x]), keep_tags))
+            R['parent_id'] = parent_ids[0] if len(parent_ids) else None
+            return R
+
         print_debug("",DEBUG_LOCAL)
-        url = self.api_version+"/projects/"
-        url += "%s/repository/commits"%str(project_id)
+        url = self.api_version + "/projects/%s/repository/commits" % str(project_id)
         res = self.http_get(url)
-        if res.status_code != 404:
-            message = res.json()
-        return message
+        assert res.status_code != 404
+        resp_list = res.json()
+        commited_chain = []
+        latest = None
+        end = False
+        while not end:
+           for i in resp_list:
+               if latest is None or i['id'] == latest['parent_id']:
+                   resp_list.remove(i)
+                   latest = extract_info(i)
+                   commited_chain.append(latest)
+               if latest['parent_id'] is None:
+                   end = True
+                   break
+        return commited_chain

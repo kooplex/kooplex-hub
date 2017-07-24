@@ -4,26 +4,17 @@
     <h4>Restore your project <strong>{{ project.name }}</strong> to a former state</h4>
   </div>
   <div class="panel-body">
-  {% if commits %}
     <div class="panel-body">
-      <div class="alert alert-danger" role="alert">
-        This action will delete your ~/git folder, roll back your project to the latest commit and clone it from the repository!
-      </div>
-      {% comment %}
       <select id="commitid" name="commitid">
         {% for commit in  commits %}
-          <option value="{{ commit.short_id }}">{{ commit.author_name }} {{ commit.kdate }} {{ commit.ktime }} {{ commit.ktime_zone }}  {{ commit.title }}  </option>
+          <option value="{{ commit.id }}">{{ commit.committer_name }} {{ commit.kdate }} {{ commit.ktime }} {{ commit.ktime_zone }}  {{ commit.title }}  </option>
         {% endfor %}
       </select>
-      {% endcomment %}
       <input type="hidden" name="project_id" value="{{ project.id }}" />
     </div>    <!-- panel.body -->
     <div class="panel-footer">
       <input type="submit" name="revert" value="Revert" class="btn btn-primary" />
       <input type="submit" name="cancel" value="Cancel" class="btn btn-secondary" />
     </div>
-  {% else %}
-    <p>You have former commits to revert to yet.</p>
-  {% endif %}
 </form>
 

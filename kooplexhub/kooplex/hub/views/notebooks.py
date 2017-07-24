@@ -401,7 +401,7 @@ def Refresh_project(request):
 
     return notebooks(request, commits=project_commits)
 
-def commit_style(commits):
+def parse_commit_list(commits):
     for commit in commits:
         if "committed_date" in commit.keys():
             commit['kdate'] = commit['committed_date'][:10]
@@ -425,8 +425,8 @@ def notebooks_commitform(request):
     g = Gitlab(request)
     target_id = 0
     username = request.user.username
-    commits = g.get_repository_commits(project.id)
-    commits = commit_style(commits)
+    commit_list = g.get_repository_commits(project.id)
+    commits = parse_commit_list(commit_list)
 
     try:
         repo = Repo(username, project.path_with_namespace)
