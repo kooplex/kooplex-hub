@@ -36,6 +36,8 @@ class Project(models.Model, ModelBase):
     environment = models.TextField(null=True)
     binds = models.TextField(null=True)
 
+    mp_git = '/git'
+#FIXME: not necessaryif if docker volume is used
     gitwd = '_git'
 
     def __str__(self):
@@ -44,6 +46,7 @@ class Project(models.Model, ModelBase):
     class Meta:
         db_table = "kooplex_hub_project"
 
+#FIXME: get rid of init if possible
     def init(self, gitlab_dict):
         #try:
         #    p = Project.objects.get(id=gitlab_dict['id'])
@@ -68,6 +71,7 @@ class Project(models.Model, ModelBase):
         self.description=gitlab_dict['description']
         self.visibility=gitlab_dict['visibility']
 
+#FIXME: use home_ property instead
         self.home = self.path_with_namespace.replace('/', '_')
 
     def get_safename(self):
@@ -82,6 +86,11 @@ class Project(models.Model, ModelBase):
     def image_(self):
         return self.image.split('-')[-1]
 
+    @property
+    def home_(self):
+        return os.path.join(self.mp_git, self.owner_name, self.path_with_namespace.replace('/', '_'))
+
+    #FIXME: rely on docker volume
     @property
     def gitdir_(self):
         return os.path.join(get_settings('users', 'srv_dir'), self.gitwd, self.owner_username, self.path_with_namespace.replace('/', '_'))

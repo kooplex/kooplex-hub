@@ -28,7 +28,8 @@ from django.contrib.auth.models import User
 from kooplex.lib.libbase import LibBase
 from kooplex.lib.gitlab import Gitlab
 from kooplex.lib.gitlabadmin import GitlabAdmin
-from kooplex.lib.repo import Repo
+from kooplex.lib.repo import Repo  # GONNA BE OBSOLETED
+from kooplex.lib.repository import repository
 from kooplex.lib.spawner import Spawner
 from kooplex.lib.ocspawner import OCSpawner
 from kooplex.lib.jupyter import Jupyter
@@ -42,7 +43,7 @@ HUB_NOTEBOOKS_URL = '/hub/notebooks'
 from kooplex.lib.debug import *
 
 
-def notebooks(request,errors=[], commits=[] ):
+def notebooks(request, errors = []):
     """Renders the notebooks page"""
     print_debug("Rendering notebook page")
     logger = logging.getLogger(__name__)
@@ -84,7 +85,6 @@ def notebooks(request,errors=[], commits=[] ):
             'user': user,
             'notebooks': notebooks,
             'running': running,
-            'commits': commits,
 
             'shared_with_me_projects': projects_sharedwithme,
             'public_projects': projects_public,
@@ -389,17 +389,18 @@ def notebooks_revert(request):
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
     
     
-def Refresh_project(request):
-    project_id = request.GET['project_id']
-    username = request.user.username
-    project = Project.objects.get(id=project_id)
-    project_commits = {}
-    g = Gitlab(request)
-    commits = g.get_repository_commits(project.id)
-    project_commits[project.id] = commit_style(commits)
-    project_commits[project.id]['committable_dict'] = Collect_commitables(username, project.name, project.owner_username, project.path_with_namespace)
-
-    return notebooks(request, commits=project_commits)
+# FIXME: not used
+####def Refresh_project(request):
+####    project_id = request.GET['project_id']
+####    username = request.user.username
+####    project = Project.objects.get(id=project_id)
+####    project_commits = {}
+####    g = Gitlab(request)
+####    commits = g.get_repository_commits(project.id)
+####    project_commits[project.id] = commit_style(commits)
+####    project_commits[project.id]['committable_dict'] = Collect_commitables(username, project.name, project.owner_username, project.path_with_namespace)
+####
+####    return notebooks(request, commits=project_commits)
 
 def parse_commit_list(commits):
     for commit in commits:
@@ -455,8 +456,6 @@ def notebooks_commit(request):
     project_id = request.POST['project_id']
     project = Project.objects.get(id = project_id)
     message = request.POST['message']
-    is_forked = False #request.POST['is_forked']
-
     modified_files = request.POST['modified_files']
 
     modified_file_list = []
@@ -468,28 +467,40 @@ def notebooks_commit(request):
     if(deleted_files != ''):
         deleted_files = deleted_files.replace("'", "")
         deleted_file_list = deleted_files.split(',')
-    next_page = HUB_NOTEBOOKS_URL
-    repo = Repo(request.user.username, project.path_with_namespace)
-    repo.commit_and_push(message, request.user.email, project.owner_username, project.name, project.creator_name,
-                         modified_file_list, deleted_file_list)
-#    repo.commit_and_push_default(message, request.user.email, project_owner, project_name)
-    # TODO megcsinalni ezt is
-    if is_forked:
-        project_id = request.POST['project_id']
-        target_id = request.POST['target_id']
-        return render(
-            request,
-            'app/mergerequest.html',
-            context_instance=RequestContext(request,
-            {
-                    'next_page': next_page,
-                    'is_forked': is_forked,
-                    'project_id': project_id,
-                    'target_id': target_id,
-            })
-        )
-    else:
-        return HttpResponseRedirect(next_page)
+    try:
+        repo = repository(request.user, project)
+        if len(modified_file_list):
+            repo.add(modified_file_list)
+        if len(deleted_file_list):
+            repo.delete(deleted_file_list)
+        repo.commit(message)
+        repo.push()
+        return notebooks(request)
+    except Exception as e:
+        return notebooks(request, errors = [ str(e) ])
+    
+###    next_page = HUB_NOTEBOOKS_URL
+###    repo = Repo(request.user.username, project.path_with_namespace)
+###    repo.commit_and_push(message, request.user.email, project.owner_username, project.name, project.creator_name,
+###                         modified_file_list, deleted_file_list)
+####    repo.commit_and_push_default(message, request.user.email, project_owner, project_name)
+###    # TODO megcsinalni ezt is
+###    if is_forked:
+###        project_id = request.POST['project_id']
+###        target_id = request.POST['target_id']
+###        return render(
+###            request,
+###            'app/mergerequest.html',
+###            context_instance=RequestContext(request,
+###            {
+###                    'next_page': next_page,
+###                    'is_forked': is_forked,
+###                    'project_id': project_id,
+###                    'target_id': target_id,
+###            })
+###        )
+###    else:
+###        return HttpResponseRedirect(next_page)
 
 def notebooks_mergerequestform(request):
     assert isinstance(request, HttpRequest)
