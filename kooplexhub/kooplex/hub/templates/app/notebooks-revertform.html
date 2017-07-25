@@ -5,9 +5,9 @@
   </div>
   <div class="panel-body">
     <div class="panel-body">
-      <select id="commitid" name="commitid">
+      <select id="commitid" name="commitid" style="max-width: 100%">
         {% for commit in  commits %}
-          <option value="{{ commit.id }}">{{ commit.kdate }} {{ commit.ktime }} {{ commit.ktime_zone }} ({{ commit.committer_name }}) &nbsp; {{ commit.title }}  </option>
+          <option value="{{ commit.commitid }}">{{ commit.date }} {{ commit.time }} ({{ commit.name }}) &nbsp; {{ commit.message }}  </option>
         {% endfor %}
       </select>
       <input type="hidden" name="project_id" value="{{ project.id }}" />

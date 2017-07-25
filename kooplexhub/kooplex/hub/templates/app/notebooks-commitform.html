@@ -3,19 +3,19 @@
   <div class="panel-heading">
     <h4>Commit changes for project <strong>{{ project.name }}</strong></h4>
   </div>
-  {% if committable_dict.d or committable_dict.m or committable_dict.u %}
+  {% if committable_dict.modified or committable_dict.deleted or committable_dict.other %}
     <div class="panel-body">
       <label>Select the files you want to commit:</label>
       <div class="form-group">
-        {% for committable in committable_dict.d %}
+        {% for committable in committable_dict.deleted %}
           <input type="checkbox" value="deleted" name="{{ committable }}">
           {{ committable }} (deleted)<br>
         {% endfor %}
-        {% for committable in committable_dict.m %}
+        {% for committable in committable_dict.modified %}
           <input type="checkbox" value="modified" name="{{ committable }}">
           {{ committable }} (modified)<br>
         {% endfor %}
-        {% for committable in committable_dict.u %}
+        {% for committable in committable_dict.other %}
           <input type="checkbox" value="untracted" name="{{ committable }}">
           {{ committable }} (untracted/renamed/new)<br>
         {% endfor %}
@@ -23,7 +23,6 @@
       <label>Your commit message:</label>
       <input id="id_message" type="text" name="message" value="Update the project file(s)">
       <input type="hidden" name="project_id" value="{{ project.id }}" />
-      <input type="hidden" name="target_id" value="{{ target_id }}" />
       <input type="hidden" name="modified_files" value="" />
       <input type="hidden" name="deleted_files" value="" />
       <input type="hidden" name="commitall" value="false" />

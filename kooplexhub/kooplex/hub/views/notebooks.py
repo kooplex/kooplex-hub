@@ -378,77 +378,44 @@ def notebooks_revert(request):
     assert isinstance(request, HttpRequest)
     if 'cancel' in request.POST.keys():
         return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
-    print_debug("Reverting project,")
     project_id = request.POST['project_id']
     project = Project.objects.get(id = project_id)
-    repo_name = project.path_with_namespace
-    repo = Repo(request.user.username, repo_name)
-    repo.ensure_local_dir_empty()
-    repo.clone()
-    print_debug("Reverting project, Finished")
+    user = request.user
+    repo = repository(user, project)
+    commitid = request.POST['commitid']
+    try:
+        repo.revert(commitid)
+        return notebooks(request)
+    except Exception as e:
+        return notebooks(request, errors = [ str(e) ])
+
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
     
-    
-# FIXME: not used
-####def Refresh_project(request):
-####    project_id = request.GET['project_id']
-####    username = request.user.username
-####    project = Project.objects.get(id=project_id)
-####    project_commits = {}
-####    g = Gitlab(request)
-####    commits = g.get_repository_commits(project.id)
-####    project_commits[project.id] = commit_style(commits)
-####    project_commits[project.id]['committable_dict'] = Collect_commitables(username, project.name, project.owner_username, project.path_with_namespace)
-####
-####    return notebooks(request, commits=project_commits)
-
-def parse_commit_list(commits):
-    for commit in commits:
-        if "committed_date" in commit.keys():
-            commit['kdate'] = commit['committed_date'][:10]
-            commit['ktime'] = commit['committed_date'][11:19]
-        elif "created_at" in commit.keys():
-            commit['kdate'] = commit['created_at'][:10]
-            commit['ktime'] = commit['created_at'][11:19]
-        else:
-            commit['kdate'] = "NULL"
-            commit['ktime'] = "NULL"
-
-        # commit['ktime_zone']=commit['committed_date'][-6:]
-        commit['ktime_zone'] = 'CET'
-
-    return commits
-
 def notebooks_commitform(request):
     assert isinstance(request, HttpRequest)
     project_id = request.GET['project_id']
     project = Project.objects.get(id = project_id)
-    g = Gitlab(request)
-    target_id = 0
-    username = request.user.username
-    commit_list = g.get_repository_commits(project.id)
-    commits = parse_commit_list(commit_list)
-
+    user = request.user
+    repo = repository(user, project)
     try:
-        repo = Repo(username, project.path_with_namespace)
-        committable_dict = repo.list_committable_files(project.path_with_namespace)
-        print("committable", committable_dict)
-    except:
-        committable_dict = []
-
-    return render(
-        request,
-        'app/notebooks-gitform.html',
-        context_instance=RequestContext(request,
-        {
-            'project': project,
-            'target_id': target_id,
-            'committable_dict' : committable_dict,
-            'commits' : commits,
-        })
-    )
+        git_log = repo.log()
+        git_files = repo.lsfiles()
+        return render(
+            request,
+            'app/notebooks-gitform.html',
+            context_instance=RequestContext(request,
+            {
+                'project': project,
+                'committable_dict' : git_files,
+                'commits' : git_log,
+            })
+        )
+    except Exception as e:
+        return notebooks(request, errors = [ e ])
 
 def notebooks_commit(request):
+    def mysplit(x):
+        return x[1:-1].split("','")
     assert isinstance(request, HttpRequest)
     if 'cancel' in request.POST.keys():
         return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
@@ -456,134 +423,103 @@ def notebooks_commit(request):
     project_id = request.POST['project_id']
     project = Project.objects.get(id = project_id)
     message = request.POST['message']
-    modified_files = request.POST['modified_files']
+    modified_files = mysplit(request.POST['modified_files'])
+    deleted_files = mysplit(request.POST['deleted_files'])
 
-    modified_file_list = []
-    if(modified_files != ''):
-        modified_files = modified_files.replace("'", "")
-        modified_file_list = modified_files.split(',')
-    deleted_files = request.POST['deleted_files']
-    deleted_file_list = []
-    if(deleted_files != ''):
-        deleted_files = deleted_files.replace("'", "")
-        deleted_file_list = deleted_files.split(',')
     try:
         repo = repository(request.user, project)
-        if len(modified_file_list):
-            repo.add(modified_file_list)
-        if len(deleted_file_list):
-            repo.delete(deleted_file_list)
+        if len(modified_files):
+            repo.add(modified_files)
+        if len(deleted_files):
+            repo.remove(deleted_files)
         repo.commit(message)
         repo.push()
         return notebooks(request)
     except Exception as e:
         return notebooks(request, errors = [ str(e) ])
     
-###    next_page = HUB_NOTEBOOKS_URL
-###    repo = Repo(request.user.username, project.path_with_namespace)
-###    repo.commit_and_push(message, request.user.email, project.owner_username, project.name, project.creator_name,
-###                         modified_file_list, deleted_file_list)
-####    repo.commit_and_push_default(message, request.user.email, project_owner, project_name)
-###    # TODO megcsinalni ezt is
-###    if is_forked:
-###        project_id = request.POST['project_id']
-###        target_id = request.POST['target_id']
+###def notebooks_mergerequestform(request):
+###    assert isinstance(request, HttpRequest)
+###    next_page = request.POST['next_page']
+###    project_id = request.POST['project_id']
+###    target_id = request.POST['target_id']
+###    title = request.POST['title']
+###    description = request.POST['description']
+###    g = Gitlab(request)
+###    message_json = g.create_mergerequest(project_id, target_id, title, description)
+###    if message_json == "":
+###        return HttpResponseRedirect(next_page)
+###    else:
 ###        return render(
 ###            request,
-###            'app/mergerequest.html',
+###            'app/error.html',
 ###            context_instance=RequestContext(request,
 ###            {
-###                    'next_page': next_page,
-###                    'is_forked': is_forked,
-###                    'project_id': project_id,
-###                    'target_id': target_id,
+###                    'error_title': 'Error',
+###                    'error_message': message_json,
 ###            })
 ###        )
-###    else:
-###        return HttpResponseRedirect(next_page)
+###        
 
-def notebooks_mergerequestform(request):
-    assert isinstance(request, HttpRequest)
-    next_page = request.POST['next_page']
-    project_id = request.POST['project_id']
-    target_id = request.POST['target_id']
-    title = request.POST['title']
-    description = request.POST['description']
-    g = Gitlab(request)
-    message_json = g.create_mergerequest(project_id, target_id, title, description)
-    if message_json == "":
-        return HttpResponseRedirect(next_page)
-    else:
-        return render(
-            request,
-            'app/error.html',
-            context_instance=RequestContext(request,
-            {
-                    'error_title': 'Error',
-                    'error_message': message_json,
-            })
-        )
-        
-
-def notebooks_mergerequestlist(request):
-    assert isinstance(request, HttpRequest)
-    itemid = request.GET['itemid']
-    path_with_namespace = request.GET['path_with_namespace']
-    g = Gitlab(request)
-    mergerequests = g.list_mergerequests(itemid)
-    return render(
-        request,
-        'app/mergerequestlist.html',
-        context_instance=RequestContext(request,
-        {
-            'mergerequests': mergerequests,
-            'path_with_namespace': path_with_namespace,
-        })
-    )
-
-def notebooks_acceptmergerequest(request):
-    assert isinstance(request, HttpRequest)
-    project_id = request.GET['project_id']
-    mergerequestid = request.GET['mergerequestid']
-    g = Gitlab(request)
-    message_json = g.accept_mergerequest(project_id, mergerequestid)
-    if message_json == "":
-        return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
-    else:
-        return render(
-            request,
-            'app/error.html',
-            context_instance=RequestContext(request,
-            {
-                    'error_title': 'Error',
-                    'error_message': message_json,
-            })
-        )
-
-def project_fork(request):
-    assert isinstance(request, HttpRequest)
-    itemid = request.GET['itemid']
-    g = Gitlab(request)
-    message = g.fork_project(itemid)
-    #TODO gadmin get image variable
-    print_debug(message)
-    gadmin = GitlabAdmin(request)
-    forked_project_image = gadmin.get_project_variable(itemid, 'container_image')
-    forked_project = gadmin.get_project(itemid)
-    project = g.get_project_by_name(forked_project['name'])
-    g.change_variable_value(project[0]['id'], 'container_image', forked_project_image)
-    if message == "":
-        return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
-    else:
-        return render(
-            request,
-            'app/error.html',
-            context_instance=RequestContext(request,
-            {
-                    'error_title': 'Error',
-                    'error_message': message,
-            })
-        )
+### def notebooks_mergerequestlist(request):
+###     assert isinstance(request, HttpRequest)
+###     itemid = request.GET['itemid']
+###     path_with_namespace = request.GET['path_with_namespace']
+###     g = Gitlab(request)
+###     mergerequests = g.list_mergerequests(itemid)
+###     return render(
+###         request,
+###         'app/mergerequestlist.html',
+###         context_instance=RequestContext(request,
+###         {
+###             'mergerequests': mergerequests,
+###             'path_with_namespace': path_with_namespace,
+###         })
+###     )
+### 
+### def notebooks_acceptmergerequest(request):
+###     assert isinstance(request, HttpRequest)
+###     project_id = request.GET['project_id']
+###     mergerequestid = request.GET['mergerequestid']
+###     g = Gitlab(request)
+###     message_json = g.accept_mergerequest(project_id, mergerequestid)
+###     if message_json == "":
+###         return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
+###     else:
+###         return render(
+###             request,
+###             'app/error.html',
+###             context_instance=RequestContext(request,
+###             {
+###                     'error_title': 'Error',
+###                     'error_message': message_json,
+###             })
+###         )
+### 
+### def project_fork(request):
+###     assert isinstance(request, HttpRequest)
+###     itemid = request.GET['itemid']
+###     g = Gitlab(request)
+###     message = g.fork_project(itemid)
+###     #TODO gadmin get image variable
+###     print_debug(message)
+###     gadmin = GitlabAdmin(request)
+###     forked_project_image = gadmin.get_project_variable(itemid, 'container_image')
+###     forked_project = gadmin.get_project(itemid)
+###     project = g.get_project_by_name(forked_project['name'])
+###     g.change_variable_value(project[0]['id'], 'container_image', forked_project_image)
+###     if message == "":
+###         return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
+###     else:
+###         return render(
+###             request,
+###             'app/error.html',
+###             context_instance=RequestContext(request,
+###             {
+###                     'error_title': 'Error',
+###                     'error_message': message,
+###             })
+###         )
 
 def usermanagementForm(request):
     users = filter(lambda x: x.username != 'gitlabadmin', User.objects.all())
@@ -936,11 +872,11 @@ urlpatterns = [
     url(r'^commit$', notebooks_commit, name='notebooks-commit'),
     url(r'^commitform$', notebooks_commitform, name='notebooks-commitform'),
     url(r'^revert$', notebooks_revert, name='notebooks-revert'),
-    url(r'^mergerequestform$', notebooks_mergerequestform, name='notebooks-mergerequestform'),
-    url(r'^mergerequestlist', notebooks_mergerequestlist, name='notebooks-mergerequestlist'),
-    url(r'^acceptmergerequest', notebooks_acceptmergerequest, name='notebooks-acceptmergerequest'),
-    url(r'^fork$', project_fork, name='project-fork'),
-    url(r'^refresh$', Refresh_database, name='refresh-db'),
+###    url(r'^mergerequestform$', notebooks_mergerequestform, name='notebooks-mergerequestform'),
+###    url(r'^mergerequestlist', notebooks_mergerequestlist, name='notebooks-mergerequestlist'),
+###    url(r'^acceptmergerequest', notebooks_acceptmergerequest, name='notebooks-acceptmergerequest'),
+###    url(r'^fork$', project_fork, name='project-fork'),
+###    url(r'^refresh$', Refresh_database, name='refresh-db'),
 
     url(r'^usermanagement$', usermanagementForm, name='usermanagement-form'),
     url(r'^adduser$', usermanagement, name='usermanagement-add'),
