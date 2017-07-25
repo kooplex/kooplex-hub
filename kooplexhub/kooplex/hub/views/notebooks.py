@@ -374,23 +374,6 @@ def Refresh_database(request):
         p.save()
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
-def notebooks_revert(request):
-    assert isinstance(request, HttpRequest)
-    if 'cancel' in request.POST.keys():
-        return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
-    project_id = request.POST['project_id']
-    project = Project.objects.get(id = project_id)
-    user = request.user
-    repo = repository(user, project)
-    commitid = request.POST['commitid']
-    try:
-        repo.revert(commitid)
-        return notebooks(request)
-    except Exception as e:
-        return notebooks(request, errors = [ str(e) ])
-
-    return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
-    
 def notebooks_commitform(request):
     assert isinstance(request, HttpRequest)
     project_id = request.GET['project_id']
@@ -400,6 +383,7 @@ def notebooks_commitform(request):
     try:
         git_log = repo.log()
         git_files = repo.lsfiles()
+        git_changed = repo.remote_changed()
         return render(
             request,
             'app/notebooks-gitform.html',
@@ -408,6 +392,7 @@ def notebooks_commitform(request):
                 'project': project,
                 'committable_dict' : git_files,
                 'commits' : git_log,
+                'changedremote': git_changed,
             })
         )
     except Exception as e:
@@ -434,9 +419,39 @@ def notebooks_commit(request):
             repo.remove(deleted_files)
         repo.commit(message)
         repo.push()
-        return notebooks(request)
+        return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
     except Exception as e:
         return notebooks(request, errors = [ str(e) ])
+    
+def notebooks_pull(request):
+    assert isinstance(request, HttpRequest)
+    if 'cancel' in request.POST.keys():
+        return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
+    project_id = request.POST['project_id']
+    project = Project.objects.get(id = project_id)
+    user = request.user
+    repo = repository(user, project)
+    try:
+        repo.pull()
+        return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
+    except Exception as e:
+        return notebooks(request, errors = [ str(e) ])
+    
+def notebooks_revert(request):
+    assert isinstance(request, HttpRequest)
+    if 'cancel' in request.POST.keys():
+        return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
+    project_id = request.POST['project_id']
+    project = Project.objects.get(id = project_id)
+    user = request.user
+    repo = repository(user, project)
+    commitid = request.POST['commitid']
+    try:
+        repo.revert(commitid)
+        return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
+    except Exception as e:
+        return notebooks(request, errors = [ str(e) ])
+
     
 ###def notebooks_mergerequestform(request):
 ###    assert isinstance(request, HttpRequest)
@@ -869,8 +884,9 @@ urlpatterns = [
     url(r'^clone$', notebooks_clone, name = 'notebooks-clone'),
     url(r'^preparetoconverthtml$', notebooks_publishform, name = 'notebooks-publishform'),
     url(r'^converthtml$', notebooks_publish, name = 'notebooks-convert-html'),
-    url(r'^commit$', notebooks_commit, name='notebooks-commit'),
     url(r'^commitform$', notebooks_commitform, name='notebooks-commitform'),
+    url(r'^commit$', notebooks_commit, name='notebooks-commit'),
+    url(r'^pull$', notebooks_pull, name='notebooks-pull'),
     url(r'^revert$', notebooks_revert, name='notebooks-revert'),
 ###    url(r'^mergerequestform$', notebooks_mergerequestform, name='notebooks-mergerequestform'),
 ###    url(r'^mergerequestlist', notebooks_mergerequestlist, name='notebooks-mergerequestlist'),

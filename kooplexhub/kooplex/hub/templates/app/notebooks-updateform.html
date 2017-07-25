@@ -1,0 +1,22 @@
+<form action="{% url 'notebooks-pull' %}" method="post" class="form-horizontal">
+  {% csrf_token %}
+  <div class="panel-heading">
+    <h4>Update your project <strong>{{ project.name }}</strong> to remote chnges</h4>
+  </div>
+  {% if changedremote %}
+    <div class="panel-body">
+      <input type="hidden" name="project_id" value="{{ project.id }}" />
+      <p>In your favour the following command is issued in the project folder:</p>
+      <code>
+git pull
+      </code>
+    </div>   <!-- panel-body -->
+    <div class="panel-footer" style="text-align: left;">
+      <input type="submit" name="pull" value="Pull" class="btn btn-primary" />
+      <input type="submit" name="cancel" value="Cancel" class="btn btn-secondary" />
+    </div>   <!-- panel-footer -->
+   {% else %}
+     <p>You have nothing to pull yet.</p>
+   {% endif %}
+</form>
+

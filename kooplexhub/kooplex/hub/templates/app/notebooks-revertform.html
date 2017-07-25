@@ -11,6 +11,15 @@
         {% endfor %}
       </select>
       <input type="hidden" name="project_id" value="{{ project.id }}" />
+      <hr>
+      <p>In your favour the following commands are issued in the project folder:</p>
+      <code>
+git reset<br>
+git revert --no-commit &lt;latest id&gt;..&lt;next to selected id&gt;<br>
+git checkout &lt;selected id&gt; .<br>
+git commmit -m 'Revert "&lt;selected commit message&gt;"'<br>
+git push
+      </code>
     </div>    <!-- panel.body -->
     <div class="panel-footer">
       <input type="submit" name="revert" value="Revert" class="btn btn-primary" />

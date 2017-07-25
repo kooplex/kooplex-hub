@@ -88,15 +88,23 @@ Date:   (?P<date>\d{4}-\d{2}-\d{2})\s(?P<time>\d{2}:\d{2}:\d{2}).*
         self.reset()
         history = self.log()
         latestid = history[0]['commitid']
-        behindid = None
-        for x in history:
-            if x['commitid'] == commitid:
-                break
-            behindid = x['commitid']
-        assert behindid is not None, "Commitid %s not found" % commitid
-        command = "git revert --no-commit %s..%s" % (behindid, latestid)
-        self.__execute(command)
+        if latestid != commitid:
+            behindid = None
+            for x in history:
+                if x['commitid'] == commitid:
+                    break
+                behindid = x['commitid']
+            assert behindid is not None, "Commitid %s not found" % commitid
+            command = "git revert --no-commit %s..%s" % (behindid, latestid)
+            self.__execute(command)
         command = "git checkout %s ." % commitid
         self.__execute(command)
         self.commit("Revert \"%s\"" % x['message'])
         self.push()
+
+    def remote_changed(self):
+        command = "git ls-remote"
+        resp = self.__execute(command).decode()
+        _, remoteid, _ = re.split(r'^.*\n?([a-z0-9]{40})\sHEAD\n.*$', resp)
+        history = self.log()
+        return history[0]['commitid'] != remoteid
