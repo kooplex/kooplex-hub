@@ -58,6 +58,7 @@ def worksheets(request):
     )
 
 def worksheets_open_as_dashboard(request):
+#FIXME: check if authorization is enforced by the dashboard
     url = request.GET['url']
     cache_url = request.GET['cache_url']
     D = Dashboards()
@@ -66,22 +67,50 @@ def worksheets_open_as_dashboard(request):
 
 def worksheets_open_html(request):
     report_id = request.GET['report_id']
-    report = Report.objects.get(id = report_id)
+    try:
+        report = Report.objects.get(id = report_id)
+    except Report.DoesNotExist:
+        return HttpResponseRedirect(HUB_REPORTS_URL)
+    if request.user.is_anonymous():
+        if report.scope == 'public':
+            pass
+    else:
+        me = HubUser.objects.get(username = request.user.username)
+        if report.scope == 'internal' and me in report.project.members_:
+            pass
+        elif report.scope == 'private' and report.creator == me:
+            pass
+        else:
+            return HttpResponseRedirect(HUB_REPORTS_URL)
     with codecs.open(report.entry_, 'r', 'utf-8') as f:
         content = f.read()
     return HttpResponse(content)
 
 def reports_unpublish(request):
-    report_id = int(request.GET['report_id'])
-    r = Report.objects.get(id = report_id)
-    r.remove()
+    if request.user.is_anonymous():
+        return HttpResponseRedirect(HUB_REPORTS_URL)
+    try:
+        me = HubUser.objects.get(username = request.user.username)
+        report_id = int(request.GET['report_id'])
+        r = Report.objects.get(id = report_id, creator = me)
+        r.remove()
+    except Report.DoesNotExist:
+        # only the creator is allowed to remove the report
+        pass
     return HttpResponseRedirect(HUB_REPORTS_URL)
 
 def report_changescope(request):
-    report_id = int(request.POST['report_id'])
-    r = Report.objects.get(id = report_id)
-    r.scope = request.POST['scope']
-    r.save()
+    if request.user.is_anonymous():
+        return HttpResponseRedirect(HUB_REPORTS_URL)
+    try:
+        me = HubUser.objects.get(username = request.user.username)
+        report_id = int(request.POST['report_id'])
+        r = Report.objects.get(id = report_id)
+        r.scope = request.POST['scope']
+        r.save()
+    except Report.DoesNotExist:
+        # only the creator is allowed to change the scope of the report
+        pass
     return HttpResponseRedirect(HUB_REPORTS_URL)
 
 urlpatterns = [
