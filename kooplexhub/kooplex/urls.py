@@ -52,7 +52,7 @@ def preset(request):
         hubuser = HubUser.objects.get(username = username)
         assert hubuser.email == email, 'Wrong e-mail address is provided'
         token = pwgen.pwgen(12)
-        with open('/tmp/%s.token', 'w') as f:
+        with open('/tmp/%s.token'%hubuser.username, 'w') as f:
             f.write(token)
         send_token(hubuser, token)
     except Exception as e:
@@ -82,8 +82,8 @@ def preset2(request):
 #        hubuser = HubUser.objects.get(username = username)
         assert len(token), 'Please check your e-mail for the token and type it'
         assert len(password1), 'You cannot have an empty password'
-        tokengood = open('/tmp/%s.token').read()
-        assert token == tokengood, 'Your provide an invalid token'
+        tokengood = open('/tmp/%s.token'%username).read()
+        assert token == tokengood, 'You provide an invalid token'
         assert password1 == password2, 'Your passwords do not match'
         l = Ldap()
         dj_user = User.objects.get(username = username)
