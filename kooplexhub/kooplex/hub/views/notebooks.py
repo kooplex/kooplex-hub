@@ -263,9 +263,11 @@ def notebooks_clone(request):
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
 def notebooks_publishform(request):
+#FIXME: authorization!
     assert isinstance(request, HttpRequest)
     project_id = request.GET['project_id']
     project = Project.objects.get(id = project_id)
+    reports = Report.objects.filter(project = project)
     folder = project.gitdir(username = request.user.username)
     files = os.listdir(folder)
 
@@ -286,6 +288,7 @@ def notebooks_publishform(request):
                                             'ipynbs': ipynbs,
                                             'other_files': other_files,
                                             'project_id': project_id,
+                                            'reports': reports,
                                         })
     )
 
