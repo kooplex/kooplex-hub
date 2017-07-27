@@ -11,7 +11,7 @@
         <form action="{% url 'notebooks-convert-html' %}" method="post" class="form-horizontal" onsubmit="collectCheckedElements()">
           {% csrf_token %}
           <p>Notebooks can be published as static (html) or as interactive (dashboard) documents. These documents are available at the
-             <a href="{% url 'worksheets' %}" target="_blank" >Reports</a> section.
+             <a href="{% url 'reports' %}" target="_blank" >Reports</a> section.
           </p>
           <hr>
           <p>Please select the notebook to publish as a new report:</p>
@@ -30,7 +30,7 @@
           </div>
           {% endif %}
           <div class="well">
-            <strong>The url to the latest report:</strong> <code>{% url 'worksheet-open-latest' %}?project_id={{ project_id }}</code>
+            <strong>The url to the latest report:</strong> <code>{% url 'report-open-latest' %}?project_id={{ project_id }}</code>
           </div>
           {% if reports %}
           <hr>

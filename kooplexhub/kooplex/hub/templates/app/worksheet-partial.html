@@ -28,13 +28,13 @@
           <p><strong>Report description (latest):</strong>{{ item.description }}
         {% endif %}
         {% if pane == 'mine' %}
-          <p><strong>Url to the latest report:</strong><code>{% url 'worksheet-open-latest' %}?project_id={{ project.id }}</code>
+          <p><strong>Url to the latest report:</strong><code>{% url 'report-open-latest' %}?project_id={{ project.id }}</code>
         {% endif %}
         </div>
-        <form action="{% url 'reportformer' %}" method="post">
+        <form action="{% url 'report-open-lates-post' %}" method="post">
           {% csrf_token %}
           <label>Former reports</label>
-          <select id='report_id{{ project.id }}'>
+          <select name='report_id'>
         {% for r in reports %}
           <option value="{{ r.id }}">[{{ r.ts_ }}] ({{ r.type }}) {{ r.description }}</option>
         {% endfor %}

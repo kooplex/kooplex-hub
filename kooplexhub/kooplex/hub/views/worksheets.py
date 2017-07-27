@@ -19,8 +19,6 @@ from kooplex.hub.models.project import Project
 
 import os
 
-#TODO: rename worksheet -> report
-
 HUB_REPORTS_URL = '/hub/worksheets'
 
 def group_by_project(reports):
@@ -33,8 +31,7 @@ def group_by_project(reports):
         rl.sort()
     return reports_grouped
 
-def worksheets(request):
-    """Renders the worksheets page"""
+def reports(request):
     assert isinstance(request, HttpRequest)
     if request.user.is_anonymous():
         myreports = []
@@ -54,23 +51,13 @@ def worksheets(request):
         'app/worksheets.html',
         context_instance = RequestContext(request,
         {
-            'title':'Browse worksheets',
-            'message':'',
             'myreports': group_by_project( myreports ),
             'publicreports': group_by_project( publicreports ),
-            'username' : username,
+            'username': username,
        })
     )
 
-def worksheets_open_as_dashboard(request):
-#FIXME: check if authorization is enforced by the dashboard
-    url = request.GET['url']
-    cache_url = request.GET['cache_url']
-    D = Dashboards()
-    D.clear_cache_temp(cache_url)
-    return HttpResponseRedirect(url)
-
-def worksheets_open_html(request):
+def openreport(request):
     report_id = request.GET['report_id']
     try:
         report = Report.objects.get(id = report_id)
@@ -89,11 +76,14 @@ def worksheets_open_html(request):
             pass
         else:
             return HttpResponseRedirect(HUB_REPORTS_URL)
-    with codecs.open(report.entry_, 'r', 'utf-8') as f:
-        content = f.read()
-    return HttpResponse(content)
+    if report.type == 'html':
+        with codecs.open(report.entry_, 'r', 'utf-8') as f:
+            content = f.read()
+        return HttpResponse(content)
+    elif report.type == 'dashboard':
+        return HttpResponseRedirect(report.url_)
 
-def worksheets_open_html_latest(request):
+def openreport_latest(request):
     project_id = request.GET['project_id']
     try:
         project = Project.objects.get(id = project_id)
@@ -107,16 +97,14 @@ def worksheets_open_html_latest(request):
         return HttpResponseRedirect(HUB_REPORTS_URL)
     return HttpResponseRedirect(HUB_REPORTS_URL + 'open?report_id=%d' % report.id)
 
-def report_former(request):
+def openreport_latest_post(request):
     try:
-        report_id = int(request.POST['report_id'])
+        report_id = request.POST['report_id']
         return HttpResponseRedirect(HUB_REPORTS_URL + "open?report_id=%s" % report_id)  #FIXME: ugly
     except:
         return HttpResponseRedirect(HUB_REPORTS_URL)
 
-def report_settings(request):
-    raise Exception(str(request.POST))
-    return HttpResponseRedirect(HUB_REPORTS_URL)
+def setreport(request):
     if request.user.is_anonymous():
         return HttpResponseRedirect(HUB_REPORTS_URL)
     button = request.POST['button']
@@ -135,11 +123,10 @@ def report_settings(request):
     return HttpResponseRedirect(HUB_REPORTS_URL)
 
 urlpatterns = [
-    url(r'^$', worksheets, name='worksheets'),
-    url(r'^open$', worksheets_open_html, name='worksheet-open'),
-    url(r'^openlatest$', worksheets_open_html_latest, name='worksheet-open-latest'),
-    url(r'^opendashboard$', worksheets_open_as_dashboard, name='worksheet-open-as-dashboard'),
-    url(r'^former$', report_former, name='reportformer'),
-    url(r'^settings$', report_settings, name='report-settings'),
+    url(r'^$', reports, name = 'reports'),
+    url(r'^open$', openreport, name='report-open'),
+    url(r'^openlatest$', openreport_latest, name='report-open-latest'),
+    url(r'^openlatestpost$', openreport_latest_post, name='report-open-lates-post'),
+    url(r'^settings$', setreport, name='report-settings'),
 ]
 
