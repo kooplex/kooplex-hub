@@ -62,7 +62,11 @@
           </button>
         </a>
         <a href="#">
+{% if item.owner_username == user.username %} 
           <button type="button" class="btn btn-default" data-toggle="tooltip" title="Project settings for running project {{ item.name }} is disabled" data-placement="top">
+{% else %}
+          <button type="button" class="btn btn-default" data-toggle="tooltip" title="Project settings for project {{ item.name }} is disabled, because it is owned by {{ item.owner_username  }}" data-placement="top">
+{% endif %}
             <span class="glyphicon glyphicon-cog" aria-hidden="true"></span>
           </button>
         </a>
@@ -92,7 +96,7 @@
         </a>
 {% else %}
         <a href="#">
-          <button role="button" type="button" class="btn btn-default" data-toggle="tooltip" title="Project setting for running {{ item.name }} is disabled." data-placement="top">
+          <button role="button" type="button" class="btn btn-default" data-toggle="tooltip" title="Project setting for {{ item.name }} is disabled because its owner is {{ item.owner_username }}." data-placement="top">
             <span class="glyphicon glyphicon-cog" aria-hidden="true"></span>
           </button>
         </a>
