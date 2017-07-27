@@ -2,7 +2,7 @@ import base64
 import codecs
 
 from django.conf.urls import patterns, url, include
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpRequest,HttpResponse
 from django.template import RequestContext
 from datetime import datetime
@@ -26,24 +26,19 @@ HUB_REPORTS_URL = '/hub/worksheets'
 def worksheets(request):
     """Renders the worksheets page"""
     assert isinstance(request, HttpRequest)
-
-    username = request.user.username
-    try:
+    if request.user.is_anonymous():
+        myreports = []
+        internal_good_ = []
+        username = None
+    else:
+        username = request.user.username
         me = HubUser.objects.get(username = username)
         my_gitlab_id = str( HubUser.objects.get(username = username).gitlab_id )
         myreports = Report.objects.filter(creator = me)
-    except:
-        # unauthenticated
-        myreports = []
-    publicreports = list( Report.objects.filter(scope = 'public') )
-    try:
         internal_ = Report.objects.filter(scope = 'internal')
         internal_good_ = filter(lambda x: my_gitlab_id in x.project.gids.split(','), internal_)
-        publicreports.extend(internal_good_)
-    except:
-        # unauthenticated
-        pass
-
+    publicreports = list( Report.objects.filter(scope = 'public') )
+    publicreports.extend(internal_good_)
     return render(
         request,
         'app/worksheets.html',
@@ -86,6 +81,20 @@ def worksheets_open_html(request):
         content = f.read()
     return HttpResponse(content)
 
+def worksheets_open_html_latest(request):
+    project_id = request.GET['project_id']
+    try:
+        project = Project.objects.get(id = project_id)
+        reports = list(Report.objects.filter(project = project))
+        report = reports.pop()
+        while len(reports):
+            r = reports.pop()
+            if r.ts_created > report.ts_created:
+                report = r
+    except Report.DoesNotExist:
+        return HttpResponseRedirect(HUB_REPORTS_URL)
+    return HttpResponseRedirect(HUB_REPORTS_URL + 'open?report_id=%d' % report.id)
+
 def reports_unpublish(request):
     if request.user.is_anonymous():
         return HttpResponseRedirect(HUB_REPORTS_URL)
@@ -116,6 +125,7 @@ def report_changescope(request):
 urlpatterns = [
     url(r'^$', worksheets, name='worksheets'),
     url(r'^open$', worksheets_open_html, name='worksheet-open'),
+    url(r'^openlatest$', worksheets_open_html_latest, name='worksheet-open-latest'),
     url(r'^opendashboard$', worksheets_open_as_dashboard, name='worksheet-open-as-dashboard'),
     url(r'^unpublish$', reports_unpublish, name='worksheet-unpublish'),
     url(r'^changescope$', report_changescope, name='reportschangescope'),
