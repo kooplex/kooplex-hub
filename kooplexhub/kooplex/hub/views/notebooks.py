@@ -286,8 +286,6 @@ def notebooks_publishform(request):
                                             'ipynbs': ipynbs,
                                             'other_files': other_files,
                                             'project_id': project_id,
-#FIXME:
-                                            'url_latest': 'https://sandbox.vo.elte.hu/hub/worksheetsopenlatest?project_id=%s' % project_id,
                                         })
     )
 

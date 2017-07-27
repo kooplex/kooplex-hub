@@ -23,6 +23,7 @@
         </a>
         <div class="well">
           <p><strong>Project description:</strong>{{ project.description }}
+          <p><strong>Report type (latest):</strong>{{ item.type }}
           <p><strong>Report description (latest):</strong>{{ item.description }}
         {% if pane == 'mine' %}
           <p><strong>Url to the latest report:</strong><code>{% url 'worksheet-open-latest' %}?project_id={{ project.id }}</code>
@@ -33,7 +34,7 @@
           <label>Former reports</label>
           <select id='report_id{{ project.id }}'>
         {% for r in reports %}
-          <option value="{{ r.id }}">[{{ r.ts_ }}] {{ r.description }}</option>
+          <option value="{{ r.id }}">[{{ r.ts_ }}] ({{ r.type }}) {{ r.description }}</option>
         {% endfor %}
           </select>
           <button type="submit" class="btn btn-info" data-toggle="tooltip" title="Open a former report" data-placement="top"><span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span></button>
