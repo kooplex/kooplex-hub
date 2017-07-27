@@ -24,7 +24,9 @@
         <div class="well">
           <p><strong>Project description:</strong>{{ project.description }}
           <p><strong>Report type (latest):</strong>{{ item.type }}
+        {% if item.description %}
           <p><strong>Report description (latest):</strong>{{ item.description }}
+        {% endif %}
         {% if pane == 'mine' %}
           <p><strong>Url to the latest report:</strong><code>{% url 'worksheet-open-latest' %}?project_id={{ project.id }}</code>
         {% endif %}
