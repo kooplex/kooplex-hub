@@ -107,33 +107,6 @@ def worksheets_open_html_latest(request):
         return HttpResponseRedirect(HUB_REPORTS_URL)
     return HttpResponseRedirect(HUB_REPORTS_URL + 'open?report_id=%d' % report.id)
 
-def reports_unpublish(request):
-    if request.user.is_anonymous():
-        return HttpResponseRedirect(HUB_REPORTS_URL)
-    try:
-        me = HubUser.objects.get(username = request.user.username)
-        report_id = int(request.GET['report_id'])
-        r = Report.objects.get(id = report_id, creator = me)
-        r.remove()
-    except Report.DoesNotExist:
-        # only the creator is allowed to remove the report
-        pass
-    return HttpResponseRedirect(HUB_REPORTS_URL)
-
-def report_changescope(request):
-    if request.user.is_anonymous():
-        return HttpResponseRedirect(HUB_REPORTS_URL)
-    try:
-        me = HubUser.objects.get(username = request.user.username)
-        report_id = int(request.POST['report_id'])
-        r = Report.objects.get(id = report_id)
-        r.scope = request.POST['scope']
-        r.save()
-    except Report.DoesNotExist:
-        # only the creator is allowed to change the scope of the report
-        pass
-    return HttpResponseRedirect(HUB_REPORTS_URL)
-
 def report_former(request):
     try:
         report_id = int(request.POST['report_id'])
@@ -142,6 +115,23 @@ def report_former(request):
         return HttpResponseRedirect(HUB_REPORTS_URL)
 
 def report_settings(request):
+    raise Exception(str(request.POST))
+    return HttpResponseRedirect(HUB_REPORTS_URL)
+    if request.user.is_anonymous():
+        return HttpResponseRedirect(HUB_REPORTS_URL)
+    button = request.POST['button']
+    try:
+        me = HubUser.objects.get(username = request.user.username)
+        report_id = request.POST['report_id']
+        r = Report.objects.get(id = report_id, creator = me)
+        if button == 'apply':
+            r.scope = request.POST['scope']
+            r.save()
+        elif button == 'delete':
+            r.remove()
+    except Report.DoesNotExist:
+        # only the creator is allowed to change the scope of the report
+        pass
     return HttpResponseRedirect(HUB_REPORTS_URL)
 
 urlpatterns = [
@@ -149,8 +139,6 @@ urlpatterns = [
     url(r'^open$', worksheets_open_html, name='worksheet-open'),
     url(r'^openlatest$', worksheets_open_html_latest, name='worksheet-open-latest'),
     url(r'^opendashboard$', worksheets_open_as_dashboard, name='worksheet-open-as-dashboard'),
-    url(r'^unpublish$', reports_unpublish, name='worksheet-unpublish'),
-    url(r'^changescope$', report_changescope, name='reportschangescope'),
     url(r'^former$', report_former, name='reportformer'),
     url(r'^settings$', report_settings, name='report-settings'),
 ]

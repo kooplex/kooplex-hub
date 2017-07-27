@@ -11,10 +11,11 @@
           <li><a href="#pane_deletion-{{ r.id }}" data-toggle="tab">Deletion</a></li>
         </ul>
         <div class="tab-content">
-          <p>You can set here who can view your {{ r.name }} report.</p>
-          <p><strong>Private</strong> means only you can view the report, <strong>internal</strong> means everybody you shared your {{ r.project.name }} project can view. If you choose <strong>public</strong> then unauthenticated users can also see the content of this report.</p>
-          <p>The current scope is <strong>{{ r.scope }}</strong>.
           <div id="pane_scope-{{ r.id }}" class="tab-pane fade in active">
+            <p>You can set here who can view your report.</p>
+            <p><strong>Private</strong> means only you can view the report, <strong>internal</strong> means everybody you shared your {{ r.project.name }} project can view. If you choose <strong>public</strong> then unauthenticated users can also see the content of this report.</p>
+            <p>The current scope is <strong>{{ r.scope }}</strong>.
+            <hr>
             <label>Scope</label>
             <select name = "scope">
               <option value="private" {% if r.scope == 'private' %} selected {% endif %}>private</option>

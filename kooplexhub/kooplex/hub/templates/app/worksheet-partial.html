@@ -24,20 +24,21 @@
         <div class="well">
           <p><strong>Project description:</strong>{{ project.description }}
           <p><strong>Report description (latest):</strong>{{ item.description }}
+        {% if pane == 'mine' %}
+          <p><strong>Url to the latest report:</strong><code>{% url 'worksheet-open-latest' %}?project_id={{ project.id }}</code>
+        {% endif %}
         </div>
         <form action="{% url 'reportformer' %}" method="post">
           {% csrf_token %}
           <label>Former reports</label>
-          <select name='report_id' style="max-width=500px">
+          <select id='report_id{{ project.id }}'>
         {% for r in reports %}
           <option value="{{ r.id }}">[{{ r.ts_ }}] {{ r.description }}</option>
         {% endfor %}
           </select>
           <button type="submit" class="btn btn-info" data-toggle="tooltip" title="Open a former report" data-placement="top"><span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span></button>
       {% if pane == 'mine' %}
-          <a href="#" data-toggle="modal" data-target="#report-settings-{{ r.id }}">
-            <button type="button" class="btn btn-info" data-toggle="tooltip" title="Report settings" data-placement="top"><span class="glyphicon glyphicon-cog" aria-hidden="true"></span></button>
-          </a>
+          <button type="button" class="btn btn-info" data-toggle="tooltip" title="Report settings" data-placement="top" onclick="settings({{ project.id }});"><span class="glyphicon glyphicon-cog" aria-hidden="true"></span></button>
       {% endif  %}
         </form>
       </div>    <!-- projects -->
@@ -45,3 +46,11 @@
   </div>        <!-- collapse -->
 {% endwith %}
 </div>        <!-- panel -->
+
+<script type="text/javascript">
+function settings(project_id) {
+  var report_id;
+  report_id = document.getElementById('report_id' + project_id).value;
+  $('#report-settings-' + report_id).modal('show');
+}
+</script>
