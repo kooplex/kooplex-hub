@@ -46,6 +46,10 @@ class Report(models.Model, ModelBase):
         self.creator = creator
         self.creator_name = self.project.owner_username
 
+    def __lt__(self, r):
+        assert isinstance(r, Report)
+        return self.ts_created > r.ts_created
+
     @property
     def ts_(self):
         return strftime("%Y%m%d_%H%M%S", localtime(self.ts_created))
