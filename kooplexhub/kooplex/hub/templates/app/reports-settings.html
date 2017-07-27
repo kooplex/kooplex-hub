@@ -8,6 +8,7 @@
         <h4>Setting of report <strong>{{ r.name }} [{{ r.ts_ }}]</strong></h4>
         <ul class="nav nav-tabs">
           <li class="active"><a href="#pane_scope-{{ r.id }}" data-toggle="tab">Scope</a></li>
+          <li><a href="#pane_description-{{ r.id }}" data-toggle="tab">Description</a></li>
           <li><a href="#pane_deletion-{{ r.id }}" data-toggle="tab">Deletion</a></li>
         </ul>
         <div class="tab-content">
@@ -22,6 +23,14 @@
               <option value="internal" {% if r.scope == 'internal' %} selected {% endif %}>internal</option>
               <option value="public" {% if r.scope == 'public' %} selected {% endif %}>public</option>
             </select>
+          </div>
+          <div id="pane_description-{{ r.id }}" class="tab-pane fade">
+            <p>You can update the description here.</p>
+            <textarea name="report_description" rows="6" cols="50" id="report_description">
+{% if r.description %}
+{{ r.description }}
+{% endif %}
+            </textarea>
           </div>
           <div id="pane_deletion-{{ r.id }}" class="tab-pane fade">
             <p>All data related to this report are lost after deletion.</p>

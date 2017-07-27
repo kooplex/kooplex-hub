@@ -116,6 +116,7 @@ def setreport(request):
         r = Report.objects.get(id = report_id, creator = me)
         if button == 'apply':
             r.scope = request.POST['scope']
+            r.description = request.POST['report_description']
             r.save()
         elif button == 'delete':
             r.remove()

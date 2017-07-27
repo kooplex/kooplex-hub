@@ -20,6 +20,10 @@
              <input type="radio" name="ipynb_file" value="{{ item }}" {% if forloop.first %} checked {% endif %} > {{ item }}<br>
           {% endfor %}
           </div>
+          <hr>
+          <textarea rows="6" cols="50" id="report_description" name="report_description">
+Description of this report
+          </textarea>
           {% if other_files %}
           <hr>
           <p>Select those files to be attached to your report:</p>

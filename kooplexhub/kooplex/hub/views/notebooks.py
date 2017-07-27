@@ -298,6 +298,7 @@ def notebooks_publish(request):
         return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
     username = request.user.username
     project_id = request.POST['project_id']
+    description = request.POST['report_description'].strip()
     if 'html' in request.POST.keys():
         type = 'html'
     elif 'dashboard' in request.POST.keys():
@@ -315,17 +316,26 @@ def notebooks_publish(request):
         dashboard_server = Dashboard_server.objects.get(type = image_type)
         creator = HubUser.objects.get(username = request.user.username)
         report = Report()
-        report.init(dashboard_server, project, creator, file = ipynb_file, type = type)
+        report.init(
+          dashboard_server = dashboard_server,
+          project = project,
+          creator = creator, 
+          description = description,
+          file = ipynb_file, 
+          type = type,
+        )
         report.deploy(other_files)
         report.scope = request.POST['scope']
         report.save()
-        reports2remove = request.POST['reports2remove'].split(',') if ',' in request.POST['reports2remove'] else [ request.POST['reports2remove'] ]
-        for reportid in reports2remove:
-            report = Report.objects.get(id = reportid, creator = creator)
-            report.delete()
+        if len(request.POST['reports2remove']):
+            reports2remove = request.POST['reports2remove'].split(',') if ',' in request.POST['reports2remove'] else [ request.POST['reports2remove'] ]
+            for reportid in reports2remove:
+                report = Report.objects.get(id = reportid, creator = creator)
+                report.delete()
 
         return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
     except Exception as e:
+        raise
         return render(
             request,
             'app/error.html',
