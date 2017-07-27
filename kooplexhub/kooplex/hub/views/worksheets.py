@@ -23,6 +23,16 @@ import os
 
 HUB_REPORTS_URL = '/hub/worksheets'
 
+def group_by_project(reports):
+    reports_grouped = {}
+    for r in reports:
+        if not r.project in reports_grouped:
+            reports_grouped[r.project] = []
+        reports_grouped[r.project].append(r)
+    for rl in reports_grouped.values():
+        rl.sort()
+    return reports_grouped
+
 def worksheets(request):
     """Renders the worksheets page"""
     assert isinstance(request, HttpRequest)
@@ -46,8 +56,8 @@ def worksheets(request):
         {
             'title':'Browse worksheets',
             'message':'',
-            'myreports': myreports,
-            'publicreports': publicreports,
+            'myreports': group_by_project( myreports ),
+            'publicreports': group_by_project( publicreports ),
             'username' : username,
        })
     )
@@ -69,11 +79,13 @@ def worksheets_open_html(request):
     if request.user.is_anonymous():
         if report.scope == 'public':
             pass
+        else:
+            return HttpResponseRedirect(HUB_REPORTS_URL)
     else:
         me = HubUser.objects.get(username = request.user.username)
         if report.scope == 'internal' and me in report.project.members_:
             pass
-        elif report.scope == 'private' and report.creator == me:
+        elif report.creator == me:
             pass
         else:
             return HttpResponseRedirect(HUB_REPORTS_URL)
@@ -85,7 +97,7 @@ def worksheets_open_html_latest(request):
     project_id = request.GET['project_id']
     try:
         project = Project.objects.get(id = project_id)
-        reports = list(Report.objects.filter(project = project))
+        reports = list(Report.objects.filter(project = project, scope = 'public'))
         report = reports.pop()
         while len(reports):
             r = reports.pop()
@@ -122,6 +134,16 @@ def report_changescope(request):
         pass
     return HttpResponseRedirect(HUB_REPORTS_URL)
 
+def report_former(request):
+    try:
+        report_id = int(request.POST['report_id'])
+        return HttpResponseRedirect(HUB_REPORTS_URL + "open?report_id=%s" % report_id)  #FIXME: ugly
+    except:
+        return HttpResponseRedirect(HUB_REPORTS_URL)
+
+def report_settings(request):
+    return HttpResponseRedirect(HUB_REPORTS_URL)
+
 urlpatterns = [
     url(r'^$', worksheets, name='worksheets'),
     url(r'^open$', worksheets_open_html, name='worksheet-open'),
@@ -129,5 +151,7 @@ urlpatterns = [
     url(r'^opendashboard$', worksheets_open_as_dashboard, name='worksheet-open-as-dashboard'),
     url(r'^unpublish$', reports_unpublish, name='worksheet-unpublish'),
     url(r'^changescope$', report_changescope, name='reportschangescope'),
+    url(r'^former$', report_former, name='reportformer'),
+    url(r'^settings$', report_settings, name='report-settings'),
 ]
 

@@ -29,8 +29,12 @@
 
  <div class="tab-content">
 
+     {% if username %}
      <div id="myreports" class="tab-pane fade in active">
-       {% for item in myreports %}
+     {% else %}
+     <div id="myreports" class="tab-pane fade">
+     {% endif %}
+       {% for project, reports in myreports.items %}
          <div class="row">
             {% include 'app/worksheet-partial.html' with pane='mine' %}
          </div>
@@ -42,7 +46,7 @@
      {% else %}
      <div id="publicreports" class="tab-pane fade in active">
      {% endif %}
-     {% for item in publicreports %}
+     {% for project, reports in publicreports.items %}
          <div class="row">
             {% include 'app/worksheet-partial.html' with pane='public' %}
          </div>
