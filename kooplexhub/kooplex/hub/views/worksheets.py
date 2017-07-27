@@ -70,7 +70,9 @@ def openreport(request):
             return HttpResponseRedirect(HUB_REPORTS_URL)
     else:
         me = HubUser.objects.get(username = request.user.username)
-        if report.scope == 'internal' and me in report.project.members_:
+        if report.scope == 'public':
+            pass
+        elif report.scope == 'internal' and me in report.project.members_:
             pass
         elif report.creator == me:
             pass
