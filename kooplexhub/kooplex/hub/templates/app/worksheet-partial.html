@@ -34,9 +34,9 @@
         <form action="{% url 'report-open-lates-post' %}" method="post">
           {% csrf_token %}
           <label>Former reports</label>
-          <select name='report_id'>
+          <select name='report_id' id='report_id{{ project.id }}'>
         {% for r in reports %}
-          <option value="{{ r.id }}">[{{ r.ts_ }}] ({{ r.type }}) {{ r.description }}</option>
+          <option value="{{ r.id }}">[{{ r.ts_ }}] ({{ r.scope }} - {{ r.type }}) {{ r.description }}</option>
         {% endfor %}
           </select>
           <button type="submit" class="btn btn-info" data-toggle="tooltip" title="Open a former report" data-placement="top"><span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span></button>
