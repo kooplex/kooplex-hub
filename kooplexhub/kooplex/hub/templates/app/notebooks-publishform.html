@@ -8,7 +8,7 @@
         <h4>Publish your work</h4>
       </div>    <!-- heading -->
       <div class="panel-body">
-        <form action="{% url 'notebooks-convert-html' %}" method="post" class="form-horizontal" onsubmit="collectCheckedElements()">
+        <form action="{% url 'notebooks-publish' %}" method="post" class="form-horizontal" onsubmit="collectCheckedElements()">
           {% csrf_token %}
           <p>Notebooks can be published as static (html) or as interactive (dashboard) documents. These documents are available at the
              <a href="{% url 'reports' %}" target="_blank" >Reports</a> section.
@@ -49,7 +49,7 @@
               </select>
               <input type="hidden" name="project_id" value="{{ project_id }}" />
               <input type="hidden" name="toconvert_files" value="" />
-              <input type="hidden" id="reports2remove" name="toremove_reports" value="" />
+              <input type="hidden" id="reports2remove" name="reports2remove" value="" />
               <input type="submit" name="html" value="Convert to html" class="btn btn-default" />
               <input type="submit" name="dashboard" value="Deploy as dashboard" class="btn btn-default" />
               <input type="submit" name="cancel" value="Cancel" class="btn btn-default" />
@@ -82,8 +82,11 @@ function collectCheckedElements() {
   if (other_files.length > 0) {
     other_files = other_files.substring(1, other_files.length - 1);
   }
+  if (reports_to_remove.length > 0) {
+    reports_to_remove = reports_to_remove.substring(0, reports_to_remove.length - 1);
+  }
   document.getElementsByName("other_files")[0].value = other_files;
-  document.getElementsById("reports2remove").value = reports_to_remove;
+  document.getElementById("reports2remove").value = reports_to_remove;
 }
 </script>
 

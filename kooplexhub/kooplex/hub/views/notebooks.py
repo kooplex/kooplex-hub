@@ -293,20 +293,17 @@ def notebooks_publishform(request):
     )
 
 def notebooks_publish(request):
-    """ Converts ipynb to html in the opened container, creates variable in gitlab, commits file in gitlab"""
     assert isinstance(request, HttpRequest)
     if 'cancel' in request.POST.keys():
         return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
-    print_debug("Deploying notebook,")
-
     username = request.user.username
     project_id = request.POST['project_id']
     if 'html' in request.POST.keys():
         type = 'html'
-    if 'dashboard' in request.POST.keys():
+    elif 'dashboard' in request.POST.keys():
         type = 'dashboard'
-
-    # TODO here and elsewhere: does the filter give more than 1?
+    else:
+        return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
     project = Project.objects.get(id = project_id)
 
     ipynb_file = request.POST['ipynb_file']
@@ -322,6 +319,10 @@ def notebooks_publish(request):
         report.deploy(other_files)
         report.scope = request.POST['scope']
         report.save()
+        reports2remove = request.POST['reports2remove'].split(',') if ',' in request.POST['reports2remove'] else [ request.POST['reports2remove'] ]
+        for reportid in reports2remove:
+            report = Report.objects.get(id = reportid, creator = creator)
+            report.delete()
 
         return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
     except Exception as e:
@@ -885,8 +886,8 @@ urlpatterns = [
     url(r'^start_container$', container_start, name = 'container-start'),
     url(r'^open_container$', container_open, name = 'container-open'),
     url(r'^clone$', notebooks_clone, name = 'notebooks-clone'),
-    url(r'^preparetoconverthtml$', notebooks_publishform, name = 'notebooks-publishform'),
-    url(r'^converthtml$', notebooks_publish, name = 'notebooks-convert-html'),
+    url(r'^preparetopublish$', notebooks_publishform, name = 'notebooks-publishform'),
+    url(r'^publish$', notebooks_publish, name = 'notebooks-publish'),
     url(r'^commitform$', notebooks_commitform, name='notebooks-commitform'),
     url(r'^commit$', notebooks_commit, name='notebooks-commit'),
     url(r'^pull$', notebooks_pull, name='notebooks-pull'),
