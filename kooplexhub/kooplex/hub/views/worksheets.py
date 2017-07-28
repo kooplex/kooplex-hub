@@ -1,23 +1,17 @@
-import base64
 import codecs
 
-from django.conf.urls import patterns, url, include
+from django.conf.urls import url
 from django.shortcuts import render, redirect
-from django.http import HttpRequest,HttpResponse
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.template import RequestContext
-from datetime import datetime
-from django.http import HttpRequest, HttpResponseRedirect
 
 from kooplex.hub.models.report import Report
 from kooplex.hub.models.dashboard_server import Dashboard_server
+from kooplex.hub.models.user import HubUser
+from kooplex.hub.models.project import Project
 from kooplex.lib.libbase import get_settings
 from kooplex.lib.gitlab import Gitlab
 from kooplex.lib.spawner import Spawner
-from kooplex.lib.debug import *
-from kooplex.hub.models.user import HubUser
-from kooplex.hub.models.project import Project
-
-import os
 
 HUB_REPORTS_URL = '/hub/worksheets'
 
@@ -58,7 +52,7 @@ def reports(request):
     )
 
 def openreport(request):
-    report_id = request.GET['report_id']
+    report_id = request.GET['report_id']  if request.method == 'GET' else request.POST['report_id']
     try:
         report = Report.objects.get(id = report_id)
     except Report.DoesNotExist:
@@ -99,13 +93,6 @@ def openreport_latest(request):
         return HttpResponseRedirect(HUB_REPORTS_URL)
     return HttpResponseRedirect(HUB_REPORTS_URL + 'open?report_id=%d' % report.id)
 
-def openreport_latest_post(request):
-    try:
-        report_id = request.POST['report_id']
-        return HttpResponseRedirect(HUB_REPORTS_URL + "open?report_id=%s" % report_id)  #FIXME: ugly
-    except:
-        return HttpResponseRedirect(HUB_REPORTS_URL)
-
 def setreport(request):
     if request.user.is_anonymous():
         return HttpResponseRedirect(HUB_REPORTS_URL)
@@ -129,7 +116,6 @@ urlpatterns = [
     url(r'^$', reports, name = 'reports'),
     url(r'^open$', openreport, name='report-open'),
     url(r'^openlatest$', openreport_latest, name='report-open-latest'),
-    url(r'^openlatestpost$', openreport_latest_post, name='report-open-lates-post'),
     url(r'^settings$', setreport, name='report-settings'),
 ]
 

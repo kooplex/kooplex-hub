@@ -31,7 +31,7 @@
           <p><strong>Url to the latest report:</strong><code>{% url 'report-open-latest' %}?project_id={{ project.id }}</code>
         {% endif %}
         </div>
-        <form action="{% url 'report-open-lates-post' %}" method="post">
+        <form action="{% url 'report-open' %}" method="post">
           {% csrf_token %}
           <label>Former reports</label>
           <select name='report_id' id='report_id{{ project.id }}' style="max-width: 800px;">

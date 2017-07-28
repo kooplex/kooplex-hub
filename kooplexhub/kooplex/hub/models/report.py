@@ -37,7 +37,7 @@ class Report(models.Model, ModelBase):
     class Meta:
         db_table = "kooplex_hub_report"
 
-    def init(self, dashboard_server, project, creator, file="", type=""):
+    def init(self, dashboard_server, project, creator, description, file="", type=""):
         self.ts_created = int(time())
         self.path, self.file_name = os.path.split(file)
         self.name = os.path.splitext(self.file_name)[0]
@@ -46,6 +46,7 @@ class Report(models.Model, ModelBase):
         self.project = project
         self.creator = creator
         self.creator_name = self.project.owner_username
+        self.description = description
 
     def __lt__(self, r):
         assert isinstance(r, Report)
