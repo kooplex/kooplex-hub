@@ -1,31 +1,31 @@
 {% for r in reports %}
   {% include 'report/settings.html' %}
 {% endfor %}
-{% if item.type == 'dashboard' %}
+{% with reports|first as report_latest %}
+{% if report_latest.type == 'dashboard' %}
 <div class="panel panel-success ">
 {% else %}
 <div class="panel panel-default ">
 {% endif %}
-{% with reports|first as item %}
   <div class="panel-heading">
-    <a href="{{ item.url_ }}" target="_blank">
+    <a href="{{ report_latest.url_ }}" target="_blank">
       <button type="button" class="btn btn-info"><span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span> Open</button>
     </a>
-    <a data-toggle="collapse" href="#collapse{{ item.id }}{{ pane }}" style="text-decoration: none; color: gray">
-      <strong>{{ item.name  }} [{{ item.ts_ }}]</strong> - {{ item.creator_name }} - {{ item.file_name }}
+    <a data-toggle="collapse" href="#collapse{{ report_latest.id }}{{ pane }}" style="text-decoration: none; color: gray">
+      <strong>{{ report_latest.name  }} [{{ report_latest.ts_ }}]</strong> - {{ report_latest.creator_name }} - {{ report_latest.file_name }}
     </a>
   </div>
-  <div id="collapse{{ item.id }}{{ pane }}" class="panel-collapse collapse">
+  <div id="collapse{{ report_latest.id }}{{ pane }}" class="panel-collapse collapse">
     <div class="panel-body">
       <div class="projects worksheet">
-        <a href="{{ item.url_ }}" target="_blank">
-          <img src="{{ item.picture }}"  style="max-height: 200px; max-width: 100%;">
+        <a href="{{ report_latest.url_ }}" target="_blank">
+          <img src="{{ report_latest.picture }}"  style="max-height: 200px; max-width: 100%;">
         </a>
         <div class="well">
           <p><strong>Project description:</strong>{{ project.description }}
-          <p><strong>Report type (latest):</strong>{{ item.type }}
-        {% if item.description %}
-          <p><strong>Report description (latest):</strong>{{ item.description }}
+          <p><strong>Report type (latest):</strong>{{ report_latest.type }}
+        {% if report_latest.description %}
+          <p><strong>Report description (latest):</strong>{{ report_latest.description }}
         {% endif %}
         {% if pane == 'mine' %}
           <p><strong>Url to the latest report:</strong><code>{% url 'report-openlatest' %}?project_id={{ project.id }}</code>
@@ -36,7 +36,9 @@
           <label>Former reports</label>
           <select name='report_id' id='report_id{{ project.id }}' style="max-width: 800px;">
         {% for r in reports %}
-          <option value="{{ r.id }}">[{{ r.ts_ }}] ({{ r.scope }} - {{ r.type }}) {% if r.description %} {{ r.description }} {% endif %}</option>
+          <option value="{{ r.id }}"
+{% if r.type == "dashboard" %} style="background-color: lightgreen;" {% endif %}
+>{{ r.name }} [{{ r.ts_ }}] ({{ r.scope }}) {% if r.description %} {{ r.description }} {% endif %}</option>
         {% endfor %}
           </select>
           <button type="submit" class="btn btn-info" data-toggle="tooltip" title="Open a former report" data-placement="top"><span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span></button>
