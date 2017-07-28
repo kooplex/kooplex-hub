@@ -15,9 +15,10 @@ from kooplex.hub.models.project import Project
 def group_by_project(reports):
     reports_grouped = {}
     for r in reports:
-        if not r.project in reports_grouped:
-            reports_grouped[r.project] = []
-        reports_grouped[r.project].append(r)
+        k = r.project, r.name
+        if not k in reports_grouped:
+            reports_grouped[k] = []
+        reports_grouped[k].append(r)
     for rl in reports_grouped.values():
         rl.sort()
     return reports_grouped
