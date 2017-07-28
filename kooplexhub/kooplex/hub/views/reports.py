@@ -3,17 +3,14 @@ import codecs
 from django.conf.urls import url
 from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
+from django.core.urlresolvers import reverse
 from django.template import RequestContext
 
 from kooplex.hub.models.report import Report
-from kooplex.hub.models.dashboard_server import Dashboard_server
 from kooplex.hub.models.user import HubUser
 from kooplex.hub.models.project import Project
-from kooplex.lib.libbase import get_settings
-from kooplex.lib.gitlab import Gitlab
-from kooplex.lib.spawner import Spawner
 
-HUB_REPORTS_URL = '/hub/worksheets'
+#from kooplex.lib.libbase import get_settings #TODO: get server prefix
 
 def group_by_project(reports):
     reports_grouped = {}
@@ -42,7 +39,7 @@ def reports(request):
     publicreports.extend(internal_good_)
     return render(
         request,
-        'app/worksheets.html',
+        'report/reports.html',
         context_instance = RequestContext(request,
         {
             'myreports': group_by_project( myreports ),
@@ -52,16 +49,17 @@ def reports(request):
     )
 
 def openreport(request):
+    assert isinstance(request, HttpRequest)
     report_id = request.GET['report_id']  if request.method == 'GET' else request.POST['report_id']
     try:
         report = Report.objects.get(id = report_id)
     except Report.DoesNotExist:
-        return HttpResponseRedirect(HUB_REPORTS_URL)
+        return HttpResponseRedirect(reverse('reports'))
     if request.user.is_anonymous():
         if report.scope == 'public':
             pass
         else:
-            return HttpResponseRedirect(HUB_REPORTS_URL)
+            return HttpResponseRedirect(reverse('reports'))
     else:
         me = HubUser.objects.get(username = request.user.username)
         if report.scope == 'public':
@@ -71,7 +69,7 @@ def openreport(request):
         elif report.creator == me:
             pass
         else:
-            return HttpResponseRedirect(HUB_REPORTS_URL)
+            return HttpResponseRedirect(reverse('reports'))
     if report.type == 'html':
         with codecs.open(report.entry_, 'r', 'utf-8') as f:
             content = f.read()
@@ -80,6 +78,7 @@ def openreport(request):
         return HttpResponseRedirect(report.url_)
 
 def openreport_latest(request):
+    assert isinstance(request, HttpRequest)
     project_id = request.GET['project_id']
     try:
         project = Project.objects.get(id = project_id)
@@ -90,12 +89,13 @@ def openreport_latest(request):
             if r.ts_created > report.ts_created:
                 report = r
     except Report.DoesNotExist:
-        return HttpResponseRedirect(HUB_REPORTS_URL)
-    return HttpResponseRedirect(HUB_REPORTS_URL + 'open?report_id=%d' % report.id)
+        return HttpResponseRedirect(reverse('reports'))
+    return HttpResponseRedirect(reverse('report-open') + '?report_id=%d' % report.id)
 
 def setreport(request):
+    assert isinstance(request, HttpRequest)
     if request.user.is_anonymous():
-        return HttpResponseRedirect(HUB_REPORTS_URL)
+        return HttpResponseRedirect(reverse('reports'))
     button = request.POST['button']
     try:
         me = HubUser.objects.get(username = request.user.username)
@@ -110,12 +110,12 @@ def setreport(request):
     except Report.DoesNotExist:
         # only the creator is allowed to change the scope of the report
         pass
-    return HttpResponseRedirect(HUB_REPORTS_URL)
+    return HttpResponseRedirect(reverse('reports'))
 
 urlpatterns = [
     url(r'^$', reports, name = 'reports'),
     url(r'^open$', openreport, name='report-open'),
-    url(r'^openlatest$', openreport_latest, name='report-open-latest'),
+    url(r'^openlatest$', openreport_latest, name='report-openlatest'),
     url(r'^settings$', setreport, name='report-settings'),
 ]
 

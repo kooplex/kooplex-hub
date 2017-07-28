@@ -1,5 +1,5 @@
 {% for r in reports %}
-  {% include 'app/reports-settings.html' %}
+  {% include 'report/settings.html' %}
 {% endfor %}
 {% if item.type == 'dashboard' %}
 <div class="panel panel-success ">
@@ -28,7 +28,7 @@
           <p><strong>Report description (latest):</strong>{{ item.description }}
         {% endif %}
         {% if pane == 'mine' %}
-          <p><strong>Url to the latest report:</strong><code>{% url 'report-open-latest' %}?project_id={{ project.id }}</code>
+          <p><strong>Url to the latest report:</strong><code>{% url 'report-openlatest' %}?project_id={{ project.id }}</code>
         {% endif %}
         </div>
         <form action="{% url 'report-open' %}" method="post">

@@ -36,7 +36,7 @@
      {% endif %}
        {% for project, reports in myreports.items %}
          <div class="row">
-            {% include 'app/worksheet-partial.html' with pane='mine' %}
+            {% include 'report/partial.html' with pane='mine' %}
          </div>
        {% endfor %}
      </div>
@@ -48,7 +48,7 @@
      {% endif %}
      {% for project, reports in publicreports.items %}
          <div class="row">
-            {% include 'app/worksheet-partial.html' with pane='public' %}
+            {% include 'report/partial.html' with pane='public' %}
          </div>
      {% endfor %}
      </div>
