@@ -34,7 +34,7 @@ Description of this report
           </div>
           {% endif %}
           <div class="well">
-            <strong>The url to the latest report:</strong> <code>{% url 'report-openlatest' %}?project_id={{ project_id }}</code>
+            <strong>The url to the latest report:</strong> <code>{% url 'report-openlatest' %}?project_id={{ project_id }}&amp;filename=<strong>your_chosen_file.ipynb</strong></code>
           </div>
           {% if reports %}
           <hr>

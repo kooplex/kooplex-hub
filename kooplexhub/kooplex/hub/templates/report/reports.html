@@ -34,9 +34,9 @@
      {% else %}
      <div id="myreports" class="tab-pane fade">
      {% endif %}
-       {% for project, reports in myreports.items %}
+       {% for key, reports in myreports.items %}
          <div class="row">
-            {% include 'report/partial.html' with pane='mine' %}
+            {% include 'report/partial.html' with pane='mine' project=key.0 %}
          </div>
        {% endfor %}
      </div>
@@ -46,9 +46,9 @@
      {% else %}
      <div id="publicreports" class="tab-pane fade in active">
      {% endif %}
-     {% for project, reports in publicreports.items %}
+     {% for key, reports in publicreports.items %}
          <div class="row">
-            {% include 'report/partial.html' with pane='public' %}
+            {% include 'report/partial.html' with pane='public' project=key.0 %}
          </div>
      {% endfor %}
      </div>

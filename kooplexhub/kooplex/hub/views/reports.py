@@ -81,14 +81,20 @@ def openreport(request):
 def openreport_latest(request):
     assert isinstance(request, HttpRequest)
     project_id = request.GET['project_id']
+    filename = request.GET['filename']
+    checker = { 'dashboard': filename, 'html': filename.replace('.ipynb', '.html') }
     try:
         project = Project.objects.get(id = project_id)
         reports = list(Report.objects.filter(project = project, scope = 'public'))
-        report = reports.pop()
+        reports.sort()
+        found = False
         while len(reports):
-            r = reports.pop()
-            if r.ts_created > report.ts_created:
-                report = r
+            report = reports.pop(0)
+            if report.file_name == checker[report.type]:
+                found = True
+                break
+        if not found:
+            raise Report.DoesNotExist()
     except Report.DoesNotExist:
         return HttpResponseRedirect(reverse('reports'))
     return HttpResponseRedirect(reverse('report-open') + '?report_id=%d' % report.id)
