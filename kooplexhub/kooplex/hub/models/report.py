@@ -1,6 +1,7 @@
 ﻿import os.path
 import json
 from django.db import models
+from django.core.urlresolvers import reverse
 from shutil import copyfile as cp
 from os import mkdir
 from distutils import dir_util, file_util
@@ -59,7 +60,7 @@ class Report(models.Model, ModelBase):
     @property
     def url_(self):
         if self.type == 'html':
-            return "/hub/worksheetsopen?report_id=%d" %  (self.id)
+            return reverse('report-open') + "?report_id=%d" %  (self.id)
         elif self.type == 'dashboard':
 #FIXME: why dashboard here
             return os.path.join(self.dashboard_server.url, self.path, 'dashboards', self.project.home, self.ts_, self.name)

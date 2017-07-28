@@ -1,4 +1,4 @@
-﻿"""
+"""
 Definition of urls for kooplex.
 """
 
@@ -34,6 +34,10 @@ import pwgen
 from kooplex.lib.sendemail import send_token
 from django.contrib.auth.models import User
 from kooplex.lib.ldap import Ldap
+
+def hw(request):
+    from django.http import HttpResponse
+    return HttpResponse('Szia')
 
 def pwreset(request):
     return render(
@@ -101,7 +105,7 @@ def preset2(request):
         )
     return redirect('/hub/login/')
 
-urlpatterns = (
+urlpatterns = [
     url(r'^hub/login/$',
         django.contrib.auth.views.login,
         {
@@ -117,21 +121,6 @@ urlpatterns = (
      url(r'hub/login/passwordreset$', pwreset, {}, name = 'pwreset'),
      url(r'hub/login/preset$', preset, {}, name = 'preset'),
      url(r'hub/login/preset2$', preset2, {}, name = 'preset2'),
-#OBSOLETED
-#    url(r'^hub/chan/$',
-#        django.contrib.auth.views.password_change,
-#        {
-#            'template_name': 'app/change-password.html',
-#            'password_change_form': BootstrapPasswordChangeForm,
-#            'post_change_redirect': '/hub',
-#            'extra_context':
-#            {
-#                'title':'Change Password',
-#                'year':datetime.now().year,
-#                'next_page': '/hub',
-#            }
-#        },
-#        name='chan'),
     url(r'^hub/logout$',
         django.contrib.auth.views.logout,
         {
@@ -160,5 +149,4 @@ urlpatterns = (
     #url(r'^changepassword/', include('kooplex.hub.views.changepassword')),
     #url(r'^changepassword', changepassword.change_password),
     
-
-)
+]
