@@ -21,7 +21,11 @@ class repository:
         url = d.get_docker_url()
         self.dockerclient = docker.client.Client(base_url = url)
         self.sshagentsock = os.path.join('/tmp', self.user)
-        self.__execute('/usr/local/bin/init-ssh-agent.sh %s' % self.user)
+        usercommand = [ "/usr/local/bin/init-ssh-agent.sh", self.user ]
+        x = self.dockerclient.exec_create(container = self.container_git, cmd = usercommand)
+        self.dockerclient.exec_start(exec_id = x['Id'], stream = False)
+        check = self.dockerclient.exec_inspect(exec_id = x['Id'])
+        assert check['ExitCode'] == 0, check
 
     def __execute(self, command):
         usercommand = [ "sudo", "-i", "-u", self.user, "sh", "-c", "cd %s ; SSH_AUTH_SOCK=%s %s" % (self.gitdir, self.sshagentsock, command) ]
