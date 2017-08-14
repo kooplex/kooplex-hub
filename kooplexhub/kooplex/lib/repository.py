@@ -21,12 +21,7 @@ class repository:
         url = d.get_docker_url()
         self.dockerclient = docker.client.Client(base_url = url)
         self.sshagentsock = os.path.join('/tmp', self.user)
-        try:
-            self.__execute('ssh-agent -a %s' % self.sshagentsock)
-            self.__execute('SSH_AUTH_SOCK=%s ssh-add \$HOME/.ssh/gitlab.key' % self.sshagentsock)
-        except:
-            # ssh-agent already running
-            pass
+        self.__execute('/usr/local/bin/init-ssh-agent.sh %s' % self.user)
 
     def __execute(self, command):
         usercommand = [ "sudo", "-i", "-u", self.user, "sh", "-c", "cd %s ; SSH_AUTH_SOCK=%s %s" % (self.gitdir, self.sshagentsock, command) ]
