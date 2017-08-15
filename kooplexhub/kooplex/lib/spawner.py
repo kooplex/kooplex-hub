@@ -210,7 +210,7 @@ class Spawner(RestClient):
                 'NB_URL': notebook_path,
                 'NB_PORT': self.port,
                 'PR_ID': self.project.id,
-                'PR_NAME': self.project.safename,
+                'PR_NAME': self.project.groupname_,
                 'PR_MEMBERS': ",".join(projectmembers),
                 'PR_URL': "ssh://git@%s/%s.git" % (get_settings('gitlab', 'ssh_host'), self.project.path_with_namespace),
                 'GID_OFFSET': G_OFFSET,

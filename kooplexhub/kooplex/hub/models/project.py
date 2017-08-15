@@ -1,4 +1,5 @@
 ﻿import json, os
+import re
 from django.db import models
 
 from .modelbase import ModelBase
@@ -74,8 +75,13 @@ class Project(models.Model, ModelBase):
 #FIXME: use home_ property instead
         self.home = self.path_with_namespace.replace('/', '_')
 
+#FIXME: I guess this is not necessary
     def get_safename(self):
         return self.name.replace(" ",'-')
+
+    @property
+    def groupname_(self):
+        return re.split('([_a-z][-0-9_a-z]*)', self.name.lower())[1] if len(self.name) else "dummygroup"
 
     def from_gitlab_dict_projectmembers(self, list_of_members):
         self.gids = ""

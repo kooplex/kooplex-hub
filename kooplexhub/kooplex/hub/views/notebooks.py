@@ -6,6 +6,7 @@ from django.shortcuts import render
 from django.http import HttpRequest, HttpResponseRedirect,HttpResponse
 from django.template import RequestContext
 from django.template.response import TemplateResponse
+from django.core.urlresolvers import reverse
 import logging
 import logging.config
 from datetime import datetime
@@ -45,15 +46,12 @@ from kooplex.lib.debug import *
 
 def notebooks(request, errors = []):
     """Renders the notebooks page"""
-    print_debug("Rendering notebook page")
-    logger = logging.getLogger(__name__)
-
     assert isinstance(request, HttpRequest)
-
     user = request.user
+    if user.is_anonymous():
+        return HttpResponseRedirect(reverse('login'))
+
     hubuser = HubUser.objects.get(username = user.username)
-#FIXME: login if exception raised
-    print_debug("Rendering notebook page, getting sessions")
     notebooks = Notebook.objects.filter(username = user.username)
     running = []
     for n in notebooks:
