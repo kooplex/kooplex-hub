@@ -3,100 +3,36 @@
 {% block content %}
 
 <div class="jumbotron">
-    <h1>Kooplex</h1>
-    <p class="lead">Infrastructure for flexible collaboration</p>
+  <h2>Kooplex</h2>
+  <p class="lead">Infrastructure for flexible collaboration</p>
+  <div class="container" style="font-size: 14px">
+   <ul>
+     <li>Access digested scientific output, meant for the general public.</li>
+     <li>Develop and share your jupyter notebook projects.</li>
+     <li>Access private cloud file system, share data and results.</li>
+   </ul>
+  </div>
 </div>
 
-{% include 'app/notebooks-new-partial.html' %}
-
-<div class="row">
-
-  <div class="col-md-3 col-sm-4 col-xs-6" >
-    <div class="thumbnail">
-        <div  style="height: 90px; padding: 10px 0px 10px 0px;background-color: white;text-align: center;">
-  <img
-    src="/static/app/content/notebook.jpeg" style="height: 70px;padding-top: 10px 0px 10px;"
-    alt="reports" >
-            </div>
-      <div class="caption">
-        <h3> Public Reports</h3>
-          <p>Access digested scientific output, meant for the general public.</p>
-        <p><a href="{% url 'reports' %}" class="btn btn-primary" role="button">
-          <span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span>  to reports</a>
-            </p>
-      </div>
-    </div>
+<div class="jumbotron">
+  <p class="lead">Motored by:</p>
+  <div class="row" style="float: right">
+   <img src="/static/app/content/django.png" style="height: 40px; padding-right: 10px" alt="django">
+   <img src="https://jupyter.readthedocs.io/en/latest/_static/_images/jupyter.svg" style="height: 40px; padding-right: 10px" alt="Jupyter Notebook">
+   <img src="https://about.gitlab.com/images/logo.png" style="height: 40px; padding-right: 10px" alt="GitLab">
+   <img src="https://raw.githubusercontent.com/docker-library/docs/9d36b4ed7cabc35dbd3849272ba2bd7abe482172/owncloud/logo.png" style="height: 40px; padding-right: 10px" alt="OwnCLoud Fileserver">
   </div>
+</div>
 
-      <div class="col-md-3 col-sm-4 col-xs-6" >
-    <div class="thumbnail">
-        <div  style="height: 90px; padding: 10px 0px 10px 0px;background-color: white;text-align: center;">
-      <img src="https://jupyter.readthedocs.io/en/latest/_static/_images/jupyter.svg" style="height: 60px;padding-top: 10px 0px 10px;" alt="Jupyter Notebook">
-            </div>
-      <div class="caption">
-        <h3> Notebook projects </h3>
-        <p>Manage private jupyter notebook projects, meant for the individual researcher.</p>
-            {% if user.is_authenticated %}
-        <p><a href="{% url 'notebooks' %}" class="btn btn-primary" role="button"><span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span> Browse projects</a>
-            </p>
-                {%  else %}
-                <p><a href="{% url 'login' %}" class="btn btn-default" > Login to browse projects</a></p>
-            {% endif %}
-      </div>
-    </div>
-  </div>
-
-        <div class="col-md-3 col-sm-4 col-xs-6">
-    <div class="thumbnail">
-<div  style="height: 90px; padding: 10px 0px 10px 0px;background-color: white;text-align: center;">
-      <img src="https://about.gitlab.com/images/logo.png" style="height: 80px;padding:10px;" alt="GitLab">
-    </div>
-      <div class="caption">
-        <h3> Gitlab</h3>
-        <p>Manage projects and file issues, meant for the project manager.</p>
-        {% if user.is_authenticated %}
-        <p><a href="/gitlab" target="_blank" class="btn btn-primary" role="button">
-        <span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span> to Gitlab</a>
-            </p>
-            {%  else %}
-                <p><a href="{% url 'login' %}" class="btn btn-default" > Login to manage projects</a></p>
-            {% endif %}
-      </div>
-    </div>
-  </div>
-
-        <div class="col-md-3 col-sm-4 col-xs-6">
-    <div class="thumbnail">
-        <div  style="height: 90px; padding: 10px 0px 10px 0px;background-color: white;text-align: center;">
-      <img src="https://raw.githubusercontent.com/docker-library/docs/9d36b4ed7cabc35dbd3849272ba2bd7abe482172/owncloud/logo.png" style="height: 70px;padding-top: 10px 0px 10px;" alt="OwnCLoud Fileserver">
-            </div>
-      <div class="caption">
-        <h3> Owncloud</h3>
-        <p>Access private cloud file system, share data and results.</p>
-        {% if user.is_authenticated %}
-        <p><a href="/owncloud" target="_blank" class="btn btn-primary" role="button">
-        <span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span> to Owncloud</a>
-            </p>
-            {%  else %}
-                <p><a href="{% url 'login' %}" class="btn btn-default" > Login to access files</a></p>
-            {% endif %}
-      </div>
-    </div>
-  </div>
-
-    </div>
-
-<footer class="bs-docs-footer" style="padding-top: 50px;padding-bottom: 50px;margin-top: 10px;color: #99979c;text-align: center;background-color: #2a2730;"> <div class="container">
-
-<ul>
-    <li>To reach the developers, please send a message to - <a href="#">kooplex at complex.elte.hu.</a></li>
-    <li>To report problems or buggy features, please, file an issue at - <a href="https://github.com/kooplex/kooplex-hub" target="_blank">https://github.com/kooplex/kooplex-hub</a></li>
-    <li>There is manual at - <a href="https://github.com/kooplex/kooplex-hub/wiki" target="_blank">https://github.com/kooplex/kooplex-hub/wiki </a></li>
-</ul>
-
- <p>Designed and built with all the love in the world by the <b>Kooplex
- Team</b>. We try to maintain it too! :)
- </div> </footer>
-
+<footer class="bs-docs-footer" style="padding-top: 50px;padding-bottom: 50px;margin-top: 10px;color: #99979c;background-color: #2a2730;">
+  <div class="container">
+    <ul>
+        <li>To reach the developers, please send a message to - <a href="#">kooplex at complex.elte.hu.</a></li>
+        <li>To report problems or buggy features, please, file an issue at - <a href="https://github.com/kooplex/kooplex-hub" target="_blank">https://github.com/kooplex/kooplex-hub</a></li>
+        <li>There is manual at - <a href="https://github.com/kooplex/kooplex-hub/wiki" target="_blank">https://github.com/kooplex/kooplex-hub/wiki </a></li>
+    </ul>
+    <p>Designed and built with all the love in the world by the <b>Kooplex Team</b>. We try to maintain it too! :)</p>
+ </div>
+</footer>
 
 {% endblock %}
