@@ -54,8 +54,9 @@ class Dashboard_server(models.Model, ModelBase):
                 self.ports = mappings['PublicPort']
                 break
         self.state = dict['State']  # created|restarting|running|paused|exited|dead
-        prefix = get_settings('dashboards', 'prefix', None, '')
-        self.type = self.image.split(prefix + "_dashboards-")[1]
+        dashboards_prefix = get_settings('dashboards', 'prefix', None, '')
+        notebook_prefix = get_settings('prefix', 'name', None, '')
+        self.type = self.image.split("%s-%s-"%(notebook_prefix, dashboards_prefix))[1]
         url_prefix = get_settings('dashboards', 'url_prefix', None, '')
         url_prefix = url_prefix.replace('{$dashboard_port}', str(self.ports))
         self.dir = get_settings('dashboards', 'dir', None, '')
