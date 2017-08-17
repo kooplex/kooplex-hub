@@ -130,7 +130,11 @@ class Jupyter(RestClient):
 
         data = session.to_jupyter_dict()
         res = self.http_post('/sessions', data=data)
-        print(res)
+        t=res.json()
+        c=t.keys()
+        if 'short_message' in t.keys():
+            data['kernel'] = {'name' :'python2'}
+            res = self.http_post('/sessions', data=data)
         session = Session.from_jupyter_dict(self.notebook, res.json())
         session.notebook = self.notebook
         return session

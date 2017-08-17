@@ -24,6 +24,7 @@ class DockerImage(models.Model, ModelBase):
 
     def Refresh_database(self, request='', *args, **kwargs):
         DockerImage.objects.all().delete()
+        Dashboard_server.objects.all().delete()
 
 
         d = Docker()
@@ -34,14 +35,14 @@ class DockerImage(models.Model, ModelBase):
             i.save()
             dashboards_prefix = get_settings('dashboards', 'prefix', None, '')
             notebook_prefix = get_settings('prefix', 'name', None, '')
-            dashboard_container_name = dashboards_prefix + "_dashboards-" + \
+            dashboard_container_name = "%s-%s-"%(notebook_prefix, dashboards_prefix) + \
                                         i.name.split(notebook_prefix + "-notebook-")[1]
             docker_container = d.get_container(dashboard_container_name, original=True)
             # container, docker_container = d.get_container(dashboard_container_name)
             if docker_container:
-                D = Dashboard_server()
-                D.init(d, docker_container)
-                D.save()
+                DS = Dashboard_server()
+                DS.init(d, docker_container)
+                DS.save()
         return HttpResponseRedirect("/admin")
 
 #    def get_name(self):
