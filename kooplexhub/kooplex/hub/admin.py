@@ -65,16 +65,25 @@ class MountPointPrivilegeBinding(admin.ModelAdmin):
 
 def reset_password(modeladmin, request, queryset):
     for hubuser in queryset:
-        hubuser.last_name = 'Lajos'
-        hubuser.save()
+        hubuser.pwgen()
+
 reset_password.short_description = 'Reset Password'
 
 @admin.register(HubUser)
 class HubUserAdmin(admin.ModelAdmin):
     list_display = ('username', 'first_name', 'last_name', 'gitlab_id')
-    fieldsets = ( (None, { 'fields': ('username', ( 'first_name', 'last_name'), 'email', 'user_permissions')     }),    )
+    readonly_fields = ('uid', 'gid', 'gitlab_id', 'password')
+    fieldsets = ( (None, { 'fields': ('username', ( 'first_name', 'last_name'), 'email', 'user_permissions', 'uid', 'gid', 'gitlab_id', 'password') }),    )
     change_list_template = "admin/change_list_hubuser.html"
     actions = [reset_password, ]
+
+    #def save_model(self, request, obj, form, changed):
+    #    User = HubUser()
+    #    User.create(request)
+        # add your code here
+    #    return super(HubUserAdmin, self).changelist_view(request)
+
+
 
 
 
