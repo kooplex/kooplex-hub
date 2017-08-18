@@ -2,37 +2,69 @@
 
 {% block content %}
 
-<div class="jumbotron">
+<div class="jumbotron" style="padding-top: 10px; padding-bottom: 10px">
   <h2>Kooplex</h2>
-  <p class="lead">Infrastructure for flexible collaboration</p>
-  <div class="container" style="font-size: 14px">
-   <ul>
-     <li>Access digested scientific output, meant for the general public.</li>
-     <li>Develop and share your jupyter notebook projects.</li>
-     <li>Access private cloud file system, share data and results.</li>
-   </ul>
+  <p class="lead">An infrastructure for flexible collaboration</p>
+</div>
+
+<div class="jumbotron container-fluid" style="padding-top: 10px; padding-bottom: 10px">
+  <div id="myCarousel" class="carousel slide" data-ride="carousel">
+    <!-- Indicators -->
+    <ol class="carousel-indicators">
+      <li data-target="#myCarousel" data-slide-to="0" class="active"></li>
+      <li data-target="#myCarousel" data-slide-to="1"></li>
+      <li data-target="#myCarousel" data-slide-to="2"></li>
+    </ol>
+  <!-- Wrapper for slides -->
+    <div class="carousel-inner" style="min-height: 5em;">
+      <div class="item active">
+        <img src="TBA.jpg" alt="Access digested scientific output, meant for the general public">
+      </div>
+  
+      <div class="item">
+        <img src="TBA.jpg" alt="Develop and share your jupyter notebook projects">
+      </div>
+  
+      <div class="item">
+        <img src="TBA.jpg" alt="Access private cloud file system, share data and results">
+      </div>
+    </div>
+  <!-- Left and right controls -->
+    <a class="left carousel-control" href="#myCarousel" data-slide="prev">
+      <span class="glyphicon glyphicon-chevron-left"></span>
+      <span class="sr-only">Previous</span>
+    </a>
+    <a class="right carousel-control" href="#myCarousel" data-slide="next">
+      <span class="glyphicon glyphicon-chevron-right"></span>
+      <span class="sr-only">Next</span>
+    </a>
   </div>
 </div>
 
-<div class="jumbotron">
-  <p class="lead">Motored by:</p>
-  <div class="row" style="float: right">
-   <img src="/static/app/content/django.png" style="height: 40px; padding-right: 10px" alt="django">
-   <img src="https://jupyter.readthedocs.io/en/latest/_static/_images/jupyter.svg" style="height: 40px; padding-right: 10px" alt="Jupyter Notebook">
-   <img src="https://about.gitlab.com/images/logo.png" style="height: 40px; padding-right: 10px" alt="GitLab">
-   <img src="https://raw.githubusercontent.com/docker-library/docs/9d36b4ed7cabc35dbd3849272ba2bd7abe482172/owncloud/logo.png" style="height: 40px; padding-right: 10px" alt="OwnCLoud Fileserver">
+<div class="jumbotron container-fluid" style="padding-top: 10px; padding-bottom: 10px">
+  <div class="row">
+    <div class="col-md-3">Motored by:</div>
+    <div class="col-md-9" style="text-align: right">
+     <img src="/static/app/content/dockerlogo.png" style="height: 40px; padding-right: 10px" alt="docker">
+     <img src="/static/app/content/django.png" style="height: 40px; padding-right: 10px" alt="django">
+     <img src="/static/app/content/jupyter.png" style="height: 40px; padding-right: 10px" alt="jupyter">
+     <!-- img src="https://jupyter.readthedocs.io/en/latest/_static/_images/jupyter.svg" style="height: 40px; padding-right: 10px" alt="Jupyter Notebook" -->
+     <img src="/static/app/content/gitlab.png" style="height: 40px; padding-right: 10px" alt="gitlab">
+     <!--img src="https://about.gitlab.com/images/logo.png" style="height: 40px; padding-right: 10px" alt="GitLab"-->
+     <!--img src="https://raw.githubusercontent.com/docker-library/docs/9d36b4ed7cabc35dbd3849272ba2bd7abe482172/owncloud/logo.png" style="height: 40px; padding-right: 10px" alt="OwnCLoud Fileserver"-->
+     <img src="/static/app/content/owncloud.png" style="height: 40px; padding-right: 10px" alt="owncloud">
+     <img src="/static/app/content/Nginx-Logo.png" style="height: 40px; padding-right: 10px" alt="nginx">
+    </div>
   </div>
 </div>
 
-<footer class="bs-docs-footer" style="padding-top: 50px;padding-bottom: 50px;margin-top: 10px;color: #99979c;background-color: #2a2730;">
-  <div class="container">
-    <ul>
-        <li>To reach the developers, please send a message to - <a href="#">kooplex at complex.elte.hu.</a></li>
-        <li>To report problems or buggy features, please, file an issue at - <a href="https://github.com/kooplex/kooplex-hub" target="_blank">https://github.com/kooplex/kooplex-hub</a></li>
-        <li>There is manual at - <a href="https://github.com/kooplex/kooplex-hub/wiki" target="_blank">https://github.com/kooplex/kooplex-hub/wiki </a></li>
-    </ul>
-    <p>Designed and built with all the love in the world by the <b>Kooplex Team</b>. We try to maintain it too! :)</p>
- </div>
-</footer>
+<div class="jumbotron bs-docs-footer" style="font-size: 14px; padding-top: 20px; padding-bottom: 20px; color: #99979c; background-color: #2a2730;">
+  <p>Designed and built with all the love in the world by the <b>Kooplex Team</b>. We try to maintain it too! :)</p>
+  <ul>
+    <li>To reach the developers please send a message to - <strong>kooplex at complex.elte.hu.</strong></li>
+    <li>To report problems or buggy features please file an issue at - <a href="https://github.com/kooplex/kooplex-hub" target="_blank" style="color: #99979c"><strong>https://github.com/kooplex/kooplex-hub</strong></a></li>
+    <li>To check the manual please visit - <a href="https://github.com/kooplex/kooplex-hub/wiki" target="_blank" style="color: #99979c"><strong>https://github.com/kooplex/kooplex-hub/wiki</strong></a></li>
+  </ul>
+</div>
 
 {% endblock %}
