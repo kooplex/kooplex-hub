@@ -1,9 +1,15 @@
+from django.contrib import messages
+from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import User
 from django.db import models
+import pwgen
 import os
 
+from kooplex.lib.sendemail import send_new_password
 from kooplex.lib.libbase import get_settings
+import subprocess
+from distutils.dir_util import mkpath
 
 class HubUser(User):
     #user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -14,6 +20,23 @@ class HubUser(User):
     uid = models.IntegerField(null=True)
     gid = models.IntegerField(null=True)
 
+    data = None #dict([(k, self(k)) for k in ['first_name', 'last_name', 'username', 'email', 'password']])
+
+    def __str__(self):
+        return str(self.username)
+
+    def __getitem__(self, k):
+        if not k in self._data:
+            raise Exception("Unknown attribute %s" % k)
+        if self._data[k] is None:
+            raise Exception("Unset attribute %s" % k)
+        return self._data[k]
+
+    def setattribute(self, **kw):
+        for k, v in kw.items():
+            if not k in self._data.keys():
+                raise Exception("Unknown attribute: %s" % k)
+            self._data[k] = v
 
     class Meta:
         db_table = "kooplex_hub_hubuser"
@@ -32,22 +55,118 @@ class HubUser(User):
     def file_netrc_exists_(self):
         return os.path.exists(self.file_netrc_)
 
+    #def create(self, request):
     def save(self, *args, **kwargs):
-        super(HubUser, self).save( *args, **kwargs)
-        # pw = pwgen.pwgen(12)
-        # try:
-        #     send_new_password(name="%s %s" % (request.POST['firstname'], request.POST['lastname']),
-        #                       username=request.POST['username'],
-        #                       to=request.POST['email'],
-        #                       pw=pw)
-        #     return HttpResponseRedirect(USERMANAGEMENT_URL)
-        # except Exception as e:
-        #     return render(
-        #         request,
-        #         'app/error.html',
-        #         context_instance=RequestContext(request,
-        #                                         {
-        #                                             'error_title': 'Error',
-        #                                             'error_message': str(e),
-        #                                         })
-        #     )
+        from kooplex.lib.ldap import Ldap
+        l = Ldap()
+        old_user = HubUser.objects.filter(username=self.username)
+        if len(old_user) == 1:
+            #self = l.modify_user(old_user[0])  # FIXME: PyAsn error????
+            pass # FIXME:
+        else:
+            pw = pwgen.pwgen(12)
+            #self.username = request.POST['username']
+            #self.first_name = request.POST['first_name']
+            #self.last_name = request.POST['last_name']
+            #self.email = request.POST['email']
+            self.data = dict(username=self.username,
+                           first_name=self.first_name,
+                           last_name=self.last_name,
+                           email=self.email,
+                           password=pw)
+
+            try:
+                def mkdir(d, uid=0, gid=0, mode=0b111101000):
+                    mkpath(d)
+                    os.chown(d, uid, gid)
+                    os.chmod(d, mode)
+
+                self.home = "/home/" + self.username  # FIXME: this is ugly
+                try:
+                    self = l.add_user(self)  # FIXME:
+                except Exception as e:
+                    raise Exception("ldap: %s"%e) # FIXME
+                    #pass
+
+                from kooplex.lib.gitlabadmin import GitlabAdmin
+                gad = GitlabAdmin()
+                try:
+                    msg = gad.create_user(self)
+                    if len(msg):
+                        raise Exception(str(msg))
+                except Exception as e:
+                    raise Exception(str(e))  # FIXME
+                    #pass
+
+                gg = gad.get_user(self.username)[0]
+                self.gitlab_id = gg['id']
+
+                srv_dir = get_settings('users', 'srv_dir', None, '')
+                home_dir = get_settings('users', 'home_dir', None, '')
+                home_dir = os.path.join(srv_dir, home_dir.replace('{$username}', self.username))
+                ssh_dir = os.path.join(home_dir, '.ssh')
+                oc_dir = os.path.join(srv_dir, '_oc', self.username)
+                git_dir = os.path.join(srv_dir, '_git', self.username)
+
+                mkdir(home_dir, uid=self.uid, gid=self.gid)
+                mkdir(ssh_dir, uid=self.uid, gid=self.gid, mode=0b111000000)
+                mkdir(oc_dir, uid=self.uid, gid=self.gid, mode=0b111000000)
+                mkdir(git_dir, uid=self.uid, gid=self.gid)
+
+                key_fn = os.path.join(ssh_dir, "gitlab.key")
+                subprocess.call(['/usr/bin/ssh-keygen', '-N', '', '-f', key_fn])
+                os.chown(key_fn, self.uid, self.gid)
+                os.chown(key_fn + ".pub", self.uid, self.gid)
+                key = open(key_fn + ".pub").read().strip()
+
+                try:
+                    msg = gad.upload_userkey(self, key)
+                    if len(msg):
+                        raise Exception("gitkeyadd: %s" % msg)
+                except Exception as e:
+                    raise Exception("gitadd2: %s" % e)
+
+                send_new_password(name = "%s %s" % (self.first_name, self.last_name),
+                username = self.username,
+                to = self.email,
+                pw = pw)
+
+            except Exception as e:
+                error_message = "What??? %s" % str(e)
+                raise CommandError(error_message)
+
+        #self.save()
+        super(HubUser, self).save(*args, **kwargs)
+
+
+    def delete(self):
+        from kooplex.lib.ldap import Ldap
+        l = Ldap()
+        try:
+            l.delete_user(self)
+        except Exception as e:
+            raise Exception("ldap: %s" % e)
+
+        from kooplex.lib.gitlabadmin import GitlabAdmin
+        gad = GitlabAdmin()
+        try:
+            gad.delete_user(self.username)
+        except Exception as e:
+            raise Exception("git: %s" % e)
+            #pass
+
+        super(HubUser, self).delete()
+        # TODO: remove appropriate directories from the filesystem
+
+    def pwgen(self):
+        pw = pwgen.pwgen(12)
+        from kooplex.lib.ldap import Ldap
+        l = Ldap()
+        l.changepassword(self, 'doesntmatter', pw, validate_old_password = False)
+
+        send_new_password(name = "%s %s" % (self.first_name, self.last_name),
+           username = self.username,
+           to = self.email,
+           pw = pw)
+
+
