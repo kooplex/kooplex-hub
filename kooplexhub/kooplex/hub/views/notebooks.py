@@ -412,7 +412,7 @@ def notebooks_commitform(request):
 
 def notebooks_commit(request):
     def mysplit(x):
-        return x[1:-1].split("','")
+        return x[1:-1].split("','") if len(x) else []
     assert isinstance(request, HttpRequest)
     if 'cancel' in request.POST.keys():
         return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
@@ -434,7 +434,7 @@ def notebooks_commit(request):
         return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
     except Exception as e:
         return notebooks(request, errors = [ str(e) ])
-    
+
 def notebooks_pull(request):
     assert isinstance(request, HttpRequest)
     if 'cancel' in request.POST.keys():
