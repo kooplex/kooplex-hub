@@ -101,8 +101,9 @@ Date:   (?P<date>\d{4}-\d{2}-\d{2})\s(?P<time>\d{2}:\d{2}:\d{2}).*
                 self.__execute(command)
         command = "git checkout %s ." % commitid
         self.__execute(command)
-        self.commit("Revert \"%s\"" % x['message'])
-        self.push()
+        if latestid != commitid:
+            self.commit("Revert \"%s\"" % x['message'])
+            self.push()
 
     def remote_changed(self):
         command = "git ls-remote"
