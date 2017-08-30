@@ -16,7 +16,9 @@ class repository:
     def __init__(self, user, project):
         self.user = user.username
         self.repo = project.path_with_namespace
-        self.gitdir = project.home_
+        #FIXME:
+        ## self.gitdir = project.home_#Nem jo mert ha megosztottak a projektet, akkor a projekttulajdonos konyvtarat jelenti
+        self.gitdir = os.path.join(project.mp_git, user.username, project.path_with_namespace.replace('/', '_'))
         d = Docker()
         url = d.get_docker_url()
         self.dockerclient = docker.client.Client(base_url = url)
@@ -94,8 +96,9 @@ Date:   (?P<date>\d{4}-\d{2}-\d{2})\s(?P<time>\d{2}:\d{2}:\d{2}).*
                     break
                 behindid = x['commitid']
             assert behindid is not None, "Commitid %s not found" % commitid
-            command = "git revert --no-commit %s..%s" % (behindid, latestid)
-            self.__execute(command)
+            if behindid != latestid:
+                command = "git revert --no-commit %s..%s" % (behindid, latestid)
+                self.__execute(command)
         command = "git checkout %s ." % commitid
         self.__execute(command)
         self.commit("Revert \"%s\"" % x['message'])
