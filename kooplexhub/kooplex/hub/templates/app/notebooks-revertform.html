@@ -3,7 +3,9 @@
   <div class="panel-heading">
     <h4>Restore your project <strong>{{ project.name }}</strong> to a former state</h4>
   </div>
-  <div class="panel-body">
+  {% if changedremote %}
+    <p>There are some remote changes. Please update your project and see changes before trying to revert to a former state.</p>
+  {% else %}
     <div class="panel-body">
       <select id="commitid" name="commitid" style="max-width: 100%">
         {% for commit in  commits %}
@@ -25,5 +27,6 @@ git push
       <input type="submit" name="revert" value="Revert" class="btn btn-primary" />
       <input type="submit" name="cancel" value="Cancel" class="btn btn-secondary" />
     </div>
+  {% endif %}
 </form>
 

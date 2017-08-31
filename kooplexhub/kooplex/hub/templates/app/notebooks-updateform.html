@@ -1,7 +1,7 @@
 <form action="{% url 'notebooks-pull' %}" method="post" class="form-horizontal">
   {% csrf_token %}
   <div class="panel-heading">
-    <h4>Update your project <strong>{{ project.name }}</strong> to remote chnges</h4>
+    <h4>Update your project <strong>{{ project.name }}</strong> to remote changes</h4>
   </div>
   {% if changedremote %}
     <div class="panel-body">
