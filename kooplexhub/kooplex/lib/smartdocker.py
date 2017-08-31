@@ -160,7 +160,8 @@ class Docker(LibBase):
     def get_container(self, container, original=False):
         print_debug("")
         name = self.get_container_name(container)
-        conts = self.docli.containers(all=True, filters={'name': name})
+        #TODO: docker API prepends '/' in front of container names. This is hardcoded here.
+        conts = list(filter(lambda x: '/' + name in x['Names'], self.docli.containers(all = True)))
         if conts and len(conts) == 1:
             if original:
                 return conts[0]
