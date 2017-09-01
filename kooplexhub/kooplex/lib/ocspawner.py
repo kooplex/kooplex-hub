@@ -1,32 +1,23 @@
-﻿import sys, os
-import getopt
-import json
-import string
-import uuid
-import random
-import docker
-import requests as req
-from os import path
-from netaddr import IPAddress
-from time import sleep
-from io import BytesIO
-from distutils.dir_util import mkpath
+﻿'''
+@author: Jozsef Steger
+@created: 05. 07. 2017
+@summary: in favour of a user run a filesystem synchronization script in a separate container
+'''
 
-from kooplex.lib.libbase import LibBase, get_settings
+import os
+import docker
+
+from kooplex.lib.libbase import get_settings
 from kooplex.lib.restclient import RestClient
 from kooplex.lib.smartdocker import Docker
-from kooplex.lib.proxy import Proxy
-from kooplex.lib.jupyter import Jupyter
-from kooplex.hub.models import Container, Notebook, Session, Project, MountPointProjectBinding, HubUser
 
-from kooplex.lib import ldap
-
-from kooplex.lib.debug import *
-
-class OCSpawner(RestClient):
+class OCSpawner:
     image = 'kooplex-occ'
+    url_owncloud = 'http://kooplex-nginx/owncloud/' #FIXME: still hardcoded
+    network = get_settings('docker', 'network', None, 'kooplex-net')
     sync_folder = '/syncme'
-   
+    srv_path = get_settings('users', 'srv_dir', None, '')
+
     def __init__(self, user):
         self.user = user
         d = Docker()
@@ -43,11 +34,10 @@ class OCSpawner(RestClient):
 
     @property
     def binds_(self):
-        srv_path = get_settings('users', 'srv_dir', None, '')
         binds = {}
-        home_host = os.path.join(srv_path, 'home', self.username_)
+        home_host = os.path.join(self.srv_path, 'home', self.username_)
         home_container = os.path.join('/home', self.username_)
-        oc_host = os.path.join(srv_path, '_oc', self.username_)
+        oc_host = os.path.join(self.srv_path, '_oc', self.username_)
         oc_container = self.sync_folder
         binds[home_host] = {'bind': home_container, 'mode': 'ro'}
         binds[oc_host] = {'bind': oc_container, 'mode': 'rw'}
@@ -61,8 +51,8 @@ class OCSpawner(RestClient):
     def env_(self):
         return {
             'FOLDER_SYNC': self.sync_folder,
-            'URL_OWNCLOUD': 'http://kooplex-nginx/owncloud/', 
-            'S_UID': self.user.uid, 
+            'URL_OWNCLOUD': self.url_owncloud,
+            'S_UID': self.user.uid,
             'S_GID': self.user.gid,
             'S_UNAME': self.username_
         }
@@ -74,7 +64,6 @@ class OCSpawner(RestClient):
                 return ctr['State']
         return 'missing'
 
-#FIXME: url, network hardcoded
     def start(self):
         assert self.state_ == 'missing', "Cannot start %s, because its state is %s" % (self.container_name_, self.state_)
         response = self.dockerclient.create_container(
@@ -84,7 +73,7 @@ class OCSpawner(RestClient):
             host_config = self.dockerclient.create_host_config(binds = self.binds_),
             name = self.container_name_,
             detach = True,
-            networking_config =  { 'EndpointsConfig': { 'kooplex-net': {} } },
+            networking_config =  { 'EndpointsConfig': { self.network: {} } },
             command = '/start.sh',
         )
         return self.dockerclient.start( container = response['Id'] )
