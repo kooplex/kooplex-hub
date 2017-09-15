@@ -632,6 +632,19 @@ class myuser:
         mkdir(oc_dir, uid = dj_user.uid, gid = dj_user.gid, mode = 0b111000000)
         mkdir(git_dir, uid = dj_user.uid, gid = dj_user.gid)
 
+        ## prepare .gitconfig
+        fn_gitconfig = os.path.join(home_dir, '.gitignore')
+        with open(fn_gitconfig, 'w') as f:
+            f.write("""
+[user]
+        name = %s %s
+        email = %s
+[push]
+        default = matching
+""" % (self['firstname'], self['lastname'], self['email']))
+        os.chown(fn_gitconfig, dj_user.uid, dj_user.gid)
+        ##
+
         key_fn = os.path.join(ssh_dir, "gitlab.key")
         subprocess.call(['/usr/bin/ssh-keygen', '-N', '', '-f', key_fn])
         os.chown(key_fn, dj_user.uid, dj_user.gid)
