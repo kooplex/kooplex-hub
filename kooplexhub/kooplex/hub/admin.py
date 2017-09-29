@@ -18,6 +18,7 @@ from kooplex.hub.views.notebooks import Refresh_database
 # Register your models here.
 @admin.register(Notebook)
 class NotebookAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'project_id', 'project_owner', 'project_name')
     pass
 
 @admin.register(Session)
@@ -40,7 +41,7 @@ class Dashboard_serverAdmin(admin.ModelAdmin):
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
-    list_display = ('id', 'owner_username','owner_name', 'path', 'visibility')
+    list_display = ('id', 'name', 'owner_username','owner_name', 'path', 'visibility')
     pass
 
 @admin.register(Report)
