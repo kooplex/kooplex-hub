@@ -108,37 +108,46 @@ def parse_shares_and_volumes(request):
         elif re.match('^mprw=\d+', k):
             mprw.append(int(v))
         elif re.match('^vol=', k):
-            #V = Volume.objects.filter(name = v)[0]  #FIXME: use id here and sg like get
             V = Volume.objects.get(name = v)
             vols.append(V)
     return mp, mprw, vols
 
 def project_new(request):
     assert isinstance(request, HttpRequest)
-    ooops = []
     project_name = request.POST['project_name'].strip()
+    description = request.POST['project_description'].strip()
+    scope = request.POST['button']
+    template = request.POST['project_template']
+    # parse shares and volumes
+    mp, mprw, vols = parse_shares_and_volumes(request)
+
+    ooops = []
 #TODO: nicer regexp
     if not re.match(r'^[a-zA-Z]([0-9]|[a-zA-Z]|-|_| )*$', project_name):
         ooops.append('For project name specification please use only Upper/lower case letters, hyphens, spaces and underscores.')
-    description = request.POST['project_description'].strip()
 #FIXME: regexp
 #    if not re.match(r'^[a-zA-Z]([0-9]|[a-zA-Z]|-|_| |\n)*$', description):
 #        ooops.append('In your project description use only Upper/lower case letters, hyphens, spaces and underscores.')
     if len(ooops):
         return notebooks(request, errors = ooops)
-    scope = request.POST['button']
-    template = request.POST['project_template']
 
     if template.startswith('clonable_project='):
-        return notebooks(request, errors = [ 'This part of the code is not implemented yed.' ])
-        # project_image_name =
+        name, owner = template.split('=')[-1].split('@')
+        project = Project.objects.get(name = name, owner_username = owner)
+        project_image_name = project.image
+        # Retrieve former_shares and unify with users current choices
+        for mpb in MountPointProjectBinding.objects.filter(project = project):
+            mp.append(mpb.id)
+        mp = list(set(mp))
+        # Retrieve former_volumes and unify with users current choices
+        for vpb in VolumeProjectBinding.objects.filter(project = project):
+            vols.append(vpb.volume)
+        vols = list(set(vols))
+        cloned_project = True
     elif template.startswith('image='):
         project_image_name = template.split('=')[-1]
+        cloned_project = False
 
-    # parse shares and volumes
-    mp, mprw, vols = parse_shares_and_volumes(request)
-
-#FIXME: PREPARE THE APPROPRIATE GIT FOLDER HERE: image= case: git clone, clonable_project= case: git clone the 2, copy files, git add, git push, rm temp
     g = Gitlab(request)
     print_debug("Creating new project, add variables")
     try:
@@ -171,8 +180,38 @@ def project_new(request):
             vpb = VolumeProjectBinding(volume = vol, project = p)
             vpb.save()
 
-        #Create a README (FIXME only for empty)
-        g.create_project_readme(p.id, "README.md", "* proba", "Created a default README")
+        if cloned_project:
+# Create a magic script to clone ancient projects content
+            ancientprojecturl = "ssh://git@%s/%s.git" % (get_settings('gitlab', 'ssh_host'), project.path_with_namespace)
+            commitmsg = "Snapshot commit of project %s" % project
+            script = """#! /bin/bash
+TMPFOLDER=$(mktemp -d)
+git clone %(url)s ${TMPFOLDER}
+cd ${TMPFOLDER}
+rm -rf ./.git/
+mv * ~/git/
+for hidden in $(echo .?* | sed s/'\.\.'//) ; do
+  mv $hidden ~/git
+done
+cd ~/git
+git add --all
+git commit -a -m "%(message)s"
+git push origin master
+rm -rf ${TMPFOLDER}
+rm ~/$(basename $0)
+            """ % { 'url': ancientprojecturl, 'message': commitmsg }
+            srv_dir = get_settings('users', 'srv_dir', None, '')
+            home_dir = get_settings('users', 'home_dir', None, '').replace('{$username}', p.owner_username)
+            fn_basename = ".gitclone-%s.sh" % p.name
+            fn_script = os.path.join(srv_dir, home_dir, fn_basename)
+            open(fn_script, 'w').write(script)
+            os.chmod(fn_script, 0b111000000)
+            hubuser = HubUser.objects.get(username = p.owner_username)
+            os.chown(fn_script, int(hubuser.uid), int(hubuser.gid))
+        else:
+# Create a README file
+            g.create_project_readme(p.id, "README.md", "* proba", "Created a default README")
+
         return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
     except Exception as e:
         return render(
