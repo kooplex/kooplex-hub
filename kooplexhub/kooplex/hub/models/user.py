@@ -56,7 +56,7 @@ class HubUser(User):
         return os.path.exists(self.file_netrc_)
 
     #def create(self, request):
-    def save(self, *args, **kwargs):
+    def save_MEGNEEEE(self, *args, **kwargs):
         from kooplex.lib.ldap import Ldap
         l = Ldap()
         old_user = HubUser.objects.filter(username=self.username)
