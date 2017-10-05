@@ -1,5 +1,5 @@
 import codecs
-
+import os
 from django.conf.urls import url
 from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
@@ -9,6 +9,7 @@ from django.template import RequestContext
 from kooplex.hub.models.report import Report
 from kooplex.hub.models.user import HubUser
 from kooplex.hub.models.project import Project
+from kooplex.lib.spawner import ReportSpawner
 
 #from kooplex.lib.libbase import get_settings #TODO: get server prefix
 
@@ -99,6 +100,44 @@ def openreport_latest(request):
         return HttpResponseRedirect(reverse('reports'))
     return HttpResponseRedirect(reverse('report-open') + '?report_id=%d' % report.id)
 
+def container_report_start(request):
+    assert isinstance(request, HttpRequest)
+    report_id = request.GET['report_id']
+    report = Report.objects.get(id=report_id)
+    #spawner = ReportSpawner(report, image=report.image)
+    spawner = ReportSpawner( project=report.project, image=report.image, report=report)
+    notebook = spawner.ensure_notebook_running()
+
+    session = spawner.start_session(report.target_, 'python3', notebook.name, notebook.name)
+    session.report_id = report.id
+    session.save()
+    return HttpResponseRedirect(notebook.external_url)
+
+def container_report_stop(request):
+    assert isinstance(request, HttpRequest)
+    report_id = request.GET['report_id']
+    report = Report.objects.get(id=report_id)
+    notebook = Notebook.objects.filter(username="none",id=report_id)[0]
+
+    spawner = ReportSpawner(project=report.project, image=report.image, report=report)
+    spawner.delete_notebook(notebook)
+    # Change/Save project status
+    # project.session = None
+    # project.save()
+
+    return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
+    report_id = request.GET['report_id']
+    report = Report.objects.get(id=report_id)
+    #spawner = ReportSpawner(report, image=report.image)
+    spawner = ReportSpawner( project=report.project, image=report.image, report=report)
+    notebook = spawner.ensure_notebook_running()
+
+    session = spawner.start_session(report.target_, 'python3', notebook.name, notebook.name)
+    session.report_id = report.id
+    session.save()
+    print_debug("Opening session, Finished")
+    return HttpResponseRedirect(reverse('reports'))
+
 def setreport(request):
     assert isinstance(request, HttpRequest)
     if request.user.is_anonymous():
@@ -121,7 +160,9 @@ def setreport(request):
 
 urlpatterns = [
     url(r'^$', reports, name = 'reports'),
-    url(r'^open$', openreport, name='report-open'),
+    #url(r'^open$', openreport, name='report-open'),
+    url(r'^open$', container_report_start, name='report-open'),
+    url(r'^rstart$', container_report_start, name='rstart'),
     url(r'^openlatest$', openreport_latest, name='report-openlatest'),
     url(r'^settings$', setreport, name='report-settings'),
 ]

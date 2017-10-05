@@ -1,42 +1,39 @@
-import os.path
-import re
-
-from django.conf.urls import patterns, url, include
-from django.shortcuts import render
-from django.http import HttpRequest, HttpResponseRedirect,HttpResponse
-from django.template import RequestContext
-from django.template.response import TemplateResponse
-from django.core.urlresolvers import reverse
+import git
+import json
 import logging
 import logging.config
-from datetime import datetime
-import json
-
+import os.path
 import pwgen
-
-from kooplex.lib.libbase import get_settings
-from kooplex.hub.models.notebook import Notebook
-from kooplex.hub.models.session import Session
-from kooplex.hub.models.project import Project
-from kooplex.hub.models.mountpoints import MountPoints, MountPointProjectBinding, MountPointPrivilegeBinding
-from kooplex.hub.models.volume import Volume, VolumeProjectBinding
-from kooplex.hub.models.dockerimage import DockerImage
-from kooplex.hub.models.report import Report
-from kooplex.hub.models.user import HubUser
-from kooplex.hub.models.dashboard_server import Dashboard_server
+import re
+from datetime import datetime
+from django.conf.urls import patterns, url, include
 from django.contrib.auth.models import User
+from django.core.urlresolvers import reverse
+from django.http import HttpRequest, HttpResponseRedirect,HttpResponse
+from django.shortcuts import render
+from django.template import RequestContext
+from django.template.response import TemplateResponse
 
-from kooplex.lib.libbase import LibBase
+from kooplex.hub.models.dashboard_server import Dashboard_server
+from kooplex.hub.models.dockerimage import DockerImage
+from kooplex.hub.models.mountpoints import MountPoints, MountPointProjectBinding, MountPointPrivilegeBinding
+from kooplex.hub.models.notebook import Notebook
+from kooplex.hub.models.project import Project
+from kooplex.hub.models.report import Report
+from kooplex.hub.models.session import Session
+from kooplex.hub.models.user import HubUser
+from kooplex.hub.models.volume import Volume, VolumeProjectBinding
 from kooplex.lib.gitlab import Gitlab
 from kooplex.lib.gitlabadmin import GitlabAdmin
+from kooplex.lib.jupyter import Jupyter
+from kooplex.lib.libbase import LibBase
+from kooplex.lib.libbase import get_settings
+from kooplex.lib.ocspawner import OCSpawner
 from kooplex.lib.repo import Repo  # GONNA BE OBSOLETED
 from kooplex.lib.repository import repository
-from kooplex.lib.spawner import Spawner
-from kooplex.lib.ocspawner import OCSpawner
-from kooplex.lib.jupyter import Jupyter
-from kooplex.lib.smartdocker import Docker
 from kooplex.lib.sendemail import send_new_password
-import git
+from kooplex.lib.smartdocker import Docker
+from kooplex.lib.spawner import Spawner
 
 NOTEBOOK_DIR_NAME = 'notebooks'
 HUB_NOTEBOOKS_URL = '/hub/notebooks'
@@ -356,10 +353,11 @@ def notebooks_publish(request):
         report.init(
           dashboard_server = dashboard_server,
           project = project,
-          creator = creator, 
+          creator = creator,
           description = description,
-          file = ipynb_file, 
+          file = ipynb_file,
           type = type,
+          image = project.image
         )
         report.deploy(other_files)
         report.scope = request.POST['scope']
