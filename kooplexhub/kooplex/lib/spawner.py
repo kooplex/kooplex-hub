@@ -361,6 +361,7 @@ class ReportSpawner(RestClient):
 
         self.docli = Docker()  # self.make_docker_client()
         self.pxcli = self.make_proxy_client()
+        self.random_id = str(random.randint(1000000,9999999))
 
         self.report = report
 
@@ -397,7 +398,7 @@ class ReportSpawner(RestClient):
         name = self.container_name
 
         name = name.replace('{$reportname}', self.report.name)
-        name = name.replace('{$randomint}', str(random.randint(100000,999999)))
+        name = name.replace('{$randomint}', self.random_id)
         name = name.replace('{$author_name}', self.report.project.safename)
 
         # To handle spaces in names
@@ -440,7 +441,7 @@ class ReportSpawner(RestClient):
         print_debug("")
         path = self.notebook_path
         path = path.replace('{$username}', self.report.name)
-        path = path.replace('{$notebook.id}', id)
+        path = path.replace('{$notebook.id}', self.random_id)
         return path
 
     def make_notebook(self):
@@ -493,7 +494,7 @@ class ReportSpawner(RestClient):
             'PR_ID': self.report.id,
             'PR_FULLNAME': self.report.name,
             "REPORT" : "TRUE",
-            "PASSWORD" : "almafa"
+            "PASSWD" : "almafa",
         })
 
         # create folders here and set ownership
@@ -545,7 +546,7 @@ class ReportSpawner(RestClient):
 
     def start_session(self, notebook, notebook_path, kernel, container_name, project_id=0, target_id=0):
         session = self.make_session(notebook_path, kernel)
-        jpcli = Jupyter(notebook)
+        jpcli = Jupyter(notebook, report=True)
         session = jpcli.start_session(session)
         proxy_path = self.get_session_path(notebook, session)
         session.external_url = self.get_external_url(proxy_path)
@@ -553,6 +554,7 @@ class ReportSpawner(RestClient):
         session.project_id = project_id
         session.target_id = target_id
         session.repo_name = "none"
+        session.type = "report"
         session.container_name = container_name
         session.save()
         return session
