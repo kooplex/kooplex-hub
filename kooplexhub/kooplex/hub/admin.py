@@ -18,11 +18,7 @@ from kooplex.hub.views.notebooks import Refresh_database
 # Register your models here.
 @admin.register(Notebook)
 class NotebookAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'project_id', 'project_owner', 'project_name')
-    pass
-
-@admin.register(Session)
-class SessionAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'project_id', 'project_owner', 'project_name', 'type')
     pass
 
 @admin.register(Container)
@@ -47,6 +43,12 @@ class ProjectAdmin(admin.ModelAdmin):
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'creator_name', 'file_name', 'type')
+    pass
+
+
+@admin.register(Session)
+class SessionAdmin(admin.ModelAdmin):
+    list_display = ('id', 'container_name', 'project_id')
     pass
 
 @admin.register(MountPoints)

@@ -17,6 +17,7 @@ class Session(models.Model, ModelBase):
     is_forked = models.BooleanField()
     project_id = models.IntegerField()
     target_id = models.IntegerField()
+    type = models.CharField(max_length=15)
 
     class Meta:
         db_table = "kooplex_hub_session"

@@ -7,6 +7,7 @@ from django.core.urlresolvers import reverse
 from django.template import RequestContext
 
 from kooplex.hub.models.report import Report
+from kooplex.hub.models.notebook import Notebook
 from kooplex.hub.models.user import HubUser
 from kooplex.hub.models.project import Project
 from kooplex.lib.spawner import ReportSpawner
@@ -102,13 +103,15 @@ def openreport_latest(request):
 
 def container_report_start(request):
     assert isinstance(request, HttpRequest)
+    #CHECK how many report servers are running and shutdown the oldest one
     report_id = request.GET['report_id']
     report = Report.objects.get(id=report_id)
     #spawner = ReportSpawner(report, image=report.image)
     spawner = ReportSpawner( project=report.project, image=report.image, report=report)
-    notebook = spawner.ensure_notebook_running()
+    notebook = spawner.make_notebook()
+    notebook = spawner.start_notebook(notebook)
 
-    session = spawner.start_session(report.target_, 'python3', notebook.name, notebook.name)
+    session = spawner.start_session(notebook, report.target_, 'python3', notebook.name)
     session.report_id = report.id
     session.save()
     return HttpResponseRedirect(notebook.external_url)
@@ -138,6 +141,16 @@ def container_report_stop(request):
     print_debug("Opening session, Finished")
     return HttpResponseRedirect(reverse('reports'))
 
+def container_report_all_stop(request):
+    assert isinstance(request, HttpRequest)
+    notebooks = Notebook.objects.filter(type="report")
+    for notebook in  notebooks:
+        project = Project.objects.get(id=notebook.project_id)
+        spawner = ReportSpawner(project=project, image="none", report=None)
+        spawner.delete_notebook(notebook)
+
+    return HttpResponseRedirect(reverse('reports'))
+
 def setreport(request):
     assert isinstance(request, HttpRequest)
     if request.user.is_anonymous():
@@ -160,9 +173,9 @@ def setreport(request):
 
 urlpatterns = [
     url(r'^$', reports, name = 'reports'),
-    #url(r'^open$', openreport, name='report-open'),
-    url(r'^open$', container_report_start, name='report-open'),
-    url(r'^rstart$', container_report_start, name='rstart'),
+    url(r'^open$', openreport, name='report-open'),
+    url(r'^rstart$', container_report_start, name='report-start'),
+    url(r'^reports-stop$', container_report_all_stop, name='report-all-stop'),
     url(r'^openlatest$', openreport_latest, name='report-openlatest'),
     url(r'^settings$', setreport, name='report-settings'),
 ]

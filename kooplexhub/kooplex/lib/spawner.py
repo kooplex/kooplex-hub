@@ -187,6 +187,7 @@ class Spawner(RestClient):
             project_name = self.project.name,
             project_id = self.project.id,
             is_stopped=False,
+            type = "user",
         )
         ldp = ldap.Ldap()
         U = ldp.get_user(self.username) 
@@ -344,8 +345,9 @@ class ReportSpawner(RestClient):
         self.project = project
         self.project_name = project.name
         prefix = get_settings('prefix', 'name')
-        self.container_name = get_settings('spawner', 'notebook_container_name', container_name,
-                                           prefix + '-notebook-{$reportname}')
+        #self.container_name = get_settings('spawner', 'notebook_container_name', container_name,
+        #                                   prefix + '-notebook-{$reportname}-{$randomint}-{$author_name}')
+        self.container_name = prefix + '-notebook-{$reportname}-{$randomint}-{$author_name}'
         self.image = get_settings('spawner', 'notebook_image', image, prefix + '-notebook')
         self.notebook_path = get_settings('spawner', 'notebook_proxy_path', None,
                                           '{$host_port}/notebook/{$reportname}/{$notebook.id}')
@@ -394,9 +396,9 @@ class ReportSpawner(RestClient):
         print_debug("")
         name = self.container_name
 
-        name = name.replace('{$username}', self.report.name)
-        name = name.replace('{$project_owner}', "none")
-        name = name.replace('{$project_name}', "none")
+        name = name.replace('{$reportname}', self.report.name)
+        name = name.replace('{$randomint}', str(random.randint(100000,999999)))
+        name = name.replace('{$author_name}', self.report.project.safename)
 
         # To handle spaces in names
         name = name.replace(" ", "-")
@@ -480,6 +482,7 @@ class ReportSpawner(RestClient):
             project_name=self.report.name,
             project_id=self.report.id,
             is_stopped=False,
+            type="report",
         )
 
                 # NOTE: offset is hardcoded here!
@@ -520,51 +523,12 @@ class ReportSpawner(RestClient):
         notebook.save()
         return notebook
 
-    def ensure_notebook_running(self):
-        print_debug("")
-        notebook = self.get_notebook()
-        if not notebook:
-            notebook = self.make_notebook()
-            notebook = self.start_notebook(notebook)
-        else:
-            # TODO: verify if accessible, restart if necessary
-            container = self.docli.get_container(notebook)
-            if not container:
-                notebook.delete()
-                notebook = self.make_notebook()
-                notebook = self.start_notebook(notebook)
-            elif container.state != 'running':
-                self.docli.ensure_container_removed(container)
-                notebook.delete()
-                notebook = self.make_notebook()
-                notebook = self.start_notebook(notebook)
-        return notebook
-
-    def stop_notebook(self, notebook):
-        print_debug("")
-        self.docli.ensure_container_stopped(notebook)
-        notebook.is_stopped = True
-        print(notebook.proxy_path)
-        self.pxcli.remove_route(notebook.proxy_path)
-        notebook.save()
-
     def delete_notebook(self, notebook):
         print_debug("")
         self.docli.ensure_container_removed(notebook)
         notebook.delete()
 
-    def ensure_notebook_stopped(self):
-        print_debug("")
-        notebook = self.get_notebook()
-        if notebook:
-            self.stop_notebook(notebook)
-        else:
-            # Try to stop container if running but not in DB
-            notebook = self.make_notebook()
-            self.docli.ensure_container_removed(notebook)
-
     def get_session_path(self, notebook, session):
-        print_debug("")
         path = self.session_path
         path = path.replace('{$reportname}', self.report.name)
         path = path.replace('{$notebook.id}', str(notebook.id))
@@ -572,26 +536,23 @@ class ReportSpawner(RestClient):
         return path
 
     def make_session(self, notebook_path, kernel):
-        print_debug("")
         session = Session(
             notebook_path=notebook_path,
             kernel_name=kernel,
+            type="report",
         )
         return session
 
-    def start_session(self, notebook_path, kernel, repo_name, container_name, is_forked=False, project_id=0,
-                      target_id=0):
-        print_debug("")
-        notebook = self.ensure_notebook_running()
+    def start_session(self, notebook, notebook_path, kernel, container_name, project_id=0, target_id=0):
         session = self.make_session(notebook_path, kernel)
         jpcli = Jupyter(notebook)
         session = jpcli.start_session(session)
         proxy_path = self.get_session_path(notebook, session)
         session.external_url = self.get_external_url(proxy_path)
-        session.is_forked = is_forked
+        session.is_forked = False
         session.project_id = project_id
         session.target_id = target_id
-        session.repo_name = repo_name
+        session.repo_name = "none"
         session.container_name = container_name
         session.save()
         return session
