@@ -908,32 +908,45 @@ def project_settings(request):
         message_json = g.delete_project(project_id)
         if message_json:
             project.delete()
-            return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
-    assert button == 'apply'
-    for k, v in request.POST.items():
-        if k.startswith('project_image-'):
-            project.image = v
-            project.save()
-    # parse shares and volumes
-    mp2add, mprw, vols2add = parse_shares_and_volumes(request) #NOTE: mprw is now not rendered until nfs4 acls are working
-    # update volumes if necessary
-    for vpb in VolumeProjectBinding.objects.filter(project = project):
-        if vpb.volume in vols2add:
-            vols2add.remove(vpb.volume)
-        else:
-            vpb.delete()
-    for vol in vols2add:
-        vpb = VolumeProjectBinding(project = project, volume = vol)
-        vpb.save()
-    # update shares if necessary
-    for mpb in MountPointProjectBinding.objects.filter(project = project):
-        if mpb.mountpoint.id in mp2add:
-            mp2add.remove(mpb.mountpoint.id)
-        else:
-            mpb.delete()
-    for mpid in mp2add:
-        mpb = MountPointProjectBinding(project = project, mountpoint = MountPoints.objects.get(id = mpid), readwrite = 'ro') #FIXME: hardcoded
-        mpb.save()
+    elif button == 'makepublic':
+        g = Gitlab(request)
+        level='public'
+        g.set_project_visibility(project_id, level)
+        project.visibility=level
+        project.save()
+    elif button == 'makeprivate':
+        g = Gitlab(request)
+        level = 'private'
+        g.set_project_visibility(project_id, level)
+        project.visibility = level
+        project.save()
+
+    elif button == 'apply':
+        for k, v in request.POST.items():
+            if k.startswith('project_image-'):
+                project.image = v
+                project.save()
+        # parse shares and volumes
+        mp2add, mprw, vols2add = parse_shares_and_volumes(request) #NOTE: mprw is now not rendered until nfs4 acls are working
+        # update volumes if necessary
+        for vpb in VolumeProjectBinding.objects.filter(project = project):
+            if vpb.volume in vols2add:
+                vols2add.remove(vpb.volume)
+            else:
+                vpb.delete()
+        for vol in vols2add:
+            vpb = VolumeProjectBinding(project = project, volume = vol)
+            vpb.save()
+        # update shares if necessary
+        for mpb in MountPointProjectBinding.objects.filter(project = project):
+            if mpb.mountpoint.id in mp2add:
+                mp2add.remove(mpb.mountpoint.id)
+            else:
+                mpb.delete()
+        for mpid in mp2add:
+            mpb = MountPointProjectBinding(project = project, mountpoint = MountPoints.objects.get(id = mpid), readwrite = 'ro') #FIXME: hardcoded
+            mpb.save()
+
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
 
