@@ -57,8 +57,8 @@ def notebooks(request, errors = []):
             running.append(s.project_id)
 
     projects_all = Project.objects.all()
-    projects_sharedwithme = [ project for project in projects_all for i in project.gids.split(",") if i  and int(i) == hubuser.gitlab_id ]
-    projects_public = Project.objects.filter(visibility = "public").exclude(owner_username = user.username)
+    projects_sharedwithme = sorted([ project for project in projects_all for i in project.gids.split(",") if i  and int(i) == hubuser.gitlab_id ])
+    projects_public = sorted(Project.objects.filter(visibility = "public").exclude(owner_username = user.username))
 
     notebook_images = [ image.name for image in DockerImage.objects.all() ]
 

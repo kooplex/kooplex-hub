@@ -477,7 +477,7 @@ class ReportSpawner(RestClient):
             privileged=True,
             command=None,
             port=self.port,
-            proxy_path=notebook_path,
+            proxy_path=notebook_path, #TODO proxy mutasson a notebook?dashboard -ra
             external_url=external_url,
             project_owner="none",
             project_name=self.report.name,
