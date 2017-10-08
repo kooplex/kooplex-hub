@@ -357,7 +357,10 @@ class ReportSpawner(RestClient):
         self.port = get_settings('spawner', 'notebook_port', None, 8000)
 
         self.srv_path = get_settings('spawner', 'srv_path', None, '/srv/' + prefix)
-        self.dashboards_url = get_settings('dashboards', 'base_url', '')
+        if report:
+            self.dashboards_url = os.path.join("/notebooks", report.file_name)# + "?dashboard"
+        else:
+            self.dashboards_url = ""
 
         self.docli = Docker()  # self.make_docker_client()
         self.pxcli = self.make_proxy_client()
@@ -457,8 +460,11 @@ class ReportSpawner(RestClient):
         print_debug("")
         id = str(uuid.uuid4())
         container_name = self.get_container_name()
+        #notebook_path = os.path.join(self.get_notebook_path(id),"notebooks", self.report.file_name) + "?dashboard"
         notebook_path = self.get_notebook_path(id)
-        external_url = os.path.join(self.get_external_url(notebook_path),"notebooks", self.report.file_name) + "?dashboard"
+        #external_url = os.path.join(self.get_external_url(notebook_path)[:-3]+"ss", "dashboard")
+        external_url = os.path.join(self.get_external_url(notebook_path), "notebooks", self.report.file_name) + "?dashboard"
+        #external_url = self.get_external_url(notebook_path)
         ip = self.pick_random_ip()
         binds = self.define_binds()
         self.image = self.report.image
@@ -494,7 +500,7 @@ class ReportSpawner(RestClient):
             'PR_ID': self.report.id,
             'PR_FULLNAME': self.report.name,
             "REPORT" : "TRUE",
-            "PASSWD" : "almafa",
+            "PASSWD" : self.report.password,
         })
 
         # create folders here and set ownership
@@ -520,7 +526,10 @@ class ReportSpawner(RestClient):
         print_debug("")
         self.docli.ensure_container_running(notebook)
         notebook.is_stopped = False
-        self.pxcli.add_route(notebook.proxy_path, notebook.ip, notebook.port)
+        self.pxcli.add_route(notebook.proxy_path, notebook.ip, notebook.port, extratarget="")
+# TODO create proxy path directly to dashboard view
+        #self.pxcli.add_route(notebook.external_url, notebook.ip, notebook.port, extratarget=self.dashboards_url)
+        #self.pxcli.add_route("/notebook/GGG", notebook.ip, notebook.port)#, extratarget=self.dashboards_url)
         notebook.save()
         return notebook
 

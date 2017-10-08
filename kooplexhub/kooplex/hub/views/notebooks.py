@@ -345,6 +345,7 @@ def notebooks_publish(request):
     other_files = request.POST.getlist('other_files')
     prefix = get_settings('prefix', 'name', None, '')
     image_type = project.image.split(prefix + "-notebook-")[1]
+    password = request.POST['password']
 
     try:
         dashboard_server = Dashboard_server.objects.get(type = image_type)
@@ -357,7 +358,7 @@ def notebooks_publish(request):
           description = description,
           file = ipynb_file,
           type = type,
-          image = project.image
+          password = password
         )
         report.deploy(other_files)
         report.scope = request.POST['scope']

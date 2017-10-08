@@ -106,7 +106,6 @@ def container_report_start(request):
     #CHECK how many report servers are running and shutdown the oldest one
     report_id = request.GET['report_id']
     report = Report.objects.get(id=report_id)
-    #spawner = ReportSpawner(report, image=report.image)
     spawner = ReportSpawner( project=report.project, image=report.image, report=report)
     notebook = spawner.make_notebook()
     notebook = spawner.start_notebook(notebook)

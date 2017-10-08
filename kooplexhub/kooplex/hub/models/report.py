@@ -33,13 +33,14 @@ class Report(models.Model, ModelBase):
     binds = models.TextField(null=True)                               #FIXME: used?
     description = models.TextField(null=True)
     image = models.CharField(max_length=200, null=True)
+    password = models.CharField(max_length=128, null=True)
 
     wd = '_report'
 
     class Meta:
         db_table = "kooplex_hub_report"
 
-    def init(self, dashboard_server, project, creator, description, file="", type=""):
+    def init(self, dashboard_server, project, creator, description, file="", type="", password=""):
         self.ts_created = int(time())
         self.path, self.file_name = os.path.split(file)
         self.name = os.path.splitext(self.file_name)[0]
@@ -50,6 +51,7 @@ class Report(models.Model, ModelBase):
         self.creator_name = self.project.owner_username
         self.description = description
         self.image = project.image
+        self.password = password
 
     def __lt__(self, r):
         assert isinstance(r, Report)
