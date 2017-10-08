@@ -116,6 +116,9 @@ def container_report_start(request):
 
     report_id = request.GET['report_id']
     report = Report.objects.get(id=report_id)
+    if report.image=="":
+        report.image = report.project.image
+        
     spawner = ReportSpawner( project=report.project, image=report.image, report=report)
     notebook = spawner.make_notebook()
     notebook = spawner.start_notebook(notebook)
