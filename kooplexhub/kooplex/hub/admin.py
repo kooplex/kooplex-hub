@@ -18,7 +18,7 @@ from kooplex.hub.views.notebooks import Refresh_database
 # Register your models here.
 @admin.register(Notebook)
 class NotebookAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'project_id', 'project_owner', 'project_name', 'type')
+    list_display = ('id', 'name', 'project_id', 'project_owner', 'project_name', 'type', 'launched_at')
     pass
 
 @admin.register(Container)

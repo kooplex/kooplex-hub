@@ -2,6 +2,7 @@
 from django.db import models
 
 from .modelbase import ModelBase
+from django.utils import timezone
 
 class Container(models.Model, ModelBase):
     id = models.UUIDField(primary_key=True)
@@ -20,6 +21,10 @@ class Container(models.Model, ModelBase):
     project_owner = models.CharField(max_length=200, null=True)
     project_name = models.CharField(max_length=200, null=True)
     is_stopped = models.BooleanField()
+    launched_at = models.DateTimeField(default=timezone.now)
+
+    def __lt__(self, c):
+        return self.launched_at < c.launched_at
 
     class Meta:
         db_table = "kooplex_hub_container"

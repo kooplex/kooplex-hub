@@ -11,6 +11,8 @@ from kooplex.hub.models.notebook import Notebook
 from kooplex.hub.models.user import HubUser
 from kooplex.hub.models.project import Project
 from kooplex.lib.spawner import ReportSpawner
+from kooplex.lib.libbase import get_settings
+
 
 #from kooplex.lib.libbase import get_settings #TODO: get server prefix
 
@@ -104,6 +106,14 @@ def openreport_latest(request):
 def container_report_start(request):
     assert isinstance(request, HttpRequest)
     #CHECK how many report servers are running and shutdown the oldest one
+    notebooks = Notebook.objects.filter(type="report")
+    max_number_of_report_servers =  get_settings('report_server', 'max_number', None, 5)
+    if len(notebooks) > max_number_of_report_servers:
+        notebook=sorted(notebooks)[0]
+        project = Project.objects.get(id=notebook.project_id)
+        spawner = ReportSpawner(project=project, image="none", report=None)
+        spawner.delete_notebook(notebook)
+
     report_id = request.GET['report_id']
     report = Report.objects.get(id=report_id)
     spawner = ReportSpawner( project=report.project, image=report.image, report=report)
