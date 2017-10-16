@@ -11,10 +11,13 @@ from kooplex.lib.libbase import get_settings
 import subprocess
 from distutils.dir_util import mkpath
 
+from .position import Position
+
 class HubUser(User):
     #user = models.OneToOneField(User, on_delete=models.CASCADE)
-    #bio = models.TextField(max_length=500, blank=True)
-    #location = models.CharField(max_length=30, blank=True)
+    bio = models.TextField(max_length = 500, blank = True)
+    location = models.CharField(max_length = 30, blank = True)
+    position = models.ForeignKey(Position, blank = True, null = True)
     #birth_date = models.DateField(null=True, blank=True)
     gitlab_id = models.IntegerField(null=True)
     uid = models.IntegerField(null=True)
@@ -56,7 +59,7 @@ class HubUser(User):
         return os.path.exists(self.file_netrc_)
 
     #def create(self, request):
-    def save(self, *args, **kwargs):
+    def save_MEGNEEEE(self, *args, **kwargs):
         from kooplex.lib.ldap import Ldap
         l = Ldap()
         old_user = HubUser.objects.filter(username=self.username)

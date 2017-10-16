@@ -13,16 +13,14 @@ from kooplex.hub.models.report import Report
 from kooplex.hub.models.mountpoints import MountPoints, MountPointProjectBinding, MountPointPrivilegeBinding
 from kooplex.hub.models.user import HubUser
 from kooplex.hub.models.volume import Volume, VolumeProjectBinding
+from kooplex.hub.models.tender import Tender, UserTenderBinding
+from kooplex.hub.models.position import Position
 from kooplex.hub.views.notebooks import Refresh_database
 
 # Register your models here.
 @admin.register(Notebook)
 class NotebookAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'project_id', 'project_owner', 'project_name')
-    pass
-
-@admin.register(Session)
-class SessionAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'project_id', 'project_owner', 'project_name', 'type', 'launched_at')
     pass
 
 @admin.register(Container)
@@ -47,6 +45,12 @@ class ProjectAdmin(admin.ModelAdmin):
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'creator_name', 'file_name', 'type')
+    pass
+
+
+@admin.register(Session)
+class SessionAdmin(admin.ModelAdmin):
+    list_display = ('id', 'container_name', 'project_id')
     pass
 
 @admin.register(MountPoints)
@@ -95,6 +99,18 @@ class VolumeAdmin(admin.ModelAdmin):
 
 @admin.register(VolumeProjectBinding)
 class VolumeProjectBindingAdmin(admin.ModelAdmin):
+    pass
+
+@admin.register(Tender)
+class TenderAdmin(admin.ModelAdmin):
+    pass
+
+@admin.register(UserTenderBinding)
+class UserTenderBindingAdmin(admin.ModelAdmin):
+    pass
+
+@admin.register(Position)
+class PositionAdmin(admin.ModelAdmin):
     pass
 
 def admin_main(request):
