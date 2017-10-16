@@ -13,6 +13,11 @@
     <!-- Collect the nav links, forms, and other content for toggling -->
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
       <ul class="nav navbar-nav">
+        {% if user.is_superuser %}
+            <a href="{% url 'report-all-stop' %}">
+              <button type="button" class="btn btn-info"><span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span> Stop all Report Servers</button>
+            </a>
+        {% endif %}
           {% if username %}
                 <li class="active" ><a href="#myreports" data-toggle="tab">My reports</a></li>
                 <li><a href="#publicreports" data-toggle="tab" >Public reports </a></li>
@@ -26,6 +31,7 @@
 </div>
 </div>
 
+{% include 'app/about.html' %}
 
  <div class="tab-content">
 

@@ -8,7 +8,7 @@ class Notebook(Container):
     proxy_path = models.CharField(max_length=200)
     external_url = models.CharField(max_length=200)
     project_id = models.IntegerField(null=True)
-
+    type = models.CharField(max_length=20)
 
     class Meta:
         db_table = "kooplex_hub_notebook"

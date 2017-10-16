@@ -166,6 +166,14 @@ class Gitlab(RestClient):
         res = self.http_post(self.api_version+'/projects/%d/members?user_id=%d&access_level=40'%(project_id, user_id))
         return res.json()
 
+    def set_project_visibility(self,project_id, level):
+        print_debug("",DEBUG_LOCAL)
+        data = {
+            'visibility': level,
+        }
+        res = self.http_put(self.api_version+'/projects/%s'%project_id, params=data)
+        return res.json()
+
     def delete_project_members(self,project_id, user_id):
         print_debug("",DEBUG_LOCAL)
         res = self.http_delete(self.api_version+'/projects/%d/members/%d'%(project_id, user_id))

@@ -33,6 +33,13 @@
         <li><a href="{% url 'login' %}" role="button" type="button" data-toggle="tooltip" title="Browse project or file issues" data-placement="bottom">Gitlab</a></li>
         <li><a href="{% url 'login' %}" role="button" type="button" data-toggle="tooltip" title="Access cloud storage" data-placement="bottom">Owncloud</a></li>
       {% endif %}
+        <li class="dropdown">
+          <a class="dropdown-togle" data-toggle="dropdown" href="#" role="button" type="button" data-toggle="tooltip" title="Manage jupyter notebook projects" data-placement="bottom">Help <span class="caret"/></a>
+          <ul class="dropdown-menu">
+            <li><a href="https://github.com/kooplex/kooplex-hub/wiki" target="_blank">Kooplex Hub Wiki</a></li>
+            <li><a href="#" data-toggle="modal" data-target="#about-contacts">Contacts and about</a></li>
+          </ul>
+        </li>
     </ul>
     <ul class="nav navbar-nav navbar-right">
       {% if user.is_authenticated %}

@@ -8,8 +8,11 @@
 <div class="panel panel-default ">
 {% endif %}
   <div class="panel-heading">
-    <a href="{{ report_latest.url_ }}" target="_blank">
-      <button type="button" class="btn btn-info"><span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span> Open</button>
+    <a href="{% url 'report-open' %}?report_id={{ report_latest.id }}&creator={{ report_latest.creator_name }}" target="_blank">
+      <button type="button" class="btn btn-info"><span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span> Open a Dashboard Server</button>
+    </a>
+      <a href="{% url 'report-start' %}?report_id={{ report_latest.id }}&creator={{ report_latest.creator_name }}" target="_blank">
+      <button type="button" class="btn btn-info"><span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span> Open a Report Server</button>
     </a>
     <a data-toggle="collapse" href="#collapse{{ report_latest.id }}{{ pane }}" style="text-decoration: none; color: gray">
       <strong>{{ report_latest.name  }}/{{ project.name }} [{{ report_latest.ts_ }}]</strong> - {{ report_latest.creator_name }}

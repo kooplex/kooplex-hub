@@ -15,10 +15,11 @@ class Jupyter(RestClient):
     """
     token = "aiSiga1aiFai2AiZu1veeWein5gijei8yeLay2Iecae3ahkiekeisheegh2ahgee"
 
-    def __init__(self, notebook):
+    def __init__(self, notebook, report=False):
         print_debug("")
         assert isinstance(notebook, Notebook)
         self.notebook = notebook
+        self.report = report
         # TODO: use external URL for debug but otherwise could just
         # switch to internal IP addresses and bypass the proxy
         base_url = get_settings('session', 'base_url', None, '')

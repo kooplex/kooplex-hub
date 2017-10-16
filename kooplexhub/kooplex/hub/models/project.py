@@ -44,6 +44,9 @@ class Project(models.Model, ModelBase):
     def __str__(self):
         return "%s@%s" % (self.name, self.owner_username)
 
+    def __lt__(self, p):
+        return self.name < p.name
+
     class Meta:
         db_table = "kooplex_hub_project"
 

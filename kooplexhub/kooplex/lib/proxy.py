@@ -35,16 +35,16 @@ class Proxy(RestClient):
         path = RestClient.join_path('/api/routes/', path)
         return path
 
-    def make_route(self, path, host=None, port=None, https=None):
+    def make_route(self, path, host=None, port=None, https=None, extratarget=""):
         print_debug("")
         path = self.make_path(path)
-        target = RestClient.make_url(host=host, port=port, https=https)
+        target = RestClient.make_url(host=host, port=port, https=https) + extratarget
         data = {'target': target}
         return path, data
 
-    def add_route(self, path, host, port, https=False):
+    def add_route(self, path, host, port, https=False, extratarget=""):
         print_debug("")
-        path, data = self.make_route(path, host, port, https)
+        path, data = self.make_route(path, host, port, https, extratarget)
         res = self.http_post(path, data=data)
         if res.status_code != 201:
             raise ProxyError

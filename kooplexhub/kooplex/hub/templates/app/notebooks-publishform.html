@@ -20,17 +20,43 @@
              <input type="radio" name="ipynb_file" value="{{ item }}" {% if forloop.first %} checked {% endif %} > {{ item }}<br>
           {% endfor %}
           </div>
-          <hr>
-          <textarea rows="6" cols="50" id="report_description" name="report_description">
-Description of this report
-          </textarea>
+            <hr>
+            <ul class="nav nav-tabs">
+                <li class="active"><a href="#pane_desc" data-toggle="tab">Description</a></li>
+                <li><a href="#pane_passwd" data-toggle="tab">Password</a></li>
+            </ul>
+            <div class="tab-content">
+                <div id="pane_desc" class="tab-pane fade in active">
+                    <br>
+                    <textarea rows="6" cols="100" id="report_description" name="report_description">
+                          Description of this report
+                    </textarea>
+                </div>
+                <div id="pane_passwd" class="tab-pane fade">
+                    <br>
+                    You can secure your published work by a password. Public reports can also be protected by a password.
+                    <br>
+                    <input type="text" class="form-control" id="password" name="password" placeholder="Enter a password or leave it blank">
+                </div>
+            </div>   <!-- tab-content -->
+
           {% if other_files %}
           <hr>
-          <p>Select those files to be attached to your report:</p>
-          <div class="form-group">
-          {% for item in other_files %}
-             <input type="checkbox" name="other_files" value="{{ item }}"> {{ item }}<br>
-          {% endfor %}
+
+
+            <ul class="nav nav-tabs">
+                <li class="active"><a href="#pane_otherfiles" data-toggle="tab">Select those files to be attached to your report:</a></li>
+            </ul>
+            <div class="tab-content">
+                <div id="pane_otherfiles" class="tab-pane fade in active">
+                <div class="form-group">
+                  {% for item in other_files %}
+                     <input type="checkbox" name="other_files" value="{{ item }}"> {{ item }}<br>
+                  {% endfor %}
+                </div>
+                </div>
+            </div>   <!-- tab-content -->
+
           </div>
           {% endif %}
           <div class="well">
@@ -55,7 +81,7 @@ Description of this report
               <input type="hidden" name="toconvert_files" value="" />
               <input type="hidden" id="reports2remove" name="reports2remove" value="" />
               <input type="submit" name="html" value="Convert to html" class="btn btn-default" />
-              <input type="submit" name="dashboard" value="Deploy as dashboard" class="btn btn-default" />
+              <input type="submit" name="dashboard" value="Deploy as dashboard" class="btn btn-default" onClick="return empty()" />
               <input type="submit" name="cancel" value="Cancel" class="btn btn-default" />
             </div>   <!-- col -->
           </div>     <!-- form-group -->
@@ -66,6 +92,15 @@ Description of this report
 </div>               <!-- row -->
 
 <script>
+function empty() {
+    var x;
+    x = document.getElementById("password").value;
+    if (x == "") {
+        alert("Enter some password, thanks! </br> (It will have effect only at running a report server)");
+        return false;
+    };
+}
+
 function collectCheckedElements() {
   var inputs = document.getElementsByTagName("input");
   var other_files = "'";

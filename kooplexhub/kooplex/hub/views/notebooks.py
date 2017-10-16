@@ -1,42 +1,39 @@
-import os.path
-import re
-
-from django.conf.urls import patterns, url, include
-from django.shortcuts import render
-from django.http import HttpRequest, HttpResponseRedirect,HttpResponse
-from django.template import RequestContext
-from django.template.response import TemplateResponse
-from django.core.urlresolvers import reverse
+import git
+import json
 import logging
 import logging.config
-from datetime import datetime
-import json
-
+import os.path
 import pwgen
-
-from kooplex.lib.libbase import get_settings
-from kooplex.hub.models.notebook import Notebook
-from kooplex.hub.models.session import Session
-from kooplex.hub.models.project import Project
-from kooplex.hub.models.mountpoints import MountPoints, MountPointProjectBinding, MountPointPrivilegeBinding
-from kooplex.hub.models.volume import Volume, VolumeProjectBinding
-from kooplex.hub.models.dockerimage import DockerImage
-from kooplex.hub.models.report import Report
-from kooplex.hub.models.user import HubUser
-from kooplex.hub.models.dashboard_server import Dashboard_server
+import re
+from datetime import datetime
+from django.conf.urls import patterns, url, include
 from django.contrib.auth.models import User
+from django.core.urlresolvers import reverse
+from django.http import HttpRequest, HttpResponseRedirect,HttpResponse
+from django.shortcuts import render
+from django.template import RequestContext
+from django.template.response import TemplateResponse
 
-from kooplex.lib.libbase import LibBase
+from kooplex.hub.models.dashboard_server import Dashboard_server
+from kooplex.hub.models.dockerimage import DockerImage
+from kooplex.hub.models.mountpoints import MountPoints, MountPointProjectBinding, MountPointPrivilegeBinding
+from kooplex.hub.models.notebook import Notebook
+from kooplex.hub.models.project import Project
+from kooplex.hub.models.report import Report
+from kooplex.hub.models.session import Session
+from kooplex.hub.models.user import HubUser
+from kooplex.hub.models.volume import Volume, VolumeProjectBinding
 from kooplex.lib.gitlab import Gitlab
 from kooplex.lib.gitlabadmin import GitlabAdmin
+from kooplex.lib.jupyter import Jupyter
+from kooplex.lib.libbase import LibBase
+from kooplex.lib.libbase import get_settings
+from kooplex.lib.ocspawner import OCSpawner
 from kooplex.lib.repo import Repo  # GONNA BE OBSOLETED
 from kooplex.lib.repository import repository
-from kooplex.lib.spawner import Spawner
-from kooplex.lib.ocspawner import OCSpawner
-from kooplex.lib.jupyter import Jupyter
-from kooplex.lib.smartdocker import Docker
 from kooplex.lib.sendemail import send_new_password
-import git
+from kooplex.lib.smartdocker import Docker
+from kooplex.lib.spawner import Spawner
 
 NOTEBOOK_DIR_NAME = 'notebooks'
 HUB_NOTEBOOKS_URL = '/hub/notebooks'
@@ -60,8 +57,8 @@ def notebooks(request, errors = []):
             running.append(s.project_id)
 
     projects_all = Project.objects.all()
-    projects_sharedwithme = [ project for project in projects_all for i in project.gids.split(",") if i  and int(i) == hubuser.gitlab_id ]
-    projects_public = Project.objects.filter(visibility = "public").exclude(owner_username = user.username)
+    projects_sharedwithme = sorted([ project for project in projects_all for i in project.gids.split(",") if i  and int(i) == hubuser.gitlab_id ])
+    projects_public = sorted(Project.objects.filter(visibility = "public").exclude(owner_username = user.username))
 
     notebook_images = [ image.name for image in DockerImage.objects.all() ]
 
@@ -348,6 +345,7 @@ def notebooks_publish(request):
     other_files = request.POST.getlist('other_files')
     prefix = get_settings('prefix', 'name', None, '')
     image_type = project.image.split(prefix + "-notebook-")[1]
+    password = request.POST['password']
 
     try:
         dashboard_server = Dashboard_server.objects.get(type = image_type)
@@ -356,10 +354,11 @@ def notebooks_publish(request):
         report.init(
           dashboard_server = dashboard_server,
           project = project,
-          creator = creator, 
+          creator = creator,
           description = description,
-          file = ipynb_file, 
+          file = ipynb_file,
           type = type,
+          password = password
         )
         report.deploy(other_files)
         report.scope = request.POST['scope']
@@ -910,32 +909,45 @@ def project_settings(request):
         message_json = g.delete_project(project_id)
         if message_json:
             project.delete()
-            return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
-    assert button == 'apply'
-    for k, v in request.POST.items():
-        if k.startswith('project_image-'):
-            project.image = v
-            project.save()
-    # parse shares and volumes
-    mp2add, mprw, vols2add = parse_shares_and_volumes(request) #NOTE: mprw is now not rendered until nfs4 acls are working
-    # update volumes if necessary
-    for vpb in VolumeProjectBinding.objects.filter(project = project):
-        if vpb.volume in vols2add:
-            vols2add.remove(vpb.volume)
-        else:
-            vpb.delete()
-    for vol in vols2add:
-        vpb = VolumeProjectBinding(project = project, volume = vol)
-        vpb.save()
-    # update shares if necessary
-    for mpb in MountPointProjectBinding.objects.filter(project = project):
-        if mpb.mountpoint.id in mp2add:
-            mp2add.remove(mpb.mountpoint.id)
-        else:
-            mpb.delete()
-    for mpid in mp2add:
-        mpb = MountPointProjectBinding(project = project, mountpoint = MountPoints.objects.get(id = mpid), readwrite = 'ro') #FIXME: hardcoded
-        mpb.save()
+    elif button == 'makepublic':
+        g = Gitlab(request)
+        level='public'
+        g.set_project_visibility(project_id, level)
+        project.visibility=level
+        project.save()
+    elif button == 'makeprivate':
+        g = Gitlab(request)
+        level = 'private'
+        g.set_project_visibility(project_id, level)
+        project.visibility = level
+        project.save()
+
+    elif button == 'apply':
+        for k, v in request.POST.items():
+            if k.startswith('project_image-'):
+                project.image = v
+                project.save()
+        # parse shares and volumes
+        mp2add, mprw, vols2add = parse_shares_and_volumes(request) #NOTE: mprw is now not rendered until nfs4 acls are working
+        # update volumes if necessary
+        for vpb in VolumeProjectBinding.objects.filter(project = project):
+            if vpb.volume in vols2add:
+                vols2add.remove(vpb.volume)
+            else:
+                vpb.delete()
+        for vol in vols2add:
+            vpb = VolumeProjectBinding(project = project, volume = vol)
+            vpb.save()
+        # update shares if necessary
+        for mpb in MountPointProjectBinding.objects.filter(project = project):
+            if mpb.mountpoint.id in mp2add:
+                mp2add.remove(mpb.mountpoint.id)
+            else:
+                mpb.delete()
+        for mpid in mp2add:
+            mpb = MountPointProjectBinding(project = project, mountpoint = MountPoints.objects.get(id = mpid), readwrite = 'ro') #FIXME: hardcoded
+            mpb.save()
+
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
 
