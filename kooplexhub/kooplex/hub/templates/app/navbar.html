@@ -43,8 +43,15 @@
     </ul>
     <ul class="nav navbar-nav navbar-right">
       {% if user.is_authenticated %}
-        <li><span class="navbar-brand">Hello {{ user.username }}!</span></li>
-        <li><a href="javascript:document.getElementById('changepassw').submit()">Change pass</a></li>
+        <li class="dropdown">
+          <div class="dropdown-togle" data-toggle="dropdown" href="#" role="button" type="button" data-toggle="tooltip" title="Manage your profile" data-placement="bottom"><span class="navbar-brand">Hello {{ user.username }}! <span class="caret"/></span></div>
+          <ul class="dropdown-menu">
+            <li><a href="javascript:document.getElementById('changepassw').submit()">Change pass</a></li>
+            <li><a href="#" data-toggle="modal" data-target="#update-bio">Update bio</a></li>
+            <li><a href="javascript:document.getElementById('logoutForm').submit()">Log off <span class="glyphicon glyphicon-log-out"/></a></li>
+          </ul>
+        </li>
+
         <li><a href="javascript:document.getElementById('logoutForm').submit()">Log off <span class="glyphicon glyphicon-log-out"/></a></li>
 
         <form id="changepassw" action="{% url 'changepassword' %}" method="post">
@@ -59,4 +66,6 @@
     </ul>
   </div>     <!-- container-fluid -->
 </div>       <!-- navbar -->
-
+{% if user.is_authenticated %}
+  {% include 'app/update-bio.html' %}
+{% endif %}

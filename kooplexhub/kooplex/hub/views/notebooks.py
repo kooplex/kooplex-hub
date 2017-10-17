@@ -78,6 +78,7 @@ def notebooks(request, errors = []):
         context_instance = RequestContext(request,
         {
             'user': user,
+            'hubuser': hubuser,  #TODO: atterni
             'notebooks': notebooks,
             'running': running,
 
@@ -950,6 +951,16 @@ def project_settings(request):
 
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
+def update_bio(request):
+    assert isinstance(request, HttpRequest)
+    me = request.user
+    location = request.POST['location'].strip()
+    bio = request.POST['bio'].strip()
+    user = HubUser.objects.get(username = me.username)
+    user.location = location
+    user.bio = bio
+    user.save()
+    return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
 urlpatterns = [
     url(r'^$', notebooks, name='notebooks'),
@@ -983,4 +994,6 @@ urlpatterns = [
 
     
     url(r'^project_settings$', project_settings, name='project-settings'),
+
+    url(r'^updatebio$', update_bio, name='update-bio'),
 ]
