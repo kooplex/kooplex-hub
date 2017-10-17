@@ -15,10 +15,20 @@
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="form-group">
+                                    <div class="row">
+                                        <div class="col-md-2">Name</div>
+                                        <div class="col-md-2">Short bio</div>
+                                    </div>
                                     {% for user in otherusers %}
-                                        <input type="checkbox" name="user_id[{{ user.gitlab_id }}]" value="True">
-                                        {{ user.gitlab_id }} {{ user.first_name }} {{ user.last_name }} ({{ user.username }})
-                                        <br>
+                                        <div class="row">
+                                           <div class="col-md-2" data-toggle="tooltip" title="Username {{ user.username }}<br>Location {{ user.location }}<br>Position: {{ user.position }}" data-placement="right" data-html="true">
+                                             <input type="checkbox" name="user_id[{{ user.gitlab_id }}]" value="True">
+                                             {{ user.first_name }} {{ user.last_name }}
+                                           </div>
+                                           <div class="col-md-10">
+                                              {{ user.bio }}
+                                           </div>
+                                        </div>
                                     {% endfor %}
                                 </div>
                             </div>

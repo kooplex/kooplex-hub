@@ -78,7 +78,7 @@ reset_password.short_description = 'Reset Password'
 class HubUserAdmin(admin.ModelAdmin):
     list_display = ('username', 'first_name', 'last_name', 'gitlab_id')
     readonly_fields = ('uid', 'gid', 'gitlab_id', 'password')
-    fieldsets = ( (None, { 'fields': ('username', ( 'first_name', 'last_name'), 'email', 'user_permissions', 'uid', 'gid', 'gitlab_id', 'password') }),    )
+    fieldsets = ( (None, { 'fields': ('username', ( 'first_name', 'last_name'), 'bio', 'position', 'location', 'email', 'user_permissions', 'uid', 'gid', 'gitlab_id', 'password') }),    )
     change_list_template = "admin/change_list_hubuser.html"
     actions = [reset_password, ]
 
