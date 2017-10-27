@@ -232,7 +232,8 @@ class Gitlab(RestClient):
         prefix = get_settings('prefix', 'name')
         containername=prefix+"-gitlabdb"
         db_passwd = get_settings('gitlabdb', 'db_password')
-        command="bash -c \"PGPASSWORD={0} psql -h {1} -p 5432 -U postgres -d gitlabhq_production -c 'update notification_settings set level=2 where source_id={2};'\"".format(db_passwd,containername,pid)
+        db_port = get_settings('gitlabdb', 'psql_port')
+        command="bash -c \"PGPASSWORD={0} psql -h {1} -p {2} -U postgres -d gitlabhq_production -c 'update notification_settings set level=2 where source_id={3};'\"".format(db_passwd,containername,db_port,pid)
         subprocess.call(shlex.split(command))
         
     def create_project(self,project_name,public='false',description=""):
