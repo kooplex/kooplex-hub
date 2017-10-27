@@ -13,7 +13,7 @@ from kooplex.lib.smartdocker import Docker
 
 class OCSpawner:
     image = 'kooplex-occ'
-    url_owncloud = 'http://kooplex-nginx/owncloud/' #FIXME: still hardcoded
+    url_owncloud = 'http://kooplex-nginx/ownCloud/' #FIXME: still hardcoded
     network = get_settings('docker', 'network', None, 'kooplex-net')
     sync_folder = '/syncme'
     srv_path = get_settings('users', 'srv_dir', None, '')
