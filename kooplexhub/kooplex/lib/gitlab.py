@@ -1,6 +1,7 @@
 ﻿import json
 import base64
 import requests
+import subprocess, shlex
 from django.conf import settings
 from threadlocals.threadlocals import get_current_request
 
@@ -164,6 +165,7 @@ class Gitlab(RestClient):
     def add_project_members(self,project_id, user_id):
         print_debug("",DEBUG_LOCAL)
         res = self.http_post(self.api_version+'/projects/%d/members?user_id=%d&access_level=40'%(project_id, user_id))
+        self.patch_notification(project_id)
         return res.json()
 
     def set_project_visibility(self,project_id, level):
@@ -226,6 +228,13 @@ class Gitlab(RestClient):
             message = res.json()
         return message
 
+    def patch_notification(self, pid):
+        prefix = get_settings('prefix', 'name')
+        containername=prefix+"-gitlabdb"
+        db_passwd = get_settings('gitlabdb', 'db_password')
+        command="bash -c \"PGPASSWORD={0} psql -h {1} -p 5432 -U postgres -d gitlabhq_production -c 'update notification_settings set level=2 where source_id={2};'\"".format(db_passwd,containername,pid)
+        subprocess.call(shlex.split(command))
+        
     def create_project(self,project_name,public='false',description=""):
         print_debug("",DEBUG_LOCAL)
         url = self.api_version+"/projects"
@@ -234,6 +243,11 @@ class Gitlab(RestClient):
         message = ""
         if res.status_code != 201:
             message = res.json()
+        # set project level notification to watch
+        pid = self.get_project_by_name(project_name)[0]['id']
+        #url = self.api_version+"/projects/%(id)d/notification_settings?level=watch" % res[0]
+        #res = self.http_post(url)   # NOTE: failure is not handled, silently ignored
+        self.patch_notification(pid)
         return message
 
     def delete_project(self, project_id):
