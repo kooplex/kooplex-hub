@@ -29,6 +29,7 @@ class Project(models.Model, ModelBase):
 
     shared_directory = models.CharField(max_length=200, null=True)
 
+    # TODO DELETE
     # From gitlab api projectmembers
     gids = models.CharField(max_length=300,null=True)
 
@@ -86,11 +87,6 @@ class Project(models.Model, ModelBase):
     def groupname_(self):
         return re.split('([_a-z][-0-9_a-z]*)', self.name.lower())[1] if len(self.name) else "dummygroup"
 
-    def from_gitlab_dict_projectmembers(self, list_of_members):
-        self.gids = ""
-        for E in list_of_members:
-            self.gids +="%d,"%E['id']
-
     @property
     def image_(self):
         return self.image.split('-')[-1]
@@ -121,9 +117,7 @@ class Project(models.Model, ModelBase):
 
     @property
     def members_(self):
-        for gid in self.gids.split(","):
-            if len(gid):
-                yield HubUser.objects.get(gitlab_id = gid)
+        return UserProjectBinding(project=self)
 
 
     def get_binds(self):
@@ -162,3 +156,15 @@ class Project(models.Model, ModelBase):
                         }
                     }
         return networking_config
+
+class UserProjectBinding(models.Model):
+    id = models.AutoField(primary_key = True)
+    hub_user = models.ForeignKey(HubUser, null = False)
+    project = models.ForeignKey(Project, null = False)
+
+    def set(self, project, hub_user):
+       self.project = project
+       self.hub_user = hub_user
+
+    def __str__(self):
+       return "%s-%s" % (self.project.name, self.hub_user.username)

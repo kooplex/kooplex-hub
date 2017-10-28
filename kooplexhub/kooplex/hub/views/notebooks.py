@@ -18,7 +18,7 @@ from kooplex.hub.models.dashboard_server import Dashboard_server
 from kooplex.hub.models.dockerimage import DockerImage
 from kooplex.hub.models.mountpoints import MountPoints, MountPointProjectBinding, MountPointPrivilegeBinding
 from kooplex.hub.models.notebook import Notebook
-from kooplex.hub.models.project import Project
+from kooplex.hub.models.project import Project, UserProjectBinding
 from kooplex.hub.models.report import Report
 from kooplex.hub.models.session import Session
 from kooplex.hub.models.user import HubUser
@@ -57,7 +57,7 @@ def notebooks(request, errors = []):
             running.append(s.project_id)
 
     projects_all = Project.objects.all()
-    projects_sharedwithme = sorted([ project for project in projects_all for i in project.gids.split(",") if i  and int(i) == hubuser.gitlab_id ])
+    projects_sharedwithme = sorted([up.project for up in UserProjectBinding.objects.filter(hub_user=hubuser)])
     projects_public = sorted(Project.objects.filter(visibility = "public").exclude(owner_username = user.username))
 
     notebook_images = [ image.name for image in DockerImage.objects.all() ]
@@ -156,13 +156,14 @@ def project_new(request):
         res = g.get_project_by_name(project_name)
         p = Project()
         p.init(res[0])
-        m = g.get_project_members(p.id)
-        p.from_gitlab_dict_projectmembers(m)
-    
-        #Add image_name to project
         p.image = project_image_name
         p.save()
 
+        hubuser = HubUser.objects.get(username = p.owner_username)
+        userp = UserProjectBinding()
+        userp.set(project = p, hub_user = hubuser)
+        userp.save()
+        #Add image_name to project
         # manage shares
         while len(mp):
             mpid = mp.pop()
@@ -415,13 +416,21 @@ def Refresh_database(request):
             D.save()
 
     g = Gitlab()
+    for p in Project.objects.all():
+         m = g.get_project_members(p.id)
+         for member in m:
+            hubuser = HubUser.objects.get(gitlab_id = member['id'])
+            if not UserProjectBinding.objects.filter(project = p, hub_user = hubuser):
+                 userp = UserProjectBinding()
+                 userp.set(project = p, hub_user = hubuser)
+                 userp.save()
+
     gitlab_projects = g.get_my_projects()
     gitlab_projects = []
     for gitlab_project in gitlab_projects:
         p = Project()
         p.init(gitlab_project)
         m = g.get_project_members(p.id)
-        p.from_gitlab_dict_projectmembers(m)
         p.save()
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
@@ -788,8 +797,8 @@ def usermanagement2(request):
 def project_membersForm(request):
     me = HubUser.objects.get(username = request.user.username)
     project = Project.objects.get(id = request.GET['project_id'])
-    current_members = list( project.members_ )
-    current_members.pop( current_members.index(me) )
+    ups = UserProjectBinding.objects.filter(project = project).exclude(hub_user = me)
+    current_members = [up.hub_user for up in ups ]
     allusers = HubUser.objects.all()
     other_users = []
     for user in allusers:
@@ -830,18 +839,20 @@ def project_members_modify(request):
     ooops = []
     for gid in gids:
         try:
+            hubuser = HubUser.objects.get(gitlab_id = gid)
             if request.POST['button'] == 'Add':
                 g.add_project_members(project.id, gid)
+                if not UserProjectBinding.objects.filter(project = project, hub_user = hubuser):
+                    userp = UserProjectBinding()
+                    userp.set(project = project, hub_user = hubuser) 
+                    userp.save()
             elif request.POST['button'] == 'Remove':
                 g.delete_project_members(project.id, gid)
+                userp = UserProjectBinding.objects.get(project = project, hub_user = hubuser)
+                if userp:
+                     userp.delete()
         except Exception as e:
             ooops.append(str(e))
-    try:
-        m = g.get_project_members(project.id)
-        project.from_gitlab_dict_projectmembers(m)
-        project.save()
-    except Exception as e:
-        ooops.append(str(e))
     if len(ooops):
         return render(
             request,

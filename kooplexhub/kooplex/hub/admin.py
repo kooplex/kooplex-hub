@@ -8,7 +8,7 @@ from kooplex.hub.models.session import Session
 from kooplex.hub.models.container import Container
 from kooplex.hub.models.dashboard_server import Dashboard_server
 from kooplex.hub.models.dockerimage import DockerImage
-from kooplex.hub.models.project import Project
+from kooplex.hub.models.project import Project, UserProjectBinding
 from kooplex.hub.models.report import Report
 from kooplex.hub.models.mountpoints import MountPoints, MountPointProjectBinding, MountPointPrivilegeBinding
 from kooplex.hub.models.user import HubUser
@@ -62,6 +62,12 @@ class MountPoints(admin.ModelAdmin):
 class MountPointProjectBinding(admin.ModelAdmin):
     list_display = ('id', 'mountpoint', 'project', 'readwrite')
     pass
+
+@admin.register(UserProjectBinding)
+class UserProjectBinding(admin.ModelAdmin):
+    list_display = ('id', 'project', 'hub_user')
+    pass
+
 
 @admin.register(MountPointPrivilegeBinding)
 class MountPointPrivilegeBinding(admin.ModelAdmin):
