@@ -15,7 +15,7 @@ class Volume(models.Model):
     description = models.TextField(null = True)
 
     def __str__(self):
-        return self.displayname
+        return self.name
 
     def create(self, uid = 0, gid = 0):
         d = Docker()

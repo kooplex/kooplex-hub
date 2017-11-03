@@ -17,7 +17,7 @@ class MountPoints(models.Model, ModelBase):
     description = models.TextField(null = True)
 
     def __str__(self):
-        return self.displayname
+        return self.name
 
     def init(self, name, type, host_mountpoint, container_mountpoint, project):
         self.name = name
