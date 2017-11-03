@@ -13,9 +13,11 @@ class MountPoints(models.Model, ModelBase):
     type = models.CharField(max_length = 200)
     host_mountpoint = models.CharField(max_length = 200)
     host_groupid = models.IntegerField(null = True)
+    displayname = models.CharField(max_length = 64)
+    description = models.TextField(null = True)
 
     def __str__(self):
-        return self.name
+        return self.displayname
 
     def init(self, name, type, host_mountpoint, container_mountpoint, project):
         self.name = name

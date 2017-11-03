@@ -11,9 +11,11 @@ from .project import Project
 class Volume(models.Model):
     id = models.AutoField(primary_key = True)
     name = models.CharField(max_length = 64, unique = True)
+    displayname = models.CharField(max_length = 64)
+    description = models.TextField(null = True)
 
     def __str__(self):
-        return self.name
+        return self.displayname
 
     def create(self, uid = 0, gid = 0):
         d = Docker()

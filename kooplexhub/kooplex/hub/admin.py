@@ -55,7 +55,7 @@ class SessionAdmin(admin.ModelAdmin):
 
 @admin.register(MountPoints)
 class MountPoints(admin.ModelAdmin):
-    list_display = ('id', 'name', 'type', 'host_mountpoint', 'host_groupid')
+    list_display = ('id', 'displayname', 'name', 'type', 'host_mountpoint', 'host_groupid')
     pass
 
 @admin.register(MountPointProjectBinding)
@@ -100,7 +100,7 @@ class HubUserAdmin(admin.ModelAdmin):
 
 @admin.register(Volume)
 class VolumeAdmin(admin.ModelAdmin):
-    list_display = ('name', )
+    list_display = ('name', 'displayname')
     pass
 
 @admin.register(VolumeProjectBinding)

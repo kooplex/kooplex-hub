@@ -6,7 +6,8 @@
     {% if p = item  and volume in vs %}
       checked
     {% endif %}
-  {% endfor %}>{{ volume }}
+  {% endfor %}><span style="padding-left:10px"> <strong >{{ volume }}</strong>:  <span style="padding-left:10px"> {{ volume.description }}
+    </span></span>
 
 <br>
 {% endfor %}
@@ -28,7 +29,9 @@
         {% endif %}
       {% endfor %}
     {% endif %}
-  {% endfor %}>{{ binding.mountpoint.name }}
+  {% endfor %}> <span style="padding-left:10px"> <strong > {{ binding.mountpoint.displayname }}
+    </strong>:  <span style="padding-left:20px"> {{ binding.mountpoint.description }} </span>
+    </span>
 {% comment %}
   {% if binding.rw_ %}
 (grant write access <input type="checkbox" name="mprw={{ binding.mountpoint.id }}" value="{{ binding.mountpoint.id }}">)
