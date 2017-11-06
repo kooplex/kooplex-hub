@@ -315,7 +315,7 @@ class Spawner(RestClient):
         print_debug("")
         notebook = self.ensure_notebook_running()
         session = self.make_session(notebook_path, kernel)
-        jpcli = Jupyter(notebook)
+        jpcli = Jupyter(notebook)#, token="aiSiga1aiFai2AiZu1veeWein5gijei8yeLay2Iecae3ahkiekeisheegh2ahgee")
         session = jpcli.start_session(session)
         proxy_path = self.get_session_path(notebook, session)
         session.external_url = self.get_external_url(proxy_path)
@@ -555,7 +555,7 @@ class ReportSpawner(RestClient):
 
     def start_session(self, notebook, notebook_path, kernel, container_name, project_id=0, target_id=0):
         session = self.make_session(notebook_path, kernel)
-        jpcli = Jupyter(notebook, report=True)
+        jpcli = Jupyter(notebook, report=True, token="")
         session = jpcli.start_session(session)
         proxy_path = self.get_session_path(notebook, session)
         session.external_url = self.get_external_url(proxy_path)
