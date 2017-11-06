@@ -117,7 +117,7 @@ class Project(models.Model, ModelBase):
 
     @property
     def members_(self):
-        return UserProjectBinding.get(project=self)
+        return UserProjectBinding.objects.get(project=self)
 
 
     def get_binds(self):
