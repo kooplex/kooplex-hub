@@ -69,7 +69,7 @@ def openreport(request):
         me = HubUser.objects.get(username = request.user.username)
         if report.scope == 'public':
             pass
-        elif report.scope == 'internal' and me in report.project.members_:
+        elif report.scope == 'internal' and me in [ r.hub_user for r in report.project.members_]:
             pass
         elif report.creator == me:
             pass
@@ -118,7 +118,7 @@ def container_report_start(request):
     report = Report.objects.get(id=report_id)
     if report.image=="":
         report.image = report.project.image
-        
+
     spawner = ReportSpawner( project=report.project, image=report.image, report=report)
     notebook = spawner.make_notebook()
     notebook = spawner.start_notebook(notebook)
