@@ -229,8 +229,7 @@ class Gitlab(RestClient):
         return message
 
     def patch_notification(self, pid):
-        prefix = get_settings('prefix', 'name')
-        containername=prefix+"-gitlabdb"
+        containername = get_settings('gitlabdb', 'hostname')
         db_passwd = get_settings('gitlabdb', 'db_password')
         db_port = get_settings('gitlabdb', 'psql_port')
         command="bash -c \"PGPASSWORD={0} psql -h {1} -p {2} -U postgres -d gitlabhq_production -c 'update notification_settings set level=2 where source_id={3};'\"".format(db_passwd,containername,db_port,pid)

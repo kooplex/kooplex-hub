@@ -18,7 +18,7 @@ from kooplex.lib.smartdocker import Docker
 from kooplex.lib.proxy import Proxy
 from kooplex.lib.jupyter import Jupyter
 #TODO: from kooplex.hub.models import *
-from kooplex.hub.models import Container, Notebook, Session, Project, MountPointProjectBinding, HubUser, VolumeProjectBinding, Volume
+from kooplex.hub.models import Container, Notebook, Session, Project, MountPointProjectBinding, HubUser, VolumeProjectBinding, Volume, UserProjectBinding
 
 from kooplex.lib import ldap
 
@@ -192,9 +192,7 @@ class Spawner(RestClient):
         ldp = ldap.Ldap()
         U = ldp.get_user(self.username) 
         projectname = self.project.path_with_namespace.replace('/', '_')
-        gitlabids = self.project.gids.strip()
-        lst = -1 if gitlabids[-1] == ',' else 0
-        projectmembers = [ HubUser.objects.get(gitlab_id = int(x)).username for x in gitlabids[:lst].split(',') ]
+        projectmembers = [m.hub_user.username for m in UserProjectBinding.objects.filter(project=self.project)]
         projectowner = self.project.owner_username
 
         mpgids = []
