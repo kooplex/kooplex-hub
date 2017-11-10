@@ -92,6 +92,10 @@ class Project(models.Model, ModelBase):
         return self.image.split('-')[-1]
 
     @property
+    def safename_(self):
+        return os.path.join(self.path_with_namespace.replace('/', '_'))
+
+    @property
     def home_(self):
         return os.path.join(self.mp_git, self.owner_name, self.path_with_namespace.replace('/', '_'))
 

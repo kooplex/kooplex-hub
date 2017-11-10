@@ -28,7 +28,7 @@ from kooplex.lib.gitlabadmin import GitlabAdmin
 from kooplex.lib.jupyter import Jupyter
 from kooplex.lib.libbase import LibBase
 from kooplex.lib.libbase import get_settings
-from kooplex.lib.ocspawner import OCSpawner
+from kooplex.lib.ocspawner import OCSpawner, OCHelper
 from kooplex.lib.repo import Repo  # GONNA BE OBSOLETED
 from kooplex.lib.repository import repository
 from kooplex.lib.sendemail import send_new_password
@@ -178,6 +178,8 @@ def project_new(request):
             vol = vols.pop()
             vpb = VolumeProjectBinding(volume = vol, project = p)
             vpb.save()
+
+        OCHelper(hubuser, p).mkdir()
 
         if cloned_project:
 # Create a magic script to clone ancient projects content
@@ -840,17 +842,20 @@ def project_members_modify(request):
     for gid in gids:
         try:
             hubuser = HubUser.objects.get(gitlab_id = gid)
+            creator_user = HubUser.objects.get(username = project.creator_name)
             if request.POST['button'] == 'Add':
                 g.add_project_members(project.id, gid)
                 if not UserProjectBinding.objects.filter(project = project, hub_user = hubuser):
                     userp = UserProjectBinding()
                     userp.set(project = project, hub_user = hubuser) 
                     userp.save()
+                OCHelper(creator_user, project).share(hubuser)
             elif request.POST['button'] == 'Remove':
                 g.delete_project_members(project.id, gid)
                 userp = UserProjectBinding.objects.get(project = project, hub_user = hubuser)
                 if userp:
                      userp.delete()
+                OCHelper(creator_user, project).unshare(hubuser)
         except Exception as e:
             ooops.append(str(e))
     if len(ooops):

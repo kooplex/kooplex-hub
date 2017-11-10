@@ -82,3 +82,40 @@ class OCSpawner:
         assert self.state_ == 'running', "Cannot stop %s, because its state is %s" % (self.container_name_, self.state_)
         self.dockerclient.remove_container(container = self.container_name_, force = True)
 
+class OCHelper:
+    container_allusers = 'kooplex-git'  #FIXME: hardcoded. to be renamed, also used by repository
+    ocmountpoint = '/oc'
+    url_base = "http://kooplex-nginx/ownCloud"  # FIXME: IPAddress hardcoded
+
+    def __init__(self, user, project):
+        self.username = user.username
+        self.subfolder = "_project." + project.safename_
+        self.folder = os.path.join(self.ocmountpoint, self.username, self.subfolder)
+        d = Docker()
+        url = d.get_docker_url()
+        self.dockerclient = docker.client.Client(base_url = url)
+
+    def _execute(self, usercommand):
+        command = [ "sudo", "-i", "-u", self.username, "sh", "-c", " ".join(usercommand) ]
+        x = self.dockerclient.exec_create(container = self.container_allusers, cmd = command)
+        self.dockerclient.exec_start(exec_id = x['Id'], stream = False)
+        check = self.dockerclient.exec_inspect(exec_id = x['Id'])
+        assert check['ExitCode'] == 0, check
+
+    def mkdir(self):
+        usercommand = [ "mkdir", "-p %s" % self.folder ]
+        self._execute(usercommand)
+        self.synch()
+
+    def synch(self):
+        usercommand = [ "owncloudcmd", "-n %s" % self.folder, self.url_base ]
+        self._execute(usercommand)
+
+    def share(self, user):
+        self.mkdir()
+        usercommand = [ "share.sh", "share", self.subfolder, user.username ]
+        self._execute(usercommand)
+
+    def unshare(self, user):
+        usercommand = [ "share.sh", "unshare", self.subfolder, user.username ]
+        self._execute(usercommand)
