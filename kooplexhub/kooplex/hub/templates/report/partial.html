@@ -15,7 +15,9 @@
       <button type="button" class="btn btn-info"><span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span> Open a Report Server</button>
     </a-->
     <a data-toggle="collapse" href="#collapse{{ report_latest.id }}{{ pane }}" style="text-decoration: none; color: gray">
-      <strong>{{ report_latest.name  }}/{{ project.name }} [{{ report_latest.ts_ }}]</strong> - {{ report_latest.creator_name }}
+      <span style="padding-left:20px;"> project name: <strong style="text-transform: uppercase;">{{ project.name }}</strong>  </span><span style="padding-left:20px"><strong> -
+        {{ report_latest.name  }}{% if report_latest.type == 'dashboard' %}.ipynb{%  elif report_latest.type == 'html' %}.html</span> {%  endif %}</strong>
+ published on {{ report_latest.prettyts_ }} by {{ report_latest.creator_name }} <span class="badge" style="float: inline-end;">{% if report_latest.type == 'dashboard' %}dashboard{%  elif report_latest.type == 'html' %}html</span> {%  endif %}</span>
     </a>
   </div>
   <div id="collapse{{ report_latest.id }}{{ pane }}" class="panel-collapse collapse">
