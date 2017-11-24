@@ -729,20 +729,20 @@ class myuser:
     def delete(self):
         ooops = []
         dj_user = User.objects.get(username = self['username'])
-        l = Ldap()
         try:
+            l = Ldap()
             l.delete_user(dj_user)
         except Exception as e:
             ooops.append("ldap: %s" % e)
-        gad = GitlabAdmin()
         try:
+            gad = GitlabAdmin()
             gad.delete_user(self['username'])
         except Exception as e:
             ooops.append("git: %s" % e)
         dj_user.delete()
 #TODO: remove appropriate directories from the filesystem
         if len(ooops):
-            raise Exception(",RR".join(ooops))
+            raise Exception(",".join(ooops))
 
 USERMANAGEMENT_URL = '/hub/notebooksusermanagement'
 def usermanagement(request):
@@ -779,7 +779,7 @@ def usermanagement2(request):
         U = myuser()
         if 'delete' in request.POST:
             U.setattribute(username = request.POST['delete'])
-#            U.delete()
+            U.delete()
         elif 'pwgen' in request.POST:
             U.setattribute(username = request.POST['pwgen'])
             U.pwgen()
