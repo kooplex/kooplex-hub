@@ -76,11 +76,7 @@ class GitlabAdmin(Gitlab):
         respdict = self.get_user(username)[0]
         url = self.api_version + "/users/%d?hard_delete=true" % respdict['id']
         res = self.http_delete(url)
-        message = ""
-        if res.status_code != 201:
-            message = res.json()
-        return message
-
+        return "" if res.status_code in [ 204, 201 ] else res.json()
 
     def get_all_users(self):
         print_debug("",DEBUG_LOCAL)
@@ -92,7 +88,7 @@ class GitlabAdmin(Gitlab):
         res = self.http_get(self.api_version+'/users?username=%s'%username)
 #        res = self.http_get('api/v3/users?search=%s'%username)
         user = res.json()
-        
+
         return user[0]['is_admin']
 
     def modify_user(self, userid, property, value):
