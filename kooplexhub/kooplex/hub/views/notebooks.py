@@ -629,12 +629,13 @@ class myuser:
         if self._data[k] is None:
             raise Exception("Unset attribute %s" % k)
         return self._data[k]
-    
+
 
     def setattribute(self, **kw):
         for k, v in kw.items():
-            if not k in self._data.keys():
-               raise Exception("Unknown attribute: %s" % k)
+            assert k in self._data.keys(), "Unknown attribute: %s" % k
+            if k == 'email':
+                assert '@' in v, "E-mail address should contain @" #FIXME: regular expression
             self._data[k] = v
 
     def create(self):
