@@ -660,16 +660,16 @@ class myuser:
         except Exception as e:
             ooops.append("ldap: %s" % e)
 
-        gad = GitlabAdmin()
         try:
+            gad = GitlabAdmin()
             msg = gad.create_user(self)
             if len(msg):
                 ooops.append("gitcreate: %s" % msg)
+            gg = gad.get_user(dj_user.username)[0]
+            dj_user.gitlab_id = gg['id']
         except Exception as e:
             ooops.append("gitcreate2: %s" % e)
 
-        gg = gad.get_user(dj_user.username)[0]
-        dj_user.gitlab_id = gg['id']
 
         srv_dir = get_settings('users', 'srv_dir', None, '')
         home_dir = get_settings('users', 'home_dir', None, '')
