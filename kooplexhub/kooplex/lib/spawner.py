@@ -206,7 +206,7 @@ class Spawner(RestClient):
                 lut_gid_gidname[gid_].append(gidname_)
         mpgids = []
         for gid_, gidnames_ in lut_gid_gidname.items():
-            mpgids.append("%s:%d" % ("_".join(gidnames_), gid_))
+            mpgids.append("%s:%d" % (("_".join(gidnames_))[:10], gid_))
 
 #NOTE: offset is hardcoded here!
         G_OFFSET = 20000
