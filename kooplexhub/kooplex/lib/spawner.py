@@ -195,10 +195,18 @@ class Spawner(RestClient):
         projectmembers = [m.hub_user.username for m in UserProjectBinding.objects.filter(project=self.project)]
         projectowner = self.project.owner_username
 
-        mpgids = []
+        # we have to make sure if more than one mount points share the same group id, we collapse their names
+        lut_gid_gidname = {}
         for mpb in MountPointProjectBinding.objects.filter(project = self.project):
             if mpb.mountpoint.type == 'nfs' and mpb.mountpoint.host_groupid > 0:
-                mpgids.append("%s:%d" % (mpb.mountpoint.name, mpb.mountpoint.host_groupid))
+                gid_ = mpb.mountpoint.host_groupid
+                gidname_ = mpb.mountpoint.name.lower()
+                if not gid_ in lut_gid_gidname:
+                    lut_gid_gidname[gid_] = []
+                lut_gid_gidname[gid_].append(gidname_)
+        mpgids = []
+        for gid_, gidnames_ in lut_gid_gidname.items():
+            mpgids.append("%s:%d" % ("_".join(gidnames_), gid_))
 
 #NOTE: offset is hardcoded here!
         G_OFFSET = 20000
