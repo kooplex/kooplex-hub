@@ -90,7 +90,7 @@ class OCHelper:
     def __init__(self, user, project):
         self.username = user.username
         self.subfolder = "_project." + project.safename_
-        self.folder = os.path.join(self.ocmountpoint, self.username, self.subfolder)
+        self.folder = os.path.join(self.ocmountpoint, self.username)
         d = Docker()
         url = d.get_docker_url()
         self.dockerclient = docker.client.Client(base_url = url)
@@ -103,7 +103,7 @@ class OCHelper:
         assert check['ExitCode'] == 0, check
 
     def mkdir(self):
-        usercommand = [ "mkdir", "-p %s" % self.folder ]
+        usercommand = [ "mkdir", "-p %s" % os.path.join(self.folder, self.subfolder) ]
         self._execute(usercommand)
         self.synch()
 
