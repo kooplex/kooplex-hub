@@ -7,11 +7,12 @@
 import docker
 import os
 import re
+from kooplex.lib.libbase import get_settings
 #FIXME: get rid of smartdocker
 from kooplex.lib.smartdocker import Docker
 
 class repository:
-    container_git = 'kooplex-git'
+    container_git = get_settings('impersonator', 'container_name')
 
     def __init__(self, user, project):
         self.user = user.username

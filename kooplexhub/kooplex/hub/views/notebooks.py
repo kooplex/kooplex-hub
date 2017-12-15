@@ -28,7 +28,7 @@ from kooplex.lib.gitlabadmin import GitlabAdmin
 from kooplex.lib.jupyter import Jupyter
 from kooplex.lib.libbase import LibBase
 from kooplex.lib.libbase import get_settings
-from kooplex.lib.ocspawner import OCSpawner, OCHelper
+from kooplex.lib.ochelper import OCHelper
 from kooplex.lib.repo import Repo  # GONNA BE OBSOLETED
 from kooplex.lib.repository import repository
 from kooplex.lib.sendemail import send_new_password
@@ -68,8 +68,8 @@ def notebooks(request, errors = []):
     volumes = Volume.objects.all()
     volumes_attached = dict( map(lambda p: (p, [ vpb.volume for vpb in VolumeProjectBinding.objects.filter(project = p) ]), projects_sharedwithme) )
 
-    ocspawner = OCSpawner(hubuser)
-    oc_running = ocspawner.state_ == 'running'
+###    ocspawner = OCSpawner(hubuser)
+###    oc_running = ocspawner.state_ == 'running'
 
     # TODO unittest to check if port is accessible (ufw allow "5555")
     return render(
@@ -87,7 +87,8 @@ def notebooks(request, errors = []):
             'notebook_dir_name': NOTEBOOK_DIR_NAME,
             'notebook_images' : notebook_images,
             'errors' : errors,
-            'oc_running': oc_running,
+            #'oc_running': oc_running,
+            'oc_running': False, #FIXME: to remove
             'netrc_exists': hubuser.file_netrc_exists_,
             'bindings': shares,
             'shares_attached': shares_attached,
@@ -675,13 +676,19 @@ class myuser:
         home_dir = get_settings('users', 'home_dir', None, '')
         home_dir = os.path.join(srv_dir, home_dir.replace('{$username}', self['username']))
         ssh_dir = os.path.join(home_dir, '.ssh')
-        oc_dir = os.path.join(srv_dir, '_oc', self['username'])
+        ###################oc_dir = os.path.join(srv_dir, '_oc', self['username'])
+        oc_dir = os.path.join(home_dir, 'oc')
         git_dir = os.path.join(srv_dir, '_git', self['username'])
+        davfs_dir = os.path.join(home_dir, '.davfs2')
 
         mkdir(home_dir, uid = dj_user.uid, gid = dj_user.gid)
         mkdir(ssh_dir, uid = dj_user.uid, gid = dj_user.gid, mode = 0b111000000)
         mkdir(oc_dir, uid = dj_user.uid, gid = dj_user.gid, mode = 0b111000000)
         mkdir(git_dir, uid = dj_user.uid, gid = dj_user.gid)
+        mkdir(davfs_dir, uid = dj_user.uid, gid = dj_user.gid, mode=0b111000000)
+
+        ## touch a file to show whether oc is mounted, used by impersonator
+        open(os.path.join(oc_dir, ".notmounted"), "w").close()
 
         ## prepare .gitconfig
         fn_gitconfig = os.path.join(home_dir, '.gitignore')
@@ -695,6 +702,13 @@ class myuser:
 """ % (self['firstname'], self['lastname'], self['email']))
         os.chown(fn_gitconfig, dj_user.uid, dj_user.gid)
         ##
+
+        ## preapare davfs secret file
+        davsecret_fn = os.path.join(davfs_dir, "secrets")
+        with open(davsecret_fn, "w") as f:
+            f.write("http://kooplex-nginx/ownCloud/remote.php/webdav/ %s %s" % (self['username'], self['password']))
+        os.chown(davsecret_fn, dj_user.uid, dj_user.gid)
+        os.chmod(davsecret_fn, 0b111000000) 
 
         key_fn = os.path.join(ssh_dir, "gitlab.key")
         subprocess.call(['/usr/bin/ssh-keygen', '-N', '', '-f', key_fn])
@@ -872,43 +886,44 @@ def project_members_modify(request):
     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
 
 def toggle_oc(request):
-    assert isinstance(request, HttpRequest)
-    try:
-        user = request.user
-        hubuser = HubUser.objects.get(username = user.username)
-        ocspawner = OCSpawner(hubuser)
-        if request.POST['button'] == 'Start':
-            pw = request.POST['password']
-            netrc_exists = request.POST['netrc_exists'] == 'True'
-            if not netrc_exists and (len(pw) == 0):
-                raise Exception("Please provide a password so the synchronization daemon can access your owncloud storage")
-
-#FIXME: machine name hardcoded
-            if len(pw):
-                fn_netrc = hubuser.file_netrc_
-                netrc = """
-machine %s
-login %s
-password %s
-"""     % ('kooplex-nginx', user.username, pw)
-                with open(fn_netrc, 'w') as f:
-                    f.write(netrc)
-                os.chown(fn_netrc, hubuser.uid, hubuser.gid)
-                os.chmod(fn_netrc, 0b111000000)
-            ocspawner.start()
-        elif request.POST['button'] == 'Stop':
-            ocspawner.stop()
-        return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
-    except Exception as e:
-        return render(
-            request,
-            'app/error.html',
-            context_instance=RequestContext(request,
-                                            {
-                                                'error_title': 'Error',
-                                                'error_message': str(e),
-                                            })
-        )
+    pass
+###    assert isinstance(request, HttpRequest)
+###    try:
+###        user = request.user
+###        hubuser = HubUser.objects.get(username = user.username)
+###        ocspawner = OCSpawner(hubuser)
+###        if request.POST['button'] == 'Start':
+###            pw = request.POST['password']
+###            netrc_exists = request.POST['netrc_exists'] == 'True'
+###            if not netrc_exists and (len(pw) == 0):
+###                raise Exception("Please provide a password so the synchronization daemon can access your owncloud storage")
+###
+####FIXME: machine name hardcoded
+###            if len(pw):
+###                fn_netrc = hubuser.file_netrc_
+###                netrc = """
+###machine %s
+###login %s
+###password %s
+###"""     % ('kooplex-nginx', user.username, pw)
+###                with open(fn_netrc, 'w') as f:
+###                    f.write(netrc)
+###                os.chown(fn_netrc, hubuser.uid, hubuser.gid)
+###                os.chmod(fn_netrc, 0b111000000)
+###            ocspawner.start()
+###        elif request.POST['button'] == 'Stop':
+###            ocspawner.stop()
+###        return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
+###    except Exception as e:
+###        return render(
+###            request,
+###            'app/error.html',
+###            context_instance=RequestContext(request,
+###                                            {
+###                                                'error_title': 'Error',
+###                                                'error_message': str(e),
+###                                            })
+###        )
 
 
 
@@ -997,6 +1012,7 @@ urlpatterns = [
 ###    url(r'^acceptmergerequest', notebooks_acceptmergerequest, name='notebooks-acceptmergerequest'),
 ###    url(r'^fork$', project_fork, name='project-fork'),
 ###    url(r'^refresh$', Refresh_database, name='refresh-db'),
+
 
     url(r'^usermanagement$', usermanagementForm, name='usermanagement-form'),
     url(r'^adduser$', usermanagement, name='usermanagement-add'),

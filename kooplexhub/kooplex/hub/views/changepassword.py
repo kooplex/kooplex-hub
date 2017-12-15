@@ -12,6 +12,7 @@ from kooplex.lib.gitlabadmin import GitlabAdmin
 from kooplex.lib.debug import *
 from kooplex.lib.libbase import get_settings
 import os
+from kooplex.hub.models.user import HubUser
 
 HUB_URL = '/hub'
 
@@ -54,8 +55,11 @@ def change_password_form_ldap(request):
         davsecret_fn = os.path.join(davfs_dir, "secrets")
         with open(davsecret_fn, "w") as f:
             f.write("http://kooplex-nginx/ownCloud/remote.php/webdav/ %s %s" % (request.user.username, newpassword))
-##############
+        dj_user = HubUser.objects.get(username = request.user.username,)
+        os.chown(davsecret_fn, dj_user.uid, dj_user.gid)
+        os.chmod(davsecret_fn, 0b111000000)
 
+##############
 
     except Exception as e:
         return render(
