@@ -10,7 +10,8 @@ from django.shortcuts import render_to_response
 from django.core.exceptions import ValidationError
 from kooplex.lib.gitlabadmin import GitlabAdmin
 from kooplex.lib.debug import *
-
+from kooplex.lib.libbase import get_settings
+import os
 
 HUB_URL = '/hub'
 
@@ -44,6 +45,18 @@ def change_password_form_ldap(request):
         uu = request.user
         uu.set_password(newpassword)            #FIXME: should not be here
         l.changepassword(request.user, oldpassword, newpassword)
+
+#FIXME: dirty
+        srv_dir = get_settings('users', 'srv_dir', None, '')
+        home_dir = get_settings('users', 'home_dir', None, '')
+        home_dir = os.path.join(srv_dir, home_dir.replace('{$username}', request.user.username))
+        davfs_dir = os.path.join(home_dir, '.davfs2')
+        davsecret_fn = os.path.join(davfs_dir, "secrets")
+        with open(davsecret_fn, "w") as f:
+            f.write("http://kooplex-nginx/ownCloud/remote.php/webdav/ %s %s" % (request.user.username, newpassword))
+##############
+
+
     except Exception as e:
         return render(
             request,
