@@ -9,7 +9,7 @@ from django.template import RequestContext
 from kooplex.hub.models.report import Report
 from kooplex.hub.models.notebook import Notebook
 from kooplex.hub.models.user import HubUser
-from kooplex.hub.models.project import Project
+from kooplex.hub.models.project import Project, UserProjectBinding
 from kooplex.lib.spawner import ReportSpawner
 from kooplex.lib.libbase import get_settings
 
@@ -38,10 +38,12 @@ def reports(request):
         me = HubUser.objects.get(username = username)
         my_gitlab_id = str( HubUser.objects.get(username = username).gitlab_id )
         myreports = Report.objects.filter(creator = me)
-        internal_ = Report.objects.filter(scope = 'internal')
-        internal_good_ = filter(lambda x: my_gitlab_id in x.project.gids.split(','), internal_)
+        myprojectbindings = UserProjectBinding.objects.filter(hub_user = me)
+        internalreports = Report.objects.filter(scope = 'internal')
+        projectset = set([ pb.project for pb in myprojectbindings ]).intersection([ r.project for r in internalreports ])
+        internalreports_good = filter(lambda r: r.project in projectset, internalreports) 
     publicreports = list( Report.objects.filter(scope = 'public') )
-    publicreports.extend(internal_good_)
+    publicreports.extend(internalreports_good)
     return render(
         request,
         'report/reports.html',
