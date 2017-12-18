@@ -708,7 +708,7 @@ class myuser:
         with open(davsecret_fn, "w") as f:
             f.write("http://kooplex-nginx/ownCloud/remote.php/webdav/ %s %s" % (self['username'], self['password']))
         os.chown(davsecret_fn, dj_user.uid, dj_user.gid)
-        os.chmod(davsecret_fn, 0b111000000) 
+        os.chmod(davsecret_fn, 0b110000000) 
 
         key_fn = os.path.join(ssh_dir, "gitlab.key")
         subprocess.call(['/usr/bin/ssh-keygen', '-N', '', '-f', key_fn])

@@ -57,7 +57,7 @@ def change_password_form_ldap(request):
             f.write("http://kooplex-nginx/ownCloud/remote.php/webdav/ %s %s" % (request.user.username, newpassword))
         dj_user = HubUser.objects.get(username = request.user.username,)
         os.chown(davsecret_fn, dj_user.uid, dj_user.gid)
-        os.chmod(davsecret_fn, 0b111000000)
+        os.chmod(davsecret_fn, 0b110000000)
 
 ##############
 
