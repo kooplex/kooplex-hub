@@ -10,6 +10,7 @@ import re
 from kooplex.lib.libbase import get_settings
 #FIXME: get rid of smartdocker
 from kooplex.lib.smartdocker import Docker
+from kooplex.lib.libbase import get_settings
 
 class repository:
     container_git = get_settings('impersonator', 'container_name')
