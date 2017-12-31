@@ -42,9 +42,19 @@
   <div id="myprojects" class="tab-pane fade in active">
 
         {% for item in shared_with_me_projects %}
+        {% if item.id in running %}
           <div class="row">
             {% include 'app/notebooks-project-partial.html' %}
           </div>
+        {% endif %}
+        {% endfor %}
+
+        {% for item in shared_with_me_projects %}
+        {% if item.id not in running %}
+          <div class="row">
+            {% include 'app/notebooks-project-partial.html' %}
+          </div>
+        {% endif %}
         {% endfor %}
 
   </div>
