@@ -76,7 +76,7 @@ class Ldap(LibBase):
             'uid': user.username,
             'uidNumber': user.uid,
             'gidNumber': user.gid,
-            'homeDirectory': user.home,
+            'homeDirectory': '/home/%s'%user.username,
             'sn': user.last_name,
             'displayName': '%s %s' % (user.first_name, user.last_name),
             'givenName': user.first_name,

@@ -179,7 +179,7 @@ class Gitlab(RestClient):
     def delete_project_members(self,project_id, user_id):
         print_debug("",DEBUG_LOCAL)
         res = self.http_delete(self.api_version+'/projects/%d/members/%d'%(project_id, user_id))
-        return res.json()
+        #return res.json()
 
     def get_file(self,project_id,file):
         print_debug("",DEBUG_LOCAL)
