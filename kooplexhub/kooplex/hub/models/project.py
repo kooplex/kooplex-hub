@@ -1,4 +1,4 @@
-﻿import json, os
+import json, os
 import re
 from django.db import models
 
@@ -28,10 +28,6 @@ class Project(models.Model, ModelBase):
     home = models.CharField(max_length=200, null=True)
 
     shared_directory = models.CharField(max_length=200, null=True)
-
-    # TODO DELETE
-    # From gitlab api projectmembers
-    gids = models.CharField(max_length=300,null=True)
 
     # From docker api
     image = models.CharField(max_length=200)
