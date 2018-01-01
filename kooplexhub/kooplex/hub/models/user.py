@@ -110,17 +110,24 @@ class HubUser(User):
                 ssh_dir = os.path.join(home_dir, '.ssh')
                 oc_dir = os.path.join(srv_dir, '_oc', self.username)
                 git_dir = os.path.join(srv_dir, '_git', self.username)
+                davfs_dir = os.path.join(home_dir, '.davfs2')
 
                 mkdir(home_dir, uid=self.uid, gid=self.gid)
                 mkdir(ssh_dir, uid=self.uid, gid=self.gid, mode=0b111000000)
                 mkdir(oc_dir, uid=self.uid, gid=self.gid, mode=0b111000000)
                 mkdir(git_dir, uid=self.uid, gid=self.gid)
+                mkdir(davfs_dir, uid=self.uid, gid=self.gid, mode=0b111000000)
 
                 key_fn = os.path.join(ssh_dir, "gitlab.key")
                 subprocess.call(['/usr/bin/ssh-keygen', '-N', '', '-f', key_fn])
                 os.chown(key_fn, self.uid, self.gid)
                 os.chown(key_fn + ".pub", self.uid, self.gid)
                 key = open(key_fn + ".pub").read().strip()
+
+                davsecret_fn = os.path.join(davfs_dir, "secrets")
+                with open(davsecret_fn, "w") as f:
+                    f.write("http://kooplex-nginx/ownCloud/remote.php/webdav/ %s %s" % (self.username, pw))
+
 
                 try:
                     msg = gad.upload_userkey(self, key)
@@ -166,6 +173,15 @@ class HubUser(User):
         from kooplex.lib.ldap import Ldap
         l = Ldap()
         l.changepassword(self, 'doesntmatter', pw, validate_old_password = False)
+
+        srv_dir = get_settings('users', 'srv_dir', None, '')
+        home_dir = get_settings('users', 'home_dir', None, '')
+        home_dir = os.path.join(srv_dir, home_dir.replace('{$username}', self.username))
+        davfs_dir = os.path.join(home_dir, '.davfs2')
+        davsecret_fn = os.path.join(davfs_dir, "secrets")
+        with open(davsecret_fn, "w") as f:
+            f.write("http://kooplex-nginx/ownCloud/remote.php/webdav/ %s %s" % (self.username, pw))
+
 
         send_new_password(name = "%s %s" % (self.first_name, self.last_name),
            username = self.username,
