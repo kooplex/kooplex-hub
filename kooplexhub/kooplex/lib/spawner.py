@@ -1,4 +1,4 @@
-﻿import sys, os
+import sys, os
 import getopt
 import json
 import string
@@ -111,13 +111,15 @@ class Spawner(RestClient):
 #DEPRECATED in favor of davfs
 #        oc_host = os.path.join(self.srv_path, '_oc', self.username)
 #        oc_container = os.path.join('/home', self.username, 'oc')
-        git_host = os.path.join(self.srv_path, '_git', self.username, projectname)
+#        git_host = os.path.join(self.srv_path, '_git', self.username, projectname)
+        git_host = self.project.git_volume(self.username)
         git_container = os.path.join('/home', self.username, 'git')
         share_host = os.path.join(self.srv_path, '_share', projectname)
         share_container = os.path.join('/home', self.username, 'share')
 
         binds[home_host] = {'bind': home_container, 'mode': 'rw'}
 #        binds[oc_host] = {'bind': oc_container, 'mode': 'rw'}  #DEPRECATED in favor of davfs
+#        binds[git_host] = {'bind': git_container, 'mode': 'rw'}
         binds[git_host] = {'bind': git_container, 'mode': 'rw'}
         binds[share_host] = {'bind': share_container, 'mode': 'rw'}
 
