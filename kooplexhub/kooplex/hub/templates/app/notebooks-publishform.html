@@ -17,7 +17,7 @@
           <p>Please select the notebook to publish as a new report:</p>
           <div class="form-group">
           {% for item in ipynbs %}
-             <input type="radio" name="ipynb_file" value="{{ item }}" {% if forloop.first %} checked {% endif %} > {{ item }}<br>
+             <input type="radio" name="ipynb_file" value="{{ item.path }}" {% if forloop.first %} checked {% endif %} > {{ item.path }}<br>
           {% endfor %}
           </div>
             <hr>
@@ -72,16 +72,21 @@
 
           <div class="form-group">
             <div class="col-md-offset-2 col-md-10">
-              <select name = "scope" class = "btn btn-default">
-                <option value="private">private</option>
-                <option value="internal">internal</option>
-                <option value="public">public</option>
-              </select>
-              <input type="hidden" name="project_id" value="{{ project_id }}" />
-              <input type="hidden" name="toconvert_files" value="" />
-              <input type="hidden" id="reports2remove" name="reports2remove" value="" />
-              <input type="submit" name="html" value="Convert to html" class="btn btn-default" />
-              <input type="submit" name="dashboard" value="Deploy as dashboard" class="btn btn-default" onClick="return empty()" />
+
+              {% if ipynbs|length > 0  %}
+                <select name = "scope" class = "btn btn-default">
+                  <option value="private">private</option>
+                  <option value="internal">internal</option>
+                  <option value="public">public</option>
+                </select>
+                 <input type="hidden" name="project_id" value="{{ project_id }}" />
+                 <input type="hidden" name="toconvert_files" value="" />
+                 <input type="hidden" id="reports2remove" name="reports2remove" value="" />
+                 <input type="submit" name="html" value="Convert to html" class="btn btn-default" />
+                 <input type="submit" name="dashboard" value="Deploy as dashboard" class="btn btn-default" onClick="return empty()" />
+              {% else %}              
+                 <span style="color:red;margin-right: 20px;"> There is nothing to publish</span>
+              {% endif %}
               <input type="submit" name="cancel" value="Cancel" class="btn btn-default" />
             </div>   <!-- col -->
           </div>     <!-- form-group -->

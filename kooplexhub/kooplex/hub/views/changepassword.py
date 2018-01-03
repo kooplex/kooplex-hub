@@ -33,7 +33,6 @@ def change_password(request):
 def change_password_form_ldap(request):
     """Checks password in ldap and changes it"""
     assert isinstance(request, HttpRequest)
-    username = request.POST['username']
     try:
         oldpassword = request.POST['oldpassword']
         newpassword = request.POST['newpassword']

@@ -115,7 +115,6 @@ class Spawner(RestClient):
         binds['%s-git' % prefix ] = { 'bind': '/mnt/.volumes/git', 'mode': 'rw' }
         binds['%s-share' % prefix ] = { 'bind': '/mnt/.volumes/share', 'mode': 'rw' }
 
-
         # dynamically added data sources
         dockerclient = self.make_docker_client()
         for mpb in MountPointProjectBinding.objects.filter(project = self.project):

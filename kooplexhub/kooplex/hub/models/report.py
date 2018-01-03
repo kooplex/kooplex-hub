@@ -62,6 +62,11 @@ class Report(models.Model, ModelBase):
         return strftime("%Y%m%d_%H%M%S", localtime(self.ts_created))
 
     @property
+    def prettyts_(self):
+        return strftime("%Y %m. %d.", localtime(self.ts_created))
+
+
+    @property
     def url_(self):
         if self.type == 'html':
             return reverse('report-open') + "?report_id=%d" %  (self.id)
@@ -125,8 +130,21 @@ class Report(models.Model, ModelBase):
                 raise
 
         elif self.type=='dashboard':
+            #THIS WILL REPLACE THE FILE OPENER FUNCTION , WHICH WILL COPY THE FILES TO THE RIGHT PLACE
+            def func_replace():
+                import json
+
+#                def findcell(obj, sstr):
+#                    cells = obj['cells']
+#                    for icell in range(len(cells)):
+#                        for i in range(len(cells[icell]['source'])):
+#                            if cells[icell]['source'][i].find('import') > -1 and cells[icell]['source'][i].find(
+#                                    sstr) > -1:
+#                                return icell, i
+
+
             ooops = []
-            other_files.append(os.path.join(self.path, self.file_name))
+            #other_files.append(os.path.join(self.path, self.file_name))
             for file in other_files:
                 file_to_deploy = os.path.join(self.gitdir_, self.path, file)
                 file_to_create = os.path.join(self.target_, file)
@@ -135,6 +153,24 @@ class Report(models.Model, ModelBase):
                     file_util.copy_file(file_to_deploy, file_to_create)
                 except:
                     ooops.append(file)
+                    
+            newcell = {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {
+    "collapsed": True
+   },
+   "outputs": [],
+   "source": ["import os\n","os.chdir('%s')"%os.path.join("/home/",self.project.home, self.ts_)]
+  }
+            with open(os.path.join(self.gitdir_, self.path, self.file_name),'r') as Foriginal:
+               ipynb=json.load(Foriginal)
+            ipynb['cells'].insert(0,newcell)
+
+            with open(os.path.join(self.target_, self.file_name),'w') as WW:
+               json.dump(ipynb,WW)
+
+                    
             if len(ooops):
                 raise Exception("Error copying files: %s" % ",".join(ooops))
 

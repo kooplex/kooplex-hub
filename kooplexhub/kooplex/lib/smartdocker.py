@@ -1,4 +1,4 @@
-﻿from docker.client import Client
+from docker.client import Client
 from kooplex.lib import LibBase, get_settings
 from kooplex.hub.models.container import Container
 from kooplex.lib.debug import *
@@ -237,3 +237,12 @@ class Docker(LibBase):
         # TODO: use real user once LDAP and PAM are set up inside image
         res = self.docli.exec_start(exec, detach=detach)
         return res
+
+    def create_volume(self, mountpoint, volume_name):
+        res = self.docli.create_volume(volume_name, driver=None, driver_opts={"device":mountpoint, "o":"bind"}, labels=None)
+        return res
+
+    def remove_volume(self, volume_name):
+        res = self.docli.remove_volume(volume_name)
+        return res
+        

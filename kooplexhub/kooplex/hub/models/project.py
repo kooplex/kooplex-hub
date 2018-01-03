@@ -1,4 +1,4 @@
-﻿import json, os
+import json, os
 import re
 from django.db import models
 
@@ -29,10 +29,6 @@ class Project(models.Model, ModelBase):
 
     shared_directory = models.CharField(max_length=200, null=True)
 
-    # TODO DELETE
-    # From gitlab api projectmembers
-    gids = models.CharField(max_length=300,null=True)
-
     # From docker api
     image = models.CharField(max_length=200)
     environment = models.TextField(null=True)
@@ -41,6 +37,7 @@ class Project(models.Model, ModelBase):
     mp_git = '/git'
 #FIXME: not necessaryif if docker volume is used
     gitwd = '_git'
+    sharewd = '_share'
 
     def __str__(self):
         return "%s@%s" % (self.name, self.owner_username)
@@ -103,9 +100,24 @@ class Project(models.Model, ModelBase):
     @property
     def gitdir_(self):
         return os.path.join(get_settings('users', 'srv_dir'), self.gitwd, self.owner_username, self.path_with_namespace.replace('/', '_'))
+
+    @property
+    def git_volume_(self):
+        return get_settings('prefix', 'name')+"-git-%s-%s"%(self.owner_username, self.path_with_namespace.replace('/', '_'))
  
     def gitdir(self, username):
         return os.path.join(get_settings('users', 'srv_dir'), self.gitwd, username, self.path_with_namespace.replace('/', '_'))
+
+    def git_volume(self, username):
+        return get_settings('prefix', 'name')+"-git-%s-%s"%(username, self.path_with_namespace.replace('/', '_'))
+    
+    @property
+    def sharedir_(self):
+        return os.path.join(get_settings('users', 'srv_dir'), self.sharewd, self.path_with_namespace.replace('/', '_'))
+
+    @property
+    def share_volume_(self):
+        return get_settings('prefix', 'name')+"-git-%s"%(self.path_with_namespace.replace('/', '_'))
 
 #TODO: do wee need these?
     def get_full_home(self):

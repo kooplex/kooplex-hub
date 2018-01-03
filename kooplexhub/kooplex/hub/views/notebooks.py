@@ -224,6 +224,19 @@ rm ~/$(basename $0)
         else:
 # Create a README file
             g.create_project_readme(p.id, "README.md", "* proba", "Created a default README")
+<<<<<<< HEAD
+=======
+
+#NOTE: offset is hardcoded here!
+        G_OFFSET = 20000
+        mkdir(p.gitdir_, U.uid, G_OFFSET + p.id, 0b111100000)
+        mkdir(p.sharedir_, hubuser.uid, G_OFFSET + p.id, 0b111111101)
+        d = Docker()
+        d.create_volume(p.gitdir_, p.git_volume_)
+        d.create_volume(p.sharedir_, p.share_volume_)
+
+
+>>>>>>> 98fb7db4b4b49a15ae6a852a5fff3370a69ef106
         return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
     except Exception as e:
         return render(
@@ -874,13 +887,23 @@ def project_members_modify(request):
                     userp.set(project = project, hub_user = hubuser) 
                     userp.save()
                 OCHelper(creator_user, project).share(hubuser)
+#NOTE: offset is hardcoded here!
+                G_OFFSET = 20000
+                mkdir(project.gitdir(hubuser.username), hubuser.uid, G_OFFSET + project.id, 0b111100000)
+                d = Docker()
+                d.create_volume(project.gitdir(hubuser.username), project.git_volume(hubuser.username))
+                
             elif request.POST['button'] == 'Remove':
                 g.delete_project_members(project.id, gid)
                 userp = UserProjectBinding.objects.get(project = project, hub_user = hubuser)
                 if userp:
                      userp.delete()
                 OCHelper(creator_user, project).unshare(hubuser)
+<<<<<<< HEAD
 #TODO shall we remove the user's git dir???
+=======
++#TODO shall we remove the user's git dir???
+>>>>>>> 98fb7db4b4b49a15ae6a852a5fff3370a69ef106
         except Exception as e:
             ooops.append(str(e))
     if len(ooops):

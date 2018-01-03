@@ -29,6 +29,9 @@ from django.conf.urls import include
 from django.contrib import admin
 admin.autodiscover()
 
+import os
+from kooplex.lib.libbase import get_settings
+
 from kooplex.hub.models.user import HubUser
 import pwgen
 from kooplex.lib.sendemail import send_token
@@ -90,8 +93,20 @@ def preset2(request):
         assert token == tokengood, 'You provide an invalid token'
         assert password1 == password2, 'Your passwords do not match'
         l = Ldap()
-        dj_user = User.objects.get(username = username)
+        dj_user = HubUser.objects.get(username = username)
         l.changepassword(dj_user, 'doesntmatter', password1, validate_old_password = False)
+
+        srv_dir = get_settings('users', 'srv_dir', None, '')
+        home_dir = get_settings('users', 'home_dir', None, '')
+        home_dir = os.path.join(srv_dir, home_dir.replace('{$username}', username))
+        davfs_dir = os.path.join(home_dir, '.davfs2')
+
+        ## preapare davfs secret file
+        davsecret_fn = os.path.join(davfs_dir, "secrets")
+        with open(davsecret_fn, "w") as f:
+            f.write("http://kooplex-nginx/ownCloud/remote.php/webdav/ %s %s" % (username, password1))
+        os.chown(davsecret_fn, dj_user.uid, dj_user.gid)
+        os.chmod(davsecret_fn, 0b110000000)
 
     except Exception as e:
         return render(
