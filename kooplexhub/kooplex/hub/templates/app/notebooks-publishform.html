@@ -17,7 +17,7 @@
           <p>Please select the notebook to publish as a new report:</p>
           <div class="form-group">
           {% for item in ipynbs %}
-             <input type="radio" name="ipynb_file" value="{{ item.path }}" {% if forloop.first %} checked {% endif %} > {{ item.path }}<br>
+             <input type="radio" name="ipynb_file" value="{{ item }}" {% if forloop.first %} checked {% endif %} > {{ item }}<br>
           {% endfor %}
           </div>
             <hr>
