@@ -3,12 +3,14 @@ import json
 import logging
 import logging.config
 import os.path
+from distutils.dir_util import remove_tree
 import pwgen
 import re
 from datetime import datetime
 from django.conf.urls import patterns, url, include
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
+from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponseRedirect,HttpResponse
 from django.shortcuts import render
 from django.template import RequestContext
@@ -35,10 +37,19 @@ from kooplex.lib.sendemail import send_new_password
 from kooplex.lib.smartdocker import Docker
 from kooplex.lib.spawner import Spawner
 
+from kooplex.lib.ldap import Ldap
+import subprocess
+from distutils.dir_util import mkpath
+
 NOTEBOOK_DIR_NAME = 'notebooks'
 HUB_NOTEBOOKS_URL = '/hub/notebooks'
 
 from kooplex.lib.debug import *
+
+def mkdir(d, uid = 0, gid = 0, mode = 0b111101000):
+    mkpath(d)
+    os.chown(d, uid, gid)
+    os.chmod(d, mode)
 
 
 def notebooks(request, errors = []):
@@ -213,7 +224,6 @@ rm ~/$(basename $0)
         else:
 # Create a README file
             g.create_project_readme(p.id, "README.md", "* proba", "Created a default README")
-
         return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
     except Exception as e:
         return render(
@@ -249,6 +259,7 @@ def container_start(request):
     #    session = spawner.start_session(notebook_path, 'python3', project.path_with_namespace, notebook.name, is_forked, project.id, target_id)
     #else:
     #    session = spawner.start_session(notebook_path, 'python3', project.path_with_namespace, notebook.name, project_id=project.id)
+    # FIXME: python3 is hardcoded here
     session = spawner.start_session(notebook_path, 'python3', project.path_with_namespace, notebook.name,
                                     project_id=project.id)
     session.project_id = project.id
@@ -332,6 +343,7 @@ def notebooks_publishform(request):
     )
 
 def notebooks_publish(request):
+    """ Converts ipynb to html in the opened container, creates variable in gitlab, commits file in gitlab"""
     assert isinstance(request, HttpRequest)
     if 'cancel' in request.POST.keys():
         return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
@@ -610,11 +622,6 @@ def usermanagementForm(request):
     )
 
 
-from kooplex.lib.ldap import Ldap
-import subprocess
-from distutils.dir_util import mkpath
-
-
 #FIXME: put functionality in HubUser model
 class myuser:
 
@@ -660,6 +667,7 @@ class myuser:
             dj_user = l.add_user(dj_user) # FIXME:
         except Exception as e:
             ooops.append("ldap: %s" % e)
+
 
         try:
             gad = GitlabAdmin()
@@ -811,6 +819,7 @@ def usermanagement2(request):
             })
         )
 
+# AUTOCOMPLETE https://djangopackages.org/grids/g/auto-complete/
 def project_membersForm(request):
     me = HubUser.objects.get(username = request.user.username)
     project = Project.objects.get(id = request.GET['project_id'])
@@ -871,6 +880,7 @@ def project_members_modify(request):
                 if userp:
                      userp.delete()
                 OCHelper(creator_user, project).unshare(hubuser)
+#TODO shall we remove the user's git dir???
         except Exception as e:
             ooops.append(str(e))
     if len(ooops):
@@ -942,6 +952,13 @@ def project_settings(request):
         message_json = g.delete_project(project_id)
         if message_json:
             project.delete()
+        d = Docker()
+        d.remove_volume(project.share_volume_)
+        remove_tree(project.sharedir_)
+        for member in UserProjectBinding.objects.filter(project = project):
+            d.remove_volume(project.git_volume, member.hubuser)
+            remove_tree(project.gitdir, member.hubuser)
+
     elif button == 'makepublic':
         g = Gitlab(request)
         level='public'

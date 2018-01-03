@@ -1,4 +1,4 @@
-﻿import sys, os
+import sys, os
 import getopt
 import json
 import string
@@ -95,6 +95,7 @@ class Spawner(RestClient):
         binds = {}
         svc = 'notebook'
         notebook_path = os.path.join(self.srv_path, svc)
+#TODO: config stuff be in a volume
         binds[os.path.join(notebook_path, 'init')] = {'bind': '/init', 'mode': 'rw'}
         binds[os.path.join(notebook_path, 'etc/hosts')] = {'bind': '/etc/hosts', 'mode': 'ro'}
         binds[os.path.join(notebook_path, 'etc/ldap/ldap.conf')] = {'bind': '/etc/ldap/ldap.conf', 'mode': 'rw'}
@@ -108,18 +109,12 @@ class Spawner(RestClient):
         projectname = self.project.path_with_namespace.replace('/', '_')
         home_host = os.path.join(self.srv_path, 'home', self.username)
         home_container = os.path.join('/home', self.username)
-#DEPRECATED in favor of davfs
-#        oc_host = os.path.join(self.srv_path, '_oc', self.username)
-#        oc_container = os.path.join('/home', self.username, 'oc')
-        git_host = os.path.join(self.srv_path, '_git', self.username, projectname)
-        git_container = os.path.join('/home', self.username, 'git')
-        share_host = os.path.join(self.srv_path, '_share', projectname)
-        share_container = os.path.join('/home', self.username, 'share')
+# handle volumes containing user data
+        prefix = get_settings('prefix', 'name')
+        binds['%s-home' % prefix ] = { 'bind': '/mnt/.volumes/home', 'mode': 'rw' }
+        binds['%s-git' % prefix ] = { 'bind': '/mnt/.volumes/git', 'mode': 'rw' }
+        binds['%s-share' % prefix ] = { 'bind': '/mnt/.volumes/share', 'mode': 'rw' }
 
-        binds[home_host] = {'bind': home_container, 'mode': 'rw'}
-#        binds[oc_host] = {'bind': oc_container, 'mode': 'rw'}  #DEPRECATED in favor of davfs
-        binds[git_host] = {'bind': git_container, 'mode': 'rw'}
-        binds[share_host] = {'bind': share_container, 'mode': 'rw'}
 
         # dynamically added data sources
         dockerclient = self.make_docker_client()
@@ -220,6 +215,7 @@ class Spawner(RestClient):
                 'PR_ID': self.project.id,
                 'PR_NAME': self.project.groupname_,
                 'PR_FULLNAME': self.project.name,
+                'PR_PWN': projectname,
                 'PR_MEMBERS': ",".join(projectmembers),
                 'PR_URL': "ssh://git@%s/%s.git" % (get_settings('gitlab', 'ssh_host'), self.project.path_with_namespace),
                 'GID_OFFSET': G_OFFSET,
