@@ -874,11 +874,6 @@ def project_members_modify(request):
                     userp.set(project = project, hub_user = hubuser) 
                     userp.save()
                 OCHelper(creator_user, project).share(hubuser)
-#NOTE: offset is hardcoded here!
-                G_OFFSET = 20000
-                mkdir(project.gitdir(hubuser.username), hubuser.uid, G_OFFSET + project.id, 0b111100000)
-                d = Docker()
-                d.create_volume(project.gitdir(hubuser.username), project.git_volume(hubuser.username))
                 
             elif request.POST['button'] == 'Remove':
                 g.delete_project_members(project.id, gid)
@@ -958,12 +953,13 @@ def project_settings(request):
         message_json = g.delete_project(project_id)
         if message_json:
             project.delete()
-        d = Docker()
-        d.remove_volume(project.share_volume_)
-        remove_tree(project.sharedir_)
-        for member in UserProjectBinding.objects.filter(project = project):
-            d.remove_volume(project.git_volume, member.hubuser)
-            remove_tree(project.gitdir, member.hubuser)
+#        remove_tree(project.sharedir_)
+#TODO gitdir ??
+
+#TODO permanently delete????
+ 
+#        for member in UserProjectBinding.objects.filter(project = project):
+#            remove_tree(project.gitdir+"/.git", member.hubuser)
 
     elif button == 'makepublic':
         g = Gitlab(request)
