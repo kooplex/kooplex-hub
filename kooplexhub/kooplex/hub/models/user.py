@@ -50,14 +50,6 @@ class HubUser(User):
     def get_username(self):
         return self.username
 
-    @property
-    def file_netrc_(self):
-        return os.path.join(get_settings('users', 'srv_dir', None, ''), 'home', self.username, '.netrc' )
-
-    @property
-    def file_netrc_exists_(self):
-        return os.path.exists(self.file_netrc_)
-
     #def create(self, request):
     def save_MEGNEEEE(self, *args, **kwargs):
         from kooplex.lib.ldap import Ldap

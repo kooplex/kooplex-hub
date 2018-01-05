@@ -98,9 +98,7 @@ def notebooks(request, errors = []):
             'notebook_dir_name': NOTEBOOK_DIR_NAME,
             'notebook_images' : notebook_images,
             'errors' : errors,
-            #'oc_running': oc_running,
             'oc_running': False, #FIXME: to remove
-            'netrc_exists': hubuser.file_netrc_exists_,
             'bindings': shares,
             'shares_attached': shares_attached,
             'volumes': volumes,

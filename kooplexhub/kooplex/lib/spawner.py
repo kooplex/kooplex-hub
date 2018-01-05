@@ -95,16 +95,7 @@ class Spawner(RestClient):
         binds = {}
         svc = 'notebook'
         notebook_path = os.path.join(self.srv_path, svc)
-#TODO: config stuff be in a volume
-        binds[os.path.join(notebook_path, 'init')] = {'bind': '/init', 'mode': 'rw'}
-        binds[os.path.join(notebook_path, 'etc/hosts')] = {'bind': '/etc/hosts', 'mode': 'ro'}
-        binds[os.path.join(notebook_path, 'etc/ldap/ldap.conf')] = {'bind': '/etc/ldap/ldap.conf', 'mode': 'rw'}
-        binds[os.path.join(notebook_path, 'etc/nslcd.conf')] = {'bind': '/etc/nslcd.conf', 'mode': 'rw'}
-        binds[os.path.join(notebook_path, 'etc/nsswitch.conf')] = {'bind': '/etc/nsswitch.conf', 'mode': 'rw'}
-        # TODO: remove hardcoding!
-        binds[os.path.join(notebook_path, 'etc/jupyter_notebook_config.py')] = {
-            'bind': '/etc/jupyter_notebook_config.py', 'mode': 'rw'}
-        binds['/etc/localtime'] = {'bind': '/etc/localtime', 'mode': 'ro'}
+
         # constant definitions: home (for user), oc (for user), git (for user / project), share (common / project)
         projectname = self.project.path_with_namespace.replace('/', '_')
         home_host = os.path.join(self.srv_path, 'home', self.username)
