@@ -26,7 +26,6 @@
   </nav>
 </div>                  <!-- row -->
 
-{% include 'app/notebooks-owncloud.html' %}
 {% include 'app/notebooks-new-partial.html' %}
 {% include 'app/about.html' %}
 
@@ -44,7 +43,7 @@
         {% for item in shared_with_me_projects %}
         {% if item.id in running %}
           <div class="row">
-            {% include 'app/notebooks-project-partial.html' %}
+            {% include 'app/notebooks-project-partial.html' with publicvar=False %}
           </div>
         {% endif %}
         {% endfor %}
@@ -52,7 +51,7 @@
         {% for item in shared_with_me_projects %}
         {% if item.id not in running %}
           <div class="row">
-            {% include 'app/notebooks-project-partial.html' %}
+            {% include 'app/notebooks-project-partial.html' with publicvar=False %}
           </div>
         {% endif %}
         {% endfor %}
