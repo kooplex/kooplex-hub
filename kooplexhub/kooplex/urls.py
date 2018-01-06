@@ -129,6 +129,9 @@ urlpatterns = [
             'extra_context':
             {
                 'next_page': '/hub/notebooks',
+                'year' : 2018,
+                'hubuser' : None,
+                'title' : 'Login',
             }
         },
         name='login'),
