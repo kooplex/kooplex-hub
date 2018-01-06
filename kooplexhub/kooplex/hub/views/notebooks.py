@@ -1,3 +1,7 @@
+import logging
+logger = logging.getLogger(__name__)
+debug_logger = logging.getLogger('debug_logger')
+info_logger = logging.getLogger('info_logger')
 import git
 import json
 import logging
@@ -29,7 +33,7 @@ from kooplex.lib.gitlab import Gitlab
 from kooplex.lib.gitlabadmin import GitlabAdmin
 from kooplex.lib.jupyter import Jupyter
 from kooplex.lib.libbase import LibBase
-from kooplex.lib.libbase import get_settings
+from kooplex.lib.libbase import get_settings, , mkdir
 from kooplex.lib.ochelper import OCHelper
 from kooplex.lib.repo import Repo  # GONNA BE OBSOLETED
 from kooplex.lib.repository import repository
@@ -39,17 +43,11 @@ from kooplex.lib.spawner import Spawner
 
 from kooplex.lib.ldap import Ldap
 import subprocess
-from distutils.dir_util import mkpath
 
 NOTEBOOK_DIR_NAME = 'notebooks'
 HUB_NOTEBOOKS_URL = '/hub/notebooks'
 
 from kooplex.lib.debug import *
-
-def mkdir(d, uid = 0, gid = 0, mode = 0b111101000):
-    mkpath(d)
-    os.chown(d, uid, gid)
-    os.chmod(d, mode)
 
 
 def notebooks(request, errors = []):
@@ -103,6 +101,7 @@ def notebooks(request, errors = []):
             'shares_attached': shares_attached,
             'volumes': volumes,
             'volumes_attached': volumes_attached,
+            'year' : 2018,
         })
     )
 
@@ -128,6 +127,7 @@ def project_new(request):
     template = request.POST['project_template']
     # parse shares and volumes
     mp, mprw, vols = parse_shares_and_volumes(request)
+    debug_logger.debug("Create project %s - init"% project_name)
 
     ooops = []
 #TODO: nicer regexp
@@ -155,6 +155,7 @@ def project_new(request):
     elif template.startswith('image='):
         project_image_name = template.split('=')[-1]
         cloned_project = False
+    debug_logger.debug("Create project %s - GitLab"% project_name)
 
     g = Gitlab(request)
     print_debug("Creating new project, add variables")
@@ -164,6 +165,8 @@ def project_new(request):
             raise Exception(message_json)
 #FIXME: check failure
         res = g.get_project_by_name(project_name)
+
+        debug_logger.debug("Create project %s - Save to Hubdb"% project_name)
         p = Project()
         p.init(res[0])
         p.image = project_image_name
@@ -645,10 +648,6 @@ class myuser:
             self._data[k] = v
 
     def create(self):
-        def mkdir(d, uid = 0, gid = 0, mode = 0b111101000):
-            mkpath(d)
-            os.chown(d, uid, gid)
-            os.chmod(d, mode) 
 
         ooops = []
         dj_user = HubUser(

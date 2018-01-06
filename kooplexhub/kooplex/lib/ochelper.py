@@ -1,17 +1,18 @@
-﻿'''
+'''
 @author: Jozsef Steger
 @created: 05. 07. 2017
 @summary: in favour of a user run a filesystem synchronization script in a separate container
 '''
 
 import docker
+from django.conf import settings as Setting
 
 from kooplex.lib.libbase import get_settings
 from kooplex.lib.smartdocker import Docker
 
 class OCHelper:
     container_allusers = get_settings('impersonator', 'container_name')
-    url_base = "http://kooplex-nginx/ownCloud"  # FIXME: IPAddress hardcoded
+    url_base = "http://%s-nginx/ownCloud"%Setting.get('prefix')  
 
     def __init__(self, user, project):
         self.username = user.username

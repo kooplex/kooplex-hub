@@ -4,6 +4,12 @@ import json
 import requests
 from django.conf import settings
 from kooplex.lib.debug import *
+from distutils.dir_util import mkpath
+
+def mkdir(d, uid = 0, gid = 0, mode = 0b111101000):
+    mkpath(d)
+    os.chown(d, uid, gid)
+    os.chmod(d, mode)
 
 
 def get_settings(block, value, override=None, default=None):
