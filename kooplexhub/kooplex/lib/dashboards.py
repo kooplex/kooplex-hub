@@ -13,6 +13,8 @@ from kooplex.lib.repo import Repo
 from kooplex.lib.smartdocker import Docker
 from kooplex.hub.models.dashboard_server import Dashboard_server
 from kooplex.hub.models.project import Project
+from django.conf import settings
+Setting=settings.KOOPLEX
 
 from kooplex.lib.debug import *
 from html.parser import HTMLParser
@@ -91,7 +93,7 @@ def list_dashboards(self,request):
   gadmin = GitlabAdmin(request)
   projects = gadmin.get_all_projects()
   docli = Docker()
-  prefix = get_settings('prefix', 'name')
+  prefix = Setting['prefix']
   outer_host = get_settings('hub', 'outer_host')
   proto = get_settings('hub', 'protocol')
   list_of_dashboards = []

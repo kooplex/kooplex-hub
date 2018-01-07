@@ -13,6 +13,8 @@ from io import BytesIO
 from distutils.dir_util import mkpath
 
 from kooplex.lib.libbase import LibBase, get_settings
+from django.conf import settings
+Setting=settings.KOOPLEX
 from kooplex.lib.restclient import RestClient
 from kooplex.lib.smartdocker import Docker
 from kooplex.lib.proxy import Proxy
@@ -33,7 +35,7 @@ class Spawner(RestClient):
         self.project = project
         self.project_owner = project.owner_username
         self.project_name = project.name
-        prefix = get_settings('prefix', 'name')
+        prefix = Setting['prefix']
         self.container_name = get_settings('spawner', 'notebook_container_name', container_name, prefix+'-notebook-{$username}')
         self.image = get_settings('spawner', 'notebook_image', image, prefix + '-notebook')
         self.notebook_path = get_settings('spawner', 'notebook_proxy_path', None, '{$host_port}/notebook/{$username}/{$notebook.id}')
@@ -101,7 +103,7 @@ class Spawner(RestClient):
         home_host = os.path.join(self.srv_path, 'home', self.username)
         home_container = os.path.join('/home', self.username)
 # handle volumes containing user data
-        prefix = get_settings('prefix', 'name')
+        prefix = Setting['prefix']
         binds['%s-home' % prefix ] = { 'bind': '/mnt/.volumes/home', 'mode': 'rw' }
         binds['%s-git' % prefix ] = { 'bind': '/mnt/.volumes/git', 'mode': 'rw' }
         binds['%s-share' % prefix ] = { 'bind': '/mnt/.volumes/share', 'mode': 'rw' }
@@ -337,7 +339,7 @@ class ReportSpawner(RestClient):
         # self.project_id = project_id
         self.project = project
         self.project_name = project.name
-        prefix = get_settings('prefix', 'name')
+        prefix = Setting['prefix']
         #self.container_name = get_settings('spawner', 'notebook_container_name', container_name,
         #                                   prefix + '-notebook-{$reportname}-{$randomint}-{$author_name}')
         self.container_name = prefix + '-notebook-{$reportname}-{$randomint}-{$author_name}'

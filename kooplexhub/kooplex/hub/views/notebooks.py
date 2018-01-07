@@ -34,6 +34,9 @@ from kooplex.lib.gitlabadmin import GitlabAdmin
 from kooplex.lib.jupyter import Jupyter
 from kooplex.lib.libbase import LibBase
 from kooplex.lib.libbase import get_settings,  mkdir
+from django.conf import settings
+Setting=settings.KOOPLEX
+
 from kooplex.lib.ochelper import OCHelper
 from kooplex.lib.repo import Repo  # GONNA BE OBSOLETED
 from kooplex.lib.repository import repository
@@ -362,7 +365,7 @@ def notebooks_publish(request):
 
     ipynb_file = request.POST['ipynb_file']
     other_files = request.POST.getlist('other_files')
-    prefix = get_settings('prefix', 'name', None, '')
+    prefix = Setting['prefix']
     image_type = project.image.split(prefix + "-notebook-")[1]
     password = request.POST['password']
 
@@ -423,7 +426,7 @@ def Refresh_database(request):
         i = i.from_docker_dict(image)
         i.save()
         dashboards_prefix = get_settings('dashboards', 'prefix', None, '')
-        notebook_prefix = get_settings('prefix', 'name', None, '')
+        notebook_prefix = Setting['prefix']
         dashboard_container_name = dashboards_prefix + "_dashboards-" + i.name.split(notebook_prefix + "-notebook-")[1]
         docker_container = d.get_container(dashboard_container_name, original=True)
         #container, docker_container = d.get_container(dashboard_container_name)

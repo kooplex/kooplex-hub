@@ -2,6 +2,8 @@ from docker.client import Client
 from kooplex.lib import LibBase, get_settings
 from kooplex.hub.models.container import Container
 from kooplex.lib.debug import *
+from django.conf import settings
+Setting=settings.KOOPLEX
 
 class Docker(LibBase):
 
@@ -70,7 +72,7 @@ class Docker(LibBase):
             return None
 
     def get_all_notebook_images(self):
-        prefix = get_settings('prefix', 'name')
+        prefix = Setting['prefix']
         imgs = self.get_images()
         notebook_images=[]
         for img in imgs:
@@ -83,7 +85,7 @@ class Docker(LibBase):
             return None
 
     def get_all_dashboard_containers(self):
-        prefix = get_settings('dashboards', 'prefix')
+        prefix = Setting['prefix']
         imgs = self.get_images()
         dashboard_containers=[]
         for img in imgs:
