@@ -124,7 +124,7 @@ def project_new(request):
     project_name = request.POST['project_name'].strip()
     description = request.POST['project_description'].strip()
     scope = request.POST['button']
-    template = request.POST['project_template']
+    template = request.POST.get('project_template',[])
     # parse shares and volumes
     mp, mprw, vols = parse_shares_and_volumes(request)
     debug_logger.debug("Create project %s - init"% project_name)
@@ -138,8 +138,9 @@ def project_new(request):
 #        ooops.append('In your project description use only Upper/lower case letters, hyphens, spaces and underscores.')
     if len(ooops):
         return notebooks(request, errors = ooops)
-
-    if template.startswith('clonable_project='):
+        
+    if template:
+      if template.startswith('clonable_project='):
         name, owner = template.split('=')[-1].split('@')
         project = Project.objects.get(name = name, owner_username = owner)
         project_image_name = project.image
@@ -152,7 +153,7 @@ def project_new(request):
             vols.append(vpb.volume)
         vols = list(set(vols))
         cloned_project = True
-    elif template.startswith('image='):
+      elif template.startswith('image='):
         project_image_name = template.split('=')[-1]
         cloned_project = False
     debug_logger.debug("Create project %s - GitLab"% project_name)
@@ -1027,7 +1028,7 @@ urlpatterns = [
 ###    url(r'^mergerequestlist', notebooks_mergerequestlist, name='notebooks-mergerequestlist'),
 ###    url(r'^acceptmergerequest', notebooks_acceptmergerequest, name='notebooks-acceptmergerequest'),
 ###    url(r'^fork$', project_fork, name='project-fork'),
-###    url(r'^refresh$', Refresh_database, name='refresh-db'),
+    url(r'^refresh$', Refresh_database, name='refresh-db'),
 
 
     url(r'^usermanagement$', usermanagementForm, name='usermanagement-form'),
