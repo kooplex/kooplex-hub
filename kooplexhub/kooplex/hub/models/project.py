@@ -103,13 +103,13 @@ class Project(models.Model, ModelBase):
 
     @property
     def git_volume_(self):
-        return prefix = Setting['prefix']+"-git-%s-%s"%(self.owner_username, self.path_with_namespace.replace('/', '_'))
+        return Setting['prefix']+"-git-%s-%s"%(self.owner_username, self.path_with_namespace.replace('/', '_'))
  
     def gitdir(self, username):
         return os.path.join("/home", self.gitwd, username, self.path_with_namespace.replace('/', '_'))
 
     def git_volume(self, username):
-        return prefix = Setting['prefix']+"-git-%s-%s"%(username, self.path_with_namespace.replace('/', '_'))
+        return Setting['prefix']+"-git-%s-%s"%(username, self.path_with_namespace.replace('/', '_'))
     
     @property
     def sharedir_(self):
@@ -117,7 +117,7 @@ class Project(models.Model, ModelBase):
 
     @property
     def share_volume_(self):
-        return prefix = Setting['prefix']+"-git-%s"%(self.path_with_namespace.replace('/', '_'))
+        returnSetting['prefix']+"-git-%s"%(self.path_with_namespace.replace('/', '_'))
 
 #TODO: do wee need these?
     def get_full_home(self):
