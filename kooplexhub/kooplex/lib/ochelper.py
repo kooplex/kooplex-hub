@@ -5,8 +5,8 @@
 '''
 
 import docker
-from django.conf import settings as Setting
-
+from django.conf import settings 
+Setting=settings.KOOPLEX
 from kooplex.lib.libbase import get_settings
 from kooplex.lib.smartdocker import Docker
 

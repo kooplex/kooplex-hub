@@ -33,7 +33,7 @@ from kooplex.lib.gitlab import Gitlab
 from kooplex.lib.gitlabadmin import GitlabAdmin
 from kooplex.lib.jupyter import Jupyter
 from kooplex.lib.libbase import LibBase
-from kooplex.lib.libbase import get_settings, , mkdir
+from kooplex.lib.libbase import get_settings,  mkdir
 from kooplex.lib.ochelper import OCHelper
 from kooplex.lib.repo import Repo  # GONNA BE OBSOLETED
 from kooplex.lib.repository import repository
