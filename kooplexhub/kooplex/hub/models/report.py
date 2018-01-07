@@ -84,9 +84,9 @@ class Report(models.Model, ModelBase):
     @property
     def target_(self):
         if self.type == 'html':
-            return os.path.join(get_settings('users', 'srv_dir', None, ''), self.wd, 'html', self.project.home, self.ts_)
+            return os.path.join(srv_dir, self.wd, 'html', self.project.home, self.ts_)
         elif self.type == 'dashboard':
-            return os.path.join(get_settings('users', 'srv_dir', None, ''), self.wd, self.dashboard_server.type, self.project.home, self.ts_)
+            return os.path.join(srv_dir, self.wd, self.dashboard_server.type, self.project.home, self.ts_)
 
     @property
     def entry_(self):

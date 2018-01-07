@@ -99,37 +99,32 @@ class Project(models.Model, ModelBase):
     #FIXME: rely on docker volume
     @property
     def gitdir_(self):
-        return os.path.join(get_settings('users', 'srv_dir'), self.gitwd, self.owner_username, self.path_with_namespace.replace('/', '_'))
+        return os.path.join("/home", self.gitwd, self.owner_username, self.path_with_namespace.replace('/', '_'))
 
     @property
     def git_volume_(self):
-        return get_settings('prefix', 'name')+"-git-%s-%s"%(self.owner_username, self.path_with_namespace.replace('/', '_'))
+        return prefix = Setting['prefix']+"-git-%s-%s"%(self.owner_username, self.path_with_namespace.replace('/', '_'))
  
     def gitdir(self, username):
-        return os.path.join(get_settings('users', 'srv_dir'), self.gitwd, username, self.path_with_namespace.replace('/', '_'))
+        return os.path.join("/home", self.gitwd, username, self.path_with_namespace.replace('/', '_'))
 
     def git_volume(self, username):
-        return get_settings('prefix', 'name')+"-git-%s-%s"%(username, self.path_with_namespace.replace('/', '_'))
+        return prefix = Setting['prefix']+"-git-%s-%s"%(username, self.path_with_namespace.replace('/', '_'))
     
     @property
     def sharedir_(self):
-        return os.path.join(get_settings('users', 'srv_dir'), self.sharewd, self.path_with_namespace.replace('/', '_'))
+        return os.path.join("/home", self.sharewd, self.path_with_namespace.replace('/', '_'))
 
     @property
     def share_volume_(self):
-        return get_settings('prefix', 'name')+"-git-%s"%(self.path_with_namespace.replace('/', '_'))
+        return prefix = Setting['prefix']+"-git-%s"%(self.path_with_namespace.replace('/', '_'))
 
 #TODO: do wee need these?
     def get_full_home(self):
-        srv_dir = get_settings('users', 'srv_dir')
-        user_home = get_settings('users', 'home_dir')
-        user_home = user_home.replace('{$username}', self.owner_username)
-        return os.path.join(srv_dir, user_home, self.home)
+        return os.path.join("/home", self.owner_username)
 
     def get_relative_home(self):
-        user_home = get_settings('users', 'home_dir')
-        user_home = user_home.replace('{$username}', self.owner_username)
-        return os.path.join(user_home, self.home)
+        return os.path.join("/home", self.owner_username)
 
     @property
     def members_(self):

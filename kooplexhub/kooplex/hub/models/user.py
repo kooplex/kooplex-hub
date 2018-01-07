@@ -96,17 +96,15 @@ class HubUser(User):
                 gg = gad.get_user(self.username)[0]
                 self.gitlab_id = gg['id']
 
-                srv_dir = get_settings('users', 'srv_dir', None, '')
-                home_dir = get_settings('users', 'home_dir', None, '')
-                home_dir = os.path.join(srv_dir, home_dir.replace('{$username}', self.username))
+                home_dir = os.path.join("/home", self.username))
                 ssh_dir = os.path.join(home_dir, '.ssh')
-                oc_dir = os.path.join(srv_dir, '_oc', self.username)
-                git_dir = os.path.join(srv_dir, '_git', self.username)
+                #oc_dir = os.path.join(srv_dir, '_oc', self.username)
+                git_dir = os.path.join('/_git', self.username)
                 davfs_dir = os.path.join(home_dir, '.davfs2')
 
                 mkdir(home_dir, uid=self.uid, gid=self.gid)
                 mkdir(ssh_dir, uid=self.uid, gid=self.gid, mode=0b111000000)
-                mkdir(oc_dir, uid=self.uid, gid=self.gid, mode=0b111000000)
+                #mkdir(oc_dir, uid=self.uid, gid=self.gid, mode=0b111000000)
                 mkdir(git_dir, uid=self.uid, gid=self.gid)
                 mkdir(davfs_dir, uid=self.uid, gid=self.gid, mode=0b111000000)
 
@@ -166,9 +164,7 @@ class HubUser(User):
         l = Ldap()
         l.changepassword(self, 'doesntmatter', pw, validate_old_password = False)
 
-        srv_dir = get_settings('users', 'srv_dir', None, '')
-        home_dir = get_settings('users', 'home_dir', None, '')
-        home_dir = os.path.join(srv_dir, home_dir.replace('{$username}', self.username))
+        home_dir = os.path.join("/home", self.username))
         davfs_dir = os.path.join(home_dir, '.davfs2')
         davsecret_fn = os.path.join(davfs_dir, "secrets")
         with open(davsecret_fn, "w") as f:

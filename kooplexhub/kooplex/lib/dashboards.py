@@ -29,7 +29,7 @@ def deploy(project_id, file, type, other_files=[]):
     from os import mkdir
 
 
-    srv_dir = get_settings('users', 'srv_dir')
+    srv_dir = "/"
     project = Project.objects.get(id=project_id)
     D = Dashboard()
     g = Gitlab()
@@ -165,7 +165,6 @@ def deploy_data(self, imagename, project, notebook_path_dir, file, extradir=''):
 
     print_debug("",DEBUG_LOCAL)
     sroot = get_settings('dashboards', 'base_dir', None, '')
-    srv_dir = get_settings('users', 'srv_dir')
     g = Gitlab()
     creator = g.get_user_by_id(project['creator_id'])
     creator_name = creator['username']

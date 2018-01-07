@@ -96,9 +96,7 @@ def preset2(request):
         dj_user = HubUser.objects.get(username = username)
         l.changepassword(dj_user, 'doesntmatter', password1, validate_old_password = False)
 
-        srv_dir = get_settings('users', 'srv_dir', None, '')
-        home_dir = get_settings('users', 'home_dir', None, '')
-        home_dir = os.path.join(srv_dir, home_dir.replace('{$username}', username))
+        home_dir = os.path.join("/home", username))
         davfs_dir = os.path.join(home_dir, '.davfs2')
 
         ## preapare davfs secret file

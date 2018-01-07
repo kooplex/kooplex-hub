@@ -218,10 +218,9 @@ git push origin master
 rm -rf ${TMPFOLDER}
 rm ~/$(basename $0)
             """ % { 'url': ancientprojecturl, 'message': commitmsg }
-            srv_dir = get_settings('users', 'srv_dir', None, '')
-            home_dir = get_settings('users', 'home_dir', None, '').replace('{$username}', p.owner_username)
+            home_dir = os.path.join("/home", p.owner_username)
             fn_basename = ".gitclone-%s.sh" % p.name
-            fn_script = os.path.join(srv_dir, home_dir, fn_basename)
+            fn_script = os.path.join(home_dir, fn_basename)
             open(fn_script, 'w').write(script)
             os.chmod(fn_script, 0b111000000)
             hubuser = HubUser.objects.get(username = p.owner_username)
@@ -681,18 +680,16 @@ class myuser:
             ooops.append("gitcreate2: %s" % e)
 
 
-        srv_dir = get_settings('users', 'srv_dir', None, '')
-        home_dir = get_settings('users', 'home_dir', None, '')
-        home_dir = os.path.join(srv_dir, home_dir.replace('{$username}', self['username']))
+        home_dir = os.path.join("/home", self['username']))
         ssh_dir = os.path.join(home_dir, '.ssh')
         ###################oc_dir = os.path.join(srv_dir, '_oc', self['username'])
-        oc_dir = os.path.join(home_dir, 'oc')
-        git_dir = os.path.join(srv_dir, '_git', self['username'])
+        #oc_dir = os.path.join(home_dir, 'oc')
+        git_dir = os.path.join('/_git', self['username'])
         davfs_dir = os.path.join(home_dir, '.davfs2')
 
         mkdir(home_dir, uid = dj_user.uid, gid = dj_user.gid)
         mkdir(ssh_dir, uid = dj_user.uid, gid = dj_user.gid, mode = 0b111000000)
-        mkdir(oc_dir, uid = dj_user.uid, gid = dj_user.gid, mode = 0b111000000)
+        #mkdir(oc_dir, uid = dj_user.uid, gid = dj_user.gid, mode = 0b111000000)
         mkdir(git_dir, uid = dj_user.uid, gid = dj_user.gid)
         mkdir(davfs_dir, uid = dj_user.uid, gid = dj_user.gid, mode=0b111000000)
 

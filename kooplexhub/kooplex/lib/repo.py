@@ -14,7 +14,6 @@ class Repo(LibBase):
     def __init__(self, username, name, proto='ssh'):
 
         self.user_home_dir = get_settings('users', 'home_dir')
-        self.srv_dir = get_settings('users', 'srv_dir')
         self.base_url = get_settings('gitlab', 'base_url')
         self.ssh_cmd = get_settings('gitlab', 'ssh_cmd', None, 'ssh')
         self.ssh_host = get_settings('gitlab', 'ssh_host')

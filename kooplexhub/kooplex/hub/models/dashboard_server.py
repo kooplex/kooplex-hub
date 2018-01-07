@@ -55,7 +55,7 @@ class Dashboard_server(models.Model, ModelBase):
                 break
         self.state = dict['State']  # created|restarting|running|paused|exited|dead
         dashboards_prefix = get_settings('dashboards', 'prefix', None, '')
-        notebook_prefix = get_settings('prefix', 'name', None, '')
+        notebook_prefix = Setting['prefix']
         self.type = self.image.split("%s-%s-"%(notebook_prefix, dashboards_prefix))[1]
         url_prefix = get_settings('dashboards', 'url_prefix', None, '')
         url_prefix = url_prefix.replace('{$dashboard_port}', str(self.ports))
@@ -73,6 +73,5 @@ class Dashboard_server(models.Model, ModelBase):
 
 
     def get_full_dir_to(self):
-        srv_dir = get_settings('users', 'srv_dir')
         prefix = get_settings('dashboards', 'prefix', None, '')
-        return os.path.join(srv_dir, prefix, self.dir)
+        return os.path.join("/reports", prefix, self.dir)
