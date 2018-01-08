@@ -70,7 +70,7 @@ def notebooks(request, errors = []):
 
     projects_all = Project.objects.all()
     projects_sharedwithme = sorted([up.project for up in UserProjectBinding.objects.filter(hub_user=hubuser)])
-    projects_public = sorted(Project.objects.filter(visibility = "public").exclude(owner_username = user.username))
+    projects_public = sorted(Project.objects.filter(visibility = "public").exclude(owner_username = user.username)
 
     notebook_images = [ image.name for image in DockerImage.objects.all() ]
 

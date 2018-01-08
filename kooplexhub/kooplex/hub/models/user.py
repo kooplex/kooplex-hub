@@ -96,7 +96,7 @@ class HubUser(User):
                 gg = gad.get_user(self.username)[0]
                 self.gitlab_id = gg['id']
 
-                home_dir = os.path.join(get_settings('volumes', 'home'), self.username))
+                home_dir = os.path.join(get_settings('volumes', 'home'), self.username)
                 ssh_dir = os.path.join(home_dir, '.ssh')
                 #oc_dir = os.path.join(srv_dir, '_oc', self.username)
                 git_dir = os.path.join(get_settings('volumes', 'git'), self.username)
@@ -164,7 +164,7 @@ class HubUser(User):
         l = Ldap()
         l.changepassword(self, 'doesntmatter', pw, validate_old_password = False)
 
-        home_dir = os.path.join(get_settings('volume', "home"), self.username))
+        home_dir = os.path.join(get_settings('volume', "home"), self.username)
         davfs_dir = os.path.join(home_dir, '.davfs2')
         davsecret_fn = os.path.join(davfs_dir, "secrets")
         with open(davsecret_fn, "w") as f:
