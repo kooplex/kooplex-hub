@@ -34,10 +34,7 @@ class Project(models.Model, ModelBase):
     environment = models.TextField(null=True)
     binds = models.TextField(null=True)
 
-    mp_git = '/git'
-#FIXME: not necessaryif if docker volume is used
-    gitwd = '_git'
-    sharewd = '_share'
+    gitwd = get_settings('volumes', 'git')
 
     def __str__(self):
         return "%s@%s" % (self.name, self.owner_username)
@@ -93,43 +90,14 @@ class Project(models.Model, ModelBase):
         return os.path.join(self.path_with_namespace.replace('/', '_'))
 
     @property
-    def home_(self):
-        return os.path.join(self.mp_git, self.owner_name, self.path_with_namespace.replace('/', '_'))
-
-    #FIXME: rely on docker volume
-    @property
     def gitdir_(self):
-        return os.path.join("/home", self.gitwd, self.owner_username, self.path_with_namespace.replace('/', '_'))
-
-    @property
-    def git_volume_(self):
-        return Setting['prefix']+"-git-%s-%s"%(self.owner_username, self.path_with_namespace.replace('/', '_'))
- 
+        return os.path.join(self.gitwd, self.owner_username, self.path_with_namespace.replace('/', '_'))
     def gitdir(self, username):
-        return os.path.join("/home", self.gitwd, username, self.path_with_namespace.replace('/', '_'))
-
-    def git_volume(self, username):
-        return Setting['prefix']+"-git-%s-%s"%(username, self.path_with_namespace.replace('/', '_'))
-    
-    @property
-    def sharedir_(self):
-        return os.path.join("/home", self.sharewd, self.path_with_namespace.replace('/', '_'))
-
-    @property
-    def share_volume_(self):
-        returnSetting['prefix']+"-git-%s"%(self.path_with_namespace.replace('/', '_'))
-
-#TODO: do wee need these?
-    def get_full_home(self):
-        return os.path.join("/home", self.owner_username)
-
-    def get_relative_home(self):
-        return os.path.join("/home", self.owner_username)
+        return os.path.join(self.gitwd, username, self.path_with_namespace.replace('/', '_'))
 
     @property
     def members_(self):
-        return UserProjectBinding.objects.get(project=self)
-
+        return UserProjectBinding.objects.get(project = self)
 
     def get_binds(self):
         return self.load_json(self.binds)

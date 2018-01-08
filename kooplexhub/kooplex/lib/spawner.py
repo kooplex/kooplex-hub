@@ -43,7 +43,7 @@ class Spawner(RestClient):
         self.ip_pool = get_settings('spawner', 'notebook_ip_pool', None, ['172.18.20.1', '172.18.20.255'])
         self.port = get_settings('spawner', 'notebook_port', None, 8000)
 
-        self.srv_path = get_settings('spawner', 'srv_path', None, '/srv/' + prefix)
+###        self.srv_path = get_settings('spawner', 'srv_path', None, '/srv/' + prefix)
         self.dashboards_url = get_settings('dashboards', 'base_url','')
 
         self.docli = Docker()         #self.make_docker_client()
@@ -95,13 +95,8 @@ class Spawner(RestClient):
 
     def define_binds(self):
         binds = {}
-        svc = 'notebook'
-        notebook_path = os.path.join(self.srv_path, svc)
-
         # constant definitions: home (for user), oc (for user), git (for user / project), share (common / project)
         projectname = self.project.path_with_namespace.replace('/', '_')
-        home_host = os.path.join(self.srv_path, 'home', self.username)
-        home_container = os.path.join('/home', self.username)
 # handle volumes containing user data
         prefix = Setting['prefix']
         binds['%s-home' % prefix ] = { 'bind': '/mnt/.volumes/home', 'mode': 'rw' }

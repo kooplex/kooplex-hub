@@ -48,7 +48,7 @@ def change_password_form_ldap(request):
 
 #FIXME: dirty
         dj_user = HubUser.objects.get(username = request.user.username,)
-        home_dir = os.path.join("/home", request.user.username)
+        home_dir = os.path.join(get_settings('volumes', 'home'), request.user.username)
         davfs_dir = os.path.join(home_dir, '.davfs2')
         mkdir(davfs_dir, uid=dj_user.uid, gid=dj_user.gid, mode=0b111000000)
         davsecret_fn = os.path.join(davfs_dir, "secrets")

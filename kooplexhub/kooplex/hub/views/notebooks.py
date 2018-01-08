@@ -218,7 +218,7 @@ git push origin master
 rm -rf ${TMPFOLDER}
 rm ~/$(basename $0)
             """ % { 'url': ancientprojecturl, 'message': commitmsg }
-            home_dir = os.path.join("/home", p.owner_username)
+            home_dir = os.path.join(get_settings('volumes', 'home'), p.owner_username)
             fn_basename = ".gitclone-%s.sh" % p.name
             fn_script = os.path.join(home_dir, fn_basename)
             open(fn_script, 'w').write(script)
@@ -680,11 +680,11 @@ class myuser:
             ooops.append("gitcreate2: %s" % e)
 
 
-        home_dir = os.path.join("/home", self['username']))
+        home_dir = os.path.join(get_settings('volumes', 'home'), self['username']))
         ssh_dir = os.path.join(home_dir, '.ssh')
         ###################oc_dir = os.path.join(srv_dir, '_oc', self['username'])
         #oc_dir = os.path.join(home_dir, 'oc')
-        git_dir = os.path.join('/_git', self['username'])
+        git_dir = os.path.join(get_settings('volumes', 'git'), self['username'])
         davfs_dir = os.path.join(home_dir, '.davfs2')
 
         mkdir(home_dir, uid = dj_user.uid, gid = dj_user.gid)
