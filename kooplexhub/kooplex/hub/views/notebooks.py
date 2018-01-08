@@ -683,17 +683,18 @@ class myuser:
         home_dir = os.path.join(get_settings('volumes', 'home'), self['username'])
         ssh_dir = os.path.join(home_dir, '.ssh')
         ###################oc_dir = os.path.join(srv_dir, '_oc', self['username'])
-        #oc_dir = os.path.join(home_dir, 'oc')
+        oc_dir = os.path.join(home_dir, 'oc')
         git_dir = os.path.join(get_settings('volumes', 'git'), self['username'])
         davfs_dir = os.path.join(home_dir, '.davfs2')
 
         mkdir(home_dir, uid = dj_user.uid, gid = dj_user.gid)
         mkdir(ssh_dir, uid = dj_user.uid, gid = dj_user.gid, mode = 0b111000000)
-        #mkdir(oc_dir, uid = dj_user.uid, gid = dj_user.gid, mode = 0b111000000)
+        mkdir(oc_dir, uid = dj_user.uid, gid = dj_user.gid, mode = 0b111000000)
         mkdir(git_dir, uid = dj_user.uid, gid = dj_user.gid)
         mkdir(davfs_dir, uid = dj_user.uid, gid = dj_user.gid, mode=0b111000000)
 
-
+        open(os.path.join(oc_dir, ".notmounted"), "w").close()
+        
         ## prepare .gitconfig
         fn_gitconfig = os.path.join(home_dir, '.gitignore')
         with open(fn_gitconfig, 'w') as f:
