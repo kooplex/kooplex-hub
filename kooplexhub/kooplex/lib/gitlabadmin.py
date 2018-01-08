@@ -51,7 +51,7 @@ class GitlabAdmin(Gitlab):
         # TODO: create external user in gitlab via REST API and set
         # identity to point to LDAP
 #FIXME: LDAPORG HARDCODED
-        url = self.api_version + "/users?name='%(first_name)s %(last_name)s'&username=%(username)s&email=%(email)s&password=%(password)s&confirm=false" % (user._data)
+        url = self.api_version + "/users?name='%(firstname)s %(lastname)s'&username=%(username)s&email=%(email)s&password=%(password)s&confirm=false" % (user._data)
 #&extern_uid='uid=%(username)s,ou=users,dc=novo1,dc=complex,dc=elte,dc=hu'
         #url += "&confirmed_at=%s" % (strdatetime.time(1))
         res = self.http_post(url)
