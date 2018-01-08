@@ -693,8 +693,6 @@ class myuser:
         mkdir(git_dir, uid = dj_user.uid, gid = dj_user.gid)
         mkdir(davfs_dir, uid = dj_user.uid, gid = dj_user.gid, mode=0b111000000)
 
-        ## touch a file to show whether oc is mounted, used by impersonator
-        open(os.path.join(oc_dir, ".notmounted"), "w").close()
 
         ## prepare .gitconfig
         fn_gitconfig = os.path.join(home_dir, '.gitignore')
