@@ -70,7 +70,7 @@ def notebooks(request, errors = []):
 
     projects_all = Project.objects.all()
     projects_sharedwithme = sorted([up.project for up in UserProjectBinding.objects.filter(hub_user=hubuser)])
-    projects_public = sorted(Project.objects.filter(visibility = "public").exclude(owner_username = user.username)
+    projects_public = sorted(Project.objects.filter(visibility = "public").exclude(owner_username = user.username))
 
     notebook_images = [ image.name for image in DockerImage.objects.all() ]
 
@@ -680,7 +680,7 @@ class myuser:
             ooops.append("gitcreate2: %s" % e)
 
 
-        home_dir = os.path.join(get_settings('volumes', 'home'), self['username']))
+        home_dir = os.path.join(get_settings('volumes', 'home'), self['username'])
         ssh_dir = os.path.join(home_dir, '.ssh')
         ###################oc_dir = os.path.join(srv_dir, '_oc', self['username'])
         #oc_dir = os.path.join(home_dir, 'oc')
