@@ -62,7 +62,7 @@ class GitlabAdmin(Gitlab):
 
     def upload_userkey(self, user, key):
         print_debug("",DEBUG_LOCAL)
-        resp = self.get_user(user.['username'])[0]
+        resp = self.get_user(user['username'])[0]
         data = urlencode( { 'key': key.strip() } )
         url = self.api_version + "/users/%d/keys?title=gitlabkey" % (resp['id'])
         res = self.http_post( url, data = data )
