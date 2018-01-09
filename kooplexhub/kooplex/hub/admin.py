@@ -34,7 +34,7 @@ class DockerImageAdmin(admin.ModelAdmin):
 
 @admin.register(Dashboard_server)
 class Dashboard_serverAdmin(admin.ModelAdmin):
-    list_display = ('name', 'docker_port')
+    list_display = ('name')
     pass
 
 @admin.register(Project)

@@ -6,7 +6,7 @@ from .project import HubUser
 
 from kooplex.lib.libbase import get_settings
 
-class MountPoints(models.Model):
+class MountPoint(models.Model):
     id = models.AutoField(primary_key = True)
     name = models.CharField(max_length = 200)
     type = models.CharField(max_length = 200)
@@ -50,7 +50,7 @@ class MountPoints(models.Model):
 
 class MountPointProjectBinding(models.Model):
     id = models.AutoField(primary_key = True)
-    mountpoint = models.ForeignKey(MountPoints, null = True)
+    mountpoint = models.ForeignKey(MountPoint, null = True)
     project = models.ForeignKey(Project, null = True)
     readwrite = models.BooleanField(default = False)
 
@@ -59,7 +59,7 @@ class MountPointProjectBinding(models.Model):
 
 class MountPointPrivilegeBinding(models.Model):
     id = models.AutoField(primary_key = True)
-    mountpoint = models.ForeignKey(MountPoints, null = True)
+    mountpoint = models.ForeignKey(MountPoint, null = True)
     user = models.ForeignKey(HubUser, null = True)
     accessrights = models.CharField(max_length = 16)
 
