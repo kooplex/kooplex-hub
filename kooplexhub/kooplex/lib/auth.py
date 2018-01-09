@@ -2,7 +2,7 @@
 from kooplex.lib.gitlab import Gitlab
 from kooplex.lib.gitlabadmin import GitlabAdmin
 from kooplex.lib.debug import *
-from kooplex.hub.models.user import HubUser
+from kooplex.hub.models.user import User as HubUser #FIXME:
 
 class Auth(object):
     """description of class"""

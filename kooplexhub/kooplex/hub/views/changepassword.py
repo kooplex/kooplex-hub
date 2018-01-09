@@ -12,7 +12,7 @@ from kooplex.lib.gitlabadmin import GitlabAdmin
 from kooplex.lib.debug import *
 from kooplex.lib.libbase import get_settings, mkdir
 import os
-from kooplex.hub.models.user import HubUser
+from kooplex.hub.models.user import User as HubUser #FIXME:
 
 HUB_URL = '/hub'
 

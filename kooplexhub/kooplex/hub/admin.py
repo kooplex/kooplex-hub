@@ -19,7 +19,7 @@ class ContainerAdmin(admin.ModelAdmin):
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'owner', 'path')
+    list_display = ('id', 'name', 'owner')
     pass
 
 @admin.register(Report)
@@ -39,7 +39,7 @@ class MountPointProjectBinding(admin.ModelAdmin):
 
 @admin.register(UserProjectBinding)
 class UserProjectBinding(admin.ModelAdmin):
-    list_display = ('id', 'project', 'hub_user')
+    list_display = ('id', 'project', 'user')
     pass
 
 @admin.register(MountPointPrivilegeBinding)

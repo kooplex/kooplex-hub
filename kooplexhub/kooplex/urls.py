@@ -32,7 +32,7 @@ admin.autodiscover()
 import os
 from kooplex.lib.libbase import get_settings
 
-from kooplex.hub.models.user import HubUser
+from kooplex.hub.models.user import User as HubUser #FIXME:
 import pwgen
 from kooplex.lib.sendemail import send_token
 from django.contrib.auth.models import User
