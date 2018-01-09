@@ -12,6 +12,7 @@ def mkdir(d, uid = 0, gid = 0, mode = 0b111101000):
     os.chmod(d, mode)
 
 
+#def get_settings(block: object, value: object, override: object = None, default: object = None) -> object:
 def get_settings(block, value, override=None, default=None):
     if override:
         return override

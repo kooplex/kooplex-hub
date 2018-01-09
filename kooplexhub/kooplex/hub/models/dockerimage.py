@@ -34,7 +34,7 @@ class DockerImage(models.Model, ModelBase):
             i = i.from_docker_dict(image)
             i.save()
             dashboards_prefix = get_settings('dashboards', 'prefix', None, '')
-            notebook_prefix = Setting['prefix']
+            notebook_prefix = get_settings('prefix', 'name')
             dashboard_container_name = "%s-%s-"%(notebook_prefix, dashboards_prefix) + \
                                         i.name.split(notebook_prefix + "-notebook-")[1]
             docker_container = d.get_container(dashboard_container_name, original=True)

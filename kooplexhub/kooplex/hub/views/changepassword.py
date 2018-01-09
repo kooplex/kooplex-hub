@@ -10,7 +10,7 @@ from django.shortcuts import render_to_response
 from django.core.exceptions import ValidationError
 from kooplex.lib.gitlabadmin import GitlabAdmin
 from kooplex.lib.debug import *
-from kooplex.lib.libbase import get_settings
+from kooplex.lib.libbase import get_settings, mkdir
 import os
 from kooplex.hub.models.user import HubUser
 

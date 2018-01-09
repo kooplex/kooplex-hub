@@ -91,7 +91,7 @@ def list_dashboards(self,request):
   gadmin = GitlabAdmin(request)
   projects = gadmin.get_all_projects()
   docli = Docker()
-  prefix = Setting['prefix']
+  prefix = get_settings('prefix', 'name')
   outer_host = get_settings('hub', 'outer_host')
   proto = get_settings('hub', 'protocol')
   list_of_dashboards = []

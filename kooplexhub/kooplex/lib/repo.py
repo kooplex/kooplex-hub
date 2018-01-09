@@ -13,7 +13,6 @@ class Repo(LibBase):
 
     def __init__(self, username, name, proto='ssh'):
 
-        self.user_home_dir = get_settings('users', 'home_dir')
         self.base_url = get_settings('gitlab', 'base_url')
         self.ssh_cmd = get_settings('gitlab', 'ssh_cmd', None, 'ssh')
         self.ssh_host = get_settings('gitlab', 'ssh_host')
@@ -37,12 +36,7 @@ class Repo(LibBase):
         return ssh
 
     def get_gitlab_key(self):
-        print_debug("")
-
-        home = self.user_home_dir.replace('{$username}', self.username)
-        key = os.path.join(self.srv_dir, home)
-        key = os.path.join(key, self.ssh_key)
-        return key
+        return os.path.join(get_settings('volumes','home'), self.username, self.ssh_key)
 
     def get_git_ssh_command(self):
         print_debug("")

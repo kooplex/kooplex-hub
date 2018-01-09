@@ -362,7 +362,7 @@ def notebooks_publish(request):
 
     ipynb_file = request.POST['ipynb_file']
     other_files = request.POST.getlist('other_files')
-    prefix = Setting['prefix']
+    prefix = get_settings('prefix', 'name')
     image_type = project.image.split(prefix + "-notebook-")[1]
     password = request.POST['password']
 
@@ -422,9 +422,8 @@ def Refresh_database(request):
         i = DockerImage()
         i = i.from_docker_dict(image)
         i.save()
-        dashboards_prefix = get_settings('dashboards', 'prefix', None, '')
-        notebook_prefix = Setting['prefix']
-        dashboard_container_name = dashboards_prefix + "_dashboards-" + i.name.split(notebook_prefix + "-notebook-")[1]
+        prefix = get_settings('prefix', 'name')
+        dashboard_container_name = prefix + "-dashboards-" + i.name.split(prefix + "-notebook-")[1]
         docker_container = d.get_container(dashboard_container_name, original=True)
         #container, docker_container = d.get_container(dashboard_container_name)
         if docker_container:

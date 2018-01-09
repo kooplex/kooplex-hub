@@ -33,7 +33,7 @@ class Spawner(RestClient):
         self.project = project
         self.project_owner = project.owner_username
         self.project_name = project.name
-        prefix = Setting['prefix']
+        prefix = get_settings('prefix', 'name')
         self.container_name = get_settings('spawner', 'notebook_container_name', container_name, prefix+'-notebook-{$username}')
         self.image = get_settings('spawner', 'notebook_image', image, prefix + '-notebook')
         self.notebook_path = get_settings('spawner', 'notebook_proxy_path', None, '{$host_port}/notebook/{$username}/{$notebook.id}')
@@ -96,7 +96,7 @@ class Spawner(RestClient):
         # constant definitions: home (for user), oc (for user), git (for user / project), share (common / project)
         projectname = self.project.path_with_namespace.replace('/', '_')
 # handle volumes containing user data
-        prefix = Setting['prefix']
+        prefix = get_settings('prefix', 'name')
         binds['%s-home' % prefix ] = { 'bind': '/mnt/.volumes/home', 'mode': 'rw' }
         binds['%s-git' % prefix ] = { 'bind': '/mnt/.volumes/git', 'mode': 'rw' }
         binds['%s-share' % prefix ] = { 'bind': '/mnt/.volumes/share', 'mode': 'rw' }
@@ -208,9 +208,9 @@ class Spawner(RestClient):
             })
 
         #create folders here and set ownership
-        git_host = os.path.join(self.srv_path, '_git', self.username, projectname)
+        git_host = os.path.join(get_settings('volumes','git'), self.username, projectname)
         mkdir(git_host, U.uid, G_OFFSET + self.project.id, 0b111100000)
-        share_host = os.path.join(self.srv_path, '_share', projectname)
+        share_host = os.path.join(get_settings('volumes','share'), projectname)
         mkdir(share_host, HubUser.objects.get(username = projectowner).uid, G_OFFSET + self.project.id, 0b111111101)
 
         notebook.set_binds(binds)
@@ -326,13 +326,13 @@ class Spawner(RestClient):
         raise NotImplementedError
 
 
-class ReportSpawner(RestClient):
+class ReportSpawner(Spawner):
     def __init__(self, project, container_name=None, image=None, report=None):
         print_debug("")
         # self.project_id = project_id
         self.project = project
         self.project_name = project.name
-        prefix = Setting['prefix']
+        prefix = get_settings('prefix', 'name')
         #self.container_name = get_settings('spawner', 'notebook_container_name', container_name,
         #                                   prefix + '-notebook-{$reportname}-{$randomint}-{$author_name}')
         self.container_name = prefix + '-notebook-{$reportname}-{$randomint}-{$author_name}'
@@ -356,103 +356,12 @@ class ReportSpawner(RestClient):
 
         self.report = report
 
-    def make_docker_client(self):
-        print_debug("")
-        d = Docker()
-        url = d.get_docker_url()
-        cli = docker.client.Client(base_url=url)
-        return cli
-
-    def make_proxy_client(self):
-        return Proxy()
-
-    def pick_random_ip(self):
-        print_debug("")
-        network_name = get_settings('docker', 'network', '')
-        client = self.docli.make_docker_client()
-        network_inspect = client.inspect_network(network_name)
-        used_ips = [IPAddress(network_inspect['Containers'][l]['IPv4Address'].split("/")[0]).value for l in
-                    network_inspect['Containers']]
-        ip_pool = list(range(IPAddress(self.ip_pool[0]).value, IPAddress(self.ip_pool[1]).value))
-        for i in used_ips:
-            try:
-                ip_pool.remove(i)
-            except ValueError:
-                1 == 1
-
-        ip = IPAddress(ip_pool[random.randint(0, len(ip_pool))])
-
-        return str(ip)
-
-    def get_container_name(self):
-        print_debug("")
-        name = self.container_name
-
-        name = name.replace('{$reportname}', self.report.name)
-        name = name.replace('{$randomint}', self.random_id)
-        name = name.replace('{$author_name}', self.report.project.safename)
-
-        # To handle spaces in names
-        name = name.replace(" ", "-")
-        name = name.replace("_", "-")
-        return name
-
-    def get_external_url(self, path):
-        print_debug("")
-        url = self.pxcli.get_external_url(path)
-        return url
-
-    def define_binds(self):
-        binds = {}
-        svc = 'notebook'
-        notebook_path = os.path.join(self.srv_path, svc)
-        binds[os.path.join(notebook_path, 'init')] = {'bind': '/init', 'mode': 'rw'}
-        binds[os.path.join(notebook_path, 'etc/hosts')] = {'bind': '/etc/hosts', 'mode': 'ro'}
-        binds[os.path.join(notebook_path, 'etc/ldap/ldap.conf')] = {'bind': '/etc/ldap/ldap.conf', 'mode': 'rw'}
-        binds[os.path.join(notebook_path, 'etc/nslcd.conf')] = {'bind': '/etc/nslcd.conf', 'mode': 'rw'}
-        binds[os.path.join(notebook_path, 'etc/nsswitch.conf')] = {'bind': '/etc/nsswitch.conf', 'mode': 'rw'}
-        # TODO: remove hardcoding!
-        binds[os.path.join(notebook_path, 'etc/jupyter_report_config.py')] = {
-                'bind': '/etc/jupyter_report_config.py', 'mode': 'rw'}
-        binds[self.report.target_] = {'bind': "/report", 'mode': 'rw'}
-        binds[os.path.join(notebook_path, 'etc/jupyter_notebook_config.py')] = {
-            'bind': '/etc/jupyter_notebook_config.py', 'mode': 'rw'}
-
-
-        # dynamically added data sources
-        dockerclient = self.make_docker_client()
-
-
-        for vpb in VolumeProjectBinding.objects.filter(project=self.project):
-            binds[vpb.volume.name] = {'bind': vpb.volume.container_mountpoint_, 'mode': vpb.accessrights_}
-
-        return binds
-
-    def get_notebook_path(self, id):
-        print_debug("")
-        path = self.notebook_path
-        path = path.replace('{$username}', self.report.name)
-        path = path.replace('{$notebook.id}', self.random_id)
-        return path
-
     def make_notebook(self):
 
-        def mkdir(d, uid=0, gid=0, mode=0b111101000):
-            mkpath(d)
-            os.chown(d, uid, gid)
-            os.chmod(d, mode)
-
-        # TODO: gsuid set
-
-
-        print_debug("")
         id = str(uuid.uuid4())
         container_name = self.get_container_name()
-        #notebook_path = os.path.join(self.get_notebook_path(id),"notebooks", self.report.file_name) + "?dashboard"
         notebook_path = self.get_notebook_path(id)
-        #external_url = os.path.join(self.get_external_url(notebook_path)[:-3]+"ss", "dashboard")
         external_url = os.path.join(self.get_external_url(notebook_path), "notebooks", self.report.file_name) + "?dashboard"
-        #external_url = self.get_external_url(notebook_path)
         ip = self.pick_random_ip()
         binds = self.define_binds()
         self.image = self.report.image
@@ -521,26 +430,6 @@ class ReportSpawner(RestClient):
         notebook.save()
         return notebook
 
-    def delete_notebook(self, notebook):
-        print_debug("")
-        self.docli.ensure_container_removed(notebook)
-        notebook.delete()
-
-    def get_session_path(self, notebook, session):
-        path = self.session_path
-        path = path.replace('{$reportname}', self.report.name)
-        path = path.replace('{$notebook.id}', str(notebook.id))
-        path = path.replace('{$session.notebook_path}', session.notebook_path)
-        return path
-
-    def make_session(self, notebook_path, kernel):
-        session = Session(
-            notebook_path=notebook_path,
-            kernel_name=kernel,
-            type="report",
-        )
-        return session
-
     def start_session(self, notebook, notebook_path, kernel, container_name, project_id=0, target_id=0):
         session = self.make_session(notebook_path, kernel)
         jpcli = Jupyter(notebook, report=True, token="")
@@ -556,13 +445,5 @@ class ReportSpawner(RestClient):
         session.save()
         return session
 
-    def stop_session(self, session):
-        print_debug("")
-        jpcli = Jupyter(session.notebook)
-        jpcli.stop_session(session)
-
-    def list_sessions(self, container):
-        print_debug("")
-        raise NotImplementedError
 
 

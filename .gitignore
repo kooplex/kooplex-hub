@@ -2,6 +2,7 @@
 *.user
 bin
 obj
+*.xml
 settings.py
 __pycache__
 TestResults

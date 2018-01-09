@@ -98,7 +98,7 @@ class HubUser(User):
 
                 home_dir = os.path.join(get_settings('volumes', 'home'), self.username)
                 ssh_dir = os.path.join(home_dir, '.ssh')
-                #oc_dir = os.path.join(srv_dir, '_oc', self.username)
+                #oc_dir = os.path.join(home_dir, '_oc', self.username)
                 git_dir = os.path.join(get_settings('volumes', 'git'), self.username)
                 davfs_dir = os.path.join(home_dir, '.davfs2')
 

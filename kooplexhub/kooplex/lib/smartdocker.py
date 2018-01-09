@@ -70,12 +70,11 @@ class Docker(LibBase):
             return None
 
     def get_all_notebook_images(self):
-        prefix = Setting['prefix']
         imgs = self.get_images()
         notebook_images=[]
         for img in imgs:
             if img['RepoTags']:
-                if img['RepoTags'][0].rfind(prefix + '-notebook')>-1:
+                if img['RepoTags'][0].rfind(get_settings('prefix', 'name') + '-notebook')>-1:
                         notebook_images.append(img)
         if notebook_images and len(notebook_images) > 0:
             return notebook_images
@@ -83,12 +82,11 @@ class Docker(LibBase):
             return None
 
     def get_all_dashboard_containers(self):
-        prefix = Setting['prefix']
         imgs = self.get_images()
         dashboard_containers=[]
         for img in imgs:
             if img['RepoTags']:
-                if img['RepoTags'][0].rfind(prefix+'_')>-1:
+                if img['RepoTags'][0].rfind(get_settings('prefix', 'name')+'_')>-1:
                     dashboard_containers.append(img)
         if dashboard_containers and len(dashboard_containers) > 0:
             return dashboard_containers
@@ -161,7 +159,8 @@ class Docker(LibBase):
         print_debug("")
         name = self.get_container_name(container)
         #TODO: docker API prepends '/' in front of container names. This is hardcoded here.
-        conts = list(filter(lambda x: '/' + name in x['Names'], self.docli.containers(all = True)))
+        ddd=self.docli.containers(all=True)
+        conts = list(filter(lambda x: '/' + name in x['Names'], ddd))
         if conts and len(conts) == 1:
             if original:
                 return conts[0]
