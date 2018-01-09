@@ -5,14 +5,15 @@ from django.utils import timezone
 from .user import HubUser
 from .project import Project
 from .volume import Volume, VolumeProjectBinding
+from .image import Image
 
 class Container(models.Model):
     id = models.UUIDField(primary_key = True)  #FIXME: TO BE REPLACED BY IntegerField
     name = models.CharField(max_length = 200, null = True)
-    owner = models.ForeignKey(HubUser, null = True)
+    user = models.ForeignKey(HubUser, null = True)
     project = models.ForeignKey(Project, null = True)
 
-    image = models.CharField(max_length = 200, null = True)
+    image = models.ForeignKey(Image, null = True)
     ip = models.GenericIPAddressField()
     environment = models.TextField(null = True)
     command = models.TextField(null = True)
@@ -75,7 +76,7 @@ class VolumeContainerBinding(models.Model):
 
 def init_model():
     containertypes = [ 'notebook', 'dashboard' ]
-    for ct in containertype:
+    for ct in containertypes:
         cti = ContainerType.objects.get(name = ct)
         if cti is None:
             cti = ContainerType(name = ct)

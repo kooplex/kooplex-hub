@@ -9,6 +9,7 @@ from time import time, strftime, localtime
 
 from .project import Project
 from .container import Container
+from .scope import ScopeType
 
 from .user import HubUser
 
@@ -25,7 +26,7 @@ class Report(models.Model):
     project = models.ForeignKey(Project, null = False)
     container = models.ForeignKey(Container, null = False)
     path = models.CharField(max_length = 200, null = True)
-    scope = models.ForeignKey(ReportScope, null = False)
+    scope = models.ForeignKey(ScopeType, null = False)
     password = models.CharField(max_length = 128, null = True)  #TODO: may store encrypted
 
 ##    wd = '_report'
@@ -176,22 +177,11 @@ class ReportType(models.Model):
     id = models.AutoField(primary_key = True)
     name = models.CharField(max_length = 32)
 
-class ScopeType(models.Model):
-    id = models.AutoField(primary_key = True)
-    name = models.CharField(max_length = 32)
-
-
-
 def init_model():
     reporttypes = [ 'html', 'dashboard', 'dashboardserver' ]
-    for rt in reporttype:
+    for rt in reporttypes:
         rti = ReportType.objects.get(name = rt)
         if rti is None:
             rti = ReportType(name = rt)
             rti.save()
-    scopetypes = [ 'private', 'internal', 'public' ]
-    for st in scopetype:
-        sti = ScopeType.objects.get(name = st)
-        if sti is None:
-            sti = ReportType(name = rt)
-            sti.save()
+
