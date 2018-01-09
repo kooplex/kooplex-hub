@@ -7,8 +7,7 @@ from django.core.urlresolvers import reverse
 from django.template import RequestContext
 
 from kooplex.hub.models.report import Report
-from kooplex.hub.models.notebook import Notebook
-from kooplex.hub.models.user import HubUser
+from kooplex.hub.models.user import User as HubUser #FIXME
 from kooplex.hub.models.project import Project, UserProjectBinding
 from kooplex.lib.spawner import ReportSpawner
 from kooplex.lib.libbase import get_settings

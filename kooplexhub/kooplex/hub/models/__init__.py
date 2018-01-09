@@ -1,6 +1,6 @@
-﻿from .container import Container, ContainerType, VolumeContainerBinding
+from .container import Container, ContainerType, VolumeContainerBinding
 from .image import Image
-from .mountpoints import MountPoint, MountPointProjectBinding, MountPointPrivilegeBinding
+from .mountpoint import MountPoint, MountPointProjectBinding, MountPointPrivilegeBinding
 from .project import Project, UserProjectBinding
 from .report import Report, ReportType
 from .scope import ScopeType

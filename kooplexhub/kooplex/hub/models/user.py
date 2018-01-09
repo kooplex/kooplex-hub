@@ -6,7 +6,7 @@ from django.db import models
 import pwgen
 import os
 
-from kooplex.lib.sendemail import send_new_password
+###from kooplex.lib.sendemail import send_new_password
 from kooplex.lib.libbase import get_settings
 import subprocess
 from distutils.dir_util import mkpath
@@ -48,7 +48,7 @@ class User(DJUser):
     def save_MEGNEEEE(self, *args, **kwargs):
         from kooplex.lib.ldap import Ldap
         l = Ldap()
-        old_user = HubUser.objects.filter(username=self.username)
+        old_user = User.objects.filter(username=self.username)
         if len(old_user) == 1:
             #self = l.modify_user(old_user[0])  # FIXME: PyAsn error????
             pass # FIXME:
@@ -130,7 +130,7 @@ class User(DJUser):
                 raise CommandError(error_message)
 
         #self.save()
-        super(HubUser, self).save(*args, **kwargs)
+        super(User, self).save(*args, **kwargs)
 
 
     def delete(self):
@@ -149,7 +149,7 @@ class User(DJUser):
             raise Exception("git: %s" % e)
             #pass
 
-        super(HubUser, self).delete()
+        super(User, self).delete()
         # TODO: remove appropriate directories from the filesystem
 
     def pwgen(self):

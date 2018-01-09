@@ -8,13 +8,13 @@ from kooplex.lib.libbase import get_settings
 from .scope import ScopeType
 from .image import Image
 
-from .user import HubUser
+from .user import User
 
 class Project(models.Model):
     id = models.IntegerField(primary_key = True)
     name = models.TextField(max_length = 200, null = False)
     description = models.TextField(null=True)
-    owner = models.ForeignKey(HubUser, null = True)
+    owner = models.ForeignKey(User, null = True)
     image = models.ForeignKey(Image, null = True)
     scope = models.ForeignKey(ScopeType, null = True)
 
@@ -133,7 +133,7 @@ class Project(models.Model):
 
 class UserProjectBinding(models.Model):
     id = models.AutoField(primary_key = True)
-    user = models.ForeignKey(HubUser, null = False)
+    user = models.ForeignKey(User, null = False)
     project = models.ForeignKey(Project, null = False)
 
 #FIXME: el pldanyositas soran elvegezheto

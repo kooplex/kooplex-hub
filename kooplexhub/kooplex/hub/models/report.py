@@ -11,14 +11,19 @@ from .project import Project
 from .container import Container
 from .scope import ScopeType
 
-from .user import HubUser
+from .user import User
 
 from kooplex.lib.smartdocker import Docker
 from kooplex.lib.libbase import get_settings
 
+
+class ReportType(models.Model):
+    id = models.AutoField(primary_key = True)
+    name = models.CharField(max_length = 32)
+
 class Report(models.Model):
     id = models.AutoField(primary_key = True)
-    creator = models.ForeignKey(HubUser, null = False)
+    creator = models.ForeignKey(User, null = False)
     name = models.CharField(max_length = 200, null = True)
     description = models.TextField(null=True)
     report_type = models.ForeignKey(ReportType, null = False)
@@ -172,10 +177,6 @@ class Report(models.Model):
 ##        dir_util.remove_tree(self.target_)
 ##        self.delete()
 
-
-class ReportType(models.Model):
-    id = models.AutoField(primary_key = True)
-    name = models.CharField(max_length = 32)
 
 def init_model():
     reporttypes = [ 'html', 'dashboard', 'dashboardserver' ]

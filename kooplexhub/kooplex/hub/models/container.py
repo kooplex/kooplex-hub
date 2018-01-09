@@ -2,15 +2,19 @@ import json
 from django.db import models
 from django.utils import timezone
 
-from .user import HubUser
+from .user import User
 from .project import Project
 from .volume import Volume, VolumeProjectBinding
 from .image import Image
 
+class ContainerType(models.Model):
+    id = models.AutoField(primary_key = True)
+    name = models.CharField(max_length = 32)
+
 class Container(models.Model):
     id = models.UUIDField(primary_key = True)  #FIXME: TO BE REPLACED BY IntegerField
     name = models.CharField(max_length = 200, null = True)
-    user = models.ForeignKey(HubUser, null = True)
+    user = models.ForeignKey(User, null = True)
     project = models.ForeignKey(Project, null = True)
 
     image = models.ForeignKey(Image, null = True)
@@ -61,9 +65,6 @@ class Container(models.Model):
 ##        c.state = dict['State']    # created|restarting|running|paused|exited|dead
 ##        return c
 
-class ContainerType(models.Model):
-    id = models.AutoField(primary_key = True)
-    name = models.CharField(max_length = 32)
 
 class VolumeContainerBinding(models.Model):
     id = models.AutoField(primary_key = True)

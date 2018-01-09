@@ -18,7 +18,9 @@ from kooplex.lib.smartdocker import Docker
 from kooplex.lib.proxy import Proxy
 from kooplex.lib.jupyter import Jupyter
 #TODO: from kooplex.hub.models import *
-from kooplex.hub.models import Container, Notebook, Session, Project, MountPointProjectBinding, HubUser, VolumeProjectBinding, Volume, UserProjectBinding
+from kooplex.hub.models import Container, Project, MountPointProjectBinding, User, VolumeProjectBinding, Volume, UserProjectBinding
+#FIXME:
+HubUser = User
 
 from kooplex.lib import ldap
 

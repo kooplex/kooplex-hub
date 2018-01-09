@@ -3,7 +3,7 @@ from kooplex.lib import LibBase, get_settings
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from kooplex.lib.debug import *
-from kooplex.hub.models import HubUser as User
+from kooplex.hub.models import User
 
 class LdapException(Exception):
     pass

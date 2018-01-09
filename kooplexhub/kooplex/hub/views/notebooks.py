@@ -20,14 +20,13 @@ from django.shortcuts import render
 from django.template import RequestContext
 from django.template.response import TemplateResponse
 
-from kooplex.hub.models.dashboard_server import Dashboard_server
-from kooplex.hub.models.dockerimage import DockerImage
-from kooplex.hub.models.mountpoints import MountPoints, MountPointProjectBinding, MountPointPrivilegeBinding
-from kooplex.hub.models.notebook import Notebook
+#from kooplex.hub.models.dockerimage import DockerImage
+from kooplex.hub.models.mountpoint import MountPoint, MountPointProjectBinding, MountPointPrivilegeBinding
+#from kooplex.hub.models.notebook import Notebook
 from kooplex.hub.models.project import Project, UserProjectBinding
 from kooplex.hub.models.report import Report
-from kooplex.hub.models.session import Session
-from kooplex.hub.models.user import HubUser
+#from kooplex.hub.models.session import Session
+from kooplex.hub.models.user import User as HubUser #FIXME
 from kooplex.hub.models.volume import Volume, VolumeProjectBinding
 from kooplex.lib.gitlab import Gitlab
 from kooplex.lib.gitlabadmin import GitlabAdmin

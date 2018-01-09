@@ -2,8 +2,6 @@
 from kooplex.lib.libbase import get_settings
 from kooplex.lib.restclient import RestClient
 
-from kooplex.hub.models.notebook import Notebook
-from kooplex.hub.models.session import Session
 from kooplex.lib.debug import *
 
 class JupyterError(Exception):

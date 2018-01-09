@@ -3,7 +3,7 @@ from django.db import models
 import os
 
 #TODO: fall back to native module
-from kooplex.lib.smartdocker import Docker
+##from kooplex.lib.smartdocker import Docker
 from .project import Project
 
 

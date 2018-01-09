@@ -2,7 +2,7 @@ import json, os
 from django.db import models
 
 from .project import Project
-from .project import HubUser
+from .user import User
 
 from kooplex.lib.libbase import get_settings
 
@@ -60,7 +60,7 @@ class MountPointProjectBinding(models.Model):
 class MountPointPrivilegeBinding(models.Model):
     id = models.AutoField(primary_key = True)
     mountpoint = models.ForeignKey(MountPoint, null = True)
-    user = models.ForeignKey(HubUser, null = True)
+    user = models.ForeignKey(User, null = True)
     accessrights = models.CharField(max_length = 16)
 
     def __str__(self):
