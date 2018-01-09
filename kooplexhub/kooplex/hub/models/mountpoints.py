@@ -1,13 +1,12 @@
 import json, os
 from django.db import models
 
-from .modelbase import ModelBase
 from .project import Project
 from .project import HubUser
 
 from kooplex.lib.libbase import get_settings
 
-class MountPoints(models.Model, ModelBase):
+class MountPoints(models.Model):
     id = models.AutoField(primary_key = True)
     name = models.CharField(max_length = 200)
     type = models.CharField(max_length = 200)
@@ -23,7 +22,7 @@ class MountPoints(models.Model, ModelBase):
         self.name = name
         self.type = type
         self.host_mountpoint = host_mountpoint
-    
+
     @property
     def server_(self):
         if self.type == 'nfs':
@@ -49,7 +48,7 @@ class MountPoints(models.Model, ModelBase):
         else:
             raise Exception('Unknonwn type %s' %  self.type)
 
-class MountPointProjectBinding(models.Model, ModelBase):
+class MountPointProjectBinding(models.Model):
     id = models.AutoField(primary_key = True)
     mountpoint = models.ForeignKey(MountPoints, null = True)
     project = models.ForeignKey(Project, null = True)
@@ -57,8 +56,8 @@ class MountPointProjectBinding(models.Model, ModelBase):
 
     def __str__(self):
         return "%s:%s" % (self.project, self.mountpoint)
-    
-class MountPointPrivilegeBinding(models.Model, ModelBase):
+
+class MountPointPrivilegeBinding(models.Model):
     id = models.AutoField(primary_key = True)
     mountpoint = models.ForeignKey(MountPoints, null = True)
     user = models.ForeignKey(HubUser, null = True)

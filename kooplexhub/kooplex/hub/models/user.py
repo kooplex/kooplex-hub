@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth.models import AbstractUser
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User as DJUser
 from django.db import models
 import pwgen
 import os
@@ -11,19 +11,13 @@ from kooplex.lib.libbase import get_settings
 import subprocess
 from distutils.dir_util import mkpath
 
-from .position import Position
-
-class HubUser(User):
-    #user = models.OneToOneField(User, on_delete=models.CASCADE)
+class User(DJUser):
+    gitlab_id = models.IntegerField(null = True)
+    uid = models.IntegerField(null = True)
+    gid = models.IntegerField(null = True)
     bio = models.TextField(max_length = 500, blank = True)
-    location = models.CharField(max_length = 30, blank = True)
-    position = models.ForeignKey(Position, blank = True, null = True)
-    #birth_date = models.DateField(null=True, blank=True)
-    gitlab_id = models.IntegerField(null=True)
-    uid = models.IntegerField(null=True)
-    gid = models.IntegerField(null=True)
 
-    data = None #dict([(k, self(k)) for k in ['first_name', 'last_name', 'username', 'email', 'password']])
+##    data = None #dict([(k, self(k)) for k in ['first_name', 'last_name', 'username', 'email', 'password']])
 
     def __str__(self):
         return str(self.username)
@@ -175,5 +169,22 @@ class HubUser(User):
            username = self.username,
            to = self.email,
            pw = pw)
+
+
+class Researchgroup(models.Model):
+    id = models.AutoField(primary_key = True)
+    name = models.CharField(max_length = 32)
+    description = models.TextField(max_length = 500, null = True)
+
+    def __str__(self):
+       return self.name
+
+class ResearchgroupUserBinding(models.Model):
+    id = models.AutoField(primary_key = True)
+    user = models.ForeignKey(User, null = False)
+    researchgroup = models.ForeignKey(Researchgroup, null = False)
+
+    def __str__(self):
+       return "%s@%s" % (self.user, self.researchgroup)
 
 
