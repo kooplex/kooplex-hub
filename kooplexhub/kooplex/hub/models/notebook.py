@@ -3,12 +3,9 @@
 from .container import Container
 
 class Notebook(Container):
-    username = models.CharField(max_length=200)
-    port = models.IntegerField()
-    proxy_path = models.CharField(max_length=200)
-    external_url = models.CharField(max_length=200)
-    project_id = models.IntegerField(null=True)
-    type = models.CharField(max_length=20)
+    proxy_path = models.CharField(max_length = 200)
 
     class Meta:
         db_table = "kooplex_hub_notebook"
+
+    #external_url = models.CharField(max_length = 200) FIXME: let it be a property if really required

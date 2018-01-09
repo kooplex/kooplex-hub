@@ -15,7 +15,6 @@ class Container(models.Model):
     ip = models.GenericIPAddressField()
     environment = models.TextField(null = True)
     binds = models.TextField(null = True)
-    ports = models.TextField(null = True)
     command = models.TextField(null = True)
 
     launched_at = models.DateTimeField(default = timezone.now)
