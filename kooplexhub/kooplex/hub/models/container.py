@@ -78,6 +78,6 @@ def init_model():
     for ct in containertype:
         cti = ContainerType.objects.get(name = ct)
         if cti is None:
-            cti = ContainerType(name = cti)
+            cti = ContainerType(name = ct)
             cti.save()
 
