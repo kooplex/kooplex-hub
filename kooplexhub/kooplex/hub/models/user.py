@@ -116,7 +116,7 @@ class HubUser(User):
 
                 davsecret_fn = os.path.join(davfs_dir, "secrets")
                 with open(davsecret_fn, "w") as f:
-                    f.write("http://kooplex-nginx/ownCloud/remote.php/webdav/ %s %s" % (self.username, pw))
+                    f.write(os.path.join(get_settings('owncloud', 'inner_url'), "remote.php/webdav/") + " %s %s" % (self.username, pw))
 
 
                 try:
@@ -168,7 +168,7 @@ class HubUser(User):
         davfs_dir = os.path.join(home_dir, '.davfs2')
         davsecret_fn = os.path.join(davfs_dir, "secrets")
         with open(davsecret_fn, "w") as f:
-            f.write("http://kooplex-nginx/ownCloud/remote.php/webdav/ %s %s" % (self.username, pw))
+            f.write(os.path.join(get_settings('owncloud', 'inner_url'), "remote.php/webdav/") + " %s %s" % (self.username, pw))
 
 
         send_new_password(name = "%s %s" % (self.first_name, self.last_name),

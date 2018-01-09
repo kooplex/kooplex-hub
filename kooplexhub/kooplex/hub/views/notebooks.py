@@ -34,8 +34,6 @@ from kooplex.lib.gitlabadmin import GitlabAdmin
 from kooplex.lib.jupyter import Jupyter
 from kooplex.lib.libbase import LibBase
 from kooplex.lib.libbase import get_settings,  mkdir
-from django.conf import settings
-Setting=settings.KOOPLEX
 
 from kooplex.lib.ochelper import OCHelper
 from kooplex.lib.repo import Repo  # GONNA BE OBSOLETED
@@ -711,7 +709,7 @@ class myuser:
         ## preapare davfs secret file
         davsecret_fn = os.path.join(davfs_dir, "secrets")
         with open(davsecret_fn, "w") as f:
-            f.write("http://kooplex-nginx/ownCloud/remote.php/webdav/ %s %s" % (self['username'], self['password']))
+            f.write(os.path.join(get_settings('owncloud', 'inner_url'), "remote.php/webdav/") + " %s %s" % (self['username'], self['password']))
         os.chown(davsecret_fn, dj_user.uid, dj_user.gid)
         os.chmod(davsecret_fn, 0b110000000) 
 

@@ -102,7 +102,7 @@ def preset2(request):
         ## preapare davfs secret file
         davsecret_fn = os.path.join(davfs_dir, "secrets")
         with open(davsecret_fn, "w") as f:
-            f.write("http://kooplex-nginx/ownCloud/remote.php/webdav/ %s %s" % (username, password1))
+            f.write(os.path.join(get_settings('owncloud', 'inner_url'), "remote.php/webdav/") + " %s %s" % (username, password1))
         os.chown(davsecret_fn, dj_user.uid, dj_user.gid)
         os.chmod(davsecret_fn, 0b110000000)
 

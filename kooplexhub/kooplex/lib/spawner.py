@@ -13,8 +13,6 @@ from io import BytesIO
 from distutils.dir_util import mkpath
 
 from kooplex.lib.libbase import LibBase, get_settings
-from django.conf import settings
-Setting=settings.KOOPLEX
 from kooplex.lib.restclient import RestClient
 from kooplex.lib.smartdocker import Docker
 from kooplex.lib.proxy import Proxy

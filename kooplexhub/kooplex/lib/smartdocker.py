@@ -2,8 +2,6 @@ from docker.client import Client
 from kooplex.lib import LibBase, get_settings
 from kooplex.hub.models.container import Container
 from kooplex.lib.debug import *
-from django.conf import settings
-Setting=settings.KOOPLEX
 
 class Docker(LibBase):
 

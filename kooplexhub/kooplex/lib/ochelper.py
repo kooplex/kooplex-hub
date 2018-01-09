@@ -5,14 +5,13 @@
 '''
 
 import docker
-from django.conf import settings 
-Setting=settings.KOOPLEX
+
 from kooplex.lib.libbase import get_settings
 from kooplex.lib.smartdocker import Docker
 
 class OCHelper:
     container_allusers = get_settings('impersonator', 'container_name')
-    url_base = "http://%s-nginx/ownCloud"%Setting.get('prefix')  
+    url_base = get_settings('owncloud', 'inner_url')
 
     def __init__(self, user, project):
         self.username = user.username

@@ -13,8 +13,6 @@ from kooplex.lib.repo import Repo
 from kooplex.lib.smartdocker import Docker
 from kooplex.hub.models.dashboard_server import Dashboard_server
 from kooplex.hub.models.project import Project
-from django.conf import settings
-Setting=settings.KOOPLEX
 
 from kooplex.lib.debug import *
 from html.parser import HTMLParser

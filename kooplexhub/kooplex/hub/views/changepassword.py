@@ -53,7 +53,7 @@ def change_password_form_ldap(request):
         mkdir(davfs_dir, uid=dj_user.uid, gid=dj_user.gid, mode=0b111000000)
         davsecret_fn = os.path.join(davfs_dir, "secrets")
         with open(davsecret_fn, "w") as f:
-            f.write("http://kooplex-nginx/ownCloud/remote.php/webdav/ %s %s" % (request.user.username, newpassword))
+            f.write(os.path.join(get_settings('owncloud', 'inner_url'), "remote.php/webdav/") + " %s %s" % (request.user.username, newpassword))
         os.chown(davsecret_fn, dj_user.uid, dj_user.gid)
         os.chmod(davsecret_fn, 0b110000000)
 
