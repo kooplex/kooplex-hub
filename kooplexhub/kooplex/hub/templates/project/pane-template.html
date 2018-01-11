@@ -1,14 +1,17 @@
 <label for="project_template">Choose a template for your project</label><br>
 <select id="project_template" name="project_template">
-  {% for image in notebook_images %}
+  {% for image in images %}
   <option value="image={{ image }}" style="background-color: silver">{{ image }} (empty)</option>
   {% endfor %}
+{% comment %}
+FIXME: have them back
   {% for project in shared_with_me_projects %}
   <option value="clonable_project={{ project }}" style="background-color: gray">{{ project }}</option>
   {% endfor %}
   {% for project in public_projects %}
   <option value="clonable_project={{ project }}" style="background-color: lightgray">{{ project }}</option>
   {% endfor %}
+{% endcomment %}
 </select><br>
 
 <br>
