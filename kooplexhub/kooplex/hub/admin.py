@@ -1,15 +1,17 @@
 from django.conf.urls import patterns, url, include
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponseRedirect,HttpResponse
 from django.template import RequestContext
 from django.contrib import admin
+
 from kooplex.hub.models.container import Container
 from kooplex.hub.models.project import Project, UserProjectBinding
 from kooplex.hub.models.report import Report
 from kooplex.hub.models.mountpoint import MountPoint, MountPointProjectBinding, MountPointPrivilegeBinding
 from kooplex.hub.models.user import User
 from kooplex.hub.models.volume import Volume, VolumeProjectBinding
-from kooplex.hub.views.notebooks import Refresh_database
+from kooplex.hub.models.image import init_model as imagemodel_init
+
 
 # Register your models here.
 @admin.register(Container)
@@ -83,6 +85,11 @@ class VolumeProjectBindingAdmin(admin.ModelAdmin):
 #def admin_main(request):
 #   pass
 
+def refreshimages(request):
+#FIXME: authorize
+    imagemodel_init()
+    return redirect('/admin')
+
 urlpatterns = [
- #url(r'^refresh_images', DockerImage.Refresh_database, name='refresh_images'),
+    url(r'^refresh_images', refreshimages, name = 'refresh-images'),
 ]
