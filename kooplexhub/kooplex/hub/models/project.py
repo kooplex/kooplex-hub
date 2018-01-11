@@ -32,13 +32,10 @@ class Project(models.Model):
 ####    gitwd = get_settings('volumes', 'git')
 ####
     def __str__(self):
-        return "%s@%s" % (self.name, self.owner_username)
+        return "%s@%s" % (self.name, self.owner)
 
     def __lt__(self, p):
         return self.name < p.name
-
-    class Meta:
-        db_table = "kooplex_hub_project"
 
 #####FIXME: get rid of init if possible
 ####    def init(self, gitlab_dict):
