@@ -5,6 +5,7 @@ from email.mime.text import MIMEText
 #FIXME: how to import this variable?
 #from kooplex.lib.settings import KOOPLEX_BASE_URL
 KOOPLEX_BASE_URL = "https://kooplex.vo.elte.hu"
+KOOPLEX_TOKENPAGE = "https://sandbox.vo.elte.hu/hub/passwordtoken"
 SMTP_SERVER = 'mail.elte.hu' #FIXME: hardcoded
 FROM_ADDRESS = 'kooplex@complex.elte.hu'
 
@@ -61,7 +62,7 @@ Dear %s %s,
 
 a kooplex account password reset request for your account (%s) is issued.
 
-Provide the token %s along with the new password to be set at the dashboard.
+Provide the token %s along with the new password to be set in the dashboard.
 
 Best regards,
  Kooplex team

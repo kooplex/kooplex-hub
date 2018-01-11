@@ -1,15 +1,19 @@
+import pwgen
+import os
+import subprocess
+from distutils.dir_util import mkpath
+
 from django.contrib import messages
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import User as DJUser
 from django.db import models
-import pwgen
-import os
 
-###from kooplex.lib.sendemail import send_new_password
+
+from kooplex.lib.sendemail import send_new_password, send_token
 from kooplex.lib.libbase import get_settings
-import subprocess
-from distutils.dir_util import mkpath
+from kooplex.lib.filesystem import write_davsecret
+from kooplex.lib.lldap import Ldap #FIXME: to be renamed ldap
 
 class User(DJUser):
     gitlab_id = models.IntegerField(null = True)
@@ -21,6 +25,42 @@ class User(DJUser):
 
     def __str__(self):
         return str(self.username)
+
+    def sendtoken(self):
+        token = pwgen.pwgen(12)
+        with open('/tmp/%s.token' % self.username, 'w') as f:
+            f.write(token)
+        send_token(self, token)
+
+    def is_validtoken(self, token):
+        try:
+            return token == open('/tmp/%s.token' % self.username).read()
+        except: #File missing
+            return False
+
+    def changepassword(self, newpassword, oldpassword = None):
+        l = Ldap()
+        l.get_user(self)
+        l.changepassword(self, newpassword, oldpassword)
+        self.password = newpassword
+        write_davsecret(self)
+        self.save()
+
+
+
+
+
+
+
+
+
+
+
+
+
+#ATNEZNI
+
+
 
     def __getitem__(self, k):
         if not k in self._data:

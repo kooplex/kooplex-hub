@@ -7,7 +7,8 @@ from django.core.urlresolvers import reverse
 from django.template import RequestContext
 
 from kooplex.hub.models.report import Report
-from kooplex.hub.models.user import User as HubUser #FIXME
+from kooplex.hub.models.user import User
+from kooplex.hub.models.scope import ScopeType
 from kooplex.hub.models.project import Project, UserProjectBinding
 from kooplex.lib.spawner import ReportSpawner
 from kooplex.lib.libbase import get_settings
@@ -28,29 +29,31 @@ def group_by_project(reports):
 
 def reports(request):
     assert isinstance(request, HttpRequest)
+    INTERNAL = ScopeType.objects.get(name = 'internal')
+    PUBLIC = ScopeType.objects.get(name = 'public')
     if request.user.is_anonymous():
         myreports = []
         internal_good_ = []
-        username = None
+        me = None
     else:
-        username = request.user.username
-        me = HubUser.objects.get(username = username)
-        my_gitlab_id = str( HubUser.objects.get(username = username).gitlab_id )
+        me = request.user
+        my_gitlab_id = str( me.gitlab_id )
+#FIXME: naming should follow like in the projects: E.g. reports_mine
         myreports = Report.objects.filter(creator = me)
-        myprojectbindings = UserProjectBinding.objects.filter(hub_user = me)
-        internalreports = Report.objects.filter(scope = 'internal')
+        myprojectbindings = UserProjectBinding.objects.filter(user = me)
+        internalreports = Report.objects.filter(scope = INTERNAL)
         projectset = set([ pb.project for pb in myprojectbindings ]).intersection([ r.project for r in internalreports ])
         internalreports_good = filter(lambda r: r.project in projectset, internalreports) 
-    publicreports = list( Report.objects.filter(scope = 'public') )
+    publicreports = list( Report.objects.filter(scope = PUBLIC) )
     publicreports.extend(internalreports_good)
     return render(
         request,
         'report/reports.html',
         context_instance = RequestContext(request,
         {
+            'user': me,
             'myreports': group_by_project( myreports ),
             'publicreports': group_by_project( publicreports ),
-            'username': username,
        })
     )
 

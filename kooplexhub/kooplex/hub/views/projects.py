@@ -64,7 +64,7 @@ def projects(request, *v, **kw):
     projects_sharedwithme = sorted([ upb.project for upb in UserProjectBinding.objects.filter(user = user) ])
     projects_public = sorted(Project.objects.filter(scope = PUBLIC).exclude(owner = user))
     images = Image.objects.all()
-    scopes = Scope.objects.all()
+    scopes = ScopeType.objects.all()
 #FIXME:
 #volumes
 

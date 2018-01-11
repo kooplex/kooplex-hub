@@ -41,7 +41,7 @@
         <li class="dropdown">
           <div class="dropdown-togle" data-toggle="dropdown" href="#" role="button" type="button" data-toggle="tooltip" title="Manage your profile" data-placement="bottom"><span class="navbar-brand">Hello {{ user.username }}! <span class="caret"/></span></div>
           <ul class="dropdown-menu">
-            <li><a href="javascript:document.getElementById('changepassw').submit()">Change pass</a></li>
+            <li><a href="javascript:document.getElementById('passwordchange').submit()">Change pass</a></li>
             <li><a href="#" data-toggle="modal" data-target="#update-bio">Update bio</a></li>
             <li><a href="javascript:document.getElementById('logoutForm').submit()">Log off <span class="glyphicon glyphicon-log-out"/></a></li>
           </ul>
@@ -49,7 +49,7 @@
 
         <li><a href="javascript:document.getElementById('logoutForm').submit()">Log off <span class="glyphicon glyphicon-log-out"/></a></li>
 
-        <form id="changepassw" action="{% url 'changepassword' %}" method="post">
+        <form id="changepassw" action="{% url 'passwordchange' %}" method="post">
           {% csrf_token %}
         </form>
         <form id="logoutForm" action="logout" method="post">

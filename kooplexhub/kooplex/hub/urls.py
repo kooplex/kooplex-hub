@@ -46,10 +46,9 @@ urlpatterns = [
     url(r'^/login/?$', login, login_kwargs, name = 'login'),
     url(r'^/logout$', logout, { 'next_page': '/hub', }, name = 'logout'),
 
-    url(r'^/passwordreset$', passwordreset, name = 'resetpassword'),
-    url(r'^/passwordtoken$', passwordresettoken, name = 'passwordresettoken'),
-    url(r'^/setnewpassword$', passwordresetfinish, name = 'setnewpassword'),
-    url(r'^/changepassword', passwordchange, name = 'changepassword'),
+    url(r'^/passwordreset$', passwordresetForm, name = 'passwordreset'),
+    url(r'^/passwordtoken$', passwordtokenForm, name = 'passwordresettoken'),
+    url(r'^/passwordchange$', passwordchangeForm, name = 'passwordchange'),
 
     url(r'^/reports', include('kooplex.hub.views.reports')),
     url(r'^/projects', include('kooplex.hub.views.projects')),

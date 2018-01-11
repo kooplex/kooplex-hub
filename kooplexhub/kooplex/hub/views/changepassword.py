@@ -3,100 +3,72 @@ from django.conf.urls import url, include
 from django.shortcuts import render, redirect
 from django.http import HttpRequest
 
-def passwordchange(request):
+from kooplex.hub.models.user import User
+
+def passwordchangeForm(request):
     """Renders the password change page."""
     assert isinstance(request, HttpRequest)
     pass
 
-def passwordreset(request):
+def passwordresetForm(request):
     """Renders the password reset request page."""
     assert isinstance(request, HttpRequest)
+    errors = []
+    if request.method == 'POST':
+        if 'btn_pwlogin' in request.POST.keys():
+            return redirect('/hub/login')
+        elif 'btn_sendtoken' in request.POST.keys():
+            username = request.POST['username']
+            email = request.POST['email']
+            try:
+                user = User.objects.get(username = username, email = email)
+                user.sendtoken()
+                return render(
+                    request,
+                    'auth/tokenpassword.html',
+                    context_instance = RequestContext(request, { 'username': username })
+                )
+            except User.DoesNotExist:
+                errors.append('Please provide valid username and e-mail address')
+                user = None
     return render(
         request,
         'auth/passwordreset.html',
-        context_instance = RequestContext(request, {})
+        context_instance = RequestContext(request, { 'errors': errors })
     )
 
-def passwordresettoken(request):
+def passwordtokenForm(request):
     """Renders the password reset token input form."""
     assert isinstance(request, HttpRequest)
-    pass
-## ##    username = request.POST['username']
-## ##    email = request.POST['email']
-## ##    try:
-## ##        assert len(username), 'Please provide a username'
-## ##        hubuser = HubUser.objects.get(username = username)
-## ##        assert hubuser.email == email, 'Wrong e-mail address is provided'
-## ##        token = pwgen.pwgen(12)
-## ##        with open('/tmp/%s.token'%hubuser.username, 'w') as f:
-## ##            f.write(token)
-## ##        send_token(hubuser, token)
-## ##    except Exception as e:
-## ##        return render(
-## ##            request,
-## ##            'app/password-reset.html',
-## ##            context_instance = RequestContext(request,
-## ##            {
-## ##               'errors': str(e),
-## ##            })
-## ##        )
-## ##    return render(
-## ##        request,
-## ##        'app/password-reset-2.html',
-## ##        context_instance = RequestContext(request,
-## ##        {
-## ##           'username': username,
-## ##        })
-## ##    )
-
-def passwordresetfinish(request):
-    """Renders the set new password form."""
-    assert isinstance(request, HttpRequest)
-    pass
-## ##    username = request.POST['username']
-## ##    token = request.POST['token']
-## ##    password1 = request.POST['password1']
-## ##    password2 = request.POST['password2']
-## ##    try:
-## ###        hubuser = HubUser.objects.get(username = username)
-## ##        assert len(token), 'Please check your e-mail for the token and type it'
-## ##        assert len(password1), 'You cannot have an empty password'
-## ##        tokengood = open('/tmp/%s.token'%username).read()
-## ##        assert token == tokengood, 'You provide an invalid token'
-## ##        assert password1 == password2, 'Your passwords do not match'
-## ##        l = Ldap()
-## ##        dj_user = HubUser.objects.get(username = username)
-## ##        l.changepassword(dj_user, 'doesntmatter', password1, validate_old_password = False)
-## ##
-## ##        home_dir = os.path.join(get_settings('volumes', "home"), username)
-## ##        davfs_dir = os.path.join(home_dir, '.davfs2')
-## ##
-## ##        ## preapare davfs secret file
-## ##        davsecret_fn = os.path.join(davfs_dir, "secrets")
-## ##        with open(davsecret_fn, "w") as f:
-## ##            f.write(os.path.join(get_settings('owncloud', 'inner_url'), "remote.php/webdav/") + " %s %s" % (username, password1))
-## ##        os.chown(davsecret_fn, dj_user.uid, dj_user.gid)
-## ##        os.chmod(davsecret_fn, 0b110000000)
-## ##
-## ##    except Exception as e:
-## ##        return render(
-## ##            request,
-## ##            'app/password-reset-2.html',
-## ##            context_instance = RequestContext(request,
-## ##            {
-## ##               'errors': str(e),
-## ##               'username': username
-## ##            })
-## ##        )
-## ##    return redirect('/hub/login/')
-
-
-
-
-
-
-
-
+    errors = []
+    if request.method != 'POST':
+        return render(
+            request,
+            'auth/passwordreset.html',
+            context_instance = RequestContext(request, { })
+        )
+    username = request.POST['username']
+    password1 = request.POST['password1']
+    password2 = request.POST['password2']
+    token = request.POST['token']
+    try:
+        user = User.objects.get(username = username)
+    except User.DoesNotExist:
+        errors.append('Username is lost... are you hacking?')
+    if not user.is_validtoken(token):
+        errors.append('Please check your e-mail for the token and type it.')
+    if not len(password1):
+        errors.append('You cannot have an empty password.')
+    if not password1 == password2:
+        errors.append('Your passwords do not match.')
+    if len(errors):
+        return render(
+            request,
+            'auth/tokenpassword.html',
+            context_instance = RequestContext(request, { 'username': username, 'errors': errors })
+        )
+    user.changepassword(password1)
+    return redirect('/hub/login')
 
 
 
