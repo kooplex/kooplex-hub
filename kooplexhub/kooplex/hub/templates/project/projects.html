@@ -26,8 +26,11 @@
   </nav>
 </div>                  <!-- row -->
 
-{% include 'app/notebooks-new-partial.html' %}
+{% include 'project/new.html' %}
+{% comment %}
+#FIXME:
 {% include 'app/about.html' %}
+{% endcomment %}
 
 {% if errors %}
 <div class="alert alert-danger" role="alert">
@@ -40,28 +43,24 @@
 <div class="tab-content">
   <div id="myprojects" class="tab-pane fade in active">
 
-        {% for item in shared_with_me_projects %}
-        {% if item.id in running %}
+        {% for item in projects_mine %}
           <div class="row">
-            {% include 'app/notebooks-project-partial.html' with publicvar=False %}
+            {% include 'project/project-partial.html' with publicvar=False %}
           </div>
-        {% endif %}
+        {% endfor %}
+        {% for item in projects_shared %}
+          <div class="row">
+            {% include 'project/project-partial.html' with publicvar=False %}
+          </div>
         {% endfor %}
 
-        {% for item in shared_with_me_projects %}
-        {% if item.id not in running %}
-          <div class="row">
-            {% include 'app/notebooks-project-partial.html' with publicvar=False %}
-          </div>
-        {% endif %}
-        {% endfor %}
 
   </div>
   <div id="otherprojects" class="tab-pane fade">
 
-        {% for item in public_projects %}
+        {% for item in projects_public %}
           <div class="row">
-            {% include 'app/notebooks-project-partial.html' with publicvar=True %}
+            {% include 'project/project-partial.html' with publicvar=True %}
           </div>
         {% endfor %}
 
