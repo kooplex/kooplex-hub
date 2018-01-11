@@ -1,4 +1,4 @@
-﻿"""
+"""
 Definition of forms.
 """
 
@@ -8,14 +8,25 @@ from django.utils.translation import ugettext_lazy as _
 
 class BootstrapAuthenticationForm(AuthenticationForm):
     """Authentication form which uses boostrap CSS."""
-    username = forms.CharField(max_length=254,
-                               widget=forms.TextInput({
-                                   'class': 'form-control',
-                                   'placeholder': 'Username'}))
-    password = forms.CharField(label=_("Password"),
-                               widget=forms.PasswordInput({
-                                   'class': 'form-control',
-                                   'placeholder':'Password'}))
+    username = forms.CharField(
+        max_length = 30, 
+        widget = forms.TextInput( { 'class': 'form-control' } )
+    )
+    password = forms.CharField(
+        max_length = 128, 
+        widget=forms.PasswordInput( {'class': 'form-control' } )
+    )
+
+#HACK
+    def __init__(self, req, *k, **kw):
+        if req.method != 'GET':
+            raise Exception(str(req) + str(k) + str(kw))
+        AuthenticationForm.__init__(self, req, *k, **kw)
+
+    def confirm_login_allowed(self, user):
+        raise Exception("almafa")
+        raise forms.ValidationError( _("ALMA" + str(user)), code = 'debug' )
+#ENDHACK
 
 class BootstrapPasswordChangeForm(PasswordChangeForm):
     """Authentication form which uses boostrap CSS."""
@@ -36,8 +47,3 @@ class BootstrapPasswordChangeForm(PasswordChangeForm):
                                    'class': 'form-control',
                                    'placeholder': 'Password'}))
 
-class DocumentForm(forms.Form):
-    docfile = forms.FileField(
-        label='Select a file',
-        help_text='max. 42 megabytes'
-    )
