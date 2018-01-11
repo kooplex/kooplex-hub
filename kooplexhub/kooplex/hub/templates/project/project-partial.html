@@ -1,7 +1,7 @@
 {% load custom_tags %}
-{% include 'app/notebooks-settings.html' %}
+{% include 'project/settings.html' %}
 
-{% if item.id in running  %}
+{% if item.is_running  %}
 
 <div class="panel panel-success" style="margin-bottom: 3px">
   <div class="panel-heading" style="padding: 5px 5px;">
@@ -12,7 +12,7 @@
     </a>
     <a data-toggle="collapse"  href="#collapse{{ item.id }}" style="text-decoration: none; color: gray">
       <strong data-toggle="tooltip" title="Running" data-placement="bottom">{{ item.name }}</strong>
-      {% if item.owner_username != user.username %} ( owned by {{ item.owner_username }} ) {% endif %}
+      {% if item.owner != user %} ( owned by {{ item.owner }} ) {% endif %}
       <span style="padding-left:50px;"> Using image:<strong>{{ item.image }}</strong></span>
     </a>
   </div>
@@ -28,7 +28,7 @@
     </a>
     <a data-toggle="collapse"  href="#collapse{{ item.id }}" style="text-decoration: none; color: gray">
       <strong>{{ item.name }}</strong>
-      {% if item.owner_username != user.username %} ( owned by {{ item.owner_username }} ) {% endif %}
+      {% if item.owner != user %} ( owned by {{ item.owner }} ) {% endif %}
       <span style="padding-left:50px;"> Using image:<strong>{{ item.image }}</strong></span>
     </a>
   </div>
@@ -44,7 +44,7 @@
       <div class=" col-md-5 col-sm-5 col-xs-5">
 
 {% if not publicvar %}
-      {% if item.id in running  %}
+      {% if item.is_running  %}
 
         <a href="{% url 'container-delete' %}?project_id={{ item.id }}">
           <button role="button" type="button" class="btn btn-danger" data-toggle="tooltip" title="Stop project container {{ item.name }}" data-placement="top">
@@ -62,10 +62,10 @@
           </button>
         </a>
         <a href="#">
-{% if item.owner_username == user.username %} 
+{% if item.owner == user %} 
           <button type="button" class="btn btn-default" data-toggle="tooltip" title="Project settings for running project {{ item.name }} is disabled" data-placement="top">
 {% else %}
-          <button type="button" class="btn btn-default" data-toggle="tooltip" title="Project settings for project {{ item.name }} is disabled, because it is owned by {{ item.owner_username  }}" data-placement="top">
+          <button type="button" class="btn btn-default" data-toggle="tooltip" title="Project settings for project {{ item.name }} is disabled, because it is owned by {{ item.owner }}" data-placement="top">
 {% endif %}
             <span class="glyphicon glyphicon-cog" aria-hidden="true"></span>
           </button>
@@ -88,7 +88,7 @@
             <span class="glyphicon glyphicon-flag" aria-hidden="true"></span>
           </button>
         </a>
-{% if item.owner_username == user.username %} 
+{% if item.owner == user %} 
         <a href="#" data-toggle="modal" data-target="#project-settings-{{ item.id  }}">
           <button role="button" type="button" class="btn btn-info" data-toggle="tooltip" title="Settings of project {{ item.name }}. You can change the image, modify volume attachments or delete the project here." data-placement="top">
             <span class="glyphicon glyphicon-cog" aria-hidden="true"></span>
@@ -107,7 +107,7 @@
 
             <!-- GIT RELATED STUFF -->
 
-        <a href="{% url 'notebooks-commitform' %}?project_id={{ item.id }}">
+        <a href="{% url 'project-commit' %}?project_id={{ item.id }}">
           <button role="button" type="button" class="btn btn-warning" data-toggle="tooltip" title="Version control of your project {{ item.name }}. You can commit your changes, revert to a former commited state or pull remote changes" data-placement="top">
             <span class="glyphicon glyphicon-random" aria-hidden="true"></span>
           </button>
@@ -115,7 +115,7 @@
 
             <!-- PROJECT RELATED STUFF -->
 
-{% if item.owner_username == user.username %} 
+{% if item.owner == user %} 
         <a href="{% url 'project-members-form' %}?project_id={{ item.id }}">
           <button role="button" type="button" class="btn btn-primary" data-toggle="tooltip" title="Manage the users of the project {{ item.name }}" data-placement="top">
             <span class="glyphicon glyphicon-user" aria-hidden="true"></span>
@@ -130,7 +130,7 @@
         </a>
 {% endif %}
 {% else %} 
-      {% if item.id in running  %}
+      {% if item.is_running  %}
 
         <a href="{% url 'container-delete' %}?project_id={{ item.id }}">
           <button role="button" type="button" class="btn btn-danger" data-toggle="tooltip" title="Stop project container {{ item.name }}" data-placement="top">
