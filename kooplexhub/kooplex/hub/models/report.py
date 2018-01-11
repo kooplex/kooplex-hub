@@ -36,8 +36,6 @@ class Report(models.Model):
 
 ##    wd = '_report'
 
-    class Meta:
-        db_table = "kooplex_hub_report"
 
 ##    def init(self, dashboard_server, project, creator, description, file="", type="", password=""):
 ##        self.ts_created = int(time())
