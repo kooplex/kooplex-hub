@@ -49,74 +49,16 @@ class Ldap:
         newentries = self.get_user(user)
         newentries[0]['attributes']['userPassword'] = [ newpassword ]
         self.modify_user(oldentries, newentries)
-        
 
-####    def get_user_dn(self, user):
-####        print_debug("")
-####        username = self.get_user_name(user)
-####        dn = 'uid=%s,ou=users,%s' % (username, self.base_dn)
-####        return dn
-####
-####    def user_to_ldap(self, user):
-####        print_debug("")
-####        dn = self.get_user_dn(user)
-####        object_class = [
-####            'top',
-####            'simpleSecurityObject',
-####            'organizationalPerson',
-####            'person',
-####            'inetOrgPerson',
-####            'posixAccount',
-####            'shadowAccount',
-####        ]
-####        attributes = {
-####            'cn': user.username,
-####            'uid': user.username,
-####            'uidNumber': user.uid,
-####            'gidNumber': user.gid,
-####            'homeDirectory': '/home/%s'%user.username,
-####            'sn': user.last_name,
-####            'displayName': '%s %s' % (user.first_name, user.last_name),
-####            'givenName': user.first_name,
-####            'loginShell': '/bin/bash',
-####            'mail': user.email,
-####            'shadowExpire': -1,
-####            'shadowFlag': 0,
-####            'shadowLastChange': 10877,
-####            'shadowMax': 999999,
-####            'shadowMin': 8,
-####            'shadowWarning': 7,
-####            'userPassword': user.password
-####        }
-####        return dn, object_class, attributes
-####
-####    def validate_user(self,username,password):
-####        print_debug("")
-####
-####        bind_dn = 'uid=%s,ou=users,%s' % (username, self.base_dn)
-####        ldapsrv = ldap3.Server(host=self.host, port=self.port)
-####        ldapcon = ldap3.Connection(ldapsrv, bind_dn, password)
-####        success = ldapcon.bind()
-####        if not success:
-####            raise ValidationError("Password doesn't match!")
-####        return ldapcon
-####
-####
-####
-####
-####    def ldap_to_user(self, entry):
-####        print_debug("")
-####        user = User(
-####            username=self.get_attribute(entry, 'uid'),
-####            first_name=self.get_attribute(entry, 'givenName'),
-####            last_name=self.get_attribute(entry, 'sn'),
-####            email=self.get_attribute(entry, 'mail')
-####        )
-####        user.uid = self.get_attribute(entry, 'uidNumber')
-####        user.gid = self.get_attribute(entry, 'gidNumber')
-####        user.home = self.get_attribute(entry, 'homeDirectory')
-####        return user
-####
+    def is_validpassword(self, user, password):
+        try:
+            entries = self.get_user(user)
+            return entries[0]['attributes']['userPassword'][0].decode() == password
+        except:
+            # user record may be missing
+            return False        
+
+
 ####    def get_max_uid(self):
 ####        print_debug("")
 ####        filter = '(objectClass=posixAccount)'
@@ -145,16 +87,6 @@ class Ldap:
 ####        self.ensure_group_added(group)
 ####        return user
 ####
-####    def ensure_user_added(self, user):
-####        print_debug("")
-####        try:
-####            u = self.get_user(user)
-####        except LdapException:
-####            u = self.add_user(user)
-####        return u
-####
-####
-####
 ####    def delete_user(self, user):
 ####        print_debug("")
 ####        group = self.make_user_group(user)
@@ -162,16 +94,6 @@ class Ldap:
 ####        dn = self.get_user_dn(user)
 ####        if not self.ldapconn.delete(dn):
 ####            raise LdapException(self.ldapconn.last_error)
-####
-####    def ensure_user_deleted(self, user):
-####        print_debug("")
-####        try:
-####            self.delete_user(user)
-####        except LdapException:
-####            pass
-####
-####    ###########################################################
-####    # Group manipulation
 ####
 ####    def get_group_name(self, group):
 ####        print_debug("")
@@ -273,8 +195,6 @@ class Ldap:
 ####            group = self.ldap_to_group(entries[0])
 ####            return group
 ####
-####    def modify_group(self):
-####        pass
 ####
 ####    def delete_group(self, group):
 ####        print_debug("")
@@ -289,11 +209,3 @@ class Ldap:
 ####        except LdapException:
 ####            pass
 ####
-####    ###########################################################
-####    # Group membership
-####
-####    def add_user_group(self):
-####        pass
-####
-####    def remove_user_group(self):
-####        pass

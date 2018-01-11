@@ -1,3 +1,3 @@
 from .notebooks import *
 from .reports import *
-from .changepassword import passwordresetForm, passwordtokenForm, passwordchangeForm
+from .password import passwordresetForm, passwordtokenForm, passwordchangeForm

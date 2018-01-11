@@ -6,7 +6,7 @@ from django.http import HttpRequest, HttpResponseRedirect
 from datetime import datetime
 
 from kooplex.hub.forms import BootstrapAuthenticationForm
-from kooplex.hub.views.changepassword import *
+from kooplex.hub.views import passwordresetForm, passwordtokenForm, passwordchangeForm
 
 def indexpage(request):
     """Renders the home page."""
@@ -43,9 +43,9 @@ login_kwargs = {
 urlpatterns = [
     url(r'^/?$', indexpage, name = 'indexpage'),
     url(r'^/tutorial$', tutorial, name = 'tutorial'),
+
     url(r'^/login/?$', login, login_kwargs, name = 'login'),
     url(r'^/logout$', logout, { 'next_page': '/hub', }, name = 'logout'),
-
     url(r'^/passwordreset$', passwordresetForm, name = 'passwordreset'),
     url(r'^/passwordtoken$', passwordtokenForm, name = 'passwordresettoken'),
     url(r'^/passwordchange$', passwordchangeForm, name = 'passwordchange'),
