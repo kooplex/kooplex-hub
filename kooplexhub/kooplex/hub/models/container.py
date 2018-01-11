@@ -1,4 +1,5 @@
 import json
+
 from django.db import models
 from django.utils import timezone
 
@@ -12,7 +13,7 @@ class ContainerType(models.Model):
     name = models.CharField(max_length = 32)
 
 class Container(models.Model):
-    id = models.UUIDField(primary_key = True)  #FIXME: TO BE REPLACED BY IntegerField
+    id = models.AutoField(primary_key = True)
     name = models.CharField(max_length = 200, null = True)
     user = models.ForeignKey(User, null = True)
     project = models.ForeignKey(Project, null = True)
@@ -37,9 +38,6 @@ class Container(models.Model):
 
     def __lt__(self, c):
         return self.launched_at < c.launched_at
-
-    class Meta:
-        db_table = "kooplex_hub_container"
 
     def save(self):
         self.image = self.project.image
@@ -78,8 +76,8 @@ class VolumeContainerBinding(models.Model):
 def init_model():
     containertypes = [ 'notebook', 'dashboard' ]
     for ct in containertypes:
-        cti = ContainerType.objects.get(name = ct)
-        if cti is None:
-            cti = ContainerType(name = ct)
-            cti.save()
+        try:
+            ContainerType.objects.get(name = ct)
+        except ContainerType.DoesNotExist:
+            ContainerType(name = ct).save()
 
