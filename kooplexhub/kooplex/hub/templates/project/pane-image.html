@@ -1,15 +1,8 @@
-<p>The current image for project {{ item.name }} is 
-<strong> 
-  {% for var in item.variables %}
-    {% if var.key == 'container_image' %}
-      {{ var.value }}
-    {% endif %}
-  {% endfor %}
-</strong>.</p>
+<p>The current image for project {{ item.name }} is <strong>{{ item.image }}</strong>.</p>
 
 <label>Your choice for the new image:
 <select id="project_images-{{ item.id }}" name="project_image-{{ item.id }}">
-  {% for image in notebook_images %}
+  {% for image in images %}
     <option value="{{ image }}" {% if image = item.image %} selected {% endif %}>{{ image }}</option>
   {% endfor %}
 </select>
