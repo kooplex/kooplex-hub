@@ -2,9 +2,9 @@
   <div class="container-fluid">
     <div class="navbar-header">
       {% if user.is_authenticated %}
-        <a href="{% url 'notebooks' %}" class="navbar-brand"><img src="/static/app/content/logo_mono.png" style="height: 30px" alt="Kooplex Hub"></a>
+        <a href="{% url 'projects' %}" class="navbar-brand"><img src="/static/app/content/logo_mono.png" style="height: 30px" alt="Kooplex Hub"></a>
       {% else %}
-        <a href="{% url 'home' %}" class="navbar-brand"><img src="/static/app/content/logo_mono.png" style="height: 30px" alt="Kooplex Hub"></a>
+        <a href="{% url 'indexpage' %}" class="navbar-brand"><img src="/static/app/content/logo_mono.png" style="height: 30px" alt="Kooplex Hub"></a>
       {% endif %}
     </div>
     <ul class="nav navbar-nav">
@@ -13,22 +13,12 @@
         <li class="dropdown">
           <a class="dropdown-togle" data-toggle="dropdown" href="#" role="button" type="button" data-toggle="tooltip" title="Manage jupyter notebook projects" data-placement="bottom">Projects <span class="caret"/></a>
           <ul class="dropdown-menu">
-            <li><a href="{% url 'notebooks' %}">List projects</a></li>
+            <li><a href="{% url 'projects' %}">List projects</a></li>
             <li><a href="#" data-toggle="modal" data-target="#project-new">New project</a></li>
           </ul>
         </li>
         <li><a href="/gitlab" target="_blank" role="button" type="button" data-toggle="tooltip" title="Browse project or file issues" data-placement="bottom">Gitlab</a></li>
         <li><a href="/ownCloud" target="_blank" role="button" type="button" data-toggle="tooltip" title="Browse your files in the cloud" data-placement="bottom">Owncloud</a></li>
-    <!-- deprecated in favor of davfs -->
-        <!--
-        <li class="dropdown">
-          <a class="dropdown-togle" data-toggle="dropdown" href="#" role="button" type="button" data-toggle="tooltip" title="Access cloud storage" data-placement="bottom">Owncloud <span class="caret"/></a>
-          <ul class="dropdown-menu">
-            <li><a href="#" data-toggle="modal" data-target="#owncloud">Synchronize</a></li>
-            <li><a href="/ownCloud" target="_blank">Owncloud dashboard</a></li>
-          </ul>
-        </li>
-        // -->
         {% if user.is_superuser %}
           <li><a href="{% url 'usermanagement-form' %}">Admin</a></li>
         {% endif %}
@@ -71,6 +61,10 @@
     </ul>
   </div>     <!-- container-fluid -->
 </div>       <!-- navbar -->
+
+{% comment %}
+#FIXME
 {% if user.is_authenticated %}
   {% include 'app/update-bio.html' %}
 {% endif %}
+{% endcomment %}
