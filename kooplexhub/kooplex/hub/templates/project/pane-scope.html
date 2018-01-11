@@ -1,8 +1,9 @@
 <label>Change project's scope</label><br>
-{% if item.visibility == "private" %}
+#FIXME
+{% if item.scope == "private" %}
     <button type="submit" class="btn btn-danger" name="button" value="makepublic">Make it public</button>
 {% endif %}
-{% if item.visibility == "public" %}
+{% if item.scope == "public" %}
     <button type="submit" class="btn btn-danger" name="button" value="makeprivate">Make it private</button>
 {% endif %}
 
