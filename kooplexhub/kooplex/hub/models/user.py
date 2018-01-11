@@ -35,9 +35,6 @@ class User(DJUser):
                 raise Exception("Unknown attribute: %s" % k)
             self._data[k] = v
 
-    class Meta:
-        db_table = "kooplex_hub_hubuser"
-
     def init(self, id):
         self.gitlab_id = id
 
