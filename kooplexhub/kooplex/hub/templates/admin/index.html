@@ -2,14 +2,12 @@
 {% load i18n admin_static %}
 
 {% block sidebar %}
-    {{ block.super }}
-<div id="content-related">
+{{ block.super }}
 
+<div id="content-related">
     <div class="module">
-        <a href="{% url 'refresh_images' %}">
-          <button role="button" type="button" class="btn btn-danger" data-toggle="tooltip" title="Stop project container " data-placement="top">
-            <span class="glyphicon glyphicon-remove-circle" aria-hidden="true"> Refresh Docker Images</span>
-          </button>
+        <a href="{% url 'refresh-images' %}" class="btn" data-toggle="tooltip" title="Turn to docker API and refresh available images in the model.">
+            Refresh Docker Images
         </a>
     </div>
 </div>
