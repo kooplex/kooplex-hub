@@ -14,10 +14,10 @@
         </ul>
         <div class="tab-content">
           <div id="pane_image-{{ item.id }}" class="tab-pane fade in active">
-            {% include 'app/notebooks-change-image.html' %}
+            {% include 'project/pane-image.html' %}
           </div>
           <div id="pane_volume-{{ item.id }}" class="tab-pane fade">
-            {% include 'app/notebooks-new-pane_volume.html' %}
+            {% include 'project/pane-volume.html' %}
           </div>
           <div id="pane_deletion-{{ item.id }}" class="tab-pane fade">
             <p>All unshared data related to this project are lost by the deletion.</p>
@@ -25,7 +25,7 @@
             <button type="submit" class="btn btn-danger" name="button" value="delete"> Really delete</button>
           </div>
             <div id="pane_scope-{{ item.id }}" class="tab-pane fade">
-            {% include 'app/notebooks-new-pane_scope.html' %}
+            {% include 'project/pane-scope.html' %}
           </div>
         </div>   <!-- tab-content -->
       </div>     <!-- modal-body -->
