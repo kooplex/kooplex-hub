@@ -40,7 +40,7 @@ class Container(models.Model):
 
     @property
     def volumes(self):
-        for vcb in VolumeContainerBinding(container = self):
+        for vcb in VolumeContainerBinding.objects.filter(container = self):
             yield vcb.volume
 
 class VolumeContainerBinding(models.Model):

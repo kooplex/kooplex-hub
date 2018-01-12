@@ -1,3 +1,4 @@
+import os
 import re
 import json
 from docker.client import Client
@@ -27,36 +28,28 @@ class Docker:
                 return item
         return None
 
- 
-    def create_container(self, container):
-        volumes = container.get_volumes() #FIXME: [ '/etc/jupyter_notebook_config.py', ... ]
-        binds = container.get_binds() #FIXME: {'/srv/kooplex/mnt_kooplex/kooplex/notebook/etc/jupyter_notebook_config.py': {'mode': 'rw', 'bind': '/etc/jupyter_notebook_config.py'}, ... }
+    def create_container(self, container, volumemapping):
+        volumes = []    # the list of mount points in the container
+        binds = {}      # a mapping dictionary of the container mounts
+        # the bare minimum like for a notebook: home, git and share folders
+        for vol, mp, mode in volumemapping:
+            volumes.append(mp)
+            binds[vol] = { 'bind': mp, 'mode': mode }
+        # additional volumes specified by the owner
+        for volume in container.volumes:
+            mp = os.path.join('/vol', volume.name)
+            volumes.append(mp)
+            binds[volume.name] = { 'bind': mp, 'mode': 'rw' } #FIXME: should come from model
         host_config = self.client.create_host_config(
             binds = binds,
             privileged = True
         )
-        networking_config = container.get_networking_config() #FIXME
-####    def get_networking_config(self):
-####        networking_config = None
-####        if self.network:
-####            networking_config = {
-####                'EndpointsConfig': {
-####                    self.network: {}
-####                    }
-####               }
-####            if self.ip:
-####                networking_config['EndpointsConfig'][self.network] = {
-####                        'IPAMConfig': {
-####                            'IPv4Address': self.ip,
-####                            #'IPv6Address': '...',
-####                        }
-####                    }
-####        return networking_config
+        networking_config = { 'EndpointsConfig': { self.network: {} } }
+        ports = [ 8000 ] #FIXME
         if container.environment is None:
             environment = containser.environment = json.dumps(self.environment)
         else:
             environment = json.loads(container.environment)
-        ports = [ 8000 ] #FIXME
         self.client.create_container(
             name = container.name,
             image = container.image.imagename,
@@ -64,14 +57,21 @@ class Docker:
             hostname = container.name,
             host_config = host_config,
             networking_config = networking_config,
-            command = container.command, #FIXME
+            command = container.command, #for notebook it is not set
             environment = environment,
             volumes = volumes,
             ports = ports
         )
         return self.get_container(container)
 
-    def run_container(self, container):
+    def run_container(self, container, volumemapping):
         docker_container_info = self.get_container(container)
         if docker_container_info is None:
-            docker_container_info = self.create_container(container)
+            docker_container_info = self.create_container(container, volumemapping)
+        if docker_container_info['Status'] == 'Created':
+            self.client.start(container.name)
+        # we need to retrieve the IP address
+        docker_container_info = self.get_container(container)
+        container.ip = docker_container_info['NetworkSettings']['Networks'][self.network]['IPAddress']
+        assert docker_container_info['State'] == 'running', "Container failed to start: %s" % docker_container_info
+

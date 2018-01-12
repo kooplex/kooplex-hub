@@ -20,7 +20,7 @@ class Project(models.Model):
 
     @property
     def name_with_owner(self):
-        return "%s_%s" % (self.name, self.owner.username)
+        return "%s-%s" % (self.name, self.owner.username)
 
     @property
     def collaborators(self):

@@ -12,11 +12,12 @@ from kooplex.lib import Proxy, Docker
 
 class Spawner:
        
-    def __init__(self, user, project, containertype, environment):
+    def __init__(self, user, project, containertype, environment, volumemapping):
         self.user = user.user
         self.project = project
         self.containertype = containertype
         self.environment = environment
+        self.volumemapping = volumemapping
 
         container_name_info = { 'username': user.username, 'projectname': project.name_with_owner }
         self.container_name = get_settings('spawner', 'pattern_containername') % container_name_info
@@ -57,7 +58,7 @@ class Spawner:
         return container
 
     def start_container(self, container):
-        self.docker.run_container(container)
+        self.docker.run_container(container, self.volumemapping)
         container.is_running = True
         container.save()
         self.proxy.add_route(notebook.proxy_path, notebook.ip, notebook.port) #FIXME: get them
@@ -228,6 +229,11 @@ def spawn_project_container(user, project):
 #        mpgids = []
 #        for gid_, gidnames_ in lut_gid_gidname.items():
 #            mpgids.append("%s:%d" % (("_".join(gidnames_))[:10], gid_))
+    volumemapping = [
+        ('kooplex-home', '/mnt/.volumes/home', 'rw'),
+        ('kooplex-git', '/mnt/.volumes/git', 'rw'),
+        ('kooplex-share', '/mnt/.volumes/share', 'rw'),
+    ]
     environment = {
         'NB_USER': user.username,
         'NB_UID': user.uid,
@@ -245,7 +251,7 @@ def spawn_project_container(user, project):
     }
     try:
         notebook = ContainerType.objects.get(name = 'notebook')
-        spawner = Spawner(user, project, notebook, environment)
+        spawner = Spawner(user, project, notebook, environment, volumemapping)
         spawner.run_container()
     except:
         raise
