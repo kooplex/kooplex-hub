@@ -1,12 +1,8 @@
-import docker.client
-from django.db import models
 import os
 
-#TODO: fall back to native module
-##from kooplex.lib.smartdocker import Docker
+from django.db import models
+
 from .project import Project
-
-
 
 class Volume(models.Model):
     id = models.AutoField(primary_key = True)
@@ -15,26 +11,26 @@ class Volume(models.Model):
     description = models.TextField(null = True)
 
     def __str__(self):
-        return self.name
-
-    def create(self, uid = 0, gid = 0):
-        d = Docker()
-        url = d.get_docker_url()
-        dockerclient = docker.client.Client(base_url = url)
-        resp = dockerclient.create_volume(name = self.name)
-        os.chown(resp['Mountpoint'], uid, gid)
-        # a typical response looks like
-        # {'Mountpoint': '/var/lib/docker/volumes/kortefa/_data', 'Name': 'kortefa', 'Labels': None, 'Scope': 'local', 'Options': {}, 'Driver': 'local'}
-        # maybe this info should be part of the model and be saved now
-        self.save()
-        return resp
-
-    def delete(self):
-        pass
+        return self.displayname
 
     @property
     def container_mountpoint_(self):
         return os.path.join('/vol', self.name)
+
+#    def create(self, uid = 0, gid = 0):
+#        d = Docker()
+#        url = d.get_docker_url()
+#        dockerclient = docker.client.Client(base_url = url)
+#        resp = dockerclient.create_volume(name = self.name)
+#        os.chown(resp['Mountpoint'], uid, gid)
+#        # a typical response looks like
+#        # {'Mountpoint': '/var/lib/docker/volumes/kortefa/_data', 'Name': 'kortefa', 'Labels': None, 'Scope': 'local', 'Options': {}, 'Driver': 'local'}
+#        # maybe this info should be part of the model and be saved now
+#        self.save()
+#        return resp
+#
+#    def delete(self):
+#        pass
 
 
 class VolumeProjectBinding(models.Model):
@@ -45,6 +41,7 @@ class VolumeProjectBinding(models.Model):
     def __str__(self):
        return "%s-%s" % (self.project.name, self.volume.name)
 
-    @property
-    def accessrights_(self):
-        return 'rw'
+#    @property
+#    def accessrights_(self):
+#        return 'rw'
+

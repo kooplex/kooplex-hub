@@ -13,7 +13,7 @@
     <a data-toggle="collapse"  href="#collapse{{ item.id }}" style="text-decoration: none; color: gray">
       <strong data-toggle="tooltip" title="Running" data-placement="bottom">{{ item.name }}</strong>
       {% if item.owner != user %} ( owned by {{ item.owner }} ) {% endif %}
-      <span style="padding-left:50px;"> Using image:<strong>{{ item.image }}</strong></span>
+      <span class="badge" style="float: inline-end;"> Using image:<strong>{{ item.image }}</strong></span>
     </a>
   </div>
 
@@ -29,7 +29,7 @@
     <a data-toggle="collapse"  href="#collapse{{ item.id }}" style="text-decoration: none; color: gray">
       <strong>{{ item.name }}</strong>
       {% if item.owner != user %} ( owned by {{ item.owner }} ) {% endif %}
-      <span style="padding-left:50px;"> Using image:<strong>{{ item.image }}</strong></span>
+      <span class="badge" style="float: inline-end;"> Using image:<strong>{{ item.image }}</strong></span>
     </a>
   </div>
 

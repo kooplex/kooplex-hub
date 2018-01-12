@@ -4,13 +4,7 @@ from django.http import HttpRequest, HttpResponseRedirect,HttpResponse
 from django.template import RequestContext
 from django.contrib import admin
 
-from kooplex.hub.models.container import Container
-from kooplex.hub.models.project import Project, UserProjectBinding
-from kooplex.hub.models.report import Report
-from kooplex.hub.models.mountpoint import MountPoint, MountPointProjectBinding, MountPointPrivilegeBinding
-from kooplex.hub.models.user import User
-from kooplex.hub.models.volume import Volume, VolumeProjectBinding
-from kooplex.hub.models.image import init_model as imagemodel_init
+from kooplex.hub.models import *
 
 
 # Register your models here.
@@ -90,6 +84,13 @@ def refreshimages(request):
     imagemodel_init()
     return redirect('/admin')
 
+def initmodel(request):
+#FIXME: authorize
+    init_containertypes()
+    init_scopetypes()
+    return redirect('/admin')
+
 urlpatterns = [
-    url(r'^refresh_images', refreshimages, name = 'refresh-images'),
+    url(r'^refreshimages', refreshimages, name = 'refresh-images'),
+    url(r'^initmodel', initmodel, name = 'init-model'),
 ]

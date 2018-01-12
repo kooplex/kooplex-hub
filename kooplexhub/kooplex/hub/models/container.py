@@ -14,6 +14,7 @@ class ContainerType(models.Model):
 
 class Container(models.Model):
     id = models.AutoField(primary_key = True)
+    dockerid = models.UUIDField(unique = True, null = True)
     name = models.CharField(max_length = 200, null = True)
     user = models.ForeignKey(User, null = True)
     project = models.ForeignKey(Project, null = True)

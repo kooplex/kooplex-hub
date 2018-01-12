@@ -2,12 +2,10 @@ import json, os
 import re
 from django.db import models
 
-from kooplex.lib.gitlab import Gitlab
-from kooplex.lib.libbase import get_settings
+from kooplex.lib import get_settings
 
 from .scope import ScopeType
 from .image import Image
-
 from .user import User
 
 class Project(models.Model):
@@ -36,6 +34,22 @@ class Project(models.Model):
 
     def __lt__(self, p):
         return self.name < p.name
+
+    @property
+    def collaborators(self):
+        for upb in UserProjectBinding.objects.filter(project = self):
+            yield upb.user
+
+    @property
+    def volumes(self):
+        from .volume import VolumeProjectBinding
+        for vpb in VolumeProjectBinding.objects.filter(project = self):
+            yield vpb.volume
+
+    @property
+    def name_with_owner(self):
+        return "%s_%s" % (self.name, self.owner.username)
+          
 
 #####FIXME: get rid of init if possible
 ####    def init(self, gitlab_dict):
@@ -140,3 +154,4 @@ class UserProjectBinding(models.Model):
 
     def __str__(self):
        return "%s-%s" % (self.project.name, self.hub_user.username)
+

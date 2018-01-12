@@ -50,6 +50,6 @@ urlpatterns = [
     url(r'^/passwordtoken$', passwordtokenForm, name = 'passwordresettoken'),
     url(r'^/passwordchange$', passwordchangeForm, name = 'passwordchange'),
 
-    url(r'^/reports', include('kooplex.hub.views.reports')),
     url(r'^/projects', include('kooplex.hub.views.projects')),
+    url(r'^/reports', include('kooplex.hub.views.reports')),
 ]

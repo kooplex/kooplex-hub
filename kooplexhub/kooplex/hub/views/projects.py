@@ -1,56 +1,12 @@
 from django.conf.urls import patterns, url, include
 from django.core.urlresolvers import reverse
 from django.shortcuts import render, redirect
-from django.http import HttpRequest#, HttpResponseRedirect,HttpResponse
+from django.http import HttpRequest
 from django.template import RequestContext
 
-from kooplex.hub.models.image import Image
-from kooplex.hub.models.project import Project, UserProjectBinding
-from kooplex.hub.models.user import User
-from kooplex.hub.models.scope import ScopeType
+from kooplex.hub.models import *
+from kooplex.lib import spawn_project_container
 
-##import logging
-##logger = logging.getLogger(__name__)
-##debug_logger = logging.getLogger('debug_logger')
-##info_logger = logging.getLogger('info_logger')
-##import git
-##import json
-##import logging
-##import logging.config
-##import os.path
-##from distutils.dir_util import remove_tree
-##import pwgen
-##import re
-##from datetime import datetime
-##from django.contrib.auth.models import User
-##from django.shortcuts import render
-##from django.template.response import TemplateResponse
-##
-##from kooplex.hub.models.mountpoint import MountPoint, MountPointProjectBinding, MountPointPrivilegeBinding
-###from kooplex.hub.models.notebook import Notebook
-##from kooplex.hub.models.report import Report
-###from kooplex.hub.models.session import Session
-##from kooplex.hub.models.volume import Volume, VolumeProjectBinding
-##from kooplex.lib.gitlab import Gitlab
-##from kooplex.lib.gitlabadmin import GitlabAdmin
-##from kooplex.lib.jupyter import Jupyter
-##from kooplex.lib.libbase import LibBase
-##from kooplex.lib.libbase import get_settings,  mkdir
-##
-##from kooplex.lib.ochelper import OCHelper
-##from kooplex.lib.repo import Repo  # GONNA BE OBSOLETED
-##from kooplex.lib.repository import repository
-##from kooplex.lib.sendemail import send_new_password
-##from kooplex.lib.smartdocker import Docker
-##from kooplex.lib.spawner import Spawner
-##
-##from kooplex.lib.ldap import Ldap
-##import subprocess
-##
-##NOTEBOOK_DIR_NAME = 'notebooks'
-##HUB_NOTEBOOKS_URL = '/hub/notebooks'
-##
-##from kooplex.lib.debug import *
 
 def projects(request, *v, **kw):
     """Renders the notebooks page"""
@@ -65,6 +21,9 @@ def projects(request, *v, **kw):
     projects_public = sorted(Project.objects.filter(scope = PUBLIC).exclude(owner = user))
     images = Image.objects.all()
     scopes = ScopeType.objects.all()
+    volumes = Volume.objects.all()
+    volumes_attached = dict( map(lambda p: (p, [ vpb.volume for vpb in VolumeProjectBinding.objects.filter(project = p) ]), projects_mine) )
+    #volumes_attached = dict( map(lambda p: (p, [ vpb.volume for vpb in VolumeProjectBinding.objects.filter(project = p) ]), projects_sharedwithme) )
 #FIXME:
 #volumes
 
@@ -79,17 +38,63 @@ def projects(request, *v, **kw):
             'projects_public': projects_public,
             'images' : images,
             'scopes' : scopes,
-            'errors' : kw.get('error', None),
+            'volumes': volumes,
+            'volumes_attached': volumes_attached,
+            'errors' : kw.get('errors', None),
             'year' : 2018,
         })
     )
 
+def project_new(request):
+    assert isinstance(request, HttpRequest)
+    if request.user.is_anonymous():
+        return redirect(reverse('login'))
+#FIXME:
+
+def project_configure(request):
+    assert isinstance(request, HttpRequest)
+    if request.user.is_anonymous():
+        return redirect(reverse('login'))
+#FIXME:
+
+def project_collaborate(request):
+    assert isinstance(request, HttpRequest)
+    if request.user.is_anonymous():
+        return redirect(reverse('login'))
+#FIXME:
+
+def project_revision(request):
+    assert isinstance(request, HttpRequest)
+    if request.user.is_anonymous():
+        return redirect(reverse('login'))
+#FIXME:
+
+def project_start(request):
+    assert isinstance(request, HttpRequest)
+    if request.user.is_anonymous():
+        return redirect(reverse('login'))
+
+    try:
+        project_id = request.GET['project_id']
+        project = Project.objects.get(id = project_id)
+        if project.owner != request.user:
+            UserProjectBinding(user = user, project = project)
+    except KeyError:
+        return redirect('/')
+    except Project.DoesNotExist:
+        return projects(request, kw = { 'errors': [ 'No such project' ] } )
+    except UserProjectBinding.DoesNotExist:
+        return projects(request, kw = { 'errors': [ 'You are not allowed to run this project. Ask %s for collaboration.' % project.owner ] } )
+    spawn_project_container(request.user, project)   # TODO: check for error and get it back to user
+    return redirect('projects')
+
+
 urlpatterns = [
     url(r'^/?$', projects, name = 'projects'),
-    url(r'^/new$', projects, name = 'project-new'), #FIXME:
-    url(r'^/configure$', projects, name = 'project-settings'), #FIXME:
-    url(r'^/revisioncontrol$', projects, name = 'project-commit'), #FIXME:
-    url(r'^/collaborate$', projects, name = 'project-members-form'), #FIXME:
-
-    url(r'^/start$', projects, name = 'container-start'), #FIXME:
+    url(r'^/new$', project_new, name = 'project-new'), 
+    url(r'^/configure$', project_configure, name = 'project-settings'), 
+    url(r'^/collaborate$', project_collaborate, name = 'project-members-form'), 
+    url(r'^/revisioncontrol$', project_revision, name = 'project-commit'), 
+    url(r'^/start$', project_start, name = 'container-start'), 
 ]
+
