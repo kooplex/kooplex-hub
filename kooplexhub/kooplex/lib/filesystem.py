@@ -11,11 +11,10 @@ def _mkdir(d, uid = 0, gid = 0, mode = 0b111101000):
     os.chmod(d, mode)
 
 def mkdir_project(user, project):
-    from kooplex.hub.models import User
-    git_host = os.path.join(get_settings('volumes','git'), user.username, project.name_with_owner)
-    _mkdir(git_host, user.uid, G_OFFSET + project.id, 0b111100000)
-    share_host = os.path.join(get_settings('volumes','share'), project.name_with_owner)
-    _mkdir(share_host, User.objects.get(user = project.owner).uid, G_OFFSET + project.id, 0b111111101)
+    folder_git = os.path.join(get_settings('volumes','git'), user.username, project.name_with_owner)
+    _mkdir(folder_git, user.uid, G_OFFSET + project.id, 0b111100000)
+    folder_share = os.path.join(get_settings('volumes','share'), project.name_with_owner)
+    _mkdir(folder_share, project.owner.uid, G_OFFSET + project.id, 0b111111101)
 
 def mkdir_davsecret(user):
     dir_secret = os.path.join(get_settings('volumes', 'home'), user.username, '.davfs2')

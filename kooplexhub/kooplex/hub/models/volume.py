@@ -1,4 +1,4 @@
-import os
+#import os
 
 from django.db import models
 
@@ -13,9 +13,9 @@ class Volume(models.Model):
     def __str__(self):
         return self.displayname
 
-    @property
-    def container_mountpoint_(self):
-        return os.path.join('/vol', self.name)
+#    @property
+#    def container_mountpoint_(self):
+#        return os.path.join('/vol', self.name)
 
 #    def create(self, uid = 0, gid = 0):
 #        d = Docker()

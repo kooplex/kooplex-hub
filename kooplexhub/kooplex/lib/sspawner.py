@@ -1,5 +1,5 @@
 import os
-import uuid
+import json
 import random
 from os import path
 from netaddr import IPAddress
@@ -12,10 +12,11 @@ from kooplex.lib import Proxy, Docker
 
 class Spawner:
        
-    def __init__(self, user, project, containertype):
+    def __init__(self, user, project, containertype, environment):
         self.user = user.user
         self.project = project
         self.containertype = containertype
+        self.environment = environment
 
         container_name_info = { 'username': user.username, 'projectname': project.name_with_owner }
         self.container_name = get_settings('spawner', 'pattern_containername') % container_name_info
@@ -38,11 +39,34 @@ class Spawner:
         except Container.DoesNotExist:
             return None
 
+    def new_container(self):
+        from kooplex.hub.models import Container
+        container = Container(
+            name = self.container_name,
+            user = self.user,
+            project = self.project,
+            container_type = self.containertype,
+            environment = json.dumps(self.environment),
+        )
+        # now we copy information from project to container instance
+        container.init()
+
+        #create folders here and set ownership
+        mkdir_project(self.user, self.project)
+
+        return container
+
+    def start_container(self, container):
+        self.docker.run_container(container)
+        container.is_running = True
+        container.save()
+        self.proxy.add_route(notebook.proxy_path, notebook.ip, notebook.port) #FIXME: get them
+
     def run_container(self):
         container = self.get_container()
         if container is None:
             container = self.new_container()
-#            notebook = self.start_notebook(notebook)
+            self.start_container(container)
         raise Exception(str(container))
 #        else:
 #            # TODO: verify if accessible, restart if necessary
@@ -57,55 +81,6 @@ class Spawner:
 #                notebook = self.make_notebook()
 #                notebook = self.start_notebook(notebook)
 #        return notebook
-
-    def new_container(self):
-        from kooplex.hub.models import Container
-        container = Container(
-            name = self.container_name,
-            user = self.user,
-            project = self.project,
-            container_type = self.containertype,
-        )
-
-        # we have to make sure if more than one mount points share the same group id, we collapse their names
-#        lut_gid_gidname = {}
-#        for mpb in MountPointProjectBinding.objects.filter(project = self.project):
-#            if mpb.mountpoint.type == 'nfs' and mpb.mountpoint.host_groupid > 0:
-#                gid_ = mpb.mountpoint.host_groupid
-#                gidname_ = mpb.mountpoint.name.lower()
-#                if not gid_ in lut_gid_gidname:
-#                    lut_gid_gidname[gid_] = []
-#                lut_gid_gidname[gid_].append(gidname_)
-#        mpgids = []
-#        for gid_, gidnames_ in lut_gid_gidname.items():
-#            mpgids.append("%s:%d" % (("_".join(gidnames_))[:10], gid_))
-
-#NOTE: offset is hardcoded here!
-#        G_OFFSET = 20000
-#        notebook.set_environment({
-#                'NB_USER': self.username,
-#                'NB_UID': U.uid,
-#                'NB_GID': U.gid,
-#                'NB_URL': notebook_path,
-#                'NB_PORT': self.port,
-#                'PR_ID': self.project.id,
-#                'PR_NAME': self.project.groupname_,
-#                'PR_FULLNAME': self.project.name,
-#                'PR_PWN': projectname,
-#                'PR_MEMBERS': ",".join(projectmembers),
-#                'PR_URL': "ssh://git@%s/%s.git" % (get_settings('gitlab', 'ssh_host'), self.project.path_with_namespace),
-#                'GID_OFFSET': G_OFFSET,
-#                'MNT_GIDS': ",".join(mpgids)
-#            })
-
-        #create folders here and set ownership
-        mkdir_project(self.user, self.project)
-
-#        notebook.set_binds(binds)
-#        # TODO: make binds read-only once config is fixed
-#        notebook.set_ports([self.port])
-
-        return container
 
 
 
@@ -178,12 +153,6 @@ class Spawner:
 
 
 
-    def start_notebook(self, notebook):
-        self.docli.ensure_container_running(notebook)
-        notebook.is_stopped = False
-        self.pxcli.add_route(notebook.proxy_path, notebook.ip, notebook.port)
-        notebook.save()
-        return notebook
 
 
     def stop_notebook(self, notebook):
@@ -246,9 +215,37 @@ class Spawner:
 
 def spawn_project_container(user, project):
     from kooplex.hub.models import ContainerType
+    from .filesystem import G_OFFSET
+    # we have to make sure if more than one mount points share the same group id, we collapse their names
+#        lut_gid_gidname = {}
+#        for mpb in MountPointProjectBinding.objects.filter(project = self.project):
+#            if mpb.mountpoint.type == 'nfs' and mpb.mountpoint.host_groupid > 0:
+#                gid_ = mpb.mountpoint.host_groupid
+#                gidname_ = mpb.mountpoint.name.lower()
+#                if not gid_ in lut_gid_gidname:
+#                    lut_gid_gidname[gid_] = []
+#                lut_gid_gidname[gid_].append(gidname_)
+#        mpgids = []
+#        for gid_, gidnames_ in lut_gid_gidname.items():
+#            mpgids.append("%s:%d" % (("_".join(gidnames_))[:10], gid_))
+    environment = {
+        'NB_USER': user.username,
+        'NB_UID': user.uid,
+        'NB_GID': user.gid,
+#        'NB_URL': notebook_path, #FIXME
+        'NB_PORT': 8000,
+        'PR_ID': project.id,
+        'PR_NAME': project.name, #FIXME:
+        'PR_FULLNAME': project.name,
+        'PR_PWN': project.name,
+#        'PR_MEMBERS': ",".join(projectmembers),
+#        'PR_URL': "ssh://git@%s/%s.git" % (get_settings('gitlab', 'ssh_host'), self.project.path_with_namespace),
+        'GID_OFFSET': G_OFFSET,
+#        'MNT_GIDS': ",".join(mpgids)
+    }
     try:
         notebook = ContainerType.objects.get(name = 'notebook')
-        spawner = Spawner(user, project, notebook)
+        spawner = Spawner(user, project, notebook, environment)
         spawner.run_container()
     except:
         raise

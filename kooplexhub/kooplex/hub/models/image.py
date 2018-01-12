@@ -1,6 +1,6 @@
 from django.db import models
 
-from kooplex.lib.docker import Docker
+from kooplex.lib import get_settings
 
 class Image(models.Model):
     id = models.AutoField(primary_key = True)
@@ -12,10 +12,10 @@ class Image(models.Model):
 
     @property
     def imagename(self):
-        return "kooplex-notebook-" + self.name  #FIXME: get_settings 
-
+        return get_settings('docker', 'pattern_imagename') % { 'imagename': self.name }
 
 def init_model():
+    from kooplex.lib import Docker
     # the list of the names of the currently available images as of docker API information
     images = list(Docker().list_imagenames())
     for image in Image.objects.all():
