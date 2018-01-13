@@ -68,7 +68,8 @@ class Docker:
         docker_container_info = self.get_container(container)
         if docker_container_info is None:
             docker_container_info = self.create_container(container, volumemapping)
-        if docker_container_info['Status'] in [ 'Created', 'Stopped' ]:
+        status = docker_container_info['Status']
+        if status == 'Created' or status.startswith('Exited'):
             self.start_container(container)
 
     def start_container(self, container):
