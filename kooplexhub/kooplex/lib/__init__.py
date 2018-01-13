@@ -11,4 +11,4 @@ from .docker import Docker
 from .jupyter import Jupyter
 
 from .filesystem import write_davsecret, mkdir_project
-from .sspawner import spawn_project_container
+from .sspawner import spawn_project_container, stop_project_container

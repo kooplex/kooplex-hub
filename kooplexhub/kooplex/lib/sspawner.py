@@ -61,27 +61,13 @@ class Spawner:
         self.docker.run_container(container, self.volumemapping)
         container.is_running = True
         container.save()
-        self.proxy.add_route(notebook.proxy_path, notebook.ip, notebook.port) #FIXME: get them
+        self.proxy.add_route(container.proxy_path, container.ip, 8000) #FIXME: get them
 
     def run_container(self):
         container = self.get_container()
         if container is None:
             container = self.new_container()
-            self.start_container(container)
-        raise Exception(str(container))
-#        else:
-#            # TODO: verify if accessible, restart if necessary
-#            container = self.docli.get_container(notebook)
-#            if not container:
-#                notebook.delete()
-#                notebook = self.make_notebook()
-#                notebook = self.start_notebook(notebook)
-#            elif container.state != 'running':
-#                self.docli.ensure_container_removed(container)
-#                notebook.delete()
-#                notebook = self.make_notebook()
-#                notebook = self.start_notebook(notebook)
-#        return notebook
+        self.start_container(container)
 
 
 
@@ -90,61 +76,11 @@ class Spawner:
 
 
 
-
-
-    def pick_random_ip(self):
-        network_name = get_settings('docker', 'network','')
-        client = self.docli.make_docker_client()
-        network_inspect = client.inspect_network(network_name)
-        used_ips = [ IPAddress(network_inspect['Containers'][l]['IPv4Address'].split("/")[0]).value for l in network_inspect['Containers']]
-        ip_pool = list(range(IPAddress(self.ip_pool[0]).value, IPAddress(self.ip_pool[1]).value))
-        for i in used_ips:
-            try:
-                ip_pool.remove(i)
-            except ValueError:
-                1==1
-
-        ip = IPAddress(ip_pool[random.randint(0,len(ip_pool))])
-
-        return str(ip)
 
 
     def get_external_url(self, path):
         url = self.pxcli.get_external_url(path)
         return url
-
-    def define_binds(self):
-        binds = {}
-        # constant definitions: home (for user), oc (for user), git (for user / project), share (common / project)
-        projectname = self.project.path_with_namespace.replace('/', '_')
-# handle volumes containing user data
-        prefix = get_settings('prefix', 'name')
-        binds['%s-home' % prefix ] = { 'bind': '/mnt/.volumes/home', 'mode': 'rw' }
-        binds['%s-git' % prefix ] = { 'bind': '/mnt/.volumes/git', 'mode': 'rw' }
-        binds['%s-share' % prefix ] = { 'bind': '/mnt/.volumes/share', 'mode': 'rw' }
-
-        # dynamically added data sources
-        dockerclient = self.make_docker_client()
-        for mpb in MountPointProjectBinding.objects.filter(project = self.project):
-            if mpb.mountpoint.type == 'local':
-                binds[mpb.mountpoint.mountpoint_] = {'bind': os.path.join('/mnt', mpb.mountpoint.name), 'mode': mpb.mountpoint.accessrights_}
-            elif mpb.mountpoint.type == 'nfs':
-                mp = mpb.mountpoint
-                volname = "%s-%s-%s" % (mp.name, mp.server_, mp.mountpoint_.replace('/', '_'))
-                if not volname in [ v['Name'] for v in dockerclient.volumes()['Volumes'] ]:
-                    dockerclient.create_volume(
-                       name = volname, 
-                       driver='local', 
-                       driver_opts = { 'type': 'nfs', 'o': 'addr=%s,%s' % (mp.server_, mp.accessrights_), 'device': ':' + mp.mountpoint_ },
-                       labels = {}
-                    )
-                binds[volname] = { 'bind': os.path.join('/mnt', mp.name), 'mode': mpb.mountpoint.accessrights_ }
-
-        for vpb in VolumeProjectBinding.objects.filter(project = self.project):
-            binds[vpb.volume.name] = { 'bind': vpb.volume.container_mountpoint_, 'mode': vpb.accessrights_ }
-
-
-        return binds
 
     def get_notebook_path(self, id):
         path = self.notebook_path
@@ -152,43 +88,12 @@ class Spawner:
         path = path.replace('{$notebook.id}', id)
         return path
 
-
-
-
-
-    def stop_notebook(self, notebook):
-        self.docli.ensure_container_stopped(notebook)
-        notebook.is_stopped=True
-        print(notebook.proxy_path)
-        self.pxcli.remove_route(notebook.proxy_path)
-        notebook.save()
-
-    def delete_notebook(self, notebook):
-        self.docli.ensure_container_removed(notebook)
-        notebook.delete()
-
-    def ensure_notebook_stopped(self):
-        notebook = self.get_notebook()
-        if notebook:
-            self.stop_notebook(notebook)
-        else:
-            # Try to stop container if running but not in DB
-            notebook = self.make_notebook()
-            self.docli.ensure_container_removed(notebook)
-
     def get_session_path(self, notebook, session):
         path = self.session_path
         path = path.replace('{$username}', self.username)
         path = path.replace('{$notebook.id}', str(notebook.id))
         path = path.replace('{$session.notebook_path}', session.notebook_path)
         return path
-
-    def make_session(self, notebook_path, kernel):
-        session = Session(
-            notebook_path=notebook_path,
-            kernel_name=kernel,
-        )
-        return session
 
     def start_session(self, notebook_path, kernel, repo_name, container_name, is_forked=False, project_id=0, target_id=0):
         notebook = self.ensure_notebook_running()
@@ -204,7 +109,6 @@ class Spawner:
         session.container_name = container_name
         session.save()
         return session
-
 
     def stop_session(self, session):
         jpcli = Jupyter(session.notebook)
@@ -255,3 +159,14 @@ def spawn_project_container(user, project):
         spawner.run_container()
     except:
         raise
+
+def stop_project_container(container):
+    Docker().stop_container(container)
+    container.is_running = False
+    container.save()
+    try:
+        Proxy().remove_route(container.proxy_path)
+    except KeyError:
+        # if there was no proxy path saved we silently ignore the exception
+        pass
+

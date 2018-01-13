@@ -68,10 +68,15 @@ class Docker:
         docker_container_info = self.get_container(container)
         if docker_container_info is None:
             docker_container_info = self.create_container(container, volumemapping)
-        if docker_container_info['Status'] == 'Created':
-            self.client.start(container.name)
+        if docker_container_info['Status'] in [ 'Created', 'Stopped' ]:
+            self.start_container(container)
+
+    def start_container(self, container):
+        self.client.start(container.name)
         # we need to retrieve the IP address
         docker_container_info = self.get_container(container)
         container.ip = docker_container_info['NetworkSettings']['Networks'][self.network]['IPAddress']
         assert docker_container_info['State'] == 'running', "Container failed to start: %s" % docker_container_info
 
+    def stop_container(self, container):
+        self.client.stop(container.name)

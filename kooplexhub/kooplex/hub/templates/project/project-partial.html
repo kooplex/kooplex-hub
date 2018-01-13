@@ -1,7 +1,7 @@
 {% load custom_tags %}
 {% include 'project/settings.html' %}
 
-{% if item.is_running  %}
+{% if item in running  %}
 
 <div class="panel panel-success" style="margin-bottom: 3px">
   <div class="panel-heading" style="padding: 5px 5px;">
@@ -44,7 +44,7 @@
       <div class=" col-md-5 col-sm-5 col-xs-5">
 
 {% if not publicvar %}
-      {% if item.is_running  %}
+      {% if item in running  %}
 
         <a href="{% url 'container-delete' %}?project_id={{ item.id }}">
           <button role="button" type="button" class="btn btn-danger" data-toggle="tooltip" title="Stop project container {{ item.name }}" data-placement="top">
@@ -130,7 +130,7 @@
         </a>
 {% endif %}
 {% else %} 
-      {% if item.is_running  %}
+      {% if item in running  %}
 
         <a href="{% url 'container-delete' %}?project_id={{ item.id }}">
           <button role="button" type="button" class="btn btn-danger" data-toggle="tooltip" title="Stop project container {{ item.name }}" data-placement="top">
