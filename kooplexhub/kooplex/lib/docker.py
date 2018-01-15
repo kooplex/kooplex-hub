@@ -74,9 +74,8 @@ class Docker:
 
     def start_container(self, container):
         self.client.start(container.name)
-        # we need to retrieve the IP address
+        # we need to retrieve the IP address, and update identity information
         docker_container_info = self.get_container(container)
-        container.ip = docker_container_info['NetworkSettings']['Networks'][self.network]['IPAddress']
         assert docker_container_info['State'] == 'running', "Container failed to start: %s" % docker_container_info
 
     def stop_container(self, container):

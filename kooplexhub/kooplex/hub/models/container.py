@@ -1,5 +1,8 @@
+import os
 from django.db import models
 from django.utils import timezone
+
+from kooplex.lib import get_settings
 
 from .user import User
 from .project import Project
@@ -12,20 +15,18 @@ class ContainerType(models.Model):
 
 class Container(models.Model):
     id = models.AutoField(primary_key = True)
-    dockerid = models.UUIDField(unique = True, null = True)
     name = models.CharField(max_length = 200, null = True)
     user = models.ForeignKey(User, null = True)
     project = models.ForeignKey(Project, null = True)
 
     image = models.ForeignKey(Image, null = True)
-    ip = models.GenericIPAddressField()
     environment = models.TextField(null = True)
     command = models.TextField(null = True)
 
     container_type = models.ForeignKey(ContainerType, null = False)
 
-    proxy_path = models.CharField(max_length = 200)
-
+    token = models.CharField(max_length = 64, null = True)
+    kernelid = models.UUIDField(max_length = 200, null = True)
     launched_at = models.DateTimeField(default = timezone.now)
     is_running = models.BooleanField(default = False)
 
@@ -42,6 +43,16 @@ class Container(models.Model):
     def volumes(self):
         for vcb in VolumeContainerBinding.objects.filter(container = self):
             yield vcb.volume
+
+    @property
+    def proxy_path(self):
+        info = { 'containername': self.name }
+        return get_settings('spawner', 'pattern_proxypath') % info
+
+    @property
+    def url(self):
+        return os.path.join(get_settings('hub', 'base_url'), self.proxy_path)
+
 
 class VolumeContainerBinding(models.Model):
     id = models.AutoField(primary_key = True)

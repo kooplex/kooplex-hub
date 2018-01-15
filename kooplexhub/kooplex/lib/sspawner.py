@@ -2,35 +2,29 @@ import os
 import json
 import random
 from os import path
+import pwgen
 from netaddr import IPAddress
 
 from kooplex.lib import get_settings, mkdir_project
-from kooplex.lib import Proxy, Docker
+from kooplex.lib import Proxy, Docker, Jupyter
 
 ##################
 # FIXME: this class needs a major revision
 
+
 class Spawner:
        
-    def __init__(self, user, project, containertype, environment, volumemapping):
+    def __init__(self, user, project, containertype, env_generator, volumemapping):
         self.user = user.user
         self.project = project
         self.containertype = containertype
-        self.environment = environment
+        self.env_generator = env_generator
         self.volumemapping = volumemapping
-
         container_name_info = { 'username': user.username, 'projectname': project.name_with_owner }
         self.container_name = get_settings('spawner', 'pattern_containername') % container_name_info
-
-        self.notebook_path = get_settings('spawner', 'notebook_proxy_path', None, '{$host_port}/notebook/{$username}/{$notebook.id}')
-        self.session_path = get_settings('spawner', 'session_proxy_path', None, '/notebook/{$username}/{$notebook.id}/tree')
-
-        self.ip_pool = get_settings('spawner', 'notebook_ip_pool', None, ['172.18.20.1', '172.18.20.255'])
-        self.port = get_settings('spawner', 'notebook_port', None, 8000)
-        self.dashboards_url = get_settings('dashboards', 'base_url','')
-
         self.docker = Docker()
         self.proxy = Proxy()
+        self.jupyter = Jupyter()
 
     def get_container(self):
         from kooplex.hub.models import Container
@@ -47,8 +41,9 @@ class Spawner:
             user = self.user,
             project = self.project,
             container_type = self.containertype,
-            environment = json.dumps(self.environment),
         )
+        environment_dict = self.env_generator(container)
+        container.environment = json.dumps(environment_dict)
         # now we copy information from project to container instance
         container.init()
 
@@ -59,9 +54,11 @@ class Spawner:
 
     def start_container(self, container):
         self.docker.run_container(container, self.volumemapping)
+        container.token = pwgen.pwgen(64)
+        self.jupyter.start_session(container)
         container.is_running = True
         container.save()
-        self.proxy.add_route(container.proxy_path, container.ip, 8000) #FIXME: get them
+        self.proxy.add_route(container.url, container.name, 8000)
 
     def run_container(self):
         container = self.get_container()
@@ -138,24 +135,25 @@ def spawn_project_container(user, project):
         ('kooplex-git', '/mnt/.volumes/git', 'rw'),
         ('kooplex-share', '/mnt/.volumes/share', 'rw'),
     ]
-    environment = {
-        'NB_USER': user.username,
-        'NB_UID': user.uid,
-        'NB_GID': user.gid,
-#        'NB_URL': notebook_path, #FIXME
-        'NB_PORT': 8000,
-        'PR_ID': project.id,
-        'PR_NAME': project.name, #FIXME:
-        'PR_FULLNAME': project.name,
-        'PR_PWN': project.name,
-#        'PR_MEMBERS': ",".join(projectmembers),
-#        'PR_URL': "ssh://git@%s/%s.git" % (get_settings('gitlab', 'ssh_host'), self.project.path_with_namespace),
-        'GID_OFFSET': G_OFFSET,
-#        'MNT_GIDS': ",".join(mpgids)
-    }
+    def env_generator(container):
+        return {
+            'NB_USER': user.username,
+            'NB_UID': user.uid,
+            'NB_GID': user.gid,
+            'NB_URL': container.proxy_path, 
+            'NB_PORT': 8000,
+            'PR_ID': project.id,
+            'PR_NAME': project.name, #FIXME:
+            'PR_FULLNAME': project.name,
+            'PR_PWN': project.name,
+    #        'PR_MEMBERS': ",".join(projectmembers),
+    #        'PR_URL': "ssh://git@%s/%s.git" % (get_settings('gitlab', 'ssh_host'), self.project.path_with_namespace),
+            'GID_OFFSET': G_OFFSET,
+    #        'MNT_GIDS': ",".join(mpgids)
+        }
     try:
         notebook = ContainerType.objects.get(name = 'notebook')
-        spawner = Spawner(user, project, notebook, environment, volumemapping)
+        spawner = Spawner(user, project, notebook, env_generator, volumemapping)
         spawner.run_container()
     except:
         raise

@@ -8,7 +8,7 @@ from kooplex.lib import spawn_project_container, stop_project_container
 
 
 def projects(request, *v, **kw):
-    """Renders the notebooks page"""
+    """Renders the projectlist page."""
     assert isinstance(request, HttpRequest)
     if request.user.is_anonymous():
         return redirect('login')
@@ -45,30 +45,28 @@ def projects(request, *v, **kw):
     )
 
 def project_new(request):
+    """Handles the creation of a new project."""
     assert isinstance(request, HttpRequest)
     if request.user.is_anonymous():
         return redirect('login')
 #FIXME:
 
 def project_configure(request):
+    """Handles the project configuration."""
     assert isinstance(request, HttpRequest)
     if request.user.is_anonymous():
         return redirect('login')
 #FIXME:
 
 def project_collaborate(request):
-    assert isinstance(request, HttpRequest)
-    if request.user.is_anonymous():
-        return redirect('login')
-#FIXME:
-
-def project_revision(request):
+    """Handles the project user collaborations."""
     assert isinstance(request, HttpRequest)
     if request.user.is_anonymous():
         return redirect('login')
 #FIXME:
 
 def project_start(request):
+    """Starts. the project container."""
     assert isinstance(request, HttpRequest)
     if request.user.is_anonymous():
         return redirect('login')
@@ -88,13 +86,28 @@ def project_start(request):
     return redirect('projects')
 
 def project_open(request):
+    """Opens the project container."""
     assert isinstance(request, HttpRequest)
     if request.user.is_anonymous():
         return redirect('login')
-#FIXME:
+
+    user = request.user
+    project_id = request.GET['project_id']
+    try:
+        project = Project.objects.get(id = project_id)
+        container = Container.objects.get(user = user, project = project, is_running = True)
+    except Project.DoesNotExist:
+        return projects(request, kw = { 'errors': [ 'No such project' ] } )
+    except Container.DoesNotExist:
+        return projects(request, kw = { 'errors': [ 'Notebook container seems to be missing or not running already.' ] } )
+#WE DONT HAVE IT NOW
+#    session = Session.objects.get(notebook = notebooks[0])
+#    url_w_token = session.external_url + '/?token=aiSiga1aiFai2AiZu1veeWein5gijei8yeLay2Iecae3ahkiekeisheegh2ahgee'
+    return redirect(url_w_token)
+
 
 def project_stop(request):
-    """Stop project and delete container."""
+    """Stops project and delete container."""
     assert isinstance(request, HttpRequest)
     if request.user.is_anonymous():
         return redirect('login')
@@ -111,7 +124,15 @@ def project_stop(request):
     stop_project_container(container)
     return redirect('projects')
 
+def project_versioning(request):
+    """Handles the git."""
+    assert isinstance(request, HttpRequest)
+    if request.user.is_anonymous():
+        return redirect('login')
+#FIXME:
+
 def project_publish(request):
+    """Handles the publication."""
     assert isinstance(request, HttpRequest)
     if request.user.is_anonymous():
         return redirect('login')
@@ -122,7 +143,7 @@ urlpatterns = [
     url(r'^/new$', project_new, name = 'project-new'), 
     url(r'^/configure$', project_configure, name = 'project-settings'), 
     url(r'^/collaborate$', project_collaborate, name = 'project-members-form'), 
-    url(r'^/revisioncontrol$', project_revision, name = 'project-commit'), 
+    url(r'^/versioncontrol$', project_versioning, name = 'project-commit'), 
     url(r'^/start$', project_start, name = 'container-start'), 
     url(r'^/open$', project_open, name = 'container-open'), 
     url(r'^/stop$', project_stop, name = 'container-delete'), 
