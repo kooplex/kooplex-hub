@@ -20,6 +20,7 @@ def projects(request, *v, **kw):
     projects_sharedwithme = sorted([ upb.project for upb in UserProjectBinding.objects.filter(user = user) ])
     projects_public = sorted(Project.objects.filter(scope = PUBLIC).exclude(owner = user))
     running = [ c.project for c in Container.objects.filter(user = user, is_running = True, container_type = NOTEBOOK) ]
+    users = sorted(User.objects.all())
     images = Image.objects.all()
     scopes = ScopeType.objects.all()
     volumes = Volume.objects.all()
@@ -36,6 +37,7 @@ def projects(request, *v, **kw):
             'projects_shared': projects_sharedwithme,
             'projects_public': projects_public,
             'running': running,
+            'users': users,
             'images' : images,
             'scopes' : scopes,
             'volumes': volumes,
@@ -44,12 +46,14 @@ def projects(request, *v, **kw):
         })
     )
 
+
 def project_new(request):
     """Handles the creation of a new project."""
     assert isinstance(request, HttpRequest)
     if request.user.is_anonymous():
         return redirect('login')
 #FIXME:
+
 
 def project_configure(request):
     """Handles the project configuration."""
@@ -58,12 +62,14 @@ def project_configure(request):
         return redirect('login')
 #FIXME:
 
+
 def project_collaborate(request):
     """Handles the project user collaborations."""
     assert isinstance(request, HttpRequest)
     if request.user.is_anonymous():
         return redirect('login')
 #FIXME:
+
 
 def project_start(request):
     """Starts. the project container."""
@@ -85,6 +91,7 @@ def project_start(request):
     spawn_project_container(request.user, project)
     return redirect('projects')
 
+
 def project_open(request):
     """Opens the project container."""
     assert isinstance(request, HttpRequest)
@@ -100,10 +107,8 @@ def project_open(request):
         return projects(request, kw = { 'errors': [ 'No such project' ] } )
     except Container.DoesNotExist:
         return projects(request, kw = { 'errors': [ 'Notebook container seems to be missing or not running already.' ] } )
-#WE DONT HAVE IT NOW
-#    session = Session.objects.get(notebook = notebooks[0])
-#    url_w_token = session.external_url + '/?token=aiSiga1aiFai2AiZu1veeWein5gijei8yeLay2Iecae3ahkiekeisheegh2ahgee'
-    return redirect(url_w_token)
+    return redirect(container.url + '/?token=aiSiga1aiFai2AiZu1veeWein5gijei8yeLay2Iecae3ahkiekeisheegh2ahgee') #FIXME: a lenti sor a vegso
+    return redirect(container.url_with_token) #FIXME: majd ez kell, ha a megfelelo tokennel indul a jupyter
 
 
 def project_stop(request):
@@ -131,12 +136,14 @@ def project_versioning(request):
         return redirect('login')
 #FIXME:
 
+
 def project_publish(request):
     """Handles the publication."""
     assert isinstance(request, HttpRequest)
     if request.user.is_anonymous():
         return redirect('login')
 #FIXME:
+
 
 urlpatterns = [
     url(r'^/?$', projects, name = 'projects'),

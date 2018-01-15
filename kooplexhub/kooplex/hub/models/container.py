@@ -53,6 +53,10 @@ class Container(models.Model):
     def url(self):
         return os.path.join(get_settings('hub', 'base_url'), self.proxy_path)
 
+    @property
+    def url_with_token(self):
+        return os.path.join(get_settings('hub', 'base_url'), self.proxy_path, '?token=%s' % self.token)
+
 
 class VolumeContainerBinding(models.Model):
     id = models.AutoField(primary_key = True)

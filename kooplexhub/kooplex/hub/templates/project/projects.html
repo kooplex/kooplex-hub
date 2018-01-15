@@ -43,12 +43,12 @@
 <div class="tab-content">
   <div id="myprojects" class="tab-pane fade in active">
 
-        {% for item in projects_mine %}
+        {% for project in projects_mine %}
           <div class="row">
             {% include 'project/project-partial.html' with publicvar=False %}
           </div>
         {% endfor %}
-        {% for item in projects_shared %}
+        {% for project in projects_shared %}
           <div class="row">
             {% include 'project/project-partial.html' with publicvar=False %}
           </div>
@@ -58,7 +58,7 @@
   </div>
   <div id="otherprojects" class="tab-pane fade">
 
-        {% for item in projects_public %}
+        {% for project in projects_public %}
           <div class="row">
             {% include 'project/project-partial.html' with publicvar=True %}
           </div>
@@ -68,3 +68,4 @@
 </div><!-- /.tab-content -->
 
 {% endblock %}
+

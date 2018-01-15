@@ -1,31 +1,39 @@
-<div id="project-settings-{{ item.id }}" class="modal fade modal-dialog" role="dialog" style="position: fixed; top: 0px; ">
+<div id="project-settings-{{ project.id }}" class="modal fade modal-dialog" role="dialog" style="position: fixed; top: 0px; ">
   <div class="modal-content">
-    <form id="project-settings-form-{{ item.id }}" class="form-horizontal" action="{% url 'project-settings' %}" method="post">
+    <form id="project-settings-form-{{ project.id }}" class="form-horizontal" action="{% url 'project-settings' %}" method="post">
       {% csrf_token %}
-      <input type="hidden" name="project_id" value="{{ item.id }}">
+      <input type="hidden" name="project_id" value="{{ project.id }}">
       <div class="modal-body">
         <button type="button" class="close" data-dismiss="modal">&times;</button>
-        <h4>Setting of project <span style="font-weight: bold">{{ item.name }}</span></h4>
+        <h4>Setting of project <span style="font-weight: bold">{{ project.name }}</span></h4>
         <ul class="nav nav-tabs">
-          <li class="active"><a href="#pane_image-{{ item.id }}" data-toggle="tab">Image</a></li>
-          <li><a href="#pane_volume-{{ item.id }}" data-toggle="tab">Storage and volumes</a></li>
-          <li><a href="#pane_deletion-{{ item.id }}" data-toggle="tab">Deletion</a></li>
-          <li><a href="#pane_scope-{{ item.id }}" data-toggle="tab">Scope</a></li>
+          <li class="active"><a href="#pane_collaboration-{{ project.id }}" data-toggle="tab">Collaboration</a></li>
+          <li><a href="#pane_image-{{ project.id }}" data-toggle="tab">Image</a></li>
+          <li><a href="#pane_volume-{{ project.id }}" data-toggle="tab">Storage and volumes</a></li>
+          <li><a href="#pane_scope-{{ project.id }}" data-toggle="tab">Scope</a></li>
+          <li><a href="#pane_deletion-{{ project.id }}" data-toggle="tab">Deletion</a></li>
         </ul>
         <div class="tab-content">
-          <div id="pane_image-{{ item.id }}" class="tab-pane fade in active">
+          <div id="pane_collaboration-{{ project.id }}" class="tab-pane fade in active">
+            {% if project.owner = user %}
+            {% include 'project/pane-collaboration.html' %}
+            {% else %}
+            <div class="alert alert-warning" role="alert">Ask the owner of project {{ project.name }} ({{ project.owner.username }}) to remove you or add someone else to this project.</div>
+            {% endif %}
+          </div>
+          <div id="pane_image-{{ project.id }}" class="tab-pane fade">
             {% include 'project/pane-image.html' %}
           </div>
-          <div id="pane_volume-{{ item.id }}" class="tab-pane fade">
+          <div id="pane_volume-{{ project.id }}" class="tab-pane fade">
             {% include 'project/pane-volume.html' %}
           </div>
-          <div id="pane_deletion-{{ item.id }}" class="tab-pane fade">
-            <p>All unshared data related to this project are lost by the deletion.</p>
+          <div id="pane_scope-{{ project.id }}" class="tab-pane fade">
+            {% include 'project/pane-scope.html' %}
+          </div>
+          <div id="pane_deletion-{{ project.id }}" class="tab-pane fade">
+            <div class="alert alert-danger" role="alert">All unshared data related to this project are lost by the deletion.</div>
             <p>Are you are sure about it?</p>
             <button type="submit" class="btn btn-danger" name="button" value="delete"> Really delete</button>
-          </div>
-            <div id="pane_scope-{{ item.id }}" class="tab-pane fade">
-            {% include 'project/pane-scope.html' %}
           </div>
         </div>   <!-- tab-content -->
       </div>     <!-- modal-body -->

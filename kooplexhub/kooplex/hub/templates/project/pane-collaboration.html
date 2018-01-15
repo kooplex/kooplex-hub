@@ -1,0 +1,23 @@
+<h4>Manage members</h4>
+<div class="form-group">
+    <div class="row">
+        <div class="col-md-1">In</div>
+        <div class="col-md-4">Name</div>
+        <div class="col-md-7">Short bio</div>
+    </div>
+    {% for user in users %}
+        {% if project.owner != user %}
+        <div class="row">
+           <div class="col-md-1">
+             <input type="checkbox" name="user_id[{{ user.gitlab_id }}]" value="True" {% if user in project.collaborators %}checked{% endif %}>
+           </div>
+           <div class="col-md-4" data-toggle="tooltip" title="Username: {{ user.username }}" data-placement="right" data-html="true">
+             {{ user.first_name }} {{ user.last_name }}
+           </div>
+           <div class="col-md-7">
+              {{ user.bio }}
+           </div>
+        </div>
+        {% endif %}
+    {% endfor %}
+</div>
