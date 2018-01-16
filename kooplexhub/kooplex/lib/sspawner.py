@@ -53,7 +53,6 @@ class Spawner:
         from kooplex.lib import proxy_addroute
         self.docker.run_container(container, self.volumemapping)
 ##import pwgen
-##        container.token = pwgen.pwgen(64)   #FIXME: should be a user attribute
 #        jupyter_startsession(container)
         container.is_running = True
         container.save()
@@ -64,16 +63,6 @@ class Spawner:
         if container is None:
             container = self.new_container()
         self.start_container(container)
-
-
-
-
-
-
-
-
-
-
 
 #    def stop_session(self, session):
 #        jpcli = Jupyter(session.notebook)
@@ -110,12 +99,13 @@ def spawn_project_container(user, project):
             'NB_GID': user.gid,
             'NB_URL': container.proxy_path, 
             'NB_PORT': 8000,
+            'NB_TOKEN': container.user.token,
             'PR_ID': project.id,
             'PR_NAME': project.name, #FIXME:
             'PR_FULLNAME': project.name,
             'PR_PWN': project.name,
     #        'PR_MEMBERS': ",".join(projectmembers),
-    #        'PR_URL': "ssh://git@%s/%s.git" % (get_settings('gitlab', 'ssh_host'), self.project.path_with_namespace),
+            'PR_URL': project.url_gitlab,
             'GID_OFFSET': G_OFFSET,
     #        'MNT_GIDS': ",".join(mpgids)
         }

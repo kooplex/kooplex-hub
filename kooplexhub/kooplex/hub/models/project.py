@@ -1,5 +1,7 @@
 from django.db import models
 
+from kooplex.lib import get_settings
+
 from .user import User
 from .image import Image
 from .scope import ScopeType
@@ -34,6 +36,14 @@ class Project(models.Model):
             yield vpb.volume
 
 #FIXME: add mountpoint iterator
+
+    @property
+    def url_gitlab(self):
+        info = {
+            'username': self.owner.username,
+            'projectname': self.name,
+        }
+        return get_settings('gitlab', 'pattern_urlproject') % info
           
 class UserProjectBinding(models.Model):
     id = models.AutoField(primary_key = True)
