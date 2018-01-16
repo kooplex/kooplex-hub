@@ -54,7 +54,7 @@ class Container(models.Model):
 
     @property
     def url_with_token(self):
-        return os.path.join(get_settings('hub', 'base_url'), self.proxy_path, '?token=%s' % self.token)
+        return os.path.join(get_settings('hub', 'base_url'), self.proxy_path, '?token=%s' % self.user.token)
 
 
 class VolumeContainerBinding(models.Model):

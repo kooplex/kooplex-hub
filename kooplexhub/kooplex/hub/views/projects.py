@@ -208,8 +208,7 @@ def project_open(request):
         return projects(request, kw = { 'errors': [ 'No such project' ] } )
     except Container.DoesNotExist:
         return projects(request, kw = { 'errors': [ 'Notebook container seems to be missing or not running already.' ] } )
-    return redirect(container.url + '/?token=aiSiga1aiFai2AiZu1veeWein5gijei8yeLay2Iecae3ahkiekeisheegh2ahgee') #FIXME: a lenti sor a vegso
-    return redirect(container.url_with_token) #FIXME: majd ez kell, ha a megfelelo tokennel indul a jupyter
+    return redirect(container.url_with_token)
 
 
 def project_stop(request):
