@@ -81,7 +81,7 @@ class VolumeProjectBindingAdmin(admin.ModelAdmin):
 
 def refreshimages(request):
 #FIXME: authorize
-    imagemodel_init()
+    refresh_images()
     return redirect('/admin')
 
 def initmodel(request):

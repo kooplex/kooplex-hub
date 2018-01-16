@@ -2,13 +2,15 @@ import os
 import re
 import json
 from docker.client import Client
+import logging
+logger = logging.getLogger('debug_logger')
 
 from kooplex.lib import get_settings
 
 
 class Docker:
     base_url = get_settings('docker', 'base_url')
-    pattern_imagename = get_settings('docker', 'pattern_imagenamefilter')
+    pattern_imagenamefilter = get_settings('docker', 'pattern_imagenamefilter')
     network = get_settings('docker', 'network')
 
     def __init__(self):
@@ -16,9 +18,11 @@ class Docker:
 
     def list_imagenames(self):
         for image in self.client.images(all = True):
+            if image['RepoTags'] is None:
+                continue
             for tag in image['RepoTags']:
                 if re.match(self.pattern_imagenamefilter, tag):
-                    _, imagename, _ = re.split(self.pattern_imagename_notebook, tag)
+                    _, imagename, _ = re.split(self.pattern_imagenamefilter, tag)
                     yield imagename
 
     def get_container(self, container):

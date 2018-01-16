@@ -85,7 +85,6 @@ class Spawner:
 
 def spawn_project_container(user, project):
     from kooplex.hub.models import ContainerType
-    from kooplex.lib import proxy_removeroute
     from .filesystem import G_OFFSET
     # we have to make sure if more than one mount points share the same group id, we collapse their names
 #        lut_gid_gidname = {}
@@ -128,6 +127,7 @@ def spawn_project_container(user, project):
         raise
 
 def stop_project_container(container):
+    from kooplex.lib import proxy_removeroute
     Docker().stop_container(container)
     container.is_running = False
     container.save()
