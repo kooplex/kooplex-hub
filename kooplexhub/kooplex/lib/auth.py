@@ -8,7 +8,7 @@ class Auth(object):
     """description of class"""
 
     def authenticate(self, username=None, password=None):
-        print_debug("")
+        print_debug("IDE jjj")
         g = Gitlab()
         res, u = g.authenticate_user(username, password)
         if u is not None:
