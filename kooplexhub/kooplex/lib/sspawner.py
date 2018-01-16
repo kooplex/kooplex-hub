@@ -100,9 +100,9 @@ def spawn_project_container(user, project):
 #        for gid_, gidnames_ in lut_gid_gidname.items():
 #            mpgids.append("%s:%d" % (("_".join(gidnames_))[:10], gid_))
     volumemapping = [
-        ('kooplex-home', '/mnt/.volumes/home', 'rw'),
-        ('kooplex-git', '/mnt/.volumes/git', 'rw'),
-        ('kooplex-share', '/mnt/.volumes/share', 'rw'),
+        (get_settings('spawner', 'volume-home'), '/mnt/.volumes/home', 'rw'),
+        (get_settings('spawner', 'volume-git'), '/mnt/.volumes/git', 'rw'),
+        (get_settings('spawner', 'volume-share'), '/mnt/.volumes/share', 'rw'),
     ]
     def env_generator(container):
         return {
