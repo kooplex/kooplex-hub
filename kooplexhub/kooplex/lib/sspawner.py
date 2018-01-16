@@ -2,11 +2,10 @@ import os
 import json
 import random
 from os import path
-import pwgen
 from netaddr import IPAddress
 
 from kooplex.lib import get_settings, mkdir_project
-from kooplex.lib import Proxy, Docker, Jupyter
+from kooplex.lib import Docker#, proxy_addroute, proxy_removeroute
 
 ##################
 # FIXME: this class needs a major revision
@@ -23,8 +22,6 @@ class Spawner:
         container_name_info = { 'username': user.username, 'projectname': project.name_with_owner }
         self.container_name = get_settings('spawner', 'pattern_containername') % container_name_info
         self.docker = Docker()
-        self.proxy = Proxy()
-        self.jupyter = Jupyter()
 
     def get_container(self):
         from kooplex.hub.models import Container
@@ -53,13 +50,14 @@ class Spawner:
         return container
 
     def start_container(self, container):
+        from kooplex.lib import proxy_addroute
         self.docker.run_container(container, self.volumemapping)
-        container.token = pwgen.pwgen(64)   #FIXME: should be a user attribute
-        self.jupyter.start_session(container)
+##import pwgen
+##        container.token = pwgen.pwgen(64)   #FIXME: should be a user attribute
+#        jupyter_startsession(container)
         container.is_running = True
         container.save()
-        #self.proxy.add_route(container.proxy_path, container.name, 8000)
-        self.proxy.add_route(container)
+        proxy_addroute(container)
 
     def run_container(self):
         container = self.get_container()
@@ -76,41 +74,10 @@ class Spawner:
 
 
 
-    def get_external_url(self, path):
-        url = self.pxcli.get_external_url(path)
-        return url
 
-    def get_notebook_path(self, id):
-        path = self.notebook_path
-        path = path.replace('{$username}', self.user.username)
-        path = path.replace('{$notebook.id}', id)
-        return path
-
-    def get_session_path(self, notebook, session):
-        path = self.session_path
-        path = path.replace('{$username}', self.username)
-        path = path.replace('{$notebook.id}', str(notebook.id))
-        path = path.replace('{$session.notebook_path}', session.notebook_path)
-        return path
-
-    def start_session(self, notebook_path, kernel, repo_name, container_name, is_forked=False, project_id=0, target_id=0):
-        notebook = self.ensure_notebook_running()
-        session = self.make_session(notebook_path, kernel)
-        jpcli = Jupyter(notebook)#, token="aiSiga1aiFai2AiZu1veeWein5gijei8yeLay2Iecae3ahkiekeisheegh2ahgee")
-        session = jpcli.start_session(session)
-        proxy_path = self.get_session_path(notebook, session)
-        session.external_url = self.get_external_url(proxy_path)
-        session.is_forked = is_forked
-        session.project_id = project_id
-        session.target_id = target_id
-        session.repo_name = repo_name
-        session.container_name = container_name
-        session.save()
-        return session
-
-    def stop_session(self, session):
-        jpcli = Jupyter(session.notebook)
-        jpcli.stop_session(session)
+#    def stop_session(self, session):
+#        jpcli = Jupyter(session.notebook)
+#        jpcli.stop_session(session)
 
 
 
@@ -118,6 +85,7 @@ class Spawner:
 
 def spawn_project_container(user, project):
     from kooplex.hub.models import ContainerType
+    from kooplex.lib import proxy_removeroute
     from .filesystem import G_OFFSET
     # we have to make sure if more than one mount points share the same group id, we collapse their names
 #        lut_gid_gidname = {}
@@ -164,7 +132,7 @@ def stop_project_container(container):
     container.is_running = False
     container.save()
     try:
-        Proxy().remove_route(container)
+        proxy_removeroute(container)
     except KeyError:
         # if there was no proxy path saved we silently ignore the exception
         #pass

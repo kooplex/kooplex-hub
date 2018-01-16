@@ -25,7 +25,6 @@ class Container(models.Model):
 
     container_type = models.ForeignKey(ContainerType, null = False)
 
-    token = models.CharField(max_length = 64, null = True)
     kernelid = models.UUIDField(max_length = 200, null = True)
     launched_at = models.DateTimeField(default = timezone.now)
     is_running = models.BooleanField(default = False)

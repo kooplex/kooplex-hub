@@ -19,8 +19,7 @@ class User(DJUser):
     uid = models.IntegerField(null = True)
     gid = models.IntegerField(null = True)
     bio = models.TextField(max_length = 500, blank = True)
-
-    pattern_tokenfile = get_settings('user', 'pattern_tokenfile')
+    token = models.CharField(max_length = 64, null = True)
 
     def __str__(self):
         return str(self.username)
@@ -33,7 +32,7 @@ class User(DJUser):
 
     @property
     def fn_tokenfile(self):
-        return self.pattern_tokenfile % self
+        return get_settings('user', 'pattern_tokenfile') % self
 
     def sendtoken(self):
         token = pwgen.pwgen(12)
