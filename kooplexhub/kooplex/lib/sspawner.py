@@ -7,10 +7,6 @@ from netaddr import IPAddress
 from kooplex.lib import get_settings, mkdir_project
 from kooplex.lib import Docker#, proxy_addroute, proxy_removeroute
 
-##################
-# FIXME: this class needs a major revision
-
-
 class Spawner:
 
     def __init__(self, user, project, containertype, env_generator, volumemapping):
@@ -97,17 +93,17 @@ def spawn_project_container(user, project):
             'NB_USER': user.username,
             'NB_UID': user.uid,
             'NB_GID': user.gid,
-            'NB_URL': container.proxy_path, 
+            'NB_URL': container.proxy_path,
             'NB_PORT': 8000,
             'NB_TOKEN': container.user.token,
             'PR_ID': project.id,
-            'PR_NAME': project.name, #FIXME:
+            'PR_NAME': project.name,
             'PR_FULLNAME': project.name,
-            'PR_PWN': project.name,
-    #        'PR_MEMBERS': ",".join(projectmembers),
+            'PR_PWN': project.name_with_owner,
+            'PR_MEMBERS': ",".join([ str(u.uid) for u in project.collaborators ]),
             'PR_URL': project.url_gitlab,
             'GID_OFFSET': G_OFFSET,
-    #        'MNT_GIDS': ",".join(mpgids)
+    #        'MNT_GIDS': ",".join(mpgids)  #FIXME: still missing
         }
     try:
         notebook = ContainerType.objects.get(name = 'notebook')
