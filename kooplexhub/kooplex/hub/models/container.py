@@ -51,7 +51,7 @@ class Container(models.Model):
 
     @property
     def url(self):
-        return os.path.join(get_settings('hub', 'base_url'), self.proxy_path)
+        return "http://%s:%d" % (self.name, 8000) #FIXME: PORT hardcoded
 
     @property
     def url_with_token(self):

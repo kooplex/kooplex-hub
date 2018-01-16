@@ -170,3 +170,10 @@ class GitlabAdmin(Gitlab):
         res = self.http_get(self.api_version+'/projects/%d/variables'%(project_id))
         project_variables = res.json()
         return project_variables
+
+
+def create_project(project, request):
+    g = Gitlab(request)
+    g.create_project(project.name, project.scope.name, project.description)
+    res = g.get_project_by_name(project.name)
+

@@ -1,3 +1,5 @@
+import re
+
 from django.conf.urls import patterns, url, include
 from django.shortcuts import render, redirect
 from django.http import HttpRequest
@@ -5,6 +7,7 @@ from django.template import RequestContext
 
 from kooplex.hub.models import *
 from kooplex.lib import spawn_project_container, stop_project_container
+from kooplex.lib import gitlab_create_project
 
 
 def projects(request, *v, **kw):
@@ -24,8 +27,6 @@ def projects(request, *v, **kw):
     images = Image.objects.all()
     scopes = ScopeType.objects.all()
     volumes = Volume.objects.all()
-#FIXME:
-#volumes
 
     return render(
         request,
@@ -52,7 +53,107 @@ def project_new(request):
     assert isinstance(request, HttpRequest)
     if request.user.is_anonymous():
         return redirect('login')
+
+    user = request.user
+    name = request.POST['project_name'].strip()
+    description = request.POST['project_description'].strip()
+    scope = request.POST['button']
+    template = request.POST.get('project_template')
+    #FIXME: parse shares and volumes
+
+    errors = []
+    if not re.match(r'^[a-zA-Z][0-9a-zA-Z_-]*$', name):
+        errors.append('For project name specification please use only Upper/lower case letters, hyphens and underscores.')
+    if not re.match(r'^[0-9a-zA-Z_ -]*$', description):
+        errors.append('In your project description use only Upper/lower case letters, hyphens, spaces and underscores.')
+    if len(errors):
+        return projects(request, kw = { 'errors': errors })
+        
+    if template.startswith('clonable_project='):
+        pass
 #FIXME:
+#        name, owner = template.split('=')[-1].split('@')
+#        project = Project.objects.get(name = name, owner_username = owner)
+#        project_image_name = project.image
+#        # Retrieve former_shares and unify with users current choices
+#        for mpb in MountPointProjectBinding.objects.filter(project = project):
+#            mp.append(mpb.id)
+#        mp = list(set(mp))
+#        # Retrieve former_volumes and unify with users current choices
+#        for vpb in VolumeProjectBinding.objects.filter(project = project):
+#            vols.append(vpb.volume)
+#        vols = list(set(vols))
+#        cloned_project = True
+    elif template.startswith('image='):
+        imagename = template.split('=')[-1]
+        cloned_project = False
+#    debug_logger.debug("Create project %s - GitLab"% project_name)
+    scope = ScopeType.objects.get(name = scope)
+    image = Image.objects.get(name = imagename)
+    project = Project(name = name, owner = user, description = description, image = image, scope = scope)
+    gitlab_create_project(project, request) #FIXME: why we give request?
+    project.save()
+    return redirect('projects')
+#FIXME:
+#####        #Add image_name to project
+#####        # manage shares
+#####        while len(mp):
+#####            mpid = mp.pop()
+#####            mpb = MountPointProjectBinding()
+#####            mpb.project = p
+#####            mpb.mountpoint = MountPoints.objects.get(id = mpid)
+#####            mpb.readwrite = mpid in mprw
+#####            mpb.save()
+#####
+#####        # manage volumes
+#####        while len(vols):
+#####            vol = vols.pop()
+#####            vpb = VolumeProjectBinding(volume = vol, project = p)
+#####            vpb.save()
+#####
+#####        OCHelper(hubuser, p).mkdir()
+#####
+#####        if cloned_project:
+###### Create a magic script to clone ancient projects content
+#####            ancientprojecturl = "ssh://git@%s/%s.git" % (get_settings('gitlab', 'ssh_host'), project.path_with_namespace)
+#####            commitmsg = "Snapshot commit of project %s" % project
+#####            script = """#! /bin/bash
+#####TMPFOLDER=$(mktemp -d)
+#####git clone %(url)s ${TMPFOLDER}
+#####cd ${TMPFOLDER}
+#####rm -rf ./.git/
+#####mv * ~/git/
+#####for hidden in $(echo .?* | sed s/'\.\.'//) ; do
+#####  mv $hidden ~/git
+#####done
+#####cd ~/git
+#####git add --all
+#####git commit -a -m "%(message)s"
+#####git push origin master
+#####rm -rf ${TMPFOLDER}
+#####rm ~/$(basename $0)
+#####            """ % { 'url': ancientprojecturl, 'message': commitmsg }
+#####            home_dir = os.path.join(get_settings('volumes', 'home'), p.owner_username)
+#####            fn_basename = ".gitclone-%s.sh" % p.name
+#####            fn_script = os.path.join(home_dir, fn_basename)
+#####            open(fn_script, 'w').write(script)
+#####            os.chmod(fn_script, 0b111000000)
+#####            hubuser = HubUser.objects.get(username = p.owner_username)
+#####            os.chown(fn_script, int(hubuser.uid), int(hubuser.gid))
+#####        else:
+###### Create a README file
+#####            g.create_project_readme(p.id, "README.md", "* proba", "Created a default README")
+#####        return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
+#####    except Exception as e:
+#####        return render(
+#####            request,
+#####            'app/error.html',
+#####            context_instance=RequestContext(request,
+#####                                            {
+#####                                                'error_title': 'Error',
+#####                                                'error_message': str(e),
+#####                                            })
+#####        )
 
 
 def project_configure(request):

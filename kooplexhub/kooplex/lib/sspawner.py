@@ -13,7 +13,7 @@ from kooplex.lib import Proxy, Docker, Jupyter
 
 
 class Spawner:
-       
+
     def __init__(self, user, project, containertype, env_generator, volumemapping):
         self.user = user.user
         self.project = project
@@ -54,11 +54,12 @@ class Spawner:
 
     def start_container(self, container):
         self.docker.run_container(container, self.volumemapping)
-        container.token = pwgen.pwgen(64)
+        container.token = pwgen.pwgen(64)   #FIXME: should be a user attribute
         self.jupyter.start_session(container)
         container.is_running = True
         container.save()
-        self.proxy.add_route(container.url, container.name, 8000)
+        #self.proxy.add_route(container.proxy_path, container.name, 8000)
+        self.proxy.add_route(container)
 
     def run_container(self):
         container = self.get_container()
@@ -163,8 +164,9 @@ def stop_project_container(container):
     container.is_running = False
     container.save()
     try:
-        Proxy().remove_route(container.proxy_path)
+        Proxy().remove_route(container)
     except KeyError:
         # if there was no proxy path saved we silently ignore the exception
-        pass
+        #pass
+        raise #FIXME: for debug reasons we dont yet catch exception here
 

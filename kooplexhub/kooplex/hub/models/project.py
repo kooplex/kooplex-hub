@@ -5,7 +5,7 @@ from .image import Image
 from .scope import ScopeType
 
 class Project(models.Model):
-    id = models.IntegerField(primary_key = True)
+    id = models.AutoField(primary_key = True)
     name = models.TextField(max_length = 200, null = False)
     description = models.TextField(null=True)
     owner = models.ForeignKey(User, null = True)
