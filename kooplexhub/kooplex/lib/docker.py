@@ -15,20 +15,24 @@ class Docker:
 
     def __init__(self):
         self.client = Client(base_url = self.base_url)
+        logger.debug("Client init")
 
     def list_imagenames(self):
+        logger.debug("Listing imagenames")
         for image in self.client.images(all = True):
             if image['RepoTags'] is None:
                 continue
             for tag in image['RepoTags']:
                 if re.match(self.pattern_imagenamefilter, tag):
                     _, imagename, _ = re.split(self.pattern_imagenamefilter, tag)
+                    logger.debug("Found image: %s" % imagename)
                     yield imagename
 
     def get_container(self, container):
         for item in self.client.containers(all = True):
             # docker API prepends '/' in front of container names
             if '/' + container.name in item['Names']:
+                logger.debug("Get container %s"%container.name)
                 return item
         return None
 
@@ -66,21 +70,27 @@ class Docker:
             volumes = volumes,
             ports = ports
         )
+        logger.debug("Container created")
         return self.get_container(container)
 
     def run_container(self, container, volumemapping):
         docker_container_info = self.get_container(container)
         if docker_container_info is None:
+            logger.debug("Container did not exist, Creating new one")
             docker_container_info = self.create_container(container, volumemapping)
         status = docker_container_info['Status']
         if status == 'Created' or status.startswith('Exited'):
+            logger.debug("Starting container")
             self.start_container(container)
 
     def start_container(self, container):
         self.client.start(container.name)
         # we need to retrieve the IP address, and update identity information
         docker_container_info = self.get_container(container)
+        logger.debug("Container state %s"%docker_container_info['State'])
         assert docker_container_info['State'] == 'running', "Container failed to start: %s" % docker_container_info
 
     def stop_container(self, container):
         self.client.stop(container.name)
+        logger.debug("Container state %s"%docker_container_info['State'])
+

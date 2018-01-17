@@ -1,4 +1,5 @@
 import os
+import glob
 from distutils.dir_util import mkpath
 
 from kooplex.lib import get_settings
@@ -71,4 +72,15 @@ def mkdir_project(user, project):
     _mkdir(folder_git, user.uid, G_OFFSET + project.id, 0b111100000)
     folder_share = os.path.join(get_settings('volumes','share'), project.name_with_owner)
     _mkdir(folder_share, project.owner.uid, G_OFFSET + project.id, 0b111111101)
+
+def list_notebooks(user, project):
+    pattern_notebooks = os.path.join(get_settings('volumes','git'), user.username, project.name_with_owner, '*.ipynb')
+    for fn in glob.glob(pattern_notebooks):
+        yield fn, 'git', os.path.basename(fn)
+    pattern_notebooks = os.path.join(get_settings('volumes','share'), project.name_with_owner, '*.ipynb')
+    for fn in glob.glob(pattern_notebooks):
+        yield fn, 'share', os.path.basename(fn)
+    pattern_notebooks = os.path.join(get_settings('volumes','home'), user.username, '*.ipynb')
+    for fn in glob.glob(pattern_notebooks):
+        yield fn, 'home', os.path.basename(fn)
 

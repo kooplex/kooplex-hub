@@ -52,7 +52,7 @@
           <button role="button" type="button" class="btn btn-success" data-toggle="tooltip" title="Open project container: {{ project.name }}" data-placement="top">
             <span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span>
           </button></a>
-        <a href="{% url 'notebooks-publishform' %}?project_id={{ project.id  }}">
+        <a href="{% url 'notebook-publishform' %}?project_id={{ project.id  }}">
           <button role="button" type="button" class="btn btn-warning" data-toggle="tooltip" title="Publish project: {{ project.name }}" data-placement="top">
             <span class="glyphicon glyphicon-flag" aria-hidden="true"></span>
           </button></a>

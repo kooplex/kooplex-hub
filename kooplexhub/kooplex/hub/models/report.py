@@ -34,35 +34,20 @@ class Report(models.Model):
     scope = models.ForeignKey(ScopeType, null = False)
     password = models.CharField(max_length = 128, null = True)  #TODO: may store encrypted
 
-##    wd = '_report'
+    def __lt__(self, r):
+        assert isinstance(r, Report)
+        return self.ts_created > r.ts_created
 
+    @property
+    def pretty_ts(self):
+        return strftime("%Y %m. %d.", localtime(self.ts_created))
 
-##    def init(self, dashboard_server, project, creator, description, file="", type="", password=""):
-##        self.ts_created = int(time())
-##        self.path, self.file_name = os.path.split(file)
-##        self.name = os.path.splitext(self.file_name)[0]
-##        self.type = type
-##        self.dashboard_server = dashboard_server
-##        self.project = project
-##        self.creator = creator
-##        self.creator_name = self.project.owner_username
-##        self.description = description
-##        self.image = project.image
-##        self.password = password
-##
-##    def __lt__(self, r):
-##        assert isinstance(r, Report)
-##        return self.ts_created > r.ts_created
-##
-##    @property
-##    def ts_(self):
-##        return strftime("%Y%m%d_%H%M%S", localtime(self.ts_created))
-##
-##    @property
-##    def prettyts_(self):
-##        return strftime("%Y %m. %d.", localtime(self.ts_created))
-##
-##
+    def save(self):
+        #make sure the container is with the project 
+        container = Container.objects.get()
+        self.container = container
+        models.Model.save(self)
+
 ##    @property
 ##    def url_(self):
 ##        if self.type == 'html':
@@ -179,8 +164,8 @@ class Report(models.Model):
 def init_model():
     reporttypes = [ 'html', 'dashboard', 'dashboardserver' ]
     for rt in reporttypes:
-        rti = ReportType.objects.get(name = rt)
-        if rti is None:
-            rti = ReportType(name = rt)
-            rti.save()
+        try:
+            ReportType.objects.get(name = rt)
+        except ScopeType.DoesNotExist:
+            ReportType(name = rt)
 

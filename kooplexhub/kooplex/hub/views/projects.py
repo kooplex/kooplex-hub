@@ -237,12 +237,6 @@ def project_versioning(request):
 #FIXME:
 
 
-def project_publish(request):
-    """Handles the publication."""
-    assert isinstance(request, HttpRequest)
-    if request.user.is_anonymous():
-        return redirect('login')
-#FIXME:
 
 
 urlpatterns = [
@@ -254,6 +248,5 @@ urlpatterns = [
     url(r'^/start$', project_start, name = 'container-start'), 
     url(r'^/open$', project_open, name = 'container-open'), 
     url(r'^/stop$', project_stop, name = 'container-delete'), 
-    url(r'^/publish$', project_publish, name = 'notebooks-publishform'), 
 ]
 

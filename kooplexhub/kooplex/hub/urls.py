@@ -51,5 +51,6 @@ urlpatterns = [
     url(r'^/passwordchange$', passwordchangeForm, name = 'passwordchange'),
 
     url(r'^/projects', include('kooplex.hub.views.projects')),
+    url(r'^/publish', include('kooplex.hub.views.publish')),
     url(r'^/reports', include('kooplex.hub.views.reports')),
 ]

@@ -1,0 +1,109 @@
+{% extends "app/layout.html" %}
+{% block content %}
+
+<div class="row">
+  <div class=" col-md-10 col-sm-10 col-xs-12">
+    <div class="panel panel-default ">
+      <div class="panel-heading">
+        <h4>Publish your work</h4>
+      </div>    <!-- heading -->
+      <div class="panel-body">
+        <p>Notebooks can be published as static (html) or as interactive (dashboard) documents. These documents are available at the
+           <a href="{% url 'reports' %}" target="_blank" >Reports</a> section.
+        </p>
+        <hr>
+        {% if notebooks|length > 0  %}
+        <p>Please select the notebook to publish as a new report:</p>
+        <form action="{% url 'notebook-publishform' %}" method="post" class="form-horizontal">
+          {% csrf_token %}
+          <div class="form-group">
+          {% for nbfile in notebooks %}
+             <input type="radio" name="ipynb_file" value="{{ nbfile.fullpath }}" {% if forloop.first %} checked {% endif %} > {{ nbfile.filename }} ({{ nbfile.volume }})<br>
+          {% endfor %}
+          </div>
+          <hr>
+          <ul class="nav nav-tabs">
+              <li class="active"><a href="#pane_desc" data-toggle="tab">Description</a></li>
+              <li><a href="#pane_passwd" data-toggle="tab">Password</a></li>
+          </ul>
+          <div class="tab-content">
+              <div id="pane_desc" class="tab-pane fade in active">
+                <strong>Name of the report:</strong> <input type="text" name="report_name" /><br>
+                <strong>Description:</strong> <textarea rows="6" cols="100" id="report_description" name="report_description"></textarea>
+              </div>
+              <div id="pane_passwd" class="tab-pane fade">
+                <input type="text" class="form-control" id="password" name="password" placeholder="Enter a password or leave it blank">
+              </div>
+          </div>   <!-- tab-content -->
+
+          {% if other_files %}
+          <hr>
+
+
+            <ul class="nav nav-tabs">
+                <li class="active"><a href="#pane_otherfiles" data-toggle="tab">Select those files to be attached to your report:</a></li>
+            </ul>
+            <div class="tab-content">
+                <div id="pane_otherfiles" class="tab-pane fade in active">
+                <div class="form-group">
+                  {% for item in other_files %}
+                     <input type="checkbox" name="other_files" value="{{ item }}"> {{ item }}<br>
+                  {% endfor %}
+                </div>
+                </div>
+            </div>   <!-- tab-content -->
+
+          </div>
+          {% endif %}
+          <div class="well">
+            <ul>
+              <li><strong>The url to the latest report:</strong> <code>{% url 'report-openlatest' %}?project_id={{ project_id }}&amp;filename=<strong>your_chosen_file.ipynb</strong></code>
+              <li>If no <strong>Name</strong> is provided for the report, it is automatically generated from the noteboook's filename.
+              <li>Public reports can be protected by a password if you provide one under the <strong>Password</strong> tab.
+            </ul>
+          </div>
+          {% if reports %}
+          <hr>
+          <p>There are former reports of this project. Tick those you would like to unpublish with this reporting transaction.</p>
+          {% for r in reports %}
+          <input type="checkbox" name="report2remove" value="{{ r.id }}">[{{ r.ts_ }}] ({{ r.type }} - {{ r.scope }}) {% if r.description %} {{ r.description }} {% endif %}<br>
+          {% endfor %}
+          {% endif %}
+
+          <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <select name = "scope" class = "btn btn-default">
+                  {% for scope in scopes %}
+                  <option value="{{ scope.name }}">{{ scope }}</option>
+                  {% endfor %}
+                </select>
+                 <input type="hidden" name="project_id" value="{{ project_id }}" />
+                 <input type="hidden" name="toconvert_files" value="" />
+                 <input type="hidden" id="reports2remove" name="reports2remove" value="" />
+<!-- FIXME: reporttypes could also be dynamically rendered buttons //-->
+                 <input type="submit" name="html" value="Convert to html" class="btn btn-default" />
+                 <input type="submit" name="dashboard" value="Deploy as dashboard" class="btn btn-default" onClick="return empty()" />
+              <input type="submit" name="cancel" value="Cancel" class="btn btn-default" />
+            </div>   <!-- col -->
+          </div>     <!-- form-group -->
+        </form>
+        {% else %}              
+        <div class="alert alert-warning" role="alert">There is nothing to publish yet. Notebook files (with ipynb filename extension) are searched in your git directory, the the share directory and in the shares without recursion.</div>
+        {% endif %}
+      </div>         <!-- panel-body -->
+    </div>           <!-- panel -->
+  </div>             <!-- col -->
+</div>               <!-- row -->
+
+<script>
+function empty() {
+    var x;
+    x = document.getElementById("password").value;
+    if (x == "") {
+        alert("Please enter a password.\nIt will have effect only at querying the report server...");
+        return false;
+    };
+}
+</script>
+
+{% endblock %}
