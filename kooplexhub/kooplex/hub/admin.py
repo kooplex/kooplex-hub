@@ -88,7 +88,6 @@ def initmodel(request):
 #FIXME: authorize
     init_containertypes()
     init_scopetypes()
-    init_reporttypes()
     return redirect('/admin')
 
 urlpatterns = [
