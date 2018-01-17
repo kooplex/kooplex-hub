@@ -11,37 +11,34 @@ from kooplex.hub.models import *
 @admin.register(Container)
 class ContainerAdmin(admin.ModelAdmin):
     list_display = ('id', 'name')
-    pass
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'owner')
-    pass
 
-@admin.register(Report)
-class ReportAdmin(admin.ModelAdmin):
-    list_display = ('id', 'creator')
-    pass
+@admin.register(HtmlReport)
+class HtmlReportAdmin(admin.ModelAdmin):
+    list_display = ('name', 'creator')
+
+@admin.register(DashboardReport)
+class DashboardReportAdmin(admin.ModelAdmin):
+    list_display = ('name', 'creator')
 
 @admin.register(MountPoint)
 class MountPointAdmin(admin.ModelAdmin):
     list_display = ('id', 'displayname', 'name', 'type', 'host_mountpoint', 'host_groupid')
-    pass
 
 @admin.register(MountPointProjectBinding)
 class MountPointProjectBinding(admin.ModelAdmin):
     list_display = ('id', 'mountpoint', 'project', 'readwrite')
-    pass
 
 @admin.register(UserProjectBinding)
 class UserProjectBinding(admin.ModelAdmin):
     list_display = ('id', 'project', 'user')
-    pass
 
 @admin.register(MountPointPrivilegeBinding)
 class MountPointPrivilegeBinding(admin.ModelAdmin):
     list_display = ('id', 'mountpoint', 'user', 'accessrights')
-    pass
 
 def reset_password(modeladmin, request, queryset):
     for hubuser in queryset:
@@ -70,7 +67,6 @@ class UserAdmin(admin.ModelAdmin):
 @admin.register(Volume)
 class VolumeAdmin(admin.ModelAdmin):
     list_display = ('name', 'displayname')
-    pass
 
 @admin.register(VolumeProjectBinding)
 class VolumeProjectBindingAdmin(admin.ModelAdmin):
@@ -94,3 +90,4 @@ urlpatterns = [
     url(r'^refreshimages', refreshimages, name = 'refresh-images'),
     url(r'^initmodel', initmodel, name = 'init-model'),
 ]
+

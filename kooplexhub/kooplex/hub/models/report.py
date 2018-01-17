@@ -27,11 +27,9 @@ class Report(models.Model):
     creator = models.ForeignKey(User, null = False)
     name = models.CharField(max_length = 200, null = True)
     description = models.TextField(null=True)
-#    report_type = models.ForeignKey(ReportType, null = False)
     ts_created = models.IntegerField(null = True)
     project = models.ForeignKey(Project, null = False)
-#    container = models.ForeignKey(Container, null = False)
-    path = models.CharField(max_length = 200, null = True)
+    notebook_filename = models.CharField(max_length = 200, null = True)
     scope = models.ForeignKey(ScopeType, null = False)
     password = models.CharField(max_length = 128, null = True)  #TODO: may store encrypted
 
@@ -43,17 +41,23 @@ class Report(models.Model):
     def pretty_ts(self):
         return strftime("%Y %m. %d.", localtime(self.ts_created))
 
-    def save(self):
-        #make sure the container is with the project 
-        container = Container.objects.get()
-        self.container = container
-        models.Model.save(self)
-
 class HtmlReport(Report):
-    pass
+    @property
+    def displaytype(self):
+        return 'Html report'
 
 class DashboardReport(Report):
     image = models.ForeignKey(ScopeType, null = False)
+
+    @property
+    def displaytype(self):
+        return 'Dashboard report'
+
+    def save(self):
+        # make sure the current image is saved with the model
+        self.image = self.project.image
+        Report.save(self)
+
 
 ##    @property
 ##    def url_(self):
