@@ -18,7 +18,7 @@
               <button type="button" class="btn btn-info"><span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span> Stop all Report Servers</button>
             </a>
         {% endif %}
-          {% if username %}
+          {% if user %}
                 <li class="active" ><a href="#myreports" data-toggle="tab">My reports</a></li>
                 <li><a href="#publicreports" data-toggle="tab" >Public reports </a></li>
           {% else %}
@@ -35,19 +35,19 @@
 
  <div class="tab-content">
 
-     {% if username %}
+     {% if user %}
      <div id="myreports" class="tab-pane fade in active">
      {% else %}
      <div id="myreports" class="tab-pane fade">
      {% endif %}
-       {% for key, reports in myreports.items %}
+       {% for key, reports in reports_mine.items %}
          <div class="row">
             {% include 'report/partial.html' with pane='mine' project=key.0 %}
          </div>
        {% endfor %}
      </div>
 
-     {% if username %}
+     {% if user %}
      <div id="publicreports" class="tab-pane fade">
      {% else %}
      <div id="publicreports" class="tab-pane fade in active">

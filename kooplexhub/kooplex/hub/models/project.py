@@ -44,6 +44,15 @@ class Project(models.Model):
             'projectname': self.name,
         }
         return get_settings('gitlab', 'pattern_urlproject') % info
+
+    @property
+    def reports(self):
+        from .report import HtmlReport, DashboardReport
+        for report in HtmlReport.objects.filter(project = self):
+            yield report
+        for report in DashboardReport.objects.filter(project = self):
+            yield report
+
           
 class UserProjectBinding(models.Model):
     id = models.AutoField(primary_key = True)

@@ -8,7 +8,6 @@ from distutils import dir_util, file_util
 from time import time, strftime, localtime
 
 from .project import Project
-#from .container import Container
 from .scope import ScopeType
 from .image import Image
 
@@ -17,10 +16,6 @@ from .user import User
 from kooplex.lib.smartdocker import Docker
 from kooplex.lib.libbase import get_settings
 
-
-#class ReportType(models.Model):
-#    id = models.AutoField(primary_key = True)
-#    name = models.CharField(max_length = 32)
 
 class Report(models.Model):
     id = models.AutoField(primary_key = True)
@@ -197,11 +192,9 @@ class DashboardReport(Report):
 ##        self.delete()
 
 
-#def init_model():
-#    reporttypes = [ 'html', 'dashboard', 'dashboardserver' ]
-#    for rt in reporttypes:
-#        try:
-#            ReportType.objects.get(name = rt)
-#        except ScopeType.DoesNotExist:
-#            ReportType(name = rt)
+def list_user_reports(user):
+    for report in HtmlReport.objects.filter(creator = user):
+        yield report
+    for report in DashboardReport.objects.filter(creator = user):
+        yield report
 

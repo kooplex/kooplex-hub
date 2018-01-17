@@ -2,13 +2,13 @@
   {% include 'report/settings.html' %}
 {% endfor %}
 {% with reports|first as report_latest %}
-{% if report_latest.type == 'dashboard' %}
+{% if report_latest.displaytype == 'Dashboard report' %}
 <div class="panel panel-success ">
 {% else %}
 <div class="panel panel-default ">
 {% endif %}
   <div class="panel-heading">
-    <a href="{% url 'report-open' %}?report_id={{ report_latest.id }}&creator={{ report_latest.creator_name }}" target="_blank">
+    <a href="{% url 'report-open' %}?report_id={{ report_latest.id }}&creator={{ report_latest.creator.username }}" target="_blank">
       <button type="button" class="btn btn-info"><span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span> Open</button>
     </a>
       <!--a href="{% url 'report-start' %}?report_id={{ report_latest.id }}&creator={{ report_latest.creator_name }}" target="_blank">

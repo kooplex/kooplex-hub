@@ -23,8 +23,7 @@ def publishForm(request):
     if request.method == 'GET':
         project_id = request.GET['project_id']
         project = Project.objects.get(id = project_id)
-        reports = list(HtmlReport.objects.filter(project = project))
-        reports.extend( list(DashboardReport.objects.filter(project = project)) )
+        reports = list(project.reports)
         scopes = ScopeType.objects.all()
         notebooks = [ fileinfo(*x) for x in list_notebooks(request.user, project) ]
         return render(

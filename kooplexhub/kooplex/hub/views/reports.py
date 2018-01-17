@@ -6,7 +6,8 @@ from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.template import RequestContext
 
-from kooplex.hub.models.report import Report
+from kooplex.hub.models import list_user_reports
+#############
 from kooplex.hub.models.user import User
 from kooplex.hub.models.scope import ScopeType
 from kooplex.hub.models.project import Project, UserProjectBinding
@@ -32,28 +33,28 @@ def reports(request):
     INTERNAL = ScopeType.objects.get(name = 'internal')
     PUBLIC = ScopeType.objects.get(name = 'public')
     if request.user.is_anonymous():
-        myreports = []
-        internal_good_ = []
-        me = None
+        user = None
+        reports_mine = []
+#        internal_good_ = []
     else:
-        me = request.user
-        my_gitlab_id = str( me.gitlab_id )
-#FIXME: naming should follow like in the projects: E.g. reports_mine
-        myreports = Report.objects.filter(creator = me)
-        myprojectbindings = UserProjectBinding.objects.filter(user = me)
-        internalreports = Report.objects.filter(scope = INTERNAL)
-        projectset = set([ pb.project for pb in myprojectbindings ]).intersection([ r.project for r in internalreports ])
-        internalreports_good = filter(lambda r: r.project in projectset, internalreports) 
-    publicreports = list( Report.objects.filter(scope = PUBLIC) )
-    publicreports.extend(internalreports_good)
+        user = request.user
+#        my_gitlab_id = str( me.gitlab_id )
+        reports_mine = list(list_user_reports(user))
+###############################
+#        myprojectbindings = UserProjectBinding.objects.filter(user = me)
+#        internalreports = Report.objects.filter(scope = INTERNAL)
+#        projectset = set([ pb.project for pb in myprojectbindings ]).intersection([ r.project for r in internalreports ])
+#        internalreports_good = filter(lambda r: r.project in projectset, internalreports) 
+#    publicreports = list( Report.objects.filter(scope = PUBLIC) )
+#    publicreports.extend(internalreports_good)
     return render(
         request,
         'report/reports.html',
         context_instance = RequestContext(request,
         {
-            'user': me,
-            'myreports': group_by_project( myreports ),
-            'publicreports': group_by_project( publicreports ),
+            'user': user,
+            'reports_mine': group_by_project( reports_mine ),
+#            'publicreports': group_by_project( publicreports ),
        })
     )
 
