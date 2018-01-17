@@ -8,8 +8,9 @@ from distutils import dir_util, file_util
 from time import time, strftime, localtime
 
 from .project import Project
-from .container import Container
+#from .container import Container
 from .scope import ScopeType
+from .image import Image
 
 from .user import User
 
@@ -17,19 +18,19 @@ from kooplex.lib.smartdocker import Docker
 from kooplex.lib.libbase import get_settings
 
 
-class ReportType(models.Model):
-    id = models.AutoField(primary_key = True)
-    name = models.CharField(max_length = 32)
+#class ReportType(models.Model):
+#    id = models.AutoField(primary_key = True)
+#    name = models.CharField(max_length = 32)
 
 class Report(models.Model):
     id = models.AutoField(primary_key = True)
     creator = models.ForeignKey(User, null = False)
     name = models.CharField(max_length = 200, null = True)
     description = models.TextField(null=True)
-    report_type = models.ForeignKey(ReportType, null = False)
+#    report_type = models.ForeignKey(ReportType, null = False)
     ts_created = models.IntegerField(null = True)
     project = models.ForeignKey(Project, null = False)
-    container = models.ForeignKey(Container, null = False)
+#    container = models.ForeignKey(Container, null = False)
     path = models.CharField(max_length = 200, null = True)
     scope = models.ForeignKey(ScopeType, null = False)
     password = models.CharField(max_length = 128, null = True)  #TODO: may store encrypted
@@ -47,6 +48,12 @@ class Report(models.Model):
         container = Container.objects.get()
         self.container = container
         models.Model.save(self)
+
+class HtmlReport(Report):
+    pass
+
+class DashboardReport(Report):
+    image = models.ForeignKey(ScopeType, null = False)
 
 ##    @property
 ##    def url_(self):
@@ -161,11 +168,11 @@ class Report(models.Model):
 ##        self.delete()
 
 
-def init_model():
-    reporttypes = [ 'html', 'dashboard', 'dashboardserver' ]
-    for rt in reporttypes:
-        try:
-            ReportType.objects.get(name = rt)
-        except ScopeType.DoesNotExist:
-            ReportType(name = rt)
+#def init_model():
+#    reporttypes = [ 'html', 'dashboard', 'dashboardserver' ]
+#    for rt in reporttypes:
+#        try:
+#            ReportType.objects.get(name = rt)
+#        except ScopeType.DoesNotExist:
+#            ReportType(name = rt)
 
