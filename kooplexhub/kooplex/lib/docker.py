@@ -94,3 +94,8 @@ class Docker:
         self.client.stop(container.name)
         logger.debug("Container state %s"%docker_container_info['State'])
 
+
+    def execute(self, container, command):
+        execution = self.client.exec_create(container = container.name, cmd = command)
+        return self.client.exec_start(execution, detach = False)
+

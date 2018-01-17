@@ -6,7 +6,7 @@ from django.http import HttpRequest
 from django.template import RequestContext
 
 from kooplex.hub.models import Project, HtmlReport, DashboardReport, ScopeType
-from kooplex.lib import list_notebooks
+from kooplex.lib import list_notebooks, publish_htmlreport
 
 class fileinfo:
     def __init__(self, fn, volume, filename):
@@ -62,7 +62,6 @@ def publishForm(request):
             creator = request.user,
             name = name,
             description = description,
-            report_type = reporttype,
             ts_created = int(time.time()),
             project = project,
             notebook_filename = ipynb_file,
@@ -71,8 +70,7 @@ def publishForm(request):
         )
         # conversion and deployment
         if isinstance(report, HtmlReport):
-            # docker_exec
-            raise NotImplementedError
+            publish_htmlreport(report)
         elif isinstance(report, DashboardReport):
             raise NotImplementedError
         report.save()

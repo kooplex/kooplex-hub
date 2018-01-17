@@ -46,6 +46,21 @@ class HtmlReport(Report):
     def displaytype(self):
         return 'Html report'
 
+    @property
+    def filename(self):
+        # as the user sees in their container
+        mp_home = get_settings('volumes', 'home')
+        mp_share = get_settings('volumes', 'share')
+        mp_git = get_settings('volumes', 'git')
+        if self.notebook_filename.startswith(mp_home):
+            return '/home' + self.notebook_filename[len(mp_home):]
+        else:
+            raise NotImplementedError
+
+    @property
+    def filename_html(self):
+        return self.notebook_filename[:-5] + 'html'
+
 class DashboardReport(Report):
     image = models.ForeignKey(ScopeType, null = False)
 

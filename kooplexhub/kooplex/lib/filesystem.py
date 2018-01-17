@@ -84,3 +84,5 @@ def list_notebooks(user, project):
     for fn in glob.glob(pattern_notebooks):
         yield fn, 'home', os.path.basename(fn)
 
+def move_htmlreport_in_place(report):
+    raise Exception(report.filename_html)
