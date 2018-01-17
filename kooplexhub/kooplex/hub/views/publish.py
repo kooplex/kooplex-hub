@@ -57,7 +57,7 @@ def publishForm(request):
         elif 'dashboard' in request.POST.keys():
             reportclass = DashboardReport
         else:
-            return redirect('project')
+            return redirect('projects')
         report = reportclass(
             creator = request.user,
             name = name,
@@ -74,7 +74,7 @@ def publishForm(request):
         elif isinstance(report, DashboardReport):
             raise NotImplementedError
         report.save()
-    redirect('project')
+    return redirect('projects')
 
 urlpatterns = [
     url(r'^/?$', publishForm, name = 'notebook-publishform'), 

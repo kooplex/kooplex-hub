@@ -54,12 +54,22 @@ class HtmlReport(Report):
         mp_git = get_settings('volumes', 'git')
         if self.notebook_filename.startswith(mp_home):
             return '/home' + self.notebook_filename[len(mp_home):]
+#        if self.notebook_filename.startswith(mp_git):
+#            return '/home' + self.notebook_filename[len(mp_git):]
         else:
             raise NotImplementedError
 
     @property
     def filename_html(self):
-        return self.notebook_filename[:-5] + 'html'
+        fn_wo_ext, _ = os.path.splitext(self.notebook_filename)
+        return fn_wo_ext + '.html'
+
+    @property
+    def filename_report_html(self):
+        fn_ipynb = os.path.basename(self.notebook_filename)
+        fn_wo_ext, _ = os.path.splitext(fn_ipynb)
+        fn_html = fn_wo_ext + '.html'
+        return os.path.join(get_settings('volumes', 'htmlreport'), self.creator.username, self.project.name_with_owner, fn_html)
 
 class DashboardReport(Report):
     image = models.ForeignKey(ScopeType, null = False)

@@ -1,6 +1,7 @@
 import os
 import glob
 from distutils.dir_util import mkpath
+from distutils.file_util import move_file
 
 from kooplex.lib import get_settings
 
@@ -85,4 +86,8 @@ def list_notebooks(user, project):
         yield fn, 'home', os.path.basename(fn)
 
 def move_htmlreport_in_place(report):
-    raise Exception(report.filename_html)
+    filename_source = report.filename_html
+    filename_destination = report.filename_report_html
+    folder = os.path.dirname(filename_destination)
+    mkpath(folder)
+    move_file(filename_source, folder)
