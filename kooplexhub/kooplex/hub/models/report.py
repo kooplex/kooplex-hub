@@ -69,8 +69,14 @@ class HtmlReport(Report):
         mp_git = get_settings('volumes', 'git')
         if self.notebook_filename.startswith(mp_home):
             return '/home' + self.notebook_filename[len(mp_home):]
-#        if self.notebook_filename.startswith(mp_git):
-#            return '/home' + self.notebook_filename[len(mp_git):]
+        if self.notebook_filename.startswith(mp_git):
+            wd_hub = os.path.join(mp_git, self.creator.username, self.project.name_with_owner)
+            wd_usercontainer = os.path.join('/home', self.creator.username, 'git')
+            return self.notebook_filename.replace(wd_hub, wd_usercontainer)
+        if self.notebook_filename.startswith(mp_share):
+            wd_hub = os.path.join(mp_share, self.project.name_with_owner)
+            wd_usercontainer = os.path.join('/home', self.creator.username, 'share')
+            return self.notebook_filename.replace(wd_hub, wd_usercontainer)
         else:
             raise NotImplementedError
 

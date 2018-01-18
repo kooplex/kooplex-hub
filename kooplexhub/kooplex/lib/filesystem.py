@@ -78,13 +78,36 @@ def mkdir_project(user, project):
 def list_notebooks(user, project):
     pattern_notebooks = os.path.join(get_settings('volumes','git'), user.username, project.name_with_owner, '*.ipynb')
     for fn in glob.glob(pattern_notebooks):
-        yield fn, 'git', os.path.basename(fn)
+        yield { 'fullpath': fn, 'volume': 'git', 'filename': os.path.basename(fn) }
     pattern_notebooks = os.path.join(get_settings('volumes','share'), project.name_with_owner, '*.ipynb')
     for fn in glob.glob(pattern_notebooks):
-        yield fn, 'share', os.path.basename(fn)
+        yield { 'fullpath': fn, 'volume': 'share', 'filename': os.path.basename(fn) }
     pattern_notebooks = os.path.join(get_settings('volumes','home'), user.username, '*.ipynb')
     for fn in glob.glob(pattern_notebooks):
-        yield fn, 'home', os.path.basename(fn)
+        yield { 'fullpath': fn, 'volume': 'home', 'filename': os.path.basename(fn) }
+
+def list_files(user, project):
+    def skip(fn):
+        if fn.endswith('.ipynb'):
+            return True
+        if not os.path.isdir(fn):
+            return False
+        if fn.endswith('git') or fn.endswith('oc') or fn.endswith('share'):
+            return True
+        return False
+
+    pattern_notebooks = os.path.join(get_settings('volumes','git'), user.username, project.name_with_owner, '*')
+    for fn in glob.glob(pattern_notebooks):
+        if not skip(fn):
+            yield { 'fullpath': fn, 'volume': 'git', 'filename': os.path.basename(fn), 'is_dir': os.path.isdir(fn) }
+    pattern_notebooks = os.path.join(get_settings('volumes','share'), project.name_with_owner, '*')
+    for fn in glob.glob(pattern_notebooks):
+        if not skip(fn):
+            yield { 'fullpath': fn, 'volume': 'share', 'filename': os.path.basename(fn), 'is_dir': os.path.isdir(fn) }
+    pattern_notebooks = os.path.join(get_settings('volumes','home'), user.username, '*')
+    for fn in glob.glob(pattern_notebooks):
+        if not skip(fn):
+            yield { 'fullpath': fn, 'volume': 'home', 'filename': os.path.basename(fn), 'is_dir': os.path.isdir(fn) }
 
 def move_htmlreport_in_place(report):
     filename_source = report.filename_html
@@ -104,3 +127,5 @@ def cleanup_reportfiles(report):
             raise
     else:
         raise NotImplementedError
+
+

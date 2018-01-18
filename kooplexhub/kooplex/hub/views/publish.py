@@ -6,13 +6,7 @@ from django.http import HttpRequest
 from django.template import RequestContext
 
 from kooplex.hub.models import Project, HtmlReport, DashboardReport, ScopeType
-from kooplex.lib import get_settings, list_notebooks, publish_htmlreport
-
-class fileinfo:
-    def __init__(self, fn, volume, filename):
-        self.fullpath = fn
-        self.volume = volume
-        self.filename = filename
+from kooplex.lib import get_settings, list_notebooks, list_files, publish_htmlreport
 
 def publishForm(request):
     """Handles the publication."""
@@ -21,22 +15,26 @@ def publishForm(request):
         return redirect('login')
 
     if request.method == 'GET':
-        project_id = request.GET['project_id']
+        try:
+            project_id = request.GET['project_id']
+        except KeyError:
+            return redirect('reports')
         project = Project.objects.get(id = project_id)
         reports = list(project.reports)
         scopes = ScopeType.objects.all()
-        notebooks = [ fileinfo(*x) for x in list_notebooks(request.user, project) ]
+        notebooks = list(list_notebooks(request.user, project))
+        files = list(list_files(request.user, project))
         return render(
             request,
             'publish/publishform.html',
             context_instance = RequestContext(request,
                 {
                     'base_url': get_settings('hub', 'base_url'),
-                    'notebooks': notebooks,
-                    'scopes': scopes,
-                    'other_files': [],
                     'project_id': project_id,
                     'reports': reports,
+                    'notebooks': notebooks,
+                    'files': files,
+                    'scopes': scopes,
                 })
         )
     elif request.method == 'POST':

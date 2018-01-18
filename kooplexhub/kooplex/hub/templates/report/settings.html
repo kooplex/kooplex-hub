@@ -26,11 +26,7 @@
           </div>
           <div id="pane_description-{{ r.id }}" class="tab-pane fade">
             <p>You can update the description here.</p>
-            <textarea name="report_description" rows="6" cols="50" id="report_description">
-{% if r.description %}
-{{ r.description }}
-{% endif %}
-            </textarea>
+            <textarea name="report_description" rows="6" cols="50" id="report_description">{% if r.description %}{{ r.description }}{% endif %}</textarea>
           </div>
           <div id="pane_deletion-{{ r.id }}" class="tab-pane fade">
             <p>All data related to this report are lost after deletion.</p>
