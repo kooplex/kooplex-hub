@@ -10,6 +10,7 @@ from time import time, strftime, localtime
 from .project import Project, UserProjectBinding
 from .scope import ScopeType
 from .user import User
+from .image import Image
 
 from kooplex.lib import get_settings
 
@@ -90,127 +91,20 @@ class HtmlReport(Report):
         return os.path.join(get_settings('volumes', 'htmlreport'), self.creator.username, self.project.name_with_owner, str(self.ts_created), self.filename_wo_ext + '.html')
 
 class DashboardReport(Report):
-    image = models.ForeignKey(ScopeType, null = False)
+    image = models.ForeignKey(Image, null = False)
 
     @property
     def displaytype(self):
         return 'Dashboard report'
 
+    @property
+    def report_root(self):
+        return os.path.join(get_settings('volumes', 'dashboardreport'), "%s-%s-%s.%f" % (self.creator.username, self.project.name_with_owner, self.name, self.ts_created))
+
     def save(self):
         # make sure the current image is saved with the model
         self.image = self.project.image
         Report.save(self)
-
-
-##    @property
-##    def url_(self):
-##        if self.type == 'html':
-##            return reverse('report-open') + "?report_id=%d" %  (self.id)
-##        elif self.type == 'dashboard':
-###FIXME: why dashboard here
-##            return os.path.join(self.dashboard_server.url, self.path, 'dashboards', self.project.home, self.ts_, self.name)
-##        else:
-##            assert False, "Unhandled type %s" % self.type
-##
-##    @property
-##    def cache_url_(self):
-##        assert self.type == 'html', "Unhandled type %s" % self.type
-##        return os.path.join(self.dashboard_server.cache_url, self.path)
-##
-##    @property
-##    def target_(self):
-##        if self.type == 'html':
-##            return os.path.join(srv_dir, self.wd, 'html', self.project.home, self.ts_)
-##        elif self.type == 'dashboard':
-##            return os.path.join(srv_dir, self.wd, self.dashboard_server.type, self.project.home, self.ts_)
-##
-##    @property
-##    def entry_(self):
-##        return os.path.join(self.target_, self.file_name)
-##
-##    @property
-##    def gitdir_(self):
-##        return self.project.gitdir(self.creator.username)
-##
-##    def get_environment(self):
-##        return self.load_json(self.environment)
-##
-##    def set_environment(self, value):
-##        self.environment = self.save_json(value)
-##
-##    def get_binds(self):
-##        return self.load_json(self.binds)
-##
-##    def set_binds(self, value):
-##        self.binds = self.save_json(value)
-##
-##    def convert_to_html(self, notebook):
-##        docli = Docker()
-##        nb = os.path.join('home', self.creator.username, 'git', self.path, self.name)
-##        command = " jupyter-nbconvert --to html /%s.ipynb " % nb
-##        docli.exec_container(notebook, command, detach=False)
-##
-##
-##    def deploy(self, other_files):
-##        if self.type=='html':
-##            notebook = Notebook.objects.get(project_id = self.project.id, username = self.creator.username)
-##            self.convert_to_html(notebook)
-##            dir_util.mkpath(self.target_)
-##            self.file_name = os.path.splitext(self.file_name)[0] + ".html"
-##            file_to_deploy = os.path.join(self.gitdir_, self.path, self.file_name)
-##            file_to_create = os.path.join(self.target_, self.file_name)
-##            try:
-##                file_util.move_file(file_to_deploy, file_to_create)
-##            except:
-##                os.remove(file_to_deploy)
-##                raise
-##
-##        elif self.type=='dashboard':
-##            #THIS WILL REPLACE THE FILE OPENER FUNCTION , WHICH WILL COPY THE FILES TO THE RIGHT PLACE
-##            def func_replace():
-##                import json
-##
-###                def findcell(obj, sstr):
-###                    cells = obj['cells']
-###                    for icell in range(len(cells)):
-###                        for i in range(len(cells[icell]['source'])):
-###                            if cells[icell]['source'][i].find('import') > -1 and cells[icell]['source'][i].find(
-###                                    sstr) > -1:
-###                                return icell, i
-##
-##
-##            ooops = []
-##            other_files.append(os.path.join(self.path, self.file_name))
-##            for file in other_files:
-##                file_to_deploy = os.path.join(self.gitdir_, self.path, file)
-##                file_to_create = os.path.join(self.target_, file)
-##                dir_util.mkpath(os.path.split(file_to_create)[0])
-##                try:
-##                    file_util.copy_file(file_to_deploy, file_to_create)
-##                except:
-##                    ooops.append(file)
-##                    
-##            newcell = {
-##   "cell_type": "code",
-##   "execution_count": 1,
-##   "metadata": {
-##    "collapsed": True
-##   },
-##   "outputs": [],
-##   "source": ["import os\n","os.chdir('%s')"%os.path.join("/home/",self.project.home, self.ts_)]
-##  }
-##            with open(os.path.join(self.gitdir_, self.path, self.file_name),'r') as Foriginal:
-##               ipynb=json.load(Foriginal)
-##            ipynb['cells'].insert(0,newcell)
-##
-##            with open(os.path.join(self.target_, self.file_name),'w') as WW:
-##               json.dump(ipynb,WW)
-##
-##                    
-##            if len(ooops):
-##                raise Exception("Error copying files: %s" % ",".join(ooops))
-##
-
 
 def list_user_reports(user):
     for report in HtmlReport.objects.filter(creator = user):

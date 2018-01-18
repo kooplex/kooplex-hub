@@ -1,8 +1,9 @@
 import os
+import ast
 import time
 import glob
 from distutils.dir_util import mkpath, copy_tree, remove_tree
-from distutils.file_util import move_file
+from distutils.file_util import copy_file, move_file
 
 from kooplex.lib import get_settings
 
@@ -110,11 +111,43 @@ def list_files(user, project):
             yield { 'fullpath': fn, 'volume': 'home', 'filename': os.path.basename(fn), 'is_dir': os.path.isdir(fn) }
 
 def move_htmlreport_in_place(report):
+    from kooplex.hub.models import HtmlReport
+    assert isinstance(report, HtmlReport)
     filename_source = report.filename_html
     filename_destination = report.filename_report_html
     folder = os.path.dirname(filename_destination)
     mkpath(folder)
     move_file(filename_source, folder)
+
+def copy_dashboardreport_in_place(report, files):
+    from kooplex.hub.models import DashboardReport
+    assert isinstance(report, DashboardReport)
+    filename_source = report.notebook_filename
+    report_root = report.report_root
+    if filename_source.startswith(get_settings('volumes', 'home')):
+        dir_target = report.report_root
+    elif filename_source.startswith(get_settings('volumes', 'git')):
+        dir_target = os.path.join(report.report_root, 'git')
+    elif filename_source.startswith(get_settings('volumes', 'share')):
+        dir_target = os.path.join(report.report_root, 'share')
+    else:
+        raise NotImplementedError
+    mkpath(dir_target)
+    copy_file(filename_source, dir_target)
+    for f in files:
+        f = ast.literal_eval(f)
+        if f['volume'] == 'home':
+            dir_container = '.'
+        elif f['volume'] in [ 'git', 'share' ]:
+            dir_container = f['volume']
+        else:
+            continue
+        dir_target = os.path.join(report_root, dir_container)
+        if f['is_dir']:
+            copy_tree(f['fullpath'], os.path.join(dir_target, f['filename']))
+        else:
+            mkpath(dir_target)
+            copy_file(f['fullpath'], dir_target)
 
 def cleanup_reportfiles(report):
     from kooplex.hub.models import HtmlReport, DashboardReport
