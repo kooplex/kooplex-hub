@@ -5,7 +5,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpRequest
 from django.template import RequestContext
 import logging
-logger = logging.getLogger('debug_logger')
+logger = logging.getLogger(__name__)
 
 from kooplex.hub.models import *
 from kooplex.lib import spawn_project_container, stop_project_container
