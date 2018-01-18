@@ -1,21 +1,18 @@
 import codecs
 import os
+
 from django.conf.urls import url
 from django.shortcuts import render, redirect
-from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
+from django.http import HttpRequest, HttpResponse
 from django.core.urlresolvers import reverse
 from django.template import RequestContext
 
-from kooplex.hub.models import list_user_reports
+from kooplex.hub.models import list_user_reports, list_internal_reports, list_public_reports, get_report, ReportDoesNotExist, HtmlReport, DashboardReport, ScopeType
+from kooplex.lib import get_settings, cleanup_reportfiles
 #############
-from kooplex.hub.models.user import User
-from kooplex.hub.models.scope import ScopeType
-from kooplex.hub.models.project import Project, UserProjectBinding
+from kooplex.hub.models import Project
 from kooplex.lib.spawner import ReportSpawner
-from kooplex.lib.libbase import get_settings
 
-
-#from kooplex.lib.libbase import get_settings #TODO: get server prefix
 
 def group_by_project(reports):
     reports_grouped = {}
@@ -30,62 +27,51 @@ def group_by_project(reports):
 
 def reports(request):
     assert isinstance(request, HttpRequest)
-    INTERNAL = ScopeType.objects.get(name = 'internal')
-    PUBLIC = ScopeType.objects.get(name = 'public')
     if request.user.is_anonymous():
         user = None
         reports_mine = []
-#        internal_good_ = []
+        reports_internal = []
     else:
         user = request.user
-#        my_gitlab_id = str( me.gitlab_id )
         reports_mine = list(list_user_reports(user))
-###############################
-#        myprojectbindings = UserProjectBinding.objects.filter(user = me)
-#        internalreports = Report.objects.filter(scope = INTERNAL)
-#        projectset = set([ pb.project for pb in myprojectbindings ]).intersection([ r.project for r in internalreports ])
-#        internalreports_good = filter(lambda r: r.project in projectset, internalreports) 
-#    publicreports = list( Report.objects.filter(scope = PUBLIC) )
-#    publicreports.extend(internalreports_good)
+        reports_internal = list(list_internal_reports(user))
+    reports_public = list(list_public_reports())
     return render(
         request,
         'report/reports.html',
         context_instance = RequestContext(request,
         {
             'user': user,
+            'base_url': get_settings('hub', 'base_url'),
             'reports_mine': group_by_project( reports_mine ),
-#            'publicreports': group_by_project( publicreports ),
+            'reports_internal': group_by_project( reports_internal ),
+            'reports_public': group_by_project( reports_public ),
        })
     )
 
 def openreport(request):
     assert isinstance(request, HttpRequest)
-    report_id = request.GET['report_id']  if request.method == 'GET' else request.POST['report_id']
-    try:
-        report = Report.objects.get(id = report_id)
-    except Report.DoesNotExist:
-        return HttpResponseRedirect(reverse('reports'))
-    if request.user.is_anonymous():
-        if report.scope == 'public':
-            pass
-        else:
-            return HttpResponseRedirect(reverse('reports'))
+    if request.method == 'GET':
+        report_id = request.GET['report_id']
+    elif request.method == 'POST':
+        report_id = request.POST['report_id']
     else:
-        me = HubUser.objects.get(username = request.user.username)
-        if report.scope == 'public':
-            pass
-        elif report.scope == 'internal' and me in [ r.hub_user for r in report.project.members_]:
-            pass
-        elif report.creator == me:
-            pass
-        else:
-            return HttpResponseRedirect(reverse('reports'))
-    if report.type == 'html':
-        with codecs.open(report.entry_, 'r', 'utf-8') as f:
+        raise Exception ("Please, do not hack me")
+    try:
+        user = request.user
+        report = get_report(id = report_id)
+        if not report.is_user_allowed(user):
+            return redirect('reports')
+    except ReportDoesNotExist:
+            return redirect('reports')
+    if isinstance(report, HtmlReport):
+        with codecs.open(report.filename_report_html, 'r', 'utf-8') as f:
             content = f.read()
         return HttpResponse(content)
-    elif report.type == 'dashboard':
-        return HttpResponseRedirect(report.url_)
+    elif isinstance(report, DashboardReport):
+        raise NotImplementedError
+        #return HttpResponseRedirect(report.url_)
+    return redirect('reports')
 
 def openreport_latest(request):
     assert isinstance(request, HttpRequest)
@@ -171,29 +157,32 @@ def container_report_all_stop(request):
 def setreport(request):
     assert isinstance(request, HttpRequest)
     if request.user.is_anonymous():
-        return HttpResponseRedirect(reverse('reports'))
+        return redirect('reports')
+    assert request.method == 'POST', "Please, do not hack me"
+
     button = request.POST['button']
     try:
-        me = HubUser.objects.get(username = request.user.username)
+        user = request.user
         report_id = request.POST['report_id']
-        r = Report.objects.get(id = report_id, creator = me)
+        report = get_report(id = report_id, creator = user)
         if button == 'apply':
-            r.scope = request.POST['scope']
-            r.description = request.POST['report_description']
-            r.save()
+            report.scope = ScopeType.objects.get(name = request.POST['scope'])
+            report.description = request.POST['report_description'].strip()
+            report.save()
         elif button == 'delete':
-            r.remove()
-    except Report.DoesNotExist:
+            cleanup_reportfiles(report)
+            report.delete()
+    except ReportDoesNotExist:
         # only the creator is allowed to change the scope of the report
         pass
-    return HttpResponseRedirect(reverse('reports'))
+    return redirect('reports')
 
 urlpatterns = [
-    url(r'^$', reports, name = 'reports'),
-    url(r'^open$', openreport, name='report-open'),
+    url(r'^/?$', reports, name = 'reports'),
+    url(r'^/open$', openreport, name='report-open'),
     url(r'^rstart$', container_report_start, name='report-start'),
     url(r'^reports-stop$', container_report_all_stop, name='report-all-stop'),
-    url(r'^openlatest$', openreport_latest, name='report-openlatest'),
-    url(r'^settings$', setreport, name='report-settings'),
+    url(r'^/openlatest$', openreport_latest, name='report-openlatest'),
+    url(r'^/settings$', setreport, name='report-settings'),
 ]
 

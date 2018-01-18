@@ -1,6 +1,7 @@
 import os
+import time
 import glob
-from distutils.dir_util import mkpath
+from distutils.dir_util import mkpath, copy_tree, remove_tree
 from distutils.file_util import move_file
 
 from kooplex.lib import get_settings
@@ -91,3 +92,15 @@ def move_htmlreport_in_place(report):
     folder = os.path.dirname(filename_destination)
     mkpath(folder)
     move_file(filename_source, folder)
+
+def cleanup_reportfiles(report):
+    from kooplex.hub.models import HtmlReport, DashboardReport
+    garbage = os.path.join(get_settings('volumes', 'garbage'), "report.%f" % time.time())
+    if isinstance(report, HtmlReport):
+        try:
+            copy_tree(os.path.dirname(report.filename_report_html), garbage)
+            remove_tree(os.path.dirname(report.filename_report_html))
+        except:
+            raise
+    else:
+        raise NotImplementedError

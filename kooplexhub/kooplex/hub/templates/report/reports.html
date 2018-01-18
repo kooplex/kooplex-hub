@@ -20,9 +20,10 @@
         {% endif %}
           {% if user %}
                 <li class="active" ><a href="#myreports" data-toggle="tab">My reports</a></li>
-                <li><a href="#publicreports" data-toggle="tab" >Public reports </a></li>
+                <li><a href="#internalreports" data-toggle="tab">Internal reports</a></li>
+                <li><a href="#publicreports" data-toggle="tab" >Public reports</a></li>
           {% else %}
-              <li class="active"><a href="#publicreports" data-toggle="tab" >Public reports </a></li>
+              <li class="active"><a href="#publicreports" data-toggle="tab" >Public reports</a></li>
           {% endif %}
       </ul>
     </div><!-- /.navbar-collapse -->
@@ -42,19 +43,26 @@
      {% endif %}
        {% for key, reports in reports_mine.items %}
          <div class="row">
-            {% include 'report/partial.html' with pane='mine' project=key.0 %}
+            {% include 'report/partial.html' with pane='mine' project=key.0 user_can_set=True %}
          </div>
        {% endfor %}
      </div>
 
+     <div id="internalreports" class="tab-pane fade">
+       {% for key, reports in reports_internal.items %}
+         <div class="row">
+            {% include 'report/partial.html' with pane='public' project=key.0 user_can_set=False %}
+         </div>
+       {% endfor %}
+     </div>
      {% if user %}
      <div id="publicreports" class="tab-pane fade">
      {% else %}
      <div id="publicreports" class="tab-pane fade in active">
      {% endif %}
-     {% for key, reports in publicreports.items %}
+     {% for key, reports in reports_public.items %}
          <div class="row">
-            {% include 'report/partial.html' with pane='public' project=key.0 %}
+            {% include 'report/partial.html' with pane='public' project=key.0 user_can_set=False %}
          </div>
      {% endfor %}
      </div>

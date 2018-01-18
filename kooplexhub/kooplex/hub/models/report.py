@@ -7,15 +7,14 @@ from os import mkdir
 from distutils import dir_util, file_util
 from time import time, strftime, localtime
 
-from .project import Project
+from .project import Project, UserProjectBinding
 from .scope import ScopeType
-from .image import Image
-
 from .user import User
 
-from kooplex.lib.smartdocker import Docker
-from kooplex.lib.libbase import get_settings
+from kooplex.lib import get_settings
 
+class ReportDoesNotExist(Exception):
+    pass
 
 class Report(models.Model):
     id = models.AutoField(primary_key = True)
@@ -28,6 +27,9 @@ class Report(models.Model):
     scope = models.ForeignKey(ScopeType, null = False)
     password = models.CharField(max_length = 128, null = True)  #TODO: may store encrypted
 
+    def __str__(self):
+        return "%s [%s]" % (self.filename_wo_ext, self.project.name_with_owner)
+
     def __lt__(self, r):
         assert isinstance(r, Report)
         return self.ts_created > r.ts_created
@@ -36,13 +38,31 @@ class Report(models.Model):
     def pretty_ts(self):
         return strftime("%Y %m. %d.", localtime(self.ts_created))
 
+    @property
+    def filename_wo_ext(self):
+        fn_wo_ext, _ = os.path.splitext(os.path.basename(self.notebook_filename))
+        return fn_wo_ext
+
+    def is_user_allowed(self, user):
+        public = ScopeType.objects.get(name = 'public')
+        internal = ScopeType.objects.get(name = 'internal')
+        if self.scope == public:
+            return True
+        if self.creator == user:
+            return True
+        if self.scope == internal:
+            for collaborator in project.collaborators:
+                if collaborator == user:
+                    return True
+        return False
+
 class HtmlReport(Report):
     @property
     def displaytype(self):
         return 'Html report'
 
     @property
-    def filename(self):
+    def filename(self): #FIXME: rename it
         # as the user sees in their container
         mp_home = get_settings('volumes', 'home')
         mp_share = get_settings('volumes', 'share')
@@ -61,10 +81,7 @@ class HtmlReport(Report):
 
     @property
     def filename_report_html(self):
-        fn_ipynb = os.path.basename(self.notebook_filename)
-        fn_wo_ext, _ = os.path.splitext(fn_ipynb)
-        fn_html = fn_wo_ext + '.html'
-        return os.path.join(get_settings('volumes', 'htmlreport'), self.creator.username, self.project.name_with_owner, fn_html)
+        return os.path.join(get_settings('volumes', 'htmlreport'), self.creator.username, self.project.name_with_owner, str(self.ts_created), self.filename_wo_ext + '.html')
 
 class DashboardReport(Report):
     image = models.ForeignKey(ScopeType, null = False)
@@ -187,9 +204,6 @@ class DashboardReport(Report):
 ##            if len(ooops):
 ##                raise Exception("Error copying files: %s" % ",".join(ooops))
 ##
-##    def remove(self):
-##        dir_util.remove_tree(self.target_)
-##        self.delete()
 
 
 def list_user_reports(user):
@@ -197,4 +211,34 @@ def list_user_reports(user):
         yield report
     for report in DashboardReport.objects.filter(creator = user):
         yield report
+
+def list_internal_reports(user):
+    internal = ScopeType.objects.get(name = 'internal')
+    for upb in UserProjectBinding.objects.filter(user = user):
+        for report in HtmlReport.objects.filter(project = upb.project, scope = internal):
+            if report.owner == user:
+                continue
+            yield report
+        for report in DashboardReport.objects.filter(project = upb.project, scope = internal):
+            if report.owner == user:
+                continue
+            yield report
+
+def list_public_reports():
+    public = ScopeType.objects.get(name = 'public')
+    for report in HtmlReport.objects.filter(scope = public):
+        yield report
+    for report in DashboardReport.objects.filter(scope = public):
+        yield report
+
+def get_report(**kw):
+    try:
+        return HtmlReport.objects.get(**kw)
+    except:
+        pass
+    try:
+        return DashboardReport.objects.get(**kw)
+    except:
+        pass
+    raise ReportDoesNotExist("Cannot find either Html not Dashboard reports")
 

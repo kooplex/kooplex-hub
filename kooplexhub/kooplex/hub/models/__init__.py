@@ -1,5 +1,5 @@
 from .container import Container, ContainerType, VolumeContainerBinding, init_model as init_containertypes
-from .report import HtmlReport, DashboardReport, list_user_reports
+from .report import HtmlReport, DashboardReport, ReportDoesNotExist, list_user_reports, list_internal_reports, list_public_reports, get_report
 from .image import Image, init_model as refresh_images
 from .mountpoint import MountPoint, MountPointProjectBinding, MountPointPrivilegeBinding
 from .project import Project, UserProjectBinding

@@ -6,7 +6,7 @@ from django.http import HttpRequest
 from django.template import RequestContext
 
 from kooplex.hub.models import Project, HtmlReport, DashboardReport, ScopeType
-from kooplex.lib import list_notebooks, publish_htmlreport
+from kooplex.lib import get_settings, list_notebooks, publish_htmlreport
 
 class fileinfo:
     def __init__(self, fn, volume, filename):
@@ -31,6 +31,7 @@ def publishForm(request):
             'publish/publishform.html',
             context_instance = RequestContext(request,
                 {
+                    'base_url': get_settings('hub', 'base_url'),
                     'notebooks': notebooks,
                     'scopes': scopes,
                     'other_files': [],

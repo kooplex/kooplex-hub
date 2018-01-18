@@ -24,15 +24,31 @@
           <hr>
           <ul class="nav nav-tabs">
               <li class="active"><a href="#pane_desc" data-toggle="tab">Description</a></li>
-              <li><a href="#pane_passwd" data-toggle="tab">Password</a></li>
+              <li><a href="#pane_passwdNscope" data-toggle="tab">Password and scope</a></li>
+              <li><a href="#pane_unpublish" data-toggle="tab">Unpublish</a></li>
           </ul>
           <div class="tab-content">
               <div id="pane_desc" class="tab-pane fade in active">
                 <strong>Name of the report:</strong> <input type="text" name="report_name" /><br>
                 <strong>Description:</strong> <textarea rows="6" cols="100" id="report_description" name="report_description"></textarea>
               </div>
-              <div id="pane_passwd" class="tab-pane fade">
-                <input type="text" class="form-control" id="password" name="password" placeholder="Enter a password or leave it blank">
+              <div id="pane_passwdNscope" class="tab-pane fade">
+                <strong>Password:</strong> <input type="text" class="form-control" id="password" name="password" placeholder="Leave blank toyield unrestricted access" /><br>
+                <strong>Scope:</strong> <select name = "scope" class = "btn btn-default">
+                  {% for scope in scopes %}
+                  <option value="{{ scope.name }}">{{ scope }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div id="pane_unpublish" class="tab-pane fade">
+                {% if reports %}
+                <strong>Tick to remove:</strong><br>
+                  {% for r in reports %}
+                  <input type="checkbox" name="report2remove" value="{{ r.id }}">[{{ r.pretty_ts }}] ({{ r }} - {{ r.scope }}) <br>
+                  {% endfor %}
+                {% else %}
+                <div class="alert alert-warning" role="alert">There are no former reports of this project yet.</div>
+                {% endif %}
               </div>
           </div>   <!-- tab-content -->
 
@@ -57,26 +73,15 @@
           {% endif %}
           <div class="well">
             <ul>
-              <li><strong>The url to the latest report:</strong> <code>{% url 'report-openlatest' %}?project_id={{ project_id }}&amp;filename=<strong>your_chosen_file.ipynb</strong></code>
+              <li>The url to the <strong>latest report:</strong> <code>{{ base_url }}{% url 'report-openlatest' %}?project_id={{ project_id }}&amp;filename=<strong>your_chosen_file</strong></code>
+              <li>The filename in the url should not contain any filename extension.
               <li>If no <strong>Name</strong> is provided for the report, it is automatically generated from the noteboook's filename.
               <li>Public reports can be protected by a password if you provide one under the <strong>Password</strong> tab.
             </ul>
           </div>
-          {% if reports %}
-          <hr>
-          <p>There are former reports of this project. Tick those you would like to unpublish with this reporting transaction.</p>
-          {% for r in reports %}
-          <input type="checkbox" name="report2remove" value="{{ r.id }}">[{{ r.ts_ }}] ({{ r.type }} - {{ r.scope }}) {% if r.description %} {{ r.description }} {% endif %}<br>
-          {% endfor %}
-          {% endif %}
 
           <div class="form-group">
             <div class="col-md-offset-2 col-md-10">
-                <select name = "scope" class = "btn btn-default">
-                  {% for scope in scopes %}
-                  <option value="{{ scope.name }}">{{ scope }}</option>
-                  {% endfor %}
-                </select>
                  <input type="hidden" name="project_id" value="{{ project_id }}" />
                  <input type="hidden" name="toconvert_files" value="" />
                  <input type="hidden" id="reports2remove" name="reports2remove" value="" />

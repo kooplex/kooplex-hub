@@ -1,6 +1,8 @@
-{% for r in reports %}
-  {% include 'report/settings.html' %}
-{% endfor %}
+{% if user_can_set %}
+  {% for r in reports %}
+    {% include 'report/settings.html' %}
+  {% endfor %}
+{% endif %}
 {% with reports|first as report_latest %}
 {% if report_latest.displaytype == 'Dashboard report' %}
 <div class="panel panel-success ">
@@ -8,16 +10,22 @@
 <div class="panel panel-default ">
 {% endif %}
   <div class="panel-heading">
-    <a href="{% url 'report-open' %}?report_id={{ report_latest.id }}&creator={{ report_latest.creator.username }}" target="_blank">
+    <a href="{% url 'report-open' %}?report_id={{ report_latest.id }}" target="_blank">
       <button type="button" class="btn btn-info"><span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span> Open</button>
     </a>
-      <!--a href="{% url 'report-start' %}?report_id={{ report_latest.id }}&creator={{ report_latest.creator_name }}" target="_blank">
-      <button type="button" class="btn btn-info"><span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span> Open a Report Server</button>
-    </a-->
     <a data-toggle="collapse" href="#collapse{{ report_latest.id }}{{ pane }}" style="text-decoration: none; color: gray">
-      <span style="padding-left:20px;"> project name: <strong style="text-transform: uppercase;">{{ project.name }}</strong>  </span><span style="padding-left:20px"><strong> -
-        {{ report_latest.name  }}{% if report_latest.type == 'dashboard' %}.ipynb{%  elif report_latest.type == 'html' %}.html</span> {%  endif %}</strong>
- published on {{ report_latest.prettyts_ }} by {{ report_latest.creator_name }} <span class="badge" style="float: inline-end;">{% if report_latest.type == 'dashboard' %}dashboard{%  elif report_latest.type == 'html' %}html</span> {%  endif %}</span>
+      <span style="padding-left:20px;"> 
+        <strong>{{ report_latest.name  }}</strong>
+      </span>
+      <span style="padding-left:20px">
+        project name: <strong style="text-transform: uppercase;">{{ project.name }}</strong>,
+        filename: <strong>{{ report_latest.filename_wo_ext }}</strong>,
+        published on: <strong>{{ report_latest.pretty_ts }}</strong>
+        {% if not user_can_set %}
+        by {{ report_latest.creator.username }}
+        {% endif %}
+      </span>
+      <span class="badge" style="float: inline-end;">{{ report_latest.displaytype }}</span>
     </a>
   </div>
   <div id="collapse{{ report_latest.id }}{{ pane }}" class="panel-collapse collapse">
@@ -27,14 +35,9 @@
           <img src="{{ report_latest.picture }}"  style="max-height: 200px; max-width: 100%;">
         </a>
         <div class="well">
-          <p><strong>Project description:</strong>{{ project.description }}
-          <p><strong>Report type (latest):</strong>{{ report_latest.type }}
-        {% if report_latest.description %}
-          <p><strong>Report description (latest):</strong>{{ report_latest.description }}
-        {% endif %}
-        {% if pane == 'mine' %}
-          <p><strong>Url to the latest report:</strong><code>{% url 'report-openlatest' %}?project_id={{ project.id }}&amp;filename={{ report_latest.file_name }}</code>
-        {% endif %}
+          <p><strong>Project description: </strong>{{ project.description }}
+          <p><strong>Report description (latest): </strong>{{ report_latest.description }}
+          <p><strong>Url to the latest report: </strong><code>{{ base_url }}{% url 'report-openlatest' %}?project_id={{ project.id }}&amp;filename={{ report_latest.filename_wo_ext }}</code>
         </div>
         <form action="{% url 'report-open' %}" method="post">
           {% csrf_token %}
@@ -42,8 +45,9 @@
           <select name='report_id' id='report_id{{ project.id }}' style="max-width: 800px;">
         {% for r in reports %}
           <option value="{{ r.id }}"
-{% if r.type == "dashboard" %} style="background-color: lightgreen;" {% endif %}
->[{{ r.ts_ }}] ({{ r.scope }}) {% if r.description %} {{ r.description }} {% endif %}</option>
+            {% if r.displaytype == "Dashboard report" %} style="background-color: lightgreen;" {% endif %}
+          >[{{ r.pretty_ts }}] ({{ r.scope }})
+          </option>
         {% endfor %}
           </select>
           <button type="submit" class="btn btn-info" data-toggle="tooltip" title="Open a former report" data-placement="top"><span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span></button>
