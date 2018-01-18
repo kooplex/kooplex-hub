@@ -92,7 +92,7 @@ class Docker:
 
     def stop_container(self, container):
         self.client.stop(container.name)
-        logger.debug("Container state %s"%docker_container_info['State'])
+        logger.debug("Container stopped %s"% container.name)
 
 
     def execute(self, container, command):
