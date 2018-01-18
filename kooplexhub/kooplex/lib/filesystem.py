@@ -2,6 +2,7 @@ import os
 import ast
 import time
 import glob
+import subprocess
 from distutils.dir_util import mkpath, copy_tree, remove_tree
 from distutils.file_util import copy_file, move_file
 
@@ -65,7 +66,7 @@ def generate_rsakey(user, overwrite = False):
 
 def read_rsapubkey(user):
     fn_keyfile = os.path.join(get_settings('volumes', 'home'), user.username, '.ssh', 'gitlab.key.pub')
-    return open(fn_keyfile + ".pub").read().strip()
+    return open(fn_keyfile).read().strip()
 
 def mkdir_homefolderstructure(user):
     dir_home = os.path.join(get_settings('volumes', 'home'), user.username)

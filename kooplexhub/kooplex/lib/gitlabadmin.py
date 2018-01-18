@@ -50,10 +50,7 @@ class GitlabAdmin(Gitlab):
         print_debug("",DEBUG_LOCAL)
         # TODO: create external user in gitlab via REST API and set
         # identity to point to LDAP
-#FIXME: LDAPORG HARDCODED
-        url = self.api_version + "/users?name='%(firstname)s %(lastname)s'&username=%(username)s&email=%(email)s&password=%(password)s&confirm=false" % (user._data)
-#&extern_uid='uid=%(username)s,ou=users,dc=novo1,dc=complex,dc=elte,dc=hu'
-        #url += "&confirmed_at=%s" % (strdatetime.time(1))
+        url = self.api_version + "/users?name='%(first_name)s %(last_name)s'&username=%(username)s&email=%(email)s&password=%(password)s&confirm=false" % (user)
         res = self.http_post(url)
         message = ""
         if res.status_code != 201:
@@ -62,7 +59,7 @@ class GitlabAdmin(Gitlab):
 
     def upload_userkey(self, user, key):
         print_debug("",DEBUG_LOCAL)
-        resp = self.get_user(user['username'])[0]
+        resp = self.get_user(user)[0]
         data = urlencode( { 'key': key.strip() } )
         url = self.api_version + "/users/%d/keys?title=gitlabkey" % (resp['id'])
         res = self.http_post( url, data = data )

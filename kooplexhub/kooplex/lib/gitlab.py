@@ -1,4 +1,4 @@
-﻿import json
+import json
 import base64
 import requests
 import subprocess, shlex
@@ -78,9 +78,9 @@ class Gitlab(RestClient):
             return res, u
         return res, None
 
-    def get_user(self,username):
+    def get_user(self, user):
         print_debug("",DEBUG_LOCAL)
-        res = self.http_get(self.api_version+'/users?username=%s'%username)
+        res = self.http_get(self.api_version+'/users?username=%s'%user.username)
         return res.json()
 
     def get_user_by_id(self,id):

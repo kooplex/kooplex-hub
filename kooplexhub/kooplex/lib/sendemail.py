@@ -1,39 +1,32 @@
 import time
 import smtplib
 from email.mime.text import MIMEText
+import logging
 
-#FIXME: how to import this variable?
-#from kooplex.lib.settings import KOOPLEX_BASE_URL
-KOOPLEX_BASE_URL = "https://kooplex.vo.elte.hu"
-KOOPLEX_TOKENPAGE = "https://sandbox.vo.elte.hu/hub/passwordtoken"
-SMTP_SERVER = 'mail.elte.hu' #FIXME: hardcoded
-FROM_ADDRESS = 'kooplex@complex.elte.hu'
+from kooplex.lib import get_settings
 
+logger = logging.getLogger(__name__)
 
 def _send(to, subject, message):
     msg = MIMEText(message)
     msg['Subject'] = subject
-    msg['From'] = FROM_ADDRESS
+    msg['From'] = get_settings('hub', 'adminemail')
     msg['To'] = to
 
     try:
-        s = smtplib.SMTP(SMTP_SERVER)
+        s = smtplib.SMTP(get_settings('hub', 'smtpserver'))
         s.send_message(msg)
         s.quit()
+        logger.info('mailto: %s [%s]' % (to, subject))
         return 0
     except Exception as e:
-        with open('/tmp/email_err.log', 'a') as f:
-            f.write('%f to: %s\t%s\n' % (time.time(), to, e))
-        return e
+        logger.error('mailto: %s [%s]' % (to, subject))
+        return 1
 
-
-def send_new_password(name, username, to, pw):
-    # NOTE: make a local copy of the secret for debug purposes
-    with open('/tmp/%s' % username, 'w') as f:
-        f.write(pw)
-
+def send_new_password(user):
+    subject = 'Your kooplex account is created'
     message = """
-Dear %s,
+Dear %s %s,
 
 your new kooplex account (%s) is created.
 
@@ -41,22 +34,23 @@ The login password is set %s . Please change it the first time you visit the das
 
 Best regards,
  Kooplex team
-    """ % (name, username, pw, KOOPLEX_BASE_URL)
+    """ % (user.first_name, user.last_name, user.username, user.password, get_settings('hub', 'base_url'))
 
-    status = _send(to = to, subject = 'Your kooplex account is created', message = message)
+    status = _send(to = user.email, subject = subject, message = message)
     if status != 0:
-        send_error_report(status, 'Error delivering pw (%s) to %s' % (pw, to))
+        send_error_report(status, 'Error delivering pw (%s) to %s' % (user.password, user.email))
+    return status
 
 def send_error_report(status, extra = 'na'):
     message = """
 Instance: %s
 Failure: %s
 Extra: %s
-    """ % (KOOPLEX_BASE_URL, status, extra)
-
-    _send(to = FROM_ADDRESS, subject = '[SMTP error]', message = message)
+    """ % (get_settings('hub', 'base_url'), status, extra)
+    _send(to = get_settings('hub', 'adminemail'), subject = '[SMTP error]', message = message)
 
 def send_token(user, token):
+    subject = 'Kooplex account password reset request'
     message = """
 Dear %s %s,
 
@@ -68,7 +62,8 @@ Best regards,
  Kooplex team
     """ % (user.first_name, user.last_name, user.username, token)
 
-    status = _send(to = user.email, subject = 'Kooplex account password reset request', message = message)
+    status = _send(to = user.email, subject = subject, message = message)
     if status != 0:
         send_error_report(status, 'Error delivering pw request token (%s) to %s' % (token, user.email))
+    return status
 
