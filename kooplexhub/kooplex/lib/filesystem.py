@@ -24,6 +24,14 @@ def _mkdir_davsecret(user):
     _mkdir(dir_secret, user.uid, user.gid, 0b111000000)
     return dir_secret
 
+def _chown_recursive(path, uid = 0, gid = 0):
+    os.chown(path, uid, gid)
+    for root, dirs, files in os.walk(path):
+        for name in dirs:
+            os.chown(os.path.join(root, name), uid, gid)
+        for name in files:
+            os.chown(os.path.join(root, name), uid, gid)
+
 def write_davsecret(user):
     dir_secret = _mkdir_davsecret(user)
     fn_secret = os.path.join(dir_secret, 'secrets')
@@ -148,6 +156,7 @@ def copy_dashboardreport_in_place(report, files):
         else:
             mkpath(dir_target)
             copy_file(f['fullpath'], dir_target)
+    _chown_recursive(report_root, get_settings('dashboard', 'uid'), get_settings('dashboard', 'gid'))
 
 def cleanup_reportfiles(report):
     from kooplex.hub.models import HtmlReport, DashboardReport

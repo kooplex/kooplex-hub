@@ -134,11 +134,11 @@ def list_public_reports():
 def get_report(**kw):
     try:
         return HtmlReport.objects.get(**kw)
-    except:
+    except HtmlReport.DoesNotExist:
         pass
     try:
         return DashboardReport.objects.get(**kw)
-    except:
+    except DashboardReport.DoesNotExist:
         pass
     raise ReportDoesNotExist("Cannot find either Html not Dashboard reports")
 
