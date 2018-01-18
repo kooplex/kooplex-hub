@@ -3,7 +3,7 @@ import re
 import json
 from docker.client import Client
 import logging
-logger = logging.getLogger('debug_logger')
+logger = logging.getLogger(__name__)
 
 from kooplex.lib import get_settings
 
@@ -92,7 +92,7 @@ class Docker:
 
     def stop_container(self, container):
         self.client.stop(container.name)
-        logger.debug("Container state %s"%docker_container_info['State'])
+        logger.debug("Container stopped %s"% container.name)
 
 
     def execute(self, container, command):

@@ -4,6 +4,8 @@ from django.conf.urls import patterns, url, include
 from django.shortcuts import render, redirect
 from django.http import HttpRequest
 from django.template import RequestContext
+import logging
+logger = logging.getLogger(__name__)
 
 from kooplex.hub.models import *
 from kooplex.lib import spawn_project_container, stop_project_container
@@ -14,7 +16,10 @@ def projects(request, *v, **kw):
     """Renders the projectlist page."""
     assert isinstance(request, HttpRequest)
     if request.user.is_anonymous():
+        logger.debug('User not authenticated yet --> goes to login page')
         return redirect('login')
+    logger.debug('User authenticated %s' %request.user)
+    logger.info('Userauthenticated')
 
     PUBLIC = ScopeType.objects.get(name = 'public')
     NOTEBOOK = ContainerType.objects.get(name = 'notebook')
@@ -27,6 +32,7 @@ def projects(request, *v, **kw):
     images = Image.objects.all()
     scopes = ScopeType.objects.all()
     volumes = Volume.objects.all()
+    logger.debug('Rendering projects.html')
 
     return render(
         request,
@@ -60,6 +66,7 @@ def project_new(request):
     scope = request.POST['button']
     template = request.POST.get('project_template')
     #FIXME: parse shares and volumes
+    logger.debug('New project to be created: %s'%name)
 
     errors = []
     if not re.match(r'^[a-zA-Z][0-9a-zA-Z_-]*$', name):
@@ -86,13 +93,16 @@ def project_new(request):
 #        cloned_project = True
     elif template.startswith('image='):
         imagename = template.split('=')[-1]
+        logger.debug('Project to be created from image: %s' % imagename)
         cloned_project = False
 #    debug_logger.debug("Create project %s - GitLab"% project_name)
     scope = ScopeType.objects.get(name = scope)
     image = Image.objects.get(name = imagename)
     project = Project(name = name, owner = user, description = description, image = image, scope = scope)
     gitlab_create_project(project, request) #FIXME: why we give request?
+    logger.debug('New project created in GitLab: %s' % name)
     project.save()
+    logger.debug('New project saved in HubDB: %s' % name)
     return redirect('projects')
 #FIXME:
 #####        #Add image_name to project

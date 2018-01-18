@@ -4,32 +4,44 @@
 {% if project in running  %}
 
 <div class="panel panel-success" style="margin-bottom: 3px">
+
   <div class="panel-heading" style="padding: 5px 5px;">
+<div class="row">
+    <div class="col-md-1">
     <a href="{% url 'container-open' %}?project_id={{ project.id }}" target="_blank">
       <button role="button" type="button" class="btn btn-success" style="padding: 3px 6px 6px 6px">
         <span class="glyphicon glyphicon-folder-open" aria-hidden="true"> Open</span>
-      </button></a>
-    <a data-toggle="collapse"  href="#collapse{{ project.id }}" style="text-decoration: none; color: gray">
-      <strong data-toggle="tooltip" title="Running" data-placement="bottom">{{ project.name }}</strong>
+      </button>
+    </a>
+    </div>
+     <a data-toggle="collapse"  href="#collapse{{ project.id }}" style="text-decoration: none; color: gray">
+      <div class="col-md-9" style="padding-bottom: 10px;"><strong data-toggle="tooltip" title="Running" data-placement="bottom">{{ project.name }}</strong></div>
       {% if project.owner != user %} ( owned by {{ project.owner }} ) {% endif %}
       <span class="badge" style="float: inline-end;"> Using image:<strong>{{ project.image }}</strong></span>
     </a>
+  </div>
   </div>
 
 {% else %}
 
 <div class="panel panel-default" style="margin-bottom: 3px">
   <div class="panel-heading" style="padding: 5px 5px;">
+  <div class="row">
+    <div class="col-md-1">
     <a href="{% url 'container-start' %}?project_id={{ project.id }}">
       <button role="button" type="button" class="btn btn-default" style="padding: 3px 6px 6px 6px">
         <span class="glyphicon glyphicon-play" aria-hidden="true"> Start</span>
-      </button></a>
+      </button>
+    </a>
+    </div>
+
     <a data-toggle="collapse"  href="#collapse{{ project.id }}" style="text-decoration: none; color: gray">
-      <strong>{{ project.name }}</strong>
+      <div class="col-md-9" style="padding-bottom: 10px;"> <strong>{{ project.name }}</strong></div>
       {% if project.owner != user %} ( owned by {{ project.owner }} ) {% endif %}
       <span class="badge" style="float: inline-end;"> Using image:<strong>{{ project.image }}</strong></span>
     </a>
   </div>
+</div>
 
 {% endif %}
 
