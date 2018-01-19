@@ -47,7 +47,7 @@ class Spawner:
         return container
 
     def start_container(self, container):
-        from kooplex.lib import proxy_addroute
+        from kooplex.lib.proxy import proxy_addroute
         self.docker.run_container(container, self.volumemapping)
 ##import pwgen
 #        jupyter_startsession(container)
@@ -71,7 +71,7 @@ class Spawner:
 
 def spawn_project_container(user, project):
     from kooplex.hub.models import ContainerType
-    from .filesystem import G_OFFSET
+    from kooplex.lib.filesystem import G_OFFSET
     # we have to make sure if more than one mount points share the same group id, we collapse their names
 #        lut_gid_gidname = {}
 #        for mpb in MountPointProjectBinding.objects.filter(project = self.project):

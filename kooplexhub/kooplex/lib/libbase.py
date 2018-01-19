@@ -1,64 +1,57 @@
-import os
-import stat
-import json
-import requests
+"""
+@author: Jozsef Steger
+@summary: 
+"""
+import time
+import logging
+
 from django.conf import settings
-from distutils.dir_util import mkpath
 
-def get_settings(block, value, override=None, default=None):
-    if override:
-        return override
-    else:
-        s = settings.KOOPLEX[block]
-        if s and value in s:
-            return s[value]
-        else:
+logger = logging.getLogger(__name__)
+
+def keeptrying(method, times, **kw):
+    """
+    @summary: run an arbitrary method with keyword arguments. In case an exception is raised during the call, 
+    keep trying some more times with exponentially increasing waiting time between consecutive calls.
+    @param method: the method to call
+    @type method: callable
+    @param times: the number of trials
+    @type times: int
+    @param kw: keyword arguments to pass to the method
+    @returns the return value of method
+    @raises the last exception if calling th method fails times many times
+    """
+    dt = .1
+    while times > 0:
+        logging.debug("executing %s" % method)
+        times -= 1
+        try:
+            return method(**kw)
+        except Exception as e:
+            logging.warning("exception (%s) while executing %s [backoff and try %d more]" % (method, e, times))
+            if times == 0:
+                logging.error("gave up execution of %s" % method)
+                raise
+            time.sleep(dt)
+            dt *= 2
+
+def get_settings(block, item, default = None):
+    """
+    @summary: retrieve configuration constants from the KOOPLEX settings hierarchy
+    @param block: the name of the collection of configuration constants
+    @type block: str
+    @param item: the name of the configuration constant within the block
+    @type item: str
+    @param default: in case searched constant is not present in the configuration fall back to this value
+    @type default: anything defaults to None
+    @raises KeyError: in case no default value is provided and either the block is not present in the settings or the item is missing within the block
+    """
+    try:
+        return settings.KOOPLEX[block][item]
+    except KeyError:
+        if default:
+            logging.warning("block %s item %s is missing from settings.py Default value: %s is returned" % (block, item, default))
             return default
+        logger.error("missing block %s item %s in settings.py" % (block, item))
+        raise
 
-class LibBase:
-
-    def __init__(self, request=None):
-        self.request = request
-        return None
-
-    def join_path(a, b):
-        if not b or len(b) == 0:
-            url = a
-        elif a[-1] != '/' and b[0] != '/':
-            url = a + '/' + b
-        elif a[-1] == '/' and b[0] == '/':
-            url = a + b[1:]
-        else:
-            url = a + b
-        return url
-
-    def make_url(host='localhost', path=None, port=None, https=False):
-        print_debug("")
-        proto = 'https://' if https else 'http://'
-        port = '' if (not port or not https and port == 80 or https and port == 443) else ':' + str(port)
-        url = LibBase.join_path(proto + host + port, path)
-        return url
-
-    def clean_dir(path):        
-        print_debug("")
-        for root, dirs, files in os.walk(path, topdown=False):
-            for name in files:
-                path = os.path.join(root, name)
-                LibBase.chmod(path)
-                os.remove(path)
-            for name in dirs:
-                path = os.path.join(root, name)
-                LibBase.chmod(path)
-                os.rmdir(os.path.join(root, name))
-
-    def chmod(path):
-        print_debug("")
-        if not os.access(path, os.W_OK):
-            # Is the error an access error ?
-            os.chmod(path, stat.S_IWUSR)
-
-    def ensure_dir(dir):
-        print_debug("")
-        if not os.path.exists(dir):
-            os.makedirs(dir)
-        return dir

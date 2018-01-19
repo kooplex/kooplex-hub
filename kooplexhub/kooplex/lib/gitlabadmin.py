@@ -3,7 +3,7 @@ import requests
 from django.conf import settings
 import datetime
 from kooplex.lib.libbase import LibBase
-from kooplex.lib.restclient import RestClient
+#from kooplex.lib.restclient import RestClient
 from kooplex.lib.gitlab import Gitlab
 from kooplex.lib.libbase import get_settings
 from django.core.exceptions import ValidationError
@@ -13,6 +13,7 @@ from urllib.parse import quote, urlencode
 DEBUG_LOCAL=False
 #FIXME:
 def print_debug(*v, **w): pass
+RestClient = object
 
 class GitlabAdmin(Gitlab):
 

@@ -5,12 +5,12 @@ import subprocess, shlex
 from django.conf import settings
 from threadlocals.threadlocals import get_current_request
 
-from kooplex.lib.libbase import LibBase
 from kooplex.lib.libbase import get_settings
 
 #FIXME:
 def print_debug(*v, **w): pass
 RestClient = object
+LibBase = object
 
 DEBUG_LOCAL=False
 
@@ -21,7 +21,7 @@ class Gitlab(RestClient):
     HEADER_PRIVATE_TOKEN_KEY = 'PRIVATE-TOKEN'
     URL_PRIVATE_TOKEN_KEY = 'private_token'
 
-    base_url = get_settings('gitlab', 'base_url', None, 'http://www.gitlab.com/')
+    base_url = get_settings('gitlab', 'base_url')
 
     def __init__(self, request=None):
         self.request = request
