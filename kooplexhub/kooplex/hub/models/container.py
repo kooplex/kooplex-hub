@@ -20,12 +20,9 @@ class Container(models.Model):
     project = models.ForeignKey(Project, null = True)
 
     image = models.ForeignKey(Image, null = True)
-    environment = models.TextField(null = True)
-    command = models.TextField(null = True)
 
     container_type = models.ForeignKey(ContainerType, null = False)
 
-    kernelid = models.UUIDField(max_length = 200, null = True)
     launched_at = models.DateTimeField(default = timezone.now)
     is_running = models.BooleanField(default = False)
 
