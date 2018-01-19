@@ -1,4 +1,4 @@
-﻿import django
+import django
 import unittest
 import requests
 import time

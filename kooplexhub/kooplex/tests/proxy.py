@@ -1,4 +1,4 @@
-﻿import unittest
+import unittest
 from kooplex.lib.proxy import Proxy, ProxyError
 
 class Test_proxy(unittest.TestCase):

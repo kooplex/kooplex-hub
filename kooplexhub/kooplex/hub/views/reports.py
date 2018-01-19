@@ -11,8 +11,10 @@ from kooplex.hub.models import list_user_reports, list_internal_reports, list_pu
 from kooplex.lib import get_settings, cleanup_reportfiles
 #############
 from kooplex.hub.models import Project
-from kooplex.lib.spawner import ReportSpawner
+##from kooplex.lib.spawner import ReportSpawner
 
+#FIXME:
+class ReportSpawner: pass
 
 def group_by_project(reports):
     reports_grouped = {}

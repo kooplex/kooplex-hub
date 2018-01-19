@@ -1,4 +1,4 @@
-﻿import unittest
+import unittest
 from kooplex.lib import Docker
 from kooplex.hub.models import Container
 

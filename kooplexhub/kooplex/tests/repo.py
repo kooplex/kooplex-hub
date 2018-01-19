@@ -1,4 +1,4 @@
-﻿import unittest
+import unittest
 from kooplex.lib.repo import Repo
 
 class Test_repo(unittest.TestCase):

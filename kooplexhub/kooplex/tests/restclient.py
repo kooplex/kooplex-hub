@@ -1,4 +1,4 @@
-﻿import unittest
+import unittest
 from kooplex.lib.libbase import LibBase
 from kooplex.lib.restclient import RestClient
 

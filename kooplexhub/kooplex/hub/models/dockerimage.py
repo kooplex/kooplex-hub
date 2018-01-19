@@ -1,4 +1,4 @@
-﻿#FIXME: ooops equals to Image
+#FIXME: ooops equals to Image
 import json
 from django.db import models
 from django.http import HttpResponseRedirect

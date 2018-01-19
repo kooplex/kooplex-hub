@@ -1,4 +1,4 @@
-﻿"""
+"""
 Package for kooplex.
 """
 

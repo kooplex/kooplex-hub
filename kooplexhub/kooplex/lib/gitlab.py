@@ -9,7 +9,8 @@ from kooplex.lib.libbase import LibBase
 from kooplex.lib.restclient import RestClient
 from kooplex.lib.libbase import get_settings
 
-from kooplex.lib.debug import *
+#FIXME:
+def print_debug(*v, **w): pass
 
 DEBUG_LOCAL=False
 

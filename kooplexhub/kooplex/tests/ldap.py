@@ -1,4 +1,4 @@
-﻿import unittest
+import unittest
 from kooplex.lib.ldap import Ldap, LdapException
 from django.contrib.auth.models import User, Group
 

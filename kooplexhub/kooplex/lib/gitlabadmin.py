@@ -6,12 +6,13 @@ from kooplex.lib.libbase import LibBase
 from kooplex.lib.restclient import RestClient
 from kooplex.lib.gitlab import Gitlab
 from kooplex.lib.libbase import get_settings
-from kooplex.lib.debug import *
 from django.core.exceptions import ValidationError
 
 from urllib.parse import quote, urlencode
 
 DEBUG_LOCAL=False
+#FIXME:
+def print_debug(*v, **w): pass
 
 class GitlabAdmin(Gitlab):
 

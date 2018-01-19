@@ -1,4 +1,4 @@
-﻿import django
+import django
 from django.test import TestCase
 
 from kooplex.lib.gitlab import Gitlab

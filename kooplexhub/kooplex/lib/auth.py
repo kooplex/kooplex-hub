@@ -1,8 +1,10 @@
 from django.contrib.auth.models import User
 from kooplex.lib.gitlab import Gitlab
 from kooplex.lib.gitlabadmin import GitlabAdmin
-from kooplex.lib.debug import *
 from kooplex.hub.models.user import User
+
+#FIXME:
+def print_debug(*v, **w): pass
 
 class Auth(object):
     """description of class"""

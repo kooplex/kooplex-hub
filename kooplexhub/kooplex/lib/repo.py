@@ -1,9 +1,11 @@
 import os
 import git
 
-from kooplex.lib.debug import *
-from kooplex.lib import LibBase, get_settings
+from kooplex.lib import get_settings
 
+#FIXME:
+LibBase = object
+def print_debug(*v, **w): pass
 
 
 class RepoException(Exception):

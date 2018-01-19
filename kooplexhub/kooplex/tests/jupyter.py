@@ -1,4 +1,4 @@
-﻿import unittest
+import unittest
 from kooplex.lib.spawner import Spawner
 from kooplex.lib.jupyter import Jupyter
 from kooplex.hub.models.notebook import Notebook
