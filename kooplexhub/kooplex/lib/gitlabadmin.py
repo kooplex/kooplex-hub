@@ -2,8 +2,6 @@ import json
 import requests
 from django.conf import settings
 import datetime
-from kooplex.lib.libbase import LibBase
-#from kooplex.lib.restclient import RestClient
 from kooplex.lib.gitlab import Gitlab
 from kooplex.lib.libbase import get_settings
 from django.core.exceptions import ValidationError
@@ -14,11 +12,12 @@ DEBUG_LOCAL=False
 #FIXME:
 def print_debug(*v, **w): pass
 RestClient = object
+LibBase = object
 
 class GitlabAdmin(Gitlab):
 
-    ADMIN_USERNAME = get_settings('gitlab', 'admin_username', None, None)
-    ADMIN_PASSWORD= get_settings('gitlab', 'admin_password', None, None)
+    ADMIN_USERNAME = get_settings('gitlab', 'admin_username')
+    ADMIN_PASSWORD= get_settings('gitlab', 'admin_password')
     ADMIN_PRIVATE_TOKEN = None
 
     def http_prepare_headers(self, headers):

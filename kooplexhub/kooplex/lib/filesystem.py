@@ -1,3 +1,4 @@
+import logging
 import os
 import ast
 import time
@@ -8,9 +9,11 @@ from distutils.file_util import copy_file, move_file
 
 from kooplex.lib import get_settings
 
+logger = logging.getLogger(__name__)
 G_OFFSET = 20000
 
 def _mkdir(d, uid = 0, gid = 0, mode = 0b111101000, mountpoint = False):
+    logger.debug("dir: %s uid/gid: %d/%d; mountpoint: %s" % (d, uid, gid, mountpoint))
     mkpath(d)
     os.chown(d, uid, gid)
     os.chmod(d, mode)
