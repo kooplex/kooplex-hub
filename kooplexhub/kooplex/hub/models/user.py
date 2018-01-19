@@ -1,8 +1,6 @@
 import logging
-import pwgen
 import os
-import subprocess
-from distutils.dir_util import mkpath
+import pwgen
 
 from django.contrib import messages
 from django.core.management.base import BaseCommand, CommandError
@@ -10,10 +8,7 @@ from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import User as DJUser
 from django.db import models
 
-from kooplex.lib import get_settings, mkdir_homefolderstructure
-from kooplex.lib import send_new_password, send_token
-from kooplex.lib import write_davsecret, generate_rsakey, read_rsapubkey
-from kooplex.lib import Ldap, GitlabAdmin
+from kooplex.lib import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +27,16 @@ class User(DJUser):
 
     def __getitem__(self, k):
         return self.__getattribute__(k)
+
+    @property
+    def n_projects(self):
+        from .project import Project
+        return len(list(Project.objects.filter(owner = self)))
+
+    @property
+    def n_reports(self):
+        from .report import Report
+        return len(list(Report.objects.filter(creator = self)))
 
     @property
     def fn_tokenfile(self):
@@ -59,70 +64,36 @@ class User(DJUser):
         write_davsecret(self)
         self.save()
 
+    def generatenewpassword(self):
+        password = pwgen.pwgen(12)
+        self.changepassword(self, password)
+        with open(get_settings('user', 'pattern_passwordfile') % self, 'w') as f:
+            f.write(self.password)
+        self.changepassword(password)
+        #FIXME: send e-mail
+
     def researchgroups(self):
         for rpb in ResearchgroupProjectBinding.objects.filter(user = self):
             yield rpb.researchgroup
 
-    def save(self, **kw):
-        try:
-            User.objects.get(username = self.username)
-            DJUser.save(self, **kw)
-            return
-        except User.DoesNotExist:
-            # we need to create the account right now
-            pass
-        errors = 0
-        # generate uid and gid
-        next_uid = User.objects.all().aggregate(models.Max('uid'))['uid__max'] + 1
-        self.uid = next_uid
+    def create(self):
+        from kooplex.logic import user
+        logger.debug("%s" % self)
+        # set uid and gid, generate token
+        self.uid = User.objects.all().aggregate(models.Max('uid'))['uid__max'] + 1
         self.gid = get_settings('ldap', 'usersgroupid')
-        # generate password and token
-        self.password = pwgen.pwgen(12)
-        with open(get_settings('user', 'pattern_passwordfile') % self, 'w') as f:
-            f.write(self.password)
         self.token = pwgen.pwgen(64)
-        # create new ldap entry
-        try:
-            Ldap().adduser(self)
-        except Exception as e:
-            logger.error("Failed to create ldap entry for %s (%s)" % (self, e))
-            errors |= 0x000001
-        # create home filesystem
-        try:
-            mkdir_homefolderstructure(self)
-        except Exception as e:
-            logger.error("Failed to create home for %s (%s)" % (self, e))
-            errors |= 0x000010
-        # create gitlab account
-        try:
-            gad = GitlabAdmin()
-            gad.create_user(self)
-        except Exception as e:
-            logger.error("Failed to create gitlab entry for %s (%s)" % (self, e))
-            errors |= 0x000100
-        # retrieve gitlab_id
-        try:
-            data = gad.get_user(self)[0]
-            self.gitlab_id = data['id']
-        except Exception as e:
-            logger.error("Failed to fetch gitlab id for %s (%s)" % (self, e))
-            errors |= 0x001000
-        # generate and upload rsa key
-        try:
-            generate_rsakey(self)
-            pub_key_content = read_rsapubkey(self)
-            gad.upload_userkey(self, pub_key_content)
-        except Exception as e:
-            logger.error("Failed to upload rsa key in gitlab for %s (%s)" % (self, e))
-            errors |= 0x010000
-            raise
-        # send email with the password
-        if send_new_password(self) != 0:
-            logger.error("Failed to send email to %s (%s)" % (self, self.email))
-            errors |= 0x100000
-        # send summary report to admin
-        DJUser.save(self)
-        logger.info("New user: %s %s (%s with uid/gid: %d/%s) created. Email: %s (Errorflags: %s)" % (self.last_name, self.first_name, self.username, self.uid, self.gid, self.email, "{0:b}".format(errors)))
+        # during user manifestation gitlab_id and password are set
+        status = user.add(self)
+        self.save()
+        logger.info(("New user: %(last_name)s %(first_name)s (%(username)s with uid/gitlab_id: %(uid)d/%(gitlab_id)d) created. Email: %(email)s) status: " % self) + "{0:b}".format(status))
+
+    def remove(self):
+        from kooplex.logic import user
+        logger.debug("%s" % self)
+        status = user.remove(self)
+        logger.info(("Deleted user: %(last_name)s %(first_name)s (%(username)s with uid/gitlab_id: %(uid)d/%(gitlab_id)d) created. Email: %(email)s) status: " % self) + "{0:b}".format(status))
+        self.delete()
 
 class Researchgroup(models.Model):
     id = models.AutoField(primary_key = True)

@@ -1,6 +1,9 @@
-﻿import ldap3
+import ldap3
+import logging
 
 from kooplex.lib import get_settings
+
+logger = logging.getLogger(__name__)
 
 class LdapException(Exception):
     pass
@@ -62,6 +65,7 @@ class Ldap:
         return 'uid=%s,ou=users,%s' % (user.username, self.base_dn)
 
     def adduser(self, user):
+        logging.debug('add %s' % user)
         dn = self.userdn(user)
         object_class = [
             'top',

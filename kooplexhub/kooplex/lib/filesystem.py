@@ -79,6 +79,33 @@ def mkdir_homefolderstructure(user):
     write_gitconfig(user)
     generate_rsakey(user)
 
+def cleanup_home(user):
+    # move home
+    garbage = os.path.join(get_settings('volumes', 'garbage'), "user-%s.%f" % (user.username, time.time()))
+    mkpath(garbage)
+    status = 0
+    try:
+        dir_home = os.path.join(get_settings('volumes', 'home'), user.username)
+        copy_tree(dir_home, garbage)
+        remove_tree(os.path.dirname(dir_home))
+    except:
+        status |= 0x001
+    # move share
+    try:
+        dir_share = os.path.join(get_settings('volumes', 'share'), user.username)
+        copy_tree(dir_share, garbage)
+        remove_tree(os.path.dirname(dir_share))
+    except:
+        status |= 0x010
+    # move git
+    try:
+        dir_git = os.path.join(get_settings('volumes', 'git'), user.username)
+        copy_tree(dir_git, garbage)
+        remove_tree(os.path.dirname(dir_git))
+    except:
+        status |= 0x100
+    return status
+
 def mkdir_project(user, project):
     folder_git = os.path.join(get_settings('volumes','git'), user.username, project.name_with_owner)
     _mkdir(folder_git, user.uid, G_OFFSET + project.id, 0b111100000)
