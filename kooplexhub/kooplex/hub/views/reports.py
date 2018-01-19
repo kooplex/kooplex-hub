@@ -7,8 +7,10 @@ from django.http import HttpRequest, HttpResponse
 from django.core.urlresolvers import reverse
 from django.template import RequestContext
 
+from kooplex.lib import get_settings
+from kooplex.lib.filesystem import cleanup_reportfiles
+
 from kooplex.hub.models import list_user_reports, list_internal_reports, list_public_reports, get_report, ReportDoesNotExist, HtmlReport, DashboardReport, ScopeType
-from kooplex.lib import get_settings, cleanup_reportfiles
 #############
 from kooplex.hub.models import Project
 ##from kooplex.lib.spawner import ReportSpawner

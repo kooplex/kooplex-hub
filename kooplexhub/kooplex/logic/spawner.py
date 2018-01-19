@@ -4,7 +4,8 @@ import random
 from os import path
 from netaddr import IPAddress
 
-from kooplex.lib import get_settings, mkdir_project
+from kooplex.lib import get_settings
+from kooplex.lib.filesystem import mkdir_project
 from kooplex.lib import Docker#, proxy_addroute, proxy_removeroute
 
 class Spawner:

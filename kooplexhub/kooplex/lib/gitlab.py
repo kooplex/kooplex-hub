@@ -6,11 +6,11 @@ from django.conf import settings
 from threadlocals.threadlocals import get_current_request
 
 from kooplex.lib.libbase import LibBase
-from kooplex.lib.restclient import RestClient
 from kooplex.lib.libbase import get_settings
 
 #FIXME:
 def print_debug(*v, **w): pass
+RestClient = object
 
 DEBUG_LOCAL=False
 

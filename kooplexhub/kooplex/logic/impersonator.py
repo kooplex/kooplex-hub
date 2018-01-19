@@ -1,5 +1,6 @@
 
-from kooplex.lib import Docker, move_htmlreport_in_place
+from kooplex.lib import Docker
+from kooplex.lib.filesystem import move_htmlreport_in_place
 
 
 def publish_htmlreport(report):

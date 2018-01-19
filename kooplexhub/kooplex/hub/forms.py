@@ -9,7 +9,10 @@ from django.utils.translation import ugettext_lazy as _
 from django.shortcuts import redirect
 
 from kooplex.hub.models import User
-from kooplex.lib import Gitlab
+#from kooplex.lib import Gitlab
+
+#FIXME
+Gitlab = None
 
 class BootstrapAuthenticationForm(AuthenticationForm):
     """Authentication form which uses boostrap CSS."""

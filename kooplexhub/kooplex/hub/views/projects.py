@@ -8,9 +8,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 from kooplex.hub.models import *
-from kooplex.lib import spawn_project_container, stop_project_container
-from kooplex.lib import gitlab_create_project
-
+from kooplex.logic.spawner import spawn_project_container, stop_project_container
+#from kooplex.logic import gitlab_create_project
+#FIXME:
+def gitlab_create_project(*v, **w): pass
 
 def projects(request, *v, **kw):
     """Renders the projectlist page."""

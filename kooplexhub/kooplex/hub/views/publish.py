@@ -6,7 +6,9 @@ from django.http import HttpRequest
 from django.template import RequestContext
 
 from kooplex.hub.models import Project, HtmlReport, DashboardReport, ScopeType
-from kooplex.lib import get_settings, list_notebooks, list_files, publish_htmlreport, copy_dashboardreport_in_place
+from kooplex.lib import get_settings
+from kooplex.lib.filesystem import list_notebooks, list_files, copy_dashboardreport_in_place
+from kooplex.logic.impersonator import publish_htmlreport
 
 def publishForm(request):
     """Handles the publication."""
