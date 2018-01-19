@@ -1,12 +1,16 @@
+"""
+@author: Jozsef Steger, David Visontai
+@summary: docker API driver
+"""
+import logging
 import os
 import re
 import json
 from docker.client import Client
-import logging
-logger = logging.getLogger(__name__)
 
 from kooplex.lib import get_settings
 
+logger = logging.getLogger(__name__)
 
 class Docker:
     base_url = get_settings('docker', 'base_url')
@@ -65,7 +69,7 @@ class Docker:
             hostname = container.name,
             host_config = host_config,
             networking_config = networking_config,
-            command = container.command, #for notebook it is not set
+        #    command = container.command, #for notebook it is not set
             environment = environment,
             volumes = volumes,
             ports = ports
@@ -78,17 +82,18 @@ class Docker:
         if docker_container_info is None:
             logger.debug("Container did not exist, Creating new one")
             docker_container_info = self.create_container(container, volumemapping)
-        status = docker_container_info['Status']
-        if status == 'Created' or status.startswith('Exited'):
+        container_state = docker_container_info['Status']
+        if container_state == 'Created' or container_state.startswith('Exited'):
             logger.debug("Starting container")
             self.start_container(container)
 
     def start_container(self, container):
         self.client.start(container.name)
-        # we need to retrieve the IP address, and update identity information
+        # we need to retrieve the container state after starting it
         docker_container_info = self.get_container(container)
-        logger.debug("Container state %s"%docker_container_info['State'])
-        assert docker_container_info['State'] == 'running', "Container failed to start: %s" % docker_container_info
+        container_state = docker_container_info['State']
+        logger.debug("Container state %s" % container_state)
+        assert container_state == 'running', "Container failed to start: %s" % docker_container_info
 
     def stop_container(self, container):
         self.client.stop(container.name)

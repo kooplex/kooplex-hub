@@ -1,12 +1,11 @@
-import os
 import json
-import random
-from os import path
-from netaddr import IPAddress
+import logging
 
 from kooplex.lib import get_settings
+from kooplex.lib import Docker
 from kooplex.lib.filesystem import mkdir_project
-from kooplex.lib import Docker#, proxy_addroute, proxy_removeroute
+
+logger = logging.getLogger(__name__)
 
 class Spawner:
 
@@ -19,6 +18,7 @@ class Spawner:
         container_name_info = { 'username': user.username, 'projectname': project.name_with_owner }
         self.container_name = get_settings('spawner', 'pattern_containername') % container_name_info
         self.docker = Docker()
+        logging.info("user %s, project: %s, containertype: %s" % (user, project, containertype))
 
     def get_container(self):
         from kooplex.hub.models import Container
@@ -40,32 +40,23 @@ class Spawner:
         container.environment = json.dumps(environment_dict)
         # now we copy information from project to container instance
         container.init()
-
         #create folders here and set ownership
         mkdir_project(self.user, self.project)
-
         return container
 
     def start_container(self, container):
-        from kooplex.lib.proxy import proxy_addroute
+        from kooplex.lib.proxy import addroute
         self.docker.run_container(container, self.volumemapping)
-##import pwgen
-#        jupyter_startsession(container)
         container.is_running = True
         container.save()
-        proxy_addroute(container)
+        addroute(container)
+        logger.info("container %s" % container)
 
     def run_container(self):
         container = self.get_container()
         if container is None:
             container = self.new_container()
         self.start_container(container)
-
-#    def stop_session(self, session):
-#        jpcli = Jupyter(session.notebook)
-#        jpcli.stop_session(session)
-
-
 
 #################################################################
 
@@ -114,14 +105,13 @@ def spawn_project_container(user, project):
         raise
 
 def stop_project_container(container):
-    from kooplex.lib import proxy_removeroute
+    from kooplex.lib.proxy import removeroute
     Docker().stop_container(container)
     container.is_running = False
     container.save()
     try:
-        proxy_removeroute(container)
+        removeroute(container)
     except KeyError:
         # if there was no proxy path saved we silently ignore the exception
-        #pass
-        raise #FIXME: for debug reasons we dont yet catch exception here
+        pass
 
