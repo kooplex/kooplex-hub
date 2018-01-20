@@ -101,7 +101,7 @@ def generate_rsakey(user, overwrite = False):
     fn_keyfile = os.path.join(dir_ssh, "gitlab.key")
     if not overwrite and os.path.exists(fn_keyfile):
         return
-    bash('/usr/bin/ssh-keygen -N -f %s' + fn_keyfile])
+    bash('/usr/bin/ssh-keygen -N -f %s' % fn_keyfile)
     os.chown(key_fn, user.uid, user.gid)
     os.chown(key_fn + ".pub", user.uid, user.gid)
 
