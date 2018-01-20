@@ -4,6 +4,8 @@
 """
 import time
 import logging
+import subprocess
+import shlex
 
 from django.conf import settings
 
@@ -55,3 +57,12 @@ def get_settings(block, item, default = None):
         logger.error("missing block %s item %s in settings.py" % (block, item))
         raise
 
+def bash(command):
+    """
+    @summary: run a command as root in the hub container
+    @param command: the shell command to run
+    @type command: str
+    """
+    wrap = "bash -c \"%s\""
+    logger.info(command)
+    subprocess.call(shlex.split(command))

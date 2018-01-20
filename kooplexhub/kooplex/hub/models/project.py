@@ -13,6 +13,7 @@ class Project(models.Model):
     owner = models.ForeignKey(User, null = True)
     image = models.ForeignKey(Image, null = True)
     scope = models.ForeignKey(ScopeType, null = True)
+    gitlab_id = models.IntegerField(null = True)
 
     def __lt__(self, p):
         return self.name < p.name
