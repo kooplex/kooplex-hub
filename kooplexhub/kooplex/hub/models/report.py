@@ -1,11 +1,7 @@
-import os.path
-import json
+import os
+
 from django.db import models
-from django.core.urlresolvers import reverse
-from shutil import copyfile as cp
-from os import mkdir
-from distutils import dir_util, file_util
-from time import time, strftime, localtime
+from time import strftime, localtime
 
 from .project import Project, UserProjectBinding
 from .scope import ScopeType
