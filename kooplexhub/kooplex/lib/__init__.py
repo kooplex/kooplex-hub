@@ -1,4 +1,4 @@
-from .libbase import get_settings, keeptrying
+from .libbase import get_settings, keeptrying, bash
 
 from .docker import Docker
 
