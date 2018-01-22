@@ -1,31 +1,16 @@
-from django.contrib.auth.models import User
-from kooplex.lib.gitlab import Gitlab
-from kooplex.lib.gitlabadmin import GitlabAdmin
-from kooplex.hub.models.user import User
+#FIXME: not used at all????
 
-#FIXME:
-def print_debug(*v, **w): pass
+#from django.contrib.auth.models import User
+
+#from kooplex.lib.gitlab import Gitlab
+#from kooplex.lib.gitlabadmin import GitlabAdmin
+from kooplex.hub.models.user import User
 
 class Auth(object):
     """description of class"""
 
-    def authenticate(self, username=None, password=None):
-        print_debug("IDE jjj")
-        g = Gitlab()
-        res, u = g.authenticate_user(username, password)
-        if u is not None:
-            try:
-                return User.objects.get(username = username)
-            except User.DoesNotExist:
-                # Authenticate user does not exist
-                # Create a new user.
-                user = User(
-                    username = username, 
-                    email = u['email'], 
-                    is_superuser = u['is_admin'], 
-                    gitlab_id = u['id'])
-                user.save()
-                return user
+    def authenticate(self, usernamei = None, password = None):
+        return User.objects.get(username = username)
 
     def get_user(self, user_id):
         print_debug("%d" % user_id)

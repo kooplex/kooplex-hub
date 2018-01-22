@@ -2,17 +2,15 @@
 Definition of forms.
 """
 import logging
-logger = logging.getLogger(__name__)
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
 from django.utils.translation import ugettext_lazy as _
 from django.shortcuts import redirect
 
 from kooplex.hub.models import User
-#from kooplex.lib import Gitlab
+from kooplex.idp import authenticate
 
-#FIXME
-Gitlab = None
+logger = logging.getLogger(__name__)
 
 class BootstrapAuthenticationForm(AuthenticationForm):
     """Authentication form which uses boostrap CSS."""
@@ -32,30 +30,22 @@ class BootstrapAuthenticationForm(AuthenticationForm):
         #empty_permitted = True
 #        super(AuthenticationForm, self)
         AuthenticationForm.__init__(self, req, *k, **kw)
-        logger.debug("Login tortent")
+        logger.debug("Login")
         if req.method == 'POST':
             username = req.POST['username']
             password = req.POST['password']
-            g = Gitlab()
-            res, u = g.authenticate_user(username, password)
-            if u is not None:
+            authenticated_flag, userdscriptor = authenticate(username, password)
+            if authenticated_flag:
                 try:
-                    User.objects.get(username=username)
+                    User.objects.get(username = username)
                 except User.DoesNotExist:
-                    # Authenticate user does not exist
-                    # Create a new user.
-                    user = User(
-                        username=username,
-                        email=u['email'],
-                        is_superuser=u['is_admin'],
-                        gitlab_id=u['id'])
-                    user.save()
+                    User(**userdscriptor).save()
             redirect('projects')
         else:
             AuthenticationForm.__init__(self, req, *k, **kw)
 
     def confirm_login_allowed(self, user):
-        #raise Exception("almafa")
+#        raise Exception("almafa %s" % user )
         #raise forms.ValidationError( _("ALMA" + str(user)), code = 'debug' )
         return True
 #ENDHACK
