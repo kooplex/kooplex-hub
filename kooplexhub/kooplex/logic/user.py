@@ -71,8 +71,7 @@ def remove(user):
         logger.error("Failed to remove some directories for %s (status: %d)" % (user, status_fs))
     # remove gitlab account
     try:
-        gad = GitlabAdmin()
-        gad.delete_user(user)
+        GitlabAdmin().delete_user(user)
     except Exception as e:
         logger.error("Failed to delete gitlab entry for %s (%s)" % (user, e))
         status |= 0x100

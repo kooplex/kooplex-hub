@@ -51,6 +51,13 @@ class GitlabAdmin:
         logger.debug(information)
 
     def delete_user(self, user):
-        raise NotImplementedError
-
+        kw = {
+            'url': os.path.join(self.base_url, 'users', str(user.gitlab_id)),
+            'headers': { 'PRIVATE-TOKEN': self.token },
+            'data': { 'hard_delete': True }
+        }
+        response = keeptrying(requests.delete, 3, **kw)
+        assert response.status_code == 201, response.json()
+        information = response.json()
+        logger.debug(information)
 
