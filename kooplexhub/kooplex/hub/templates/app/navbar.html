@@ -14,7 +14,7 @@
         <li><a href="/gitlab" target="_blank" role="button" type="button" data-toggle="tooltip" title="Browse project or file issues" data-placement="bottom">Gitlab</a></li>
         <li><a href="/ownCloud" target="_blank" role="button" type="button" data-toggle="tooltip" title="Browse your files in the cloud" data-placement="bottom">Owncloud</a></li>
         {% if user.is_superuser %}
-          <li><a href="{#% url 'usermanagement-form' %#}">Admin</a></li>
+          <li><a href="/admin">Admin</a></li>
         {% endif %}
       {% else %}
         <li><a href="{% url 'login' %}" role="button" type="button" data-toggle="tooltip" title="Manage jupyter notebook projects" data-placement="bottom">Projects</a></li>

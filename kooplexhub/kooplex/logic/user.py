@@ -2,12 +2,9 @@ import logging
 import pwgen
 
 from kooplex.lib import get_settings
-from kooplex.lib import Ldap
+from kooplex.lib import Ldap, GitlabAdmin
 from kooplex.lib.sendemail import send_new_password, send_token
 from kooplex.lib.filesystem import mkdir_homefolderstructure, cleanup_home, write_davsecret, generate_rsakey, read_rsapubkey
-
-#FIXME:
-class GitlabAdmin: pass
 
 logger = logging.getLogger(__name__)
 
@@ -35,21 +32,14 @@ def add(user, skip_gitlab = False):
     except Exception as e:
         logger.error("Failed to create home for %s (%s)" % (user, e))
         status |= 0x000010
-    # create gitlab account
+    # create gitlab account and retrieve new user's gitlab_id
     if not skip_gitlab: #NOTE: this is a temporary check; to be removed if not the gitlab is the IDP
         try:
             gad = GitlabAdmin()
-            gad.create_user(user)
+            user.gitlab_id = gad.create_user(user)['id']
         except Exception as e:
             logger.error("Failed to create gitlab entry for %s (%s)" % (user, e))
             status |= 0x000100
-        # retrieve gitlab_id
-        try:
-            data = gad.get_user(user)[0]
-            user.gitlab_id = data['id']
-        except Exception as e:
-            logger.error("Failed to fetch gitlab id for %s (%s)" % (user, e))
-            status |= 0x001000
         # generate and upload rsa key
         try:
             generate_rsakey(user)
