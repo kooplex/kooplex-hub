@@ -31,15 +31,13 @@ def loginHandler(request, *v, **kw):
     if request.method == 'POST':
         username = request.POST['username']
         password = request.POST['password']
-        #user = authenticate(request, username = username, password = password)
         user = authenticate(username = username, password = password)
-        raise Exception(str((username, password, user)))
         if user is not None:
             login(request, user)
             return redirect('projects')
         else:
             return redirect('login')
-    raise Exception(str((request, v, kw)))
+    return redirect('indexpage')
 
 
 def logoutHandler(request):

@@ -8,7 +8,9 @@ from kooplex.hub.models import User
 logger = logging.getLogger(__name__)
 
 class AuthBackend:
-
+    """
+    https://docs.djangoproject.com/en/2.0/topics/auth/customizing/#authentication-backends
+    """
     def authenticate(self, **credentials):
         username = credentials.get('username', '')
         password = credentials.get('password', '')
@@ -52,13 +54,12 @@ class AuthBackend:
         user.save()
         return user
 
-    def get_user(self, user_id):
-        raise Exception("get_user called %s" % user_id)
-        print_debug("%d" % user_id)
+    def get_user(self, user_ptr):
         try:
-            # Our user model descends from django.user
-            return User.objects.get(user_ptr = user_id)
+            logger.debug("get user_ptr: %d" % user_ptr)
+            return User.objects.get(user_ptr = user_ptr)
         except:
-            pass
+            logger.warning("unknown user_ptr: %d" % user_ptr)
+            return None
 
 
