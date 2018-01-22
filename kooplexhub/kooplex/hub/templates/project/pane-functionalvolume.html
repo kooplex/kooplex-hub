@@ -1,0 +1,35 @@
+{% if functional_volumes %}
+  <label>Select module volumes to attach to your project</label><br>
+  {% for volume in functional_volumes %}
+  <input type="checkbox" name="func_volumes" value="{{ volume }}"
+    {% for v in project.volumes %}
+      {% if v.name = volume.name %}
+        checked
+      {% endif %}
+    {% endfor %}><span style="padding-left:10px"> <strong >{{ volume }}</strong>:  <span style="padding-left:10px"> {{ volume.description }}
+      </span></span>
+  
+  <br>
+  {% endfor %}
+{% else %}
+  <div class="alert alert-danger" role="alert">Currently there are no volumes you can attach.</div>
+{% endif %}
+
+<div class="panel panel-success">
+  <div class="panel-heading">
+    <a data-toggle="collapse"  href="#collapse-help-funvol-{{ project.id }}" style="text-decoration: none; color: gray">
+      <span class="glyphicon  glyphicon-question-sign"></span> Help <span
+      class="glyphicon glyphicon-option-horizontal"></span>
+    </a>
+  </div>
+  <div id="collapse-help-funvol-{{ project.id }}" class="panel-collapse collapse">
+    <div class="panel-body">
+      <strong>Volumes </strong>contain installed conda environments, python and other packages.
+      <ul>
+        <li>Any number volumes can be selected. </li>
+        <li>Volumes are mounted under  <code>/vol/"volumename"</code> </li>
+        <li>When you run a notebook only one conda environment can enabled at once. However, other packages will be available like yaehmop or siesta.
+      </ul>
+    </div>
+  </div>
+</div>

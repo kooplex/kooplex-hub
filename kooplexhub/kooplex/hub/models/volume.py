@@ -1,9 +1,10 @@
-#import os
+import os
 
 from django.db import models
 
 from .project import Project
 from .user import User
+from kooplex.lib import get_settings
 
 class Volume(models.Model):
     id = models.AutoField(primary_key = True)
@@ -26,9 +27,26 @@ class Volume(models.Model):
 
 class FunctionalVolume(Volume):
     owner = models.ForeignKey(User, null = True)
+
+    @property
+    def volumename(self):
+        return get_settings('volumes', 'pattern_functionalvolumename') % { 'name': self.name }
+ 
+    @property
+    def mountpoint(self):
+        return get_settings('spawner', 'pattern_mnt_functionalvolume') % { 'name': self.name }
  
 class StorageVolume(Volume):
     groupid = models.IntegerField(null = True)
+
+    @property
+    def volumename(self):
+        return get_settings('volumes', 'pattern_storagevolumename') % { 'name': self.name }
+ 
+    @property
+    def mountpoint(self):
+        return get_settings('spawner', 'pattern_mnt_storagevolume') % { 'name': self.name }
+ 
 
 class UserPrivilegeVolumeBinding(models.Model):
     id = models.AutoField(primary_key = True)
@@ -47,6 +65,7 @@ class VolumeProjectBinding(models.Model):
 
     def __str__(self):
        return "%s-%s" % (self.project.name, self.volume.name)
+
 
 
 #    @property

@@ -63,9 +63,13 @@ class DashboardReportAdmin(admin.ModelAdmin):
 class UserProjectBinding(admin.ModelAdmin):
     list_display = ('id', 'project', 'user')
 
-@admin.register(Volume)
-class VolumeAdmin(admin.ModelAdmin):
-    list_display = ('name', 'displayname')
+@admin.register(FunctionalVolume)
+class FunctionalVolumeAdmin(admin.ModelAdmin):
+    list_display = ('name', 'displayname', 'description', 'owner')
+
+@admin.register(StorageVolume)
+class StorageVolumeAdmin(admin.ModelAdmin):
+    list_display = ('name', 'displayname', 'description', 'groupid')
 
 @admin.register(VolumeProjectBinding)
 class VolumeProjectBindingAdmin(admin.ModelAdmin):

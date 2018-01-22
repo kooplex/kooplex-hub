@@ -1,4 +1,3 @@
-<div id="project-new" class="modal fade modal-dialog" role="dialog" style="position: fixed; top: 0px; ">
   <div class="modal-content">
     <form id="newproject" class="form-horizontal" action="{% url 'project-new' %}" method="post">
       {% csrf_token %}
@@ -8,7 +7,8 @@
         <ul class="nav nav-tabs">
           <li class="active"><a href="#pane_thename" data-toggle="tab">Description</a></li>
           <li><a href="#pane_template" data-toggle="tab">Template</a></li>
-          <li><a href="#pane_volume" data-toggle="tab">Storage and volumes</a></li>
+          <li><a href="#pane_funcvolume" data-toggle="tab">Module volumes</a></li>
+          <li><a href="#pane_stgvolume" data-toggle="tab">Storage volumes</a></li>
         </ul>
         <div class="tab-content">
           <div id="pane_thename" class="tab-pane fade in active">
@@ -17,8 +17,11 @@
           <div id="pane_template" class="tab-pane fade">
             {% include 'project/pane-template.html' %}
           </div>
-          <div id="pane_volume" class="tab-pane fade">
-            {% include 'project/pane-volume.html' %}
+          <div id="pane_funcvolume" class="tab-pane fade">
+            {% include 'project/pane-functionalvolume.html' %}
+          </div>
+          <div id="pane_stgvolume" class="tab-pane fade">
+            {% include 'project/pane-storagevolume.html' %}
           </div>
         </div>   <!-- tab-content -->
       </div>     <!-- modal-body -->
@@ -30,4 +33,3 @@
       </div>
     </form>
   </div>         <!-- modal-content -->
-</div>           <!-- modal -->
