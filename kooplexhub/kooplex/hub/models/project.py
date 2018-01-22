@@ -36,8 +36,6 @@ class Project(models.Model):
         for vpb in VolumeProjectBinding.objects.filter(project = self):
             yield vpb.volume
 
-#FIXME: add mountpoint iterator
-
     @property
     def url_gitlab(self):
         info = {

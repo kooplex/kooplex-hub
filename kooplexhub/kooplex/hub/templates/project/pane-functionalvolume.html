@@ -2,8 +2,8 @@
   <label>Select module volumes to attach to your project</label><br>
   {% for volume in functional_volumes %}
   <input type="checkbox" name="func_volumes" value="{{ volume }}"
-    {% for p, vs in volumes_attached.items %}
-      {% if p = item  and volume in vs %}
+    {% for v in project.volumes %}
+      {% if v.name = volume.name %}
         checked
       {% endif %}
     {% endfor %}><span style="padding-left:10px"> <strong >{{ volume }}</strong>:  <span style="padding-left:10px"> {{ volume.description }}
