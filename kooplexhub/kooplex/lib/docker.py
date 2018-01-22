@@ -74,10 +74,6 @@ class Docker:
         )
         networking_config = { 'EndpointsConfig': { self.network: {} } }
         ports = [ 8000 ] #FIXME
-        if container.environment is None:
-            environment = containser.environment = json.dumps(self.environment)
-        else:
-            environment = json.loads(container.environment)
         self.client.create_container(
             name = container.name,
             image = container.image.imagename,
@@ -86,7 +82,7 @@ class Docker:
             host_config = host_config,
             networking_config = networking_config,
         #    command = container.command, #for notebook it is not set
-            environment = environment,
+            environment = container.environment,
             volumes = volumes,
             ports = ports
         )

@@ -2,6 +2,7 @@
 @author: Jozsef Steger, David Visontai
 @summary: gitlab driver
 """
+import os
 import json
 import requests
 import logging
@@ -16,7 +17,7 @@ class Gitlab:
     def __init__(self, user):
         kw = {
             'url': os.path.join(self.base_url, 'session'),
-            'params': json.dumps({ 'login': user.username, 'password': user.password }),
+            'params': { 'login': user.username, 'password': user.password },
         }
         response = keeptrying(requests.post, 3, **kw)
         logger.debug("response status: %d" % response.status_code)
@@ -34,7 +35,7 @@ class Gitlab:
         kw = {
             'url': os.path.join(self.base_url, 'projects'),
             'headers': { 'PRIVATE-TOKEN': self.token },
-            'data': json.dumps({ 'name': project.name, 'visibility': project.scope.name, 'description': project.description })
+            'data': { 'name': project.name, 'visibility': project.scope.name, 'description': project.description }
         }
         response = keeptrying(requests.post, 3, **kw)
         assert response.status_code == 201, response.json()
@@ -61,7 +62,7 @@ class Gitlab:
         kw = {
             'url': os.path.join(self.base_url, 'projects', str(project.gitlab_id), 'members'),
             'headers': { 'PRIVATE-TOKEN': self.token },
-            'data': json.dumps({ 'user_id': user.gitlab_id, 'access_level': 40 })
+            'data': { 'user_id': user.gitlab_id, 'access_level': 40 }
         }
         response = keeptrying(requests.post, 3, **kw)
         assert response.status_code == 201, response.json()
@@ -83,10 +84,10 @@ class Gitlab:
         kw = {
             'url': os.path.join(self.base_url, 'projects', str(gitlab_id), 'repository', 'files', filename),
             'headers': { 'PRIVATE-TOKEN': self.token },
-            'data': json.dumps({ 'branch': 'master', 'content': content, 'commit_message': commit_message })
+            'data': { 'branch': 'master', 'content': content, 'commit_message': commit_message }
         }
         response = keeptrying(requests.post, 3, **kw)
-        assert response.status_code == 404, response.json()
+#        assert response.status_code == 404, response.json()
         logger.info('file %s created and committed to %d' % (filename, gitlab_id))
         return response.json()
 
@@ -94,7 +95,7 @@ class Gitlab:
         hostname_gitlabdb = get_settings('gitlabdb', 'hostname')
         db_passwd = get_settings('gitlabdb', 'db_password')
         db_port = get_settings('gitlabdb', 'psql_port')
-        command = "PGPASSWORD={0} psql -h {1} -p {2} -U postgres -d gitlabhq_production -c 'update notification_settings set level=2 where source_id={3};'\"".format(db_passwd, containername, db_port, gitlab_id)
+        command = "PGPASSWORD={0} psql -h {1} -p {2} -U postgres -d gitlabhq_production -c 'update notification_settings set level=2 where source_id={3};'\"".format(db_passwd, hostname_gitlabdb, db_port, gitlab_id)
         logger.debug('patched %d' % gitlab_id)
 
     def get_repository_commits(self, project):

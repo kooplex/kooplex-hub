@@ -9,9 +9,7 @@ logger = logging.getLogger(__name__)
 
 from kooplex.hub.models import *
 from kooplex.logic.spawner import spawn_project_container, stop_project_container
-#from kooplex.logic import gitlab_create_project
-#FIXME:
-def gitlab_create_project(*v, **w): pass
+from kooplex.logic import create_project
 
 def projects(request, *v, **kw):
     """Renders the projectlist page."""
@@ -32,7 +30,8 @@ def projects(request, *v, **kw):
     users = sorted(User.objects.all())
     images = Image.objects.all()
     scopes = ScopeType.objects.all()
-    volumes = Volume.objects.all()
+    functional_volumes = FunctionalVolume.objects.all()
+    storage_volumes = StorageVolume.objects.all()
     logger.debug('Rendering projects.html')
 
     return render(
@@ -48,7 +47,8 @@ def projects(request, *v, **kw):
             'users': users,
             'images' : images,
             'scopes' : scopes,
-            'volumes': volumes,
+            'functional_volumes': functional_volumes,
+            'storage_volumes': storage_volumes,
             'errors' : kw.get('errors', None),
             'year' : 2018,
         })
@@ -66,8 +66,9 @@ def project_new(request):
     description = request.POST['project_description'].strip()
     scope = request.POST['button']
     template = request.POST.get('project_template')
-    #FIXME: parse shares and volumes
-    logger.debug('New project to be created: %s'%name)
+    volumes = [ FunctionalVolume.objects.get(name = x) for x in request.POST.getlist('func_volumes') ]
+    volumes.extend( [ StorageVolume.objects.get(name = x) for x in request.POST.getlist('storage_volumes') ] )
+    logger.debug('New project to be created: %s' % name)
 
     errors = []
     if not re.match(r'^[a-zA-Z][0-9a-zA-Z_-]*$', name):
@@ -78,7 +79,7 @@ def project_new(request):
         return projects(request, kw = { 'errors': errors })
         
     if template.startswith('clonable_project='):
-        pass
+        raise NotImplementedError
 #FIXME:
 #        name, owner = template.split('=')[-1].split('@')
 #        project = Project.objects.get(name = name, owner_username = owner)
@@ -96,35 +97,13 @@ def project_new(request):
         imagename = template.split('=')[-1]
         logger.debug('Project to be created from image: %s' % imagename)
         cloned_project = False
-#    debug_logger.debug("Create project %s - GitLab"% project_name)
     scope = ScopeType.objects.get(name = scope)
     image = Image.objects.get(name = imagename)
     project = Project(name = name, owner = user, description = description, image = image, scope = scope)
-    gitlab_create_project(project, request) #FIXME: why we give request?
-    logger.debug('New project created in GitLab: %s' % name)
-    project.save()
+    # NOTE: create_project takes good care of saving the new project instance
+    create_project(project, volumes)
     logger.debug('New project saved in HubDB: %s' % name)
     return redirect('projects')
-#FIXME:
-#####        #Add image_name to project
-#####        # manage shares
-#####        while len(mp):
-#####            mpid = mp.pop()
-#####            mpb = MountPointProjectBinding()
-#####            mpb.project = p
-#####            mpb.mountpoint = MountPoints.objects.get(id = mpid)
-#####            mpb.readwrite = mpid in mprw
-#####            mpb.save()
-#####
-#####        # manage volumes
-#####        while len(vols):
-#####            vol = vols.pop()
-#####            vpb = VolumeProjectBinding(volume = vol, project = p)
-#####            vpb.save()
-#####
-#####        OCHelper(hubuser, p).mkdir()
-#####
-#####        if cloned_project:
 ###### Create a magic script to clone ancient projects content
 #####            ancientprojecturl = "ssh://git@%s/%s.git" % (get_settings('gitlab', 'ssh_host'), project.path_with_namespace)
 #####            commitmsg = "Snapshot commit of project %s" % project

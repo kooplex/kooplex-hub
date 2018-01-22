@@ -30,7 +30,7 @@ def _mkdir(path, uid = 0, gid = 0, mode = 0b111101000, mountpoint = False):
     @param mountpoint: whether the created directory is to be used as a mount point, default False
     @typa mountpoint: bool
     """
-    logger.debug("dir: %s uid/gid: %d/%d; mountpoint: %s" % (d, uid, gid, mountpoint))
+    logger.debug("dir: %s uid/gid: %d/%d; mountpoint: %s" % (path, uid, gid, mountpoint))
     dir_util.mkpath(path)
     os.chown(path, uid, gid)
     os.chmod(path, mode)
@@ -46,7 +46,7 @@ def _mkdir_davsecret(user):
     return dir_secret
 
 def _chown_recursive(path, uid = 0, gid = 0):
-    logger.debug("dir: %s uid/gid: %d/%d" % (d, uid, gid))
+    logger.debug("dir: %s uid/gid: %d/%d" % (path, uid, gid))
     os.chown(path, uid, gid)
     for root, dirs, files in os.walk(path):
         for name in dirs:

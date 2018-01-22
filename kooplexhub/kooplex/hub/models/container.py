@@ -3,6 +3,7 @@ from django.db import models
 from django.utils import timezone
 
 from kooplex.lib import get_settings
+from kooplex.lib.filesystem import G_OFFSET
 
 from .user import User
 from .project import Project
@@ -53,6 +54,27 @@ class Container(models.Model):
     def url_with_token(self):
         return os.path.join(get_settings('hub', 'base_url'), self.proxy_path, '?token=%s' % self.user.token)
 
+    @property
+    def environment(self):
+        if self.container_type.name == 'notebook':
+            return {
+                'NB_USER': self.user.username,
+                'NB_UID': self.user.uid,
+                'NB_GID': self.user.gid,
+                'NB_URL': self.proxy_path,
+                'NB_PORT': 8000,
+                'NB_TOKEN': self.user.token,
+                'PR_ID': self.project.id,
+                'PR_NAME': self.project.name,
+                'PR_FULLNAME': self.project.name,
+                'PR_PWN': self.project.name_with_owner,
+                'PR_MEMBERS': ",".join([ str(u.uid) for u in self.project.collaborators ]),
+                'PR_URL': self.project.url_gitlab,
+                'GID_OFFSET': G_OFFSET,
+        #        'MNT_GIDS': ",".join(mpgids)  #FIXME: still missing
+            }
+        else:
+            raise NotImplementedError
 
 class VolumeContainerBinding(models.Model):
     id = models.AutoField(primary_key = True)

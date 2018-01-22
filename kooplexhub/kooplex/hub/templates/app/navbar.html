@@ -10,13 +10,7 @@
     <ul class="nav navbar-nav">
       <li><a href="{% url 'reports' %}" role="button" type="button" data-toggle="tooltip" title="Access digested scientific output" data-placement="bottom">Reports</a></li>
       {% if user.is_authenticated %}
-        <li class="dropdown">
-          <a class="dropdown-togle" data-toggle="dropdown" href="#" role="button" type="button" data-toggle="tooltip" title="Manage jupyter notebook projects" data-placement="bottom">Projects <span class="caret"/></a>
-          <ul class="dropdown-menu">
-            <li><a href="{% url 'projects' %}">List projects</a></li>
-            <li><a href="#" data-toggle="modal" data-target="#project-new">New project</a></li>
-          </ul>
-        </li>
+        <li><a href="{% url 'projects' %}" role="button" type="button" data-toggle="tooltip" title="Manage jupyter notebook projects" data-placement="bottom">Projects</a></li>
         <li><a href="/gitlab" target="_blank" role="button" type="button" data-toggle="tooltip" title="Browse project or file issues" data-placement="bottom">Gitlab</a></li>
         <li><a href="/ownCloud" target="_blank" role="button" type="button" data-toggle="tooltip" title="Browse your files in the cloud" data-placement="bottom">Owncloud</a></li>
         {% if user.is_superuser %}

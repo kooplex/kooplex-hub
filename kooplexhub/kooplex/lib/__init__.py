@@ -1,8 +1,8 @@
 from .libbase import get_settings, keeptrying, bash
 
 from .docker import Docker
+from .gitlab import  Gitlab
 
-#from .gitlab import  Gitlab
 #from .gitlabadmin import GitlabAdmin
 #from .gitlabadmin import create_project as gitlab_create_project
 #from .lldap import Ldap
