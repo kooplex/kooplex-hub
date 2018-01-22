@@ -7,7 +7,7 @@
 
   <div class="panel-heading" style="padding: 5px 5px;">
 <div class="row">
-    <div class="col-md-1">
+    <div class="col-md-1 col-sm-2">
     <a href="{% url 'container-open' %}?project_id={{ project.id }}" target="_blank">
       <button role="button" type="button" class="btn btn-success" style="padding: 3px 6px 6px 6px">
         <span class="glyphicon glyphicon-folder-open" aria-hidden="true"> Open</span>
@@ -15,9 +15,10 @@
     </a>
     </div>
      <a data-toggle="collapse"  href="#collapse{{ project.id }}" style="text-decoration: none; color: gray">
-      <div class="col-md-9" style="padding-bottom: 10px;"><strong data-toggle="tooltip" title="Running" data-placement="bottom">{{ project.name }}</strong></div>
+      <div class="col-md-11 col-sm-10" style="padding: 0px 30px 0px 30px;"><strong data-toggle="tooltip" title="Running" data-placement="bottom">{{ project.name }}</strong>
       {% if project.owner != user %} ( owned by {{ project.owner }} ) {% endif %}
-      <span class="badge" style="float: inline-end;"> Using image:<strong>{{ project.image }}</strong></span>
+      <span class="badge" style="float: right;"> Using image:<strong>{{ project.image }}</strong></span>
+      </div>
     </a>
   </div>
   </div>
@@ -27,7 +28,7 @@
 <div class="panel panel-default" style="margin-bottom: 3px">
   <div class="panel-heading" style="padding: 5px 5px;">
   <div class="row">
-    <div class="col-md-1">
+    <div class="col-md-1 col-sm-2">
     <a href="{% url 'container-start' %}?project_id={{ project.id }}">
       <button role="button" type="button" class="btn btn-default" style="padding: 3px 6px 6px 6px">
         <span class="glyphicon glyphicon-play" aria-hidden="true"> Start</span>
@@ -36,9 +37,10 @@
     </div>
 
     <a data-toggle="collapse"  href="#collapse{{ project.id }}" style="text-decoration: none; color: gray">
-      <div class="col-md-9" style="padding-bottom: 10px;"> <strong>{{ project.name }}</strong></div>
+      <div class="col-md-11 col-sm-10" style="padding: 0px 30px 0px 30px;"> <strong>{{ project.name }}</strong>
       {% if project.owner != user %} ( owned by {{ project.owner }} ) {% endif %}
-      <span class="badge" style="float: inline-end;"> Using image:<strong>{{ project.image }}</strong></span>
+      <span class="badge" style="float: right;"> Using image:<strong>{{ project.image }}</strong></span>
+      </div>
     </a>
   </div>
 </div>
