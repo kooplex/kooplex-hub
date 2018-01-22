@@ -20,7 +20,8 @@ def generatenewpassword(user):
 def add(user, skip_gitlab = False):
     logger.debug('call %s' % user)
     status = 0
-    generatenewpassword(user)
+    if not skip_gitlab: #NOTE: this is a temporary check; to be removed if not the gitlab is the IDP
+        generatenewpassword(user)
     # create new ldap entry
     try:
         Ldap().adduser(user)
@@ -42,26 +43,26 @@ def add(user, skip_gitlab = False):
         except Exception as e:
             logger.error("Failed to create gitlab entry for %s (%s)" % (user, e))
             status |= 0x000100
-    # retrieve gitlab_id
-    try:
-        data = gad.get_user(user)[0]
-        user.gitlab_id = data['id']
-    except Exception as e:
-        logger.error("Failed to fetch gitlab id for %s (%s)" % (user, e))
-        status |= 0x001000
-    # generate and upload rsa key
-    try:
-        generate_rsakey(user)
-        pub_key_content = read_rsapubkey(user)
-        gad.upload_userkey(user, pub_key_content)
-    except Exception as e:
-        logger.error("Failed to upload rsa key in gitlab for %s (%s)" % (user, e))
-        status |= 0x010000
-        raise
-    # send email with the password
-    if send_new_password(user) != 0:
-        logger.error("Failed to send email to %s (%s)" % (user, user.email))
-        status |= 0x100000
+        # retrieve gitlab_id
+        try:
+            data = gad.get_user(user)[0]
+            user.gitlab_id = data['id']
+        except Exception as e:
+            logger.error("Failed to fetch gitlab id for %s (%s)" % (user, e))
+            status |= 0x001000
+        # generate and upload rsa key
+        try:
+            generate_rsakey(user)
+            pub_key_content = read_rsapubkey(user)
+            gad.upload_userkey(user, pub_key_content)
+        except Exception as e:
+            logger.error("Failed to upload rsa key in gitlab for %s (%s)" % (user, e))
+            status |= 0x010000
+            raise
+        # send email with the password
+        if send_new_password(user) != 0:
+            logger.error("Failed to send email to %s (%s)" % (user, user.email))
+            status |= 0x100000
     return status
 
 def remove(user):
