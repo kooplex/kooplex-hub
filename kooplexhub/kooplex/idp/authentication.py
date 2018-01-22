@@ -29,7 +29,6 @@ class AuthBackend:
         }
         response = keeptrying(requests.post, 3, **kw)
         logger.debug("response status: %d" % response.status_code)
-        assert response.status_code == 201, response.json()
         information = response.json()
         if not 'private_token' in information:
             logger.warning('permission denied %s' % username)
