@@ -76,7 +76,7 @@ class User(DJUser):
         for rpb in ResearchgroupProjectBinding.objects.filter(user = self):
             yield rpb.researchgroup
 
-    def create(self):
+    def create(self, skip_gitlab = False):
         from kooplex.logic import user
         logger.debug("%s" % self)
         # set uid and gid, generate token
@@ -84,7 +84,7 @@ class User(DJUser):
         self.gid = get_settings('ldap', 'usersgroupid')
         self.token = pwgen.pwgen(64)
         # during user manifestation gitlab_id and password are set
-        status = user.add(self)
+        status = user.add(self, skip_gitlab)
         self.save()
         logger.info(("New user: %(last_name)s %(first_name)s (%(username)s with uid/gitlab_id: %(uid)d/%(gitlab_id)d) created. Email: %(email)s) status: " % self) + "{0:b}".format(status))
 

@@ -1,11 +1,12 @@
-from django.contrib.auth.views import login, logout
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.views import login as login_view
 from django.template import RequestContext
 from django.conf.urls import url, include
 from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponseRedirect
 from datetime import datetime
 
-from kooplex.hub.forms import BootstrapAuthenticationForm
+from kooplex.hub.forms import authenticationForm
 from kooplex.hub.views import passwordresetForm, passwordtokenForm, passwordchangeForm
 
 def indexpage(request):
@@ -24,6 +25,27 @@ def indexpage(request):
         })
     )
 
+def loginHandler(request, *v, **kw):
+    if request.method == 'GET':
+        return login_view(request, *v, **kw)
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        #user = authenticate(request, username = username, password = password)
+        user = authenticate(username = username, password = password)
+        raise Exception(str((username, password, user)))
+        if user is not None:
+            login(request, user)
+            return redirect('projects')
+        else:
+            return redirect('login')
+    raise Exception(str((request, v, kw)))
+
+
+def logoutHandler(request):
+    logout(request)
+    return redirect('indexpage')
+
 def tutorial(request):
     """Renders the page with videos."""
     assert isinstance(request, HttpRequest)
@@ -31,7 +53,7 @@ def tutorial(request):
 
 login_kwargs = {
     'template_name': 'auth/login.html',
-    'authentication_form': BootstrapAuthenticationForm,
+    'authentication_form': authenticationForm,
     'extra_context':
     {
         'next_page': '/hub/projects',
@@ -44,8 +66,8 @@ urlpatterns = [
     url(r'^/?$', indexpage, name = 'indexpage'),
     url(r'^/tutorial$', tutorial, name = 'tutorial'),
 
-    url(r'^/login/?$', login, login_kwargs, name = 'login'),
-    url(r'^/logout$', logout, { 'next_page': '/hub', }, name = 'logout'),
+    url(r'^/login/?$', loginHandler, login_kwargs, name = 'login'),
+    url(r'^/logout$', logoutHandler, name = 'logout'),
     url(r'^/passwordreset$', passwordresetForm, name = 'passwordreset'),
     url(r'^/passwordtoken$', passwordtokenForm, name = 'passwordresettoken'),
     url(r'^/passwordchange$', passwordchangeForm, name = 'passwordchange'),

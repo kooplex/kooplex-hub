@@ -1,1 +1,1 @@
-from .authenticate import authenticate
+from .authentication import AuthBackend

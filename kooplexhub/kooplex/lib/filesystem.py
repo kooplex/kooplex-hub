@@ -102,8 +102,8 @@ def generate_rsakey(user, overwrite = False):
     if not overwrite and os.path.exists(fn_keyfile):
         return
     bash('/usr/bin/ssh-keygen -N -f %s' % fn_keyfile)
-    os.chown(key_fn, user.uid, user.gid)
-    os.chown(key_fn + ".pub", user.uid, user.gid)
+    os.chown(fn_keyfile, user.uid, user.gid)
+    os.chown(fn_keyfile + ".pub", user.uid, user.gid)
 
 def read_rsapubkey(user):
     """
