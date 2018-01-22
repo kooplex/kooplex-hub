@@ -93,7 +93,7 @@ class User(DJUser):
         logger.debug("%s" % self)
         status = user.remove(self)
         logger.info(("Deleted user: %(last_name)s %(first_name)s (%(username)s with uid/gitlab_id: %(uid)d/%(gitlab_id)d) created. Email: %(email)s) status: " % self) + "{0:b}".format(status))
-        self.delete()
+#        self.delete()
 
 class Researchgroup(models.Model):
     id = models.AutoField(primary_key = True)
