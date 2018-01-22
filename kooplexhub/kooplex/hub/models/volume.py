@@ -25,7 +25,7 @@ class Volume(models.Model):
             return "ro"
 
 class FunctionalVolume(Volume):
-    owner = models.ForeignKey(User, null = False)
+    owner = models.ForeignKey(User, null = True)
  
 class StorageVolume(Volume):
     groupid = models.IntegerField(null = True)
@@ -67,4 +67,25 @@ class VolumeProjectBinding(models.Model):
 #
 #    def delete(self):
 #        pass
+
+
+
+def init_model():
+    from kooplex.lib import Docker
+    # the list of the functional and storage volume names based on API information
+    #FIXME: decide what to do with volumes present in the model but not present in the system
+    for volume in Docker().list_volumenames():
+        vname = volume['name']
+        if volume['volumetype'] == 'functional':
+            try:
+                FunctionalVolume.objects.get(name = vname)
+            except FunctionalVolume.DoesNotExist:
+                description = "Functional volume %s automatically detected and added. Ask an administrator to provide a nice displayname and set the owner" % vname
+                FunctionalVolume(name = vname, displayname = vname, description = description).save()
+        elif volume['volumetype'] == 'storage':
+            try:
+                StorageVolume.objects.get(name = vname)
+            except StorageVolume.DoesNotExist:
+                description = "Storage volume %s automatically detected and added. Ask an administrator to provide a nice displayname and set the group id" % vname
+                StorageVolume(name = vname, displayname = vname, description = description).save()
 

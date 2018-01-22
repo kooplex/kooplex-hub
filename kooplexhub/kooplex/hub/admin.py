@@ -59,28 +59,9 @@ class HtmlReportAdmin(admin.ModelAdmin):
 class DashboardReportAdmin(admin.ModelAdmin):
     list_display = ('name', 'creator')
 
-@admin.register(MountPoint)
-class MountPointAdmin(admin.ModelAdmin):
-    list_display = ('id', 'displayname', 'name', 'type', 'host_mountpoint', 'host_groupid')
-
-@admin.register(MountPointProjectBinding)
-class MountPointProjectBinding(admin.ModelAdmin):
-    list_display = ('id', 'mountpoint', 'project', 'readwrite')
-
 @admin.register(UserProjectBinding)
 class UserProjectBinding(admin.ModelAdmin):
     list_display = ('id', 'project', 'user')
-
-@admin.register(MountPointPrivilegeBinding)
-class MountPointPrivilegeBinding(admin.ModelAdmin):
-    list_display = ('id', 'mountpoint', 'user', 'accessrights')
-
-
-
-
-
-
-
 
 @admin.register(Volume)
 class VolumeAdmin(admin.ModelAdmin):
@@ -96,6 +77,7 @@ class VolumeProjectBindingAdmin(admin.ModelAdmin):
 def refreshimages(request):
 #FIXME: authorize
     refresh_images()
+    refresh_volumes()
     return redirect('/admin')
 
 def initmodel(request):

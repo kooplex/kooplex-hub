@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 
 class Docker:
     base_url = get_settings('docker', 'base_url')
-    pattern_imagenamefilter = get_settings('docker', 'pattern_imagenamefilter')
     network = get_settings('docker', 'network')
 
     def __init__(self):
@@ -23,14 +22,31 @@ class Docker:
 
     def list_imagenames(self):
         logger.debug("Listing imagenames")
+        pattern_imagenamefilter = get_settings('docker', 'pattern_imagenamefilter')
         for image in self.client.images(all = True):
             if image['RepoTags'] is None:
                 continue
             for tag in image['RepoTags']:
-                if re.match(self.pattern_imagenamefilter, tag):
-                    _, imagename, _ = re.split(self.pattern_imagenamefilter, tag)
+                if re.match(pattern_imagenamefilter, tag):
+                    _, imagename, _ = re.split(pattern_imagenamefilter, tag)
                     logger.debug("Found image: %s" % imagename)
                     yield imagename
+
+    def list_volumenames(self):
+        logger.debug("Listing volumenames")
+        volumes = self.client.volumes()
+        pattern_volnamefilter_functional = get_settings('volumes', 'pattern_functionalvolumenamefilter')
+        pattern_volnamefilter_storage = get_settings('volumes', 'pattern_storagevolumenamefilter')
+        for volume in volumes['Volumes']:
+            volname_full = volume['Name']
+            if re.match(pattern_volnamefilter_functional, volname_full):
+                _, volname, _ = re.split(pattern_volnamefilter_functional, volname_full)
+                logger.debug("Found functional volume: %s" % volname)
+                yield { 'volumetype': 'functional', 'name': volname }
+            elif re.match(pattern_volnamefilter_storage, volname_full):
+                _, volname, _ = re.split(pattern_volnamefilter_storage, volname_full)
+                logger.debug("Found storage volume: %s" % volname)
+                yield { 'volumetype': 'storage', 'name': volname }
 
     def get_container(self, container):
         for item in self.client.containers(all = True):
