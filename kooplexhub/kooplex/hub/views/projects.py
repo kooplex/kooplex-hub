@@ -20,8 +20,14 @@ def projects(request, *v, **kw):
     logger.debug('User authenticated %s' %request.user)
     logger.info('Userauthenticated')
 
-    PUBLIC = ScopeType.objects.get(name = 'public')
-    NOTEBOOK = ContainerType.objects.get(name = 'notebook')
+    try:
+        PUBLIC = ScopeType.objects.get(name = 'public')
+    except ScopeType.DoesNotExist:
+        return redirect('/admin')
+    try:
+        NOTEBOOK = ContainerType.objects.get(name = 'notebook')
+    except ContainerType.DoesNotExist:
+        return redirect('/admin')
     user = request.user
     projects_mine = Project.objects.filter(owner = user)
     projects_sharedwithme = sorted([ upb.project for upb in UserProjectBinding.objects.filter(user = user) ])
