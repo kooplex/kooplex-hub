@@ -356,7 +356,6 @@ def project_versioning_pull(request):
         if project.owner != user and not user in project.collaborators:
             #FIXME: message you are not allowed....
             return redirect('projects')
-        commitid = request.POST['commitid']
         repo = Repository(request.user, project)
         repo.pull()
         return redirect('projects')
