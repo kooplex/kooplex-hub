@@ -7,8 +7,8 @@ import logging
 from kooplex.lib import Gitlab
 from kooplex.lib.filesystem import mkdir_project
 from kooplex.logic.impersonator import mkdir_project_oc, share_project_oc, unshare_project_oc
+from kooplex.logic.spawner import remove_project_container
 from kooplex.hub.models import VolumeProjectBinding, UserProjectBinding, Container
-from .spawner import remove_project_container
 
 logger = logging.getLogger(__name__)
 

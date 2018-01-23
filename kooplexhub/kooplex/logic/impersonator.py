@@ -37,7 +37,7 @@ def share_project_oc(project, user):
     command = 'sudo -i -u %s sh -c "share.sh share %s %s"' % (project.owner.username, directory, user.username)
     Docker().execute(get_impersonator_container(), command)
 
-def share_project_oc(project, user):
+def unshare_project_oc(project, user):
     logger.debug(project)
     directory = '_project.' + project.name_with_owner
     command = 'sudo -i -u %s sh -c "share.sh unshare %s %s"' % (project.owner.username, directory, user.username)
