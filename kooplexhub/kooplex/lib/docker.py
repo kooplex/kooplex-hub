@@ -115,8 +115,18 @@ class Docker:
         self.client.remove_container(container.name)
         logger.debug("Container stopped %s"% container.name)
 
+#FIXME: az execute2 lesz az igazi...
     def execute(self, container, command):
         logger.info("execution: %s in %s" % (command, container))
         execution = self.client.exec_create(container = container.name, cmd = shlex.split(command))
         return self.client.exec_start(execution, detach = False)
+
+    def execute2(self, container, command):
+        logger.info("execution: %s in %s" % (command, container))
+        execution = self.client.exec_create(container = container.name, cmd = shlex.split(command))
+        response = self.client.exec_start(exec_id = execution['Id'], stream = False)
+        check = self.client.exec_inspect(exec_id = execution['Id'])
+        if check['ExitCode'] != 0:
+            logger.error('Execution %s in %s failed -- %s' % (command, container, check))
+        return response.decode()
 

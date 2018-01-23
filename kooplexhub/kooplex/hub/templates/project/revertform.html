@@ -1,4 +1,4 @@
-<form action="{% url 'notebooks-revert' %}" method="post" class="form-horizontal">
+<form action="{% url 'project-commit' %}" method="post" class="form-horizontal">
   {% csrf_token %}
   <div class="panel-heading">
     <h4>Restore your project <strong>{{ project.name }}</strong> to a former state</h4>

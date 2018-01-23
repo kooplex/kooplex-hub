@@ -1,4 +1,4 @@
-<form action="{% url 'notebooks-pull' %}" method="post" class="form-horizontal">
+<form action="{% url 'project-commit' %}" method="post" class="form-horizontal">
   {% csrf_token %}
   <div class="panel-heading">
     <h4>Update your project <strong>{{ project.name }}</strong> to remote changes</h4>

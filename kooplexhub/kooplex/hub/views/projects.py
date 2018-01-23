@@ -1,16 +1,18 @@
 import re
+import logging
 
 from django.contrib import messages
 from django.conf.urls import patterns, url, include
 from django.shortcuts import render, redirect
 from django.http import HttpRequest
 from django.template import RequestContext
-import logging
-logger = logging.getLogger(__name__)
 
 from kooplex.hub.models import *
 from kooplex.logic.spawner import spawn_project_container, stop_project_container
 from kooplex.logic import create_project, delete_project, configure_project
+from kooplex.logic import Repository
+
+logger = logging.getLogger(__name__)
 
 def projects(request, *v, **kw):
     """Renders the projectlist page."""
@@ -250,7 +252,37 @@ def project_versioning(request):
     assert isinstance(request, HttpRequest)
     if request.user.is_anonymous():
         return redirect('login')
+
+    user = request.user
+    if request.method == 'GET':
+        try:
+            project = Project.objects.get(id = request.GET.get('project_id', -1))
+            if project.owner != user and not user in project.collaborators:
+                #FIXME: message you are not allowed....
+                return redirect('projects')
+            
+            repo = Repository(user, project)
+            git_log = repo.log()
+            git_files = repo.lsfiles()
+##            git_changed = repo.remote_changed()
+            return render(
+                request,
+                'project/gitform.html',
+                context_instance=RequestContext(request,
+                {
+                    'project': project,
+                    'committable_dict' : git_files,
+                    'commits' : git_log,
+                    'changedremote': [],#git_changed,
+                })
+            )
+        except Project.DoesNotExist:
+            #FIXME: message does not exist ...
+            return redirect('projects')
+    elif request.method == 'POST':
+        raise NotImplementedError
 #FIXME:
+
 
 
 

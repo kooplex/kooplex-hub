@@ -1,4 +1,4 @@
-<form action="{% url 'notebooks-commit' %}" method="post" class="form-horizontal" onsubmit="collectCheckedElements()">
+<form action="{% url 'project-commit' %}" method="post" class="form-horizontal" onsubmit="collectCheckedElements()">
   {% csrf_token %}
   <div class="panel-heading">
     <h4>Commit changes for project <strong>{{ project.name }}</strong></h4>
