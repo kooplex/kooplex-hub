@@ -40,6 +40,11 @@
 </div>
 {% endif %}
 
+{% if messages %}
+  {% include 'message.html' %}
+{% endif %}
+
+
 <div class="tab-content">
   <div id="myprojects" class="tab-pane fade in active">
         {% for project in projects_mine %}
@@ -64,6 +69,7 @@
      {% include 'project/new.html' %}
   </div>
 </div><!-- /.tab-content -->
+
 
 {% endblock %}
 
