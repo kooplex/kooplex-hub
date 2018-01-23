@@ -95,7 +95,7 @@
 
             <!-- GIT RELATED STUFF -->
 
-        <a href="{% url 'project-commit' %}?project_id={{ project.id }}">
+        <a href="{% url 'project-versioncontrol' %}?project_id={{ project.id }}">
           <button role="button" type="button" class="btn btn-warning" data-toggle="tooltip" title="Version control of your project {{ project.name }}. You can commit your changes, revert to a former commited state or pull remote changes" data-placement="top">
             <span class="glyphicon glyphicon-random" aria-hidden="true"></span>
           </button></a>

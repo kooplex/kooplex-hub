@@ -1,4 +1,4 @@
-<form action="{% url 'project-commit' %}" method="post" class="form-horizontal" onsubmit="collectCheckedElements()">
+<form action="{% url 'project-commit' %}" method="post" class="form-horizontal">
   {% csrf_token %}
   <div class="panel-heading">
     <h4>Commit changes for project <strong>{{ project.name }}</strong></h4>
@@ -8,24 +8,21 @@
       <label>Select the files you want to commit:</label>
       <div class="form-group">
         {% for committable in committable_dict.deleted %}
-          <input type="checkbox" value="deleted" name="{{ committable }}">
+          <input type="checkbox" value="{{ committable }}" name="deleted_files">
           {{ committable }} (deleted)<br>
         {% endfor %}
         {% for committable in committable_dict.modified %}
-          <input type="checkbox" value="modified" name="{{ committable }}">
+          <input type="checkbox" value="{{ committable }}" name="modified_files">
           {{ committable }} (modified)<br>
         {% endfor %}
         {% for committable in committable_dict.other %}
-          <input type="checkbox" value="untracted" name="{{ committable }}">
+          <input type="checkbox" value="{{ committable }}" name="other_files">
           {{ committable }} (untracted/renamed/new)<br>
         {% endfor %}
       </div> <!-- form-group -->
       <label>Your commit message:</label>
       <input id="id_message" type="text" name="message" value="Update the project file(s)">
       <input type="hidden" name="project_id" value="{{ project.id }}" />
-      <input type="hidden" name="modified_files" value="" />
-      <input type="hidden" name="deleted_files" value="" />
-      <input type="hidden" name="commitall" value="false" />
       <hr>
       <p>In your favour the following commands are issued in the project folder:</p> 
       <code> 
@@ -36,39 +33,11 @@ git push
       </code>
     </div>   <!-- panel-body -->
     <div class="panel-footer" style="text-align: left;">
-      <input type="submit" name="commitall" value="Commit and push" class="btn btn-primary" />
-      <input type="submit" name="cancel" value="Cancel" class="btn btn-secondary" />
+      <input type="submit" name="button" value="Commit and push" class="btn btn-primary" />
+      <input type="submit" name="button" value="Cancel" class="btn btn-secondary" />
     </div>   <!-- panel-footer -->
    {% else %}
      <p>You have nothing to commit yet.</p>
    {% endif %}
 </form>
-
-<script>
-    function collectCheckedElements() {
-        var inputs = document.getElementsByTagName("input");
-        var modified_files = "";
-        var deleted_files = "";
-        for (var i = 1; i < inputs.length; i++) {
-            if (inputs[i].type == "checkbox") {
-                if (inputs[i].checked) {
-                    if (inputs[i].value == "deleted") {
-                        deleted_files += "'" + inputs[i].name + "',";
-                    } else {
-                        modified_files += "'" + inputs[i].name + "',";
-                    }
-                    inputs[i].disabled = true;
-                }
-            }
-        }
-        if (modified_files.length > 0) {
-            modified_files = modified_files.substring(0, modified_files.length - 1);
-        }
-        if (deleted_files.length > 0) {
-            deleted_files = deleted_files.substring(0, deleted_files.length - 1);
-        }
-        document.getElementsByName("modified_files")[0].value = modified_files;
-        document.getElementsByName("deleted_files")[0].value = deleted_files;
-    }
-</script>
 

@@ -253,37 +253,116 @@ def project_versioning(request):
     if request.user.is_anonymous():
         return redirect('login')
 
+    if request.method != 'GET':
+        #FIXME: message dont hack me....
+        return redirect('projects')
     user = request.user
-    if request.method == 'GET':
-        try:
-            project = Project.objects.get(id = request.GET.get('project_id', -1))
-            if project.owner != user and not user in project.collaborators:
-                #FIXME: message you are not allowed....
-                return redirect('projects')
-            
-            repo = Repository(user, project)
-            git_log = repo.log()
-            git_files = repo.lsfiles()
-##            git_changed = repo.remote_changed()
-            return render(
-                request,
-                'project/gitform.html',
-                context_instance=RequestContext(request,
-                {
-                    'project': project,
-                    'committable_dict' : git_files,
-                    'commits' : git_log,
-                    'changedremote': [],#git_changed,
-                })
-            )
-        except Project.DoesNotExist:
-            #FIXME: message does not exist ...
+    try:
+        project = Project.objects.get(id = request.GET.get('project_id', -1))
+        if project.owner != user and not user in project.collaborators:
+            #FIXME: message you are not allowed....
             return redirect('projects')
-    elif request.method == 'POST':
-        raise NotImplementedError
-#FIXME:
+        
+        repo = Repository(user, project)
+        git_log = repo.log()
+        git_files = repo.lsfiles()
+        git_changed = repo.remote_changed()
+        return render(
+            request,
+            'project/gitform.html',
+            context_instance=RequestContext(request,
+            {
+                'project': project,
+                'committable_dict' : git_files,
+                'commits' : git_log,
+                'changedremote': git_changed,
+            })
+        )
+    except Project.DoesNotExist:
+        #FIXME: message does not exist ...
+        return redirect('projects')
 
 
+def project_versioning_commit(request):
+    """Handles the git."""
+    assert isinstance(request, HttpRequest)
+    if request.user.is_anonymous():
+        return redirect('login')
+
+    if request.method != 'POST':
+        #FIXME: message dont hack me....
+        return redirect('projects')
+    if request.POST['button'] == 'Cancel':
+        return redirect('projects')
+    user = request.user
+    try:
+        project = Project.objects.get(id = request.POST['project_id'])
+        if project.owner != user and not user in project.collaborators:
+            #FIXME: message you are not allowed....
+            return redirect('projects')
+        message = request.POST['message']
+        repo = Repository(request.user, project)
+        repo.add( request.POST.getlist('modified_files') )
+        repo.add( request.POST.getlist('other_files') )
+        repo.remove( request.POST.getlist('deleted_files') )
+        repo.commit(message)
+        repo.push()
+        return redirect('projects')
+    except Exception as e:
+        raise#FIXME: message
+    return redirect('projects')
+
+
+def project_versioning_revert(request):
+    """Handles the git."""
+    assert isinstance(request, HttpRequest)
+    if request.user.is_anonymous():
+        return redirect('login')
+
+    if request.method != 'POST':
+        #FIXME: message dont hack me....
+        return redirect('projects')
+    if request.POST['button'] == 'Cancel':
+        return redirect('projects')
+    user = request.user
+    try:
+        project = Project.objects.get(id = request.POST['project_id'])
+        if project.owner != user and not user in project.collaborators:
+            #FIXME: message you are not allowed....
+            return redirect('projects')
+        commitid = request.POST['commitid']
+        repo = Repository(request.user, project)
+        repo.revert(commitid)
+        return redirect('projects')
+    except Exception as e:
+        raise#FIXME: message
+    return redirect('projects')
+
+
+def project_versioning_pull(request):
+    """Handles the git."""
+    assert isinstance(request, HttpRequest)
+    if request.user.is_anonymous():
+        return redirect('login')
+
+    if request.method != 'POST':
+        #FIXME: message dont hack me....
+        return redirect('projects')
+    if request.POST['button'] == 'Cancel':
+        return redirect('projects')
+    user = request.user
+    try:
+        project = Project.objects.get(id = request.POST['project_id'])
+        if project.owner != user and not user in project.collaborators:
+            #FIXME: message you are not allowed....
+            return redirect('projects')
+        commitid = request.POST['commitid']
+        repo = Repository(request.user, project)
+        repo.pull()
+        return redirect('projects')
+    except Exception as e:
+        raise#FIXME: message
+    return redirect('projects')
 
 
 
@@ -291,7 +370,10 @@ urlpatterns = [
     url(r'^/?$', projects, name = 'projects'),
     url(r'^/new$', project_new, name = 'project-new'), 
     url(r'^/configure$', project_configure, name = 'project-settings'), 
-    url(r'^/versioncontrol$', project_versioning, name = 'project-commit'), 
+    url(r'^/versioncontrol$', project_versioning, name = 'project-versioncontrol'), 
+    url(r'^/versioncontrol/commit$', project_versioning_commit, name = 'project-commit'), 
+    url(r'^/versioncontrol/revert$', project_versioning_revert, name = 'project-revert'), 
+    url(r'^/versioncontrol/pull$', project_versioning_pull, name = 'project-pull'), 
     url(r'^/start$', project_start, name = 'container-start'), 
     url(r'^/open$', project_open, name = 'container-open'), 
     url(r'^/stop$', project_stop, name = 'container-delete'), 

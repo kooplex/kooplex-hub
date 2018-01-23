@@ -37,7 +37,7 @@ class Repository:
         return 'sudo -i -u %s sh -c "cd %s ; SSH_AUTH_SOCK=%s %s"' % (self.user.username, self.gitdir, self.sshagentsock, command)
 
     def log(self):
-        logger.debug('call')
+        logger.debug('user: %s, project: %s' % (self.user, self.project))
         tags = [ 'commitid', 'name', 'message', 'date', 'time' ]
         regexp = r"""commit (?P<commitid>[0-9a-z]{40})
 Author: (?P<name>[A-Za-z\ \.]+)\s<[a-z0-9\.\-_]+@[a-z0-9\.]+>
@@ -55,62 +55,70 @@ Date:   (?P<date>\d{4}-\d{2}-\d{2})\s(?P<time>\d{2}:\d{2}:\d{2}).*
         return self.docker.execute2(self.container, command).splitlines()
 
     def lsfiles(self):
-        logger.debug('call')
+        logger.debug('user: %s, project: %s' % (self.user, self.project))
         files_deleted = self._lsfiles('deleted')
         files_other = self._lsfiles('other', extra = '-x .ipynb_checkpoints')
         files_modified = list(set(self._lsfiles('modified')).difference(set(files_deleted)))
         return { 'modified': files_modified, 'deleted': files_deleted, 'other': files_other }
 
     def remote_changed(self):
-        logger.debug('call')
+        logger.debug('user: %s, project: %s' % (self.user, self.project))
         command = self._sudowrap("git ls-remote")
         resp = self.docker.execute2(self.container, command)
-        logger.debug(resp)
-        _, remoteid, _ = re.split(r'^.*\n?([a-z0-9]{40})\sHEAD\n.*$', resp)
+        _, remoteid, _ = re.split(r'([a-f0-9]{40})\sHEAD', resp)
         history = self.log()
         return history[0]['commitid'] != remoteid
 
-#    def add(self, files):
-#        command = "git add %s" % " ".join(files)
-#        return self.__execute(command)
-#
-#    def remove(self, files):
-#        command = "git rm %s" % " ".join(files)
-#        return self.__execute(command)
-#
-#    def commit(self, message):
-#        command = "git commit -m '%s'" % (message)
-#        return self.__execute(command)
-#
-#    def push(self):
-#        command = "git push"
-#        return self.__execute(command)
-#
-#    def pull(self):
-#        command = "git pull"
-#        return self.__execute(command)
-#
-#    def reset(self):
-#        command = "git reset"
-#        return self.__execute(command)
-#
-#    def revert(self, commitid):
-#        self.reset()
-#        history = self.log()
-#        latestid = history[0]['commitid']
-#        if latestid != commitid:
-#            behindid = None
-#            for x in history:
-#                if x['commitid'] == commitid:
-#                    break
-#                behindid = x['commitid']
-#            assert behindid is not None, "Commitid %s not found" % commitid
-#            if behindid != latestid:
-#                command = "git revert --no-commit %s..%s" % (behindid, latestid)
-#                self.__execute(command)
-#        command = "git checkout %s ." % commitid
-#        self.__execute(command)
-#        if latestid != commitid:
-#            self.commit("Revert \"%s\"" % x['message'])
-#            self.push()
+    def add(self, files):
+        if not len(files): return
+        logger.debug("%d files" % len(files))
+        command = self._sudowrap("git add %s" % " ".join(files))
+        return self.docker.execute2(self.container, command)
+
+    def remove(self, files):
+        if not len(files): return
+        logger.debug("%d files" % len(files))
+        command = self._sudowrap("git rm %s" % " ".join(files))
+        return self.docker.execute2(self.container, command)
+
+    def commit(self, message):
+        logger.info("project %s user %s commit %s" % (self.project, self. user, message))
+        command = self._sudowrap("git commit -m '%s'" % (message))
+        return self.docker.execute2(self.container, command)
+
+    def push(self):
+        logger.debug('user: %s, project: %s' % (self.user, self.project))
+        command = self._sudowrap("git push")
+        return self.docker.execute2(self.container, command)
+
+    def pull(self):
+        logger.debug('user: %s, project: %s' % (self.user, self.project))
+        command = self._sudowrap("git pull")
+        return self.docker.execute2(self.container, command)
+
+    def reset(self):
+        logger.debug('user: %s, project: %s' % (self.user, self.project))
+        command = self._sudowrap("git reset")
+        return self.docker.execute2(self.container, command)
+
+    def revert(self, commitid):
+        logger.debug('user: %s, project: %s' % (self.user, self.project))
+        self.reset()
+        history = self.log()
+        latestid = history[0]['commitid']
+        if latestid != commitid:
+            behindid = None
+            for x in history:
+                if x['commitid'] == commitid:
+                    break
+                behindid = x['commitid']
+            assert behindid is not None, "Commitid %s not found" % commitid
+            if behindid != latestid:
+                command = "git revert --no-commit %s..%s" % (behindid, latestid)
+                self.__execute(command)
+        command = self._sudowrap("git checkout %s ." % commitid)
+        self.docker.execute2(self.container, command)
+        if latestid != commitid:
+            self.commit("Revert \"%s\"" % x['message'])
+            self.push()
 

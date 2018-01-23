@@ -1,4 +1,4 @@
-<form action="{% url 'project-commit' %}" method="post" class="form-horizontal">
+<form action="{% url 'project-pull' %}" method="post" class="form-horizontal">
   {% csrf_token %}
   <div class="panel-heading">
     <h4>Update your project <strong>{{ project.name }}</strong> to remote changes</h4>
@@ -12,8 +12,8 @@ git pull
       </code>
     </div>   <!-- panel-body -->
     <div class="panel-footer" style="text-align: left;">
-      <input type="submit" name="pull" value="Pull" class="btn btn-primary" />
-      <input type="submit" name="cancel" value="Cancel" class="btn btn-secondary" />
+      <input type="submit" name="button" value="Pull" class="btn btn-primary" />
+      <input type="submit" name="button" value="Cancel" class="btn btn-secondary" />
     </div>   <!-- panel-footer -->
    {% else %}
      <p>You have nothing to pull yet.</p>
