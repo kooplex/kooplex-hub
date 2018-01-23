@@ -46,9 +46,6 @@ class UserAdmin(admin.ModelAdmin):
         super().save_model(request, user, form, changed)
 
     def delete_model(self, request, user):
-        if user.n_projects > 0 or user.n_reports > 0:
-            # policy? delete reports and projects OR delegate to a dummy user?
-            raise NotImplementedError
         user.remove()
         super().delete_model(request, user)
 

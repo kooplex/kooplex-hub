@@ -157,7 +157,7 @@ def cleanup_home(user):
     except Exception as e:
         status |= 0x001
         logger.error("cannot move %s (%s)" % (dir_home, e))
-    for p in user.projects:
+    for p in user.projects():
         cleanup_share(p)
     try:
         dir_git = os.path.join(get_settings('volumes', 'git'), user.username)
