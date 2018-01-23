@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 from kooplex.hub.models import *
 from kooplex.logic.spawner import spawn_project_container, stop_project_container
-from kooplex.logic import create_project, delete_project
+from kooplex.logic import create_project, delete_project, configure_project
 
 def projects(request, *v, **kw):
     """Renders the projectlist page."""
@@ -170,8 +170,14 @@ def project_configure(request):
         return redirect('projects')
     if button == 'delete':
         delete_project(project)
-        return redirect('projects')
-#FIXME: NotImplemented
+    elif button == 'apply':
+        collaborators = [ User.objects.get(id = x) for x in request.POST.getlist('collaborators') ]
+        volumes = [ FunctionalVolume.objects.get(name = x) for x in request.POST.getlist('func_volumes') ]
+        volumes.extend( [ StorageVolume.objects.get(name = x) for x in request.POST.getlist('storage_volumes') ] )
+        image = Image.objects.get(name = request.POST['project_image'])
+        scope = ScopeType.objects.get(name = request.POST['project_scope'])
+        configure_project(project, image, scope, volumes, collaborators)
+    return redirect('projects')
     raise Exception(str(request.POST))
 
 

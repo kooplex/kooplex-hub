@@ -2,7 +2,7 @@
 
 <p>The current scope of project {{ project }} is {{ project.scope }}</p>
 
-<select id="project_scope-{{ project.id }}" name="project_scope-{{ project.id }}">
+<select id="project_scope-{{ project.id }}" name="project_scope">
   {% for scope in scopes %}
     <option value="{{ scope }}" {% if project.scope = scope %} selected {% endif %}>{{ scope }}</option>
   {% endfor %}

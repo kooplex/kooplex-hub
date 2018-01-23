@@ -57,15 +57,7 @@ class UserPrivilegeVolumeBinding(models.Model):
     def __str__(self):
         return "%s@%s" % (self.user, self.volume)
 
-class VolumeProjectBinding(models.Model):
-    id = models.AutoField(primary_key = True)
-    volume = models.ForeignKey(Volume, null = False)
-    project = models.ForeignKey(Project, null = False)
-    #readwrite = models.BooleanField(default = False)
-
-    def __str__(self):
-       return "%s-%s" % (self.project.name, self.volume.name)
-
+#FIXME: hide it
 def lookup(volume):
     try:
         return FunctionalVolume.objects.get(id = volume.id)
@@ -76,6 +68,19 @@ def lookup(volume):
     except StorageVolume.DoesNotExist:
         pass
     raise Exception("Unknown volume: %s" % volume)
+
+class VolumeProjectBinding(models.Model):
+    id = models.AutoField(primary_key = True)
+    volume = models.ForeignKey(Volume, null = False)
+    project = models.ForeignKey(Project, null = False)
+    #readwrite = models.BooleanField(default = False)
+
+    def __str__(self):
+       return "%s-%s" % (self.project.name, self.volume.name)
+
+    @property
+    def childvolume(self):
+        return lookup( self.volume )
 
 def init_model():
     from kooplex.lib import Docker

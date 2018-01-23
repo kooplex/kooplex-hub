@@ -45,6 +45,8 @@ def delete_project(project):
               5. remove user project binding
               6. get rid of containers if any
               7. delete gitlab project on the user's behalf
+    @param project: the project model
+    @type project: kooplex.hub.models.Project
     """
     logger.debug(project)
     for vpb in VolumeProjectBinding.objects.filter(project = project):
@@ -64,3 +66,32 @@ def delete_project(project):
     information = g.delete_project(project)
     logger.info("%s deleted" % project)
     project.delete()
+
+def configure_project(project, image, scope, volumes, collaborators):
+    logger.debug(project)
+    project.image = image
+    project.scop = scope
+    for vpb in VolumeProjectBinding.objects.filter(project = project):
+        if vpb.childvolume in volumes:
+            logger.debug("volume project binding remains %s" % vpb)
+            volumes.remove(vpb.childvolume)
+        else:
+            logger.debug("volume project binding removed %s" % vpb)
+            vpb.delete()
+    for volume in volumes:
+        vpb = VolumeProjectBinding(project = project, volume = volume)
+        logger.debug("volume project binding added %s" % vpb)
+        vpb.save()
+    for upb in UserProjectBinding.objects.filter(project = project):
+        if upb.user in collaborators:
+            logger.debug("collaborator remains %s" % upb)
+            collaborators.remove(upb.user)
+        else:
+            logger.debug("collaborator removed %s" % upb)
+            upb.delete()
+    for user in collaborators:
+        upb = UserProjectBinding(project = project, user = user)
+        logger.debug("collaborator added %s" % upb)
+        upb.save()
+    project.save()
+
