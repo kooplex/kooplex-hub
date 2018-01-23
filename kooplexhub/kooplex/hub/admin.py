@@ -1,5 +1,6 @@
 import logging
 
+from django.contrib import messages
 from django.conf.urls import patterns, url, include
 from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponseRedirect,HttpResponse
@@ -21,9 +22,17 @@ class UserAdmin(admin.ModelAdmin):
 #FIXME: deletion of many should be caugth and iterated like the sigle instance in the delete_model method!!!
     actions = ['reset_password', ]
 
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        extra_context['messages']= messages.get_messages(request)
+        return super(UserAdmin, self).changelist_view(request, extra_context)
+        
     def reset_password(self, request, queryset):
+        msg=""
         for user in queryset:
             user.generatenewpassword()
+            msg+="%s, "%user.username
+        messages.success(request,"Password reseted for: %s" %msg)
     reset_password.short_description = 'Reset password'
 
     def save_model(self, request, user, form, changed):
