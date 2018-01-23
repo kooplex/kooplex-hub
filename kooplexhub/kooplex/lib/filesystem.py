@@ -188,11 +188,11 @@ def cleanup_share(project):
     folder_share = os.path.join(get_settings('volumes','share'), project.name_with_owner)
     garbage = os.path.join(get_settings('volumes', 'garbage'), "share-%s.%f" % (project.name_with_owner, time.time()))
     try:
-        dir_util.copy_tree(dir_share, garbage)
-        dir_util.remove_tree(dir_share)
-        logger.info("moved %s -> %s" % (dir_share, garbage))
+        dir_util.copy_tree(folder_share, garbage)
+        dir_util.remove_tree(folder_share)
+        logger.info("moved %s -> %s" % (folder_share, garbage))
     except Exception as e:
-        logger.error("cannot move %s (%s)" % (dir_share, e))
+        logger.error("cannot move %s (%s)" % (folder_share, e))
 
 def mkdir_git_workdir(user, project):
     """
