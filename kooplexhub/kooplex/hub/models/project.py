@@ -32,9 +32,9 @@ class Project(models.Model):
 
     @property
     def volumes(self):
-        from .volume import VolumeProjectBinding
+        from .volume import VolumeProjectBinding, lookup
         for vpb in VolumeProjectBinding.objects.filter(project = self):
-            yield vpb.volume
+            yield lookup( vpb.volume )
 
     @property
     def url_gitlab(self):

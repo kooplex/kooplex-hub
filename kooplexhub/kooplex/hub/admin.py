@@ -45,7 +45,7 @@ class UserAdmin(admin.ModelAdmin):
 
 @admin.register(Container)
 class ContainerAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name')
+    list_display = ('id', 'name', 'project', 'image')
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):

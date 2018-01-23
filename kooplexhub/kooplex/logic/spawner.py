@@ -61,18 +61,6 @@ class Spawner:
 def spawn_project_container(user, project):
     from kooplex.hub.models import ContainerType
     from kooplex.lib.filesystem import G_OFFSET
-    # we have to make sure if more than one mount points share the same group id, we collapse their names
-#        lut_gid_gidname = {}
-#        for mpb in MountPointProjectBinding.objects.filter(project = self.project):
-#            if mpb.mountpoint.type == 'nfs' and mpb.mountpoint.host_groupid > 0:
-#                gid_ = mpb.mountpoint.host_groupid
-#                gidname_ = mpb.mountpoint.name.lower()
-#                if not gid_ in lut_gid_gidname:
-#                    lut_gid_gidname[gid_] = []
-#                lut_gid_gidname[gid_].append(gidname_)
-#        mpgids = []
-#        for gid_, gidnames_ in lut_gid_gidname.items():
-#            mpgids.append("%s:%d" % (("_".join(gidnames_))[:10], gid_))
     volumemapping = [
         (get_settings('spawner', 'volume-home'), '/mnt/.volumes/home', 'rw'),
         (get_settings('spawner', 'volume-git'), '/mnt/.volumes/git', 'rw'),

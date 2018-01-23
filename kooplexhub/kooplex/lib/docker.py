@@ -3,7 +3,6 @@
 @summary: docker API driver
 """
 import logging
-import os
 import re
 import json
 from docker.client import Client
@@ -65,9 +64,9 @@ class Docker:
             binds[vol] = { 'bind': mp, 'mode': mode }
         # additional volumes specified by the owner
         for volume in container.volumes:
-            mp = os.path.join('/vol', volume.name)
+            mp = volume.mountpoint
             volumes.append(mp)
-            binds[volume.name] = { 'bind': mp, 'mode': 'rw' } #FIXME: should come from model
+            binds[volume.volumename] = { 'bind': mp, 'mode': volume.mode(container.user) } 
         host_config = self.client.create_host_config(
             binds = binds,
             privileged = True

@@ -66,28 +66,16 @@ class VolumeProjectBinding(models.Model):
     def __str__(self):
        return "%s-%s" % (self.project.name, self.volume.name)
 
-
-
-#    @property
-#    def container_mountpoint_(self):
-#        return os.path.join('/vol', self.name)
-
-#    def create(self, uid = 0, gid = 0):
-#        d = Docker()
-#        url = d.get_docker_url()
-#        dockerclient = docker.client.Client(base_url = url)
-#        resp = dockerclient.create_volume(name = self.name)
-#        os.chown(resp['Mountpoint'], uid, gid)
-#        # a typical response looks like
-#        # {'Mountpoint': '/var/lib/docker/volumes/kortefa/_data', 'Name': 'kortefa', 'Labels': None, 'Scope': 'local', 'Options': {}, 'Driver': 'local'}
-#        # maybe this info should be part of the model and be saved now
-#        self.save()
-#        return resp
-#
-#    def delete(self):
-#        pass
-
-
+def lookup(volume):
+    try:
+        return FunctionalVolume.objects.get(id = volume.id)
+    except FunctionalVolume.DoesNotExist:
+        pass
+    try:
+        return StorageVolume.objects.get(id = volume.id)
+    except StorageVolume.DoesNotExist:
+        pass
+    raise Exception("Unknown volume: %s" % volume)
 
 def init_model():
     from kooplex.lib import Docker

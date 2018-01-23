@@ -38,8 +38,9 @@ class Container(models.Model):
 
     @property
     def volumes(self):
+        from .volume import lookup
         for vcb in VolumeContainerBinding.objects.filter(container = self):
-            yield vcb.volume
+            yield lookup( vcb.volume )
 
     @property
     def proxy_path(self):
