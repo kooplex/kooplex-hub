@@ -111,6 +111,9 @@ class Docker:
         self.client.stop(container.name)
         logger.debug("Container stopped %s"% container.name)
 
+    def remove_container(self, container):
+        self.client.remove_container(container.name)
+        logger.debug("Container stopped %s"% container.name)
 
     def execute(self, container, command):
         execution = self.client.exec_create(container = container.name, cmd = command)

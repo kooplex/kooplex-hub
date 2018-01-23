@@ -87,6 +87,7 @@ def spawn_project_container(user, project):
 
 def stop_project_container(container):
     from kooplex.lib.proxy import removeroute
+    logger.debug(container)
     Docker().stop_container(container)
     container.is_running = False
     container.save()
@@ -96,3 +97,8 @@ def stop_project_container(container):
         # if there was no proxy path saved we silently ignore the exception
         pass
 
+def remove_project_container(container):
+    stop_project_container(container)
+    logger.debug(container)
+    Docker().remove_container(container)
+    container.delete()

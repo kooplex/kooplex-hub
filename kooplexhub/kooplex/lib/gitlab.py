@@ -56,11 +56,11 @@ class Gitlab:
         response = keeptrying(requests.delete, 3, **kw)
         information = response.json()
         statuscode = response.status_code
-        assert statuscode in [ 201, 404 ], information
-        if statuscode == 201:
-            logger.info('deleted project %s (gitlab project id: %d)' % (project, project.gitlab_id))
+        assert statuscode in [ 201, 202, 404 ], information
+        if statuscode in [ 201, 202 ]:
+            logger.info('deleted project %s (gitlab project id: %d) -- %s' % (project, project.gitlab_id, information))
         elif statuscode == 404:
-            logger.warning('not found project %s (gitlab project id: %d)' % (project, project.gitlab_id))
+            logger.warning('not found project %s (gitlab project id: %d) -- %s' % (project, project.gitlab_id, information))
         return information
 
     def add_project_members(self, project, user):
