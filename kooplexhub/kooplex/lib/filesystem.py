@@ -152,7 +152,7 @@ def cleanup_home(user):
     try:
         dir_home = os.path.join(get_settings('volumes', 'home'), user.username)
         dir_util.copy_tree(dir_home, garbage)
-        dir_util.remove_tree(os.path.dirname(dir_home))
+        dir_util.remove_tree(dir_home)
         logger.info("moved %s -> %s" % (dir_home, garbage))
     except Exception as e:
         status |= 0x001
@@ -162,7 +162,7 @@ def cleanup_home(user):
     try:
         dir_git = os.path.join(get_settings('volumes', 'git'), user.username)
         dir_util.copy_tree(dir_git, garbage)
-        dir_util.remove_tree(os.path.dirname(dir_git))
+        dir_util.remove_tree(dir_git)
         logger.info("moved %s -> %s" % (dir_git, garbage))
     except Exception as e:
         status |= 0x100
@@ -189,7 +189,7 @@ def cleanup_share(project):
     garbage = os.path.join(get_settings('volumes', 'garbage'), "share-%s.%f" % (project.name_with_owner, time.time()))
     try:
         dir_util.copy_tree(dir_share, garbage)
-        dir_util.remove_tree(os.path.dirname(dir_share))
+        dir_util.remove_tree(dir_share)
         logger.info("moved %s -> %s" % (dir_share, garbage))
     except Exception as e:
         logger.error("cannot move %s (%s)" % (dir_share, e))
