@@ -54,13 +54,9 @@ class User(DJUser):
         except: #File missing
             return False
 
-    def is_validpassword(self, password):
-        return Ldap().is_validpassword(self, password)
-
-    def changepassword(self, newpassword, oldpassword = None):
-        l = Ldap()
-        l.changepassword(self, newpassword, oldpassword)
-        self.password = newpassword
+    def changepassword(self, password):
+        from kooplex.lib.filesystem import write_davsecret
+        self.password = password
         write_davsecret(self)
         self.save()
 

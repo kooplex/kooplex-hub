@@ -11,7 +11,6 @@ from .spawner import remove_project_container
 logger = logging.getLogger(__name__)
 
 def create_project(project, volumes):
-#FIXME: 3, 4, 5 not implemnted
     """
     @summary: create a new user project
               1. create gitlab project behalf of the user
@@ -33,9 +32,9 @@ def create_project(project, volumes):
         vpb.save()
         logger.debug("new volume project binding %s" % vpb)
     logger.info("%s created" % project)
+#FIXME: 3, 4, 5 not implemnted
 
 def delete_project(project):
-#FIXME: 2, 3, 4 not implemnted
     """
     @summary: delete a user project
               1. remove project volume bindings
@@ -52,9 +51,10 @@ def delete_project(project):
     for vpb in VolumeProjectBinding.objects.filter(project = project):
         logger.debug("removed volume project binding %s" % vpb)
         vpb.delete()
-#FIXME
+#FIXME: garbage collections
     for upb in UserProjectBinding.objects.filter(project = project):
         logger.debug("removed user project binding %s" % upb)
+#FIXME: unshare
         upb.delete()
     try:
         container = Container.objects.get(user = project.owner, project = project)
@@ -68,6 +68,22 @@ def delete_project(project):
     project.delete()
 
 def configure_project(project, image, scope, volumes, collaborators):
+    """
+    @summary: configure a user project
+              1. set image and scope
+              2. manage volume project bindings
+              3. manage user project bindings
+    @param project: the project model
+    @type project: kooplex.hub.models.Project
+    @param image: the new image to set
+    @type image: kooplex.hub.models.Image
+    @param scope: the new scope to set
+    @type scope: kooplex.hub.models.ScopeType
+    @param volumes: the list of functional and storage volumes
+    @type volumes: list(kooplex.hub.models.Volume)
+    @param collaborators: the list of users to share the project with as collaboration
+    @type collaborators: list(kooplex.hub.models.User)
+    """
     logger.debug(project)
     project.image = image
     project.scop = scope
@@ -88,10 +104,12 @@ def configure_project(project, image, scope, volumes, collaborators):
             collaborators.remove(upb.user)
         else:
             logger.debug("collaborator removed %s" % upb)
+#FIXME: unshare
             upb.delete()
     for user in collaborators:
         upb = UserProjectBinding(project = project, user = user)
         logger.debug("collaborator added %s" % upb)
+#FIXME: share
         upb.save()
     project.save()
 

@@ -4,6 +4,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpRequest
 
 from kooplex.hub.models import User
+from kooplex.idp.authentication import check_password, set_password
 
 def passwordchangeForm(request):
     """Renders the password change page."""
@@ -15,7 +16,7 @@ def passwordchangeForm(request):
         if 'btn_cabcel' in request.POST.keys():
             return redirect('/')
         elif 'btn_pwchange' in request.POST.keys():
-            username = request.POST['username']
+            username = request.POST['username']  #FIXME: we could use request.user as the user is already authenticated
             oldpassword = request.POST['oldpassword']
             newpassword1 = request.POST['newpassword1']
             newpassword2 = request.POST['newpassword2']
@@ -27,12 +28,10 @@ def passwordchangeForm(request):
                 errors.append('You cannot have an empty password.')
             if not newpassword1 == newpassword2:
                 errors.append('Your passwords do not match.')
-            if not user.is_validpassword(oldpassword):
-                from kooplex.lib.lldap import Ldap
-                raise Exception(str(Ldap().get_user(user)))
+            if not check_password(user, oldpassword):
                 errors.append('Please check your old password.')
             if len(errors) == 0:
-                user.changepassword(newpassword1)
+                set_password(user, newpassword1)
                 return redirect('/')
     return render(
         request,
