@@ -106,7 +106,6 @@ class Ldap:
     def removeuser(self, user):
         logging.debug('remove %s' % user)
         dn = self.userdn(user)
-        self.connection.add(dn, object_class, attributes)
         if not self.connection.delete(dn):
             raise LdapException(self.connection.result['description'])
 
