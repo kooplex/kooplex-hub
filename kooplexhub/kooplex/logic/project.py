@@ -5,7 +5,7 @@
 import logging
 
 from kooplex.lib import Gitlab
-from kooplex.lib.filesystem import mkdir_project, mkdir_git_workdir
+from kooplex.lib.filesystem import mkdir_project, mkdir_git_workdir, cleanup_share
 from kooplex.logic.impersonator import mkdir_project_oc, share_project_oc, unshare_project_oc
 from kooplex.logic.spawner import remove_project_container
 from kooplex.hub.models import VolumeProjectBinding, UserProjectBinding, Container
@@ -54,7 +54,8 @@ def delete_project(project):
     for vpb in VolumeProjectBinding.objects.filter(project = project):
         logger.debug("removed volume project binding %s" % vpb)
         vpb.delete()
-#FIXME: garbage collections
+    cleanup_share(project)
+    #FIXME: git workdir removal
     for upb in UserProjectBinding.objects.filter(project = project):
         logger.debug("removed user project binding %s" % upb)
         unshare_project_oc(project, upb.user)

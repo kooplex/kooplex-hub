@@ -157,14 +157,8 @@ def cleanup_home(user):
     except Exception as e:
         status |= 0x001
         logger.error("cannot move %s (%s)" % (dir_home, e))
-    try:
-        dir_share = os.path.join(get_settings('volumes', 'share'), user.username)
-        dir_util.copy_tree(dir_share, garbage)
-        dir_util.remove_tree(os.path.dirname(dir_share))
-        logger.info("moved %s -> %s" % (dir_share, garbage))
-    except Exception as e:
-        status |= 0x010
-        logger.error("cannot move %s (%s)" % (dir_share, e))
+    for p in user.projects:
+        cleanup_share(p)
     try:
         dir_git = os.path.join(get_settings('volumes', 'git'), user.username)
         dir_util.copy_tree(dir_git, garbage)
@@ -183,6 +177,22 @@ def mkdir_share(project):
     """
     folder_share = os.path.join(get_settings('volumes','share'), project.name_with_owner)
     _mkdir(folder_share, project.owner.uid, G_OFFSET + project.id, 0b111111101)
+    logger.info("created %s" % (folder_share))
+
+def cleanup_share(project):
+    """
+    @summary: remove share directory to garbage
+    @param project: the project
+    @type project: kooplex.hub.models.Project
+    """
+    folder_share = os.path.join(get_settings('volumes','share'), project.name_with_owner)
+    garbage = os.path.join(get_settings('volumes', 'garbage'), "share-%s.%f" % (project.name_with_owner, time.time()))
+    try:
+        dir_util.copy_tree(dir_share, garbage)
+        dir_util.remove_tree(os.path.dirname(dir_share))
+        logger.info("moved %s -> %s" % (dir_share, garbage))
+    except Exception as e:
+        logger.error("cannot move %s (%s)" % (dir_share, e))
 
 def mkdir_git_workdir(user, project):
     """

@@ -33,6 +33,11 @@ class User(DJUser):
         from .project import Project
         return len(list(Project.objects.filter(owner = self)))
 
+    def projects(self):
+        from .project import Project
+        for p in Project.objects.filter(owner = self):
+            yield p
+
     @property
     def n_reports(self):
         from .report import Report
