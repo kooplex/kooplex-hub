@@ -5,7 +5,7 @@
 import logging
 
 from kooplex.lib import Gitlab
-from kooplex.lib.filesystem import mkdir_project
+from kooplex.lib.filesystem import mkdir_project, mkdir_git_workdir
 from kooplex.logic.impersonator import mkdir_project_oc, share_project_oc, unshare_project_oc
 from kooplex.logic.spawner import remove_project_container
 from kooplex.hub.models import VolumeProjectBinding, UserProjectBinding, Container
@@ -112,6 +112,7 @@ def configure_project(project, image, scope, volumes, collaborators):
         upb = UserProjectBinding(project = project, user = user)
         logger.debug("collaborator added %s" % upb)
         share_project_oc(project, upb.user)
+        mkdir_git_workdir(upb.user, project)
         upb.save()
     project.save()
 
