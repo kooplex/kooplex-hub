@@ -1,5 +1,6 @@
 import re
 
+from django.contrib import messages as messages_
 from django.conf.urls import patterns, url, include
 from django.shortcuts import render, redirect
 from django.http import HttpRequest
@@ -40,6 +41,14 @@ def projects(request, *v, **kw):
     storage_volumes = StorageVolume.objects.all()
     logger.debug('Rendering projects.html')
 
+ 
+#    messages_.error(request, 'Hello world.')
+#    messages_.success(request,"AAAAA")
+#    messages_.warning(request," mindjart ....")
+#    messages_.info(request,"AAAAATTTTTTT")
+#    messages_.add_message(request, 50, 'A serious error occurred.')
+
+    messages = messages_.get_messages(request)
     return render(
         request,
         'project/projects.html',
@@ -57,6 +66,7 @@ def projects(request, *v, **kw):
             'storage_volumes': storage_volumes,
             'errors' : kw.get('errors', None),
             'year' : 2018,
+            'messages': messages,
         })
     )
 
@@ -107,7 +117,12 @@ def project_new(request):
     image = Image.objects.get(name = imagename)
     project = Project(name = name, owner = user, description = description, image = image, scope = scope)
     # NOTE: create_project takes good care of saving the new project instance
-    create_project(project, volumes)
+    try:
+       create_project(project, volumes)
+    except AssertionError:
+        messages_.error(request, 'Could not create project!. Wait for the administrator to respond!' )
+        logger.error('Could not create project %s for user %s' % (name, user.username) )
+        return redirect('projects')
     logger.debug('New project saved in HubDB: %s' % name)
     return redirect('projects')
 #FIXME: 
