@@ -5,6 +5,7 @@
 import logging
 
 from kooplex.lib import Gitlab
+from kooplex.lib.filesystem import mkdir_project
 from kooplex.hub.models import VolumeProjectBinding, UserProjectBinding, Container
 from .spawner import remove_project_container
 
@@ -15,9 +16,8 @@ def create_project(project, volumes):
     @summary: create a new user project
               1. create gitlab project behalf of the user
               2. save project volume bindings
-              3. create share
+              3. create share and git workdir
               4. create owncloud workdir
-              5. create git workdir
     @param project: the project model
     @type project: kooplex.hub.models.Project
     @param volumes: volumes to bind with the project
@@ -32,7 +32,8 @@ def create_project(project, volumes):
         vpb.save()
         logger.debug("new volume project binding %s" % vpb)
     logger.info("%s created" % project)
-#FIXME: 3, 4, 5 not implemnted
+    mkdir_project(project.owner, project)
+#FIXME: 4 not implemnted
 
 def delete_project(project):
     """
