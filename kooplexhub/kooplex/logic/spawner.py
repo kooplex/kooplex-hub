@@ -3,7 +3,6 @@ import logging
 
 from kooplex.lib import get_settings
 from kooplex.lib import Docker
-from kooplex.lib.filesystem import mkdir_project
 
 logger = logging.getLogger(__name__)
 
@@ -38,8 +37,6 @@ class Spawner:
         # now we copy information from project to container instance
         container.save()
         container.init()
-        #create folders here and set ownership
-        mkdir_project(self.user, self.project)
         return container
 
     def start_container(self, container):

@@ -124,7 +124,7 @@ def mkdir_homefolderstructure(user):
     dir_home = os.path.join(get_settings('volumes', 'home'), user.username)
     _mkdir(dir_home, uid = user.uid, gid = user.gid)
     dir_oc = os.path.join(get_settings('volumes', 'home'), user.username, 'oc')
-    _mkdir(dir_oc, mountpoint = True)
+    _mkdir(dir_oc, mountpoint = True, mode = 0b111101101)
     dir_git = os.path.join(get_settings('volumes', 'home'), user.username, 'git')
     _mkdir(dir_git, mountpoint = True)
     write_davsecret(user)
@@ -175,6 +175,26 @@ def cleanup_home(user):
         logger.error("cannot move %s (%s)" % (dir_git, e))
     return status
 
+def mkdir_share(project):
+    """
+    @summary: create share directory
+    @param project: the project
+    @type project: kooplex.hub.models.Project
+    """
+    folder_share = os.path.join(get_settings('volumes','share'), project.name_with_owner)
+    _mkdir(folder_share, project.owner.uid, G_OFFSET + project.id, 0b111111101)
+
+def mkdir_git_workdir(user, project):
+    """
+    @summary: create subversion control working directory
+    @param user: user of the project
+    @type user: kooplex.hub.models.User
+    @param project: the project
+    @type project: kooplex.hub.models.Project
+    """
+    folder_git = os.path.join(get_settings('volumes','git'), user.username, project.name_with_owner)
+    _mkdir(folder_git, user.uid, G_OFFSET + project.id, 0b111100000)
+
 def mkdir_project(user, project):
     """
     @summary: create working directories for the project
@@ -185,10 +205,8 @@ def mkdir_project(user, project):
     @param project: the project
     @type project: kooplex.hub.models.Project
     """
-    folder_git = os.path.join(get_settings('volumes','git'), user.username, project.name_with_owner)
-    _mkdir(folder_git, user.uid, G_OFFSET + project.id, 0b111100000)
-    folder_share = os.path.join(get_settings('volumes','share'), project.name_with_owner)
-    _mkdir(folder_share, project.owner.uid, G_OFFSET + project.id, 0b111111101)
+    mkdir_git_workdir(user, project)
+    mkdir_share(project)
 
 def list_notebooks(user, project):
     """

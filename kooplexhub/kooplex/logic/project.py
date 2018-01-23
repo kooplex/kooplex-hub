@@ -5,8 +5,10 @@
 import logging
 
 from kooplex.lib import Gitlab
+from kooplex.lib.filesystem import mkdir_project, mkdir_git_workdir
+from kooplex.logic.impersonator import mkdir_project_oc, share_project_oc, unshare_project_oc
+from kooplex.logic.spawner import remove_project_container
 from kooplex.hub.models import VolumeProjectBinding, UserProjectBinding, Container
-from .spawner import remove_project_container
 
 logger = logging.getLogger(__name__)
 
@@ -15,9 +17,8 @@ def create_project(project, volumes):
     @summary: create a new user project
               1. create gitlab project behalf of the user
               2. save project volume bindings
-              3. create share
+              3. create share and git workdir
               4. create owncloud workdir
-              5. create git workdir
     @param project: the project model
     @type project: kooplex.hub.models.Project
     @param volumes: volumes to bind with the project
@@ -32,7 +33,8 @@ def create_project(project, volumes):
         vpb.save()
         logger.debug("new volume project binding %s" % vpb)
     logger.info("%s created" % project)
-#FIXME: 3, 4, 5 not implemnted
+    mkdir_project(project.owner, project)
+    mkdir_project_oc(project)
 
 def delete_project(project):
     """
@@ -54,7 +56,7 @@ def delete_project(project):
 #FIXME: garbage collections
     for upb in UserProjectBinding.objects.filter(project = project):
         logger.debug("removed user project binding %s" % upb)
-#FIXME: unshare
+        unshare_project_oc(project, upb.user)
         upb.delete()
     try:
         container = Container.objects.get(user = project.owner, project = project)
@@ -104,12 +106,13 @@ def configure_project(project, image, scope, volumes, collaborators):
             collaborators.remove(upb.user)
         else:
             logger.debug("collaborator removed %s" % upb)
-#FIXME: unshare
+            unshare_project_oc(project, upb.user)
             upb.delete()
     for user in collaborators:
         upb = UserProjectBinding(project = project, user = user)
         logger.debug("collaborator added %s" % upb)
-#FIXME: share
+        share_project_oc(project, upb.user)
+        mkdir_git_workdir(upb.user, project)
         upb.save()
     project.save()
 
