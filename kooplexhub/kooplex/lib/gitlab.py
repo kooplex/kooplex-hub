@@ -86,9 +86,15 @@ class Gitlab:
             'headers': { 'PRIVATE-TOKEN': self.token },
         }
         response = keeptrying(requests.delete, 3, **kw)
-        assert response.status_code == 201, response.json()
-        logger.info('user %s deleted from project %s' % (user, project))
-        return response.json()
+        status_code = response.status_code
+        assert status_code in [ 204, 404 ], information
+        if status_code == 204:
+            information = {}
+            logger.info('user %s deleted from project %s -- %s' % (user, project, information))
+        elif status_code == 404:
+            information = response.json()
+            logger.warning('user %s not found associated with project %s -- %s' % (user, project, information))
+        return information
 
     def create_project_file(self, gitlab_id, filename = "README.md", content = "* proba", commit_message = "Created a default README.md file"):
         kw = {
