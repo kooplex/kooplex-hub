@@ -96,6 +96,6 @@ def passwordtokenForm(request):
             'auth/tokenpassword.html',
             context_instance = RequestContext(request, { 'username': username, 'errors': errors })
         )
-    user.changepassword(password1)
+    set_password(user, password1)
     return redirect('/hub/login')
 

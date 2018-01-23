@@ -16,10 +16,12 @@ class Ldap:
     bind_pw = get_settings('ldap', 'bind_password')
 
     def __init__(self):
+        logger.debug("init")
         server = ldap3.Server(host = self.host, port = self.port)
         self.connection = ldap3.Connection(server, self.bind_dn, self.bind_pw)
         success = self.connection.bind()
         if not success:
+            logger.error("Cannot bind to ldap server")
             raise LdapException("Cannot bind to ldap server")
 
     def get_user(self, user):
@@ -42,10 +44,12 @@ class Ldap:
         for key, value in newentries[0]['attributes'].items():
             if oldentries[0]['attributes'][key] != value:
                 changes[key] = [(ldap3.MODIFY_REPLACE, value)]
+        logger.debug("%s" % changes.keys())
         if not self.connection.modify(dn, changes):
             raise LdapException(self.connection.last_error)
 
     def changepassword(self, user, newpassword, oldpassword = None):
+        logger.debug('changepassword %s' % user)
         if oldpassword is not None:
             self.validate_user(user.username, oldpassword)
         oldentries = self.get_user(user)
