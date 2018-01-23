@@ -181,14 +181,6 @@ def project_configure(request):
     raise Exception(str(request.POST))
 
 
-def project_collaborate(request):
-    """Handles the project user collaborations."""
-    assert isinstance(request, HttpRequest)
-    if request.user.is_anonymous():
-        return redirect('login')
-#FIXME:
-
-
 def project_start(request):
     """Starts. the project container."""
     assert isinstance(request, HttpRequest)
@@ -199,7 +191,7 @@ def project_start(request):
         project_id = request.GET['project_id']
         project = Project.objects.get(id = project_id)
         if project.owner != request.user:
-            UserProjectBinding(user = user, project = project)
+            UserProjectBinding(user = request.user, project = project)
     except KeyError:
         return redirect('/')
     except Project.DoesNotExist:
@@ -260,7 +252,6 @@ urlpatterns = [
     url(r'^/?$', projects, name = 'projects'),
     url(r'^/new$', project_new, name = 'project-new'), 
     url(r'^/configure$', project_configure, name = 'project-settings'), 
-    url(r'^/collaborate$', project_collaborate, name = 'project-members-form'), 
     url(r'^/versioncontrol$', project_versioning, name = 'project-commit'), 
     url(r'^/start$', project_start, name = 'container-start'), 
     url(r'^/open$', project_open, name = 'container-open'), 
