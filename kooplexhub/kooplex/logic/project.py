@@ -50,6 +50,7 @@ def delete_project(project):
     @type project: kooplex.hub.models.Project
     """
     logger.debug(project)
+    gitlab = Gitlab(project.owner)
     for vpb in VolumeProjectBinding.objects.filter(project = project):
         logger.debug("removed volume project binding %s" % vpb)
         vpb.delete()
@@ -57,6 +58,7 @@ def delete_project(project):
     for upb in UserProjectBinding.objects.filter(project = project):
         logger.debug("removed user project binding %s" % upb)
         unshare_project_oc(project, upb.user)
+        gitlab.delete_project_member(project, upb.user)
         upb.delete()
     try:
         container = Container.objects.get(user = project.owner, project = project)
@@ -64,8 +66,7 @@ def delete_project(project):
         remove_project_container(container)
     except Container.DoesNotExist:
         logger.debug("%s has no container" % project)
-    g = Gitlab(project.owner)
-    information = g.delete_project(project)
+    information = gitlab.delete_project(project)
     logger.info("%s deleted" % project)
     project.delete()
 
@@ -74,7 +75,7 @@ def configure_project(project, image, scope, volumes, collaborators):
     @summary: configure a user project
               1. set image and scope
               2. manage volume project bindings
-              3. manage user project bindings
+              3. manage user project bindings and manage gitlab sharing
     @param project: the project model
     @type project: kooplex.hub.models.Project
     @param image: the new image to set
@@ -100,6 +101,7 @@ def configure_project(project, image, scope, volumes, collaborators):
         vpb = VolumeProjectBinding(project = project, volume = volume)
         logger.debug("volume project binding added %s" % vpb)
         vpb.save()
+    gitlab = Gitlab(project.owner)
     for upb in UserProjectBinding.objects.filter(project = project):
         if upb.user in collaborators:
             logger.debug("collaborator remains %s" % upb)
@@ -107,11 +109,13 @@ def configure_project(project, image, scope, volumes, collaborators):
         else:
             logger.debug("collaborator removed %s" % upb)
             unshare_project_oc(project, upb.user)
+            gitlab.delete_project_member(project, upb.user)
             upb.delete()
     for user in collaborators:
         upb = UserProjectBinding(project = project, user = user)
         logger.debug("collaborator added %s" % upb)
         share_project_oc(project, upb.user)
+        gitlab.add_project_member(project, upb.user)
         mkdir_git_workdir(upb.user, project)
         upb.save()
     project.save()
