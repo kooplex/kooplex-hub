@@ -6,6 +6,7 @@ import logging
 
 from kooplex.lib import Gitlab
 from kooplex.lib.filesystem import mkdir_project
+from kooplex.logic.impersonator import mkdir_project_oc, share_project_oc, unshare_project_oc
 from kooplex.hub.models import VolumeProjectBinding, UserProjectBinding, Container
 from .spawner import remove_project_container
 
@@ -33,7 +34,7 @@ def create_project(project, volumes):
         logger.debug("new volume project binding %s" % vpb)
     logger.info("%s created" % project)
     mkdir_project(project.owner, project)
-#FIXME: 4 not implemnted
+    mkdir_project_oc(project)
 
 def delete_project(project):
     """
@@ -55,7 +56,7 @@ def delete_project(project):
 #FIXME: garbage collections
     for upb in UserProjectBinding.objects.filter(project = project):
         logger.debug("removed user project binding %s" % upb)
-#FIXME: unshare
+        unshare_project_oc(project, upb.user)
         upb.delete()
     try:
         container = Container.objects.get(user = project.owner, project = project)
@@ -105,12 +106,12 @@ def configure_project(project, image, scope, volumes, collaborators):
             collaborators.remove(upb.user)
         else:
             logger.debug("collaborator removed %s" % upb)
-#FIXME: unshare
+            unshare_project_oc(project, upb.user)
             upb.delete()
     for user in collaborators:
         upb = UserProjectBinding(project = project, user = user)
         logger.debug("collaborator added %s" % upb)
-#FIXME: share
+        share_project_oc(project, upb.user)
         upb.save()
     project.save()
 

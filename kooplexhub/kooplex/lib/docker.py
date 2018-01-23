@@ -5,6 +5,7 @@
 import logging
 import re
 import json
+import shlex
 from docker.client import Client
 
 from kooplex.lib import get_settings
@@ -115,6 +116,7 @@ class Docker:
         logger.debug("Container stopped %s"% container.name)
 
     def execute(self, container, command):
-        execution = self.client.exec_create(container = container.name, cmd = command)
+        logger.info("execution: %s in %s" % (command, container))
+        execution = self.client.exec_create(container = container.name, cmd = shlex.split(command))
         return self.client.exec_start(execution, detach = False)
 

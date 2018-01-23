@@ -30,6 +30,9 @@ class Container(models.Model):
     def __lt__(self, c):
         return self.launched_at < c.launched_at
 
+    def __str__(self):
+        return "<Container: %s of %s@%s>" % (self.name, self.user, self.project)
+
     def init(self):
         self.image = self.project.image
         for vpb in VolumeProjectBinding.objects.filter(project = self.project):
