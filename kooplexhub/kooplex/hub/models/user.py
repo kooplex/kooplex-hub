@@ -43,6 +43,7 @@ class User(DJUser):
         return get_settings('user', 'pattern_tokenfile') % self
 
     def sendtoken(self):
+        from kooplex.lib.sendemail import send_token
         token = pwgen.pwgen(12)
         with open(self.fn_tokenfile, 'w') as f:
             f.write(token)

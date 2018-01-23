@@ -63,12 +63,14 @@ class AuthBackend:
 
 
 def check_password(user, password):
+    logger.debug(user)
     backend = AuthBackend()
     user_back = backend.authenticate(username = user.username, password = password)
     return user_back == user
 
 def set_password(user, password):
     from kooplex.lib import Ldap
+    logger.debug(user)
     user.changepassword(password)
     Ldap().changepassword(user, password)
 
