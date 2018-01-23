@@ -63,19 +63,24 @@ class Gitlab:
             logger.warning('not found project %s (gitlab project id: %d) -- %s' % (project, project.gitlab_id, information))
         return information
 
-    def add_project_members(self, project, user):
+    def add_project_member(self, project, user):
         kw = {
             'url': os.path.join(self.base_url, 'projects', str(project.gitlab_id), 'members'),
             'headers': { 'PRIVATE-TOKEN': self.token },
             'data': { 'user_id': user.gitlab_id, 'access_level': 40 }
         }
         response = keeptrying(requests.post, 3, **kw)
-        assert response.status_code == 201, response.json()
-        logger.info('user %s added to project %s' % (user, project))
-        self.patch_notification(gitlab_id)
-        return response.json()
+        status_code = response.status_code
+        information = response.json()
+        assert status_code in [ 201, 409 ], information
+        if status_code == 201:
+            logger.info('user %s added to project %s -- %s' % (user, project, information))
+        elif status_code == 409:
+            logger.warning('user %s already member to project %s -- %s' % (user, project, information))
+        self.patch_notification(project.gitlab_id)
+        return information
 
-    def delete_project_members(self,project_id, user_id):
+    def delete_project_member(self, project, user):
         kw = {
             'url': os.path.join(self.base_url, 'projects', str(project.gitlab_id), 'members', str(user.gitlab_id)),
             'headers': { 'PRIVATE-TOKEN': self.token },
