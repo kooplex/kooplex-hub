@@ -49,7 +49,7 @@ class ContainerAdmin(admin.ModelAdmin):
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'owner')
+    list_display = ('id', 'name', 'owner', 'gitlab_id')
 
 @admin.register(HtmlReport)
 class HtmlReportAdmin(admin.ModelAdmin):

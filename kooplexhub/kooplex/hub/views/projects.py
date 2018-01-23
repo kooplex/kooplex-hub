@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 from kooplex.hub.models import *
 from kooplex.logic.spawner import spawn_project_container, stop_project_container
-from kooplex.logic import create_project
+from kooplex.logic import create_project, delete_project
 
 def projects(request, *v, **kw):
     """Renders the projectlist page."""
@@ -110,6 +110,7 @@ def project_new(request):
     create_project(project, volumes)
     logger.debug('New project saved in HubDB: %s' % name)
     return redirect('projects')
+#FIXME: 
 ###### Create a magic script to clone ancient projects content
 #####            ancientprojecturl = "ssh://git@%s/%s.git" % (get_settings('gitlab', 'ssh_host'), project.path_with_namespace)
 #####            commitmsg = "Snapshot commit of project %s" % project
@@ -157,7 +158,21 @@ def project_configure(request):
     assert isinstance(request, HttpRequest)
     if request.user.is_anonymous():
         return redirect('login')
-#FIXME:
+    if request.method != 'POST':
+        return redirect('projects')
+
+    button = request.POST['button']
+    project_id = request.POST['project_id']
+    try:
+        project = Project.objects.get(id = project_id, owner = request.user)
+    except Project.DoesNotExist:
+        #FIXME: send don't hack me error message
+        return redirect('projects')
+    if button == 'delete':
+        delete_project(project)
+        return redirect('projects')
+#FIXME: NotImplemented
+    raise Exception(str(request.POST))
 
 
 def project_collaborate(request):

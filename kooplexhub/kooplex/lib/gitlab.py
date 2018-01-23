@@ -54,9 +54,14 @@ class Gitlab:
             'headers': { 'PRIVATE-TOKEN': self.token },
         }
         response = keeptrying(requests.delete, 3, **kw)
-        assert response.status_code == 201, response.json()
-        logger.info('deleted project %s (gitlab project id: %d)' % (project, gitlab_id))
-        return response.json()
+        information = response.json()
+        statuscode = response.status_code
+        assert statuscode in [ 201, 404 ], information
+        if statuscode == 201:
+            logger.info('deleted project %s (gitlab project id: %d)' % (project, project.gitlab_id))
+        elif statuscode == 404:
+            logger.warning('not found project %s (gitlab project id: %d)' % (project, project.gitlab_id))
+        return information
 
     def add_project_members(self, project, user):
         kw = {
