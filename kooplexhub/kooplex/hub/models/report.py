@@ -138,3 +138,9 @@ def get_report(**kw):
         pass
     raise ReportDoesNotExist("Cannot find either Html not Dashboard reports")
 
+def filter_report(**kw):
+    for report in HtmlReport.objects.filter(**kw):
+        yield report
+    for report in DashboardReport.objects.filter(**kw):
+        yield report
+
