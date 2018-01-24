@@ -58,9 +58,6 @@ def projects(request, *v, **kw):
             'scopes' : scopes,
             'functional_volumes': functional_volumes,
             'storage_volumes': storage_volumes,
-            'errors' : kw.get('errors', None),
-            'year' : 2018,
-            'messages': messages.get_messages(request),
         })
     )
 
@@ -74,21 +71,27 @@ def project_new(request):
     user = request.user
     name = request.POST['project_name'].strip()
     description = request.POST['project_description'].strip()
-    scope = request.POST['button']
+    button = request.POST['button']
+    if button == 'Cancel':
+        return redirect('projects')
     template = request.POST.get('project_template')
     volumes = [ FunctionalVolume.objects.get(name = x) for x in request.POST.getlist('func_volumes') ]
     volumes.extend( [ StorageVolume.objects.get(name = x) for x in request.POST.getlist('storage_volumes') ] )
     logger.debug('New project to be created: %s' % name)
 
-    errors = []
+    stop = False
     if not re.match(r'^[a-zA-Z][0-9a-zA-Z_-]*$', name):
-        errors.append('For project name specification please use only Upper/lower case letters, hyphens and underscores.')
+        messages.error(request, 'For project name specification please use only Upper/lower case letters, hyphens and underscores.')
+        stop = True
     if not re.match(r'^[0-9a-zA-Z_ -]*$', description):
-        errors.append('In your project description use only Upper/lower case letters, hyphens, spaces and underscores.')
-    if len(errors):
-        return projects(request, kw = { 'errors': errors })
+        messages.error(request, 'In your project description use only Upper/lower case letters, hyphens, spaces and underscores.')
+        stop = True
+    if stop:
+        return redirect('projects')
         
     if template.startswith('clonable_project='):
+        messages.error(request, 'Not implemented error. Wait for the code maintainers...')
+        return redirect('projects')
         raise NotImplementedError
 #FIXME:
 #        name, owner = template.split('=')[-1].split('@')
@@ -107,7 +110,7 @@ def project_new(request):
         imagename = template.split('=')[-1]
         logger.debug('Project to be created from image: %s' % imagename)
         cloned_project = False
-    scope = ScopeType.objects.get(name = scope)
+    scope = ScopeType.objects.get(name = button)
     image = Image.objects.get(name = imagename)
     project = Project(name = name, owner = user, description = description, image = image, scope = scope)
     # NOTE: create_project takes good care of saving the new project instance

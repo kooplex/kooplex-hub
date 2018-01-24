@@ -28,22 +28,12 @@
 </div>                  <!-- row -->
 
 {% comment %}
-#FIXME:
 {% include 'app/about.html' %}
 {% endcomment %}
-
-{% if errors %}
-<div class="alert alert-danger" role="alert">
-  {% for error in errors %}
-  <p class="validation-summary-errors">{{ error }}</p>
-  {% endfor %}
-</div>
-{% endif %}
 
 {% if messages %}
   {% include 'message.html' %}
 {% endif %}
-
 
 <div class="tab-content">
   <div id="myprojects" class="tab-pane fade in active">
