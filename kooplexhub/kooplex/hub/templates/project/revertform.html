@@ -4,7 +4,7 @@
     <h4>Restore your project <strong>{{ project.name }}</strong> to a former state</h4>
   </div>
   {% if changedremote %}
-    <p>There are some remote changes. Please update your project and see changes before trying to revert to a former state.</p>
+    <div class="alert alert-warning">There are some remote changes. Please update your project and see changes before trying to revert to a former state.</div>
   {% else %}
     <div class="panel-body">
       <select id="commitid" name="commitid" style="max-width: 100%">
@@ -13,15 +13,17 @@
         {% endfor %}
       </select>
       <input type="hidden" name="project_id" value="{{ project.id }}" />
-      <hr>
-      <p>In your favour the following commands are issued in the project folder:</p>
-      <code>
+      <div class="alert alert-info">
+        <p>In your favour the following commands are issued in the project folder:</p>
+        <hr>
+        <code>
 git reset<br>
 git revert --no-commit &lt;latest id&gt;..&lt;next to selected id&gt;<br>
 git checkout &lt;selected id&gt; .<br>
 git commmit -m 'Revert "&lt;selected commit message&gt;"'<br>
 git push
-      </code>
+        </code>
+      </div>
     </div>    <!-- panel.body -->
     <div class="panel-footer">
       <input type="submit" name="button" value="Revert" class="btn btn-primary" />

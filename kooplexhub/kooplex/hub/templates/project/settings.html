@@ -19,7 +19,7 @@
             {% if project.owner = user %}
             {% include 'project/pane-collaboration.html' %}
             {% else %}
-            <div class="alert alert-warning" role="alert">Ask the owner of project {{ project.name }} ({{ project.owner.username }}) to remove you or add someone else to this project.</div>
+            <div class="alert alert-warning" role="alert">The owner of project {{ project.name }} is {{ project.owner.displayname }} ({{ project.owner.username }}). Please contact him/her to remove you from or add someone else to the collaboration.</div>
             {% endif %}
           </div>
           <div id="pane_image-{{ project.id }}" class="tab-pane fade">
@@ -32,12 +32,20 @@
             {% include 'project/pane-storagevolume.html' %}
           </div>
           <div id="pane_scope-{{ project.id }}" class="tab-pane fade">
+            {% if project.owner = user %}
             {% include 'project/pane-scope.html' %}
+            {% else %}
+            <div class="alert alert-warning" role="alert">Only the project owner {{ project.owner.displayname }} ({{ project.owner.username }}) can modify the scope.</div>
+            {% endif %}
           </div>
           <div id="pane_deletion-{{ project.id }}" class="tab-pane fade">
+            {% if project.owner = user %}
             <div class="alert alert-danger" role="alert">All unshared data related to this project are lost by the deletion.</div>
             <p>Are you are sure about it?</p>
             <button type="submit" class="btn btn-danger" name="button" value="delete"> Really delete</button>
+            {% else %}
+            <div class="alert alert-warning" role="alert">Only the owner {{ project.owner.displayname }} ({{ project.owner.username }}) can delete the project.</div>
+            {% endif %}
           </div>
         </div>   <!-- tab-content -->
       </div>     <!-- modal-body -->

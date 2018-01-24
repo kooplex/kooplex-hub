@@ -6,17 +6,20 @@
   {% if changedremote %}
     <div class="panel-body">
       <input type="hidden" name="project_id" value="{{ project.id }}" />
-      <p>In your favour the following command is issued in the project folder:</p>
-      <code>
+      <div class="alert alert-info">
+        <p>In your favour the following commands are issued in the project folder:</p>
+        <hr>
+        <code> 
 git pull
-      </code>
+        </code>
+      </div>
     </div>   <!-- panel-body -->
     <div class="panel-footer" style="text-align: left;">
       <input type="submit" name="button" value="Pull" class="btn btn-primary" />
       <input type="submit" name="button" value="Cancel" class="btn btn-secondary" />
     </div>   <!-- panel-footer -->
    {% else %}
-     <p>You have nothing to pull yet.</p>
+     <div class="alert alert-warning">You have nothing to pull yet.</div>
    {% endif %}
 </form>
 

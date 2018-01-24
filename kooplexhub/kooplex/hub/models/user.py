@@ -29,6 +29,10 @@ class User(DJUser):
         return self.__getattribute__(k)
 
     @property
+    def displayname(self):
+        return "%(first_name)s %(last_name)s" % self
+
+    @property
     def n_projects(self):
         from .project import Project
         return len(list(Project.objects.filter(owner = self)))
