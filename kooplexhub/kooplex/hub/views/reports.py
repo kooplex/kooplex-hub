@@ -1,6 +1,8 @@
+import logging
 import codecs
 import os
 
+from django.contrib import messages
 from django.conf.urls import url
 from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponse
@@ -9,14 +11,16 @@ from django.template import RequestContext
 
 from kooplex.lib import get_settings
 from kooplex.lib.filesystem import cleanup_reportfiles
-
-from kooplex.hub.models import list_user_reports, list_internal_reports, list_public_reports, get_report, ReportDoesNotExist, HtmlReport, DashboardReport, ScopeType
-#############
+from kooplex.hub.models import list_user_reports, list_internal_reports, list_public_reports, get_report
+from kooplex.hub.models import ReportDoesNotExist, HtmlReport, DashboardReport, ScopeType
 from kooplex.hub.models import Project
+#############
 ##from kooplex.lib.spawner import ReportSpawner
-
 #FIXME:
 class ReportSpawner: pass
+#############
+
+logger = logging.getLogger(__name__)
 
 def group_by_project(reports):
     reports_grouped = {}
@@ -40,6 +44,7 @@ def reports(request):
         reports_mine = list(list_user_reports(user))
         reports_internal = list(list_internal_reports(user))
     reports_public = list(list_public_reports())
+    logger.debug('Rendering reports.html')
     return render(
         request,
         'report/reports.html',
@@ -60,21 +65,23 @@ def openreport(request):
     elif request.method == 'POST':
         report_id = request.POST['report_id']
     else:
-        raise Exception ("Please, do not hack me")
+        return redirect('reports')
     try:
         user = request.user
         report = get_report(id = report_id)
         if not report.is_user_allowed(user):
+            messages.error(request, 'You are not allowed to open this report')
             return redirect('reports')
     except ReportDoesNotExist:
-            return redirect('reports')
+        messages.error(request, 'Report does not exist')
+        return redirect('reports')
     if isinstance(report, HtmlReport):
         with codecs.open(report.filename_report_html, 'r', 'utf-8') as f:
             content = f.read()
+        logger.debug("Dumping reportfile %s" % report.filename_report_html)
         return HttpResponse(content)
     elif isinstance(report, DashboardReport):
         raise NotImplementedError
-        #return HttpResponseRedirect(report.url_)
     return redirect('reports')
 
 def openreport_latest(request):
@@ -95,10 +102,12 @@ def openreport_latest(request):
         if not found:
             raise Report.DoesNotExist()
     except Report.DoesNotExist:
-        return HttpResponseRedirect(reverse('reports'))
+        messages.error(request, 'Report does not exist')
+        return redirect('reports')
     return HttpResponseRedirect(reverse('report-open') + '?report_id=%d' % report.id)
 
 def container_report_start(request):
+#FIXME: needs revision and error handling
     assert isinstance(request, HttpRequest)
     #CHECK how many report servers are running and shutdown the oldest one
     notebooks = Notebook.objects.filter(type="report")
@@ -110,11 +119,11 @@ def container_report_start(request):
         spawner.delete_notebook(notebook)
 
     report_id = request.GET['report_id']
-    report = Report.objects.get(id=report_id)
-    if report.image=="":
+    report = Report.objects.get(id = report_id)
+    if report.image == "":
         report.image = report.project.image
 
-    spawner = ReportSpawner( project=report.project, image=report.image, report=report)
+    spawner = ReportSpawner( project = report.project, image = report.image, report = report)
     notebook = spawner.make_notebook()
     notebook = spawner.start_notebook(notebook)
 
@@ -124,6 +133,7 @@ def container_report_start(request):
     return HttpResponseRedirect(notebook.external_url)
 
 def container_report_stop(request):
+#FIXME: needs revision and error handling
     assert isinstance(request, HttpRequest)
     report_id = request.GET['report_id']
     report = Report.objects.get(id=report_id)
@@ -162,8 +172,8 @@ def setreport(request):
     assert isinstance(request, HttpRequest)
     if request.user.is_anonymous():
         return redirect('reports')
-    assert request.method == 'POST', "Please, do not hack me"
-
+    if request.method != 'POST':
+        return redirect('reports')
     button = request.POST['button']
     try:
         user = request.user
@@ -177,9 +187,9 @@ def setreport(request):
             cleanup_reportfiles(report)
             report.delete()
     except ReportDoesNotExist:
-        # only the creator is allowed to change the scope of the report
-        pass
+        messages.error(request, 'You are not allowed to configure this report')
     return redirect('reports')
+
 
 urlpatterns = [
     url(r'^/?$', reports, name = 'reports'),

@@ -14,21 +14,17 @@ from kooplex.logic import Repository
 
 logger = logging.getLogger(__name__)
 
-def projects(request, *v, **kw):
+def projects(request):
     """Renders the projectlist page."""
     assert isinstance(request, HttpRequest)
     if request.user.is_anonymous():
         logger.debug('User not authenticated yet --> goes to login page')
         return redirect('login')
-    logger.debug('User authenticated %s' %request.user)
-    logger.info('Userauthenticated')
-
     try:
         PUBLIC = ScopeType.objects.get(name = 'public')
+        NOTEBOOK = ContainerType.objects.get(name = 'notebook')
     except ScopeType.DoesNotExist:
         return redirect('/admin')
-    try:
-        NOTEBOOK = ContainerType.objects.get(name = 'notebook')
     except ContainerType.DoesNotExist:
         return redirect('/admin')
     user = request.user
@@ -42,7 +38,6 @@ def projects(request, *v, **kw):
     functional_volumes = FunctionalVolume.objects.all()
     storage_volumes = StorageVolume.objects.all()
     logger.debug('Rendering projects.html')
-
     return render(
         request,
         'project/projects.html',
@@ -67,7 +62,6 @@ def project_new(request):
     assert isinstance(request, HttpRequest)
     if request.user.is_anonymous():
         return redirect('login')
-
     user = request.user
     name = request.POST['project_name'].strip()
     description = request.POST['project_description'].strip()
@@ -78,7 +72,6 @@ def project_new(request):
     volumes = [ FunctionalVolume.objects.get(name = x) for x in request.POST.getlist('func_volumes') ]
     volumes.extend( [ StorageVolume.objects.get(name = x) for x in request.POST.getlist('storage_volumes') ] )
     logger.debug('New project to be created: %s' % name)
-
     stop = False
     if not re.match(r'^[a-zA-Z][0-9a-zA-Z_-]*$', name):
         messages.error(request, 'For project name specification please use only Upper/lower case letters, hyphens and underscores.')
@@ -172,13 +165,12 @@ def project_configure(request):
         return redirect('login')
     if request.method != 'POST':
         return redirect('projects')
-
     button = request.POST['button']
     project_id = request.POST['project_id']
     try:
         project = Project.objects.get(id = project_id, owner = request.user)
     except Project.DoesNotExist:
-        #FIXME: send don't hack me error message
+        messages.error(request, 'Project does not exist')
         return redirect('projects')
     if button == 'delete':
         delete_project(project)
@@ -190,7 +182,6 @@ def project_configure(request):
         scope = ScopeType.objects.get(name = request.POST['project_scope'])
         configure_project(project, image, scope, volumes, collaborators)
     return redirect('projects')
-    raise Exception(str(request.POST))
 
 
 def project_start(request):
@@ -198,19 +189,18 @@ def project_start(request):
     assert isinstance(request, HttpRequest)
     if request.user.is_anonymous():
         return redirect('login')
-
     try:
         project_id = request.GET['project_id']
         project = Project.objects.get(id = project_id)
         if project.owner != request.user:
             UserProjectBinding(user = request.user, project = project)
+        spawn_project_container(request.user, project)
     except KeyError:
         return redirect('/')
     except Project.DoesNotExist:
-        return projects(request, kw = { 'errors': [ 'No such project' ] } )
+        messages.error(request, 'Project does not exist')
     except UserProjectBinding.DoesNotExist:
-        return projects(request, kw = { 'errors': [ 'You are not allowed to run this project. Ask %s for collaboration.' % project.owner ] } )
-    spawn_project_container(request.user, project)
+        messages.error(request, 'You are not authorized to start that project')
     return redirect('projects')
 
 
@@ -219,17 +209,17 @@ def project_open(request):
     assert isinstance(request, HttpRequest)
     if request.user.is_anonymous():
         return redirect('login')
-
     user = request.user
     project_id = request.GET['project_id']
     try:
         project = Project.objects.get(id = project_id)
         container = Container.objects.get(user = user, project = project, is_running = True)
+        return redirect(container.url_with_token)
     except Project.DoesNotExist:
-        return projects(request, kw = { 'errors': [ 'No such project' ] } )
+        messages.error(request, 'Project does not exist')
     except Container.DoesNotExist:
-        return projects(request, kw = { 'errors': [ 'Notebook container seems to be missing or not running already.' ] } )
-    return redirect(container.url_with_token)
+        messages.error(request, 'Project container is missing or stopped')
+    return redirect('projects')
 
 
 def project_stop(request):
@@ -237,17 +227,16 @@ def project_stop(request):
     assert isinstance(request, HttpRequest)
     if request.user.is_anonymous():
         return redirect('login')
-    
     user = request.user
     project_id = request.GET['project_id']
     try:
         project = Project.objects.get(id = project_id)
         container = Container.objects.get(user = user, project = project, is_running = True)
+        stop_project_container(container)
     except Project.DoesNotExist:
-        return projects(request, kw = { 'errors': [ 'No such project' ] } )
+        messages.error(request, 'Project does not exist')
     except Container.DoesNotExist:
-        return projects(request, kw = { 'errors': [ 'Notebook container seems to be missing or not running already.' ] } )
-    stop_project_container(container)
+        messages.error(request, 'Project container does is missing')
     return redirect('projects')
 
 def project_versioning(request):
@@ -255,21 +244,19 @@ def project_versioning(request):
     assert isinstance(request, HttpRequest)
     if request.user.is_anonymous():
         return redirect('login')
-
     if request.method != 'GET':
-        #FIXME: message dont hack me....
         return redirect('projects')
     user = request.user
     try:
         project = Project.objects.get(id = request.GET.get('project_id', -1))
         if project.owner != user and not user in project.collaborators:
-            #FIXME: message you are not allowed....
+            messages.error(request, 'You are not allowed to version control this project')
             return redirect('projects')
-        
         repo = Repository(user, project)
         git_log = repo.log()
         git_files = repo.lsfiles()
         git_changed = repo.remote_changed()
+        logger.debug('Rendering gitform.html')
         return render(
             request,
             'project/gitform.html',
@@ -282,7 +269,7 @@ def project_versioning(request):
             })
         )
     except Project.DoesNotExist:
-        #FIXME: message does not exist ...
+        messages.error(request, 'Project does not exist')
         return redirect('projects')
 
 
@@ -291,9 +278,7 @@ def project_versioning_commit(request):
     assert isinstance(request, HttpRequest)
     if request.user.is_anonymous():
         return redirect('login')
-
     if request.method != 'POST':
-        #FIXME: message dont hack me....
         return redirect('projects')
     if request.POST['button'] == 'Cancel':
         return redirect('projects')
@@ -301,7 +286,7 @@ def project_versioning_commit(request):
     try:
         project = Project.objects.get(id = request.POST['project_id'])
         if project.owner != user and not user in project.collaborators:
-            #FIXME: message you are not allowed....
+            messages.error(request, 'You are not allowed to version control this project')
             return redirect('projects')
         message = request.POST['message']
         repo = Repository(request.user, project)
@@ -312,7 +297,9 @@ def project_versioning_commit(request):
         repo.push()
         return redirect('projects')
     except Exception as e:
-        raise#FIXME: message
+        msg = "Unhandled exception -- %s" % e
+        messages.error(request, msg)
+        logger.error(msg)
     return redirect('projects')
 
 
@@ -321,9 +308,7 @@ def project_versioning_revert(request):
     assert isinstance(request, HttpRequest)
     if request.user.is_anonymous():
         return redirect('login')
-
     if request.method != 'POST':
-        #FIXME: message dont hack me....
         return redirect('projects')
     if request.POST['button'] == 'Cancel':
         return redirect('projects')
@@ -331,14 +316,16 @@ def project_versioning_revert(request):
     try:
         project = Project.objects.get(id = request.POST['project_id'])
         if project.owner != user and not user in project.collaborators:
-            #FIXME: message you are not allowed....
+            messages.error(request, 'You are not allowed to version control this project')
             return redirect('projects')
         commitid = request.POST['commitid']
         repo = Repository(request.user, project)
         repo.revert(commitid)
         return redirect('projects')
     except Exception as e:
-        raise#FIXME: message
+        msg = "Unhandled exception -- %s" % e
+        messages.error(request, msg)
+        logger.error(msg)
     return redirect('projects')
 
 
@@ -347,9 +334,7 @@ def project_versioning_pull(request):
     assert isinstance(request, HttpRequest)
     if request.user.is_anonymous():
         return redirect('login')
-
     if request.method != 'POST':
-        #FIXME: message dont hack me....
         return redirect('projects')
     if request.POST['button'] == 'Cancel':
         return redirect('projects')
@@ -357,13 +342,15 @@ def project_versioning_pull(request):
     try:
         project = Project.objects.get(id = request.POST['project_id'])
         if project.owner != user and not user in project.collaborators:
-            #FIXME: message you are not allowed....
+            messages.error(request, 'You are not allowed to version control this project')
             return redirect('projects')
         repo = Repository(request.user, project)
         repo.pull()
         return redirect('projects')
     except Exception as e:
-        raise#FIXME: message
+        msg = "Unhandled exception -- %s" % e
+        messages.error(request, msg)
+        logger.error(msg)
     return redirect('projects')
 
 
