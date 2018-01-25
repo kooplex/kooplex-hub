@@ -66,8 +66,12 @@ class DashboardReport(Report):
         return 'Dashboard report'
 
     @property
+    def report_dir(self):
+        return "%s-%s-%s.%f" % (self.creator.username, self.project.name_with_owner, self.name, self.ts_created)
+
+    @property
     def report_root(self):
-        return os.path.join(get_settings('volumes', 'dashboardreport'), "%s-%s-%s.%f" % (self.creator.username, self.project.name_with_owner, self.name, self.ts_created))
+        return os.path.join(get_settings('volumes', 'dashboardreport'), self.report_dir)
 
     def save(self):
         # make sure the current image is saved with the model
