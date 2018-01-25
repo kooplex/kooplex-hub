@@ -31,7 +31,7 @@ class GitlabAdmin:
         kw = {
             'url': os.path.join(self.base_url, 'users'),
             'headers': { 'PRIVATE-TOKEN': self.token },
-            'data': { 'name': name, 'username': user.username, 'email': user.email, 'bio': user.bio, 'confirm': False, 'password': user.password }
+            'data': { 'name': name, 'username': user.username, 'email': user.email, 'bio': user.bio, 'confirm': True, 'password': user.password }
         }
         response = keeptrying(requests.post, 3, **kw)
         assert response.status_code == 201, response.json()
