@@ -33,7 +33,7 @@ class Report(models.Model):
 
     @property
     def pretty_ts(self):
-        return strftime("%Y %m. %d.", localtime(self.ts_created))
+        return strftime("%Y. %m. %d.", localtime(self.ts_created))
 
     def is_user_allowed(self, user):
         public = ScopeType.objects.get(name = 'public')

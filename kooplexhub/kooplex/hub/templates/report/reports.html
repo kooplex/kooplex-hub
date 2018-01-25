@@ -8,17 +8,10 @@
 <div class="col-md-12 col-sm-12 col-xs-12">
 <nav class="navbar navbar-default">
  <div class="container-fluid">
-
-
     <!-- Collect the nav links, forms, and other content for toggling -->
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
       <ul class="nav navbar-nav">
-        {% if user.is_superuser %}
-            <a href="{% url 'report-all-stop' %}">
-              <button type="button" class="btn btn-info"><span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span> Stop all Report Servers</button>
-            </a>
-        {% endif %}
-          {% if user.is_autenticated %}
+          {% if user.is_authenticated %}
               <li class="active" ><a href="#myreports" data-toggle="tab">My reports</a></li>
               <li><a href="#internalreports" data-toggle="tab">Internal reports</a></li>
               <li><a href="#publicreports" data-toggle="tab" >Public reports</a></li>
@@ -38,7 +31,7 @@
 
  <div class="tab-content">
 
-     {% if user %}
+     {% if user.is_authenticated %}
      <div id="myreports" class="tab-pane fade in active">
      {% else %}
      <div id="myreports" class="tab-pane fade">
