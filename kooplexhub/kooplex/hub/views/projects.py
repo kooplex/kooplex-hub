@@ -32,6 +32,7 @@ def projects(request):
     projects_sharedwithme = sorted([ upb.project for upb in UserProjectBinding.objects.filter(user = user) ])
     projects_public = sorted(Project.objects.filter(scope = PUBLIC).exclude(owner = user))
     running = [ c.project for c in Container.objects.filter(user = user, is_running = True, container_type = NOTEBOOK) ]
+    stopped = [ c.project for c in Container.objects.filter(user = user, is_running = False, container_type = NOTEBOOK) ]
     users = sorted(User.objects.all())
     images = Image.objects.all()
     scopes = ScopeType.objects.all()
@@ -48,6 +49,7 @@ def projects(request):
             'projects_shared': projects_sharedwithme,
             'projects_public': projects_public,
             'running': running,
+            'stopped': stopped,
             'users': users,
             'images' : images,
             'scopes' : scopes,
@@ -236,7 +238,7 @@ def project_stop(request):
     except Project.DoesNotExist:
         messages.error(request, 'Project does not exist')
     except Container.DoesNotExist:
-        messages.error(request, 'Project container does is missing')
+        messages.error(request, 'Project container is already stopped or is missing')
     return redirect('projects')
 
 def project_versioning(request):

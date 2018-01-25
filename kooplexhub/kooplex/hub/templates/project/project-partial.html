@@ -15,9 +15,11 @@
     </a>
     </div>
      <a data-toggle="collapse"  href="#collapse{{ project.id }}" style="text-decoration: none; color: gray">
-      <div class="col-md-11 col-sm-10" style="padding: 0px 30px 0px 30px;"><strong data-toggle="tooltip" title="Running" data-placement="bottom">{{ project.name }}</strong>
-      {% if project.owner != user %} ( owned by {{ project.owner }} ) {% endif %}
-      <span class="badge" style="float: right;"> Using image:<strong>{{ project.image }}</strong></span>
+      <div class="col-md-11 col-sm-10" style="padding: 0px 30px 0px 30px;">
+        <span class="glyphicon glyphicon-ok-circle" aria-hidden="true" data-toggle="tooltip" title="Project container is present and running" data-placement="bottom"></span>
+        <strong data-toggle="tooltip" title="Running" data-placement="bottom">{{ project.name }}</strong>
+        {% if project.owner != user %} ( owned by {{ project.owner }} ) {% endif %}
+        <span class="badge" style="float: right;"> Using image:<strong>{{ project.image }}</strong></span>
       </div>
     </a>
   </div>
@@ -37,9 +39,15 @@
     </div>
 
     <a data-toggle="collapse"  href="#collapse{{ project.id }}" style="text-decoration: none; color: gray">
-      <div class="col-md-11 col-sm-10" style="padding: 0px 30px 0px 30px;"> <strong>{{ project.name }}</strong>
-      {% if project.owner != user %} ( owned by {{ project.owner }} ) {% endif %}
-      <span class="badge" style="float: right;"> Using image:<strong>{{ project.image }}</strong></span>
+      <div class="col-md-11 col-sm-10" style="padding: 0px 30px 0px 30px;">
+        {% if project in stopped %}
+        <span class="glyphicon glyphicon-remove-circle" aria-hidden="true" data-toggle="tooltip" title="Project container is present and stopped" data-placement="bottom"></span>
+        {% else %}
+        <span class="glyphicon glyphicon-ban-circle" aria-hidden="true" data-toggle="tooltip" title="Project container is not present" data-placement="bottom"></span>
+        {% endif %}
+        <strong>{{ project.name }}</strong>
+        {% if project.owner != user %} ( owned by {{ project.owner }} ) {% endif %}
+        <span class="badge" style="float: right;"> Using image:<strong>{{ project.image }}</strong></span>
       </div>
     </a>
   </div>
@@ -90,7 +98,7 @@
 
         <a href="#" data-toggle="modal" data-target="#project-settings-{{ project.id  }}">
           <button role="button" type="button" class="btn btn-info" data-toggle="tooltip" title="Settings of project {{ project.name }}. You can manage collaboration. You can change the image, modify volume attachments or delete the project here." data-placement="top">
-            <span class="glyphicon glyphicon-cog" aria-hidden="true"></span>
+            <span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
           </button></a>
 
             <!-- GIT RELATED STUFF -->

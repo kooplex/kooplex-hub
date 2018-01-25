@@ -54,6 +54,7 @@ class Spawner:
         self.start_container(container)
 
 #################################################################
+#NOTE: these methods may belong to the project.py module
 
 def spawn_project_container(user, project):
     from kooplex.hub.models import ContainerType
@@ -73,14 +74,12 @@ def spawn_project_container(user, project):
 def stop_project_container(container):
     from kooplex.lib.proxy import removeroute
     logger.debug(container)
-    Docker().stop_container(container)
-    container.is_running = False
-    container.save()
     try:
         removeroute(container)
     except KeyError:
-        # if there was no proxy path saved we silently ignore the exception
+        logger.warning("The proxy path was not existing: %s" % container)
         pass
+    Docker().stop_container(container)
 
 def remove_project_container(container):
     stop_project_container(container)

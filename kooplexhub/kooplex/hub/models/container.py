@@ -19,13 +19,11 @@ class Container(models.Model):
     name = models.CharField(max_length = 200, null = True)
     user = models.ForeignKey(User, null = True)
     project = models.ForeignKey(Project, null = True)
-
     image = models.ForeignKey(Image, null = True)
-
     container_type = models.ForeignKey(ContainerType, null = False)
-
     launched_at = models.DateTimeField(default = timezone.now)
     is_running = models.BooleanField(default = False)
+    mark_to_remove = models.BooleanField(default = False)
 
     def __lt__(self, c):
         return self.launched_at < c.launched_at

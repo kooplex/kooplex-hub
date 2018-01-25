@@ -4,7 +4,7 @@
 """
 import logging
 
-from kooplex.lib import Gitlab
+from kooplex.lib import Gitlab, Docker
 from kooplex.lib.filesystem import mkdir_project, mkdir_git_workdir, cleanup_share
 from kooplex.logic.impersonator import mkdir_project_oc, share_project_oc, unshare_project_oc
 from kooplex.logic.spawner import remove_project_container
@@ -89,8 +89,10 @@ def configure_project(project, image, scope, volumes, collaborators):
     @type collaborators: list(kooplex.hub.models.User)
     """
     logger.debug(project)
-    project.image = image
-    project.scop = scope
+    if project.image != image:
+        project.image = image
+        mark_containers_remove(project)
+    project.scope = scope
     for vpb in VolumeProjectBinding.objects.filter(project = project):
         if vpb.childvolume in volumes:
             logger.debug("volume project binding remains %s" % vpb)
@@ -121,3 +123,15 @@ def configure_project(project, image, scope, volumes, collaborators):
         upb.save()
     project.save()
 
+def mark_containers_remove(project):
+    """
+    @summary: mark project containers to be removed when they are stopped next time. In case the container is already stopped, remove them
+    @param project: the project model
+    @type project: kooplex.hub.models.Project
+    """
+    for container in project.containers:
+        if container.is_running:
+            container.mark_to_remove = True
+            container.save()
+        else:
+            Docker().remove_container(container)

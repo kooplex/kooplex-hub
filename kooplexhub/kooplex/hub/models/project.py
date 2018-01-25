@@ -52,6 +52,10 @@ class Project(models.Model):
         for report in DashboardReport.objects.filter(project = self):
             yield report
 
+    @property
+    def containers(self):
+        from .container import Container
+        return Container.objects.filter(project = self)
           
 class UserProjectBinding(models.Model):
     id = models.AutoField(primary_key = True)
@@ -60,4 +64,5 @@ class UserProjectBinding(models.Model):
 
     def __str__(self):
        return "%s-%s" % (self.project.name, self.user.username)
+
 

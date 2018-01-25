@@ -109,11 +109,16 @@ class Docker:
 
     def stop_container(self, container):
         self.client.stop(container.name)
-        logger.debug("Container stopped %s"% container.name)
+        container.is_running = False
+        container.save()
+        logger.debug("Container stopped %s (marked to remove %s)" % (container.name, container.mark_to_remove))
+        if container.mark_to_remove:
+            self.remove_container(container)
 
     def remove_container(self, container):
         self.client.remove_container(container.name)
-        logger.debug("Container stopped %s"% container.name)
+        logger.debug("Container removed %s" % container.name)
+        container.delete()
 
 #FIXME: az execute2 lesz az igazi...
     def execute(self, container, command):
