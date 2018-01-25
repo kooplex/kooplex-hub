@@ -87,7 +87,7 @@ class User(DJUser):
         logger.debug("%s" % self)
         # set uid and gid, generate token
         last_uid = User.objects.all().aggregate(models.Max('uid'))['uid__max']
-        if last_uid:
+        if last_uid is None:
           self.uid = 1
         else:
           self.uid = last_uid + 1
