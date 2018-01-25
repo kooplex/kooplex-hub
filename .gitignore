@@ -8,3 +8,4 @@ __pycache__
 TestResults
 kooplexhub/kooplex/hub/migrations/
 *.sw?
+.idea/*
