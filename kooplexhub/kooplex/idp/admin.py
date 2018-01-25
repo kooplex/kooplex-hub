@@ -25,7 +25,7 @@ class AuthBackend:
     def get_user(self, user_ptr):
         try:
             logger.debug("get user_ptr: %d" % user_ptr)
-            return User.objects.get(user_ptr = user_ptr)
+            return User.objects.get(id = user_ptr)
         except:
             logger.warning("unknown user_ptr: %d" % user_ptr)
             return None
