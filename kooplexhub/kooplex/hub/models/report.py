@@ -72,7 +72,7 @@ class DashboardReport(Report):
     def save(self):
         # make sure the current image is saved with the model
         self.image = self.project.image
-        Report.save(self)
+        Report.save(self)      #FIXME: use the super() syntax
 
 def list_user_reports(user):
     for report in HtmlReport.objects.filter(creator = user):
