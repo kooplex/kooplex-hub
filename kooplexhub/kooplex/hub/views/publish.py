@@ -1,3 +1,4 @@
+import os
 import time
 
 from django.conf.urls import patterns, url, include
@@ -7,7 +8,7 @@ from django.template import RequestContext
 
 from kooplex.hub.models import Project, HtmlReport, DashboardReport, ScopeType
 from kooplex.lib import get_settings
-from kooplex.lib.filesystem import list_notebooks, list_files, copy_dashboardreport_in_place
+from kooplex.lib.filesystem import list_notebooks, list_files, copy_dashboardreport_in_place, translate
 from kooplex.logic.impersonator import publish_htmlreport
 
 def publishForm(request):
@@ -45,16 +46,15 @@ def publishForm(request):
         project = Project.objects.get(id = request.POST['project_id'])
         name = request.POST['report_name'].strip()
         description = request.POST['report_description'].strip()
-        ipynb_file = request.POST['ipynb_file']
+        t = translate(request.POST['ipynb_file'])
         if len(name) == 0:
-            name = ipynb_file.split('/')[-1][:-6]
+            name, _ = os.path.splitext(os.path.basename(t['filename_in_container']))
         password = request.POST['password']
         scope = ScopeType.objects.get(name = request.POST['scope'])
-##    #other_files = request.POST.getlist('other_files')
-##    #request.POST['reports2remove'] 
         if 'html' in request.POST.keys():
             reportclass = HtmlReport
         elif 'dashboard' in request.POST.keys():
+##    #other_files = request.POST.getlist('other_files')
             reportclass = DashboardReport
         else:
             return redirect('projects')
@@ -64,10 +64,12 @@ def publishForm(request):
             description = description,
             ts_created = int(time.time()),
             project = project,
-            notebook_filename = ipynb_file,
+            notebook_filename = t['filename_in_mount'], #NOTE: we may need the volume as well!
             scope = scope,
             password = password
         )
+        report.filename_in_hub = t['filename_in_hub']
+        report.filename_in_container = t['filename_in_container']
         # conversion and deployment
         if isinstance(report, HtmlReport):
             publish_htmlreport(report)

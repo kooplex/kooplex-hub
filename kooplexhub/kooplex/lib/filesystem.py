@@ -2,12 +2,13 @@
 @autor: Jozsef Steger
 @summary: file and directory operations
 """
+import re
 import logging
 import os
 import ast
 import time
 import glob
-import subprocess
+import base64
 from distutils import dir_util
 from distutils import file_util
 
@@ -218,6 +219,50 @@ def mkdir_project(user, project):
     mkdir_git_workdir(user, project)
     mkdir_share(project)
 
+def _get_mountpoint_in_hub(volname, user, project):
+    if volname == 'git':
+        return os.path.join(get_settings('volumes','git'), user.username, project.name_with_owner)
+    if volname == 'share':
+        return os.path.join(get_settings('volumes','share'), project.name_with_owner)
+    if volname == 'home':
+        return os.path.join(get_settings('volumes','home'), user.username)
+
+def _get_mountpoint_in_container(volname, user, project):
+    if volname == 'git':
+        return os.path.join('/home', user.username, 'git')
+    if volname == 'share':
+        return os.path.join('/home', user.username, 'share')
+    if volname == 'home':
+        return os.path.join('/home', user.username)
+
+def _filename_in_mount(mountpoint_in_hub, filename_in_hub):
+    filename_in_container = filename_in_hub.replace(mountpoint_in_hub, '')
+    return filename_in_container[1:] if filename_in_container[0] == '/' else filename_in_container
+
+def _filetype(filename_in_hub):
+    if os.path.isdir(filename_in_hub):
+        return 'd'
+    if os.path.isfile(filename_in_hub):
+        return 'f'
+    if os.path.islink(filename_in_hub):
+        return 'l'
+
+def myencode(filename):
+    return base64.b64encode(filename.encode()).decode()
+
+def mydecode(filename_enc):
+    return base64.b64decode(filename_enc.encode()).decode()
+
+def translate(representation):
+    _, volname, filetype, filename_in_hub_enc, filename_in_container_enc, filename_in_mount, _ = re.split(r'(\w+):(\w):([=\w]+):([=\w]+):(.*)', representation)
+    return {
+        'filename_in_hub': mydecode(filename_in_hub_enc),
+        'filename_in_container': mydecode(filename_in_container_enc),
+        'filename_in_mount': filename_in_mount,
+        'filetype': filetype,
+        'volname': volname,
+    }
+
 def list_notebooks(user, project):
     """
     @summary: iterate over user files with ipynb extension
@@ -229,15 +274,19 @@ def list_notebooks(user, project):
     @param project: the project
     @type project: kooplex.hub.models.Project
     """
-    pattern_notebooks = os.path.join(get_settings('volumes','git'), user.username, project.name_with_owner, '*.ipynb')
-    for fn in glob.glob(pattern_notebooks):
-        yield { 'fullpath': fn, 'volume': 'git', 'filename': os.path.basename(fn) }
-    pattern_notebooks = os.path.join(get_settings('volumes','share'), project.name_with_owner, '*.ipynb')
-    for fn in glob.glob(pattern_notebooks):
-        yield { 'fullpath': fn, 'volume': 'share', 'filename': os.path.basename(fn) }
-    pattern_notebooks = os.path.join(get_settings('volumes','home'), user.username, '*.ipynb')
-    for fn in glob.glob(pattern_notebooks):
-        yield { 'fullpath': fn, 'volume': 'home', 'filename': os.path.basename(fn) }
+    for volname in [ 'git', 'share', 'home' ]:
+        mph = _get_mountpoint_in_hub(volname, user, project)
+        mpc = _get_mountpoint_in_container(volname, user, project)
+        for fnh in glob.glob(os.path.join(mph, '*.ipynb')):
+            fnm = _filename_in_mount(mph, fnh)
+            fnc = os.path.join(mpc, fnm)
+            t = _filetype(fnh)
+            yield {
+                'volume': volname, 
+                'isdir': t == 'd', 
+                'filename': fnc, 
+                'representation': "%s:%s:%s:%s:%s" % (volname, t, myencode(fnh), myencode(fnc), fnm)
+            }
 
 def list_files(user, project):
     """
@@ -259,18 +308,20 @@ def list_files(user, project):
             return True
         return False
 
-    pattern_all = os.path.join(get_settings('volumes','git'), user.username, project.name_with_owner, '*')
-    for fn in glob.glob(pattern_all):
-        if not skip(fn):
-            yield { 'fullpath': fn, 'volume': 'git', 'filename': os.path.basename(fn), 'is_dir': os.path.isdir(fn) }
-    pattern_all = os.path.join(get_settings('volumes','share'), project.name_with_owner, '*')
-    for fn in glob.glob(pattern_all):
-        if not skip(fn):
-            yield { 'fullpath': fn, 'volume': 'share', 'filename': os.path.basename(fn), 'is_dir': os.path.isdir(fn) }
-    pattern_all = os.path.join(get_settings('volumes','home'), user.username, '*')
-    for fn in glob.glob(pattern_all):
-        if not skip(fn):
-            yield { 'fullpath': fn, 'volume': 'home', 'filename': os.path.basename(fn), 'is_dir': os.path.isdir(fn) }
+    for volname in [ 'git', 'share', 'home' ]:
+        mph = _get_mountpoint_in_hub(volname, user, project)
+        mpc = _get_mountpoint_in_container(volname, user, project)
+        for fnh in glob.glob(os.path.join(mph, '*')):
+            if not skip(fnh):
+                fnm = _filename_in_mount(mph, fnh)
+                fnc = os.path.join(mpc, fnm)
+                t = _filetype(fnh)
+                yield {
+                    'volume': volname, 
+                    'isdir': t == 'd', 
+                    'filename': fnc, 
+                    'representation': "%s:%s:%s:%s:%s" % (volname, t, myencode(fnh), myencode(fnc), fnm)
+                }
 
 def move_htmlreport_in_place(report):
     """
@@ -280,11 +331,13 @@ def move_htmlreport_in_place(report):
     """
     from kooplex.hub.models import HtmlReport
     assert isinstance(report, HtmlReport)
-    filename_source = report.filename_html
+    filename_wo_ext, _ = os.path.splitext(report.filename_in_hub)
+    filename_source = filename_wo_ext + '.html'
     filename_destination = report.filename_report_html
     folder = os.path.dirname(filename_destination)
     dir_util.mkpath(folder)
     file_util.move_file(filename_source, folder)
+    logger.info('Report %s -> %s' % (report, folder))
 
 def copy_dashboardreport_in_place(report, files):
     """

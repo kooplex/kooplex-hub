@@ -18,7 +18,7 @@
           {% csrf_token %}
           <div class="form-group">
           {% for nbfile in notebooks %}
-             <input type="radio" name="ipynb_file" value="{{ nbfile.fullpath }}" {% if forloop.first %} checked {% endif %} > {{ nbfile.filename }} ({{ nbfile.volume }})<br>
+             <input type="radio" name="ipynb_file" value="{{ nbfile.representation }}" {% if forloop.first %} checked {% endif %} > {{ nbfile.filename }} ({{ nbfile.volume }})<br>
           {% endfor %}
           </div>
           <hr>
@@ -38,8 +38,8 @@
                 Select those files to be attached to your report:
                 <div class="form-group">
                   {% for file in files %}
-                     <input type="checkbox" name="other_files" value="{{ file }}">
-                     {% if file.is_dir %}
+                     <input type="checkbox" name="other_files" value="{{ file.representation }}">
+                     {% if file.isdir %}
                      <span class="glyphicon glyphicon-folder-open">
                      {% else %}
                      <span class="glyphicon glyphicon-file">
