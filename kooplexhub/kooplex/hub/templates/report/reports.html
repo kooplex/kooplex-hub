@@ -38,7 +38,7 @@
      {% endif %}
        {% for key, reports in reports_mine.items %}
          <div class="row">
-            {% include 'report/partial.html' with pane='mine' project=key.0 user_can_set=True %}
+            {% include 'report/partial.html' with project=key.0 user_can_set=True %}
          </div>
        {% endfor %}
      </div>
@@ -46,7 +46,7 @@
      <div id="internalreports" class="tab-pane fade">
        {% for key, reports in reports_internal.items %}
          <div class="row">
-            {% include 'report/partial.html' with pane='public' project=key.0 user_can_set=False %}
+            {% include 'report/partial.html' with project=key.0 user_can_set=False %}
          </div>
        {% endfor %}
      </div>
@@ -57,7 +57,7 @@
      {% endif %}
      {% for key, reports in reports_public.items %}
          <div class="row">
-            {% include 'report/partial.html' with pane='public' project=key.0 user_can_set=False %}
+            {% include 'report/partial.html' with project=key.0 user_can_set=False %}
          </div>
      {% endfor %}
      </div>

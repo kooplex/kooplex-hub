@@ -19,9 +19,9 @@
             <hr>
             <label>Scope</label>
             <select name = "scope">
-              <option value="private" {% if r.scope == 'private' %} selected {% endif %}>private</option>
-              <option value="internal" {% if r.scope == 'internal' %} selected {% endif %}>internal</option>
-              <option value="public" {% if r.scope == 'public' %} selected {% endif %}>public</option>
+              <option value="private" {% if r.scope.name == 'private' %} selected {% endif %}>private</option>
+              <option value="internal" {% if r.scope.name == 'internal' %} selected {% endif %}>internal</option>
+              <option value="public" {% if r.scope.name == 'public' %} selected {% endif %}>public</option>
             </select>
           </div>
           <div id="pane_description-{{ r.id }}" class="tab-pane fade">
