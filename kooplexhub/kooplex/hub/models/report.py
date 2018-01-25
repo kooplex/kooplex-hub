@@ -33,7 +33,7 @@ class Report(models.Model):
 
     @property
     def pretty_ts(self):
-        return strftime("%Y %m. %d.", localtime(self.ts_created))
+        return strftime("%Y. %m. %d.", localtime(self.ts_created))
 
     def is_user_allowed(self, user):
         public = ScopeType.objects.get(name = 'public')
@@ -72,7 +72,7 @@ class DashboardReport(Report):
     def save(self):
         # make sure the current image is saved with the model
         self.image = self.project.image
-        Report.save(self)
+        Report.save(self)      #FIXME: use the super() syntax
 
 def list_user_reports(user):
     for report in HtmlReport.objects.filter(creator = user):

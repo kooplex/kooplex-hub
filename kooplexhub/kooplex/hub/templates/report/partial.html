@@ -22,9 +22,8 @@
               <span style="padding-left:20px;">
                 <strong>{{ report_latest.name  }}</strong>
               </span>
-              <span style="padding-left:20px">
+              <span style="padding-left:20px" data-toggle="tooltip" title="Source filename of the latest report is {{ report_latest.notebook_filename }}" data-placement="bottom">
                 project name: <strong style="text-transform: uppercase;">{{ project.name }}</strong>,
-                filename: <strong>{{ report_latest.filename_wo_ext }}</strong>,
                 published on: <strong>{{ report_latest.pretty_ts }}</strong>
                 {% if not user_can_set %}
                 by {{ report_latest.creator.username }}
@@ -45,7 +44,7 @@
         <div class="well">
           <p><strong>Project description: </strong>{{ project.description }}
           <p><strong>Report description (latest): </strong>{{ report_latest.description }}
-          <p><strong>Url to the latest report: </strong><code>{{ base_url }}{% url 'report-openlatest' %}?project_id={{ project.id }}&amp;filename={{ report_latest.filename_wo_ext }}</code>
+          <p><strong>Url to the latest report: </strong><code>{{ base_url }}{% url 'report-openlatest' %}?project_id={{ project.id }}&amp;name={{ report_latest.name }}</code>
         </div>
         <form action="{% url 'report-open' %}" method="post">
           {% csrf_token %}

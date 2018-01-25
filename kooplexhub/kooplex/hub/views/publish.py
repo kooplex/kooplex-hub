@@ -54,7 +54,6 @@ def publishForm(request):
         if 'html' in request.POST.keys():
             reportclass = HtmlReport
         elif 'dashboard' in request.POST.keys():
-##    #other_files = request.POST.getlist('other_files')
             reportclass = DashboardReport
         else:
             return redirect('projects')

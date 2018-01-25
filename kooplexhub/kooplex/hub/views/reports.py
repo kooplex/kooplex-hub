@@ -37,12 +37,11 @@ def group_by_project(reports):
 
 def reports(request):
     assert isinstance(request, HttpRequest)
+    user = request.user
     if request.user.is_anonymous():
-        user = None
         reports_mine = []
         reports_internal = []
     else:
-        user = request.user
         reports_mine = list(list_user_reports(user))
         reports_internal = list(list_internal_reports(user))
     reports_public = list(list_public_reports())
@@ -95,11 +94,11 @@ def openreport(request):
 def openreport_latest(request):
     assert isinstance(request, HttpRequest)
     project_id = request.GET['project_id']
-    filename = request.GET['filename']
+    name = request.GET['name']
     try:
         user = request.user
         project = Project.objects.get(id = project_id)
-        reports = list(filter_report(project = project, notebook_filename = filename))
+        reports = list(filter_report(project = project, name = name))
         reports.sort()
         reports.reverse()
         for report in reports:

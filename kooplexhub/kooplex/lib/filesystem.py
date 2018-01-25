@@ -229,11 +229,11 @@ def _get_mountpoint_in_hub(volname, user, project):
 
 def _get_mountpoint_in_container(volname, user, project):
     if volname == 'git':
-        return os.path.join('/home', user.username, 'git')
+        return os.path.join('home', user.username, 'git')
     if volname == 'share':
-        return os.path.join('/home', user.username, 'share')
+        return os.path.join('home', user.username, 'share')
     if volname == 'home':
-        return os.path.join('/home', user.username)
+        return os.path.join('home', user.username)
 
 def _filename_in_mount(mountpoint_in_hub, filename_in_hub):
     filename_in_container = filename_in_hub.replace(mountpoint_in_hub, '')
@@ -304,7 +304,7 @@ def list_files(user, project):
             return True
         if not os.path.isdir(fn):
             return False
-        if fn.endswith('git') or fn.endswith('oc') or fn.endswith('share'):
+        if fn.endswith('git') or fn.endswith('oc') or fn.endswith('share') or fn.endswith('__pycache__'):
             return True
         return False
 
@@ -349,33 +349,21 @@ def copy_dashboardreport_in_place(report, files):
     """
     from kooplex.hub.models import DashboardReport
     assert isinstance(report, DashboardReport)
-    filename_source = report.notebook_filename
+    filename_source = report.filename_in_hub
+    filename_in_container = report.filename_in_container
     report_root = report.report_root
-    if filename_source.startswith(get_settings('volumes', 'home')):
-        dir_target = report.report_root
-    elif filename_source.startswith(get_settings('volumes', 'git')):
-        dir_target = os.path.join(report.report_root, 'git')
-    elif filename_source.startswith(get_settings('volumes', 'share')):
-        dir_target = os.path.join(report.report_root, 'share')
-    else:
-        raise NotImplementedError
+    dir_target = os.path.join(report_root, os.path.dirname(filename_in_container))
     dir_util.mkpath(dir_target)
     file_util.copy_file(filename_source, dir_target)
+    logger.debug('cp %s -> %s' % (filename_source, dir_target))
     for f in files:
-        f = ast.literal_eval(f) #FIXME: evaluate already in the caller
-        if f['volume'] == 'home':
-            dir_container = '.'
-        elif f['volume'] in [ 'git', 'share' ]:
-            dir_container = f['volume']
-        else:
-            continue
-        dir_target = os.path.join(report_root, dir_container)
-        if f['is_dir']:
-            dir_util.copy_tree(f['fullpath'], os.path.join(dir_target, f['filename']))
-        else:
-            dir_util.mkpath(dir_target)
-            file_util.copy_file(f['fullpath'], dir_target)
+        t = translate(f)
+        dir_target = os.path.join(report_root, os.path.dirname(t['filename_in_container']))
+        dir_util.mkpath(dir_target)
+        file_util.copy_file(t['filename_in_hub'], dir_target)
+        logger.debug('cp %s -> %s' % (t['filename_in_hub'], dir_target))
     _chown_recursive(report_root, get_settings('dashboard', 'uid'), get_settings('dashboard', 'gid'))
+    logger.info('Report %s -> %s' % (report, report_root))
 
 def cleanup_reportfiles(report):
     """
