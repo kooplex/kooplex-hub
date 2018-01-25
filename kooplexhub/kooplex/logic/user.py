@@ -1,10 +1,12 @@
 import logging
+import re
 import pwgen
 
 from kooplex.lib import get_settings
 from kooplex.lib import Ldap, GitlabAdmin
 from kooplex.lib.sendemail import send_new_password, send_token
 from kooplex.lib.filesystem import mkdir_homefolderstructure, cleanup_home, write_davsecret, generate_rsakey, read_rsapubkey
+from kooplex.hub.models import User
 
 logger = logging.getLogger(__name__)
 
@@ -14,46 +16,86 @@ def generatenewpassword(user):
     with open(get_settings('user', 'pattern_passwordfile') % user, 'w') as f:
         f.write(user.password)
 
-def add(user, skip_gitlab = False):
+def add(user):
+    """
+    @summary: create a new user
+              1. generate a password
+              2. create an ldap entry
+              3. create home directory structure
+              4. create a gitlab account
+              5. generate and upload RSA key
+    @param user: a new user to add to the system
+    @type user: kooplex.hub.models.User
+    @returns: { 'status_code': int, 'messages': list(str) }
+              status_code:
+              - flag: 0x00001: wrong characters in username or username or email already in use
+              - flag: 0x00010: ldap failure
+              - flag: 0x00100: filesystem failure
+              - flag: 0x01000: gitlab add failure
+              - flag: 0x10000: gitlab upload failure
+    """
     logger.debug('call %s' % user)
+    # check
+    wrong_characters = "".join( re.split('[a-z0-9]+', user.username) )
+    if wrong_characters != "":
+        msg = "Username contains blacklisted characters: %s" % wrong_characters
+        logger.error(msg)
+        return { 'status_code': 0x00001, 'messages': [ msg ] }
+    try:
+        User.objects.get(username = user.username)
+        msg = "Username already exists: %s" % user
+        logger.error(msg)
+        return { 'status_code': 0x00001, 'messages': [ msg ] }
+    except User.DoesNotExist:
+        pass
+    try:
+        User.objects.get(email = user.email)
+        msg = "Email is already registered: %s" % user
+        logger.error(msg)
+        return { 'status_code': 0x00001, 'messages': [ msg ] }
+    except User.DoesNotExist:
+        pass
+    
     status = 0
-    if not skip_gitlab: #NOTE: this is a temporary check; to be removed if not the gitlab is the IDP
-        generatenewpassword(user)
+    messages = []
+    generatenewpassword(user)
     # create new ldap entry
     try:
         Ldap().adduser(user)
     except Exception as e:
-        logger.error("Failed to create ldap entry for %s (%s)" % (user, e))
-        status |= 0x000001
+        msg = "Failed to create ldap entry for %s (%s)" % (user, e)
+        logger.error(msg)
+        messages.append(msg)
+        status |= 0x00010
     # create home filesystem save dav secret
     try:
         mkdir_homefolderstructure(user)
         write_davsecret(user)
     except Exception as e:
-        logger.error("Failed to create home for %s (%s)" % (user, e))
-        status |= 0x000010
+        msg = "Failed to create home for %s (%s)" % (user, e)
+        logger.error(msg)
+        messages.append(msg)
+        status |= 0x00100
     # create gitlab account and retrieve new user's gitlab_id
-    if not skip_gitlab: #NOTE: this is a temporary check; to be removed if not the gitlab is the IDP
-        try:
-            gad = GitlabAdmin()
-            user.gitlab_id = gad.create_user(user)['id']
-        except Exception as e:
-            logger.error("Failed to create gitlab entry for %s (%s)" % (user, e))
-            status |= 0x000100
-        # generate and upload rsa key
-        try:
-            generate_rsakey(user)
-            pub_key_content = read_rsapubkey(user)
-            gad.upload_userkey(user, pub_key_content)
-        except Exception as e:
-            logger.error("Failed to upload rsa key in gitlab for %s (%s)" % (user, e))
-            status |= 0x010000
-            raise
-        # send email with the password
-        if send_new_password(user) != 0:
-            logger.error("Failed to send email to %s (%s)" % (user, user.email))
-            status |= 0x100000
-    return status
+    try:
+        gad = GitlabAdmin()
+        user.gitlab_id = gad.create_user(user)['id']
+    except Exception as e:
+        msg = "Failed to create gitlab entry for %s (%s)" % (user, e)
+        logger.error(msg)
+        messages.append(msg)
+        status |= 0x01000
+    # generate and upload rsa key
+    try:
+        generate_rsakey(user)
+        pub_key_content = read_rsapubkey(user)
+        gad.upload_userkey(user, pub_key_content)
+    except Exception as e:
+        msg = "Failed to upload rsa key in gitlab for %s (%s)" % (user, e)
+        logger.error(msg)
+        messages.append(msg)
+        status |= 0x10000
+    return { 'status_code': status, 'messages': messages }
 
 def remove(user):
     logger.debug('call %s' % user)

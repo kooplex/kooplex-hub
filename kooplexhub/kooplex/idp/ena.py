@@ -2,6 +2,7 @@ import os
 import logging
 import requests
 import base64
+from random import randint
 
 from kooplex.lib import get_settings, keeptrying
 from .authentication import create_user
@@ -31,10 +32,12 @@ class AuthBackend:
         if status_code != 200:
             logger.warning('user %s is not authenticated' % username)
             return None
+        mapped_username = username.replace('-', '').lower()
         try:
-            return User.objects.get(username = username)
+            return User.objects.get(username = mapped_username)
         except User.DoesNotExist:
-            return create_user(username, first_name, last_name, email)
+#FIXME: random generate e-mail address and username, as IDP does not provide them.
+            return create_user(username = mapped_username, first_name = 'Missing', last_name = 'Missing', email = 'missing@rnd%d.ms' % randint(1,1000))
 
     def get_user(self, user_ptr):
         try:
