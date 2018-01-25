@@ -86,3 +86,35 @@ def remove_project_container(container):
     logger.debug(container)
     Docker().remove_container(container)
     container.delete()
+
+#################################################################
+#NOTE: these methods may belong to the report.py module
+
+def spawn_report_container(report):
+    from kooplex.hub.models import ContainerType
+#    from kooplex.lib.filesystem import G_OFFSET
+    volumemapping = [
+        (get_settings('spawner', report-volume), '/home/', 'rw'),
+    ]
+    try:
+        dashboard = ContainerType.objects.get(name = 'dashboard')
+        spawner = Spawner(user, project, dashboard, volumemapping)
+        spawner.run_container()
+    except:
+        raise
+
+def stop_project_container(container):
+    from kooplex.lib.proxy import removeroute
+    logger.debug(container)
+    try:
+        removeroute(container)
+    except KeyError:
+        logger.warning("The proxy path was not existing: %s" % container)
+        pass
+    Docker().stop_container(container)
+
+def remove_project_container(container):
+    stop_project_container(container)
+    logger.debug(container)
+    Docker().remove_container(container)
+    container.delete()

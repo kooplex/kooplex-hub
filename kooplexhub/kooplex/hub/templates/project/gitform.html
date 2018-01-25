@@ -1,12 +1,19 @@
 {% extends "app/layout.html" %}
 
 {% block content %}
+<div class="row">
+<nav class="navbar navbar-default">
+   <!-- Collect the nav links, forms, and other content for toggling -->
+   <ul class="nav nav-tabs">
+       <li><a href="{% url 'projects' %}" >Back to projects</a></li>
 
-<ul class="nav nav-tabs">
-  <li class="active"><a href="#pane_commit" data-toggle="tab">Commit</a></li>
-  <li><a href="#pane_update" data-toggle="tab">Update</a></li>
-  <li><a href="#pane_revert" data-toggle="tab">Revert</a></li>
-</ul>
+       <li class=""><a href="#pane_commit" data-toggle="tab">Commit</a></li>
+       <li class="active"><a href="#pane_update" data-toggle="tab">Update</a></li>
+       <li><a href="#pane_revert" data-toggle="tab">Revert</a></li>
+    </ul>
+</nav>
+</div>
+
 <div class="tab-content">
   <div id="pane_commit" class="tab-pane fade in active">
     {% include 'project/commitform.html' %}

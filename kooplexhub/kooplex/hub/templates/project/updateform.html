@@ -1,4 +1,5 @@
-<form action="{% url 'project-pull' %}" method="post" class="form-horizontal">
+<div class="modal-content">
+    <form action="{% url 'project-pull' %}" method="post" class="form-horizontal">
   {% csrf_token %}
   <div class="panel-heading">
     <h4>Update your project <strong>{{ project.name }}</strong> to remote changes</h4>
@@ -23,3 +24,4 @@ git pull
    {% endif %}
 </form>
 
+</div>

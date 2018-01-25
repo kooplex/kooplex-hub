@@ -1,4 +1,5 @@
-<form action="{% url 'project-revert' %}" method="post" class="form-horizontal">
+<div class="modal-content">
+    <form action="{% url 'project-revert' %}" method="post" class="form-horizontal">
   {% csrf_token %}
   <div class="panel-heading">
     <h4>Restore your project <strong>{{ project.name }}</strong> to a former state</h4>
@@ -31,4 +32,4 @@ git push
     </div>
   {% endif %}
 </form>
-
+</div>
