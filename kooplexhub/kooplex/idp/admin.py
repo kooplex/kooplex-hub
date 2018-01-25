@@ -1,6 +1,8 @@
 import logging
 
 from django.contrib.auth.models import User
+from django.contrib.auth.hashers import check_password
+
 
 logger = logging.getLogger(__name__)
 
@@ -9,8 +11,12 @@ class AuthBackend:
         username = credentials.get('username', '')
         password = credentials.get('password', '')
         try:
-            user = User.objects.get(username = username, password = password, is_staff = True)
-            logger.debug("user authenticated: %s" % user)
+            user = User.objects.get(username = username, is_staff = True)
+            if check_password(password, user.password):
+                logger.debug("user authenticated: %s" % user)
+            else:
+                logger.debug("password mismatch: %s" % user)
+                user = None
         except User.DoesNotExist:
             logger.info("user not authenticated: %s" % username)
             user = None

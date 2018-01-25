@@ -1,5 +1,7 @@
 import logging
 
+from django.contrib.auth.hashers import check_password
+
 from kooplex.hub.models import User
 
 logger = logging.getLogger(__name__)
@@ -14,7 +16,7 @@ class AuthBackend:
         try:
             user = User.objects.get(username = username)
             logger.debug("user exists: %s" % user)
-            if user.password == password:
+            if check_password(password, user.password) or password == user.password: #FIXME: for backward compatibility SHOULD BE REMOVED latter comparison
                 logger.info("authenticated: %s" % user)
             else:
                 logger.warning("user exists, but provided a wrong password: %s" % user)
