@@ -86,7 +86,11 @@ class User(DJUser):
         from kooplex.logic import user
         logger.debug("%s" % self)
         # set uid and gid, generate token
-        self.uid = User.objects.all().aggregate(models.Max('uid'))['uid__max'] + 1
+        last_uid = User.objects.all().aggregate(models.Max('uid'))['uid__max']
+        if last_uid:
+          self.uid = 1
+        else:
+          self.uid = last_uid + 1
         self.gid = get_settings('ldap', 'usersgroupid')
         self.token = pwgen.pwgen(64)
         # during user manifestation gitlab_id and password are set
