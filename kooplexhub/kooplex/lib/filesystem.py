@@ -382,4 +382,35 @@ def cleanup_reportfiles(report):
     else:
         raise NotImplementedError
 
-
+def create_clone_script(project, project_template = None):
+    '''
+    @summary: create a magic script to clone the project sources from gitlab
+    '''
+    if project_template is not None:
+        commitmsg = "Snapshot commit of project %s" % project_template.name_with_owner
+        script = """#! /bin/bash
+rm $0
+TMPFOLDER=$(mktemp -d)
+git clone %(url)s ${TMPFOLDER}
+cd ${TMPFOLDER}
+rm -rf ./.git/
+mv * ~/git/
+for hidden in $(echo .?* | sed s/'\.\.'//) ; do
+  mv $hidden ~/git
+done
+cd ~/git
+git add --all
+git commit -a -m "%(message)s"
+git push origin master
+rm -rf ${TMPFOLDER}
+        """ % { 'url': project_template.url_gitlab, 'message': commitmsg }
+    else:
+        script = """#! /bin/bash
+rm $0
+git clone %(url)s ../git
+        """ % { 'url': project.url_gitlab }
+    filename = os.path.join(_get_mountpoint_in_hub('git', project.owner, project), 'clone.sh')
+    with open(filename, 'w') as f:
+        f.write(script)
+    os.chown(filename, project.owner.uid, project.owner.gid)
+    os.chmod(filename, 0b111000000)

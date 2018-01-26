@@ -1,17 +1,17 @@
 <label for="project_template">Choose a template for your project</label><br>
 <select id="project_template" name="project_template">
   {% for image in images %}
-  <option value="image={{ image }}" style="background-color: silver">{{ image }} (empty)</option>
+  <option value="image={{ image }}" style="background-color: silver">(empty) {{ image }}</option>
   {% endfor %}
-{% comment %}
-FIXME: have them back
-  {% for project in shared_with_me_projects %}
-  <option value="clonable_project={{ project }}" style="background-color: gray">{{ project }}</option>
+  {% for project in projects_mine %}
+  <option value="clonable_project={{ project.id }}" style="background-color: gray">(mine) {{ project }}</option>
   {% endfor %}
-  {% for project in public_projects %}
-  <option value="clonable_project={{ project }}" style="background-color: lightgray">{{ project }}</option>
+  {% for project in projects_sharedwithme %}
+  <option value="clonable_project={{ project.id }}" style="background-color: gray">(shared) {{ project }}</option>
   {% endfor %}
-{% endcomment %}
+  {% for project in projects_public %}
+  <option value="clonable_project={{ project.id }}" style="background-color: lightgray">(public) {{ project }}</option>
+  {% endfor %}
 </select><br>
 
 <br>
@@ -25,14 +25,13 @@ FIXME: have them back
   </div>
 <div id="collapse-help-template" class="panel-collapse collapse">
   <div class="panel-body">
-    <strong>Images</strong> are the bases for the containers in which you can work 
+    <p>Select a project starting template, which can be either an <strong>empty</strong> template or you can clone an already available project.</p>
+    <p>When selecting an empty template choose by the image name. The <code>basic</code> image provides your project with all the necessary packages.</p>
+    <p>In case you clone a project the following project groups are defined:
     <ul>
-    <li> The <code>basic</code> image provides your project with all the necessary
-    packages  </li>
-    <li> If you select a template then in addition to the <code>basic</code> image
-    you will start with notebooks and other utils that has been used for
-    that project.</li>
-    
+     <li><strong>mine:</strong> those projects you created so far.</li>
+     <li><strong>shared:</strong> those projects other users created but you are a collaborator of.</li>
+     <li><strong>public:</strong> those projects that anyone can see.</li>
     </ul>
   </div>
  </div>
