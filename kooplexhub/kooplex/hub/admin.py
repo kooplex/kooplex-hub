@@ -49,9 +49,13 @@ class UserAdmin(admin.ModelAdmin):
         user.remove()
         super().delete_model(request, user)
 
-@admin.register(Container)
-class ContainerAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'project', 'image')
+@admin.register(ProjectContainer)
+class ProjectContainerAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'image', 'project')
+
+@admin.register(DashboardContainer)
+class DashboardContainerAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'image', 'report')
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):

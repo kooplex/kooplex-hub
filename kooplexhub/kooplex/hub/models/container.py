@@ -10,20 +10,13 @@ from .project import Project
 from .volume import Volume, VolumeProjectBinding
 from .image import Image
 
-class ContainerType(models.Model):
-    id = models.AutoField(primary_key = True)
-    name = models.CharField(max_length = 32)
-
 class Container(models.Model):
     id = models.AutoField(primary_key = True)
     name = models.CharField(max_length = 200, null = True)
     user = models.ForeignKey(User, null = True)
-    project = models.ForeignKey(Project, null = True)
     image = models.ForeignKey(Image, null = True)
-    container_type = models.ForeignKey(ContainerType, null = False)
     launched_at = models.DateTimeField(default = timezone.now)
     is_running = models.BooleanField(default = False)
-    mark_to_remove = models.BooleanField(default = False)
 
     def __lt__(self, c):
         return self.launched_at < c.launched_at
@@ -43,6 +36,10 @@ class Container(models.Model):
         for vcb in VolumeContainerBinding.objects.filter(container = self):
             yield lookup( vcb.volume )
 
+class ProjectContainer(Container):
+    project = models.ForeignKey(Project, null = True)
+    mark_to_remove = models.BooleanField(default = False)
+
     @property
     def proxy_path(self):
         info = { 'containername': self.name }
@@ -58,25 +55,22 @@ class Container(models.Model):
 
     @property
     def environment(self):
-        if self.container_type.name == 'notebook':
-            return {
-                'NB_USER': self.user.username,
-                'NB_UID': self.user.uid,
-                'NB_GID': self.user.gid,
-                'NB_URL': self.proxy_path,
-                'NB_PORT': 8000,
-                'NB_TOKEN': self.user.token,
-                'PR_ID': self.project.id,
-                'PR_NAME': self.project.name,
-                'PR_FULLNAME': self.project.name,
-                'PR_PWN': self.project.name_with_owner,
-                'PR_MEMBERS': ",".join([ str(u.uid) for u in self.project.collaborators ]),
-                'PR_URL': self.project.url_gitlab,
-                'GID_OFFSET': G_OFFSET,
-        #        'MNT_GIDS': ",".join(mpgids)  #FIXME: still missing
-            }
-        else:
-            raise NotImplementedError
+        return {
+            'NB_USER': self.user.username,
+            'NB_UID': self.user.uid,
+            'NB_GID': self.user.gid,
+            'NB_URL': self.proxy_path,
+            'NB_PORT': 8000,
+            'NB_TOKEN': self.user.token,
+            'PR_ID': self.project.id,
+            'PR_NAME': self.project.name,
+            'PR_PWN': self.project.name_with_owner,
+        }
+
+class DashboardContainer(Container):
+    from .report import DashboardReport
+    report = models.ForeignKey(DashboardReport, null = True)
+
 
 class VolumeContainerBinding(models.Model):
     id = models.AutoField(primary_key = True)
@@ -85,13 +79,4 @@ class VolumeContainerBinding(models.Model):
 
     def __str__(self):
        return "%s-%s" % (self.container.name, self.volume.name)
-
-
-def init_model():
-    containertypes = [ 'notebook', 'dashboard' ]
-    for ct in containertypes:
-        try:
-            ContainerType.objects.get(name = ct)
-        except ContainerType.DoesNotExist:
-            ContainerType(name = ct).save()
 

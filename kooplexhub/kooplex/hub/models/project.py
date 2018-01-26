@@ -54,8 +54,8 @@ class Project(models.Model):
 
     @property
     def containers(self):
-        from .container import Container
-        return Container.objects.filter(project = self)
+        from .container import ProjectContainer
+        return ProjectContainer.objects.filter(project = self)
           
 class UserProjectBinding(models.Model):
     id = models.AutoField(primary_key = True)

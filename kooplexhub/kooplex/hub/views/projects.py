@@ -23,17 +23,14 @@ def projects(request):
         return redirect('login')
     try:
         PUBLIC = ScopeType.objects.get(name = 'public')
-        NOTEBOOK = ContainerType.objects.get(name = 'notebook')
     except ScopeType.DoesNotExist:
-        return redirect('/admin')
-    except ContainerType.DoesNotExist:
         return redirect('/admin')
     user = request.user
     projects_mine = Project.objects.filter(owner = user)
     projects_sharedwithme = sorted([ upb.project for upb in UserProjectBinding.objects.filter(user = user) ])
     projects_public = sorted(Project.objects.filter(scope = PUBLIC).exclude(owner = user))
-    running = [ c.project for c in Container.objects.filter(user = user, is_running = True, container_type = NOTEBOOK) ]
-    stopped = [ c.project for c in Container.objects.filter(user = user, is_running = False, container_type = NOTEBOOK) ]
+    running = [ c.project for c in ProjectContainer.objects.filter(user = user, is_running = True) ]
+    stopped = [ c.project for c in ProjectContainer.objects.filter(user = user, is_running = False) ]
     users = sorted(User.objects.all())
     images = Image.objects.all()
     scopes = ScopeType.objects.all()
@@ -171,11 +168,11 @@ def project_open(request):
     project_id = request.GET['project_id']
     try:
         project = Project.objects.get(id = project_id)
-        container = Container.objects.get(user = user, project = project, is_running = True)
+        container = ProjectContainer.objects.get(user = user, project = project, is_running = True)
         return redirect(container.url_with_token)
     except Project.DoesNotExist:
         messages.error(request, 'Project does not exist')
-    except Container.DoesNotExist:
+    except ProjectContainer.DoesNotExist:
         messages.error(request, 'Project container is missing or stopped')
     return redirect('projects')
 
@@ -189,11 +186,11 @@ def project_stop(request):
     project_id = request.GET['project_id']
     try:
         project = Project.objects.get(id = project_id)
-        container = Container.objects.get(user = user, project = project, is_running = True)
+        container = ProjectContainer.objects.get(user = user, project = project, is_running = True)
         stop_project_container(container)
     except Project.DoesNotExist:
         messages.error(request, 'Project does not exist')
-    except Container.DoesNotExist:
+    except ProjectContainer.DoesNotExist:
         messages.error(request, 'Project container is already stopped or is missing')
     return redirect('projects')
 

@@ -8,7 +8,7 @@ from kooplex.lib import Gitlab, Docker
 from kooplex.lib.filesystem import mkdir_project, mkdir_git_workdir, cleanup_share
 from kooplex.logic.impersonator import mkdir_project_oc, share_project_oc, unshare_project_oc
 from kooplex.logic.spawner import remove_project_container
-from kooplex.hub.models import VolumeProjectBinding, UserProjectBinding, Container
+from kooplex.hub.models import VolumeProjectBinding, UserProjectBinding, ProjectContainer
 
 logger = logging.getLogger(__name__)
 
@@ -62,10 +62,10 @@ def delete_project(project):
         gitlab.delete_project_member(project, upb.user)
         upb.delete()
     try:
-        container = Container.objects.get(user = project.owner, project = project)
+        container = ProjectContainer.objects.get(user = project.owner, project = project)
         logger.debug("remove container %s" % container)
         remove_project_container(container)
-    except Container.DoesNotExist:
+    except ProjectContainer.DoesNotExist:
         logger.debug("%s has no container" % project)
     information = gitlab.delete_project(project)
     logger.info("%s deleted" % project)
