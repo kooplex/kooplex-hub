@@ -11,6 +11,7 @@ from kooplex.hub.models import *
 from kooplex.logic.spawner import spawn_project_container, stop_project_container
 from kooplex.logic import create_project, delete_project, configure_project
 from kooplex.logic import Repository
+from kooplex.lib.filesystem import create_clone_script
 
 logger = logging.getLogger(__name__)
 
@@ -85,79 +86,34 @@ def project_new(request):
         return redirect('projects')
         
     if template.startswith('clonable_project='):
-        messages.error(request, 'Not implemented error. Wait for the code maintainers...')
-        return redirect('projects')
-        raise NotImplementedError
-#FIXME:
-#        name, owner = template.split('=')[-1].split('@')
-#        project = Project.objects.get(name = name, owner_username = owner)
-#        project_image_name = project.image
-#        # Retrieve former_shares and unify with users current choices
-#        for mpb in MountPointProjectBinding.objects.filter(project = project):
-#            mp.append(mpb.id)
-#        mp = list(set(mp))
-#        # Retrieve former_volumes and unify with users current choices
-#        for vpb in VolumeProjectBinding.objects.filter(project = project):
-#            vols.append(vpb.volume)
-#        vols = list(set(vols))
-#        cloned_project = True
+        _, pidstr, _ = re.split(r'clonable_project=(\d+)', template)
+        project_source = Project.objects.get(id = int(pidstr))
+        image = project_source.image
+        logger.debug('Project to be created from project: %s' % project_source)
+        cloned_project = True
     elif template.startswith('image='):
-        imagename = template.split('=')[-1]
+        _, imagename, _ = re.split(r'image=(\w+)', template)
+        image = Image.objects.get(name = imagename)
         logger.debug('Project to be created from image: %s' % imagename)
         cloned_project = False
     scope = ScopeType.objects.get(name = button)
-    image = Image.objects.get(name = imagename)
     project = Project(name = name, owner = user, description = description, image = image, scope = scope)
     # NOTE: create_project takes good care of saving the new project instance
     try:
-       create_project(project, volumes)
+        create_project(project, volumes)
+        if cloned_project:
+            for volume in project_source.volumes:
+                VolumeProjectBinding(project = project, volume = volume).save()
+                logger.debug('volume %s bound to project %s' % (volume, project))
+            create_clone_script(project, project_source)
+        else:
+            create_clone_script(project)
     except AssertionError:
         messages.error(request, 'Could not create project!. Wait for the administrator to respond!' )
         logger.error('Could not create project %s for user %s' % (name, user.username) )
         return redirect('projects')
     logger.debug('New project saved in HubDB: %s' % name)
     return redirect('projects')
-#FIXME: 
-###### Create a magic script to clone ancient projects content
-#####            ancientprojecturl = "ssh://git@%s/%s.git" % (get_settings('gitlab', 'ssh_host'), project.path_with_namespace)
-#####            commitmsg = "Snapshot commit of project %s" % project
-#####            script = """#! /bin/bash
-#####TMPFOLDER=$(mktemp -d)
-#####git clone %(url)s ${TMPFOLDER}
-#####cd ${TMPFOLDER}
-#####rm -rf ./.git/
-#####mv * ~/git/
-#####for hidden in $(echo .?* | sed s/'\.\.'//) ; do
-#####  mv $hidden ~/git
-#####done
-#####cd ~/git
-#####git add --all
-#####git commit -a -m "%(message)s"
-#####git push origin master
-#####rm -rf ${TMPFOLDER}
-#####rm ~/$(basename $0)
-#####            """ % { 'url': ancientprojecturl, 'message': commitmsg }
-#####            home_dir = os.path.join(get_settings('volumes', 'home'), p.owner_username)
-#####            fn_basename = ".gitclone-%s.sh" % p.name
-#####            fn_script = os.path.join(home_dir, fn_basename)
-#####            open(fn_script, 'w').write(script)
-#####            os.chmod(fn_script, 0b111000000)
-#####            hubuser = HubUser.objects.get(username = p.owner_username)
-#####            os.chown(fn_script, int(hubuser.uid), int(hubuser.gid))
-#####        else:
-###### Create a README file
-#####            g.create_project_readme(p.id, "README.md", "* proba", "Created a default README")
-#####        return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
-#####    except Exception as e:
-#####        return render(
-#####            request,
-#####            'app/error.html',
-#####            context_instance=RequestContext(request,
-#####                                            {
-#####                                                'error_title': 'Error',
-#####                                                'error_message': str(e),
-#####                                            })
-#####        )
 
 
 def project_configure(request):

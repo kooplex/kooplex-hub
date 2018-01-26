@@ -128,6 +128,8 @@ def mkdir_homefolderstructure(user):
     _mkdir(dir_oc, mountpoint = True, mode = 0b111101101)
     dir_git = os.path.join(get_settings('volumes', 'home'), user.username, 'git')
     _mkdir(dir_git, mountpoint = True)
+    dir_condaenv = os.path.join(get_settings('volumes', 'home'), user.username, '.conda', 'env')
+    _mkdir(dir_condaenv, uid = user.uid, gid = user.gid, mode = 0b10100000)
     write_davsecret(user)
     write_gitconfig(user)
     generate_rsakey(user)
@@ -227,7 +229,7 @@ def _get_mountpoint_in_hub(volname, user, project):
     if volname == 'home':
         return os.path.join(get_settings('volumes','home'), user.username)
 
-def _get_mountpoint_in_container(volname, user, project):
+def _get_mountpoint_in_container(volname, user):
     if volname == 'git':
         return os.path.join('home', user.username, 'git')
     if volname == 'share':
@@ -276,7 +278,7 @@ def list_notebooks(user, project):
     """
     for volname in [ 'git', 'share', 'home' ]:
         mph = _get_mountpoint_in_hub(volname, user, project)
-        mpc = _get_mountpoint_in_container(volname, user, project)
+        mpc = _get_mountpoint_in_container(volname, user)
         for fnh in glob.glob(os.path.join(mph, '*.ipynb')):
             fnm = _filename_in_mount(mph, fnh)
             fnc = os.path.join(mpc, fnm)
@@ -310,7 +312,7 @@ def list_files(user, project):
 
     for volname in [ 'git', 'share', 'home' ]:
         mph = _get_mountpoint_in_hub(volname, user, project)
-        mpc = _get_mountpoint_in_container(volname, user, project)
+        mpc = _get_mountpoint_in_container(volname, user)
         for fnh in glob.glob(os.path.join(mph, '*')):
             if not skip(fnh):
                 fnm = _filename_in_mount(mph, fnh)
@@ -382,4 +384,35 @@ def cleanup_reportfiles(report):
     else:
         raise NotImplementedError
 
-
+def create_clone_script(project, project_template = None):
+    '''
+    @summary: create a magic script to clone the project sources from gitlab
+    '''
+    if project_template is not None:
+        commitmsg = "Snapshot commit of project %s" % project_template.name_with_owner
+        script = """#! /bin/bash
+rm $0
+TMPFOLDER=$(mktemp -d)
+git clone %(url)s ${TMPFOLDER}
+cd ${TMPFOLDER}
+rm -rf ./.git/
+mv * /%(gitdir)s
+for hidden in $(echo .?* | sed s/'\.\.'//) ; do
+  mv $hidden /%(gitdir)s
+done
+cd /%(gitdir)s
+git add --all
+git commit -a -m "%(message)s"
+git push origin master
+rm -rf ${TMPFOLDER}
+        """ % { 'url': project_template.url_gitlab, 'message': commitmsg, 'gitdir': _get_mountpoint_in_container('git', project.owner) }
+    else:
+        script = """#! /bin/bash
+rm $0
+git clone %(url)s /%(gitdir)s
+        """ % { 'url': project.url_gitlab, 'gitdir': _get_mountpoint_in_container('git', project.owner)  }
+    filename = os.path.join(_get_mountpoint_in_hub('git', project.owner, project), 'clone.sh')
+    with open(filename, 'w') as f:
+        f.write(script)
+    os.chown(filename, project.owner.uid, project.owner.gid)
+    os.chmod(filename, 0b111000000)
