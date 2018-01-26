@@ -4,7 +4,6 @@ import logging
 from django.contrib import messages
 from django.conf.urls import patterns, url, include
 from django.shortcuts import render, redirect
-from django.http import HttpRequest
 from django.template import RequestContext
 
 from kooplex.hub.models import *
@@ -12,14 +11,13 @@ from kooplex.logic.spawner import spawn_project_container, stop_container
 from kooplex.logic import create_project, delete_project, configure_project
 from kooplex.logic import Repository
 from kooplex.lib.filesystem import create_clone_script
+from kooplex.lib import authorize
 
 logger = logging.getLogger(__name__)
 
 def projects(request):
     """Renders the projectlist page."""
-    assert isinstance(request, HttpRequest)
-    if request.user.is_anonymous():
-        logger.debug('User not authenticated yet --> goes to login page')
+    if not authorize(request):
         return redirect('login')
     try:
         PUBLIC = ScopeType.objects.get(name = 'public')
@@ -59,8 +57,7 @@ def projects(request):
 
 def project_new(request):
     """Handles the creation of a new project."""
-    assert isinstance(request, HttpRequest)
-    if request.user.is_anonymous():
+    if not authorize(request):
         return redirect('login')
     user = request.user
     name = request.POST['project_name'].strip()
@@ -115,8 +112,7 @@ def project_new(request):
 
 def project_configure(request):
     """Handles the project configuration."""
-    assert isinstance(request, HttpRequest)
-    if request.user.is_anonymous():
+    if not authorize(request):
         return redirect('login')
     if request.method != 'POST':
         return redirect('projects')
@@ -141,8 +137,7 @@ def project_configure(request):
 
 def project_start(request):
     """Starts. the project container."""
-    assert isinstance(request, HttpRequest)
-    if request.user.is_anonymous():
+    if not authorize(request):
         return redirect('login')
     try:
         project_id = request.GET['project_id']
@@ -161,8 +156,7 @@ def project_start(request):
 
 def project_open(request):
     """Opens the project container."""
-    assert isinstance(request, HttpRequest)
-    if request.user.is_anonymous():
+    if not authorize(request):
         return redirect('login')
     user = request.user
     project_id = request.GET['project_id']
@@ -179,8 +173,7 @@ def project_open(request):
 
 def project_stop(request):
     """Stops project and delete container."""
-    assert isinstance(request, HttpRequest)
-    if request.user.is_anonymous():
+    if not authorize(request):
         return redirect('login')
     user = request.user
     project_id = request.GET['project_id']
@@ -196,8 +189,7 @@ def project_stop(request):
 
 def project_versioning(request):
     """Handles the git."""
-    assert isinstance(request, HttpRequest)
-    if request.user.is_anonymous():
+    if not authorize(request):
         return redirect('login')
     if request.method != 'GET':
         return redirect('projects')
@@ -230,8 +222,7 @@ def project_versioning(request):
 
 def project_versioning_commit(request):
     """Handles the git."""
-    assert isinstance(request, HttpRequest)
-    if request.user.is_anonymous():
+    if not authorize(request):
         return redirect('login')
     if request.method != 'POST':
         return redirect('projects')
@@ -260,8 +251,7 @@ def project_versioning_commit(request):
 
 def project_versioning_revert(request):
     """Handles the git."""
-    assert isinstance(request, HttpRequest)
-    if request.user.is_anonymous():
+    if not authorize(request):
         return redirect('login')
     if request.method != 'POST':
         return redirect('projects')
@@ -286,8 +276,7 @@ def project_versioning_revert(request):
 
 def project_versioning_pull(request):
     """Handles the git."""
-    assert isinstance(request, HttpRequest)
-    if request.user.is_anonymous():
+    if not authorize(request):
         return redirect('login')
     if request.method != 'POST':
         return redirect('projects')

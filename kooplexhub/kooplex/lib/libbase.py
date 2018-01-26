@@ -66,3 +66,20 @@ def bash(command):
     wrap = "bash -c \"%s\""
     logger.info(command)
     subprocess.call(shlex.split(command))
+
+def authorize(request):
+    from kooplex.hub.models import User
+    from django.http import HttpRequest
+    """
+    @summary: authorize a request.
+    @param request: web server request
+    @type request: django.http.HttpRequest
+    @return: whether the user associated with the request is found in the hub db
+    @rtype: bool
+    """
+    assert isinstance(request, HttpRequest)
+    try:
+        User.objects.get(username = request.user.username)
+        return True
+    except User.DoesNotExist:
+        return False

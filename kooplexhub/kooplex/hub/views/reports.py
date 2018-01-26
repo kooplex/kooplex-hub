@@ -9,7 +9,7 @@ from django.http import HttpRequest, HttpResponse
 from django.core.urlresolvers import reverse
 from django.template import RequestContext
 
-from kooplex.lib import get_settings
+from kooplex.lib import authorize, get_settings
 from kooplex.lib.filesystem import cleanup_reportfiles
 from kooplex.hub.models import list_user_reports, list_internal_reports, list_public_reports, get_report, filter_report
 from kooplex.hub.models import ReportDoesNotExist, HtmlReport, DashboardReport, ScopeType
@@ -30,14 +30,13 @@ def group_by_project(reports):
     return reports_grouped
 
 def reports(request):
-    assert isinstance(request, HttpRequest)
     user = request.user
-    if request.user.is_anonymous():
-        reports_mine = []
-        reports_internal = []
-    else:
+    if authorize(request):
         reports_mine = list(list_user_reports(user))
         reports_internal = list(list_internal_reports(user))
+    else:
+        reports_mine = []
+        reports_internal = []
     reports_public = list(list_public_reports())
     logger.debug('Rendering reports.html')
     return render(
@@ -184,8 +183,7 @@ def _report_start_and_open(report):
 ### ###     return HttpResponseRedirect(reverse('reports'))
 
 def setreport(request):
-    assert isinstance(request, HttpRequest)
-    if request.user.is_anonymous():
+    if not authorize(request):
         return redirect('reports')
     if request.method != 'POST':
         return redirect('reports')

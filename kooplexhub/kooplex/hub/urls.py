@@ -57,7 +57,7 @@ def loginHandler(request, *v, **kw):
                 return redirect('projects')
             except User.DoesNotExist:
                 logger.warning('user %s is not a hub user, we do not log it in' % request.user)
-                messages.error(request, 'You tried to log in as %s, but as you are not a hub user we deny access' % request.user)
+                messages.error(request, 'You tried to log in as %s, but as you are not a hub user we deny access' % user)
         return redirect('login')
     return redirect('indexpage')
 
