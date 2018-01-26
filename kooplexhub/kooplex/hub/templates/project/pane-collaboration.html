@@ -1,23 +1,29 @@
 <h4>Manage members</h4>
 <div class="form-group" style="margin: 0px 5px;">
-    <div class="row">
-        <div class="col-md-1">In</div>
-        <div class="col-md-4">Name</div>
-        <div class="col-md-7">Short bio</div>
-    </div>
-    {% for user in users %}
-        {% if project.owner != user %}
-        <div class="row">
-           <div class="col-md-1  col-xs-1">
-             <input type="checkbox" name="collaborators" value="{{ user.id }}" {% if user in project.collaborators %}checked{% endif %}>
-           </div>
-           <div class="col-md-4 col-xs-4" data-toggle="tooltip" title="Username: {{ user.username }}" data-placement="right" data-html="true">
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th scope="col">Id</th>
+      <th scope="col">Name</th>
+      <th scope="col">Short Bio</th>
+      <th scope="col">Position</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for user in users %}
+    {% if project.owner != user %}
+     <tr>
+      <th scope="row"> <input type="checkbox" name="collaborators" value="{{ user.id }}" {% if user in project.collaborators %}checked{% endif %}></th>
+      <td><div data-toggle="tooltip" title="Username: {{ user.username }}" data-placement="right" data-html="true">
              {{ user.first_name }} {{ user.last_name }}
-           </div>
-           <div class="col-md-7 col-xs-7">
-              {{ user.bio }}
-           </div>
-        </div>
-        {% endif %}
-    {% endfor %}
+           </div></td>
+      <td>{{ user.bio }}</td>
+      <td> </td>
+    </tr>
+    {% endif %}
+  {% endfor %}
+  </tbody>
+</table>
+
 </div>
