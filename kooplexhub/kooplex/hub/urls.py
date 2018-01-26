@@ -5,9 +5,11 @@ from django.conf.urls import url, include
 from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponseRedirect
 from datetime import datetime
+from django.contrib import messages
 
 from kooplex.hub.forms import authenticationForm
 from kooplex.hub.views import passwordresetForm, passwordtokenForm, passwordchangeForm
+
 
 def indexpage(request):
     """Renders the home page."""
@@ -27,6 +29,9 @@ def indexpage(request):
 
 def loginHandler(request, *v, **kw):
     if request.method == 'GET':
+        if request.user.is_authenticated:
+            messages.info(request, 'You are already logged in as %s.' % request.user.username)
+            return redirect('projects')
         return login_view(request, *v, **kw)
     if request.method == 'POST':
         username = request.POST['username']
