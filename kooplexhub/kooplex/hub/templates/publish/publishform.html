@@ -13,14 +13,33 @@
         </p>
         <hr>
         {% if notebooks|length > 0  %}
-        <p>Please select the notebook to publish as a new report:</p>
-        <form action="{% url 'notebook-publishform' %}" method="post" class="form-horizontal">
+        <table class="table table-striped">
+                <thead>
+                <tr>
+                <th>
+                  Please select the notebook to publish as a new report:
+                </th>
+                </tr>
+                </thead>
+                <tbody>
+                
+                
+                <form action="{% url 'notebook-publishform' %}" method="post" class="form-horizontal">
           {% csrf_token %}
           <div class="form-group">
           {% for nbfile in notebooks %}
+          <tr><td>
              <input type="radio" name="ipynb_file" value="{{ nbfile.representation }}" {% if forloop.first %} checked {% endif %} > {{ nbfile.filename }} ({{ nbfile.volume }})<br>
+          </td></tr>
           {% endfor %}
           </div>
+                </td>
+                </tr>
+                </tbody>
+                </table>
+
+
+
           <hr>
           <ul class="nav nav-tabs">
               <li class="active"><a href="#pane_desc" data-toggle="tab">Description</a></li>
@@ -29,15 +48,28 @@
               <li><a href="#pane_unpublish" data-toggle="tab">Unpublish</a></li>
           </ul>
           <div class="tab-content">
-              <div id="pane_desc" class="tab-pane fade in active">
-                <strong>Name of the report:</strong> <input type="text" name="report_name" /><br>
-                <strong>Description:</strong> <textarea rows="6" cols="100" id="report_description" name="report_description"></textarea>
+            <div id="pane_desc" class="tab-pane fade in active">
+                 <div class="panel">
+                 <div class="panel-heading">
+                 </div>
+                  <strong>Name of the report:</strong> <input type="text" name="report_name" /><br>
+                  <strong>Description:</strong> <textarea rows="6" cols="100" id="report_description" name="report_description"></textarea>
+                </div>
               </div>
               <div id="pane_files" class="tab-pane fade">
                 {% if files %}
-                Select those files to be attached to your report:
+                <table class="table table-striped">
+                <thead>
+                <tr>
+                <th>
+                  Select those files to be attached to your report:
+                </tr>
+                </th>
+                </thead>
+                <tbody>
                 <div class="form-group">
                   {% for file in files %}
+                     <tr><td>
                      <input type="checkbox" name="other_files" value="{{ file.representation }}">
                      {% if file.isdir %}
                      <span class="glyphicon glyphicon-folder-open">
@@ -45,8 +77,11 @@
                      <span class="glyphicon glyphicon-file">
                      {% endif %}
                      {{ file.filename }} ({{ file.volume }})</span><br>
+                     </td></tr>
                   {% endfor %}
                 </div>
+                </tbody>    
+                </table>
                 {% else %}
                 <div class="alert alert-warning" role="alert">There are no files you can attach.</div>
                 {% endif %}
