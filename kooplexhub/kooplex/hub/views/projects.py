@@ -8,7 +8,7 @@ from django.http import HttpRequest
 from django.template import RequestContext
 
 from kooplex.hub.models import *
-from kooplex.logic.spawner import spawn_project_container, stop_project_container
+from kooplex.logic.spawner import spawn_project_container, stop_container
 from kooplex.logic import create_project, delete_project, configure_project
 from kooplex.logic import Repository
 from kooplex.lib.filesystem import create_clone_script
@@ -187,7 +187,7 @@ def project_stop(request):
     try:
         project = Project.objects.get(id = project_id)
         container = ProjectContainer.objects.get(user = user, project = project, is_running = True)
-        stop_project_container(container)
+        stop_container(container)
     except Project.DoesNotExist:
         messages.error(request, 'Project does not exist')
     except ProjectContainer.DoesNotExist:

@@ -24,12 +24,6 @@ class Container(models.Model):
     def __str__(self):
         return "<Container: %s of %s@%s>" % (self.name, self.user, self.project)
 
-    def init(self):
-        self.image = self.project.image
-        for vpb in VolumeProjectBinding.objects.filter(project = self.project):
-            vcb = VolumeContainerBinding(container = self, volume = vpb.volume)
-            vcb.save()
-
     @property
     def volumes(self):
         from .volume import lookup
@@ -39,6 +33,14 @@ class Container(models.Model):
 class ProjectContainer(Container):
     project = models.ForeignKey(Project, null = True)
     mark_to_remove = models.BooleanField(default = False)
+
+    def init(self):
+        container_name_info = { 'username': self.user.username, 'projectname': self.project.name_with_owner }
+        self.name = get_settings('spawner', 'pattern_containername') % container_name_info
+        self.image = self.project.image
+        for vpb in VolumeProjectBinding.objects.filter(project = self.project):
+            vcb = VolumeContainerBinding(container = self, volume = vpb.volume)
+            vcb.save()
 
     @property
     def proxy_path(self):
@@ -54,6 +56,14 @@ class ProjectContainer(Container):
         return os.path.join(get_settings('hub', 'base_url'), self.proxy_path, '?token=%s' % self.user.token)
 
     @property
+    def volumemapping(self):
+        return [
+            (get_settings('spawner', 'volume-home'), '/mnt/.volumes/home', 'rw'),
+            (get_settings('spawner', 'volume-git'), '/mnt/.volumes/git', 'rw'),
+            (get_settings('spawner', 'volume-share'), '/mnt/.volumes/share', 'rw'),
+        ]
+
+    @property
     def environment(self):
         return {
             'NB_USER': self.user.username,
@@ -67,9 +77,13 @@ class ProjectContainer(Container):
             'PR_PWN': self.project.name_with_owner,
         }
 
+
 class DashboardContainer(Container):
     from .report import DashboardReport
     report = models.ForeignKey(DashboardReport, null = True)
+
+    def init(self, container):
+        raise NotImplementedError
 
 
 class VolumeContainerBinding(models.Model):

@@ -14,13 +14,7 @@ from kooplex.lib.filesystem import cleanup_reportfiles
 from kooplex.hub.models import list_user_reports, list_internal_reports, list_public_reports, get_report, filter_report
 from kooplex.hub.models import ReportDoesNotExist, HtmlReport, DashboardReport, ScopeType
 from kooplex.hub.models import Project
-from kooplex.logic.spawner import spawn_project_container, stop_project_container
-
-#############
-##from kooplex.lib.spawner import ReportSpawner
-#FIXME:
-class ReportSpawner: pass
-#############
+from kooplex.logic.spawner import spawn_project_container
 
 logger = logging.getLogger(__name__)
 

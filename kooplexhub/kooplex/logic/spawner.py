@@ -3,75 +3,79 @@ import logging
 
 from kooplex.lib import get_settings
 from kooplex.lib import Docker
+from kooplex.hub.models import ProjectContainer, DashboardContainer
 
 logger = logging.getLogger(__name__)
 
 class Spawner:
 
-    def __init__(self, user, project, volumemapping):
-        self.user = user.user
-        self.project = project
-#        self.containertype = containertype
-        self.volumemapping = volumemapping
-        container_name_info = { 'username': user.username, 'projectname': project.name_with_owner }
-        self.container_name = get_settings('spawner', 'pattern_containername') % container_name_info
+    def __init__(self, container):
         self.docker = Docker()
-#FIXME: 
-#        logging.info("user %s, project: %s, containertype: %s" % (user, project, containertype))
+        if isinstance(container, ProjectContainer):
+            try:
+                container_from_model = ProjectContainer.objects.get(user = container.user, project = container.project)
+                logger.debug('ProjectContainer present in hubdb: %s' % container_from_model)
+                present = True
+            except ProjectContainer.DoesNotExist:
+                logger.debug('ProjectContainer not present in hubdb')
+                present = False
+        elif isinstance(container, DashboardContainer):
+            try:
+                container_from_model = DashboardContainer.objects.get(user = container.user, report = container.report)
+                logger.debug('DashboardContainer present in hubdb: %s' % container_from_model)
+                present = True
+            except ProjectContainer.DoesNotExist:
+                logger.debug('DashboardContainer not present in hubdb')
+                present = False
+        if present:
+            self.container = container_from_model
+        else:
+            container.save()
+            container.init()
+            self.container = container
+        logging.debug("spawner for container %s" % self.container)
 
-    def get_container(self):
-#FIXME: we may not need it, or may have DashboardContainer too here
-        from kooplex.hub.models import ProjectContainer
-        try:
-            # the name of the container is unique
-            return ProjectContainer.objects.get(name = self.container_name)
-        except ProjectContainer.DoesNotExist:
-            return None
+    def run_container(self): #NOTE: shall we check docker API?
+        if self.container.is_running:
+            logging.debug("container %s is running" % self.container)
+        else:
+            self.start_container()
+            logging.debug("container %s is running" % self.container)
 
-    def new_container(self):
-        from kooplex.hub.models import ProjectContainer
-#FIXME:
-        container = ProjectContainer(
-            name = self.container_name,
-            user = self.user,
-            project = self.project,
-        )
-        # now we copy information from project to container instance
-        container.save()
-        container.init()
-        return container
-
-    def start_container(self, container):
+    def start_container(self):
         from kooplex.lib.proxy import addroute
-        self.docker.run_container(container, self.volumemapping)
-        container.is_running = True
-        container.save()
-        addroute(container)
-        logger.info("container %s" % container)
+        self.docker.run_container(self.container)
+        self.container.is_running = True
+        self.container.save()
+        addroute(self.container)
+        logger.info("started %s" % self.container)
 
-    def run_container(self):
-        container = self.get_container()
-        if container is None:
-            container = self.new_container()
-        self.start_container(container)
 
 #################################################################
-#NOTE: these methods may belong to the project.py module
 
 def spawn_project_container(user, project):
-    from kooplex.lib.filesystem import G_OFFSET
-    volumemapping = [
-        (get_settings('spawner', 'volume-home'), '/mnt/.volumes/home', 'rw'),
-        (get_settings('spawner', 'volume-git'), '/mnt/.volumes/git', 'rw'),
-        (get_settings('spawner', 'volume-share'), '/mnt/.volumes/share', 'rw'),
-    ]
+    container = ProjectContainer(
+        user = user,
+        project = project,
+    )
     try:
-        spawner = Spawner(user, project, volumemapping)
+        spawner = Spawner(container)
         spawner.run_container()
     except:
         raise
 
-def stop_project_container(container):
+def spawn_dashboard_container(user, report):
+    container = DashboardContainer(
+        user = user,
+        report = report,
+    )
+    try:
+        spawner = Spawner(container)
+        spawner.run_container()
+    except:
+        raise
+
+def stop_container(container):
     from kooplex.lib.proxy import removeroute
     logger.debug(container)
     try:
@@ -81,40 +85,9 @@ def stop_project_container(container):
         pass
     Docker().stop_container(container)
 
-def remove_project_container(container):
-    stop_project_container(container)
+def remove_container(container):
+    stop_container(container)
     logger.debug(container)
     Docker().remove_container(container)
     container.delete()
 
-#################################################################
-#NOTE: these methods may belong to the report.py module
-
-## def spawn_report_container(report):
-##     from kooplex.hub.models import ContainerType
-## #    from kooplex.lib.filesystem import G_OFFSET
-##     volumemapping = [
-##         (get_settings('spawner', report-volume), '/home/', 'rw'),
-##     ]
-##     try:
-##         dashboard = ContainerType.objects.get(name = 'dashboard')
-##         spawner = Spawner(user, project, dashboard, volumemapping)
-##         spawner.run_container()
-##     except:
-##         raise
-## 
-## def stop_project_container(container):
-##     from kooplex.lib.proxy import removeroute
-##     logger.debug(container)
-##     try:
-##         removeroute(container)
-##     except KeyError:
-##         logger.warning("The proxy path was not existing: %s" % container)
-##         pass
-##     Docker().stop_container(container)
-## 
-## def remove_project_container(container):
-##     stop_project_container(container)
-##     logger.debug(container)
-##     Docker().remove_container(container)
-##     container.delete()
