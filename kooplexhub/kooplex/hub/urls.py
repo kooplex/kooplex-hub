@@ -29,9 +29,9 @@ def indexpage(request):
 
 def loginHandler(request, *v, **kw):
     if request.method == 'GET':
-        if request.user.is_authenticated:
-            messages.info(request, 'You are already logged in as %s.' % request.user.username)
-            return redirect('projects')
+#        if request.user.is_authenticated:
+#            messages.info(request, 'You are already logged in as %s.' % request.user.username)
+#            return redirect('projects')
         return login_view(request, *v, **kw)
     if request.method == 'POST':
         username = request.POST['username']
