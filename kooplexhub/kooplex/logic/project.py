@@ -98,9 +98,11 @@ def configure_project(project, image, scope, volumes, collaborators):
             logger.debug("volume project binding remains %s" % vpb)
             volumes.remove(vpb.childvolume)
         else:
+            mark_containers_remove(project)
             logger.debug("volume project binding removed %s" % vpb)
             vpb.delete()
     for volume in volumes:
+        mark_containers_remove(project)
         vpb = VolumeProjectBinding(project = project, volume = volume)
         logger.debug("volume project binding added %s" % vpb)
         vpb.save()
