@@ -1,4 +1,4 @@
-from .container import ProjectContainer, DashboardContainer, VolumeContainerBinding
+from .container import ProjectContainer, DashboardContainer, VolumeContainerBinding, LimitReached
 from .report import HtmlReport, DashboardReport, ReportDoesNotExist, list_user_reports, list_internal_reports, list_public_reports, get_report, filter_report
 from .image import Image, init_model as refresh_images
 from .project import Project, UserProjectBinding

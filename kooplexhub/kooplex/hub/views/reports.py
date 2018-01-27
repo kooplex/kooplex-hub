@@ -13,7 +13,7 @@ from kooplex.lib import authorize, get_settings
 from kooplex.lib.filesystem import cleanup_reportfiles
 from kooplex.hub.models import list_user_reports, list_internal_reports, list_public_reports, get_report, filter_report
 from kooplex.hub.models import ReportDoesNotExist, HtmlReport, DashboardReport, ScopeType
-from kooplex.hub.models import Project
+from kooplex.hub.models import Project, LimitReached
 from kooplex.logic.spawner import spawn_dashboard_container
 
 logger = logging.getLogger(__name__)
@@ -60,7 +60,7 @@ def _do_report_open(report):
         return HttpResponse(content)
     elif isinstance(report, DashboardReport):
         logger.debug("Starting Dashboard server for %s" % report)
-        return redirect(spawn_dashboard_container(report)) #FIXME: launch is not autgorized
+        return redirect(spawn_dashboard_container(report)) #FIXME: launch is not authorized
 
 def openreport(request):
     assert isinstance(request, HttpRequest)
@@ -80,9 +80,11 @@ def openreport(request):
             messages.error(request, 'You are not allowed to open this report')
     except ReportDoesNotExist:
         messages.error(request, 'Report does not exist')
+    except LimitReached as msg:
+        logger.warning(msg)
+        messages.error(request, msg)
     return redirect('reports')
     
-
 def openreport_latest(request):
     assert isinstance(request, HttpRequest)
     project_id = request.GET['project_id']

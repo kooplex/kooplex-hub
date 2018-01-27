@@ -20,14 +20,15 @@ class Spawner:
                 logger.debug('ProjectContainer not present in hubdb')
                 present = False
         elif isinstance(container, DashboardContainer):
-            try:
-                #FIXME: Anonymous
-                #container_from_model = DashboardContainer.objects.get(user = container.user, report = container.report)
-                container_from_model = DashboardContainer.objects.get(report = container.report)
-                logger.debug('DashboardContainer present in hubdb: %s' % container_from_model)
-                present = True
-            except DashboardContainer.DoesNotExist:
-                logger.debug('DashboardContainer not present in hubdb')
+        #FIXME: new for each Anonym request...
+        #    try:
+        #        #FIXME: Anonymous
+        #        #container_from_model = DashboardContainer.objects.get(user = container.user, report = container.report)
+        #        container_from_model = DashboardContainer.objects.get(report = container.report)
+        #        logger.debug('DashboardContainer present in hubdb: %s' % container_from_model)
+        #        present = True
+        #    except DashboardContainer.DoesNotExist:
+        #        logger.debug('DashboardContainer not present in hubdb')
                 present = False
         if present:
             self.container = container_from_model

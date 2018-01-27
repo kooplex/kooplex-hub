@@ -1,3 +1,5 @@
+import logging
+import re
 import os
 from django.db import models
 from django.utils import timezone
@@ -8,6 +10,8 @@ from .user import User
 from .project import Project
 from .volume import Volume, VolumeProjectBinding
 from .image import Image
+
+logger = logging.getLogger(__name__)
 
 class Container(models.Model):
     id = models.AutoField(primary_key = True)
@@ -80,6 +84,8 @@ class ProjectContainer(Container):
     def command(self):
         return get_settings('spawner', 'nbcommand')
 
+class LimitReached(Exception):
+    pass
 
 class DashboardContainer(Container):
     from .report import DashboardReport
@@ -90,19 +96,28 @@ class DashboardContainer(Container):
 
     def init(self):
         dashboardlimit = get_settings('spawner', 'max_dashboards_per_report')
-        dashboard_containers = DashboardContainer.objects.filter(report = self.report)
-        if len(dashboard_containers) >= dashboardlimit:
-            logger.warning("%s dashboard report reached the limits of %d containers" % (report, dashboardlimit))
+        dashboardnamefilter = get_settings('spawner', 'pattern_dashboard_containername_filter')
+        pool = list(range(dashboardlimit))
+        for dbc in DashboardContainer.objects.filter(report = self.report):
+            if dbc.name is None:
+                logger.warning("%s" % (dbc))
+                continue
+            _, _, used_id, _ = re.split(dashboardnamefilter, dbc.name)
+            used_id = int(used_id)
+            pool.remove(used_id)
+            logger.debug("dashboard id %d for report %s is occupied" % (used_id, self.report))
+        logger.debug("LEFT %d" % len(pool))
+        if len(pool) == 0:
+            logger.warning("%s dashboard report reached the limits of %d containers" % (self.report, dashboardlimit))
             self.delete()
-            raise Exception("cannot launch more dashboard containers for this project")
-#FIXME: calculate instance_id
-        TBD = 1
-        container_name_info = { 'instance_id': TBD, 'reportname': standardize_str(self.report.name) }
+            raise LimitReached("cannot launch more dashboard containers for report %s" % self.report)
+        container_name_info = { 'instance_id': pool.pop(), 'reportname': standardize_str(self.report.name) }
         self.name = get_settings('spawner', 'pattern_dashboard_containername') % container_name_info
         self.image = self.report.project.image
         for vpb in VolumeProjectBinding.objects.filter(project = self.report.project):
             vcb = VolumeContainerBinding(container = self, volume = vpb.volume)
             vcb.save()
+        self.save() #FIXME: breaks symmetry
 
     @property
     def proxy_path(self):
