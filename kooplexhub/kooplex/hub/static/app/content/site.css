@@ -47,6 +47,6 @@ input[type="checkbox"].input-validation-error {
 }
 
 .modal-dialog {
-    width: 50%;
-    min-width: 700px;
+    width: 90%;
+    min-width: 800px;
 }

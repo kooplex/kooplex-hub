@@ -1,16 +1,31 @@
 {% if storage_volumes %}
-  <label>Select volumes to attach to your project</label><br>
-  {% for volume in storage_volumes %}
-  <input type="checkbox" name="stg_volumes" value="{{ volume }}"
-    {% for v in project.volumes %}
-      {% if v.name = volume.name %}
-        checked
-      {% endif %}
-    {% endfor %}><span style="padding-left:10px"> <strong >{{ volume }}</strong>:  <span style="padding-left:10px"> {{ volume.description }}
-      </span></span>
-  
-  <br>
-  {% endfor %}
+
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <label>Select volumes to attach to your project</label></tr>
+      </thead>
+      <tbody>
+      <tr>
+          <th></th><th>Volume name</th><th>Description</th>
+      </tr>
+        {% for volume in storage_volumes %}
+          <tr>
+            <td>
+                <input type="checkbox" name="stg_volumes" value="{{ volume }}"
+                {% for v in project.volumes %}
+                    {% if v.name = volume.name %}
+                        checked
+                    {% endif %}
+                {% endfor %}>
+            </td>
+            <td> <strong >{{ volume }}</strong>: </td>
+            <td> {{ volume.description }} </td>
+          </tr>
+
+        {% endfor %}
+      </tbody>
+    </table>
 {% else %}
   <div class="alert alert-danger" role="alert">Currently there are no volumes you can attach.</div>
 {% endif %}
