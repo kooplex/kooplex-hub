@@ -174,6 +174,8 @@ def project_open(request):
         messages.error(request, 'Project does not exist')
     except ProjectContainer.DoesNotExist:
         messages.error(request, 'Project container is missing or stopped')
+    #except ConnectionError:
+    #    messages.error(request, 'Could not open it. Try again, please! If you keep seeing this error then ask an administrator <strong> %s </strong>'%get_settings('hub', 'adminemail'))
     return redirect('projects')
 
 
@@ -225,6 +227,9 @@ def project_versioning(request):
         )
     except Project.DoesNotExist:
         messages.error(request, 'Project does not exist')
+        return redirect('projects')
+    except ValueError:
+        messages.error(request, 'Something went wrong! Please try to start first your project. If you keep seeing this error then ask an administrator <strong> %s </strong>'%get_settings('hub', 'adminemail'))
         return redirect('projects')
 
 

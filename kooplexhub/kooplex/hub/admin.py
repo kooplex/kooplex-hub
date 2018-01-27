@@ -96,7 +96,7 @@ def refreshimages(request):
 
 def initmodel(request):
 #FIXME: authorize
-    init_containertypes()
+#    init_containertypes()
     init_scopetypes()
     return redirect('/admin')
 
