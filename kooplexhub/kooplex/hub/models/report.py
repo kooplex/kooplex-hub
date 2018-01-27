@@ -8,7 +8,7 @@ from .scope import ScopeType
 from .user import User
 from .image import Image
 
-from kooplex.lib import get_settings
+from kooplex.lib import get_settings, standardize_str
 
 class ReportDoesNotExist(Exception):
     pass
@@ -67,7 +67,7 @@ class DashboardReport(Report):
 
     @property
     def report_dir(self):
-        return "%s-%s-%s.%f" % (self.creator.username, self.project.name_with_owner, self.name, self.ts_created)
+        return "%s-%s-%s.%f" % (self.creator.username, self.project.name_with_owner, standardize_str(self.name), self.ts_created)
 
     @property
     def report_root(self):

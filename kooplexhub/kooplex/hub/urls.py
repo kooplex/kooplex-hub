@@ -1,3 +1,5 @@
+import logging
+
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.views import login as login_view
 from django.template import RequestContext
@@ -9,7 +11,9 @@ from django.contrib import messages
 
 from kooplex.hub.forms import authenticationForm
 from kooplex.hub.views import passwordresetForm, passwordtokenForm, passwordchangeForm
+from kooplex.hub.models import User
 
+logger = logging.getLogger(__name__)
 
 def indexpage(request):
     """Renders the home page."""
@@ -29,19 +33,32 @@ def indexpage(request):
 
 def loginHandler(request, *v, **kw):
     if request.method == 'GET':
-#        if request.user.is_authenticated:
-#            messages.info(request, 'You are already logged in as %s.' % request.user.username)
-#            return redirect('projects')
-        return login_view(request, *v, **kw)
+        if request.user.is_active:
+            logger.debug('%s is active' % request.user)
+            try:
+                User.objects.get(username = request.user.username)
+                logger.warning('user %s is already logged in and is a hubuser' % request.user)
+                messages.info(request, 'You are already logged in as %s' % request.user)
+                return redirect('projects')
+            except User.DoesNotExist:
+                logger.warning('user %s is not a hub user, we log it out' % request.user)
+                logout(request)
+        logger.debug('render login')
+        return login_view(request, template_name = 'auth/login.html', authentication_form = authenticationForm)
     if request.method == 'POST':
         username = request.POST['username']
         password = request.POST['password']
         user = authenticate(username = username, password = password)
         if user is not None:
-            login(request, user)
-            return redirect('projects')
-        else:
-            return redirect('login')
+            try:
+                User.objects.get(username = user.username)
+                logger.info('user %s logs in' % request.user)
+                login(request, user)
+                return redirect('projects')
+            except User.DoesNotExist:
+                logger.warning('user %s is not a hub user, we do not log it in' % request.user)
+                messages.error(request, 'You tried to log in as %s, but as you are not a hub user we deny access' % user)
+        return redirect('login')
     return redirect('indexpage')
 
 
@@ -54,22 +71,11 @@ def tutorial(request):
     assert isinstance(request, HttpRequest)
     return render(request, 'tutorial/tutorial.html')
 
-login_kwargs = {
-    'template_name': 'auth/login.html',
-    'authentication_form': authenticationForm,
-    'extra_context':
-    {
-        'next_page': '/hub/projects',
-        'year': datetime.now().year,
-        'title' : 'Login',
-    }
-}
-
 urlpatterns = [
     url(r'^/?$', indexpage, name = 'indexpage'),
     url(r'^/tutorial$', tutorial, name = 'tutorial'),
 
-    url(r'^/login/?$', loginHandler, login_kwargs, name = 'login'),
+    url(r'^/login/?$', loginHandler, name = 'login'),
     url(r'^/logout$', logoutHandler, name = 'logout'),
     url(r'^/passwordreset$', passwordresetForm, name = 'passwordreset'),
     url(r'^/passwordtoken$', passwordtokenForm, name = 'passwordresettoken'),

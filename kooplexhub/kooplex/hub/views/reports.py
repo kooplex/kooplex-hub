@@ -9,18 +9,12 @@ from django.http import HttpRequest, HttpResponse
 from django.core.urlresolvers import reverse
 from django.template import RequestContext
 
-from kooplex.lib import get_settings
+from kooplex.lib import authorize, get_settings
 from kooplex.lib.filesystem import cleanup_reportfiles
 from kooplex.hub.models import list_user_reports, list_internal_reports, list_public_reports, get_report, filter_report
 from kooplex.hub.models import ReportDoesNotExist, HtmlReport, DashboardReport, ScopeType
-from kooplex.hub.models import Project
-from kooplex.logic.spawner import spawn_project_container, stop_project_container
-
-#############
-##from kooplex.lib.spawner import ReportSpawner
-#FIXME:
-class ReportSpawner: pass
-#############
+from kooplex.hub.models import Project, LimitReached
+from kooplex.logic.spawner import spawn_dashboard_container
 
 logger = logging.getLogger(__name__)
 
@@ -36,14 +30,13 @@ def group_by_project(reports):
     return reports_grouped
 
 def reports(request):
-    assert isinstance(request, HttpRequest)
     user = request.user
-    if request.user.is_anonymous():
-        reports_mine = []
-        reports_internal = []
-    else:
+    if authorize(request):
         reports_mine = list(list_user_reports(user))
         reports_internal = list(list_internal_reports(user))
+    else:
+        reports_mine = []
+        reports_internal = []
     reports_public = list(list_public_reports())
     logger.debug('Rendering reports.html')
     return render(
@@ -66,9 +59,8 @@ def _do_report_open(report):
         logger.debug("Dumping reportfile %s" % report.filename_report_html)
         return HttpResponse(content)
     elif isinstance(report, DashboardReport):
-        logger.debug("Starting Dashboard server for %s" % report.displaytype)
-        _report_start_and_open(report)
-        raise NotImplementedError
+        logger.debug("Starting Dashboard server for %s" % report)
+        return redirect(spawn_dashboard_container(report)) #FIXME: launch is not authorized
 
 def openreport(request):
     assert isinstance(request, HttpRequest)
@@ -88,9 +80,11 @@ def openreport(request):
             messages.error(request, 'You are not allowed to open this report')
     except ReportDoesNotExist:
         messages.error(request, 'Report does not exist')
+    except LimitReached as msg:
+        logger.warning(msg)
+        messages.error(request, msg)
     return redirect('reports')
     
-
 def openreport_latest(request):
     assert isinstance(request, HttpRequest)
     project_id = request.GET['project_id']
@@ -109,22 +103,6 @@ def openreport_latest(request):
         messages.error(request, 'Report does not exist')
     return redirect('reports')
 
-
-def _report_start_and_open(report):
-    """Starts. the Dashboard report container."""
-    url_with_token  = spawn_project_container(report)
-    #time.sleep(4)
-#    except KeyError:
-#        return redirect('/')
-#    except Project.DoesNotExist:
-#        messages.error(request, 'Project does not exist')
-#    except UserProjectBinding.DoesNotExist:
-#        messages.error(request, 'You are not authorized to start that project')
-#    return redirect('projects')
-
-
-#        container = Container.objects.get(user = user, project = project, is_running = True)
-    return redirect(url_with_token)
 
 
 ### ### def container_report_start(request):
@@ -190,8 +168,7 @@ def _report_start_and_open(report):
 ### ###     return HttpResponseRedirect(reverse('reports'))
 
 def setreport(request):
-    assert isinstance(request, HttpRequest)
-    if request.user.is_anonymous():
+    if not authorize(request):
         return redirect('reports')
     if request.method != 'POST':
         return redirect('reports')

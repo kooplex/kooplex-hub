@@ -52,15 +52,15 @@ class Docker:
         for item in self.client.containers(all = True):
             # docker API prepends '/' in front of container names
             if '/' + container.name in item['Names']:
-                logger.debug("Get container %s"%container.name)
+                logger.debug("Get container %s" % container.name)
                 return item
         return None
 
-    def create_container(self, container, volumemapping):
+    def create_container(self, container):
         volumes = []    # the list of mount points in the container
         binds = {}      # a mapping dictionary of the container mounts
         # the bare minimum like for a notebook: home, git and share folders
-        for vol, mp, mode in volumemapping:
+        for vol, mp, mode in container.volumemapping:
             volumes.append(mp)
             binds[vol] = { 'bind': mp, 'mode': mode }
         # additional volumes specified by the owner
@@ -74,26 +74,28 @@ class Docker:
         )
         networking_config = { 'EndpointsConfig': { self.network: {} } }
         ports = [ 8000 ] #FIXME
-        self.client.create_container(
-            name = container.name,
-            image = container.image.imagename,
-            detach = True,
-            hostname = container.name,
-            host_config = host_config,
-            networking_config = networking_config,
-        #    command = container.command, #for notebook it is not set
-            environment = container.environment,
-            volumes = volumes,
-            ports = ports
-        )
+        args = {
+            'name': container.name,
+            'image': container.image.imagename,
+            'detach': True,
+            'hostname': container.name,
+            'host_config': host_config,
+            'networking_config': networking_config,
+            'environment': container.environment,
+            'volumes': volumes,
+            'ports': ports,
+        }
+        if len(container.command):
+            args['command'] = container.command
+        self.client.create_container(**args)
         logger.debug("Container created")
         return self.get_container(container)
 
-    def run_container(self, container, volumemapping):
+    def run_container(self, container):
         docker_container_info = self.get_container(container)
         if docker_container_info is None:
             logger.debug("Container did not exist, Creating new one")
-            docker_container_info = self.create_container(container, volumemapping)
+            docker_container_info = self.create_container(container)
         container_state = docker_container_info['Status']
         if container_state == 'Created' or container_state.startswith('Exited'):
             logger.debug("Starting container")

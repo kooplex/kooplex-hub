@@ -2,6 +2,7 @@
 @author: Jozsef Steger
 @summary: 
 """
+import re
 import time
 import logging
 import subprocess
@@ -66,3 +67,34 @@ def bash(command):
     wrap = "bash -c \"%s\""
     logger.info(command)
     subprocess.call(shlex.split(command))
+
+def authorize(request):
+    from kooplex.hub.models import User
+    from django.http import HttpRequest
+    """
+    @summary: authorize a request.
+    @param request: web server request
+    @type request: django.http.HttpRequest
+    @return: whether the user associated with the request is found in the hub db
+    @rtype: bool
+    """
+    assert isinstance(request, HttpRequest)
+    try:
+        User.objects.get(username = request.user.username)
+        return True
+    except User.DoesNotExist:
+        return False
+
+def standardize_str(s):
+    '''
+    @summary: get rid of tricky characters in a string:
+              1. lower the string
+              2. keep english letters amd numbers
+    @param s: the string to clean
+    @type s: str
+    @returns: rhe cleaned string
+    @raises AssertionError, if not characters are left after cleaning
+    '''
+    s_clean = "".join(re.split(r'[^0-9a-z]*([a-z0-9]+)[^0-9a-z]*', s.lower()))
+    assert len(s_clean), "No characters kept after standardization"
+    return s_clean
