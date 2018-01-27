@@ -1,4 +1,4 @@
-from .libbase import authorize, get_settings, keeptrying, bash
+from .libbase import authorize, get_settings, keeptrying, bash, standardize_str
 
 from .docker import Docker
 from .gitlab import  Gitlab

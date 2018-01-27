@@ -70,11 +70,11 @@ def project_new(request):
     volumes.extend( [ StorageVolume.objects.get(name = x) for x in request.POST.getlist('storage_volumes') ] )
     logger.debug('New project to be created: %s' % name)
     stop = False
-    if not re.match(r'^[a-zA-Z][0-9a-zA-Z_-]*$', name):
-        messages.error(request, 'For project name specification please use only Upper/lower case letters, hyphens and underscores.')
+    if not re.match(r'^[a-zA-Z][0-9a-zA-Z_\. -]*$', name):
+        messages.error(request, 'For project name specification please use only Upper/lower case letters, hyphens, underscores, space and period.')
         stop = True
-    if not re.match(r'^[0-9a-zA-Z_ -]*$', description):
-        messages.error(request, 'In your project description use only Upper/lower case letters, hyphens, spaces and underscores.')
+    if not re.match(r'^[0-9a-zA-Z_\. -]*$', description):
+        messages.error(request, 'In your project description use only Upper/lower case letters, hyphens, spaces, underscores and period.')
         stop = True
     if stop:
         return redirect('projects')

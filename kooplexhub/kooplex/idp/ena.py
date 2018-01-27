@@ -4,7 +4,7 @@ import requests
 import base64
 from random import randint
 
-from kooplex.lib import get_settings, keeptrying
+from kooplex.lib import get_settings, keeptrying, standardize_str
 from .authentication import create_user
 from kooplex.hub.models import User
 
@@ -32,7 +32,7 @@ class AuthBackend:
         if status_code != 200:
             logger.warning('user %s is not authenticated' % username)
             return None
-        mapped_username = username.replace('-', '').lower()
+        mapped_username = standardize_str(username)
         try:
             return User.objects.get(username = mapped_username)
         except User.DoesNotExist:

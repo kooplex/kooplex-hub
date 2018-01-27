@@ -1,6 +1,6 @@
 from django.db import models
 
-from kooplex.lib import get_settings
+from kooplex.lib import get_settings, standardize_str
 
 from .user import User
 from .image import Image
@@ -23,7 +23,7 @@ class Project(models.Model):
 
     @property
     def name_with_owner(self):
-        return "%s-%s" % (self.name.lower(), self.owner.username)
+        return "%s-%s" % (standardize_str(self.name), self.owner.username)
 
     @property
     def collaborators(self):
@@ -40,7 +40,7 @@ class Project(models.Model):
     def url_gitlab(self):
         info = {
             'username': self.owner.username,
-            'projectname': self.name,
+            'projectname': standardize_str(self.name),
         }
         return get_settings('gitlab', 'pattern_urlproject') % info
 

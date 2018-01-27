@@ -81,9 +81,9 @@ class Docker:
             'hostname': container.name,
             'host_config': host_config,
             'networking_config': networking_config,
-            'environment' container.environment,
-            'volumes' volumes,
-            'ports' ports,
+            'environment': container.environment,
+            'volumes': volumes,
+            'ports': ports,
         }
         if len(container.command):
             args['command'] = container.command
