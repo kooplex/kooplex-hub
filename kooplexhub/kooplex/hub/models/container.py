@@ -2,7 +2,7 @@ import os
 from django.db import models
 from django.utils import timezone
 
-from kooplex.lib import get_settings
+from kooplex.lib import get_settings, standardize_str
 
 from .user import User
 from .project import Project
@@ -19,6 +19,10 @@ class Container(models.Model):
 
     def __lt__(self, c):
         return self.launched_at < c.launched_at
+
+    @property
+    def url(self):
+        return "http://%s:%d" % (self.name, 8000) #FIXME: PORT hardcoded
 
     @property
     def volumes(self):
@@ -45,10 +49,6 @@ class ProjectContainer(Container):
     def proxy_path(self):
         info = { 'containername': self.name }
         return get_settings('spawner', 'pattern_proxypath') % info
-
-    @property
-    def url(self):
-        return "http://%s:%d" % (self.name, 8000) #FIXME: PORT hardcoded
 
     @property
     def url_with_token(self):
@@ -88,8 +88,7 @@ class DashboardContainer(Container):
     def __str__(self):
         return "<DashboardContainer: %s of %s@%s>" % (self.name, self.user, self.report)
 
-    def init(self, container):
-        raise NotImplementedError
+    def init(self):
         dashboardlimit = get_settings('spawner', 'max_dashboards_per_report')
         dashboard_containers = DashboardContainer.objects.filter(report = self.report)
         if len(dashboard_containers) >= dashboardlimit:
@@ -97,7 +96,8 @@ class DashboardContainer(Container):
             self.delete()
             raise Exception("cannot launch more dashboard containers for this project")
 #FIXME: calculate instance_id
-        container_name_info = { 'instance_id': TBD, 'reportname': self.report.name }
+        TBD = 1
+        container_name_info = { 'instance_id': TBD, 'reportname': standardize_str(self.report.name) }
         self.name = get_settings('spawner', 'pattern_dashboard_containername') % container_name_info
         self.image = self.report.project.image
         for vpb in VolumeProjectBinding.objects.filter(project = self.report.project):
@@ -106,11 +106,8 @@ class DashboardContainer(Container):
 
     @property
     def proxy_path(self):
-        raise NotImplementedError
-
-    @property
-    def url(self):
-        raise NotImplementedError
+        info = { 'containername': self.name }
+        return get_settings('spawner', 'pattern_proxypath') % info
 
     @property
     def volumemapping(self):
@@ -120,7 +117,15 @@ class DashboardContainer(Container):
 
     @property
     def environment(self):
-        raise NotImplementedError
+        return { #FIXME: revise
+            'NB_USER': self.report.creator.username,
+            'NB_UID': 0, #FIXME
+            'NB_GID': 0, #FIXME
+            'NB_URL': self.proxy_path,
+            'NB_PORT': 8000,
+            'NB_TOKEN': self.report.password,
+            'P': os.path.join('/mnt/.volumes/reports', self.report.report_dir),
+        }
 
     @property
     def command(self):

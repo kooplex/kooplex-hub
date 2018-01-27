@@ -21,10 +21,12 @@ class Spawner:
                 present = False
         elif isinstance(container, DashboardContainer):
             try:
-                container_from_model = DashboardContainer.objects.get(user = container.user, report = container.report)
+                #FIXME: Anonymous
+                #container_from_model = DashboardContainer.objects.get(user = container.user, report = container.report)
+                container_from_model = DashboardContainer.objects.get(report = container.report)
                 logger.debug('DashboardContainer present in hubdb: %s' % container_from_model)
                 present = True
-            except ProjectContainer.DoesNotExist:
+            except DashboardContainer.DoesNotExist:
                 logger.debug('DashboardContainer not present in hubdb')
                 present = False
         if present:
@@ -64,14 +66,16 @@ def spawn_project_container(user, project):
     except:
         raise
 
-def spawn_dashboard_container(user, report):
+def spawn_dashboard_container(report):
     container = DashboardContainer(
-        user = user,
+#FIXME: user is not used unauthenticated launch
+#        user = user,
         report = report,
     )
     try:
         spawner = Spawner(container)
         spawner.run_container()
+        return container.proxy_path
     except:
         raise
 

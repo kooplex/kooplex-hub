@@ -14,7 +14,7 @@ from kooplex.lib.filesystem import cleanup_reportfiles
 from kooplex.hub.models import list_user_reports, list_internal_reports, list_public_reports, get_report, filter_report
 from kooplex.hub.models import ReportDoesNotExist, HtmlReport, DashboardReport, ScopeType
 from kooplex.hub.models import Project
-from kooplex.logic.spawner import spawn_project_container
+from kooplex.logic.spawner import spawn_dashboard_container
 
 logger = logging.getLogger(__name__)
 
@@ -59,9 +59,8 @@ def _do_report_open(report):
         logger.debug("Dumping reportfile %s" % report.filename_report_html)
         return HttpResponse(content)
     elif isinstance(report, DashboardReport):
-        logger.debug("Starting Dashboard server for %s" % report.displaytype)
-        _report_start_and_open(report)
-        raise NotImplementedError
+        logger.debug("Starting Dashboard server for %s" % report)
+        return redirect(spawn_dashboard_container(report)) #FIXME: launch is not autgorized
 
 def openreport(request):
     assert isinstance(request, HttpRequest)
@@ -102,22 +101,6 @@ def openreport_latest(request):
         messages.error(request, 'Report does not exist')
     return redirect('reports')
 
-
-def _report_start_and_open(report):
-    """Starts. the Dashboard report container."""
-    url_with_token  = spawn_project_container(report)
-    #time.sleep(4)
-#    except KeyError:
-#        return redirect('/')
-#    except Project.DoesNotExist:
-#        messages.error(request, 'Project does not exist')
-#    except UserProjectBinding.DoesNotExist:
-#        messages.error(request, 'You are not authorized to start that project')
-#    return redirect('projects')
-
-
-#        container = Container.objects.get(user = user, project = project, is_running = True)
-    return redirect(url_with_token)
 
 
 ### ### def container_report_start(request):
