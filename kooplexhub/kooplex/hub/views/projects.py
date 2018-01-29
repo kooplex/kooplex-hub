@@ -9,7 +9,7 @@ from django.template import RequestContext
 from kooplex.hub.models import *
 from kooplex.logic.spawner import spawn_project_container, stop_container
 from kooplex.logic import create_project, delete_project, configure_project
-from kooplex.logic import Repository
+from kooplex.logic import Repository, NotCheckedOut
 from kooplex.lib.filesystem import create_clone_script
 from kooplex.lib import authorize
 
@@ -197,9 +197,13 @@ def project_versioning(request):
     try:
         project = Project.objects.get(id = request.GET.get('project_id', -1))
         if project.owner != user and not user in project.collaborators:
-            messages.error(request, 'You are not allowed to version control this project')
+            messages.error(request, 'You are not allowed to version control this project.')
             return redirect('projects')
-        repo = Repository(user, project)
+        try:
+            repo = Repository(user, project)
+        except NotCheckedOut:
+            messages.error(request, 'You are not allowed to version control this project until you first start the project container.')
+            return redirect('projects')
         git_log = repo.log()
         git_files = repo.lsfiles()
         git_changed = repo.remote_changed()

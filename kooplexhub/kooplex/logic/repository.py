@@ -13,6 +13,9 @@ from .impersonator import get_impersonator_container
 
 logger = logging.getLogger(__name__)
 
+class NotCheckedOut(Exception):
+    pass
+
 class Repository:
 
     def __init__(self, user, project):
@@ -20,6 +23,12 @@ class Repository:
         self.project = project
         self.container = get_impersonator_container()
         self.docker = Docker()
+
+        command = "ls ~/git/.git"
+        response = self.docker.execute2(self.container, command)
+        if self.docker.check['ExitCode'] == 2:
+            raise NotCheckedOut(response)
+
         command = '/usr/local/bin/init-ssh-agent.sh %s' % self.user.username
         self.docker.execute2(self.container, command)
         logger.debug('initialized repo: user: %s, project: %s' % (user, project))
