@@ -35,7 +35,7 @@ class Gitlab:
         kw = {
             'url': os.path.join(self.base_url, 'projects'),
             'headers': { 'PRIVATE-TOKEN': self.token },
-            'data': { 'name': project.name, 'visibility': project.scope.name, 'description': project.description }
+            'data': { 'name': project.gitlabname, 'visibility': project.scope.name, 'description': project.description }
         }
         response = keeptrying(requests.post, 3, **kw)
         assert response.status_code == 201, response.json()

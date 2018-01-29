@@ -19,6 +19,7 @@ class Docker:
     def __init__(self):
         self.client = Client(base_url = self.base_url)
         logger.debug("Client init")
+        self.check = None
 
     def list_imagenames(self):
         logger.debug("Listing imagenames")
@@ -133,6 +134,7 @@ class Docker:
         execution = self.client.exec_create(container = container.name, cmd = shlex.split(command))
         response = self.client.exec_start(exec_id = execution['Id'], stream = False)
         check = self.client.exec_inspect(exec_id = execution['Id'])
+        self.check = check
         if check['ExitCode'] != 0:
             logger.error('Execution %s in %s failed -- %s' % (command, container, check))
         return response.decode()
