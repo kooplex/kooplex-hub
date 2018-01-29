@@ -1,9 +1,24 @@
 <div class="modal-content">
     <form action="{% url 'project-revert' %}" method="post" class="form-horizontal">
   {% csrf_token %}
-  <div class="panel-heading">
+
+<div class="panel panel-default ">
+
+<div class="panel-heading">
+<div style="display: inline-block;">
     <h4>Restore your project <strong>{{ project.name }}</strong> to a former state</h4>
-  </div>
+    </div>
+    <div style="float: right;">
+      <a href="/hub/projects">
+        <button role="button" type="button" class="btn btn-default" style="padding: 3px 6px 6px 6px">
+          <span class="glyphicon glyphicon-arrow-left" aria-hidden="true">
+          Back to projects</span>
+        </button>
+      </a>
+</div>
+</div>
+
+
   {% if changedremote %}
     <div class="alert alert-warning">There are some remote changes. Please update your project and see changes before trying to revert to a former state.</div>
   {% else %}
@@ -31,5 +46,6 @@ git push
       <input type="submit" name="button" value="Cancel" class="btn btn-secondary" />
     </div>
   {% endif %}
+</div>
 </form>
 </div>

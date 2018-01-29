@@ -1,9 +1,23 @@
 <div class="modal-content">
     <form action="{% url 'project-pull' %}" method="post" class="form-horizontal">
   {% csrf_token %}
-  <div class="panel-heading">
+
+<div class="panel panel-default ">
+
+<div class="panel-heading">
+  <div style="display: inline-block;">
     <h4>Update your project <strong>{{ project.name }}</strong> to remote changes</h4>
+    </div>
+    <div style="float: right;">
+      <a href="/hub/projects">
+        <button role="button" type="button" class="btn btn-default" style="padding: 3px 6px 6px 6px">
+          <span class="glyphicon glyphicon-arrow-left" aria-hidden="true">
+          Back to projects</span>
+        </button>
+      </a>
   </div>
+</div>
+
   {% if changedremote %}
     <div class="panel-body">
       <input type="hidden" name="project_id" value="{{ project.id }}" />
@@ -22,6 +36,7 @@ git pull
    {% else %}
      <div class="alert alert-warning">You have nothing to pull yet.</div>
    {% endif %}
+</div>
 </form>
 
 </div>

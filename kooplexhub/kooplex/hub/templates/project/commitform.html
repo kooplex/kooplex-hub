@@ -1,26 +1,54 @@
 <div class="modal-content">
     <form action="{% url 'project-commit' %}" method="post" class="form-horizontal">
   {% csrf_token %}
-  <div class="panel-heading">
-    <h4>Commit changes for project <strong>{{ project.name }}</strong></h4>
-  </div>
+
+<div class="panel panel-default ">
+
+<div class="panel-heading">
+<div style="display: inline-block;">
+      <h4>Commit changes for project <strong>tyjtjy</strong></h4>
+    </div>
+    <div style="float: right;">
+      <a href="/hub/projects">
+        <button role="button" type="button" class="btn btn-default" style="padding: 3px 6px 6px 6px">
+          <span class="glyphicon glyphicon-arrow-left" aria-hidden="true">
+          Back to projects</span>
+        </button>
+      </a>
+</div>
+</div>
   {% if committable_dict.modified or committable_dict.deleted or committable_dict.other %}
     <div class="panel-body">
-      <label>Select the files you want to commit:</label>
       <div class="form-group">
+          <table class="table table-striped">    
+           <thead><tr><th colspan=3>Select the files you want to commit:</th></tr></thead>
+           <tbody>
+            <tr><th></th><th>Filename</th><th>Status</th></tr>
         {% for committable in committable_dict.deleted %}
-          <input type="checkbox" value="{{ committable }}" name="deleted_files">
-          {{ committable }} (deleted)<br>
+          <tr>
+            <td> <input type="checkbox" value="{{ committable }}" name="deleted_files"></td>
+            <td> {{ committable }} </td>
+            <td> (deleted) </td>
+          </tr>
         {% endfor %}
         {% for committable in committable_dict.modified %}
-          <input type="checkbox" value="{{ committable }}" name="modified_files">
-          {{ committable }} (modified)<br>
+          <tr>
+            <td> <input type="checkbox" value="{{ committable }}" name="modified_files"></td>
+            <td> {{ committable }} </td>
+            <td> (modified) </td>
+          </tr>
         {% endfor %}
         {% for committable in committable_dict.other %}
-          <input type="checkbox" value="{{ committable }}" name="other_files">
-          {{ committable }} (untracted/renamed/new)<br>
+          <tr>
+            <td> <input type="checkbox" value="{{ committable }}" name="other_files"> </td>
+            <td> {{ committable }} </td>
+            <td> (untracted/renamed/new) </td>
+          </tr>
         {% endfor %}
+        </tbody>
+        </table>
       </div> <!-- form-group -->
+      
       <label>Your commit message:</label>
       <input id="id_message" type="text" name="message" value="Update the project file(s)">
       <input type="hidden" name="project_id" value="{{ project.id }}" />
@@ -42,6 +70,7 @@ git push
    {% else %}
      <div class="alert alert-warning">You have nothing to commit yet.</div>
    {% endif %}
+</div>
 </form>
 </div>
 

@@ -1,12 +1,22 @@
 {% extends "app/layout.html" %}
 {% block content %}
-<div class="modal-content">
+<div class="modal-content" style="margin-top: 40px;">
 <div>
 
     <div class="panel panel-default ">
       <div class="panel-heading">
-        <h4>Publish your work</h4>
-      </div>    <!-- heading -->
+        <div style="display: inline-block;">
+           <h4>Publish your work</h4>
+        </div>
+        <div style="float: right;">
+          <a href="/hub/projects">
+             <button role="button" type="button" class="btn btn-default" style="padding: 3px 6px 6px 6px">
+             <span class="glyphicon glyphicon-arrow-left" aria-hidden="true">Back to projects</span>
+             </button>
+             </a>
+        </div>
+      </div>
+
       <div class="panel-body" style="padding-left: 30px;">
         <p>Notebooks can be published as static (html) or as interactive (dashboard) documents. These documents are available at the
            <a href="{% url 'reports' %}" target="_blank" >Reports</a> section.
