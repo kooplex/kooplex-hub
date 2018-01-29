@@ -380,7 +380,7 @@ def copy_dashboardreport_in_place(report, files):
         dir_util.mkpath(dir_target)
         file_util.copy_file(t['filename_in_hub'], dir_target)
         logger.debug('cp %s -> %s' % (t['filename_in_hub'], dir_target))
-    _chown_recursive(report_root, get_settings('dashboard', 'uid'), get_settings('dashboard', 'gid'))
+    _chown_recursive(report_root, get_settings('ldap', 'reportuid'), get_settings('ldap', 'reportgid'))
     logger.info('Report %s -> %s' % (report, report_root))
 
 def cleanup_reportfiles(report):
