@@ -26,6 +26,10 @@ class Project(models.Model):
         return "%s-%s" % (standardize_str(self.name), self.owner.username)
 
     @property
+    def gitlabname(self):
+        return standardize_str(self.name)
+
+    @property
     def collaborators(self):
         for upb in UserProjectBinding.objects.filter(project = self):
             yield upb.user
@@ -40,7 +44,7 @@ class Project(models.Model):
     def url_gitlab(self):
         info = {
             'username': self.owner.username,
-            'projectname': standardize_str(self.name),
+            'projectname': self.gitlabname,
         }
         return get_settings('gitlab', 'pattern_urlproject') % info
 
