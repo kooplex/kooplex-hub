@@ -14,7 +14,7 @@ from kooplex.lib.filesystem import cleanup_reportfiles
 from kooplex.hub.models import list_user_reports, list_internal_reports, list_public_reports, get_report, filter_report
 from kooplex.hub.models import ReportDoesNotExist, HtmlReport, DashboardReport, ScopeType
 from kooplex.hub.models import Project, LimitReached
-from kooplex.logic.spawner import spawn_dashboard_container
+from kooplex.logic.spawner import spawn_dashboard_container, remove_container
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +84,7 @@ def openreport(request):
         logger.warning(msg)
         messages.error(request, msg)
     return redirect('reports')
-    
+
 def openreport_latest(request):
     assert isinstance(request, HttpRequest)
     project_id = request.GET['project_id']
@@ -98,65 +98,24 @@ def openreport_latest(request):
         for report in reports:
             if report.is_user_allowed(user):
                 return _do_report_open(report)
-        messages.error(request, 'You are not allowed to open this report')
+        messages.error(request, 'You are not allowed to open this report.')
     except ReportDoesNotExist:
         messages.error(request, 'Report does not exist')
     return redirect('reports')
 
 
+def stop_reportcontainer(request):
+    assert isinstance(request, HttpRequest)
+    containername = request.GET['containername']
+    try:
+        container = DashboardContainer.objects.get(name = containername) #FIXME: we should authorize by browser id
+        remove_container(container)
+        logger.info('report container %s is removed' % container)
+    except DashboardContainer.DoesNotExist:
+        messages.error(request, 'Reportserver container is not found.')
+    return redirect('reports')
 
-### ### def container_report_start(request):
-### ### #FIXME: needs revision and error handling
-### ###     assert isinstance(request, HttpRequest)
-### ###     #CHECK how many report servers are running and shutdown the oldest one
-### ###     notebooks = Notebook.objects.filter(type="report")
-### ###     max_number_of_report_servers =  get_settings('report_server', 'max_number', None, 5)
-### ###     if len(notebooks) > max_number_of_report_servers:
-### ###         notebook=sorted(notebooks)[0]
-### ###         project = Project.objects.get(id=notebook.project_id)
-### ###         spawner = ReportSpawner(project=project, image="none", report=None)
-### ###         spawner.delete_notebook(notebook)
-### ### 
-### ###     report_id = request.GET['report_id']
-### ###     report = Report.objects.get(id = report_id)
-### ###     if report.image == "":
-### ###         report.image = report.project.image
-### ### 
-### ###     spawner = ReportSpawner( project = report.project, image = report.image, report = report)
-### ###     notebook = spawner.make_notebook()
-### ###     notebook = spawner.start_notebook(notebook)
-### ### 
-### ###     session = spawner.start_session(notebook, report.target_, 'python3', notebook.name)
-### ###     session.report_id = report.id
-### ###     session.save()
-### ###     return HttpResponseRedirect(notebook.external_url)
-### ### 
-### ### def container_report_stop(request):
-### ### #FIXME: needs revision and error handling
-### ###     assert isinstance(request, HttpRequest)
-### ###     report_id = request.GET['report_id']
-### ###     report = Report.objects.get(id=report_id)
-### ###     notebook = Notebook.objects.filter(username="none",id=report_id)[0]
-### ### 
-### ###     spawner = ReportSpawner(project=report.project, image=report.image, report=report)
-### ###     spawner.delete_notebook(notebook)
-### ###     # Change/Save project status
-### ###     # project.session = None
-### ###     # project.save()
-### ### 
-### ###     return HttpResponseRedirect(HUB_NOTEBOOKS_URL)
-### ###     report_id = request.GET['report_id']
-### ###     report = Report.objects.get(id=report_id)
-### ###     #spawner = ReportSpawner(report, image=report.image)
-### ###     spawner = ReportSpawner( project=report.project, image=report.image, report=report)
-### ###     notebook = spawner.ensure_notebook_running()
-### ### 
-### ###     session = spawner.start_session(report.target_, 'python3', notebook.name, notebook.name)
-### ###     session.report_id = report.id
-### ###     session.save()
-### ###     print_debug("Opening session, Finished")
-### ###     return HttpResponseRedirect(reverse('reports'))
-### ### 
+
 ### ### def container_report_all_stop(request):
 ### ###     assert isinstance(request, HttpRequest)
 ### ###     notebooks = Notebook.objects.filter(type="report")
@@ -193,8 +152,7 @@ urlpatterns = [
     url(r'^/?$', reports, name = 'reports'),
     url(r'^/open$', openreport, name='report-open'),
     url(r'^/openlatest$', openreport_latest, name='report-openlatest'),
-#    url(r'^rstart$', container_report_start, name='report-start'),
-#    url(r'^reports-stop$', container_report_all_stop, name='report-all-stop'),
+    url(r'^/stop$', stop_reportcontainer, name='report-all-stop'),
     url(r'^/settings$', setreport, name='report-settings'),
 ]
 
