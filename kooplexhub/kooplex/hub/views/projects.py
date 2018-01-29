@@ -7,11 +7,12 @@ from django.shortcuts import render, redirect
 from django.template import RequestContext
 
 from kooplex.hub.models import *
+
 from kooplex.logic.spawner import spawn_project_container, stop_container
 from kooplex.logic import create_project, delete_project, configure_project
 from kooplex.logic import Repository, NotCheckedOut
 from kooplex.lib.filesystem import create_clone_script
-from kooplex.lib import authorize
+from kooplex.lib import authorize, get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -225,7 +226,7 @@ def project_versioning(request):
         messages.error(request, 'Project does not exist')
         return redirect('projects')
     except ValueError:
-        messages.error(request, 'Something went wrong! Please try to start first your project. If you keep seeing this error then ask an administrator <strong> %s </strong>'%get_settings('hub', 'adminemail'))
+        messages.error(request, 'Something went wrong! Please try to start first your project. If you keep seeing this error then ask an administrator %s '%get_settings('hub', 'adminemail'))
         return redirect('projects')
 
 
