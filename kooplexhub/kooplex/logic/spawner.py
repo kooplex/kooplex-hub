@@ -76,7 +76,7 @@ def spawn_dashboard_container(report):
     try:
         spawner = Spawner(container)
         spawner.run_container()
-        return container.url
+        return container.url_external
     except:
         raise
 

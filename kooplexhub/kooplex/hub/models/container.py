@@ -55,7 +55,7 @@ class ProjectContainer(Container):
             vcb.save()
 
     @property
-    def url_with_token(self):
+    def url_external(self):
         return os.path.join(get_settings('hub', 'base_url'), self.proxy_path, '?token=%s' % self.user.token)
 
     @property
@@ -134,8 +134,8 @@ class DashboardContainer(Container):
         }
 
     @property
-    def url(self):
-        return os.path.join(get_settings('hub', 'base_url'), self.proxy_path, '%s?dashboard' % self.report.notebook_filename)
+    def url_external(self):
+        return os.path.join(get_settings('hub', 'base_url'), self.proxy_path, 'notebooks', '%s?dashboard' % self.report.notebook_filename)
 
 
 

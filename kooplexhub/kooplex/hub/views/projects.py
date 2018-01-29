@@ -164,7 +164,7 @@ def project_open(request):
     try:
         project = Project.objects.get(id = project_id)
         container = ProjectContainer.objects.get(user = user, project = project, is_running = True)
-        return redirect(container.url_with_token)
+        return redirect(container.url_external)
     except Project.DoesNotExist:
         messages.error(request, 'Project does not exist')
     except ProjectContainer.DoesNotExist:
