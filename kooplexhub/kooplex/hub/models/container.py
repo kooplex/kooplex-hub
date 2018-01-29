@@ -129,7 +129,7 @@ class DashboardContainer(Container):
     @property
     def volumemapping(self):
         return [
-            (get_settings('volumes', 'dashboardreport'), '/mnt/.volumes/reports', 'ro'),
+            (get_settings('spawner', 'volume-dashbaord-report'), '/mnt/.volumes/reports', 'ro'),
         ]
 
     @property
