@@ -80,9 +80,6 @@ class ProjectContainer(Container):
             'PR_PWN': self.project.name_with_owner,
         }
 
-    @property
-    def command(self):
-        return get_settings('spawner', 'nbcommand')
 
 class LimitReached(Exception):
     pass
@@ -132,19 +129,14 @@ class DashboardContainer(Container):
 
     @property
     def environment(self):
-        return { #FIXME: revise
+        return {
             'NB_USER': self.report.creator.username,
-            'NB_UID': 0, #FIXME
-            'NB_GID': 0, #FIXME
             'NB_URL': self.proxy_path,
             'NB_PORT': 8000,
             'NB_TOKEN': self.report.password,
-            'P': os.path.join('/mnt/.volumes/reports', self.report.report_dir),
+            'REPORT_DIR': os.path.join('/mnt/.volumes/reports', self.report.report_dir),
+            'REPORT_FILE': self.report.notebook_filename,
         }
-
-    @property
-    def command(self):
-        return get_settings('spawner', 'dbcommand')
 
 
 class VolumeContainerBinding(models.Model):

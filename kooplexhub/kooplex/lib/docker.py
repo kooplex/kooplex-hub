@@ -86,8 +86,6 @@ class Docker:
             'volumes': volumes,
             'ports': ports,
         }
-        if len(container.command):
-            args['command'] = container.command
         self.client.create_container(**args)
         logger.debug("Container created")
         return self.get_container(container)
