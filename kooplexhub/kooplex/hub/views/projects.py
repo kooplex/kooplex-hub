@@ -99,7 +99,7 @@ def project_new(request):
             for volume in project_source.volumes:
                 VolumeProjectBinding(project = project, volume = volume).save()
                 logger.debug('volume %s bound to project %s' % (volume, project))
-            create_clone_script(project, project_source)
+            create_clone_script(project, project_template = project_source)
         else:
             create_clone_script(project)
     except AssertionError:

@@ -5,7 +5,7 @@
 import logging
 
 from kooplex.lib import Gitlab, Docker
-from kooplex.lib.filesystem import mkdir_project, mkdir_git_workdir, cleanup_share
+from kooplex.lib.filesystem import mkdir_project, mkdir_git_workdir, cleanup_share, cleanup_git_workdir, create_clone_script
 from kooplex.logic.impersonator import mkdir_project_oc, share_project_oc, unshare_project_oc
 from kooplex.logic.spawner import remove_container
 from kooplex.hub.models import VolumeProjectBinding, UserProjectBinding, ProjectContainer
@@ -55,11 +55,12 @@ def delete_project(project):
         logger.debug("removed volume project binding %s" % vpb)
         vpb.delete()
     cleanup_share(project)
-    #FIXME: git workdir removal
+    cleanup_git_workdir(project.owner, project)
     for upb in UserProjectBinding.objects.filter(project = project):
         logger.debug("removed user project binding %s" % upb)
         unshare_project_oc(project, upb.user)
         gitlab.delete_project_member(project, upb.user)
+        cleanup_git_workdir(upb.user, project)
         upb.delete()
     try:
         container = ProjectContainer.objects.get(user = project.owner, project = project)
@@ -115,6 +116,7 @@ def configure_project(project, image, scope, volumes, collaborators):
             logger.debug("collaborator removed %s" % upb)
             unshare_project_oc(project, upb.user)
             gitlab.delete_project_member(project, upb.user)
+            cleanup_git_workdir(upb.user, project)
             upb.delete()
     for user in collaborators:
         upb = UserProjectBinding(project = project, user = user)
@@ -122,6 +124,7 @@ def configure_project(project, image, scope, volumes, collaborators):
         share_project_oc(project, upb.user)
         gitlab.add_project_member(project, upb.user)
         mkdir_git_workdir(upb.user, project)
+        create_clone_script(project, collaboratoruser = upb.user)
         upb.save()
     project.save()
 

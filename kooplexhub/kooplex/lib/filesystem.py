@@ -15,7 +15,6 @@ from distutils import file_util
 from kooplex.lib import get_settings, bash
 
 logger = logging.getLogger(__name__)
-G_OFFSET = 20000
 
 def _mkdir(path, uid = 0, gid = 0, mode = 0b111101000, mountpoint = False):
     """
@@ -179,7 +178,7 @@ def mkdir_share(project):
     @type project: kooplex.hub.models.Project
     """
     folder_share = os.path.join(get_settings('volumes','share'), project.name_with_owner)
-    _mkdir(folder_share, project.owner.uid, G_OFFSET + project.id, 0b111111101)
+    _mkdir(folder_share, project.owner.uid, project.owner.gid, 0b111111101)
     logger.info("created %s" % (folder_share))
 
 def cleanup_share(project):
@@ -206,7 +205,24 @@ def mkdir_git_workdir(user, project):
     @type project: kooplex.hub.models.Project
     """
     folder_git = os.path.join(get_settings('volumes','git'), user.username, project.name_with_owner)
-    _mkdir(folder_git, user.uid, G_OFFSET + project.id, 0b111100000)
+    _mkdir(folder_git, user.uid, project.owner.gid, 0b111100000)
+
+def cleanup_git_workdir(user, project):
+    """
+    @summary: move subversion control working directory to garbage volume
+    @param user: user of the project
+    @type user: kooplex.hub.models.User
+    @param project: the project
+    @type project: kooplex.hub.models.Project
+    """
+    folder_git = os.path.join(get_settings('volumes','git'), user.username, project.name_with_owner)
+    garbage = os.path.join(get_settings('volumes', 'garbage'), "gitwd-%s-%s.%f" % (user.username, project.name_with_owner, time.time()))
+    try:
+        dir_util.copy_tree(folder_git, garbage)
+        dir_util.remove_tree(folder_git)
+        logger.info("moved %s -> %s" % (folder_git, garbage))
+    except Exception as e:
+        logger.error("cannot move %s (%s)" % (folder_git, e))
 
 def mkdir_project(user, project):
     """
@@ -384,7 +400,7 @@ def cleanup_reportfiles(report):
     else:
         raise NotImplementedError
 
-def create_clone_script(project, project_template = None):
+def create_clone_script(project, collaboratoruser = None, project_template = None):
     '''
     @summary: create a magic script to clone the project sources from gitlab
     '''
@@ -407,12 +423,13 @@ git push origin master
 rm -rf ${TMPFOLDER}
         """ % { 'url': project_template.url_gitlab, 'message': commitmsg, 'gitdir': _get_mountpoint_in_container('git', project.owner) }
     else:
+        user = project.owner if collaboratoruser is None else collaboratoruser
         script = """#! /bin/bash
 rm $0
 git clone %(url)s /%(gitdir)s
-        """ % { 'url': project.url_gitlab, 'gitdir': _get_mountpoint_in_container('git', project.owner)  }
-    filename = os.path.join(_get_mountpoint_in_hub('git', project.owner, project), 'clone.sh')
+        """ % { 'url': project.url_gitlab, 'gitdir': _get_mountpoint_in_container('git', user)  }
+    filename = os.path.join(_get_mountpoint_in_hub('git', user, project), 'clone.sh')
     with open(filename, 'w') as f:
         f.write(script)
-    os.chown(filename, project.owner.uid, project.owner.gid)
+    os.chown(filename, user.uid, user.gid)
     os.chmod(filename, 0b111000000)
