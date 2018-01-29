@@ -137,6 +137,10 @@ class DashboardContainer(Container):
     def url_external(self):
         return os.path.join(get_settings('hub', 'base_url'), self.proxy_path, 'notebooks', '%s?dashboard' % self.report.notebook_filename)
 
+    @property
+    def mark_to_remove(self):
+        return True
+
 
 
 class VolumeContainerBinding(models.Model):

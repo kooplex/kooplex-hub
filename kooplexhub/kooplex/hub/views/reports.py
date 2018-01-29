@@ -12,7 +12,7 @@ from django.template import RequestContext
 from kooplex.lib import authorize, get_settings
 from kooplex.lib.filesystem import cleanup_reportfiles
 from kooplex.hub.models import list_user_reports, list_internal_reports, list_public_reports, get_report, filter_report
-from kooplex.hub.models import ReportDoesNotExist, HtmlReport, DashboardReport, ScopeType
+from kooplex.hub.models import ReportDoesNotExist, HtmlReport, DashboardReport, ScopeType, DashboardContainer
 from kooplex.hub.models import Project, LimitReached
 from kooplex.logic.spawner import spawn_dashboard_container, remove_container
 
