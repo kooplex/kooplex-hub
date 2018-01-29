@@ -29,6 +29,11 @@ class Container(models.Model):
         return "http://%s:%d" % (self.name, 8000) #FIXME: PORT hardcoded
 
     @property
+    def proxy_path(self):
+        info = { 'containername': self.name }
+        return get_settings('spawner', 'pattern_proxypath') % info
+
+    @property
     def volumes(self):
         from .volume import lookup
         for vcb in VolumeContainerBinding.objects.filter(container = self):
@@ -48,11 +53,6 @@ class ProjectContainer(Container):
         for vpb in VolumeProjectBinding.objects.filter(project = self.project):
             vcb = VolumeContainerBinding(container = self, volume = vpb.volume)
             vcb.save()
-
-    @property
-    def proxy_path(self):
-        info = { 'containername': self.name }
-        return get_settings('spawner', 'pattern_notebook_proxypath') % info
 
     @property
     def url_with_token(self):
@@ -117,31 +117,26 @@ class DashboardContainer(Container):
         self.save() #FIXME: breaks symmetry
 
     @property
-    def proxy_path(self):
-        info = { 'containername': self.name, 'notebook_file': self.report.notebook_filename }
-        return get_settings('spawner', 'pattern_dashboard_proxypath') % info
-
-    @property
-    def base_url(self):
-        info = { 'containername': self.name }
-        return get_settings('spawner', 'pattern_dashboard_baseurl') % info
-
-    @property
     def volumemapping(self):
         return [
-            (get_settings('spawner', 'volume-dashbaord-report'), '/mnt/.volumes/reports', 'ro'),
+            (get_settings('spawner', 'volume-dashboard-report'), '/mnt/.volumes/reports', 'ro'),
         ]
 
     @property
     def environment(self):
         return {
             'NB_USER': self.report.creator.username,
-            'NB_URL': self.base_url,
+            'NB_URL': self.proxy_path,
             'NB_PORT': 8000,
             'NB_TOKEN': self.report.password,
             'REPORT_DIR': os.path.join('/mnt/.volumes/reports', self.report.report_dir),
             'REPORT_FILE': self.report.notebook_filename,
         }
+
+    @property
+    def url(self):
+        return os.path.join(get_settings('hub', 'base_url'), self.proxy_path, '%s?dashboard' % self.report.notebook_filename)
+
 
 
 class VolumeContainerBinding(models.Model):

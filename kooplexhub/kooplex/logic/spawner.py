@@ -76,7 +76,7 @@ def spawn_dashboard_container(report):
     try:
         spawner = Spawner(container)
         spawner.run_container()
-        return container.proxy_path
+        return container.url
     except:
         raise
 
