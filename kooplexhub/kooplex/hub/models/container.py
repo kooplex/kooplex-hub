@@ -52,7 +52,7 @@ class ProjectContainer(Container):
     @property
     def proxy_path(self):
         info = { 'containername': self.name }
-        return get_settings('spawner', 'pattern_proxypath') % info
+        return get_settings('spawner', 'pattern_notebook_proxypath') % info
 
     @property
     def url_with_token(self):
@@ -118,8 +118,13 @@ class DashboardContainer(Container):
 
     @property
     def proxy_path(self):
+        info = { 'containername': self.name, 'notebook_file': self.report.notebook_filename }
+        return get_settings('spawner', 'pattern_dashboard_proxypath') % info
+
+    @property
+    def base_url(self):
         info = { 'containername': self.name }
-        return get_settings('spawner', 'pattern_proxypath') % info
+        return get_settings('spawner', 'pattern_dashboard_baseurl') % info
 
     @property
     def volumemapping(self):
@@ -131,7 +136,7 @@ class DashboardContainer(Container):
     def environment(self):
         return {
             'NB_USER': self.report.creator.username,
-            'NB_URL': self.proxy_path,
+            'NB_URL': self.base_url,
             'NB_PORT': 8000,
             'NB_TOKEN': self.report.password,
             'REPORT_DIR': os.path.join('/mnt/.volumes/reports', self.report.report_dir),
