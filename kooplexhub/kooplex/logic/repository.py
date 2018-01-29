@@ -24,7 +24,8 @@ class Repository:
         self.container = get_impersonator_container()
         self.docker = Docker()
 
-        command = "ls ~/git/.git"
+        dir_to_check = os.path.join(self.gitdir, '.git')
+        command = "ls %s" % dir_to_check
         response = self.docker.execute2(self.container, command)
         if self.docker.check['ExitCode'] == 2:
             raise NotCheckedOut(response)
