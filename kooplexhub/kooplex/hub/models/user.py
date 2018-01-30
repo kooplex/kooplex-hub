@@ -66,9 +66,11 @@ class User(DJUser):
 
     def changepassword(self, password):
         from kooplex.lib.filesystem import write_davsecret
+        from kooplex.lib import Ldap
         self.password = password
         write_davsecret(self)
         self.save()
+        Ldap().changepassword(self, password)
 
     def generatenewpassword(self):
         password = pwgen.pwgen(12)
@@ -88,9 +90,9 @@ class User(DJUser):
         # set uid and gid, generate token
         last_uid = User.objects.all().aggregate(models.Max('uid'))['uid__max']
         if last_uid is None:
-          self.uid = 1
+            self.uid = 1
         else:
-          self.uid = last_uid + 1
+            self.uid = last_uid + 1
         self.gid = get_settings('ldap', 'usersgroupid')
         self.token = pwgen.pwgen(64)
         # during user manifestation gitlab_id and password are set
