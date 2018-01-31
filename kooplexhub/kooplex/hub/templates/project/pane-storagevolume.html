@@ -29,6 +29,9 @@
 {% else %}
   <div class="alert alert-danger" role="alert">Currently there are no volumes you can attach.</div>
 {% endif %}
+{% if project in running %}
+<div class="alert alert-warning" role="alert">This project {{ project }} is running. Storage volume mounting at runtime is not possible, so do not forget to restart the project container to take effect if you change the setup.</div>
+{% endif %}
 
 <div class="panel panel-success">
   <div class="panel-heading">

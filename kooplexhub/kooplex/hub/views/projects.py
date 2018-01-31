@@ -68,7 +68,7 @@ def project_new(request):
         return redirect('projects')
     template = request.POST.get('project_template')
     volumes = [ FunctionalVolume.objects.get(name = x) for x in request.POST.getlist('func_volumes') ]
-    volumes.extend( [ StorageVolume.objects.get(name = x) for x in request.POST.getlist('storage_volumes') ] )
+    volumes.extend( [ StorageVolume.objects.get(name = x) for x in request.POST.getlist('stg_volumes') ] )
     logger.debug('New project to be created: %s' % name)
     stop = False
     if not re.match(r'^[a-zA-Z][0-9a-zA-Z_\. -]*$', name):
@@ -129,10 +129,12 @@ def project_configure(request):
     elif button == 'apply':
         collaborators = [ User.objects.get(id = x) for x in request.POST.getlist('collaborators') ]
         volumes = [ FunctionalVolume.objects.get(name = x) for x in request.POST.getlist('func_volumes') ]
-        volumes.extend( [ StorageVolume.objects.get(name = x) for x in request.POST.getlist('storage_volumes') ] )
+        volumes.extend( [ StorageVolume.objects.get(name = x) for x in request.POST.getlist('stg_volumes') ] )
         image = Image.objects.get(name = request.POST['project_image'])
         scope = ScopeType.objects.get(name = request.POST['project_scope'])
-        configure_project(project, image, scope, volumes, collaborators)
+        marked_to_remove = configure_project(project, image, scope, volumes, collaborators)
+        if marked_to_remove:
+            messages.info(request, 'Running container of project %s is going to be removed when you stop. Mount point changes take effect after restarting them.' % project)
     return redirect('projects')
 
 

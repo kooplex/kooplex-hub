@@ -88,7 +88,9 @@ def configure_project(project, image, scope, volumes, collaborators):
     @type volumes: list(kooplex.hub.models.Volume)
     @param collaborators: the list of users to share the project with as collaboration
     @type collaborators: list(kooplex.hub.models.User)
+    @return: bool whether the project containers were marked to be removed after next stop
     """
+    mark_to_remove = False
     logger.debug(project)
     if project.image != image:
         project.image = image
@@ -99,11 +101,11 @@ def configure_project(project, image, scope, volumes, collaborators):
             logger.debug("volume project binding remains %s" % vpb)
             volumes.remove(vpb.childvolume)
         else:
-            mark_containers_remove(project)
+            mark_to_remove = True
             logger.debug("volume project binding removed %s" % vpb)
             vpb.delete()
     for volume in volumes:
-        mark_containers_remove(project)
+        mark_to_remove = True
         vpb = VolumeProjectBinding(project = project, volume = volume)
         logger.debug("volume project binding added %s" % vpb)
         vpb.save()
@@ -126,7 +128,10 @@ def configure_project(project, image, scope, volumes, collaborators):
         mkdir_git_workdir(upb.user, project)
         create_clone_script(project, collaboratoruser = upb.user)
         upb.save()
+    if mark_to_remove:
+        mark_containers_remove(project)
     project.save()
+    return mark_to_remove
 
 def mark_containers_remove(project):
     """

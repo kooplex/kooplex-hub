@@ -1,3 +1,4 @@
+import logging
 import os
 
 from django.db import models
@@ -5,6 +6,8 @@ from django.db import models
 from .project import Project
 from .user import User
 from kooplex.lib import get_settings
+
+logger = logging.getLogger(__name__)
 
 class Volume(models.Model):
     id = models.AutoField(primary_key = True)
@@ -88,6 +91,7 @@ def init_model():
     #FIXME: decide what to do with volumes present in the model but not present in the system
     for volume in Docker().list_volumenames():
         vname = volume['name']
+        logger.debug("vol: %s" % str(volume))
         if volume['volumetype'] == 'functional':
             try:
                 FunctionalVolume.objects.get(name = vname)
