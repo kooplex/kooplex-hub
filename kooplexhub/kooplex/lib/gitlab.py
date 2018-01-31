@@ -60,7 +60,7 @@ class Gitlab:
         if statuscode in [ 201, 202 ]:
             logger.info('deleted project %s (gitlab project id: %d) -- %s' % (project, project.gitlab_id, information))
         elif statuscode == 404:
-            logger.warning('not found project %s (gitlab project id: %d) -- %s' % (project, project.gitlab_id, information))
+            logger.warning('not found project %s (gitlab project id: %s) -- %s' % (project, str(project.gitlab_id), information))
         return information
 
     def add_project_member(self, project, user):
