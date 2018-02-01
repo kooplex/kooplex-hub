@@ -56,7 +56,11 @@ class Spawner:
 
 #################################################################
 
+class SpawnError(Exception):
+    pass
+
 def spawn_project_container(user, project):
+    from docker import errors
     container = ProjectContainer(
         user = user,
         project = project,
@@ -64,6 +68,11 @@ def spawn_project_container(user, project):
     try:
         spawner = Spawner(container)
         spawner.run_container()
+        logger.debug('spawner new container: %s' % container)
+    except errors.NotFound as e:
+        logger.error('container: %s -- %s' % (container, e))
+        remove_container(container)
+        raise SpawnError(e.explanation)
     except:
         raise
 
@@ -94,5 +103,3 @@ def remove_container(container):
     stop_container(container)
     logger.debug(container)
     Docker().remove_container(container)
-    container.delete()
-
