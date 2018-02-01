@@ -3,6 +3,7 @@ import re
 import os
 from django.db import models
 from django.utils import timezone
+import datetime
 
 from kooplex.lib import get_settings, standardize_str
 
@@ -23,6 +24,12 @@ class Container(models.Model):
 
     def __lt__(self, c):
         return self.launched_at < c.launched_at
+
+    @property
+    def uptime(self):
+        now = datetime.datetime.now(tz = datetime.timezone.utc)
+        delta = now - self.launched_at
+        return delta if self.is_running else -1
 
     @property
     def url(self):

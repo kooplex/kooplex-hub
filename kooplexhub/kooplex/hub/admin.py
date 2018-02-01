@@ -19,21 +19,42 @@ class UserAdmin(admin.ModelAdmin):
     list_display = ('username', 'first_name', 'last_name', 'uid', 'gitlab_id', 'n_projects', 'n_reports')
     #fieldsets = ( (None, { 'fields': (( 'first_name', 'last_name'), ('username', 'email'), 'bio', 'user_permissions') }),    )
     fieldsets = ( (None, { 'fields': (( 'first_name', 'last_name'), ('username', 'email'), 'bio' ) }),    )
-#FIXME: deletion of many should be caugth and iterated like the sigle instance in the delete_model method!!!
-    actions = ['reset_password', ]
+    actions = ['reset_password', 'remove_users' ]
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
 
     def changelist_view(self, request, extra_context=None):
         extra_context = extra_context or {}
-        extra_context['messages']= messages.get_messages(request)
+        extra_context['messages'] = messages.get_messages(request)
         return super(UserAdmin, self).changelist_view(request, extra_context)
         
     def reset_password(self, request, queryset):
-        msg=""
+        msg = ""
         for user in queryset:
             user.generatenewpassword()
-            msg+="%s, "%user.username
-        messages.success(request,"Password reseted for: %s" %msg)
+            msg += "%s, " % user.username
+        messages.success(request,"Password reseted for: %s" % msg)
     reset_password.short_description = 'Reset password'
+
+    def remove_users(self, request, queryset):
+        msg = ""
+        oops = ""
+        for user in queryset:
+            try:
+                user.remove()
+                super().delete_model(request, user)
+                msg += "%s, " % user
+            except Exception as e:
+                oops += "%s (%s), " % (user, e)
+        if len(msg):
+            messages.success(request,"Deleted: %s" % msg)
+        if len(oops):
+            messages.warning(request,"Ooopsed: %s" % oops)
+    remove_users.short_description = 'Delete users in a neat way'
 
     def save_model(self, request, user, form, changed):
         try:
@@ -55,7 +76,30 @@ class ProjectContainerAdmin(admin.ModelAdmin):
 
 @admin.register(DashboardContainer)
 class DashboardContainerAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'image', 'report')
+    list_display = ('id', 'name', 'image', 'report', 'uptime', 'url')
+    actions = ['stop_containers', ]
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+
+    def stop_containers(self, request, queryset):
+        from kooplex.logic.spawner import stop_container
+        msg = ""
+        oops = ""
+        for container in queryset:
+            try:
+                stop_container(container)
+                msg += "%s, " % container
+            except:
+                oops += "%s, " % container
+        if len(msg):
+            messages.success(request, "stopped: %s" % msg)
+        if len(oops):
+            messages.warning(request, "oopses: %s" % oops)
+    stop_containers.short_description = 'Stop selected containers'
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
