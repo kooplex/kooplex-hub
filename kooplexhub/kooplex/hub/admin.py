@@ -1,16 +1,14 @@
 import logging
 
 from django.contrib import messages
-from django.conf.urls import patterns, url, include
-from django.shortcuts import render, redirect
-from django.http import HttpRequest, HttpResponseRedirect,HttpResponse
-from django.template import RequestContext
+from django.conf.urls import url
+from django.shortcuts import redirect
 from django.contrib import admin
-from django import forms
 
 from kooplex.hub.models import *
+from kooplex.logic.project import mark_containers_remove
 
-logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
@@ -25,7 +23,7 @@ class UserAdmin(admin.ModelAdmin):
             del actions['delete_selected']
         return actions
 
-    def changelist_view(self, request, extra_context=None):
+    def changelist_view(self, request, extra_context = None):
         extra_context = extra_context or {}
         extra_context['messages'] = messages.get_messages(request)
         return super(UserAdmin, self).changelist_view(request, extra_context)
@@ -35,7 +33,8 @@ class UserAdmin(admin.ModelAdmin):
         for user in queryset:
             user.generatenewpassword()
             msg += "%s, " % user.username
-        messages.success(request,"Password reseted for: %s" % msg)
+            logger.debug("reset_password: %s" % user)
+        messages.success(request, "Password reseted for: %s" % msg)
     reset_password.short_description = 'Reset password'
 
     def remove_users(self, request, queryset):
@@ -46,12 +45,14 @@ class UserAdmin(admin.ModelAdmin):
                 user.remove()
                 super().delete_model(request, user)
                 msg += "%s, " % user
+                logger.info("removed user: %s" % user)
             except Exception as e:
+                logger.error("remove_user: %s -- %s" % (user, e))
                 oops += "%s (%s), " % (user, e)
         if len(msg):
-            messages.success(request,"Deleted: %s" % msg)
+            messages.success(request, "Deleted: %s" % msg)
         if len(oops):
-            messages.warning(request,"Ooopsed: %s" % oops)
+            messages.warning(request, "Ooopsed: %s" % oops)
     remove_users.short_description = 'Delete users in a neat way'
 
     def save_model(self, request, user, form, changed):
@@ -62,44 +63,48 @@ class UserAdmin(admin.ModelAdmin):
                 raise NotImplementedError
         except User.DoesNotExist:
             user.create()
+            logger.info("user created: %s" % s)
         super().save_model(request, user, form, changed)
 
     def delete_model(self, request, user):
         user.remove()
+        logger.info("removed user: %s" % user)
         super().delete_model(request, user)
+
+def stop_containers(klass, request, queryset):
+    from kooplex.logic.spawner import stop_container
+    msg = ""
+    oops = ""
+    for container in queryset:
+        try:
+            stop_container(container)
+            logger.info("removed container: %s" % container)
+            msg += "%s, " % container
+        except Exception as e:
+            logger.error("cannot remove container: %s -- %s" % (container, e))
+            oops += "%s, " % container
+    if len(msg):
+        messages.success(request, "stopped: %s" % msg)
+    if len(oops):
+        messages.warning(request, "oopses: %s" % oops)
+stop_containers.short_description = 'Stop selected containers'
 
 @admin.register(ProjectContainer)
 class ProjectContainerAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'image', 'project', 'uptime', 'url')
-    actions = ['stop_containers', ]
+    actions = [ stop_containers, ]
 
     def get_actions(self, request):
         actions = super().get_actions(request)
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
-
-    def stop_containers(self, request, queryset):
-        from kooplex.logic.spawner import stop_container
-        msg = ""
-        oops = ""
-        for container in queryset:
-            try:
-                stop_container(container)
-                msg += "%s, " % container
-            except:
-                oops += "%s, " % container
-        if len(msg):
-            messages.success(request, "stopped: %s" % msg)
-        if len(oops):
-            messages.warning(request, "oopses: %s" % oops)
-    stop_containers.short_description = 'Stop selected containers'
 
 
 @admin.register(DashboardContainer)
 class DashboardContainerAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'image', 'report', 'uptime', 'url')
-    actions = ['stop_containers', ]
+    actions = [ stop_containers, ]
 
     def get_actions(self, request):
         actions = super().get_actions(request)
@@ -107,21 +112,6 @@ class DashboardContainerAdmin(admin.ModelAdmin):
             del actions['delete_selected']
         return actions
 
-    def stop_containers(self, request, queryset):
-        from kooplex.logic.spawner import stop_container
-        msg = ""
-        oops = ""
-        for container in queryset:
-            try:
-                stop_container(container)
-                msg += "%s, " % container
-            except:
-                oops += "%s, " % container
-        if len(msg):
-            messages.success(request, "stopped: %s" % msg)
-        if len(oops):
-            messages.warning(request, "oopses: %s" % oops)
-    stop_containers.short_description = 'Stop selected containers'
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
@@ -149,7 +139,37 @@ class StorageVolumeAdmin(admin.ModelAdmin):
 
 @admin.register(VolumeProjectBinding)
 class VolumeProjectBindingAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('id', 'project', 'volume')
+    actions = [ 'delete_vpb', ]
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+
+    def save_model(self, request, vpb, form, changed):
+        try:
+            VolumeProjectBinding.objects.get(project = vpb.project, volume = vpb.volume)
+            messages.error(request, "Not saving %s, because that entry already exists" % vpb)
+            logger.debug("not saving volume project binding to avoid duplication: %s" % vpb)
+        except VolumeProjectBinding.DoesNotExist:
+            n_mark, n_remove = mark_containers_remove(vpb.project)
+            messages.success(request, "%d containers removed and %d containers marked to be removed" % (n_remove, n_mark))
+            super().save_model(request, vpb, form, changed)
+            logger.debug("saved volume project binding: %s, %d containers removed, %d containers marked to be removed" % (vpb, n_remove, n_mark))
+
+    def delete_model(self, request, vpb):
+        n_mark, n_remove = mark_containers_remove(vpb.project)
+        messages.success(request, "# containers removed: %d and marked to be removed %d" % (n_remove, n_mark))
+        super().delete_model(request, vpb)
+        logger.debug("removed volume project binding: %s, %d containers removed, %d containers marked to be removed" % (vpb, n_remove, n_mark))
+
+    def delete_vpb(self, request, queryset):
+        msg = ""
+        for vpb in queryset:
+            self.delete_model(request, vpb)
+    delete_vpb.short_description = 'Delete volume project bindings'
 
 #def admin_main(request):
 #   pass

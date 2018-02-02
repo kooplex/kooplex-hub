@@ -138,11 +138,17 @@ def mark_containers_remove(project):
     @summary: mark project containers to be removed when they are stopped next time. In case the container is already stopped, remove them
     @param project: the project model
     @type project: kooplex.hub.models.Project
+    @returns a pair of containers marked to be removed and the number of containers actually removed
+    @rtype (int, int)
     """
+    n_mark = 0
+    n_remove = 0
     for container in project.containers:
         if container.is_running:
             container.mark_to_remove = True
             container.save()
+            n_mark += 1
         else:
             Docker().remove_container(container)
-
+            n_remove += 1
+    return n_mark, n_remove
