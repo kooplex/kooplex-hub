@@ -12,8 +12,6 @@ from kooplex.hub.models import *
 
 logging.getLogger(__name__)
 
-U = User
-
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     list_display = ('username', 'first_name', 'last_name', 'uid', 'gitlab_id', 'n_projects', 'n_reports')
