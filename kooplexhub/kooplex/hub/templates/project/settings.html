@@ -23,13 +23,25 @@
             {% endif %}
           </div>
           <div id="pane_image-{{ project.id }}" class="tab-pane fade">
+            {% if project.owner = user %}
             {% include 'project/pane-image.html' %}
+            {% else %}
+            <div class="alert alert-warning" role="alert">The owner of project {{ project.name }} is {{ project.owner.displayname }} ({{ project.owner.username }}). Please contact him/her to change the image.</div>
+            {% endif %}
           </div>
           <div id="pane_funvolume-{{ project.id }}" class="tab-pane fade">
+            {% if project.owner = user %}
             {% include 'project/pane-functionalvolume.html' %}
+            {% else %}
+            <div class="alert alert-warning" role="alert">The owner of project {{ project.name }} is {{ project.owner.displayname }} ({{ project.owner.username }}). Please contact him/her to modify modules settings.</div>
+            {% endif %}
           </div>
           <div id="pane_stgvolume-{{ project.id }}" class="tab-pane fade">
+            {% if project.owner = user %}
             {% include 'project/pane-storagevolume.html' %}
+            {% else %}
+            <div class="alert alert-warning" role="alert">The owner of project {{ project.name }} is {{ project.owner.displayname }} ({{ project.owner.username }}). Please contact him/her to attach or remove some storage volumes.</div>
+            {% endif %}
           </div>
           <div id="pane_scope-{{ project.id }}" class="tab-pane fade">
             {% if project.owner = user %}
