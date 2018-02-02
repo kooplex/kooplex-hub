@@ -60,6 +60,7 @@ class ProjectContainer(Container):
         for vpb in VolumeProjectBinding.objects.filter(project = self.project):
             vcb = VolumeContainerBinding(container = self, volume = vpb.volume)
             vcb.save()
+            logger.debug('container volume binding %s' % vcb)
 
     @property
     def url_external(self):

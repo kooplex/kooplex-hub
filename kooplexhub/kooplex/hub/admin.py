@@ -31,7 +31,7 @@ class UserAdmin(admin.ModelAdmin):
         extra_context = extra_context or {}
         extra_context['messages'] = messages.get_messages(request)
         return super(UserAdmin, self).changelist_view(request, extra_context)
-        
+
     def reset_password(self, request, queryset):
         msg = ""
         for user in queryset:
@@ -72,7 +72,31 @@ class UserAdmin(admin.ModelAdmin):
 
 @admin.register(ProjectContainer)
 class ProjectContainerAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'image', 'project')
+    list_display = ('id', 'name', 'image', 'project', 'uptime', 'url')
+    actions = ['stop_containers', ]
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+
+    def stop_containers(self, request, queryset):
+        from kooplex.logic.spawner import stop_container
+        msg = ""
+        oops = ""
+        for container in queryset:
+            try:
+                stop_container(container)
+                msg += "%s, " % container
+            except:
+                oops += "%s, " % container
+        if len(msg):
+            messages.success(request, "stopped: %s" % msg)
+        if len(oops):
+            messages.warning(request, "oopses: %s" % oops)
+    stop_containers.short_description = 'Stop selected containers'
+
 
 @admin.register(DashboardContainer)
 class DashboardContainerAdmin(admin.ModelAdmin):
