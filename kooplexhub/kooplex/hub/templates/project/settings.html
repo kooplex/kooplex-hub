@@ -56,7 +56,9 @@
             <p>Are you are sure about it?</p>
             <button type="submit" class="btn btn-danger" name="button" value="delete"> Really delete</button>
             {% else %}
-            <div class="alert alert-warning" role="alert">Only the owner {{ project.owner.displayname }} ({{ project.owner.username }}) can delete the project.</div>
+            <div class="alert alert-danger" role="alert">All unshared data related to this project are lost by quitting collaboration.</div>
+            <p>Are you are sure about it?</p>
+            <button type="submit" class="btn btn-danger" name="button" value="quit"> Really quit</button>
             {% endif %}
           </div>
         </div>   <!-- tab-content -->

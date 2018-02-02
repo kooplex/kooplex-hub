@@ -152,3 +152,38 @@ def mark_containers_remove(project):
             Docker().remove_container(container)
             n_remove += 1
     return n_mark, n_remove
+
+def leave_project(project, user):
+    """
+    @summary: leave a user project
+              1. remove user project binding
+              2. garbage collect data in git workdir
+              3. owncloud unshare
+              6. get rid of containers if any
+              7. delete gitlab project on the user's behalf
+    @param project: the project model
+    @type project: kooplex.hub.models.Project
+    @param user: the collaborator to leave the project
+    @type user: kooplex.hub.models.User
+    """
+    logger.debug(project)
+    try:
+        upb = UserProjectBinding.objects.get(project = project, user = user)
+        upb.delete()
+        logger.debug('user project binding removed: %s' % upb)
+    except UserProjectBinding.DoesNotExist:
+        msg = 'user %s is not bound to project %s' % (user, project)
+        logger.error(msg)
+        return msg
+    gitlab = Gitlab(project.owner)
+    cleanup_git_workdir(user, project)
+    unshare_project_oc(project, user)
+    gitlab.delete_project_member(project, user)
+    try:
+        container = ProjectContainer.objects.get(user = user, project = project)
+        logger.debug("remove container %s" % container)
+        remove_container(container)
+    except ProjectContainer.DoesNotExist:
+        logger.debug("%s has no container" % project)
+    logger.info("%s left project %s" % (user, project))
+

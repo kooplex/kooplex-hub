@@ -9,7 +9,7 @@ from django.template import RequestContext
 from kooplex.hub.models import *
 
 from kooplex.logic.spawner import spawn_project_container, stop_container, SpawnError
-from kooplex.logic import create_project, delete_project, configure_project
+from kooplex.logic import create_project, delete_project, configure_project, leave_project
 from kooplex.logic import Repository, NotCheckedOut
 from kooplex.lib.filesystem import create_clone_script
 from kooplex.lib import authorize, get_settings
@@ -120,13 +120,26 @@ def project_configure(request):
     button = request.POST['button']
     project_id = request.POST['project_id']
     try:
-        project = Project.objects.get(id = project_id, owner = request.user)
+        project = Project.objects.get(id = project_id)
     except Project.DoesNotExist:
         messages.error(request, 'Project does not exist')
         return redirect('projects')
     if button == 'delete':
-        delete_project(project)
+        if project.owner == request.user:
+            delete_project(project)
+        else:
+            messages.error(request, 'Project %s is not yours' % project)
+            return redirect('projects')
+    elif button == 'quit':
+        if project.owner == request.user:
+            messages.error(request, 'You are the owner of the project %s, you cannot leave it' % project)
+            return redirect('projects')
+        else:
+            leave_project(project, request.user)
     elif button == 'apply':
+        if project.owner != request.user:
+            messages.warning(request, 'Currently only project owners can modify project')
+            return redirect('projects')
         collaborators = [ User.objects.get(id = x) for x in request.POST.getlist('collaborators') ]
         volumes = [ FunctionalVolume.objects.get(name = x) for x in request.POST.getlist('func_volumes') ]
         volumes.extend( [ StorageVolume.objects.get(name = x) for x in request.POST.getlist('stg_volumes') ] )
