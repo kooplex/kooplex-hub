@@ -56,6 +56,7 @@ class UserAdmin(admin.ModelAdmin):
     remove_users.short_description = 'Delete users in a neat way'
 
     def save_model(self, request, user, form, changed):
+        from kooplex.lib.sendemail import send_new_password
         try:
             user_old = User.objects.get(username = user.username)
             if user_old.email != user.email:
@@ -64,6 +65,7 @@ class UserAdmin(admin.ModelAdmin):
         except User.DoesNotExist:
             user.create()
             logger.info("user created: %s" % s)
+            send_new_password(user)
         super().save_model(request, user, form, changed)
 
     def delete_model(self, request, user):

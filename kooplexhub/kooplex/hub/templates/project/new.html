@@ -17,10 +17,10 @@
           {% include 'project/pane-template.html' %}
         </div>
         <div id="pane_funcvolume" class="tab-pane fade">
-          {% include 'project/pane-functionalvolume.html' %}
+          {% include 'project/pane-functionalvolume.html' with project=None %}
         </div>
         <div id="pane_stgvolume" class="tab-pane fade">
-          {% include 'project/pane-storagevolume.html' %}
+          {% include 'project/pane-storagevolume.html' with project=None %}
         </div>
       </div>   <!-- tab-content -->
     </div>     <!-- modal-body -->

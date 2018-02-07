@@ -6,7 +6,7 @@
   {% for project in projects_mine %}
   <option value="clonable_project={{ project.id }}" style="background-color: gray">(mine) {{ project }}</option>
   {% endfor %}
-  {% for project in projects_sharedwithme %}
+  {% for project in projects_shared %}
   <option value="clonable_project={{ project.id }}" style="background-color: gray">(shared) {{ project }}</option>
   {% endfor %}
   {% for project in projects_public %}

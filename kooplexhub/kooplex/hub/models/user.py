@@ -78,7 +78,6 @@ class User(DJUser):
         with open(get_settings('user', 'pattern_passwordfile') % self, 'w') as f:
             f.write(self.password)
         self.changepassword(password)
-        #FIXME: send e-mail
 
     def researchgroups(self):
         for rpb in ResearchgroupProjectBinding.objects.filter(user = self):
