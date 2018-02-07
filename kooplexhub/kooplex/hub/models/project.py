@@ -15,6 +15,9 @@ class Project(models.Model):
     scope = models.ForeignKey(ScopeType, null = True)
     gitlab_id = models.IntegerField(null = True)
 
+    _collaborators = None
+    _volumes = None
+
     def __lt__(self, p):
         return self.name < p.name
 
@@ -31,13 +34,17 @@ class Project(models.Model):
 
     @property
     def collaborators(self):
-        for upb in UserProjectBinding.objects.filter(project = self):
+        if self._collaborators is None:
+            self._collaborators = UserProjectBinding.objects.filter(project = self)
+        for upb in self._collaboraotrs:
             yield upb.user
 
     @property
     def volumes(self):
         from .volume import VolumeProjectBinding, lookup
-        for vpb in VolumeProjectBinding.objects.filter(project = self):
+        if self._volumes is None:
+            self._volumes = VolumeProjectBinding.objects.filter(project = self)
+        for vpb in self._volumes:
             yield lookup( vpb.volume )
 
     @property
@@ -60,7 +67,7 @@ class Project(models.Model):
     def containers(self):
         from .container import ProjectContainer
         return ProjectContainer.objects.filter(project = self)
-          
+
 class UserProjectBinding(models.Model):
     id = models.AutoField(primary_key = True)
     user = models.ForeignKey(User, null = False)
