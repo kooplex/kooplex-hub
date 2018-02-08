@@ -18,26 +18,16 @@ from kooplex.logic.spawner import spawn_dashboard_container, remove_container
 
 logger = logging.getLogger(__name__)
 
-def group_by_project(reports):
-    reports_grouped = {}
-    for r in reports:
-        k = r.project, r.name
-        if not k in reports_grouped:
-            reports_grouped[k] = []
-        reports_grouped[k].append(r)
-    for rl in reports_grouped.values():
-        rl.sort()
-    return reports_grouped
-
 def reports(request):
     user = request.user
     if authorize(request):
-        reports_mine = list(list_user_reports(user))
-        reports_internal = list(list_internal_reports(user))
+        reports_mine = list_user_reports(user)
+        reports_internal = list_internal_reports(user)
+        reports_public = list_public_reports(authorized = True)
     else:
         reports_mine = []
         reports_internal = []
-    reports_public = list(list_public_reports())
+        reports_public = list_public_reports(authorized = False)
     logger.debug('Rendering reports.html')
     return render(
         request,
@@ -46,9 +36,9 @@ def reports(request):
         {
             'user': user,
             'base_url': get_settings('hub', 'base_url'),
-            'reports_mine': group_by_project( reports_mine ),
-            'reports_internal': group_by_project( reports_internal ),
-            'reports_public': group_by_project( reports_public ),
+            'reports_mine': reports_mine,
+            'reports_internal': reports_internal,
+            'reports_public': reports_public,
        })
     )
 
@@ -62,20 +52,43 @@ def _do_report_open(report):
         logger.debug("Starting Dashboard server for %s" % report)
         return redirect(spawn_dashboard_container(report)) #FIXME: launch is not authorized
 
+def _checkpass(report, report_pass):
+    if isinstance(report, HtmlReport):
+        if len(report.password) == 0:
+            logger.debug("Report %s is not password protected" % report)
+            return True
+        if report.password == report_pass:
+            logger.debug("Report password for %s is matching" % report)
+            return True
+        else:
+            logger.debug("Report password for %s is not matching" % report)
+            return False
+    elif isinstance(report, DashboardReport):
+        logger.debug("Report password for %s is not checked, jupyter will take care for it" % report)
+        return True
+
 def openreport(request):
     assert isinstance(request, HttpRequest)
     if request.method == 'GET':
         report_id = request.GET['report_id']
+        report_pass = None
     elif request.method == 'POST':
         report_id = request.POST['report_id']
+        report_pass = request.POST.get('report_pass', '')
     else:
         return redirect('reports')
     try:
         user = request.user
         report = get_report(id = report_id)
         if report.is_user_allowed(user):
-            logger.debug('open report: %s' % report)
+            logger.debug('authenticated user %s opens report %s' % (user, report))
             return _do_report_open(report)
+        if report.is_public:
+            if _checkpass(report, report_pass):
+                logger.debug('open public report %s' % (report))
+                return _do_report_open(report)
+            else:
+                messages.error(request, 'You may have mistyped the password')
         else:
             messages.error(request, 'You are not allowed to open this report')
     except ReportDoesNotExist:
@@ -98,6 +111,7 @@ def openreport_latest(request):
         for report in reports:
             if report.is_user_allowed(user):
                 return _do_report_open(report)
+#FIXME: password check redirection
         messages.error(request, 'You are not allowed to open this report.')
     except ReportDoesNotExist:
         messages.error(request, 'Report does not exist')

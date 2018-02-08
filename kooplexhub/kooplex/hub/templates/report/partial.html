@@ -1,8 +1,11 @@
-{% if user_can_set %}
-  {% for r in reports %}
+{% for r in reports %}
+  {% if r.is_configurable %}
     {% include 'report/settings.html' %}
-  {% endfor %}
-{% endif %}
+  {% endif %}
+  {% if r.ask_password %}
+    {% include 'report/password.html' %}
+  {% endif %}
+{% endfor %}
 {% with reports|first as report_latest %}
 {% if report_latest.displaytype == 'Dashboard report' %}
 <div class="panel panel-success ">
@@ -12,7 +15,11 @@
   <div class="panel-heading">
      <div class="row">
          <div class="col-md-1 col-sm-2">
+            {% if report_latest.ask_password %}
+            <a href="#" data-toggle="modal" data-target="#report-password-{{ report_latest.id  }}">
+            {% else %}
             <a href="{% url 'report-open' %}?report_id={{ report_latest.id }}" target="_blank">
+            {% endif %}
               <button type="button" class="btn btn-info"><span class="glyphicon glyphicon-folder-open" aria-hidden="true"> </span> Open</button>
             </a>
          </div>
@@ -48,10 +55,10 @@
           <p><strong>Report description (latest): </strong>{{ report_latest.description }}
           <p><strong>Url to the latest report: </strong><code>{{ base_url }}{% url 'report-openlatest' %}?project_id={{ project.id }}&amp;name={{ report_latest.name }}</code>
         </div>
-        <form action="{% url 'report-open' %}" method="post">
+        <form id="list-{{ report_latest.id }}" action="{% url 'report-open' %}" method="post">
           {% csrf_token %}
           <label>Former reports</label>
-          <select name='report_key' id='report_key-{{ project.id }}-{{ key.1 }}' style="max-width: 800px;">
+          <select name='report_id' id='report_key-{{ project.id }}-{{ reportname }}' style="max-width: 800px;">
         {% for r in reports %}
           <option value="{{ r.id }}"
             {% if r.displaytype == "Dashboard report" %} style="background-color: lightgreen;" {% endif %}
@@ -59,10 +66,10 @@
           </option>
         {% endfor %}
           </select>
-          <button type="submit" class="btn btn-info" data-toggle="tooltip" title="Open a former report" data-placement="top"><span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span></button>
-      {% if user_can_set %}
-          <button type="button" class="btn btn-info" data-toggle="tooltip" title="Report settings" data-placement="top" onclick="settings('report_key-{{ project.id }}-{{ key.1 }}');"><span class="glyphicon glyphicon-wrench" aria-hidden="true"></span></button>
-      {% endif  %}
+          <button type="button" class="btn btn-info" data-toggle="tooltip" title="Open a former report" data-placement="top" onclick="password_pane('report_key-{{ project.id }}-{{ reportname }}', 'list-{{ report_latest.id }}');"><span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span></button>
+        {% if report_latest.is_configurable %}
+          <button type="button" class="btn btn-info" data-toggle="tooltip" title="Report settings" data-placement="top" onclick="settings_pane('report_key-{{ project.id }}-{{ reportname }}');"><span class="glyphicon glyphicon-wrench" aria-hidden="true"></span></button>
+        {% endif  %}
         </form>
       </div>    <!-- projects -->
     </div>      <!-- panel body -->
@@ -71,9 +78,17 @@
 </div>        <!-- panel -->
 
 <script type="text/javascript">
-function settings(key) {
+function settings_pane(key) {
   var report_id;
   report_id = document.getElementById(key).value;
   $('#report-settings-' + report_id).modal('show');
+}
+function password_pane(key, formid) {
+  var report_id;
+  report_id = document.getElementById(key).value;
+  if (document.getElementById('report-password-' + report_id) == null) {
+    document.getElementById(formid).submit();
+  }
+  $('#report-password-' + report_id).modal('show');
 }
 </script>

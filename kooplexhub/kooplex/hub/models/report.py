@@ -36,10 +36,7 @@ class Report(models.Model):
         return strftime("%Y. %m. %d.", localtime(self.ts_created))
 
     def is_user_allowed(self, user):
-        public = ScopeType.objects.get(name = 'public')
         internal = ScopeType.objects.get(name = 'internal')
-        if self.scope == public:
-            return True
         if self.creator == user:
             return True
         if self.scope == internal:
@@ -47,6 +44,10 @@ class Report(models.Model):
                 if collaborator == user:
                     return True
         return False
+
+    @property
+    def is_public(self):
+        return self.scope == ScopeType.objects.get(name = 'public')
 
 class HtmlReport(Report):
     @property
@@ -78,30 +79,62 @@ class DashboardReport(Report):
         self.image = self.project.image
         Report.save(self)      #FIXME: use the super() syntax
 
-def list_user_reports(user):
+def _groupby(reports):
+    reports_grouped = {}
+    for r in reports:
+        k = r.project, r.name
+        if not k in reports_grouped:
+            reports_grouped[k] = []
+        reports_grouped[k].append(r)
+    for rl in reports_grouped.values():
+        rl.sort()
+    return reports_grouped
+
+def _list_user_reports(user):
     for report in HtmlReport.objects.filter(creator = user):
+        report.ask_password = False
+        report.is_configurable = True
         yield report
     for report in DashboardReport.objects.filter(creator = user):
+        report.ask_password = False
+        report.is_configurable = True
         yield report
 
-def list_internal_reports(user):
+def list_user_reports(user):
+    return _groupby(_list_user_reports(user))
+
+def _list_internal_reports(user):
     internal = ScopeType.objects.get(name = 'internal')
     for upb in UserProjectBinding.objects.filter(user = user):
         for report in HtmlReport.objects.filter(project = upb.project, scope = internal):
             if report.owner == user:
                 continue
+            report.ask_password = False
+            report.is_configurable = False
             yield report
         for report in DashboardReport.objects.filter(project = upb.project, scope = internal):
             if report.owner == user:
                 continue
+            report.ask_password = False
+            report.is_configurable = False
             yield report
 
-def list_public_reports():
+def list_internal_reports(user):
+    return _groupby(_list_internal_reports(user))
+
+def _list_public_reports(authorized):
     public = ScopeType.objects.get(name = 'public')
     for report in HtmlReport.objects.filter(scope = public):
+        report.ask_password = False if authorized or (len(report.password) == 0) else True
+        report.is_configurable = False
         yield report
     for report in DashboardReport.objects.filter(scope = public):
+        report.ask_password = False # Note: password is asked by the notebook server
+        report.is_configurable = False
         yield report
+
+def list_public_reports(authorized):
+    return _groupby(_list_public_reports(authorized))
 
 def get_report(**kw):
     try:
