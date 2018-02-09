@@ -64,7 +64,7 @@ class UserAdmin(admin.ModelAdmin):
                 raise NotImplementedError
         except User.DoesNotExist:
             user.create()
-            logger.info("user created: %s" % s)
+            logger.info("user created: %s" % user)
             send_new_password(user)
         super().save_model(request, user, form, changed)
 
