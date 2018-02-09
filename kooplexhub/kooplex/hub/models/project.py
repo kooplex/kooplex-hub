@@ -36,7 +36,7 @@ class Project(models.Model):
     def collaborators(self):
         if self._collaborators is None:
             self._collaborators = UserProjectBinding.objects.filter(project = self)
-        for upb in self._collaboraotrs:
+        for upb in self._collaborators:
             yield upb.user
 
     @property
