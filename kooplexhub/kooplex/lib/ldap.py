@@ -99,8 +99,8 @@ class Ldap:
             'shadowWarning': 7,
             'userPassword': user.password
         }
-        self.connection.add(dn, object_class, attributes)
-        if not self.connection.add(dn, object_class, attributes):
+        success = self.connection.add(dn, object_class, attributes)
+        if not success:
             raise LdapException(self.connection.result['description'])
 
     def removeuser(self, user):

@@ -55,7 +55,7 @@ def add(user):
         return { 'status_code': 0x00001, 'messages': [ msg ] }
     except User.DoesNotExist:
         pass
-    
+
     status = 0
     messages = []
     generatenewpassword(user)
@@ -104,7 +104,7 @@ def remove(user):
     try:
         Ldap().removeuser(user)
     except Exception as e:
-        logger.error("Failed to create ldap entry for %s (%s)" % (user, e))
+        logger.error("Failed to remove ldap entry for %s (%s)" % (user, e))
         status |= 0x001
     # remove folders from the filesyystem
     status_fs = cleanup_home(user)
