@@ -70,6 +70,7 @@ def publishForm(request):
         )
         report.filename_in_hub = t['filename_in_hub']
         report.filename_in_container = t['filename_in_container']
+        report.volname = t['volname']
         # conversion and deployment
         if isinstance(report, HtmlReport):
             publish_htmlreport(report)

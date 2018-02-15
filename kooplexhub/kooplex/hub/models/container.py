@@ -143,7 +143,7 @@ class DashboardContainer(Container):
 
     @property
     def url_external(self):
-        return os.path.join(get_settings('hub', 'base_url'), self.proxy_path, 'notebooks', '%s?dashboard' % self.report.notebook_filename)
+        return os.path.join(get_settings('hub', 'base_url'), self.proxy_path, 'notebooks', '%s?dashboard' % self.report.nb_path)
 
     @property
     def mark_to_remove(self):
