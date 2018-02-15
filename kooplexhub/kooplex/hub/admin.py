@@ -1,9 +1,10 @@
 import logging
 
+from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.conf.urls import url
-from django.shortcuts import redirect
 from django.contrib import admin
+from django.template import RequestContext
 
 from kooplex.hub.models import *
 from kooplex.logic.project import mark_containers_remove
@@ -12,10 +13,10 @@ logger = logging.getLogger(__name__)
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    list_display = ('username', 'first_name', 'last_name', 'uid', 'gitlab_id', 'n_projects', 'n_reports')
+    list_display = ('username', 'first_name', 'last_name', 'uid', 'gitlab_id', 'n_projects', 'n_reports', 'n_containers', 'tokenlen')
     #fieldsets = ( (None, { 'fields': (( 'first_name', 'last_name'), ('username', 'email'), 'bio', 'user_permissions') }),    )
     fieldsets = ( (None, { 'fields': (( 'first_name', 'last_name'), ('username', 'email'), 'bio' ) }),    )
-    actions = ['reset_password', 'remove_users' ]
+    actions = [ 'send_email', 'reset_token', 'reset_password', 'remove_users' ]
 
     def get_actions(self, request):
         actions = super().get_actions(request)
@@ -34,8 +35,48 @@ class UserAdmin(admin.ModelAdmin):
             user.generatenewpassword()
             msg += "%s, " % user.username
             logger.debug("reset_password: %s" % user)
-        messages.success(request, "Password reseted for: %s" % msg)
+        messages.success(request, "Password reset for: %s" % msg)
     reset_password.short_description = 'Reset password'
+
+    def reset_token(self, request, queryset):
+        from kooplex.lib import Docker
+        from kooplex.lib.sendemail import send_restart_containers_mail
+        msg = ""
+        for user in queryset:
+            user.settoken()
+            msg += "%s, " % user.username
+            logger.debug("reset_token: %s" % user)
+            containers_to_restart = []
+            for container in user.containers():
+                if container.is_running:
+                    container.mark_to_remove = True
+                    container.save()
+                    logger.debug("user: %s projectcontainer: %s marked to remove" % (user, container))
+                    containers_to_restart.append(container)
+                else:
+                    try:
+                        Docker().remove_container(container)
+                        logger.debug("projectcontainer %s is removed" % container)
+                    except Exception as e:
+                        logger.warning("projectcontainer %s is not removed, removing from hub database anyway -- %s" % (container, e))
+                        messages.warning(request, "projectcontainer %s is not removed -- %s" % (container, e))
+                        container.delete()
+            if len(containers_to_restart):
+                status = send_restart_containers_mail(user, containers_to_restart, "Administrator updated your jupyter notebook secret token")
+                logger.debug("user: %s, some project containers are running, sendmail status %d" % (user, status)) 
+        messages.success(request, "Token (re)set for: %s" % msg)
+    reset_token.short_description = 'Reset token'
+
+    def send_email(self, request, queryset):
+        return render(
+            request,
+            'admin/sendemail.html',
+            context_instance = RequestContext(request,
+            {
+                'users': queryset,
+            })
+        )
+    send_email.short_description = 'Send email in a mass'
 
     def remove_users(self, request, queryset):
         msg = ""
@@ -188,8 +229,43 @@ def initmodel(request):
     init_scopetypes()
     return redirect('/admin')
 
+def send_email(request):
+    from kooplex.lib import sendemail
+#FIXME: authorize
+    subject = request.POST.get('subject', '').strip()
+    message = request.POST.get('message', '').strip()
+    if not len(subject):
+        messages.error(request, "Mails are not sent out. Provide a subject")
+        return redirect('/admin')
+    if not len(message):
+        messages.error(request, "Mails are not sent out. Provide a message")
+        return redirect('/admin')
+    subject = "[ kooplex-admin ] %s" % subject
+    okay = []
+    notokay = []
+    for uid in request.POST.getlist('userlist'):
+        try:
+            user = User.objects.get(id = uid)
+            status = sendemail(user.email, subject, message)
+            if status == 0:
+                logger.info("mail with subject %s sent to %s" % (subject, user.email))
+                okay.append(user.username)
+            else:
+                logger.debug("cannot sent mail with subject %s to %s" % (subject, user.email))
+                notokay.append(user.username)
+        except User.DoesNotExist:
+            logger.error("Mass email: Someone hacking? uid = %d not found" % uid)
+            messages.error(request, "Loop broken, uid not found!")
+            break
+    if len(okay):
+        messages.success(request, "mail sent to: " + ",".join(okay))
+    if len(notokay):
+        messages.error(request, "mail not sent to: " + ",".join(notokay))
+    return redirect('/admin')
+
 urlpatterns = [
     url(r'^refreshimages', refreshimages, name = 'refresh-images'),
     url(r'^initmodel', initmodel, name = 'init-model'),
+    url(r'^sendemail', send_email, name = 'send-email'),
 ]
 
