@@ -54,8 +54,12 @@ class UserAdmin(admin.ModelAdmin):
                     logger.debug("user: %s projectcontainer: %s marked to remove" % (user, container))
                     containers_to_restart.append(container)
                 else:
-                    Docker().remove_container(container)
-                    logger.debug("projectcontainer %s is removed" % container)
+                    try:
+                        Docker().remove_container(container)
+                        logger.debug("projectcontainer %s is removed" % container)
+                    except Exception as e:
+                        logger.warning("projectcontainer %s is not removed -- %s" % (container, e))
+                        messages.warning(request, "projectcontainer %s is not removed -- %s" % (container, e))
             if len(containers_to_restart):
                 status = send_restart_containers_mail(user, containers_to_restart, "Administrator updated your jupyter notebook secret token")
                 logger.debug("user: %s, some project containers are running, sendmail status %d" % (user, status)) 
