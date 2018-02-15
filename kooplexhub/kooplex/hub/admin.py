@@ -39,15 +39,26 @@ class UserAdmin(admin.ModelAdmin):
     reset_password.short_description = 'Reset password'
 
     def reset_token(self, request, queryset):
+        from kooplex.lib import Docker
+        from kooplex.lib.sendemail import send_restart_containers_mail
         msg = ""
         for user in queryset:
-            user.settoken() #FIXME: we may automatically send an alert e-mail to restart all containers
+            user.settoken()
             msg += "%s, " % user.username
             logger.debug("reset_token: %s" % user)
+            containers_to_restart = []
             for container in user.containers():
-                container.mark_to_remove = True
-                container.save()
-                logger.debug("user: %s container: %s marked to remove" % (user, container))
+                if container.is_running:
+                    container.mark_to_remove = True
+                    container.save()
+                    logger.debug("user: %s projectcontainer: %s marked to remove" % (user, container))
+                    containers_to_restart.append(container)
+                else:
+                    Docker().remove_container(container)
+                    logger.debug("projectcontainer %s is removed" % container)
+            if len(containers_to_restart):
+                status = send_restart_containers_mail(user, containers_to_restart, "Administrator updated your jupyter notebook secret token")
+                logger.debug("user: %s, some project containers are running, sendmail status %d" % (user, status)) 
         messages.success(request, "Token (re)set for: %s" % msg)
     reset_token.short_description = 'Reset token'
 

@@ -104,3 +104,31 @@ Best regards,
         send_error_report(status, 'Error delivering pw request token (%s) to %s' % (token, user.email))
     return status
 
+def send_restart_containers_mail(user, containers, reason):
+    '''
+    @summary: send a message that 
+    @param user: recipient
+    @type user: kooplex.hub.models.User
+    @param container: the list of containers to be restarted
+    @type token: list(kooplex.hub.models.ProjectContainer)
+    @param reason: some explanation to the user
+    @type reason: str
+    @returns: 0 if suceeded 0 otherwise
+    '''
+    ctrs = ",".join([ c.project.name if c.project.owner == user else c.project.name_with_owner for c in containers ])
+    subject = 'ProjectContainer restart request'
+    message = """
+Dear %s %s,
+
+please restart your containers: %s
+
+Extra reason: %s
+
+Best regards,
+ Kooplex team
+    """ % (user.first_name, user.last_name, ctrs, reason)
+
+    status = _send(to = user.email, subject = subject, message = message)
+    if status != 0:
+        send_error_report(status, 'Error delivering pw request token (%s) to %s' % (token, user.email))
+    return status
