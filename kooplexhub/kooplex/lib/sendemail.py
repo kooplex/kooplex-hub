@@ -115,7 +115,7 @@ def send_restart_containers_mail(user, containers, reason):
     @type reason: str
     @returns: 0 if suceeded 0 otherwise
     '''
-    ctrs = ",".join([ c.project.name if c.project.owner == user else c.project.name_with_owner for c in containers ])
+    ctrs = ", ".join([ c.project.name if c.project.owner == user else c.project.name_with_owner for c in containers ])
     subject = 'ProjectContainer restart request'
     message = """
 Dear %s %s,
