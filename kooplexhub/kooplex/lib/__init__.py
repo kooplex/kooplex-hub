@@ -4,4 +4,5 @@ from .docker import Docker
 from .gitlab import  Gitlab
 from .gitlabadmin import  GitlabAdmin
 from .ldap import Ldap
+from .sendemail import _send as sendemail
 

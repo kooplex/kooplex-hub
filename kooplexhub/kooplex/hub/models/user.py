@@ -34,8 +34,7 @@ class User(DJUser):
 
     @property
     def n_projects(self):
-        from .project import Project
-        return len(list(Project.objects.filter(owner = self)))
+        return len(list(self.projects()))
 
     def projects(self):
         from .project import Project
@@ -83,6 +82,12 @@ class User(DJUser):
         for rpb in ResearchgroupProjectBinding.objects.filter(user = self):
             yield rpb.researchgroup
 
+    def settoken(self, save = True):
+        self.token = pwgen.pwgen(64)
+        if save:
+            logger.debug("Token update for %(last_name)s %(first_name)s [%(username)s]" % self)
+            self.save()
+
     def create(self):
         from kooplex.logic import user
         logger.debug("%s" % self)
@@ -93,7 +98,7 @@ class User(DJUser):
         else:
             self.uid = last_uid + 1
         self.gid = get_settings('ldap', 'usersgroupid')
-        self.token = pwgen.pwgen(64)
+        self.settoken(save = False)
         # during user manifestation gitlab_id and password are set
         status = user.add(self)
         self.save()
@@ -106,6 +111,19 @@ class User(DJUser):
         status = user.remove(self)
         logger.info(("Deleted user: %(last_name)s %(first_name)s (%(username)s with uid/gitlab_id: %(uid)d/%(gitlab_id)d) created. Email: %(email)s) status: " % self))
 #        self.delete()
+
+    def tokenlen(self):
+        return len(self.token) if self.token else -1
+
+    def containers(self):
+        from .container import ProjectContainer
+        for container in ProjectContainer.objects.filter(user = self):
+            yield container
+
+    @property
+    def n_containers(self):
+        return len(list(self.containers()))
+
 
 class Researchgroup(models.Model):
     id = models.AutoField(primary_key = True)
