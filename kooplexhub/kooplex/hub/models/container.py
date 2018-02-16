@@ -4,6 +4,8 @@ import os
 from django.db import models
 from django.utils import timezone
 import datetime
+import requests
+import time
 
 from kooplex.lib import get_settings, standardize_str
 
@@ -46,6 +48,18 @@ class Container(models.Model):
         for vcb in VolumeContainerBinding.objects.filter(container = self):
             yield lookup( vcb.volume )
 
+    def wait_until_ready(self):
+        url = self.api
+        while (True):
+            try:
+                logger.debug('Try to connect to notebook server in container %s' % self)
+                response = requests.get(url)
+                logger.debug('Connect to notebook server in container %s -- %s' % (self, response))
+                break
+            except Exception as e:
+                logger.debug('Cannot connect to notebook server in container %s, sleeping...' % self)
+                time.sleep(.1)
+
 class ProjectContainer(Container):
     project = models.ForeignKey(Project, null = True)
     mark_to_remove = models.BooleanField(default = False)
@@ -65,6 +79,10 @@ class ProjectContainer(Container):
     @property
     def url_external(self):
         return os.path.join(get_settings('hub', 'base_url'), self.proxy_path, '?token=%s' % self.user.token)
+
+    @property
+    def api(self):
+        return os.path.join(self.url, 'notebook', self.proxy_path)
 
     @property
     def volumemapping(self):
@@ -87,6 +105,7 @@ class ProjectContainer(Container):
             'PR_NAME': self.project.name,
             'PR_PWN': self.project.name_with_owner,
         }
+
 
 
 class LimitReached(Exception):
