@@ -168,6 +168,10 @@ class DashboardContainer(Container):
     def mark_to_remove(self):
         return True
 
+    @property
+    def api(self):
+        return os.path.join(self.url, self.proxy_path)
+
 
 
 class VolumeContainerBinding(models.Model):
