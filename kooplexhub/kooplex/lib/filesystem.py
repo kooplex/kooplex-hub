@@ -374,6 +374,7 @@ def copy_dashboardreport_in_place(report, files):
     dir_util.mkpath(dir_target)
 #    file_util.copy_file(filename_source, dir_target)
     target_file = os.path.join(dir_target, os.path.basename(filename_source))
+    prepare_dashboardreport_withinitcell(filename_source, target_file)
     logger.debug('cp %s -> %s' % (filename_source, dir_target))
     for f in files:
         t = translate(f)
