@@ -156,6 +156,7 @@ class DashboardContainer(Container):
             'NB_URL': self.proxy_path,
             'NB_PORT': 8000,
             'NB_TOKEN': self.report.password,
+            'REPORT_DIRANDFILE': self.report.nb_path,
             'REPORT_DIR': os.path.join('/mnt/.volumes/reports', self.report.report_dir),
             'REPORT_FILE': self.report.notebook_filename,
         }

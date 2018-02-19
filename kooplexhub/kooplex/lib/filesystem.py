@@ -372,7 +372,9 @@ def copy_dashboardreport_in_place(report, files):
     report_root = report.report_root
     dir_target = os.path.join(report_root, os.path.dirname(filename_in_container))
     dir_util.mkpath(dir_target)
-    file_util.copy_file(filename_source, dir_target)
+#    file_util.copy_file(filename_source, dir_target)
+    target_file = os.path.join(dir_target, os.path.basename(filename_source))
+    prepare_dashboardreport_withinitcell(filename_source, target_file)
     logger.debug('cp %s -> %s' % (filename_source, dir_target))
     for f in files:
         t = translate(f)
@@ -382,6 +384,14 @@ def copy_dashboardreport_in_place(report, files):
         logger.debug('cp %s -> %s' % (t['filename_in_hub'], dir_target))
     _chown_recursive(report_root, get_settings('ldap', 'reportuid'), get_settings('ldap', 'reportgid'))
     logger.info('Report %s -> %s' % (report, report_root))
+
+def prepare_dashboardreport_withinitcell(source_file, target_file):
+    import json
+    d=json.load(open(source_file))
+    for ic in range(len(d['cells'])):
+        d['cells'][ic]['metadata']['init_cell'] = True
+    d['metadata']['celltoolbar'] = 'Initialization Cell'
+    json.dump(d, open(target_file, 'w'))
 
 def cleanup_reportfiles(report):
     """
