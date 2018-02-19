@@ -51,6 +51,9 @@ class GitlabAdmin:
         logger.debug(information)
 
     def delete_user(self, user):
+        if user.gitlab_id is None:
+            logger.error("User %s does not have a valid gitlab_id, cannot remove the account" % user)
+            return
         kw = {
             'url': os.path.join(self.base_url, 'users', str(user.gitlab_id)),
             'headers': { 'PRIVATE-TOKEN': self.token },

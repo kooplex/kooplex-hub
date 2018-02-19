@@ -102,14 +102,20 @@ class User(DJUser):
         # during user manifestation gitlab_id and password are set
         status = user.add(self)
         self.save()
-        logger.info(("New user: %(last_name)s %(first_name)s (%(username)s with uid/gitlab_id: %(uid)d/%(gitlab_id)d) created. Email: %(email)s) status: " % self) + str(status))
+        try:
+            logger.info(("New user: %(last_name)s %(first_name)s (%(username)s with uid/gitlab_id: %(uid)d/%(gitlab_id)d) created. Email: %(email)s) status: " % self) + str(status))
+        except:
+            logger.info(("New user: %(last_name)s %(first_name)s (%(username)s with uid/gitlab_id: %(uid)d/%(gitlab_id)s) created. Email: %(email)s) status: " % self) + str(status))
         return status
 
     def remove(self):
         from kooplex.logic import user
         logger.debug("%s" % self)
         status = user.remove(self)
-        logger.info(("Deleted user: %(last_name)s %(first_name)s (%(username)s with uid/gitlab_id: %(uid)d/%(gitlab_id)d) created. Email: %(email)s) status: " % self))
+        try:
+            logger.info(("Deleted user: %(last_name)s %(first_name)s (%(username)s with uid/gitlab_id: %(uid)d/%(gitlab_id)d) created. Email: %(email)s) status: " % self))
+        except:
+            logger.info(("Deleted user: %(last_name)s %(first_name)s (%(username)s with uid/gitlab_id: %(uid)d/%(gitlab_id)s) created. Email: %(email)s) status: " % self))
 #        self.delete()
 
     def tokenlen(self):
