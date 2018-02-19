@@ -1,5 +1,6 @@
 import json
 import logging
+from threading import Timer
 
 from kooplex.lib import get_settings
 from kooplex.lib import Docker
@@ -76,6 +77,31 @@ def spawn_project_container(user, project):
     except:
         raise
 
+def register_check_timer(container):
+    logger.debug("register checker %s" % container)
+    Timer(get_settings('spawner', 'checkinterval_dashboard'), check_dashboard, (container, )).start()
+
+def check_dashboard(container):
+    from kooplex.lib import jupyter_session
+    response = jupyter_session(container).json()
+    logger.debug("%s -- %s" % (container, response))
+    starting_kernel = False
+    if len(response):
+        connections = 0
+        for r in response:
+            connections += r['kernel']['connections']
+            starting_kernel |= r['kernel']['execution_state'] == 'starting'
+        logger.debug("%d kernels in %s" % (connections, container))
+    else:
+        connections = None
+        logger.debug("no kernels started yet in %s" % container)
+    if (connections == 0) and not starting_kernel:
+        logger.info("no more kernels, stopping container %s" % container)
+        stop_container(container)
+    else:
+        register_check_timer(container)
+        
+
 def spawn_dashboard_container(report):
     container = DashboardContainer(
 #FIXME: user is not used unauthenticated launch
@@ -86,6 +112,7 @@ def spawn_dashboard_container(report):
         spawner = Spawner(container)
         spawner.run_container()
         container.wait_until_ready()
+        register_check_timer(container)
         return container.url_external
     except:
         raise
