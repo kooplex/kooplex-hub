@@ -132,7 +132,7 @@ def guestAccountRequestForm(request):
     if not len(lastname):
         messages.error(request, 'Last name must not be empty')
         error = True
-    if not re.match(r'\w+@\w+\.\w+', email):
+    if not re.match(r'[\w\.]+@\w+\.\w+', email):
         messages.error(request, 'E-mail should be valid')
         error = True
     try:
@@ -153,7 +153,7 @@ def guestAccountRequestForm(request):
             'auth/guest.html',
             context_instance = RequestContext(request, { })
         )
-       
+
     try:
         user = User(username = username, first_name = firstname, last_name = lastname, email = email)
         user.create()
@@ -172,6 +172,6 @@ def guestAccountRequestForm(request):
             user.remove()
         except Exception as e:
             logger.error("Error during removal of a guest account %s -- %s" % (user, e))
-        
+
     return redirect('/hub/login')
 
