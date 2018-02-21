@@ -214,6 +214,11 @@ class VolumeProjectBindingAdmin(admin.ModelAdmin):
             self.delete_model(request, vpb)
     delete_vpb.short_description = 'Delete volume project bindings'
 
+@admin.register(UserPrivilegeVolumeBinding)
+class UserPrivilegeVolumeBindingAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'volume', 'readwrite')
+
+
 #def admin_main(request):
 #   pass
 

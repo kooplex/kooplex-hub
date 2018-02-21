@@ -34,7 +34,7 @@ def projects(request):
     images = Image.objects.all()
     scopes = ScopeType.objects.all()
     functional_volumes = FunctionalVolume.objects.all()
-    storage_volumes = StorageVolume.objects.all()
+    storage_volumes = list(user.volumes())
     logger.debug('Rendering projects.html')
     return render(
         request,

@@ -32,6 +32,16 @@ class User(DJUser):
     def displayname(self):
         return "%(first_name)s %(last_name)s" % self
 
+    def volumes(self):
+        from kooplex.hub.models import UserPrivilegeVolumeBinding, StorageVolume
+        #FIXME: cache
+        for upvb in UserPrivilegeVolumeBinding.objects.filter(user = self):
+            try:
+                yield StorageVolume.objects.get(id = upvb.volume.id)
+            except StorageVolume.DoesNotExists:
+                pass
+            
+
     @property
     def n_projects(self):
         return len(list(self.projects()))
