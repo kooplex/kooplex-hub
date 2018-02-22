@@ -402,13 +402,18 @@ def cleanup_reportfiles(report):
     from kooplex.hub.models import HtmlReport, DashboardReport
     garbage = os.path.join(get_settings('volumes', 'garbage'), "report.%f" % time.time())
     if isinstance(report, HtmlReport):
-        try:
-            dir_util.copy_tree(os.path.dirname(report.filename_report_html), garbage)
-            dir_util.remove_tree(os.path.dirname(report.filename_report_html))
-        except:
-            raise
+        move_folder = os.path.dirname(report.filename_report_html)
+    elif isinstance(report, DashboardReport):
+        move_folder = report.report_root
     else:
         raise NotImplementedError
+    try:
+        dir_util.copy_tree(move_folder, garbage)
+        dir_util.remove_tree(move_folder)
+        logger.info("cleanup report %s %s -> %s" % (report, move_folder, garbage))
+    except Exception as e:
+        logger.error("fail to cleanup report %s %s -> %s -- %s" % (report, move_folder, garbage, e))
+        raise
 
 def create_clone_script(project, collaboratoruser = None, project_template = None):
     '''
