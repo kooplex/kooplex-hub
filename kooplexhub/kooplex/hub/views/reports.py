@@ -130,16 +130,6 @@ def stop_reportcontainer(request):
     return redirect('reports')
 
 
-### ### def container_report_all_stop(request):
-### ###     assert isinstance(request, HttpRequest)
-### ###     notebooks = Notebook.objects.filter(type="report")
-### ###     for notebook in  notebooks:
-### ###         project = Project.objects.get(id=notebook.project_id)
-### ###         spawner = ReportSpawner(project=project, image="none", report=None)
-### ###         spawner.delete_notebook(notebook)
-### ### 
-### ###     return HttpResponseRedirect(reverse('reports'))
-
 def setreport(request):
     if not authorize(request):
         return redirect('reports')
