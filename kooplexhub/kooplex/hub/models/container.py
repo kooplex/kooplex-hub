@@ -134,7 +134,7 @@ class DashboardContainer(Container):
         if len(pool) == 0:
             logger.warning("%s dashboard report reached the limits of %d containers" % (self.report, dashboardlimit))
             self.delete()
-            raise LimitReached("cannot launch more dashboard containers for report %s" % self.report)
+            raise LimitReached("Cannot launch any more dashboard containers for report %s" % self.report.name)
         container_name_info = { 'instance_id': pool.pop(), 'reportname': standardize_str(self.report.name) }
         self.name = get_settings('spawner', 'pattern_dashboard_containername') % container_name_info
         self.image = self.report.project.image
