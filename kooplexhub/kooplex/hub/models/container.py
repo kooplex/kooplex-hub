@@ -111,6 +111,15 @@ class ProjectContainer(Container):
 class LimitReached(Exception):
     pass
 
+def filter_dashboardcontainers(report):
+    from .report import DashboardReport
+    for r in DashboardReport.objects.filter(creator = report.creator, name = report.name, project = report.project):
+        for dbc in DashboardContainer.objects.filter(report = r):
+            if dbc.name == None:
+                logger.warning("check database for dashboard containers without a name %s" % (dbc))
+                continue
+            yield dbc
+
 class DashboardContainer(Container):
     from .report import DashboardReport
     report = models.ForeignKey(DashboardReport, null = True)
@@ -122,10 +131,7 @@ class DashboardContainer(Container):
         dashboardlimit = get_settings('spawner', 'max_dashboards_per_report')
         dashboardnamefilter = get_settings('spawner', 'pattern_dashboard_containername_filter')
         pool = list(range(dashboardlimit))
-        for dbc in DashboardContainer.objects.filter(report = self.report):
-            if dbc.name is None:
-                logger.warning("%s" % (dbc))
-                continue
+        for dbc in filter_dashboardcontainers(self.report):
             _, _, used_id, _ = re.split(dashboardnamefilter, dbc.name)
             used_id = int(used_id)
             pool.remove(used_id)
