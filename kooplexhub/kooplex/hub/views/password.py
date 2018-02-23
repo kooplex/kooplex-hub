@@ -165,13 +165,18 @@ def guestAccountRequestForm(request):
         else:
             messages.error(request, 'Cannot send an email to %s. Will remove this account.' % email)
             user.remove()
+            user.delete()
     except Exception as e:
-        messages.error(request, 'Error. Ask the administraot to check the logs. Removing account.')
+        messages.error(request, 'Error. Ask the administrator to check the logs. Removing account...')
         logger.error("Error during creation of a guest account %s -- %s" % (user, e))
         try:
             user.remove()
         except Exception as e:
             logger.error("Error during removal of a guest account %s -- %s" % (user, e))
+        try:
+            user.delete()
+        except Exception as e:
+            logger.error("Error during instance deletion of a guest account %s -- %s" % (user, e))
 
     return redirect('/hub/login')
 
