@@ -78,12 +78,12 @@ def spawn_project_container(user, project):
         raise
 
 def register_check_timer(container, first_time = True):
-    logger.debug("register checker %s" % container)
     dt = get_settings('spawner', 'checkpasswordinterval_dashboard') if first_time else get_settings('spawner', 'checkinterval_dashboard')
+    logger.debug("register checker %s for %f sec" % (container, dt))
     Timer(dt, check_dashboard, (container, )).start()
 
 
-def check_dashboard(container, n):
+def check_dashboard(container):
     from kooplex.lib import jupyter_session
     response = jupyter_session(container).json()
     logger.debug("%s -- %s" % (container, response))
