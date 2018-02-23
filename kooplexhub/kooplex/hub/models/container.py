@@ -63,6 +63,7 @@ class Container(models.Model):
 class ProjectContainer(Container):
     project = models.ForeignKey(Project, null = True)
     mark_to_remove = models.BooleanField(default = False)
+    volume_gids = set()
 
     def __str__(self):
         return "<ProjectContainer: %s of %s@%s>" % (self.name, self.user, self.project)
@@ -75,6 +76,11 @@ class ProjectContainer(Container):
             vcb = VolumeContainerBinding(container = self, volume = vpb.volume)
             vcb.save()
             logger.debug('container volume binding %s' % vcb)
+            try:
+                self.volume_gids.add(vpb.volume.groupid)
+            except:
+                # a functional volume does not have a groupid
+                pass
 
     @property
     def url_external(self):
@@ -94,7 +100,7 @@ class ProjectContainer(Container):
 
     @property
     def environment(self):
-        return {
+        envs = {
             'NB_USER': self.user.username,
             'NB_UID': self.user.uid,
             'NB_GID': self.user.gid,
@@ -105,8 +111,9 @@ class ProjectContainer(Container):
             'PR_NAME': self.project.name,
             'PR_PWN': self.project.name_with_owner,
         }
-
-
+        if len(self.volume_gids):
+            envs['MNT_GIDS'] = ",".join([ str(x) for x in self.volume_gids ])
+        return envs
 
 class LimitReached(Exception):
     pass
