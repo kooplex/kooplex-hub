@@ -80,14 +80,15 @@ class DashboardReport(Report):
         return os.path.join(self.notebook_dirname, self.notebook_filename)
 
     def save(self):
-        # make sure the current image is saved with the model
-        self.image = self.project.image
-        if self.volname == 'home':
-            self.notebook_dirname = ""
-        elif self.volname == 'git':
-            self.notebook_dirname = "git"
-        elif self.volname == 'share':
-            self.notebook_dirname = "share"
+        if hasattr(self, 'volname'):
+            # make sure the current image is saved with the model
+            self.image = self.project.image
+            if self.volname == 'home':
+                self.notebook_dirname = ""
+            elif self.volname == 'git':
+                self.notebook_dirname = "git"
+            elif self.volname == 'share':
+                self.notebook_dirname = "share"
         Report.save(self)      #FIXME: use the super() syntax
 
 def _groupby(reports):

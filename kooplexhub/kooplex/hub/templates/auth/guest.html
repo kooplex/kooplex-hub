@@ -1,0 +1,65 @@
+{% extends "app/layout.html" %}
+
+{% block content %}
+
+
+{% if messages %}
+  {% include 'message.html' %}
+{% endif %}
+
+
+<div class="row">
+    <div class="col-md-8">
+        <section id="changepasswForm">
+            <form action="{% url 'guestaccount' %}" method="post" class="form-horizontal">
+                {% csrf_token %}
+                <h4>Register for a guest account</h4>
+                <hr />
+                <div class="form-group">
+                    <label class="col-md-2 control-label">First name</label>
+                    <div class="col-md-10">
+                        <input class="form-control" name="firstname">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-2 control-label">Last name</label>
+                    <div class="col-md-10">
+                        <input class="form-control" name="lastname">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-2 control-label">Username</label>
+                    <div class="col-md-10">
+                        <input class="form-control" name="username">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-2 control-label">Email</label>
+                    <div class="col-md-10">
+                        <input class="form-control" name="email">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-offset-2 col-md-10">
+                        <input type="submit" name="btn_req" value="Request account" class="btn btn-default" />
+                        <input type="submit" name="btn_cancel" value="Cacncel" class="btn btn-default" />
+                    </div>
+                </div>
+                {% if errors %}
+                <p class="validation-summary-errors">{{ errors }}</p>
+                {% endif %}
+            </form>
+        </section>
+    </div>
+
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+    {% load staticfiles %}
+<script src="{% static 'app/scripts/jquery.validate.min.js' %}"></script>
+
+{% endblock %}

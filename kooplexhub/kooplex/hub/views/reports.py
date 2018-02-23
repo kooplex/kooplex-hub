@@ -28,18 +28,21 @@ def reports(request):
         reports_mine = []
         reports_internal = []
         reports_public = list_public_reports(authorized = False)
-    logger.debug('Rendering reports.html')
+    context_dict = {
+        'user': user,
+        'reports_mine': reports_mine,
+        'reports_internal': reports_internal,
+        'reports_public': reports_public,
+    }
+    if hasattr(request, 'ask_for_password'):
+        logger.debug("Rendering reports.html and ask for password: report id %s" % request.ask_for_password)
+        context_dict['ask_for_password'] = int(request.ask_for_password)
+    else:
+        logger.debug('Rendering reports.html')
     return render(
         request,
         'report/reports.html',
-        context_instance = RequestContext(request,
-        {
-            'user': user,
-            'base_url': get_settings('hub', 'base_url'),
-            'reports_mine': reports_mine,
-            'reports_internal': reports_internal,
-            'reports_public': reports_public,
-       })
+        context_instance = RequestContext(request, context_dict)
     )
 
 def _do_report_open(report):
@@ -84,7 +87,10 @@ def openreport(request):
             logger.debug('authenticated user %s opens report %s' % (user, report))
             return _do_report_open(report)
         if report.is_public:
-            if _checkpass(report, report_pass):
+            if report_pass is None and request.method == 'GET':
+                request.ask_for_password = report_id
+                return reports(request)
+            elif _checkpass(report, report_pass):
                 logger.debug('open public report %s' % (report))
                 return _do_report_open(report)
             else:
@@ -129,16 +135,6 @@ def stop_reportcontainer(request):
         messages.error(request, 'Reportserver container is not found.')
     return redirect('reports')
 
-
-### ### def container_report_all_stop(request):
-### ###     assert isinstance(request, HttpRequest)
-### ###     notebooks = Notebook.objects.filter(type="report")
-### ###     for notebook in  notebooks:
-### ###         project = Project.objects.get(id=notebook.project_id)
-### ###         spawner = ReportSpawner(project=project, image="none", report=None)
-### ###         spawner.delete_notebook(notebook)
-### ### 
-### ###     return HttpResponseRedirect(reverse('reports'))
 
 def setreport(request):
     if not authorize(request):

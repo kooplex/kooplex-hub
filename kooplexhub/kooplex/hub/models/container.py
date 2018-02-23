@@ -11,7 +11,7 @@ from kooplex.lib import get_settings, standardize_str
 
 from .user import User
 from .project import Project
-from .volume import Volume, VolumeProjectBinding
+from .volume import Volume, VolumeProjectBinding, StorageVolume
 from .image import Image
 
 logger = logging.getLogger(__name__)
@@ -63,6 +63,7 @@ class Container(models.Model):
 class ProjectContainer(Container):
     project = models.ForeignKey(Project, null = True)
     mark_to_remove = models.BooleanField(default = False)
+    volume_gids = set()
 
     def __str__(self):
         return "<ProjectContainer: %s of %s@%s>" % (self.name, self.user, self.project)
@@ -75,6 +76,16 @@ class ProjectContainer(Container):
             vcb = VolumeContainerBinding(container = self, volume = vpb.volume)
             vcb.save()
             logger.debug('container volume binding %s' % vcb)
+            try:
+                vol = StorageVolume.objects.get(id = vpb.volume.id)
+                if vol.groupid is None:
+                    logger.warning("storage volume %s does not have a group id associated" % vol)
+                    continue
+                self.volume_gids.add(vol.groupid)
+                logger.debug("storage volume %s associated group id %d" % (vol, vol.groupid))
+            except StorageVolume.DoesNotExist:
+                # a functional volume does not have a groupid
+                pass
 
     @property
     def url_external(self):
@@ -94,7 +105,7 @@ class ProjectContainer(Container):
 
     @property
     def environment(self):
-        return {
+        envs = {
             'NB_USER': self.user.username,
             'NB_UID': self.user.uid,
             'NB_GID': self.user.gid,
@@ -105,11 +116,21 @@ class ProjectContainer(Container):
             'PR_NAME': self.project.name,
             'PR_PWN': self.project.name_with_owner,
         }
-
-
+        if len(self.volume_gids):
+            envs['MNT_GIDS'] = ",".join([ str(x) for x in self.volume_gids ])
+        return envs
 
 class LimitReached(Exception):
     pass
+
+def filter_dashboardcontainers(report):
+    from .report import DashboardReport
+    for r in DashboardReport.objects.filter(creator = report.creator, name = report.name, project = report.project):
+        for dbc in DashboardContainer.objects.filter(report = r):
+            if dbc.name == None:
+                logger.warning("check database for dashboard containers without a name %s" % (dbc))
+                continue
+            yield dbc
 
 class DashboardContainer(Container):
     from .report import DashboardReport
@@ -122,10 +143,7 @@ class DashboardContainer(Container):
         dashboardlimit = get_settings('spawner', 'max_dashboards_per_report')
         dashboardnamefilter = get_settings('spawner', 'pattern_dashboard_containername_filter')
         pool = list(range(dashboardlimit))
-        for dbc in DashboardContainer.objects.filter(report = self.report):
-            if dbc.name is None:
-                logger.warning("%s" % (dbc))
-                continue
+        for dbc in filter_dashboardcontainers(self.report):
             _, _, used_id, _ = re.split(dashboardnamefilter, dbc.name)
             used_id = int(used_id)
             pool.remove(used_id)
@@ -134,7 +152,7 @@ class DashboardContainer(Container):
         if len(pool) == 0:
             logger.warning("%s dashboard report reached the limits of %d containers" % (self.report, dashboardlimit))
             self.delete()
-            raise LimitReached("cannot launch more dashboard containers for report %s" % self.report)
+            raise LimitReached("Cannot launch any more dashboard containers for report %s" % self.report.name)
         container_name_info = { 'instance_id': pool.pop(), 'reportname': standardize_str(self.report.name) }
         self.name = get_settings('spawner', 'pattern_dashboard_containername') % container_name_info
         self.image = self.report.project.image

@@ -34,7 +34,7 @@ def projects(request):
     images = Image.objects.all()
     scopes = ScopeType.objects.all()
     functional_volumes = FunctionalVolume.objects.all()
-    storage_volumes = StorageVolume.objects.all()
+    storage_volumes = list(user.volumes())
     logger.debug('Rendering projects.html')
     return render(
         request,
@@ -68,7 +68,10 @@ def project_new(request):
         return redirect('projects')
     template = request.POST.get('project_template')
     volumes = [ FunctionalVolume.objects.get(name = x) for x in request.POST.getlist('func_volumes') ]
-    volumes.extend( [ StorageVolume.objects.get(name = x) for x in request.POST.getlist('stg_volumes') ] )
+    for x in request.POST.getlist('stg_volumes'):
+        v = StorageVolume.objects.get(name = x)
+        if v in user.volumes():
+            volumes.append(v)
     logger.debug('New project to be created: %s' % name)
     stop = False
     if not re.match(r'^[a-zA-Z][0-9a-zA-Z_\. -]*$', name):

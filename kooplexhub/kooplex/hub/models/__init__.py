@@ -4,4 +4,4 @@ from .image import Image, init_model as refresh_images
 from .project import Project, UserProjectBinding
 from .scope import ScopeType, init_model as init_scopetypes
 from .user import User, Researchgroup, ResearchgroupUserBinding
-from .volume import FunctionalVolume, StorageVolume, VolumeProjectBinding, init_model as refresh_volumes
+from .volume import FunctionalVolume, StorageVolume, VolumeProjectBinding, UserPrivilegeVolumeBinding, init_model as refresh_volumes
