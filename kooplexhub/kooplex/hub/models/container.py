@@ -11,7 +11,7 @@ from kooplex.lib import get_settings, standardize_str
 
 from .user import User
 from .project import Project
-from .volume import Volume, VolumeProjectBinding
+from .volume import Volume, VolumeProjectBinding, StorageVolume
 from .image import Image
 
 logger = logging.getLogger(__name__)
@@ -77,8 +77,13 @@ class ProjectContainer(Container):
             vcb.save()
             logger.debug('container volume binding %s' % vcb)
             try:
-                self.volume_gids.add(vpb.volume.groupid)
-            except:
+                vol = StorageVolume.objects.get(id = vpb.volume.id)
+                if vol.groupid is None:
+                    logger.warning("storage volume %s does not have a group id associated" % vol)
+                    continue
+                self.volume_gids.add(vol.groupid)
+                logger.debug("storage volume %s associated group id %d" % (vol, vol.groupid))
+            except StorageVolume.DoesNotExist:
                 # a functional volume does not have a groupid
                 pass
 
