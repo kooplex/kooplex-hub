@@ -77,11 +77,13 @@ def spawn_project_container(user, project):
     except:
         raise
 
-def register_check_timer(container):
+def register_check_timer(container, first_time = True):
     logger.debug("register checker %s" % container)
-    Timer(get_settings('spawner', 'checkinterval_dashboard'), check_dashboard, (container, )).start()
+    dt = get_settings('spawner', 'checkpasswordinterval_dashboard') if first_time else get_settings('spawner', 'checkinterval_dashboard')
+    Timer(dt, check_dashboard, (container, )).start()
 
-def check_dashboard(container):
+
+def check_dashboard(container, n):
     from kooplex.lib import jupyter_session
     response = jupyter_session(container).json()
     logger.debug("%s -- %s" % (container, response))
@@ -93,13 +95,13 @@ def check_dashboard(container):
             starting_kernel |= r['kernel']['execution_state'] == 'starting'
         logger.debug("%d kernels in %s" % (connections, container))
     else:
-        connections = None
-        logger.debug("no kernels started yet in %s" % container)
+        logger.info("no password provided in time %s" % container)
+        stop_container(container)
     if (connections == 0) and not starting_kernel:
         logger.info("no more kernels, stopping container %s" % container)
         stop_container(container)
     else:
-        register_check_timer(container)
+        register_check_timer(container, first_time = False)
         
 
 def spawn_dashboard_container(report):
