@@ -45,7 +45,24 @@ def reports(request):
         context_instance = RequestContext(request, context_dict)
     )
 
-def _do_report_open(report):
+def _open_report_authorized(request, report):
+    user = request.user
+    if report.is_user_allowed(user):
+        logger.debug('authenticated user %s opens report %s' % (user, report))
+    if report.is_public:
+        if isinstance(report, DashboardReport):
+            logger.debug('dashboard report %s pass is checked elsewhere' % report)
+        if request.report_pass is None and request.method == 'GET':
+            request.ask_for_password = report.id
+            return reports(request)
+        elif _checkpass(report, request.report_pass):
+            logger.debug('password accepted, opening report %s' % report)
+        else:
+            messages.error(request, 'You may have mistyped the password')
+            return redirect('reports')
+    else:
+        messages.error(request, 'You are not allowed to open this report')
+        return redirect('reports')
     if isinstance(report, HtmlReport):
         with codecs.open(report.filename_report_html, 'r', 'utf-8') as f:
             content = f.read()
@@ -72,36 +89,20 @@ def _checkpass(report, report_pass):
 
 def openreport(request):
     assert isinstance(request, HttpRequest)
-    report_id = None
     if request.method == 'GET':
         report_id = request.GET.get('report_id', None)
-        report_pass = None
+        request.report_pass = None
     elif request.method == 'POST':
         report_id = request.POST.get('report_id', None)
-        report_pass = request.POST.get('report_pass', '')
+        request.report_pass = request.POST.get('report_pass', '')
+    else:
+        report_id = None
     if report_id is None:
         messages.error(request, 'Hub received a mailformed open report request. Try to navigate and open the report using the report list.')
         return redirect('reports')
     try:
-        user = request.user
         report = get_report(id = report_id)
-        if report.is_user_allowed(user):
-            logger.debug('authenticated user %s opens report %s' % (user, report))
-            return _do_report_open(report)
-        if report.is_public:
-            if isinstance(report, DashboardReport):
-                logger.debug('dashboard report %s pass is checked elsewhere' % report)
-                return _do_report_open(report)
-            if report_pass is None and request.method == 'GET':
-                request.ask_for_password = report_id
-                return reports(request)
-            elif _checkpass(report, report_pass):
-                logger.debug('password accepted, opening report %s' % report)
-                return _do_report_open(report)
-            else:
-                messages.error(request, 'You may have mistyped the password')
-        else:
-            messages.error(request, 'You are not allowed to open this report')
+        return _open_report_authorized(request, report)
     except ReportDoesNotExist:
         messages.error(request, 'Report does not exist')
     except LimitReached as msg:
@@ -113,6 +114,7 @@ def openreport_latest(request):
     assert isinstance(request, HttpRequest)
     project_id = request.GET['project_id']
     name = request.GET['name']
+    request.report_pass = None
     try:
         user = request.user
         project = Project.objects.get(id = project_id)
@@ -120,9 +122,8 @@ def openreport_latest(request):
         reports.sort()
         reports.reverse()
         for report in reports:
-            if report.is_user_allowed(user):
-                return _do_report_open(report)
-#FIXME: password check redirection
+            if report.is_user_allowed(user) or report.is_public:
+                return _open_report_authorized(request, report)
         messages.error(request, 'You are not allowed to open this report.')
     except ReportDoesNotExist:
         messages.error(request, 'Report does not exist')
