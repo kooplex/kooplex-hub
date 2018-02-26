@@ -89,11 +89,14 @@ def openreport(request):
             logger.debug('authenticated user %s opens report %s' % (user, report))
             return _do_report_open(report)
         if report.is_public:
+            if isinstance(report, DashboardReport):
+                logger.debug('dashboard report %s pass is checked elsewhere' % report)
+                return _do_report_open(report)
             if report_pass is None and request.method == 'GET':
                 request.ask_for_password = report_id
                 return reports(request)
             elif _checkpass(report, report_pass):
-                logger.debug('open public report %s' % (report))
+                logger.debug('password accepted, opening report %s' % report)
                 return _do_report_open(report)
             else:
                 messages.error(request, 'You may have mistyped the password')
