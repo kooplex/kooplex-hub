@@ -10,3 +10,12 @@ def extra_context(request):
         'base_url': get_settings('hub', 'base_url'),
     }
 
+def get_pane(request):
+    if request.method == 'GET':
+        pane = request.GET.get('pane', None)
+    elif request.method == 'POST':
+        pane = request.POST.get('pane', None)
+    else:
+        pane = None
+    return pane
+

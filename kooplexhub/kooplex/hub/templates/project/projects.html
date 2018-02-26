@@ -6,8 +6,13 @@
   <nav class="navbar navbar-default">
       <!-- Collect the nav links, forms, and other content for toggling -->
       <ul class="nav navbar-nav">
-          <li class="active" ><a href="#myprojects" data-toggle="tab">My projects</a></li>
+          {% if pane == 'projects_public' %}
+          <li><a href="#myprojects" data-toggle="tab">My projects</a></li>
+          <li class="active"><a href="#otherprojects" data-toggle="tab">Public projects</a></li>
+          {% else %}
+          <li class="active"><a href="#myprojects" data-toggle="tab">My projects</a></li>
           <li><a href="#otherprojects" data-toggle="tab">Public projects</a></li>
+          {% endif %}
           <li><a href="#newproject" data-toggle="tab">New project</a></li>
       </ul>
   </nav>
@@ -20,27 +25,35 @@
 {% endif %}
 
 <div class="tab-content">
+  {% if pane == 'projects_public' %}
+  <div id="myprojects" class="tab-pane fade">
+  {% else %}
   <div id="myprojects" class="tab-pane fade in active">
+  {% endif %}
         {% for project in projects_mine %}
           <div class="row">
-            {% include 'project/project-partial.html' with publicvar=False %}
+            {% include 'project/project-partial.html' with publicvar=False this_pane='projects_mine' %}
           </div>
         {% endfor %}
         {% for project in projects_shared %}
           <div class="row">
-            {% include 'project/project-partial.html' with publicvar=False %}
+            {% include 'project/project-partial.html' with publicvar=False this_pane='projects_mine' %}
           </div>
         {% endfor %}
   </div>
+  {% if pane == 'projects_public' %}
+  <div id="otherprojects" class="tab-pane fade in active">
+  {% else %}
   <div id="otherprojects" class="tab-pane fade">
+  {% endif %}
         {% for project in projects_public %}
           <div class="row">
-            {% include 'project/project-partial.html' with publicvar=True %}
+            {% include 'project/project-partial.html' with publicvar=True this_pane='projects_public' %}
           </div>
         {% endfor %}
   </div>
   <div id="newproject" class="tab-pane fade">
-     {% include 'project/new.html' %}
+     {% include 'project/new.html' with this_pane='project_new' %}
   </div>
 </div><!-- /.tab-content -->
 

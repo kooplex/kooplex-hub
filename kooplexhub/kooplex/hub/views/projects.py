@@ -7,6 +7,7 @@ from django.shortcuts import render, redirect
 from django.template import RequestContext
 
 from kooplex.hub.models import *
+from kooplex.hub.views.extra_context import get_pane
 
 from kooplex.logic.spawner import spawn_project_container, stop_container, SpawnError
 from kooplex.logic import create_project, delete_project, configure_project, leave_project
@@ -36,23 +37,25 @@ def projects(request):
     functional_volumes = FunctionalVolume.objects.all()
     storage_volumes = list(user.volumes())
     logger.debug('Rendering projects.html')
+    context_dict = {
+        'user': user,
+        'projects_mine': projects_mine,
+        'projects_shared': projects_sharedwithme,
+        'projects_public': projects_public,
+        'running': running,
+        'stopped': stopped,
+        'users': users,
+        'images' : images,
+        'scopes' : scopes,
+        'functional_volumes': functional_volumes,
+        'storage_volumes': storage_volumes,
+    }
+    if hasattr(request, 'pane'):
+        context_dict['pane'] = request.pane
     return render(
         request,
         'project/projects.html',
-        context_instance = RequestContext(request,
-        {
-            'user': user,
-            'projects_mine': projects_mine,
-            'projects_shared': projects_sharedwithme,
-            'projects_public': projects_public,
-            'running': running,
-            'stopped': stopped,
-            'users': users,
-            'images' : images,
-            'scopes' : scopes,
-            'functional_volumes': functional_volumes,
-            'storage_volumes': storage_volumes,
-        })
+        context_instance = RequestContext(request, context_dict)
     )
 
 
@@ -158,6 +161,7 @@ def project_start(request):
     """Starts. the project container."""
     if not authorize(request):
         return redirect('login')
+    request.pane = get_pane(request)
     try:
         project_id = request.GET['project_id']
         project = Project.objects.get(id = project_id)
@@ -172,15 +176,14 @@ def project_start(request):
         messages.error(request, 'You are not authorized to start that project')
     except SpawnError as e:
         messages.error(request, 'We cannot start the container -- %s' % e)
-    return redirect('projects')
-
+    return projects(request)
 
 def project_open(request):
     """Opens the project container."""
     if not authorize(request):
         return redirect('login')
     user = request.user
-    project_id = request.GET['project_id']
+    project_id = request.GET.get('project_id', None)
     try:
         project = Project.objects.get(id = project_id)
         container = ProjectContainer.objects.get(user = user, project = project, is_running = True)
@@ -200,7 +203,8 @@ def project_stop(request):
     if not authorize(request):
         return redirect('login')
     user = request.user
-    project_id = request.GET['project_id']
+    project_id = request.GET.get('project_id', None)
+    request.pane = get_pane(request)
     try:
         project = Project.objects.get(id = project_id)
         container = ProjectContainer.objects.get(user = user, project = project, is_running = True)
@@ -209,7 +213,7 @@ def project_stop(request):
         messages.error(request, 'Project does not exist')
     except ProjectContainer.DoesNotExist:
         messages.error(request, 'Project container is already stopped or is missing')
-    return redirect('projects')
+    return projects(request)
 
 def project_versioning(request):
     """Handles the git."""
