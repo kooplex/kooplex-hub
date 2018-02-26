@@ -76,6 +76,9 @@ def _open_report_authorized(request, report):
         logger.debug('authenticated user %s opens report %s' % (user, report))
         return _do_report_open(report)
     if report.is_public:
+        if authorize(request):
+            logger.debug('user %s is authorized to view the report %s' % (user, report))
+            return _do_report_open(report)
         if isinstance(report, DashboardReport):
             logger.debug('dashboard report %s pass is checked elsewhere' % report)
             return _do_report_open(report)
