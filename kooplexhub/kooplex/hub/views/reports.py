@@ -72,13 +72,15 @@ def _checkpass(report, report_pass):
 
 def openreport(request):
     assert isinstance(request, HttpRequest)
+    report_id = None
     if request.method == 'GET':
-        report_id = request.GET['report_id']
+        report_id = request.GET.get('report_id', None)
         report_pass = None
     elif request.method == 'POST':
-        report_id = request.POST['report_id']
+        report_id = request.POST.get('report_id', None)
         report_pass = request.POST.get('report_pass', '')
-    else:
+    if report_id is None:
+        messages.error(request, 'Hub received a mailformed open report request. Try to navigate and open the report using the report list.')
         return redirect('reports')
     try:
         user = request.user
