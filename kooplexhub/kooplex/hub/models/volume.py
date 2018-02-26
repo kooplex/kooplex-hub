@@ -41,6 +41,7 @@ class FunctionalVolume(Volume):
  
 class StorageVolume(Volume):
     groupid = models.IntegerField(null = True)
+    public = models.BooleanField(default = False)
 
     @property
     def volumename(self):

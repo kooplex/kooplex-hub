@@ -33,14 +33,19 @@ class User(DJUser):
         return "%(first_name)s %(last_name)s" % self
 
     def volumes(self):
+        '''
+        @summary: iterate over those volumes this user has access. First public volumes are yielded
+        @yields: kooplex.hub.models.StorageVolume
+        '''
         from kooplex.hub.models import UserPrivilegeVolumeBinding, StorageVolume
         #FIXME: cache
+        for v in StorageVolume.objects.filter(public = True):
+            yield v
         for upvb in UserPrivilegeVolumeBinding.objects.filter(user = self):
             try:
                 yield StorageVolume.objects.get(id = upvb.volume.id)
             except StorageVolume.DoesNotExists:
                 pass
-            
 
     @property
     def n_projects(self):
