@@ -45,33 +45,6 @@ def reports(request):
         context_instance = RequestContext(request, context_dict)
     )
 
-def _open_report_authorized(request, report):
-    user = request.user
-    if report.is_user_allowed(user):
-        logger.debug('authenticated user %s opens report %s' % (user, report))
-    if report.is_public:
-        if isinstance(report, DashboardReport):
-            logger.debug('dashboard report %s pass is checked elsewhere' % report)
-        if request.report_pass is None and request.method == 'GET':
-            request.ask_for_password = report.id
-            return reports(request)
-        elif _checkpass(report, request.report_pass):
-            logger.debug('password accepted, opening report %s' % report)
-        else:
-            messages.error(request, 'You may have mistyped the password')
-            return redirect('reports')
-    else:
-        messages.error(request, 'You are not allowed to open this report')
-        return redirect('reports')
-    if isinstance(report, HtmlReport):
-        with codecs.open(report.filename_report_html, 'r', 'utf-8') as f:
-            content = f.read()
-        logger.debug("Dumping reportfile %s" % report.filename_report_html)
-        return HttpResponse(content)
-    elif isinstance(report, DashboardReport):
-        logger.debug("Starting Dashboard server for %s" % report)
-        return redirect(spawn_dashboard_container(report)) #FIXME: launch is not authorized
-
 def _checkpass(report, report_pass):
     if isinstance(report, HtmlReport):
         if len(report.password) == 0:
@@ -86,6 +59,38 @@ def _checkpass(report, report_pass):
     elif isinstance(report, DashboardReport):
         logger.debug("Report password for %s is not checked, jupyter will take care for it" % report)
         return True
+
+def _do_report_open(report):
+    if isinstance(report, HtmlReport):
+        with codecs.open(report.filename_report_html, 'r', 'utf-8') as f:
+            content = f.read()
+        logger.debug("Dumping reportfile %s" % report.filename_report_html)
+        return HttpResponse(content)
+    elif isinstance(report, DashboardReport):
+        logger.debug("Starting Dashboard server for %s" % report)
+        return redirect(spawn_dashboard_container(report)) #FIXME: launch is not authorized
+
+def _open_report_authorized(request, report):
+    user = request.user
+    if report.is_user_allowed(user):
+        logger.debug('authenticated user %s opens report %s' % (user, report))
+        return _do_report_open(report)
+    if report.is_public:
+        if isinstance(report, DashboardReport):
+            logger.debug('dashboard report %s pass is checked elsewhere' % report)
+            return _do_report_open(report)
+        if request.report_pass is None and request.method == 'GET':
+            request.ask_for_password = report.id
+            return reports(request)
+        elif _checkpass(report, request.report_pass):
+            logger.debug('password accepted, opening report %s' % report)
+            return _do_report_open(report)
+        else:
+            messages.error(request, 'You may have mistyped the password')
+            return redirect('reports')
+    else:
+        messages.error(request, 'You are not allowed to open this report')
+        return redirect('reports')
 
 def openreport(request):
     assert isinstance(request, HttpRequest)
@@ -112,8 +117,8 @@ def openreport(request):
 
 def openreport_latest(request):
     assert isinstance(request, HttpRequest)
-    project_id = request.GET['project_id']
-    name = request.GET['name']
+    project_id = request.GET.get('project_id', None)
+    name = request.GET.get('name', None)
     request.report_pass = None
     try:
         user = request.user
@@ -125,6 +130,8 @@ def openreport_latest(request):
             if report.is_user_allowed(user) or report.is_public:
                 return _open_report_authorized(request, report)
         messages.error(request, 'You are not allowed to open this report.')
+    except Project.DoesNotExist:
+        messages.error(request, 'Report does not exist')
     except ReportDoesNotExist:
         messages.error(request, 'Report does not exist')
     return redirect('reports')
