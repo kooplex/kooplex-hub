@@ -16,9 +16,19 @@
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
       <ul class="nav navbar-nav">
           {% if user.is_authenticated %}
-              <li class="active" ><a href="#myreports" data-toggle="tab">My reports</a></li>
+            {% if pane == 'reports_public' %}
+              <li><a href="#myreports" data-toggle="tab">My reports</a></li>
+              <li><a href="#internalreports" data-toggle="tab">Internal reports</a></li>
+              <li class="active"><a href="#publicreports" data-toggle="tab" >Public reports</a></li>
+            {% elif pane == 'reports_internal' %}
+              <li><a href="#myreports" data-toggle="tab">My reports</a></li>
+              <li class="active"><a href="#internalreports" data-toggle="tab">Internal reports</a></li>
+              <li><a href="#publicreports" data-toggle="tab" >Public reports</a></li>
+            {% else %}
+              <li class="active"><a href="#myreports" data-toggle="tab">My reports</a></li>
               <li><a href="#internalreports" data-toggle="tab">Internal reports</a></li>
               <li><a href="#publicreports" data-toggle="tab" >Public reports</a></li>
+            {% endif %}
           {% else %}
               <li class="active"><a href="#publicreports" data-toggle="tab" >Public reports</a></li>
           {% endif %}
@@ -37,33 +47,41 @@
 
  <div class="tab-content">
 
-     {% if user.is_authenticated %}
+     {% if user.is_authenticated and pane != 'reports_internal' and pane != 'reports_public' %}
      <div id="myreports" class="tab-pane fade in active">
      {% else %}
      <div id="myreports" class="tab-pane fade">
      {% endif %}
        {% for key, reports in reports_mine.items %}
          <div class="row">
-            {% include 'report/partial.html' with project=key.0 reportname=key.1 %}
+            {% include 'report/partial.html' with project=key.0 reportname=key.1 this_pane='reports_mine' %}
          </div>
        {% endfor %}
      </div>
 
+     {% if user.is_authenticated and pane == 'reports_internal' %}
+     <div id="internalreports" class="tab-pane fade in active">
+     {% else %}
      <div id="internalreports" class="tab-pane fade">
+     {% endif %}
        {% for key, reports in reports_internal.items %}
          <div class="row">
-            {% include 'report/partial.html' with project=key.0 reportname=key.1 %}
+            {% include 'report/partial.html' with project=key.0 reportname=key.1 this_pane='reports_internal' %}
          </div>
        {% endfor %}
      </div>
      {% if user.is_authenticated %}
+       {% if pane == 'reports_public' %}
+     <div id="publicreports" class="tab-pane fade in active">
+       {% else %}
      <div id="publicreports" class="tab-pane fade">
+       {% endif %}
      {% else %}
      <div id="publicreports" class="tab-pane fade in active">
      {% endif %}
      {% for key, reports in reports_public.items %}
          <div class="row">
-            {% include 'report/partial.html' with project=key.0 reportname=key.1 %}
+            {% include 'report/partial.html' with project=key.0 reportname=key.1 this_pane='reports_public' %}
          </div>
      {% endfor %}
      </div>

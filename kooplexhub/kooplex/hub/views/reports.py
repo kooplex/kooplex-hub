@@ -15,6 +15,7 @@ from kooplex.hub.models import list_user_reports, list_internal_reports, list_pu
 from kooplex.hub.models import ReportDoesNotExist, HtmlReport, DashboardReport, ScopeType, DashboardContainer
 from kooplex.hub.models import Project, LimitReached
 from kooplex.logic.spawner import spawn_dashboard_container, remove_container
+from kooplex.hub.views.extra_context import get_pane
 
 logger = logging.getLogger(__name__)
 
@@ -37,8 +38,9 @@ def reports(request):
     if hasattr(request, 'ask_for_password'):
         logger.debug("Rendering reports.html and ask for password: report id %s" % request.ask_for_password)
         context_dict['ask_for_password'] = int(request.ask_for_password)
-    else:
-        logger.debug('Rendering reports.html')
+    if hasattr(request, 'pane'):
+        context_dict['pane'] = request.pane
+    logger.debug('Rendering reports.html')
     return render(
         request,
         'report/reports.html',
@@ -108,6 +110,7 @@ def openreport(request):
     if report_id is None:
         messages.error(request, 'Hub received a mailformed open report request. Try to navigate and open the report using the report list.')
         return redirect('reports')
+    request.pane = get_pane(request)
     try:
         report = get_report(id = report_id)
         return _open_report_authorized(request, report)
@@ -116,13 +119,14 @@ def openreport(request):
     except LimitReached as msg:
         logger.warning(msg)
         messages.error(request, msg)
-    return redirect('reports')
+    return reports(request)
 
 def openreport_latest(request):
     assert isinstance(request, HttpRequest)
     project_id = request.GET.get('project_id', None)
     name = request.GET.get('name', None)
     request.report_pass = None
+    request.pane = get_pane(request)
     try:
         user = request.user
         project = Project.objects.get(id = project_id)
@@ -137,7 +141,7 @@ def openreport_latest(request):
         messages.error(request, 'Report does not exist')
     except ReportDoesNotExist:
         messages.error(request, 'Report does not exist')
-    return redirect('reports')
+    return reports(request)
 
 
 def stop_reportcontainer(request):
