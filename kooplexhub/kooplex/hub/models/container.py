@@ -133,8 +133,11 @@ def filter_dashboardcontainers(report):
             yield dbc
 
 class DashboardContainer(Container):
+    from threading import Lock
     from .report import DashboardReport
     report = models.ForeignKey(DashboardReport, null = True)
+
+    initlock = Lock()
 
     def __str__(self):
         return "<DashboardContainer: %s of %s@%s>" % (self.name, self.user, self.report)
@@ -143,23 +146,24 @@ class DashboardContainer(Container):
         dashboardlimit = get_settings('spawner', 'max_dashboards_per_report')
         dashboardnamefilter = get_settings('spawner', 'pattern_dashboard_containername_filter')
         pool = list(range(dashboardlimit))
-        for dbc in filter_dashboardcontainers(self.report):
-            _, _, used_id, _ = re.split(dashboardnamefilter, dbc.name)
-            used_id = int(used_id)
-            pool.remove(used_id)
-            logger.debug("dashboard id %d for report %s is occupied" % (used_id, self.report))
-        logger.debug("LEFT %d" % len(pool))
-        if len(pool) == 0:
-            logger.warning("%s dashboard report reached the limits of %d containers" % (self.report, dashboardlimit))
-            self.delete()
-            raise LimitReached("Cannot launch any more dashboard containers for report %s" % self.report.name)
-        container_name_info = { 'instance_id': pool.pop(), 'reportname': standardize_str(self.report.name) }
-        self.name = get_settings('spawner', 'pattern_dashboard_containername') % container_name_info
-        self.image = self.report.project.image
-        for vpb in VolumeProjectBinding.objects.filter(project = self.report.project):
-            vcb = VolumeContainerBinding(container = self, volume = vpb.volume)
-            vcb.save()
-        self.save() #FIXME: breaks symmetry
+        with self.initlock:
+            for dbc in filter_dashboardcontainers(self.report):
+                _, _, used_id, _ = re.split(dashboardnamefilter, dbc.name)
+                used_id = int(used_id)
+                pool.remove(used_id)
+                logger.debug("dashboard id %d for report %s is occupied" % (used_id, self.report))
+            logger.debug("LEFT %d" % len(pool))
+            if len(pool) == 0:
+                logger.warning("%s dashboard report reached the limits of %d containers" % (self.report, dashboardlimit))
+                self.delete()
+                raise LimitReached("Cannot launch any more dashboard containers for report %s" % self.report.name)
+            container_name_info = { 'instance_id': pool.pop(), 'reportname': standardize_str(self.report.name) }
+            self.name = get_settings('spawner', 'pattern_dashboard_containername') % container_name_info
+            self.image = self.report.project.image
+            for vpb in VolumeProjectBinding.objects.filter(project = self.report.project):
+                vcb = VolumeContainerBinding(container = self, volume = vpb.volume)
+                vcb.save()
+            self.save()
 
     @property
     def volumemapping(self):
