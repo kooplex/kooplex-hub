@@ -74,6 +74,9 @@ def _do_report_open(report):
 
 def _open_report_authorized(request, report):
     user = request.user
+    if report.password == '':
+        logger.debug('user %s opens report %s, which is not protected by a password' % (user, report))
+        return _do_report_open(report)
     if report.is_user_allowed(user):
         logger.debug('authenticated user %s opens report %s' % (user, report))
         return _do_report_open(report)
@@ -169,6 +172,7 @@ def setreport(request):
         if button == 'apply':
             report.scope = ScopeType.objects.get(name = request.POST['scope'])
             report.description = request.POST['report_description'].strip()
+            report.password = request.POST['password'].strip()
             report.save()
         elif button == 'delete':
             cleanup_reportfiles(report)
