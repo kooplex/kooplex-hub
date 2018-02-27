@@ -23,8 +23,10 @@
               <option value="internal" {% if r.scope.name == 'internal' %} selected {% endif %}>internal</option>
               <option value="public" {% if r.scope.name == 'public' %} selected {% endif %}>public</option>
             </select><br>
+            <label>Show password</label>
+            <input type="checkbox" onclick="toggle_pw({{ r.id }});"><br>
             <label>Password</label>
-            <input name="password" value="{{ r.password }}">
+            <input name="password" type="password" value="{{ r.password }}" id="pw-{{ r.id }}">
           </div>
           <div id="pane_description-{{ r.id }}" class="tab-pane fade">
             <p>You can update the description here.</p>
@@ -44,3 +46,13 @@
     </form>
   </div>         <!-- modal-content -->
 </div>           <!-- modal -->
+<script type="text/javascript">
+function toggle_pw(report_id) {
+    var pwinput = document.getElementById("pw-" + report_id);
+    if (pwinput.type === "password") {
+        pwinput.type = "text";
+    } else {
+        pwinput.type = "password";
+    }
+}
+</script>
