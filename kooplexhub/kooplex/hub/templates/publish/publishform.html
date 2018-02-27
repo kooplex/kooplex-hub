@@ -97,7 +97,8 @@
                 {% endif %}
               </div>
               <div id="pane_passwdNscope" class="tab-pane fade">
-                <strong>Password:</strong> <input type="text" class="form-control" id="password" name="password" placeholder="Leave blank toyield unrestricted access" /><br>
+                <strong>Hide password:</strong> <input type="checkbox" checked onclick="toggle_pw();"/><br>
+                <strong>Password:</strong> <input type="password" class="form-control" id="pw" name="password" placeholder="Leave blank to yield unrestricted access" /><br>
                 <strong>Scope:</strong> <select name = "scope" class = "btn btn-default">
                   {% for scope in scopes %}
                   <option value="{{ scope.name }}">{{ scope }}</option>
@@ -122,7 +123,6 @@
               <li>If no <strong>Name</strong> is provided for the report, it is automatically generated from the noteboook's filename.
               <li>The reportname in the url should not contain any filename extension.
               <li>Public reports can be protected by a password if you provide one under the <strong>Password</strong> tab.
-              <li>File attachments are deployed only with dashboard reports.
             </ul>
           </div>
 
@@ -144,7 +144,7 @@
 </div>               <!-- row -->
 </div>
 
-<script>
+<script type="text/javascript">
 function empty() {
     var x;
     x = document.getElementById("password").value;
@@ -152,6 +152,15 @@ function empty() {
         alert("Please enter a password.\nIt will have effect only at querying the report server...");
         return false;
     };
+}
+
+function toggle_pw() {
+    var pwinput = document.getElementById("pw");
+    if (pwinput.type === "password") {
+        pwinput.type = "text";
+    } else {
+        pwinput.type = "password";
+    }
 }
 </script>
 
