@@ -2,12 +2,7 @@
 
 {% block content %}
 
-{% if ask_for_password %}
-<div class="container" onmouseover="popup_password();">
-{% else %}
 <div class="container">
-{% endif %}
-
 <div class="row">
 <div class="col-md-12 col-sm-12 col-xs-12">
 <nav class="navbar navbar-default">
@@ -91,7 +86,7 @@
 
 {% if ask_for_password %}
 <script type="text/javascript">
-function popup_password() {
+window.onload = function () {
   $('#report-password-' + {{ ask_for_password }}).modal('show');
 }
 </script>
