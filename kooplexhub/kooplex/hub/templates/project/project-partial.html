@@ -74,7 +74,7 @@
           <button role="button" type="button" class="btn btn-success" data-toggle="tooltip" title="Open project container: {{ project.name }}" data-placement="top">
             <span class="glyphicon glyphicon-folder-open" aria-hidden="true"></span>
           </button></a>
-        <a href="{% url 'notebook-publishform' %}?project_id={{ project.id  }}&pane={{ this_pane }}">
+        <a href="{% url 'notebook-publishform' %}?project_id={{ project.id  }}">
           <button role="button" type="button" class="btn btn-warning" data-toggle="tooltip" title="Publish project: {{ project.name }}" data-placement="top">
             <span class="glyphicon glyphicon-flag" aria-hidden="true"></span>
           </button></a>
@@ -100,7 +100,7 @@
 
             <!-- GIT RELATED STUFF -->
 
-        <a href="{% url 'project-versioncontrol' %}?project_id={{ project.id }}&pane={{ this_pane }}">
+        <a href="{% url 'project-versioncontrol' %}?project_id={{ project.id }}">
           <button role="button" type="button" class="btn btn-warning" data-toggle="tooltip" title="Version control of your project {{ project.name }}. You can commit your changes, revert to a former commited state or pull remote changes" data-placement="top">
             <span class="glyphicon glyphicon-random" aria-hidden="true"></span>
           </button></a>
