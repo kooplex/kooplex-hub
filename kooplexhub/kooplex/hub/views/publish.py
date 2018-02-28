@@ -97,8 +97,10 @@ def publishForm(request):
             except Exception as e:
                 logger.error("cannot delete report %s -- %s" % (report, e))
                 messages.error(request, 'Somethng went wrong while deleting report %s [%s]. Ask the administraotr to look after the case.' % (report, e))
-    if removed > 0:
-        messages.info(request, '%d former report instances of project %s has benn deleted.' % (removed, project))
+    if removed == 1:
+        messages.info(request, 'A former report instance of project %s has been deleted.' % (project))
+    elif removed > 1:
+        messages.info(request, '%d former report instances of project %s have been deleted.' % (project))
     return redirect('projects')
 
 urlpatterns = [
