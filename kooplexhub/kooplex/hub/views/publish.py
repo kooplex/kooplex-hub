@@ -5,10 +5,11 @@ import time
 from django.conf.urls import patterns, url, include
 from django.shortcuts import render, redirect
 from django.template import RequestContext
+from django.contrib import messages
 
-from kooplex.hub.models import Project, HtmlReport, DashboardReport, ScopeType
+from kooplex.hub.models import Project, HtmlReport, DashboardReport, ScopeType, ReportDoesNotExist, get_report
 from kooplex.lib import authorize, get_settings
-from kooplex.lib.filesystem import list_notebooks, list_files, copy_dashboardreport_in_place, translate
+from kooplex.lib.filesystem import list_notebooks, list_files, copy_reportfiles_in_place, translate, cleanup_reportfiles
 from kooplex.logic.impersonator import publish_htmlreport
 
 logger = logging.getLogger(__name__)
@@ -74,11 +75,30 @@ def publishForm(request):
         # conversion and deployment
         if isinstance(report, HtmlReport):
             publish_htmlreport(report)
+            #files = request.POST.getlist('other_files')
+            #copy_reportfiles_in_place(report, files)
         elif isinstance(report, DashboardReport):
             files = request.POST.getlist('other_files')
-            copy_dashboardreport_in_place(report, files)
+            copy_reportfiles_in_place(report, files)
         report.save()
         logger.info('new report %s' % report)
+        messages.info(request, 'Your new report named %s of project %s is publised.' % (report.name, project))
+        removed = 0
+        for report_id in request.POST.getlist('report2remove'):
+            try:
+                report = get_report(id = report_id, creator = request.user)
+                cleanup_reportfiles(report)
+                report.delete()
+                logger.info("deleted report %s" % report)
+                removed += 1
+            except ReportDoesNotExist:
+                logger.warning("not found reportid %d and user %s" % (report_id, request.user))
+                messages.warning(request, 'You are not allowed to manipulate report with id %d' % report_id)
+            except Exception as e:
+                logger.error("cannot delete report %s -- %s" % (report, e))
+                messages.error(request, 'Somethng went wrong while deleting report %s [%s]. Ask the administraotr to look after the case.' % (report, e))
+    if removed > 0:
+        messages.info(request, '%d former report instances of project %s has benn deleted.' % (removed, project))
     return redirect('projects')
 
 urlpatterns = [
