@@ -109,7 +109,7 @@ class User(DJUser):
         # set uid and gid, generate token
         last_uid = User.objects.all().aggregate(models.Max('uid'))['uid__max']
         if last_uid is None:
-            self.uid = 1
+            self.uid = get_settings('hub', 'min_userid')
         else:
             self.uid = last_uid + 1
         self.gid = get_settings('ldap', 'usersgroupid')
