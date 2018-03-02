@@ -72,10 +72,10 @@ def tutorial(request):
     return render(request, 'tutorial/tutorial.html')
 
 
-def gt(request):
-    from kooplex.lib import Gitlab
-    G = Gitlab(request.user)
-    G.get_projects()
+#def gt(request):
+#    from kooplex.lib import Gitlab
+#    G = Gitlab(request.user)
+#    G.get_projects()
 
 urlpatterns = [
     url(r'^/?$', indexpage, name = 'indexpage'),
@@ -91,5 +91,7 @@ urlpatterns = [
     url(r'^/projects', include('kooplex.hub.views.projects')),
     url(r'^/publish', include('kooplex.hub.views.publish')),
     url(r'^/reports', include('kooplex.hub.views.reports')),
-    url(r'^/s', gt),
+
+    url(r'^/ws', include('kooplex.hub.ws')),
+#    url(r'^/s', gt),
 ]

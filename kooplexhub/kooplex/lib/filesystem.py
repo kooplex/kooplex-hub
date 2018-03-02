@@ -357,7 +357,7 @@ def move_htmlreport_in_place(report):
     file_util.move_file(filename_source, folder)
     logger.info('Report %s -> %s' % (report, folder))
 
-def copy_dashboardreport_in_place(report, files):
+def copy_reportfiles_in_place(report, files):
     """
     @summary: copy notebook file and its attachments in server working directory
     @param report: the report
@@ -366,16 +366,16 @@ def copy_dashboardreport_in_place(report, files):
     @type files: str
     """
     from kooplex.hub.models import DashboardReport
-    assert isinstance(report, DashboardReport)
-    filename_source = report.filename_in_hub
-    filename_in_container = report.filename_in_container
     report_root = report.report_root
-    dir_target = os.path.join(report_root, os.path.dirname(filename_in_container))
-    dir_util.mkpath(dir_target)
+    if isinstance(report, DashboardReport):
+        filename_source = report.filename_in_hub
+        filename_in_container = report.filename_in_container
+        dir_target = os.path.join(report_root, os.path.dirname(filename_in_container))
+        dir_util.mkpath(dir_target)
 #    file_util.copy_file(filename_source, dir_target)
-    target_file = os.path.join(dir_target, os.path.basename(filename_source))
-    prepare_dashboardreport_withinitcell(filename_source, target_file)
-    logger.debug('cp %s -> %s' % (filename_source, dir_target))
+        target_file = os.path.join(dir_target, os.path.basename(filename_source))
+        prepare_dashboardreport_withinitcell(filename_source, target_file)
+        logger.debug('convert %s -> %s' % (filename_source, dir_target))
     for f in files:
         t = translate(f)
         dir_target = os.path.join(report_root, os.path.dirname(t['filename_in_container']))
@@ -387,7 +387,7 @@ def copy_dashboardreport_in_place(report, files):
 
 def prepare_dashboardreport_withinitcell(source_file, target_file):
     import json
-    d=json.load(open(source_file))
+    d = json.load(open(source_file))
     for ic in range(len(d['cells'])):
         d['cells'][ic]['metadata']['init_cell'] = True
     d['metadata']['celltoolbar'] = 'Initialization Cell'
