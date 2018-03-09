@@ -4,7 +4,7 @@
       {% if user.is_authenticated %}
         <a href="{% url 'projects' %}" class="navbar-brand"><img src="/static/app/content/logo_mono.png" style="height: 30px" alt="Kooplex Hub"></a>
       {% else %}
-        <a href="{% url 'indexpage' %}" class="navbar-brand"><img src="/static/app/content/logo_mono.png" style="height: 30px" alt="Kooplex Hub"></a>
+        <a href="{% url 'projects' %}" class="navbar-brand"><img src="/static/app/content/logo_mono.png" style="height: 30px" alt="Kooplex Hub"></a>
       {% endif %}
     </div>
     <ul class="nav navbar-nav">
@@ -12,7 +12,7 @@
       {% if user.is_authenticated %}
         <li><a href="{% url 'projects' %}" role="button" type="button" data-toggle="tooltip" title="Manage jupyter notebook projects" data-placement="bottom">Projects</a></li>
         <li><a href="/gitlab" target="_blank" role="button" type="button" data-toggle="tooltip" title="Browse project or file issues" data-placement="bottom">Gitlab</a></li>
-        <li><a href="/ownCloud" target="_blank" role="button" type="button" data-toggle="tooltip" title="Browse your files in the cloud" data-placement="bottom">Owncloud</a></li>
+        <li><a href="/ownCloud" target="_blank" role="button" type="button" data-toggle="tooltip" title="Browse your files in the cloud" data-placement="bottom">OwnCloud</a></li>
         {% if user.is_superuser %}
           <li><a href="/admin">Admin</a></li>
         {% endif %}
