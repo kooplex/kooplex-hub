@@ -2,7 +2,7 @@ import re
 import logging
 
 from django.contrib import messages
-from django.conf.urls import patterns, url, include
+from django.conf.urls import url, include
 from django.shortcuts import render, redirect
 from django.template import RequestContext
 

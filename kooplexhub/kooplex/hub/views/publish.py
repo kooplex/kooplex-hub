@@ -2,7 +2,7 @@ import logging
 import os
 import time
 
-from django.conf.urls import patterns, url, include
+from django.conf.urls import url, include
 from django.shortcuts import render, redirect
 from django.template import RequestContext
 from django.contrib import messages
