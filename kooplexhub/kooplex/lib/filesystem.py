@@ -128,7 +128,7 @@ def mkdir_homefolderstructure(user):
     dir_git = os.path.join(get_settings('volumes', 'home'), user.username, 'git')
     _mkdir(dir_git, mountpoint = True)
     dir_condaenv = os.path.join(get_settings('volumes', 'home'), user.username, '.conda', 'envs')
-    _mkdir(dir_condaenv, uid = user.uid, gid = user.gid, mode = 0b10100000)
+    _mkdir(dir_condaenv, uid = user.uid, gid = user.gid, mode = 0o700)
     write_davsecret(user)
     write_gitconfig(user)
     generate_rsakey(user)
