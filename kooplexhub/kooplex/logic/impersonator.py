@@ -24,6 +24,11 @@ def get_impersonator_container():
     #NOTE: do not save this container instance. It is just used to interface with the docker API FIXME: we may use impersonator Container
     return ProjectContainer(name = get_settings('impersonator', 'container_name'))
 
+def update_fstab():
+    logger.debug('called')
+    command = 'patch-davfs.sh'
+    Docker().execute(get_impersonator_container(), command)
+
 def mkdir_project_oc(project):
     logger.debug(project)
     directory = '_project.' + project.name_with_owner
