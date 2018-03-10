@@ -10,7 +10,7 @@ from kooplex.hub.models import *
 from kooplex.hub.views.extra_context import get_pane
 
 from kooplex.logic.spawner import spawn_project_container, stop_container, SpawnError
-from kooplex.logic import create_project, delete_project, configure_project, leave_project
+from kooplex.logic import create_project, delete_project, configure_project, join_project, leave_project
 from kooplex.logic import Repository, NotCheckedOut
 from kooplex.lib.filesystem import create_clone_script
 from kooplex.lib import authorize, get_settings
@@ -114,6 +114,54 @@ def project_new(request):
         logger.error('Could not create project %s for user %s' % (name, user.username) )
         return redirect('projects')
     logger.debug('New project saved in HubDB: %s' % name)
+    return redirect('projects')
+
+
+def project_join(request):
+    """Handles the joining of a public project."""
+    if not authorize(request):
+        return redirect('login')
+    user = request.user
+    try:
+        PUBLIC = ScopeType.objects.get(name = 'public')
+        project = Project.objects.get(id = request.GET.get('project_id', ''), scope = PUBLIC)
+        if user in project.collaborators:
+            logger.error('User %s cannot join the public project %s, as it is already a collaborator' % (user, project))
+            messages.error(request, 'You are already a collaborator of the project %s owned by %s.' % (project.name, project.owner.username))
+        else:
+            join_project(project, user)
+            logger.debug('User %s joins public project %s' % (user, project))
+            messages.info(request, 'Joined public project %s owned by %s.' % (project.name, project.owner.username))
+    except Project.DoesNotExist:
+        logger.error('User %s cannot join public project %s, project may not be public, or not existing in hub' % (user, project))
+        messages.error(request, 'You are not allowed to join the requested project.')
+    except Exception as e:
+        logger.error('User %s cannot join public project %s -- %s' % (user, project, e))
+        messages.error(request, 'You cannot join the requested project. -- %s' % e)
+    return redirect('projects')
+
+
+def project_leave(request):
+    """Handles the fact a collaborator wants to leave a public project."""
+    if not authorize(request):
+        return redirect('login')
+    user = request.user
+    try:
+        PUBLIC = ScopeType.objects.get(name = 'public')
+        project = Project.objects.get(id = request.GET.get('project_id', ''), scope = PUBLIC)
+        if user in project.collaborators:
+            leave_project(project, user)
+            logger.debug('User %s leaves public project %s' % (user, project))
+            messages.info(request, 'Left public project %s owned by %s.' % (project.name, project.owner.username))
+        else:
+            logger.error('User %s cannot leave public project %s, as it is not a collaborator' % (user, project))
+            messages.error(request, 'You are not a collaborator of the project %s owned by %s.' % (project.name, project.owner.username))
+    except Project.DoesNotExist:
+        logger.error('User %s cannot leave public project %s, project may not be public, or not existing in hub' % (user, project))
+        messages.error(request, 'You are not allowed to join the requested project.')
+    except Exception as e:
+        logger.error('User %s cannot leave public project %s -- %s' % (user, project, e))
+        messages.error(request, 'You cannot join the requested project. -- %s' % e)
     return redirect('projects')
 
 
@@ -337,6 +385,8 @@ def project_versioning_pull(request):
 urlpatterns = [
     url(r'^/?$', projects, name = 'projects'),
     url(r'^/new$', project_new, name = 'project-new'), 
+    url(r'^/join$', project_join, name = 'project-join'), 
+    url(r'^/leave$', project_leave, name = 'project-leave'), 
     url(r'^/configure$', project_configure, name = 'project-settings'), 
     url(r'^/versioncontrol$', project_versioning, name = 'project-versioncontrol'), 
     url(r'^/versioncontrol/commit$', project_versioning_commit, name = 'project-commit'), 

@@ -1,0 +1,10 @@
+{% if project in running %}
+    <span class="glyphicon glyphicon-ok-circle" aria-hidden="true" data-toggle="tooltip" title="Project container is present and running" data-placement="bottom"></span>
+{% else %}
+  {% if project in stopped %}
+    <span class="glyphicon glyphicon-remove-circle" aria-hidden="true" data-toggle="tooltip" title="Project container is present and stopped" data-placement="bottom"></span>
+  {% else %}
+    <span class="glyphicon glyphicon-ban-circle" aria-hidden="true" data-toggle="tooltip" title="Project container is not present" data-placement="bottom"></span>
+  {% endif %}
+{% endif %}
+

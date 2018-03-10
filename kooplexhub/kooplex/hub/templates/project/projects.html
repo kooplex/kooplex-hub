@@ -32,12 +32,12 @@
   {% endif %}
         {% for project in projects_mine %}
           <div class="row">
-            {% include 'project/project-partial.html' with publicvar=False this_pane='projects_mine' %}
+            {% include 'project/partial-mine.html' %}
           </div>
         {% endfor %}
         {% for project in projects_shared %}
           <div class="row">
-            {% include 'project/project-partial.html' with publicvar=False this_pane='projects_mine' %}
+            {% include 'project/partial-mine.html' %}
           </div>
         {% endfor %}
   </div>
@@ -48,12 +48,12 @@
   {% endif %}
         {% for project in projects_public %}
           <div class="row">
-            {% include 'project/project-partial.html' with publicvar=True this_pane='projects_public' %}
+            {% include 'project/partial-public.html' %}
           </div>
         {% endfor %}
   </div>
   <div id="newproject" class="tab-pane fade">
-     {% include 'project/new.html' with this_pane='project_new' %}
+     {% include 'project/new.html' %}
   </div>
 </div><!-- /.tab-content -->
 
