@@ -121,13 +121,7 @@ def configure_project(project, image, scope, volumes, collaborators):
             cleanup_git_workdir(upb.user, project)
             upb.delete()
     for user in collaborators:
-        upb = UserProjectBinding(project = project, user = user)
-        logger.debug("collaborator added %s" % upb)
-        share_project_oc(project, upb.user)
-        gitlab.add_project_member(project, upb.user)
-        mkdir_git_workdir(upb.user, project)
-        create_clone_script(project, collaboratoruser = upb.user)
-        upb.save()
+        join_project(project, user, gitlab)
     if mark_to_remove:
         mark_containers_remove(project)
     project.save()
@@ -152,6 +146,31 @@ def mark_containers_remove(project):
             Docker().remove_container(container)
             n_remove += 1
     return n_mark, n_remove
+
+def join_project(project, user, gitlab = None):
+    """
+    @summary: join a user project
+              1. add a new user project binding
+              2. owncloud share
+              3. gitlab project on the user's behalf
+    @param project: the project model
+    @type project: kooplex.hub.models.Project
+    @param user: the collaborator to join the project
+    @type user: kooplex.hub.models.User
+    @param gitlab: a gitlab driver instance, defaults to None, which means we are initializing a new here
+    @type gitlab: kooplex.lib.Gitlab
+    """
+    if gitlab is None:
+        gitlab = Gitlab(project.owner)
+    logger.debug(project)
+    upb = UserProjectBinding(project = project, user = user)
+    logger.debug("collaborator added %s" % upb)
+    share_project_oc(project, upb.user)
+    gitlab.add_project_member(project, upb.user)
+    mkdir_git_workdir(upb.user, project)
+    create_clone_script(project, collaboratoruser = upb.user)
+    upb.save()
+    logger.info("%s joins project %s" % (user, project))
 
 def leave_project(project, user):
     """

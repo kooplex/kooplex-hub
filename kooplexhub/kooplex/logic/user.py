@@ -6,6 +6,7 @@ from kooplex.lib import get_settings
 from kooplex.lib import Ldap, GitlabAdmin
 from kooplex.lib.sendemail import send_new_password, send_token
 from kooplex.lib.filesystem import mkdir_homefolderstructure, cleanup_home, write_davsecret, generate_rsakey, read_rsapubkey
+from kooplex.logic.impersonator import update_fstab
 from kooplex.hub.models import User
 
 logger = logging.getLogger(__name__)
@@ -24,15 +25,17 @@ def add(user):
               3. create home directory structure
               4. create a gitlab account
               5. generate and upload RSA key
+              6. update fstab in impersonator container
     @param user: a new user to add to the system
     @type user: kooplex.hub.models.User
     @returns: { 'status_code': int, 'messages': list(str) }
               status_code:
-              - flag: 0x00001: wrong characters in username or username or email already in use
-              - flag: 0x00010: ldap failure
-              - flag: 0x00100: filesystem failure
-              - flag: 0x01000: gitlab add failure
-              - flag: 0x10000: gitlab upload failure
+              - flag: 0x000001: wrong characters in username or username or email already in use
+              - flag: 0x000010: ldap failure
+              - flag: 0x000100: filesystem failure
+              - flag: 0x001000: gitlab add failure
+              - flag: 0x010000: gitlab upload failure
+              - flag: 0x100000: fstab update error
     """
     logger.debug('call %s' % user)
     # check
@@ -66,7 +69,7 @@ def add(user):
         msg = "Failed to create ldap entry for %s (%s)" % (user, e)
         logger.error(msg)
         messages.append(msg)
-        status |= 0x00010
+        status |= 0x000010
     # create home filesystem save dav secret
     try:
         mkdir_homefolderstructure(user)
@@ -75,7 +78,7 @@ def add(user):
         msg = "Failed to create home for %s (%s)" % (user, e)
         logger.error(msg)
         messages.append(msg)
-        status |= 0x00100
+        status |= 0x000100
     # create gitlab account and retrieve new user's gitlab_id
     try:
         gad = GitlabAdmin()
@@ -84,7 +87,7 @@ def add(user):
         msg = "Failed to create gitlab entry for %s (%s)" % (user, e)
         logger.error(msg)
         messages.append(msg)
-        status |= 0x01000
+        status |= 0x001000
     # generate and upload rsa key
     try:
         generate_rsakey(user)
@@ -94,10 +97,32 @@ def add(user):
         msg = "Failed to upload rsa key in gitlab for %s (%s)" % (user, e)
         logger.error(msg)
         messages.append(msg)
-        status |= 0x10000
+        status |= 0x010000
+    try:
+        update_fstab()
+    except Exception as e:
+        status |= 0x100000
+        msg = 'cannot update /etc/fstab in impersonator container -- %s' % e
+        logger.error(msg)
+        messages.append(msg)
     return { 'status_code': status, 'messages': messages }
 
 def remove(user):
+    """
+    @summary: remove a user
+              1. delete ldap entry
+              2. garbage collect home directory structure
+              3. remove a gitlab account
+              4. update fstab in impersonator container
+    @param user: the user to be removed from the system
+    @type user: kooplex.hub.models.User
+    @returns: { 'status_code': int, 'messages': list(str) }
+              status_code:
+              - flag: 0x0001: ldap failure
+              - flag: 0x0010: filesystem failure
+              - flag: 0x0100: gitlab removeuser failure
+              - flag: 0x1000: fstab update error
+    """
     logger.debug('call %s' % user)
     status = 0
     # remove ldap entry
@@ -105,16 +130,23 @@ def remove(user):
         Ldap().removeuser(user)
     except Exception as e:
         logger.error("Failed to remove ldap entry for %s (%s)" % (user, e))
-        status |= 0x001
+        status |= 0x0001
     # remove folders from the filesyystem
     status_fs = cleanup_home(user)
     if status_fs != 0:
-        status |= 0x010
+        status |= 0x0010
         logger.error("Failed to remove some directories for %s (status: %d)" % (user, status_fs))
     # remove gitlab account
     try:
         GitlabAdmin().delete_user(user)
     except Exception as e:
         logger.error("Failed to delete gitlab entry for %s (%s)" % (user, e))
-        status |= 0x100
+        status |= 0x0100
+    try:
+        update_fstab()
+    except Exception as e:
+        status |= 0x1000
+        msg = 'cannot update /etc/fstab in impersonator container -- %s' % e
+        logger.error(msg)
+        messages.append(msg)
     return status
