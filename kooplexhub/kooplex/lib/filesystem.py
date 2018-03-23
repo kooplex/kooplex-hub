@@ -387,7 +387,7 @@ def copy_reportfiles_in_place(report, files):
 
 def prepare_dashboardreport_withinitcell(source_file, target_file):
     import json
-    d = json.load(open(source_file))
+    d = json.load(open(source_file, encoding='utf8'))
     for ic in range(len(d['cells'])):
         d['cells'][ic]['metadata']['init_cell'] = True
     d['metadata']['celltoolbar'] = 'Initialization Cell'
