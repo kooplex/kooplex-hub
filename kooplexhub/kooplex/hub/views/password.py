@@ -44,7 +44,7 @@ def passwordchangeForm(request):
     return render(
         request,
         'auth/passwordchange.html',
-        context_instance = RequestContext(request, { 'errors': errors })
+        context =  { 'errors': errors }
     )
 
 def passwordresetForm(request):
@@ -63,7 +63,7 @@ def passwordresetForm(request):
                 return render(
                     request,
                     'auth/tokenpassword.html',
-                    context_instance = RequestContext(request, { 'username': username })
+                    context =  { 'username': username }
                 )
             except User.DoesNotExist:
                 errors.append('Please provide valid username and e-mail address')
@@ -71,7 +71,7 @@ def passwordresetForm(request):
     return render(
         request,
         'auth/passwordreset.html',
-        context_instance = RequestContext(request, { 'errors': errors })
+        context =  { 'errors': errors }
     )
 
 def passwordtokenForm(request):
@@ -82,7 +82,7 @@ def passwordtokenForm(request):
         return render(
             request,
             'auth/passwordreset.html',
-            context_instance = RequestContext(request, { })
+            context =  { }
         )
     username = request.POST['username']
     password1 = request.POST['password1']
@@ -102,7 +102,7 @@ def passwordtokenForm(request):
         return render(
             request,
             'auth/tokenpassword.html',
-            context_instance = RequestContext(request, { 'username': username, 'errors': errors })
+            context =  { 'username': username, 'errors': errors }
         )
     set_password(user, password1)
     return redirect('/hub/login')
@@ -115,7 +115,7 @@ def guestAccountRequestForm(request):
         return render(
             request,
             'auth/guest.html',
-            context_instance = RequestContext(request, { })
+            context =  { }
         )
     if 'btn_cancel' in request.POST:
         return redirect('/hub/login')
@@ -151,7 +151,7 @@ def guestAccountRequestForm(request):
         return render(
             request,
             'auth/guest.html',
-            context_instance = RequestContext(request, { })
+            context =  { }
         )
 
     try:
