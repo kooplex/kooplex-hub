@@ -13,17 +13,18 @@ logger = logging.getLogger(__name__)
 
 class Gitlab:
     base_url = get_settings('gitlab', 'base_url')
+    api_url = os.path.join(get_settings('gitlab', 'base_url'), get_settings('gitlab', 'api_path'))
 
     def __init__(self, user):
         kw = {
-            'url': os.path.join(self.base_url, 'session'),
-            'params': { 'login': user.username, 'password': user.password },
+            'url': os.path.join(self.base_url, 'oauth/token'),
+            'params': { 'grant_type': 'password', 'username': user.username, 'password': user.password },
         }
         response = keeptrying(requests.post, 3, **kw)
-        logger.debug("response status: %d" % response.status_code)
-        assert response.status_code == 201, response.json()
+        logger.debug("response status: %d" % (response.status_code))
+        assert response.status_code == 200, response.json()
         self._session = response.json()
-        self.token = self._session['private_token']
+        self.token = self._session['access_token']
         logger.info('token retrieved')
 
     @property
@@ -33,11 +34,12 @@ class Gitlab:
     def create_project(self, project):
         from .libbase import bash
         kw = {
-            'url': os.path.join(self.base_url, 'projects'),
-            'headers': { 'PRIVATE-TOKEN': self.token },
+            'url': os.path.join(self.api_url, 'projects'),
+            'headers': { 'Authorization': "Bearer %s" % self.token },
             'data': { 'name': project.gitlabname, 'visibility': project.scope.name, 'description': project.description }
         }
         response = keeptrying(requests.post, 3, **kw)
+        logger.debug("response status: %d" % (response.status_code))
         assert response.status_code == 201, response.json()
         information = response.json()
         logger.debug(information)
@@ -50,10 +52,11 @@ class Gitlab:
 
     def delete_project(self, project):
         kw = {
-            'url': os.path.join(self.base_url, 'projects', str(project.gitlab_id)),
-            'headers': { 'PRIVATE-TOKEN': self.token },
+            'url': os.path.join(self.api_url, 'projects', str(project.gitlab_id)),
+            'headers': { 'Authorization': "Bearer %s" % self.token },
         }
         response = keeptrying(requests.delete, 3, **kw)
+        logger.debug("response status: %d" % (response.status_code))
         information = response.json()
         statuscode = response.status_code
         assert statuscode in [ 201, 202, 404 ], information
@@ -65,8 +68,8 @@ class Gitlab:
 
     def add_project_member(self, project, user):
         kw = {
-            'url': os.path.join(self.base_url, 'projects', str(project.gitlab_id), 'members'),
-            'headers': { 'PRIVATE-TOKEN': self.token },
+            'url': os.path.join(self.api_url, 'projects', str(project.gitlab_id), 'members'),
+            'headers': { 'Authorization': "Bearer %s" % self.token },
             'data': { 'user_id': user.gitlab_id, 'access_level': 40 }
         }
         response = keeptrying(requests.post, 3, **kw)
@@ -82,8 +85,8 @@ class Gitlab:
 
     def delete_project_member(self, project, user):
         kw = {
-            'url': os.path.join(self.base_url, 'projects', str(project.gitlab_id), 'members', str(user.gitlab_id)),
-            'headers': { 'PRIVATE-TOKEN': self.token },
+            'url': os.path.join(self.api_url, 'projects', str(project.gitlab_id), 'members', str(user.gitlab_id)),
+            'headers': { 'Authorization': "Bearer %s" % self.token },
         }
         response = keeptrying(requests.delete, 3, **kw)
         status_code = response.status_code
@@ -98,14 +101,14 @@ class Gitlab:
 
     def create_project_file(self, gitlab_id, filename = "README.md", content = "* proba", commit_message = "Created a default README.md file"):
         kw = {
-            'url': os.path.join(self.base_url, 'projects', str(gitlab_id), 'repository', 'files', filename),
-            'headers': { 'PRIVATE-TOKEN': self.token },
+            'url': os.path.join(self.api_url, 'projects', str(gitlab_id), 'repository', 'files', filename),
+            'headers': { 'Authorization': "Bearer %s" % self.token },
             'data': { 'branch': 'master', 'content': content, 'commit_message': commit_message }
         }
         response = keeptrying(requests.post, 3, **kw)
 #        assert response.status_code == 404, response.json()
-        logger.info('file %s created and committed to %d' % (filename, gitlab_id))
-        return response.json()
+        logger.info('file %s created and committed to %d (status: %d)' % (filename, gitlab_id, response.status_code))
+        #return response.json()
 
     def patch_notification(self, gitlab_id):
         hostname_gitlabdb = get_settings('gitlabdb', 'hostname')
@@ -124,8 +127,8 @@ class Gitlab:
             return R
 
         kw = {
-            'url': os.path.join(self.base_url, 'projects', str(project.gitlab_id), 'repository', 'commits'),
-            'headers': { 'PRIVATE-TOKEN': self.token },
+            'url': os.path.join(self.api_url, 'projects', str(project.gitlab_id), 'repository', 'commits'),
+            'headers': { 'Authorization': "Bearer %s" % self.token },
         }
         response = keeptrying(requests.get, 3, **kw)
         assert response.status_code != 404, response.json()
