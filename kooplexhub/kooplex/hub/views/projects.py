@@ -4,7 +4,6 @@ import logging
 from django.contrib import messages
 from django.conf.urls import url, include
 from django.shortcuts import render, redirect
-from django.template import RequestContext
 
 from kooplex.hub.models import *
 from kooplex.hub.views.extra_context import get_pane
@@ -55,7 +54,7 @@ def projects(request):
     return render(
         request,
         'project/projects.html',
-        context_instance = RequestContext(request, context_dict)
+        context = context_dict
     )
 
 
@@ -287,13 +286,13 @@ def project_versioning(request):
         return render(
             request,
             'project/gitform.html',
-            context_instance=RequestContext(request,
+            context =
             {
                 'project': project,
                 'committable_dict' : git_files,
                 'commits' : git_log,
                 'changedremote': git_changed,
-            })
+            }
         )
     except Project.DoesNotExist:
         messages.error(request, 'Project does not exist')

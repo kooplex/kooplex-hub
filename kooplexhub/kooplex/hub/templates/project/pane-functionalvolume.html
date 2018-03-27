@@ -15,7 +15,7 @@
           <input type="checkbox" name="func_volumes" value="{{ volume }}"
             {% if project %}
             {% for v in project.volumes %}
-            {% if v.name = volume.name %}
+            {% if v.name == volume.name %}
                 checked
             {% endif %}
             {% endfor %}

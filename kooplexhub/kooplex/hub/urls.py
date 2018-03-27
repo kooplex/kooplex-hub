@@ -2,7 +2,6 @@ import logging
 
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.views import login as login_view
-from django.template import RequestContext
 from django.conf.urls import url, include
 from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponseRedirect
@@ -24,11 +23,11 @@ def indexpage(request):
     return render(
         request,
         'app/index.html',
-        context_instance = RequestContext(request,
+        context = 
         {
             'title': 'Home Page',
             'year': datetime.now().year,
-        })
+        }
     )
 
 def loginHandler(request, *v, **kw):

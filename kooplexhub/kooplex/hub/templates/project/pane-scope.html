@@ -4,7 +4,7 @@
 
 <select id="project_scope-{{ project.id }}" name="project_scope">
   {% for scope in scopes %}
-    <option value="{{ scope }}" {% if project.scope = scope %} selected {% endif %}>{{ scope }}</option>
+    <option value="{{ scope }}" {% if project.scope == scope %} selected {% endif %}>{{ scope }}</option>
   {% endfor %}
 </select>
 

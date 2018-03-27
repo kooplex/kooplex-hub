@@ -4,7 +4,7 @@
 <select id="project_images-{{ project.id }}" name="project_image">
   {% for image in images %}
     {% if image.present %}
-      <option value="{{ image.name }}" {% if project.image = image %} selected {% endif %}>{{ image }}</option>
+      <option value="{{ image.name }}" {% if project.image == image %} selected {% endif %}>{{ image }}</option>
     {% endif %}
   {% endfor %}
 </select>

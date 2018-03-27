@@ -4,7 +4,6 @@ import time
 
 from django.conf.urls import url, include
 from django.shortcuts import render, redirect
-from django.template import RequestContext
 from django.contrib import messages
 
 from kooplex.hub.models import Project, HtmlReport, DashboardReport, ScopeType, ReportDoesNotExist, get_report
@@ -32,7 +31,7 @@ def publishForm(request):
         return render(
             request,
             'publish/publishform.html',
-            context_instance = RequestContext(request,
+            context = 
                 {
                     'base_url': get_settings('hub', 'base_url'),
                     'project_id': project_id,
@@ -40,7 +39,7 @@ def publishForm(request):
                     'notebooks': notebooks,
                     'files': files,
                     'scopes': scopes,
-                })
+                }
         )
     elif request.method == 'POST':
         if 'cancel' in request.POST.keys():

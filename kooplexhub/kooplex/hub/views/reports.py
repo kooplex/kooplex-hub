@@ -7,7 +7,6 @@ from django.conf.urls import url
 from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponse
 from django.core.urlresolvers import reverse
-from django.template import RequestContext
 
 from kooplex.lib import authorize, get_settings
 from kooplex.lib.filesystem import cleanup_reportfiles
@@ -44,7 +43,7 @@ def reports(request):
     return render(
         request,
         'report/reports.html',
-        context_instance = RequestContext(request, context_dict)
+        context = context_dict
     )
 
 def _checkpass(report, report_pass):

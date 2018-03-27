@@ -4,7 +4,6 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.conf.urls import url
 from django.contrib import admin
-from django.template import RequestContext
 
 from kooplex.hub.models import *
 from kooplex.logic.project import mark_containers_remove
@@ -71,10 +70,7 @@ class UserAdmin(admin.ModelAdmin):
         return render(
             request,
             'admin/sendemail.html',
-            context_instance = RequestContext(request,
-            {
-                'users': queryset,
-            })
+            context = { 'users': queryset, }
         )
     send_email.short_description = 'Send email in a mass'
 
