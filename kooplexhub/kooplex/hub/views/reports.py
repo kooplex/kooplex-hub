@@ -19,10 +19,12 @@ from kooplex.hub.views.extra_context import get_pane
 logger = logging.getLogger(__name__)
 
 def reports(request):
-    if request.method == 'POST' and not hasattr(request, 'ask_for_password'):
+    ask_pass = request.session.get('ask_for_password', -1)
+    logger.debug('method %s, ask_pass %s' % (request.method, ask_pass))
+    if request.method == 'POST' and ask_pass == -1:
         report_id = request.POST.get('report_id', None)
         if report_id:
-            request.session['report_lastpassword'] = request.POST.get('report_pass', '')
+            request.session['report_lastpassword'] = request.POST.get('report_pass', None)
             return redirect(reverse('report-open', kwargs = {'report_id': report_id}))
     user = request.user
     if authorize(request):
@@ -39,9 +41,9 @@ def reports(request):
         'reports_internal': reports_internal,
         'reports_public': reports_public,
     }
-    if hasattr(request, 'ask_for_password'):
-        logger.debug("Rendering reports.html and ask for password: report id %s" % request.ask_for_password)
-        context_dict['ask_for_password'] = int(request.ask_for_password)
+    if ask_pass != -1:
+        logger.debug("Rendering reports.html and ask for password: report id %s" % ask_pass)
+        context_dict['ask_for_password'] = ask_pass
     if hasattr(request, 'pane'):
         context_dict['pane'] = request.pane
     logger.debug('Rendering reports.html')
@@ -52,12 +54,17 @@ def reports(request):
     )
 
 def authorized(report, user, report_pass):
-    if len(report.password) == 0:
-        logger.debug("report %s is not password protected" % report)
-        return True
-    if report.password == report_pass:
-        logger.debug("password for report %s is matching" % report)
-        return True
+    logger.debug("report %s scope %s" % (report, report.scope))
+    if report.is_public:
+        logger.debug('report %s is public' % report)
+        if len(report.password) == 0:
+            logger.debug("report %s is not password protected" % report)
+            return True
+        if report.password == report_pass:
+            logger.debug("password for report %s is matching" % report)
+            return True
+    else:
+        logger.debug('report %s is not public' % report)
     allowed = report.is_user_allowed(user)
     logger.debug('can user %s open report %s -> %s' % (user, report, allowed))
     return allowed
@@ -85,9 +92,15 @@ def dump_file(filename):
         logger.error('error serving file %s -- extension%s  not handled' % (filename, ext))
     return HttpResponse('')
 
+def _allow(request, report):
+    logger.debug('access granted to open report %s and its attachments' % report)
+    request.session['allowed-%s' % report.id] = True
+    if 'ask_for_password' in request.session:
+        request.session.pop('ask_for_password')
+
 def openreport(request, report_id):
     assert isinstance(request, HttpRequest)
-    last_pass = request.session.get('report_lastpassword', '')
+    last_pass = request.session.get('report_lastpassword', None)
     report_pass = request.POST.get('report_pass', last_pass)
     request.pane = get_pane(request)
     try:
@@ -96,13 +109,15 @@ def openreport(request, report_id):
             logger.debug("Starting Dashboard server for %s" % report)
             return redirect(spawn_dashboard_container(report))
         if authorized(report, request.user, report_pass):
-            logger.debug('report %s can be opened' % report)
-            request.session['allowed-%s' % report_id] = True
+            _allow(request, report)
             return dump_file(report.filename_report_html)
-        else:
+        elif report.is_public:
             logger.debug('asking password for report %s' % report)
-            request.ask_for_password = report.id
+            request.session['ask_for_password'] = report.id
             return reports(request)
+        else:
+            messages.error(request, 'Report does not exist or it is not public.')
+            return redirect('reports')
     except ReportDoesNotExist:
         messages.error(request, 'Report does not exist')
     except LimitReached as msg:
@@ -124,13 +139,12 @@ def servefile(request, report_id, path):
         allowed = request.session.get('allowed-%s' % report_id, False)
         if allowed:
             logger.debug('attachment %s of report %s can be opened, based on the session' % (path, report))
-            return dump_file(os.path.join(report.basepath, path))
+            return dump_file(os.path.join(report.report_root, path))
         if authorized(report, request.user, report_pass):
-            request.session['allowed'] = True
-            logger.debug('attachment %s of report %s can be opened' % (path, report))
-            return dump_file(os.path.join(report.basepath, path))
+            _allow(request, report)
+            return dump_file(os.path.join(report.report_root, path))
         logger.debug('asking password for report %s (%s wants to retrieve component %s)' % (report, request.user, path))
-        request.ask_for_password = report.id
+        request.session['ask_for_password'] = report.id
         return reports(request)
     except ReportDoesNotExist:
         messages.error(request, 'Report does not exist')

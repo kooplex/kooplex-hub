@@ -34,7 +34,7 @@
                 <tbody>
                 
                 
-                <form action="{% url 'notebook-publishform' %}" method="post" class="form-horizontal">
+                <form action="" method="post" class="form-horizontal">
           {% csrf_token %}
           <div class="form-group">
           {% for nbfile in notebooks %}
@@ -106,9 +106,9 @@
                 </select>
               </div>
               <div id="pane_unpublish" class="tab-pane fade">
-                {% if reports %}
+                {% if project.reports %}
                 <strong>Tick to remove:</strong><br>
-                  {% for r in reports %}
+                  {% for r in project.reports %}
                   <input type="checkbox" name="report2remove" value="{{ r.id }}">[{{ r.pretty_ts }}] ({{ r }} - {{ r.scope }}) <br>
                   {% endfor %}
                 {% else %}
@@ -119,7 +119,7 @@
 
           <div class="well">
             <ul>
-              <li>The url to the <strong>latest report:</strong> <code>{{ base_url }}{% url 'report-openlatest' %}?project_id={{ project_id }}&amp;name=<strong>reportname</strong></code>
+              <li>The url to the <strong>latest report:</strong> <code>{{ base_url }}{% url 'report-openlatest' project_name=project.name project_owner=project.owner report_name='reportname' %}</code>
               <li>If no <strong>Name</strong> is provided for the report, it is automatically generated from the noteboook's filename.
               <li>The reportname in the url should not contain any filename extension.
               <li>Public reports can be protected by a password if you provide one under the <strong>Password</strong> tab.
@@ -128,7 +128,6 @@
 
           <div class="form-group">
             <div>
-                 <input type="hidden" name="project_id" value="{{ project_id }}" />
                  <input type="hidden" id="reports2remove" name="reports2remove" value="" />
                  <input type="submit" name="html" value="Convert to html" class="btn btn-default" />
                  <input type="submit" name="dashboard" value="Deploy as dashboard" class="btn btn-default" onClick="return empty()" />

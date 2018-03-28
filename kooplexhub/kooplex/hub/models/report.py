@@ -20,6 +20,7 @@ class Report(models.Model):
     description = models.TextField(null=True)
     ts_created = models.IntegerField(null = True)
     project = models.ForeignKey(Project, null = False)
+    notebook_dirname = models.CharField(max_length = 200, null = True)
     notebook_filename = models.CharField(max_length = 200, null = True)
     scope = models.ForeignKey(ScopeType, null = False)
     password = models.CharField(max_length = 128, null = True)  #TODO: may store encrypted
@@ -30,6 +31,10 @@ class Report(models.Model):
     def __lt__(self, r):
         assert isinstance(r, Report)
         return self.ts_created > r.ts_created
+
+    @property
+    def safename(self):
+        return standardize_str(self.name)
 
     @property
     def pretty_ts(self):
@@ -55,17 +60,22 @@ class HtmlReport(Report):
         return 'Html report'
 
     @property
-    def basepath(self):
+    def report_root(self):
         return os.path.join(get_settings('volumes', 'htmlreport'), self.creator.username, self.project.name_with_owner, str(self.ts_created))
 
     @property
     def filename_report_html(self):
         fn_wo_ext, _ = os.path.splitext(os.path.basename(self.notebook_filename))
-        return os.path.join(get_settings('volumes', 'htmlreport'), self.creator.username, self.project.name_with_owner, str(self.ts_created), fn_wo_ext + '.html')
+        return os.path.join(self.report_root, self.notebook_dirname, fn_wo_ext + '.html')
+
+    @property
+    def base(self):
+        from django.core.urlresolvers import reverse
+        return os.path.join(get_settings('hub', 'base_url'), reverse('report-open', kwargs = {'report_id': self.id}))
+
 
 class DashboardReport(Report):
     image = models.ForeignKey(Image, null = False)
-    notebook_dirname = models.CharField(max_length = 200, null = True)
 
     @property
     def displaytype(self):
@@ -73,7 +83,7 @@ class DashboardReport(Report):
 
     @property
     def report_dir(self):
-        return "%s-%s-%s.%f" % (self.creator.username, self.project.name_with_owner, standardize_str(self.name), self.ts_created)
+        return "%s-%s-%s.%f" % (self.creator.username, self.project.name_with_owner, self.safename, self.ts_created)
 
     @property
     def report_root(self):

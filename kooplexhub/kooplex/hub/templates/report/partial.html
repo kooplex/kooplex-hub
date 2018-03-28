@@ -53,7 +53,7 @@
         <div class="well">
           <p><strong>Project description: </strong>{{ project.description }}
           <p><strong>Report description (latest): </strong>{{ report_latest.description }}
-          <p><strong>Url to the latest report: </strong><code>{{ base_url }}{% url 'report-openlatest' project_owner=project.owner project_name=project.name report_name=report_latest.name %}</code>
+          <p><strong>Url to the latest report: </strong><code>{{ base_url }}{% url 'report-openlatest' project_owner=project.owner project_name=project.gitlabname report_name=report_latest.safename %}</code>
         </div>
         <form id="list-{{ report_latest.id }}" action="" method="post">
           {% csrf_token %}

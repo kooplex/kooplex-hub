@@ -349,8 +349,23 @@ def move_htmlreport_in_place(report):
     """
     from kooplex.hub.models import HtmlReport
     assert isinstance(report, HtmlReport)
+    insert_head = """<base href="%s/" />\n""" % report.base
     filename_wo_ext, _ = os.path.splitext(report.filename_in_hub)
     filename_source = filename_wo_ext + '.html'
+    filename_source_ = filename_wo_ext + '.html.orig'
+    os.rename(filename_source, filename_source_)
+    logger.debug('patching html %s' % filename_source)
+    with open(filename_source_) as fin:
+        with open(filename_source, 'w') as fout:
+            inserted = False
+            for l in fin.readlines():
+                fout.write(l)
+                if not inserted and l.startswith('<head>'):
+                    fout.write(insert_head)
+                    inserted = True
+    os.unlink(filename_source_)
+    if not inserted:
+        logger.error('could not patch file %s' % filename_source)
     filename_destination = report.filename_report_html
     folder = os.path.dirname(filename_destination)
     dir_util.mkpath(folder)
@@ -365,7 +380,7 @@ def copy_reportfiles_in_place(report, files):
     @param files: attachments a serialized dictionary
     @type files: str
     """
-    from kooplex.hub.models import DashboardReport
+    from kooplex.hub.models import DashboardReport, HtmlReport
     report_root = report.report_root
     if isinstance(report, DashboardReport):
         filename_source = report.filename_in_hub
@@ -378,7 +393,10 @@ def copy_reportfiles_in_place(report, files):
         logger.debug('convert %s -> %s' % (filename_source, dir_target))
     for f in files:
         t = translate(f)
-        dir_target = os.path.join(report_root, os.path.dirname(t['filename_in_container']))
+        if isinstance(report, DashboardReport):
+            dir_target = os.path.join(report_root, os.path.dirname(t['filename_in_container']))
+        elif isinstance(report, HtmlReport):
+            dir_target = os.path.join(report_root, *'/'.split(os.path.dirname(t['filename_in_container']))[3:])
         dir_util.mkpath(dir_target)
         file_util.copy_file(t['filename_in_hub'], dir_target)
         logger.debug('cp %s -> %s' % (t['filename_in_hub'], dir_target))

@@ -13,17 +13,12 @@ from kooplex.logic.impersonator import publish_htmlreport
 
 logger = logging.getLogger(__name__)
 
-def publishForm(request):
+def publishForm(request, project_id):
     """Handles the publication."""
     if not authorize(request):
         return redirect('login')
     if request.method == 'GET':
-        try:
-            project_id = request.GET['project_id']
-        except KeyError:
-            return redirect('reports')
         project = Project.objects.get(id = project_id)
-        reports = list(project.reports)
         scopes = ScopeType.objects.all()
         notebooks = list(list_notebooks(request.user, project))
         files = list(list_files(request.user, project))
@@ -34,8 +29,7 @@ def publishForm(request):
             context = 
                 {
                     'base_url': get_settings('hub', 'base_url'),
-                    'project_id': project_id,
-                    'reports': reports,
+                    'project': project,
                     'notebooks': notebooks,
                     'files': files,
                     'scopes': scopes,
@@ -44,7 +38,7 @@ def publishForm(request):
     elif request.method == 'POST':
         if 'cancel' in request.POST.keys():
             return redirect('projects')
-        project = Project.objects.get(id = request.POST['project_id'])
+        project = Project.objects.get(id = project_id)
         name = request.POST['report_name'].strip()
         description = request.POST['report_description'].strip()
         t = translate(request.POST['ipynb_file'])
@@ -64,23 +58,25 @@ def publishForm(request):
             description = description,
             ts_created = int(time.time()),
             project = project,
-            notebook_filename = t['filename_in_mount'], #NOTE: we may need the volume as well!
+            notebook_dirname = t['volname'],            #FIXME: the name
+            notebook_filename = t['filename_in_mount'], 
             scope = scope,
             password = password
         )
         report.filename_in_hub = t['filename_in_hub']
         report.filename_in_container = t['filename_in_container']
         report.volname = t['volname']
+        report.save()    #FIXME: menteni kell, hogy legyen id a base-hez
         # conversion and deployment
         if isinstance(report, HtmlReport):
+            logger.debug('publish new HtmlReport %s' % report)
             publish_htmlreport(report)
-            #files = request.POST.getlist('other_files')
-            #copy_reportfiles_in_place(report, files)
         elif isinstance(report, DashboardReport):
-            files = request.POST.getlist('other_files')
-            copy_reportfiles_in_place(report, files)
+            logger.debug('publish new DashboardReport %s' % report)
+        files = request.POST.getlist('other_files')
+        copy_reportfiles_in_place(report, files)
         report.save()
-        logger.info('new report %s' % report)
+        logger.info('new report %s published' % report)
         messages.info(request, 'Your new report named %s of project %s is publised.' % (report.name, project))
         removed = 0
         for report_id in request.POST.getlist('report2remove'):
@@ -95,13 +91,13 @@ def publishForm(request):
                 messages.warning(request, 'You are not allowed to manipulate report with id %d' % report_id)
             except Exception as e:
                 logger.error("cannot delete report %s -- %s" % (report, e))
-                messages.error(request, 'Somethng went wrong while deleting report %s [%s]. Ask the administraotr to look after the case.' % (report, e))
+                messages.error(request, 'Somethng went wrong while deleting report %s [%s]. Ask the administrator to look after the case.' % (report, e))
     if removed == 1:
         messages.info(request, 'A former report instance of project %s has been deleted.' % (project))
     elif removed > 1:
-        messages.info(request, '%d former report instances of project %s have been deleted.' % (project))
+        messages.info(request, '%d former report instances of project %s have been deleted.' % (removed, project))
     return redirect('projects')
 
 urlpatterns = [
-    url(r'^/?$', publishForm, name = 'notebook-publishform'), 
+    url(r'^/(?P<project_id>\d+)/$', publishForm, name = 'notebook-publishform'), 
 ]
