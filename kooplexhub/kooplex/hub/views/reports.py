@@ -19,6 +19,10 @@ from kooplex.hub.views.extra_context import get_pane
 logger = logging.getLogger(__name__)
 
 def reports(request):
+    if request.method == 'POST' and not hasattr(request, 'ask_for_password'):
+        report_id = request.POST.get('report_id', None)
+        if report_id:
+            return openreport(request, report_id)
     user = request.user
     if authorize(request):
         reports_mine = list_user_reports(user)
@@ -46,76 +50,56 @@ def reports(request):
         context = context_dict
     )
 
-def _checkpass(report, report_pass):
-    if isinstance(report, HtmlReport):
-        if len(report.password) == 0:
-            logger.debug("Report %s is not password protected" % report)
-            return True
-        if report.password == report_pass:
-            logger.debug("Report password for %s is matching" % report)
-            return True
-        else:
-            logger.debug("Report password for %s is not matching" % report)
-            return False
-    elif isinstance(report, DashboardReport):
-        logger.debug("Report password for %s is not checked, jupyter will take care for it" % report)
+def authorized(report, user, report_pass):
+    if len(report.password) == 0:
+        logger.debug("report %s is not password protected" % report)
         return True
+    if report.password == report_pass:
+        logger.debug("password for report %s is matching" % report)
+        return True
+    allowed = report.is_user_allowed(user)
+    logger.debug('can user %s open report %s -> %s' % (user, report, allowed))
+    return allowed
 
-def _do_report_open(report):
-    if isinstance(report, HtmlReport):
-        with codecs.open(report.filename_report_html, 'r', 'utf-8') as f:
-            content = f.read()
-        logger.debug("Dumping reportfile %s" % report.filename_report_html)
-        return HttpResponse(content)
-    elif isinstance(report, DashboardReport):
-        logger.debug("Starting Dashboard server for %s" % report)
-        return redirect(spawn_dashboard_container(report)) #FIXME: launch is not authorized
-
-def _open_report_authorized(request, report):
-    user = request.user
-    if report.password == '':
-        logger.debug('user %s opens report %s, which is not protected by a password' % (user, report))
-        return _do_report_open(report)
-    if report.is_user_allowed(user):
-        logger.debug('authenticated user %s opens report %s' % (user, report))
-        return _do_report_open(report)
-    if report.is_public:
-        if authorize(request):
-            logger.debug('user %s is authorized to view the report %s' % (user, report))
-            return _do_report_open(report)
-        if isinstance(report, DashboardReport):
-            logger.debug('dashboard report %s pass is checked elsewhere' % report)
-            return _do_report_open(report)
-        if request.report_pass is None and request.method == 'GET':
-            request.ask_for_password = report.id
-            return reports(request)
-        elif _checkpass(report, request.report_pass):
-            logger.debug('password accepted, opening report %s' % report)
-            return _do_report_open(report)
-        else:
-            messages.error(request, 'You may have mistyped the password')
-            return redirect('reports')
+def dump_file(filename):
+    _, ext = os.path.splitext(filename)
+    ext = ext[1:].lower()  # split off the period
+    logger.debug('filename %s -> extension: %s' % (filename, ext))
+    mime = {
+        'html': 'text/html',
+        'png': 'image/png',
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'pdf': 'application/pdf',
+    }
+    if ext in mime:
+        ct = mime[ext]
+        try:
+            with open(filename, 'rb') as f:
+                logger.debug('dumping %s file %s' % (mime[ext], filename))
+                return HttpResponse(f.read(), content_type = ct)
+        except Exception as e:
+            logger.error('error serving file %s -- %s' % (filename, e))
     else:
-        messages.error(request, 'You are not allowed to open this report')
-        return redirect('reports')
+        logger.error('error serving file %s -- extension%s  not handled' % (filename, ext))
+    return HttpResponse('')
 
-def openreport(request):
+def openreport(request, report_id):
     assert isinstance(request, HttpRequest)
-    if request.method == 'GET':
-        report_id = request.GET.get('report_id', None)
-        request.report_pass = None
-    elif request.method == 'POST':
-        report_id = request.POST.get('report_id', None)
-        request.report_pass = request.POST.get('report_pass', '')
-    else:
-        report_id = None
-    if report_id is None:
-        messages.error(request, 'Hub received a mailformed open report request. Try to navigate and open the report using the report list.')
-        return redirect('reports')
+    report_pass = request.POST.get('report_pass', '')
     request.pane = get_pane(request)
     try:
         report = get_report(id = report_id)
-        return _open_report_authorized(request, report)
+        if isinstance(report, DashboardReport):
+            logger.debug("Starting Dashboard server for %s" % report)
+            return redirect(spawn_dashboard_container(report))
+        if authorized(report, request.user, report_pass):
+            logger.debug('report %s can be opened' % report)
+            return dump_file(report.filename_report_html)
+        else:
+            logger.debug('asking password for report %s' % report)
+            request.ask_for_password = report.id
+            return reports(request)
     except ReportDoesNotExist:
         messages.error(request, 'Report does not exist')
     except LimitReached as msg:
@@ -123,29 +107,52 @@ def openreport(request):
         messages.error(request, msg)
     return reports(request)
 
-def openreport_latest(request):
+def servefile(request, report_id, path):
     assert isinstance(request, HttpRequest)
-    project_id = request.GET.get('project_id', None)
-    name = request.GET.get('name', None)
-    request.report_pass = None
+    report_pass = request.POST.get('report_pass', '')
     request.pane = get_pane(request)
     try:
-        user = request.user
-        project = Project.objects.get(id = project_id)
-        reports = list(filter_report(project = project, name = name))
-        reports.sort()
-        reports.reverse()
-        for report in reports:
-            if report.is_user_allowed(user) or report.is_public:
-                return _open_report_authorized(request, report)
-        messages.error(request, 'You are not allowed to open this report.')
-    except Project.DoesNotExist:
-        messages.error(request, 'Report does not exist')
+        report = get_report(id = report_id)
+        if isinstance(report, DashboardReport):
+            logger.error("Dashboard report %s don't serve file" % report)
+            messages.error(request, 'Dashboard report attachments are not accessible directly')
+            return reports(request)
+        if authorized(report, request.user, report_pass):
+            logger.debug('attachment %s of report %s can be opened' % (path, report))
+            return dump_file(os.path.join(report.basepath, path))
+        else:
+            logger.debug('asking password for report %s (%s wants to retrieve component %s)' % (report, request.user, path))
+            request.ask_for_password = report.id
+            return reports(request)
     except ReportDoesNotExist:
         messages.error(request, 'Report does not exist')
     return reports(request)
 
 
+def openreport_latest(request, project_owner, project_name, report_name):
+    assert isinstance(request, HttpRequest)
+    request.pane = get_pane(request)
+    user = request.user
+    logger.debug('%s opens report %s from project %s-%s' % (user, report_name, project_owner, project_name))
+    try:
+        logger.debug('found')
+        project = Project.objects.get(id = 41)#name = project_name, owner = project_owner)
+        logger.debug('found project %s' % (project))
+        reports = list(filter_report(project = project, name = report_name))
+        reports.sort()
+        reports.reverse()
+        for report in reports:
+            if report.is_user_allowed(user) or report.is_public:
+                return redirect(reverse('report-open', kwargs = {'report_id': report.id}))
+        messages.error(request, 'You are not allowed to open this report.')
+    except Project.DoesNotExist:
+        messages.error(request, 'Report does not exist')
+    except ReportDoesNotExist:
+        messages.error(request, 'Report does not exist')
+    return redirect('reports')
+
+
+#TODO: update url regexp resolver
 def stop_reportcontainer(request):
     assert isinstance(request, HttpRequest)
     containername = request.GET['containername']
@@ -157,7 +164,7 @@ def stop_reportcontainer(request):
         messages.error(request, 'Reportserver container is not found.')
     return redirect('reports')
 
-
+#TODO: update url regexp resolver
 def setreport(request):
     if not authorize(request):
         return redirect('reports')
@@ -180,12 +187,12 @@ def setreport(request):
         messages.error(request, 'You are not allowed to configure this report')
     return redirect('reports')
 
-
 urlpatterns = [
     url(r'^/?$', reports, name = 'reports'),
-    url(r'^/open$', openreport, name='report-open'),
-    url(r'^/openlatest$', openreport_latest, name='report-openlatest'),
-    url(r'^/stop$', stop_reportcontainer, name='report-all-stop'),
-    url(r'^/settings$', setreport, name='report-settings'),
+    url(r'^/open/(?P<report_id>\d+)/$', openreport, name = 'report-open'),
+    url(r'^/open/(?P<report_id>\d+)/(?P<path>[\./\w]+)$', servefile, name = 'report-dumpcomponent'),
+    url(r'^/openlatest/(?P<project_owner>\w+)-(?P<project_name>\w+)/(?P<report_name>\w+)$', openreport_latest, name = 'report-openlatest'),
+    url(r'^/stop$', stop_reportcontainer, name = 'reportcontainer-stop'),
+    url(r'^/settings$', setreport, name = 'report-settings'),
 ]
 

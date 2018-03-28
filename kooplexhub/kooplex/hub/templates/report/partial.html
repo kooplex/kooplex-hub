@@ -18,7 +18,7 @@
             {% if report_latest.ask_password %}
             <a href="#" data-toggle="modal" data-target="#report-password-{{ report_latest.id  }}">
             {% else %}
-            <a href="{% url 'report-open' %}?report_id={{ report_latest.id }}" target="_blank">
+            <a href="{% url 'report-open' report_id=report_latest.id %}" target="_blank">
             {% endif %}
               <button type="button" class="btn btn-info"><span class="glyphicon glyphicon-folder-open" aria-hidden="true"> </span> Open</button>
             </a>
@@ -53,9 +53,9 @@
         <div class="well">
           <p><strong>Project description: </strong>{{ project.description }}
           <p><strong>Report description (latest): </strong>{{ report_latest.description }}
-          <p><strong>Url to the latest report: </strong><code>{{ base_url }}{% url 'report-openlatest' %}?project_id={{ project.id }}&amp;name={{ report_latest.name }}</code>
+          <p><strong>Url to the latest report: </strong><code>{{ base_url }}{% url 'report-openlatest' project_owner=project.owner project_name=project.name report_name=report_latest.name %}</code>
         </div>
-        <form id="list-{{ report_latest.id }}" action="{% url 'report-open' %}" method="post">
+        <form id="list-{{ report_latest.id }}" action="" method="post">
           {% csrf_token %}
           <label>Former reports</label>
           <select name='report_id' id='report_key-{{ project.id }}-{{ reportname }}' style="max-width: 800px;">

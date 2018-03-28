@@ -55,6 +55,10 @@ class HtmlReport(Report):
         return 'Html report'
 
     @property
+    def basepath(self):
+        return os.path.join(get_settings('volumes', 'htmlreport'), self.creator.username, self.project.name_with_owner, str(self.ts_created))
+
+    @property
     def filename_report_html(self):
         fn_wo_ext, _ = os.path.splitext(os.path.basename(self.notebook_filename))
         return os.path.join(get_settings('volumes', 'htmlreport'), self.creator.username, self.project.name_with_owner, str(self.ts_created), fn_wo_ext + '.html')
