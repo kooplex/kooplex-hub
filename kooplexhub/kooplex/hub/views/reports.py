@@ -22,7 +22,8 @@ def reports(request):
     if request.method == 'POST' and not hasattr(request, 'ask_for_password'):
         report_id = request.POST.get('report_id', None)
         if report_id:
-            return openreport(request, report_id)
+            request.session['report_lastpassword'] = request.POST.get('report_pass', '')
+            return redirect(reverse('report-open', kwargs = {'report_id': report_id}))
     user = request.user
     if authorize(request):
         reports_mine = list_user_reports(user)
@@ -86,7 +87,8 @@ def dump_file(filename):
 
 def openreport(request, report_id):
     assert isinstance(request, HttpRequest)
-    report_pass = request.POST.get('report_pass', '')
+    last_pass = request.session.get('report_lastpassword', '')
+    report_pass = request.POST.get('report_pass', last_pass)
     request.pane = get_pane(request)
     try:
         report = get_report(id = report_id)
@@ -95,6 +97,7 @@ def openreport(request, report_id):
             return redirect(spawn_dashboard_container(report))
         if authorized(report, request.user, report_pass):
             logger.debug('report %s can be opened' % report)
+            request.session['allowed-%s' % report_id] = True
             return dump_file(report.filename_report_html)
         else:
             logger.debug('asking password for report %s' % report)
@@ -109,7 +112,8 @@ def openreport(request, report_id):
 
 def servefile(request, report_id, path):
     assert isinstance(request, HttpRequest)
-    report_pass = request.POST.get('report_pass', '')
+    last_pass = request.session.get('report_lastpassword', '')
+    report_pass = request.POST.get('report_pass', last_pass)
     request.pane = get_pane(request)
     try:
         report = get_report(id = report_id)
@@ -117,13 +121,17 @@ def servefile(request, report_id, path):
             logger.error("Dashboard report %s don't serve file" % report)
             messages.error(request, 'Dashboard report attachments are not accessible directly')
             return reports(request)
+        allowed = request.session.get('allowed-%s' % report_id, False)
+        if allowed:
+            logger.debug('attachment %s of report %s can be opened, based on the session' % (path, report))
+            return dump_file(os.path.join(report.basepath, path))
         if authorized(report, request.user, report_pass):
+            request.session['allowed'] = True
             logger.debug('attachment %s of report %s can be opened' % (path, report))
             return dump_file(os.path.join(report.basepath, path))
-        else:
-            logger.debug('asking password for report %s (%s wants to retrieve component %s)' % (report, request.user, path))
-            request.ask_for_password = report.id
-            return reports(request)
+        logger.debug('asking password for report %s (%s wants to retrieve component %s)' % (report, request.user, path))
+        request.ask_for_password = report.id
+        return reports(request)
     except ReportDoesNotExist:
         messages.error(request, 'Report does not exist')
     return reports(request)
