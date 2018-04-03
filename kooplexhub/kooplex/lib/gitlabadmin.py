@@ -16,8 +16,8 @@ class GitlabAdmin:
 
     def __init__(self, ):
         kw = {
-            'url': os.path.join(self.base_url, 'session'),
-            'params': { 'login': get_settings('gitlab', 'admin_username'), 'password': get_settings('gitlab', 'admin_password') },
+            'url': os.path.join(self.base_url, 'oauth/token'),
+            'params': { 'grant_type': 'password', 'username': user.username, 'password': user.password },
         }
         response = keeptrying(requests.post, 3, **kw)
         logger.debug("response status: %d" % response.status_code)
@@ -29,7 +29,7 @@ class GitlabAdmin:
     def create_user(self, user):
         name = "%s %s" % (user.first_name, user.last_name)
         kw = {
-            'url': os.path.join(self.base_url, 'users'),
+            'url': os.path.join(self.api_url, 'users'),
             'headers': { 'PRIVATE-TOKEN': self.token },
             'data': { 'name': name, 'username': user.username, 'email': user.email, 'bio': user.bio, 'skip_confirmation': True, 'password': user.password }
         }
@@ -41,7 +41,7 @@ class GitlabAdmin:
 
     def upload_userkey(self, user, key):
         kw = {
-            'url': os.path.join(self.base_url, 'users', str(user.gitlab_id), 'keys'),
+            'url': os.path.join(self.api_url, 'users', str(user.gitlab_id), 'keys'),
             'headers': { 'PRIVATE-TOKEN': self.token },
             'data': { 'title': 'gitlabkey', 'key': key.strip() }
         }
@@ -55,7 +55,7 @@ class GitlabAdmin:
             logger.error("User %s does not have a valid gitlab_id, cannot remove the account" % user)
             return
         kw = {
-            'url': os.path.join(self.base_url, 'users', str(user.gitlab_id)),
+            'url': os.path.join(self.api_url, 'users', str(user.gitlab_id)),
             'headers': { 'PRIVATE-TOKEN': self.token },
             'data': { 'hard_delete': True }
         }
