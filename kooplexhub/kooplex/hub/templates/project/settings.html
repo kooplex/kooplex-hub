@@ -20,6 +20,19 @@
             {% include 'project/pane-collaboration.html' %}
             {% else %}
             <div class="alert alert-warning" role="alert">The owner of project {{ project.name }} is {{ project.owner.displayname }} ({{ project.owner.username }}). Please contact him/her to remove you from or add someone else to the collaboration.</div>
+             <table class="table table-striped">
+             <thead><tr><th scope="col">Name</th>  <th scope="col">Short Bio</th>  <th scope="col">Position</th></tr></thead>
+             <tbody>
+                <tr> <td><div data-toggle="tooltip" title="Username: {{ project.owner.displayname }}"  data-placement="right" data-html="true">
+                  {{ project.owner.displayname }}  ( project owner )
+               </div></td> <td>{{ user.bio }}</td> <td> </td> </tr>
+             {% for user in project.collaborators %}
+                 <tr> <td><div data-toggle="tooltip" title="Username: {{ user.username }}" data-placement="right" data-html="true">
+                 {{ user.first_name }} {{ user.last_name }}
+                </div></td><td>{{ user.bio }}</td><td> </td></tr>
+               {% endfor %}
+               </tbody>
+               </table>
             {% endif %}
           </div>
           <div id="pane_image-{{ project.id }}" class="tab-pane fade">
