@@ -119,7 +119,7 @@
 
           <div class="well">
             <ul>
-              <li>The url to the <strong>latest report:</strong> <code>{{ base_url }}{% url 'report-openlatest' project_name=project.name project_owner=project.owner report_name='reportname' %}</code>
+              <li>The url to the <strong>latest report:</strong> <code>{{ base_url }}{% url 'report-openlatest' project_name=project.gitlabname project_owner=project.owner report_name='reportname' %}</code>
               <li>If no <strong>Name</strong> is provided for the report, it is automatically generated from the noteboook's filename.
               <li>The reportname in the url should not contain any filename extension.
               <li>Public reports can be protected by a password if you provide one under the <strong>Password</strong> tab.
