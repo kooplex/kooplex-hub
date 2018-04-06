@@ -349,18 +349,18 @@ def move_htmlreport_in_place(report):
     """
     from kooplex.hub.models import HtmlReport
     assert isinstance(report, HtmlReport)
-    insert_head = """<base href="%s/" />\n""" % report.base
+    insert_head = bytes("""<base href="%s/" />\n""" % report.base, encoding = 'utf-8')
     filename_wo_ext, _ = os.path.splitext(report.filename_in_hub)
     filename_source = filename_wo_ext + '.html'
     filename_source_ = filename_wo_ext + '.html.orig'
     os.rename(filename_source, filename_source_)
     logger.debug('patching html %s' % filename_source)
-    with open(filename_source_) as fin:
-        with open(filename_source, 'w') as fout:
+    with open(filename_source_, 'rb') as fin:
+        with open(filename_source, 'wb') as fout:
             inserted = False
             for l in fin.readlines():
                 fout.write(l)
-                if not inserted and l.startswith('<head>'):
+                if not inserted and l.startswith(b'<head>'):
                     fout.write(insert_head)
                     inserted = True
     os.unlink(filename_source_)
