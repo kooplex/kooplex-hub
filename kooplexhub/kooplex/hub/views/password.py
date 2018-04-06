@@ -194,20 +194,30 @@ def tokenchangeForm(request):
         elif 'btn_tokenchange' in request.POST.keys():
             # remove those project containers running
             for container in containers:
-                remove_container(container)
-                msg = "Your running container %s has been removed." % container
-                messages.info(request, msg)
-                logger.info(msg)
+                try:
+                    remove_container(container)
+                    msg = "Your running container %s has been removed." % container
+                    messages.info(request, msg)
+                    logger.info(msg)
+                except Exception as e:
+                    msg = "Exception thrown while removing your running container %s -- %s" % (container, e)
+                    messages.error(request, msg)
+                    logger.error(msg)
             # generate a new token
             request.user.settoken()
             messages.info(request, "Your new token is saved.")
     elif request.method == 'GET':
         # remove those project containers not running
         for container in ProjectContainer.objects.filter(user = request.user, is_running = False):
-            remove_container(container)
-            msg = "Your container %s, which was not running has been removed." % container
-            logger.info(msg)
-            messages.info(request, msg)
+            try:
+                remove_container(container)
+                msg = "Your container %s, which was not running has been removed." % container
+                logger.info(msg)
+                messages.info(request, msg)
+            except Exception as e:
+                msg = "Exception thrown while removing your stopped container %s -- %s" % (container, e)
+                messages.error(request, msg)
+                logger.error(msg)
         if len(containers):
             return render(
                 request,
