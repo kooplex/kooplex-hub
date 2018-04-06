@@ -1,0 +1,33 @@
+{% extends "app/layout.html" %}
+
+{% block content %}
+
+<h2>Request for a new secret token</h2>
+<div class="row">
+    <form action="" method="post" class="form-horizontal">
+        {% csrf_token %}
+        <div class="alert alert-warning">
+            <h4>Warning!</h4>
+            <p>You have some project containers still running. Make sure all your data is saved before you go on.
+            <p>When you submit this request these containers will be removed.
+            <p>Next time you start project containers the new token is used for securing access.
+            <hr>
+            <p>The list of running containers
+            <ul>
+                {% for c in containers %}
+                <li>{{ c.name }}
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="submit" name="btn_tokenchange" value="New token" class="btn btn-default" />
+                <input type="submit" name="btn_cancel" value="Cancel" class="btn btn-default" />
+            </div>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
+
+
