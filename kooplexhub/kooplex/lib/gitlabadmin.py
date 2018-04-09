@@ -18,7 +18,7 @@ class GitlabAdmin:
     def __init__(self, ):
         kw = {
             'url': os.path.join(self.base_url, 'oauth/token'),
-            'params': { 'login': get_settings('gitlab', 'admin_username'), 'password': get_settings('gitlab', 'admin_password') },
+            'params': { 'grant_type': 'password', 'username': get_settings('gitlab', 'admin_username') , 'password': get_settings('gitlab', 'admin_password') },
         }
         response = keeptrying(requests.post, 3, **kw)
         logger.debug("response status: %d" % response.status_code)
