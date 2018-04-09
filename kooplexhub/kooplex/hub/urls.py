@@ -9,7 +9,7 @@ from datetime import datetime
 from django.contrib import messages
 
 from kooplex.hub.forms import authenticationForm
-from kooplex.hub.views import passwordresetForm, passwordtokenForm, passwordchangeForm, guestAccountRequestForm
+from kooplex.hub.views import passwordresetForm, passwordtokenForm, passwordchangeForm, guestAccountRequestForm, tokenchangeForm
 from kooplex.hub.models import User
 
 logger = logging.getLogger(__name__)
@@ -76,6 +76,7 @@ def tutorial(request):
 #    G = Gitlab(request.user)
 #    G.get_projects()
 
+
 urlpatterns = [
     url(r'^/?$', indexpage, name = 'indexpage'),
     url(r'^/tutorial$', tutorial, name = 'tutorial'),
@@ -86,6 +87,8 @@ urlpatterns = [
     url(r'^/passwordtoken$', passwordtokenForm, name = 'passwordresettoken'),
     url(r'^/passwordchange$', passwordchangeForm, name = 'passwordchange'),
     url(r'^/guestaccount$', guestAccountRequestForm, name = 'guestaccount'),
+
+    url(r'^/tokenchange$', tokenchangeForm, name = 'tokenchange'),
 
     url(r'^/projects', include('kooplex.hub.views.projects')),
     url(r'^/publish', include('kooplex.hub.views.publish')),
