@@ -440,7 +440,7 @@ def create_clone_script(project, collaboratoruser = None, project_template = Non
     if project_template is not None:
         commitmsg = "Snapshot commit of project %s" % project_template.name_with_owner
         script = """#! /bin/bash
-exec > $(date +"/tmp/clone-%Y-%m-%d_%H:%M:%S.log")
+exec > $(date +"/tmp/clone-%%Y-%%m-%%d_%%H:%%M:%%S.log")
 exec 2>&1
 set -v
 BACKMEUP=$(mktemp)
@@ -469,7 +469,7 @@ fi
     else:
         user = project.owner if collaboratoruser is None else collaboratoruser
         script = """#! /bin/bash
-exec > $(date +"/tmp/clone-%Y-%m-%d_%H:%M:%S.log")
+exec > $(date +"/tmp/clone-%%Y-%%m-%%d_%%H:%%M:%%S.log")
 exec 2>&1
 set -v
 BACKMEUP=$(mktemp)
