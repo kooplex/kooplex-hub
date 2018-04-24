@@ -440,26 +440,49 @@ def create_clone_script(project, collaboratoruser = None, project_template = Non
     if project_template is not None:
         commitmsg = "Snapshot commit of project %s" % project_template.name_with_owner
         script = """#! /bin/bash
-rm $0
+exec > $(date +"/tmp/clone-%Y-%m-%d_%H:%M:%S.log")
+exec 2>&1
+set -v
+BACKMEUP=$(mktemp)
+mv $0 ${BACKMEUP}
 TMPFOLDER=$(mktemp -d)
 git clone %(url)s ${TMPFOLDER}
-cd ${TMPFOLDER}
-rm -rf ./.git/
-mv * /%(gitdir)s
-for hidden in $(echo .?* | sed s/'\.\.'//) ; do
-  mv $hidden /%(gitdir)s
-done
-cd /%(gitdir)s
-git add --all
-git commit -a -m "%(message)s"
-git push origin master
-rm -rf ${TMPFOLDER}
+S=$?
+if [ $S -eq 0 ] ; then
+  cd ${TMPFOLDER}
+  rm -rf ./.git/
+  mv * /%(gitdir)s
+  for hidden in $(echo .?* | sed s/'\.\.'//) ; do
+    mv $hidden /%(gitdir)s
+  done
+  cd /%(gitdir)s
+  git add --all
+  git commit -a -m "%(message)s"
+  git push origin master
+  rm -rf ${TMPFOLDER}
+  rm ${BACKMEUP}
+else
+  echo "move clone script back in place"
+  mv ${BACKMEUP} $0
+fi
         """ % { 'url': project_template.url_gitlab, 'message': commitmsg, 'gitdir': _get_mountpoint_in_container('git', project.owner) }
     else:
         user = project.owner if collaboratoruser is None else collaboratoruser
         script = """#! /bin/bash
-rm $0
+exec > $(date +"/tmp/clone-%Y-%m-%d_%H:%M:%S.log")
+exec 2>&1
+set -v
+BACKMEUP=$(mktemp)
+mv $0 ${BACKMEUP}
 git clone %(url)s /%(gitdir)s
+S=$?
+echo "Exit status: $S"
+if [ $S -eq 0 ] ; then
+  rm ${BACKMEUP}
+else
+  echo "move clone script back in place"
+  mv ${BACKMEUP} $0
+fi
         """ % { 'url': project.url_gitlab, 'gitdir': _get_mountpoint_in_container('git', user)  }
     filename = os.path.join(_get_mountpoint_in_hub('git', user, project), 'clone.sh')
     with open(filename, 'w') as f:
