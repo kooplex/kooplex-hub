@@ -158,7 +158,6 @@ def openreport_latest(request, project_owner, project_name, report_name):
     user = request.user
     logger.debug('%s opens report %s from project %s-%s' % (user, report_name, project_owner, project_name))
     try:
-        logger.debug('found')
         project_owner_instance = User.objects.get(username = project_owner)
         project = get_project(name = project_name, owner = project_owner_instance)
         logger.debug('found project %s' % (project))
