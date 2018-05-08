@@ -10,7 +10,7 @@ from django.core.urlresolvers import reverse
 
 from kooplex.lib import authorize, get_settings
 from kooplex.lib.filesystem import cleanup_reportfiles
-from kooplex.hub.models import list_user_reports, list_internal_reports, list_public_reports, get_report, filter_report
+from kooplex.hub.models import list_user_reports, list_internal_reports, list_public_reports, get_report, filter_report, get_project
 from kooplex.hub.models import ReportDoesNotExist, HtmlReport, DashboardReport, ScopeType, DashboardContainer
 from kooplex.hub.models import Project, LimitReached
 from kooplex.hub.models import User
@@ -160,7 +160,7 @@ def openreport_latest(request, project_owner, project_name, report_name):
     try:
         logger.debug('found')
         project_owner_instance = User.objects.get(username = project_owner)
-        project = Project.objects.get(name = project_name, owner = project_owner_instance)
+        project = get_project(name = project_name, owner = project_owner_instance)
         logger.debug('found project %s' % (project))
         reports = list(filter_report(project = project, name = report_name))
         reports.sort()

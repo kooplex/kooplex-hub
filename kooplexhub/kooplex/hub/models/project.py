@@ -77,3 +77,19 @@ class UserProjectBinding(models.Model):
        return "%s-%s" % (self.project.name, self.user.username)
 
 
+def get_project(**kw):
+    try:
+        return Project.objects.get(**kw)
+    except Project.DoesNotExist:
+        if not 'name' in kw:
+            raise
+        project_name = kw.pop('name')
+        filterprojects_pre = Project.objects.filter(**kw)
+        filterprojects_fin = []
+        for p in filterprojects_pre:
+            if p.gitlabname == project_name:
+                filterprojects_fin.append(p)
+        if len(filterprojects_fin) == 1:
+            return filterprojects_fin[0]
+        raise
+
