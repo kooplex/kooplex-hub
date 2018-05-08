@@ -178,4 +178,13 @@ def filter_report(**kw):
         yield report
     for report in DashboardReport.objects.filter(**kw):
         yield report
+    if 'name' in kw:
+        report_name = kw.pop('name')
+        for report in HtmlReport.objects.filter(**kw):
+            if report.safename == report_name:
+                yield report
+        for report in DashboardReport.objects.filter(**kw):
+            if report.safename == report_name:
+                yield report
+
 
