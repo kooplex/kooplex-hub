@@ -13,6 +13,7 @@ from kooplex.lib.filesystem import cleanup_reportfiles
 from kooplex.hub.models import list_user_reports, list_internal_reports, list_public_reports, get_report, filter_report
 from kooplex.hub.models import ReportDoesNotExist, HtmlReport, DashboardReport, ScopeType, DashboardContainer
 from kooplex.hub.models import Project, LimitReached
+from kooplex.hub.models import User
 from kooplex.logic.spawner import spawn_dashboard_container, remove_container
 from kooplex.hub.views.extra_context import get_pane
 
@@ -158,7 +159,8 @@ def openreport_latest(request, project_owner, project_name, report_name):
     logger.debug('%s opens report %s from project %s-%s' % (user, report_name, project_owner, project_name))
     try:
         logger.debug('found')
-        project = Project.objects.get(id = 41)#name = project_name, owner = project_owner)
+        project_owner_instance = User.objects.get(username = project_owner)
+        project = Project.objects.get(name = project_name, owner = project_owner_instance)
         logger.debug('found project %s' % (project))
         reports = list(filter_report(project = project, name = report_name))
         reports.sort()
@@ -167,9 +169,14 @@ def openreport_latest(request, project_owner, project_name, report_name):
             if report.is_user_allowed(user) or report.is_public:
                 return redirect(reverse('report-open', kwargs = {'report_id': report.id}))
         messages.error(request, 'You are not allowed to open this report.')
+    except User.DoesNotExist:
+        logger.warning('Project owner %s does not exist' % (project_owner))
+        messages.error(request, 'Report does not exist')
     except Project.DoesNotExist:
+        logger.warning('Project %s-%s does not exist' % (project_name, project_owner))
         messages.error(request, 'Report does not exist')
     except ReportDoesNotExist:
+        logger.warning('Report %s of project %s-%s does not exist' % (report_name, project_name, project_owner))
         messages.error(request, 'Report does not exist')
     return redirect('reports')
 
