@@ -80,6 +80,7 @@ def dump_file(filename):
         'jpg': 'image/jpeg',
         'jpeg': 'image/jpeg',
         'pdf': 'application/pdf',
+        'md': 'text/markdown',
     }
     if ext in mime:
         ct = mime[ext]
@@ -218,7 +219,7 @@ def setreport(request):
 urlpatterns = [
     url(r'^/?$', reports, name = 'reports'),
     url(r'^/open/(?P<report_id>\d+)/$', openreport, name = 'report-open'),
-    url(r'^/open/(?P<report_id>\d+)/(?P<path>[\./\w]+)$', servefile, name = 'report-dumpcomponent'),
+    url(r'^/open/(?P<report_id>\d+)/(?P<path>[\./\w-]+)$', servefile, name = 'report-dumpcomponent'),
     url(r'^/openlatest/(?P<project_owner>\w+)-(?P<project_name>\w+)/(?P<report_name>\w+)$', openreport_latest, name = 'report-openlatest'),
     url(r'^/stop$', stop_reportcontainer, name = 'reportcontainer-stop'),
     url(r'^/settings$', setreport, name = 'report-settings'),
