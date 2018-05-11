@@ -15,7 +15,7 @@ def publish_htmlreport(report):
     # select the user's project container, which should be running
     container = ProjectContainer.objects.get(user = report.creator, project = report.project, is_running = True)
     # run conversion behalf of the user
-    command = 'jupyter-nbconvert --to html %s' % report.filename_in_container
+    command = 'jupyter-nbconvert --to html %s' % report.notebookfile.path_in_usercontainer
     response = Docker().execute(container, command)
     # mv result files in place
     move_htmlreport_in_place(report)

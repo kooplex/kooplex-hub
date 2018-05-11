@@ -237,50 +237,80 @@ def mkdir_project(user, project):
     mkdir_git_workdir(user, project)
     mkdir_share(project)
 
-def _get_mountpoint_in_hub(volname, user, project):
+class FileOrFolder:
+    def __init__(self, path_in_hub):
+        self.path_in_hub = path_in_hub
+
+    @property
+    def isdir(self):
+        return os.path.isdir(self.path_in_hub)
+
+    @property
+    def representation(self):
+        return base64.b64encode(self.path_in_hub.encode()).decode()
+
+    @property
+    def volume(self):
+        return split_volume_path_in_hub(self.path_in_hub)['volumename']
+
+    @property
+    def dirname(self):
+        return '' if self.volume == 'home' else self.volume
+
+    @property
+    def path(self):
+        return split_volume_path_in_hub(self.path_in_hub)['path']
+
+    @property
+    def path_in_usercontainer(self):
+        r = split_volume_path_in_hub(self.path_in_hub)
+        username = r['username']
+        volname = r['volumename']
+        path = r['path']
+        if volname == 'git':
+            return os.path.join('/home', username, 'git', path)
+        if volname == 'share':
+            return os.path.join('/home', username, 'share', path)
+        if volname == 'home':
+            return os.path.join('/home', username, path)
+
+
+def translate(representation):
+    return FileOrFolder(base64.b64decode(representation.encode()).decode())
+
+def mountpoint_in_hub(volname, user, project):
+    if volname == 'home':
+        return os.path.join(get_settings('volumes','home'), user.username)
     if volname == 'git':
         return os.path.join(get_settings('volumes','git'), user.username, project.name_with_owner)
     if volname == 'share':
         return os.path.join(get_settings('volumes','share'), project.name_with_owner)
-    if volname == 'home':
-        return os.path.join(get_settings('volumes','home'), user.username)
 
-def _get_mountpoint_in_container(volname, user):
-    if volname == 'git':
-        return os.path.join('home', user.username, 'git')
-    if volname == 'share':
-        return os.path.join('home', user.username, 'share')
-    if volname == 'home':
-        return os.path.join('home', user.username)
-
-def _filename_in_mount(mountpoint_in_hub, filename_in_hub):
-    filename_in_container = filename_in_hub.replace(mountpoint_in_hub, '')
-    return filename_in_container[1:] if filename_in_container[0] == '/' else filename_in_container
-
-def _filetype(filename_in_hub):
-    if os.path.isdir(filename_in_hub):
-        return 'd'
-    if os.path.isfile(filename_in_hub):
-        return 'f'
-    if os.path.islink(filename_in_hub):
-        return 'l'
-
-def myencode(filename):
-    return base64.b64encode(filename.encode()).decode()
-
-def mydecode(filename_enc):
-    return base64.b64decode(filename_enc.encode()).decode()
-
-def translate(representation):
-    _, volname, filetype, filename_in_hub_enc, filename_in_container_enc, filename_in_mount, _ = re.split(r'(\w+):(\w):([=\w]+):([=\w]+):(.*)', representation)
-    return {
-        'filename_in_hub': mydecode(filename_in_hub_enc),
-        'filename_in_container': mydecode(filename_in_container_enc),
-        'filename_in_mount': filename_in_mount,
-        'filetype': filetype,
-        'volname': volname,
-    }
-
+def split_volume_path_in_hub(filename):
+    resp = {}
+    vn = None
+    for volumename in [ 'home', 'git', 'share' ]:
+        mp = get_settings('volumes', volumename)
+        cursor = len(mp)
+        if filename.startswith(mp):
+            while filename[cursor] == '/':
+                cursor += 1
+            vn = volumename
+            path = filename[cursor:]
+    if vn is None:
+        message = "Cannot split filename %s in the hub into volumename and path" % filename
+        logger.error(message)
+        raise Exception(message)
+    if vn == 'home':
+        u, p = path.split('/', 1)
+        return { 'volumename': vn, 'username': u, 'path': p }
+    if vn == 'git':
+        u, pr, p = path.split('/', 2)
+        return { 'volumename': vn, 'username': u, 'project_with_owner': pr, 'path': p }
+    if vn == 'share':
+        pr, p = path.split('/', 1)
+        return { 'volumename': vn, 'project_with_owner': pr, 'path': p }
+    
 def list_notebooks(user, project):
     """
     @summary: iterate over user files with ipynb extension
@@ -293,18 +323,9 @@ def list_notebooks(user, project):
     @type project: kooplex.hub.models.Project
     """
     for volname in [ 'git', 'share', 'home' ]:
-        mph = _get_mountpoint_in_hub(volname, user, project)
-        mpc = _get_mountpoint_in_container(volname, user)
+        mph = mountpoint_in_hub(volname, user, project)
         for fnh in glob.glob(os.path.join(mph, '*.ipynb')):
-            fnm = _filename_in_mount(mph, fnh)
-            fnc = os.path.join(mpc, fnm)
-            t = _filetype(fnh)
-            yield {
-                'volume': volname, 
-                'isdir': t == 'd', 
-                'filename': fnc, 
-                'representation': "%s:%s:%s:%s:%s" % (volname, t, myencode(fnh), myencode(fnc), fnm)
-            }
+            yield FileOrFolder(fnh)
 
 def list_files(user, project):
     """
@@ -327,19 +348,10 @@ def list_files(user, project):
         return False
 
     for volname in [ 'git', 'share', 'home' ]:
-        mph = _get_mountpoint_in_hub(volname, user, project)
-        mpc = _get_mountpoint_in_container(volname, user)
+        mph = mountpoint_in_hub(volname, user, project)
         for fnh in glob.glob(os.path.join(mph, '*')):
             if not skip(fnh):
-                fnm = _filename_in_mount(mph, fnh)
-                fnc = os.path.join(mpc, fnm)
-                t = _filetype(fnh)
-                yield {
-                    'volume': volname, 
-                    'isdir': t == 'd', 
-                    'filename': fnc, 
-                    'representation': "%s:%s:%s:%s:%s" % (volname, t, myencode(fnh), myencode(fnc), fnm)
-                }
+                yield FileOrFolder(fnh)
 
 def move_htmlreport_in_place(report):
     """
@@ -349,8 +361,8 @@ def move_htmlreport_in_place(report):
     """
     from kooplex.hub.models import HtmlReport
     assert isinstance(report, HtmlReport)
-    insert_head = bytes("""<base href="%s/" />\n""" % report.base, encoding = 'utf-8')
-    filename_wo_ext, _ = os.path.splitext(report.filename_in_hub)
+    insert_head = bytes("""<base href="%s" />\n""" % report.base_url, encoding = 'utf-8')
+    filename_wo_ext, _ = os.path.splitext(report.notebookfile.path_in_hub)
     filename_source = filename_wo_ext + '.html'
     filename_source_ = filename_wo_ext + '.html.orig'
     os.rename(filename_source, filename_source_)
@@ -383,8 +395,9 @@ def copy_reportfiles_in_place(report, files):
     from kooplex.hub.models import DashboardReport, HtmlReport
     report_root = report.report_root
     if isinstance(report, DashboardReport):
-        filename_source = report.filename_in_hub
-        filename_in_container = report.filename_in_container
+#FIXME: test it
+        filename_source = report.path_in_hub
+        filename_in_container = report.path_in_usercontainer
         dir_target = os.path.join(report_root, os.path.dirname(filename_in_container))
         dir_util.mkpath(dir_target)
 #    file_util.copy_file(filename_source, dir_target)
@@ -392,14 +405,10 @@ def copy_reportfiles_in_place(report, files):
         prepare_dashboardreport_withinitcell(filename_source, target_file)
         logger.debug('convert %s -> %s' % (filename_source, dir_target))
     for f in files:
-        t = translate(f)
-        if isinstance(report, DashboardReport):
-            dir_target = os.path.join(report_root, os.path.dirname(t['filename_in_container']))
-        elif isinstance(report, HtmlReport):
-            dir_target = os.path.join(report_root, *'/'.split(os.path.dirname(t['filename_in_container']))[3:])
+        dir_target = os.path.join(report_root, *os.path.dirname(f.path_in_usercontainer).split('/')[3:])
         dir_util.mkpath(dir_target)
-        file_util.copy_file(t['filename_in_hub'], dir_target)
-        logger.debug('cp %s -> %s' % (t['filename_in_hub'], dir_target))
+        file_util.copy_file(f.path_in_hub, dir_target)
+        logger.debug('cp %s -> %s' % (f.path_in_hub, dir_target))
     _chown_recursive(report_root, get_settings('ldap', 'reportuid'), get_settings('ldap', 'reportgid'))
     logger.info('Report %s -> %s' % (report, report_root))
 

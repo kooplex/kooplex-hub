@@ -43,7 +43,7 @@ def publishForm(request, project_id):
         description = request.POST['report_description'].strip()
         t = translate(request.POST['ipynb_file'])
         if len(name) == 0:
-            name, _ = os.path.splitext(os.path.basename(t['filename_in_container']))
+            name, _ = os.path.splitext(os.path.basename(t.path))
         password = request.POST['password']
         scope = ScopeType.objects.get(name = request.POST['scope'])
         if 'html' in request.POST.keys():
@@ -58,14 +58,12 @@ def publishForm(request, project_id):
             description = description,
             ts_created = int(time.time()),
             project = project,
-            notebook_dirname = t['volname'],            #FIXME: the name
-            notebook_filename = t['filename_in_mount'], 
+            notebook_dirname = t.dirname,
+            notebook_filename = t.path, 
             scope = scope,
             password = password
         )
-        report.filename_in_hub = t['filename_in_hub']
-        report.filename_in_container = t['filename_in_container']
-        report.volname = t['volname']
+        report.notebookfile = t
         report.save()    #FIXME: menteni kell, hogy legyen id a base-hez
         # conversion and deployment
         if isinstance(report, HtmlReport):
@@ -73,7 +71,7 @@ def publishForm(request, project_id):
             publish_htmlreport(report)
         elif isinstance(report, DashboardReport):
             logger.debug('publish new DashboardReport %s' % report)
-        files = request.POST.getlist('other_files')
+        files = [ translate(f) for f in request.POST.getlist('other_files') ]
         copy_reportfiles_in_place(report, files)
         report.save()
         logger.info('new report %s published' % report)

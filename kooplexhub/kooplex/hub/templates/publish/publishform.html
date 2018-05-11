@@ -39,7 +39,7 @@
           <div class="form-group">
           {% for nbfile in notebooks %}
           <tr><td>
-             <input type="radio" name="ipynb_file" value="{{ nbfile.representation }}" {% if forloop.first %} checked {% endif %} > {{ nbfile.filename }} ({{ nbfile.volume }})<br>
+             <input type="radio" name="ipynb_file" value="{{ nbfile.representation }}" {% if forloop.first %} checked {% endif %} > {{ nbfile.path }} ({{ nbfile.volume }})<br>
           </td></tr>
           {% endfor %}
           </div>
@@ -86,7 +86,7 @@
                      {% else %}
                      <span class="glyphicon glyphicon-file">
                      {% endif %}
-                     {{ file.filename }} ({{ file.volume }})</span><br>
+                     {{ file.path }} ({{ file.volume }})</span><br>
                      </td></tr>
                   {% endfor %}
                 </div>

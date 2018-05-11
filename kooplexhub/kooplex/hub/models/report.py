@@ -73,6 +73,10 @@ class HtmlReport(Report):
         from django.core.urlresolvers import reverse
         return os.path.join(get_settings('hub', 'base_url'), reverse('report-open', kwargs = {'report_id': self.id}))
 
+    @property
+    def base_url(self):
+        return ("/%s/%s/" % (self.base, self.notebook_dirname)).replace('//', '/')
+
 
 class DashboardReport(Report):
     image = models.ForeignKey(Image, null = False)
