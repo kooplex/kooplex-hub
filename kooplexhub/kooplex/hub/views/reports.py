@@ -210,7 +210,10 @@ def setreport(request):
             report.password = request.POST['password'].strip()
             report.save()
         elif button == 'delete':
-            cleanup_reportfiles(report)
+            try:
+                cleanup_reportfiles(report)
+            except Exception as e:
+                logger.error("Cannot delete report files. Report %s -- %s" % (report, e))
             report.delete()
     except ReportDoesNotExist:
         messages.error(request, 'You are not allowed to configure this report')

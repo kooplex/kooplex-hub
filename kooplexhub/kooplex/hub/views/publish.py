@@ -89,7 +89,7 @@ def publishForm(request, project_id):
                 messages.warning(request, 'You are not allowed to manipulate report with id %d' % report_id)
             except Exception as e:
                 logger.error("cannot delete report %s -- %s" % (report, e))
-                messages.error(request, 'Somethng went wrong while deleting report %s [%s]. Ask the administrator to look after the case.' % (report, e))
+                messages.error(request, 'Something went wrong while deleting report %s [%s]. Ask the administrator to look after the case.' % (report, e))
     if removed == 1:
         messages.info(request, 'A former report instance of project %s has been deleted.' % (project))
     elif removed > 1:
