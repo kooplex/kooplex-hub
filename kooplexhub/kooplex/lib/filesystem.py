@@ -309,7 +309,8 @@ def split_volume_path_in_hub(filename):
         return { 'volumename': vn, 'username': u, 'project_with_owner': pr, 'path': p }
     if vn == 'share':
         pr, p = path.split('/', 1)
-        return { 'volumename': vn, 'project_with_owner': pr, 'path': p }
+        u = pr.split('-')[-1]
+        return { 'volumename': vn, 'project_with_owner': pr, 'path': p , 'username': u}
     
 def list_notebooks(user, project):
     """
