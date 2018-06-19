@@ -1,7 +1,7 @@
 import ldap3
 import logging
 
-from kooplex.lib import get_settings
+from kooplex.settings import KOOPLEX
 
 logger = logging.getLogger(__name__)
 
@@ -9,14 +9,19 @@ class LdapException(Exception):
     pass
 
 class Ldap:
-    host = get_settings('ldap', 'host')
-    port = get_settings('ldap', 'port')
-    base_dn = get_settings('ldap', 'base_dn')
-    bind_dn = get_settings('ldap', 'bind_dn')
-    bind_pw = get_settings('ldap', 'bind_password')
 
     def __init__(self):
         logger.debug("init")
+        ldapconf = KOOPLEX.get('ldap', {})
+        self.host = ldapconf.get('host', 'localhost')
+        self.port = ldapconf.get('port', 389)
+        try:
+            self.base_dn = ldapconf['base_dn']
+            self.bind_dn = ldapconf['bind_dn']
+            self.bind_pw = ldapconf['bind_password']
+        except KeyError as e:
+            logger.error("Cannot initialize ldap, KOOPLEX['ldap'][key] key is missing -- %s" % e)
+            raise
         server = ldap3.Server(host = self.host, port = self.port)
         self.connection = ldap3.Connection(server, self.bind_dn, self.bind_pw)
         success = self.connection.bind()
@@ -83,8 +88,8 @@ class Ldap:
         attributes = {
             'cn': user.username,
             'uid': user.username,
-            'uidNumber': user.uid,
-            'gidNumber': user.gid,
+            'uidNumber': user.profile.userid,
+            'gidNumber': user.profile.groupid,
             'homeDirectory': '/home/%s' % user.username,
             'sn': user.last_name,
             'displayName': '%s %s' % (user.first_name, user.last_name),
@@ -97,7 +102,7 @@ class Ldap:
             'shadowMax': 999999,
             'shadowMin': 8,
             'shadowWarning': 7,
-            'userPassword': user.password
+            'userPassword': 'fixme'
         }
         success = self.connection.add(dn, object_class, attributes)
         if not success:

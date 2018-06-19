@@ -1,18 +1,23 @@
 """
-Definition of urls for kooplex.
 """
-
 from django.conf.urls import url, include
 from django.contrib import admin
-admin.autodiscover()
+from django.contrib.auth import views as auth_views
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
 
-def req_test(request):
-    raise Exception(str(request.META))
+def indexpage(request):
+    return render(request, 'index.html', {})
 
 urlpatterns = [
-    url(r'^hub', include('kooplex.hub.urls')),
-## ##    #url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
-    url(r'^admin/', include(admin.site.urls)),
-    url(r'^admin/', include('kooplex.hub.admin')),
-    url(r'^hub/a', req_test),
+    url(r'^admin/', admin.site.urls),
+    url(r'^admin/', include('hub.admin', namespace = 'myadmin')),
+    url(r'^hub/oauth/', include('social_django.urls', namespace = 'social')),
+    url(r'^hub/container/', include('hub.views.container', namespace = 'container')),
+    url(r'^hub/project/', include('hub.views.project', namespace = 'project')),
+    url(r'^hub/teaching/', include('hub.views.teaching', namespace = 'teaching')),
+    url(r'^hub/courses/', include('hub.views.courses', namespace = 'courses')),
+    url(r'^hub/user/', include('hub.views.user', namespace = 'user')),
+    url(r'^hub/?', indexpage, name = 'indexpage'),
+    url(r'^accounts/logout/', auth_views.logout, { 'next_page': 'indexpage' }, name = 'logout'),
 ]

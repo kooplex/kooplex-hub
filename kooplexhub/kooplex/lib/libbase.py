@@ -38,26 +38,6 @@ def keeptrying(method, times, **kw):
             time.sleep(dt)
             dt *= 2
 
-def get_settings(block, item, default = None):
-    """
-    @summary: retrieve configuration constants from the KOOPLEX settings hierarchy
-    @param block: the name of the collection of configuration constants
-    @type block: str
-    @param item: the name of the configuration constant within the block
-    @type item: str
-    @param default: in case searched constant is not present in the configuration fall back to this value
-    @type default: anything defaults to None
-    @raises KeyError: in case no default value is provided and either the block is not present in the settings or the item is missing within the block
-    """
-    try:
-        return settings.KOOPLEX[block][item]
-    except KeyError:
-        if default:
-            logging.warning("block %s item %s is missing from settings.py Default value: %s is returned" % (block, item, default))
-            return default
-        logger.error("missing block %s item %s in settings.py" % (block, item))
-        raise
-
 def bash(command):
     """
     @summary: run a command as root in the hub container
@@ -68,22 +48,24 @@ def bash(command):
     logger.info(command)
     subprocess.call(shlex.split(command))
 
-def authorize(request):
-    from kooplex.hub.models import User
-    from django.http import HttpRequest
-    """
-    @summary: authorize a request.
-    @param request: web server request
-    @type request: django.http.HttpRequest
-    @return: whether the user associated with the request is found in the hub db
-    @rtype: bool
-    """
-    assert isinstance(request, HttpRequest)
-    try:
-        User.objects.get(username = request.user.username)
-        return True
-    except User.DoesNotExist:
-        return False
+###def authorize(request):
+###    from kooplex.hub.models import User
+###    from django.http import HttpRequest
+###    """
+###    @summary: authorize a request.
+###    @param request: web server request
+###    @type request: django.http.HttpRequest
+###    @return: whether the user associated with the request is found in the hub db
+###    @rtype: bool
+###    """
+###    assert isinstance(request, HttpRequest)
+###    logger.debug("%s" % request.user)
+###    logger.debug("%s" % type(request.user))
+###    try:
+###        User.objects.get(username = request.user.username)
+###        return True
+###    except User.DoesNotExist:
+###        return False
 
 def standardize_str(s):
     '''

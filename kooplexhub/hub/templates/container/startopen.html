@@ -1,0 +1,22 @@
+{% if container.is_running %}
+    <div class="col-md-1 col-sm-2">
+        <a href="{% url 'container:open' container.id %}" target="_blank">
+          <button role="button" type="button" class="btn btn-success" style="padding: 3px 6px 6px 6px">
+            <span class="glyphicon glyphicon-folder-open" aria-hidden="true"> Open</span>
+          </button>
+        </a>
+    </div>
+{% else %}
+    <div class="col-md-1 col-sm-2">
+  {% if container %}
+      <a href="{% url 'container:start' container.id %}">
+  {% else %}
+      <a href="{% url 'container:startprojectcontainer' project.id %}">
+  {% endif %}
+        <button role="button" type="button" class="btn btn-default" style="padding: 3px 6px 6px 6px">
+          <span class="glyphicon glyphicon-play" aria-hidden="true"> Start</span>
+        </button>
+      </a>
+    </div>
+{% endif %}
+

@@ -1,0 +1,25 @@
+<ul class="nav navbar-nav navbar-right">
+  <li class="dropdown">
+  {% if user.is_authenticated %}
+    <a class="dropdown-togle" data-toggle="dropdown" href="#" role="button" type="button" data-toggle="tooltip" title="Manage your profile and projects" data-placement="bottom">Hello {{ user.first_name }}! <span class="glyphicon glyphicon-chevron-down" /></a>
+  {% else %}
+    <a class="dropdown-togle" data-toggle="dropdown" href="#" role="button" type="button" data-toggle="tooltip" title="Some hints about Kooplex and its usage" data-placement="bottom">Help <span class="glyphicon glyphicon-chevron-down" /></a>
+  {% endif %}
+    <ul class="dropdown-menu">
+  {% if user.is_authenticated %}
+      <li><a href="#" data-toggle="modal" data-target="#update-bio">Update bio</a></li>
+      <li><a href="#" data-toggle="modal" data-target="#manage-projects">Manage projects</a></li>
+      <li><a href="{% url 'user:changetoken' %}">Change token</a></li>
+  {% endif %}
+      <!-- li><a href="{% url 'indexpage'  %}">Tutorial</a></li -->
+      <li><a href="https://github.com/kooplex/kooplex-hub/wiki" target="_blank">Kooplex Hub Wiki</a></li>
+      <li><a href="#" data-toggle="modal" data-target="#about-contacts">Contacts and about</a></li>
+    </ul>
+  </li>
+  
+  {% if user.is_authenticated %}
+    <li><a href="{% url 'logout' %}">Log off <span class="glyphicon glyphicon-log-out"/></a></li>
+  {% else %}
+    <li><a href="{% url 'social:begin' 'elteoidc' %}">Log in <span class="glyphicon glyphicon-log-in"/></a></li>
+  {% endif %}
+</ul>

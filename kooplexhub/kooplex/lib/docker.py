@@ -4,26 +4,27 @@
 """
 import logging
 import re
+import os
 import json
 import shlex
 from docker.client import Client
 
-from kooplex.lib import get_settings
+from kooplex.settings import KOOPLEX
 
 logger = logging.getLogger(__name__)
 
 class Docker:
-    base_url = get_settings('docker', 'base_url')
-    network = get_settings('docker', 'network')
+    dockerconf = KOOPLEX.get('docker', {})
 
     def __init__(self):
-        self.client = Client(base_url = self.base_url)
+        base_url = self.dockerconf.get('base_url', '')
+        self.client = Client(base_url = base_url)
         logger.debug("Client init")
         self.check = None
 
     def list_imagenames(self):
-        logger.debug("Listing imagenames")
-        pattern_imagenamefilter = get_settings('docker', 'pattern_imagenamefilter')
+        logger.debug("Listing image names")
+        pattern_imagenamefilter = KOOPLEX.get('docker', {}).get('pattern_imagename_filter', r'^image-%(\w+):\w$')
         for image in self.client.images(all = True):
             if image['RepoTags'] is None:
                 continue
@@ -34,20 +35,10 @@ class Docker:
                     yield imagename
 
     def list_volumenames(self):
-        logger.debug("Listing volumenames")
+        logger.debug("Listing volume names")
         volumes = self.client.volumes()
-        pattern_volnamefilter_functional = get_settings('volumes', 'pattern_functionalvolumenamefilter')
-        pattern_volnamefilter_storage = get_settings('volumes', 'pattern_storagevolumenamefilter')
         for volume in volumes['Volumes']:
-            volname_full = volume['Name']
-            if re.match(pattern_volnamefilter_functional, volname_full):
-                _, volname, _ = re.split(pattern_volnamefilter_functional, volname_full)
-                logger.debug("Found functional volume: %s" % volname)
-                yield { 'volumetype': 'functional', 'name': volname }
-            elif re.match(pattern_volnamefilter_storage, volname_full):
-                _, volname, _ = re.split(pattern_volnamefilter_storage, volname_full)
-                logger.debug("Found storage volume: %s" % volname)
-                yield { 'volumetype': 'storage', 'name': volname }
+            yield volume['Name']
 
     def get_container(self, container):
         for item in self.client.containers(all = True):
@@ -60,24 +51,23 @@ class Docker:
     def create_container(self, container):
         volumes = []    # the list of mount points in the container
         binds = {}      # a mapping dictionary of the container mounts
-        # the bare minimum like for a notebook: home, git and share folders
-        for vol, mp, mode in container.volumemapping:
-            volumes.append(mp)
-            binds[vol] = { 'bind': mp, 'mode': mode }
-        # additional volumes specified by the owner
         for volume in container.volumes:
+            logger.debug("container %s, volume %s" % (container, volume))
             mp = volume.mountpoint
             volumes.append(mp)
-            binds[volume.volumename] = { 'bind': mp, 'mode': volume.mode(container.user) } 
+            binds[volume.name] = { 'bind': mp, 'mode': volume.mode(container.user) }
+        logger.debug("container %s binds %s" % (container, binds))
         host_config = self.client.create_host_config(
             binds = binds,
             privileged = True
         )
-        networking_config = { 'EndpointsConfig': { self.network: {} } }
-        ports = [ 8000 ] #FIXME
+        network = self.dockerconf.get('network', 'host')
+        networking_config = { 'EndpointsConfig': { network: {} } }
+        ports = self.dockerconf.get('container_ports', [ 8000 ])
+        imagename = container.image.imagename if container.image else self.dockerconf.get('default_image', 'basic')
         args = {
             'name': container.name,
-            'image': container.image.imagename,
+            'image': imagename,
             'detach': True,
             'hostname': container.name,
             'host_config': host_config,
@@ -88,7 +78,56 @@ class Docker:
         }
         self.client.create_container(**args)
         logger.debug("Container created")
+        mapper = self.construct_mapper(container)
+        self.copy_mapper(container, mapper)
         return self.get_container(container)
+
+    def construct_mapper(self, container):
+        from hub.models import Volume
+        user = container.user
+        mapper = []
+        for binding in container.volumecontainerbindings:
+            if binding.volume.is_volumetype(Volume.WORKDIR):
+                mapper.append('workdir:%s' % os.path.join(binding.volume.mountpoint, user.username, binding.project.name_with_owner))
+            elif binding.volume.is_volumetype(Volume.SHARE):
+                mapper.append('share:%s' % os.path.join(binding.volume.mountpoint, binding.project.name_with_owner))
+            elif binding.volume.is_volumetype(Volume.COURSE_SHARE):
+                course = binding.project.course
+                if user.profile.is_courseteacher(course):
+                    mapper.append('share:%s' % os.path.join(binding.volume.mountpoint, course.courseid))
+                else:
+                    mapper.append('share:%s' % os.path.join(binding.volume.mountpoint, course.courseid, 'public'))
+            elif binding.volume.is_volumetype(Volume.COURSE_WORKDIR):
+                course = binding.project.course
+                if user.profile.is_courseteacher(course):
+                    mapper.append('workdir:%s' % os.path.join(binding.volume.mountpoint, course.courseid))
+                else:
+                    flags = course.list_userflags(user)
+                    if len(flags) != 1:
+                        logger.error("Student %s has more course %s flags (%s) than expected" (user, course, list(flags)))
+                    mapper.append('workdir:%s' % os.path.join(binding.volume.mountpoint, course.courseid, flags[0], user.username))
+        logger.debug("container %s mapper %s" % (container, "+".join(mapper)))
+        return mapper
+
+    def copy_mapper(self, container, mapper):
+        import tarfile
+        import time
+        from io import BytesIO
+
+        tarstream = BytesIO()
+        tar = tarfile.TarFile(fileobj = tarstream, mode = 'w')
+        file_data = "\n".join(mapper).encode('utf8')
+        tarinfo = tarfile.TarInfo(name = 'mount.conf')
+        tarinfo.size = len(file_data)
+        tarinfo.mtime = time.time()
+        tar.addfile(tarinfo, BytesIO(file_data))
+        tar.close()
+        tarstream.seek(0)
+        try:
+            status = self.client.put_archive(container = container.name, path = '/tmp', data = tarstream)
+            logger.info("container %s put_archive returns %s" % (container, status))
+        except Exception as e:
+            logger.error("container %s put_archive fails -- %s" % (container, e))
 
     def run_container(self, container):
         docker_container_info = self.get_container(container)
@@ -109,15 +148,18 @@ class Docker:
         assert container_state == 'running', "Container failed to start: %s" % docker_container_info
 
     def stop_container(self, container):
-        self.client.stop(container.name)
+        try:
+            self.client.stop(container.name)
+        except Exception as e:
+            logger.warn("docker container not found by API -- %s" % e)
         container.is_running = False
         container.save()
-        logger.debug("Container stopped %s (marked to remove %s)" % (container.name, container.mark_to_remove))
-        if container.mark_to_remove:
-            self.remove_container(container)
 
     def remove_container(self, container):
-        self.client.remove_container(container.name)
+        try:
+            self.client.remove_container(container.name)
+        except Exception as e:
+            logger.warn("docker container not found by API -- %s" % e)
         logger.debug("Container removed %s" % container.name)
         container.delete()
 

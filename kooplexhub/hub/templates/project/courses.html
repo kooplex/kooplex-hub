@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<div class="tab-content">
+  {% for project in user.profile.courseprojects_attended %}
+    {% if not project|is_hiddenbyuser:user %}
+       <div class="row">
+         {% include 'project/partial.html' with container=project|get_usercontainer:user caller='student' %}
+       </div>
+    {% endif %}
+  {% endfor %}
+</div><!-- /.tab-content -->
+
+{% endblock %}
+
