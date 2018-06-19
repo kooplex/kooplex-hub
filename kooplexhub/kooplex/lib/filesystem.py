@@ -460,11 +460,11 @@ S=$?
 if [ $S -eq 0 ] ; then
   cd ${TMPFOLDER}
   rm -rf ./.git/
-  mv * /%(gitdir)s
+  mv * %(gitdir)s
   for hidden in $(echo .?* | sed s/'\.\.'//) ; do
-    mv $hidden /%(gitdir)s
+    mv $hidden %(gitdir)s
   done
-  cd /%(gitdir)s
+  cd %(gitdir)s
   git add --all
   git commit -a -m "%(message)s"
   git push origin master
@@ -474,7 +474,7 @@ else
   echo "move clone script back in place"
   mv ${BACKMEUP} $0
 fi
-        """ % { 'url': project_template.url_gitlab, 'message': commitmsg, 'gitdir': _get_mountpoint_in_container('git', project.owner) }
+        """ % { 'url': project_template.url_gitlab, 'message': commitmsg, 'gitdir': '/home/%s/git' % project.owner }
     else:
         user = project.owner if collaboratoruser is None else collaboratoruser
         script = """#! /bin/bash
@@ -483,7 +483,7 @@ exec 2>&1
 set -v
 BACKMEUP=$(mktemp)
 mv $0 ${BACKMEUP}
-git clone %(url)s /%(gitdir)s
+git clone %(url)s %(gitdir)s
 S=$?
 echo "Exit status: $S"
 if [ $S -eq 0 ] ; then
@@ -492,8 +492,8 @@ else
   echo "move clone script back in place"
   mv ${BACKMEUP} $0
 fi
-        """ % { 'url': project.url_gitlab, 'gitdir': _get_mountpoint_in_container('git', user)  }
-    filename = os.path.join(_get_mountpoint_in_hub('git', user, project), 'clone.sh')
+        """ % { 'url': project.url_gitlab, 'gitdir': '/home/%s/git' % user  }
+    filename = os.path.join(mountpoint_in_hub('git', user, project), 'clone.sh')
     with open(filename, 'w') as f:
         f.write(script)
     os.chown(filename, user.uid, user.gid)
