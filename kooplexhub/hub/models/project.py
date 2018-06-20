@@ -3,6 +3,8 @@ import logging
 from django.db import models
 from django.contrib.auth.models import User
 from django.template.defaulttags import register
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 from .image import Image
 from .scope import ScopeType
@@ -35,6 +37,13 @@ class Project(models.Model):
     @property
     def name_with_owner(self):
         return "%s-%s" % (standardize_str(self.name), self.owner.username)
+
+    @property
+    def safename(self):
+        try:
+            return self.name_with_owner
+        except UserProjectBinding.DoesNotExist:
+            return standardize_str(self.name)
 
     _volumes = None
     @property
@@ -127,6 +136,7 @@ class UserProjectBinding(models.Model):
             binding.save()
         except UserProjectBinding.DoesNotExist:
             raise ProjectDoesNotExist
+
 
 
 #FIXME: project del signal -> container karbantart

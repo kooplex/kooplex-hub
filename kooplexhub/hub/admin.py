@@ -65,7 +65,7 @@ class ProjectContainerBindingAdmin(admin.ModelAdmin):
 
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
-    list_display = ('courseid', 'description')
+    list_display = ('id', 'courseid', 'description')
 
 @admin.register(UserCourseBinding)
 class UserCourseBindingAdmin(admin.ModelAdmin):
@@ -129,3 +129,10 @@ class VolumeContainerBindingAdmin(admin.ModelAdmin):
 class ImageAdmin(admin.ModelAdmin):
     list_display = ('id', 'name')
 
+@admin.register(Group)
+class GroupAdmin(admin.ModelAdmin):
+    list_display = ('groupid', 'name', 'is_active')
+
+@admin.register(UserGroupBinding)
+class UserGroupBindingAdmin(admin.ModelAdmin):
+    list_display = ('group', 'user')

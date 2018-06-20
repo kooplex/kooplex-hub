@@ -89,18 +89,17 @@ class Container(models.Model):
         logger.debug("project id %s & user %s" % (project_id, user))
         project = Project.get_userproject(project_id, user)
         logger.debug("found project %s and authorized for user %s" % (project, user))
-        try:
-            container = ProjectContainerBinding.objects.get(project = project).container
-            logger.debug("container in db %s" % container)
-        except ProjectContainerBinding.DoesNotExist:
-            if create:
-                containername = "%s-%s" % (project.name, user.username)
-                container = Container.objects.create(name = containername, user = user)
-                ProjectContainerBinding.objects.create(project = project, container = container)
-                logger.debug("new container in db %s" % container)
-            else:
-                raise
-        return container 
+        for binding in ProjectContainerBinding.objects.filter(project = project):
+            if binding.container.user == user:
+                logger.debug("container in db %s" % container)
+                return container
+        if create:
+            containername = "%s-%s" % (project.name, user.username)
+            container = Container.objects.create(name = containername, user = user)
+            ProjectContainerBinding.objects.create(project = project, container = container)
+            logger.debug("new container in db %s" % container)
+            return container 
+        raise Container.DoesNotExist
 
     @staticmethod
     def get_usercontainer(user, container_id, **kw):

@@ -20,6 +20,7 @@
 {% if show_scope %}
           <li><a href="#pane_scope-{{ project.id }}" data-toggle="tab">Scope</a></li>
 {% endif %}
+          <li><a href="#pane_description-{{ project.id }}" data-toggle="tab">Description</a></li>
 {% if show_deletion %}
           <li><a href="#pane_deletion-{{ project.id }}" data-toggle="tab">Deletion</a></li>
 {% endif %}
@@ -69,6 +70,9 @@
             {% endif %}
           </div>
 {% endif %}
+          <div id="pane_description-{{ project.id }}" class="tab-pane fade">
+            {% include 'project/pane-description.html' %}
+          </div>
 {% if show_deletion %}
           <div id="pane_deletion-{{ project.id }}" class="tab-pane fade">
             {% if project.owner == user %}

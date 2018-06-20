@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.shortcuts import render, redirect
 
-from hub.models import Project, UserProjectBinding
+from hub.models import Project
 from hub.models import Container
 
 logger = logging.getLogger(__name__)
@@ -19,7 +19,7 @@ def startprojectcontainer(request, project_id):
     try:
         container = Container.get_userprojectcontainer(user = user, project_id = project_id, create = True)
         container.docker_start()
-    except UserProjectBinding.DoesNotExist:
+    except Container.DoesNotExist:
         messages.error(request, 'Project does not exist')
     except Exception as e:
         messages.error(request, 'Cannot start the container -- %s' % e)

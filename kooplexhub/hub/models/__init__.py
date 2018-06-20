@@ -6,3 +6,4 @@ from .project import Project,  UserProjectBinding
 from .container import Container, ProjectContainerBinding, VolumeContainerBinding
 from .volume import Volume, VolumeOwnerBinding, ExtraFields, UserPrivilegeVolumeBinding, VolumeProjectBinding, init_model as store_volumes
 
+from .group import Group, UserGroupBinding

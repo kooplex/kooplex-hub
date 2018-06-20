@@ -46,7 +46,8 @@ def configure(request):
         image = Image.objects.get(name = request.POST['project_image'])
 #        scope = ScopeType.objects.get(name = request.POST['project_scope'])
         ##marked_to_remove = configure_project(project, image, scope, volumes, collaborators)
-        marked_to_remove = configure_project(project, image = image, volumes_functional = volumes_fun, volumes_storage = volumes_stg)
+        description = request.POST.get('course_description')
+        marked_to_remove = configure_project(project, image = image, volumes_functional = volumes_fun, volumes_storage = volumes_stg, description=description)
         if marked_to_remove:
             messages.info(request, '%d running containers of project %s will be removed when you stop. Changes take effect after a restart.' % (marked_to_remove, project))
     return redirect(next_page)

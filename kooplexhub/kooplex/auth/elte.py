@@ -37,8 +37,9 @@ class my_ElteOpenID(OpenIdConnectAuth):
             for courseid in response.get(key, []):
                 if '/' in courseid:
                     coursename, flag = courseid.split('/', 1)
-                    if courseid.count('/') > 1:
-                        logger.error("Strange sourse id: %s (user %s)" % (courseid, request.user))
+                    if flag.count('/') > 0:
+                        flag = flag.replace('/', '.')
+                        logger.error("Too many '/' symbol in course id: %s (user %s) flag is now: %s" % (courseid, request.user, flag))
                 else:
                     coursename = courseid
                     flag = None

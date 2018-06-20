@@ -10,7 +10,7 @@ from kooplex.lib import Docker
 logger = logging.getLogger(__name__)
 
 
-def configure_project(project, **kw):#image, scope, volumes, collaborators):
+def configure_project(project, **kw):#image, scope, volumes, collaborators, description):
     from hub.models import VolumeProjectBinding
     """
     @summary: configure a user project
@@ -28,6 +28,9 @@ def configure_project(project, **kw):#image, scope, volumes, collaborators):
     image = kw.get('image')
     vol_fun = set(kw.get('volumes_functional', []))
     vol_stg = set(kw.get('volumes_storage', []))
+    
+    olddescr = project.description
+    project.description = kw.get('description',olddescr)
 
     if image and project.image != image:
         project.image = image

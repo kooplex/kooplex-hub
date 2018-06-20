@@ -19,7 +19,8 @@ class Profile(models.Model):
     can_createproject = models.BooleanField(default = False) 
 
     @property
-    def groupid(self): return 1000 #TODO: later it may be different for each group of users
+    def groupid(self):
+        return KOOPLEX.get('ldap', {}).get('gid_users', 1000)
 
     @property
     def coursebindings(self):
@@ -98,9 +99,19 @@ def create_user_home(sender, instance, created, **kwargs):
 @receiver(post_save, sender = User)
 def create_user_ldap(sender, instance, created, **kwargs):
     from kooplex.lib.ldap import Ldap
-    if created:
+    regenerate = False
+    try:
+        ldap = Ldap()
+        response = ldap.get_user(instance)
+        uidnumber = response.get('attributes', {}).get('uidNumber')
+        if uidnumber != instance.profile.userid:
+            ldap.removeuser(instance)
+            regenerate = True
+    except Exception as e:
+        logger.error("Failed to get ldap entry for %s -- %s" % (instance, e))
+    if created or regenerate:
         try:
-            Ldap().adduser(instance)
+            ldap.adduser(instance)
         except Exception as e:
             logger.error("Failed to create ldap entry for %s -- %s" % (instance, e))
 
