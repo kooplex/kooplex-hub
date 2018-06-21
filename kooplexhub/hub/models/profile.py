@@ -2,7 +2,7 @@ import pwgen
 import logging
 
 from django.db import models
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_delete, post_delete
 from django.dispatch import receiver
 from django.contrib.auth.models import User
 
@@ -88,16 +88,28 @@ def create_user_profile(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender = User)
 def create_user_home(sender, instance, created, **kwargs):
-    from kooplex.lib.filesystem import mkdir_homefolderstructure
+    from kooplex.lib.filesystem import mkdir_home
     if created:
         try:
-            mkdir_homefolderstructure(instance)
+            mkdir_home(instance)
         except Exception as e:
             logger.error("Failed to create home for %s -- %s" % (instance, e))
 
 
+@receiver(post_delete, sender = Profile)
+def remove_django_user(sender, instance, **kwargs):
+    instance.user.delete()
+    logger.info("Deleted user %s" % instance.user)
+
+
+@receiver(pre_delete, sender = User)
+def garbage_user_home(sender, instance, **kwargs):
+    from kooplex.lib.filesystem import garbagedir_home
+    garbagedir_home(instance)
+
+
 @receiver(post_save, sender = User)
-def create_user_ldap(sender, instance, created, **kwargs):
+def ldap_create_user(sender, instance, created, **kwargs):
     from kooplex.lib.ldap import Ldap
     regenerate = False
     try:
@@ -116,9 +128,12 @@ def create_user_ldap(sender, instance, created, **kwargs):
             logger.error("Failed to create ldap entry for %s -- %s" % (instance, e))
 
 
-#SZTEM EZ NEM KELL
-#@receiver(post_save, sender = User)
-#def save_user_profile(sender, instance, **kwargs):
-#    if hasattr(instance, 'profile'):
-#        instance.profile.save()
+@receiver(post_delete, sender = User)
+def ldap_delete_user(sender, instance, **kwargs):
+    from kooplex.lib.ldap import Ldap
+    try:
+        Ldap().removeuser(instance)
+    except Exception as e:
+        logger.error("Failed to remove ldap entry for %s -- %s" % (instance, e))
+
 

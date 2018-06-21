@@ -2,7 +2,7 @@ import os
 import logging
 
 from django.db import models
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_delete, post_delete
 from django.dispatch import receiver
 from django.contrib.auth.models import User
 from django.template.defaulttags import register
@@ -48,13 +48,14 @@ class UserCourseBinding(models.Model):
 
 @receiver(post_save, sender = Course)
 def mkdir_course(sender, instance, created, **kwargs):
-    from kooplex.lib.filesystem import _mkdir
+    from kooplex.lib.filesystem import mkdir_course_share
     if created:
-        folder_courseprivate = os.path.join(KOOPLEX.get('mountpoint', {}).get('course'), instance.courseid, 'private')
-        _mkdir(folder_courseprivate)
-        folder_coursepublic = os.path.join(KOOPLEX.get('mountpoint', {}).get('course'), instance.courseid, 'public')
-        _mkdir(folder_coursepublic)
-        logger.info("course %s directories created" % instance)
+        mkdir_course_share(instance)
+
+@receiver(post_delete, sender = Course)
+def garbagedir_course(sender, instance, **kwargs):
+    from kooplex.lib.filesystem import garbagedir_course_share
+    garbagedir_course_share(instance)
 
 @receiver(post_save, sender = Course)
 def create_courseproject(sender, instance, created, **kwargs):
@@ -62,7 +63,6 @@ def create_courseproject(sender, instance, created, **kwargs):
         try:
             binding = CourseProjectBinding.objects.get(course = instance)
             logger.debug("Binding is present %s" % binding)
-            return
         except CourseProjectBinding.DoesNotExist:
             project = Project.objects.create(name = 'c_%s' % instance.courseid)
             CourseProjectBinding.objects.create(course = instance, project = project)
@@ -82,15 +82,14 @@ def bind_coursevolumes(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender = UserCourseBinding)
 def mkdir_usercourse(sender, instance, created, **kwargs):
-    from kooplex.lib.filesystem import _mkdir
+    from kooplex.lib.filesystem import mkdir_course_workdir
     if created:
-        if instance.flag:
-            folder_usercourse = os.path.join(KOOPLEX.get('mountpoint', {}).get('usercourse'), instance.course.courseid, instance.flag, instance.user.username)
-        else:
-            folder_usercourse = os.path.join(KOOPLEX.get('mountpoint', {}).get('usercourse'), instance.course.courseid, '_', instance.user.username)
-        _mkdir(folder_usercourse)
-        #FIXME: set acl
-        logger.info("created %s" % (folder_usercourse))
+        mkdir_course_workdir(instance)
+
+@receiver(pre_delete, sender = UserCourseBinding)
+def movedir_usercourse(sender, instance, **kwargs):
+    from kooplex.lib.filesystem import archive_course_workdir
+    archive_course_workdir(instance)
 
 @receiver(post_save, sender = UserCourseBinding)
 def create_usercourseproject(sender, instance, created, **kwargs):

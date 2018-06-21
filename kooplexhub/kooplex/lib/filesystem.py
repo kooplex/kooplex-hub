@@ -41,19 +41,94 @@ def _mkdir(path, uid = 0, gid = 0, mode = 0b111101000, mountpoint = False):
         os.chown(placeholder, 0, 0)
         os.chmod(placeholder, 0)
 
+def mkdir_home(user):
+    """
+    @summary: create a home directory for the user
+    @param user: the user
+    @type user: kooplex.hub.models.User
+    """
+    try:
+        mountpoint = KOOPLEX.get('mountpoint', {})
+        dir_home = os.path.join(mountpoint['home'], user.username)
+        _mkdir(dir_home, uid = user.profile.userid, gid = user.profile.groupid)
+        dir_condaenv = os.path.join(dir_home, '.conda', 'envs')
+        _mkdir(dir_condaenv, uid = user.profile.userid, gid = user.profile.groupid, mode = 0o700)
+        dir_share = os.path.join(dir_home, 'share')
+        _mkdir(dir_share, mountpoint = True, mode = 0o000)
+        dir_workdir = os.path.join(dir_home, 'workdir')
+        _mkdir(dir_workdir, mountpoint = True, mode = 0o000)
+        logger.info("Home dir created for user %s" % user)
+    except KeyError as e:
+        logger.error("Cannot create home dir, KOOPLEX['mountpoint']['home'] is missing")
+
+def garbagedir_home(user):
+    try:
+        mountpoint = KOOPLEX.get('mountpoint', {})
+        dir_home = os.path.join(mountpoint['home'], user.username)
+        dir_garbage = os.path.join(mountpoint['garbage'], "user-%s.%f" % (user.username, time.time()))
+        dir_util.mkpath(dir_garbage)
+        dir_util.copy_tree(dir_home, dir_garbage)
+        dir_util.remove_tree(dir_home)
+    except Exception as e:
+        logger.error("Cannot garbage home dir %s -- %s" % (user, e))
+
+def mkdir_course_share(course):
+    try:
+        mountpoint = KOOPLEX.get('mountpoint', {})
+        dir_courseprivate = os.path.join(mountpoint['course'], course.courseid, 'private')
+        _mkdir(dir_courseprivate)
+        dir_coursepublic = os.path.join(mountpoint['course'], course.courseid, 'public')
+        _mkdir(dir_coursepublic)
+        logger.info("Course dir created for course %s" % course)
+    except KeyError as e:
+        logger.error("Cannot create course dir, KOOPLEX['mountpoint']['course'] is missing")
+
+def garbagedir_course_share(course):
+    try:
+        mountpoint = KOOPLEX.get('mountpoint', {})
+        dir_course = os.path.join(mountpoint['course'], course.courseid)
+        dir_garbage = os.path.join(mountpoint['garbage'], "course-%s.%f" % (course.courseid, time.time()))
+        dir_util.mkpath(dir_garbage)
+        dir_util.copy_tree(dir_course, dir_garbage)
+        dir_util.remove_tree(dir_course)
+    except Exception as e:
+        logger.error("Cannot garbage course dir %s -- %s" % (course, e))
+
+def mkdir_course_workdir(usercoursebinding):
+    try:
+        mountpoint = KOOPLEX.get('mountpoint', {})
+        flag = usercoursebinding.flag if usercoursebinding.flag else '_'
+        dir_usercourse = os.path.join(mountpoint['usercourse'], usercoursebinding.course.courseid, flag, usercoursebinding.user.username)
+        _mkdir(dir_usercourse)
+    except KeyError as e:
+        logger.error("Cannot create course dir, KOOPLEX['mountpoint']['usercourse'] is missing")
+
+def archive_course_workdir(usercoursebinding):
+    try:
+        mountpoint = KOOPLEX.get('mountpoint', {})
+        flag = usercoursebinding.flag if usercoursebinding.flag else '_'
+        dir_usercourse = os.path.join(mountpoint['usercourse'], usercoursebinding.course.courseid, flag, usercoursebinding.user.username)
+        dir_target = os.path.join(mountpoint['home'], usercoursebinding.user.username, "%s.%s.%f" % (usercoursebinding.course.courseid, flag, time.time()))
+        dir_util.mkpath(dir_target)
+        dir_util.copy_tree(dir_usercourse, dir_target)
+        dir_util.remove_tree(dir_usercourse)
+    except Exception as e:
+        logger.error("Cannot archive dir for user course %s -- %s" % (usercoursebinding, e))
+
+
+#def _chown_recursive(path, uid = 0, gid = 0):
+#    logger.debug("dir: %s uid/gid: %d/%d" % (path, uid, gid))
+#    os.chown(path, uid, gid)
+#    for root, dirs, files in os.walk(path):
+#        for name in dirs:
+#            os.chown(os.path.join(root, name), uid, gid)
+#        for name in files:
+#            os.chown(os.path.join(root, name), uid, gid)
+
 #def _mkdir_davsecret(user):
 #    dir_secret = os.path.join(get_settings('volumes', 'home'), user.username, '.davfs2')
 #    _mkdir(dir_secret, user.uid, user.gid, 0b111000000)
 #    return dir_secret
-
-def _chown_recursive(path, uid = 0, gid = 0):
-    logger.debug("dir: %s uid/gid: %d/%d" % (path, uid, gid))
-    os.chown(path, uid, gid)
-    for root, dirs, files in os.walk(path):
-        for name in dirs:
-            os.chown(os.path.join(root, name), uid, gid)
-        for name in files:
-            os.chown(os.path.join(root, name), uid, gid)
 
 #def write_davsecret(user):
 #    """
@@ -115,25 +190,6 @@ def _chown_recursive(path, uid = 0, gid = 0):
 #    fn_keyfile = os.path.join(get_settings('volumes', 'home'), user.username, '.ssh', 'gitlab.key.pub')
 #    return open(fn_keyfile).read().strip()
 
-def mkdir_homefolderstructure(user):
-    """
-    @summary: create a home directory for the user
-    @param user: the user
-    @type user: kooplex.hub.models.User
-    """
-    logger.info(user)
-    mountpoint = KOOPLEX.get('mountpoint', {})
-    if 'home' in mountpoint:
-        dir_home = os.path.join(mountpoint['home'], user.username)
-        _mkdir(dir_home, uid = user.profile.userid, gid = user.profile.groupid)
-        dir_condaenv = os.path.join(dir_home, '.conda', 'envs')
-        _mkdir(dir_condaenv, uid = user.profile.userid, gid = user.profile.groupid, mode = 0o700)
-        dir_share = os.path.join(dir_home, 'share')
-        _mkdir(dir_share, mountpoint = True, mode = 0o000)
-        dir_workdir = os.path.join(dir_home, 'workdir')
-        _mkdir(dir_workdir, mountpoint = True, mode = 0o000)
-    else:
-        logger.error("Cannot create home folder, KOOPLEX['mountpoint']['home'] is missing")
     #dir_oc = os.path.join(get_settings('volumes', 'home'), user.username, 'oc')
     #_mkdir(dir_oc, mountpoint = True, mode = 0b111101101)
     #dir_git = os.path.join(get_settings('volumes', 'home'), user.username, 'git')
@@ -186,9 +242,9 @@ def mkdir_homefolderstructure(user):
 #    @param project: the project
 #    @type project: kooplex.hub.models.Project
 #    """
-#    folder_share = os.path.join(get_settings('volumes','share'), project.name_with_owner)
-#    _mkdir(folder_share, project.owner.uid, project.owner.gid, 0b111111101)
-#    logger.info("created %s" % (folder_share))
+#    dir_share = os.path.join(get_settings('volumes','share'), project.name_with_owner)
+#    _mkdir(dir_share, project.owner.uid, project.owner.gid, 0b111111101)
+#    logger.info("created %s" % (dir_share))
 #
 #def cleanup_share(project):
 #    """
@@ -196,14 +252,14 @@ def mkdir_homefolderstructure(user):
 #    @param project: the project
 #    @type project: kooplex.hub.models.Project
 #    """
-#    folder_share = os.path.join(get_settings('volumes','share'), project.name_with_owner)
+#    dir_share = os.path.join(get_settings('volumes','share'), project.name_with_owner)
 #    garbage = os.path.join(get_settings('volumes', 'garbage'), "share-%s.%f" % (project.name_with_owner, time.time()))
 #    try:
-#        dir_util.copy_tree(folder_share, garbage)
-#        dir_util.remove_tree(folder_share)
-#        logger.info("moved %s -> %s" % (folder_share, garbage))
+#        dir_util.copy_tree(dir_share, garbage)
+#        dir_util.remove_tree(dir_share)
+#        logger.info("moved %s -> %s" % (dir_share, garbage))
 #    except Exception as e:
-#        logger.error("cannot move %s (%s)" % (folder_share, e))
+#        logger.error("cannot move %s (%s)" % (dir_share, e))
 #
 #def mkdir_git_workdir(user, project):
 #    """
@@ -213,8 +269,8 @@ def mkdir_homefolderstructure(user):
 #    @param project: the project
 #    @type project: kooplex.hub.models.Project
 #    """
-#    folder_git = os.path.join(get_settings('volumes','git'), user.username, project.name_with_owner)
-#    _mkdir(folder_git, user.uid, project.owner.gid, 0b111100000)
+#    dir_git = os.path.join(get_settings('volumes','git'), user.username, project.name_with_owner)
+#    _mkdir(dir_git, user.uid, project.owner.gid, 0b111100000)
 #
 #def cleanup_git_workdir(user, project):
 #    """
@@ -224,14 +280,14 @@ def mkdir_homefolderstructure(user):
 #    @param project: the project
 #    @type project: kooplex.hub.models.Project
 #    """
-#    folder_git = os.path.join(get_settings('volumes','git'), user.username, project.name_with_owner)
+#    dir_git = os.path.join(get_settings('volumes','git'), user.username, project.name_with_owner)
 #    garbage = os.path.join(get_settings('volumes', 'garbage'), "gitwd-%s-%s.%f" % (user.username, project.name_with_owner, time.time()))
 #    try:
-#        dir_util.copy_tree(folder_git, garbage)
-#        dir_util.remove_tree(folder_git)
-#        logger.info("moved %s -> %s" % (folder_git, garbage))
+#        dir_util.copy_tree(dir_git, garbage)
+#        dir_util.remove_tree(dir_git)
+#        logger.info("moved %s -> %s" % (dir_git, garbage))
 #    except Exception as e:
-#        logger.error("cannot move %s (%s)" % (folder_git, e))
+#        logger.error("cannot move %s (%s)" % (dir_git, e))
 #
 #def mkdir_project(user, project):
 #    """
@@ -389,10 +445,10 @@ def mkdir_homefolderstructure(user):
 #    if not inserted:
 #        logger.error('could not patch file %s' % filename_source)
 #    filename_destination = report.filename_report_html
-#    folder = os.path.dirname(filename_destination)
-#    dir_util.mkpath(folder)
-#    file_util.move_file(filename_source, folder)
-#    logger.info('Report %s -> %s' % (report, folder))
+#    dir = os.path.dirname(filename_destination)
+#    dir_util.mkpath(dir)
+#    file_util.move_file(filename_source, dir)
+#    logger.info('Report %s -> %s' % (report, dir))
 #
 #def copy_reportfiles_in_place(report, files):
 #    """
@@ -439,17 +495,17 @@ def mkdir_homefolderstructure(user):
 #    from kooplex.hub.models import HtmlReport, DashboardReport
 #    garbage = os.path.join(get_settings('volumes', 'garbage'), "report.%f" % time.time())
 #    if isinstance(report, HtmlReport):
-#        move_folder = os.path.dirname(report.filename_report_html)
+#        move_dir = os.path.dirname(report.filename_report_html)
 #    elif isinstance(report, DashboardReport):
-#        move_folder = report.report_root
+#        move_dir = report.report_root
 #    else:
 #        raise NotImplementedError
 #    try:
-#        dir_util.copy_tree(move_folder, garbage)
-#        dir_util.remove_tree(move_folder)
-#        logger.info("cleanup report %s %s -> %s" % (report, move_folder, garbage))
+#        dir_util.copy_tree(move_dir, garbage)
+#        dir_util.remove_tree(move_dir)
+#        logger.info("cleanup report %s %s -> %s" % (report, move_dir, garbage))
 #    except Exception as e:
-#        logger.error("fail to cleanup report %s %s -> %s -- %s" % (report, move_folder, garbage, e))
+#        logger.error("fail to cleanup report %s %s -> %s -- %s" % (report, move_dir, garbage, e))
 #        raise
 #
 #def create_clone_script(project, collaboratoruser = None, project_template = None):

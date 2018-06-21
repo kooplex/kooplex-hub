@@ -2,7 +2,6 @@ import logging
 
 from django.contrib import admin
 
-# Register your models here.
 from django.conf.urls import url, include
 from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required
@@ -69,7 +68,7 @@ class CourseAdmin(admin.ModelAdmin):
 
 @admin.register(UserCourseBinding)
 class UserCourseBindingAdmin(admin.ModelAdmin):
-    list_display = ('user', 'course', 'flag', 'is_teacher', 'is_protected')
+    list_display = ('id', 'user', 'course', 'flag', 'is_teacher', 'is_protected')
 
 @admin.register(UserProjectBinding)
 class UserProjectBindingAdmin(admin.ModelAdmin):
@@ -131,8 +130,8 @@ class ImageAdmin(admin.ModelAdmin):
 
 @admin.register(Group)
 class GroupAdmin(admin.ModelAdmin):
-    list_display = ('groupid', 'name', 'is_active')
+    list_display = ('id', 'groupid', 'name', 'project', 'is_active')
 
 @admin.register(UserGroupBinding)
 class UserGroupBindingAdmin(admin.ModelAdmin):
-    list_display = ('group', 'user')
+    list_display = ('id', 'group', 'user')
