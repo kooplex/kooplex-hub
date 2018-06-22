@@ -12,6 +12,7 @@ from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
+
 def keeptrying(method, times, **kw):
     """
     @summary: run an arbitrary method with keyword arguments. In case an exception is raised during the call, 
@@ -38,6 +39,7 @@ def keeptrying(method, times, **kw):
             time.sleep(dt)
             dt *= 2
 
+
 def bash(command):
     """
     @summary: run a command as root in the hub container
@@ -48,24 +50,6 @@ def bash(command):
     logger.info(command)
     subprocess.call(shlex.split(command))
 
-###def authorize(request):
-###    from kooplex.hub.models import User
-###    from django.http import HttpRequest
-###    """
-###    @summary: authorize a request.
-###    @param request: web server request
-###    @type request: django.http.HttpRequest
-###    @return: whether the user associated with the request is found in the hub db
-###    @rtype: bool
-###    """
-###    assert isinstance(request, HttpRequest)
-###    logger.debug("%s" % request.user)
-###    logger.debug("%s" % type(request.user))
-###    try:
-###        User.objects.get(username = request.user.username)
-###        return True
-###    except User.DoesNotExist:
-###        return False
 
 def standardize_str(s):
     '''

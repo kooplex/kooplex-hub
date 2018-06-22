@@ -98,8 +98,8 @@ class Project(models.Model):
 
     @property
     def course(self):
-        from .course import CourseProjectBinding
-        return CourseProjectBinding.objects.get(project = self).course
+        from .course import Course
+        return Course.objects.get(project = self)
 
     @staticmethod
     def get_userproject(project_id, user):

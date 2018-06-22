@@ -64,7 +64,7 @@ class ProjectContainerBindingAdmin(admin.ModelAdmin):
 
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
-    list_display = ('id', 'courseid', 'description')
+    list_display = ('id', 'courseid', 'description', 'project')
 
 @admin.register(UserCourseBinding)
 class UserCourseBindingAdmin(admin.ModelAdmin):

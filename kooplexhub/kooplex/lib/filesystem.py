@@ -12,7 +12,7 @@ import base64
 from distutils import dir_util
 from distutils import file_util
 
-#from kooplex.lib import get_settings, bash
+from kooplex.lib import bash
 from kooplex.settings import KOOPLEX
 
 logger = logging.getLogger(__name__)
@@ -76,12 +76,40 @@ def mkdir_course_share(course):
     try:
         mountpoint = KOOPLEX.get('mountpoint', {})
         dir_courseprivate = os.path.join(mountpoint['course'], course.courseid, 'private')
-        _mkdir(dir_courseprivate)
+        _mkdir(dir_courseprivate, gid = course.groupid, mode = 0o770)
         dir_coursepublic = os.path.join(mountpoint['course'], course.courseid, 'public')
-        _mkdir(dir_coursepublic)
+        _mkdir(dir_coursepublic, gid = course.groupid, mode = 0o750)
         logger.info("Course dir created for course %s" % course)
     except KeyError as e:
         logger.error("Cannot create course dir, KOOPLEX['mountpoint']['course'] is missing")
+
+def grantacl_course_share(usercoursebinding):
+    try:
+        mountpoint = KOOPLEX.get('mountpoint', {})
+        #dir_courseprivate = os.path.join(mountpoint['course'], usercoursebinding.course.courseid, 'private')
+        dir_coursepublic = os.path.join(mountpoint['course'], usercoursebinding.course.courseid, 'public')
+        if usercoursebinding.is_teacher:
+        #    bash("setfacl -R -m %d:rwx %s" % (usercoursebinding.user.profile.userid, dir_courseprivate))
+            bash("setfacl -R -m u:%d:rwX %s" % (usercoursebinding.user.profile.userid, dir_coursepublic))
+        #else:
+        #    bash("setfacl -R -m %d:rx %s" % (usercoursebinding.user.profile.userid, dir_coursepublic))
+        logger.debug("acl granted %s" % usercoursebinding)
+    except Exception as e:
+        logger.error("Cannot grant acl %s -- %s" % (usercoursebinding, e))
+
+def revokeacl_course_share(usercoursebinding):
+    try:
+        mountpoint = KOOPLEX.get('mountpoint', {})
+        #dir_courseprivate = os.path.join(mountpoint['course'], usercoursebinding.course.courseid, 'private')
+        dir_coursepublic = os.path.join(mountpoint['course'], usercoursebinding.course.courseid, 'public')
+        if usercoursebinding.is_teacher:
+        #    bash("setfacl -R -x %d %s" % (usercoursebinding.user.profile.userid, dir_courseprivate))
+            bash("setfacl -R -x u:%d %s" % (usercoursebinding.user.profile.userid, dir_coursepublic))
+        #else:
+        #    bash("setfacl -R -x %d %s" % (usercoursebinding.user.profile.userid, dir_coursepublic))
+        logger.debug("acl revoked %s" % usercoursebinding)
+    except Exception as e:
+        logger.error("Cannot revoke acl %s -- %s" % (usercoursebinding, e))
 
 def garbagedir_course_share(course):
     try:
@@ -98,13 +126,43 @@ def mkdir_course_workdir(usercoursebinding):
     try:
         mountpoint = KOOPLEX.get('mountpoint', {})
         flag = usercoursebinding.flag if usercoursebinding.flag else '_'
-        dir_usercourse = os.path.join(mountpoint['usercourse'], usercoursebinding.course.courseid, flag, usercoursebinding.user.username)
-        _mkdir(dir_usercourse)
+        if usercoursebinding.is_teacher:
+            dir_usercourse = os.path.join(mountpoint['usercourse'], usercoursebinding.course.courseid, flag)
+            uid = 0
+        else:
+            dir_usercourse = os.path.join(mountpoint['usercourse'], usercoursebinding.course.courseid, flag, usercoursebinding.user.username)
+            uid = usercoursebinding.user.userid
+        _mkdir(dir_usercourse, uid = uid, gid = usercoursebinding.course.groupid, mode = 0o770)
     except KeyError as e:
         logger.error("Cannot create course dir, KOOPLEX['mountpoint']['usercourse'] is missing")
 
+def grantacl_course_workdir(usercoursebinding):
+    try:
+        mountpoint = KOOPLEX.get('mountpoint', {})
+        flag = usercoursebinding.flag if usercoursebinding.flag else '_'
+        if usercoursebinding.is_teacher:
+            dir_usercourse = os.path.join(mountpoint['usercourse'], usercoursebinding.course.courseid, flag)
+            bash("setfacl -R -m u:%d:rwX %s" % (usercoursebinding.user.profile.userid, dir_usercourse))
+#        else:
+#            dir_usercourse = os.path.join(mountpoint['usercourse'], usercoursebinding.course.courseid, flag, usercoursebinding.user.username)
+#        bash("setfacl -R -m %d:rwX %s" % (usercoursebinding.user.profile.userid, dir_usercourse))
+    except Exception as e:
+        logger.error("Cannot grant acl %s -- %s" % (usercoursebinding, e))
+
+def revokeacl_course_workdir(usercoursebinding):
+    try:
+        mountpoint = KOOPLEX.get('mountpoint', {})
+        flag = usercoursebinding.flag if usercoursebinding.flag else '_'
+        if usercoursebinding.is_teacher:
+            dir_usercourse = os.path.join(mountpoint['usercourse'], usercoursebinding.course.courseid, flag)
+            bash("setfacl -R -x u:%d %s" % (usercoursebinding.user.profile.userid, dir_usercourse))
+    except Exception as e:
+        logger.error("Cannot revoke acl %s -- %s" % (usercoursebinding, e))
+
 def archive_course_workdir(usercoursebinding):
     try:
+        if usercoursebinding.is_teacher:
+            return
         mountpoint = KOOPLEX.get('mountpoint', {})
         flag = usercoursebinding.flag if usercoursebinding.flag else '_'
         dir_usercourse = os.path.join(mountpoint['usercourse'], usercoursebinding.course.courseid, flag, usercoursebinding.user.username)
@@ -115,6 +173,16 @@ def archive_course_workdir(usercoursebinding):
     except Exception as e:
         logger.error("Cannot archive dir for user course %s -- %s" % (usercoursebinding, e))
 
+
+def rmdir_course_workdir(course):
+    try:
+        mountpoint = KOOPLEX.get('mountpoint', {})
+        dir_usercourse = os.path.join(mountpoint['usercourse'], course.courseid)
+        dir_util.remove_tree(dir_usercourse)
+    except KeyError as e:
+        logger.error("Cannot remove course dir, KOOPLEX['mountpoint']['usercourse'] is missing")
+    except Exception as e:
+        logger.error("Cannot remove course %s workdir -- %s" % (course, e))
 
 #def _chown_recursive(path, uid = 0, gid = 0):
 #    logger.debug("dir: %s uid/gid: %d/%d" % (path, uid, gid))

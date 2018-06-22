@@ -2,7 +2,7 @@ import os
 import logging
 
 from django.db import models
-from django.db.models.signals import post_save, pre_delete, post_delete
+from django.db.models.signals import pre_save, post_save, pre_delete, post_delete
 from django.dispatch import receiver
 from django.contrib.auth.models import User
 from django.template.defaulttags import register
@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 class Course(models.Model):
     courseid = models.CharField(max_length = 30, null = False)
     description = models.TextField(max_length = 500, blank = True)
+    project = models.OneToOneField(Project)
 
     def __str__(self):
         return "<Course: %s>" % self.courseid
@@ -29,12 +30,14 @@ class Course(models.Model):
         return ", ".join(list(self.list_userflags(user)))
 
     @property
-    def project(self):
-        return CourseProjectBinding.objects.get(course = self).project
-
-class CourseProjectBinding(models.Model):
-    course = models.ForeignKey(Course, null = False)
-    project = models.ForeignKey(Project, null = False)
+    def groupid(self):
+        from .group import Group
+        try:
+            group = Group.objects.get(project = self.project)
+            return group.groupid if group.is_active else 0
+        except Exception as e:
+            logger.error("No groupid for course %s" % self)
+            return 0
 
 class UserCourseBinding(models.Model):
     user = models.ForeignKey(User, null = False)
@@ -54,19 +57,9 @@ def mkdir_course(sender, instance, created, **kwargs):
 
 @receiver(post_delete, sender = Course)
 def garbagedir_course(sender, instance, **kwargs):
-    from kooplex.lib.filesystem import garbagedir_course_share
+    from kooplex.lib.filesystem import garbagedir_course_share, rmdir_course_workdir
     garbagedir_course_share(instance)
-
-@receiver(post_save, sender = Course)
-def create_courseproject(sender, instance, created, **kwargs):
-    if created:
-        try:
-            binding = CourseProjectBinding.objects.get(course = instance)
-            logger.debug("Binding is present %s" % binding)
-        except CourseProjectBinding.DoesNotExist:
-            project = Project.objects.create(name = 'c_%s' % instance.courseid)
-            CourseProjectBinding.objects.create(course = instance, project = project)
-            logger.warn("Project %s for course %s is created and bound. Please specify image and description." % (project, instance))
+    rmdir_course_workdir(instance)
 
 @receiver(post_save, sender = Course)
 def bind_coursevolumes(sender, instance, created, **kwargs):
@@ -82,14 +75,18 @@ def bind_coursevolumes(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender = UserCourseBinding)
 def mkdir_usercourse(sender, instance, created, **kwargs):
-    from kooplex.lib.filesystem import mkdir_course_workdir
+    from kooplex.lib.filesystem import mkdir_course_workdir, grantacl_course_workdir, grantacl_course_share
     if created:
         mkdir_course_workdir(instance)
+        grantacl_course_workdir(instance)
+        grantacl_course_share(instance)
 
 @receiver(pre_delete, sender = UserCourseBinding)
 def movedir_usercourse(sender, instance, **kwargs):
-    from kooplex.lib.filesystem import archive_course_workdir
+    from kooplex.lib.filesystem import archive_course_workdir, revokeacl_course_workdir, revokeacl_course_share
     archive_course_workdir(instance)
+    revokeacl_course_workdir(instance)
+    revokeacl_course_share(instance)
 
 @receiver(post_save, sender = UserCourseBinding)
 def create_usercourseproject(sender, instance, created, **kwargs):
@@ -105,8 +102,14 @@ def lookup_course(courseid):
     try:
         course = Course.objects.get(courseid = courseid)
     except Course.DoesNotExist:
-        logger.warn('Course with courseid %s is going to be created. Provide a description in admin panel' % courseid)
-        course = Course.objects.create(courseid = courseid)
+        try:
+            project = Project.objects.get(name = 'c_%s' % courseid)
+            logger.debug("Course %s associated project found" % courseid)
+        except Project.DoesNotExist:
+            project = Project.objects.create(name = 'c_%s' % courseid)
+            logger.debug("Course %s associated project created" % courseid)
+        course = Course.objects.create(courseid = courseid, project = project)
+        logger.warn('Course with courseid %s is created. Provide a description in admin panel' % courseid)
     return course
 
 def update_UserCourseBindings(user, newbindings):

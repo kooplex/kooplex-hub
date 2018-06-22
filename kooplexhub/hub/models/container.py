@@ -160,43 +160,6 @@ class ProjectContainerBinding(models.Model):
     def __str__(self):
         return "<ProjectContainerBinding %s-%s>" % (self.project, self.container)
 
-####    @property
-####    def workdir(self):
-####        from .course import CourseProjectBinding
-####        from .volume import StaticVolume
-####        try:
-####            course = self.project.course
-#####FIXME: hardcoded
-####            volume = StaticVolume.objects.get(name = 'iig-usercourse')
-####            wd = course.courseid
-####            if self.container.user.profile.is_courseteacher(course):
-####                return volume, wd
-####            else:
-####                flags = course.list_userflags(self.container.user)
-####                assert len(flags) == 1, "Student has more course flags than expected"
-####                return volume, os.path.join(wd, flags[0], self.container.user.username)
-####        except CourseProjectBinding.DoesNotExist:
-#####FIXME: hardcoded
-####            volume = StaticVolume.objects.get(name = 'iig-workdir')
-####            return volume, os.path.join(self.container.user.username, self.project.name_with_owner)
-####
-####    @property
-####    def sharedir(self):
-####        from .course import CourseProjectBinding
-####        from .volume import StaticVolume
-####        try:
-####            course = self.project.course
-#####FIXME: hardcoded
-####            volume = StaticVolume.objects.get(name = 'iig-course')
-####            sd = course.courseid
-####            if self.container.user.profile.is_courseteacher(course):
-####                return volume, sd
-####            else:
-####                return volume, os.path.join(sd, 'public')
-####        except CourseProjectBinding.DoesNotExist:
-#####FIXME: hardcoded
-####            volume = StaticVolume.objects.get(name = 'iig-share')
-####            return volume, self.project.name_with_owner
   
 #class ProjectContainer(ContainerBase):
 #    project = models.ForeignKey(Project, null = True)
