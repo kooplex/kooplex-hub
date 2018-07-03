@@ -94,18 +94,18 @@ class Docker:
             elif binding.volume.is_volumetype(Volume.COURSE_SHARE):
                 course = binding.project.course
                 if user.profile.is_courseteacher(course):
-                    mapper.append('share:%s' % os.path.join(binding.volume.mountpoint, course.courseid))
+                    mapper.append('share:%s' % os.path.join(binding.volume.mountpoint, course.safecourseid))
                 else:
-                    mapper.append('share:%s' % os.path.join(binding.volume.mountpoint, course.courseid, 'public'))
+                    mapper.append('share:%s' % os.path.join(binding.volume.mountpoint, course.safecourseid, 'public'))
             elif binding.volume.is_volumetype(Volume.COURSE_WORKDIR):
                 course = binding.project.course
                 if user.profile.is_courseteacher(course):
-                    mapper.append('workdir:%s' % os.path.join(binding.volume.mountpoint, course.courseid))
+                    mapper.append('workdir:%s' % os.path.join(binding.volume.mountpoint, course.safecourseid))
                 else:
                     flags = course.list_userflags(user)
                     if len(flags) != 1:
                         logger.error("Student %s has more course %s flags (%s) than expected" (user, course, list(flags)))
-                    mapper.append('workdir:%s' % os.path.join(binding.volume.mountpoint, course.courseid, flags[0], user.username))
+                    mapper.append('workdir:%s' % os.path.join(binding.volume.mountpoint, course.safecourseid, flags[0], user.username))
         logger.debug("container %s mapper %s" % (container, "+".join(mapper)))
         return mapper
 

@@ -43,7 +43,7 @@ class Project(models.Model):
         try:
             return self.name_with_owner
         except UserProjectBinding.DoesNotExist:
-            return standardize_str(self.name)
+            return self.cleanname
 
     _volumes = None
     @property

@@ -10,6 +10,7 @@ from django.template.defaulttags import register
 from .project import Project
 
 from kooplex.settings import KOOPLEX
+from kooplex.lib import standardize_str
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,10 @@ class Course(models.Model):
 
     def __str__(self):
         return "<Course: %s>" % self.courseid
+
+    @property
+    def safecourseid(self):
+        return standardize_str(self.courseid)
 
     def list_userflags(self, user):
         for coursebinding in UserCourseBinding.objects.filter(user = user, course = self):
@@ -99,14 +104,15 @@ def create_usercourseproject(sender, instance, created, **kwargs):
             logger.info("New UserProjectBinding %s" % b)
 
 def lookup_course(courseid):
+    safe_courseid = standardize_str(courseid)
     try:
         course = Course.objects.get(courseid = courseid)
     except Course.DoesNotExist:
         try:
-            project = Project.objects.get(name = 'c_%s' % courseid)
+            project = Project.objects.get(name = 'c_%s' % safe_courseid)
             logger.debug("Course %s associated project found" % courseid)
         except Project.DoesNotExist:
-            project = Project.objects.create(name = 'c_%s' % courseid)
+            project = Project.objects.create(name = 'c_%s' % safe_courseid)
             logger.debug("Course %s associated project created" % courseid)
         course = Course.objects.create(courseid = courseid, project = project)
         logger.warn('Course with courseid %s is created. Provide a description in admin panel' % courseid)

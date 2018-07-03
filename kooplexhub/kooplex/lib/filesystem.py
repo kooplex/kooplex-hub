@@ -75,9 +75,9 @@ def garbagedir_home(user):
 def mkdir_course_share(course):
     try:
         mountpoint = KOOPLEX.get('mountpoint', {})
-        dir_courseprivate = os.path.join(mountpoint['course'], course.courseid, 'private')
+        dir_courseprivate = os.path.join(mountpoint['course'], course.safecourseid, 'private')
         _mkdir(dir_courseprivate, gid = course.groupid, mode = 0o770)
-        dir_coursepublic = os.path.join(mountpoint['course'], course.courseid, 'public')
+        dir_coursepublic = os.path.join(mountpoint['course'], course.safecourseid, 'public')
         _mkdir(dir_coursepublic, gid = course.groupid, mode = 0o750)
         logger.info("Course dir created for course %s" % course)
     except KeyError as e:
@@ -86,8 +86,8 @@ def mkdir_course_share(course):
 def grantacl_course_share(usercoursebinding):
     try:
         mountpoint = KOOPLEX.get('mountpoint', {})
-        #dir_courseprivate = os.path.join(mountpoint['course'], usercoursebinding.course.courseid, 'private')
-        dir_coursepublic = os.path.join(mountpoint['course'], usercoursebinding.course.courseid, 'public')
+        #dir_courseprivate = os.path.join(mountpoint['course'], usercoursebinding.course.safecourseid, 'private')
+        dir_coursepublic = os.path.join(mountpoint['course'], usercoursebinding.course.safecourseid, 'public')
         if usercoursebinding.is_teacher:
         #    bash("setfacl -R -m %d:rwx %s" % (usercoursebinding.user.profile.userid, dir_courseprivate))
             bash("setfacl -R -m u:%d:rwX %s" % (usercoursebinding.user.profile.userid, dir_coursepublic))
@@ -100,8 +100,8 @@ def grantacl_course_share(usercoursebinding):
 def revokeacl_course_share(usercoursebinding):
     try:
         mountpoint = KOOPLEX.get('mountpoint', {})
-        #dir_courseprivate = os.path.join(mountpoint['course'], usercoursebinding.course.courseid, 'private')
-        dir_coursepublic = os.path.join(mountpoint['course'], usercoursebinding.course.courseid, 'public')
+        #dir_courseprivate = os.path.join(mountpoint['course'], usercoursebinding.course.safecourseid, 'private')
+        dir_coursepublic = os.path.join(mountpoint['course'], usercoursebinding.course.safecourseid, 'public')
         if usercoursebinding.is_teacher:
         #    bash("setfacl -R -x %d %s" % (usercoursebinding.user.profile.userid, dir_courseprivate))
             bash("setfacl -R -x u:%d %s" % (usercoursebinding.user.profile.userid, dir_coursepublic))
@@ -114,8 +114,8 @@ def revokeacl_course_share(usercoursebinding):
 def garbagedir_course_share(course):
     try:
         mountpoint = KOOPLEX.get('mountpoint', {})
-        dir_course = os.path.join(mountpoint['course'], course.courseid)
-        dir_garbage = os.path.join(mountpoint['garbage'], "course-%s.%f" % (course.courseid, time.time()))
+        dir_course = os.path.join(mountpoint['course'], course.safecourseid)
+        dir_garbage = os.path.join(mountpoint['garbage'], "course-%s.%f" % (course.safecourseid, time.time()))
         dir_util.mkpath(dir_garbage)
         dir_util.copy_tree(dir_course, dir_garbage)
         dir_util.remove_tree(dir_course)
@@ -127,10 +127,10 @@ def mkdir_course_workdir(usercoursebinding):
         mountpoint = KOOPLEX.get('mountpoint', {})
         flag = usercoursebinding.flag if usercoursebinding.flag else '_'
         if usercoursebinding.is_teacher:
-            dir_usercourse = os.path.join(mountpoint['usercourse'], usercoursebinding.course.courseid, flag)
+            dir_usercourse = os.path.join(mountpoint['usercourse'], usercoursebinding.course.safecourseid, flag)
             uid = 0
         else:
-            dir_usercourse = os.path.join(mountpoint['usercourse'], usercoursebinding.course.courseid, flag, usercoursebinding.user.username)
+            dir_usercourse = os.path.join(mountpoint['usercourse'], usercoursebinding.course.safecourseid, flag, usercoursebinding.user.username)
             uid = usercoursebinding.user.userid
         _mkdir(dir_usercourse, uid = uid, gid = usercoursebinding.course.groupid, mode = 0o770)
     except KeyError as e:
@@ -141,10 +141,10 @@ def grantacl_course_workdir(usercoursebinding):
         mountpoint = KOOPLEX.get('mountpoint', {})
         flag = usercoursebinding.flag if usercoursebinding.flag else '_'
         if usercoursebinding.is_teacher:
-            dir_usercourse = os.path.join(mountpoint['usercourse'], usercoursebinding.course.courseid, flag)
+            dir_usercourse = os.path.join(mountpoint['usercourse'], usercoursebinding.course.safecourseid, flag)
             bash("setfacl -R -m u:%d:rwX %s" % (usercoursebinding.user.profile.userid, dir_usercourse))
 #        else:
-#            dir_usercourse = os.path.join(mountpoint['usercourse'], usercoursebinding.course.courseid, flag, usercoursebinding.user.username)
+#            dir_usercourse = os.path.join(mountpoint['usercourse'], usercoursebinding.course.safecourseid, flag, usercoursebinding.user.username)
 #        bash("setfacl -R -m %d:rwX %s" % (usercoursebinding.user.profile.userid, dir_usercourse))
     except Exception as e:
         logger.error("Cannot grant acl %s -- %s" % (usercoursebinding, e))
@@ -154,7 +154,7 @@ def revokeacl_course_workdir(usercoursebinding):
         mountpoint = KOOPLEX.get('mountpoint', {})
         flag = usercoursebinding.flag if usercoursebinding.flag else '_'
         if usercoursebinding.is_teacher:
-            dir_usercourse = os.path.join(mountpoint['usercourse'], usercoursebinding.course.courseid, flag)
+            dir_usercourse = os.path.join(mountpoint['usercourse'], usercoursebinding.course.safecourseid, flag)
             bash("setfacl -R -x u:%d %s" % (usercoursebinding.user.profile.userid, dir_usercourse))
     except Exception as e:
         logger.error("Cannot revoke acl %s -- %s" % (usercoursebinding, e))
@@ -165,8 +165,8 @@ def archive_course_workdir(usercoursebinding):
             return
         mountpoint = KOOPLEX.get('mountpoint', {})
         flag = usercoursebinding.flag if usercoursebinding.flag else '_'
-        dir_usercourse = os.path.join(mountpoint['usercourse'], usercoursebinding.course.courseid, flag, usercoursebinding.user.username)
-        dir_target = os.path.join(mountpoint['home'], usercoursebinding.user.username, "%s.%s.%f" % (usercoursebinding.course.courseid, flag, time.time()))
+        dir_usercourse = os.path.join(mountpoint['usercourse'], usercoursebinding.course.safecourseid, flag, usercoursebinding.user.username)
+        dir_target = os.path.join(mountpoint['home'], usercoursebinding.user.username, "%s.%s.%f" % (usercoursebinding.course.safecourseid, flag, time.time()))
         dir_util.mkpath(dir_target)
         dir_util.copy_tree(dir_usercourse, dir_target)
         dir_util.remove_tree(dir_usercourse)
@@ -177,7 +177,7 @@ def archive_course_workdir(usercoursebinding):
 def rmdir_course_workdir(course):
     try:
         mountpoint = KOOPLEX.get('mountpoint', {})
-        dir_usercourse = os.path.join(mountpoint['usercourse'], course.courseid)
+        dir_usercourse = os.path.join(mountpoint['usercourse'], course.safecourseid)
         dir_util.remove_tree(dir_usercourse)
     except KeyError as e:
         logger.error("Cannot remove course dir, KOOPLEX['mountpoint']['usercourse'] is missing")
