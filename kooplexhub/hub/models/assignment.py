@@ -7,7 +7,7 @@ from django.dispatch import receiver
 from django.contrib.auth.models import User
 from django.template.defaulttags import register
 
-from .course import Course
+from .course import Course, UserCourseBinding
 
 from kooplex.settings import KOOPLEX
 from kooplex.lib import standardize_str
@@ -56,9 +56,35 @@ class UserAssignmentBinding(models.Model):
 
     user = models.ForeignKey(User, null = False)
     assignment = models.ForeignKey(Assignment, null = False)
-    version = models.IntegerField(null = False)
+#    version = models.IntegerField(null = False)
+    received_at = models.DateTimeField(auto_now_add = True)
     state = models.CharField(max_length = 16, choices = [ (x['short'], x['long']) for x in STATE_LIST ])
     submitted_at = models.DateTimeField(null = True)
     corrected_at = models.DateTimeField(null = True)
 
+
+
+@receiver(post_save, sender = Assignment)
+def snapshot_assignemt(sender, instance, created, **kwargs):
+    from kooplex.lib.filesystem import snapshot_assignment
+    if created:
+        snapshot_assignment(instance)
+
+@receiver(pre_delete, sender = Assignment)
+def garbage_assignmentsnapshot(sender, instance, **kwargs):
+    from kooplex.lib.filesystem import garbagedir_assignmentsnapshot
+    garbagedir_assignmentsnapshot(instance)
+
+
+@receiver(post_save, sender = UserCourseBinding)
+def add_userassignmentbinding(sender, instance, created, **kwargs):
+    if created and not instance.is_teacher:
+        for a in instance.assignments:
+            UserAssignmentBinding.objects.create(user = instance.user, assignment = a, state = UserAssignmentBinding.ST_WORKINPROGRESS['short'])
+
+@receiver(post_save, sender = UserAssignmentBinding)
+def copy_assignmentsnapshot(sender, instance, created, **kwargs):
+    from kooplex.lib.filesystem import cp_assignmentsnapshot
+    if created:
+        cp_assignmentsnapshot(instance)
 

@@ -56,12 +56,26 @@ class Dirname:
         return os.path.join(Dirname.mountpoint['home'], usercoursebinding.user.username, "%s.%s.%f" % (usercoursebinding.course.safecourseid, flag, time.time()))
 
     @staticmethod
-    def assignmentdir():
-        pass
+    def assignmentsource(assignment):
+        return os.path.join(Dirname.courseprivate(assignment.course), assignment.folder)
 
     @staticmethod
-    def assignmentsnapshot():
-        pass
+    def assignmentsnapshot(assignment):
+        flag = assignment.flag if assignment.flag else '_'
+        return os.path.join(Dirname.mountpoint['assignment'], assignment.course.safecourseid, flag, 'stage-%s.%d' % (assignment.safename, assignment.created_at.timestamp()))
+
+    @staticmethod
+    def assignmentsnapshot_garbage(assignment):
+        d = os.path.basename(Dirname.assignmentsnapshot(assignment))
+        return os.path.join(Dirname.mountpoint['garbage'], "assignmentsnapshot-%s.%f" % (d, time.time()))
+
+    @staticmethod
+    def assignmentworkdir(userassignmentbinding):
+        from hub.models import UserCourseBinding
+        usercoursebinding = UserCourseBinding.objects.get(user = userassignmentbinding.user, course = userassignmentbinding.assignment.course, flag = userassignmentbinding.assignment.flag)
+        wd = Dirname.courseworkdir(usercoursebinding)
+        return os.path.join(wd, userassignmentbinding.assignment.safename)
+
 
 def _mkdir(path, uid = 0, gid = 0, mode = 0b111101000, mountpoint = False):
     """
@@ -159,7 +173,7 @@ def garbagedir_course_share(course):
 def mkdir_course_workdir(usercoursebinding):
     try:
         dir_usercourse = Dirname.courseworkdir(usercoursebinding)
-        uid = 0 if usercoursebinding.is_teacher else usercoursebinding.user.userid
+        uid = 0 if usercoursebinding.is_teacher else usercoursebinding.user.profile.userid
         _mkdir(dir_usercourse, uid = uid, gid = usercoursebinding.course.groupid, mode = 0o770)
     except KeyError as e:
         logger.error("Cannot create course dir, KOOPLEX['mountpoint']['usercourse'] is missing")
@@ -201,6 +215,33 @@ def rmdir_course_workdir(course):
         logger.error("Cannot remove course dir, KOOPLEX['mountpoint']['usercourse'] is missing")
     except Exception as e:
         logger.error("Cannot remove course %s workdir -- %s" % (course, e))
+
+def snapshot_assignment(assignment):
+    try:
+        dir_source = Dirname.assignmentsource(assignment)
+        dir_target = Dirname.assignmentsnapshot(assignment)
+        dir_util.mkpath(dir_target)
+        dir_util.copy_tree(dir_source, dir_target)
+    except Exception as e:
+        logger.error("Cannot create snapshot dir %s -- %s" % (assignment, e))
+
+def garbagedir_assignmentsnapshot(assignment):
+    try:
+        dir_source = Dirname.assignmentsnapshot(assignment)
+        dir_target = Dirname.assignmentsnapshot_garbage(assignment)
+        dir_util.copy_tree(dir_source, dir_target)
+        dir_util.remove_tree(dir_source)
+    except Exception as e:
+        logger.error("Cannot create snapshot dir %s -- %s" % (assignment, e))
+
+def cp_assignmentsnapshot(userassignmentbinding):
+    try:
+        dir_source = Dirname.assignmentsnapshot(userassignmentbinding.assignment)
+        dir_target = Dirname.assignmentworkdir(userassignmentbinding)
+        dir_util.mkpath(dir_target)
+        dir_util.copy_tree(dir_source, dir_target)
+    except Exception as e:
+        logger.error("Cannot cp snapshot dir %s -- %s" % (userassignmentbinding, e))
 
 #def _chown_recursive(path, uid = 0, gid = 0):
 #    logger.debug("dir: %s uid/gid: %d/%d" % (path, uid, gid))

@@ -53,6 +53,7 @@ class Course(models.Model):
             if os.path.isdir(os.path.join(dir_courseprivate, d)):
                 yield d
 
+
 class UserCourseBinding(models.Model):
     user = models.ForeignKey(User, null = False)
     course = models.ForeignKey(Course, null = False)
@@ -62,6 +63,14 @@ class UserCourseBinding(models.Model):
 
     def __str__(self):
         return "<UserCourseBinding: %s %s/%s>" % (self.user, self.course, self.flag)
+
+    @property
+    def assignments(self):
+        from .assignment import Assignment
+        for a in Assignment.objects.filter(course = self.course, flag = self.flag):
+            #FIXME: check expiry date
+            yield a
+
 
 @receiver(post_save, sender = Course)
 def mkdir_course(sender, instance, created, **kwargs):

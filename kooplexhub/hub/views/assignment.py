@@ -3,7 +3,8 @@ import logging
 
 from django.conf.urls import url
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
+from django.contrib import messages
+from django.shortcuts import redirect
 
 from hub.models import Course, UserCourseBinding, Assignment
 
@@ -31,8 +32,9 @@ def new(request):
             Assignment.objects.create(course = course, flag = flag, name = name, creator = user, description = description, folder = folder, can_studentsubmit = can_studentsubmit)
     except Exception as e:
         logger.error(e)
-        raise
-    raise Exception(str( request.POST ))
+        messages.error(request, 'Cannot start the container -- %s' % e)
+    messages.info(request, 'Assignments are registered for course %s and flag %s' % (course.courseid, ", ".join(course_flags)))
+    return redirect('teaching:list')
 
 
 urlpatterns = [

@@ -12,6 +12,11 @@ def indexpage(request):
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^admin/', include('hub.admin', namespace = 'myadmin')),
+
+    
+    url(r'^hub/mock/', include('kooplex.mock', namespace = 'mock')), #FIXME: REMOVE FROM PRODUCTION
+
+
     url(r'^hub/oauth/', include('social_django.urls', namespace = 'social')),
     url(r'^hub/container/', include('hub.views.container', namespace = 'container')),
     url(r'^hub/project/', include('hub.views.project', namespace = 'project')),
