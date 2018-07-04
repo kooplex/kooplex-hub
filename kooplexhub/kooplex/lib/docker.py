@@ -102,7 +102,7 @@ class Docker:
                 if user.profile.is_courseteacher(course):
                     mapper.append('workdir:%s' % os.path.join(binding.volume.mountpoint, course.safecourseid))
                 else:
-                    flags = course.list_userflags(user)
+                    flags = list(course.list_userflags(user))
                     if len(flags) != 1:
                         logger.error("Student %s has more course %s flags (%s) than expected" (user, course, list(flags)))
                     mapper.append('workdir:%s' % os.path.join(binding.volume.mountpoint, course.safecourseid, flags[0], user.username))

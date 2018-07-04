@@ -32,7 +32,7 @@ def new(request):
             Assignment.objects.create(course = course, flag = flag, name = name, creator = user, description = description, folder = folder, can_studentsubmit = can_studentsubmit)
     except Exception as e:
         logger.error(e)
-        messages.error(request, 'Cannot start the container -- %s' % e)
+        messages.error(request, 'Cannot fully register assignment -- %s' % e)
     messages.info(request, 'Assignments are registered for course %s and flag %s' % (course.courseid, ", ".join(course_flags)))
     return redirect('teaching:list')
 

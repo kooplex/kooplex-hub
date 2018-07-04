@@ -12,10 +12,9 @@ from hub.models import Container
 logger = logging.getLogger(__name__)
 
 @login_required
-def startprojectcontainer(request, project_id):
+def startprojectcontainer(request, project_id, next_page):
     """Starts the project container."""
     user = request.user
-    next_page = request.GET.get('redirect', 'teaching:list') #FIXME
     try:
         container = Container.get_userprojectcontainer(user = user, project_id = project_id, create = True)
         container.docker_start()
@@ -26,10 +25,9 @@ def startprojectcontainer(request, project_id):
     return redirect(next_page)
 
 @login_required
-def startcontainer(request, container_id):
+def startcontainer(request, container_id, next_page):
     """Starts the container."""
     user = request.user
-    next_page = request.GET.get('redirect', 'teaching:list') #FIXME
     try:
         container = Container.objects.get(user = user, id = container_id)
         container.docker_start()
@@ -40,10 +38,9 @@ def startcontainer(request, container_id):
     return redirect(next_page)
 
 @login_required
-def opencontainer(request, container_id):
+def opencontainer(request, container_id, next_page):
     """Opens a container"""
     user = request.user
-    next_page = request.GET.get('redirect', 'teaching:list') #FIXME
     try:
         container = Container.get_usercontainer(container_id = container_id, user = user, is_running = True)
         container.wait_until_ready()
@@ -55,10 +52,10 @@ def opencontainer(request, container_id):
     return redirect(next_page)
 
 @login_required
-def stopcontainer(request, container_id):
+def stopcontainer(request, container_id, next_page):
     """Stops a container"""
     user = request.user
-    next_page = request.GET.get('redirect', 'teaching:list') #FIXME
+    logger.error(next_page)
     try:
         container = Container.get_usercontainer(container_id = container_id, user = user, is_running = True)
         container.docker_stop(remove = False)
@@ -68,10 +65,9 @@ def stopcontainer(request, container_id):
 
 
 @login_required
-def removecontainer(request, container_id):
+def removecontainer(request, container_id, next_page):
     """Stops a container"""
     user = request.user
-    next_page = request.GET.get('redirect', 'teaching:list') #FIXME
     try:
         container = Container.get_usercontainer(container_id = container_id, user = user)
         container.docker_stop(remove = True)
@@ -81,9 +77,9 @@ def removecontainer(request, container_id):
 
 
 urlpatterns = [
-    url(r'startproject/(?P<project_id>\d+)$', startprojectcontainer, name = 'startprojectcontainer'),
-    url(r'start/(?P<container_id>\d+)$', startcontainer, name = 'start'),
-    url(r'open/(?P<container_id>\d+)$', opencontainer, name = 'open'),
-    url(r'stop/(?P<container_id>\d+)$', stopcontainer, name = 'stop'),
-    url(r'remove/(?P<container_id>\d+)$', removecontainer, name = 'remove'),
+    url(r'startproject/(?P<project_id>\d+)/(?P<next_page>\w+:?\w*)$', startprojectcontainer, name = 'startprojectcontainer'),
+    url(r'start/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)$', startcontainer, name = 'start'),
+    url(r'open/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)$', opencontainer, name = 'open'),
+    url(r'stop/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)$', stopcontainer, name = 'stop'),
+    url(r'remove/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)$', removecontainer, name = 'remove'),
 ]

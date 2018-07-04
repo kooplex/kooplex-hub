@@ -6,7 +6,7 @@
   {% for project in user.profile.courseprojects_taught %}
     {% if not project|is_hiddenbyuser:user %}
        <div class="row">
-         {% include 'project/partial.html' with container=project|get_usercontainer:user caller='teacher' %}
+         {% include 'project/partial.html' with container=project|get_usercontainer:user caller='teacher' next_page='teaching:list' %}
        </div>
     {% endif %}
   {% endfor %}

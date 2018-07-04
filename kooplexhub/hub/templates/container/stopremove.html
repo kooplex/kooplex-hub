@@ -1,11 +1,11 @@
 {% if container %}
   {% if container.is_running %}
-     <a href="{% url 'container:stop' container.id %}">
+     <a href="{% url 'container:stop' container.id next_page %}">
        <button role="button" type="button" class="btn btn-success" style="padding: 3px 6px 6px 6px">
        <span class="glyphicon glyphicon-remove-circle" aria-hidden="true"/></button>
      </a>
   {% else %}
-     <a href="{% url 'container:remove' container.id %}">
+     <a href="{% url 'container:remove' container.id next_page %}">
        <button role="button" type="button" class="btn btn-danger" style="padding: 3px 6px 6px 6px">
        <span class="glyphicon glyphicon-fire" aria-hidden="true"/></button>
      </a>
