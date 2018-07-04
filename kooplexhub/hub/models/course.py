@@ -44,6 +44,20 @@ class Course(models.Model):
             if binding.assignment in assignments:
                 yield binding
 
+    @register.filter
+    def lookup_userassignmentbindings_submitted(self, user):
+        from .assignment import Assignment, UserAssignmentBinding
+        for assignment in Assignment.objects.filter(course = self, creator = user):  #FIXME: 2 teacher to the same course flag may share assignment and correction tasks!
+            for binding in UserAssignmentBinding.objects.filter(assignment = assignment, state = UserAssignmentBinding.ST_SUBMITTED['short']): #FIXME ST_RESUBMITTED
+                yield binding
+
+    @register.filter
+    def lookup_userassignmentbindings_correcting(self, user):
+        from .assignment import Assignment, UserAssignmentBinding
+        for assignment in Assignment.objects.filter(course = self, creator = user):  #FIXME: 2 teacher to the same course flag may share assignment and correction tasks!
+            for binding in UserAssignmentBinding.objects.filter(assignment = assignment, state = UserAssignmentBinding.ST_CORRECTING['short']):
+                yield binding
+
     @property
     def groupid(self):
         from .group import Group

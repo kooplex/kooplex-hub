@@ -46,7 +46,7 @@ def studentsubmit(request):
     for binding_id in userassignmentbinding_ids:
         try:
             binding = UserAssignmentBinding.objects.get(id = binding_id, user = user)
-            binding.state = UserAssignmentBinding.ST_SUBMITTED['short']
+            binding.state = UserAssignmentBinding.ST_SUBMITTED['short'] #FIXME: MAY be ST_RESUBMITTED
             binding.submitted_at = datetime.datetime.now()
             binding.save()
             messages.info(request, '%s assignment submitted for course %s and flag %s' % (binding.assignment.name, binding.assignment.course.courseid, binding.assignment.flag))
@@ -56,7 +56,48 @@ def studentsubmit(request):
     return redirect('course:list')
 
 
+@login_required
+def markcorrection(request):
+    """Mark assignments to correct"""
+    user = request.user   #FIXME: check authorization
+    userassignmentbinding_ids = request.POST.getlist('userassignmentbindingid')
+    for binding_id in userassignmentbinding_ids:
+        try:
+            binding = UserAssignmentBinding.objects.get(id = binding_id, state = UserAssignmentBinding.ST_SUBMITTED['short'])
+            binding.state = UserAssignmentBinding.ST_CORRECTING['short']
+            binding.save()
+            messages.info(request, '%s\'s assignment %s for course %s and flag %s is marked for being corrected' % (binding.user.username, binding.assignment.name, binding.assignment.course.courseid, binding.assignment.flag))
+        except Exception as e:
+            logger.error(e)
+            messages.error(request, 'Cannot mark assignment for correction -- %s' % e)
+    return redirect('teaching:list')
+
+
+@login_required
+def markcorrected(request):
+    """Mark assignments to correct"""
+    user = request.user   #FIXME: check authorization
+    userassignmentbinding_ids = request.POST.getlist('userassignmentbindingid')
+    for binding_id in userassignmentbinding_ids:
+        logger.info(binding_id)
+        try:
+            binding = UserAssignmentBinding.objects.get(id = binding_id, state = UserAssignmentBinding.ST_CORRECTING['short'])
+            binding.state = UserAssignmentBinding.ST_FEEDBACK['short']
+            binding.corrected_at = datetime.datetime.now()
+            binding.save()
+            messages.info(request, '%s\'s assignment %s for course %s and flag %s is marked corrected' % (binding.user.username, binding.assignment.name, binding.assignment.course.courseid, binding.assignment.flag))
+        except Exception as e:
+            logger.error(e)
+            messages.error(request, 'Cannot mark assignment corrected -- %s' % e)
+            raise
+    return redirect('teaching:list')
+
+
 urlpatterns = [
     url(r'new/?$', new, name = 'new'),
     url(r'submit/?$', studentsubmit, name = 'submit'),
+    url(r'correct/?$', markcorrection, name = 'correct'),
+    url(r'feedback/?$', markcorrected, name = 'feedback'),
 ]
+
+

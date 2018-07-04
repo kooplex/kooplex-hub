@@ -1,6 +1,6 @@
-<form id="assignments-correctform-{{ project.id }}" class="form-horizontal" action="{% url 'assignment:correct' %}" method="post">
+<form id="assignments-feedbackform-{{ project.id }}" class="form-horizontal" action="{% url 'assignment:feedback' %}" method="post">
   {% csrf_token %}
-  {% for b in project.course|lookup_userassignmentbindings_submitted:user %}
+  {% for b in project.course|lookup_userassignmentbindings_correcting:user %}
     <br><input type="checkbox" name="userassignmentbindingid" value="{{ b.id }}"/> {{ b.assignment.flag }} {{ b.assignment.name }} {{ b.user.username }}
   {% endfor %}
   <div class="modal-footer">
