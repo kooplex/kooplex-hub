@@ -35,6 +35,15 @@ class Course(models.Model):
     def lookup_usercourseflags(self, user):
         return list(self.list_userflags(user))
 
+    @register.filter
+    def lookup_userassignmentbindings(self, user):
+        from .assignment import Assignment, UserAssignmentBinding
+        flag = self.lookup_usercourseflags(user)[0] #FIXME: check if it has more than 1 elements!
+        assignments = list(Assignment.objects.filter(course = self, flag = flag)) # FIXME: filter for not expired items
+        for binding in UserAssignmentBinding.objects.filter(user = user):
+            if binding.assignment in assignments:
+                yield binding
+
     @property
     def groupid(self):
         from .group import Group

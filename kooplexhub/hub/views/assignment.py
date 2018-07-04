@@ -1,4 +1,5 @@
 import re
+import datetime
 import logging
 
 from django.conf.urls import url
@@ -6,7 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.shortcuts import redirect
 
-from hub.models import Course, UserCourseBinding, Assignment
+from hub.models import Course, UserCourseBinding, Assignment, UserAssignmentBinding
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +38,25 @@ def new(request):
     return redirect('teaching:list')
 
 
+@login_required
+def studentsubmit(request):
+    """Handle assignment submission"""
+    user = request.user
+    userassignmentbinding_ids = request.POST.getlist('userassignmentbindingid')
+    for binding_id in userassignmentbinding_ids:
+        try:
+            binding = UserAssignmentBinding.objects.get(id = binding_id, user = user)
+            binding.state = UserAssignmentBinding.ST_SUBMITTED['short']
+            binding.submitted_at = datetime.datetime.now()
+            binding.save()
+            messages.info(request, '%s assignment submitted for course %s and flag %s' % (binding.assignment.name, binding.assignment.course.courseid, binding.assignment.flag))
+        except Exception as e:
+            logger.error(e)
+            messages.error(request, 'Cannot fully submit assignment -- %s' % e)
+    return redirect('course:list')
+
+
 urlpatterns = [
     url(r'new/?$', new, name = 'new'),
+    url(r'submit/?$', studentsubmit, name = 'submit'),
 ]

@@ -76,6 +76,12 @@ class Dirname:
         wd = Dirname.courseworkdir(usercoursebinding)
         return os.path.join(wd, userassignmentbinding.assignment.safename)
 
+    @staticmethod
+    def assignmentcollectdir(userassignmentbinding):
+        assignment = userassignmentbinding.assignment
+        flag = assignment.flag if assignment.flag else '_'
+        return os.path.join(Dirname.mountpoint['assignment'], assignment.course.safecourseid, flag, 'submitted-%s-%s.%d' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp()))
+
 
 def _mkdir(path, uid = 0, gid = 0, mode = 0b111101000, mountpoint = False):
     """
@@ -240,8 +246,18 @@ def cp_assignmentsnapshot(userassignmentbinding):
         dir_target = Dirname.assignmentworkdir(userassignmentbinding)
         dir_util.mkpath(dir_target)
         dir_util.copy_tree(dir_source, dir_target)
+        bash("setfacl -R -m u:%d:rwX %s" % (userassignmentbinding.user.profile.userid, dir_target))
     except Exception as e:
         logger.error("Cannot cp snapshot dir %s -- %s" % (userassignmentbinding, e))
+
+def cp_userassignment(userassignmentbinding):
+    try:
+        dir_source = Dirname.assignmentworkdir(userassignmentbinding)
+        dir_target = Dirname.assignmentcollectdir(userassignmentbinding)
+        dir_util.mkpath(dir_target)
+        dir_util.copy_tree(dir_source, dir_target)
+    except Exception as e:
+        logger.error("Cannot collect assignemnt dir %s -- %s" % (userassignmentbinding, e))
 
 #def _chown_recursive(path, uid = 0, gid = 0):
 #    logger.debug("dir: %s uid/gid: %d/%d" % (path, uid, gid))

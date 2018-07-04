@@ -88,3 +88,11 @@ def copy_assignmentsnapshot(sender, instance, created, **kwargs):
     if created:
         cp_assignmentsnapshot(instance)
 
+@receiver(post_save, sender = UserAssignmentBinding)
+def copy_userassignment(sender, instance, created, **kwargs):
+    from kooplex.lib.filesystem import cp_userassignment
+    if created:
+        return
+    if instance.state == UserAssignmentBinding.ST_SUBMITTED['short']:
+        cp_userassignment(instance)
+
