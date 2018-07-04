@@ -1,0 +1,32 @@
+<form id="assignments-form-{{ project.id }}" class="form-horizontal" action="{% url 'assignment:new' %}" method="post">
+  {% csrf_token %}
+  <input type="hidden" name="course_id" value="{{ project.course.id }}">
+  {% if project.course.listdirs_private %}
+    <div class="alert alert-warning" role="alert">Select a folder and add a name to the new assigment.</div>
+    <label>Name:</label>
+    <input name="name"/><br>
+    <label>Data folder:</label>
+    <select name="folder">
+      {% for d in project.course.listdirs_private %}
+        <option value="{{ d }}">{{ d }}</option>
+      {% endfor %}
+    </select><br>
+    <label>Description:</label>
+    <textarea name="description"></textarea><br>
+    <label>Valid from:</label>
+    TBA<br>
+    <label>Expires at:</label>
+    TBA<br>
+    <label>Student can submit earlier:</label>
+    <input type="checkbox" checked name="cansubmit" value="True"/><br>
+    <label>Course flags:</label>
+    {% for flag in project.course|lookup_usercourseflags:user %}
+      <br><input type="checkbox" checked name="flag" value="{{ flag }}"/> {{ flag }}
+    {% endfor %}
+    <div class="modal-footer">
+      <button type="submit" class="btn btn-default" name="button" value="apply"> Create</button>
+    </div>
+  {% else %}
+    <div class="alert alert-danger" role="alert">There are no subfolders in <code>~/share/private</code> directory. Please create one and place all files into it to be part of the assignment.</div>
+  {% endif %}
+</form>

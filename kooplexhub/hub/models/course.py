@@ -11,6 +11,7 @@ from .project import Project
 
 from kooplex.settings import KOOPLEX
 from kooplex.lib import standardize_str
+from kooplex.lib.filesystem import Dirname
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +33,7 @@ class Course(models.Model):
 
     @register.filter
     def lookup_usercourseflags(self, user):
-        return ", ".join(list(self.list_userflags(user)))
+        return list(self.list_userflags(user))
 
     @property
     def groupid(self):
@@ -43,6 +44,14 @@ class Course(models.Model):
         except Exception as e:
             logger.error("No groupid for course %s" % self)
             return 0
+
+    def listdirs_private(self):
+        dir_courseprivate = Dirname.courseprivate(self)
+        for d in os.listdir(dir_courseprivate):
+            if d in ['.ipynb_checkpoints']:
+                continue
+            if os.path.isdir(os.path.join(dir_courseprivate, d)):
+                yield d
 
 class UserCourseBinding(models.Model):
     user = models.ForeignKey(User, null = False)

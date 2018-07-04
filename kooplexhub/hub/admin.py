@@ -70,6 +70,14 @@ class CourseAdmin(admin.ModelAdmin):
 class UserCourseBindingAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'course', 'flag', 'is_teacher', 'is_protected')
 
+@admin.register(Assignment)
+class AssignmentAdmin(admin.ModelAdmin):
+    list_display = ('id', 'course', 'flag', 'name', 'folder', 'creator', 'description', 'created_at', 'valid_from', 'expires_at', 'can_studentsubmit')
+
+@admin.register(UserAssignmentBinding)
+class UserAssignmentBindingAdmin(admin.ModelAdmin):
+    list_display = ('id', 'assignment', 'user', 'state', 'submitted_at', 'corrected_at')
+
 @admin.register(UserProjectBinding)
 class UserProjectBindingAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'project', 'is_hidden')

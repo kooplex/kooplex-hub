@@ -6,7 +6,7 @@
     <ul class="nav navbar-nav">
     {% if user.is_authenticated %}
      {% if user.profile.is_student %}
-      <li><a href="{% url 'courses:list' %}" role="button" type="button" data-toggle="tooltip" title="Access notebook environments related to those courses you attend this semester" data-placement="bottom">Courses</a></li>
+      <li><a href="{% url 'course:list' %}" role="button" type="button" data-toggle="tooltip" title="Access notebook environments related to those courses you attend this semester" data-placement="bottom">Courses</a></li>
      {% endif %}
      {% if user.profile.is_teacher %}
       <li><a href="{% url 'teaching:list' %}" role="button" type="button" data-toggle="tooltip" title="Access notebook environments related to those courses you teach this semester" data-placement="bottom">Teaching</a></li>
