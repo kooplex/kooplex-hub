@@ -22,24 +22,24 @@ def show(request):
 
 
 @login_required
-def assignmentform(request, project_id):
+def assignmentform(request, course_id):
     """Renders assignment management form."""
-    from hub.models import UserCourseBinding
+    from hub.models import Course, UserCourseBinding
     user = request.user
     logger.debug('Rendering assignments.html')
     try:
-        project = Project.objects.get(id = project_id)
-        assert len(list(UserCourseBinding.objects.filter(user = user, course = project.course, is_teacher = True))) > 0, "%s is not a teacher of course %s" % (user, project.course)
+        course = Course.objects.get(id = course_id)
+        assert len(list(UserCourseBinding.objects.filter(user = user, course = course, is_teacher = True))) > 0, "%s is not a teacher of course %s" % (user, course)
     except Exception as e:
-        logger.error("Invalid request with project id %s and user %s -- %s" % (project_id, user, e))
+        logger.error("Invalid request with course id %s and user %s -- %s" % (course_id, user, e))
         return redirect('indexpage')
     context_dict = {
         'user': user,
-        'project': project,
+        'course': course,
     }
     return render(request, 'edu/assignments.html', context = context_dict)
 
 urlpatterns = [
     url(r'list/?$', show, name = 'list'),
-    url(r'assignment/(?P<project_id>\d+)$', assignmentform, name = 'assignment'),
+    url(r'assignment/(?P<course_id>\d+)$', assignmentform, name = 'assignment'),
 ]

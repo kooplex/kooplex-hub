@@ -1,13 +1,13 @@
-<form id="assignments-form-{{ project.id }}" class="form-horizontal" action="{% url 'assignment:new' %}" method="post">
+<form id="assignments-form-{{ course.id }}" class="form-horizontal" action="{% url 'assignment:new' %}" method="post">
   {% csrf_token %}
-  <input type="hidden" name="course_id" value="{{ project.course.id }}">
-  {% if project.course.dirs_assignmentcandidate %}
+  <input type="hidden" name="course_id" value="{{ course.id }}">
+  {% if course.dirs_assignmentcandidate %}
     <div class="alert alert-warning" role="alert">Select a folder and add a name to the new assigment.</div>
     <label>Name:</label>
     <input name="name"/><br>
     <label>Data folder:</label>
     <select name="folder">
-      {% for d in project.course.dirs_assignmentcandidate %}
+      {% for d in course.dirs_assignmentcandidate %}
         <option value="{{ d }}">{{ d }}</option>
       {% endfor %}
     </select><br>
@@ -20,8 +20,8 @@
     <label>Student can submit earlier:</label>
     <input type="checkbox" checked name="cansubmit" value="True"/><br>
     <label>Course flags:</label>
-    {% for flag in project.course|lookup_usercourseflags:user %}
-      <br><input type="checkbox" checked name="flag" value="{{ flag }}"/> {{ flag }} ({{ project.course|count_students4flag:flag }} students)
+    {% for flag in course|lookup_usercourseflags:user %}
+      <br><input type="checkbox" checked name="flag" value="{{ flag }}"/> {{ flag }} ({{ course|count_students4flag:flag }} students)
     {% endfor %}
     <div class="modal-footer">
       <button type="submit" class="btn btn-default" name="button" value="apply"> Create</button>

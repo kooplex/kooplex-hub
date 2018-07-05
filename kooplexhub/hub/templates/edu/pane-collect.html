@@ -1,14 +1,14 @@
-<form id="assignmentcollect-form-{{ project.id }}" class="form-horizontal" action="{% url 'assignment:collect' %}" method="post">
+<form id="assignmentcollect-form-{{ course.id }}" class="form-horizontal" action="{% url 'assignment:collect' %}" method="post">
   {% csrf_token %}
-  <input type="hidden" name="course_id" value="{{ project.course.id }}">
-  {% if project.course.collectableassignments %}
+  <input type="hidden" name="course_id" value="{{ course.id }}">
+  {% if course.collectableassignments %}
     <div class="alert alert-warning" role="alert">Select assignments to collect right now.</div>
     <table>
       <thead>
         <tr><td>Collect<td>Name<td>Folder<td>Flag
       </thead>
       <tbody>
-      {% for a in project.course.collectableassignments %}
+      {% for a in course.collectableassignments %}
         <tr><td><input type="checkbox" name="assignmentid" value="{{ a.id }}"><td>{{ a.name }}<td>{{ a.folder }}<td>{{ a.flag }}
       {% endfor %}
       </tbody>

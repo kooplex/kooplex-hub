@@ -35,7 +35,7 @@ def new(request):
     except Exception as e:
         logger.error(e)
         messages.error(request, 'Cannot fully register assignment -- %s' % e)
-    return redirect('teaching:list')
+    return redirect('teaching:assignment', course_id)
 
 
 @login_required
@@ -65,7 +65,7 @@ def teachercollect(request):
     try:
         course = Course.objects.get(id = course_id)
     except Course.DoesNotExist:
-        course = None
+        return redirect('teaching:list')
     for assignment_id in assignment_ids:
         try:
             assignment = Assignment.objects.get(id = assignment_id, course = course)
@@ -81,17 +81,20 @@ def teachercollect(request):
         except Exception as e:
             logger.error(e)
             messages.error(request, 'Cannot mark assignment collected -- %s' % e)
-    return redirect('teaching:list')
+    return redirect('teaching:assignment', course_id)
 
 
 @login_required
 def markcorrection(request):
     """Mark assignments to correct"""
     user = request.user
+    course_id = request.POST.get('course_id')
     userassignmentbinding_ids = request.POST.getlist('userassignmentbindingid')
     for binding_id in userassignmentbinding_ids:
         try:
-            binding = UserAssignmentBinding.objects.get(id = binding_id, state = UserAssignmentBinding.ST_SUBMITTED)
+            binding = UserAssignmentBinding.objects.get(id = binding_id)
+            assert binding.state in [ UserAssignmentBinding.ST_SUBMITTED, UserAssignmentBinding.ST_COLLECTED ]
+            assert binding.assignment.course.id == int(course_id), "Course id mismatch"
             UserCourseBinding.objects.get(user = user, course = binding.assignment.course, flag = binding.assignment.flag, is_teacher = True)
             binding.state = UserAssignmentBinding.ST_CORRECTING
             binding.corrector = user
@@ -100,7 +103,7 @@ def markcorrection(request):
         except Exception as e:
             logger.error(e)
             messages.error(request, 'Cannot mark assignment for correction -- %s' % e)
-    return redirect('teaching:list')
+    return redirect('teaching:assignment', course_id)
 
 
 @login_required
