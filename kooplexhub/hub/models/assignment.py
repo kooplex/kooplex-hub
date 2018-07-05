@@ -52,6 +52,7 @@ class UserAssignmentBinding(models.Model):
     received_at = models.DateTimeField(auto_now_add = True)
     state = models.CharField(max_length = 16, choices = [ (x, ST_LOOKUP[x]) for x in STATE_LIST ], default = ST_WORKINPROGRESS)
     submitted_at = models.DateTimeField(null = True)
+    corrector = models.ForeignKey(User, null = True, related_name = 'corrector')
     corrected_at = models.DateTimeField(null = True)
 
     @property

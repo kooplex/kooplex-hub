@@ -76,7 +76,7 @@ class AssignmentAdmin(admin.ModelAdmin):
 
 @admin.register(UserAssignmentBinding)
 class UserAssignmentBindingAdmin(admin.ModelAdmin):
-    list_display = ('id', 'assignment', 'user', 'state', 'received_at', 'submitted_at', 'corrected_at')
+    list_display = ('id', 'assignment', 'user', 'state', 'received_at', 'submitted_at', 'corrector', 'corrected_at')
 
 @admin.register(UserProjectBinding)
 class UserProjectBindingAdmin(admin.ModelAdmin):

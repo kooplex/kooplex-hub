@@ -15,11 +15,8 @@ def show(request):
     context_dict = {
         'user': user,
     }
-    return render(request, 'project/courses.html', context = context_dict)
+    return render(request, 'edu/courses.html', context = context_dict)
 
-
-def bla(request):
-    pass
 
 urlpatterns = [
     url(r'list/?$', show, name = 'list'),

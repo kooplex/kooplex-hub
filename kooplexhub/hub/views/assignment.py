@@ -31,10 +31,10 @@ def new(request):
 #FIXME: valid/expiry
         for flag in course_flags:
             Assignment.objects.create(course = course, flag = flag, name = name, creator = user, description = description, folder = folder, can_studentsubmit = can_studentsubmit)
+        messages.info(request, 'Assignments are registered for course %s and flag %s' % (course.courseid, ", ".join(course_flags)))
     except Exception as e:
         logger.error(e)
         messages.error(request, 'Cannot fully register assignment -- %s' % e)
-    messages.info(request, 'Assignments are registered for course %s and flag %s' % (course.courseid, ", ".join(course_flags)))
     return redirect('teaching:list')
 
 
@@ -94,6 +94,7 @@ def markcorrection(request):
             binding = UserAssignmentBinding.objects.get(id = binding_id, state = UserAssignmentBinding.ST_SUBMITTED)
             UserCourseBinding.objects.get(user = user, course = binding.assignment.course, flag = binding.assignment.flag, is_teacher = True)
             binding.state = UserAssignmentBinding.ST_CORRECTING
+            binding.corrector = user
             binding.save()
             messages.info(request, '%s\'s assignment %s for course %s and flag %s is marked for being corrected' % (binding.user.username, binding.assignment.name, binding.assignment.course.courseid, binding.assignment.flag))
         except Exception as e:
