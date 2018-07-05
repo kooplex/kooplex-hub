@@ -7,7 +7,10 @@
         <button type="button" class="close" data-dismiss="modal">&times;</button>
         <h4>Settings of project <span style="font-weight: bold">{{ project.name }}</span></h4>
         <ul class="nav nav-tabs">
-          <li class="active"><a href="#pane_collaboration-{{ project.id }}" data-toggle="tab">Collaboration</a></li>
+          <li class="active"><a href="#pane_description-{{ project.id }}" data-toggle="tab">Description</a></li>
+{% if project.owner == user %}
+          <li><a href="#pane_collaboration-{{ project.id }}" data-toggle="tab">Collaboration</a></li>
+{% endif %}
 {% if enable_image or project.owner == user %}
           <li><a href="#pane_image-{{ project.id }}" data-toggle="tab">Image</a></li>
 {% endif %}
@@ -20,13 +23,16 @@
 {% if show_scope %}
           <li><a href="#pane_scope-{{ project.id }}" data-toggle="tab">Scope</a></li>
 {% endif %}
-          <li><a href="#pane_description-{{ project.id }}" data-toggle="tab">Description</a></li>
 {% if show_deletion %}
           <li><a href="#pane_deletion-{{ project.id }}" data-toggle="tab">Deletion</a></li>
 {% endif %}
         </ul>
         <div class="tab-content">
-          <div id="pane_collaboration-{{ project.id }}" class="tab-pane fade in active">
+          <div id="pane_description-{{ project.id }}" class="tab-pane fade in active">
+            {% include 'project/pane-description.html' %}
+          </div>
+{% if project.owner == user %}
+          <div id="pane_collaboration-{{ project.id }}" class="tab-pane fade">
             {% if project.owner == user %}
             {% include 'project/pane-collaboration.html' %}
             {% else %}
@@ -46,6 +52,7 @@
                </table>
             {% endif %}
           </div>
+{% endif %}
 {% if enable_image or project.owner == user %}
           <div id="pane_image-{{ project.id }}" class="tab-pane fade">
             {% include 'project/pane-image.html' %}
@@ -70,9 +77,6 @@
             {% endif %}
           </div>
 {% endif %}
-          <div id="pane_description-{{ project.id }}" class="tab-pane fade">
-            {% include 'project/pane-description.html' %}
-          </div>
 {% if show_deletion %}
           <div id="pane_deletion-{{ project.id }}" class="tab-pane fade">
             {% if project.owner == user %}
