@@ -56,19 +56,22 @@ class UserAssignmentBinding(models.Model):
 
     user = models.ForeignKey(User, null = False)
     assignment = models.ForeignKey(Assignment, null = False)
-#    version = models.IntegerField(null = False)
     received_at = models.DateTimeField(auto_now_add = True)
-    state = models.CharField(max_length = 16, choices = [ (x['short'], x['long']) for x in STATE_LIST ])
+    state = models.CharField(max_length = 16, choices = [ (x['short'], x['long']) for x in STATE_LIST ], default = ST_WORKINPROGRESS['short'])
     submitted_at = models.DateTimeField(null = True)
     corrected_at = models.DateTimeField(null = True)
 
 
 
 @receiver(post_save, sender = Assignment)
-def snapshot_assignemt(sender, instance, created, **kwargs):
+def snapshot_assignment(sender, instance, created, **kwargs):
     from kooplex.lib.filesystem import snapshot_assignment
+    from .course import UserCourseBinding
     if created:
         snapshot_assignment(instance)
+        for binding in UserCourseBinding.objects.filter(course = instance.course, flag = instance.flag, is_teacher = False):
+            # FIXME: if not within interval, schedule it!
+            UserAssignmentBinding.objects.create(user = binding.user, assignment = instance)
 
 @receiver(pre_delete, sender = Assignment)
 def garbage_assignmentsnapshot(sender, instance, **kwargs):

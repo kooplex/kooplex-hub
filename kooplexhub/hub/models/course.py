@@ -58,6 +58,10 @@ class Course(models.Model):
             for binding in UserAssignmentBinding.objects.filter(assignment = assignment, state = UserAssignmentBinding.ST_CORRECTING['short']):
                 yield binding
 
+    @register.filter
+    def count_students4flag(self, flag):
+        return len(UserCourseBinding.objects.filter(course = self, flag = flag, is_teacher = False))
+
     @property
     def groupid(self):
         from .group import Group
@@ -71,10 +75,28 @@ class Course(models.Model):
     def listdirs_private(self):
         dir_courseprivate = Dirname.courseprivate(self)
         for d in os.listdir(dir_courseprivate):
-            if d in ['.ipynb_checkpoints']:
-                continue
             if os.path.isdir(os.path.join(dir_courseprivate, d)):
                 yield d
+
+    def dirs_assignmentcandidate(self):
+        from .assignment import Assignment
+        candidates = []
+        for d in self.listdirs_private():
+            if d in ['.ipynb_checkpoints']:
+                continue
+            assignments = set(Assignment.objects.filter(course = self, folder = d))
+            if len(assignments) == 0:
+                candidates.append(d)
+        return candidates
+
+    def collectableassignments(self):
+        from .assignment import Assignment, UserAssignmentBinding
+        collectable = []
+        for assignment in Assignment.objects.filter(course = self):
+            bindings = UserAssignmentBinding.objects.filter(assignment = assignment, state = UserAssignmentBinding.ST_WORKINPROGRESS['short'])
+            if len(bindings):
+                collectable.append(assignment)
+        return collectable
 
 
 class UserCourseBinding(models.Model):

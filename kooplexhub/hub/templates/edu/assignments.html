@@ -15,10 +15,10 @@
           {% include 'edu/pane-massassign.html' %}
         </div>
         <div id="pane_updateassignment-{{ project.id }}" class="tab-pane fade">
-          <div class="alert alert-warning" role="alert">TBA1.</div>
+          <div class="alert alert-warning" role="alert">TBA</div>
         </div>
         <div id="pane_collectassignment-{{ project.id }}" class="tab-pane fade">
-          <div class="alert alert-warning" role="alert">TBA2.</div>
+          {% include 'edu/pane-collect.html' %}
         </div>
         <div id="pane_correctassignment-{{ project.id }}" class="tab-pane fade">
           <div class="alert alert-warning" role="alert">Select user assignments to correct. During correction phase students are prevented from resubmit and update their given assignment.</div>
