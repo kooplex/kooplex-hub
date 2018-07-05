@@ -36,26 +36,35 @@ class Course(models.Model):
         return list(self.list_userflags(user))
 
     @register.filter
-    def lookup_userassignmentbindings(self, user):
+    def lookup_userassignmentbindings(self, student):
         from .assignment import Assignment, UserAssignmentBinding
-        flag = self.lookup_usercourseflags(user)[0] #FIXME: check if it has more than 1 elements!
-        assignments = list(Assignment.objects.filter(course = self, flag = flag)) # FIXME: filter for not expired items
-        for binding in UserAssignmentBinding.objects.filter(user = user):
+        flags = self.lookup_usercourseflags(student)
+        if len(flags) > 0:
+            logger.error("Student %s has more flags (%s) for course %s, assuming first item" % (student, flags, self.courseid))
+        flag = None if flags[0] == '_' else flags[0]
+        assignments = list(Assignment.objects.filter(course = self, flag = flag))
+        for binding in UserAssignmentBinding.objects.filter(user = student):
             if binding.assignment in assignments:
                 yield binding
 
     @register.filter
-    def lookup_userassignmentbindings_submitted(self, user):
+    def lookup_userassignmentbindings_submitted(self, teacher):
         from .assignment import Assignment, UserAssignmentBinding
-        for assignment in Assignment.objects.filter(course = self, creator = user):  #FIXME: 2 teacher to the same course flag may share assignment and correction tasks!
-            for binding in UserAssignmentBinding.objects.filter(assignment = assignment, state = UserAssignmentBinding.ST_SUBMITTED['short']): #FIXME ST_RESUBMITTED
+        for assignment in Assignment.objects.filter(course = self):
+            if assignment.creator != teacher and len(UserCourseBinding.objects.filter(user = teacher, course = self, flag = assignment.flag, is_teacher = True)) == 0:
+                continue
+            for binding in UserAssignmentBinding.objects.filter(assignment = assignment, state = UserAssignmentBinding.ST_SUBMITTED):
+                yield binding
+            for binding in UserAssignmentBinding.objects.filter(assignment = assignment, state = UserAssignmentBinding.ST_COLLECTED):
                 yield binding
 
     @register.filter
-    def lookup_userassignmentbindings_correcting(self, user):
+    def lookup_userassignmentbindings_correcting(self, teacher):
         from .assignment import Assignment, UserAssignmentBinding
-        for assignment in Assignment.objects.filter(course = self, creator = user):  #FIXME: 2 teacher to the same course flag may share assignment and correction tasks!
-            for binding in UserAssignmentBinding.objects.filter(assignment = assignment, state = UserAssignmentBinding.ST_CORRECTING['short']):
+        for assignment in Assignment.objects.filter(course = self):
+            if assignment.creator != teacher and len(UserCourseBinding.objects.filter(user = teacher, course = self, flag = assignment.flag, is_teacher = True)) == 0:
+                continue
+            for binding in UserAssignmentBinding.objects.filter(assignment = assignment, state = UserAssignmentBinding.ST_CORRECTING):
                 yield binding
 
     @register.filter
@@ -93,7 +102,7 @@ class Course(models.Model):
         from .assignment import Assignment, UserAssignmentBinding
         collectable = []
         for assignment in Assignment.objects.filter(course = self):
-            bindings = UserAssignmentBinding.objects.filter(assignment = assignment, state = UserAssignmentBinding.ST_WORKINPROGRESS['short'])
+            bindings = UserAssignmentBinding.objects.filter(assignment = assignment, state = UserAssignmentBinding.ST_WORKINPROGRESS)
             if len(bindings):
                 collectable.append(assignment)
         return collectable

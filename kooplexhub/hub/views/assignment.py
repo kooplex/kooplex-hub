@@ -46,7 +46,7 @@ def studentsubmit(request):
     for binding_id in userassignmentbinding_ids:
         try:
             binding = UserAssignmentBinding.objects.get(id = binding_id, user = user)
-            binding.state = UserAssignmentBinding.ST_SUBMITTED['short'] #FIXME: MAY be ST_RESUBMITTED
+            binding.state = UserAssignmentBinding.ST_SUBMITTED
             binding.submitted_at = datetime.datetime.now()
             binding.save()
             messages.info(request, '%s assignment submitted for course %s and flag %s' % (binding.assignment.name, binding.assignment.course.courseid, binding.assignment.flag))
@@ -73,7 +73,7 @@ def teachercollect(request):
             counter = 0
             for binding in UserAssignmentBinding.objects.filter(assignment = assignment):
                 #FIXME: we may double check state and skip some bindings
-                binding.state = UserAssignmentBinding.ST_SUBMITTED['short']
+                binding.state = UserAssignmentBinding.ST_COLLECTED
                 binding.submitted_at = datetime.datetime.now()
                 binding.save()
                 counter += 1
@@ -91,9 +91,9 @@ def markcorrection(request):
     userassignmentbinding_ids = request.POST.getlist('userassignmentbindingid')
     for binding_id in userassignmentbinding_ids:
         try:
-            binding = UserAssignmentBinding.objects.get(id = binding_id, state = UserAssignmentBinding.ST_SUBMITTED['short'])
+            binding = UserAssignmentBinding.objects.get(id = binding_id, state = UserAssignmentBinding.ST_SUBMITTED)
             UserCourseBinding.objects.get(user = user, course = binding.assignment.course, flag = binding.assignment.flag, is_teacher = True)
-            binding.state = UserAssignmentBinding.ST_CORRECTING['short']
+            binding.state = UserAssignmentBinding.ST_CORRECTING
             binding.save()
             messages.info(request, '%s\'s assignment %s for course %s and flag %s is marked for being corrected' % (binding.user.username, binding.assignment.name, binding.assignment.course.courseid, binding.assignment.flag))
         except Exception as e:
@@ -109,9 +109,9 @@ def markcorrected(request):
     userassignmentbinding_ids = request.POST.getlist('userassignmentbindingid')
     for binding_id in userassignmentbinding_ids:
         try:
-            binding = UserAssignmentBinding.objects.get(id = binding_id, state = UserAssignmentBinding.ST_CORRECTING['short'])
+            binding = UserAssignmentBinding.objects.get(id = binding_id, state = UserAssignmentBinding.ST_CORRECTING)
             UserCourseBinding.objects.get(user = user, course = binding.assignment.course, flag = binding.assignment.flag, is_teacher = True)
-            binding.state = UserAssignmentBinding.ST_FEEDBACK['short']
+            binding.state = UserAssignmentBinding.ST_FEEDBACK
             binding.corrected_at = datetime.datetime.now()
             binding.save()
             messages.info(request, '%s\'s assignment %s for course %s and flag %s is marked corrected' % (binding.user.username, binding.assignment.name, binding.assignment.course.courseid, binding.assignment.flag))

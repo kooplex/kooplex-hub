@@ -31,36 +31,38 @@ class Assignment(models.Model):
         return standardize_str(self.name)
 
 
+ST_LOOKUP = {
+    'wip': 'Working on assignment',
+    'sub': 'Submitted, waiting for corrections',
+    'col': 'Collected, waiting for corrections',
+    'cor': 'Assignment is being corrected',
+    'rdy': 'Assignment is corrected',
+}
+
 class UserAssignmentBinding(models.Model):
-    ST_WORKINPROGRESS = {
-        'short': 'wip', 
-        'long': 'Working on assignment',
-    }
-    ST_SUBMITTED = {
-        'short': 'sub', 
-        'long': 'Submitted, waiting for corrections',
-    }
-    ST_RESUBMITTED = {
-        'short': 'res', 
-        'long': 'Resubmitted before corrections',
-    }
-    ST_CORRECTING = {
-        'short': 'cor', 
-        'long': 'Assignment is being corrected',
-    }
-    ST_FEEDBACK = {
-        'short': 'rdy', 
-        'long': 'Assignment is corrected',
-    }
-    STATE_LIST = [ST_WORKINPROGRESS, ST_SUBMITTED, ST_CORRECTING, ST_FEEDBACK]
+    ST_WORKINPROGRESS = 'wip'
+    ST_SUBMITTED = 'sub'
+    ST_COLLECTED = 'col'
+    ST_CORRECTING = 'cor'
+    ST_FEEDBACK = 'rdy'
+    STATE_LIST = [ ST_WORKINPROGRESS, ST_SUBMITTED, ST_COLLECTED, ST_CORRECTING, ST_FEEDBACK ]
 
     user = models.ForeignKey(User, null = False)
     assignment = models.ForeignKey(Assignment, null = False)
     received_at = models.DateTimeField(auto_now_add = True)
-    state = models.CharField(max_length = 16, choices = [ (x['short'], x['long']) for x in STATE_LIST ], default = ST_WORKINPROGRESS['short'])
+    state = models.CharField(max_length = 16, choices = [ (x, ST_LOOKUP[x]) for x in STATE_LIST ], default = ST_WORKINPROGRESS)
     submitted_at = models.DateTimeField(null = True)
     corrected_at = models.DateTimeField(null = True)
 
+    @property
+    def state_long(self):
+        return ST_LOOKUP[self.state] 
+
+    @property
+    def submittable(self):
+        if not self.assignment.can_studentsubmit:
+            return False
+        return self.state in [ self.ST_WORKINPROGRESS, self.ST_SUBMITTED ]
 
 
 @receiver(post_save, sender = Assignment)
@@ -83,7 +85,7 @@ def garbage_assignmentsnapshot(sender, instance, **kwargs):
 def add_userassignmentbinding(sender, instance, created, **kwargs):
     if created and not instance.is_teacher:
         for a in instance.assignments:
-            UserAssignmentBinding.objects.create(user = instance.user, assignment = a, state = UserAssignmentBinding.ST_WORKINPROGRESS['short'])
+            UserAssignmentBinding.objects.create(user = instance.user, assignment = a)
 
 @receiver(post_save, sender = UserAssignmentBinding)
 def copy_assignmentsnapshot(sender, instance, created, **kwargs):
@@ -96,8 +98,8 @@ def copy_userassignment(sender, instance, created, **kwargs):
     from kooplex.lib.filesystem import cp_userassignment, cp_userassignment2correct
     if created:
         return
-    if instance.state == UserAssignmentBinding.ST_SUBMITTED['short']: #FIXME: ST_RESUBMITTED
+    if instance.state in [ UserAssignmentBinding.ST_SUBMITTED, UserAssignmentBinding.ST_COLLECTED ]:
         cp_userassignment(instance)
-    elif instance.state == UserAssignmentBinding.ST_CORRECTING['short']:
+    elif instance.state == UserAssignmentBinding.ST_CORRECTING:
         cp_userassignment2correct(instance)
 
