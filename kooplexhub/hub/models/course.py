@@ -50,22 +50,23 @@ class Course(models.Model):
     @register.filter
     def lookup_userassignmentbindings_submitted(self, teacher):
         from .assignment import Assignment, UserAssignmentBinding
+        bindings = None
         for assignment in Assignment.objects.filter(course = self):
             if assignment.creator != teacher and len(UserCourseBinding.objects.filter(user = teacher, course = self, flag = assignment.flag, is_teacher = True)) == 0:
                 continue
-            for binding in UserAssignmentBinding.objects.filter(assignment = assignment, state = UserAssignmentBinding.ST_SUBMITTED):
-                yield binding
-            for binding in UserAssignmentBinding.objects.filter(assignment = assignment, state = UserAssignmentBinding.ST_COLLECTED):
-                yield binding
+            bindings = set(UserAssignmentBinding.objects.filter(assignment = assignment, state = UserAssignmentBinding.ST_SUBMITTED))
+            bindings.union_update(UserAssignmentBinding.objects.filter(assignment = assignment, state = UserAssignmentBinding.ST_COLLECTED))
+        return bindings
 
     @register.filter
     def lookup_userassignmentbindings_correcting(self, teacher):
         from .assignment import Assignment, UserAssignmentBinding
+        bindings = set()
         for assignment in Assignment.objects.filter(course = self):
             if assignment.creator != teacher and len(UserCourseBinding.objects.filter(user = teacher, course = self, flag = assignment.flag, is_teacher = True)) == 0:
                 continue
-            for binding in UserAssignmentBinding.objects.filter(assignment = assignment, state = UserAssignmentBinding.ST_CORRECTING):
-                yield binding
+            bindings.union_update(UserAssignmentBinding.objects.filter(assignment = assignment, state = UserAssignmentBinding.ST_CORRECTING))
+        return bindings
 
     @register.filter
     def count_students4flag(self, flag):

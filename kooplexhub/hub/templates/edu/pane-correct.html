@@ -1,10 +1,16 @@
 <form id="assignments-correctform-{{ course.id }}" class="form-horizontal" action="{% url 'assignment:correct' %}" method="post">
   {% csrf_token %}
-  <input type="hidden" name="course_id" value="{{course.id }}" />
-  {% for b in course|lookup_userassignmentbindings_submitted:user %}
-    <br><input type="checkbox" name="userassignmentbindingid" value="{{ b.id }}"/> {{ b.assignment.flag }} {{ b.assignment.name }} {{ b.user.username }}
-  {% endfor %}
-  <div class="modal-footer">
-    <button type="submit" class="btn btn-default" name="button" value="apply"> Correcting</button>
-  </div>
+  {% if course|lookup_userassignmentbindings_submitted:user %}
+    <div class="alert alert-warning" role="alert">Select user assignments to correct. During correction phase students are prevented from resubmit and update their given assignment.</div>
+
+    <input type="hidden" name="course_id" value="{{course.id }}" />
+    {% for b in course|lookup_userassignmentbindings_submitted:user %}
+      <br><input type="checkbox" name="userassignmentbindingid" value="{{ b.id }}"/> {{ b.assignment.flag }} {{ b.assignment.name }} {{ b.user.username }}
+    {% endfor %}
+    <div class="modal-footer">
+      <button type="submit" class="btn btn-default" name="button" value="apply"> Correcting</button>
+    </div>
+  {% else %}
+    <div class="alert alert-danger" role="alert">There are no assignments you can collect.</div>
+  {% endif %}
 </form>

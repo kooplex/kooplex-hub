@@ -1,9 +1,14 @@
 <form id="assignments-feedbackform-{{ course.id }}" class="form-horizontal" action="{% url 'assignment:feedback' %}" method="post">
   {% csrf_token %}
-  {% for b in course|lookup_userassignmentbindings_correcting:user %}
-    <br><input type="checkbox" name="userassignmentbindingid" value="{{ b.id }}"/> {{ b.assignment.flag }} {{ b.assignment.name }} {{ b.user.username }}
-  {% endfor %}
-  <div class="modal-footer">
-    <button type="submit" class="btn btn-default" name="button" value="apply"> Feedback</button>
-  </div>
+  {% if course|lookup_userassignmentbindings_correcting:user %}
+    <div class="alert alert-warning" role="alert">Select user assignments you finished correcting.</div>
+    {% for b in course|lookup_userassignmentbindings_correcting:user %}
+      <br><input type="checkbox" name="userassignmentbindingid" value="{{ b.id }}"/> {{ b.assignment.flag }} {{ b.assignment.name }} {{ b.user.username }}
+    {% endfor %}
+    <div class="modal-footer">
+      <button type="submit" class="btn btn-default" name="button" value="apply"> Feedback</button>
+    </div>
+  {% else %}
+    <div class="alert alert-danger" role="alert">There are no assignments being corrected.</div>
+  {% endif %}
 </form>
