@@ -65,7 +65,7 @@ class Course(models.Model):
         for assignment in Assignment.objects.filter(course = self):
             if assignment.creator != teacher and len(UserCourseBinding.objects.filter(user = teacher, course = self, flag = assignment.flag, is_teacher = True)) == 0:
                 continue
-            bindings.update(UserAssignmentBinding.objects.filter(assignment = assignment, state = UserAssignmentBinding.ST_CORRECTING))
+            bindings.update(UserAssignmentBinding.objects.filter(assignment = assignment, corrector = teacher, state = UserAssignmentBinding.ST_CORRECTING))
         return bindings
 
     @register.filter

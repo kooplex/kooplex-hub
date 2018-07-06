@@ -107,4 +107,7 @@ def copy_userassignment(sender, instance, created, **kwargs):
         manageacl_feedback(instance)
         mapping = "+:%s:%s" % (Dirname.assignmentcorrectdir(instance, in_hub = False), instance.assignment.safename)
         Container.manage_report_mount(user = instance.user, project =instance.assignment.course.project, mapping = mapping)
+        mapping = "-:%s" % (instance.assignment.safename)
+        Container.manage_report_mount(user = instance.corrector, project =instance.assignment.course.project, mapping = mapping)
+
 

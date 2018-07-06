@@ -81,14 +81,14 @@ class Dirname:
         assignment = userassignmentbinding.assignment
         flag = assignment.flag if assignment.flag else '_'
         return os.path.join(Dirname.mountpoint['assignment'], assignment.course.safecourseid, flag, 'submitted-%s-%s.%d' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp())) if in_hub else \
-               os.path.join(assignment.course.safecourseid, flag, 'submitted-%s-%s.%d' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp()))
+               os.path.join('assignment', assignment.course.safecourseid, flag, 'submitted-%s-%s.%d' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp()))
 
     @staticmethod
     def assignmentcorrectdir(userassignmentbinding, in_hub = True):
         assignment = userassignmentbinding.assignment
         flag = assignment.flag if assignment.flag else '_'
         return os.path.join(Dirname.mountpoint['assignment'], assignment.course.safecourseid, flag, 'feedback-%s-%s.%d' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp())) if in_hub else \
-               os.path.join(assignment.course.safecourseid, flag, 'feedback-%s-%s.%d' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp()))
+               os.path.join('assignment', assignment.course.safecourseid, flag, 'feedback-%s-%s.%d' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp()))
 
 
 def _mkdir(path, uid = 0, gid = 0, mode = 0b111101000, mountpoint = False):
