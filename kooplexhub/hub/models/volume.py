@@ -47,7 +47,12 @@ class Volume(models.Model):
         'description': 'Course workdir volume',
         'pattern': volumeconf.get('pattern_usercoursevolumename_filter', r'^(usercourse)$'),
     }
-    VOLUME_TYPE_LIST = [HOME, SHARE, WORKDIR, FUNCTIONAL, STORAGE, COURSE_SHARE, COURSE_WORKDIR]
+    COURSE_ASSIGNMENTDIR = {
+        'tag': 'assignment', 
+        'description': 'Course assignment volume',
+        'pattern': volumeconf.get('pattern_assignmentvolumename_filter', r'^(assignment)$'),
+    }
+    VOLUME_TYPE_LIST = [HOME, SHARE, WORKDIR, FUNCTIONAL, STORAGE, COURSE_SHARE, COURSE_WORKDIR, COURSE_ASSIGNMENTDIR]
     name = models.CharField(max_length = 64, unique = True)
     displayname = models.CharField(max_length = 64)
     description = models.TextField(null = True)
@@ -149,7 +154,7 @@ def init_model():
     dockerconf = KOOPLEX.get('docker', {})
     for volume in Volume.objects.all():
         volume.is_present = False
-        volume.svae()
+        volume.save()
     for volumename in Docker().list_volumenames():
         logger.debug("vol: %s" % volumename)
         try:

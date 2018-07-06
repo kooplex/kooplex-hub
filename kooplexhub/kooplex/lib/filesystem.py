@@ -77,16 +77,18 @@ class Dirname:
         return os.path.join(wd, userassignmentbinding.assignment.safename)
 
     @staticmethod
-    def assignmentcollectdir(userassignmentbinding):
+    def assignmentcollectdir(userassignmentbinding, in_hub = True):
         assignment = userassignmentbinding.assignment
         flag = assignment.flag if assignment.flag else '_'
-        return os.path.join(Dirname.mountpoint['assignment'], assignment.course.safecourseid, flag, 'submitted-%s-%s.%d' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp()))
+        return os.path.join(Dirname.mountpoint['assignment'], assignment.course.safecourseid, flag, 'submitted-%s-%s.%d' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp())) if in_hub else \
+               os.path.join(assignment.course.safecourseid, flag, 'submitted-%s-%s.%d' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp()))
 
     @staticmethod
-    def assignmentcorrectdir(userassignmentbinding):
+    def assignmentcorrectdir(userassignmentbinding, in_hub = True):
         assignment = userassignmentbinding.assignment
         flag = assignment.flag if assignment.flag else '_'
-        return os.path.join(Dirname.mountpoint['assignment'], assignment.course.safecourseid, flag, 'feedback-%s-%s.%d' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp()))
+        return os.path.join(Dirname.mountpoint['assignment'], assignment.course.safecourseid, flag, 'feedback-%s-%s.%d' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp())) if in_hub else \
+               os.path.join(assignment.course.safecourseid, flag, 'feedback-%s-%s.%d' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp()))
 
 
 def _mkdir(path, uid = 0, gid = 0, mode = 0b111101000, mountpoint = False):
@@ -138,7 +140,6 @@ def garbagedir_home(user):
     try:
         dir_home = Dirname.userhome(user)
         dir_garbage = Dirname.userhome_garbage(user)
-        dir_util.mkpath(dir_garbage)
         dir_util.copy_tree(dir_home, dir_garbage)
         dir_util.remove_tree(dir_home)
     except Exception as e:
@@ -176,7 +177,6 @@ def garbagedir_course_share(course):
     try:
         dir_course = Dirname.course(course)
         dir_garbage = Dirname.course_garbage(course)
-        dir_util.mkpath(dir_garbage)
         dir_util.copy_tree(dir_course, dir_garbage)
         dir_util.remove_tree(dir_course)
     except Exception as e:
@@ -212,7 +212,6 @@ def archive_course_workdir(usercoursebinding):
             return
         dir_usercourse = Dirname.courseworkdir(usercoursebinding)
         dir_target = Dirname.courseworkdir_archive(usercoursebinding)
-        dir_util.mkpath(dir_target)
         dir_util.copy_tree(dir_usercourse, dir_target)
         dir_util.remove_tree(dir_usercourse)
     except Exception as e:
@@ -232,15 +231,14 @@ def snapshot_assignment(assignment):
     try:
         dir_source = Dirname.assignmentsource(assignment)
         dir_target = Dirname.assignmentsnapshot(assignment)
-        dir_util.mkpath(dir_target)
-        dir_util.copy_tree(dir_source, dir_target)
+        dir_util.copy_tree(dir_source, dir_target, preserve_mode = False, preserve_symlinks = True)
     except Exception as e:
         logger.error("Cannot create snapshot dir %s -- %s" % (assignment, e))
 
 def garbagedir_assignmentsnapshot(assignment):
     try:
         dir_source = Dirname.assignmentsnapshot(assignment)
-        dir_target = Dirname.assignmentsnapshot_garbage(assignment)
+        dir_target = Dirname.assignmentsnapshot_garbage(assignment, preserve_mode = False, preserve_symlinks = True)
         dir_util.copy_tree(dir_source, dir_target)
         dir_util.remove_tree(dir_source)
     except Exception as e:
@@ -250,8 +248,7 @@ def cp_assignmentsnapshot(userassignmentbinding):
     try:
         dir_source = Dirname.assignmentsnapshot(userassignmentbinding.assignment)
         dir_target = Dirname.assignmentworkdir(userassignmentbinding)
-        dir_util.mkpath(dir_target)
-        dir_util.copy_tree(dir_source, dir_target)
+        dir_util.copy_tree(dir_source, dir_target, preserve_mode = False, preserve_symlinks = True)
         bash("setfacl -R -m u:%d:rwX %s" % (userassignmentbinding.user.profile.userid, dir_target))
     except Exception as e:
         logger.error("Cannot cp snapshot dir %s -- %s" % (userassignmentbinding, e))
@@ -260,8 +257,9 @@ def cp_userassignment(userassignmentbinding):
     try:
         dir_source = Dirname.assignmentworkdir(userassignmentbinding)
         dir_target = Dirname.assignmentcollectdir(userassignmentbinding)
-        dir_util.mkpath(dir_target)
-        dir_util.copy_tree(dir_source, dir_target)
+        dir_util.copy_tree(dir_source, dir_target, preserve_mode = False, preserve_symlinks = True)
+        bash("chmod -R 0 %s" % dir_target)
+        bash("setfacl -R -m u:%d:rX %s" % (userassignmentbinding.user.profile.userid, dir_target))
     except Exception as e:
         logger.error("Cannot collect assignemnt dir %s -- %s" % (userassignmentbinding, e))
 
@@ -269,12 +267,21 @@ def cp_userassignment2correct(userassignmentbinding):
     try:
         dir_source = Dirname.assignmentcollectdir(userassignmentbinding)
         dir_target = Dirname.assignmentcorrectdir(userassignmentbinding)
-        dir_util.mkpath(dir_target)
-        dir_util.copy_tree(dir_source, dir_target)
+        dir_util.copy_tree(dir_source, dir_target, preserve_mode = False, preserve_symlinks = True)
+        bash("chmod -R 0 %s" % dir_target)
+        bash("setfacl -R -m u:%d:rwX %s" % (userassignmentbinding.corrector.profile.userid, dir_target))
     except Exception as e:
-        logger.error("Cannot copy correctt dir %s -- %s" % (userassignmentbinding, e))
+        logger.error("Cannot copy correct dir %s -- %s" % (userassignmentbinding, e))
 
-
+def manageacl_feedback(userassignmentbinding):
+    try:
+        dir_target = Dirname.assignmentcorrectdir(userassignmentbinding)
+        bash("setfacl -R -x u:%d %s" % (userassignmentbinding.corrector.profile.userid, dir_target))
+        bash("setfacl -R -m u:%d:rX %s" % (userassignmentbinding.corrector.profile.userid, dir_target))
+        bash("setfacl -R -m u:%d:rX %s" % (userassignmentbinding.user.profile.userid, dir_target))
+    except Exception as e:
+        logger.error("Cannot revoke acl from feedback dir %s -- %s" % (userassignmentbinding, e))
+    
 
 
 

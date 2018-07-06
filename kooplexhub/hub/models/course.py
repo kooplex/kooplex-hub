@@ -54,8 +54,8 @@ class Course(models.Model):
         for assignment in Assignment.objects.filter(course = self):
             if assignment.creator != teacher and len(UserCourseBinding.objects.filter(user = teacher, course = self, flag = assignment.flag, is_teacher = True)) == 0:
                 continue
-            bindings.union_update(UserAssignmentBinding.objects.filter(assignment = assignment, state = UserAssignmentBinding.ST_SUBMITTED))
-            bindings.union_update(UserAssignmentBinding.objects.filter(assignment = assignment, state = UserAssignmentBinding.ST_COLLECTED))
+            bindings.update(UserAssignmentBinding.objects.filter(assignment = assignment, state = UserAssignmentBinding.ST_SUBMITTED))
+            bindings.update(UserAssignmentBinding.objects.filter(assignment = assignment, state = UserAssignmentBinding.ST_COLLECTED))
         return bindings
 
     @register.filter
@@ -65,7 +65,7 @@ class Course(models.Model):
         for assignment in Assignment.objects.filter(course = self):
             if assignment.creator != teacher and len(UserCourseBinding.objects.filter(user = teacher, course = self, flag = assignment.flag, is_teacher = True)) == 0:
                 continue
-            bindings.union_update(UserAssignmentBinding.objects.filter(assignment = assignment, state = UserAssignmentBinding.ST_CORRECTING))
+            bindings.update(UserAssignmentBinding.objects.filter(assignment = assignment, state = UserAssignmentBinding.ST_CORRECTING))
         return bindings
 
     @register.filter
@@ -143,7 +143,7 @@ def garbagedir_course(sender, instance, **kwargs):
 def bind_coursevolumes(sender, instance, created, **kwargs):
     from .volume import Volume, VolumeProjectBinding
     if created:
-        for key in [ Volume.HOME, Volume.COURSE_SHARE, Volume.COURSE_WORKDIR ]:
+        for key in [ Volume.HOME, Volume.COURSE_SHARE, Volume.COURSE_WORKDIR, Volume.COURSE_ASSIGNMENTDIR ]:
             try:
                 volume = Volume.lookup(key)
                 binding = VolumeProjectBinding.objects.create(project = instance.project, volume = volume)

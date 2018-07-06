@@ -22,6 +22,9 @@ from kooplex.lib import  standardize_str
 logger = logging.getLogger(__name__)
 
 
+#FIXME: container state machinery rewrite
+#FIXME: when docker container is created, manage mount_report.conf
+
 class Container(models.Model):
     name = models.CharField(max_length = 200, null = False)
     user = models.ForeignKey(User, null = False)
@@ -91,8 +94,8 @@ class Container(models.Model):
         logger.debug("found project %s and authorized for user %s" % (project, user))
         for binding in ProjectContainerBinding.objects.filter(project = project):
             if binding.container.user == user:
-                logger.debug("container in db %s" % container)
-                return container
+                logger.debug("container in db %s" % binding.container)
+                return binding.container
         if create:
             containername = "%s-%s" % (project.name, user.username)
             container = Container.objects.create(name = containername, user = user)
@@ -151,6 +154,19 @@ class Container(models.Model):
     @property
     def api(self):
         return os.path.join(self.url, 'notebook', self.proxy_path)
+
+    @staticmethod
+    def manage_report_mount(user, project, mapping):
+        from kooplex.lib import Docker 
+        try: 
+            container = Container.get_userprojectcontainer(user = user, project_id = project.id, create = False) 
+            if container.is_running:
+                logger.debug("container %s found and is running" % container) 
+                Docker().reportmount(container, mapping)
+            else:
+                logger.debug("container %s is not running" % container) 
+        except Exception as e: 
+            logger.error("cannot manage mapping this time -- %s" % e) 
 
 
 class ProjectContainerBinding(models.Model):

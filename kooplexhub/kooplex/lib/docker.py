@@ -80,6 +80,7 @@ class Docker:
         logger.debug("Container created")
         mapper = self.construct_mapper(container)
         self.copy_mapper(container, mapper)
+        #FIXME: reportdir mapper
         return self.get_container(container)
 
     def construct_mapper(self, container):
@@ -109,7 +110,7 @@ class Docker:
         logger.debug("container %s mapper %s" % (container, "+".join(mapper)))
         return mapper
 
-    def copy_mapper(self, container, mapper):
+    def copy_mapper(self, container, mapper, filename = 'mount.conf'):  #FIXME: no default here and rename method
         import tarfile
         import time
         from io import BytesIO
@@ -117,7 +118,7 @@ class Docker:
         tarstream = BytesIO()
         tar = tarfile.TarFile(fileobj = tarstream, mode = 'w')
         file_data = "\n".join(mapper).encode('utf8')
-        tarinfo = tarfile.TarInfo(name = 'mount.conf')
+        tarinfo = tarfile.TarInfo(name = filename)
         tarinfo.size = len(file_data)
         tarinfo.mtime = time.time()
         tar.addfile(tarinfo, BytesIO(file_data))
@@ -128,6 +129,9 @@ class Docker:
             logger.info("container %s put_archive returns %s" % (container, status))
         except Exception as e:
             logger.error("container %s put_archive fails -- %s" % (container, e))
+
+    def reportmount(self, container, configline):
+        self.copy_mapper(container, [ configline ], 'mount_report.conf')
 
     def run_container(self, container):
         docker_container_info = self.get_container(container)

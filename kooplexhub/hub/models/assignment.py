@@ -88,19 +88,23 @@ def add_userassignmentbinding(sender, instance, created, **kwargs):
         for a in instance.assignments:
             UserAssignmentBinding.objects.create(user = instance.user, assignment = a)
 
-@receiver(post_save, sender = UserAssignmentBinding)
-def copy_assignmentsnapshot(sender, instance, created, **kwargs):
-    from kooplex.lib.filesystem import cp_assignmentsnapshot
-    if created:
-        cp_assignmentsnapshot(instance)
 
 @receiver(post_save, sender = UserAssignmentBinding)
 def copy_userassignment(sender, instance, created, **kwargs):
-    from kooplex.lib.filesystem import cp_userassignment, cp_userassignment2correct
+    from kooplex.lib.filesystem import cp_assignmentsnapshot, cp_userassignment, cp_userassignment2correct, manageacl_feedback, Dirname
+    from .container import Container
     if created:
-        return
-    if instance.state in [ UserAssignmentBinding.ST_SUBMITTED, UserAssignmentBinding.ST_COLLECTED ]:
+        cp_assignmentsnapshot(instance)
+    elif instance.state in [ UserAssignmentBinding.ST_SUBMITTED, UserAssignmentBinding.ST_COLLECTED ]:
         cp_userassignment(instance)
+        mapping = "+:%s:%s" % (Dirname.assignmentcollectdir(instance, in_hub = False), instance.assignment.safename)
+        Container.manage_report_mount(user = instance.user, project =instance.assignment.course.project, mapping = mapping)
     elif instance.state == UserAssignmentBinding.ST_CORRECTING:
         cp_userassignment2correct(instance)
+        mapping = "+:%s:%s" % (Dirname.assignmentcorrectdir(instance, in_hub = False), instance.assignment.safename)
+        Container.manage_report_mount(user = instance.corrector, project =instance.assignment.course.project, mapping = mapping)
+    elif instance.state == UserAssignmentBinding.ST_FEEDBACK:
+        manageacl_feedback(instance)
+        mapping = "+:%s:%s" % (Dirname.assignmentcorrectdir(instance, in_hub = False), instance.assignment.safename)
+        Container.manage_report_mount(user = instance.user, project =instance.assignment.course.project, mapping = mapping)
 
