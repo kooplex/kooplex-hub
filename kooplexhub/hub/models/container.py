@@ -11,7 +11,6 @@ from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.contrib.auth.models import User
 
-from .course import Course, UserCourseBinding
 from .project import Project
 from .volume import Volume, VolumeProjectBinding
 from .image import Image
@@ -23,7 +22,6 @@ logger = logging.getLogger(__name__)
 
 
 #FIXME: container state machinery rewrite
-#FIXME: when docker container is created, manage mount_report.conf
 
 class Container(models.Model):
     name = models.CharField(max_length = 200, null = False)
@@ -75,7 +73,7 @@ class Container(models.Model):
 
     def wait_until_ready(self):
         from kooplex.lib import keeptrying
-        return keeptrying(method = requests.get, times = 10, url =self.api)
+        return keeptrying(method = requests.get, times = 10, url = self.api)
 
     @property
     def n_projects(self):
@@ -167,6 +165,12 @@ class Container(models.Model):
                 logger.debug("container %s is not running" % container) 
         except Exception as e: 
             logger.error("cannot manage mapping this time -- %s" % e) 
+
+    @property
+    def report_mapping(self):
+        for project in self.projects:
+            for mapping in project.report_mapping4user(self.user):
+                yield mapping
 
 
 class ProjectContainerBinding(models.Model):
@@ -290,6 +294,7 @@ def update_image(sender, instance, **kwargs):
         logger.debug("container (%s) image is set %s" % (instance.container, instance.container.image))
     if instance.project.image is not None:
         assert instance.container.image == instance.project.image, "Conflicting images %s =/= %s" % (instance.container.image, instance.project.image)
+
 
 @receiver(pre_save, sender = ProjectContainerBinding)
 def update_volumecontainerbinding(sender, instance, **kwargs):

@@ -79,8 +79,12 @@ class Docker:
         self.client.create_container(**args)
         logger.debug("Container created")
         mapper = self.construct_mapper(container)
-        self.copy_mapper(container, mapper)
-        #FIXME: reportdir mapper
+        self.copy_mapper(container, mapper, 'mount.conf')
+        mapper = list(container.report_mapping)
+#FIXME: dirty hack until inotify in container is healed
+        mapper[-1] = mapper[-1] + '\n'
+# end of hack
+        self.copy_mapper(container, mapper, 'mount_report.conf')
         return self.get_container(container)
 
     def construct_mapper(self, container):
@@ -110,11 +114,11 @@ class Docker:
         logger.debug("container %s mapper %s" % (container, "+".join(mapper)))
         return mapper
 
-    def copy_mapper(self, container, mapper, filename = 'mount.conf'):  #FIXME: no default here and rename method
+    def copy_mapper(self, container, mapper, filename):
         import tarfile
         import time
         from io import BytesIO
-
+        logger.debug("container %s mapping %s -> containerfile %s" % (container, mapper, filename))
         tarstream = BytesIO()
         tar = tarfile.TarFile(fileobj = tarstream, mode = 'w')
         file_data = "\n".join(mapper).encode('utf8')

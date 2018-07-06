@@ -108,6 +108,23 @@ class Course(models.Model):
                 collectable.append(assignment)
         return collectable
 
+    def report_mapping4user(self, user):
+        from .assignment import Assignment, UserAssignmentBinding
+        for assignment in Assignment.objects.filter(course = self):
+            for binding in UserAssignmentBinding.objects.filter(assignment = assignment, corrector = user, state = UserAssignmentBinding.ST_CORRECTING):
+                mapping = "+:%s:%s" % (Dirname.assignmentcorrectdir(binding, in_hub = False), binding.assignment.safename) 
+                logger.debug(mapping)
+                yield mapping
+            for binding in UserAssignmentBinding.objects.filter(assignment = assignment, user = user):
+                if binding.state in [ UserAssignmentBinding.ST_SUBMITTED, UserAssignmentBinding.ST_COLLECTED ]:
+                    mapping = "+:%s:%s" % (Dirname.assignmentcollectdir(binding, in_hub = False), binding.assignment.safename) 
+                elif binding.state == UserAssignmentBinding.ST_FEEDBACK:
+                    mapping = "+:%s:%s" % (Dirname.assignmentcorrectdir(binding, in_hub = False), binding.assignment.safename) 
+                else:
+                    continue
+                logger.debug(mapping)
+                yield mapping
+
 
 class UserCourseBinding(models.Model):
     user = models.ForeignKey(User, null = False)

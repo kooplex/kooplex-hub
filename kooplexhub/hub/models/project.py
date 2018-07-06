@@ -105,6 +105,15 @@ class Project(models.Model):
     def get_userproject(project_id, user):
         return UserProjectBinding(user = user, project_id = project_id).project
 
+    def report_mapping4user(self, user):
+        try:
+            for mapping in self.course.report_mapping4user(user):
+                yield mapping
+        except Course.DoesNotExist:
+            pass
+        logger.warn("NotImplementedError")
+
+
 #class Project(ProjectBase):
 #    scope = models.ForeignKey(ScopeType, null = True)
 #
