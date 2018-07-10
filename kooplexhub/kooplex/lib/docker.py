@@ -81,9 +81,6 @@ class Docker:
         mapper = self.construct_mapper(container)
         self.copy_mapper(container, mapper, 'mount.conf')
         mapper = list(container.report_mapping)
-#FIXME: dirty hack until inotify in container is healed
-        mapper[-1] = mapper[-1] + '\n'
-# end of hack
         self.copy_mapper(container, mapper, 'mount_report.conf')
         return self.get_container(container)
 
@@ -121,6 +118,10 @@ class Docker:
         logger.debug("container %s mapping %s -> containerfile %s" % (container, mapper, filename))
         tarstream = BytesIO()
         tar = tarfile.TarFile(fileobj = tarstream, mode = 'w')
+        if len(mapper):
+            #NOTE: mounter uses read to process the mapper configuration, thus we need to make sure '\n' terminates the config mapper file
+            mapper.append('')
+        logger.debug("mapping: %s" % mapper)
         file_data = "\n".join(mapper).encode('utf8')
         tarinfo = tarfile.TarInfo(name = filename)
         tarinfo.size = len(file_data)
