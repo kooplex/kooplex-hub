@@ -261,7 +261,7 @@ def cp_userassignment(userassignmentbinding):
         bash("chmod -R 0 %s" % dir_target)
         bash("setfacl -R -m u:%d:rX %s" % (userassignmentbinding.user.profile.userid, dir_target))
     except Exception as e:
-        logger.error("Cannot collect assignemnt dir %s -- %s" % (userassignmentbinding, e))
+        logger.error("Cannot collect assignment dir %s -- %s" % (userassignmentbinding, e))
 
 def cp_userassignment2correct(userassignmentbinding):
     try:

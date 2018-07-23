@@ -47,7 +47,7 @@ class my_ElteOpenID(OpenIdConnectAuth):
                 bindings.append({ 'course': course, 'flag': flag, 'is_teacher': is_teacher })
         user = super(my_ElteOpenID, self).authenticate(request, **credentials)
         response = credentials.get('response', {})
-        #logger.debug("resp %s" % response)
+#        logger.debug("IDP resp %s" % response)
         bindings = []
         # currently held courses
         updater('niifEduPersonHeldCourse', is_teacher = True)

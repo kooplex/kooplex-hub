@@ -20,6 +20,7 @@ def new(request):
     name = request.POST.get("name").strip()
     description = request.POST.get("description").strip()
     folder = request.POST.get("folder")
+    is_massassignment = bool(request.POST.get("massassignment"))
     can_studentsubmit = bool(request.POST.get("cansubmit"))
     try:
         assert len(name), "You need to provide a name"
@@ -30,7 +31,7 @@ def new(request):
         assert len(course_flags), "You are not authorized to save assignment to course flags provided"
 #FIXME: valid/expiry
         for flag in course_flags:
-            Assignment.objects.create(course = course, flag = flag, name = name, creator = user, description = description, folder = folder, can_studentsubmit = can_studentsubmit)
+            Assignment.objects.create(course = course, flag = flag, name = name, creator = user, description = description, folder = folder, can_studentsubmit = can_studentsubmit, is_massassignment = is_massassignment)
         messages.info(request, 'Assignments are registered for course %s and flag %s' % (course.courseid, ", ".join(course_flags)))
     except Exception as e:
         logger.error(e)
@@ -125,12 +126,37 @@ def markcorrected(request):
     return redirect('teaching:list')
 
 
+@login_required
+def bind(request):
+    from django.contrib.auth.models import User
+    """Bind assignment and user"""
+#FIXME: authorization!!!!!
+    user = request.user
+    for b in request.POST.getlist('binding'):
+        assignment_id, user_id = b.split('-')
+        try:
+            assignment = Assignment.objects.get(id = assignment_id)
+            student = User.objects.get(id = user_id)
+        except Exception as e:
+            logger.error("oops -- %s" % e)
+            continue
+        try:
+            binding = UserAssignmentBinding.objects.get(user = student, assignment = assignment)
+            logger.error("Will not create a duplicate %s" % binding)
+            messages.error(request, "Prevented from creating a duplicate assignemt %s for student %s" % (assignment.name, student))
+        except UserAssignmentBinding.DoesNotExist:
+            UserAssignmentBinding.objects.create(user = student, assignment = assignment)
+            messages.info(request, "Creating an assignemt %s for student %s" % (assignment.name, student))
+    return redirect('teaching:list')
+
+
 urlpatterns = [
     url(r'new/?$', new, name = 'new'),
     url(r'submit/?$', studentsubmit, name = 'submit'),
     url(r'collect/?$', teachercollect, name = 'collect'),
     url(r'correct/?$', markcorrection, name = 'correct'),
     url(r'feedback/?$', markcorrected, name = 'feedback'),
+    url(r'bind/?$', bind, name = 'bind'),
 ]
 
 

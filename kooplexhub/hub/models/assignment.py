@@ -25,10 +25,22 @@ class Assignment(models.Model):
     valid_from = models.DateTimeField(auto_now_add = True)
     expires_at = models.DateTimeField(null = True)
     can_studentsubmit = models.BooleanField(default = True)
+    is_massassignment = models.BooleanField(default = True)
 
     @property
     def safename(self):
         return standardize_str(self.name)
+
+    def list_students_bindable(self):
+        from .course import UserCourseBinding
+        students = []
+        for usercoursebinding in UserCourseBinding.objects.filter(course = self.course, is_teacher = False):
+            logger.debug(usercoursebinding.user)
+            try:
+                UserAssignmentBinding.objects.get(assignment = self, user = usercoursebinding.user)
+            except UserAssignmentBinding.DoesNotExist:
+                students.append(usercoursebinding.user)
+        return students
 
 
 ST_LOOKUP = {
@@ -72,6 +84,8 @@ def snapshot_assignment(sender, instance, created, **kwargs):
     from .course import UserCourseBinding
     if created:
         snapshot_assignment(instance)
+        if not instance.is_massassignment:
+            return
         for binding in UserCourseBinding.objects.filter(course = instance.course, flag = instance.flag, is_teacher = False):
             # FIXME: if not within interval, schedule it!
             UserAssignmentBinding.objects.create(user = binding.user, assignment = instance)
