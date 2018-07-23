@@ -20,6 +20,10 @@ def new(request):
     name = request.POST.get("name").strip()
     description = request.POST.get("description").strip()
     folder = request.POST.get("folder")
+    valid_date = request.POST.get('valid_from_0')
+    valid_time = request.POST.get('valid_from_1', '00:00:00')
+    expiry_date = request.POST.get('expires_at_0')
+    expiry_time = request.POST.get('expires_at_1', '00:00:00')
     is_massassignment = bool(request.POST.get("massassignment"))
     can_studentsubmit = bool(request.POST.get("cansubmit"))
     try:
@@ -30,9 +34,16 @@ def new(request):
         course_flags.intersection_update(goodflags)
         assert len(course_flags), "You are not authorized to save assignment to course flags provided"
 #FIXME: valid/expiry
+        extra = {}
+        if valid_date:
+            extra['valid_from'] = "%s %s" % (valid_date, valid_time)
+        if expiry_date:
+            extra['expires_at'] = "%s %s" % (expiry_date, expiry_time)
+        logger.debug("extra: %s" % extra)
         for flag in course_flags:
-            Assignment.objects.create(course = course, flag = flag, name = name, creator = user, description = description, folder = folder, can_studentsubmit = can_studentsubmit, is_massassignment = is_massassignment)
-        messages.info(request, 'Assignments are registered for course %s and flag %s' % (course.courseid, ", ".join(course_flags)))
+            Assignment.objects.create(course = course, flag = flag, name = name, creator = user, description = description, folder = folder, can_studentsubmit = can_studentsubmit, is_massassignment = is_massassignment, **extra)
+        course_flags_str = map(lambda x: x if x else '_', course_flags)
+        messages.info(request, 'Assignments are registered for course %s and flag %s' % (course.courseid, ", ".join(course_flags_str)))
     except Exception as e:
         logger.error(e)
         messages.error(request, 'Cannot fully register assignment -- %s' % e)

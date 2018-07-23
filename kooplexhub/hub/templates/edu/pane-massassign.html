@@ -13,10 +13,20 @@
     </select><br>
     <label>Description:</label>
     <textarea name="description"></textarea><br>
-    <label>Valid from:</label>
-    TBA<br>
-    <label>Expires at:</label>
-    TBA<br>
+    <div class="form-row field-valid_from">
+      <label>Valid from:</label>
+      <p class="datetime">
+        <input type="text" name="valid_from_0" class="vDateField" size="10" required id="valid_from_0" />
+        <input type="text" name="valid_from_1" class="vTimeField" size="8" required id="valid_from_1" />
+      </p>
+    </div>
+    <div class="form-row field-valid_from">
+      <label>Expires at:</label>
+      <p class="datetime">
+        <input type="text" name="expires_at_0" class="vDateField" size="10" required id="expures_at_0" />
+        <input type="text" name="expires_at_1" class="vTimeField" size="8" required id="expires_at_1" />
+      </p>
+    </div>
     <label>Assign for all student:</label>
     <input type="checkbox" checked name="massassignment" value="True"/><br>
     <label>Student can submit earlier:</label>
