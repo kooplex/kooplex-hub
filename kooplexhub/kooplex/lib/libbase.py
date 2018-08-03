@@ -7,11 +7,18 @@ import time
 import logging
 import subprocess
 import shlex
+import datetime
+import pytz
 
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
+def now():
+    """
+    @summary: returns the current time in a tz-aware datetime format
+    """
+    return datetime.datetime.utcnow().replace(tzinfo = pytz.utc)
 
 def keeptrying(method, times, **kw):
     """

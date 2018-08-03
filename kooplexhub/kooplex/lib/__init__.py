@@ -1,2 +1,2 @@
-from .libbase import standardize_str, keeptrying, bash
+from .libbase import standardize_str, keeptrying, bash, now
 from .docker import Docker

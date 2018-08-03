@@ -16,7 +16,7 @@ from .volume import Volume, VolumeProjectBinding
 from .image import Image
 
 from kooplex.settings import KOOPLEX
-from kooplex.lib import  standardize_str
+from kooplex.lib import  standardize_str, now
 
 logger = logging.getLogger(__name__)
 
@@ -39,8 +39,8 @@ class Container(models.Model):
 
     @property
     def uptime(self):
-        now = datetime.datetime.now(tz = datetime.timezone.utc)
-        delta = now - self.launched_at
+        timenow = now()
+        delta = timenow - self.launched_at
         return delta if self.is_running else -1
 
     @property

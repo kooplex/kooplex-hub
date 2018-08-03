@@ -8,6 +8,7 @@ from django.contrib import messages
 from django.shortcuts import redirect
 
 from hub.models import Course, UserCourseBinding, Assignment, UserAssignmentBinding
+from kooplex.lib import now
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +60,7 @@ def studentsubmit(request):
         try:
             binding = UserAssignmentBinding.objects.get(id = binding_id, user = user)
             binding.state = UserAssignmentBinding.ST_SUBMITTED
-            binding.submitted_at = datetime.datetime.now()
+            binding.submitted_at = now()
             binding.save()
             messages.info(request, '%s assignment submitted for course %s and flag %s' % (binding.assignment.name, binding.assignment.course.courseid, binding.assignment.flag))
         except Exception as e:
@@ -84,10 +85,7 @@ def teachercollect(request):
             UserCourseBinding.objects.get(user = user, course = course, flag = assignment.flag, is_teacher = True)
             counter = 0
             for binding in UserAssignmentBinding.objects.filter(assignment = assignment):
-                #FIXME: we may double check state and skip some bindings
-                binding.state = UserAssignmentBinding.ST_COLLECTED
-                binding.submitted_at = datetime.datetime.now()
-                binding.save()
+                binding.do_collect()
                 counter += 1
             messages.info(request, '%d assignments %s for course %s and flag %s are collected' % (counter, assignment.name, assignment.course.courseid, assignment.flag))
         except Exception as e:
@@ -128,7 +126,7 @@ def markcorrected(request):
             binding = UserAssignmentBinding.objects.get(id = binding_id, state = UserAssignmentBinding.ST_CORRECTING)
             UserCourseBinding.objects.get(user = user, course = binding.assignment.course, flag = binding.assignment.flag, is_teacher = True)
             binding.state = UserAssignmentBinding.ST_FEEDBACK
-            binding.corrected_at = datetime.datetime.now()
+            binding.corrected_at = now()
             binding.save()
             messages.info(request, '%s\'s assignment %s for course %s and flag %s is marked corrected' % (binding.user.username, binding.assignment.name, binding.assignment.course.courseid, binding.assignment.flag))
         except Exception as e:
@@ -156,7 +154,7 @@ def bind(request):
             logger.error("Will not create a duplicate %s" % binding)
             messages.error(request, "Prevented from creating a duplicate assignemt %s for student %s" % (assignment.name, student))
         except UserAssignmentBinding.DoesNotExist:
-            UserAssignmentBinding.objects.create(user = student, assignment = assignment)
+            UserAssignmentBinding.objects.create(user = student, assignment = assignment, expires_at = assignment.expires_at)
             messages.info(request, "Creating an assignemt %s for student %s" % (assignment.name, student))
     return redirect('teaching:list')
 

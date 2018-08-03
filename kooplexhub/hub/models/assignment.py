@@ -1,6 +1,5 @@
 import os
 import logging
-import datetime, pytz
 
 from django.db import models
 from django.db.models.signals import pre_save, post_save, pre_delete, post_delete
@@ -11,7 +10,7 @@ from django.template.defaulttags import register
 from .course import Course, UserCourseBinding
 
 from kooplex.settings import KOOPLEX
-from kooplex.lib import standardize_str
+from kooplex.lib import standardize_str, now
 
 logger = logging.getLogger(__name__)
 
@@ -48,11 +47,11 @@ class Assignment(models.Model):
     ST_SCHEDULED, ST_VALID, ST_EXPIRED = range(3)
     @property
     def state(self):
-        now = datetime.datetime.utcnow().replace(tzinfo = pytz.utc)
-        dt = self.valid_from - now
+        timenow = now()
+        dt = self.valid_from - timenow
         if dt.total_seconds() > 0:
             return self.ST_SCHEDULED
-        if self.expires_at is None or (self.expires_at - now).total_seconds() >= 0:
+        if self.expires_at is None or (self.expires_at - timenow).total_seconds() >= 0:
             return self.ST_VALID
         else:
             return self.ST_EXPIRED
@@ -66,7 +65,7 @@ class Assignment(models.Model):
     def bind_students(self):
         student_list = self.list_students_bindable()
         for student in student_list:
-            UserAssignmentBinding.objects.create(user = student, assignment = self)
+            UserAssignmentBinding.objects.create(user = student, assignment = self, expires_at = self.expires_at)
             logger.info("handout %s -> %s" % (self, student))
         return student_list
 
@@ -89,10 +88,14 @@ class UserAssignmentBinding(models.Model):
     user = models.ForeignKey(User, null = False)
     assignment = models.ForeignKey(Assignment, null = False)
     received_at = models.DateTimeField(auto_now_add = True)
+    expires_at = models.DateTimeField(null = True)
     state = models.CharField(max_length = 16, choices = [ (x, ST_LOOKUP[x]) for x in STATE_LIST ], default = ST_WORKINPROGRESS)
     submitted_at = models.DateTimeField(null = True)
     corrector = models.ForeignKey(User, null = True, related_name = 'corrector')
     corrected_at = models.DateTimeField(null = True)
+
+    def __str__(self):
+        return "%s by %s" % (self.assignment, self.user)
 
     @property
     def state_long(self):
@@ -103,6 +106,23 @@ class UserAssignmentBinding(models.Model):
         if not self.assignment.can_studentsubmit:
             return False
         return self.state in [ self.ST_WORKINPROGRESS, self.ST_SUBMITTED ]
+
+    @staticmethod
+    def iter_expired():
+        timenow = now()
+        for binding in UserAssignmentBinding.objects.filter(state = UserAssignmentBinding.ST_WORKINPROGRESS):
+            if binding.expires_at is None:
+                continue
+            dt = timenow - binding.expires_at
+            if dt.total_seconds() > 0:
+                yield binding
+
+    def do_collect(self):
+        #FIXME: we may double check state and skip some bindings
+        self.state = UserAssignmentBinding.ST_COLLECTED
+        self.submitted_at = now()
+        self.save()
+        logger.info(self)
 
 
 @receiver(post_save, sender = Assignment)
@@ -126,7 +146,8 @@ def garbage_assignmentsnapshot(sender, instance, **kwargs):
 def add_userassignmentbinding(sender, instance, created, **kwargs):
     if created and not instance.is_teacher:
         for a in instance.assignments:
-            UserAssignmentBinding.objects.create(user = instance.user, assignment = a)
+            if a.state == a.ST_VALID:
+                UserAssignmentBinding.objects.create(user = instance.user, assignment = a, expires_at = a.expires_at)
 
 
 @receiver(post_save, sender = UserAssignmentBinding)

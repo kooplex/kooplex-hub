@@ -1,7 +1,7 @@
 import logging
 
 from django.core.management.base import BaseCommand, CommandError
-from hub.models import Assignment
+from hub.models import Assignment, UserAssignmentBinding
 
 logger = logging.getLogger(__name__)
 
@@ -14,12 +14,14 @@ class Command(BaseCommand):
     
     def handle(self, *args, **options):
         logger.info("tick %s %s" % (args, options))
-        if options.get('tasks', 'handout') == 'handout':
+#        print (options)
+        if 'handout' in options.get('tasks', ['handout']):
             self.handle_handout(Assignment.iter_valid(), options['dry'])
-        # print (options)
-        # find expired
+        if 'collect' in options.get('tasks', ['collect']):
+            self.handle_collect(UserAssignmentBinding.iter_expired(), options['dry'])
 
     def handle_handout(self, valid_assignments, dry):
+        print ("Mass handout")
         for a in valid_assignments:
             student_list = a.list_students_bindable() if dry else a.bind_students()
             if len(student_list):
@@ -27,3 +29,9 @@ class Command(BaseCommand):
                 for student in student_list:
                     print ("\t-> %s" % student)
 
+    def handle_collect(self, expired_userassignments, dry):
+        print ("Mass collect")
+        for binding in expired_userassignments:
+           print ("<- %s" % binding)
+           if not dry:
+               binding.do_collect()
