@@ -4,7 +4,7 @@
   {% if course.dirs_assignmentcandidate %}
     <div class="alert alert-warning" role="alert">Select a folder and add a name to the new assigment.</div>
     <label>Name:</label>
-    <input name="name"/><br>
+    <input name="name" required/><br>
     <label>Data folder:</label>
     <select name="folder">
       {% for d in course.dirs_assignmentcandidate %}
@@ -13,21 +13,13 @@
     </select><br>
     <label>Description:</label>
     <textarea name="description"></textarea><br>
-    <div class="form-row field-valid_from">
-      <label>Valid from:</label>
-      <p class="datetime">
-        <input type="text" name="valid_from_0" class="vDateField" size="10" required id="valid_from_0" />
-        <input type="text" name="valid_from_1" class="vTimeField" size="8" required id="valid_from_1" />
-      </p>
-    </div>
-    <div class="form-row field-valid_from">
-      <label>Expires at:</label>
-      <p class="datetime">
-        <input type="text" name="expires_at_0" class="vDateField" size="10" required id="expures_at_0" />
-        <input type="text" name="expires_at_1" class="vTimeField" size="8" required id="expires_at_1" />
-      </p>
-    </div>
-    <label>Assign for all student:</label>
+    <label>Valid from:</label>
+    <input type="text" name="valid_from_0" class="vDateField" size="10" id="valid_from_0" />
+    <input type="text" name="valid_from_1" class="vTimeField" size="8" id="valid_from_1" /><br>
+    <label>Expires at:</label>
+    <input type="text" name="expires_at_0" class="vDateField" size="10" id="expures_at_0" />
+    <input type="text" name="expires_at_1" class="vTimeField" size="8" id="expires_at_1" /><br>
+    <label>Assign for all students:</label>
     <input type="checkbox" checked name="massassignment" value="True"/><br>
     <label>Student can submit earlier:</label>
     <input type="checkbox" checked name="cansubmit" value="True"/><br>
@@ -39,6 +31,6 @@
       <button type="submit" class="btn btn-default" name="button" value="apply"> Create</button>
     </div>
   {% else %}
-    <div class="alert alert-danger" role="alert">There are no candidate subfolders in <code>~/share/private</code> directory. Please create one and place all files into it to be part of the assignment.</div>
+    <div class="alert alert-warning" role="warn">There are no candidate subfolders in <code>~/share/private</code> directory. Please create one and place all files into it to be part of a new assignment.</div>
   {% endif %}
 </form>

@@ -161,6 +161,10 @@ def bind(request):
     return redirect('teaching:list')
 
 
+@login_required
+def update(request):
+    """Update assignment"""
+
 urlpatterns = [
     url(r'new/?$', new, name = 'new'),
     url(r'submit/?$', studentsubmit, name = 'submit'),
@@ -168,6 +172,7 @@ urlpatterns = [
     url(r'correct/?$', markcorrection, name = 'correct'),
     url(r'feedback/?$', markcorrected, name = 'feedback'),
     url(r'bind/?$', bind, name = 'bind'),
+    url(r'update/?$', update, name = 'update'),
 ]
 
 

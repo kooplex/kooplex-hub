@@ -1,5 +1,6 @@
 import os
 import logging
+import datetime, pytz
 
 from django.db import models
 from django.db.models.signals import pre_save, post_save, pre_delete, post_delete
@@ -27,14 +28,16 @@ class Assignment(models.Model):
     can_studentsubmit = models.BooleanField(default = True)
     is_massassignment = models.BooleanField(default = True)
 
+    def __str__(self):
+        return "%s [%s/%s@%s]" % (self.name, self.course.courseid, self.flag, self.creator)
+
     @property
     def safename(self):
         return standardize_str(self.name)
 
     def list_students_bindable(self):
-        from .course import UserCourseBinding
         students = []
-        for usercoursebinding in UserCourseBinding.objects.filter(course = self.course, is_teacher = False):
+        for usercoursebinding in UserCourseBinding.objects.filter(course = self.course, flag = self.flag, is_teacher = False):
             logger.debug(usercoursebinding.user)
             try:
                 UserAssignmentBinding.objects.get(assignment = self, user = usercoursebinding.user)
@@ -42,6 +45,30 @@ class Assignment(models.Model):
                 students.append(usercoursebinding.user)
         return students
 
+    ST_SCHEDULED, ST_VALID, ST_EXPIRED = range(3)
+    @property
+    def state(self):
+        now = datetime.datetime.utcnow().replace(tzinfo = pytz.utc)
+        dt = self.valid_from - now
+        if dt.total_seconds() > 0:
+            return self.ST_SCHEDULED
+        if self.expires_at is None or (self.expires_at - now).total_seconds() >= 0:
+            return self.ST_VALID
+        else:
+            return self.ST_EXPIRED
+
+    @staticmethod
+    def iter_valid():
+        for a in Assignment.objects.filter(is_massassignment = True):
+            if a.state == Assignment.ST_VALID:
+                yield a
+
+    def bind_students(self):
+        student_list = self.list_students_bindable()
+        for student in student_list:
+            UserAssignmentBinding.objects.create(user = student, assignment = self)
+            logger.info("handout %s -> %s" % (self, student))
+        return student_list
 
 ST_LOOKUP = {
     'wip': 'Working on assignment',
@@ -81,14 +108,13 @@ class UserAssignmentBinding(models.Model):
 @receiver(post_save, sender = Assignment)
 def snapshot_assignment(sender, instance, created, **kwargs):
     from kooplex.lib.filesystem import snapshot_assignment
-    from .course import UserCourseBinding
     if created:
         snapshot_assignment(instance)
         if not instance.is_massassignment:
             return
-        for binding in UserCourseBinding.objects.filter(course = instance.course, flag = instance.flag, is_teacher = False):
-            # FIXME: if not within interval, schedule it!
-            UserAssignmentBinding.objects.create(user = binding.user, assignment = instance)
+        if instance.state == instance.IS_VALID:
+            student_list = instance.bind_students()
+
 
 @receiver(pre_delete, sender = Assignment)
 def garbage_assignmentsnapshot(sender, instance, **kwargs):

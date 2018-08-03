@@ -1,0 +1,18 @@
+<form id="assignmentupdate-form-{{ course.id }}" class="form-horizontal" action="{% url 'assignment:update' %}" method="post">
+  {% csrf_token %}
+  <input type="hidden" name="course_id" value="{{ course.id }}">
+  {% if course|list_updatableassignments:user %}
+    <div class="alert alert-warning" role="alert">Select the assigment to update.</div>
+    <label>Assignment:</label>
+    <select name="assignmentid">
+      {% for a in course|list_updatableassignments:user %}
+        <option value="{{ a.id }}">{{ a.name }} ({{ a.folder }})</option>
+      {% endfor %}
+    </select>
+    <div class="modal-footer">
+      <button type="submit" class="btn btn-default" name="button" value="apply"> Update</button>
+    </div>
+  {% else %}
+    <div class="alert alert-warning" role="warn">There are no candidate assignments to update.</div>
+  {% endif %}
+</form>

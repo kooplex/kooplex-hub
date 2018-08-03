@@ -134,6 +134,21 @@ class Course(models.Model):
                 bindable.append(assignment)
         return bindable
 
+    @register.filter
+    def list_updatableassignments(self, teacher):
+        from .assignment import Assignment
+        assignment_candidates = list(Assignment.objects.filter(creator = teacher, course = self))
+        #FIXME: extend with those assignments another teacher of the same course created
+        assignments = []
+        for a in assignment_candidates:
+            sourcedir = os.path.join(Dirname.courseprivate(self), a.folder)
+            if os.path.exists(sourcedir):
+                assignments.append(a)
+            else:
+                logger.warning("Assignment source dir %s is missing" % sourcedir)
+        return assignments
+
+
 class UserCourseBinding(models.Model):
     user = models.ForeignKey(User, null = False)
     course = models.ForeignKey(Course, null = False)
@@ -148,7 +163,6 @@ class UserCourseBinding(models.Model):
     def assignments(self):
         from .assignment import Assignment
         for a in Assignment.objects.filter(course = self.course, flag = self.flag):
-            #FIXME: check expiry date
             yield a
 
 

@@ -6,8 +6,8 @@
 <h4>Assignments related to course <span style="font-weight: bold">{{ course.courseid }}</span></h4>
 <ul class="nav nav-tabs">
   <li class="active"><a href="#pane_newassignment-{{ course.id }}" data-toggle="tab">Create</a></li>
-  <li><a href="#pane_bindassignment-{{ course.id }}" data-toggle="tab">Assign</a></li>
   <li><a href="#pane_updateassignment-{{ course.id }}" data-toggle="tab">Update</a></li>
+  <li><a href="#pane_bindassignment-{{ course.id }}" data-toggle="tab">Assign</a></li>
   <li><a href="#pane_collectassignment-{{ course.id }}" data-toggle="tab">Collect</a></li>
   <li><a href="#pane_correctassignment-{{ course.id }}" data-toggle="tab">Correct</a></li>
   <li><a href="#pane_feedbackassignment-{{ course.id }}" data-toggle="tab">Feedback</a></li>
@@ -16,11 +16,11 @@
   <div id="pane_newassignment-{{ course.id }}" class="tab-pane fade in active">
     {% include 'edu/pane-massassign.html' %}
   </div>
+  <div id="pane_updateassignment-{{ course.id }}" class="tab-pane fade">
+    {% include 'edu/pane-update.html' %}
+  </div>
   <div id="pane_bindassignment-{{ course.id }}" class="tab-pane fade">
     {% include 'edu/pane-bind.html' %}
-  </div>
-  <div id="pane_updateassignment-{{ course.id }}" class="tab-pane fade">
-    <div class="alert alert-warning" role="alert">TBA</div>
   </div>
   <div id="pane_collectassignment-{{ course.id }}" class="tab-pane fade">
     {% include 'edu/pane-collect.html' %}
