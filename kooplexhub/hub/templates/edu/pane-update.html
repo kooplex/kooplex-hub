@@ -2,7 +2,7 @@
   {% csrf_token %}
   <input type="hidden" name="course_id" value="{{ course.id }}">
   {% if course|list_updatableassignments:user %}
-    <div class="alert alert-warning" role="alert">Select the assigment to update.</div>
+    <div class="alert alert-warning">Select the assigment to update.</div>
     <label>Assignment:</label>
     <select name="assignmentid">
       {% for a in course|list_updatableassignments:user %}
@@ -13,6 +13,6 @@
       <button type="submit" class="btn btn-default" name="button" value="apply"> Update</button>
     </div>
   {% else %}
-    <div class="alert alert-warning" role="warn">There are no candidate assignments to update.</div>
+    <div class="alert alert-warning">There are no candidate assignments to update.</div>
   {% endif %}
 </form>

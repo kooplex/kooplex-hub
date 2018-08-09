@@ -9,7 +9,7 @@
 {% endif %}
   <div class="card-header" id="heading-{{ project.id }}">
     {% include 'container/startopen.html' %}
-    <button class="btn btn-outline-dark" data-toggle="collapse" data-target="#collapse-{{ project.id }}" aria-expanded="true" aria-controls="collapse-{{ project.id }}">
+    <button class="btn btn-outline-dark" data-toggle="collapse" data-target="#collapse-{{ project.id }}" aria-expanded="true" aria-controls="collapse-{{ project.id }}" style="min-width: 15em; text-align: left;">
       {% include 'container/containerstatus.html' %}
       <strong>{{ project.name }}</strong>
     </button>
@@ -33,28 +33,20 @@
       {% if caller == 'teacher' or caller == 'projectowner' %}
         <div style="float: right;">
         {% if caller == 'teacher' %}
-          <a href="{% url 'assignment:manager' project.course.id %}">
-            <button type="button" class="btn btn-secondary" data-toggle="tooltip" title="You can create and manage assignments related to course {{ project.name }}." data-placement="top">
-              <span class="oi oi-pencil" aria-hidden="true"></span>
-            </button></a>
+          <a href="{% url 'assignment:manager' project.course.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="You can create and manage assignments related to course {{ project.name }}." data-placement="top">
+            <span class="oi oi-pencil" aria-hidden="true"></span></a>
         {% endif %} {% comment %} TODO: in else branch we can add reporting button {% endcomment %}
           <!-- a href="#" data-toggle="modal" data-target="#project-settings-{{ project.id  }}" -->
-          <a href="{% url 'project:configure' project.id  %}">
-            <button type="button" class="btn btn-secondary" data-toggle="tooltip" title="Settings of project {{ project.name }}. You can change the image, modify volume attachments." data-placement="top">
-              <span class="oi oi-wrench" aria-hidden="true"></span>
-            </button></a>
-          <a href="{% url 'project:hide' project.id %}">
-            <button type="button" class="btn btn-secondary" data-toggle="tooltip" title="You can hide {{ project.name }} from your list. The related container will be stopped and removed." data-placement="top">
-              <span class="oi oi-eye" aria-hidden="true"></span>
-            </button></a>
+          <a href="{% url 'project:configure' project.id  %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Settings of project {{ project.name }}. You can change the image, modify volume attachments." data-placement="top">
+            <span class="oi oi-wrench" aria-hidden="true"></span></a>
+          <a href="{% url 'project:hide' project.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="You can hide {{ project.name }} from your list. The related container will be stopped and removed." data-placement="top">
+            <span class="oi oi-eye" aria-hidden="true"></span></a>
         </div>  <!-- float //-->
       {% endif %}
       {% if caller == 'student' %} <!-- FIXME: only when active assignments are there -->
         <div style="float: right;">
-          <a href="#" data-toggle="modal" data-target="#assignments-submit-{{ project.id  }}">
-            <button type="button" class="btn btn-secondary" data-toggle="tooltip" title="You can upload your assignments related to course {{ project.name }}." data-placement="top">
-              <span class="oi oi-pencil" aria-hidden="true"></span>
-            </button></a>
+          <a href="#" data-toggle="modal" data-target="#assignments-submit-{{ project.id  }}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="You can upload your assignments related to course {{ project.name }}." data-placement="top">
+            <span class="oi oi-pencil" aria-hidden="true"></span></a>
         </div>  <!-- float //-->
       {% endif %}
       </div>   <!-- card-body -->

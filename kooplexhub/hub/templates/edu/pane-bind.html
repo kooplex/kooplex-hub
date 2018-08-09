@@ -2,7 +2,7 @@
   {% csrf_token %}
   <input type="hidden" name="course_id" value="{{ course.id }}">
   {% if course.bindableassignments %}
-    <div class="alert alert-warning" role="alert">Select assignment and student to bind right now.</div>
+    <div class="alert alert-warning">Select assignment and student to bind right now.</div>
     <table>
       <thead>
         <tr><td>Bind<td>Assignment(Folder)<td>Student
@@ -19,6 +19,6 @@
       <button type="submit" class="btn btn-default" name="button" value="apply"> Bind</button>
     </div>
   {% else %}
-    <div class="alert alert-warning" role="warning">There are no candidate assignments to bind yet.</div>
+    <div class="alert alert-warning">There are no candidate assignments to bind yet.</div>
   {% endif %}
 </form>

@@ -118,7 +118,7 @@ def manage(request):
         }
         return render(request, 'project/manage.html', context = context_dict)
     else:
-        next_page = request.POST.get('next_page', 'teaching:list') #FIXME
+        next_page = request.POST.get('next_page', 'list:teaching') #FIXME
         hide_bindingids_req = set([ int(i) for i in request.POST.getlist('selection') ])
         n_hide = 0
         n_unhide = 0
@@ -144,7 +144,7 @@ def manage(request):
 def hide(request, project_id):
     """Hide project from the list."""
     logger.debug("project id %s, user %s" % (project_id, request.user))
-    next_page = request.GET.get('next_page', 'teaching:list') #FIXME
+    next_page = request.GET.get('next_page', 'list:teaching') #FIXME
     try:
         project = Project.objects.get(id = project_id)
         UserProjectBinding.setvisibility(project, request.user, hide = True)
