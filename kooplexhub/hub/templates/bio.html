@@ -1,21 +1,24 @@
-<div id="update-bio" class="modal fade modal-dialog" role="dialog" style="position: fixed; top: 0px; ">
-  <div class="modal-content">
-    <form id="profile" class="form-horizontal" action="{% url 'user:updateprofile' %}" method="post">
-      {% csrf_token %}
-      <div class="modal-body">
-        <button type="button" class="close" data-dismiss="modal">&times;</button>
-        <h4>Update your profile</h4>
-        Location: <input name="location" value="{{ user.profile.location }}" />
-        <br>
-        Short cv:
-        <textarea rows="6" cols="100" name="bio" id="bio">{{ user.profile.bio }}</textarea>
-        <br>
-        Username: {{ user.username }}
-      </div>     <!-- modal-body -->
-      <div class="modal-footer">
-        <button type="submit" class="btn btn-default" name="button" value="apply"> Apply</button>
-        <button class="btn btn-default" data-dismiss="modal">Cancel</button>
+<div class="modal fade" id="update-bio" tabindex="-1" role="dialog" aria-labelledby="modalAbout" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="longTitleBio">Update your profile</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
       </div>
-    </form>
-  </div>         <!-- modal-content -->
+      <form id="profile" class="form-horizontal" action="{% url 'user:updateprofile' %}" method="post">
+      {% csrf_token %}
+        <div class="modal-body">
+          <p>Username: {{ user.username }}</p>
+          {{ f_bio.as_p }}
+          <input type="hidden" name="user_id" value="{{ user.id }}">
+        </div>     <!-- modal-body -->
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-default" name="button" value="apply"> Apply</button>
+          <button class="btn btn-default" data-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+    </div>       <!-- modal-content -->
+  </div>         <!-- modal-dialog -->
 </div>           <!-- modal -->

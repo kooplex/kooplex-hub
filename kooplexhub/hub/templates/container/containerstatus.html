@@ -1,10 +1,10 @@
 {% if container %}
   {% if container.is_running %}
-    <span class="glyphicon glyphicon-ok-circle" aria-hidden="true" data-toggle="tooltip" title="Project container is present and running" data-placement="bottom"></span>
+    <span class="oi oi-circle-check" aria-hidden="true" data-toggle="tooltip" title="Project container is present and running" data-placement="bottom"></span>
   {% else %}
-    <span class="glyphicon glyphicon-remove-circle" aria-hidden="true" data-toggle="tooltip" title="Project container is present and stopped" data-placement="bottom"></span>
+    <span class="oi oi-circle-x" aria-hidden="true" data-toggle="tooltip" title="Project container is present and stopped" data-placement="bottom"></span>
   {% endif %}
 {% else %}
-    <span class="glyphicon glyphicon-ban-circle" aria-hidden="true" data-toggle="tooltip" title="Project container is not present" data-placement="bottom"></span>
+    <span class="oi oi-ban" aria-hidden="true" data-toggle="tooltip" title="Project container is not present" data-placement="bottom"></span>
 {% endif %}
 

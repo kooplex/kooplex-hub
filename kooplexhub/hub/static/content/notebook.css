@@ -16,8 +16,8 @@ div.running-containers{
 }
 
 div.new-project{
-//  background-color: #9abde4;
 float: right;
+/*  background-color: #9abde4; */
     border-color: black;
     margin-top:5px;
 }
@@ -26,7 +26,7 @@ div.projects{
     border-width: 2px;
     border-color: aliceblue;
     border-style: solid;
-#    border-radius: 10px;
+/*    border-radius: 10px; */
     padding: 10px;
     width:auto;
     transition:height 0.5s;
@@ -44,9 +44,9 @@ div.session{
     border-width: 2px;
     border-color: aliceblue;
     border-style: solid;
-//    border-radius: 10px;
+/*    border-radius: 10px; */
     background-color: #dddddd;
-//    border-color: black;
+/*    border-color: black; */
     padding: 10px;
     margin-left: 40px;
     width:auto;
@@ -77,36 +77,36 @@ padding: 5px;
       border-width: 2px;
     border-color: aliceblue;
     border-style: solid;
-//    border-radius: 10px;
+/*    border-radius: 10px; */
 }
 span.shutdown {
-//background-color: #ff7377;
+/*background-color: #ff7377;*/
 background-color: white;
 }
 span.stop {
-//background-color: #ff7377;
+/*background-color: #ff7377;*/
 background-color: white;
 }
 span.start {
-//background-color: green;
+/*background-color: green;*/
 background-color: white;
 }
 span.delete {
-//background-color: #6d7cff;
+/*background-color: #6d7cff;*/
 background-color: white;
 }
 span.open {
-//background-color: #5bc0de;
+/*background-color: #5bc0de;*/
 background-color: white;
 }
 
 span.commit {
-//background-color: gold;
+/*background-color: gold;*/
 background-color: white;
 }
 
 span.commit {
-//background-color: gold;
+/*background-color: gold;*/
 background-color: white;
 }
 

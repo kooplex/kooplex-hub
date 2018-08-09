@@ -19,9 +19,8 @@ urlpatterns = [
 
     url(r'^hub/oauth/', include('social_django.urls', namespace = 'social')),
     url(r'^hub/container/', include('hub.views.container', namespace = 'container')),
+    url(r'^hub/list/', include('hub.views.listing', namespace = 'list')),
     url(r'^hub/project/', include('hub.views.project', namespace = 'project')),
-    url(r'^hub/teaching/', include('hub.views.teaching', namespace = 'teaching')),
-    url(r'^hub/course/', include('hub.views.courses', namespace = 'course')),
     url(r'^hub/assignment/', include('hub.views.assignment', namespace = 'assignment')),
     url(r'^hub/user/', include('hub.views.user', namespace = 'user')),
     url(r'^hub/?', indexpage, name = 'indexpage'),

@@ -72,7 +72,7 @@ class UserCourseBindingAdmin(admin.ModelAdmin):
 
 @admin.register(Assignment)
 class AssignmentAdmin(admin.ModelAdmin):
-    list_display = ('id', 'course', 'flag', 'name', 'folder', 'creator', 'description', 'created_at', 'valid_from', 'expires_at', 'can_studentsubmit')
+    list_display = ('id', 'course', 'flag', 'name', 'safename', 'folder', 'creator', 'description', 'is_massassignment', 'created_at', 'valid_from', 'expires_at', 'can_studentsubmit')
 
 @admin.register(UserAssignmentBinding)
 class UserAssignmentBindingAdmin(admin.ModelAdmin):

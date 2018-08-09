@@ -1,36 +1,51 @@
-
 {% extends "layout.html" %}
 
+{% load staticfiles %}
+{% load render_table from django_tables2 %}
+
+{% block header_extra %}
+    <link rel="stylesheet" href="{% static 'css/bootstrap-datetimepicker.min.css' %}">
+{% endblock %}
+
 {% block content %}
-
-<h4>Assignments related to course <span style="font-weight: bold">{{ course.courseid }}</span></h4>
-<ul class="nav nav-tabs">
-  <li class="active"><a href="#pane_newassignment-{{ course.id }}" data-toggle="tab">Create</a></li>
-  <li><a href="#pane_updateassignment-{{ course.id }}" data-toggle="tab">Update</a></li>
-  <li><a href="#pane_bindassignment-{{ course.id }}" data-toggle="tab">Assign</a></li>
-  <li><a href="#pane_collectassignment-{{ course.id }}" data-toggle="tab">Collect</a></li>
-  <li><a href="#pane_correctassignment-{{ course.id }}" data-toggle="tab">Correct</a></li>
-  <li><a href="#pane_feedbackassignment-{{ course.id }}" data-toggle="tab">Feedback</a></li>
-</ul>
-<div class="tab-content">
-  <div id="pane_newassignment-{{ course.id }}" class="tab-pane fade in active">
+<div>
+  <h4>Assignments related to course {{ course.courseid }}</h4>
+  <ul class="nav nav-tabs" id="assignmentTabs" role="tablist">
+    <li class="nav-item"><a class="nav-link active" href="#pane_newassignment-{{ course.id }}" data-toggle="tab">Create</a></li>
+    <li class="nav-item"><a class="nav-link" href="#pane_updateassignment-{{ course.id }}" data-toggle="tab">Update</a></li>
+    <li class="nav-item"><a class="nav-link" href="#pane_bindassignment-{{ course.id }}" data-toggle="tab">Assign</a></li>
+    <li class="nav-item"><a class="nav-link" href="#pane_collectassignment-{{ course.id }}" data-toggle="tab">Collect</a></li>
+    <li class="nav-item"><a class="nav-link" href="#pane_correctassignment-{{ course.id }}" data-toggle="tab">Correct</a></li>
+    <li class="nav-item"><a class="nav-link" href="#pane_feedbackassignment-{{ course.id }}" data-toggle="tab">Feedback</a></li>
+  </ul>
+  <div class="tab-content">
+    <div id="pane_newassignment-{{ course.id }}" class="tab-pane fade show active">
     {% include 'edu/pane-massassign.html' %}
-  </div>
-  <div id="pane_updateassignment-{{ course.id }}" class="tab-pane fade">
-    {% include 'edu/pane-update.html' %}
-  </div>
-  <div id="pane_bindassignment-{{ course.id }}" class="tab-pane fade">
-    {% include 'edu/pane-bind.html' %}
-  </div>
-  <div id="pane_collectassignment-{{ course.id }}" class="tab-pane fade">
-    {% include 'edu/pane-collect.html' %}
-  </div>
-  <div id="pane_correctassignment-{{ course.id }}" class="tab-pane fade">
-    {% include 'edu/pane-correct.html' %}
-  </div>
-  <div id="pane_feedbackassignment-{{ course.id }}" class="tab-pane fade">
-    {% include 'edu/pane-feedback.html' %}
-  </div>
-</div>     <!-- tab-content -->
+    </div>
+    <div id="pane_updateassignment-{{ course.id }}" class="tab-pane fade">
+      {% include 'edu/pane-update.html' %}
+    </div>
+    <div id="pane_bindassignment-{{ course.id }}" class="tab-pane fade">
+      {% include 'edu/pane-bind.html' %}
+    </div>
+    <div id="pane_collectassignment-{{ course.id }}" class="tab-pane fade">
+      {% include 'edu/pane-collect.html' %}
+    </div>
+    <div id="pane_correctassignment-{{ course.id }}" class="tab-pane fade">
+      {% include 'edu/pane-correct.html' %}
+    </div>
+    <div id="pane_feedbackassignment-{{ course.id }}" class="tab-pane fade">
+      {% include 'edu/pane-feedback.html' %}
+    </div>
+  </div>     <!-- tab-content -->
+</div>      <!-- row -->
 
+{% endblock %}
+
+{% block scripts %}
+<script src="https://momentjs.com/downloads/moment.js"></script>
+<script src="{% static 'scripts/bootstrap-datetimepicker.min.js' %}"></script>
+<script type="text/javascript">
+    $('.datetimepicker').datetimepicker();
+</script>
 {% endblock %}

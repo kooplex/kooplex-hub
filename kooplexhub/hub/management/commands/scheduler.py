@@ -6,7 +6,7 @@ from hub.models import Assignment, UserAssignmentBinding
 logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
-    help = 'Check assignment timestamps, and if necessary hand out or collect given assignemnts'
+    help = 'Check assignment timestamps, and if necessary hand out or collect given assignments'
 
     def add_arguments(self, parser):
         parser.add_argument('--dry', help = "Dry run: list tasks to be done, and do not actually do anything with them", action = "store_true")

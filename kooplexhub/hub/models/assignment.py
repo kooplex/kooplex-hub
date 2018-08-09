@@ -19,10 +19,10 @@ class Assignment(models.Model):
     flag = models.CharField(max_length = 32, null = True)
     name = models.CharField(max_length = 32, null = False)
     creator = models.ForeignKey(User, null = False)
-    description = models.TextField(max_length = 500, blank = True)
+    description = models.TextField(max_length = 500)
     folder = models.CharField(max_length = 32, null = False)
     created_at = models.DateTimeField(auto_now_add = True)
-    valid_from = models.DateTimeField(auto_now_add = True)
+    valid_from = models.DateTimeField(null = False)
     expires_at = models.DateTimeField(null = True)
     can_studentsubmit = models.BooleanField(default = True)
     is_massassignment = models.BooleanField(default = True)
@@ -37,7 +37,6 @@ class Assignment(models.Model):
     def list_students_bindable(self):
         students = []
         for usercoursebinding in UserCourseBinding.objects.filter(course = self.course, flag = self.flag, is_teacher = False):
-            logger.debug(usercoursebinding.user)
             try:
                 UserAssignmentBinding.objects.get(assignment = self, user = usercoursebinding.user)
             except UserAssignmentBinding.DoesNotExist:
@@ -132,7 +131,7 @@ def snapshot_assignment(sender, instance, created, **kwargs):
         snapshot_assignment(instance)
         if not instance.is_massassignment:
             return
-        if instance.state == instance.IS_VALID:
+        if instance.state == instance.ST_VALID:
             student_list = instance.bind_students()
 
 

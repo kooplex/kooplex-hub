@@ -1,9 +1,9 @@
 <ul class="nav navbar-nav navbar-right">
   <li class="dropdown">
   {% if user.is_authenticated %}
-    <a class="dropdown-togle" data-toggle="dropdown" href="#" role="button" type="button" data-toggle="tooltip" title="Manage your profile and projects" data-placement="bottom">Hello {{ user.first_name }}! <span class="glyphicon glyphicon-chevron-down" /></a>
+    <a class="dropdown-togle" data-toggle="dropdown" href="#" role="button">Hello {{ user.first_name }}! <span class="glyphicon glyphicon-chevron-down"></span></a>
   {% else %}
-    <a class="dropdown-togle" data-toggle="dropdown" href="#" role="button" type="button" data-toggle="tooltip" title="Some hints about Kooplex and its usage" data-placement="bottom">Help <span class="glyphicon glyphicon-chevron-down" /></a>
+    <a class="dropdown-togle" data-toggle="dropdown" href="#" role="button">Help <span class="glyphicon glyphicon-chevron-down"></span></a>
   {% endif %}
     <ul class="dropdown-menu">
   {% if user.is_authenticated %}
@@ -18,8 +18,8 @@
   </li>
   
   {% if user.is_authenticated %}
-    <li><a href="{% url 'logout' %}">Log off <span class="glyphicon glyphicon-log-out"/></a></li>
+    <li><a href="{% url 'logout' %}">Log off <span class="glyphicon glyphicon-log-out"></span></a></li>
   {% else %}
-    <li><a href="{% url 'social:begin' 'elteoidc' %}">Log in <span class="glyphicon glyphicon-log-in"/></a></li>
+    <li><a href="{% url 'social:begin' 'elteoidc' %}">Log in <span class="glyphicon glyphicon-log-in"></span></a></li>
   {% endif %}
 </ul>

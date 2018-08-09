@@ -28,6 +28,7 @@ class Profile(models.Model):
         for binding in UserCourseBinding.objects.filter(user = self.user):
             yield binding
 
+    #FIXME: deprecat
     @property
     def courseprojects_taught(self):
         duplicate = set()
@@ -36,6 +37,17 @@ class Profile(models.Model):
                 if coursebinding.course.project in duplicate:
                     continue
                 yield coursebinding.course.project
+                duplicate.add(coursebinding.course.project)
+
+    #FIXME: refactor
+    def courseprojects_taught_NEW(self):
+        from .project import UserProjectBinding
+        duplicate = set()
+        for coursebinding in self.coursebindings:
+            if coursebinding.is_teacher:
+                if coursebinding.course.project in duplicate:
+                    continue
+                yield UserProjectBinding.objects.get(user = self.user, project = coursebinding.course.project)
                 duplicate.add(coursebinding.course.project)
 
     @property

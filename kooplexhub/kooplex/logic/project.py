@@ -26,37 +26,27 @@ def configure_project(project, **kw):#image, scope, volumes, collaborators, desc
     mark_to_remove = False
     logger.debug(project)
     image = kw.get('image')
-    vol_fun = set(kw.get('volumes_functional', []))
-    vol_stg = set(kw.get('volumes_storage', []))
+    volumes = set(kw.get('volumes', []))
     
     olddescr = project.description
-    project.description = kw.get('description',olddescr)
+    project.description = kw.get('description', olddescr)
 
     if image and project.image != image:
         project.image = image
         mark_to_remove = True
 
-    old_vol_fun = set(project.functional_volumes)    
-    old_vol_stg = set(project.storage_volumes)    
+    old_volumes = set(project.functional_volumes).union(project.storage_volumes)    
 
-    logger.debug("old: %s new: %s" % (old_vol_fun, vol_fun))
+    logger.debug("old: %s new: %s" % (old_volumes, volumes))
 
-    if old_vol_fun != vol_fun:
+    if old_volumes != volumes:
         mark_to_remove = True
-        vol_remove = old_vol_fun.difference( vol_fun )
-        vol_add = vol_fun.difference( old_vol_fun )
-        logger.debug("+ %s\n- %s" % (vol_add, vol_remove))
+        vol_remove = old_volumes.difference( volumes )
+        vol_add = volumes.difference( old_volumes )
+        logger.debug("- %s" % vol_remove)
         for volume in vol_remove:
             VolumeProjectBinding.objects.get(volume = volume, project = project).delete()
-        for volume in vol_add:
-            VolumeProjectBinding.objects.create(volume = volume, project = project)
-    
-    if old_vol_stg != vol_stg:
-        mark_to_remove = True
-        vol_remove = old_vol_stg.difference( vol_stg )
-        vol_add = vol_stg.difference( old_vol_stg )
-        for volume in vol_remove:
-            VolumeProjectBinding.objects.get(volume = volume, project = project).delete()
+        logger.debug("+ %s" % vol_add)
         for volume in vol_add:
             VolumeProjectBinding.objects.create(volume = volume, project = project)
     

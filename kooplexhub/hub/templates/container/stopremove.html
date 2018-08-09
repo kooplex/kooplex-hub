@@ -1,19 +1,19 @@
 {% if container %}
   {% if container.is_running %}
      <a href="{% url 'container:stop' container.id next_page %}">
-       <button role="button" type="button" class="btn btn-success" style="padding: 3px 6px 6px 6px">
-       <span class="glyphicon glyphicon-remove-circle" aria-hidden="true"/></button>
+       <button type="button" class="btn btn-danger" style="padding: 3px 6px 6px 6px; float: right;">
+       <span class="oi oi-x" aria-hidden="true"></span></button>
      </a>
   {% else %}
      <a href="{% url 'container:remove' container.id next_page %}">
-       <button role="button" type="button" class="btn btn-danger" style="padding: 3px 6px 6px 6px">
-       <span class="glyphicon glyphicon-fire" aria-hidden="true"/></button>
+       <button type="button" class="btn btn-danger" style="padding: 3px 6px 6px 6px; float: right;">
+       <span class="oi oi-fire" aria-hidden="true"></span></button>
      </a>
   {% endif %}
 {% else %}
      <a href="#">
-       <button role="button" type="button" class="btn btn-default" style="padding: 3px 6px 6px 6px">
-       <span class="glyphicon glyphicon-remove-circle" aria-hidden="true"/></button>
+       <button type="button" class="btn btn-default disabled" style="padding: 3px 6px 6px 6px; float: right;">
+       <span class="oi oi-x" aria-hidden="true"></span></button>
      </a>
 {% endif %}
 
