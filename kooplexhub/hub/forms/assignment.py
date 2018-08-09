@@ -38,14 +38,17 @@ class FormAssignment(forms.ModelForm):
         )
         self.fields["expires_at"].widget.attrs.update({ "class": "datetimepicker" })
         self.fields["description"].widget.attrs["rows"] = 3
+        self.fields["description"].widget.attrs["cols"] = 20
         if course is not None:
             C_folder = zip(course.dirs_assignmentcandidate(), course.dirs_assignmentcandidate())
             self.fields["folder"] = forms.ChoiceField(choices = C_folder, help_text = _('A snapshot will be created of all files in the selected folder, and students will receive a copy of this snapshot.'))
+            self.fields["folder"].widget.attrs["style"] = "width: 27ex"
             if user is not None:
                 C_flags = []
                 for flag in course.lookup_usercourseflags(user):
                     C_flags.append( (flag, "%s (%d students)" % (flag, course.count_students4flag(flag))) )
                 self.fields["flags"] = forms.MultipleChoiceField(label = "Courses", choices = C_flags, help_text = _('Select those courses for which this assignment applies for.'))
+                self.fields["flags"].widget.attrs["style"] = "width: 27ex"
         for field in self.fields:
             help_text = self.fields[field].help_text
             self.fields[field].help_text = None

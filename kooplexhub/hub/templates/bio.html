@@ -10,8 +10,9 @@
       <form id="profile" class="form-horizontal" action="{% url 'user:updateprofile' %}" method="post">
       {% csrf_token %}
         <div class="modal-body">
-          <p>Username: {{ user.username }}</p>
-          {{ f_bio.as_p }}
+          <table>
+            {{ f_bio.as_table }}
+          </table>
           <input type="hidden" name="user_id" value="{{ user.id }}">
         </div>     <!-- modal-body -->
         <div class="modal-footer">
