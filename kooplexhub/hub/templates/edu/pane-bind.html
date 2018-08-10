@@ -1,20 +1,12 @@
 <form id="assignmentbind-form-{{ course.id }}" class="form-horizontal" action="{% url 'assignment:bind' %}" method="post">
   {% csrf_token %}
   <input type="hidden" name="course_id" value="{{ course.id }}">
+  {% load render_table from django_tables2 %}
   {% if course.bindableassignments %}
     <div class="alert alert-warning">Select assignment and student to bind right now.</div>
-    <table>
-      <thead>
-        <tr><td>Bind<td>Assignment(Folder)<td>Student
-      </thead>
-      <tbody>
-      {% for a in course.bindableassignments %}
-        {% for s in a.list_students_bindable %}
-        <tr><td><input type="checkbox" name="binding" value="{{ a.id }}-{{ s.id }}"><td>{{ a.name }}({{ a.folder }})<td>{{ s }}
-        {% endfor %}
-      {% endfor %}
-      </tbody>
-    </table>
+      <div style="position: relative">
+        {% render_table t_bind %}
+      </div>
     <div class="modal-footer">
       <button type="submit" class="btn btn-default" name="button" value="apply"> Bind</button>
     </div>

@@ -87,6 +87,7 @@ class UserAssignmentBinding(models.Model):
     user = models.ForeignKey(User, null = False)
     assignment = models.ForeignKey(Assignment, null = False)
     received_at = models.DateTimeField(auto_now_add = True)
+    valid_from = models.DateTimeField(null = True)
     expires_at = models.DateTimeField(null = True)
     state = models.CharField(max_length = 16, choices = [ (x, ST_LOOKUP[x]) for x in STATE_LIST ], default = ST_WORKINPROGRESS)
     submitted_at = models.DateTimeField(null = True)

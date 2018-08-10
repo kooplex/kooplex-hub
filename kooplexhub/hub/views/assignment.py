@@ -6,40 +6,13 @@ from django.conf.urls import url
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.shortcuts import redirect, render
-import django_tables2 as tables
 from django_tables2 import RequestConfig
 
 from hub.models import Course, UserCourseBinding, Assignment, UserAssignmentBinding
 from kooplex.lib import now
-from hub.forms import FormAssignment
+from hub.forms import FormAssignment, T_BIND, T_COLLECT, T_CORRECT
 
 logger = logging.getLogger(__name__)
-
-class SelectionColumn(tables.Column):
-    def render(self, value):
-      return format_html('<input type="checkbox" name="selection" value="%s">' % value)
-
-class T_COLLECT(tables.Table):
-  id = SelectionColumn(verbose_name = 'Select', orderable = False)
-  class Meta:
-      from hub.models import Assignment
-      model = Assignment
-      fields = ('id', 'name', 'folder', 'created_at', 'valid_from', 'expires_at', 'is_massassignment', 'can_studentsubmit')
-      sequence = ('id', 'name', 'folder', 'created_at', 'valid_from', 'expires_at', 'is_massassignment', 'can_studentsubmit')
-      attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
-
-class T_CORRECT(tables.Table):
-  id = SelectionColumn(verbose_name = 'Select', orderable = False)
-  def render_assignment(self, value):
-      return format_html(
-          "<span data-toggle='tooltip' title='Assigned by %s %s\nFolder: %s' data-placement='right'>%s</span>" % 
-          (value.creator.first_name, value.creator.last_name, value.folder, value.name)
-      )
-  class Meta:
-      from hub.models import UserAssignmentBinding
-      model = UserAssignmentBinding
-      exclude = ('received_at', 'expires_at', 'corrector', 'corrected_at')
-      attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
 
 
 @login_required
@@ -51,6 +24,8 @@ def assignmentform(request, course_id):
     try:
         course = Course.objects.get(id = course_id)
         assert len(list(UserCourseBinding.objects.filter(user = user, course = course, is_teacher = True))) > 0, "%s is not a teacher of course %s" % (user, course)
+        table_bind = T_BIND(course.bindableassignmentsNEW())  #FIXME: refactor rename
+        RequestConfig(request).configure(table_bind)
         table_collect = T_COLLECT(course.collectableassignments())
         RequestConfig(request).configure(table_collect)
         table_correct = T_CORRECT(course.lookup_userassignmentbindings_submitted(user))
@@ -63,20 +38,23 @@ def assignmentform(request, course_id):
     context_dict = {
         'course': course,
         'f_assignment': FormAssignment(user = user, course = course),
+        't_bind': table_bind,
         't_collect': table_collect,
         't_correct': table_correct,
         't_feedback': table_feedback,
     }
     return render(request, 'edu/assignments.html', context = context_dict)
 
+#FIXME: place in libbase?
+def translate_date(d):
+    try:
+        return datetime.datetime.strptime(d, "%m/%d/%Y %I:%M %p").replace(tzinfo = pytz.utc) if d else None
+    except Exception as e:
+        logger.warn("Cannot convert date time -- %s" % e)
+        return None
+
 @login_required
 def new(request):
-    def translate_date(d):
-        try:
-            return datetime.datetime.strptime(d, "%m/%d/%Y %I:%M %p").replace(tzinfo = pytz.utc) if d else None
-        except Exception as e:
-            logger.warn("Cannot convert date time -- %s" % e)
-            return None
     """Create a new assignment"""
     logger.debug(str(request.POST))
     user = request.user
@@ -212,23 +190,32 @@ def markcorrected(request):
 def bind(request):
     from django.contrib.auth.models import User
     """Bind assignment and user"""
-#FIXME: authorization!!!!!
     user = request.user
-    for b in request.POST.getlist('binding'):
-        assignment_id, user_id = b.split('-')
+    thetime = now()
+    oopses = 0
+    done = 0
+    for br in request.POST.getlist('binding_representation'):
+        user_id, assignment_id = br.split('_')
         try:
             assignment = Assignment.objects.get(id = assignment_id)
             student = User.objects.get(id = user_id)
+            assert student in assignment.list_students_bindable(), "Cannot bind %s to %s" % (student, assignment)
+            assert user.profile.is_courseteacher(assignment.course), "You are not a teacher of the course %s" % assignment.course
         except Exception as e:
             logger.error("oops -- %s" % e)
+            oopses += 1
             continue
         try:
             binding = UserAssignmentBinding.objects.get(user = student, assignment = assignment)
             logger.error("Will not create a duplicate %s" % binding)
             messages.error(request, "Prevented from creating a duplicate assignment %s for student %s" % (assignment.name, student))
         except UserAssignmentBinding.DoesNotExist:
-            UserAssignmentBinding.objects.create(user = student, assignment = assignment, expires_at = assignment.expires_at)
-            messages.info(request, "Creating an assignment %s for student %s" % (assignment.name, student))
+            pass
+        valid_from = translate_date(request.POST.get('valid_from_%s' % br))
+        expires_at = translate_date(request.POST.get('expires_at_%s' % br))
+        UserAssignmentBinding.objects.create(user = student, assignment = assignment, valid_from = valid_from, expires_at = expires_at)
+#FIXME> expiry check in model init!
+        messages.info(request, "Creating an assignment %s for student %s" % (assignment.name, student))
     return redirect('list:teaching')
 
 

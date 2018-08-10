@@ -133,6 +133,16 @@ class Course(models.Model):
             if len(students):
                 bindable.append(assignment)
         return bindable
+    def bindableassignmentsNEW(self):  #FIMXE: deprecate the above and rename this one
+        from .assignment import Assignment, UserAssignmentBinding
+        bindable = []
+        for assignment in Assignment.objects.filter(course = self, is_massassignment = False):
+            for student in assignment.list_students_bindable():
+                binding = UserAssignmentBinding(assignment = assignment, user = student)
+                if not binding in bindable:
+                    bindable.append(binding)
+                    yield binding
+
 
     @register.filter
     def list_updatableassignments(self, teacher):
