@@ -1,24 +1,26 @@
-<form id="assignments-submitform-{{ project.id }}" class="form-horizontal" action="{% url 'assignment:submit' %}" method="post">
-  {% csrf_token %}
-  <div id="assignments-submit-{{ project.id }}" class="modal fade modal-dialog" role="dialog" style="position: fixed; top: 0px; ">
+{% load render_table from django_tables2 %}
+
+<div class="modal fade bd-example-modal-lg" id="assignments-submit" tabindex="-1" role="dialog" aria-labelledby="submitAssignment" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
-      <div class="modal-body">
-        <button type="button" class="close" data-dismiss="modal">&times;</button>
-        <h4>Assignments related to course project <span style="font-weight: bold">{{ project.name }}</span></h4>
-        <div class="alert alert-warning" role="alert">Select assignment folders to submit.</div>
-        {% for b in project.course|lookup_userassignmentbindings:user %}
-          <br><input type="checkbox" 
-               {% if b.submittable %}
-               checked
-               {% else %}
-               disabled
-               {% endif %}
-               name="userassignmentbindingid" value="{{ b.id }}"/> {{ b.assignment.name }} {{ b.state_long }}
-        {% endfor %}
+      <div class="modal-header">
+        <h5 class="modal-title" id="submitAssignment">The list of your assignments</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form id="assignments-submitform" class="form-horizontal" action="{% url 'assignment:submit' %}" method="post">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="alert alert-warning" role="alert">Select assignments to submit.</div>
+          {% render_table t_submit %}
+        </div>     <!-- modal-body -->
         <div class="modal-footer">
           <button type="submit" class="btn btn-default" name="button" value="apply"> Submit</button>
+          <button class="btn btn-default" data-dismiss="modal">Cancel</button>
         </div>
-      </div>       <!-- modal-body -->
-    </div>         <!-- modal-content -->
-  </div>           <!-- modal -->
-</frame>
+      </form>
+    </div>       <!-- modal-content -->
+  </div>         <!-- modal-dialog -->
+</div>           <!-- modal -->
+

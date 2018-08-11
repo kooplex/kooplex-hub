@@ -9,7 +9,7 @@ from django.shortcuts import redirect, render
 from django_tables2 import RequestConfig
 
 from hub.models import Course, UserCourseBinding, Assignment, UserAssignmentBinding
-from kooplex.lib import now
+from kooplex.lib import now, translate_date
 from hub.forms import FormAssignment, T_BIND, T_COLLECT, T_CORRECT
 
 logger = logging.getLogger(__name__)
@@ -44,14 +44,6 @@ def assignmentform(request, course_id):
         't_feedback': table_feedback,
     }
     return render(request, 'edu/assignments.html', context = context_dict)
-
-#FIXME: place in libbase?
-def translate_date(d):
-    try:
-        return datetime.datetime.strptime(d, "%m/%d/%Y %I:%M %p").replace(tzinfo = pytz.utc) if d else None
-    except Exception as e:
-        logger.warn("Cannot convert date time -- %s" % e)
-        return None
 
 @login_required
 def new(request):
@@ -106,7 +98,7 @@ def new(request):
 def studentsubmit(request):
     """Handle assignment submission"""
     user = request.user
-    userassignmentbinding_ids = request.POST.getlist('userassignmentbindingid')
+    userassignmentbinding_ids = request.POST.getlist('selection')
     for binding_id in userassignmentbinding_ids:
         try:
             binding = UserAssignmentBinding.objects.get(id = binding_id, user = user)

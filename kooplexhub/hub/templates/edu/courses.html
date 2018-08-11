@@ -2,15 +2,13 @@
 
 {% block content %}
 
-<div class="tab-content">
+  {% include 'edu/assignment_submission.html' %}
+
   {% for project in user.profile.courseprojects_attended %}
     {% if not project|is_hiddenbyuser:user %}
-       <div class="row">
-         {% include 'project/partial.html' with container=project|get_usercontainer:user caller='student' next_page='list:courses' %}
-       </div>
+       {% include 'project/partial.html' with container=project|get_usercontainer:user caller='student' next_page='list:courses' %}
     {% endif %}
   {% endfor %}
-</div><!-- /.tab-content -->
 
 {% endblock %}
 

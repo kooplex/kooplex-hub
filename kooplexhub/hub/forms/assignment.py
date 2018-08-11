@@ -60,3 +60,4 @@ class FormAssignment(forms.ModelForm):
                     'data-placement': 'bottom',
                 }
                 self.fields[field].widget.attrs.update(extra)
+

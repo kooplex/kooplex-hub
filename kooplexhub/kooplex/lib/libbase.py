@@ -20,6 +20,13 @@ def now():
     """
     return datetime.datetime.utcnow().replace(tzinfo = pytz.utc)
 
+def translate_date(d):
+    try:
+        return datetime.datetime.strptime(d, "%m/%d/%Y %I:%M %p").replace(tzinfo = pytz.utc) if d else None
+    except Exception as e:
+        logger.warn("Cannot convert date time -- %s" % e)
+        return None
+
 def keeptrying(method, times, **kw):
     """
     @summary: run an arbitrary method with keyword arguments. In case an exception is raised during the call, 
