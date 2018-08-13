@@ -4,7 +4,10 @@
   {% load render_table from django_tables2 %}
   {% if course.collectableassignments %}
     <div class="alert alert-warning">Select assignments to collect right now.</div>
-    {% render_table t_collect %}
+    <h5>Mass assignments</h5>
+    {% render_table t_collect_mass %}
+    <h5>Petrsonal assignments</h5>
+    {% render_table t_collect_personal %}
     <div class="modal-footer">
       <button type="submit" class="btn btn-default" name="button" value="apply"> Collect</button>
     </div>

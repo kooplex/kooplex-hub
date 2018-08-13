@@ -99,10 +99,14 @@ class Course(models.Model):
                 candidates.append(d)
         return candidates
 
+    def collectableassignments_2(self): return []
+
     def collectableassignments(self):
         from .assignment import Assignment, UserAssignmentBinding
         collectable = []
         for assignment in Assignment.objects.filter(course = self):
+            if not assignment.is_massassignment:
+                continue
             bindings = UserAssignmentBinding.objects.filter(assignment = assignment, state = UserAssignmentBinding.ST_WORKINPROGRESS)
             if len(bindings):
                 collectable.append(assignment)
@@ -112,7 +116,10 @@ class Course(models.Model):
         from .assignment import Assignment, UserAssignmentBinding
         for assignment in Assignment.objects.filter(course = self):
             for binding in UserAssignmentBinding.objects.filter(assignment = assignment, corrector = user, state = UserAssignmentBinding.ST_CORRECTING):
-                mapping = "+:%s:%s" % (Dirname.assignmentcorrectdir(binding, in_hub = False), binding.assignment.safename) 
+                student = binding.user
+#FIXME: this info needs to be rendered is teacher's table. the construction be part of the model or lib/filesystem
+                wd = os.path.join(binding.assignment.safename, "%s_%s_%s" % (student.username, student.first_name, student.last_name))
+                mapping = "+:%s:%s" % (Dirname.assignmentcorrectdir(binding, in_hub = False), wd) 
                 logger.debug(mapping)
                 yield mapping
             for binding in UserAssignmentBinding.objects.filter(assignment = assignment, user = user):

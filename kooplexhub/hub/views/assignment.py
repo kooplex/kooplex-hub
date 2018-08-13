@@ -10,7 +10,7 @@ from django_tables2 import RequestConfig
 
 from hub.models import Course, UserCourseBinding, Assignment, UserAssignmentBinding
 from kooplex.lib import now, translate_date
-from hub.forms import FormAssignment, T_BIND, T_COLLECT, T_CORRECT
+from hub.forms import FormAssignment, T_BIND, T_COLLECT_ASSIGNMENT, T_COLLECT_UABINDING, T_CORRECT
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +26,10 @@ def assignmentform(request, course_id):
         assert len(list(UserCourseBinding.objects.filter(user = user, course = course, is_teacher = True))) > 0, "%s is not a teacher of course %s" % (user, course)
         table_bind = T_BIND(course.bindableassignmentsNEW())  #FIXME: refactor rename
         RequestConfig(request).configure(table_bind)
-        table_collect = T_COLLECT(course.collectableassignments())
-        RequestConfig(request).configure(table_collect)
+        table_collect_mass = T_COLLECT_ASSIGNMENT(course.collectableassignments())
+        RequestConfig(request).configure(table_collect_mass)
+        table_collect_personal = T_COLLECT_UABINDING(course.collectableassignments_2())
+        RequestConfig(request).configure(table_collect_personal)
         table_correct = T_CORRECT(course.lookup_userassignmentbindings_submitted(user))
         RequestConfig(request).configure(table_correct)
         table_feedback = T_CORRECT(course.lookup_userassignmentbindings_correcting(user))
@@ -39,7 +41,8 @@ def assignmentform(request, course_id):
         'course': course,
         'f_assignment': FormAssignment(user = user, course = course),
         't_bind': table_bind,
-        't_collect': table_collect,
+        't_collect_mass': table_collect_mass,
+        't_collect_personal': table_collect_personal,
         't_correct': table_correct,
         't_feedback': table_feedback,
     }
