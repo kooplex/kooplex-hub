@@ -5,22 +5,12 @@ import django_tables2 as tables
 
 from hub.models import UserAssignmentBinding, Assignment
 
-class SelectionColumn(tables.Column):
-    def render(self, value):
-      return format_html('<input type="checkbox" name="selection" value="%s">' % value)
-
-class T_COLLECT_ASSIGNMENT(tables.Table):
-    id = SelectionColumn(verbose_name = 'Select', orderable = False)
-    
-    class Meta:
-        model = Assignment
-        fields = ('id', 'name', 'folder', 'created_at', 'valid_from', 'expires_at', 'can_studentsubmit')
-        sequence = ('id', 'name', 'folder', 'created_at', 'valid_from', 'expires_at', 'can_studentsubmit')
-        attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
-
-class T_COLLECT_UABINDING(tables.Table):
-    pass
-
+def selectioncolumn(name):
+    widget_str = '<input type="checkbox" name="%s" value="%%s">' % name
+    class SelectionColumn(tables.Column):
+        def render(self, value):
+          return format_html(widget_str % value)
+    return SelectionColumn
 
 class tableUserAssignmentCommon:
     def render_assignment(self, value):
@@ -34,8 +24,29 @@ class tableUserAssignmentCommon:
             (value.username, value.first_name, value.last_name)
         )
 
+col_assignmentIDs = selectioncolumn('assignment_ids')
+
+class T_COLLECT_ASSIGNMENT(tables.Table):
+    id = col_assignmentIDs(verbose_name = 'Select', orderable = False)
+    
+    class Meta:
+        model = Assignment
+        fields = ('id', 'name', 'folder', 'created_at', 'valid_from', 'expires_at', 'can_studentsubmit')
+        sequence = ('id', 'name', 'folder', 'created_at', 'valid_from', 'expires_at', 'can_studentsubmit')
+        attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
+
+col_userassignmentbindingIDs = selectioncolumn('userassignmentbinding_ids')
+
+class T_COLLECT_UABINDING(tables.Table, tableUserAssignmentCommon):
+    id = col_userassignmentbindingIDs(verbose_name = 'Select', orderable = False)
+    class Meta:
+        model = UserAssignmentBinding
+        exclude = ('state', 'submitted_at', 'corrector', 'corrected_at')
+        attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
+
+
 class T_CORRECT(tables.Table, tableUserAssignmentCommon):
-    id = SelectionColumn(verbose_name = 'Select', orderable = False)
+    id = col_userassignmentbindingIDs(verbose_name = 'Select', orderable = False)
     class Meta:
         model = UserAssignmentBinding
         exclude = ('received_at', 'expires_at', 'corrector', 'corrected_at')
@@ -62,7 +73,7 @@ class T_BIND(tables.Table, tableUserAssignmentCommon):
         attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
 
 class T_SUBMIT(tables.Table, tableUserAssignmentCommon):
-    id = SelectionColumn(verbose_name = 'Select', orderable = False)
+    id = col_userassignmentbindingIDs(verbose_name = 'Select', orderable = False)
     folder = tables.Column(verbose_name = 'Folder', orderable = False, empty_values = ())
     course = tables.Column(verbose_name = 'Course', orderable = False, empty_values = ())
     def render_folder(self, record):

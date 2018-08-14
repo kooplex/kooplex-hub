@@ -99,14 +99,18 @@ class Course(models.Model):
                 candidates.append(d)
         return candidates
 
-    def collectableassignments_2(self): return []
-
-    def collectableassignments(self):
+    def collectableassignments_2(self): #FIXME: refactor and give a better name
         from .assignment import Assignment, UserAssignmentBinding
         collectable = []
-        for assignment in Assignment.objects.filter(course = self):
-            if not assignment.is_massassignment:
-                continue
+        for assignment in Assignment.objects.filter(course = self, is_massassignment = False):
+            for binding in UserAssignmentBinding.objects.filter(assignment = assignment, state = UserAssignmentBinding.ST_WORKINPROGRESS):
+                yield binding
+
+    def collectableassignments(self):
+#FIXME: can be a generator
+        from .assignment import Assignment, UserAssignmentBinding
+        collectable = []
+        for assignment in Assignment.objects.filter(course = self, is_massassignment = True):
             bindings = UserAssignmentBinding.objects.filter(assignment = assignment, state = UserAssignmentBinding.ST_WORKINPROGRESS)
             if len(bindings):
                 collectable.append(assignment)

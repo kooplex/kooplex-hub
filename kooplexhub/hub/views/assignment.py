@@ -101,7 +101,7 @@ def new(request):
 def studentsubmit(request):
     """Handle assignment submission"""
     user = request.user
-    userassignmentbinding_ids = request.POST.getlist('selection')
+    userassignmentbinding_ids = request.POST.getlist('userassignmentbinding_ids')
     for binding_id in userassignmentbinding_ids:
         try:
             binding = UserAssignmentBinding.objects.get(id = binding_id, user = user)
@@ -119,8 +119,9 @@ def studentsubmit(request):
 def teachercollect(request):
     """Handle assignment collection"""
     user = request.user
-    assignment_ids = request.POST.getlist('selection')
+    assignment_ids = request.POST.getlist('assignment_ids')
     course_id = request.POST.get('course_id')
+    userassignmentbinding_ids = request.POST.getlist('userassignmentbinding_ids')
     try:
         course = Course.objects.get(id = course_id)
     except Course.DoesNotExist:
@@ -137,6 +138,17 @@ def teachercollect(request):
         except Exception as e:
             logger.error(e)
             messages.error(request, 'Cannot mark assignment collected -- %s' % e)
+    for binding_id in userassignmentbinding_ids:
+        try:
+            binding = UserAssignmentBinding.objects.get(id = binding_id)
+            assignment = binding.assignment
+            assert assignment.course == course, "course mismatch"
+            UserCourseBinding.objects.get(user = user, course = course, flag = assignment.flag, is_teacher = True)
+            binding.do_collect()
+            messages.info(request, 'Assignment %s of %s for course %s and flag %s is collected' % (assignment.name, binding.user, assignment.course.courseid, assignment.flag))
+        except Exception as e:
+            logger.error(e)
+            messages.error(request, 'Cannot mark assignment collected -- %s' % e)
     return redirect('assignment:manager', course_id)
 
 
@@ -145,7 +157,7 @@ def markcorrection(request):
     """Mark assignments to correct"""
     user = request.user
     course_id = request.POST.get('course_id')
-    userassignmentbinding_ids = request.POST.getlist('selection')
+    userassignmentbinding_ids = request.POST.getlist('userassignmentbinding_ids')
     for binding_id in userassignmentbinding_ids:
         try:
             binding = UserAssignmentBinding.objects.get(id = binding_id)
@@ -166,7 +178,7 @@ def markcorrection(request):
 def markcorrected(request):
     """Mark assignments to correct"""
     user = request.user
-    userassignmentbinding_ids = request.POST.getlist('selection')
+    userassignmentbinding_ids = request.POST.getlist('userassignmentbinding_ids')
     for binding_id in userassignmentbinding_ids:
         try:
             binding = UserAssignmentBinding.objects.get(id = binding_id, state = UserAssignmentBinding.ST_CORRECTING)
