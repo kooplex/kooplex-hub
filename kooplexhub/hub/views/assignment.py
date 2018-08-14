@@ -24,7 +24,7 @@ def assignmentform(request, course_id):
     try:
         course = Course.objects.get(id = course_id)
         assert len(list(UserCourseBinding.objects.filter(user = user, course = course, is_teacher = True))) > 0, "%s is not a teacher of course %s" % (user, course)
-        table_bind = T_BIND(course.bindableassignmentsNEW())  #FIXME: refactor rename
+        table_bind = T_BIND(course.bindableassignments())
         RequestConfig(request).configure(table_bind)
         table_collect_mass = T_COLLECT_ASSIGNMENT(course.collectableassignments())
         RequestConfig(request).configure(table_collect_mass)

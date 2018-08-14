@@ -136,15 +136,8 @@ class Course(models.Model):
                 logger.debug(mapping)
                 yield mapping
 
+ 
     def bindableassignments(self):
-        from .assignment import Assignment, UserAssignmentBinding
-        bindable = []
-        for assignment in Assignment.objects.filter(course = self, is_massassignment = False):
-            students = assignment.list_students_bindable()
-            if len(students):
-                bindable.append(assignment)
-        return bindable
-    def bindableassignmentsNEW(self):  #FIMXE: deprecate the above and rename this one
         from .assignment import Assignment, UserAssignmentBinding
         bindable = []
         for assignment in Assignment.objects.filter(course = self, is_massassignment = False):

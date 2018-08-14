@@ -41,7 +41,8 @@ class T_COLLECT_UABINDING(tables.Table, tableUserAssignmentCommon):
     id = col_userassignmentbindingIDs(verbose_name = 'Select', orderable = False)
     class Meta:
         model = UserAssignmentBinding
-        exclude = ('state', 'submitted_at', 'corrector', 'corrected_at')
+        sequence = ('id', 'user', 'assignment', 'received_at', 'expires_at', 'state')
+        exclude = ('valid_from', 'submitted_at', 'corrector', 'corrected_at')
         attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
 
 
@@ -49,11 +50,13 @@ class T_CORRECT(tables.Table, tableUserAssignmentCommon):
     id = col_userassignmentbindingIDs(verbose_name = 'Select', orderable = False)
     class Meta:
         model = UserAssignmentBinding
-        exclude = ('received_at', 'expires_at', 'corrector', 'corrected_at')
+        exclude = ('received_at', 'valid_from', 'expires_at', 'corrector', 'corrected_at')
         attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
 
 class T_BIND(tables.Table, tableUserAssignmentCommon):
-    selection = tables.Column(verbose_name = 'Select', empty_values = ())
+    selection = tables.Column(verbose_name = 'Select', empty_values = (), orderable = False)
+    valid_from = tables.DateTimeColumn(verbose_name = 'Handout', orderable = False, empty_values = ())
+    expires_at = tables.DateTimeColumn(verbose_name = 'Collect', orderable = False, empty_values = ())
     def render_valid_from(self, record):
         representation = "%d_%d" % (record.user.id, record.assignment.id)
         value_attr = "" if record.valid_from is None else str(record.valid_from)
