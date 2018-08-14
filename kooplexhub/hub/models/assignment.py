@@ -84,7 +84,7 @@ class UserAssignmentBinding(models.Model):
 
     user = models.ForeignKey(User, null = False)
     assignment = models.ForeignKey(Assignment, null = False)
-    received_at = models.DateTimeField(auto_now_add = True)
+    received_at = models.DateTimeField(null = True)
     valid_from = models.DateTimeField(null = True)
     expires_at = models.DateTimeField(null = True)
     state = models.CharField(max_length = 16, choices = [ (x, ST_LOOKUP[x]) for x in STATE_LIST ], default = ST_WORKINPROGRESS)
@@ -104,6 +104,20 @@ class UserAssignmentBinding(models.Model):
         if not self.assignment.can_studentsubmit:
             return False
         return self.state in [ self.ST_WORKINPROGRESS, self.ST_SUBMITTED ]
+
+    @staticmethod
+    def iter_valid():
+        timenow = now()
+        for binding in UserAssignmentBinding.objects.filter(state = UserAssignmentBinding.ST_QUEUED):
+            if timenow > binding.valid_from:
+                yield binding
+
+    def do_activate(self):
+        #FIXME: we may double check state and skip some bindings
+        self.state = UserAssignmentBinding.ST_WORKINPROGRESS
+        self.received_at = now()
+        self.save()
+        logger.info(self)
 
     @staticmethod
     def iter_expired():

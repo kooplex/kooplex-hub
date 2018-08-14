@@ -22,11 +22,11 @@ def now():
     """
     @summary: returns the current time in a tz-aware datetime format
     """
-    return datetime.datetime.now().replace(tzinfo = local_timezone)
+    return local_timezone.localize(datetime.datetime.now())
 
 def translate_date(d):
     try:
-        return datetime.datetime.strptime(d, "%m/%d/%Y %I:%M %p").replace(tzinfo = local_timezone) if d else None
+        return local_timezone.localize(datetime.datetime.strptime(d, "%m/%d/%Y %I:%M %p")) if d else None
     except Exception as e:
         logger.warn("Cannot convert date time %s -- %s" % (d, e))
         return None

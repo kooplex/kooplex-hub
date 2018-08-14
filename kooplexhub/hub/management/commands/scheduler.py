@@ -16,11 +16,13 @@ class Command(BaseCommand):
         logger.info("tick %s %s" % (args, options))
 #        print (options)
         if 'handout' in options.get('tasks', ['handout']):
-            self.handle_handout(Assignment.iter_valid(), options['dry'])
+            self.handle_mass_handout(Assignment.iter_valid(), options['dry'])
+            self.handle_personal_handout(UserAssignmentBinding.iter_valid(), options['dry'])
         if 'collect' in options.get('tasks', ['collect']):
             self.handle_collect(UserAssignmentBinding.iter_expired(), options['dry'])
 
-    def handle_handout(self, valid_assignments, dry):
+
+    def handle_mass_handout(self, valid_assignments, dry):
         print ("Mass handout")
         for a in valid_assignments:
             student_list = a.list_students_bindable() if dry else a.bind_students()
@@ -28,10 +30,23 @@ class Command(BaseCommand):
                 print (a)
                 for student in student_list:
                     print ("\t-> %s" % student)
+                    logger.info('%s -> %s' % (a, student))
+
+
+    def handle_personal_handout(self, valid_userassignments, dry):
+        print ("Personal handout")
+        for binding in valid_userassignments:
+            print ("-> %s" % binding)
+            if not dry:
+                binding.do_activate()
+                logger.info('-> %s' % binding)
+
 
     def handle_collect(self, expired_userassignments, dry):
-        print ("Mass collect")
+        print ("Collect")
         for binding in expired_userassignments:
-           print ("<- %s" % binding)
-           if not dry:
-               binding.do_collect()
+            print ("<- %s" % binding)
+            if not dry:
+                binding.do_collect()
+                logger.info('<- %s' % binding)
+
