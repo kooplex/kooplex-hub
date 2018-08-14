@@ -12,19 +12,23 @@ import pytz
 
 from django.conf import settings
 
+from kooplex import settings as kooplex_settings
+
 logger = logging.getLogger(__name__)
+
+local_timezone = pytz.timezone(kooplex_settings.TIME_ZONE if hasattr(kooplex_settings, 'TIME_ZONE') else 'UTC')
 
 def now():
     """
     @summary: returns the current time in a tz-aware datetime format
     """
-    return datetime.datetime.utcnow().replace(tzinfo = pytz.utc)
+    return datetime.datetime.now().replace(tzinfo = local_timezone)
 
 def translate_date(d):
     try:
-        return datetime.datetime.strptime(d, "%m/%d/%Y %I:%M %p").replace(tzinfo = pytz.utc) if d else None
+        return datetime.datetime.strptime(d, "%m/%d/%Y %I:%M %p").replace(tzinfo = local_timezone) if d else None
     except Exception as e:
-        logger.warn("Cannot convert date time -- %s" % e)
+        logger.warn("Cannot convert date time %s -- %s" % (d, e))
         return None
 
 def keeptrying(method, times, **kw):

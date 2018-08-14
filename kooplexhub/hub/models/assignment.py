@@ -47,13 +47,9 @@ class Assignment(models.Model):
     @property
     def state(self):
         timenow = now()
-        dt = self.valid_from - timenow
-        if dt.total_seconds() > 0:
+        if self.valid_from > timenow:
             return self.ST_SCHEDULED
-        if self.expires_at is None or (self.expires_at - timenow).total_seconds() >= 0:
-            return self.ST_VALID
-        else:
-            return self.ST_EXPIRED
+        return self.ST_VALID if self.expires_at is None or self.expires_at >= timenow else self.ST_EXPIRED
 
     @staticmethod
     def iter_valid():
@@ -69,6 +65,7 @@ class Assignment(models.Model):
         return student_list
 
 ST_LOOKUP = {
+    'qed': 'Waiting for handout',
     'wip': 'Working on assignment',
     'sub': 'Submitted, waiting for corrections',
     'col': 'Collected, waiting for corrections',
@@ -77,12 +74,13 @@ ST_LOOKUP = {
 }
 
 class UserAssignmentBinding(models.Model):
+    ST_QUEUED = 'qed'
     ST_WORKINPROGRESS = 'wip'
     ST_SUBMITTED = 'sub'
     ST_COLLECTED = 'col'
     ST_CORRECTING = 'cor'
     ST_FEEDBACK = 'rdy'
-    STATE_LIST = [ ST_WORKINPROGRESS, ST_SUBMITTED, ST_COLLECTED, ST_CORRECTING, ST_FEEDBACK ]
+    STATE_LIST = [ ST_QUEUED, ST_WORKINPROGRESS, ST_SUBMITTED, ST_COLLECTED, ST_CORRECTING, ST_FEEDBACK ]
 
     user = models.ForeignKey(User, null = False)
     assignment = models.ForeignKey(Assignment, null = False)
@@ -113,8 +111,7 @@ class UserAssignmentBinding(models.Model):
         for binding in UserAssignmentBinding.objects.filter(state = UserAssignmentBinding.ST_WORKINPROGRESS):
             if binding.expires_at is None:
                 continue
-            dt = timenow - binding.expires_at
-            if dt.total_seconds() > 0:
+            if timenow > binding.expires_at:
                 yield binding
 
     def do_collect(self):

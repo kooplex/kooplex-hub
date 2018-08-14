@@ -64,7 +64,7 @@ def new(request):
     is_massassignment = bool(request.POST.get("is_massassignment"))
     can_studentsubmit = bool(request.POST.get("can_studentsubmit"))
     try:
-        assert (valid_from - timenow).total_seconds() >= 0, "You try to chedule assignment behind time."
+        assert valid_from >= timenow, "You try to chedule assignment behind time."
         assert len(name), "You need to provide a name"
         assert len(course_flags), "You need to select at least one course flag"
         course = Course.objects.get(id = course_id)
@@ -220,7 +220,10 @@ def bind(request):
             pass
         valid_from = translate_date(request.POST.get('valid_from_%s' % br))
         expires_at = translate_date(request.POST.get('expires_at_%s' % br))
-        UserAssignmentBinding.objects.create(user = student, assignment = assignment, valid_from = valid_from, expires_at = expires_at)
+        if valid_from and valid_from > thetime:
+            UserAssignmentBinding.objects.create(user = student, assignment = assignment, valid_from = valid_from, expires_at = expires_at, state = UserAssignmentBinding.ST_QUEUED)
+        else:
+            UserAssignmentBinding.objects.create(user = student, assignment = assignment, valid_from = valid_from, expires_at = expires_at)
 #FIXME> expiry check in model init!
         messages.info(request, "Creating an assignment %s for student %s" % (assignment.name, student))
     return redirect('list:teaching')
