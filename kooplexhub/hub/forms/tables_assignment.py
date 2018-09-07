@@ -45,12 +45,40 @@ class T_COLLECT_UABINDING(tables.Table, tableUserAssignmentCommon):
         exclude = ('valid_from', 'submitted_at', 'corrector', 'corrected_at')
         attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
 
+class RadioSelectIDColumn(tables.Column):
+    def render(self, record):
+        if record.state in [ UserAssignmentBinding.ST_SUBMITTED, UserAssignmentBinding.ST_COLLECTED ]:
+            return format_html("""
+<input type="radio" name="task_%s" value="skip" checked> skip<br>
+<input type="radio" name="task_%s" value="correct"> correct<br>
+            """ % (record.id, record.id))
+        elif record.state != UserAssignmentBinding.ST_QUEUED:
+            return format_html("""
+<input type="radio" name="task_%s" value="skip" checked> skip<br>
+<input type="radio" name="task_%s" value="ready"> ready<br>
+<input type="radio" name="task_%s" value="reassign"> reassign
+            """ % (record.id, record.id, record.id))
+        else:
+            return "-"
 
 class T_CORRECT(tables.Table, tableUserAssignmentCommon):
-    id = col_userassignmentbindingIDs(verbose_name = 'Select', orderable = False)
+    id = RadioSelectIDColumn(verbose_name = 'Select', orderable = False) #col_userassignmentbindingIDs(verbose_name = 'Select', orderable = False)
+    score = tables.Column(empty_values = (), orderable = False)
+    feedback_text = tables.Column(empty_values = (), orderable = False)
+
+    def render_score(self, record):
+        representation = "score_%d" % (record.id)
+        value_attr = "" if record.score is None else str(record.score)
+        return format_html('<input type="text" name="%s" id="%s" value="%s" style="width: 3em"/>' % (representation, representation, value_attr) )
+
+    def render_feedback_text(self, record):
+        representation = "feedback_text_%d" % (record.id)
+        value_attr = "" if record.feedback_text is None else str(record.feedback_text)
+        return format_html('<textarea name="%s" id="%s" cols="30">%s</textarea>' % (representation, representation, value_attr) )
+
     class Meta:
         model = UserAssignmentBinding
-        exclude = ('received_at', 'valid_from', 'expires_at', 'corrector', 'corrected_at')
+        exclude = ('received_at', 'valid_from', 'expires_at', 'corrected_at')
         attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
 
 class T_BIND(tables.Table, tableUserAssignmentCommon):

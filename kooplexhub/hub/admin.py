@@ -76,7 +76,7 @@ class AssignmentAdmin(admin.ModelAdmin):
 
 @admin.register(UserAssignmentBinding)
 class UserAssignmentBindingAdmin(admin.ModelAdmin):
-    list_display = ('id', 'assignment_name', 'user', 'state', 'received_at', 'valid_from', 'expires_at', 'submitted_at', 'corrector', 'corrected_at')
+    list_display = ('id', 'assignment_name', 'user', 'state', 'received_at', 'valid_from', 'expires_at', 'submitted_at', 'corrector', 'corrected_at', 'score', 'feedback_text')
     def assignment_name(self, instance):
         return instance.assignment.name
 

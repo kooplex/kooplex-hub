@@ -17,7 +17,6 @@
     -->
     <li class="nav-item"><a class="nav-link" href="#pane_bindassignment-{{ course.id }}" data-toggle="tab">Assign</a></li>
     <li class="nav-item"><a class="nav-link" href="#pane_collectassignment-{{ course.id }}" data-toggle="tab">Collect</a></li>
-    <li class="nav-item"><a class="nav-link" href="#pane_correctassignment-{{ course.id }}" data-toggle="tab">Correct</a></li>
     <li class="nav-item"><a class="nav-link" href="#pane_feedbackassignment-{{ course.id }}" data-toggle="tab">Feedback</a></li>
   </ul>
   <div class="tab-content">
@@ -32,9 +31,6 @@
     </div>
     <div id="pane_collectassignment-{{ course.id }}" class="tab-pane fade">
       {% include 'edu/pane-collect.html' %}
-    </div>
-    <div id="pane_correctassignment-{{ course.id }}" class="tab-pane fade">
-      {% include 'edu/pane-correct.html' %}
     </div>
     <div id="pane_feedbackassignment-{{ course.id }}" class="tab-pane fade">
       {% include 'edu/pane-feedback.html' %}

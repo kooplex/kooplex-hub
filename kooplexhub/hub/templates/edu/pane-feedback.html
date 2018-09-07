@@ -1,7 +1,7 @@
 <form id="assignments-feedbackform-{{ course.id }}" class="form-horizontal" action="{% url 'assignment:feedback' %}" method="post">
   {% csrf_token %}
   {% load render_table from django_tables2 %}
-  {% if course|lookup_userassignmentbindings_correcting:user %}
+  {% if course.lookup_userassignmentbindings %}
     <div class="alert alert-warning">Select user assignments you finished correcting.</div>
     {% render_table t_feedback %}
     <div class="modal-footer">

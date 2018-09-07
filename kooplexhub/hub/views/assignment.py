@@ -30,9 +30,7 @@ def assignmentform(request, course_id):
         RequestConfig(request).configure(table_collect_mass)
         table_collect_personal = T_COLLECT_UABINDING(course.collectableassignments_2())
         RequestConfig(request).configure(table_collect_personal)
-        table_correct = T_CORRECT(course.lookup_userassignmentbindings_submitted(user))
-        RequestConfig(request).configure(table_correct)
-        table_feedback = T_CORRECT(course.lookup_userassignmentbindings_correcting(user))
+        table_feedback = T_CORRECT(course.lookup_userassignmentbindings())
         RequestConfig(request).configure(table_feedback)
     except Exception as e:
         logger.error("Invalid request with course id %s and user %s -- %s" % (course_id, user, e))
@@ -43,7 +41,6 @@ def assignmentform(request, course_id):
         't_bind': table_bind,
         't_collect_mass': table_collect_mass,
         't_collect_personal': table_collect_personal,
-        't_correct': table_correct,
         't_feedback': table_feedback,
     }
     return render(request, 'edu/assignments.html', context = context_dict)
@@ -153,38 +150,37 @@ def teachercollect(request):
 
 
 @login_required
-def markcorrection(request):
+def feedback_handler(request):
     """Mark assignments to correct"""
     user = request.user
-    course_id = request.POST.get('course_id')
-    userassignmentbinding_ids = request.POST.getlist('userassignmentbinding_ids')
-    for binding_id in userassignmentbinding_ids:
+    for k, v in request.POST.items():
+        if not k.startswith('task_'):
+            continue
         try:
+            _, binding_id = k.split('_')
+            if not v in [ 'correct', 'ready', 'reassign' ]:
+                continue
+            score = request.POST.get('score_%s' % binding_id).strip()
+            feedback_text = request.POST.get('feedback_text_%s' % binding_id).strip()
+
             binding = UserAssignmentBinding.objects.get(id = binding_id)
-            assert binding.state in [ UserAssignmentBinding.ST_SUBMITTED, UserAssignmentBinding.ST_COLLECTED ]
-            assert binding.assignment.course.id == int(course_id), "Course id mismatch"
             UserCourseBinding.objects.get(user = user, course = binding.assignment.course, flag = binding.assignment.flag, is_teacher = True)
-            binding.state = UserAssignmentBinding.ST_CORRECTING
-            binding.corrector = user
-            binding.save()
-            messages.info(request, '%s\'s assignment %s for course %s and flag %s is marked for being corrected' % (binding.user.username, binding.assignment.name, binding.assignment.course.courseid, binding.assignment.flag))
-        except Exception as e:
-            logger.error(e)
-            messages.error(request, 'Cannot mark assignment for correction -- %s' % e)
-    return redirect('assignment:manager', course_id)
-
-
-@login_required
-def markcorrected(request):
-    """Mark assignments to correct"""
-    user = request.user
-    userassignmentbinding_ids = request.POST.getlist('userassignmentbinding_ids')
-    for binding_id in userassignmentbinding_ids:
-        try:
-            binding = UserAssignmentBinding.objects.get(id = binding_id, state = UserAssignmentBinding.ST_CORRECTING)
-            UserCourseBinding.objects.get(user = user, course = binding.assignment.course, flag = binding.assignment.flag, is_teacher = True)
-            binding.state = UserAssignmentBinding.ST_FEEDBACK
-            binding.corrected_at = now()
+            if v == 'correct':
+                binding.state = UserAssignmentBinding.ST_CORRECTING
+                binding.corrector = user
+            elif v == 'ready':
+                binding.state = UserAssignmentBinding.ST_FEEDBACK
+                binding.corrected_at = now()
+            elif v == 'reassign': 
+                binding.state = UserAssignmentBinding.ST_WORKINPROGRESS
+                binding.corrected_at = now()
+            try:
+                binding.score = float(score)
+            except:
+                if len(score):
+                    messages.warning(request, "The score must be a float")
+            if len(feedback_text):
+                binding.feedback_text = feedback_text
             binding.save()
             messages.info(request, '%s\'s assignment %s for course %s and flag %s is marked corrected' % (binding.user.username, binding.assignment.name, binding.assignment.course.courseid, binding.assignment.flag))
         except Exception as e:
@@ -238,8 +234,7 @@ urlpatterns = [
     url(r'new/?$', new, name = 'new'),
     url(r'submit/?$', studentsubmit, name = 'submit'),
     url(r'collect/?$', teachercollect, name = 'collect'),
-    url(r'correct/?$', markcorrection, name = 'correct'),
-    url(r'feedback/?$', markcorrected, name = 'feedback'),
+    url(r'feedback/?$', feedback_handler, name = 'feedback'),
     url(r'bind/?$', bind, name = 'bind'),
     url(r'update/?$', update, name = 'update'),
 ]
