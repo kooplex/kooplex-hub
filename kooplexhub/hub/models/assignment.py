@@ -91,6 +91,9 @@ class UserAssignmentBinding(models.Model):
     submitted_at = models.DateTimeField(null = True)
     corrector = models.ForeignKey(User, null = True, related_name = 'corrector')
     corrected_at = models.DateTimeField(null = True)
+    score = models.FloatField(null = True)
+    feedback_text = models.TextField(null = True)
+
 
     def __str__(self):
         return "%s by %s" % (self.assignment, self.user)
