@@ -11,6 +11,7 @@ import glob
 import base64
 from distutils import dir_util
 from distutils import file_util
+import tarfile
 
 from kooplex.lib import bash
 from kooplex.settings import KOOPLEX
@@ -115,6 +116,19 @@ def _mkdir(path, uid = 0, gid = 0, mode = 0b111101000, mountpoint = False):
         os.chown(placeholder, 0, 0)
         os.chmod(placeholder, 0)
 
+def _garbagedir(folder, target):
+    try:
+        if not os.path.exists(folder):
+            logger.warning("Folder %s is missing" % folder)
+            return
+        with tarfile.open(target, mode='w:gz') as archive:
+            archive.add(folder, recursive = True)
+    except Exception as e:
+        logger.error("Cannot garbage folder %s -- %s" % (folder, e))
+    finally:
+        dir_util.remove_tree(folder)
+        logger.debug("Folder %s removed" % folder)
+
 def mkdir_home(user):
     """
     @summary: create a home directory for the user
@@ -137,13 +151,9 @@ def mkdir_home(user):
         logger.error("Cannot create home dir, KOOPLEX['mountpoint']['home'] is missing")
 
 def garbagedir_home(user):
-    try:
-        dir_home = Dirname.userhome(user)
-        dir_garbage = Dirname.userhome_garbage(user)
-        dir_util.copy_tree(dir_home, dir_garbage)
-        dir_util.remove_tree(dir_home)
-    except Exception as e:
-        logger.error("Cannot garbage home dir %s -- %s" % (user, e))
+    dir_home = Dirname.userhome(user)
+    garbage = Dirname.userhome_garbage(user) + '.tar.gz'
+    _garbagedir(dir_home, garbage)
 
 def mkdir_course_share(course):
     try:
@@ -174,13 +184,9 @@ def revokeacl_course_share(usercoursebinding):
         logger.error("Cannot revoke acl %s -- %s" % (usercoursebinding, e))
 
 def garbagedir_course_share(course):
-    try:
-        dir_course = Dirname.course(course)
-        dir_garbage = Dirname.course_garbage(course)
-        dir_util.copy_tree(dir_course, dir_garbage)
-        dir_util.remove_tree(dir_course)
-    except Exception as e:
-        logger.error("Cannot garbage course dir %s -- %s" % (course, e))
+    dir_course = Dirname.course(course)
+    garbage = Dirname.course_garbage(course) + '.tar.gz'
+    _garbagedir(dir_course, garbage)
 
 def mkdir_course_workdir(usercoursebinding):
     try:
@@ -236,13 +242,9 @@ def snapshot_assignment(assignment):
         logger.error("Cannot create snapshot dir %s -- %s" % (assignment, e))
 
 def garbagedir_assignmentsnapshot(assignment):
-    try:
-        dir_source = Dirname.assignmentsnapshot(assignment)
-        dir_target = Dirname.assignmentsnapshot_garbage(assignment, preserve_mode = False, preserve_symlinks = True)
-        dir_util.copy_tree(dir_source, dir_target)
-        dir_util.remove_tree(dir_source)
-    except Exception as e:
-        logger.error("Cannot create snapshot dir %s -- %s" % (assignment, e))
+    dir_source = Dirname.assignmentsnapshot(assignment)
+    garbage = Dirname.assignmentsnapshot_garbage(assignment, preserve_mode = False, preserve_symlinks = True) + '.tar.gz'
+    _garbagedir(dir_source, garbage)
 
 def cp_assignmentsnapshot(userassignmentbinding):
     try:
