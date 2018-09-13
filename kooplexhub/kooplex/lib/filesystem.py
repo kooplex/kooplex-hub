@@ -117,10 +117,10 @@ def _mkdir(path, uid = 0, gid = 0, mode = 0b111101000, mountpoint = False):
         os.chmod(placeholder, 0)
 
 def _garbagedir(folder, target):
+    if not os.path.exists(folder):
+        logger.warning("Folder %s is missing" % folder)
+        return
     try:
-        if not os.path.exists(folder):
-            logger.warning("Folder %s is missing" % folder)
-            return
         with tarfile.open(target, mode='w:gz') as archive:
             archive.add(folder, recursive = True)
     except Exception as e:
