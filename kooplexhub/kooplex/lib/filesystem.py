@@ -267,7 +267,7 @@ def cp_userassignment2correct(userassignmentbinding):
         dir_target = Dirname.assignmentcorrectdir(userassignmentbinding)
         with tarfile.open(archivefile, mode='r') as archive:
             archive.extractall(path = dir_target)
-        bash("chmod -R 0 %s" % dir_target)
+#        bash("chmod -R 0 %s" % dir_target)
         bash("setfacl -R -m u:%d:rwX %s" % (userassignmentbinding.corrector.profile.userid, dir_target))
     except Exception as e:
         logger.error("Cannot copy correct dir %s -- %s" % (userassignmentbinding, e))
@@ -275,8 +275,8 @@ def cp_userassignment2correct(userassignmentbinding):
 def manageacl_feedback(userassignmentbinding):
     try:
         dir_target = Dirname.assignmentcorrectdir(userassignmentbinding)
-        bash("setfacl -R -x u:%d %s" % (userassignmentbinding.corrector.profile.userid, dir_target))
-        bash("setfacl -R -m u:%d:rX %s" % (userassignmentbinding.corrector.profile.userid, dir_target))
+#        bash("setfacl -R -x u:%d %s" % (userassignmentbinding.corrector.profile.userid, dir_target))
+#        bash("setfacl -R -m u:%d:rX %s" % (userassignmentbinding.corrector.profile.userid, dir_target))
         bash("setfacl -R -m u:%d:rX %s" % (userassignmentbinding.user.profile.userid, dir_target))
     except Exception as e:
         logger.error("Cannot revoke acl from feedback dir %s -- %s" % (userassignmentbinding, e))
