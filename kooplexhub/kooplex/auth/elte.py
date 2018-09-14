@@ -48,7 +48,10 @@ class my_ElteOpenID(OpenIdConnectAuth):
         user = super(my_ElteOpenID, self).authenticate(request, **credentials)
         response = credentials.get('response', {})
 #        logger.debug("IDP resp %s" % response)
-        logger.debug("Authenticated (username) %s" % user.username)
+        try:
+            logger.debug("Authenticated (username) %s" % user.username)
+        except:
+            pass
         bindings = []
         # currently held courses
         updater('niifEduPersonHeldCourse', is_teacher = True)

@@ -103,8 +103,13 @@ class T_BIND(tables.Table, tableUserAssignmentCommon):
         exclude = ('id', 'state', 'received_at', 'submitted_at', 'corrector', 'corrected_at')
         attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
 
+class StudentSelectionColumn(tables.Column):
+    def render(self, record):
+        active = record.state in [ UserAssignmentBinding.ST_WORKINPROGRESS, UserAssignmentBinding.ST_SUBMITTED ]
+        return format_html('<input type="checkbox" name="userassignmentbinding_ids" value="%s">' % record.id) if active else '—'
+
 class T_SUBMIT(tables.Table, tableUserAssignmentCommon):
-    id = col_userassignmentbindingIDs(verbose_name = 'Select', orderable = False)
+    id = StudentSelectionColumn(verbose_name = 'Select', orderable = False)
     folder = tables.Column(verbose_name = 'Folder', orderable = False, empty_values = ())
     course = tables.Column(verbose_name = 'Course', orderable = False, empty_values = ())
     def render_folder(self, record):

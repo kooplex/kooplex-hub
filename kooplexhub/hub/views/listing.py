@@ -21,10 +21,8 @@ def teaching(request):
 @login_required
 def courses(request):
     """Renders the projectlist page for students."""
-    def f(binding):
-        return binding.state in [ UserAssignmentBinding.ST_WORKINPROGRESS, UserAssignmentBinding.ST_SUBMITTED ]
     logger.debug('Rendering courses.html')
-    bindings = filter(f, UserAssignmentBinding.objects.filter(user = request.user))
+    bindings = UserAssignmentBinding.objects.filter(user = request.user)
     table_submit = T_SUBMIT(bindings) 
     RequestConfig(request).configure(table_submit)
     context_dict = {

@@ -108,7 +108,7 @@ class Course(models.Model):
             for binding in UserAssignmentBinding.objects.filter(assignment = assignment, corrector = user, state = UserAssignmentBinding.ST_CORRECTING):
                 student = binding.user
 #FIXME: this info needs to be rendered is teacher's table. the construction be part of the model or lib/filesystem
-                wd = os.path.join(binding.assignment.safename, "%s_%s_%s" % (student.username, student.first_name, student.last_name))
+                wd = os.path.join(binding.assignment.safename, "%s_%s" % (student.username, student.profile.safename))
                 mapping = "+:%s:%s" % (Dirname.assignmentcorrectdir(binding, in_hub = False), wd) 
                 logger.debug(mapping)
                 yield mapping

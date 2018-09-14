@@ -1,5 +1,6 @@
 import pwgen
 import logging
+import unidecode
 
 from django.db import models
 from django.db.models.signals import post_save, pre_delete, post_delete
@@ -17,6 +18,10 @@ class Profile(models.Model):
     userid = models.IntegerField(null = False)
     token = models.CharField(max_length = 64, null = True)
     can_createproject = models.BooleanField(default = False) 
+
+    @property
+    def safename(self):
+        return "%s_%s" % (unidecode.unidecode(self.user.last_name), unidecode.unidecode(self.user.first_name))
 
     @property
     def groupid(self):
