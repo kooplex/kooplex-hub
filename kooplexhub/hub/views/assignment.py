@@ -2,6 +2,7 @@ import pytz
 import datetime
 import logging
 
+from django.db import transaction
 from django.conf.urls import url
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -45,6 +46,7 @@ def assignmentform(request, course_id):
     }
     return render(request, 'edu/assignments.html', context = context_dict)
 
+
 @login_required
 def new(request):
     """Create a new assignment"""
@@ -73,20 +75,36 @@ def new(request):
             assert (expires_at - valid_from).total_seconds() >= 60, "Expiry is too close to handout. "
         for flag in course_flags:
             logger.debug("flag %s" % flag)
-            Assignment.objects.create(
-                course = course, 
-                flag = flag, 
-                name = name, 
-                creator = user, 
-                description = description, 
-                folder = folder, 
-                can_studentsubmit = can_studentsubmit, 
-                is_massassignment = is_massassignment, 
-                valid_from = valid_from,
-                expires_at = expires_at
-            )
-        course_flags_str = map(lambda x: x if x else '_', course_flags)
-        messages.info(request, 'Assignments are registered for course %s and flag %s' % (course.courseid, ", ".join(course_flags_str)))
+            with transaction.atomic():
+                assignments = Assignment.objects.filter(
+                    course = course, 
+                    flag = flag, 
+                    name = name, 
+                    creator = user, 
+                    description = description, 
+                    folder = folder, 
+                    can_studentsubmit = can_studentsubmit, 
+                    is_massassignment = is_massassignment, 
+                    expires_at = expires_at
+                    )
+                if len(assignments):
+                    logger.warning('Prevented from duplicating assignments for course %s and flag %s' % (course.courseid, flag))
+                    messages.warning(request, 'Maybe you double clicked on assignments for course %s and flag %s' % (course.courseid, flag))
+                    continue
+                Assignment.objects.create(
+                    course = course, 
+                    flag = flag, 
+                    name = name, 
+                    creator = user, 
+                    description = description, 
+                    folder = folder, 
+                    can_studentsubmit = can_studentsubmit, 
+                    is_massassignment = is_massassignment, 
+                    valid_from = valid_from,
+                    expires_at = expires_at
+                )
+                logger.info('New assignments for course %s and flag %s' % (course.courseid, flag))
+                messages.info(request, 'New assignments for course %s and flag %s' % (course.courseid, flag))
         return redirect('list:teaching')
     except Exception as e:
         logger.error(e)
