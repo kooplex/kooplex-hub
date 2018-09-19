@@ -113,16 +113,14 @@ class Course(models.Model):
                 logger.debug(mapping)
                 yield mapping
             for binding in UserAssignmentBinding.objects.filter(assignment = assignment, user = user):
-                if binding.state in [ UserAssignmentBinding.ST_SUBMITTED, UserAssignmentBinding.ST_COLLECTED ]:
+                if binding.state in [ UserAssignmentBinding.ST_SUBMITTED, UserAssignmentBinding.ST_COLLECTED, UserAssignmentBinding.ST_FEEDBACK ]:
                     mapping = "+:%s:%s" % (Dirname.assignmentcollectdir(binding, in_hub = False), binding.assignment.safename) 
-                elif binding.state == UserAssignmentBinding.ST_FEEDBACK:
-                    mapping = "+:%s:%s" % (Dirname.assignmentcorrectdir(binding, in_hub = False), binding.assignment.safename) 
                 else:
                     continue
                 logger.debug(mapping)
                 yield mapping
 
- 
+
     def bindableassignments(self):
         from .assignment import Assignment, UserAssignmentBinding
         bindable = []

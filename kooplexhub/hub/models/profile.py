@@ -21,7 +21,7 @@ class Profile(models.Model):
 
     @property
     def safename(self):
-        return "%s_%s" % (unidecode.unidecode(self.user.last_name), unidecode.unidecode(self.user.first_name))
+        return "%s_%s" % (unidecode.unidecode(self.user.last_name), unidecode.unidecode(self.user.first_name).replace(' ', ''))
 
     @property
     def groupid(self):
