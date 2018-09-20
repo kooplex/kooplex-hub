@@ -28,7 +28,7 @@ col_assignmentIDs = selectioncolumn('assignment_ids')
 
 class T_COLLECT_ASSIGNMENT(tables.Table):
     id = col_assignmentIDs(verbose_name = 'Select', orderable = False)
-    
+
     class Meta:
         model = Assignment
         fields = ('id', 'name', 'folder', 'created_at', 'valid_from', 'expires_at', 'can_studentsubmit')
@@ -52,14 +52,24 @@ class RadioSelectIDColumn(tables.Column):
 <input type="radio" name="task_%s" value="skip" checked> skip<br>
 <input type="radio" name="task_%s" value="correct"> correct<br>
             """ % (record.id, record.id))
-        elif record.state != UserAssignmentBinding.ST_QUEUED:
+        elif record.state == UserAssignmentBinding.ST_CORRECTING:
             return format_html("""
 <input type="radio" name="task_%s" value="skip" checked> skip<br>
 <input type="radio" name="task_%s" value="ready"> ready<br>
 <input type="radio" name="task_%s" value="reassign"> reassign
             """ % (record.id, record.id, record.id))
+        elif record.state == UserAssignmentBinding.ST_FEEDBACK:
+            return format_html("""
+<input type="radio" name="task_%s" value="skip" checked> skip<br>
+<input type="radio" name="task_%s" value="reassign"> reassign
+            """ % (record.id, record.id, record.id))
+        elif record.state == UserAssignmentBinding.ST_WORKINPROGRESS and record.corrector is not None:
+            return format_html("""
+<input type="radio" name="task_%s" value="skip" checked> skip<br>
+<input type="radio" name="task_%s" value="ready"> ready
+            """ % (record.id, record.id, record.id))
         else:
-            return "-"
+            return "—"
 
 class T_CORRECT(tables.Table, tableUserAssignmentCommon):
     id = RadioSelectIDColumn(verbose_name = 'Select', orderable = False) #col_userassignmentbindingIDs(verbose_name = 'Select', orderable = False)
