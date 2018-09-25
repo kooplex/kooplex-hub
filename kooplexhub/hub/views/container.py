@@ -22,7 +22,6 @@ def startprojectcontainer(request, project_id, next_page):
         messages.error(request, 'Project does not exist')
     except Exception as e:
         messages.error(request, 'Cannot start the container -- %s' % e)
-        raise
     return redirect(next_page)
 
 @login_required
@@ -36,7 +35,6 @@ def startcontainer(request, container_id, next_page):
         messages.error(request, 'Container does not exist')
     except Exception as e:
         messages.error(request, 'Cannot start the container -- %s' % e)
-        raise
     return redirect(next_page)
 
 @login_required
