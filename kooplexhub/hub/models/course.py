@@ -11,7 +11,7 @@ from .project import Project
 
 from kooplex.settings import KOOPLEX
 from kooplex.lib import standardize_str
-from kooplex.lib.filesystem import Dirname
+from kooplex.lib.filesystem import Dirname, Filename
 
 logger = logging.getLogger(__name__)
 
@@ -105,21 +105,16 @@ class Course(models.Model):
     def report_mapping4user(self, user):
         from .assignment import Assignment, UserAssignmentBinding
         for assignment in Assignment.objects.filter(course = self):
-            for binding in UserAssignmentBinding.objects.filter(assignment = assignment, corrector = user, state = UserAssignmentBinding.ST_CORRECTING):
-                student = binding.user
-#FIXME: this info needs to be rendered is teacher's table. the construction be part of the model or lib/filesystem
-                wd = os.path.join(binding.assignment.safename, "%s_%s" % (student.username, student.profile.safename))
-                mapping = "+:%s:%s" % (Dirname.assignmentcorrectdir(binding, in_hub = False), wd) 
-                logger.debug(mapping)
-                yield mapping
+            for binding in UserAssignmentBinding.objects.filter(assignment = assignment, corrector = user):
+                mapping = binding.report_map(user)
+                if mapping:
+                    logger.debug(mapping)
+                    yield mapping
             for binding in UserAssignmentBinding.objects.filter(assignment = assignment, user = user):
-                if binding.state in [ UserAssignmentBinding.ST_SUBMITTED, UserAssignmentBinding.ST_COLLECTED, UserAssignmentBinding.ST_FEEDBACK ]:
-                    mapping = "+:%s:%s" % (Dirname.assignmentcollectdir(binding, in_hub = False), binding.assignment.safename) 
-                else:
-                    continue
-                logger.debug(mapping)
-                yield mapping
-
+                mapping = binding.report_map(user)
+                if mapping:
+                    logger.debug(mapping)
+                    yield mapping
 
     def bindableassignments(self):
         from .assignment import Assignment, UserAssignmentBinding

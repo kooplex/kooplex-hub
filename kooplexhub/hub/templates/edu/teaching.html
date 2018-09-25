@@ -7,6 +7,6 @@
          {% include 'project/partial.html' with container=project|get_usercontainer:user caller='teacher' next_page='list:teaching' %}
     {% endif %}
   {% endfor %}
-
+{% include "../footer.html" %}
 {% endblock %}
 

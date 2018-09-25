@@ -11,6 +11,7 @@ from .course import Course, UserCourseBinding
 
 from kooplex.settings import KOOPLEX
 from kooplex.lib import standardize_str, now
+from kooplex.lib.filesystem import Dirname
 
 logger = logging.getLogger(__name__)
 
@@ -94,7 +95,6 @@ class UserAssignmentBinding(models.Model):
     score = models.FloatField(null = True)
     feedback_text = models.TextField(null = True)
 
-
     def __str__(self):
         return "%s by %s" % (self.assignment, self.user)
 
@@ -138,6 +138,18 @@ class UserAssignmentBinding(models.Model):
         self.save()
         logger.info(self)
 
+    def report_map(self, user):
+        if self.user == user and self.state == UserAssignmentBinding.ST_FEEDBACK:
+            return "+:%s:%s" % (Dirname.assignmentcorrectdir(self), self.assignment.safename)  
+        elif self.user == user and self.state == UserAssignmentBinding.ST_WORKINPROGRESS and self.corrector is not None:
+            return "+:%s:%s" % (Dirname.assignmentcorrectdir(self), self.assignment.safename)  
+        elif self.corrector == user and self.state in [ UserAssignmentBinding.ST_CORRECTING, UserAssignmentBinding.ST_FEEDBACK ]:
+            student = self.user
+            return "+:%s:%s" % (Dirname.assignmentcorrectdir(self), os.path.join(self.assignment.safename, "%s_%s" % (student.username, student.profile.safename))) 
+        elif self.corrector == user and self.state in [ UserAssignmentBinding.ST_COLLECTED, UserAssignmentBinding.ST_SUBMITTED, UserAssignmentBinding.ST_WORKINPROGRESS ]:
+            student = self.user
+            return "-:%s" % os.path.join(self.assignment.safename, "%s_%s" % (student.username, student.profile.safename)) 
+
 
 @receiver(post_save, sender = Assignment)
 def snapshot_assignment(sender, instance, created, **kwargs):
@@ -152,8 +164,8 @@ def snapshot_assignment(sender, instance, created, **kwargs):
 
 @receiver(pre_delete, sender = Assignment)
 def garbage_assignmentsnapshot(sender, instance, **kwargs):
-    from kooplex.lib.filesystem import garbagedir_assignmentsnapshot
-    garbagedir_assignmentsnapshot(instance)
+    from kooplex.lib.filesystem import garbage_assignmentsnapshot
+    garbage_assignmentsnapshot(instance)
 
 
 @receiver(post_save, sender = UserCourseBinding)
@@ -166,23 +178,22 @@ def add_userassignmentbinding(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender = UserAssignmentBinding)
 def copy_userassignment(sender, instance, created, **kwargs):
-    from kooplex.lib.filesystem import cp_assignmentsnapshot, cp_userassignment, cp_userassignment2correct, manageacl_feedback, Dirname
+    from kooplex.lib.filesystem import cp_assignmentsnapshot, cp_userassignment, cp_userassignment2correct, manageacl_feedback, Dirname, Filename
     from .container import Container
     if created:
         cp_assignmentsnapshot(instance)
     elif instance.state in [ UserAssignmentBinding.ST_SUBMITTED, UserAssignmentBinding.ST_COLLECTED ]:
         cp_userassignment(instance)
-        mapping = "+:%s:%s" % (Dirname.assignmentcollectdir(instance, in_hub = False), instance.assignment.safename)
-        Container.manage_report_mount(user = instance.user, project =instance.assignment.course.project, mapping = mapping)
     elif instance.state == UserAssignmentBinding.ST_CORRECTING:
         cp_userassignment2correct(instance)
-        mapping = "+:%s:%s" % (Dirname.assignmentcorrectdir(instance, in_hub = False), instance.assignment.safename)
+        mapping = instance.report_map(instance.corrector)
         Container.manage_report_mount(user = instance.corrector, project =instance.assignment.course.project, mapping = mapping)
     elif instance.state == UserAssignmentBinding.ST_FEEDBACK:
         manageacl_feedback(instance)
-        mapping = "+:%s:%s" % (Dirname.assignmentcorrectdir(instance, in_hub = False), instance.assignment.safename)
+        mapping = instance.report_map(instance.user)
         Container.manage_report_mount(user = instance.user, project =instance.assignment.course.project, mapping = mapping)
-        mapping = "-:%s" % (instance.assignment.safename)
+    elif instance.state == UserAssignmentBinding.ST_WORKINPROGRESS:
+        mapping = instance.report_map(instance.corrector)
         Container.manage_report_mount(user = instance.corrector, project =instance.assignment.course.project, mapping = mapping)
 
 

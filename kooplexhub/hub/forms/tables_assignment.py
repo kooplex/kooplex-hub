@@ -62,12 +62,12 @@ class RadioSelectIDColumn(tables.Column):
             return format_html("""
 <input type="radio" name="task_%s" value="skip" checked> skip<br>
 <input type="radio" name="task_%s" value="reassign"> reassign
-            """ % (record.id, record.id, record.id))
+            """ % (record.id, record.id))
         elif record.state == UserAssignmentBinding.ST_WORKINPROGRESS and record.corrector is not None:
             return format_html("""
 <input type="radio" name="task_%s" value="skip" checked> skip<br>
 <input type="radio" name="task_%s" value="ready"> ready
-            """ % (record.id, record.id, record.id))
+            """ % (record.id, record.id))
         else:
             return "—"
 

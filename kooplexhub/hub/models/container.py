@@ -160,11 +160,62 @@ class Container(models.Model):
             container = Container.get_userprojectcontainer(user = user, project_id = project.id, create = False) 
             if container.is_running:
                 logger.debug("container %s found and is running" % container) 
-                Docker().reportmount(container, mapping)
+                Docker().managemount(container, mapping, 'report')
             else:
                 logger.debug("container %s is not running" % container) 
         except Exception as e: 
             logger.error("cannot manage mapping this time -- %s" % e) 
+
+    @property
+    def share_mapping(self):
+#TODO: filesystem manipulation should be in the lib/filesystem.py
+        from hub.models import Volume
+        user = self.user
+        mapper = []
+        for binding in self.volumecontainerbindings:
+            if binding.volume.is_volumetype(Volume.SHARE):
+                raise NotImplementedError
+            elif binding.volume.is_volumetype(Volume.COURSE_SHARE):
+                course = binding.project.course
+                if user.profile.is_courseteacher(course):
+                    mapper.append( (course.safecourseid, os.path.join(binding.volume.mountpoint, course.safecourseid)) )
+                else:
+                    mapper.append( (course.safecourseid, os.path.join(binding.volume.mountpoint, course.safecourseid, 'public')) )
+        logger.debug("container %s mapper %s" % (self, mapper))
+        if len(mapper) > 1:
+            for subfolder, folder in mapper:
+                yield "+:%s:%s" % (folder, subfolder)
+        else:
+            for subfolder, folder in mapper:
+                yield "+:%s:." % folder
+
+    @property
+    def workdir_mapping(self):
+#TODO: filesystem manipulation should be in the lib/filesystem.py
+        from hub.models import Volume
+        user = self.user
+        mapper = []
+        courseids = set()
+        for binding in self.volumecontainerbindings:
+            if binding.volume.is_volumetype(Volume.WORKDIR):
+                raise NotImplementedError
+            elif binding.volume.is_volumetype(Volume.COURSE_WORKDIR):
+                course = binding.project.course
+                courseids.add(course.courseid)
+                if user.profile.is_courseteacher(course):
+                    mapper.append( (course.safecourseid, os.path.join(binding.volume.mountpoint, course.safecourseid)) )
+                else:
+                    for flag in list(course.list_userflags(user)):
+                        if flag is None or flag == '_':
+                            continue
+                    mapper.append( ("%s_%s" % (course.safecourseid, flag), os.path.join(binding.volume.mountpoint, course.safecourseid, flag, user.username)) )
+        logger.debug("container %s mapper %s" % (self, mapper))
+        if len(mapper) > 1:
+            for subfolder, folder in mapper:
+                yield "+:%s:%s" % (folder, subfolder) if len(courseids) > 1 else "+:%s:%s" % (folder, subfolder.split('_')[1])
+        else:
+            for subfolder, folder in mapper:
+                yield "+:%s:." % folder
 
     @property
     def report_mapping(self):

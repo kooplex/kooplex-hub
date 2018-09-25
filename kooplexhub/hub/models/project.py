@@ -106,6 +106,7 @@ class Project(models.Model):
         return UserProjectBinding(user = user, project_id = project_id).project
 
     def report_mapping4user(self, user):
+        from .course import Course
         try:
             for mapping in self.course.report_mapping4user(user):
                 yield mapping

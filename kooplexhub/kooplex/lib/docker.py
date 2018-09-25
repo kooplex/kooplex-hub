@@ -78,43 +78,13 @@ class Docker:
         }
         self.client.create_container(**args)
         logger.debug("Container created")
-        mapper = self.construct_mapper(container)
-        self.copy_mapper(container, mapper, 'mount.conf')
+        mapper = list(container.share_mapping)
+        self.copy_mapper(container, mapper, 'mount_share.conf')
+        mapper = list(container.workdir_mapping)
+        self.copy_mapper(container, mapper, 'mount_workdir.conf')
         mapper = list(container.report_mapping)
         self.copy_mapper(container, mapper, 'mount_report.conf')
         return self.get_container(container)
-
-    def construct_mapper(self, container):
-        from hub.models import Volume
-        user = container.user
-        mapper = []
-        for binding in container.volumecontainerbindings:
-            if binding.volume.is_volumetype(Volume.WORKDIR):
-                mapper.append('workdir:%s' % os.path.join(binding.volume.mountpoint, user.username, binding.project.name_with_owner))
-            elif binding.volume.is_volumetype(Volume.SHARE):
-                mapper.append('share:%s' % os.path.join(binding.volume.mountpoint, binding.project.name_with_owner))
-            elif binding.volume.is_volumetype(Volume.COURSE_SHARE):
-                course = binding.project.course
-                if user.profile.is_courseteacher(course):
-                    mapper.append('share:%s' % os.path.join(binding.volume.mountpoint, course.safecourseid))
-                else:
-                    mapper.append('share:%s' % os.path.join(binding.volume.mountpoint, course.safecourseid, 'public'))
-            elif binding.volume.is_volumetype(Volume.COURSE_WORKDIR):
-                course = binding.project.course
-                if user.profile.is_courseteacher(course):
-                    mapper.append('workdir:%s' % os.path.join(binding.volume.mountpoint, course.safecourseid))
-                else:
-                    flags = list(course.list_userflags(user))
-                    if len(flags) != 1:
-                        logger.error("Student %s has more course %s flags (%s) than expected" % (user, course, list(flags)))
-                    while True:
-                        flag = flags.pop()
-                        if flag is None:
-                            continue
-                        break
-                    mapper.append('workdir:%s' % os.path.join(binding.volume.mountpoint, course.safecourseid, flag, user.username))
-        logger.debug("container %s mapper %s" % (container, "+".join(mapper)))
-        return mapper
 
     def copy_mapper(self, container, mapper, filename):
         import tarfile
@@ -140,8 +110,9 @@ class Docker:
         except Exception as e:
             logger.error("container %s put_archive fails -- %s" % (container, e))
 
-    def reportmount(self, container, configline):
-        self.copy_mapper(container, [ configline ], 'mount_report.conf')
+    def managemount(self, container, configline, target = 'report'):
+        assert target in [ 'report', 'share', 'workdir' ], "Unknown target %s" % target
+        self.copy_mapper(container, [ configline ], 'mount_%s.conf' % target)
 
     def run_container(self, container):
         docker_container_info = self.get_container(container)

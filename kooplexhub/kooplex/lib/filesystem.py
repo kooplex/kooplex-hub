@@ -18,6 +18,39 @@ from kooplex.settings import KOOPLEX
 
 logger = logging.getLogger(__name__)
 
+class Filename:
+    mountpoint = KOOPLEX.get('mountpoint', {})
+
+    @staticmethod
+    def userhome_garbage(user):
+        return os.path.join(Dirname.mountpoint['garbage'], "user-%s.%f.tar.gz" % (user.username, time.time()))
+
+    @staticmethod
+    def course_garbage(course):
+        return os.path.join(Dirname.mountpoint['garbage'], "course-%s.%f.tar.gz" % (course.safecourseid, time.time()))
+
+    @staticmethod
+    def courseworkdir_archive(usercoursebinding):
+        flag = usercoursebinding.flag if usercoursebinding.flag else '_'
+        return os.path.join(Dirname.mountpoint['home'], usercoursebinding.user.username, "%s.%s.%f.tar.gz" % (usercoursebinding.course.safecourseid, flag, time.time()))
+
+    @staticmethod
+    def assignmentsnapshot(assignment):
+        flag = assignment.flag if assignment.flag else '_'
+        return os.path.join(Dirname.mountpoint['assignment'], assignment.course.safecourseid, flag, 'assignmentsnapshot-%s.%d.tar.gz' % (assignment.safename, assignment.created_at.timestamp()))
+
+    @staticmethod
+    def assignmentsnapshot_garbage(assignment):
+        flag = assignment.flag if assignment.flag else '_'
+        return os.path.join(Dirname.mountpoint['garbage'], 'assignmentsnapshot-%s.%s-%s.%d-%f.tar.gz' % (assignment.course.safecourseid, flag, assignment.safename, assignment.created_at.timestamp(), time.time()))
+
+    @staticmethod
+    def assignmentcollection(userassignmentbinding):
+        assignment = userassignmentbinding.assignment
+        flag = assignment.flag if assignment.flag else '_'
+        return os.path.join(Dirname.mountpoint['assignment'], assignment.course.safecourseid, flag, 'submitted-%s-%s.%d.tar.gz' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp()))
+
+
 class Dirname:
     mountpoint = KOOPLEX.get('mountpoint', {})
 
@@ -26,16 +59,8 @@ class Dirname:
         return os.path.join(Dirname.mountpoint['home'], user.username)
 
     @staticmethod
-    def userhome_garbage(user):
-        return os.path.join(Dirname.mountpoint['garbage'], "user-%s.%f.tar.gz" % (user.username, time.time()))
-
-    @staticmethod
     def course(course):
         return os.path.join(Dirname.mountpoint['course'], course.safecourseid)
-
-    @staticmethod
-    def course_garbage(course):
-        return os.path.join(Dirname.mountpoint['garbage'], "course-%s.%f.tar.gz" % (course.safecourseid, time.time()))
 
     @staticmethod
     def courseprivate(course):
@@ -52,23 +77,8 @@ class Dirname:
                os.path.join(Dirname.mountpoint['usercourse'], usercoursebinding.course.safecourseid, flag, usercoursebinding.user.username)
 
     @staticmethod
-    def courseworkdir_archive(usercoursebinding):
-        flag = usercoursebinding.flag if usercoursebinding.flag else '_'
-        return os.path.join(Dirname.mountpoint['home'], usercoursebinding.user.username, "%s.%s.%f.tar.gz" % (usercoursebinding.course.safecourseid, flag, time.time()))
-
-    @staticmethod
     def assignmentsource(assignment):
         return os.path.join(Dirname.courseprivate(assignment.course), assignment.folder)
-
-    @staticmethod
-    def assignmentsnapshot(assignment):
-        flag = assignment.flag if assignment.flag else '_'
-        return os.path.join(Dirname.mountpoint['assignment'], assignment.course.safecourseid, flag, 'assignmentsnapshot-%s.%d.tar.gz' % (assignment.safename, assignment.created_at.timestamp()))
-
-    @staticmethod
-    def assignmentsnapshot_garbage(assignment):
-        flag = assignment.flag if assignment.flag else '_'
-        return os.path.join(Dirname.mountpoint['garbage'], 'assignmentsnapshot-%s.%s-%s.%d-%f.tar.gz' % (assignment.course.safecourseid, flag, assignment.safename, assignment.created_at.timestamp(), time.time()))
 
     @staticmethod
     def assignmentworkdir(userassignmentbinding):
@@ -78,18 +88,10 @@ class Dirname:
         return os.path.join(wd, userassignmentbinding.assignment.safename)
 
     @staticmethod
-    def assignmentcollectdir(userassignmentbinding, in_hub = True): #TODO: refactor
+    def assignmentcorrectdir(userassignmentbinding):
         assignment = userassignmentbinding.assignment
         flag = assignment.flag if assignment.flag else '_'
-        return os.path.join(Dirname.mountpoint['assignment'], assignment.course.safecourseid, flag, 'submitted-%s-%s.%d.tar.gz' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp())) if in_hub else \
-               os.path.join('assignment', assignment.course.safecourseid, flag, 'submitted-%s-%s.%d.tar.gz' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp()))
-
-    @staticmethod
-    def assignmentcorrectdir(userassignmentbinding, in_hub = True):
-        assignment = userassignmentbinding.assignment
-        flag = assignment.flag if assignment.flag else '_'
-        return os.path.join(Dirname.mountpoint['assignment'], assignment.course.safecourseid, flag, 'feedback-%s-%s.%d' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp())) if in_hub else \
-               os.path.join('assignment', assignment.course.safecourseid, flag, 'feedback-%s-%s.%d' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp()))
+        return os.path.join(Dirname.mountpoint['assignment'], assignment.course.safecourseid, flag, 'feedback-%s-%s.%d' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp()))
 
 
 def _mkdir(path, uid = 0, gid = 0, mode = 0b111101000, mountpoint = False):
@@ -154,7 +156,7 @@ def mkdir_home(user):
 
 def garbagedir_home(user):
     dir_home = Dirname.userhome(user)
-    garbage = Dirname.userhome_garbage(user)
+    garbage = Filename.userhome_garbage(user)
     _archivedir(dir_home, garbage)
 
 def mkdir_course_share(course):
@@ -187,7 +189,7 @@ def revokeacl_course_share(usercoursebinding):
 
 def garbagedir_course_share(course):
     dir_course = Dirname.course(course)
-    garbage = Dirname.course_garbage(course)
+    garbage = Filename.course_garbage(course)
     _archivedir(dir_course, garbage)
 
 def mkdir_course_workdir(usercoursebinding):
@@ -218,7 +220,7 @@ def archive_course_workdir(usercoursebinding):
     if usercoursebinding.is_teacher:
         return
     dir_usercourse = Dirname.courseworkdir(usercoursebinding)
-    archive = Dirname.courseworkdir_archive(usercoursebinding)
+    archive = Filename.courseworkdir_archive(usercoursebinding)
     _archivedir(dir_usercourse, archive)
 
 
@@ -233,20 +235,20 @@ def rmdir_course_workdir(course):
 
 def snapshot_assignment(assignment):
     dir_source = Dirname.assignmentsource(assignment)
-    archive = Dirname.assignmentsnapshot(assignment)
+    archive = Filename.assignmentsnapshot(assignment)
     _archivedir(dir_source, archive, remove = False)
 
-def garbagedir_assignmentsnapshot(assignment):
+def garbage_assignmentsnapshot(assignment):
     try:
-        archive = Dirname.assignmentsnapshot(assignment)
-        garbage = Dirname.assignmentsnapshot_garbage(assignment)
+        archive = Filename.assignmentsnapshot(assignment)
+        garbage = Filename.assignmentsnapshot_garbage(assignment)
         file_util.move_file(archive, garbage)
     except Exception as e:
         logger.error("move %s -> %s fails -- %s" % (archive, garbage, e))
 
 def cp_assignmentsnapshot(userassignmentbinding):
     try:
-        archivefile = Dirname.assignmentsnapshot(userassignmentbinding.assignment)
+        archivefile = Filename.assignmentsnapshot(userassignmentbinding.assignment)
         dir_target = Dirname.assignmentworkdir(userassignmentbinding)
         with tarfile.open(archivefile, mode='r') as archive:
             archive.extractall(path = dir_target)
@@ -256,14 +258,14 @@ def cp_assignmentsnapshot(userassignmentbinding):
 
 def cp_userassignment(userassignmentbinding):
     dir_source = Dirname.assignmentworkdir(userassignmentbinding)
-    archive = Dirname.assignmentcollectdir(userassignmentbinding)
+    archive = Filename.assignmentcollection(userassignmentbinding)
     _archivedir(dir_source, archive, remove = False)
         #bash("chmod -R 0 %s" % dir_target)
         #bash("setfacl -R -m u:%d:rX %s" % (userassignmentbinding.user.profile.userid, dir_target))
 
 def cp_userassignment2correct(userassignmentbinding):
     try:
-        archivefile = Dirname.assignmentcollectdir(userassignmentbinding)
+        archivefile = Filename.assignmentcollection(userassignmentbinding)
         dir_target = Dirname.assignmentcorrectdir(userassignmentbinding)
         with tarfile.open(archivefile, mode='r') as archive:
             archive.extractall(path = dir_target)
