@@ -25,7 +25,12 @@ class Command(BaseCommand):
     def handle_mass_handout(self, valid_assignments, dry):
         print ("Mass handout")
         for a in valid_assignments:
-            student_list = a.list_students_bindable() if dry else a.bind_students()
+            try:
+                student_list = a.list_students_bindable() if dry else a.bind_students()
+            except Exception as e:
+                logger.error("opps -- %s" % e)
+                print("opps %s -- %s" % (a, e))
+                student_list = []
             if len(student_list):
                 print (a)
                 for student in student_list:
@@ -38,8 +43,12 @@ class Command(BaseCommand):
         for binding in valid_userassignments:
             print ("-> %s" % binding)
             if not dry:
-                binding.do_activate()
-                logger.info('-> %s' % binding)
+                try:
+                    binding.do_activate()
+                    logger.info('-> %s' % binding)
+                except Exception as e:
+                    logger.error("opps -- %s" % e)
+                    print("opps -- %s" % e)
 
 
     def handle_collect(self, expired_userassignments, dry):
@@ -47,6 +56,10 @@ class Command(BaseCommand):
         for binding in expired_userassignments:
             print ("<- %s" % binding)
             if not dry:
-                binding.do_collect()
-                logger.info('<- %s' % binding)
+                try:
+                    binding.do_collect()
+                    logger.info('<- %s' % binding)
+                except Exception as e:
+                    logger.error("opps -- %s" % e)
+                    print("opps -- %s" % e)
 
