@@ -1,8 +1,4 @@
-{% if container.is_running  %}
-<div class="card bg-basic mb-3 text-white">
-{% else %}
 <div class="card bg-light mb-3">
-{% endif %}
   <div class="card-header" id="heading-{{ project.id }}">
     {% include 'container/startopen.html' %}
     <button class="btn btn-outline-dark" data-toggle="collapse" data-target="#collapse-{{ project.id }}" aria-expanded="true" aria-controls="collapse-{{ project.id }}" style="min-width: 15em; text-align: left;">
