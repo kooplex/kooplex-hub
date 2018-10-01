@@ -29,7 +29,9 @@ class Course(models.Model):
 
     def list_userflags(self, user):
         for coursebinding in UserCourseBinding.objects.filter(user = user, course = self):
-            yield coursebinding.flag if coursebinding.flag else "_"
+            #yield coursebinding.flag if coursebinding.flag else "_"
+            if coursebinding.flag:
+                yield coursebinding.flag
 
     @register.filter
     def lookup_usercourseflags(self, user):
