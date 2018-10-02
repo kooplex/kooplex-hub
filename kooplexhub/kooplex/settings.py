@@ -84,7 +84,7 @@ WSGI_APPLICATION = 'kooplex.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'kooplexhub',
+        'NAME': os.getenv('HUBDB', 'kooplexhub'),
         'USER': os.getenv('HUBDB_USER', PREFIX),
         'PASSWORD': os.getenv('HUBDB_PW'),
         'HOST': '%s-hub-mysql' % PREFIX,
