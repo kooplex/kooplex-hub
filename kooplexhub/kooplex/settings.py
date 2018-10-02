@@ -85,7 +85,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'kooplexhub',
-        'USER': PREFIX,
+        'USER': os.getenv('HUBDB_USER', PREFIX),
         'PASSWORD': os.getenv('HUBDB_PW'),
         'HOST': '%s-hub-mysql' % PREFIX,
         'PORT': '3306',
