@@ -174,7 +174,7 @@ KOOPLEX = {
         'pattern_usercoursevolumename_filter': r'^%s-(usercourse)$' % PREFIX,
         'pattern_assignmentvolumename_filter': r'^%s-(assignment)$' % PREFIX,
         'pattern_imagename_filter': r'^%s-notebook-(\w+):\w+$' % PREFIX,
-        'pattern_imagename': '%s-notebook-%(imagename)s' % PREFIX,
+        'pattern_imagename': '%s-notebook-%%(imagename)s' % PREFIX,
         'network': '%s-net' % PREFIX,
         'default_image': os.getenv('DEFAULT_IMAGE', '%s-notebook-basic' % PREFIX),
     },
