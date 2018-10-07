@@ -54,6 +54,15 @@ class ProjectAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'image') 
 #    actions = [ stop_containers, ]
 
+@admin.register(UserProjectBinding)
+class UserProjectBindingAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'project', 'role', 'is_hidden')
+    search_fields = ('user__username','project__name')
+
+@admin.register(GroupProjectBinding)
+class GroupProjectBindingAdmin(admin.ModelAdmin):
+    list_display = ('id', 'project', 'group')
+
 @admin.register(Container)
 class ContainerAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'image', 'user', 'n_projects', 'marked_to_remove')
@@ -69,16 +78,19 @@ class CourseAdmin(admin.ModelAdmin):
 @admin.register(UserCourseBinding)
 class UserCourseBindingAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'course', 'flag', 'is_teacher', 'is_protected')
+    search_fields = ('user__username','course__courseid')
 
 @admin.register(Assignment)
 class AssignmentAdmin(admin.ModelAdmin):
     list_display = ('id', 'course', 'flag', 'name', 'safename', 'folder', 'creator', 'description', 'is_massassignment', 'created_at', 'valid_from', 'expires_at', 'can_studentsubmit')
+    search_fields = ('creator__username', 'course__courseid' )
 
 @admin.register(UserAssignmentBinding)
 class UserAssignmentBindingAdmin(admin.ModelAdmin):
     list_display = ('id', 'assignment_name', 'user', 'state', 'received_at', 'valid_from', 'expires_at', 'submitted_at', 'corrector', 'corrected_at', 'score', 'feedback_text')
     def assignment_name(self, instance):
         return instance.assignment.name
+    search_fields = ('user__username', 'assignment__name' )
 
 @admin.register(UserProjectBinding)
 class UserProjectBindingAdmin(admin.ModelAdmin):
