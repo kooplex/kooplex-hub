@@ -1,9 +1,10 @@
-<form id="assignments-feedbackform-{{ course.id }}" class="form-horizontal" action="{% url 'assignment:feedback' %}" method="post">
+<form id="assignments-feedbackform-{{ course.id }}" class="form-horizontal" action="{% url 'assignment:feedback' course.id %}" method="post">
   {% csrf_token %}
   {% load render_table from django_tables2 %}
   {% if course.lookup_userassignmentbindings %}
     <div class="alert alert-warning">Select user assignments you finished correcting.</div>
     {% render_table t_feedback %}
+    <input type="hidden" name="pager" value="{{ pager }}">
     <div class="modal-footer">
       <button type="submit" class="btn btn-default" name="button" value="apply"> Apply</button>
     </div>

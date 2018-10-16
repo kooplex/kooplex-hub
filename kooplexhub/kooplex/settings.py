@@ -74,6 +74,7 @@ TEMPLATES = [
                 'social_django.context_processors.login_redirect',
                 'kooplex.lib.context_processors.form_biography',
                 'kooplex.lib.context_processors.user',
+                'kooplex.lib.context_processors.table',
             ],
         },
     },

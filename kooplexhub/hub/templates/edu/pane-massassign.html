@@ -1,4 +1,4 @@
-<form id="assignments-form-{{ course.id }}" class="form-horizontal" action="{% url 'assignment:new' %}" method="post">
+<form id="assignments-form-{{ course.id }}" class="form-horizontal" action="{% url 'assignment:new' course.id %}" method="post">
   {% csrf_token %}
   <input type="hidden" name="course_id" value="{{ course.id }}">
   {% if course.dirs_assignmentcandidate %}

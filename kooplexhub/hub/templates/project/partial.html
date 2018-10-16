@@ -25,7 +25,7 @@
       {% if caller == 'teacher' or caller == 'projectowner' %}
         <div style="float: right;">
         {% if caller == 'teacher' %}
-          <a href="{% url 'assignment:manager' project.course.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="You can create and manage assignments related to course {{ project.name }}." data-placement="top">
+          <a href="{% url 'assignment:new' project.course.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="You can create and manage assignments related to course {{ project.name }}." data-placement="top">
             <span class="oi oi-pencil" aria-hidden="true"></span></a>
         {% endif %} {% comment %} TODO: in else branch we can add reporting button {% endcomment %}
           <!-- a href="#" data-toggle="modal" data-target="#project-settings-{{ project.id  }}" -->

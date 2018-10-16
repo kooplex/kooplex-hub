@@ -7,34 +7,37 @@
     <link rel="stylesheet" href="{% static 'css/bootstrap-datetimepicker.min.css' %}">
 {% endblock %}
 
+{% block submenu %}
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSubmenu" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarSubmenu">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item"><a {% if submenu == 'new' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'assignment:new' course.id %}" {% endif %}>Create</a></li>
+      <li class="nav-item"><a {% if submenu == 'bind' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'assignment:bind' course.id %}" {% endif %}>Assign</a></li>
+      <li class="nav-item"><a {% if submenu == 'collect' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'assignment:collect' course.id %}" {% endif %}>Collect</a></li>
+      <li class="nav-item"><a {% if submenu == 'feedback' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'assignment:feedback' course.id %}" {% endif %}>Feedback</a></li>
+    </ul>
+    <ul class="nav navbar-nav navbar-right">
+      <li>Assignments related to course {{ course.courseid }}</li>
+    </ul>
+  </div>
+</nav>
+{% endblock %}
+
 {% block content %}
 <div>
-  <h4>Assignments related to course {{ course.courseid }}</h4>
-  <ul class="nav nav-tabs" id="assignmentTabs" role="tablist">
-    <li class="nav-item"><a class="nav-link active" href="#pane_newassignment-{{ course.id }}" data-toggle="tab">Create</a></li>
-    <!-- 
-    <li class="nav-item"><a class="nav-link" href="#pane_updateassignment-{{ course.id }}" data-toggle="tab">Update</a></li>
-    -->
-    <li class="nav-item"><a class="nav-link" href="#pane_bindassignment-{{ course.id }}" data-toggle="tab">Assign</a></li>
-    <li class="nav-item"><a class="nav-link" href="#pane_collectassignment-{{ course.id }}" data-toggle="tab">Collect</a></li>
-    <li class="nav-item"><a class="nav-link" href="#pane_feedbackassignment-{{ course.id }}" data-toggle="tab">Feedback</a></li>
-  </ul>
-  <div class="tab-content">
-    <div id="pane_newassignment-{{ course.id }}" class="tab-pane fade show active">
-    {% include 'edu/pane-massassign.html' %}
-    </div>
-    <div id="pane_updateassignment-{{ course.id }}" class="tab-pane fade">
-      {% include 'edu/pane-update.html' %}
-    </div>
-    <div id="pane_bindassignment-{{ course.id }}" class="tab-pane fade">
+  <div class="content">
+    {% if submenu == 'new' %}
+      {% include 'edu/pane-massassign.html' %}
+    {% elif submenu == 'bind' %}
       {% include 'edu/pane-bind.html' %}
-    </div>
-    <div id="pane_collectassignment-{{ course.id }}" class="tab-pane fade">
-      {% include 'edu/pane-collect.html' %}
-    </div>
-    <div id="pane_feedbackassignment-{{ course.id }}" class="tab-pane fade">
-      {% include 'edu/pane-feedback.html' %}
-    </div>
+    {% elif submenu == 'collect' %}
+       {% include 'edu/pane-collect.html' %}
+    {% elif submenu == 'feedback' %}
+       {% include 'edu/pane-feedback.html' %}
+    {% endif %}
   </div>     <!-- tab-content -->
 </div>      <!-- row -->
 
