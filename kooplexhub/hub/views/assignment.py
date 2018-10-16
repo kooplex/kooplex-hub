@@ -171,21 +171,28 @@ def teachercollect(request, course_id):
 @login_required
 def feedback_handler(request, course_id):
     """Mark assignments to correct"""
+    from hub.models.assignment import ST_LOOKUP
     user = request.user
     logger.debug("user %s, method: %s" % (user, request.method))
     try:
         course = Course.objects.get(id = course_id)
         assert len(list(UserCourseBinding.objects.filter(user = user, course = course, is_teacher = True))) > 0, "%s is not a teacher of course %s" % (user, course)
-        table_feedback = T_CORRECT(course.lookup_userassignmentbindings())
-        RequestConfig(request).configure(table_feedback)
     except Exception as e:
         logger.error("Invalid request with course id %s and user %s -- %s" % (course_id, user, e))
         return redirect('indexpage')
     if request.method == 'GET':
+        extra = {}
+        for k in [ 'state', 'name', 'user' ]:
+            v = request.GET.get(k)
+            if v:
+                extra[k] = v
+        table_feedback = T_CORRECT(course.lookup_userassignmentbindings(**extra))
+        RequestConfig(request).configure(table_feedback)
         context_dict = {
             'submenu': 'feedback',
             'course': course,
             't_feedback': table_feedback,
+            'states': ST_LOOKUP,
         }
         return render(request, 'edu/assignments.html', context = context_dict) #FIXME: rename template new_assignment.html
     elif request.method == 'POST':
@@ -286,6 +293,18 @@ def bind(request, course_id):
     else:
         return redirect('indexpage')
     
+@login_required
+def search(request):
+    course_id = request.POST.get('course_id')
+    user = request.user
+    extra = []
+    for k in [ 'state', 'name', 'user' ]:
+        v = request.POST.get(k)
+        if v:
+            extra.append("%s=%s" % (k, v))
+    url_next = reverse('assignment:feedback', kwargs = {'course_id': course_id})
+       # pager = request.POST.get('pager')
+    return redirect(url_next + "?%s" % "&".join(extra)) if len(extra) else redirect('assignment:feedback', course_id)
 
 
 #@login_required
@@ -298,6 +317,7 @@ urlpatterns = [
     url(r'(?P<course_id>\d+)/collect$', teachercollect, name = 'collect'),
     url(r'(?P<course_id>\d+)/feedback$', feedback_handler, name = 'feedback'),
     url(r'submit/?$', studentsubmit, name = 'submit'),
+    url(r'search$', search, name = 'search'),
 ]
 
 
