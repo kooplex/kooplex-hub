@@ -66,6 +66,7 @@ class Course(models.Model):
             for binding in UserAssignmentBinding.objects.filter(assignment = assignment, **extra_b):
                 if U is None or (U is not None and binding.user in U):
                     bindings.add(binding)
+        return bindings
 
     @register.filter
     def count_students4flag(self, flag):
