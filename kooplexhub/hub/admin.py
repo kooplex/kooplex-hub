@@ -92,10 +92,6 @@ class UserAssignmentBindingAdmin(admin.ModelAdmin):
         return instance.assignment.name
     search_fields = ('user__username', 'assignment__name' )
 
-@admin.register(UserProjectBinding)
-class UserProjectBindingAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'project', 'is_hidden')
-
 @admin.register(Volume)
 class VolumeAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'displayname', 'description', 'volumetype')
