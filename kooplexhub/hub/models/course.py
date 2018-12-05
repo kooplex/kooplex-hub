@@ -49,11 +49,23 @@ class Course(models.Model):
             if binding.assignment in assignments:
                 yield binding
 
-    def lookup_userassignmentbindings(self):
+    def lookup_userassignmentbindings(self, **kw):
         from .assignment import Assignment, UserAssignmentBinding
+        from django.db.models import Q
+        logger.debug('filter: %s' % kw)
+        extra_a = {}
+        extra_b = {}
+        if 'name' in kw:
+            extra_a['name__icontains'] = kw['name']
+        if 'state' in kw:
+            extra_b['state'] = kw['state']
+        user_name = kw.get('user', None)
+        U = User.objects.filter(Q(last_name__icontains = user_name) | Q(first_name__icontains = user_name)) if 'user' in kw else None
         bindings = set()
-        for assignment in Assignment.objects.filter(course = self):
-            bindings.update(UserAssignmentBinding.objects.filter(assignment = assignment))
+        for assignment in Assignment.objects.filter(course = self, **extra_a):
+            for binding in UserAssignmentBinding.objects.filter(assignment = assignment, **extra_b):
+                if U is None or (U is not None and binding.user in U):
+                    bindings.add(binding)
         return bindings
 
     @register.filter

@@ -54,14 +54,9 @@ class ProjectAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'image') 
 #    actions = [ stop_containers, ]
 
-@admin.register(UserProjectBinding)
-class UserProjectBindingAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'project', 'role', 'is_hidden')
-    search_fields = ('user__username','project__name')
-
-@admin.register(GroupProjectBinding)
-class GroupProjectBindingAdmin(admin.ModelAdmin):
-    list_display = ('id', 'project', 'group')
+#@admin.register(GroupProjectBinding)
+#class GroupProjectBindingAdmin(admin.ModelAdmin):
+#    list_display = ('id', 'project', 'group')
 
 @admin.register(Container)
 class ContainerAdmin(admin.ModelAdmin):
@@ -95,6 +90,7 @@ class UserAssignmentBindingAdmin(admin.ModelAdmin):
 @admin.register(UserProjectBinding)
 class UserProjectBindingAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'project', 'is_hidden')
+    search_fields = ('user__username','project__name')
 
 @admin.register(Volume)
 class VolumeAdmin(admin.ModelAdmin):
@@ -150,10 +146,10 @@ class VolumeContainerBindingAdmin(admin.ModelAdmin):
 class ImageAdmin(admin.ModelAdmin):
     list_display = ('id', 'name')
 
-@admin.register(Group)
-class GroupAdmin(admin.ModelAdmin):
-    list_display = ('id', 'groupid', 'name', 'project', 'is_active')
+#@admin.register(Group)
+#class GroupAdmin(admin.ModelAdmin):
+#    list_display = ('id', 'groupid', 'name', 'project', 'is_active')
 
-@admin.register(UserGroupBinding)
-class UserGroupBindingAdmin(admin.ModelAdmin):
-    list_display = ('id', 'group', 'user')
+#@admin.register(UserGroupBinding)
+#class UserGroupBindingAdmin(admin.ModelAdmin):
+#    list_display = ('id', 'group', 'user')

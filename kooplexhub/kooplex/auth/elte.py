@@ -45,17 +45,21 @@ class my_ElteOpenID(OpenIdConnectAuth):
                     flag = None
                 course = lookup_course(coursename)
                 bindings.append({ 'course': course, 'flag': flag, 'is_teacher': is_teacher })
-        user = super(my_ElteOpenID, self).authenticate(request, **credentials)
-        response = credentials.get('response', {})
-#        logger.debug("IDP resp %s" % response)
         try:
-            logger.debug("Authenticated (username) %s" % user.username)
-        except:
-            pass
-        bindings = []
-        # currently held courses
-        updater('niifEduPersonHeldCourse', is_teacher = True)
-        # currently attended courses
-        updater('niifEduPersonAttendedCourse', is_teacher = False)
-        update_UserCourseBindings(user, bindings)
-        return user
+         user = super(my_ElteOpenID, self).authenticate(request, **credentials)
+         response = credentials.get('response', {})
+#         logger.debug("IDP resp %s" % response)
+         try:
+             logger.debug("Authenticated (username) %s" % user.username)
+         except:
+             pass
+         bindings = []
+         # currently held courses
+         updater('niifEduPersonHeldCourse', is_teacher = True)
+         # currently attended courses
+         updater('niifEduPersonAttendedCourse', is_teacher = False)
+         update_UserCourseBindings(user, bindings)
+         return user
+        except Exception as e:
+            logger.error("Catching errors at login %s" % ( e))
+

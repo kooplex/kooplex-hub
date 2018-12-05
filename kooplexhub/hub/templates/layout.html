@@ -17,6 +17,7 @@
 
   <body>
     {% include 'navbar.html' %}
+    {% block submenu %}{% endblock %}
     {% include 'message.html' %}
     <div class="container body-content">
       {% block content %}{% endblock %}

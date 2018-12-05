@@ -1,4 +1,4 @@
-<form id="assignmentbind-form-{{ course.id }}" class="form-horizontal" action="{% url 'assignment:bind' %}" method="post">
+<form id="assignmentbind-form-{{ course.id }}" class="form-horizontal" action="{% url 'assignment:bind' course.id %}" method="post">
   {% csrf_token %}
   <input type="hidden" name="course_id" value="{{ course.id }}">
   {% load render_table from django_tables2 %}
@@ -6,6 +6,7 @@
     <div class="alert alert-warning">Select assignment and student to bind right now.</div>
       <div style="position: relative">
         {% render_table t_bind %}
+	<input type="hidden" name="pager" value="{{ pager }}">
       </div>
     <div class="modal-footer">
       <button type="submit" class="btn btn-default" name="button" value="apply"> Bind</button>

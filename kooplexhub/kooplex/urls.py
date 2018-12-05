@@ -14,7 +14,7 @@ urlpatterns = [
     url(r'^admin/', include('hub.admin', namespace = 'myadmin')),
 
     
-    url(r'^hub/mock/', include('kooplex.mock', namespace = 'mock')), #FIXME: REMOVE FROM PRODUCTION
+#    url(r'^hub/mock/', include('kooplex.mock', namespace = 'mock')), #FIXME: REMOVE FROM PRODUCTION
 
 
     url(r'^hub/oauth/', include('social_django.urls', namespace = 'social')),
