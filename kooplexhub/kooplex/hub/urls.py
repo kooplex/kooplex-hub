@@ -41,7 +41,11 @@ def loginHandler(request, *v, **kw):
                 return redirect('projects')
             except User.DoesNotExist:
                 logger.warning('user %s is not a hub user, we log it out' % request.user)
-                logout(request)
+                if "%s"%request.user == 'hubadmin':
+                    return redirect('projects')
+                else:
+                    logout(request)
+                 
         logger.debug('render login')
         return login_view(request, template_name = 'auth/login.html', authentication_form = authenticationForm)
     if request.method == 'POST':

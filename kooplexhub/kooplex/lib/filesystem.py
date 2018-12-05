@@ -309,7 +309,8 @@ def split_volume_path_in_hub(filename):
         return { 'volumename': vn, 'username': u, 'project_with_owner': pr, 'path': p }
     if vn == 'share':
         pr, p = path.split('/', 1)
-        return { 'volumename': vn, 'project_with_owner': pr, 'path': p }
+        u = pr.split('-')[-1]
+        return { 'volumename': vn, 'project_with_owner': pr, 'path': p , 'username': u}
     
 def list_notebooks(user, project):
     """
@@ -396,9 +397,11 @@ def copy_reportfiles_in_place(report, files):
     report_root = report.report_root
     if isinstance(report, DashboardReport):
 #FIXME: test it
-        filename_source = report.path_in_hub
-        filename_in_container = report.path_in_usercontainer
-        dir_target = os.path.join(report_root, os.path.dirname(filename_in_container))
+        #filename_source = report.path_in_hub
+        #filename_in_container = report.path_in_usercontainer
+        filename_source = report.notebookfile.path_in_hub
+        filename_in_container = report.notebookfile.path_in_usercontainer
+        dir_target = os.path.join(report_root, os.path.dirname(filename_in_container[1:]))
         dir_util.mkpath(dir_target)
 #    file_util.copy_file(filename_source, dir_target)
         target_file = os.path.join(dir_target, os.path.basename(filename_source))
@@ -474,7 +477,8 @@ else
   echo "move clone script back in place"
   mv ${BACKMEUP} $0
 fi
-        """ % { 'url': project_template.url_gitlab, 'message': commitmsg, 'gitdir': _get_mountpoint_in_container('git', project.owner) }
+        """ % { 'url': project_template.url_gitlab, 'message': commitmsg, 'gitdir': '/home/%s/git' % project.owner }
+#        """ % { 'url': project_template.url_gitlab, 'message': commitmsg, 'gitdir': _get_mountpoint_in_container('git', project.owner) }
     else:
         user = project.owner if collaboratoruser is None else collaboratoruser
         script = """#! /bin/bash
@@ -492,8 +496,10 @@ else
   echo "move clone script back in place"
   mv ${BACKMEUP} $0
 fi
-        """ % { 'url': project.url_gitlab, 'gitdir': _get_mountpoint_in_container('git', user)  }
-    filename = os.path.join(_get_mountpoint_in_hub('git', user, project), 'clone.sh')
+        """ % { 'url': project.url_gitlab, 'gitdir': '/home/%s/git' % project.owner  }
+#        """ % { 'url': project.url_gitlab, 'gitdir': _get_mountpoint_in_container('git', user)  }
+    filename = os.path.join(mountpoint_in_hub('git', user, project), 'clone.sh')
+#    filename = os.path.join(_get_mountpoint_in_hub('git', user, project), 'clone.sh')
     with open(filename, 'w') as f:
         f.write(script)
     os.chown(filename, user.uid, user.gid)

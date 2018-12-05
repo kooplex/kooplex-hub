@@ -107,6 +107,8 @@ class DashboardReport(Report):
                 self.notebook_dirname = "git"
             elif self.volname == 'share':
                 self.notebook_dirname = "share"
+        #if not self.image:
+        self.image = self.project.image
         Report.save(self)      #FIXME: use the super() syntax
 
 def _groupby(reports):

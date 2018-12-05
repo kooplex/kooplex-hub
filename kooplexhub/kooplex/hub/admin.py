@@ -133,11 +133,11 @@ class ProjectContainerAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'image', 'project', 'uptime', 'url')
     actions = [ stop_containers, ]
 
-    def get_actions(self, request):
-        actions = super().get_actions(request)
-        if 'delete_selected' in actions:
-            del actions['delete_selected']
-        return actions
+#    def get_actions(self, request):
+#        actions = super().get_actions(request)
+#        if 'delete_selected' in actions:
+#            del actions['delete_selected']
+#        return actions
 
 
 @admin.register(DashboardContainer)
