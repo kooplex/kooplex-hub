@@ -9,12 +9,44 @@ import django_tables2 as tables
 from django_tables2 import RequestConfig
 from django.utils.translation import gettext_lazy as _
 
+from hub.forms import FormProject
 from hub.models import Project, UserProjectBinding, Volume
 from hub.models import Image
 
 from kooplex.logic import configure_project
 
 logger = logging.getLogger(__name__)
+
+@login_required
+def new(request):
+    logger.debug("user %s" % request.user)
+    user_id = request.POST.get('user_id')
+    try:
+        assert user_id is not None and int(user_id) == request.user.id, "user id mismatch: %s tries to save %s %s" % (request.user, request.user.id, request.POST.get('user_id'))
+        projectname = request.POST.get('name')
+        for upb in UserProjectBinding.objects.filter(user = request.user):
+            assert upb.project.name != projectname, "Not a unique name"
+        form = FormProject(request.POST)
+        form.save()
+        upb = UserProjectBinding(user = request.user, project = form.instance)
+        upb.save()
+        messages.info(request, 'Your new project is created')
+        return redirect('project:list')
+    except Exception as e:
+        logger.error("New project not created -- %s" % e)
+        messages.error(request, 'Creation of a new project is refused.')
+        return redirect('indexpage')
+        
+
+
+@login_required
+def listprojects(request):
+    """Renders the projectlist page for courses taught."""
+    logger.debug('Rendering project.html')
+    context_dict = {
+        'next_page': 'project:list',
+    }
+    return render(request, 'project/list.html', context = context_dict)
 
 
 class ProjectSelectionColumn(tables.Column):
@@ -104,25 +136,28 @@ def configure(request, project_id):
 
 
 @login_required
-def manage(request):
+def show_hide(request, next_page):
     """Manage your projects"""
     user = request.user
     logger.debug("user %s method %s" % (user, request.method))
-    userprojectbindings_course = user.profile.courseprojects_taught_NEW()
+    userprojectbindings = user.profile.projectbindings
+    userprojectbindings_course = user.profile.courseprojects_taught_NEW() #FIXME: diak is hideolhat ?
     if request.method == 'GET':
+        table_project = T_PROJECT(userprojectbindings)
         table_course = T_PROJECT(userprojectbindings_course)
+        RequestConfig(request).configure(table_project)
         RequestConfig(request).configure(table_course)
         context_dict = {
+            't_project': table_project,
             't_course': table_course,
-            't_project': None, #FIXME>
+            'next_page': next_page,
         }
         return render(request, 'project/manage.html', context = context_dict)
     else:
-        next_page = request.POST.get('next_page', 'list:teaching') #FIXME
         hide_bindingids_req = set([ int(i) for i in request.POST.getlist('selection') ])
         n_hide = 0
         n_unhide = 0
-        for upb in userprojectbindings_course:
+        for upb in set(userprojectbindings).union(userprojectbindings_course):
             if upb.is_hidden and not upb.id in hide_bindingids_req:
                 upb.is_hidden = False
                 upb.save()
@@ -141,10 +176,9 @@ def manage(request):
         return redirect(next_page)
 
 @login_required
-def hide(request, project_id):
+def hide(request, project_id, next_page):
     """Hide project from the list."""
     logger.debug("project id %s, user %s" % (project_id, request.user))
-    next_page = request.GET.get('next_page', 'list:teaching') #FIXME
     try:
         project = Project.objects.get(id = project_id)
         UserProjectBinding.setvisibility(project, request.user, hide = True)
@@ -156,8 +190,12 @@ def hide(request, project_id):
 
 
 urlpatterns = [
+    url(r'^list', listprojects, name = 'list'), 
+
+    url(r'^new/?$', new, name = 'new'), 
+
     url(r'^configure/(?P<project_id>\d+)$', configure, name = 'configure'), 
-    url(r'^manage/?$', manage, name = 'manage'), 
-    url(r'^hide/(?P<project_id>\d+)$', hide, name = 'hide'), 
+    url(r'^show/(?P<next_page>\w+:?\w*)$', show_hide, name = 'showhide'),
+    url(r'^hide/(?P<project_id>\d+)/(?P<next_page>\w+:?\w*)$', hide, name = 'hide'), 
 ]
 

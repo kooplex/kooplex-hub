@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="row">
+  <form id="container-manage" class="form-horizontal" action="{% url 'container:addproject' container.id %}" method="post">
+    {% csrf_token %}
+    <h4>Manage container projects</h4>
+
+{% for p in container.projects %}
+<input type="checkbox" name="project_ids" value="{{ p.id }}" checked>{{ p }}<br>
+{% endfor %}
+{% for p in container.projects_addable %}
+{% if container.image %}
+  <input type="checkbox" name="project_ids" value="{{ p.id }}">{{ p }}<br>
+{% else %}
+  <input type="radio" name="project_ids" value="{{ p.id }}">{{ p }}<br>
+{% endif %}
+{% endfor %}
+
+
+    <div class="modal-footer">
+      <button type="submit" class="btn btn-default" name="button" value="apply"> Apply settings</button>
+      <button class="btn btn-default" data-dismiss="modal">Cancel</button>
+    </div>
+  </form>
+</div> <!-- container -->
+{% endblock %}

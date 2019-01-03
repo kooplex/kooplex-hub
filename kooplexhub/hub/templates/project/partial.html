@@ -2,10 +2,12 @@
   <div class="card-header" id="heading-{{ project.id }}">
     {% include 'container/startopen.html' %}
     <button class="btn btn-outline-dark" data-toggle="collapse" data-target="#collapse-{{ project.id }}" aria-expanded="true" aria-controls="collapse-{{ project.id }}" style="min-width: 15em; text-align: left;">
-      {% include 'container/containerstatus.html' %}
       <strong>{{ project.name }}</strong>
     </button>
     {% include 'container/stopremove.html' %}
+    {% include 'container/containerstatus.html' %}
+    <a href="{% url 'project:hide' project.id next_page %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="You can hide {{ project.name }} from your list." data-placement="top" style="padding: 3px 6px 6px 6px; float: right;">
+      <span class="oi oi-eye" aria-hidden="true"></span></a>
     <button class="btn" data-toggle="collapse" data-target="#collapse-{{ project.id }}" aria-expanded="true" aria-controls="collapse-{{ project.id }}" style="float: right;">
 {% if container.is_running  %}
       <span class="badge badge-pill badge-success">Using image:<strong>{{ project.image }}</strong></span>
@@ -31,8 +33,6 @@
           <!-- a href="#" data-toggle="modal" data-target="#project-settings-{{ project.id  }}" -->
           <a href="{% url 'project:configure' project.id  %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Settings of project {{ project.name }}. You can change the image, modify volume attachments." data-placement="top">
             <span class="oi oi-wrench" aria-hidden="true"></span></a>
-          <a href="{% url 'project:hide' project.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="You can hide {{ project.name }} from your list. The related container will be stopped and removed." data-placement="top">
-            <span class="oi oi-eye" aria-hidden="true"></span></a>
         </div>  <!-- float //-->
       {% endif %}
       {% if caller == 'student' %} <!-- FIXME: only when active assignments are there -->

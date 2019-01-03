@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+  {% for binding in user.profile.projectbindings %}
+    {% if not binding.is_hidden %}
+      {% with project=binding.project %}
+         {% include 'project/partial.html' with container=project|get_usercontainer:user %}
+      {% endwith %}
+    {% endif %}
+  {% endfor %}
+{% include "../footer.html" %}
+{% endblock %}
+

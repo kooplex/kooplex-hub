@@ -36,12 +36,15 @@ INSTALLED_APPS = (
 
 AUTHENTICATION_BACKENDS = (
 # TODO: a place for google IDP modul,
-    'kooplex.auth.elte.my_ElteOpenID',
+#    'kooplex.auth.elte.my_ElteOpenID',
+    'kooplex.auth.hydra.HydraOpenID',
     'django.contrib.auth.backends.ModelBackend',
 )
 
 SOCIAL_AUTH_ELTEOIDC_KEY = '%s-hub' % PREFIX
 SOCIAL_AUTH_ELTEOIDC_SECRET = os.getenv('ELTEOIDC_SECRET')
+SOCIAL_AUTH_HYDRAOIDC_KEY = '%s-hub' % PREFIX
+SOCIAL_AUTH_HYDRAOIDC_SECRET = os.getenv('ELTEOIDC_SECRET')
 SOCIAL_AUTH_USER_FIELDS = [ 'username', 'email' ]
 SOCIAL_AUTH_URL_NAMESPACE = 'social'
 
@@ -73,6 +76,8 @@ TEMPLATES = [
                 'social_django.context_processors.backends',
                 'social_django.context_processors.login_redirect',
                 'kooplex.lib.context_processors.form_biography',
+                'kooplex.lib.context_processors.form_project',
+                'kooplex.lib.context_processors.form_container',
                 'kooplex.lib.context_processors.user',
                 'kooplex.lib.context_processors.table',
             ],

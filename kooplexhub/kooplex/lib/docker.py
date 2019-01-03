@@ -130,23 +130,25 @@ class Docker:
         docker_container_info = self.get_container(container)
         container_state = docker_container_info['State']
         logger.debug("Container state %s" % container_state)
+        container.last_message = str(container_state)
         assert container_state == 'running', "Container failed to start: %s" % docker_container_info
 
     def stop_container(self, container):
         try:
             self.client.stop(container.name)
+            container.last_message = 'Container stopped'
         except Exception as e:
             logger.warn("docker container not found by API -- %s" % e)
-        container.is_running = False
-        container.save()
+            container.last_message = str(e)
 
     def remove_container(self, container):
         try:
             self.client.remove_container(container.name)
+            container.last_message = 'Container removed'
         except Exception as e:
             logger.warn("docker container not found by API -- %s" % e)
+            container.last_message = str(e)
         logger.debug("Container removed %s" % container.name)
-        container.delete()
 
 #FIXME: az execute2 lesz az igazi...
     def execute(self, container, command):

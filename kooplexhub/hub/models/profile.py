@@ -28,6 +28,25 @@ class Profile(models.Model):
         return KOOPLEX.get('ldap', {}).get('gid_users', 1000)
 
     @property
+    def projectbindings(self):
+        from .project import UserProjectBinding
+        from .course import Course
+        for binding in UserProjectBinding.objects.filter(user = self.user):
+            #FIXME: more elaborate way to hide course projects
+            try:
+                binding.project.course
+                continue
+            except Course.DoesNotExist:
+                pass
+            yield binding
+
+    @property
+    def containers(self):
+        from .container import Container
+        for container in Container.objects.filter(user = self.user):
+             yield container
+
+    @property
     def coursebindings(self):
         from .course import UserCourseBinding
         for binding in UserCourseBinding.objects.filter(user = self.user):

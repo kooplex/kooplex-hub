@@ -9,27 +9,10 @@
     <ul class="navbar-nav mr-auto">
       <!-- FIXME: no active item indicated: li class="nav-item active" -->
     {% if user.is_authenticated %}
-      <li class="nav-item">
-       {% if user.profile.is_student %}
-        <a href="{% url 'list:courses' %}" class="nav-link" data-toggle="tooltip" title="Access notebook environments related to those courses you attend this semester" data-placement="bottom">Courses</a>
-       {% else %}
-        <a href="#" class="nav-link disabled">Courses</a>
-       {% endif %}
-      </li>
-      <li class="nav-item">
-       {% if user.profile.is_teacher %}
-        <a href="{% url 'list:teaching' %}" class="nav-link" data-toggle="tooltip" title="Access notebook environments related to those courses you teach this semester" data-placement="bottom">Teaching</a>
-       {% else %}
-        <a href="#" class="nav-link disabled">Teaching</a>
-       {% endif %}
-      </li>
-      <li class="nav-tem">
-       {% if user.profile.can_createproject %}
-        <a href="{% url 'project:mine' %}" class="nav-link" data-toggle="tooltip" title="Manage your jupyter notebook projects" data-placement="bottom">Projects</a>
-       {% else %}
-        <a href="#" class="nav-link disabled">Projects</a>
-       {% endif %}
-      </li>
+      {% include "menuitem_project.html" %}
+      {% include "menuitem_report.html" %}
+      {% include "menuitem_edu.html" %}
+      {% include "menuitem_container.html" %}
     {% endif %}
     </ul>
     {% include "navbarmenu_right.html" %}

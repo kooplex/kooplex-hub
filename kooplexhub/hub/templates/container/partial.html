@@ -1,0 +1,43 @@
+<div class="card bg-light mb-3">
+  <div class="card-header" id="heading-{{ container.id }}">
+    {% include 'container/startopen.html' %}
+    <button class="btn btn-outline-dark" data-toggle="collapse" data-target="#collapse-{{ container.id }}" aria-expanded="true" aria-controls="collapse-{{ container.id }}" style="min-width: 15em; text-align: left;">
+      <strong>{{ container.name }}</strong>
+    </button>
+    {% include 'container/stopremove.html' %}
+    {% include 'container/containerstatus.html' %}
+    <button class="btn" data-toggle="collapse" data-target="#collapse-{{ container.id }}" aria-expanded="true" aria-controls="collapse-{{ container.id }}" style="float: right;">
+{% if container.is_running  %}
+      <span class="badge badge-pill badge-success">Using image:<strong>{{ container.image }}</strong></span>
+{% else %}
+      <span class="badge badge-pill badge-secondary">Using image:<strong>{{ container.image }}</strong></span>
+{% endif %}
+    </button>
+  </div>
+
+    <div id="collapse-{{ container.id }}" class="collapse" aria-labelledby="heading-{{ container.id }}" data-parent="#containerList">
+      <div class="card-body">
+        <div class="card-header">Projects: </div>
+        <div class="card-body">
+          {% for p in container.projects %}
+            <p>{{ p }}</p>
+          {% endfor %}
+        </div>
+        <div class="card-header">Volumes: </div>
+        <div class="card-body">
+          {% for v in container.volumes %}
+            <p>{{ v }}</p>
+          {% endfor %}
+        </div>
+        <div class="card-header">Last message: </div>
+        <div class="card-body">
+          <p>{{ container.last_message }}</p>
+        </div>
+
+        <a href="{% url 'container:addproject' container.id %}" role="button" class="btn" style="padding: 6px; float: right;">
+          <span class="oi oi-wrench" aria-hidden="true" data-toggle="tooltip" title="Add/remove project to the container" data-placement="bottom"></span></a>
+
+      </div>   <!-- card-body -->
+    </div>
+  </div>
+

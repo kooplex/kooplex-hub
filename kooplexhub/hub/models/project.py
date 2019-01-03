@@ -7,18 +7,30 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from .image import Image
-from .scope import ScopeType
+from .group import Group
 
 from kooplex.settings import KOOPLEX
 from kooplex.lib import standardize_str
 
 logger = logging.getLogger(__name__)
 
+SCP_LOOKUP = {
+    'public': 'Authenticated users can list and may join this project.',
+    'internal': 'Users in specific groups can list and may join this project.',
+    'private': 'Creator can invite collaborators to this project.',
+}
+
 
 class Project(models.Model):
+    SCP_PUBLIC = 'public'
+    SCP_INTERNAL = 'internal'
+    SCP_PRIVATE = 'private'
+    SCOPE_LIST = [ SCP_PUBLIC, SCP_INTERNAL, SCP_PRIVATE ]
+
     name = models.TextField(max_length = 200, null = False)
     description = models.TextField(null = True)
     image = models.ForeignKey(Image, null = True)
+    scope = models.CharField(max_length = 16, choices = [ (x, SCP_LOOKUP[x]) for x in SCOPE_LIST ], default = SCP_PRIVATE)
 
     def __str__(self):
         return self.name
@@ -31,8 +43,10 @@ class Project(models.Model):
         return standardize_str(self.name)
 
     @property
-    def owner(self):
-        return UserProjectBinding.objects.get(project = self, is_owner = True).user
+    def owner(self):  #FIXME: depracated
+        for binding in UserProjectBinding.objects.filter(project = self):
+            if binding.role == UserProjectBinding.RL_CREATOR:
+                yield binding.user
 
     @property
     def name_with_owner(self):
@@ -115,25 +129,22 @@ class Project(models.Model):
         logger.warn("NotImplementedError")
 
 
-#class Project(ProjectBase):
-#    scope = models.ForeignKey(ScopeType, null = True)
-#
-#    _collaborators = None
-#    @property
-#    def collaborators(self):
-#        if self._collaborators is None:
-#            self._collaborators = UserProjectBinding.objects.filter(project = self)
-#        for upb in self._collaborators:
-#            yield upb.user
-#
-#    def is_userauthorized(self, user):
-#        return True if user == self.owner or user in self.collaborators else False
+RL_LOOKUP = {
+    'creator': 'The creator of this project.',
+    'administrator': 'Can modify project properties.',
+    'member': 'Member of this project.',
+}
 
 class UserProjectBinding(models.Model):
+    RL_CREATOR = 'creator'
+    RL_ADMIN = 'administrator'
+    RL_COLLABORATOR = 'member'
+    ROLE_LIST = [ RL_CREATOR, RL_ADMIN, RL_COLLABORATOR ]
+
     user = models.ForeignKey(User, null = False)
     project = models.ForeignKey(Project, null = False)
     is_hidden = models.BooleanField(default = False)
-    is_owner = models.BooleanField(default = False)
+    role = models.CharField(max_length = 16, choices = [ (x, RL_LOOKUP[x]) for x in ROLE_LIST ], null = False)
 
     def __str__(self):
        return "%s-%s" % (self.project.name, self.user.username)
@@ -146,6 +157,10 @@ class UserProjectBinding(models.Model):
             binding.save()
         except UserProjectBinding.DoesNotExist:
             raise ProjectDoesNotExist
+
+class GroupProjectBinding(models.Model):
+    group = models.ForeignKey(Group, null = False)
+    project = models.ForeignKey(Project, null = False)
 
 
 

@@ -1,0 +1,21 @@
+  <li class="nav-item">
+    {% if user.profile.projectbindings %}
+      <a href="{% url 'project:list' %}" class="nav-link" data-toggle="tooltip" title="List and manage your projects" data-placement="bottom">Projects</a>
+    {% else %}
+      <a href="#" class="nav-link disabled" data-toggle="tooltip" title="You do not have a project yet" data-placement="bottom">Projects</a>
+    {% endif %}
+  </li>
+
+{% if user.profile.can_createproject %}
+  {% include "project/new.html" %}
+  <li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownProject" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></a>
+    <div class="dropdown-menu" aria-labelledby="navbarDropdownProject">
+      <a class="dropdown-item" href="#" data-toggle="modal" data-target="#project-new">New project</a>
+      <a class="dropdown-item" href="#">Join a project</a>
+      <a class="dropdown-item" href="{% url 'project:list' %}">List projects</a>
+      <a class="dropdown-item" href="{% url 'project:showhide' 'project:list' %}">Show/hide projects</a>
+      <a class="dropdown-item" href="#">New report</a>
+    </div>
+  </li>
+{% endif %}

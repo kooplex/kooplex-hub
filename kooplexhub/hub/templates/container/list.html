@@ -1,0 +1,10 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+  {% for container in user.profile.containers %}
+     {% include 'container/partial.html' %}
+  {% endfor %}
+
+{% endblock %}
+

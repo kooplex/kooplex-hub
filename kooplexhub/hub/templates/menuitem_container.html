@@ -1,0 +1,18 @@
+  <li class="nav-item">
+    {% if user.profile.containers %}
+      <a href="{% url 'container:list' %}" class="nav-link" data-toggle="tooltip" title="List and manage your containers" data-placement="bottom">Containers</a>
+    {% else %}
+      <a href="#" class="nav-link disabled" data-toggle="tooltip" title="You do not have a project container yet" data-placement="bottom">Containers</a>
+    {% endif %}
+  </li>
+
+{% if user.profile.can_createproject %}
+  {% include "container/new.html" %}
+  <li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownContainer" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></a>
+    <div class="dropdown-menu" aria-labelledby="navbarDropdownContainer">
+      <a class="dropdown-item" href="#" data-toggle="modal" data-target="#container-new">New container</a>
+      <a class="dropdown-item" href="{% url 'container:list' %}">List containers</a>
+    </div>
+  </li>
+{% endif %}

@@ -148,8 +148,12 @@ class ImageAdmin(admin.ModelAdmin):
 
 @admin.register(Group)
 class GroupAdmin(admin.ModelAdmin):
-    list_display = ('id', 'groupid', 'name', 'project', 'is_active')
+    list_display = ('id', 'groupid', 'name' )
 
 @admin.register(UserGroupBinding)
 class UserGroupBindingAdmin(admin.ModelAdmin):
     list_display = ('id', 'group', 'user')
+
+@admin.register(VCToken)
+class VCTokenAdmin(admin.ModelAdmin):
+    ist_display = ('id', 'user', 'backend_type')

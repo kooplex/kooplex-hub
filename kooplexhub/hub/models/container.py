@@ -21,21 +21,42 @@ from kooplex.lib import  standardize_str, now
 logger = logging.getLogger(__name__)
 
 
-#FIXME: container state machinery rewrite
+ST_LOOKUP = {
+    'np': 'Not present in docker engine.',
+    'man': 'Manifested but not running.',
+    'run': 'Running in docker engine.',
+}
 
 class Container(models.Model):
+    ST_NOTPRESENT = 'np'
+    ST_NOTRUNNING = 'man'
+    ST_RUNNING = 'run'
+    STATE_LIST = [ ST_NOTPRESENT, ST_NOTRUNNING, ST_RUNNING ]
+
     name = models.CharField(max_length = 200, null = False)
     user = models.ForeignKey(User, null = False)
     image = models.ForeignKey(Image, null = True)
     launched_at = models.DateTimeField(default = timezone.now)
-    is_running = models.BooleanField(default = False)
     marked_to_remove = models.BooleanField(default = False)
+
+    state = models.CharField(max_length = 16, choices = [ (x, ST_LOOKUP[x]) for x in STATE_LIST ], default = ST_NOTPRESENT)
+    last_message = models.CharField(max_length = 512, null = True)
+    last_message_at = models.DateTimeField(default = None, null = True)
+
 
     def __lt__(self, c):
         return self.launched_at < c.launched_at
 
     def __str__(self):
         return "<Container %s@%s>" % (self.name, self.user)
+
+    @property
+    def is_running(self):
+        return self.state == self.ST_RUNNING
+
+    @property
+    def is_stopped(self):
+        return self.state == self.ST_NOTRUNNING
 
     @property
     def uptime(self):
@@ -60,6 +81,17 @@ class Container(models.Model):
     def projects(self):
         for binding in ProjectContainerBinding.objects.filter(container = self):
             yield binding.project
+
+    @property
+    def projects_addable(self):
+        from .project import UserProjectBinding
+        bound_projects = set(self.projects)
+        for binding in UserProjectBinding.objects.filter(user = self.user):
+            if binding.project in bound_projects:
+                continue
+            img = binding.project.image
+            if self.image is None or img is None or self.image == img:
+                yield binding.project
 
     @property
     def volumecontainerbindings(self):
@@ -107,34 +139,21 @@ class Container(models.Model):
         logger.debug("container id %s & user %s" % (container_id, user))
         container = Container.objects.get(id = container_id, **kw)
         if not container.is_user_authorized(user):
-            raise Container.DoesNotExists("Unauthorized request")
+            raise Container.DoesNotExist("Unauthorized request")
         logger.debug("found container %s and authorized for user %s" % (container, user))
         return container 
 
     def docker_start(self):
-        from kooplex.lib import Docker
-        from kooplex.lib.proxy import addroute
-        if self.is_running:
-            logger.error("%s is running" % self)
-            return
-        docker = Docker()
-        docker.run_container(self)
-        self.is_running = True
+        self.state = self.ST_RUNNING
         self.save()
-        addroute(self)
-        logger.info("started %s" % self)
 
-    def docker_stop(self, remove = False):
-        from kooplex.lib import Docker
-        from kooplex.lib.proxy import removeroute
-        try:
-            removeroute(self)
-        except KeyError:
-            logger.warning("The proxy path was not existing: %s" % self)
-            pass
-        Docker().stop_container(self)
-        if remove or self.marked_to_remove:
-            Docker().remove_container(self)
+    def docker_stop(self):
+        self.state = self.ST_NOTRUNNING
+        self.save()
+
+    def docker_remove(self):
+        self.state = self.ST_NOTPRESENT
+        self.save()
 
     @property
     def environment(self):
@@ -222,6 +241,35 @@ class Container(models.Model):
         for project in self.projects:
             for mapping in project.report_mapping4user(self.user):
                 yield mapping
+
+
+@receiver(pre_save, sender = Container)
+def container_attribute_change(sender, instance, **kwargs):
+    from kooplex.lib import Docker
+    from kooplex.lib.proxy import addroute, removeroute
+    old = sender.objects.get(id = instance.id)
+    if old.state != instance.state:
+        logger.debug("%s statchange %s -> %s" % (instance, ST_LOOKUP[old.state], ST_LOOKUP[instance.state]))
+        docker = Docker()
+        if not old.is_running and instance.is_running:
+            docker.run_container(instance)
+            addroute(instance)
+            logger.info("started %s" % instance)
+        elif not instance.is_running:
+            try:
+                removeroute(instance)
+            except KeyError:
+                logger.warning("The proxy path was not existing: %s" % instance)
+                pass
+            docker.stop_container(instance)
+            if instance.state == sender.ST_NOTPRESENT or instance.marked_to_remove:
+                docker.remove_container(instance)
+        else:
+            raise NotImplementedError
+    elif old.last_message != instance.last_message:
+         logger.debug("msg of %s: %s" % (instance, instance.last_message))
+         instance.last_message_at = now()
+
 
 
 class ProjectContainerBinding(models.Model):
