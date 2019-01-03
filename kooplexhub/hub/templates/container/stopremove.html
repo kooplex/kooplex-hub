@@ -9,7 +9,7 @@
      <a href="#" role="button" class="btn btn-default disabled" style="padding: 3px 6px 6px 6px; float: right;">
        <span class="oi oi-x" aria-hidden="true"></span></a>
   {% else %}
-     <a href="{% url 'container:remove' container.id next_page %}" role="button" class="btn btn-danger" style="padding: 3px 6px 6px 6px; float: right;">
+     <a href="{% url 'container:destroy' container.id next_page %}" role="button" class="btn btn-danger" style="padding: 3px 6px 6px 6px; float: right;">
        <span class="oi oi-trash" aria-hidden="true"></span></a>
   {% endif %}
 {% else %}

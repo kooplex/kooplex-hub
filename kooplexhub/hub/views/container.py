@@ -99,11 +99,24 @@ def stopcontainer(request, container_id, next_page):
 
 @login_required
 def removecontainer(request, container_id, next_page):
-    """Stops a container"""
+    """Removes a container"""
     user = request.user
     try:
         container = Container.get_usercontainer(container_id = container_id, user = user)
         container.docker_remove()
+    except Container.DoesNotExist:
+        messages.error(request, 'Container is missing or stopped')
+    return redirect(next_page)
+
+
+@login_required
+def destroycontainer(request, container_id, next_page):
+    """Deletes a container instance"""
+    user = request.user
+    try:
+        container = Container.get_usercontainer(container_id = container_id, user = user)
+        container.docker_remove()
+        container.delete()
     except Container.DoesNotExist:
         messages.error(request, 'Container is missing or stopped')
     return redirect(next_page)
@@ -119,15 +132,14 @@ def addproject(request, container_id):
     next_page = 'container:list'
     user = request.user
     logger.debug("user %s method %s" % (user, request.method))
-    container = Container.objects.get(user = request.user, id = container_id) #FIXME: error handling
-    if container.image is None: 
-        projects_unbound = request.user.profile.projectbindings
-    else: 
-        projects_unbound = filter(nocontainer, request.user.profile.projectbindings)
+    try:
+        container = Container.get_usercontainer(container_id = container_id, user = user)
+    except Container.DoesNotExist:
+        messages.error(request, 'Container is missing or stopped')
+        return redirect(next_page)
     if request.method == 'GET':
         context_dict = {
             'container': container,
-            'projects_unbound': projects_unbound,
         }
         return render(request, 'container/manage.html', context = context_dict)
     else:
@@ -136,11 +148,11 @@ def addproject(request, container_id):
             if p.id in project_ids:
                 project_ids.remove(p.id)
             else:
-                project = Project.objects.get(id = p.id)   #FIXME: make sure user has the rights!!!
+                project = Project.objects.get(id = p.id)
                 ProjectContainerBinding.objects.get(container = container, project = project).delete()
         while len(project_ids):
             pid = project_ids.pop()
-            project = Project.objects.get(id = pid)   #FIXME: make sure user has the rights!!!
+            project = Project.get_userproject(id = pid, user = user)
             ProjectContainerBinding.objects.create(container = container, project = project)
         return redirect(next_page)
 
@@ -152,6 +164,7 @@ urlpatterns = [
     url(r'^open/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)$', opencontainer, name = 'open'),
     url(r'^stop/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)$', stopcontainer, name = 'stop'),
     url(r'^remove/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)$', removecontainer, name = 'remove'),
+    url(r'^destroy/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)$', destroycontainer, name = 'destroy'),
 
     url(r'^addproject/(?P<container_id>\d+)$', addproject, name = 'addproject'),
     url(r'^startproject/(?P<project_id>\d+)/(?P<next_page>\w+:?\w*)$', startprojectcontainer, name = 'startprojectcontainer'),
