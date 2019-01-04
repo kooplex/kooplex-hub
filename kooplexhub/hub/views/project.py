@@ -4,14 +4,18 @@ from django.contrib import messages
 from django.conf.urls import url, include
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.utils.html import format_html
 import django_tables2 as tables
 from django_tables2 import RequestConfig
 from django.utils.translation import gettext_lazy as _
 
+
 from hub.forms import FormProject
+from hub.forms import table_collaboration
 from hub.models import Project, UserProjectBinding, Volume
 from hub.models import Image
+from hub.models import Profile
 
 from kooplex.logic import configure_project
 
@@ -28,7 +32,7 @@ def new(request):
             assert upb.project.name != projectname, "Not a unique name"
         form = FormProject(request.POST)
         form.save()
-        upb = UserProjectBinding(user = request.user, project = form.instance)
+        upb = UserProjectBinding(user = request.user, project = form.instance, role = UserProjectBinding.RL_CREATOR)
         upb.save()
         messages.info(request, 'Your new project is created')
         return redirect('project:list')
@@ -100,9 +104,37 @@ def configure(request, project_id, next_page):
         logger.debug(request.POST)
         button = request.POST.get('button')
         if button == 'apply':
-    #        collaborators = [ User.objects.get(id = x) for x in request.POST.getlist('collaborators') ]
+            msg = []
+            for role in request.POST.getlist('role_map'):
+                targetrole, userid = role.split('-')
+                u = User.objects.get(id = userid)
+                if targetrole == 'skip':
+                    try:
+                        UserProjectBinding.objects.get(user = u, project = project).delete()
+                        msg.append("Removed %s from the collaboration" % u)
+                    except UserProjectBinding.DoesNotExist:
+                        pass
+                elif targetrole == 'collaborator':
+                    try:
+                        upb = UserProjectBinding.objects.get(user = u, project = project)
+                        upb.role = UserProjectBinding.RL_COLLABORATOR #FIXME: if really changed message
+                        upb.save()
+                    except UserProjectBinding.DoesNotExist:
+                        UserProjectBinding.objects.create(user = u, project = project, role = UserProjectBinding.RL_COLLABORATOR)
+                        msg.append("%s is in collaboration" % u)
+                elif targetrole == 'admin':
+                    try:
+                        upb = UserProjectBinding.objects.get(user = u, project = project)
+                        upb.role = UserProjectBinding.RL_ADMIN        #FIXME: like above
+                        upb.save()
+                    except UserProjectBinding.DoesNotExist:
+                        UserProjectBinding.objects.create(user = u, project = project, role = UserProjectBinding.RL_ADMIN)
+                        msg.append("%s is in collaboration and is an admin" % u)
+            if len(msg):
+                messages.info(request, '\n'.join(msg))
             volumes = [ Volume.objects.get(id = x) for x in request.POST.getlist('selection') ]
-            image = Image.objects.get(name = request.POST['project_image'])
+            imagename = request.POST['project_image']
+            image = Image.objects.get(name = imagename) if imagename != 'None' else None
     #        scope = ScopeType.objects.get(name = request.POST['project_scope'])
             description = request.POST.get('description')
             marked_to_remove = configure_project(project, image = image, volumes = volumes, description = description)
@@ -110,14 +142,19 @@ def configure(request, project_id, next_page):
                 messages.info(request, '%d running containers of project %s will be removed when you stop. Changes take effect after a restart.' % (marked_to_remove, project))
         return redirect(next_page)
     else:
+        everybody = filter(lambda p: p not in [ user.profile ], Profile.objects.all()) # FIXME: get rid of hubadmin
+        table = table_collaboration(project)
+        table_collaborators = table(everybody)
+        RequestConfig(request).configure(table_collaborators)
         context_dict = {
             'images': Image.objects.all(),
             'project': project, 
             'enable_image': True,
             'enable_modulevolume': True, 
             'enable_storagevolume': True,
-            't_volumes_fun': sel_table(user = user, project = project, volumetype = 'functional'),
-            't_volumes_stg': sel_table(user = user, project = project, volumetype = 'storage'),
+            't_collaborators': table_collaborators,
+            't_volumes_fun': sel_table(user = user, project = project, volumetype = 'functional'), #FIXME: tables placed in forms/ ReqConfig
+            't_volumes_stg': sel_table(user = user, project = project, volumetype = 'storage'),    #FIXME: like above
             'next_page': next_page,
         }
         return render(request, 'project/settings.html', context = context_dict)

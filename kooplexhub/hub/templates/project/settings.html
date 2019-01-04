@@ -3,96 +3,42 @@
 
 {% block content %}
 
+<!-- FIXME: active like assignments -->
+
 <form id="projectSettingsForm" class="form-horizontal" action="{% url 'project:configure' project.id next_page %}" method="post">
   {% csrf_token %}
   <h5 class="modal-title">Configure project {{ project.name }}</h5>
   <ul class="nav nav-tabs" role="tablist">
     <li class="nav-item"><a class="nav-link active" href="#pane_description-{{ project.id }}" data-toggle="tab">Description</a></li>
-    {% if project.owner == user %}
+    {% if project|is_admin:user %}
     <li class="nav-item"><a class="nav-link" href="#pane_collaboration-{{ project.id }}" data-toggle="tab">Collaboration</a></li>
-    {% endif %}
-    {% if enable_image or project.owner == user %}
     <li class="nav-item"><a class="nav-link" href="#pane_image-{{ project.id }}" data-toggle="tab">Image</a></li>
-    {% endif %}
-    {% if enable_modulevolume or project.owner == user %}
     <li class="nav-item"><a class="nav-link" href="#pane_funvolume-{{ project.id }}" data-toggle="tab">Module volumes</a></li>
-    {% endif %}
-    {% if enable_storagevolume or project.owner == user %}
     <li class="nav-item"><a class="nav-link" href="#pane_stgvolume-{{ project.id }}" data-toggle="tab">Storage volumes</a></li>
-    {% endif %}
-    {% if show_scope %}
     <li class="nav-item"><a class="nav-link" href="#pane_scope-{{ project.id }}" data-toggle="tab">Scope</a></li>
-    {% endif %}
-    {% if show_deletion %}
-    <li class="nav-item"><a class="nav-link" href="#pane_deletion-{{ project.id }}" data-toggle="tab">Deletion</a></li>
     {% endif %}
   </ul>
   <div class="tab-content">
     <div id="pane_description-{{ project.id }}" class="tab-pane fade show active">
       {% include 'project/pane-description.html' %}
     </div>
-   {% if project.owner == user %}
+    {% if project|is_admin:user %}
     <div id="pane_collaboration-{{ project.id }}" class="tab-pane fade">
-      {% if project.owner == user %}
-        {% include 'project/pane-collaboration.html' %}
-      {% else %}
-      <div class="alert alert-warning" role="alert">You can only view the collaborators.</div>
-<!-- FIXME: render_table -->          
-   <table class="table table-striped">
-             <thead><tr><th scope="col">Name</th>  <th scope="col">Short Bio</th>  <th scope="col">Position</th></tr></thead>
-             <tbody>
-                <tr> <td><div data-toggle="tooltip" title="Username: {{ project.owner.displayname }}"  data-placement="right" data-html="true">
-                  {{ project.owner.displayname }}  ( project owner )
-               </div></td> <td>{{ user.bio }}</td> <td> </td> </tr>
-             {% for user in project.collaborators %}
-                 <tr> <td><div data-toggle="tooltip" title="Username: {{ user.username }}" data-placement="right" data-html="true">
-                 {{ user.first_name }} {{ user.last_name }}
-                </div></td><td>{{ user.bio }}</td><td> </td></tr>
-               {% endfor %}
-               </tbody>
-               </table>
-      {% endif %}
+      {% render_table t_collaborators %}
     </div>
-   {% endif %}
-   {% if enable_image or project.owner == user %}
     <div id="pane_image-{{ project.id }}" class="tab-pane fade">
       {% include 'project/pane-image.html' %}
     </div>
-   {% endif %}
-   {% if enable_modulevolume or project.owner == user %}
     <div id="pane_funvolume-{{ project.id }}" class="tab-pane fade">
       {% render_table t_volumes_fun %}
     </div>
-   {% endif %}
-   {% if enable_storagevolume or project.owner == user %}
     <div id="pane_stgvolume-{{ project.id }}" class="tab-pane fade">
       {% render_table t_volumes_stg %}
     </div>
-   {% endif %}
-   {% if show_deletion %}
     <div id="pane_scope-{{ project.id }}" class="tab-pane fade">
-    {% if project.owner == user %}
-      {% include 'project/pane-scope.html' %}
-    {% else %}
-      <div class="alert alert-warning" role="alert">
-        Only the project owner {{ project.owner.displayname }} ({{ project.owner.username }}) can modify the scope.
-      </div>
+      {% render_table t_volumes_stg %}
+    </div>
     {% endif %}
-    </div>
-   {% endif %}
-   {% if show_deletion %}
-    <div id="pane_deletion-{{ project.id }}" class="tab-pane fade">
-      {% if project.owner == user %}
-        <div class="alert alert-danger" role="alert">All unshared data related to this project are lost by the deletion.</div>
-        <p>Are you are sure about it?</p>
-        <button type="submit" class="btn btn-danger" name="button" value="delete"> Really delete</button>
-      {% else %}
-        <div class="alert alert-danger" role="alert">All unshared data related to this project are lost by quitting collaboration.</div>
-        <p>Are you are sure about it?</p>
-        <button type="submit" class="btn btn-danger" name="button" value="quit"> Really quit</button>
-      {% endif %}
-    </div>
-   {% endif %}
   </div>   <!-- tab-content -->
   <div class="modal-footer">
     <button type="submit" class="btn btn-default" name="button" value="apply"> Apply settings</button>

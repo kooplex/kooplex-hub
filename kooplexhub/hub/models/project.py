@@ -110,6 +110,7 @@ class Project(models.Model):
         except UserProjectBinding.DoesNotExist:
             return False
 
+    @register.filter
     def is_admin(self, user):
         try:
             return UserProjectBinding.objects.get(project = self, user = user).role in [ UserProjectBinding.RL_CREATOR, UserProjectBinding.RL_ADMIN ]
