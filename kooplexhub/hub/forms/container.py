@@ -8,9 +8,10 @@ class FormContainer(forms.ModelForm):
 
     class Meta:
         model = Container
-        fields = [ 'name', ]
+        fields = [ 'name', 'image' ]
         help_texts = {
             'name': _('A short name you recall your project, but it has to be unique among your container names.'),
+            'image': _('Please select an image to the new container environment.'),
         }
 
     def __init__(self, *args, **kwargs):

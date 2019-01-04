@@ -5,11 +5,14 @@ from django.conf.urls import url
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.shortcuts import render, redirect
+import django_tables2 as tables
+from django_tables2 import RequestConfig
 
 from kooplex.lib import standardize_str
 
-#from hub.forms import FormContainer
-from hub.models import Project
+from hub.forms import table_projects
+from hub.models import Image
+from hub.models import Project, UserProjectBinding
 from hub.models import Container
 from hub.models import ProjectContainerBinding
 
@@ -26,7 +29,8 @@ def new(request):
         for container in user.profile.containers:
             assert container.name != containername, "Not a unique name"
         logger.debug("name is okay: %s" % containername)
-        Container.objects.create(user = user, name = containername)
+        image = Image.objects.get(id = request.POST.get('image'))
+        Container.objects.create(user = user, name = containername, image = image)
         messages.info(request, 'Your new container is created with name %s' % containername)
         return redirect('container:list')
     except Exception as e:
@@ -140,8 +144,16 @@ def addproject(request, container_id):
         messages.error(request, 'Container is missing or stopped')
         return redirect(next_page)
     if request.method == 'GET':
+
+
+        table = table_projects(container)
+        table_project = table(UserProjectBinding.objects.filter(user = user))
+        RequestConfig(request).configure(table_project)
+
+
         context_dict = {
             'container': container,
+            't_projects': table_project,
         }
         return render(request, 'container/manage.html', context = context_dict)
     else:
