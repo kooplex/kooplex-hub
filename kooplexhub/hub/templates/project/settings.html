@@ -3,7 +3,7 @@
 
 {% block content %}
 
-<form id="projectSettingsForm" class="form-horizontal" action="{% url 'project:configure' project.id %}" method="post">
+<form id="projectSettingsForm" class="form-horizontal" action="{% url 'project:configure' project.id next_page %}" method="post">
   {% csrf_token %}
   <h5 class="modal-title">Configure project {{ project.name }}</h5>
   <ul class="nav nav-tabs" role="tablist">

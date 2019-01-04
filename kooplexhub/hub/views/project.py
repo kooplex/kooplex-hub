@@ -87,7 +87,7 @@ def sel_table(user, project, volumetype):
 
 
 @login_required
-def configure(request, project_id):
+def configure(request, project_id, next_page):
     """Handles the project configuration."""
     user = request.user
     logger.debug("method: %s, project id: %s, user: %s" % (request.method, project_id, user))
@@ -99,19 +99,6 @@ def configure(request, project_id):
     if request.method == 'POST':
         logger.debug(request.POST)
         button = request.POST.get('button')
-    #    if button == 'delete':
-    #        if project.owner == request.user:
-    #            delete_project(project)
-    #        else:
-    #            messages.error(request, 'Project %s is not yours' % project)
-    #            return redirect('projects')
-    #    elif button == 'quit':
-    #        if project.owner == request.user:
-    #            messages.error(request, 'You are the owner of the project %s, you cannot leave it' % project)
-    #            return redirect('projects')
-    #        else:
-    #            leave_project(project, request.user)
-    #    elif button == 'apply':
         if button == 'apply':
     #        collaborators = [ User.objects.get(id = x) for x in request.POST.getlist('collaborators') ]
             volumes = [ Volume.objects.get(id = x) for x in request.POST.getlist('selection') ]
@@ -121,7 +108,7 @@ def configure(request, project_id):
             marked_to_remove = configure_project(project, image = image, volumes = volumes, description = description)
             if marked_to_remove:
                 messages.info(request, '%d running containers of project %s will be removed when you stop. Changes take effect after a restart.' % (marked_to_remove, project))
-        return redirect('list:teaching') #FIXME
+        return redirect(next_page)
     else:
         context_dict = {
             'images': Image.objects.all(),
@@ -131,8 +118,28 @@ def configure(request, project_id):
             'enable_storagevolume': True,
             't_volumes_fun': sel_table(user = user, project = project, volumetype = 'functional'),
             't_volumes_stg': sel_table(user = user, project = project, volumetype = 'storage'),
+            'next_page': next_page,
         }
         return render(request, 'project/settings.html', context = context_dict)
+
+
+@login_required
+def delete_leave(request, project_id, next_page):
+    """Delete or leave a project."""
+    user = request.user
+    logger.debug("method: %s, project id: %s, user: %s" % (request.method, project_id, user))
+    try:
+        project = Project.get_userproject(project_id = project_id, user = request.user)
+    except Project.DoesNotExist:
+        messages.error(request, 'Project does not exist')
+        return redirect(next_page)
+    if project.is_admin(request.user):
+        project.delete()
+        messages.info(request, 'Project %s is deleted' % (project))
+    elif project.is_collaborator(request.user):
+        UserProjectBinding.objects.get(project = project, user = request.user).delete()
+        messages.info(request, 'You left project %s' % (project))
+    return redirect(next_page)
 
 
 @login_required
@@ -194,7 +201,8 @@ urlpatterns = [
 
     url(r'^new/?$', new, name = 'new'), 
 
-    url(r'^configure/(?P<project_id>\d+)$', configure, name = 'configure'), 
+    url(r'^configure/(?P<project_id>\d+)/(?P<next_page>\w+:?\w*)$', configure, name = 'configure'), 
+    url(r'^delete/(?P<project_id>\d+)/(?P<next_page>\w+:?\w*)$', delete_leave, name = 'delete'), 
     url(r'^show/(?P<next_page>\w+:?\w*)$', show_hide, name = 'showhide'),
     url(r'^hide/(?P<project_id>\d+)/(?P<next_page>\w+:?\w*)$', hide, name = 'hide'), 
 ]

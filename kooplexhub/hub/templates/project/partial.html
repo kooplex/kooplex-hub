@@ -20,27 +20,14 @@
     <div id="collapse-{{ project.id }}" class="collapse" aria-labelledby="heading-{{ project.id }}" data-parent="#projectList">
       <div class="card-body">
         <strong>Description: </strong>{{ project.description }}<br>
-{% if caller == 'teacher' or caller == 'student' %}
-        <strong>Flag: </strong>
-      {% for flag in project.course|lookup_usercourseflags:user %} {{ flag }}, {% endfor %}
-{% endif %}
-      {% if caller == 'teacher' or caller == 'projectowner' %}
         <div style="float: right;">
-        {% if caller == 'teacher' %}
-          <a href="{% url 'assignment:new' project.course.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="You can create and manage assignments related to course {{ project.name }}." data-placement="top">
+          <a href="#" {% comment %} FIXME: {% "url 'assignment:new' project.course.id %}" {% endcomment %} role="button" class="btn btn-secondary disabled" data-toggle="tooltip" title="You can create and manage assignments related to course {{ project.name }}." data-placement="top">
             <span class="oi oi-pencil" aria-hidden="true"></span></a>
-        {% endif %} {% comment %} TODO: in else branch we can add reporting button {% endcomment %}
-          <!-- a href="#" data-toggle="modal" data-target="#project-settings-{{ project.id  }}" -->
-          <a href="{% url 'project:configure' project.id  %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Settings of project {{ project.name }}. You can change the image, modify volume attachments." data-placement="top">
+          <a href="{% url 'project:configure' project.id  next_page %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Settings of project {{ project.name }}. You can change the image, modify volume attachments." data-placement="top">
             <span class="oi oi-wrench" aria-hidden="true"></span></a>
+          <a href="{% url 'project:delete' project.id  next_page %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Delete or leave project {{ project.name }}." data-placement="top">
+            <span class="oi oi-trash" aria-hidden="true"></span></a>
         </div>  <!-- float //-->
-      {% endif %}
-      {% if caller == 'student' %} <!-- FIXME: only when active assignments are there -->
-        <div style="float: right;">
-          <a href="#" data-toggle="modal" data-target="#assignments-submit" role="button" class="btn btn-secondary">
-            <span class="oi oi-pencil" aria-hidden="true"></span></a>
-        </div>  <!-- float //-->
-      {% endif %}
       </div>   <!-- card-body -->
     </div>
   </div>

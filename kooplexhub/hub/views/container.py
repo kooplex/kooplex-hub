@@ -6,6 +6,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.shortcuts import render, redirect
 
+from kooplex.lib import standardize_str
+
 #from hub.forms import FormContainer
 from hub.models import Project
 from hub.models import Container
@@ -20,9 +22,10 @@ def new(request):
     user_id = request.POST.get('user_id')
     try:
         assert user_id is not None and int(user_id) == user.id, "user id mismatch: %s tries to save %s %s" % (request.user, request.user.id, request.POST.get('user_id'))
-        containername = "%s-%s" % (request.POST.get('name'), user.username)
+        containername = "%s-%s" % (standardize_str(request.POST.get('name')), user.username)
         for container in user.profile.containers:
             assert container.name != containername, "Not a unique name"
+        logger.debug("name is okay: %s" % containername)
         Container.objects.create(user = user, name = containername)
         messages.info(request, 'Your new container is created with name %s' % containername)
         return redirect('container:list')
@@ -75,13 +78,11 @@ def opencontainer(request, container_id, next_page):
     """Opens a container"""
     user = request.user
     try:
-        container = Container.get_usercontainer(container_id = container_id, user = user, state = Container.ST_RUNNING)
+        container = Container.objects.get(id = container_id, user = user, state = Container.ST_RUNNING)
         container.wait_until_ready()
         return redirect(container.url_external)
     except Container.DoesNotExist:
         messages.error(request, 'Container is missing or stopped')
-    #except ConnectionError:
-    #    messages.error(request, 'Could not open it. Try again, please! If you keep seeing this error then ask an administrator <strong> %s </strong>'%get_settings('hub', 'adminemail'))
     return redirect(next_page)
 
 
@@ -90,7 +91,7 @@ def stopcontainer(request, container_id, next_page):
     """Stops a container"""
     user = request.user
     try:
-        container = Container.get_usercontainer(container_id = container_id, user = user, state = Container.ST_RUNNING)
+        container = Container.objects.get(id = container_id, user = user, state = Container.ST_RUNNING)
         container.docker_stop()
     except Container.DoesNotExist:
         messages.error(request, 'Container is missing or stopped')
@@ -102,7 +103,7 @@ def removecontainer(request, container_id, next_page):
     """Removes a container"""
     user = request.user
     try:
-        container = Container.get_usercontainer(container_id = container_id, user = user)
+        container = Container.objects.get(id = container_id, user = user)
         container.docker_remove()
     except Container.DoesNotExist:
         messages.error(request, 'Container is missing or stopped')
@@ -114,11 +115,12 @@ def destroycontainer(request, container_id, next_page):
     """Deletes a container instance"""
     user = request.user
     try:
-        container = Container.get_usercontainer(container_id = container_id, user = user)
+        container = Container.objects.get(id = container_id, user = user)
         container.docker_remove()
         container.delete()
     except Container.DoesNotExist:
         messages.error(request, 'Container is missing or stopped')
+        raise
     return redirect(next_page)
 
 
@@ -133,7 +135,7 @@ def addproject(request, container_id):
     user = request.user
     logger.debug("user %s method %s" % (user, request.method))
     try:
-        container = Container.get_usercontainer(container_id = container_id, user = user)
+        container = Container.objects.get(id = container_id, user = user)
     except Container.DoesNotExist:
         messages.error(request, 'Container is missing or stopped')
         return redirect(next_page)
@@ -148,11 +150,11 @@ def addproject(request, container_id):
             if p.id in project_ids:
                 project_ids.remove(p.id)
             else:
-                project = Project.objects.get(id = p.id)
+                project = Project.objects.get(project_id = p.id)
                 ProjectContainerBinding.objects.get(container = container, project = project).delete()
         while len(project_ids):
             pid = project_ids.pop()
-            project = Project.get_userproject(id = pid, user = user)
+            project = Project.get_userproject(project_id = pid, user = user)
             ProjectContainerBinding.objects.create(container = container, project = project)
         return redirect(next_page)
 

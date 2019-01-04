@@ -42,11 +42,11 @@ class Project(models.Model):
     def cleanname(self):
         return standardize_str(self.name)
 
-    @property
-    def owner(self):  #FIXME: depracated
-        for binding in UserProjectBinding.objects.filter(project = self):
-            if binding.role == UserProjectBinding.RL_CREATOR:
-                yield binding.user
+###    @property
+###    def owner(self):  #FIXME: depracated
+###        for binding in UserProjectBinding.objects.filter(project = self):
+###            if binding.role == UserProjectBinding.RL_CREATOR:
+###                yield binding.user
 
     @property
     def name_with_owner(self):
@@ -107,6 +107,18 @@ class Project(models.Model):
         try:
             UserProjectBinding.objects.get(user = user, project = self)
             return True
+        except UserProjectBinding.DoesNotExist:
+            return False
+
+    def is_admin(self, user):
+        try:
+            return UserProjectBinding.objects.get(project = self, user = user).role in [ UserProjectBinding.RL_CREATOR, UserProjectBinding.RL_ADMIN ]
+        except UserProjectBinding.DoesNotExist:
+            return False
+
+    def is_collaborator(self, user):
+        try:
+            return UserProjectBinding.objects.get(project = self, user = user).role == UserProjectBinding.RL_COLLABORATOR
         except UserProjectBinding.DoesNotExist:
             return False
 

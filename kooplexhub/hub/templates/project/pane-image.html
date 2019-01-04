@@ -2,6 +2,7 @@
 
 <label>Your choice for the new image:</label>
 <select id="project_images-{{ project.id }}" name="project_image">
+  <option value="None" {% if not project.image %} selected {% endif %}>Default image</option>
   {% for image in images %}
     {% if image.present %}
       <option value="{{ image.name }}" {% if project.image == image %} selected {% endif %}>{{ image }}</option>

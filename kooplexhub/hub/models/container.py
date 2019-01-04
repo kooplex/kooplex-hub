@@ -111,11 +111,12 @@ class Container(models.Model):
     def n_projects(self):
         return len(list(self.projects))
 
-    def is_user_authorized(self, user):
-        for project in self.projects:
-            if project.is_user_authorized(user):
-                return True
-        return False
+#FIXME: deprecated
+#    def is_user_authorized(self, user):
+#        for project in self.projects:
+#            if project.is_user_authorized(user):
+#                return True
+#        return False
 
     @staticmethod
     def get_userprojectcontainer(user, project_id, create):
@@ -134,14 +135,15 @@ class Container(models.Model):
             return container 
         raise Container.DoesNotExist
 
-    @staticmethod
-    def get_usercontainer(user, container_id, **kw):
-        logger.debug("container id %s & user %s" % (container_id, user))
-        container = Container.objects.get(id = container_id, **kw)
-        if not container.is_user_authorized(user):
-            raise Container.DoesNotExist("Unauthorized request")
-        logger.debug("found container %s and authorized for user %s" % (container, user))
-        return container 
+#FIXME: deprecated
+#    @staticmethod
+#    def get_usercontainer(user, container_id, **kw):
+#        logger.debug("container id %s & user %s" % (container_id, user))
+#        container = Container.objects.get(id = container_id, **kw)
+#        if not container.is_user_authorized(user):
+#            raise Container.DoesNotExist("Unauthorized request")
+#        logger.debug("found container %s and authorized for user %s" % (container, user))
+#        return container 
 
     def docker_start(self):
         self.state = self.ST_RUNNING
@@ -247,7 +249,10 @@ class Container(models.Model):
 def container_attribute_change(sender, instance, **kwargs):
     from kooplex.lib import Docker
     from kooplex.lib.proxy import addroute, removeroute
-    old = sender.objects.get(id = instance.id)
+    try:
+        old = sender.objects.get(id = instance.id)
+    except sender.DoesNotExist:
+        old = sender()
     if old.state != instance.state:
         logger.debug("%s statchange %s -> %s" % (instance, ST_LOOKUP[old.state], ST_LOOKUP[instance.state]))
         docker = Docker()
