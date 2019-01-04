@@ -141,6 +141,62 @@ class Project(models.Model):
             pass
         logger.warn("NotImplementedError")
 
+    def set_roles(self, roles):
+        msg = []
+        for role in roles:
+            targetrole, userid = role.split('-')
+            u = User.objects.get(id = userid)
+            if targetrole == 'skip':
+                users = []
+                try:
+                    UserProjectBinding.objects.get(user = u, project = self).delete()
+                    users.append(str(u))
+                except UserProjectBinding.DoesNotExist:
+                    pass
+                if len(users):
+                    msg.append("User(s) removed from the collaboration: %s" % ','.join(users))
+            elif targetrole == 'collaborator':
+                users = []
+                try:
+                    upb = UserProjectBinding.objects.get(user = u, project = self)
+                    if upb.role != UserProjectBinding.RL_COLLABORATOR:
+                        upb.role = UserProjectBinding.RL_COLLABORATOR
+                        upb.save()
+                        users.append(str(u))
+                except UserProjectBinding.DoesNotExist:
+                    UserProjectBinding.objects.create(user = u, project = self, role = UserProjectBinding.RL_COLLABORATOR)
+                    users.append(str(u))
+                if len(users):
+                    msg.append("User(s) set as members of the collaboration: %s" % ','.join(users))
+            elif targetrole == 'admin':
+                users = []
+                try:
+                    upb = UserProjectBinding.objects.get(user = u, project = self)
+                    if upb.role != UserProjectBinding.RL_ADMIN:
+                        upb.role = UserProjectBinding.RL_ADMIN    
+                        upb.save()
+                        users.append(str(u))
+                except UserProjectBinding.DoesNotExist:
+                    UserProjectBinding.objects.create(user = u, project = self, role = UserProjectBinding.RL_ADMIN)
+                    msg.append("%s is in collaboration and is an admin" % u)
+                if len(users):
+                    msg.append("User(s) set as administrator(s) of the collaboration: %s" % ','.join(users))
+        return msg
+
+    def set_volumes(self, volumes):
+        volumes = set(volumes)
+        old_volumes = set(self.functional_volumes).union(self.storage_volumes)
+        if old_volumes != volumes:
+            vol_remove = old_volumes.difference( volumes )
+            vol_add = volumes.difference( old_volumes )
+            logger.debug("- %s" % vol_remove)
+            for volume in vol_remove:
+                VolumeProjectBinding.objects.get(volume = volume, project = project).delete()
+            logger.debug("+ %s" % vol_add)
+            for volume in vol_add:
+                VolumeProjectBinding.objects.create(volume = volume, project = project)
+
+
 
 RL_LOOKUP = {
     'creator': 'The creator of this project.',

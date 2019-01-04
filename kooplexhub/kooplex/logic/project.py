@@ -25,15 +25,8 @@ def configure_project(project, **kw):#image, scope, volumes, collaborators, desc
     """
     mark_to_remove = False
     logger.debug(project)
-    image = kw.get('image')
     volumes = set(kw.get('volumes', []))
     
-    olddescr = project.description
-    project.description = kw.get('description', olddescr)
-
-    if image and project.image != image:
-        project.image = image
-        mark_to_remove = True
 
     old_volumes = set(project.functional_volumes).union(project.storage_volumes)    
 

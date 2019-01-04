@@ -150,7 +150,7 @@ def addproject(request, container_id):
             if p.id in project_ids:
                 project_ids.remove(p.id)
             else:
-                project = Project.objects.get(project_id = p.id)
+                project = Project.objects.get(id = p.id)
                 ProjectContainerBinding.objects.get(container = container, project = project).delete()
         while len(project_ids):
             pid = project_ids.pop()

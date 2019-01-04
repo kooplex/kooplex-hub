@@ -13,8 +13,7 @@
     {% if project|is_admin:user %}
     <li class="nav-item"><a class="nav-link" href="#pane_collaboration-{{ project.id }}" data-toggle="tab">Collaboration</a></li>
     <li class="nav-item"><a class="nav-link" href="#pane_image-{{ project.id }}" data-toggle="tab">Image</a></li>
-    <li class="nav-item"><a class="nav-link" href="#pane_funvolume-{{ project.id }}" data-toggle="tab">Module volumes</a></li>
-    <li class="nav-item"><a class="nav-link" href="#pane_stgvolume-{{ project.id }}" data-toggle="tab">Storage volumes</a></li>
+    <li class="nav-item"><a class="nav-link" href="#pane_volume-{{ project.id }}" data-toggle="tab">Volumes</a></li>
     <li class="nav-item"><a class="nav-link" href="#pane_scope-{{ project.id }}" data-toggle="tab">Scope</a></li>
     {% endif %}
   </ul>
@@ -24,19 +23,20 @@
     </div>
     {% if project|is_admin:user %}
     <div id="pane_collaboration-{{ project.id }}" class="tab-pane fade">
+      <p>Manage your collaboration.</p>
       {% render_table t_collaborators %}
     </div>
     <div id="pane_image-{{ project.id }}" class="tab-pane fade">
       {% include 'project/pane-image.html' %}
     </div>
-    <div id="pane_funvolume-{{ project.id }}" class="tab-pane fade">
+    <div id="pane_volume-{{ project.id }}" class="tab-pane fade">
+      <p>Functional volumes</p>
       {% render_table t_volumes_fun %}
-    </div>
-    <div id="pane_stgvolume-{{ project.id }}" class="tab-pane fade">
+      <p>Storage volumes</p>
       {% render_table t_volumes_stg %}
     </div>
     <div id="pane_scope-{{ project.id }}" class="tab-pane fade">
-      {% render_table t_volumes_stg %}
+      {% include 'project/pane-scope.html' %}
     </div>
     {% endif %}
   </div>   <!-- tab-content -->

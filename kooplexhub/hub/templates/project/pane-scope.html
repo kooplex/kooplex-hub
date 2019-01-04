@@ -1,0 +1,8 @@
+<p>The current scope for project {{ project.name }} is <strong>{{ project.scope }}</strong>.</p>
+
+<label>Your choice for the new scope:</label>
+<select id="project_scopes-{{ project.id }}" name="project_scope">
+  {% for scope in project.SCOPE_LIST %}
+    <option value="{{ scope }}" {% if project.scope == scope %} selected {% endif %}>{{ scope }}</option>
+  {% endfor %}
+</select>
