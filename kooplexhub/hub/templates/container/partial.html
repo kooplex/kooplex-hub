@@ -7,7 +7,9 @@
     {% include 'container/stopremove.html' %}
     {% include 'container/containerstatus.html' %}
     <button class="btn" data-toggle="collapse" data-target="#collapse-{{ container.id }}" aria-expanded="true" aria-controls="collapse-{{ container.id }}" style="float: right;">
-{% if container.is_running  %}
+{% if container.marked_to_remove %}
+      <span class="badge badge-pill badge-danger">New image:<strong>{{ container.image }}</strong></span>
+{% elif container.is_running  %}
       <span class="badge badge-pill badge-success">Using image:<strong>{{ container.image }}</strong></span>
 {% else %}
       <span class="badge badge-pill badge-secondary">Using image:<strong>{{ container.image }}</strong></span>

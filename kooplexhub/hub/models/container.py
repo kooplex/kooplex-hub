@@ -269,6 +269,8 @@ def container_attribute_change(sender, instance, **kwargs):
             docker.stop_container(instance)
             if instance.state == sender.ST_NOTPRESENT or instance.marked_to_remove:
                 docker.remove_container(instance)
+                instance.marked_to_remove = False
+                instance.state = sender.ST_NOTPRESENT
         else:
             raise NotImplementedError
     elif old.last_message != instance.last_message:
@@ -423,3 +425,24 @@ def update_volumecontainerbinding(sender, instance, **kwargs):
         logger.debug("binding removed: %s" % binding)
         binding.delete()
 
+
+
+
+
+@receiver(pre_save, sender = Project)
+def container_check_image(sender, instance, **kwargs):
+    try:
+        old = sender.objects.get(id = instance.id)
+    except sender.DoesNotExist:
+        return
+    if old.image != instance.image:
+        pcbs = ProjectContainerBinding.objects.filter(project = instance)
+        for pcb in pcbs:
+            c = pcb.container
+            #assert c.image is None or c.image == instance.image, "Conflict with container %s" % c #FIXME: ez igy nem jo
+        for pcb in pcbs:
+            c = pcb.container
+            if c.is_running or c.is_stopped:
+                c.marked_to_remove = True
+            c.image = instance.image
+            c.save()
