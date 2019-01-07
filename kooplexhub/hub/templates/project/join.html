@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+
+{% block content %}
+{% load render_table from django_tables2 %}
+
+<form id="project-manage" class="form-horizontal" action="{% url 'project:join' %}" method="post">
+  {% csrf_token %}
+  <h4>Join projects</h4>
+  <p>Select those projects you want to join.</p>
+  {% render_table t_joinable %}
+  <div class="modal-footer">
+    <button type="submit" class="btn btn-default" name="button" value="apply"> Join projects</button>
+    <button class="btn btn-default" data-dismiss="modal">Cancel</button>
+  </div>
+</form>
+{% include "../footer.html" %}
+{% endblock %}
+

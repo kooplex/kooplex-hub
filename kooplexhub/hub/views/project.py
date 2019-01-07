@@ -9,15 +9,17 @@ from django.utils.html import format_html
 import django_tables2 as tables
 from django_tables2 import RequestConfig
 from django.utils.translation import gettext_lazy as _
+from django.db.models import Q
 
 
 from hub.forms import FormProject
-from hub.forms import table_collaboration
+from hub.forms import table_collaboration, T_JOINABLEPROJECT
 from hub.models import Project, UserProjectBinding, Volume
 from hub.models import Image
 from hub.models import Profile
 
 logger = logging.getLogger(__name__)
+
 
 @login_required
 def new(request):
@@ -39,6 +41,37 @@ def new(request):
         messages.error(request, 'Creation of a new project is refused.')
         return redirect('indexpage')
         
+
+@login_required
+def join(request):
+    logger.debug("user %s" % request.user)
+    user = request.user
+    if request.method == 'GET':
+        project_public_and_internal = set(Project.objects.filter(Q(scope = Project.SCP_INTERNAL) | Q(scope = Project.SCP_PUBLIC)))
+        project_mine = set([ upb.project for upb in UserProjectBinding.objects.filter(user = user) ])
+        project_joinable = project_public_and_internal.difference(project_mine)
+        table_joinable = T_JOINABLEPROJECT([ UserProjectBinding.objects.get(project = p, role = UserProjectBinding.RL_CREATOR) for p in project_joinable ])
+        RequestConfig(request).configure(table_joinable)
+        context_dict = {
+            't_joinable': table_joinable,
+        }
+        return render(request, 'project/join.html', context = context_dict)
+    else:
+        joined = []
+        for project_id in request.POST.getlist('project_ids'):
+            try:
+                project = Project.objects.get(id = project_id)
+                assert project.scope in [ Project.SCP_INTERNAL, Project.SCP_PUBLIC ], 'Permission denied to join %s' % project
+                UserProjectBinding.objects.create(user = user, project = project, role = UserProjectBinding.RL_COLLABORATOR)
+                joined.append(str(project))
+                logger.info("%s joined project %s as a member" % (user, project))
+            except Exception as e:
+                logger.warning("%s cannot join project %s -- %s" % (user, project, e))
+                messages.error(request, 'You cannot join project % s' % project)
+        if len(joined):
+            messages.info(request, 'Joined projects: %s' % '\n'.join(joined))
+
+        return redirect('project:list')
 
 
 @login_required
@@ -207,9 +240,8 @@ def hide(request, project_id, next_page):
 
 urlpatterns = [
     url(r'^list', listprojects, name = 'list'), 
-
     url(r'^new/?$', new, name = 'new'), 
-
+    url(r'^join/?$', join, name = 'join'), 
     url(r'^configure/(?P<project_id>\d+)/(?P<next_page>\w+:?\w*)$', configure, name = 'configure'), 
     url(r'^delete/(?P<project_id>\d+)/(?P<next_page>\w+:?\w*)$', delete_leave, name = 'delete'), 
     url(r'^show/(?P<next_page>\w+:?\w*)$', show_hide, name = 'showhide'),

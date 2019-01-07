@@ -40,3 +40,28 @@ def table_projects(container):
             attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
 
     return T_PROJECTS
+
+class SelectColumn(tables.Column):
+    def render(self, record):
+        p = record.project
+        return format_html("<input type='checkbox' name='project_ids' value='%d'>" % (p.id))
+
+class ProjectColumn(tables.Column):
+    def render(self, record):
+        p = record.project
+        return format_html("%s (%s)" % (p.name, p.image))
+
+class UserColumn(tables.Column):
+    def render(self, record):
+        u = record.user
+        return format_html("%s %s (%s)" % (u.first_name, u.last_name, u.username))
+
+class T_JOINABLEPROJECT(tables.Table):
+    id = SelectColumn(verbose_name = 'Select', orderable = False)
+    project = ProjectColumn(verbose_name = 'Project (image)', orderable = False)
+    user = UserColumn(verbose_name = 'Creator name', orderable = False)
+    class Meta:
+        model = UserProjectBinding
+        fields = ('id', 'project', 'user')
+        sequence = ('id', 'project', 'user')
+        attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }

@@ -265,7 +265,6 @@ def container_attribute_change(sender, instance, **kwargs):
                 removeroute(instance)
             except KeyError:
                 logger.warning("The proxy path was not existing: %s" % instance)
-                pass
             docker.stop_container(instance)
             if instance.state == sender.ST_NOTPRESENT or instance.marked_to_remove:
                 docker.remove_container(instance)
@@ -273,6 +272,13 @@ def container_attribute_change(sender, instance, **kwargs):
                 instance.state = sender.ST_NOTPRESENT
         else:
             raise NotImplementedError
+    elif old.image != instance.image:
+         if instance.state == sender.ST_RUNNING:
+             instance.marked_to_remove = True
+         elif instance.state != sender.ST_NOTPRESENT:
+             docker.remove_container(instance)
+             instance.marked_to_remove = False
+             instance.state = sender.ST_NOTPRESENT
     elif old.last_message != instance.last_message:
          logger.debug("msg of %s: %s" % (instance, instance.last_message))
          instance.last_message_at = now()

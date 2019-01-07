@@ -131,10 +131,6 @@ def destroycontainer(request, container_id, next_page):
 @login_required
 def addproject(request, container_id):
     """Manage your projects"""
-    def nocontainer(upb):
-        img = upb.project.image
-        return img is None or img == container.image
-
     next_page = 'container:list'
     user = request.user
     logger.debug("user %s method %s" % (user, request.method))
@@ -144,19 +140,18 @@ def addproject(request, container_id):
         messages.error(request, 'Container is missing or stopped')
         return redirect(next_page)
     if request.method == 'GET':
-
-
         table = table_projects(container)
         table_project = table(UserProjectBinding.objects.filter(user = user))
         RequestConfig(request).configure(table_project)
-
-
         context_dict = {
+            'images': Image.objects.all(),
             'container': container,
             't_projects': table_project,
         }
         return render(request, 'container/manage.html', context = context_dict)
     else:
+        container.image = Image.objects.get(id = request.POST.get('container_image_id'))
+        container.save()
         project_ids = request.POST.getlist('project_ids')
         for p in container.projects:
             if p.id in project_ids:
