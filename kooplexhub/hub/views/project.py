@@ -135,6 +135,7 @@ def configure(request, project_id, next_page):
     except Project.DoesNotExist:
         messages.error(request, 'Project does not exist')
         return redirect(next_page)
+    vcppbindings = set(VCProjectProjectBinding.getbinding(user = user, project = project))
     if request.method == 'POST':
         logger.debug(request.POST)
         button = request.POST.get('button')
@@ -150,11 +151,14 @@ def configure(request, project_id, next_page):
             project.description = request.POST.get('description')
             project.save()
             for id_create in request.POST.getlist('vcp_ids'):
-                vcp = VCProject.objects.get(id = id_create) # FIXME: authorize
+                vcp = VCProject.objects.get(id = id_create)
+                if vcp.token.user != user:
+                    logger.error("Unauthorized request vcp: %s, user: %s" % (vcp, user))
+                    continue
                 VCProjectProjectBinding.objects.create(project = project, vcproject = vcp)
                 messages.info(request, 'Bound %s to repotsitory %s' % (project, vcp))
             vcppb_ids2keep = request.POST.getlist('vcppb_ids')
-            for b in VCProjectProjectBinding.objects.filter(project = project): # FIXME: constraint to the user!!!!!!
+            for b in vcppbindings:
                 if not b.id in vcppb_ids2keep:
                     messages.info(request, 'Project %s is not bound to repository %s any more' % (project, b.vcproject))
                     b.delete()
@@ -165,8 +169,7 @@ def configure(request, project_id, next_page):
         table_collaborators = table(everybody)
         RequestConfig(request).configure(table_collaborators)
 
-        bindings = set(VCProjectProjectBinding.objects.filter(project = project))
-        vcprojects_bound = [ b.vcproject for b in bindings ]
+        vcprojects_bound = [ b.vcproject for b in vcppbindings ]
         vcprojects = VCProject.objects.none()
         for token in VCToken.objects.filter(user = user):
             vcprojects |= VCProject.objects.filter(token = token)

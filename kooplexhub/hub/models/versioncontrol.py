@@ -28,9 +28,18 @@ class VCProject(models.Model):
     project_name = models.CharField(max_length = 512, null = False)
     last_seen = models.DateTimeField(auto_now_add = True)
 
+    def __str__(self):
+        return "Version control repository %s/%s" % (self.token.url, self.project_name)
+
 class VCProjectProjectBinding(models.Model):
     project = models.ForeignKey(Project, null = False)
     vcproject = models.ForeignKey(VCProject, null = False)
+
+    @staticmethod
+    def getbinding(user, project):
+        for b in VCProjectProjectBinding.objects.filter(project = project):
+            if b.vcproject.token.user == user:
+                yield b
 
     @property
     def otherprojects(self):
