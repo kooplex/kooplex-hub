@@ -156,4 +156,12 @@ class UserGroupBindingAdmin(admin.ModelAdmin):
 
 @admin.register(VCToken)
 class VCTokenAdmin(admin.ModelAdmin):
-    ist_display = ('id', 'user', 'backend_type')
+    list_display = ('id', 'user', 'backend_type')
+
+@admin.register(VCProject)
+class VCProjectAdmin(admin.ModelAdmin):
+    pass
+
+@admin.register(VCProjectProjectBinding)
+class VCProjectProjectBindingAdmin(admin.ModelAdmin):
+    pass

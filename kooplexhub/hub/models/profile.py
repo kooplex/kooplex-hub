@@ -110,6 +110,12 @@ class Profile(models.Model):
         from .volume import Volume
         for volume in Volume.filter(Volume.STORAGE, user = self.user):
             yield volume
+
+    @property
+    def vctokens(self):
+        from .versioncontrol import VCToken
+        for t in VCToken.objects.filter(user = self.user):
+            yield t
    
 
 @receiver(post_save, sender = User)

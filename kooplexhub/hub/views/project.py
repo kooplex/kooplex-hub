@@ -11,12 +11,16 @@ from django_tables2 import RequestConfig
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Q
 
+from kooplex.lib import list_projects
+from kooplex.lib import now
 
 from hub.forms import FormProject
 from hub.forms import table_collaboration, T_JOINABLEPROJECT
+from hub.forms import T_PROJECTPROJECTMAP
 from hub.models import Project, UserProjectBinding, Volume
 from hub.models import Image
 from hub.models import Profile
+from hub.models import VCToken, VCProject, VCProjectProjectBinding
 
 logger = logging.getLogger(__name__)
 
@@ -145,12 +149,31 @@ def configure(request, project_id, next_page):
             project.scope = request.POST['project_scope']
             project.description = request.POST.get('description')
             project.save()
+            for id_create in request.POST.getlist('vcp_ids'):
+                vcp = VCProject.objects.get(id = id_create) # FIXME: authorize
+                VCProjectProjectBinding.objects.create(project = project, vcproject = vcp)
+                messages.info(request, 'Bound %s to repotsitory %s' % (project, vcp))
+            vcppb_ids2keep = request.POST.getlist('vcppb_ids')
+            for b in VCProjectProjectBinding.objects.filter(project = project): # FIXME: constraint to the user!!!!!!
+                if not b.id in vcppb_ids2keep:
+                    messages.info(request, 'Project %s is not bound to repository %s any more' % (project, b.vcproject))
+                    b.delete()
         return redirect(next_page)
     else:
         everybody = filter(lambda p: p not in [ user.profile ], Profile.objects.all()) # FIXME: get rid of hubadmin
         table = table_collaboration(project)
         table_collaborators = table(everybody)
         RequestConfig(request).configure(table_collaborators)
+
+        bindings = set(VCProjectProjectBinding.objects.filter(project = project))
+        vcprojects_bound = [ b.vcproject for b in bindings ]
+        vcprojects = VCProject.objects.none()
+        for token in VCToken.objects.filter(user = user):
+            vcprojects |= VCProject.objects.filter(token = token)
+        vcppbs = [ VCProjectProjectBinding.objects.get(project = project, vcproject = v) if v in vcprojects_bound else VCProjectProjectBinding(project = project, vcproject = v) for v in vcprojects ]
+        table_vcppb = T_PROJECTPROJECTMAP(vcppbs)
+        RequestConfig(request).configure(table_vcppb)        
+
         context_dict = {
             'images': Image.objects.all(),
             'project': project, 
@@ -160,6 +183,7 @@ def configure(request, project_id, next_page):
             't_collaborators': table_collaborators,
             't_volumes_fun': sel_table(user = user, project = project, volumetype = 'functional'), #FIXME: tables placed in forms/ ReqConfig
             't_volumes_stg': sel_table(user = user, project = project, volumetype = 'storage'),    #FIXME: like above
+            't_vcppb': table_vcppb, 
             'next_page': next_page,
         }
         return render(request, 'project/settings.html', context = context_dict)
@@ -238,11 +262,50 @@ def hide(request, project_id, next_page):
     return redirect(next_page)
 
 
+@login_required
+def vcrefresh(request, token_id, project_id):
+    """Refresh users version control repository projects."""
+    user = request.user
+    logger.debug("user %s (project_id %s)" % (user, project_id))
+    try:
+        now_ = now()
+        token = VCToken.objects.get(user = user, id = token_id)
+        old_list = list(VCProject.objects.filter(token = token))
+        cnt_new = 0
+        cnt_del = 0
+        for p_name in list_projects(token):
+            try:
+                p = VCProject.objects.get(token = token, project_name = p_name)
+                p.last_seen = now_
+                p.save()
+                old_list.remove(p)
+                logger.debug('still present: %s' % p_name)
+            except VCProject.DoesNotExist:
+                VCProject.objects.create(token = token, project_name = p_name)
+                logger.debug('inserted present: %s' % p_name)
+                cnt_new += 1
+        while len(old_list):
+            p = old_list.pop()
+            p.remove()
+            logger.debug('removed: %s' % p.project_name)
+            cnt_del += 1
+        if cnt_new:
+            messages.info(request, "%d new project items found" % cnt_new)
+        if cnt_del:
+            messages.warning(request, "%d project items removed" % cnt_del)
+        token.last_used = now_
+        token.save()
+    except VCToken.DoesNotExist:
+        messages.error(requset, "System abuse")
+    return redirect('project:configure', project_id, 'project:list')
+
+
 urlpatterns = [
     url(r'^list', listprojects, name = 'list'), 
     url(r'^new/?$', new, name = 'new'), 
     url(r'^join/?$', join, name = 'join'), 
     url(r'^configure/(?P<project_id>\d+)/(?P<next_page>\w+:?\w*)$', configure, name = 'configure'), 
+    url(r'^vcrefresh/(?P<token_id>\d+)/(?P<project_id>\d+)$', vcrefresh, name = 'vcrefresh'), 
     url(r'^delete/(?P<project_id>\d+)/(?P<next_page>\w+:?\w*)$', delete_leave, name = 'delete'), 
     url(r'^show/(?P<next_page>\w+:?\w*)$', show_hide, name = 'showhide'),
     url(r'^hide/(?P<project_id>\d+)/(?P<next_page>\w+:?\w*)$', hide, name = 'hide'), 

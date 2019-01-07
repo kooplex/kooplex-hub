@@ -10,4 +10,4 @@ from .image import Image, init_model as store_images
 from .volume import Volume, VolumeOwnerBinding, ExtraFields, UserPrivilegeVolumeBinding, VolumeProjectBinding, init_model as store_volumes
 from .container import Container, ProjectContainerBinding, VolumeContainerBinding
 
-from .versioncontrol import VCToken 
+from .versioncontrol import VCToken, VCProject, VCProjectProjectBinding
