@@ -140,7 +140,7 @@ class VolumeProjectBindingAdmin(admin.ModelAdmin):
     
 @admin.register(VolumeContainerBinding)
 class VolumeContainerBindingAdmin(admin.ModelAdmin):
-    list_display = ('id', 'container', 'project', 'volume' )
+    list_display = ('id', 'container', 'volume' )
 
 @admin.register(Image)
 class ImageAdmin(admin.ModelAdmin):

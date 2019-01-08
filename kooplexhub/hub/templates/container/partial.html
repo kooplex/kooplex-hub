@@ -8,7 +8,7 @@
     {% include 'container/containerstatus.html' %}
     <button class="btn" data-toggle="collapse" data-target="#collapse-{{ container.id }}" aria-expanded="true" aria-controls="collapse-{{ container.id }}" style="float: right;">
 {% if container.marked_to_remove %}
-      <span class="badge badge-pill badge-danger">New image:<strong>{{ container.image }}</strong></span>
+      <span class="badge badge-pill badge-danger">Restart with image:<strong>{{ container.image }}</strong></span>
 {% elif container.is_running  %}
       <span class="badge badge-pill badge-success">Using image:<strong>{{ container.image }}</strong></span>
 {% else %}
@@ -31,7 +31,10 @@
             <p>{{ v }}</p>
           {% endfor %}
         </div>
-        <div class="card-header">Last message: </div>
+        <div class="card-header">Last message ({{ container.last_message_at }}):
+          <a href="{% url 'container:refreshlogs' container.id %}" role="button" class="btn" style="padding: 6px; float: right;">
+            <span class="oi oi-reload" aria-hidden="true" data-toggle="tooltip" title="Refresh container information" data-placement="bottom"></span></a>
+        </div>
         <div class="card-body">
           <p>{{ container.last_message }}</p>
         </div>

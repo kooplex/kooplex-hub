@@ -11,6 +11,8 @@ from docker.client import Client
 
 from kooplex.settings import KOOPLEX
 
+from kooplex.lib import now
+
 logger = logging.getLogger(__name__)
 
 class Docker:
@@ -124,6 +126,14 @@ class Docker:
             logger.debug("Starting container")
             self.start_container(container)
 
+    def refresh_container_state(self, container):
+        docker_container_info = self.get_container(container)
+        container_state = docker_container_info['State']
+        logger.debug("Container state %s" % container_state)
+        container.last_message = str(container_state)
+        container.last_message_at = now()
+        container.save()
+
     def start_container(self, container):
         self.client.start(container.name)
         # we need to retrieve the container state after starting it
@@ -131,6 +141,7 @@ class Docker:
         container_state = docker_container_info['State']
         logger.debug("Container state %s" % container_state)
         container.last_message = str(container_state)
+        container.last_message_at = now()
         assert container_state == 'running', "Container failed to start: %s" % docker_container_info
 
     def stop_container(self, container):
@@ -145,9 +156,11 @@ class Docker:
         try:
             self.client.remove_container(container.name)
             container.last_message = 'Container removed'
+            container.last_message_at = now()
         except Exception as e:
             logger.warn("docker container not found by API -- %s" % e)
             container.last_message = str(e)
+            container.last_message_at = now()
         logger.debug("Container removed %s" % container.name)
 
 #FIXME: az execute2 lesz az igazi...

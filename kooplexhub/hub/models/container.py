@@ -6,7 +6,7 @@ import time
 
 from django.db import models
 from django.utils import timezone
-from django.db.models.signals import pre_save, post_save
+from django.db.models.signals import pre_save, post_save, post_delete
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.contrib.auth.models import User
@@ -244,19 +244,31 @@ class Container(models.Model):
             for mapping in project.report_mapping4user(self.user):
                 yield mapping
 
+    def refresh_state(self):
+        from kooplex.lib import Docker 
+        try:
+            Docker().refresh_container_state(self)
+        except TypeError:
+            pass
+
 
 @receiver(pre_save, sender = Container)
 def container_attribute_change(sender, instance, **kwargs):
     from kooplex.lib import Docker
     from kooplex.lib.proxy import addroute, removeroute
-    try:
-        old = sender.objects.get(id = instance.id)
-    except sender.DoesNotExist:
-        old = sender()
-    if old.state != instance.state:
-        logger.debug("%s statchange %s -> %s" % (instance, ST_LOOKUP[old.state], ST_LOOKUP[instance.state]))
-        docker = Docker()
-        if not old.is_running and instance.is_running:
+    is_new = sender.id is not None
+    old_instance = sender() if is_new else sender.objects.get(id = instance.id)
+    docker = Docker()
+    if not is_new and old_instance.image != instance.image:
+         if instance.state == sender.ST_RUNNING:
+             instance.marked_to_remove = True
+         elif instance.state != sender.ST_NOTPRESENT:
+             docker.remove_container(instance)
+             instance.marked_to_remove = False
+             instance.state = sender.ST_NOTPRESENT
+    if old_instance.state != instance.state:
+        logger.debug("%s statchange %s -> %s" % (instance, ST_LOOKUP[old_instance.state], ST_LOOKUP[instance.state]))
+        if not old_instance.is_running and instance.is_running:
             docker.run_container(instance)
             addroute(instance)
             logger.info("started %s" % instance)
@@ -272,16 +284,18 @@ def container_attribute_change(sender, instance, **kwargs):
                 instance.state = sender.ST_NOTPRESENT
         else:
             raise NotImplementedError
-    elif old.image != instance.image:
-         if instance.state == sender.ST_RUNNING:
-             instance.marked_to_remove = True
-         elif instance.state != sender.ST_NOTPRESENT:
-             docker.remove_container(instance)
-             instance.marked_to_remove = False
-             instance.state = sender.ST_NOTPRESENT
-    elif old.last_message != instance.last_message:
+    if old_instance.last_message != instance.last_message:
          logger.debug("msg of %s: %s" % (instance, instance.last_message))
          instance.last_message_at = now()
+
+@receiver(post_save, sender = Container)
+def bind_home(sender, instance, created, **kwargs):
+    if created:
+        try:
+            v_home = Volume.objects.get(volumetype = Volume.HOME['tag'])
+            VolumeContainerBinding.objects.create(container = instance, volume = v_home)
+        except Exception as e:
+            logger.error('Home not bound -- %s' % e)
 
 
 
@@ -292,102 +306,59 @@ class ProjectContainerBinding(models.Model):
     def __str__(self):
         return "<ProjectContainerBinding %s-%s>" % (self.project, self.container)
 
-  
-#class ProjectContainer(ContainerBase):
-#    project = models.ForeignKey(Project, null = True)
-#    mark_to_remove = models.BooleanField(default = False)
-#    volume_gids = set()
-#
-#    def __str__(self):
-#        return "<ProjectContainer: %s of %s@%s>" % (self.name, self.user, self.project)
-#
-#    def init(self):
-#        container_name_info = { 'username': self.user.username, 'projectname': self.project.name_with_owner }
-#        self.name = get_settings('spawner', 'pattern_project_containername') % container_name_info
-#        self.image = self.project.image
-#        for vpb in VolumeProjectBinding.objects.filter(project = self.project):
-#            vcb = VolumeContainerBinding(container = self, volume = vpb.volume)
-#            vcb.save()
-#            logger.debug('container volume binding %s' % vcb)
-#            try:
-#                vol = StorageVolume.objects.get(id = vpb.volume.id)
-#                if vol.groupid is None:
-#                    logger.warning("storage volume %s does not have a group id associated" % vol)
-#                    continue
-#                self.volume_gids.add(vol.groupid)
-#                logger.debug("storage volume %s associated group id %d" % (vol, vol.groupid))
-#            except StorageVolume.DoesNotExist:
-#                # a functional volume does not have a groupid
-#                pass
-#
-#    @property
-#    def url_external(self):
-#        return os.path.join(get_settings('hub', 'base_url'), self.proxy_path, '?token=%s' % self.user.token)
-#
-#    @property
-#    def api(self):
-#        return os.path.join(self.url, 'notebook', self.proxy_path)
-#
-#    @property
-#    def volumemapping(self):
-#        return [
-#            (get_settings('spawner', 'volume-home'), '/mnt/.volumes/home', 'rw'),
-#            (get_settings('spawner', 'volume-git'), '/mnt/.volumes/git', 'rw'),
-#            (get_settings('spawner', 'volume-share'), '/mnt/.volumes/share', 'rw'),
-#        ]
-#
-#    @property
-#    def environment(self):
-#        envs = {
-#            'NB_USER': self.user.username,
-#            'NB_UID': self.user.uid,
-#            'NB_GID': self.user.gid,
-#            'NB_URL': self.proxy_path,
-#            'NB_PORT': 8000,
-#            'NB_TOKEN': self.user.token,
-#            'PR_ID': self.project.id,
-#            'PR_NAME': self.project.name,
-#            'PR_PWN': self.project.name_with_owner,
-#        }
-#        if len(self.volume_gids):
-#            envs['MNT_GIDS'] = ",".join([ str(x) for x in self.volume_gids ])
-#        return envs
 
-#class CourseContainer(ContainerBase):
-##    project = models.ForeignKey(CourseProject, null = True)
-#
-#    def __str__(self):
-#        return "<CourseContainer: %s of %s@%s>" % (self.name, self.user, self.project)
-#
-#    @property
-#    def mark_to_remove(self): return True
-#    @mark_to_remove.setter
-#    def mark_to_remove(self, m): pass
-#    
-#
-#    def init(self):
-#        container_name_info = { 'username': self.user.username, 'projectname': self.project.name }
-#        self.name = KOOPLEX.get('spawner', {}).get('pattern_courseproject_containername', 'course-%(projectname)s-%(username)s') % container_name_info
-#        self.image = self.project.image
-###        for vpb in VolumeProjectBinding.objects.filter(project = self.project):
-###            vcb = VolumeContainerBinding.objects.create(container = self, volume = vpb.volume)
-###            logger.debug('container volume binding %s' % vcb)
-###            try:
-###                vol = StorageVolume.objects.get(id = vpb.volume.id)
-###                if vol.groupid is None:
-###                    logger.warning("storage volume %s does not have a group id associated" % vol)
-###                    continue
-###                self.volume_gids.add(vol.groupid)
-###                logger.debug("storage volume %s associated group id %d" % (vol, vol.groupid))
-###            except StorageVolume.DoesNotExist:
-###                # a functional volume does not have a groupid
-###                pass
-#
+@receiver(post_save, sender = ProjectContainerBinding)
+def bind_share(sender, instance, created, **kwargs):
+    if created:
+        c = instance.container
+        try:
+            v_share = Volume.objects.get(volumetype = Volume.SHARE['tag'])
+            VolumeContainerBinding.objects.get(container = c, volume = v_share)
+            logger.debug('Share already bound to container %s' % c)
+        except VolumeContainerBinding.DoesNotExist:
+            VolumeContainerBinding.objects.create(container = c, volume = v_share)
+            logger.debug('Share bound to container %s' % c)
+        except Exception as e:
+            logger.error('Share not bound to container %s -- %s' % (c, e))
+  
+@receiver(post_delete, sender = ProjectContainerBinding)
+def remove_bind_share(sender, instance, **kwargs):
+    c = instance.container
+    if not ProjectContainerBinding.objects.filter(container = c):
+        try:
+            v_share = Volume.objects.get(volumetype = Volume.SHARE['tag'])
+            VolumeContainerBinding.objects.get(container = c, volume = v_share).delete()
+            logger.debug('Share unbound from container %s' % instance)
+        except Exception as e:
+            logger.error('Share was not unbound from container %s -- %s' % (instance, e))
+
+#@receiver(pre_save, sender = ProjectContainerBinding)
+#def update_volumecontainerbinding(sender, instance, **kwargs):
+#    def process(project):
+#        for volume in project.volumes:
+#            try:
+#                binding = VolumeContainerBinding.objects.get(volume = volume, container = container, project = instance.project)
+#                try:
+#                    bindings.remove(binding)
+#                except ValueError:
+#                    pass
+#                logger.debug("binding not modified: %s" % binding)
+#            except VolumeContainerBinding.DoesNotExist:
+#                binding = VolumeContainerBinding.objects.create(volume = volume, container = container, project = instance.project)
+#                logger.debug("binding created: %s" % binding)
+#    container = instance.container
+#    bindings = list(VolumeContainerBinding.objects.filter(container = container))
+#    process(instance.project)
+#    for project in container.projects:
+#        process(project)
+#    for binding in bindings:
+#        logger.debug("binding removed: %s" % binding)
+#        binding.delete()
 
 class VolumeContainerBinding(models.Model):
     volume = models.ForeignKey(Volume, null = False)
     container = models.ForeignKey(Container, null = False)
-    project = models.ForeignKey(Project, null = False)
+    #project = models.ForeignKey(Project, null = False)
 
     def __str__(self):
        return "%s-%s" % (self.container.name, self.volume.name)
@@ -408,28 +379,6 @@ def update_image(sender, instance, **kwargs):
         assert instance.container.image == instance.project.image, "Conflicting images %s =/= %s" % (instance.container.image, instance.project.image)
 
 
-@receiver(pre_save, sender = ProjectContainerBinding)
-def update_volumecontainerbinding(sender, instance, **kwargs):
-    def process(project):
-        for volume in project.volumes:
-            try:
-                binding = VolumeContainerBinding.objects.get(volume = volume, container = container, project = instance.project)
-                try:
-                    bindings.remove(binding)
-                except ValueError:
-                    pass
-                logger.debug("binding not modified: %s" % binding)
-            except VolumeContainerBinding.DoesNotExist:
-                binding = VolumeContainerBinding.objects.create(volume = volume, container = container, project = instance.project)
-                logger.debug("binding created: %s" % binding)
-    container = instance.container
-    bindings = list(VolumeContainerBinding.objects.filter(container = container))
-    process(instance.project)
-    for project in container.projects:
-        process(project)
-    for binding in bindings:
-        logger.debug("binding removed: %s" % binding)
-        binding.delete()
 
 
 

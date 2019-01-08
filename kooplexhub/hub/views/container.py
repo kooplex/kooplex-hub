@@ -59,6 +59,7 @@ def startprojectcontainer(request, project_id, next_page):
     except Container.DoesNotExist:
         messages.error(request, 'Project does not exist')
     except Exception as e:
+        logger.error('Cannot start the container %s (project id: %s) -- %s' % (container, project_id, e))
         messages.error(request, 'Cannot start the container -- %s' % e)
     return redirect(next_page)
 
@@ -73,6 +74,7 @@ def startcontainer(request, container_id, next_page):
     except Container.DoesNotExist:
         messages.error(request, 'Container does not exist')
     except Exception as e:
+        logger.error('Cannot start the container %s -- %s' % (container, e))
         messages.error(request, 'Cannot start the container -- %s' % e)
     return redirect(next_page)
 
@@ -166,6 +168,12 @@ def addproject(request, container_id):
         return redirect(next_page)
 
 
+@login_required
+def refreshlogs(request, container_id):
+    container = Container.objects.get(id = container_id)
+    container.refresh_state()
+    return redirect('container:list')
+
 urlpatterns = [
     url(r'^new/?$', new, name = 'new'), 
     url(r'^list/?$', listcontainers, name = 'list'), 
@@ -174,6 +182,7 @@ urlpatterns = [
     url(r'^stop/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)$', stopcontainer, name = 'stop'),
     url(r'^remove/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)$', removecontainer, name = 'remove'),
     url(r'^destroy/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)$', destroycontainer, name = 'destroy'),
+    url(r'^refreshlogs/(?P<container_id>\d+)$', refreshlogs, name = 'refreshlogs'),
 
     url(r'^addproject/(?P<container_id>\d+)$', addproject, name = 'addproject'),
     url(r'^startproject/(?P<project_id>\d+)/(?P<next_page>\w+:?\w*)$', startprojectcontainer, name = 'startprojectcontainer'),
