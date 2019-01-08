@@ -36,8 +36,7 @@ def new(request):
             assert upb.project.name != projectname, "Not a unique name"
         form = FormProject(request.POST)
         form.save()
-        upb = UserProjectBinding(user = request.user, project = form.instance, role = UserProjectBinding.RL_CREATOR)
-        upb.save()
+        UserProjectBinding.objects.create(user = request.user, project = form.instance, role = UserProjectBinding.RL_CREATOR)
         messages.info(request, 'Your new project is created')
         return redirect('project:list')
     except Exception as e:

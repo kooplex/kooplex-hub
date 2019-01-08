@@ -1,9 +1,10 @@
+import os
 import logging
 
 from django.db import models
 from django.contrib.auth.models import User
 from django.template.defaulttags import register
-from django.db.models.signals import post_save
+from django.db.models.signals import pre_save, post_save, pre_delete, post_delete
 from django.dispatch import receiver
 
 from .image import Image
@@ -39,18 +40,32 @@ class Project(models.Model):
         return self.name < p.name
 
     @property
+    def creator(self):
+        return UserProjectBinding.objects.get(project = self, role = UserProjectBinding.RL_CREATOR).user
+
+    @property
     def cleanname(self):
         return standardize_str(self.name)
 
-###    @property
-###    def owner(self):  #FIXME: depracated
-###        for binding in UserProjectBinding.objects.filter(project = self):
-###            if binding.role == UserProjectBinding.RL_CREATOR:
-###                yield binding.user
+    @property
+    def uniquename(self):
+        return "%s-%s" % (self.creator.username, standardize_str(self.name))
 
     @property
-    def name_with_owner(self):
-        return "%s-%s" % (standardize_str(self.name), self.owner.username)
+    def fs_uid(self):
+        return self.creator.profile.userid
+
+    @property
+    def fs_gid(self):
+        return self.creator.profile.groupid
+
+    @property
+    def sharedir(self):
+        from .volume import Volume
+        v_share = Volume.objects.get(volumetype = Volume.SHARE['tag'])
+        return os.path.join(v_share.mountpoint, self.uniquename)
+
+
 
     @property
     def safename(self):
@@ -198,6 +213,7 @@ class Project(models.Model):
 
 
 
+
 RL_LOOKUP = {
     'creator': 'The creator of this project.',
     'administrator': 'Can modify project properties.',
@@ -218,6 +234,16 @@ class UserProjectBinding(models.Model):
     def __str__(self):
        return "%s-%s" % (self.project.name, self.user.username)
 
+    @property
+    def uniquename(self):
+        return "%s-%s" % (self.project.uniquename, self.user.username)
+
+    @property
+    def workdir(self):
+        from .volume import Volume
+        v_workdir = Volume.objects.get(volumetype = Volume.WORKDIR['tag'])
+        return os.path.join(v_workdir.mountpoint, self.uniquename)
+
     @staticmethod
     def setvisibility(project, user, hide):
         try:
@@ -227,10 +253,48 @@ class UserProjectBinding(models.Model):
         except UserProjectBinding.DoesNotExist:
             raise ProjectDoesNotExist
 
+
+@receiver(pre_save, sender = UserProjectBinding)
+def assert_single_creator(sender, instance, **kwargs):
+    p = instance.project
+    try:
+        upb = UserProjectBinding.objects.get(project = p, role = UserProjectBinding.RL_CREATOR)
+        if instance.role == UserProjectBinding.RL_CREATOR:
+            assert upb.id == instance.id, "Project %s cannot have more than one creator" % p
+    except UserProjectBinding.DoesNotExist:
+        assert instance.role == UserProjectBinding.RL_CREATOR, "The first user project binding must be the creator %s" % instance
+        
+
+@receiver(post_save, sender = UserProjectBinding)
+def mkdir_share(sender, instance, created, **kwargs):
+    from kooplex.lib.filesystem import _mkdir
+    if created and instance.role == UserProjectBinding.RL_CREATOR:
+        project = instance.project
+        _mkdir(project.sharedir, uid = project.fs_uid, gid = project.fs_gid)
+
+@receiver(pre_delete, sender = UserProjectBinding)
+def garbagedir_share(sender, instance, **kwargs):
+    from kooplex.lib.filesystem import _archivedir
+    if instance.role == UserProjectBinding.RL_CREATOR:
+        _archivedir(instance.project.sharedir, '/tmp/lastshare.tgz') #FIXME: name of garbage
+
+
+@receiver(post_save, sender = UserProjectBinding)
+def mkdir_workdir(sender, instance, created, **kwargs):
+    from kooplex.lib.filesystem import _mkdir
+    _mkdir(instance.workdir, uid = instance.user.profile.userid, gid = instance.user.profile.groupid)
+
+@receiver(pre_delete, sender = UserProjectBinding)
+def garbagedir_workdir(sender, instance, **kwargs):
+    from kooplex.lib.filesystem import _archivedir
+    _archivedir(instance.workdir, '/tmp/lastshare.tgz') #FIXME: name of garbage
+
+
+
+
 class GroupProjectBinding(models.Model):
     group = models.ForeignKey(Group, null = False)
     project = models.ForeignKey(Project, null = False)
 
 
 
-#FIXME: project del signal -> container karbantart

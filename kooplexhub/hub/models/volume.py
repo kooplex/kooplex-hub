@@ -71,7 +71,7 @@ class Volume(models.Model):
                 return Volume.objects.create(name = volumename, displayname = dirname, description = '%s (%s)' % (x['description'], dirname), volumetype = x['tag'])
 
     @staticmethod
-    def lookup(volumetype, **kw):
+    def lookup(volumetype, **kw): #FIXME: check if still used somewhere
         if not volumetype in Volume.VOLUME_TYPE_LIST:
             raise Volume.DoesNotExist
         return Volume.objects.get(volumetype = volumetype['tag'], **kw)

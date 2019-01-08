@@ -176,6 +176,7 @@ KOOPLEX = {
         'pattern_storagevolumename_filter': r'^stg-([_\w-]+)$',
         'pattern_homevolumename_filter': r'^%s-(home)$' % PREFIX,
         'pattern_sharevolumename_filter': r'^%s-(share)$' % PREFIX,
+        'pattern_workdirvolumename_filter': r'^%s-(project)$' % PREFIX,
         'pattern_coursevolumename_filter': r'^%s-(course)$' % PREFIX,
         'pattern_usercoursevolumename_filter': r'^%s-(usercourse)$' % PREFIX,
         'pattern_assignmentvolumename_filter': r'^%s-(assignment)$' % PREFIX,

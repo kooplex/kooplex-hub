@@ -332,6 +332,34 @@ def remove_bind_share(sender, instance, **kwargs):
         except Exception as e:
             logger.error('Share was not unbound from container %s -- %s' % (instance, e))
 
+
+
+@receiver(post_save, sender = ProjectContainerBinding)
+def bind_workdir(sender, instance, created, **kwargs):
+    if created:
+        c = instance.container
+        try:
+            v_workdir = Volume.objects.get(volumetype = Volume.WORKDIR['tag'])
+            VolumeContainerBinding.objects.get(container = c, volume = v_workdir)
+            logger.debug('Workdir already bound to container %s' % c)
+        except VolumeContainerBinding.DoesNotExist:
+            VolumeContainerBinding.objects.create(container = c, volume = v_workdir)
+            logger.debug('Workdir bound to container %s' % c)
+        except Exception as e:
+            logger.error('Workdir not bound to container %s -- %s' % (c, e))
+  
+@receiver(post_delete, sender = ProjectContainerBinding)
+def remove_bind_workdir(sender, instance, **kwargs):
+    c = instance.container
+    if not ProjectContainerBinding.objects.filter(container = c):
+        try:
+            v_workdir = Volume.objects.get(volumetype = Volume.WORKDIR['tag'])
+            VolumeContainerBinding.objects.get(container = c, volume = v_workdir).delete()
+            logger.debug('Workdir unbound from container %s' % instance)
+        except Exception as e:
+            logger.error('Workdir was not unbound from container %s -- %s' % (instance, e))
+
+
 #@receiver(pre_save, sender = ProjectContainerBinding)
 #def update_volumecontainerbinding(sender, instance, **kwargs):
 #    def process(project):

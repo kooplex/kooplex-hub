@@ -122,6 +122,7 @@ def _archivedir(folder, target, remove = True):
     if not os.path.exists(folder):
         logger.warning("Folder %s is missing" % folder)
         return
+    #FIXME: dont archive if empty
     try:
         dir_util.mkpath(os.path.dirname(target))
         with tarfile.open(target, mode='w:gz') as archive:
