@@ -1,0 +1,49 @@
+{% extends "layout.html" %}
+
+{% block submenu %}
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSubmenu" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarSubmenu">
+    <h5><span class="badge badge-secondary">Configure project {{ project }}</span></h5>
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item"><a {% if submenu == 'description' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'project:configure' project.id 'description' next_page %}" {% endif %}>Description</a></li>
+      <li class="nav-item"><a {% if submenu == 'collaboration' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'project:configure' project.id 'collaboration' next_page %}" {% endif %}>Collaboration</a></li>
+      <li class="nav-item"><a {% if submenu == 'environment' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'project:configure' project.id 'environment' next_page %}" {% endif %}>Environment</a></li>
+      <li class="nav-item"><a {% if submenu == 'storage' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'project:configure' project.id 'storage' next_page %}" {% endif %}>Data</a></li>
+      <li class="nav-item"><a {% if submenu == 'versioncontrol' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'project:configure' project.id 'versioncontrol' next_page %}" {% endif %}>Versioncontrol</a></li>
+    </ul>
+    <ul class="nav navbar-nav navbar-right">
+      <li>Assignments related to course {{ course.courseid }}</li>
+    </ul>
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+
+<form id="projectSettingsForm" class="form-horizontal" action="{% url 'project:configure' project.id submenu next_page %}" method="post">
+  {% csrf_token %}
+  <div class="content">
+    {% if submenu == 'description' %}
+      {% include 'project/pane-description.html' %}
+    {% elif submenu == 'collaboration' %}
+      {% include 'project/pane-collaboration.html' %}
+    {% elif submenu == 'environment' %}
+      {% include 'project/pane-image.html' %}
+    {% elif submenu == 'storage' %}
+       {% include 'project/pane-storage.html' %}
+    {% elif submenu == 'versioncontrol' %}
+       {% include 'project/pane-versioncontrol.html' %}
+    {% endif %}
+  </div>     <!-- tab-content -->
+  <div class="modal-footer">
+    <button type="submit" class="btn btn-default" name="button" value="apply"> Apply settings</button>
+    <button class="btn btn-default" data-dismiss="modal">Cancel</button>
+  </div>
+
+</form>
+
+{% endblock %}
+

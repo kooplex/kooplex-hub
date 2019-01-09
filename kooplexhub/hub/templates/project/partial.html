@@ -23,7 +23,7 @@
         <div style="float: right;">
           <a href="#" {% comment %} FIXME: {% "url 'assignment:new' project.course.id %}" {% endcomment %} role="button" class="btn btn-secondary disabled" data-toggle="tooltip" title="You can create and manage assignments related to course {{ project.name }}." data-placement="top">
             <span class="oi oi-pencil" aria-hidden="true"></span></a>
-          <a href="{% url 'project:configure' project.id  next_page %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Settings of project {{ project.name }}. You can change the image, modify volume attachments." data-placement="top">
+          <a href="{% url 'project:configure' project.id 'description' next_page %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Settings of project {{ project.name }}. You can change the image, modify volume attachments." data-placement="top">
             <span class="oi oi-wrench" aria-hidden="true"></span></a>
           <a href="{% url 'project:delete' project.id  next_page %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Delete or leave project {{ project.name }}." data-placement="top">
             <span class="oi oi-trash" aria-hidden="true"></span></a>

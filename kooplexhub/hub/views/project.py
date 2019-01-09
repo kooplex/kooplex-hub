@@ -125,10 +125,10 @@ def sel_table(user, project, volumetype):
 
 
 @login_required
-def configure(request, project_id, next_page):
+def configure(request, project_id, submenu, next_page):
     """Handles the project configuration."""
     user = request.user
-    logger.debug("method: %s, project id: %s, user: %s" % (request.method, project_id, user))
+    logger.debug("submenu: %s, method: %s, project id: %s, user: %s" % (submenu, request.method, project_id, user))
     try:
         project = Project.get_userproject(project_id = project_id, user = request.user)
     except Project.DoesNotExist:
@@ -186,9 +186,10 @@ def configure(request, project_id, next_page):
             't_volumes_fun': sel_table(user = user, project = project, volumetype = 'functional'), #FIXME: tables placed in forms/ ReqConfig
             't_volumes_stg': sel_table(user = user, project = project, volumetype = 'storage'),    #FIXME: like above
             't_vcppb': table_vcppb, 
+            'submenu': submenu,
             'next_page': next_page,
         }
-        return render(request, 'project/settings.html', context = context_dict)
+        return render(request, 'project/configure.html', context = context_dict)
 
 
 @login_required
@@ -306,7 +307,7 @@ urlpatterns = [
     url(r'^list', listprojects, name = 'list'), 
     url(r'^new/?$', new, name = 'new'), 
     url(r'^join/?$', join, name = 'join'), 
-    url(r'^configure/(?P<project_id>\d+)/(?P<next_page>\w+:?\w*)$', configure, name = 'configure'), 
+    url(r'^configure/(?P<project_id>\d+)/(?P<submenu>\w+)/(?P<next_page>\w+:?\w*)$', configure, name = 'configure'), 
     url(r'^vcrefresh/(?P<token_id>\d+)/(?P<project_id>\d+)$', vcrefresh, name = 'vcrefresh'), 
     url(r'^delete/(?P<project_id>\d+)/(?P<next_page>\w+:?\w*)$', delete_leave, name = 'delete'), 
     url(r'^show/(?P<next_page>\w+:?\w*)$', show_hide, name = 'showhide'),
