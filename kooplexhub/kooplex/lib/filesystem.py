@@ -13,118 +13,9 @@ from distutils import dir_util
 from distutils import file_util
 import tarfile
 
-from kooplex.lib import bash
-from kooplex.settings import KOOPLEX
+from kooplex.lib import bash, Dirname, Filename
 
 logger = logging.getLogger(__name__)
-
-class Filename:
-    mountpoint = KOOPLEX.get('mountpoint', {})
-
-    @staticmethod
-    def userhome_garbage(user):
-        return os.path.join(Dirname.mountpoint['garbage'], "user-%s.%f.tar.gz" % (user.username, time.time()))
-
-    @staticmethod
-    def share_garbage(userprojectbinding):
-        return os.path.join(Dirname.mountpoint['garbage'], "projectshare-%s.%f.tar.gz" % (userprojectbinding.project.uniquename, time.time()))
-
-    @staticmethod
-    def workdir_archive(userprojectbinding):
-        return os.path.join(Dirname.mountpoint['home'], userprojectbinding.user.username, "garbage", "workdir-%s.%f.tar.gz" % (userprojectbinding.uniquename, time.time()))
-
-    @staticmethod
-    def vcpcache_archive(vcprojectprojectbinding):
-        return os.path.join(Dirname.mountpoint['home'], vcprojectprojectbinding.vcproject.token.user.username, "garbage", "git-%s.%f.tar.gz" % (vcprojectprojectbinding.uniquename, time.time()))
-
-    @staticmethod
-    def course_garbage(course):
-        return os.path.join(Dirname.mountpoint['garbage'], "course-%s.%f.tar.gz" % (course.safecourseid, time.time()))
-
-    @staticmethod
-    def courseworkdir_archive(usercoursebinding):
-        flag = usercoursebinding.flag if usercoursebinding.flag else '_'
-        return os.path.join(Dirname.mountpoint['home'], usercoursebinding.user.username, "%s.%s.%f.tar.gz" % (usercoursebinding.course.safecourseid, flag, time.time()))
-
-    @staticmethod
-    def assignmentsnapshot(assignment):
-        flag = assignment.flag if assignment.flag else '_'
-        return os.path.join(Dirname.mountpoint['assignment'], assignment.course.safecourseid, flag, 'assignmentsnapshot-%s.%d.tar.gz' % (assignment.safename, assignment.created_at.timestamp()))
-
-    @staticmethod
-    def assignmentsnapshot_garbage(assignment):
-        flag = assignment.flag if assignment.flag else '_'
-        return os.path.join(Dirname.mountpoint['garbage'], 'assignmentsnapshot-%s.%s-%s.%d-%f.tar.gz' % (assignment.course.safecourseid, flag, assignment.safename, assignment.created_at.timestamp(), time.time()))
-
-    @staticmethod
-    def assignmentcollection(userassignmentbinding):
-        assignment = userassignmentbinding.assignment
-        flag = assignment.flag if assignment.flag else '_'
-        return os.path.join(Dirname.mountpoint['assignment'], assignment.course.safecourseid, flag, 'submitted-%s-%s.%d.tar.gz' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp()))
-
-
-class Dirname:
-    #from hub.models import Volume
-    mountpoint = KOOPLEX.get('mountpoint', {})
-
-    @staticmethod
-    def userhome(user):
-        return os.path.join(Dirname.mountpoint['home'], user.username)
-
-    @staticmethod
-    def share(userprojectbinding):
-    #    v_share = Volume.objects.get(volumetype = Volume.SHARE['tag'])
-    #    return os.path.join(v_share.mountpoint, userprojectbinding.uniquename)
-        v_share = Dirname.mountpoint['share']
-        return os.path.join(v_share, userprojectbinding.project.uniquename)
-
-    @staticmethod
-    def workdir(userprojectbinding):
-    #    v_workdir = Volume.objects.get(volumetype = Volume.WORKDIR['tag'])
-    #    return os.path.join(v_workdir.mountpoint, self.uniquename)
-        v_workdir = Dirname.mountpoint['workdir']
-        return os.path.join(v_workdir, userprojectbinding.uniquename)
-
-    @staticmethod
-    def vcpcache(vcprojectprojectbinding):
-        v_vccache = Dirname.mountpoint['git']
-        return os.path.join(v_vccache, vcprojectprojectbinding.uniquename)
-
-    @staticmethod
-    def course(course):
-        return os.path.join(Dirname.mountpoint['course'], course.safecourseid)
-
-    @staticmethod
-    def courseprivate(course):
-        return os.path.join(Dirname.course(course), 'private')
-
-    @staticmethod
-    def coursepublic(course):
-        return os.path.join(Dirname.course(course), 'public')
-
-    @staticmethod
-    def courseworkdir(usercoursebinding):
-        flag = usercoursebinding.flag if usercoursebinding.flag else '_'
-        return os.path.join(Dirname.mountpoint['usercourse'], usercoursebinding.course.safecourseid, flag) if usercoursebinding.is_teacher else \
-               os.path.join(Dirname.mountpoint['usercourse'], usercoursebinding.course.safecourseid, flag, usercoursebinding.user.username)
-
-    @staticmethod
-    def assignmentsource(assignment):
-        return os.path.join(Dirname.courseprivate(assignment.course), assignment.folder)
-
-    @staticmethod
-    def assignmentworkdir(userassignmentbinding):
-        from hub.models import UserCourseBinding
-        usercoursebinding = UserCourseBinding.objects.get(user = userassignmentbinding.user, course = userassignmentbinding.assignment.course, flag = userassignmentbinding.assignment.flag)
-        wd = Dirname.courseworkdir(usercoursebinding)
-        return os.path.join(wd, userassignmentbinding.assignment.safename)
-
-    @staticmethod
-    def assignmentcorrectdir(userassignmentbinding):
-        assignment = userassignmentbinding.assignment
-        flag = assignment.flag if assignment.flag else '_'
-        return os.path.join(Dirname.mountpoint['assignment'], assignment.course.safecourseid, flag, 'feedback-%s-%s.%d' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp()))
-
 
 def _mkdir(path, uid = 0, gid = 0, mode = 0b111101000, mountpoint = False):
     """
@@ -154,8 +45,8 @@ def _archivedir(folder, target, remove = True):
     if not os.path.exists(folder):
         logger.warning("Folder %s is missing" % folder)
         return
-    #FIXME: dont archive if empty
     try:
+        assert len(os.listdir(folder)) > 0, "Folder %s is empty" % folder
         dir_util.mkpath(os.path.dirname(target))
         with tarfile.open(target, mode='w:gz') as archive:
             archive.add(folder, arcname = '.', recursive = True)
@@ -168,59 +59,27 @@ def _archivedir(folder, target, remove = True):
             logger.debug("Folder %s removed" % folder)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ########################################
-# FIXME: refactor
+
 def mkdir_home(user):
     """
     @summary: create a home directory for the user
     @param user: the user
     @type user: kooplex.hub.models.User
     """
-    try:
-        dir_home = Dirname.userhome(user)
-        _mkdir(dir_home, uid = user.profile.userid, gid = user.profile.groupid)
-        dir_condaenv = os.path.join(dir_home, '.conda', 'envs')
-        _mkdir(dir_condaenv, uid = user.profile.userid, gid = user.profile.groupid, mode = 0o700)
-        dir_share = os.path.join(dir_home, 'share')
-        _mkdir(dir_share, mountpoint = True, mode = 0o000)
-        dir_workdir = os.path.join(dir_home, 'workdir')
-        _mkdir(dir_workdir, mountpoint = True, mode = 0o000)
-        dir_reportdir = os.path.join(dir_home, 'report')
-        _mkdir(dir_reportdir, mountpoint = True, mode = 0o000)
-        logger.info("Home dir structure created for user %s" % user)
-    except KeyError as e:
-        logger.error("Cannot create home dir, KOOPLEX['mountpoint']['home'] is missing")
+    dir_home = Dirname.userhome(user)
+    _mkdir(dir_home, uid = user.profile.userid, gid = user.profile.groupid)
 
 def garbagedir_home(user):
     dir_home = Dirname.userhome(user)
     garbage = Filename.userhome_garbage(user)
     _archivedir(dir_home, garbage)
 
-########################################
 
 def mkdir_share(userprojectbinding):
     project = userprojectbinding.project
     dir_share = Dirname.share(userprojectbinding)
     _mkdir(dir_share, uid = project.fs_uid, gid = project.fs_gid)
-
 
 def garbagedir_share(userprojectbinding):
     dir_share = Dirname.share(userprojectbinding)
