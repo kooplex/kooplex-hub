@@ -59,14 +59,7 @@ class Project(models.Model):
     def fs_gid(self):
         return self.creator.profile.groupid
 
-    @property
-    def sharedir(self):
-        from .volume import Volume
-        v_share = Volume.objects.get(volumetype = Volume.SHARE['tag'])
-        return os.path.join(v_share.mountpoint, self.uniquename)
-
-
-
+    #FIXME: is it used anywhere?
     @property
     def safename(self):
         try:
@@ -238,12 +231,6 @@ class UserProjectBinding(models.Model):
     def uniquename(self):
         return "%s-%s" % (self.project.uniquename, self.user.username)
 
-    @property
-    def workdir(self):
-        from .volume import Volume
-        v_workdir = Volume.objects.get(volumetype = Volume.WORKDIR['tag'])
-        return os.path.join(v_workdir.mountpoint, self.uniquename)
-
     @staticmethod
     def setvisibility(project, user, hide):
         try:
@@ -267,27 +254,26 @@ def assert_single_creator(sender, instance, **kwargs):
 
 @receiver(post_save, sender = UserProjectBinding)
 def mkdir_share(sender, instance, created, **kwargs):
-    from kooplex.lib.filesystem import _mkdir
+    from kooplex.lib.filesystem import mkdir_share
     if created and instance.role == UserProjectBinding.RL_CREATOR:
-        project = instance.project
-        _mkdir(project.sharedir, uid = project.fs_uid, gid = project.fs_gid)
+        mkdir_share(instance)
 
 @receiver(pre_delete, sender = UserProjectBinding)
 def garbagedir_share(sender, instance, **kwargs):
-    from kooplex.lib.filesystem import _archivedir
+    from kooplex.lib.filesystem import garbagedir_share
     if instance.role == UserProjectBinding.RL_CREATOR:
-        _archivedir(instance.project.sharedir, '/tmp/lastshare.tgz') #FIXME: name of garbage
+        garbagedir_share(instance)
 
 
 @receiver(post_save, sender = UserProjectBinding)
 def mkdir_workdir(sender, instance, created, **kwargs):
-    from kooplex.lib.filesystem import _mkdir
-    _mkdir(instance.workdir, uid = instance.user.profile.userid, gid = instance.user.profile.groupid)
+    from kooplex.lib.filesystem import mkdir_workdir
+    mkdir_workdir(instance)
 
 @receiver(pre_delete, sender = UserProjectBinding)
-def garbagedir_workdir(sender, instance, **kwargs):
-    from kooplex.lib.filesystem import _archivedir
-    _archivedir(instance.workdir, '/tmp/lastshare.tgz') #FIXME: name of garbage
+def archivedir_workdir(sender, instance, **kwargs):
+    from kooplex.lib.filesystem import archivedir_workdir
+    archivedir_workdir(instance)
 
 
 

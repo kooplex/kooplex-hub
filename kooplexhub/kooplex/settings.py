@@ -149,7 +149,8 @@ KOOPLEX = {
     'mountpoint': {
         'home': '/mnt/.volumes/home',
 
-        'project': '/mnt/.volumes/project',
+        'workdir': '/mnt/.volumes/project',
+        'git': '/mnt/.volumes/git',
         'share': '/mnt/.volumes/share',
         'report': '/mnt/.volumes/report',
 

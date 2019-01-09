@@ -1,11 +1,16 @@
 {% extends "layout.html" %}
 {% load render_table from django_tables2 %}
 
+{% block submenu %}
+<div class="navbar navbar-expand-lg navbar-light bg-light">
+  <h5><span class="badge badge-secondary">Show or hide your projects</span></h5>
+</div>
+{% endblock %}
+
 {% block content %}
 <div class="row">
   <form id="project-manage" class="form-horizontal" action="{% url 'project:showhide' next_page %}" method="post">
     {% csrf_token %}
-    <h4>Show or hide your projects</h4>
     <ul class="nav nav-tabs" id="myProjectTabs" role="tablist">
       <li class="nav-item">
         <a id="course-tab" class="nav-link active" href="#pane_course" data-toggle="tab">Teaching</a>

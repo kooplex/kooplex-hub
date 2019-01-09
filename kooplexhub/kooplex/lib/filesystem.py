@@ -26,6 +26,18 @@ class Filename:
         return os.path.join(Dirname.mountpoint['garbage'], "user-%s.%f.tar.gz" % (user.username, time.time()))
 
     @staticmethod
+    def share_garbage(userprojectbinding):
+        return os.path.join(Dirname.mountpoint['garbage'], "projectshare-%s.%f.tar.gz" % (userprojectbinding.project.uniquename, time.time()))
+
+    @staticmethod
+    def workdir_archive(userprojectbinding):
+        return os.path.join(Dirname.mountpoint['home'], userprojectbinding.user.username, "garbage", "workdir-%s.%f.tar.gz" % (userprojectbinding.uniquename, time.time()))
+
+    @staticmethod
+    def vcpcache_archive(vcprojectprojectbinding):
+        return os.path.join(Dirname.mountpoint['home'], vcprojectprojectbinding.vcproject.token.user.username, "garbage", "git-%s.%f.tar.gz" % (vcprojectprojectbinding.uniquename, time.time()))
+
+    @staticmethod
     def course_garbage(course):
         return os.path.join(Dirname.mountpoint['garbage'], "course-%s.%f.tar.gz" % (course.safecourseid, time.time()))
 
@@ -52,11 +64,31 @@ class Filename:
 
 
 class Dirname:
+    #from hub.models import Volume
     mountpoint = KOOPLEX.get('mountpoint', {})
 
     @staticmethod
     def userhome(user):
         return os.path.join(Dirname.mountpoint['home'], user.username)
+
+    @staticmethod
+    def share(userprojectbinding):
+    #    v_share = Volume.objects.get(volumetype = Volume.SHARE['tag'])
+    #    return os.path.join(v_share.mountpoint, userprojectbinding.uniquename)
+        v_share = Dirname.mountpoint['share']
+        return os.path.join(v_share, userprojectbinding.project.uniquename)
+
+    @staticmethod
+    def workdir(userprojectbinding):
+    #    v_workdir = Volume.objects.get(volumetype = Volume.WORKDIR['tag'])
+    #    return os.path.join(v_workdir.mountpoint, self.uniquename)
+        v_workdir = Dirname.mountpoint['workdir']
+        return os.path.join(v_workdir, userprojectbinding.uniquename)
+
+    @staticmethod
+    def vcpcache(vcprojectprojectbinding):
+        v_vccache = Dirname.mountpoint['git']
+        return os.path.join(v_vccache, vcprojectprojectbinding.uniquename)
 
     @staticmethod
     def course(course):
@@ -127,6 +159,7 @@ def _archivedir(folder, target, remove = True):
         dir_util.mkpath(os.path.dirname(target))
         with tarfile.open(target, mode='w:gz') as archive:
             archive.add(folder, arcname = '.', recursive = True)
+            logger.debug("tar %s -> %s" % (folder, target))
     except Exception as e:
         logger.error("Cannot create archive %s -- %s" % (folder, e))
     finally:
@@ -134,6 +167,27 @@ def _archivedir(folder, target, remove = True):
             dir_util.remove_tree(folder)
             logger.debug("Folder %s removed" % folder)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+########################################
+# FIXME: refactor
 def mkdir_home(user):
     """
     @summary: create a home directory for the user
@@ -159,6 +213,43 @@ def garbagedir_home(user):
     dir_home = Dirname.userhome(user)
     garbage = Filename.userhome_garbage(user)
     _archivedir(dir_home, garbage)
+
+########################################
+
+def mkdir_share(userprojectbinding):
+    project = userprojectbinding.project
+    dir_share = Dirname.share(userprojectbinding)
+    _mkdir(dir_share, uid = project.fs_uid, gid = project.fs_gid)
+
+
+def garbagedir_share(userprojectbinding):
+    dir_share = Dirname.share(userprojectbinding)
+    garbage = Filename.share_garbage(userprojectbinding)
+    _archivedir(dir_share, garbage)
+
+
+def mkdir_workdir(userprojectbinding):
+    dir_workdir = Dirname.workdir(userprojectbinding)
+    _mkdir(dir_workdir, uid = userprojectbinding.user.profile.userid, gid = userprojectbinding.user.profile.groupid)
+
+def archivedir_workdir(userprojectbinding):
+    dir_workdir = Dirname.workdir(userprojectbinding)
+    target = Filename.workdir_archive(userprojectbinding)
+    _archivedir(dir_workdir, target)
+
+
+def mkdir_vcpcache(vcprojectprojectbinding):
+    profile = vcprojectprojectbinding.vcproject.token.user.profile
+    dir_cache = Dirname.vcpcache(vcprojectprojectbinding)
+    _mkdir(dir_cache, uid = profile.userid, gid = profile.groupid)
+
+def archivedir_vcpcache(vcprojectprojectbinding):
+    dir_cache = Dirname.vcpcache(vcprojectprojectbinding)
+    target = Filename.vcpcache_archive(vcprojectprojectbinding)
+    _archivedir(dir_cache, target)
+
+
+########################################
 
 def mkdir_course_share(course):
     try:
