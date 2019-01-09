@@ -28,7 +28,7 @@
         <div class="card-header">Volumes: </div>
         <div class="card-body">
           {% for v in container.volumes %}
-            <p>{{ v }}</p>
+            <p>{{ v }} ({{ v.description }})</p>
           {% endfor %}
         </div>
         <div class="card-header">Last message ({{ container.last_message_at }}):

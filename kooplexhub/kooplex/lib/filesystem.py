@@ -36,6 +36,8 @@ def _mkdir(path, uid = 0, gid = 0, mode = 0b111101000, mountpoint = False):
     os.chown(path, uid, gid)
     os.chmod(path, mode)
     if mountpoint:
+        #FIXME: ez nem kell
+        logger.critical("remove from code")
         placeholder = os.path.join(path, '_not_mounted_')
         open(placeholder, 'w').close()
         os.chown(placeholder, 0, 0)
@@ -58,6 +60,13 @@ def _archivedir(folder, target, remove = True):
             dir_util.remove_tree(folder)
             logger.debug("Folder %s removed" % folder)
 
+
+def _createfile(fn, content, uid = 0, gid = 0, mode = 0b111101000):
+    with open(fn, 'w') as f:
+        f.write(content)
+    os.chown(fn, uid, gid)
+    os.chmod(fn, mode)
+    logger.info("Created file: %s" % fn)
 
 ########################################
 
@@ -101,6 +110,18 @@ def mkdir_vcpcache(vcprojectprojectbinding):
     profile = vcprojectprojectbinding.vcproject.token.user.profile
     dir_cache = Dirname.vcpcache(vcprojectprojectbinding)
     _mkdir(dir_cache, uid = profile.userid, gid = profile.groupid)
+    clonescript_vcpcache(vcprojectprojectbinding)
+
+def clonescript_vcpcache(vcprojectprojectbinding):
+    vcp = vcprojectprojectbinding.vcproject
+    profile = vcp.token.user.profile
+    fn_script = os.path.join(Dirname.vcpcache(vcprojectprojectbinding), "clone.sh")
+    script = """
+#! /bin/bash
+
+git clone %s/%s
+    """ % (vcp.token.url.replace('https', 'ssh'), vcp.project_name)
+    _createfile(fn_script, script)
 
 def archivedir_vcpcache(vcprojectprojectbinding):
     dir_cache = Dirname.vcpcache(vcprojectprojectbinding)

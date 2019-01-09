@@ -27,6 +27,11 @@ class Volume(models.Model):
         'description': 'Workdir volume',
         'pattern': volumeconf.get('pattern_workdirvolumename_filter', r'^(workdir)$'),
     }
+    GIT = {
+        'tag': 'git', 
+        'description': 'Git cache volume',
+        'pattern': volumeconf.get('pattern_gitvolumename_filter', r'^(git)$'),
+    }
     FUNCTIONAL = {
         'tag': 'functional', 
         'description': 'Functional volume',
@@ -52,7 +57,7 @@ class Volume(models.Model):
         'description': 'Course assignment volume',
         'pattern': volumeconf.get('pattern_assignmentvolumename_filter', r'^(assignment)$'),
     }
-    VOLUME_TYPE_LIST = [HOME, SHARE, WORKDIR, FUNCTIONAL, STORAGE, COURSE_SHARE, COURSE_WORKDIR, COURSE_ASSIGNMENTDIR]
+    VOLUME_TYPE_LIST = [HOME, GIT, SHARE, WORKDIR, FUNCTIONAL, STORAGE, COURSE_SHARE, COURSE_WORKDIR, COURSE_ASSIGNMENTDIR]
     name = models.CharField(max_length = 64, unique = True)
     displayname = models.CharField(max_length = 64)
     description = models.TextField(null = True)

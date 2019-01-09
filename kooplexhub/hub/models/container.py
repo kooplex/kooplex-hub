@@ -360,6 +360,33 @@ def remove_bind_workdir(sender, instance, **kwargs):
             logger.error('Workdir was not unbound from container %s -- %s' % (instance, e))
 
 
+@receiver(post_save, sender = ProjectContainerBinding)
+def bind_git(sender, instance, created, **kwargs):
+    if created:
+        c = instance.container
+        try:
+            v_git = Volume.objects.get(volumetype = Volume.GIT['tag'])
+            VolumeContainerBinding.objects.get(container = c, volume = v_git)
+            logger.debug('Git cache already bound to container %s' % c)
+        except VolumeContainerBinding.DoesNotExist:
+            VolumeContainerBinding.objects.create(container = c, volume = v_git)
+            logger.debug('Git cache bound to container %s' % c)
+        except Exception as e:
+            logger.error('Git cache not bound to container %s -- %s' % (c, e))
+  
+@receiver(post_delete, sender = ProjectContainerBinding)
+def remove_bind_git(sender, instance, **kwargs):
+    c = instance.container
+    if not ProjectContainerBinding.objects.filter(container = c):
+        try:
+            v_git = Volume.objects.get(volumetype = Volume.GIT['tag'])
+            VolumeContainerBinding.objects.get(container = c, volume = v_git).delete()
+            logger.debug('Git cache unbound from container %s' % instance)
+        except Exception as e:
+            logger.error('Git cache was not unbound from container %s -- %s' % (instance, e))
+
+
+
 #@receiver(pre_save, sender = ProjectContainerBinding)
 #def update_volumecontainerbinding(sender, instance, **kwargs):
 #    def process(project):
