@@ -6,8 +6,8 @@ from .assignment import Assignment, UserAssignmentBinding
 
 from .project import Project,  UserProjectBinding, GroupProjectBinding
 
-from .image import Image, init_model as store_images
-from .volume import Volume, VolumeOwnerBinding, ExtraFields, UserPrivilegeVolumeBinding, VolumeProjectBinding, init_model as store_volumes
+from .image import Image
+from .volume import Volume, VolumeOwnerBinding, ExtraFields, UserPrivilegeVolumeBinding, VolumeProjectBinding
 from .container import Container, ProjectContainerBinding, VolumeContainerBinding
 
 from .versioncontrol import VCToken, VCProject, VCProjectProjectBinding

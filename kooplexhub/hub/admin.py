@@ -11,21 +11,6 @@ from hub.models import *
 logger = logging.getLogger(__name__)
 
 
-@login_required
-def init_images(request):
-    store_images()
-    return redirect('indexpage')
-
-@login_required
-def init_volumes(request):
-    store_volumes()
-    return redirect('indexpage')
-
-urlpatterns = [
-    url(r'^init/images$', init_images, name = 'initimages'),
-    url(r'^init/volumes$', init_volumes, name = 'initvolumes'),
-]
-
 #FIXME: shant be here
 ##def stop_containers(klass, request, queryset):
 ##    from kooplex.logic.spawner import stop_container

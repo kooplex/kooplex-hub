@@ -154,19 +154,3 @@ class VolumeProjectBinding(models.Model):
        return "%s-%s" % (self.project.name, self.volume.name)
 
 
-def init_model():
-    from kooplex.lib import Docker
-    dockerconf = KOOPLEX.get('docker', {})
-    for volume in Volume.objects.all():
-        volume.is_present = False
-        volume.save()
-    for volumename in Docker().list_volumenames():
-        logger.debug("vol: %s" % volumename)
-        try:
-            volume = Volume.objects.get(name = volumename)
-            volume.is_present = True
-        except Volume.DoesNotExist:
-            volume = Volume.try_create(volumename)
-            if volume:
-                logger.debug("created %s" % volume)
-
