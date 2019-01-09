@@ -125,49 +125,144 @@ def sel_table(user, project, volumetype):
 
 
 @login_required
-def configure(request, project_id, submenu, next_page):
-    """Handles the project configuration."""
+def conf_meta(request, project_id, next_page):
     user = request.user
-    logger.debug("submenu: %s, method: %s, project id: %s, user: %s" % (submenu, request.method, project_id, user))
+    logger.debug("method: %s, project id: %s, user: %s" % (request.method, project_id, user))
     try:
         project = Project.get_userproject(project_id = project_id, user = request.user)
-    except Project.DoesNotExist:
+    except Project.DoesNotExist as e:
+        logger.error('abuse by %s project id: %s -- %s' % (user, project_id, e))
         messages.error(request, 'Project does not exist')
         return redirect(next_page)
-    vcppbindings = set(VCProjectProjectBinding.getbinding(user = user, project = project))
-    if request.method == 'POST':
-        logger.debug(request.POST)
-        button = request.POST.get('button')
-        if button == 'apply':
-            msg = project.set_roles(request.POST.getlist('role_map'))
-            if len(msg):
-                messages.info(request, '\n'.join(msg))
-            volumes = [ Volume.objects.get(id = x) for x in request.POST.getlist('selection') ]
-            project.set_volumes(volumes)
-            imagename = request.POST['project_image']
-            project.image = Image.objects.get(name = imagename) if imagename != 'None' else None
-            project.scope = request.POST['project_scope']
-            project.description = request.POST.get('description')
-            project.save()
-            for id_create in request.POST.getlist('vcp_ids'):
-                vcp = VCProject.objects.get(id = id_create)
-                if vcp.token.user != user:
-                    logger.error("Unauthorized request vcp: %s, user: %s" % (vcp, user))
-                    continue
-                VCProjectProjectBinding.objects.create(project = project, vcproject = vcp)
-                messages.info(request, 'Bound %s to repotsitory %s' % (project, vcp))
-            vcppb_ids2keep = request.POST.getlist('vcppb_ids')
-            for b in vcppbindings:
-                if not b.id in vcppb_ids2keep:
-                    messages.info(request, 'Project %s is not bound to repository %s any more' % (project, b.vcproject))
-                    b.delete()
+
+    if request.method == 'POST' and request.POST.get('button') == 'apply':
+        project.scope = request.POST['project_scope']
+        project.description = request.POST.get('description')
+        project.save()
+        return redirect(next_page)
+    else:
+        context_dict = {
+            'project': project, 
+            'submenu': 'meta',
+            'next_page': next_page,
+        }
+        return render(request, 'project/configure.html', context = context_dict)
+
+
+@login_required
+def conf_collab(request, project_id, next_page):
+    user = request.user
+    logger.debug("method: %s, project id: %s, user: %s" % (request.method, project_id, user))
+    try:
+        project = Project.get_userproject(project_id = project_id, user = request.user)
+    except Project.DoesNotExist as e:
+        logger.error('abuse by %s project id: %s -- %s' % (user, project_id, e))
+        messages.error(request, 'Project does not exist')
+        return redirect(next_page)
+
+    if request.method == 'POST' and request.POST.get('button') == 'apply':
+        msg = project.set_roles(request.POST.getlist('role_map'))
+        if len(msg):
+            messages.info(request, '\n'.join(msg))
         return redirect(next_page)
     else:
         everybody = filter(lambda p: p not in [ user.profile ], Profile.objects.all()) # FIXME: get rid of hubadmin
         table = table_collaboration(project)
         table_collaborators = table(everybody)
         RequestConfig(request).configure(table_collaborators)
+        context_dict = {
+            'project': project, 
+            't_collaborators': table_collaborators,
+            'submenu': 'collaboration',
+            'next_page': next_page,
+        }
+        return render(request, 'project/configure.html', context = context_dict)
 
+
+@login_required
+def conf_environment(request, project_id, next_page):
+    user = request.user
+    logger.debug("method: %s, project id: %s, user: %s" % (request.method, project_id, user))
+    try:
+        project = Project.get_userproject(project_id = project_id, user = request.user)
+    except Project.DoesNotExist as e:
+        logger.error('abuse by %s project id: %s -- %s' % (user, project_id, e))
+        messages.error(request, 'Project does not exist')
+        return redirect(next_page)
+
+    if request.method == 'POST' and request.POST.get('button') == 'apply':
+        volumes = [ Volume.objects.get(id = x) for x in request.POST.getlist('selection') ]
+        project.set_volumes(volumes)
+        imagename = request.POST['project_image']
+        project.image = Image.objects.get(name = imagename) if imagename != 'None' else None
+        project.save()
+        return redirect(next_page)
+    else:
+        context_dict = {
+            'images': Image.objects.all(),
+            'project': project, 
+            't_volumes_fun': sel_table(user = user, project = project, volumetype = 'functional'), #FIXME: tables placed in forms/ ReqConfig
+            'submenu': 'environment',
+            'next_page': next_page,
+        }
+        return render(request, 'project/configure.html', context = context_dict)
+
+
+@login_required
+def conf_voldata(request, project_id, next_page):
+    user = request.user
+    logger.debug("method: %s, project id: %s, user: %s" % (request.method, project_id, user))
+    try:
+        project = Project.get_userproject(project_id = project_id, user = request.user)
+    except Project.DoesNotExist as e:
+        logger.error('abuse by %s project id: %s -- %s' % (user, project_id, e))
+        messages.error(request, 'Project does not exist')
+        return redirect(next_page)
+
+    if request.method == 'POST' and request.POST.get('button') == 'apply':
+        volumes = [ Volume.objects.get(id = x) for x in request.POST.getlist('selection') ]
+        project.set_volumes(volumes)
+        return redirect(next_page)
+    else:
+        context_dict = {
+            'project': project, 
+            't_volumes_stg': sel_table(user = user, project = project, volumetype = 'storage'),    #FIXME: like above
+            'submenu': 'storage',
+            'next_page': next_page,
+        }
+        return render(request, 'project/configure.html', context = context_dict)
+
+
+@login_required
+def conf_versioncontrol(request, project_id, next_page):
+    user = request.user
+    logger.debug("method: %s, project id: %s, user: %s" % (request.method, project_id, user))
+    try:
+        project = Project.get_userproject(project_id = project_id, user = request.user)
+    except Project.DoesNotExist as e:
+        logger.error('abuse by %s project id: %s -- %s' % (user, project_id, e))
+        messages.error(request, 'Project does not exist')
+        return redirect(next_page)
+
+    vcppbindings = set(VCProjectProjectBinding.getbinding(user = user, project = project))
+    if request.method == 'POST' and request.POST.get('button') == 'apply':
+        msg = project.set_roles(request.POST.getlist('role_map'))
+        if len(msg):
+            messages.info(request, '\n'.join(msg))
+        for id_create in request.POST.getlist('vcp_ids'):
+            vcp = VCProject.objects.get(id = id_create)
+            if vcp.token.user != user:
+                logger.error("Unauthorized request vcp: %s, user: %s" % (vcp, user))
+                continue
+            VCProjectProjectBinding.objects.create(project = project, vcproject = vcp)
+            messages.info(request, 'Bound %s to repotsitory %s' % (project, vcp))
+        vcppb_ids2keep = request.POST.getlist('vcppb_ids')
+        for b in vcppbindings:
+            if not b.id in vcppb_ids2keep:
+                messages.info(request, 'Project %s is not bound to repository %s any more' % (project, b.vcproject))
+                b.delete()
+        return redirect(next_page)
+    else:
         vcprojects_bound = [ b.vcproject for b in vcppbindings ]
         vcprojects = VCProject.objects.none()
         for token in VCToken.objects.filter(user = user):
@@ -177,16 +272,9 @@ def configure(request, project_id, submenu, next_page):
         RequestConfig(request).configure(table_vcppb)        
 
         context_dict = {
-            'images': Image.objects.all(),
             'project': project, 
-            'enable_image': True,
-            'enable_modulevolume': True, 
-            'enable_storagevolume': True,
-            't_collaborators': table_collaborators,
-            't_volumes_fun': sel_table(user = user, project = project, volumetype = 'functional'), #FIXME: tables placed in forms/ ReqConfig
-            't_volumes_stg': sel_table(user = user, project = project, volumetype = 'storage'),    #FIXME: like above
             't_vcppb': table_vcppb, 
-            'submenu': submenu,
+            'submenu': 'versioncontrol',
             'next_page': next_page,
         }
         return render(request, 'project/configure.html', context = context_dict)
@@ -300,14 +388,18 @@ def vcrefresh(request, token_id, project_id):
         token.save()
     except VCToken.DoesNotExist:
         messages.error(requset, "System abuse")
-    return redirect('project:configure', project_id, 'project:list')
+    return redirect('project:conf_versioncontrol', project_id, 'project:list')
 
 
 urlpatterns = [
     url(r'^list', listprojects, name = 'list'), 
     url(r'^new/?$', new, name = 'new'), 
     url(r'^join/?$', join, name = 'join'), 
-    url(r'^configure/(?P<project_id>\d+)/(?P<submenu>\w+)/(?P<next_page>\w+:?\w*)$', configure, name = 'configure'), 
+    url(r'^configure/(?P<project_id>\d+)/meta/(?P<next_page>\w+:?\w*)$', conf_meta, name = 'conf_meta'), 
+    url(r'^configure/(?P<project_id>\d+)/collaboration/(?P<next_page>\w+:?\w*)$', conf_collab, name = 'conf_collaboration'), 
+    url(r'^configure/(?P<project_id>\d+)/environment/(?P<next_page>\w+:?\w*)$', conf_environment, name = 'conf_environment'), 
+    url(r'^configure/(?P<project_id>\d+)/storage/(?P<next_page>\w+:?\w*)$', conf_voldata, name = 'conf_storage'), 
+    url(r'^configure/(?P<project_id>\d+)/versioncontrol/(?P<next_page>\w+:?\w*)$', conf_versioncontrol, name = 'conf_versioncontrol'), 
     url(r'^vcrefresh/(?P<token_id>\d+)/(?P<project_id>\d+)$', vcrefresh, name = 'vcrefresh'), 
     url(r'^delete/(?P<project_id>\d+)/(?P<next_page>\w+:?\w*)$', delete_leave, name = 'delete'), 
     url(r'^show/(?P<next_page>\w+:?\w*)$', show_hide, name = 'showhide'),
