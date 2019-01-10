@@ -9,10 +9,10 @@
     <ul class="navbar-nav mr-auto">
       <!-- FIXME: no active item indicated: li class="nav-item active" -->
     {% if user.is_authenticated %}
-      {% include "menuitem_project.html" %}
-      {% include "menuitem_report.html" %}
-      {% include "menuitem_edu.html" %}
-      {% include "menuitem_container.html" %}
+      {% include "menuitem_project.html" with active=menu_project %}
+      {% include "menuitem_report.html" with active=menu_report %}
+      {% include "menuitem_edu.html" with active=menu_edu %}
+      {% include "menuitem_container.html" with active=menu_container %}
     {% endif %}
     </ul>
     {% include "navbarmenu_right.html" %}

@@ -83,6 +83,7 @@ def listprojects(request):
     logger.debug('Rendering project.html')
     context_dict = {
         'next_page': 'project:list',
+        'menu_project': 'active',
     }
     return render(request, 'project/list.html', context = context_dict)
 

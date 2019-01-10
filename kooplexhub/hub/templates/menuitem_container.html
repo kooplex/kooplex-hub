@@ -1,4 +1,4 @@
-  <li class="nav-item">
+  <li class="nav-item {{ active }}">
     {% if user.profile.containers %}
       <a href="{% url 'container:list' %}" class="nav-link" data-toggle="tooltip" title="List and manage your containers" data-placement="bottom">Containers</a>
     {% else %}

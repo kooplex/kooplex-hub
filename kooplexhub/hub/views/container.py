@@ -45,6 +45,7 @@ def listcontainers(request):
     logger.debug('Rendering container/list.html')
     context_dict = {
         'next_page': 'container:list',
+        'menu_container': 'active',
     }
     return render(request, 'container/list.html', context = context_dict)
 

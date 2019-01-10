@@ -1,4 +1,4 @@
-  <li class="nav-item">
+  <li class="nav-item {{ active }}">
     {% if user.profile.projectbindings %}
       <a href="{% url 'project:list' %}" class="nav-link" data-toggle="tooltip" title="List and manage your projects" data-placement="bottom">Projects</a>
     {% else %}
