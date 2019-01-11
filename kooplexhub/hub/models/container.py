@@ -11,7 +11,7 @@ from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.contrib.auth.models import User
 
-from .project import Project
+from .project import Project, UserProjectBinding
 from .volume import Volume, VolumeProjectBinding
 from .image import Image
 
@@ -88,7 +88,6 @@ class Container(models.Model):
 
     @property
     def userprojectbindings(self):
-        from .project import UserProjectBinding
         for project in self.projects:
             yield UserProjectBinding.objects.get(user = self.user, project = project)
 
@@ -102,7 +101,6 @@ class Container(models.Model):
 
     @property
     def projects_addable(self):
-        from .project import UserProjectBinding
         bound_projects = set(self.projects)
         for binding in UserProjectBinding.objects.filter(user = self.user):
             if binding.project in bound_projects:
@@ -194,41 +192,53 @@ class Container(models.Model):
 
 
 @receiver(pre_save, sender = Container)
-def container_attribute_change(sender, instance, **kwargs):
-#FIXME: atomokra bontani
+def container_image_change(sender, instance, **kwargs):
+    is_new = instance.id is None
+    old_instance = Container() if is_new else Container.objects.get(id = instance.id)
+    if not is_new and old_instance.image != instance.image:
+         instance.marked_to_remove = True
+
+@receiver(pre_save, sender = Container)
+def container_state_change(sender, instance, **kwargs):
     from kooplex.lib import Docker
     from kooplex.lib.proxy import addroute, removeroute
-    is_new = sender.id is not None
-    old_instance = sender() if is_new else sender.objects.get(id = instance.id)
+    is_new = instance.id is None
+    old_instance = Container() if is_new else Container.objects.get(id = instance.id)
+    msg = "%s %s" % (instance.id, is_new)
+    if not is_new and instance.state == old_instance.state:
+        return
+    msg += "%s statchange %s -> %s" % (instance, ST_LOOKUP[old_instance.state], ST_LOOKUP[instance.state])
+    logger.debug(msg)
     docker = Docker()
-    if not is_new and old_instance.image != instance.image:
-         if instance.state == sender.ST_RUNNING:
-             instance.marked_to_remove = True
-         elif instance.state != sender.ST_NOTPRESENT:
-             docker.remove_container(instance)
-             instance.marked_to_remove = False
-             instance.state = sender.ST_NOTPRESENT
-    if old_instance.state != instance.state:
-        logger.debug("%s statchange %s -> %s" % (instance, ST_LOOKUP[old_instance.state], ST_LOOKUP[instance.state]))
-        if not old_instance.is_running and instance.is_running:
-            docker.run_container(instance)
-            addroute(instance)
-            logger.info("started %s" % instance)
-        elif not instance.is_running:
-            try:
-                removeroute(instance)
-            except KeyError:
-                logger.warning("The proxy path was not existing: %s" % instance)
-            docker.stop_container(instance)
-            if instance.state == sender.ST_NOTPRESENT or instance.marked_to_remove:
-                docker.remove_container(instance)
-                instance.marked_to_remove = False
-                instance.state = sender.ST_NOTPRESENT
-        else:
-            raise NotImplementedError
+    assert instance.n_projects > 0 or instance.state == Container.ST_NOTPRESENT, 'container %s with 0 projects' % instance
+    if old_instance.state == Container.ST_NOTPRESENT and instance.state == Container.ST_RUNNING:
+        docker.run_container(instance)
+        addroute(instance)
+    elif old_instance.state == Container.ST_RUNNING and instance.state == Container.ST_NOTRUNNING:
+        docker.stop_container(instance)
+        removeroute(instance)
+        if instance.marked_to_remove:
+            docker.remove_container(instance)
+            instance.marked_to_remove = False
+            instance.state = Container.ST_NOTPRESENT
+    elif old_instance.state == Container.ST_NOTRUNNING and instance.state == Container.ST_RUNNING:
+        docker.run_container(instance)
+        addroute(instance)
+    elif old_instance.state == Container.ST_NOTRUNNING and instance.state == Container.ST_NOTPRESENT:
+        docker.remove_container(instance)
+        instance.marked_to_remove = False
+    else:
+         logger.critical(msg)
+
+@receiver(pre_save, sender = Container)
+def container_message_change(sender, instance, **kwargs):
+    is_new = instance.id is None
+    old_instance = Container() if is_new else Container.objects.get(id = instance.id)
     if old_instance.last_message != instance.last_message:
          logger.debug("msg of %s: %s" % (instance, instance.last_message))
          instance.last_message_at = now()
+
+
 
 @receiver(post_save, sender = Container)
 def bind_home(sender, instance, created, **kwargs):
@@ -346,33 +356,20 @@ def managemount_remove(sender, instance, **kwargs):
         logger.error('Share not bound to container %s -- %s' % (c, e))
 #######################################################################################################################################################
 
-#@receiver(pre_save, sender = ProjectContainerBinding)
-#def update_volumecontainerbinding(sender, instance, **kwargs):
-#    def process(project):
-#        for volume in project.volumes:
-#            try:
-#                binding = VolumeContainerBinding.objects.get(volume = volume, container = container, project = instance.project)
-#                try:
-#                    bindings.remove(binding)
-#                except ValueError:
-#                    pass
-#                logger.debug("binding not modified: %s" % binding)
-#            except VolumeContainerBinding.DoesNotExist:
-#                binding = VolumeContainerBinding.objects.create(volume = volume, container = container, project = instance.project)
-#                logger.debug("binding created: %s" % binding)
-#    container = instance.container
-#    bindings = list(VolumeContainerBinding.objects.filter(container = container))
-#    process(instance.project)
-#    for project in container.projects:
-#        process(project)
-#    for binding in bindings:
-#        logger.debug("binding removed: %s" % binding)
-#        binding.delete()
+
+@receiver(post_delete, sender = ProjectContainerBinding)
+def assert_container_has_projects(sender, instance, **kwargs):
+    container = instance.container
+    if container.n_projects == 0:
+        container.state = Container.ST_NOTPRESENT
+        container.save()
+         
+
+
 
 class VolumeContainerBinding(models.Model):
     volume = models.ForeignKey(Volume, null = False)
     container = models.ForeignKey(Container, null = False)
-    #project = models.ForeignKey(Project, null = False)
 
     def __str__(self):
        return "%s-%s" % (self.container.name, self.volume.name)

@@ -50,7 +50,7 @@ class GroupProjectBindingAdmin(admin.ModelAdmin):
 
 @admin.register(Container)
 class ContainerAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'image', 'user', 'n_projects', 'marked_to_remove')
+    list_display = ('id', 'name', 'image', 'user', 'state', 'n_projects', 'marked_to_remove')
 
 @admin.register(ProjectContainerBinding)
 class ProjectContainerBindingAdmin(admin.ModelAdmin):
