@@ -80,23 +80,22 @@ class Docker:
         }
         self.client.create_container(**args)
         logger.debug("Container created")
-        mapper = list(container.share_mapping)
-        self.copy_mapper(container, mapper, 'mount_share.conf')
-        mapper = list(container.workdir_mapping)
-        self.copy_mapper(container, mapper, 'mount_workdir.conf')
-        mapper = list(container.report_mapping)
-        self.copy_mapper(container, mapper, 'mount_report.conf')
+        self.managemount(container) #FIXME: check if not called twice
         return self.get_container(container)
 
     def managemount(self, container):
         import tarfile
         import time
         from io import BytesIO
+        from kooplex.lib.fs_dirname import Dirname
         
         path, filename = os.path.split(self.dockerconf.get('mountconf', '/tmp/mount.conf'))
-        mapper = [ "%s:%s" % (v.volumetype, "bla") for v in container.volumes ] #FIXME: incomplete
+        mapper = []
+        for v in container.volumes:
+            mapper.extend([ "%s:%s" % (v.volumetype, d) for d in Dirname.containervolume_listfolders(container, v) ])
         #NOTE: mounter uses read to process the mapper configuration, thus we need to make sure '\n' terminates the config mapper file
         mapper.append('')
+        logger.debug("container %s map %s" % (container, mapper))
         tarstream = BytesIO()
         tar = tarfile.TarFile(fileobj = tarstream, mode = 'w')
         file_data = "\n".join(mapper).encode('utf8')

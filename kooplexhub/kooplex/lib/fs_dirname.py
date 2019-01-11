@@ -30,6 +30,22 @@ class Dirname:
         return os.path.join(v_vccache, vcprojectprojectbinding.uniquename)
 
     @staticmethod
+    def containervolume_listfolders(container, volume):
+        if volume.volumetype == volume.HOME['tag']:
+            yield Dirname.userhome(container.user)
+        elif volume.volumetype == volume.SHARE['tag']:
+            for upb in container.userprojectbindings:
+                yield Dirname.share(upb)
+        elif volume.volumetype == volume.WORKDIR['tag']:
+            for upb in container.userprojectbindings:
+                yield Dirname.share(upb)
+        elif volume.volumetype == volume.GIT['tag']:
+            for vcppb in container.vcprojectprojectbindings:
+                yield Dirname.vcpcache(vcppb)
+        else:
+            raise NotImplementedError(volume.volumetype)
+
+    @staticmethod
     def course(course):
         return os.path.join(Dirname.mountpoint['course'], course.safecourseid)
 

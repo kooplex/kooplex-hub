@@ -87,6 +87,20 @@ class Container(models.Model):
             yield binding.project
 
     @property
+    def userprojectbindings(self):
+        from .project import UserProjectBinding
+        for project in self.projects:
+            yield UserProjectBinding.objects.get(user = self.user, project = project)
+
+    @property
+    def vcprojectprojectbindings(self):
+        from .versioncontrol import VCProjectProjectBinding
+        for project in self.projects:
+            for vcppb in VCProjectProjectBinding.objects.filter(project = project):
+                if vcppb.vcproject.token.user == self.user:
+                    yield vcppb
+
+    @property
     def projects_addable(self):
         from .project import UserProjectBinding
         bound_projects = set(self.projects)
@@ -100,11 +114,13 @@ class Container(models.Model):
     @property
     def volumecontainerbindings(self):
         for binding in VolumeContainerBinding.objects.filter(container = self):
+            logger.debug(binding)
             yield binding
 
     @property
     def volumes(self):
         for volume in VolumeContainerBinding.list_containervolumes(container = self):
+            logger.debug(volume)
             yield volume
 
     def wait_until_ready(self):
