@@ -116,19 +116,20 @@ class Course(models.Model):
                 collectable.append(assignment)
         return collectable
 
-    def report_mapping4user(self, user):
-        from .assignment import Assignment, UserAssignmentBinding
-        for assignment in Assignment.objects.filter(course = self):
-            for binding in UserAssignmentBinding.objects.filter(assignment = assignment, corrector = user):
-                mapping = binding.report_map(user)
-                if mapping:
-                    logger.debug(mapping)
-                    yield mapping
-            for binding in UserAssignmentBinding.objects.filter(assignment = assignment, user = user):
-                mapping = binding.report_map(user)
-                if mapping:
-                    logger.debug(mapping)
-                    yield mapping
+#FIXME: deprecated
+#    def report_mapping4user(self, user):
+#        from .assignment import Assignment, UserAssignmentBinding
+#        for assignment in Assignment.objects.filter(course = self):
+#            for binding in UserAssignmentBinding.objects.filter(assignment = assignment, corrector = user):
+#                mapping = binding.report_map(user)
+#                if mapping:
+#                    logger.debug(mapping)
+#                    yield mapping
+#            for binding in UserAssignmentBinding.objects.filter(assignment = assignment, user = user):
+#                mapping = binding.report_map(user)
+#                if mapping:
+#                    logger.debug(mapping)
+#                    yield mapping
 
     def bindableassignments(self):
         from .assignment import Assignment, UserAssignmentBinding

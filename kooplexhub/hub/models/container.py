@@ -51,6 +51,10 @@ class Container(models.Model):
         return "<Container %s@%s>" % (self.name, self.user)
 
     @property
+    def is_created(self):
+        return self.state != self.ST_NOTPRESENT
+
+    @property
     def is_running(self):
         return self.state == self.ST_RUNNING
 
@@ -111,13 +115,6 @@ class Container(models.Model):
     def n_projects(self):
         return len(list(self.projects))
 
-#FIXME: deprecated
-#    def is_user_authorized(self, user):
-#        for project in self.projects:
-#            if project.is_user_authorized(user):
-#                return True
-#        return False
-
     @staticmethod
     def get_userprojectcontainer(user, project_id, create):
         logger.debug("project id %s & user %s" % (project_id, user))
@@ -134,16 +131,6 @@ class Container(models.Model):
             logger.debug("new container in db %s" % container)
             return container 
         raise Container.DoesNotExist
-
-#FIXME: deprecated
-#    @staticmethod
-#    def get_usercontainer(user, container_id, **kw):
-#        logger.debug("container id %s & user %s" % (container_id, user))
-#        container = Container.objects.get(id = container_id, **kw)
-#        if not container.is_user_authorized(user):
-#            raise Container.DoesNotExist("Unauthorized request")
-#        logger.debug("found container %s and authorized for user %s" % (container, user))
-#        return container 
 
     def docker_start(self):
         self.state = self.ST_RUNNING
@@ -174,75 +161,13 @@ class Container(models.Model):
     def api(self):
         return os.path.join(self.url, 'notebook', self.proxy_path)
 
-    @staticmethod
-    def manage_report_mount(user, project, mapping):
-        from kooplex.lib import Docker 
+    def managemount(self):
+        from kooplex.lib import Docker
         try: 
-            container = Container.get_userprojectcontainer(user = user, project_id = project.id, create = False) 
-            if container.is_running:
-                logger.debug("container %s found and is running" % container) 
-                Docker().managemount(container, mapping, 'report')
-            else:
-                logger.debug("container %s is not running" % container) 
+            assert self.is_created, "%s is not manifested in docker engine"
+            Docker().managemount(self)
         except Exception as e: 
-            logger.error("cannot manage mapping this time -- %s" % e) 
-
-    @property
-    def share_mapping(self):
-#TODO: filesystem manipulation should be in the lib/filesystem.py
-        from hub.models import Volume
-        user = self.user
-        mapper = []
-        for binding in self.volumecontainerbindings:
-            if binding.volume.is_volumetype(Volume.SHARE):
-                raise NotImplementedError
-            elif binding.volume.is_volumetype(Volume.COURSE_SHARE):
-                course = binding.project.course
-                if user.profile.is_courseteacher(course):
-                    mapper.append( (course.safecourseid, os.path.join(binding.volume.mountpoint, course.safecourseid)) )
-                else:
-                    mapper.append( (course.safecourseid, os.path.join(binding.volume.mountpoint, course.safecourseid, 'public')) )
-        logger.debug("container %s mapper %s" % (self, mapper))
-        if len(mapper) > 1:
-            for subfolder, folder in mapper:
-                yield "+:%s:%s" % (folder, subfolder)
-        else:
-            for subfolder, folder in mapper:
-                yield "+:%s:." % folder
-
-    @property
-    def workdir_mapping(self):
-#TODO: filesystem manipulation should be in the lib/filesystem.py
-        from hub.models import Volume
-        user = self.user
-        mapper = []
-        courseids = set()
-        for binding in self.volumecontainerbindings:
-            if binding.volume.is_volumetype(Volume.WORKDIR):
-                raise NotImplementedError
-            elif binding.volume.is_volumetype(Volume.COURSE_WORKDIR):
-                course = binding.project.course
-                courseids.add(course.courseid)
-                if user.profile.is_courseteacher(course):
-                    mapper.append( (course.safecourseid, os.path.join(binding.volume.mountpoint, course.safecourseid)) )
-                else:
-                    for flag in list(course.list_userflags(user)):
-                        if flag is None or flag == '_':
-                            continue
-                    mapper.append( ("%s_%s" % (course.safecourseid, flag), os.path.join(binding.volume.mountpoint, course.safecourseid, flag, user.username)) )
-        logger.debug("container %s mapper %s" % (self, mapper))
-        if len(mapper) > 1:
-            for subfolder, folder in mapper:
-                yield "+:%s:%s" % (folder, subfolder) if len(courseids) > 1 else "+:%s:%s" % (folder, subfolder.split('_')[1])
-        else:
-            for subfolder, folder in mapper:
-                yield "+:%s:." % folder
-
-    @property
-    def report_mapping(self):
-        for project in self.projects:
-            for mapping in project.report_mapping4user(self.user):
-                yield mapping
+            logger.error("cannot manage mapping in container %s -- %s" % (self, e)) 
 
     def refresh_state(self):
         from kooplex.lib import Docker 
@@ -254,6 +179,7 @@ class Container(models.Model):
 
 @receiver(pre_save, sender = Container)
 def container_attribute_change(sender, instance, **kwargs):
+#FIXME: atomokra bontani
     from kooplex.lib import Docker
     from kooplex.lib.proxy import addroute, removeroute
     is_new = sender.id is not None
@@ -385,7 +311,24 @@ def remove_bind_git(sender, instance, **kwargs):
         except Exception as e:
             logger.error('Git cache was not unbound from container %s -- %s' % (instance, e))
 
+#FIXME: if volumes are added and removed the same time mounter runs twice in user container. It is an overhead better combine them some time together!
+@receiver(post_save, sender = ProjectContainerBinding)
+def managemount_add(sender, instance, created, **kwargs):
+    if created:
+        c = instance.container
+        try:
+            c.managemount()
+        except Exception as e:
+            logger.error('Share not bound to container %s -- %s' % (c, e))
 
+@receiver(post_delete, sender = ProjectContainerBinding)
+def managemount_remove(sender, instance, **kwargs):
+    c = instance.container
+    try:
+        c.managemount()
+    except Exception as e:
+        logger.error('Share not bound to container %s -- %s' % (c, e))
+#######################################################################################################################################################
 
 #@receiver(pre_save, sender = ProjectContainerBinding)
 #def update_volumecontainerbinding(sender, instance, **kwargs):

@@ -88,17 +88,17 @@ class Docker:
         self.copy_mapper(container, mapper, 'mount_report.conf')
         return self.get_container(container)
 
-    def copy_mapper(self, container, mapper, filename):
+    def managemount(self, container):
         import tarfile
         import time
         from io import BytesIO
-        logger.debug("container %s mapping %s -> containerfile %s" % (container, mapper, filename))
+        
+        path, filename = os.path.split(self.dockerconf.get('mountconf', '/tmp/mount.conf'))
+        mapper = [ "%s:%s" % (v.volumetype, "bla") for v in container.volumes ] #FIXME: incomplete
+        #NOTE: mounter uses read to process the mapper configuration, thus we need to make sure '\n' terminates the config mapper file
+        mapper.append('')
         tarstream = BytesIO()
         tar = tarfile.TarFile(fileobj = tarstream, mode = 'w')
-        if len(mapper):
-            #NOTE: mounter uses read to process the mapper configuration, thus we need to make sure '\n' terminates the config mapper file
-            mapper.append('')
-        logger.debug("mapping: %s" % mapper)
         file_data = "\n".join(mapper).encode('utf8')
         tarinfo = tarfile.TarInfo(name = filename)
         tarinfo.size = len(file_data)
@@ -107,14 +107,10 @@ class Docker:
         tar.close()
         tarstream.seek(0)
         try:
-            status = self.client.put_archive(container = container.name, path = '/tmp', data = tarstream)
+            status = self.client.put_archive(container = container.name, path = path, data = tarstream)
             logger.info("container %s put_archive returns %s" % (container, status))
         except Exception as e:
             logger.error("container %s put_archive fails -- %s" % (container, e))
-
-    def managemount(self, container, configline, target = 'report'):
-        assert target in [ 'report', 'share', 'workdir' ], "Unknown target %s" % target
-        self.copy_mapper(container, [ configline ], 'mount_%s.conf' % target)
 
     def run_container(self, container):
         docker_container_info = self.get_container(container)

@@ -138,17 +138,18 @@ class UserAssignmentBinding(models.Model):
         self.save()
         logger.info(self)
 
-    def report_map(self, user):
-        if self.user == user and self.state == UserAssignmentBinding.ST_FEEDBACK:
-            return "+:%s:%s" % (Dirname.assignmentcorrectdir(self), self.assignment.safename)  
-        elif self.user == user and self.state == UserAssignmentBinding.ST_WORKINPROGRESS and self.corrector is not None:
-            return "+:%s:%s" % (Dirname.assignmentcorrectdir(self), self.assignment.safename)  
-        elif self.corrector == user and self.state in [ UserAssignmentBinding.ST_CORRECTING, UserAssignmentBinding.ST_FEEDBACK ]:
-            student = self.user
-            return "+:%s:%s" % (Dirname.assignmentcorrectdir(self), os.path.join(self.assignment.safename, "%s_%s" % (student.username, student.profile.safename))) 
-        elif self.corrector == user and self.state in [ UserAssignmentBinding.ST_COLLECTED, UserAssignmentBinding.ST_SUBMITTED, UserAssignmentBinding.ST_WORKINPROGRESS ]:
-            student = self.user
-            return "-:%s" % os.path.join(self.assignment.safename, "%s_%s" % (student.username, student.profile.safename)) 
+#FIXME: deprecated
+#    def report_map(self, user):
+#        if self.user == user and self.state == UserAssignmentBinding.ST_FEEDBACK:
+#            return "+:%s:%s" % (Dirname.assignmentcorrectdir(self), self.assignment.safename)  
+#        elif self.user == user and self.state == UserAssignmentBinding.ST_WORKINPROGRESS and self.corrector is not None:
+#            return "+:%s:%s" % (Dirname.assignmentcorrectdir(self), self.assignment.safename)  
+#        elif self.corrector == user and self.state in [ UserAssignmentBinding.ST_CORRECTING, UserAssignmentBinding.ST_FEEDBACK ]:
+#            student = self.user
+#            return "+:%s:%s" % (Dirname.assignmentcorrectdir(self), os.path.join(self.assignment.safename, "%s_%s" % (student.username, student.profile.safename))) 
+#        elif self.corrector == user and self.state in [ UserAssignmentBinding.ST_COLLECTED, UserAssignmentBinding.ST_SUBMITTED, UserAssignmentBinding.ST_WORKINPROGRESS ]:
+#            student = self.user
+#            return "-:%s" % os.path.join(self.assignment.safename, "%s_%s" % (student.username, student.profile.safename)) 
 
 
 @receiver(post_save, sender = Assignment)
@@ -182,18 +183,19 @@ def copy_userassignment(sender, instance, created, **kwargs):
     from .container import Container
     if created:
         cp_assignmentsnapshot(instance)
-    elif instance.state in [ UserAssignmentBinding.ST_SUBMITTED, UserAssignmentBinding.ST_COLLECTED ]:
-        cp_userassignment(instance)
-    elif instance.state == UserAssignmentBinding.ST_CORRECTING:
-        cp_userassignment2correct(instance)
-        mapping = instance.report_map(instance.corrector)
-        Container.manage_report_mount(user = instance.corrector, project =instance.assignment.course.project, mapping = mapping)
-    elif instance.state == UserAssignmentBinding.ST_FEEDBACK:
-        manageacl_feedback(instance)
-        mapping = instance.report_map(instance.user)
-        Container.manage_report_mount(user = instance.user, project =instance.assignment.course.project, mapping = mapping)
-    elif instance.state == UserAssignmentBinding.ST_WORKINPROGRESS:
-        mapping = instance.report_map(instance.corrector)
-        Container.manage_report_mount(user = instance.corrector, project =instance.assignment.course.project, mapping = mapping)
+#FIXME: find right container and managemount()
+#    elif instance.state in [ UserAssignmentBinding.ST_SUBMITTED, UserAssignmentBinding.ST_COLLECTED ]:
+#        cp_userassignment(instance)
+#    elif instance.state == UserAssignmentBinding.ST_CORRECTING:
+#        cp_userassignment2correct(instance)
+#        mapping = instance.report_map(instance.corrector)
+#        Container.manage_report_mount(user = instance.corrector, project =instance.assignment.course.project, mapping = mapping)
+#    elif instance.state == UserAssignmentBinding.ST_FEEDBACK:
+#        manageacl_feedback(instance)
+#        mapping = instance.report_map(instance.user)
+#        Container.manage_report_mount(user = instance.user, project =instance.assignment.course.project, mapping = mapping)
+#    elif instance.state == UserAssignmentBinding.ST_WORKINPROGRESS:
+#        mapping = instance.report_map(instance.corrector)
+#        Container.manage_report_mount(user = instance.corrector, project =instance.assignment.course.project, mapping = mapping)
 
 
