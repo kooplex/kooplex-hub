@@ -40,6 +40,10 @@ class VCProject(models.Model):
         return "Version control repository %s/%s" % (self.token.url, self.project_name)
 
     @property
+    def repository(self):
+        return '{}/{}'.format(self.token.url, self.project_name)
+
+    @property
     def cleanname(self):
         return standardize_str(self.project_name)
 
@@ -56,6 +60,12 @@ class VCProject(models.Model):
     @staticmethod
     def f_user(user):
         for vcp in VCProject.objects.all():
+            if vcp.token.user == user:
+                yield vcp
+
+    @staticmethod
+    def f_user_namelike(user, l):
+        for vcp in VCProject.objects.filter(models.Q(project_name__icontains = l)):
             if vcp.token.user == user:
                 yield vcp
 

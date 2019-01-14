@@ -268,15 +268,16 @@ def conf_versioncontrol(request, project_id, next_page):
             messages.info(request, ' '.join(msgs))
         return redirect(next_page)
     elif (request.method == 'POST' and request.POST.get('button') == 'search') or request.method == 'GET':
-#FIXME: search not implemented yet
         t = table_vcproject(project)
-        table_vcp = t(VCProject.f_user(user = user))
+        pattern = request.POST.get('repository', '')
+        table_vcp = t(VCProject.f_user(user = user)) if pattern == '' else t(VCProject.f_user_namelike(user = user, l = pattern))
         RequestConfig(request).configure(table_vcp)
         context_dict = {
             'project': project, 
             't_vcp': table_vcp, 
             'submenu': 'versioncontrol',
             'next_page': next_page,
+            'search_repository': pattern,
         }
         return render(request, 'project/configure.html', context = context_dict)
 
