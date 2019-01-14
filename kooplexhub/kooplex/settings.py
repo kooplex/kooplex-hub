@@ -187,6 +187,7 @@ KOOPLEX = {
         'network': '%s-net' % PREFIX,
         'default_image': os.getenv('DEFAULT_IMAGE', '%s-notebook-basic' % PREFIX),
         'mountconf': '/tmp/mount.conf',
+        'gitcommandconf': '/tmp/gitcommand.conf',
     },
     'spawner': {
         'pattern_proxypath': 'notebook/%(containername)s',

@@ -108,20 +108,17 @@ def archivedir_workdir(userprojectbinding):
 
 def mkdir_vcpcache(vcprojectprojectbinding):
     profile = vcprojectprojectbinding.vcproject.token.user.profile
-    dir_cache = Dirname.vcpcache(vcprojectprojectbinding)
+    dir_cache = Dirname.vcpcache(vcprojectprojectbinding.vcproject)
     _mkdir(dir_cache, uid = profile.userid, gid = profile.groupid)
     clonescript_vcpcache(vcprojectprojectbinding)
 
 def clonescript_vcpcache(vcprojectprojectbinding):
     vcp = vcprojectprojectbinding.vcproject
     profile = vcp.token.user.profile
-    dir_target = Dirname.vcpcache(vcprojectprojectbinding)
+    dir_target = Dirname.vcpcache(vcprojectprojectbinding.vcproject)
     fn_script = os.path.join(dir_target, "clone.sh")
     script = """
 #! /bin/bash
-
-exec >> /tmp/clone.log
-exec 2>&1
 
 set -v
 
@@ -131,9 +128,9 @@ git clone ssh://git@%s/%s %s
     """ % (vcp.token.domain, vcp.project_name, dir_target)
     _createfile(fn_script, script, uid = profile.userid, gid = profile.groupid)
 
-def archivedir_vcpcache(vcprojectprojectbinding):
-    dir_cache = Dirname.vcpcache(vcprojectprojectbinding)
-    target = Filename.vcpcache_archive(vcprojectprojectbinding)
+def archivedir_vcpcache(vcproject):
+    dir_cache = Dirname.vcpcache(vcproject)
+    target = Filename.vcpcache_archive(vcproject)
     _archivedir(dir_cache, target)
 
 

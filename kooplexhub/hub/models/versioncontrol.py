@@ -24,6 +24,7 @@ class VCToken(models.Model):
     url = models.CharField(max_length = 128, null = True)
     last_used = models.DateTimeField(null = True)
     error_flag = models.BooleanField(default = False)       # TODO: save error message maybe stored in a separate table
+#FIXME: store rsa key ?
 
     @property
     def domain(self):
@@ -43,6 +44,11 @@ class VCProject(models.Model):
         return standardize_str(self.project_name)
 
     @property
+    def uniquename(self):
+        t = self.token
+        return "%s-%s-%s-%s" % (t.backend_type, t.domain, t.user.username, self.cleanname)
+
+    @property
     def vcprojectprojectbindings(self):
         for vcpb in VCProjectProjectBinding.objects.filter(vcproject = self):
             yield vcpb
@@ -58,6 +64,7 @@ class VCProjectProjectBinding(models.Model):
     project = models.ForeignKey(Project, null = False)
     vcproject = models.ForeignKey(VCProject, null = False)
 
+#FIXME: deprecated
     @property
     def uniquename(self):
         vcp = self.vcproject
@@ -79,13 +86,15 @@ class VCProjectProjectBinding(models.Model):
 @receiver(post_save, sender = VCProjectProjectBinding)
 def mkdir_vcpcache(sender, instance, created, **kwargs):
     from kooplex.lib.filesystem import mkdir_vcpcache
+    from kooplex.lib import Docker
     if created:
         mkdir_vcpcache(instance)
+        Docker().trigger_impersonator(instance.vcproject) #FIXME: ne egyesevel!!
 
 @receiver(post_delete, sender = VCProjectProjectBinding)
 def archivedir_vcpcache(sender, instance, **kwargs):
     from kooplex.lib.filesystem import archivedir_vcpcache
     if len(list(instance.vcproject.vcprojectprojectbindings)) == 0:
-        archivedir_vcpcache(instance)
+        archivedir_vcpcache(instance.vcproject)
 
 

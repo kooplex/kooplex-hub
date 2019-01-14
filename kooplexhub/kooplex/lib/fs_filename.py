@@ -20,8 +20,8 @@ class Filename:
         return os.path.join(Dirname.mountpoint['home'], userprojectbinding.user.username, "garbage", "workdir-%s.%f.tar.gz" % (userprojectbinding.uniquename, time.time()))
 
     @staticmethod
-    def vcpcache_archive(vcprojectprojectbinding):
-        return os.path.join(Dirname.mountpoint['home'], vcprojectprojectbinding.vcproject.token.user.username, "garbage", "git-%s.%f.tar.gz" % (vcprojectprojectbinding.uniquename, time.time()))
+    def vcpcache_archive(vcproject):
+        return os.path.join(Dirname.mountpoint['home'], vcproject.token.user.username, "garbage", "git-%s.%f.tar.gz" % (vcproject.uniquename, time.time()))
 
     @staticmethod
     def course_garbage(course):

@@ -83,10 +83,26 @@ class Docker:
         self.managemount(container) #FIXME: check if not called twice
         return self.get_container(container)
 
-    def managemount(self, container):
+    def _writefile(self, container_name, path, filename, content):
         import tarfile
         import time
         from io import BytesIO
+        tarstream = BytesIO()
+        tar = tarfile.TarFile(fileobj = tarstream, mode = 'w')
+        tarinfo = tarfile.TarInfo(name = filename)
+        tarinfo.size = len(content)
+        tarinfo.mtime = time.time()
+        tar.addfile(tarinfo, BytesIO(content))
+        tar.close()
+        tarstream.seek(0)
+        try:
+            status = self.client.put_archive(container = container_name, path = path, data = tarstream)
+            logger.info("container %s put_archive %s/%s returns %s" % (container_name, path, filename, status))
+        except Exception as e:
+            logger.error("container %s put_archive %s/%s fails -- %s" % (container_name, path, filename, e))
+
+
+    def managemount(self, container):
         from kooplex.lib.fs_dirname import Dirname
         
         path, filename = os.path.split(self.dockerconf.get('mountconf', '/tmp/mount.conf'))
@@ -96,20 +112,22 @@ class Docker:
         #NOTE: mounter uses read to process the mapper configuration, thus we need to make sure '\n' terminates the config mapper file
         mapper.append('')
         logger.debug("container %s map %s" % (container, mapper))
-        tarstream = BytesIO()
-        tar = tarfile.TarFile(fileobj = tarstream, mode = 'w')
         file_data = "\n".join(mapper).encode('utf8')
-        tarinfo = tarfile.TarInfo(name = filename)
-        tarinfo.size = len(file_data)
-        tarinfo.mtime = time.time()
-        tar.addfile(tarinfo, BytesIO(file_data))
-        tar.close()
-        tarstream.seek(0)
-        try:
-            status = self.client.put_archive(container = container.name, path = path, data = tarstream)
-            logger.info("container %s put_archive returns %s" % (container, status))
-        except Exception as e:
-            logger.error("container %s put_archive fails -- %s" % (container, e))
+        self._writefile(container.name, path, filename, file_data)
+
+    def trigger_impersonator(self, vcproject):       #FIXME: dont call it 1-by-1
+        from kooplex.lib.fs_dirname import Dirname
+        container_name = "kooplex-test-impersonator" #FIXME: hardcoded
+        path, filename = os.path.split(self.dockerconf.get('gitcommandconf', '/tmp/gitcommand.conf'))
+        cmdmaps = []
+        token = vcproject.token
+        fn_clonesh = os.path.join(Dirname.vcpcache(vcproject), "clone.sh")
+        fn_key = os.path.join(Dirname.userhome(vcproject.token.user), '.ssh', 'github')  #FIXME: RSA hardcoded
+        cmdmaps.append("%s:%s:%s:%s" % (token.user.username, fn_key, token.domain, fn_clonesh))
+        cmdmaps.append('')
+        file_data = "\n".join(cmdmaps).encode('utf8')
+        self._writefile(container_name, path, filename, file_data)
+
 
     def run_container(self, container):
         docker_container_info = self.get_container(container)

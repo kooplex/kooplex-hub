@@ -25,9 +25,10 @@ class Dirname:
         return os.path.join(v_workdir, userprojectbinding.uniquename)
 
     @staticmethod
-    def vcpcache(vcprojectprojectbinding):
+    def vcpcache(vcproject):
+    #def vcpcache(vcprojectprojectbinding):
         v_vccache = Dirname.mountpoint['git']
-        return os.path.join(v_vccache, vcprojectprojectbinding.uniquename)
+        return os.path.join(v_vccache, vcproject.uniquename)
 
     @staticmethod
     def containervolume_listfolders(container, volume):
@@ -41,7 +42,7 @@ class Dirname:
                 yield Dirname.share(upb)
         elif volume.volumetype == volume.GIT['tag']:
             for vcppb in container.vcprojectprojectbindings:
-                yield Dirname.vcpcache(vcppb)
+                yield Dirname.vcpcache(vcppb.vcproject)
         else:
             raise NotImplementedError(volume.volumetype)
 
