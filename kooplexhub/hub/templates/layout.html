@@ -12,10 +12,19 @@
     <link rel="stylesheet" href="{% static 'fonts/open-iconic-master/font/css/open-iconic-bootstrap.css' %}">
 
     {% block header_extra %}{% endblock %}
+    <script>
+        async function user_current_usage(username) {
+          const url = "https://kooplex.vo.elte.hu/stats/user?user_name="+username;
+          const response = await fetch(url);
+          const stats = await response.json(); //extract JSON from the http response
+          document.getElementById('navstat').innerHTML = "Current CPU usage: "+stats['current_cpu'] + " % -- Current Memory usage: "+stats['current_mem'] + " MB";
+        }
+
+    </script>
 
   </head>
 
-  <body>
+  <body onload="user_current_usage('kpapp')">
     {% include 'navbar.html' %}
     {% block submenu %}{% endblock %}
     {% include 'message.html' %}

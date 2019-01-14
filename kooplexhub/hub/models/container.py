@@ -118,7 +118,6 @@ class Container(models.Model):
     @property
     def volumes(self):
         for volume in VolumeContainerBinding.list_containervolumes(container = self):
-            logger.debug(volume)
             yield volume
 
     def wait_until_ready(self):

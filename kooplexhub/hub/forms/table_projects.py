@@ -31,7 +31,7 @@ def table_projects(container):
     class T_PROJECTS(tables.Table):
         id = rc(verbose_name = 'Select', orderable = False)
         project = tables.Column(orderable = False)
-        user = ic(verbose_name = 'Image', orderable = False) #FIXME: we are abusing this field !!!!
+        image = ic(orderable = False, empty_values = ())
     
         class Meta:
             model = UserProjectBinding

@@ -156,9 +156,12 @@ def addproject(request, container_id):
         container.image = Image.objects.get(id = request.POST.get('container_image_id'))
         container.save()
         project_ids = request.POST.getlist('project_ids')
+        logger.debug("GOT %s" % project_ids)
         for p in container.projects:
-            if p.id in project_ids:
-                project_ids.remove(p.id)
+            logger.debug("CP %s" % p)
+            p_id = str(p.id)
+            if p_id in project_ids:
+                project_ids.remove(p_id)
             else:
                 project = Project.objects.get(id = p.id)
                 ProjectContainerBinding.objects.get(container = container, project = project).delete()

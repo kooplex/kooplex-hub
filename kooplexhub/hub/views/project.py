@@ -16,7 +16,7 @@ from kooplex.lib import now
 
 from hub.forms import FormProject
 from hub.forms import table_collaboration, T_JOINABLEPROJECT
-from hub.forms import T_PROJECTPROJECTMAP
+from hub.forms import table_vcproject
 from hub.models import Project, UserProjectBinding, Volume
 from hub.models import Image
 from hub.models import Profile
@@ -245,36 +245,36 @@ def conf_versioncontrol(request, project_id, next_page):
         messages.error(request, 'Project does not exist')
         return redirect(next_page)
 
-    vcppbindings = set(VCProjectProjectBinding.getbinding(user = user, project = project))
     if request.method == 'POST' and request.POST.get('button') == 'apply':
-        msg = project.set_roles(request.POST.getlist('role_map'))
-        if len(msg):
-            messages.info(request, '\n'.join(msg))
+        msgs = []
         for id_create in request.POST.getlist('vcp_ids'):
             vcp = VCProject.objects.get(id = id_create)
             if vcp.token.user != user:
                 logger.error("Unauthorized request vcp: %s, user: %s" % (vcp, user))
                 continue
             VCProjectProjectBinding.objects.create(project = project, vcproject = vcp)
-            messages.info(request, 'Bound %s to repotsitory %s' % (project, vcp))
-        vcppb_ids2keep = request.POST.getlist('vcppb_ids')
-        for b in vcppbindings:
-            if not b.id in vcppb_ids2keep:
-                messages.info(request, 'Project %s is not bound to repository %s any more' % (project, b.vcproject))
-                b.delete()
+            msgs.append('Bound %s to repotsitory %s.' % (project, vcp))
+        for id_remove in set(request.POST.getlist('vcppb_ids_before')).difference(set(request.POST.getlist('vcppb_ids_after'))):
+            try:
+                vcppb = VCProjectProjectBinding.objects.get(id = id_remove, project = project)
+                if vcppb.vcproject.token.user != user:
+                    logger.error("Unauthorized request vcp: %s, user: %s" % (vcp, user))
+                    continue
+                msgs.append('Project %s is not bound to repository %s any more.' % (project, vcppb.vcproject))
+                vcppb.delete()
+            except VCProjectProjectBinding.DoesNotExist:
+                logger.error("Is %s hacking" % user)
+        if len(msgs):
+            messages.info(request, ' '.join(msgs))
         return redirect(next_page)
-    else:
-        vcprojects_bound = [ b.vcproject for b in vcppbindings ]
-        vcprojects = VCProject.objects.none()
-        for token in VCToken.objects.filter(user = user):
-            vcprojects |= VCProject.objects.filter(token = token)
-        vcppbs = [ VCProjectProjectBinding.objects.get(project = project, vcproject = v) if v in vcprojects_bound else VCProjectProjectBinding(project = project, vcproject = v) for v in vcprojects ]
-        table_vcppb = T_PROJECTPROJECTMAP(vcppbs)
-        RequestConfig(request).configure(table_vcppb)        
-
+    elif (request.method == 'POST' and request.POST.get('button') == 'search') or request.method == 'GET':
+#FIXME: search not implemented yet
+        t = table_vcproject(project)
+        table_vcp = t(VCProject.f_user(user = user))
+        RequestConfig(request).configure(table_vcp)
         context_dict = {
             'project': project, 
-            't_vcppb': table_vcppb, 
+            't_vcp': table_vcp, 
             'submenu': 'versioncontrol',
             'next_page': next_page,
         }

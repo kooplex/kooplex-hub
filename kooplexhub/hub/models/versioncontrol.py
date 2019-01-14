@@ -41,6 +41,18 @@ class VCProject(models.Model):
     @property
     def cleanname(self):
         return standardize_str(self.project_name)
+
+    @property
+    def vcprojectprojectbindings(self):
+        for vcpb in VCProjectProjectBinding.objects.filter(vcproject = self):
+            yield vcpb
+
+    @staticmethod
+    def f_user(user):
+        for vcp in VCProject.objects.all():
+            if vcp.token.user == user:
+                yield vcp
+
     
 class VCProjectProjectBinding(models.Model):
     project = models.ForeignKey(Project, null = False)
@@ -73,6 +85,7 @@ def mkdir_vcpcache(sender, instance, created, **kwargs):
 @receiver(post_delete, sender = VCProjectProjectBinding)
 def archivedir_vcpcache(sender, instance, **kwargs):
     from kooplex.lib.filesystem import archivedir_vcpcache
-    archivedir_vcpcache(instance)
+    if len(list(instance.vcproject.vcprojectprojectbindings)) == 0:
+        archivedir_vcpcache(instance)
 
 

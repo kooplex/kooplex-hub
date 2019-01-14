@@ -13,7 +13,9 @@
       {% include "menuitem_report.html" with active=menu_report %}
       {% include "menuitem_edu.html" with active=menu_edu %}
       {% include "menuitem_container.html" with active=menu_container %}
-    {% endif %}
+     <li><span class="badge badge-secondary"><a href="#" id="navstat" class="nav-link" style="color: white"> CPU usage: 0 % &mdash; Memory usage: 0 MB </a></span>
+
+      {% endif %}
     </ul>
     {% include "navbarmenu_right.html" %}
   </div>
