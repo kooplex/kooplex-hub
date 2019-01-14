@@ -14,6 +14,7 @@ from django.contrib.auth.models import User
 from .project import Project, UserProjectBinding
 from .volume import Volume, VolumeProjectBinding
 from .image import Image
+from .versioncontrol import VCProjectProjectBinding
 
 from kooplex.settings import KOOPLEX
 from kooplex.lib import  standardize_str, now
@@ -93,7 +94,6 @@ class Container(models.Model):
 
     @property
     def vcprojectprojectbindings(self):
-        from .versioncontrol import VCProjectProjectBinding
         for project in self.projects:
             for vcppb in VCProjectProjectBinding.objects.filter(project = project):
                 if vcppb.vcproject.token.user == self.user:
@@ -355,24 +355,41 @@ def remove_bind_git(sender, instance, **kwargs):
         except Exception as e:
             logger.error('Git cache was not unbound from container %s -- %s' % (instance, e))
 
-#FIXME: if volumes are added and removed the same time mounter runs twice in user container. It is an overhead better combine them some time together!
+
 @receiver(post_save, sender = ProjectContainerBinding)
-def managemount_add(sender, instance, created, **kwargs):
+def managemount_add_project(sender, instance, created, **kwargs):
     if created:
         c = instance.container
         try:
             c.managemount()
         except Exception as e:
-            logger.error('Share not bound to container %s -- %s' % (c, e))
+            logger.error('Container %s -- %s' % (c, e))
 
 @receiver(post_delete, sender = ProjectContainerBinding)
-def managemount_remove(sender, instance, **kwargs):
+def managemount_remove_project(sender, instance, **kwargs):
     c = instance.container
     try:
         c.managemount()
     except Exception as e:
-        logger.error('Share not bound to container %s -- %s' % (c, e))
-#######################################################################################################################################################
+        logger.error('Container %s -- %s' % (c, e))
+
+
+@receiver(post_save, sender = VCProjectProjectBinding)
+def managemount_add_vcprojectprojectbinding(sender, instance, created, **kwargs):
+    if created:
+        for c in Container.objects.filter(user = instance.vcproject.token.user, state = Container.ST_RUNNING):
+            try:
+                c.managemount()
+            except Exception as e:
+                logger.error('Container %s -- %s' % (c, e))
+
+@receiver(post_delete, sender = VCProjectProjectBinding)
+def managemount_remove_vcprojectprojectbinding(sender, instance, **kwargs):
+    for c in Container.objects.filter(user = instance.vcproject.token.user, state = Container.ST_RUNNING):
+        try:
+            c.managemount()
+        except Exception as e:
+            logger.error('Container %s -- %s' % (c, e))
 
 
 @receiver(post_delete, sender = ProjectContainerBinding)
