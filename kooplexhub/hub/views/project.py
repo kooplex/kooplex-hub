@@ -306,15 +306,15 @@ def show_hide(request, next_page):
     user = request.user
     logger.debug("user %s method %s" % (user, request.method))
     userprojectbindings = user.profile.projectbindings
-    userprojectbindings_course = user.profile.courseprojects_taught_NEW() #FIXME: diak is hideolhat ?
+    #userprojectbindings_course = user.profile.courseprojects_taught_NEW() #FIXME: diak is hideolhat ?
     if request.method == 'GET':
         table_project = T_PROJECT(userprojectbindings)
-        table_course = T_PROJECT(userprojectbindings_course)
+        #table_course = T_PROJECT(userprojectbindings_course)
         RequestConfig(request).configure(table_project)
-        RequestConfig(request).configure(table_course)
+        #RequestConfig(request).configure(table_course)
         context_dict = {
             't_project': table_project,
-            't_course': table_course,
+            #'t_course': table_course,
             'next_page': next_page,
         }
         return render(request, 'project/manage.html', context = context_dict)

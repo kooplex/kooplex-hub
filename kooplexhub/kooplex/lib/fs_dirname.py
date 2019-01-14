@@ -39,7 +39,7 @@ class Dirname:
                 yield Dirname.share(upb)
         elif volume.volumetype == volume.WORKDIR['tag']:
             for upb in container.userprojectbindings:
-                yield Dirname.share(upb)
+                yield Dirname.workdir(upb)
         elif volume.volumetype == volume.GIT['tag']:
             for vcppb in container.vcprojectprojectbindings:
                 yield Dirname.vcpcache(vcppb.vcproject)

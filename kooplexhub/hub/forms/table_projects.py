@@ -7,15 +7,14 @@ from hub.models import UserProjectBinding
 from hub.models import ProjectContainerBinding
 
 def select_column(container):
+    bound_projects = [ b.project for b in ProjectContainerBinding.objects.filter(container = container) ]
     class SelectColumn(tables.Column):
         def render(self, record):
             p = record.project
-            try:
-                ProjectContainerBinding.objects.get(container = container, project = p)
-                s = "checked"
-            except ProjectContainerBinding.DoesNotExist:
-                s = ""
-            return format_html("<input type='checkbox' name='project_ids' value='%d' %s>" % (p.id, s))
+            if p in bound_projects:
+                return format_html("<input type='hidden' name='project_ids_before' value='%d'><input type='checkbox' name='project_ids_after' value='%d' checked>" % (p.id, p.id))
+            else:
+                return format_html("<input type='checkbox' name='project_ids_after' value='%d'>" % p.id)
     return SelectColumn
 
 def image_column(container):

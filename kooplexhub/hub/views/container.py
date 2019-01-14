@@ -155,20 +155,35 @@ def addproject(request, container_id):
     else:
         container.image = Image.objects.get(id = request.POST.get('container_image_id'))
         container.save()
-        project_ids = request.POST.getlist('project_ids')
-        logger.debug("GOT %s" % project_ids)
-        for p in container.projects:
-            logger.debug("CP %s" % p)
-            p_id = str(p.id)
-            if p_id in project_ids:
-                project_ids.remove(p_id)
-            else:
-                project = Project.objects.get(id = p.id)
+        project_ids_before = set(request.POST.getlist('project_ids_before'))
+        project_ids_after = set(request.POST.getlist('project_ids_after'))
+        oops = 0
+        added = []
+        for project_id in project_ids_after.difference(project_ids_before):
+            try:
+                project = Project.get_userproject(project_id = project_id, user = user)
+                ProjectContainerBinding.objects.create(container = container, project = project)
+                added.append(str(project))
+                logger.debug('added project %s to container %s' % (project, container))
+            except Exception as e:
+                logger.error('not authorized to add project_id %s to container %s -- %s' % (project_id, container, e))
+                oops += 1
+        removed = []
+        for project_id in project_ids_before.difference(project_ids_after):
+            try:
+                project = Project.get_userproject(project_id = project_id, user = user)
                 ProjectContainerBinding.objects.get(container = container, project = project).delete()
-        while len(project_ids):
-            pid = project_ids.pop()
-            project = Project.get_userproject(project_id = pid, user = user)
-            ProjectContainerBinding.objects.create(container = container, project = project)
+                removed.append(str(project))
+                logger.debug('removed project %s from container %s' % (project, container))
+            except Exception as e:
+                logger.error('not authorized to remove project_id %s from container %s -- %s' % (project_id, container, e))
+                oops += 1
+        if len(added):
+            messages.info(request, 'Added projects %s to container %s' % (",".join(added), container))
+        if len(removed):
+            messages.info(request, 'Removed projects %s from container %s' % (",".join(removed), container))
+        if oops:
+            messages.warning(request, 'Some problems (%d) occured during handling yout request.' % (oops))
         return redirect(next_page)
 
 

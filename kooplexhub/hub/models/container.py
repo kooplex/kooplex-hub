@@ -175,12 +175,26 @@ class Container(models.Model):
         return os.path.join(self.url, 'notebook', self.proxy_path)
 
     def managemount(self):
+        import threading
+        if hasattr(self, '_timer'):
+            logger.debug("still aggregating...")
+            return
+        else:
+            logger.debug("bla")
+            self._timer = threading.Timer(1, self._managemount)
+            self._timer.start()
+            logger.debug("Aggregating timer started.")
+
+    def _managemount(self):
         from kooplex.lib import Docker
         try: 
+            logger.debug("Aggregating timer expired.")
             assert self.is_created, "%s is not manifested in docker engine"
             Docker().managemount(self)
         except Exception as e: 
             logger.error("cannot manage mapping in container %s -- %s" % (self, e)) 
+        finally:
+            del self._timer
 
     def refresh_state(self):
         from kooplex.lib import Docker 
@@ -224,6 +238,11 @@ def container_state_change(sender, instance, **kwargs):
         docker.run_container(instance)
         addroute(instance)
     elif old_instance.state == Container.ST_NOTRUNNING and instance.state == Container.ST_NOTPRESENT:
+        docker.remove_container(instance)
+        instance.marked_to_remove = False
+    elif old_instance.state == Container.ST_RUNNING and instance.state == Container.ST_NOTPRESENT:
+        docker.stop_container(instance)
+        removeroute(instance)
         docker.remove_container(instance)
         instance.marked_to_remove = False
     else:
