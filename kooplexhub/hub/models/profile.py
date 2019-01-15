@@ -20,8 +20,23 @@ class Profile(models.Model):
     can_createproject = models.BooleanField(default = False) 
 
     @property
+    def name(self):
+        return '{} {}'.format(self.user.first_name, self.user.last_name)
+
+    @property
+    def username(self):
+        return '{}'.format(self.user.username)
+
+    @property
     def safename(self):
         return "%s_%s" % (unidecode.unidecode(self.user.last_name), unidecode.unidecode(self.user.first_name).replace(' ', ''))
+
+    @property
+    def everybodyelse(self):
+        return Profile.objects.filter(~models.Q(id = self.id) & ~models.Q(user__is_superuser = True))
+
+    def everybodyelse_like(self, pattern):
+        return Profile.objects.filter(~models.Q(id = self.id) & ~models.Q(user__is_superuser = True) & (models.Q(user__username__icontains = pattern) | models.Q(user__first_name__icontains = pattern) | models.Q(user__last_name__icontains = pattern)))
 
     @property
     def groupid(self):

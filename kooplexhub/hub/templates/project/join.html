@@ -1,11 +1,16 @@
 {% extends "layout.html" %}
 
+{% block submenu %}
+<div class="navbar navbar-expand-lg navbar-light bg-light">
+  <h5><span class="badge badge-secondary">Join projects</span></h5>
+</div>
+{% endblock %}
+
 {% block content %}
 {% load render_table from django_tables2 %}
 
 <form id="project-manage" class="form-horizontal" action="{% url 'project:join' %}" method="post">
   {% csrf_token %}
-  <h4>Join projects</h4>
   <p>Select those projects you want to join.</p>
   {% render_table t_joinable %}
   <div class="modal-footer">

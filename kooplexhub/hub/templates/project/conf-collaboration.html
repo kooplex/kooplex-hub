@@ -3,6 +3,12 @@
   {% csrf_token %}
 
   <p>Manage your collaboration.</p>
+  <div  class="alert alert-warning">
+    <input type="text" name="name" placeholder="name" value="{{ search_name }}">
+    <button type="submit" class="btn btn-primary" name="button" value="search">Search</button>
+    <input type="hidden" name="pager" value="{{ pager }}">
+    <input type="hidden" name="sort" value="{{ sort }}">
+  </div>
   {% render_table t_collaborators %}
 
   <div class="modal-footer">

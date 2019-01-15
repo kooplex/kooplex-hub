@@ -13,6 +13,7 @@
     <input type="text" name="repository" placeholder="repository" value="{{ search_repository }}">
     <button type="submit" class="btn btn-primary" name="button" value="search">Search</button>
     <input type="hidden" name="pager" value="{{ pager }}">
+    <input type="hidden" name="sort" value="{{ sort }}">
   </div>
   {% load render_table from django_tables2 %}
   

@@ -161,21 +161,24 @@ def conf_collab(request, project_id, next_page):
         messages.error(request, 'Project does not exist')
         return redirect(next_page)
 
+    sort_info = request.GET.get('sort') if request.method == 'GET' else request.POST.get('sort')
     if request.method == 'POST' and request.POST.get('button') == 'apply':
         msg = project.set_roles(request.POST.getlist('role_map'))
         if len(msg):
             messages.info(request, '\n'.join(msg))
         return redirect(next_page)
-    else:
-        everybody = filter(lambda p: p not in [ user.profile ], Profile.objects.all()) # FIXME: get rid of hubadmin
+    elif (request.method == 'POST' and request.POST.get('button') == 'search') or request.method == 'GET':
+        pattern = request.POST.get('name', '')
         table = table_collaboration(project)
-        table_collaborators = table(everybody)
+        table_collaborators = table(user.profile.everybodyelse) if pattern == '' else table(user.profile.everybodyelse_like(pattern))
         RequestConfig(request).configure(table_collaborators)
         context_dict = {
             'project': project, 
             't_collaborators': table_collaborators,
             'submenu': 'collaboration',
             'next_page': next_page,
+            'search_name': pattern,
+            'sort': sort_info,
         }
         return render(request, 'project/configure.html', context = context_dict)
 
@@ -245,6 +248,7 @@ def conf_versioncontrol(request, project_id, next_page):
         messages.error(request, 'Project does not exist')
         return redirect(next_page)
 
+    sort_info = request.GET.get('sort') if request.method == 'GET' else request.POST.get('sort')
     if request.method == 'POST' and request.POST.get('button') == 'apply':
         msgs = []
         for id_create in request.POST.getlist('vcp_ids'):
@@ -278,6 +282,7 @@ def conf_versioncontrol(request, project_id, next_page):
             'submenu': 'versioncontrol',
             'next_page': next_page,
             'search_repository': pattern,
+            'sort': sort_info,
         }
         return render(request, 'project/configure.html', context = context_dict)
 

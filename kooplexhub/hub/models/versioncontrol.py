@@ -20,11 +20,11 @@ class VCToken(models.Model):
 
     user = models.ForeignKey(User, null = False)
     token = models.CharField(max_length = 256, null = False) # FIXME: dont store as clear text
+    fn_rsa = models.CharField(max_length = 256, null = False)
     backend_type = models.CharField(max_length = 16, choices = [ (x, x) for x in TYPE_LIST ], default = TP_GITHUB)
     url = models.CharField(max_length = 128, null = True)
     last_used = models.DateTimeField(null = True)
     error_flag = models.BooleanField(default = False)       # TODO: save error message maybe stored in a separate table
-#FIXME: store rsa key ?
 
     @property
     def domain(self):

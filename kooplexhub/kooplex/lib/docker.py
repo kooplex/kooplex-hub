@@ -117,12 +117,12 @@ class Docker:
 
     def trigger_impersonator(self, vcproject):       #FIXME: dont call it 1-by-1
         from kooplex.lib.fs_dirname import Dirname
-        container_name = "kooplex-test-impersonator" #FIXME: hardcoded
+        container_name = self.dockerconf.get('impersonator', 'impersonator')
         path, filename = os.path.split(self.dockerconf.get('gitcommandconf', '/tmp/gitcommand.conf'))
         cmdmaps = []
         token = vcproject.token
         fn_clonesh = os.path.join(Dirname.vcpcache(vcproject), "clone.sh")
-        fn_key = os.path.join(Dirname.userhome(vcproject.token.user), '.ssh', 'github')  #FIXME: RSA hardcoded
+        fn_key = os.path.join(Dirname.userhome(vcproject.token.user), '.ssh', token.fn_rsa)
         cmdmaps.append("%s:%s:%s:%s" % (token.user.username, fn_key, token.domain, fn_clonesh))
         cmdmaps.append('')
         file_data = "\n".join(cmdmaps).encode('utf8')

@@ -141,7 +141,7 @@ class UserGroupBindingAdmin(admin.ModelAdmin):
 
 @admin.register(VCToken)
 class VCTokenAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'backend_type', 'url')
+    list_display = ('id', 'user', 'backend_type', 'url', 'fn_rsa')
 
 @admin.register(VCProject)
 class VCProjectAdmin(admin.ModelAdmin):
