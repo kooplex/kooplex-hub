@@ -12,23 +12,29 @@ from .project import Project
 
 logger = logging.getLogger(__name__)
 
-
-class VCToken(models.Model):
+class VCRepository(models.Model):
     TP_GITHUB = 'github'
     TP_GITLAB = 'gitlab'
     TYPE_LIST = [ TP_GITHUB, TP_GITLAB ]
 
-    user = models.ForeignKey(User, null = False)
-    token = models.CharField(max_length = 256, null = False) # FIXME: dont store as clear text
-    fn_rsa = models.CharField(max_length = 256, null = False)
-    backend_type = models.CharField(max_length = 16, choices = [ (x, x) for x in TYPE_LIST ], default = TP_GITHUB)
     url = models.CharField(max_length = 128, null = True)
-    last_used = models.DateTimeField(null = True)
-    error_flag = models.BooleanField(default = False)       # TODO: save error message maybe stored in a separate table
+    backend_type = models.CharField(max_length = 16, choices = [ (x, x) for x in TYPE_LIST ], default = TP_GITHUB)
+
+    def __str__(self):
+        return self.url
 
     @property
     def domain(self):
         return re.split(r'https?://([^/]+)', self.url)[1]
+
+
+class VCToken(models.Model):
+    user = models.ForeignKey(User, null = False)
+    repository = models.ForeignKey(VCRepository, null = False)
+    token = models.CharField(max_length = 256, null = False) # FIXME: dont store as clear text
+    fn_rsa = models.CharField(max_length = 256, null = False)
+    last_used = models.DateTimeField(null = True)
+    error_flag = models.BooleanField(default = False)       # TODO: save error message maybe stored in a separate table
 
 
 class VCProject(models.Model):
@@ -37,11 +43,11 @@ class VCProject(models.Model):
     last_seen = models.DateTimeField(auto_now_add = True)
 
     def __str__(self):
-        return "Version control repository %s/%s" % (self.token.url, self.project_name)
+        return "VCProject %s/%s" % (self.token.repository.url, self.project_name)
 
     @property
     def repository(self):
-        return '{}/{}'.format(self.token.url, self.project_name)
+        return '{}/{}'.format(self.token.repository.url, self.project_name)
 
     @property
     def cleanname(self):
@@ -50,7 +56,8 @@ class VCProject(models.Model):
     @property
     def uniquename(self):
         t = self.token
-        return "%s-%s-%s-%s" % (t.backend_type, t.domain, t.user.username, self.cleanname)
+        r = t.repository
+        return "%s-%s-%s-%s" % (r.backend_type, r.domain, t.user.username, self.cleanname)
 
     @property
     def vcprojectprojectbindings(self):
@@ -73,13 +80,6 @@ class VCProject(models.Model):
 class VCProjectProjectBinding(models.Model):
     project = models.ForeignKey(Project, null = False)
     vcproject = models.ForeignKey(VCProject, null = False)
-
-#FIXME: deprecated
-    @property
-    def uniquename(self):
-        vcp = self.vcproject
-        t = vcp.token
-        return "%s-%s-%s-%s" % (t.backend_type, t.domain, t.user.username, vcp.cleanname)
 
     @staticmethod
     def getbinding(user, project):

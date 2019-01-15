@@ -7,7 +7,7 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 
 def indexpage(request):
-    return render(request, 'index.html', {})
+    return render(request, 'index.html', { 'next_page': 'indexpage' })
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),

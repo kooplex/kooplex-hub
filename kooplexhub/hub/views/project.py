@@ -285,6 +285,8 @@ def conf_versioncontrol(request, project_id, next_page):
             'sort': sort_info,
         }
         return render(request, 'project/configure.html', context = context_dict)
+    else:
+        return redirect(next_page)
 
 
 @login_required

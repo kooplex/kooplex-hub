@@ -5,7 +5,7 @@
   <p>Refresh information about your version control repositories.</p>
   
   {% for t in user.profile.vctokens %}
-    <a href="{% url 'project:vcrefresh' t.id project.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Retrieving information from {{ t.url }} may take some time." data-placement="top">{{ t.url }}</a> (Last updated: {{ t.last_used }}).<br>
+    <a href="{% url 'project:vcrefresh' t.id project.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Retrieving information from {{ t.repository.url }} may take some time." data-placement="top">{{ t.repository.url }}</a> (Last updated: {{ t.last_used }}).<br>
   {% endfor %}
 
   <p>Bind version control repositories to this project</p>

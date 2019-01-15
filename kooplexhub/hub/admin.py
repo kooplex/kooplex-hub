@@ -10,26 +10,6 @@ from hub.models import *
 
 logger = logging.getLogger(__name__)
 
-
-#FIXME: shant be here
-##def stop_containers(klass, request, queryset):
-##    from kooplex.logic.spawner import stop_container
-##    msg = ""
-##    oops = ""
-##    for container in queryset:
-##        try:
-##            stop_container(container)
-##            logger.info("removed container: %s" % container)
-##            msg += "%s, " % container
-##        except Exception as e:
-##            logger.error("cannot remove container: %s -- %s" % (container, e))
-##            oops += "%s, " % container
-#    if len(msg):
-#        messages.success(request, "stopped: %s" % msg)
-#    if len(oops):
-#        messages.warning(request, "oopses: %s" % oops)
-##stop_containers.short_description = 'Stop selected containers'
-
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'userid', 'groupid', 'location', 'bio', 'is_teacher', 'is_student', 'can_createproject')
@@ -37,7 +17,6 @@ class ProfileAdmin(admin.ModelAdmin):
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'image') 
-#    actions = [ stop_containers, ]
 
 @admin.register(UserProjectBinding)
 class UserProjectBindingAdmin(admin.ModelAdmin):
@@ -68,7 +47,7 @@ class UserCourseBindingAdmin(admin.ModelAdmin):
 @admin.register(Assignment)
 class AssignmentAdmin(admin.ModelAdmin):
     list_display = ('id', 'course', 'flag', 'name', 'safename', 'folder', 'creator', 'description', 'is_massassignment', 'created_at', 'valid_from', 'expires_at', 'can_studentsubmit')
-    search_fields = ('creator__username', 'course__courseid' )
+    search_fields = ('creator__username', 'course__courseid')
 
 @admin.register(UserAssignmentBinding)
 class UserAssignmentBindingAdmin(admin.ModelAdmin):
@@ -139,9 +118,14 @@ class GroupAdmin(admin.ModelAdmin):
 class UserGroupBindingAdmin(admin.ModelAdmin):
     list_display = ('id', 'group', 'user')
 
+
+@admin.register(VCRepository)
+class VCRepositoryAdmin(admin.ModelAdmin):
+    list_display = ('id', 'backend_type', 'url')
+
 @admin.register(VCToken)
 class VCTokenAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'backend_type', 'url', 'fn_rsa')
+    list_display = ('id', 'user', 'repository', 'fn_rsa')
 
 @admin.register(VCProject)
 class VCProjectAdmin(admin.ModelAdmin):
@@ -149,4 +133,4 @@ class VCProjectAdmin(admin.ModelAdmin):
 
 @admin.register(VCProjectProjectBinding)
 class VCProjectProjectBindingAdmin(admin.ModelAdmin):
-    list_display = ('id', 'project', 'uniquename')
+    list_display = ('id', 'project')

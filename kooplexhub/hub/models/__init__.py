@@ -10,4 +10,4 @@ from .image import Image
 from .volume import Volume, VolumeOwnerBinding, ExtraFields, UserPrivilegeVolumeBinding, VolumeProjectBinding
 from .container import Container, ProjectContainerBinding, VolumeContainerBinding
 
-from .versioncontrol import VCToken, VCProject, VCProjectProjectBinding
+from .versioncontrol import VCRepository, VCToken, VCProject, VCProjectProjectBinding

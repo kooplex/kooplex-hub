@@ -15,7 +15,7 @@
     <div class="dropdown-menu" aria-labelledby="navbarDropdownProfile">
     {% if user.is_authenticated %}
       <a class="dropdown-item" href="#" data-toggle="modal" data-target="#update-bio">Update bio</a>
-      <a class="dropdown-item" href="{% url 'user:changetoken' %}">Change token</a>
+      <a class="dropdown-item" href="{% url 'user:managetokens' next_page %}">Manage secrets</a>
       <div class="dropdown-divider"></div>
     {% endif %}
       <a class="dropdown-item" href="https://github.com/kooplex/kooplex-hub/wiki" target="_blank">Kooplex Hub Wiki</a>
