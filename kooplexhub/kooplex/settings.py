@@ -146,7 +146,7 @@ LOGGING = {
 
 KOOPLEX = {
     'base_url': 'https://%s' % DOMAIN,
-    'hydra_oidc_endpoint':  'https://kooplex-test-hydra:4444',
+    'hydra_oidc_endpoint':  'https://%s-hydra:4444' % PREFIX,
     'mountpoint': {
         'home': '/mnt/.volumes/home',
 
