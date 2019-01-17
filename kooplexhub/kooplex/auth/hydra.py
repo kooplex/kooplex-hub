@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 class HydraOpenID(OpenIdConnectAuth):
     name = 'hydraoidc'
-    OIDC_ENDPOINT = 'https://hydra-dev.elte.hu:4444'
+    OIDC_ENDPOINT = KOOPLEX.get('hydra_oidc_endpoint', 'https://localhost:4444')
 
     def get_redirect_uri(self, state = None):
         """Build redirect with redirect_state parameter."""
