@@ -17,6 +17,7 @@ class HydraOpenID(OpenIdConnectAuth):
         """Build redirect with redirect_state parameter."""
         base_url = KOOPLEX.get('base_url', 'http://localhost')
         url = os.path.join(base_url, "hub/oauth/complete/hydraoidc/")
+        logger.debug("IDP resp" )
         if self.REDIRECT_STATE and state:
             uri = url_add_parameters(url, {'redirect_state': state})
         else:

@@ -15,7 +15,11 @@ logger = logging.getLogger(__name__)
 def teaching(request):
     """Renders the projectlist page for courses taught."""
     logger.debug('Rendering teaching.html')
-    return render(request, 'edu/teaching.html')
+    context_dict = {
+        'menu_teaching': 'active',
+        'next_page': 'education:teaching', 
+    }
+    return render(request, 'edu/teaching.html', context = context_dict)
 
 
 @login_required
@@ -26,12 +30,21 @@ def courses(request):
     table_submit = T_SUBMIT(bindings) 
     RequestConfig(request).configure(table_submit)
     context_dict = {
+        'menu_teaching': 'active',
+        'next_page': 'education:courses', 
         't_submit': table_submit,
     }
     return render(request, 'edu/courses.html', context = context_dict)
 
 
+def hide(request, course_id, next_page):
+    raise NotImplementedError
+def conf_meta(request, course_id, next_page):
+    raise NotImplementedError
+
 urlpatterns = [
-    url(r'teaching/?$', teaching, name = 'teaching'),
-    url(r'courses/?$', courses, name = 'courses'),
+    url(r'^teaching/?$', teaching, name = 'teaching'),
+    url(r'^courses/?$', courses, name = 'courses'),
+    url(r'^hidecourse/(?P<course_id>\d+)/(?P<next_page>\w+:?\w*)$', hide, name = 'hide'), 
+    url(r'^configurecourse/(?P<course_id>\d+)/meta/(?P<next_page>\w+:?\w*)$', conf_meta, name = 'conf_meta'), 
 ]

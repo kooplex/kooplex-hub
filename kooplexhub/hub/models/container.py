@@ -12,6 +12,7 @@ from django.dispatch import receiver
 from django.contrib.auth.models import User
 
 from .project import Project, UserProjectBinding
+from .course import Course
 from .volume import Volume, VolumeProjectBinding
 from .image import Image
 from .versioncontrol import VCProjectProjectBinding
@@ -447,3 +448,13 @@ def container_check_image(sender, instance, **kwargs):
                 c.marked_to_remove = True
             c.image = instance.image
             c.save()
+
+
+
+
+class CourseContainerBinding(models.Model):
+    course = models.ForeignKey(Course, null = False)
+    container = models.ForeignKey(Container, null = False)
+
+    def __str__(self):
+        return "<ProjectContainerBinding %s-%s>" % (self.project, self.container)

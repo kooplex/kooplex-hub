@@ -15,10 +15,10 @@ urlpatterns = [
     url(r'^hub/mock/', include('kooplex.mock', namespace = 'mock')), #FIXME: REMOVE FROM PRODUCTION
 
     url(r'^hub/oauth/', include('social_django.urls', namespace = 'social')),
-    url(r'^hub/container/', include('hub.views.container', namespace = 'container')),
-    url(r'^hub/list/', include('hub.views.listing', namespace = 'list')),
     url(r'^hub/project/', include('hub.views.project', namespace = 'project')),
+    url(r'^hub/education/', include('hub.views.education', namespace = 'education')),
     url(r'^hub/assignment/', include('hub.views.assignment', namespace = 'assignment')),
+    url(r'^hub/container/', include('hub.views.container', namespace = 'container')),
     url(r'^hub/user/', include('hub.views.user', namespace = 'user')),
     url(r'^hub/?', indexpage, name = 'indexpage'),
     url(r'^accounts/logout/', auth_views.logout, { 'next_page': 'indexpage' }, name = 'logout'),

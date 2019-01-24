@@ -10,7 +10,7 @@
   {% for binding in user.profile.projectbindings %}
     {% if not binding.is_hidden %}
       {% with project=binding.project %}
-         {% include 'project/partial.html' with container=project|get_usercontainer:user %}
+         {% include 'project/partial.html' with container=project|get_userprojectcontainer:user %}
       {% endwith %}
     {% endif %}
   {% endfor %}

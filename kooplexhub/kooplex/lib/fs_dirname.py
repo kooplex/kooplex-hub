@@ -48,7 +48,7 @@ class Dirname:
 
     @staticmethod
     def course(course):
-        return os.path.join(Dirname.mountpoint['course'], course.safecourseid)
+        return os.path.join(Dirname.mountpoint['course'], course.safename)
 
     @staticmethod
     def courseprivate(course):
@@ -61,8 +61,8 @@ class Dirname:
     @staticmethod
     def courseworkdir(usercoursebinding):
         flag = usercoursebinding.flag if usercoursebinding.flag else '_'
-        return os.path.join(Dirname.mountpoint['usercourse'], usercoursebinding.course.safecourseid, flag) if usercoursebinding.is_teacher else \
-               os.path.join(Dirname.mountpoint['usercourse'], usercoursebinding.course.safecourseid, flag, usercoursebinding.user.username)
+        return os.path.join(Dirname.mountpoint['usercourse'], usercoursebinding.course.safename, flag) if usercoursebinding.is_teacher else \
+               os.path.join(Dirname.mountpoint['usercourse'], usercoursebinding.course.safename, flag, usercoursebinding.user.username)
 
     @staticmethod
     def assignmentsource(assignment):
@@ -79,4 +79,4 @@ class Dirname:
     def assignmentcorrectdir(userassignmentbinding):
         assignment = userassignmentbinding.assignment
         flag = assignment.flag if assignment.flag else '_'
-        return os.path.join(Dirname.mountpoint['assignment'], assignment.course.safecourseid, flag, 'feedback-%s-%s.%d' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp()))
+        return os.path.join(Dirname.mountpoint['assignment'], assignment.course.safename, flag, 'feedback-%s-%s.%d' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp()))

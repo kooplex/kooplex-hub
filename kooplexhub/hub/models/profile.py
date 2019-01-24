@@ -45,14 +45,7 @@ class Profile(models.Model):
     @property
     def projectbindings(self):
         from .project import UserProjectBinding
-        from .course import Course
         for binding in UserProjectBinding.objects.filter(user = self.user):
-            #FIXME: more elaborate way to hide course projects
-            try:
-                binding.project.course
-                continue
-            except Course.DoesNotExist:
-                pass
             yield binding
 
     @property
@@ -61,37 +54,18 @@ class Profile(models.Model):
         for container in Container.objects.filter(user = self.user):
              yield container
 
-    @property
-    def coursebindings(self):
-        from .course import UserCourseBinding
-        for binding in UserCourseBinding.objects.filter(user = self.user):
-            yield binding
-
-    #FIXME: deprecat
-    @property
-    def courseprojects_taught(self):
-        duplicate = set()
-        for coursebinding in self.coursebindings:
-            if coursebinding.is_teacher:
-                if coursebinding.course.project in duplicate:
-                    continue
-                yield coursebinding.course.project
-                duplicate.add(coursebinding.course.project)
-
-    #FIXME: refactor
-    def courseprojects_taught_NEW(self):
-        from .project import UserProjectBinding
-        duplicate = set()
-        for coursebinding in self.coursebindings:
-            if coursebinding.is_teacher:
-                if coursebinding.course.project in duplicate:
-                    continue
-                yield UserProjectBinding.objects.get(user = self.user, project = coursebinding.course.project)
-                duplicate.add(coursebinding.course.project)
+    def coursecodebindings(self, **kw):
+        from .course import UserCourseCodeBinding
+        for binding in UserCourseCodeBinding.objects.filter(user = self.user, **kw):
+            if binding.coursecode.course:
+                yield binding
 
     @property
     def is_teacher(self):
-        return len(list(self.courseprojects_taught)) > 0
+        return len(list(self.coursecodebindings(is_teacher = True))) > 0
+
+    def courses_taught(self):
+        return set([ binding.coursecode.course for binding in self.coursecodebindings(is_teacher = True) ])
 
     def is_courseteacher(self, course):
         for binding in self.coursebindings:
@@ -112,7 +86,7 @@ class Profile(models.Model):
  
     @property
     def is_student(self):
-        return len(list(self.courseprojects_attended)) > 0
+        return len(list(self.coursecodebindings(is_teacher = False))) > 0
 
     @property
     def functional_volumes(self):

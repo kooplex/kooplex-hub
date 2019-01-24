@@ -64,6 +64,8 @@ def startprojectcontainer(request, project_id, next_page):
         messages.error(request, 'Cannot start the container -- %s' % e)
     return redirect(next_page)
 
+def startcoursecontainer(request, course_id, next_page):
+    return NotImplementedError
 
 @login_required
 def startcontainer(request, container_id, next_page):
@@ -205,4 +207,5 @@ urlpatterns = [
 
     url(r'^addproject/(?P<container_id>\d+)$', addproject, name = 'addproject'),
     url(r'^startproject/(?P<project_id>\d+)/(?P<next_page>\w+:?\w*)$', startprojectcontainer, name = 'startprojectcontainer'),
+    url(r'^startcourse/(?P<course_id>\d+)/(?P<next_page>\w+:?\w*)$', startcoursecontainer, name = 'startcoursecontainer'),
 ]

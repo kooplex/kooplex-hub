@@ -35,14 +35,18 @@ class ContainerAdmin(admin.ModelAdmin):
 class ProjectContainerBindingAdmin(admin.ModelAdmin):
     list_display = ('id', 'container', 'project')
 
+@admin.register(CourseCode)
+class CourseCodeAdmin(admin.ModelAdmin):
+    list_display = ('id', 'courseid', 'safecourseid', 'course')
+
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
-    list_display = ('id', 'courseid', 'safecourseid', 'description', 'project')
+    list_display = ('id', 'name', 'safename', 'description', 'image')
 
-@admin.register(UserCourseBinding)
+@admin.register(UserCourseCodeBinding)
 class UserCourseBindingAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'course', 'flag', 'is_teacher', 'is_protected')
-    search_fields = ('user__username','course__courseid')
+    list_display = ('id', 'user', 'coursecode', 'is_teacher', 'is_protected')
+    search_fields = ('user__username', ) #FIXME:, 'course__courseid')
 
 @admin.register(Assignment)
 class AssignmentAdmin(admin.ModelAdmin):

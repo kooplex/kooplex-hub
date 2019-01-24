@@ -44,7 +44,7 @@ AUTHENTICATION_BACKENDS = (
 SOCIAL_AUTH_ELTEOIDC_KEY = '%s-hub' % PREFIX
 SOCIAL_AUTH_ELTEOIDC_SECRET = os.getenv('ELTEOIDC_SECRET')
 SOCIAL_AUTH_HYDRAOIDC_KEY = '%s-hub' % PREFIX
-SOCIAL_AUTH_HYDRAOIDC_SECRET = os.getenv('ELTEOIDC_SECRET')
+SOCIAL_AUTH_HYDRAOIDC_SECRET = "4trhoikSfxpH" # os.getenv('ELTEOIDC_SECRET')
 SOCIAL_AUTH_USER_FIELDS = [ 'username', 'email' ]
 SOCIAL_AUTH_URL_NAMESPACE = 'social'
 
@@ -146,7 +146,8 @@ LOGGING = {
 
 KOOPLEX = {
     'base_url': 'https://%s' % DOMAIN,
-    'hydra_oidc_endpoint':  'https://%s-hydra:4444' % PREFIX,
+#    'hydra_oidc_endpoint':  'https://%s-hydra:4444' % PREFIX,
+    'hydra_oidc_endpoint':  'https://kooplex-test.elte.hu/hydra',
     'mountpoint': {
         'home': '/mnt/.volumes/home',
 

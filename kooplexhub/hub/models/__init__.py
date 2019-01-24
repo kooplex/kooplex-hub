@@ -1,7 +1,7 @@
 from .profile import Profile
 from .group import Group, UserGroupBinding
 
-from .course import Course, UserCourseBinding, lookup_course, update_UserCourseBindings
+from .course import CourseCode, Course, UserCourseCodeBinding, lookup_course, update_UserCourseBindings
 from .assignment import Assignment, UserAssignmentBinding
 
 from .project import Project,  UserProjectBinding, GroupProjectBinding

@@ -10,7 +10,8 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django_tables2 import RequestConfig
 
-from hub.models import Course, UserCourseBinding, Assignment, UserAssignmentBinding
+#FIXME
+from hub.models import Course, UserCourseCodeBinding as UserCourseBinding, Assignment, UserAssignmentBinding
 from kooplex.lib import now, translate_date
 from hub.forms import FormAssignment, T_BIND, T_COLLECT_ASSIGNMENT, T_COLLECT_UABINDING, T_CORRECT
 

@@ -41,7 +41,11 @@ class Project(models.Model):
 
     @property
     def creator(self):
-        return UserProjectBinding.objects.get(project = self, role = UserProjectBinding.RL_CREATOR).user
+        try:
+            return UserProjectBinding.objects.get(project = self, role = UserProjectBinding.RL_CREATOR).user
+        except UserProjectBinding.DoesNotExist:
+            logger.warning('no creator for %s' % self)
+            return
 
     @property
     def cleanname(self):
@@ -49,7 +53,10 @@ class Project(models.Model):
 
     @property
     def uniquename(self):
-        return "%s-%s" % (self.creator.username, standardize_str(self.name))
+        try:
+            return "%s-%s" % (self.creator.username, standardize_str(self.name))
+        except AttributeError:
+            return standardize_str(self.name)
 
     @property
     def fs_uid(self):
@@ -97,11 +104,11 @@ class Project(models.Model):
             yield binding.container
 
     @register.filter
-    def get_usercontainer(self, user):
+    def get_userprojectcontainer(self, user):
         from .container import ProjectContainerBinding
         for binding in ProjectContainerBinding.objects.filter(project = self):
             if binding.container.user == user:
-                return binding.container
+                return binding.container #FIXME: the first container is returned
 
     @register.filter
     def is_hiddenbyuser(self, user):
@@ -130,11 +137,6 @@ class Project(models.Model):
             return UserProjectBinding.objects.get(project = self, user = user).role == UserProjectBinding.RL_COLLABORATOR
         except UserProjectBinding.DoesNotExist:
             return False
-
-    @property
-    def course(self):
-        from .course import Course
-        return Course.objects.get(project = self)
 
     @staticmethod
     def get_userproject(project_id, user):

@@ -330,7 +330,7 @@ def show_hide(request, next_page):
         hide_bindingids_req = set([ int(i) for i in request.POST.getlist('selection') ])
         n_hide = 0
         n_unhide = 0
-        for upb in set(userprojectbindings).union(userprojectbindings_course):
+        for upb in set(userprojectbindings):#.union(userprojectbindings_course):
             if upb.is_hidden and not upb.id in hide_bindingids_req:
                 upb.is_hidden = False
                 upb.save()
