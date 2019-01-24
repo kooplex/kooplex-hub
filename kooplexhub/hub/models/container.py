@@ -89,6 +89,13 @@ class Container(models.Model):
             yield binding.project
 
     @property
+    def course(self):
+        try:
+            return CourseContainerBinding.objects.get(container = self).course
+        except CourseContainerBinding.DoesNotExist:
+            return None
+
+    @property
     def userprojectbindings(self):
         for project in self.projects:
             yield UserProjectBinding.objects.get(user = self.user, project = project)
@@ -139,9 +146,26 @@ class Container(models.Model):
                 logger.debug("container in db %s" % binding.container)
                 return binding.container
         if create:
-            containername = "%s-%s" % (project.name, user.username)
+            containername = "%s-%s" % (project.cleanname, user.username)
             container = Container.objects.create(name = containername, user = user)
             ProjectContainerBinding.objects.create(project = project, container = container)
+            logger.debug("new container in db %s" % container)
+            return container 
+        raise Container.DoesNotExist
+
+    @staticmethod
+    def get_usercoursecontainer(user, course_id, create):
+        logger.debug("course id %s & user %s" % (course_id, user))
+        course = Course.get_usercourse(course_id, user)
+        logger.debug("found course %s and authorized for user %s" % (course, user))
+        for binding in CourseContainerBinding.objects.filter(course = course):
+            if binding.container.user == user:
+                logger.debug("container in db %s" % binding.container)
+                return binding.container
+        if create:
+            containername = "%s-%s" % (course.safename, user.username) #FIXME: rename safename -> cleanname
+            container = Container.objects.create(name = containername, user = user)
+            CourseContainerBinding.objects.create(course = course, container = container)
             logger.debug("new container in db %s" % container)
             return container 
         raise Container.DoesNotExist
@@ -224,7 +248,7 @@ def container_state_change(sender, instance, **kwargs):
     msg += "%s statchange %s -> %s" % (instance, ST_LOOKUP[old_instance.state], ST_LOOKUP[instance.state])
     logger.debug(msg)
     docker = Docker()
-    assert instance.n_projects > 0 or instance.state == Container.ST_NOTPRESENT, 'container %s with 0 projects' % instance
+    assert instance.n_projects > 0 or instance.course or instance.state == Container.ST_NOTPRESENT, 'container %s with 0 projects' % instance
     if old_instance.state == Container.ST_NOTPRESENT and instance.state == Container.ST_RUNNING:
         docker.run_container(instance)
         addroute(instance)

@@ -36,6 +36,12 @@ class Course(models.Model):
             if binding.container.user == user:
                 return binding.container #FIXME: the first container is returned
 
+    @staticmethod
+    def get_usercourse(course_id, user):
+        course = Course.objects.get(id = course_id)
+        for binding in UserCourseCodeBinding.objects.filter(user = user):
+            if binding.coursecode.course == course:
+                return course
 #FIXME:
 
     def list_userflags(self, user):

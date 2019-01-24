@@ -64,8 +64,22 @@ def startprojectcontainer(request, project_id, next_page):
         messages.error(request, 'Cannot start the container -- %s' % e)
     return redirect(next_page)
 
+
+@login_required
 def startcoursecontainer(request, course_id, next_page):
-    return NotImplementedError
+    """Starts the project container."""
+    user = request.user
+    container = None
+    try:
+        container = Container.get_usercoursecontainer(user = user, course_id = course_id, create = True)
+        container.docker_start()
+    except Container.DoesNotExist:
+        messages.error(request, 'Course does not exist')
+    except Exception as e:
+        logger.error('Cannot start the container %s (course id: %s) -- %s' % (container, course_id, e))
+        messages.error(request, 'Cannot start the container -- %s' % e)
+    return redirect(next_page)
+ 
 
 @login_required
 def startcontainer(request, container_id, next_page):

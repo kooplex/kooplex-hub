@@ -140,7 +140,7 @@ class Project(models.Model):
 
     @staticmethod
     def get_userproject(project_id, user):
-        return UserProjectBinding(user = user, project_id = project_id).project
+        return UserProjectBinding.objects.get(user = user, project_id = project_id).project
 
 #FIXME: deprecated
 #    def report_mapping4user(self, user):

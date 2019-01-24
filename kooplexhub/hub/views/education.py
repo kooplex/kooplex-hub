@@ -37,14 +37,12 @@ def courses(request):
     return render(request, 'edu/courses.html', context = context_dict)
 
 
-def hide(request, course_id, next_page):
-    raise NotImplementedError
+@login_required
 def conf_meta(request, course_id, next_page):
     raise NotImplementedError
 
 urlpatterns = [
     url(r'^teaching/?$', teaching, name = 'teaching'),
     url(r'^courses/?$', courses, name = 'courses'),
-    url(r'^hidecourse/(?P<course_id>\d+)/(?P<next_page>\w+:?\w*)$', hide, name = 'hide'), 
     url(r'^configurecourse/(?P<course_id>\d+)/meta/(?P<next_page>\w+:?\w*)$', conf_meta, name = 'conf_meta'), 
 ]

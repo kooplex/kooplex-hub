@@ -6,8 +6,6 @@
     </button>
     {% include 'container/stopremove.html' %}
     {% include 'container/containerstatus.html' %}
-    <a href="{% url 'education:hide' course.id next_page %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="You can hide {{ course.name }} from your list." data-placement="top" style="padding: 3px 6px 6px 6px; float: right;">
-      <span class="oi oi-eye" aria-hidden="true"></span></a>
     <button class="btn" data-toggle="collapse" data-target="#collapse-{{ course.id }}" aria-expanded="true" aria-controls="collapse-{{ course.id }}" style="float: right;">
 {% if container.is_running  %}
       <span class="badge badge-pill badge-success">Using image:<strong>{{ course.image }}</strong></span>
