@@ -44,9 +44,14 @@ class CourseAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'safename', 'description', 'image')
 
 @admin.register(UserCourseCodeBinding)
-class UserCourseBindingAdmin(admin.ModelAdmin):
+class UserCourseCodeBindingAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'coursecode', 'is_teacher', 'is_protected')
-    search_fields = ('user__username', ) #FIXME:, 'course__courseid')
+    search_fields = ('user__username', 'coursecode__courseid')
+
+@admin.register(UserCourseBinding)
+class UserCourseBindingAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'course', 'is_teacher', 'is_protected')
+    search_fields = ('user__username', 'course__name')
 
 @admin.register(Assignment)
 class AssignmentAdmin(admin.ModelAdmin):

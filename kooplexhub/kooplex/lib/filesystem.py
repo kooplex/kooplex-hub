@@ -171,9 +171,10 @@ def garbagedir_course_share(course):
 
 def mkdir_course_workdir(usercoursebinding):
     try:
-        dir_usercourse = Dirname.courseworkdir(usercoursebinding)
-        uid = 0 if usercoursebinding.is_teacher else usercoursebinding.user.profile.userid
-        _mkdir(dir_usercourse, uid = uid, gid = usercoursebinding.course.groupid, mode = 0o770)
+        dir_usercourse = Dirname.usercourseworkdir(usercoursebinding)
+        uid = usercoursebinding.user.profile.userid
+        gid = usercoursebinding.course.groupid
+        _mkdir(dir_usercourse, uid = uid, gid = gid, mode = 0o770)
     except KeyError as e:
         logger.error("Cannot create course dir, KOOPLEX['mountpoint']['usercourse'] is missing")
 
@@ -196,7 +197,7 @@ def revokeacl_course_workdir(usercoursebinding):
 def archive_course_workdir(usercoursebinding):
     if usercoursebinding.is_teacher:
         return
-    dir_usercourse = Dirname.courseworkdir(usercoursebinding)
+    dir_usercourse = Dirname.usercourseworkdir(usercoursebinding)
     archive = Filename.courseworkdir_archive(usercoursebinding)
     _archivedir(dir_usercourse, archive)
 

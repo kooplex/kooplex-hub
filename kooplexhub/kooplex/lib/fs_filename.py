@@ -29,23 +29,19 @@ class Filename:
 
     @staticmethod
     def courseworkdir_archive(usercoursebinding):
-        flag = usercoursebinding.flag if usercoursebinding.flag else '_'
-        return os.path.join(Dirname.mountpoint['home'], usercoursebinding.user.username, "%s.%s.%f.tar.gz" % (usercoursebinding.course.safename, flag, time.time()))
+        return os.path.join(Dirname.mountpoint['home'], usercoursebinding.user.username, "garbage", "%s.%f.tar.gz" % (usercoursebinding.course.safename, time.time()))
 
     @staticmethod
     def assignmentsnapshot(assignment):
-        flag = assignment.flag if assignment.flag else '_'
-        return os.path.join(Dirname.mountpoint['assignment'], assignment.course.safename, flag, 'assignmentsnapshot-%s.%d.tar.gz' % (assignment.safename, assignment.created_at.timestamp()))
+        return os.path.join(Dirname.mountpoint['assignment'], assignment.course.safename, 'assignmentsnapshot-%s.%d.tar.gz' % (assignment.safename, assignment.created_at.timestamp()))
 
     @staticmethod
     def assignmentsnapshot_garbage(assignment):
-        flag = assignment.flag if assignment.flag else '_'
-        return os.path.join(Dirname.mountpoint['garbage'], 'assignmentsnapshot-%s.%s-%s.%d-%f.tar.gz' % (assignment.course.safename, flag, assignment.safename, assignment.created_at.timestamp(), time.time()))
+        return os.path.join(Dirname.mountpoint['garbage'], 'assignmentsnapshot-%s.%s-%s.%d-%f.tar.gz' % (assignment.course.safename, assignment.safename, assignment.created_at.timestamp(), time.time()))
 
     @staticmethod
     def assignmentcollection(userassignmentbinding):
         assignment = userassignmentbinding.assignment
-        flag = assignment.flag if assignment.flag else '_'
-        return os.path.join(Dirname.mountpoint['assignment'], assignment.course.safename, flag, 'submitted-%s-%s.%d.tar.gz' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp()))
+        return os.path.join(Dirname.mountpoint['assignment'], assignment.course.safename, 'submitted-%s-%s.%d.tar.gz' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp()))
 
 

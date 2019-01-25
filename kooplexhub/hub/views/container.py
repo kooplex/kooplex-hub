@@ -166,6 +166,7 @@ def addproject(request, container_id):
             'images': Image.objects.all(),
             'container': container,
             't_projects': table_project,
+            'next_page': 'container:list',
         }
         return render(request, 'container/manage.html', context = context_dict)
     else:

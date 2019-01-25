@@ -5,7 +5,7 @@
   {% elif container.is_stopped %}
      <a href="{% url 'container:remove' container.id next_page %}" role="button" class="btn btn-danger" style="padding: 3px 6px 6px 6px; float: right;">
        <span class="oi oi-fire" aria-hidden="true"></span></a>
-  {% elif container.is_created %}
+  {% elif menu_container %}
      <a href="{% url 'container:destroy' container.id next_page %}" role="button" class="btn btn-danger" style="padding: 3px 6px 6px 6px; float: right;">
        <span class="oi oi-trash" aria-hidden="true"></span></a>
   {% else %}

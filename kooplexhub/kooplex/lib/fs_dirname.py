@@ -3,7 +3,6 @@ import os
 from kooplex.settings import KOOPLEX
 
 class Dirname:
-    #from hub.models import Volume
     mountpoint = KOOPLEX.get('mountpoint', {})
 
     @staticmethod
@@ -12,39 +11,18 @@ class Dirname:
 
     @staticmethod
     def share(userprojectbinding):
-    #    v_share = Volume.objects.get(volumetype = Volume.SHARE['tag'])
-    #    return os.path.join(v_share.mountpoint, userprojectbinding.uniquename)
         v_share = Dirname.mountpoint['share']
         return os.path.join(v_share, userprojectbinding.project.uniquename)
 
     @staticmethod
     def workdir(userprojectbinding):
-    #    v_workdir = Volume.objects.get(volumetype = Volume.WORKDIR['tag'])
-    #    return os.path.join(v_workdir.mountpoint, self.uniquename)
         v_workdir = Dirname.mountpoint['workdir']
         return os.path.join(v_workdir, userprojectbinding.uniquename)
 
     @staticmethod
     def vcpcache(vcproject):
-    #def vcpcache(vcprojectprojectbinding):
         v_vccache = Dirname.mountpoint['git']
         return os.path.join(v_vccache, vcproject.uniquename)
-
-    @staticmethod
-    def containervolume_listfolders(container, volume):
-        if volume.volumetype == volume.HOME['tag']:
-            yield Dirname.userhome(container.user)
-        elif volume.volumetype == volume.SHARE['tag']:
-            for upb in container.userprojectbindings:
-                yield Dirname.share(upb)
-        elif volume.volumetype == volume.WORKDIR['tag']:
-            for upb in container.userprojectbindings:
-                yield Dirname.workdir(upb)
-        elif volume.volumetype == volume.GIT['tag']:
-            for vcppb in container.vcprojectprojectbindings:
-                yield Dirname.vcpcache(vcppb.vcproject)
-        else:
-            raise NotImplementedError(volume.volumetype)
 
     @staticmethod
     def course(course):
@@ -60,9 +38,50 @@ class Dirname:
 
     @staticmethod
     def courseworkdir(usercoursebinding):
-        flag = usercoursebinding.flag if usercoursebinding.flag else '_'
-        return os.path.join(Dirname.mountpoint['usercourse'], usercoursebinding.course.safename, flag) if usercoursebinding.is_teacher else \
-               os.path.join(Dirname.mountpoint['usercourse'], usercoursebinding.course.safename, flag, usercoursebinding.user.username)
+        return os.path.join(Dirname.mountpoint['usercourse'], usercoursebinding.course.safename)
+
+    @staticmethod
+    def usercourseworkdir(usercoursebinding):
+        return os.path.join(Dirname.courseworkdir(usercoursebinding), usercoursebinding.user.username)
+
+
+    @staticmethod
+    def containervolume_listfolders(container, volume):
+        from hub.models import UserCourseBinding
+        if volume.volumetype == volume.HOME['tag']:
+            yield Dirname.userhome(container.user)
+        elif volume.volumetype == volume.SHARE['tag']:
+            for upb in container.userprojectbindings:
+                yield Dirname.share(upb)
+        elif volume.volumetype == volume.WORKDIR['tag']:
+            for upb in container.userprojectbindings:
+                yield Dirname.workdir(upb)
+        elif volume.volumetype == volume.GIT['tag']:
+            for vcppb in container.vcprojectprojectbindings:
+                yield Dirname.vcpcache(vcppb.vcproject)
+        elif volume.volumetype == volume.COURSE_SHARE['tag']:
+            if container.course in container.user.profile.courses_taught():
+                yield Dirname.course(container.course)
+            elif container.course in container.user.profile.courses_attend():
+                yield Dirname.coursepublic(container.course)
+            else:
+                logger.error("Silly situation, cannot map %s %s" % (volume, container))
+        elif volume.volumetype == volume.COURSE_WORKDIR['tag']:
+            try:
+                usercoursebinding = UserCourseBinding.objects.get(user = container.user, course = container.course)
+            except UserCourseBinding.DoesNotExist:
+                logger.error("Silly situation, cannot map %s %s COZ user course binding instance is missing" % (volume, container))
+            if container.course in container.user.profile.courses_taught():
+                yield Dirname.courseworkdir(usercoursebinding)
+            elif container.course in container.user.profile.courses_attend():
+                yield Dirname.usercourseworkdir(usercoursebinding)
+            else:
+                logger.error("Silly situation, cannot map %s %s" % (volume, container))
+        elif volume.volumetype == volume.COURSE_ASSIGNMENTDIR['tag']:
+            yield "FIXME" #Dirname.courseworkdir(container.course)
+        else:
+            raise NotImplementedError("DIRNAME %s" % volume.volumetype)
+
 
     @staticmethod
     def assignmentsource(assignment):

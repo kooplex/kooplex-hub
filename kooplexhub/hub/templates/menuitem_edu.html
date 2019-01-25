@@ -3,7 +3,7 @@
     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownEdu" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Education</a>
     <div class="dropdown-menu" aria-labelledby="navbarDropdownEdu">
       <a class="dropdown-item" href="{% url 'education:teaching' %}">Teaching</a>
-      <a class="dropdown-item" href="{% url 'education:course' %}">Courses</a>
+      <a class="dropdown-item" href="{% url 'education:courses' %}">Courses</a>
     </div>
   </li>
 {% elif user.profile.is_student %}

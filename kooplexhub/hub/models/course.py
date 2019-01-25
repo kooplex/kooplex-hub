@@ -199,6 +199,15 @@ class UserCourseCodeBinding(models.Model):
         return "%s code: %s, teacher: %s" % (self.user, self.coursecode, self.is_teacher)
 
 #FIXME:
+class UserCourseBinding(models.Model):
+    user = models.ForeignKey(User, null = False)
+    course = models.ForeignKey(Course, null = False)
+    is_teacher = models.BooleanField(default = False)
+    is_protected = models.BooleanField(default = False)
+
+    def __str__(self):
+        return "%s code: %s, teacher: %s" % (self.user, self.course, self.is_teacher)
+
     @property
     def assignments(self):
         return []
@@ -219,44 +228,39 @@ def garbagedir_course(sender, instance, **kwargs):
     garbagedir_course_share(instance)
     rmdir_course_workdir(instance)
 
-#FIXME:
-#####@receiver(post_save, sender = Course)
-#####def bind_coursevolumes(sender, instance, created, **kwargs):
-#####    from .volume import Volume, VolumeProjectBinding
-#####    if created:
-#####        for key in [ Volume.HOME, Volume.COURSE_SHARE, Volume.COURSE_WORKDIR, Volume.COURSE_ASSIGNMENTDIR ]:
-#####            try:
-#####                volume = Volume.lookup(key)
-#####                binding = VolumeProjectBinding.objects.create(project = instance.project, volume = volume)
-#####                logger.debug("binding created %s" % binding)
-#####            except Volume.DoesNotExist:
-#####                logger.error("cannot create binding course %s volume %s" % (instance, key['tag']))
-#####
-#FIXME
-#######################@receiver(post_save, sender = UserCourseBinding)
-#######################def mkdir_usercourse(sender, instance, created, **kwargs):
-#######################    from kooplex.lib.filesystem import mkdir_course_workdir, grantacl_course_workdir, grantacl_course_share
-#######################    if created:
-#######################        mkdir_course_workdir(instance)
-#######################        grantacl_course_workdir(instance)
-#######################        grantacl_course_share(instance)
-#######################
-#######################@receiver(pre_delete, sender = UserCourseBinding)
-#######################def movedir_usercourse(sender, instance, **kwargs):
-#######################    from kooplex.lib.filesystem import archive_course_workdir, revokeacl_course_workdir, revokeacl_course_share
-#######################    archive_course_workdir(instance)
-#######################    revokeacl_course_workdir(instance)
-#######################    revokeacl_course_share(instance)
-#######################
-#######################@receiver(post_save, sender = UserCourseBinding)
-#######################def create_usercourseproject(sender, instance, created, **kwargs):
-#######################    from .project import UserProjectBinding
-#######################    if created:
-#######################        try:
-#######################            UserProjectBinding.objects.get(user = instance.user, project = instance.course.project)
-#######################        except UserProjectBinding.DoesNotExist:
-#######################            b = UserProjectBinding.objects.create(user = instance.user, project = instance.course.project)
-#######################            logger.info("New UserProjectBinding %s" % b)
+
+#FIXME: EZ NEM KELL
+@receiver(post_save, sender = Course)
+def bind_coursevolumes(sender, instance, created, **kwargs):
+    from .volume import Volume, VolumeCourseBinding
+    if created:
+        for key in [ Volume.HOME, Volume.COURSE_SHARE, Volume.COURSE_WORKDIR, Volume.COURSE_ASSIGNMENTDIR ]:
+            try:
+                volume = Volume.lookup(key)
+                binding = VolumeCourseBinding.objects.create(course = instance, volume = volume)
+                logger.debug("binding created %s" % binding)
+            except Volume.DoesNotExist:
+                logger.error("cannot create binding course %s volume %s" % (instance, key['tag']))
+
+
+@receiver(post_save, sender = UserCourseBinding)
+def mkdir_usercourse(sender, instance, created, **kwargs):
+    from kooplex.lib.filesystem import mkdir_course_workdir, grantacl_course_workdir, grantacl_course_share
+    if created:
+        mkdir_course_workdir(instance)
+        grantacl_course_workdir(instance)
+        grantacl_course_share(instance)
+
+
+@receiver(pre_delete, sender = UserCourseBinding)
+def movedir_usercourse(sender, instance, **kwargs):
+    from kooplex.lib.filesystem import archive_course_workdir, revokeacl_course_workdir, revokeacl_course_share
+    archive_course_workdir(instance)
+    revokeacl_course_workdir(instance)
+    revokeacl_course_share(instance)
+
+
+
 
 def lookup_course(courseid):
     safe_courseid = standardize_str(courseid)

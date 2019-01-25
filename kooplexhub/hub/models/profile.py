@@ -67,6 +67,9 @@ class Profile(models.Model):
     def courses_taught(self):
         return set([ binding.coursecode.course for binding in self.coursecodebindings(is_teacher = True) ])
 
+    def courses_attend(self):
+        return set([ binding.coursecode.course for binding in self.coursecodebindings(is_teacher = False) ])
+
     def is_courseteacher(self, course):
         for binding in self.coursebindings:
             if binding.course != course:

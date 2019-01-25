@@ -6,6 +6,7 @@ from django.db import models
 from django.contrib.auth.models import User
 
 from .project import Project
+from .course import Course
 from kooplex.settings import KOOPLEX
 
 logger = logging.getLogger(__name__)
@@ -152,5 +153,13 @@ class VolumeProjectBinding(models.Model):
 
     def __str__(self):
        return "%s-%s" % (self.project.name, self.volume.name)
+
+
+class VolumeCourseBinding(models.Model):
+    volume = models.ForeignKey(Volume, null = False)
+    course = models.ForeignKey(Course, null = False)
+
+    def __str__(self):
+       return "%s-%s" % (self.course.name, self.volume.name)
 
 

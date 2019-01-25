@@ -13,7 +13,7 @@ from django.contrib.auth.models import User
 
 from .project import Project, UserProjectBinding
 from .course import Course
-from .volume import Volume, VolumeProjectBinding
+from .volume import Volume
 from .image import Image
 from .versioncontrol import VCProjectProjectBinding
 
@@ -293,7 +293,6 @@ def bind_home(sender, instance, created, **kwargs):
             logger.error('Home not bound -- %s' % e)
 
 
-
 class ProjectContainerBinding(models.Model):
     project = models.ForeignKey(Project, null = False)
     container = models.ForeignKey(Container, null = False)
@@ -481,4 +480,18 @@ class CourseContainerBinding(models.Model):
     container = models.ForeignKey(Container, null = False)
 
     def __str__(self):
-        return "<ProjectContainerBinding %s-%s>" % (self.project, self.container)
+        return "<CourseContainerBinding %s-%s>" % (self.course, self.container)
+
+
+@receiver(post_save, sender = CourseContainerBinding)
+def bind_courserelatedvolumes(sender, instance, created, **kwargs):
+    if created:
+        for key in [ Volume.COURSE_SHARE, Volume.COURSE_WORKDIR, Volume.COURSE_ASSIGNMENTDIR ]:
+            try:
+                volume = Volume.lookup(key)
+                binding = VolumeContainerBinding.objects.create(container = instance.container, volume = volume)
+                logger.debug("binding created %s" % binding)
+            except Volume.DoesNotExist:
+                logger.error("cannot create binding coursecontainerbinding %s volume %s" % (instance, key['tag']))
+
+
