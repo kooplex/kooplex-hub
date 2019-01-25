@@ -17,82 +17,6 @@ from hub.forms import FormAssignment, T_BIND, T_COLLECT_ASSIGNMENT, T_COLLECT_UA
 
 logger = logging.getLogger(__name__)
 
-@login_required
-def new(request, course_id):
-    """Renders assignment management form."""
-    user = request.user
-    logger.debug("user %s, method: %s" % (user, request.method))
-    try:
-        course = Course.objects.get(id = course_id)
-        assert len(list(UserCourseBinding.objects.filter(user = user, course = course, is_teacher = True))) > 0, "%s is not a teacher of course %s" % (user, course)
-    except Exception as e:
-        logger.error("Invalid request with course id %s and user %s -- %s" % (course_id, user, e))
-        return redirect('indexpage')
-    if request.method == 'GET':
-        context_dict = {
-            'submenu': 'new',
-            'course': course,
-            'f_assignment': FormAssignment(user = user, course = course),
-        }
-        return render(request, 'edu/assignments.html', context = context_dict) #FIXME: rename template new_assignment.html
-    elif request.method == 'POST':
-        course_flags = set([ None if f == "_" else f for f in request.POST.getlist("flags") ])
-        name = request.POST.get("name").strip()
-        description = request.POST.get("description").strip()
-        folder = request.POST.get("folder")
-        timenow = now()
-        valid_from = translate_date(request.POST.get('valid_from')) or timenow
-        expires_at = translate_date(request.POST.get('expires_at'))
-        is_massassignment = bool(request.POST.get("is_massassignment"))
-        can_studentsubmit = bool(request.POST.get("can_studentsubmit"))
-        try:
-            assert valid_from >= timenow, "You try to chedule assignment behind time."
-            assert len(name), "You need to provide a name"
-            assert len(course_flags), "You need to select at least one course flag"
-            course = Course.objects.get(id = course.id)
-            goodflags = set([ b.flag for b in UserCourseBinding.objects.filter(course = course, user = user, is_teacher = True) ])
-            course_flags.intersection_update(goodflags)
-            assert len(course_flags), "You are not authorized to save assignment to course flags provided"
-            extra = {}
-            if expires_at:
-                assert (expires_at - valid_from).total_seconds() >= 60, "Expiry is too close to handout. "
-            for flag in course_flags:
-                logger.debug("flag %s" % flag)
-                with transaction.atomic():
-                    assignments = Assignment.objects.filter(
-                        course = course, 
-                        flag = flag, 
-                        name = name, 
-                        creator = user, 
-                        description = description, 
-                        folder = folder, 
-                        can_studentsubmit = can_studentsubmit, 
-                        is_massassignment = is_massassignment, 
-                        expires_at = expires_at
-                        )
-                    if len(assignments):
-                        logger.warning('Prevented from duplicating assignments for course %s and flag %s' % (course.courseid, flag))
-                        messages.warning(request, 'Maybe you double clicked on assignments for course %s and flag %s' % (course.courseid, flag))
-                        continue
-                    Assignment.objects.create(
-                        course = course, 
-                        flag = flag, 
-                        name = name, 
-                        creator = user, 
-                        description = description, 
-                        folder = folder, 
-                        can_studentsubmit = can_studentsubmit, 
-                        is_massassignment = is_massassignment, 
-                        valid_from = valid_from,
-                        expires_at = expires_at
-                    )
-                    logger.info('New assignments for course %s and flag %s' % (course.courseid, flag))
-                    messages.info(request, 'New assignments for course %s and flag %s' % (course.courseid, flag))
-        except Exception as e:
-            logger.error(e)
-            messages.error(request, 'Cannot fully register assignment -- %s' % e)
-            return redirect('assignment:new', course.id)
-    return redirect('indexpage')
 
 
 @login_required
@@ -313,7 +237,6 @@ def search(request):
 #    """Update assignment"""
 
 urlpatterns = [
-    url(r'(?P<course_id>\d+)/new$', new, name = 'new'),
     url(r'(?P<course_id>\d+)/bind$', bind, name = 'bind'),
     url(r'(?P<course_id>\d+)/collect$', teachercollect, name = 'collect'),
     url(r'(?P<course_id>\d+)/feedback$', feedback_handler, name = 'feedback'),

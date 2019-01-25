@@ -7,8 +7,7 @@ from django.dispatch import receiver
 from django.contrib.auth.models import User
 from django.template.defaulttags import register
 
-#FIXME:
-from .course import Course, UserCourseCodeBinding as UserCourseBinding
+from .course import Course, UserCourseBinding
 
 from kooplex.settings import KOOPLEX
 from kooplex.lib import standardize_str, now

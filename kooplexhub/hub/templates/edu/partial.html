@@ -18,8 +18,9 @@
     <div id="collapse-{{ course.id }}" class="collapse" aria-labelledby="heading-{{ course.id }}" data-parent="#courseList">
       <div class="card-body">
         <strong>Description: </strong>{{ course.description }}<br>
+        <strong>Code: </strong>{{ course|coursecodes_joined:user }}<br>
         <div style="float: right;">
-          <a href="{% url 'assignment:new' course.id %}" role="button" class="btn btn-secondary disabled" data-toggle="tooltip" title="You can create and manage assignments related to course {{ course.name }}." data-placement="top">
+          <a href="{% url 'education:newassignment' course.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="You can create and manage assignments related to course {{ course.name }}." data-placement="top">
             <span class="oi oi-pencil" aria-hidden="true"></span></a>
           <a href="{% url 'education:conf_meta' course.id next_page %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Settings of course {{ course.name }}. You can change the image, modify volume attachments." data-placement="top">
             <span class="oi oi-wrench" aria-hidden="true"></span></a>

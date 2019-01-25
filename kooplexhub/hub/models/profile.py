@@ -54,21 +54,24 @@ class Profile(models.Model):
         for container in Container.objects.filter(user = self.user):
              yield container
 
-    def coursecodebindings(self, **kw):
-        from .course import UserCourseCodeBinding
-        for binding in UserCourseCodeBinding.objects.filter(user = self.user, **kw):
-            if binding.coursecode.course:
-                yield binding
+    def usercoursebindings(self, **kw):
+        from .course import UserCourseBinding
+        for binding in UserCourseBinding.objects.filter(user = self.user, **kw):
+            yield binding
 
     @property
     def is_teacher(self):
-        return len(list(self.coursecodebindings(is_teacher = True))) > 0
+        return len(list(self.usercoursebindings(is_teacher = True))) > 0
 
     def courses_taught(self):
-        return set([ binding.coursecode.course for binding in self.coursecodebindings(is_teacher = True) ])
+        return set([ binding.course for binding in self.usercoursebindings(is_teacher = True) ])
+
+    @property
+    def is_student(self):
+        return len(list(self.usercoursebindings(is_teacher = False))) > 0
 
     def courses_attend(self):
-        return set([ binding.coursecode.course for binding in self.coursecodebindings(is_teacher = False) ])
+        return set([ binding.course for binding in self.usercoursebindings(is_teacher = False) ])
 
     def is_courseteacher(self, course):
         for binding in self.coursebindings:
@@ -78,7 +81,7 @@ class Profile(models.Model):
         return False
 
     @property
-    def courseprojects_attended(self):
+    def courseprojects_attended(self): #FIXME
         duplicate = set()
         for coursebinding in self.coursebindings:
             if not coursebinding.is_teacher:
@@ -87,10 +90,6 @@ class Profile(models.Model):
                 yield coursebinding.course.project
                 duplicate.add(coursebinding.course.project)
  
-    @property
-    def is_student(self):
-        return len(list(self.coursecodebindings(is_teacher = False))) > 0
-
     @property
     def functional_volumes(self):
         from .volume import Volume

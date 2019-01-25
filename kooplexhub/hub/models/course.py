@@ -42,25 +42,27 @@ class Course(models.Model):
         for binding in UserCourseCodeBinding.objects.filter(user = user):
             if binding.coursecode.course == course:
                 return course
-#FIXME:
 
-    def list_userflags(self, user):
-        for coursebinding in UserCourseBinding.objects.filter(user = user, course = self):
-            #yield coursebinding.flag if coursebinding.flag else "_"
-            if coursebinding.flag:
-                yield coursebinding.flag
+    def coursecodes(self, user):
+        for coursecode in CourseCode.objects.filter(course = self):
+            try:
+                UserCourseCodeBinding.objects.get(user = user, coursecode = coursecode)
+                yield coursecode
+            except UserCourseCodeBinding.DoesNotExist:
+                pass
 
     @register.filter
-    def lookup_usercourseflags(self, user):
-        return list(self.list_userflags(user))
+    def coursecodes_joined(self, user):
+        return ", ".join([ c.courseid for c in self.coursecodes(user) ])
+
+    def count_coursecodestudents(self, coursecode):
+        assert coursecode.course == self, "Coursecode missmatch %s and %s" % (self, coursecode)
+        return len(UserCourseCodeBinding.objects.filter(coursecode = coursecode, is_teacher = False))
 
     @register.filter
     def lookup_userassignmentbindings(self, student):
         from .assignment import Assignment, UserAssignmentBinding
-        flags = self.lookup_usercourseflags(student)
-        if len(flags) > 0:
-            logger.error("Student %s has more flags (%s) for course %s, assuming first item" % (student, flags, self.courseid))
-        flag = None if flags[0] == '_' else flags[0]
+#FIXME
         assignments = list(Assignment.objects.filter(course = self, flag = flag))
         for binding in UserAssignmentBinding.objects.filter(user = student):
             if binding.assignment in assignments:
@@ -85,9 +87,6 @@ class Course(models.Model):
                     bindings.add(binding)
         return bindings
 
-    @register.filter
-    def count_students4flag(self, flag):
-        return len(UserCourseBinding.objects.filter(course = self, flag = flag, is_teacher = False))
 
     @property
     def groupid(self):
@@ -215,6 +214,18 @@ class UserCourseBinding(models.Model):
         for a in Assignment.objects.filter(course = self.course, flag = self.flag):
             yield a
 
+@receiver(post_save, sender = UserCourseCodeBinding)
+def map_uccb2ucb(sender, instance, created, **kwargs):
+    if instance.coursecode.course == None:
+        logger.debug("No mapping this time %s has no course associated" % instance)
+        return
+    try:
+        b = UserCourseBinding.objects.get(user = instance.user, course = instance.coursecode.course, is_teacher = instance.is_teacher)
+        logger.debug("Mapping for %s is already present %s" % (instance, b))
+        return
+    except UserCourseBinding.DoesNotExist:
+        b = UserCourseBinding.objects.create(user = instance.user, course = instance.coursecode.course, is_teacher = instance.is_teacher)
+        logger.info("New mapping for %s: %s" % (instance, b))
 
 @receiver(post_save, sender = Course)
 def mkdir_course(sender, instance, created, **kwargs):

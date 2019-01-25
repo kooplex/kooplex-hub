@@ -45,10 +45,8 @@ class FormAssignment(forms.ModelForm):
             self.fields["folder"].choices = C_folder
             self.fields["folder"].widget.attrs["style"] = "width: 27ex"
             if user is not None:
-                C_flags = []
-                for flag in course.lookup_usercourseflags(user):
-                    C_flags.append( (flag, "%s (%d students)" % (flag, course.count_students4flag(flag))) )
-                self.fields["flags"] = forms.MultipleChoiceField(label = "Courses", choices = C_flags, help_text = _('Select those courses for which this assignment applies for.'))
+                C_courseids = [ ( coursecode.courseid, "%s (%d students)" % (coursecode.courseid, course.count_coursecodestudents(coursecode)) ) for coursecode in course.coursecodes(user) ]
+                self.fields["flags"] = forms.MultipleChoiceField(label = "Courses", choices = C_courseids, help_text = _('Select those courses for which this assignment applies for.'))
                 self.fields["flags"].widget.attrs["style"] = "width: 27ex"
         for field in self.fields:
             help_text = self.fields[field].help_text
