@@ -58,12 +58,12 @@ class AssignmentAdmin(admin.ModelAdmin):
     list_display = ('id', 'coursecode', 'name', 'safename', 'folder', 'creator', 'description', 'is_massassignment', 'remove_collected', 'created_at', 'valid_from', 'expires_at', 'can_studentsubmit')
     search_fields = ('creator__username', 'coursecode__courseid')
 
-#@admin.register(UserAssignmentBinding)
-#class UserAssignmentBindingAdmin(admin.ModelAdmin):
-#    list_display = ('id', 'assignment_name', 'user', 'state', 'received_at', 'valid_from', 'expires_at', 'submitted_at', 'corrector', 'corrected_at', 'score', 'feedback_text')
-#    def assignment_name(self, instance):
-#        return instance.assignment.name
-#    search_fields = ('user__username', 'assignment__name' )
+@admin.register(UserAssignmentBinding)
+class UserAssignmentBindingAdmin(admin.ModelAdmin):
+    list_display = ('id', 'assignment_name', 'user', 'state', 'received_at', 'valid_from', 'expires_at', 'submitted_at', 'corrector', 'corrected_at', 'score', 'feedback_text')
+    def assignment_name(self, instance):
+        return instance.assignment.name
+    search_fields = ('user__username', 'assignment__name' )
 
 @admin.register(Volume)
 class VolumeAdmin(admin.ModelAdmin):

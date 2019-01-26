@@ -2,15 +2,19 @@ import logging
 
 from django.db import transaction
 from django.conf.urls import url
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.shortcuts import redirect, render
 from django_tables2 import RequestConfig
 
 from hub.models import CourseCode, Course, UserCourseCodeBinding, UserCourseBinding
-from hub.models import Assignment
+from hub.models import Assignment, UserAssignmentBinding
+
 from kooplex.lib import now, translate_date
+
 from hub.forms import FormAssignment
+from hub.forms import T_BIND#, T_COLLECT_ASSIGNMENT, T_COLLECT_UABINDING, T_CORRECT
 
 logger = logging.getLogger(__name__)
 
@@ -59,10 +63,10 @@ def newassignment(request, course_id):
         return redirect('education:teaching')
     if request.method == 'GET':
         context_dict = {
-            'menu_teaching': 'active',
-            'submenu': 'new',
             'course': course,
             'f_assignment': FormAssignment(user = user, course = course),
+            'menu_teaching': 'active',
+            'submenu': 'new',
             'next_page': 'education:teaching',
         }
         return render(request, 'edu/assignments.html', context = context_dict)
@@ -120,17 +124,77 @@ def newassignment(request, course_id):
                     logger.info('New assignments for course code %s' % (coursecode))
                     messages.info(request, 'New assignments for course code %s' % (coursecode))
         except Exception as e:
-            raise
             logger.error(e)
             messages.error(request, 'Cannot fully register assignment -- %s' % e)
             return redirect('education:newassignment', course.id)
-    return redirect('indexpage')
+    return redirect('education:teaching')
 
 
+@login_required
+def bindassignment(request, course_id):
+    from django.contrib.auth.models import User
+    """Bind assignment and user"""
+#FIXME: implement search
+    user = request.user
+    logger.debug("user %s, method: %s" % (user, request.method))
+    try:
+        course = Course.objects.get(id = course_id)
+        assert len(list(UserCourseBinding.objects.filter(user = user, course = course, is_teacher = True))) > 0, "%s is not a teacher of course %s" % (user, course)
+    except Exception as e:
+        logger.error("Invalid request with course id %s and user %s -- %s" % (course_id, user, e))
+        return redirect('indexpage')
+    if request.method == 'GET':
+        table_bind = T_BIND(course.bindableassignments())
+        RequestConfig(request).configure(table_bind)
+        context_dict = {
+            'course': course,
+            't_bind': table_bind,
+            'menu_teaching': 'active',
+            'submenu': 'bind',
+            'next_page': 'education:teaching', 
+        }
+        return render(request, 'edu/assignments.html', context = context_dict)
+    elif request.method == 'POST':
+        thetime = now()
+        oopses = 0
+        done = 0
+        for br in request.POST.getlist('binding_representation'):
+            user_id, assignment_id = br.split('_')
+            try:
+                assignment = Assignment.objects.get(id = assignment_id)
+                student = User.objects.get(id = user_id)
+                assert student in assignment.list_students_bindable(), "Cannot bind %s to %s" % (student, assignment)
+                assert user.profile.is_coursecodeteacher(assignment.coursecode), "You are not a teacher of %s" % assignment.coursecode
+            except Exception as e:
+                raise
+                logger.error("oops -- %s" % e)
+                oopses += 1
+                continue
+            try:
+                binding = UserAssignmentBinding.objects.get(user = student, assignment = assignment)
+                logger.error("Will not create a duplicate %s" % binding)
+                messages.error(request, "Prevented from creating a duplicate assignment %s for student %s" % (assignment.name, student))
+            except UserAssignmentBinding.DoesNotExist:
+                pass
+            valid_from = translate_date(request.POST.get('valid_from_%s' % br))
+            expires_at = translate_date(request.POST.get('expires_at_%s' % br))
+            if valid_from and valid_from > thetime:
+                UserAssignmentBinding.objects.create(user = student, assignment = assignment, valid_from = valid_from, expires_at = expires_at, state = UserAssignmentBinding.ST_QUEUED)
+            else:
+                UserAssignmentBinding.objects.create(user = student, assignment = assignment, valid_from = valid_from, expires_at = expires_at)
+    #FIXME> expiry check in model init!
+            messages.info(request, "Creating an assignment %s for student %s" % (assignment.name, student))
+        url_next = reverse('education:bindassignment', kwargs = {'course_id': course_id})
+        pager = request.POST.get('pager')
+        logger.debug("next: %s %s" % (url_next, pager)) 
+        return redirect(url_next + "?%s" % pager) if pager else redirect('education:bindassignment', course_id)
+    else:
+        return redirect('education:teaching')
 
 urlpatterns = [
     url(r'^teaching/?$', teaching, name = 'teaching'),
     url(r'^courses/?$', courses, name = 'courses'),
     url(r'^configurecourse/(?P<course_id>\d+)/meta/(?P<next_page>\w+:?\w*)$', conf_meta, name = 'conf_meta'), 
     url(r'^newassignemnt/(?P<course_id>\d+)$', newassignment, name = 'newassignment'),
+    url(r'^bindassignment/(?P<course_id>\d+)$', bindassignment, name = 'bindassignment'),
 ]

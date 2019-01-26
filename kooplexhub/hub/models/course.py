@@ -154,12 +154,13 @@ class Course(models.Model):
     def bindableassignments(self):
         from .assignment import Assignment, UserAssignmentBinding
         bindable = []
-        for assignment in Assignment.objects.filter(course = self, is_massassignment = False):
-            for student in assignment.list_students_bindable():
-                binding = UserAssignmentBinding(assignment = assignment, user = student)
-                if not binding in bindable:
-                    bindable.append(binding)
-                    yield binding
+        for coursecode in CourseCode.objects.filter(course = self):
+            for assignment in Assignment.objects.filter(coursecode = coursecode, is_massassignment = False):
+                for student in assignment.list_students_bindable():
+                    binding = UserAssignmentBinding(assignment = assignment, user = student)
+                    if not binding in bindable:
+                        bindable.append(binding)
+                        yield binding
 
 
     @register.filter

@@ -73,12 +73,13 @@ class Profile(models.Model):
     def courses_attend(self):
         return set([ binding.course for binding in self.usercoursebindings(is_teacher = False) ])
 
-    def is_courseteacher(self, course):
-        for binding in self.coursebindings:
-            if binding.course != course:
-                continue
-            return binding.is_teacher
-        return False
+    def is_coursecodeteacher(self, coursecode):
+        from .course import UserCourseCodeBinding
+        try:
+            UserCourseCodeBinding.objects.get(user = self.user, coursecode = coursecode, is_teacher = True)
+            return True
+        except UserCourseCodeBinding.DoesNotExist:
+            return False
 
     @property
     def courseprojects_attended(self): #FIXME

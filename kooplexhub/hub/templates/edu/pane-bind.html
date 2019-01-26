@@ -1,13 +1,21 @@
-<form id="assignmentbind-form-{{ course.id }}" class="form-horizontal" action="{% url 'assignment:bind' course.id %}" method="post">
+<form id="assignmentbind-form-{{ course.id }}" class="form-horizontal" action="{% url 'education:bindassignment' course.id %}" method="post">
   {% csrf_token %}
   <input type="hidden" name="course_id" value="{{ course.id }}">
   {% load render_table from django_tables2 %}
   {% if t_bind.data|length > 0 %}
     <div class="alert alert-warning">Select assignment and student to bind right now.</div>
-      <div style="position: relative">
-        {% render_table t_bind %}
-	<input type="hidden" name="pager" value="{{ pager }}">
-      </div>
+    <div  class="alert alert-warning">
+      <input type="text" name="name" placeholder="Name" value="{{ search_name }}">
+      <input type="text" name="username" placeholder="Neptun code" value="{{ search_username }}">
+      <input type="text" name="username" placeholder="Assignment" value="{{ search_assignment }}">
+      <button type="submit" class="btn btn-primary" name="button" value="search">Search</button>
+      <input type="hidden" name="pager" value="{{ pager }}">
+      <input type="hidden" name="sort" value="{{ sort }}">
+    </div>
+    <div style="position: relative">
+      {% render_table t_bind %}
+      <input type="hidden" name="pager" value="{{ pager }}">
+    </div>
     <div class="modal-footer">
       <button type="submit" class="btn btn-default" name="button" value="apply"> Bind</button>
     </div>

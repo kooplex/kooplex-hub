@@ -161,62 +161,6 @@ def feedback_handler(request, course_id):
         return redirect('indexpage')
 
 
-@login_required
-def bind(request, course_id):
-    from django.contrib.auth.models import User
-    """Bind assignment and user"""
-    user = request.user
-    logger.debug("user %s, method: %s" % (user, request.method))
-    try:
-        course = Course.objects.get(id = course_id)
-        assert len(list(UserCourseBinding.objects.filter(user = user, course = course, is_teacher = True))) > 0, "%s is not a teacher of course %s" % (user, course)
-        table_bind = T_BIND(course.bindableassignments())
-        RequestConfig(request).configure(table_bind)
-    except Exception as e:
-        logger.error("Invalid request with course id %s and user %s -- %s" % (course_id, user, e))
-        return redirect('indexpage')
-    if request.method == 'GET':
-        context_dict = {
-            'submenu': 'bind',
-            'course': course,
-            't_bind': table_bind,
-        }
-        return render(request, 'edu/assignments.html', context = context_dict) #FIXME: rename template new_assignment.html
-    elif request.method == 'POST':
-        thetime = now()
-        oopses = 0
-        done = 0
-        for br in request.POST.getlist('binding_representation'):
-            user_id, assignment_id = br.split('_')
-            try:
-                assignment = Assignment.objects.get(id = assignment_id)
-                student = User.objects.get(id = user_id)
-                assert student in assignment.list_students_bindable(), "Cannot bind %s to %s" % (student, assignment)
-                assert user.profile.is_courseteacher(assignment.course), "You are not a teacher of the course %s" % assignment.course
-            except Exception as e:
-                logger.error("oops -- %s" % e)
-                oopses += 1
-                continue
-            try:
-                binding = UserAssignmentBinding.objects.get(user = student, assignment = assignment)
-                logger.error("Will not create a duplicate %s" % binding)
-                messages.error(request, "Prevented from creating a duplicate assignment %s for student %s" % (assignment.name, student))
-            except UserAssignmentBinding.DoesNotExist:
-                pass
-            valid_from = translate_date(request.POST.get('valid_from_%s' % br))
-            expires_at = translate_date(request.POST.get('expires_at_%s' % br))
-            if valid_from and valid_from > thetime:
-                UserAssignmentBinding.objects.create(user = student, assignment = assignment, valid_from = valid_from, expires_at = expires_at, state = UserAssignmentBinding.ST_QUEUED)
-            else:
-                UserAssignmentBinding.objects.create(user = student, assignment = assignment, valid_from = valid_from, expires_at = expires_at)
-    #FIXME> expiry check in model init!
-            messages.info(request, "Creating an assignment %s for student %s" % (assignment.name, student))
-        url_next = reverse('assignment:bind', kwargs = {'course_id': course_id})
-        pager = request.POST.get('pager')
-        logger.debug("next: %s %s" % (url_next, pager)) 
-        return redirect(url_next + "?%s" % pager) if pager else redirect('assignment:bind', course_id)
-    else:
-        return redirect('indexpage')
     
 @login_required
 def search(request):
@@ -237,7 +181,6 @@ def search(request):
 #    """Update assignment"""
 
 urlpatterns = [
-    url(r'(?P<course_id>\d+)/bind$', bind, name = 'bind'),
     url(r'(?P<course_id>\d+)/collect$', teachercollect, name = 'collect'),
     url(r'(?P<course_id>\d+)/feedback$', feedback_handler, name = 'feedback'),
     url(r'submit/?$', studentsubmit, name = 'submit'),

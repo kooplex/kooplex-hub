@@ -16,7 +16,7 @@
     <h5><span class="badge badge-secondary">{{ course }} manage assignments</span></h5>
     <ul class="navbar-nav mr-auto">
       <li class="nav-item"><a {% if submenu == 'new' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'education:newassignment' course.id %}" {% endif %}>Create</a></li>
-      <li class="nav-item"><a {% if submenu == 'bind' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'assignment:bind' course.id %}" {% endif %}>Assign</a></li>
+      <li class="nav-item"><a {% if submenu == 'bind' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'education:bindassignment' course.id %}" {% endif %}>Assign</a></li>
       <li class="nav-item"><a {% if submenu == 'collect' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'assignment:collect' course.id %}" {% endif %}>Collect</a></li>
       <li class="nav-item"><a {% if submenu == 'feedback' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'assignment:feedback' course.id %}" {% endif %}>Feedback</a></li>
     </ul>

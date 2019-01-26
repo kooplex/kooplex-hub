@@ -91,27 +91,6 @@ class T_CORRECT(tables.Table, tableUserAssignmentCommon):
         exclude = ('received_at', 'valid_from', 'expires_at', 'corrected_at')
         attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
 
-class T_BIND(tables.Table, tableUserAssignmentCommon):
-    selection = tables.Column(verbose_name = 'Select', empty_values = (), orderable = False)
-    valid_from = tables.DateTimeColumn(verbose_name = 'Handout', orderable = False, empty_values = ())
-    expires_at = tables.DateTimeColumn(verbose_name = 'Collect', orderable = False, empty_values = ())
-    def render_valid_from(self, record):
-        representation = "%d_%d" % (record.user.id, record.assignment.id)
-        value_attr = "" if record.valid_from is None else str(record.valid_from)
-        return format_html('<input type="text" name="valid_from_%s" data-placement="bottom" data-toggle="tooltip" id="id_valid_from_%s" class="datetimepicker" title="If unspecified the assignment folder is populated to students right away." %s/>' % (representation, representation, value_attr) )
-    def render_expires_at(self, record):
-        representation = "%d_%d" % (record.user.id, record.assignment.id)
-        value_attr = "" if record.expires_at is None else str(record.expires_at)
-        return format_html('<input type="text" name="expires_at_%s" data-placement="bottom" data-toggle="tooltip" id="id_expires_at_%s" class="datetimepicker" title="If unspecified either you or students need to take care of collecting or submitting assignments respectively." %s/>' % (representation, representation, value_attr) )
-    def render_selection(self, record):
-        representation = "%d_%d" % (record.user.id, record.assignment.id)
-        return format_html('<input type="checkbox" name="binding_representation" id="cb_%s" value="%s" />' % (representation, representation) )
-    
-    class Meta:
-        model = UserAssignmentBinding
-        sequence = ('selection', 'user', 'assignment', 'valid_from', 'expires_at')
-        exclude = ('id', 'state', 'received_at', 'submitted_at', 'corrector', 'corrected_at')
-        attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
 
 class StudentSelectionColumn(tables.Column):
     def render(self, record):
@@ -121,14 +100,49 @@ class StudentSelectionColumn(tables.Column):
 class T_SUBMIT(tables.Table, tableUserAssignmentCommon):
     id = StudentSelectionColumn(verbose_name = 'Select', orderable = False)
     folder = tables.Column(verbose_name = 'Folder', orderable = False, empty_values = ())
-    course = tables.Column(verbose_name = 'Course', orderable = False, empty_values = ())
+    coursecode = tables.Column(verbose_name = 'Course', orderable = False, empty_values = ())
     def render_folder(self, record):
         return str(record.assignment.folder)
     def render_course(self, record):
-        c = record.assignment.course
-        return format_html('<span data-placement="bottom" data-toggle="tooltip" title="%s">%s</span>' % (c.description, c.courseid))
+        coursecode = record.assignment.coursecode
+        course = coursecode.course
+        return format_html('<span data-placement="bottom" data-toggle="tooltip" title="%s">%s (%s)</span>' % (course.description, coursecode.courseid, course.name))
     class Meta:
         model = UserAssignmentBinding
-        sequence = ('id', 'course', 'assignment', 'folder', 'received_at', 'expires_at', 'state')
+        sequence = ('id', 'coursecode', 'assignment', 'folder', 'received_at', 'expires_at', 'state')
         exclude = ('user', 'valid_from', 'submitted_at', 'corrector', 'corrected_at')
+        attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
+
+
+
+
+
+
+class T_BIND(tables.Table, tableUserAssignmentCommon):
+    selection = tables.Column(verbose_name = 'Select', empty_values = (), orderable = False)
+    valid_from = tables.DateTimeColumn(verbose_name = 'Handout', orderable = False, empty_values = ())
+    expires_at = tables.DateTimeColumn(verbose_name = 'Collect', orderable = False, empty_values = ())
+    username = tables.Column(verbose_name = 'Username', orderable = False, empty_values = ())
+
+    def render_username(self, record):
+        return format_html(record.user.username)
+
+    def render_valid_from(self, record):
+        representation = "%d_%d" % (record.user.id, record.assignment.id)
+        value_attr = "" if record.valid_from is None else str(record.valid_from)
+        return format_html('<input type="text" name="valid_from_%s" data-placement="bottom" data-toggle="tooltip" id="id_valid_from_%s" class="datetimepicker" title="If unspecified the assignment folder is populated to students right away." %s/>' % (representation, representation, value_attr) )
+
+    def render_expires_at(self, record):
+        representation = "%d_%d" % (record.user.id, record.assignment.id)
+        value_attr = "" if record.expires_at is None else str(record.expires_at)
+        return format_html('<input type="text" name="expires_at_%s" data-placement="bottom" data-toggle="tooltip" id="id_expires_at_%s" class="datetimepicker" title="If unspecified either you or students need to take care of collecting or submitting assignments respectively." %s/>' % (representation, representation, value_attr) )
+
+    def render_selection(self, record):
+        representation = "%d_%d" % (record.user.id, record.assignment.id)
+        return format_html('<input type="checkbox" name="binding_representation" id="cb_%s" value="%s" />' % (representation, representation) )
+    
+    class Meta:
+        model = UserAssignmentBinding
+        sequence = ('selection', 'user', 'username', 'assignment', 'valid_from', 'expires_at')
+        exclude = ('id', 'state', 'received_at', 'submitted_at', 'corrector', 'corrected_at', 'score', 'feedback_text')
         attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
