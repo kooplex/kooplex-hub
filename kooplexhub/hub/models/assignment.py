@@ -7,7 +7,7 @@ from django.dispatch import receiver
 from django.contrib.auth.models import User
 from django.template.defaulttags import register
 
-from .course import Course, UserCourseBinding
+from .course import CourseCode, UserCourseCodeBinding, UserCourseBinding
 
 from kooplex.settings import KOOPLEX
 from kooplex.lib import standardize_str, now
@@ -16,9 +16,8 @@ from kooplex.lib.filesystem import Dirname
 logger = logging.getLogger(__name__)
 
 class Assignment(models.Model):
-    course = models.ForeignKey(Course, null = False)
-    flag = models.CharField(max_length = 32, null = True)
     name = models.CharField(max_length = 32, null = False)
+    coursecode = models.ForeignKey(CourseCode, null = False)
     creator = models.ForeignKey(User, null = False)
     description = models.TextField(max_length = 500)
     folder = models.CharField(max_length = 32, null = False)
@@ -26,10 +25,11 @@ class Assignment(models.Model):
     valid_from = models.DateTimeField(null = False)
     expires_at = models.DateTimeField(null = True)
     can_studentsubmit = models.BooleanField(default = True)
+    remove_collected = models.BooleanField(default = False)
     is_massassignment = models.BooleanField(default = True)
 
     def __str__(self):
-        return "%s [%s/%s@%s]" % (self.name, self.course.courseid, self.flag, self.creator)
+        return "%s [%s@%s]" % (self.name, self.coursecode, self.creator)
 
     @property
     def safename(self):
@@ -37,11 +37,11 @@ class Assignment(models.Model):
 
     def list_students_bindable(self):
         students = []
-        for usercoursebinding in UserCourseBinding.objects.filter(course = self.course, flag = self.flag, is_teacher = False):
+        for usercoursecodebinding in UserCourseCodeBinding.objects.filter(coursecode = self.coursecode, is_teacher = False):
             try:
-                UserAssignmentBinding.objects.get(assignment = self, user = usercoursebinding.user)
+                UserAssignmentBinding.objects.get(assignment = self, user = usercoursecodebinding.user)
             except UserAssignmentBinding.DoesNotExist:
-                students.append(usercoursebinding.user)
+                students.append(usercoursecodebinding.user)
         return students
 
     ST_SCHEDULED, ST_VALID, ST_EXPIRED = range(3)

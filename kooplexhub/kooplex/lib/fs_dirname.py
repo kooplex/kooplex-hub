@@ -44,6 +44,10 @@ class Dirname:
     def usercourseworkdir(usercoursebinding):
         return os.path.join(Dirname.courseworkdir(usercoursebinding), usercoursebinding.user.username)
 
+    @staticmethod
+    def assignmentsource(assignment):
+        return os.path.join(Dirname.courseprivate(assignment.coursecode.course), assignment.folder)
+
 
     @staticmethod
     def containervolume_listfolders(container, volume):
@@ -84,13 +88,9 @@ class Dirname:
 
 
     @staticmethod
-    def assignmentsource(assignment):
-        return os.path.join(Dirname.courseprivate(assignment.course), assignment.folder)
-
-    @staticmethod
     def assignmentworkdir(userassignmentbinding):
         from hub.models import UserCourseBinding
-        usercoursebinding = UserCourseBinding.objects.get(user = userassignmentbinding.user, course = userassignmentbinding.assignment.course, flag = userassignmentbinding.assignment.flag)
+        usercoursebinding = UserCourseBinding.objects.get(user = userassignmentbinding.user, course = userassignmentbinding.assignment.courseid.course)
         wd = Dirname.courseworkdir(usercoursebinding)
         return os.path.join(wd, userassignmentbinding.assignment.safename)
 
@@ -98,4 +98,4 @@ class Dirname:
     def assignmentcorrectdir(userassignmentbinding):
         assignment = userassignmentbinding.assignment
         flag = assignment.flag if assignment.flag else '_'
-        return os.path.join(Dirname.mountpoint['assignment'], assignment.course.safename, flag, 'feedback-%s-%s.%d' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp()))
+        return os.path.join(Dirname.mountpoint['assignment'], assignment.coursecode.course.safename, 'feedback-%s-%s.%d' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp()))

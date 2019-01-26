@@ -22,15 +22,17 @@ class FormAssignment(forms.ModelForm):
 
     class Meta:
         model = Assignment
-        fields = [ 'name', 'folder', 'description', 'can_studentsubmit', 'is_massassignment', 'valid_from', 'expires_at', ]
+        fields = [ 'name', 'folder', 'description', 'can_studentsubmit', 'remove_collected', 'is_massassignment', 'valid_from', 'expires_at', ]
         labels = {
             'name': _('The name of the assignment'),
             'description': _('A short description of the excercises'),
             'can_studentsubmit': _('Student can submit earlier'),
+            'remove_collected': _('Remove folder when collecting'),
             'is_massassignment': _('All students receive'),
         }
         help_texts = {
             'can_studentsubmit': _('Student can submit earlier even when you set an expiry date.'),
+            'remove_collected': _('Remove student\'s folder when submitted'),
             'is_massassignment': _('All students receive the same set of excercises.'),
         }
 
@@ -45,9 +47,9 @@ class FormAssignment(forms.ModelForm):
             self.fields["folder"].choices = C_folder
             self.fields["folder"].widget.attrs["style"] = "width: 27ex"
             if user is not None:
-                C_courseids = [ ( coursecode.courseid, "%s (%d students)" % (coursecode.courseid, course.count_coursecodestudents(coursecode)) ) for coursecode in course.coursecodes(user) ]
-                self.fields["flags"] = forms.MultipleChoiceField(label = "Courses", choices = C_courseids, help_text = _('Select those courses for which this assignment applies for.'))
-                self.fields["flags"].widget.attrs["style"] = "width: 27ex"
+                C_courseids = [ ( coursecode.id, "%s (%d students)" % (coursecode.courseid, course.count_coursecodestudents(coursecode)) ) for coursecode in course.coursecodes(user) ]
+                self.fields["coursecodes"] = forms.MultipleChoiceField(label = "Course codes", choices = C_courseids, help_text = _('Select those courses for which this assignment applies for.'))
+                self.fields["coursecodes"].widget.attrs["style"] = "width: 27ex"
         for field in self.fields:
             help_text = self.fields[field].help_text
             self.fields[field].help_text = None

@@ -63,7 +63,7 @@ class Course(models.Model):
     def lookup_userassignmentbindings(self, student):
         from .assignment import Assignment, UserAssignmentBinding
 #FIXME
-        assignments = list(Assignment.objects.filter(course = self, flag = flag))
+        assignments = list(Assignment.objects.filter(course = self))
         for binding in UserAssignmentBinding.objects.filter(user = student):
             if binding.assignment in assignments:
                 yield binding
@@ -108,10 +108,14 @@ class Course(models.Model):
         from .assignment import Assignment
         candidates = []
         for d in self.listdirs_private():
+            okay = True
             if d in ['.ipynb_checkpoints']:
                 continue
-            assignments = set(Assignment.objects.filter(course = self, folder = d))
-            if len(assignments) == 0:
+            for assignment in Assignment.objects.filter(folder = d):
+                if assignment.coursecode.course == self:
+                    okay = False
+                    break
+            if okay:
                 candidates.append(d)
         return candidates
 
@@ -211,7 +215,7 @@ class UserCourseBinding(models.Model):
     def assignments(self):
         return []
         from .assignment import Assignment
-        for a in Assignment.objects.filter(course = self.course, flag = self.flag):
+        for a in Assignment.objects.filter(course = self.course):
             yield a
 
 @receiver(post_save, sender = UserCourseCodeBinding)
@@ -294,16 +298,16 @@ def update_UserCourseBindings(user, newbindings):
     bindings = list(UserCourseBinding.objects.filter(user = user))
     for newbinding in newbindings:
         course = newbinding['course']
-        flag = newbinding['flag']
+        #flag = newbinding['flag']
         is_teacher = newbinding['is_teacher']
         try:
-            binding = UserCourseBinding.objects.get(user = user, course = course, flag = flag, is_teacher = is_teacher)
+            binding = UserCourseBinding.objects.get(user = user, course = course, is_teacher = is_teacher)
             if binding in bindings:
                 bindings.remove(binding)
             continue
         except UserCourseBinding.DoesNotExist:
-            UserCourseBinding.objects.create(user = user, course = course, flag = flag, is_teacher = is_teacher)
-            logger.info("User %s binds to course %s/%s (is teacher: %s)" % (user, course, flag, is_teacher))
+            UserCourseBinding.objects.create(user = user, course = course, is_teacher = is_teacher)
+            logger.info("User %s binds to course %s/%s (is teacher: %s)" % (user, course, is_teacher))
     for binding in bindings:
         if binding.is_protected:
             logger.warn("According to IDP user %s is not bound to course %s any longer. Binding is not removed because it is protected" % (user, binding.course))

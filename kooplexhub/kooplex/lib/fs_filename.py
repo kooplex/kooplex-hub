@@ -33,15 +33,15 @@ class Filename:
 
     @staticmethod
     def assignmentsnapshot(assignment):
-        return os.path.join(Dirname.mountpoint['assignment'], assignment.course.safename, 'assignmentsnapshot-%s.%d.tar.gz' % (assignment.safename, assignment.created_at.timestamp()))
+        return os.path.join(Dirname.mountpoint['assignment'], assignment.coursecode.course.safename, 'assignmentsnapshot-%s.%d.tar.gz' % (assignment.safename, assignment.created_at.timestamp()))
 
     @staticmethod
     def assignmentsnapshot_garbage(assignment):
-        return os.path.join(Dirname.mountpoint['garbage'], 'assignmentsnapshot-%s.%s-%s.%d-%f.tar.gz' % (assignment.course.safename, assignment.safename, assignment.created_at.timestamp(), time.time()))
+        return os.path.join(Dirname.mountpoint['garbage'], 'assignmentsnapshot-%s.%s-%s.%d-%f.tar.gz' % (assignment.coursecode.course.safename, assignment.safename, assignment.created_at.timestamp(), time.time()))
 
     @staticmethod
     def assignmentcollection(userassignmentbinding):
         assignment = userassignmentbinding.assignment
-        return os.path.join(Dirname.mountpoint['assignment'], assignment.course.safename, 'submitted-%s-%s.%d.tar.gz' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp()))
+        return os.path.join(Dirname.mountpoint['assignment'], assignment.coursecode.course.safename, 'submitted-%s-%s.%d.tar.gz' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp()))
 
 

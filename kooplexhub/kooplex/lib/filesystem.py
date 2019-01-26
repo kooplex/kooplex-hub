@@ -149,8 +149,12 @@ def mkdir_course_share(course):
 def grantacl_course_share(usercoursebinding):
     try:
         dir_coursepublic = Dirname.coursepublic(usercoursebinding.course)
+        dir_courseprivate = Dirname.courseprivate(usercoursebinding.course)
         if usercoursebinding.is_teacher:
             bash("setfacl -R -m u:%d:rwX %s" % (usercoursebinding.user.profile.userid, dir_coursepublic))
+            bash("setfacl -R -m u:%d:rwX %s" % (usercoursebinding.user.profile.userid, dir_courseprivate))
+        else:
+            bash("setfacl -R -m u:%d:rX %s" % (usercoursebinding.user.profile.userid, dir_coursepublic))
         logger.debug("acl granted %s" % usercoursebinding)
     except Exception as e:
         logger.error("Cannot grant acl %s -- %s" % (usercoursebinding, e))
@@ -158,8 +162,10 @@ def grantacl_course_share(usercoursebinding):
 def revokeacl_course_share(usercoursebinding):
     try:
         dir_coursepublic = Dirname.coursepublic(usercoursebinding.course)
+        dir_courseprivate = Dirname.courseprivate(usercoursebinding.course)
         if usercoursebinding.is_teacher:
-            bash("setfacl -R -x u:%d %s" % (usercoursebinding.user.profile.userid, dir_coursepublic))
+            bash("setfacl -R -x u:%d %s" % (usercoursebinding.user.profile.userid, dir_courseprivate))
+        bash("setfacl -R -x u:%d %s" % (usercoursebinding.user.profile.userid, dir_coursepublic))
         logger.debug("acl revoked %s" % usercoursebinding)
     except Exception as e:
         logger.error("Cannot revoke acl %s -- %s" % (usercoursebinding, e))
