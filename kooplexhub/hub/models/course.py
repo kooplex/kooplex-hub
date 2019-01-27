@@ -56,7 +56,7 @@ class Course(models.Model):
         return ", ".join([ c.courseid for c in self.coursecodes(user) ])
 
     def count_coursecodestudents(self, coursecode):
-        assert coursecode.course == self, "Coursecode missmatch %s and %s" % (self, coursecode)
+        assert coursecode.course == self, "Coursecode mssmatch %s and %s" % (self, coursecode)
         return len(UserCourseCodeBinding.objects.filter(coursecode = coursecode, is_teacher = False))
 
     @register.filter
@@ -68,24 +68,6 @@ class Course(models.Model):
             if binding.assignment in assignments:
                 yield binding
 
-    def lookup_userassignmentbindings(self, **kw):
-        from .assignment import Assignment, UserAssignmentBinding
-        from django.db.models import Q
-        logger.debug('filter: %s' % kw)
-        extra_a = {}
-        extra_b = {}
-        if 'name' in kw:
-            extra_a['name__icontains'] = kw['name']
-        if 'state' in kw:
-            extra_b['state'] = kw['state']
-        user_name = kw.get('user', None)
-        U = User.objects.filter(Q(last_name__icontains = user_name) | Q(first_name__icontains = user_name)) if 'user' in kw else None
-        bindings = set()
-        for assignment in Assignment.objects.filter(course = self, **extra_a):
-            for binding in UserAssignmentBinding.objects.filter(assignment = assignment, **extra_b):
-                if U is None or (U is not None and binding.user in U):
-                    bindings.add(binding)
-        return bindings
 
 
     @property
@@ -119,22 +101,12 @@ class Course(models.Model):
                 candidates.append(d)
         return candidates
 
-    def collectableassignments_2(self): #FIXME: refactor and give a better name
-        from .assignment import Assignment, UserAssignmentBinding
-        collectable = []
-        for assignment in Assignment.objects.filter(course = self, is_massassignment = False):
-            for binding in UserAssignmentBinding.objects.filter(assignment = assignment, state = UserAssignmentBinding.ST_WORKINPROGRESS):
-                yield binding
-
     def collectableassignments(self):
-#FIXME: can be a generator
         from .assignment import Assignment, UserAssignmentBinding
-        collectable = []
-        for assignment in Assignment.objects.filter(course = self, is_massassignment = True):
-            bindings = UserAssignmentBinding.objects.filter(assignment = assignment, state = UserAssignmentBinding.ST_WORKINPROGRESS)
-            if len(bindings):
-                collectable.append(assignment)
-        return collectable
+        for coursecode in CourseCode.objects.filter(course = self):
+            for assignment in Assignment.objects.filter(coursecode = coursecode):
+                for binding in UserAssignmentBinding.objects.filter(assignment = assignment, state = UserAssignmentBinding.ST_WORKINPROGRESS):
+                    yield binding
 
 #FIXME: deprecated
 #    def report_mapping4user(self, user):
@@ -161,6 +133,27 @@ class Course(models.Model):
                     if not binding in bindable:
                         bindable.append(binding)
                         yield binding
+
+
+    def userassignmentbindings(self, **kw):
+        from .assignment import Assignment, UserAssignmentBinding
+        from django.db.models import Q
+        logger.debug('filter: %s' % kw)
+        extra_a = {}
+        extra_b = {}
+        if 'name' in kw:
+            extra_a['name__icontains'] = kw['name']
+        if 'state' in kw:
+            extra_b['state'] = kw['state']
+        user_name = kw.get('user', None)
+        U = User.objects.filter(Q(last_name__icontains = user_name) | Q(first_name__icontains = user_name)) if 'user' in kw else None
+        bindings = set()
+        for coursecode in CourseCode.objects.filter(course = self):
+           for assignment in Assignment.objects.filter(coursecode = coursecode, **extra_a):
+               for binding in UserAssignmentBinding.objects.filter(assignment = assignment, **extra_b):
+                   if U is None or (U is not None and binding.user in U):
+                       bindings.add(binding)
+        return bindings
 
 
     @register.filter

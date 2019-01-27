@@ -14,7 +14,7 @@ from hub.models import Assignment, UserAssignmentBinding
 from kooplex.lib import now, translate_date
 
 from hub.forms import FormAssignment
-from hub.forms import T_BIND#, T_COLLECT_ASSIGNMENT, T_COLLECT_UABINDING, T_CORRECT
+from hub.forms import T_BIND_ASSIGNMENT, T_COLLECT_ASSIGNMENT, T_FEEDBACK_ASSIGNMENT
 
 logger = logging.getLogger(__name__)
 
@@ -90,7 +90,7 @@ def newassignment(request, course_id):
                 assert (expires_at - valid_from).total_seconds() >= 60, "Expiry is too close to handout. "
             for coursecodeid in coursecode_ids:
                 coursecode = CourseCode.objects.get(id = coursecodeid)
-                assert coursecode.course == course, "Course code missmatch"
+                assert coursecode.course == course, "Course code mismatch"
                 UserCourseCodeBinding.objects.get(coursecode = coursecode, user = user, is_teacher = True)
                 logger.debug("coursecode id %s" % coursecodeid)
                 with transaction.atomic():
@@ -144,7 +144,7 @@ def bindassignment(request, course_id):
         logger.error("Invalid request with course id %s and user %s -- %s" % (course_id, user, e))
         return redirect('indexpage')
     if request.method == 'GET':
-        table_bind = T_BIND(course.bindableassignments())
+        table_bind = T_BIND_ASSIGNMENT(course.bindableassignments())
         RequestConfig(request).configure(table_bind)
         context_dict = {
             'course': course,
@@ -191,10 +191,123 @@ def bindassignment(request, course_id):
     else:
         return redirect('education:teaching')
 
+
+@login_required
+def collectassignment(request, course_id):
+    """Handle assignment collection"""
+    user = request.user
+    logger.debug("user %s, method: %s" % (user, request.method))
+    try:
+        course = Course.objects.get(id = course_id)
+        assert len(list(UserCourseBinding.objects.filter(user = user, course = course, is_teacher = True))) > 0, "%s is not a teacher of course %s" % (user, course)
+    except Exception as e:
+        logger.error("Invalid request with course id %s and user %s -- %s" % (course_id, user, e))
+        return redirect('indexpage')
+    if request.method == 'GET':
+        table_collect = T_COLLECT_ASSIGNMENT(course.collectableassignments())
+        RequestConfig(request).configure(table_collect)
+        context_dict = {
+            'course': course,
+            't_collect': table_collect,
+            'menu_teaching': 'active',
+            'submenu': 'collect',
+            'next_page': 'education:feedback',
+        }
+        return render(request, 'edu/assignments.html', context = context_dict)
+    elif request.method == 'POST':
+        userassignmentbinding_ids = request.POST.getlist('userassignmentbinding_ids')
+        for binding_id in userassignmentbinding_ids:
+            try:
+                binding = UserAssignmentBinding.objects.get(id = binding_id)
+                coursecode = binding.assignment.coursecode
+                assert coursecode.course == course, "course code mismatch"
+                UserCourseCodeBinding.objects.get(user = user, coursecode = coursecode, is_teacher = True)
+                binding.do_collect()
+                messages.info(request, 'Assignment %s of %s for course code %s is collected' % (binding.assignment.name, binding.user, coursecode))
+            except Exception as e:
+                logger.error(e)
+                messages.error(request, 'Cannot mark assignment collected -- %s' % e)
+        url_next = reverse('education:collectassignment', kwargs = {'course_id': course_id})
+        pager = request.POST.get('pager')
+        return redirect(url_next + "?%s" % pager) if pager else redirect('education:collectassignment', course_id)
+    else:
+        return redirect('indexpage')
+
+
+@login_required
+def feedbackassignment(request, course_id):
+    """Mark assignments to correct"""
+    from hub.models.assignment import ST_LOOKUP
+    user = request.user
+    logger.debug("user %s, method: %s" % (user, request.method))
+    try:
+        course = Course.objects.get(id = course_id)
+        assert len(list(UserCourseBinding.objects.filter(user = user, course = course, is_teacher = True))) > 0, "%s is not a teacher of course %s" % (user, course)
+    except Exception as e:
+        logger.error("Invalid request with course id %s and user %s -- %s" % (course_id, user, e))
+        return redirect('indexpage')
+    if request.method == 'GET':
+        extra = {}
+        for k in [ 'state', 'name', 'user' ]:
+            v = request.GET.get(k)
+            if v:
+                extra[k] = v
+        table_feedback = T_FEEDBACK_ASSIGNMENT(course.userassignmentbindings(**extra))
+        RequestConfig(request).configure(table_feedback)
+        context_dict = {
+            'course': course,
+            't_feedback': table_feedback,
+            'states': ST_LOOKUP,
+            'menu_teaching': 'active',
+            'submenu': 'feedback',
+            'next_page': 'education:feedback',
+        }
+        return render(request, 'edu/assignments.html', context = context_dict)
+    elif request.method == 'POST':
+        for k, v in request.POST.items():
+            try:
+                task, binding_id = k.split('_')
+                assert task == 'task'
+                assert v in [ 'correct', 'ready', 'reassign' ]
+                task = v
+            except:
+                continue
+            try:
+                binding = UserAssignmentBinding.objects.get(id = binding_id)
+                UserCourseCodeBinding.objects.get(user = user, coursecode = binding.assignment.coursecode, is_teacher = True)
+                score = request.POST.get('score_%s' % binding_id)
+                feedback_text = request.POST.get('feedback_text_%s' % binding_id)
+                if task == 'correct':
+                    binding.state = UserAssignmentBinding.ST_CORRECTING
+                    binding.corrector = user
+                elif task == 'ready':
+                    binding.state = UserAssignmentBinding.ST_FEEDBACK
+                    binding.corrected_at = now()
+                    binding.score = float(score)
+                    if feedback_text:
+                        binding.feedback_text = feedback_text.strip()
+                elif task == 'reassign': 
+                    binding.state = UserAssignmentBinding.ST_WORKINPROGRESS
+                    binding.corrected_at = now()
+                binding.save()
+                messages.info(request, '%s\'s assignment %s for course code %s is now %s' % (binding.user.username, binding.assignment.name, binding.assignment.coursecode.courseid, binding.assignment.state))
+            except Exception as e:
+                logger.error(e)
+                messages.error(request, 'Cannot mark assignment corrected -- %s' % e)
+        url_next = reverse('education:feedback', kwargs = {'course_id': course_id})
+        pager = request.POST.get('pager')
+        return redirect(url_next + "?%s" % pager) if pager else redirect('education:feedback', course_id)
+    else:
+        return redirect('education:teaching')
+
+
+
 urlpatterns = [
     url(r'^teaching/?$', teaching, name = 'teaching'),
     url(r'^courses/?$', courses, name = 'courses'),
     url(r'^configurecourse/(?P<course_id>\d+)/meta/(?P<next_page>\w+:?\w*)$', conf_meta, name = 'conf_meta'), 
     url(r'^newassignemnt/(?P<course_id>\d+)$', newassignment, name = 'newassignment'),
     url(r'^bindassignment/(?P<course_id>\d+)$', bindassignment, name = 'bindassignment'),
+    url(r'^collectassignment/(?P<course_id>\d+)$', collectassignment, name = 'collectassignment'),
+    url(r'^feedback/(?P<course_id>\d+)$', feedbackassignment, name = 'feedback'),
 ]
