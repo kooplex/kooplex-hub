@@ -18,24 +18,6 @@ logger = logging.getLogger(__name__)
 
 
 
-@login_required
-def studentsubmit(request):
-    """Handle assignment submission"""
-    user = request.user
-    userassignmentbinding_ids = request.POST.getlist('userassignmentbinding_ids')
-    for binding_id in userassignmentbinding_ids:
-        try:
-            binding = UserAssignmentBinding.objects.get(id = binding_id, user = user)
-            binding.state = UserAssignmentBinding.ST_SUBMITTED
-            binding.submitted_at = now()
-            binding.save()
-            messages.info(request, '%s assignment submitted for course %s and flag %s' % (binding.assignment.name, binding.assignment.course.courseid, binding.assignment.flag))
-        except Exception as e:
-            logger.error(e)
-            messages.error(request, 'Cannot fully submit assignment -- %s' % e)
-    return redirect('list:courses')
-
-
 
     
 @login_required
@@ -57,7 +39,6 @@ def search(request):
 #    """Update assignment"""
 
 urlpatterns = [
-    url(r'submit/?$', studentsubmit, name = 'submit'),
     url(r'search$', search, name = 'search'),
 ]
 

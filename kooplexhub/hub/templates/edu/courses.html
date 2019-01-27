@@ -9,7 +9,7 @@
 {% block content %}
 
   {% for course in user.profile.courses_attend %}
-     {% include 'edu/partial.html' with container=course|get_usercoursecontainer:user %}
+     {% include 'edu/partial.html' with container=course|get_usercoursecontainer:user url_assignment="education:submitassignment" tooltip="You can submit assignments." %}
   {% endfor %}
 
 {% endblock %}

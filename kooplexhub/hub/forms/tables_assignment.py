@@ -5,60 +5,6 @@ import django_tables2 as tables
 
 from hub.models import UserAssignmentBinding, Assignment
 
-####  def selectioncolumn(name):
-####      widget_str = '<input type="checkbox" name="%s" value="%%s">' % name
-####      class SelectionColumn(tables.Column):
-####          def render(self, value):
-####            return format_html(widget_str % value)
-####      return SelectionColumn
-####  
-####  
-####  col_assignmentIDs = selectioncolumn('assignment_ids')
-####  
-####  ###class T_COLLECT_ASSIGNMENT(tables.Table):
-####  ###    id = col_assignmentIDs(verbose_name = 'Select', orderable = False)
-####  ###
-####  ###    class Meta:
-####  ###        model = Assignment
-####  ###        fields = ('id', 'name', 'folder', 'created_at', 'valid_from', 'expires_at', 'can_studentsubmit')
-####  ###        sequence = ('id', 'name', 'folder', 'created_at', 'valid_from', 'expires_at', 'can_studentsubmit')
-####  ###        attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
-####  
-####  
-####  class T_CORRECT(tables.Table):#, tableUserAssignmentCommon):
-####      #id = RadioSelectIDColumn(verbose_name = 'Select', orderable = False) #col_userassignmentbindingIDs(verbose_name = 'Select', orderable = False)
-####      score = tables.Column(empty_values = (), orderable = False)
-####      feedback_text = tables.Column(empty_values = (), orderable = False)
-####  
-####  
-####      class Meta:
-####          model = UserAssignmentBinding
-####          exclude = ('received_at', 'valid_from', 'expires_at', 'corrected_at')
-####          attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
-####  
-####  
-####  class StudentSelectionColumn(tables.Column):
-####      def render(self, record):
-####          active = record.state in [ UserAssignmentBinding.ST_WORKINPROGRESS, UserAssignmentBinding.ST_SUBMITTED ]
-####          return format_html('<input type="checkbox" name="userassignmentbinding_ids" value="%s">' % record.id) if active else '—'
-####  
-####  class T_SUBMIT(tables.Table):#, tableUserAssignmentCommon):
-####      id = StudentSelectionColumn(verbose_name = 'Select', orderable = False)
-####      folder = tables.Column(verbose_name = 'Folder', orderable = False, empty_values = ())
-####      coursecode = tables.Column(verbose_name = 'Course', orderable = False, empty_values = ())
-####      def render_folder(self, record):
-####          return str(record.assignment.folder)
-####      def render_course(self, record):
-####          coursecode = record.assignment.coursecode
-####          course = coursecode.course
-####          return format_html('<span data-placement="bottom" data-toggle="tooltip" title="%s">%s (%s)</span>' % (course.description, coursecode.courseid, course.name))
-####      class Meta:
-####          model = UserAssignmentBinding
-####          sequence = ('id', 'coursecode', 'assignment', 'folder', 'received_at', 'expires_at', 'state')
-####          exclude = ('user', 'valid_from', 'submitted_at', 'corrector', 'corrected_at')
-####          attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
-
-
 
 class common:
     def render_user(self, value):
@@ -72,6 +18,8 @@ class common:
             "<span data-toggle='tooltip' title='Assigned by %s %s\nFolder: %s' data-placement='right'>%s</span>" % 
             (value.creator.first_name, value.creator.last_name, value.folder, value.name)
         )
+
+
 
 class T_BIND_ASSIGNMENT(tables.Table, common):
     selection = tables.Column(verbose_name = 'Select', empty_values = (), orderable = False)
@@ -140,7 +88,7 @@ class T_FEEDBACK_ASSIGNMENT(tables.Table, common):
 <input type="radio" name="task_%s" value="ready"> ready
             """ % (record.id, record.id))
         else:
-            return "—"
+            return format_html("—")
 
     def render_score(self, record):
         representation = "score_%d" % (record.id)
@@ -160,3 +108,27 @@ class T_FEEDBACK_ASSIGNMENT(tables.Table, common):
 
 
 
+class T_SUBMIT_ASSIGNMENT(tables.Table):
+    id = tables.Column(verbose_name = 'Submit', orderable = False, empty_values = ())
+    corrector = tables.Column(verbose_name = 'Corrector', orderable = False, empty_values = ())
+
+    def render_id(self, record):
+        if record.state in [ UserAssignmentBinding.ST_WORKINPROGRESS, UserAssignmentBinding.ST_SUBMITTED ]:
+            return format_html('<input type="checkbox" name="userassignmentbinding_ids" value="%d">' % record.id)
+        else:
+            return format_html("—")
+
+    def render_corrector(self, value):
+        return format_html('%s %s' % (value.first_name, value.last_name))
+
+    def render_folder(self, record):
+        return str(record.assignment.folder)
+
+    def render_assignment(self, value):
+        return format_html('<span data-placement="bottom" data-toggle="tooltip" title="folder: %s">%s</span>' % (value.safename, value.name))
+
+    class Meta:
+        model = UserAssignmentBinding
+        sequence = ('id', 'assignment', 'expires_at', 'state', 'corrector', 'corrected_at', 'score', 'feedback_text')
+        exclude = ('user', 'received_at', 'valid_from', 'submitted_at')
+        attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }

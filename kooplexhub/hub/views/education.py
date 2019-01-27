@@ -14,7 +14,7 @@ from hub.models import Assignment, UserAssignmentBinding
 from kooplex.lib import now, translate_date
 
 from hub.forms import FormAssignment
-from hub.forms import T_BIND_ASSIGNMENT, T_COLLECT_ASSIGNMENT, T_FEEDBACK_ASSIGNMENT
+from hub.forms import T_BIND_ASSIGNMENT, T_COLLECT_ASSIGNMENT, T_FEEDBACK_ASSIGNMENT, T_SUBMIT_ASSIGNMENT
 
 logger = logging.getLogger(__name__)
 
@@ -301,6 +301,44 @@ def feedbackassignment(request, course_id):
         return redirect('education:teaching')
 
 
+@login_required
+def submitassignment(request, course_id):
+    """Handle assignment submission"""
+    user = request.user
+    logger.debug("user %s, method: %s" % (user, request.method))
+    try:
+        course = Course.objects.get(id = course_id)
+        assert len(list(UserCourseBinding.objects.filter(user = user, course = course, is_teacher = False))) == 1, "%s is not a student of course %s" % (user, course)
+    except Exception as e:
+        logger.error("Invalid request with course id %s and user %s -- %s" % (course_id, user, e))
+        return redirect('indexpage')
+    if request.method == 'GET':
+        table_submit = T_SUBMIT_ASSIGNMENT(course.userassignmentbindings())
+        RequestConfig(request).configure(table_submit)
+        context_dict = {
+            'course': course,
+            't_submit': table_submit,
+            'menu_teaching': 'active',
+            'next_page': 'education:course',
+        }
+        return render(request, 'edu/assignment-submit.html', context = context_dict)
+    elif request.method == 'POST':
+        userassignmentbinding_ids = request.POST.getlist('userassignmentbinding_ids')
+        for binding_id in userassignmentbinding_ids:
+            try:
+                binding = UserAssignmentBinding.objects.get(id = binding_id, user = user)
+                binding.state = UserAssignmentBinding.ST_SUBMITTED
+                binding.submitted_at = now()
+                binding.save()
+                assignment = binding.assignment
+                coursecode = assignment.coursecode
+                messages.info(request, '%s assignment is submitted for course %s (%s)' % (assignment.name, coursecode.course.name, coursecode.courseid))
+            except Exception as e:
+                logger.error(e)
+                messages.error(request, 'Cannot fully submit assignment -- %s' % e)
+    return redirect('education:courses')
+
+
 
 urlpatterns = [
     url(r'^teaching/?$', teaching, name = 'teaching'),
@@ -310,4 +348,5 @@ urlpatterns = [
     url(r'^bindassignment/(?P<course_id>\d+)$', bindassignment, name = 'bindassignment'),
     url(r'^collectassignment/(?P<course_id>\d+)$', collectassignment, name = 'collectassignment'),
     url(r'^feedback/(?P<course_id>\d+)$', feedbackassignment, name = 'feedback'),
+    url(r'^submitassignment/(?P<course_id>\d+)$', submitassignment, name = 'submitassignment'),
 ]
