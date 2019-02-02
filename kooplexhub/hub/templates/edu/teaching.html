@@ -9,7 +9,7 @@
 {% block content %}
 
   {% for course in user.profile.courses_taught %}
-     {% include 'edu/partial.html' with container=course|get_usercoursecontainer:user url_assignment="education:newassignment" tooltip="You can create and manage assignments." %}
+     {% include 'edu/partial.html' with container=course|get_usercoursecontainer:user url_assignment="education:newassignment" tooltip="You can create and manage assignments." enable_conf=1 %}
   {% endfor %}
 
 {% endblock %}
