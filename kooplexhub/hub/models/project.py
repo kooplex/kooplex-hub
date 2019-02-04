@@ -269,6 +269,18 @@ def garbagedir_share(sender, instance, **kwargs):
 
 
 @receiver(post_save, sender = UserProjectBinding)
+def grantaccess_share(sender, instance, created, **kwargs):
+    from kooplex.lib.filesystem import grantaccess_share
+    if created:
+        grantaccess_share(instance)
+
+@receiver(pre_delete, sender = UserProjectBinding)
+def revokeaccess_share(sender, instance, **kwargs):
+    from kooplex.lib.filesystem import revokeaccess_share
+    revokeaccess_share(instance)
+
+
+@receiver(post_save, sender = UserProjectBinding)
 def mkdir_workdir(sender, instance, created, **kwargs):
     from kooplex.lib.filesystem import mkdir_workdir
     mkdir_workdir(instance)

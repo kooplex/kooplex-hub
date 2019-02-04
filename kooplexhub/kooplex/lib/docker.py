@@ -123,7 +123,7 @@ class Docker:
         token = vcproject.token
         fn_clonesh = os.path.join(Dirname.vcpcache(vcproject), "clone.sh")
         fn_key = os.path.join(Dirname.userhome(vcproject.token.user), '.ssh', token.fn_rsa)
-        cmdmaps.append("%s:%s:%s:%s" % (token.user.username, fn_key, token.domain, fn_clonesh))
+        cmdmaps.append("%s:%s:%s:%s" % (token.user.username, fn_key, token.repository.domain, fn_clonesh))
         cmdmaps.append('')
         file_data = "\n".join(cmdmaps).encode('utf8')
         self._writefile(container_name, path, filename, file_data)

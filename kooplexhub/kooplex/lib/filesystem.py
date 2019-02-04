@@ -17,7 +17,7 @@ from kooplex.lib import bash, Dirname, Filename
 
 logger = logging.getLogger(__name__)
 
-def _mkdir(path, uid = 0, gid = 0, mode = 0b111101000, mountpoint = False):
+def _mkdir(path, uid = 0, gid = 0, mode = 0b111101000):
     """
     @summary: make directory, set ownership and mode. (A helper method)
     @param path: the directory to make
@@ -28,20 +28,19 @@ def _mkdir(path, uid = 0, gid = 0, mode = 0b111101000, mountpoint = False):
     @type gid: int
     @param mode: filesystem access flags (9 bits), default 0b111101000
     @type mode: int
-    @param mountpoint: whether the created directory is to be used as a mount point, default False
-    @type mountpoint: bool
     """
-    logger.debug("dir: %s uid/gid: %d/%d; mountpoint: %s" % (path, uid, gid, mountpoint))
+    logger.debug("dir: %s uid/gid: %d/%d" % (path, uid, gid))
     dir_util.mkpath(path)
     os.chown(path, uid, gid)
     os.chmod(path, mode)
-    if mountpoint:
-        #FIXME: ez nem kell
-        logger.critical("remove from code")
-        placeholder = os.path.join(path, '_not_mounted_')
-        open(placeholder, 'w').close()
-        os.chown(placeholder, 0, 0)
-        os.chmod(placeholder, 0)
+
+
+def _grantaccess(user, folder):
+    bash("setfacl -R -m u:%d:rwX %s" % (user.profile.userid, folder))
+
+def _revokeaccess(user, folder):
+    bash("setfacl -R -x u:%d %s" % (user.profile.userid, folder))
+
 
 def _archivedir(folder, target, remove = True):
     if not os.path.exists(folder):
@@ -96,6 +95,17 @@ def garbagedir_share(userprojectbinding):
     _archivedir(dir_share, garbage)
 
 
+def grantaccess_share(userprojectbinding):
+    user = userprojectbinding.user
+    dir_share = Dirname.share(userprojectbinding)
+    _grantaccess(user, dir_share)
+
+def revokeaccess_share(userprojectbinding):
+    user = userprojectbinding.user
+    dir_share = Dirname.share(userprojectbinding)
+    _revokeaccess(user, dir_share)
+
+
 def mkdir_workdir(userprojectbinding):
     dir_workdir = Dirname.workdir(userprojectbinding)
     _mkdir(dir_workdir, uid = userprojectbinding.user.profile.userid, gid = userprojectbinding.user.profile.groupid)
@@ -125,7 +135,7 @@ set -v
 mv $0 $(mktemp)
 
 git clone ssh://git@%s/%s %s
-    """ % (vcp.token.domain, vcp.project_name, dir_target)
+    """ % (vcp.token.repository.domain, vcp.project_name, dir_target)
     _createfile(fn_script, script, uid = profile.userid, gid = profile.groupid)
 
 def archivedir_vcpcache(vcproject):
@@ -151,7 +161,7 @@ def grantacl_course_share(usercoursebinding):
         dir_coursepublic = Dirname.coursepublic(usercoursebinding.course)
         dir_courseprivate = Dirname.courseprivate(usercoursebinding.course)
         if usercoursebinding.is_teacher:
-            bash("setfacl -R -m u:%d:rwX %s" % (usercoursebinding.user.profile.userid, dir_coursepublic))
+            bash("setfacl -R -m u:%d:rwX %s" % (usercoursebinding.user.profile.userid, dir_coursepublic)) #FIXME: use _grantaccess
             bash("setfacl -R -m u:%d:rwX %s" % (usercoursebinding.user.profile.userid, dir_courseprivate))
         else:
             bash("setfacl -R -m u:%d:rX %s" % (usercoursebinding.user.profile.userid, dir_coursepublic))
@@ -164,7 +174,7 @@ def revokeacl_course_share(usercoursebinding):
         dir_coursepublic = Dirname.coursepublic(usercoursebinding.course)
         dir_courseprivate = Dirname.courseprivate(usercoursebinding.course)
         if usercoursebinding.is_teacher:
-            bash("setfacl -R -x u:%d %s" % (usercoursebinding.user.profile.userid, dir_courseprivate))
+            bash("setfacl -R -x u:%d %s" % (usercoursebinding.user.profile.userid, dir_courseprivate)) #FIXME: use _revokeaccess
         bash("setfacl -R -x u:%d %s" % (usercoursebinding.user.profile.userid, dir_coursepublic))
         logger.debug("acl revoked %s" % usercoursebinding)
     except Exception as e:

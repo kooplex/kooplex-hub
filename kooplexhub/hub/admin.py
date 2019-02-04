@@ -16,7 +16,9 @@ class ProfileAdmin(admin.ModelAdmin):
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'image') 
+    def project_creator(self, instance):
+        return instance.creator
+    list_display = ('id', 'name', 'image', 'project_creator') 
 
 @admin.register(UserProjectBinding)
 class UserProjectBindingAdmin(admin.ModelAdmin):
@@ -142,4 +144,4 @@ class VCProjectAdmin(admin.ModelAdmin):
 
 @admin.register(VCProjectProjectBinding)
 class VCProjectProjectBindingAdmin(admin.ModelAdmin):
-    list_display = ('id', 'project')
+    list_display = ('id', 'project', 'vcproject')

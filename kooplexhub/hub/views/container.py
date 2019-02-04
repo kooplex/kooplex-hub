@@ -25,7 +25,7 @@ def new(request):
     user_id = request.POST.get('user_id')
     try:
         assert user_id is not None and int(user_id) == user.id, "user id mismatch: %s tries to save %s %s" % (request.user, request.user.id, request.POST.get('user_id'))
-        containername = "%s-%s" % (standardize_str(request.POST.get('name')), user.username)
+        containername = "%s-%s" % (user.username, standardize_str(request.POST.get('name')))
         for container in user.profile.containers:
             assert container.name != containername, "Not a unique name"
         logger.debug("name is okay: %s" % containername)

@@ -102,10 +102,19 @@ class Container(models.Model):
 
     @property
     def vcprojectprojectbindings(self):
+        serve_history = {}
         for project in self.projects:
+            creator = project.creator
             for vcppb in VCProjectProjectBinding.objects.filter(project = project):
                 if vcppb.vcproject.token.user == self.user:
                     yield vcppb
+                    serve_history[project] = None
+                if vcppb.vcproject.token.user == creator:
+                    if not project in serve_history:
+                        serve_history[project] = vcppb
+        for vcppb in serve_history.values():
+            if vcppb is not None:
+                yield vcppb
 
     @property
     def projects_addable(self):
@@ -146,7 +155,7 @@ class Container(models.Model):
                 logger.debug("container in db %s" % binding.container)
                 return binding.container
         if create:
-            containername = "%s-%s" % (project.cleanname, user.username)
+            containername = "%s-%s-%s" % (user.username, project.cleanname, project.creator.username)
             container = Container.objects.create(name = containername, user = user)
             ProjectContainerBinding.objects.create(project = project, container = container)
             logger.debug("new container in db %s" % container)

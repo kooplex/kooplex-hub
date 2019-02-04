@@ -156,9 +156,10 @@ def conf_collab(request, project_id, next_page):
     logger.debug("method: %s, project id: %s, user: %s" % (request.method, project_id, user))
     try:
         project = Project.get_userproject(project_id = project_id, user = request.user)
-    except Project.DoesNotExist as e:
+        assert project.is_admin(user), "%s is not admin of %s" % (user, project)
+    except Exception as e:
         logger.error('abuse by %s project id: %s -- %s' % (user, project_id, e))
-        messages.error(request, 'Project does not exist')
+        messages.error(request, 'Unauthorized request.')
         return redirect(next_page)
 
     sort_info = request.GET.get('sort') if request.method == 'GET' else request.POST.get('sort')
@@ -174,6 +175,7 @@ def conf_collab(request, project_id, next_page):
         RequestConfig(request).configure(table_collaborators)
         context_dict = {
             'project': project, 
+            'can_configure': True,
             't_collaborators': table_collaborators,
             'submenu': 'collaboration',
             'next_page': next_page,
@@ -189,9 +191,10 @@ def conf_environment(request, project_id, next_page):
     logger.debug("method: %s, project id: %s, user: %s" % (request.method, project_id, user))
     try:
         project = Project.get_userproject(project_id = project_id, user = request.user)
-    except Project.DoesNotExist as e:
+        assert project.is_admin(user), "%s is not admin of %s" % (user, project)
+    except Exception as e:
         logger.error('abuse by %s project id: %s -- %s' % (user, project_id, e))
-        messages.error(request, 'Project does not exist')
+        messages.error(request, 'Unauthorized request.')
         return redirect(next_page)
 
     if request.method == 'POST' and request.POST.get('button') == 'apply':
@@ -218,9 +221,10 @@ def conf_voldata(request, project_id, next_page):
     logger.debug("method: %s, project id: %s, user: %s" % (request.method, project_id, user))
     try:
         project = Project.get_userproject(project_id = project_id, user = request.user)
-    except Project.DoesNotExist as e:
+        assert project.is_admin(user), "%s is not admin of %s" % (user, project)
+    except Exception as e:
         logger.error('abuse by %s project id: %s -- %s' % (user, project_id, e))
-        messages.error(request, 'Project does not exist')
+        messages.error(request, 'Unauthorized request.')
         return redirect(next_page)
 
     if request.method == 'POST' and request.POST.get('button') == 'apply':
@@ -243,9 +247,10 @@ def conf_versioncontrol(request, project_id, next_page):
     logger.debug("method: %s, project id: %s, user: %s" % (request.method, project_id, user))
     try:
         project = Project.get_userproject(project_id = project_id, user = request.user)
-    except Project.DoesNotExist as e:
+        assert project.is_admin(user), "%s is not admin of %s" % (user, project)
+    except Exception as e:
         logger.error('abuse by %s project id: %s -- %s' % (user, project_id, e))
-        messages.error(request, 'Project does not exist')
+        messages.error(request, 'Unauthorized request.')
         return redirect(next_page)
 
     sort_info = request.GET.get('sort') if request.method == 'GET' else request.POST.get('sort')

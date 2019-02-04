@@ -21,8 +21,13 @@
       <div class="card-body">
         <strong>Description: </strong>{{ project.description }}<br>
         <div style="float: right;">
+          {% if project|is_admin:user %}
           <a href="{% url 'project:conf_meta' project.id next_page %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Settings of project {{ project.name }}. You can change the image, modify volume attachments." data-placement="top">
             <span class="oi oi-wrench" aria-hidden="true"></span></a>
+          {% else %}
+          <a href="#" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Only administrators can configure a project." data-placement="top">
+            <span class="oi oi-wrench" aria-hidden="true"></span></a>
+          {% endif %}
           <a href="{% url 'project:delete' project.id  next_page %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Delete or leave project {{ project.name }}." data-placement="top">
             <span class="oi oi-trash" aria-hidden="true"></span></a>
         </div>  <!-- float //-->
