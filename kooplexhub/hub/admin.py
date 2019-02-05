@@ -145,3 +145,7 @@ class VCProjectAdmin(admin.ModelAdmin):
 @admin.register(VCProjectProjectBinding)
 class VCProjectProjectBindingAdmin(admin.ModelAdmin):
     list_display = ('id', 'project', 'vcproject')
+
+@admin.register(Report)
+class ReportAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'creator', 'created_at', 'reporttype') 

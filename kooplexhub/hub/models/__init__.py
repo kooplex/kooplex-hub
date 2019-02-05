@@ -9,6 +9,9 @@ from .versioncontrol import VCRepository, VCToken, VCProject, VCProjectProjectBi
 
 from .project import Project,  UserProjectBinding, GroupProjectBinding
 
+from .report import Report
+
 from .course import CourseCode, Course, UserCourseBinding, UserCourseCodeBinding, lookup_course, update_UserCourseBindings
 from .assignment import Assignment, UserAssignmentBinding
+
 
