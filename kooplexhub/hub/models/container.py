@@ -302,6 +302,16 @@ def bind_home(sender, instance, created, **kwargs):
             logger.error('Home not bound -- %s' % e)
 
 
+@receiver(post_save, sender = Container)
+def bind_report(sender, instance, created, **kwargs):
+    if created:
+        try:
+            v_report = Volume.objects.get(volumetype = Volume.REPORT['tag'])
+            VolumeContainerBinding.objects.create(container = instance, volume = v_report)
+        except Exception as e:
+            logger.error('Report not bound -- %s' % e)
+
+
 class ProjectContainerBinding(models.Model):
     project = models.ForeignKey(Project, null = False)
     container = models.ForeignKey(Container, null = False)

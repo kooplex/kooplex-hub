@@ -84,6 +84,11 @@ def garbagedir_home(user):
     _archivedir(dir_home, garbage)
 
 
+def mkdir_reportprepare(user):
+    dir_reportprepare = Dirname.reportprepare(user)
+    _mkdir(dir_reportprepare, uid = user.profile.userid, gid = user.profile.groupid)
+
+
 def mkdir_share(userprojectbinding):
     project = userprojectbinding.project
     dir_share = Dirname.share(userprojectbinding)

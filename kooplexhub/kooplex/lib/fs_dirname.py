@@ -10,6 +10,10 @@ class Dirname:
         return os.path.join(Dirname.mountpoint['home'], user.username)
 
     @staticmethod
+    def reportprepare(user):
+        return os.path.join(Dirname.mountpoint['report'], user.username)
+
+    @staticmethod
     def share(userprojectbinding):
         v_share = Dirname.mountpoint['share']
         return os.path.join(v_share, userprojectbinding.project.uniquename)
@@ -83,6 +87,8 @@ class Dirname:
                 logger.error("Silly situation, cannot map %s %s" % (volume, container))
         elif volume.volumetype == volume.COURSE_ASSIGNMENTDIR['tag']:
             yield "FIXME" #Dirname.courseworkdir(container.course)
+        elif volume.volumetype == volume.REPORT['tag']:
+            yield Dirname.reportprepare(container.user)
         else:
             raise NotImplementedError("DIRNAME %s" % volume.volumetype)
 

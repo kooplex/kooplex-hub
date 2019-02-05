@@ -18,6 +18,11 @@ class Volume(models.Model):
         'description': 'Home volume',
         'pattern': volumeconf.get('pattern_homevolumename_filter', r'^(home)$'),
     }
+    REPORT = {
+        'tag': 'report', 
+        'description': 'Report volume',
+        'pattern': volumeconf.get('pattern_reportvolumename_filter', r'^(report)$'),
+    }
     SHARE = {
         'tag': 'share', 
         'description': 'Share volume',
@@ -58,7 +63,7 @@ class Volume(models.Model):
         'description': 'Course assignment volume',
         'pattern': volumeconf.get('pattern_assignmentvolumename_filter', r'^(assignment)$'),
     }
-    VOLUME_TYPE_LIST = [HOME, GIT, SHARE, WORKDIR, FUNCTIONAL, STORAGE, COURSE_SHARE, COURSE_WORKDIR, COURSE_ASSIGNMENTDIR]
+    VOLUME_TYPE_LIST = [HOME, GIT, SHARE, WORKDIR, FUNCTIONAL, STORAGE, COURSE_SHARE, COURSE_WORKDIR, COURSE_ASSIGNMENTDIR, REPORT]
     name = models.CharField(max_length = 64, unique = True)
     displayname = models.CharField(max_length = 64)
     description = models.TextField(null = True)

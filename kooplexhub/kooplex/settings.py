@@ -151,6 +151,8 @@ KOOPLEX = {
     'mountpoint': {
         'home': '/mnt/.volumes/home',
 
+        'report': '/mnt/.volumes/report',
+
         'workdir': '/mnt/.volumes/workdir',
         'git': '/mnt/.volumes/git',
         'share': '/mnt/.volumes/share',
@@ -178,6 +180,7 @@ KOOPLEX = {
         'pattern_functionalvolumename_filter': r'^vol-([_\w-]+)$',
         'pattern_storagevolumename_filter': r'^stg-([_\w-]+)$',
         'pattern_homevolumename_filter': r'^%s-(home)$' % PREFIX,
+        'pattern_reportvolumename_filter': r'^%s-(report)$' % PREFIX,
         'pattern_sharevolumename_filter': r'^%s-(share)$' % PREFIX,
         'pattern_gitvolumename_filter': r'^%s-(git)$' % PREFIX,
         'pattern_workdirvolumename_filter': r'^%s-(workdir)$' % PREFIX,
