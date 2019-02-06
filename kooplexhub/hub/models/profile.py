@@ -100,7 +100,7 @@ class Profile(models.Model):
                 duplicate.add(coursebinding.course.project)
 
     def dirs_reportprepare(self):
-        dir_reportprepare = Dirname.reportprepare(self)
+        dir_reportprepare = Dirname.reportprepare(self.user)
         for d in os.listdir(dir_reportprepare):
             if d.startswith('.'):
                 continue

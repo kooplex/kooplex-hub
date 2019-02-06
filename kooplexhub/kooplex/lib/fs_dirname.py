@@ -16,11 +16,11 @@ class Dirname:
 
     @staticmethod
     def reportprepare(user):
-        return os.path.join(self.reportroot(user), '_prepare')
+        return os.path.join(Dirname.reportroot(user), '_prepare')
 
     @staticmethod
     def report(report):
-        return os.path.join(self.reportroot(report.creator.username), standardize_str(report.name), report.created_at.strftime('%Y_%m_%d'))
+        return os.path.join(Dirname.reportroot(report.creator), standardize_str(report.name), report.created_at.strftime('%Y_%m_%d'))
 
     @staticmethod
     def share(userprojectbinding):
