@@ -59,6 +59,18 @@ def _archivedir(folder, target, remove = True):
             dir_util.remove_tree(folder)
             logger.debug("Folder %s removed" % folder)
 
+def _copy_dir(f_source, f_target, remove = False):
+    if not os.path.exists(f_source):
+        msg = "Folder %s not found" % f_source
+        logger.error(msg)
+        raise Exception(msg)
+    dir_util.copy_tree(f_source, f_target)
+    logger.info("copied %s -> %s" % (f_source, f_target))
+    if remove:
+        dir_util.remove_tree(f_source)
+        logger.debug("Folder %s removed" % folder)
+    
+
 
 def _createfile(fn, content, uid = 0, gid = 0, mode = 0b111101000):
     with open(fn, 'w') as f:
@@ -148,6 +160,11 @@ def archivedir_vcpcache(vcproject):
     target = Filename.vcpcache_archive(vcproject)
     _archivedir(dir_cache, target)
 
+
+def snapshot_report(report):
+    dir_source = os.path.join(Dirname.reportprepare(report.creator), report.folder)
+    dir_target = Dirname.report(report)
+    _copy_dir(dir_source, dir_target, remove = False)
 
 ########################################
 

@@ -1,6 +1,6 @@
   <li class="nav-item {{ active }}">
     {% if user.profile.reports %}
-      <a href="#" class="nav-link" data-toggle="tooltip" title="List and manage your reports" data-placement="bottom">Reports</a>
+      <a href="{% url 'report:list' %}" class="nav-link" data-toggle="tooltip" title="List and manage your reports" data-placement="bottom">Reports</a>
     {% else %}
       <a href="#" class="nav-link disabled" data-toggle="tooltip" title="You do not have a project yet" data-placement="bottom">Reports</a>
     {% endif %}
@@ -10,9 +10,8 @@
   <li class="nav-item dropdown">
     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownReport" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></a>
     <div class="dropdown-menu" aria-labelledby="navbarDropdownReport">
-      <a class="dropdown-item" href="#">Preview report</a>
-      <a class="dropdown-item" href="#">New report</a>
-      <a class="dropdown-item" href="#">List reports</a>
+      <a class="dropdown-item" href="{% url 'report:new' %}">New report</a>
+      <a class="dropdown-item" href="{% url 'report:list' %}">List reports</a>
     </div>
   </li>
 {% endif %}

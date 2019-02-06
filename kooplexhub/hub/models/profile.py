@@ -1,3 +1,4 @@
+import os
 import pwgen
 import logging
 import unidecode
@@ -8,6 +9,7 @@ from django.dispatch import receiver
 from django.contrib.auth.models import User
 
 from kooplex.settings import KOOPLEX
+from kooplex.lib.filesystem import Dirname
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +56,12 @@ class Profile(models.Model):
         for container in Container.objects.filter(user = self.user):
              yield container
 
+    @property
+    def reports(self):
+        from .report import Report
+        for report in Report.objects.all():#FIXME: filter those you can see
+             yield report
+
     def usercoursebindings(self, **kw):
         from .course import UserCourseBinding
         for binding in UserCourseBinding.objects.filter(user = self.user, **kw):
@@ -90,6 +98,14 @@ class Profile(models.Model):
                     continue
                 yield coursebinding.course.project
                 duplicate.add(coursebinding.course.project)
+
+    def dirs_reportprepare(self):
+        dir_reportprepare = Dirname.reportprepare(self)
+        for d in os.listdir(dir_reportprepare):
+            if d.startswith('.'):
+                continue
+            if os.path.isdir(os.path.join(dir_reportprepare, d)):
+                yield d
  
     @property
     def functional_volumes(self):

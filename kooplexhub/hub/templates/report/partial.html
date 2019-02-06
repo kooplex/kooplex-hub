@@ -1,0 +1,24 @@
+<div class="card bg-light mb-3">
+  <div class="card-header" id="heading-{{ report.id }}">
+    <button class="btn" data-toggle="collapse" data-target="#collapse-{{ report.id }}" aria-expanded="true" aria-controls="collapse-{{ report.id }}">
+      <strong>{{ report.name }}</strong>
+    </button>
+  </div>
+
+    <div id="collapse-{{ report.id }}" class="collapse" aria-labelledby="heading-{{ report.id }}" data-parent="#reportList">
+      <div class="card-body">
+        <strong>Creator: </strong>{{ report.creator }}<br>
+        <strong>Description: </strong>{{ report.description }}<br>
+        <div style="float: right;">
+          {% if report.creator == user %}
+          <a href="#" role="button" class="btn btn-secondary" data-toggle="tooltip" title="BLA" data-placement="top">
+            <span class="oi oi-wrench" aria-hidden="true"></span></a>
+          {% else %}
+          <a href="#" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Not your report" data-placement="top">
+            <span class="oi oi-wrench" aria-hidden="true"></span></a>
+          {% endif %}
+        </div>  <!-- float //-->
+      </div>   <!-- card-body -->
+    </div>
+  </div>
+

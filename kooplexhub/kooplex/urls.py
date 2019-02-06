@@ -16,6 +16,7 @@ urlpatterns = [
 
     url(r'^hub/oauth/', include('social_django.urls', namespace = 'social')),
     url(r'^hub/project/', include('hub.views.project', namespace = 'project')),
+    url(r'^hub/report/', include('hub.views.report', namespace = 'report')),
     url(r'^hub/education/', include('hub.views.education', namespace = 'education')),
     url(r'^hub/assignment/', include('hub.views.assignment', namespace = 'assignment')),
     url(r'^hub/container/', include('hub.views.container', namespace = 'container')),

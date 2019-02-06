@@ -16,19 +16,23 @@ logger = logging.getLogger(__name__)
 
 TYPE_LOOKUP = {
     'static': 'Static content served by an nginx server.',
+    'bokeh': 'Dynamic content: runs a bokeh server behind the scene.',
     'dynamic': 'Dynamic content requires a running kernel in the back.',
     'service': 'Dynamic content requires a service implemented by user.',
 }
 
 class Report(models.Model):
     TP_STATIC = 'static'
+    TP_BOKEH = 'bokeh'
     TP_DYNAMIC = 'dynamic'
     TP_SERVICE = 'service'
-    TYPE_LIST = [ TP_STATIC, TP_DYNAMIC, TP_SERVICE ]
+    TYPE_LIST = [ TP_STATIC, TP_DYNAMIC, TP_SERVICE, TP_BOKEH ]
 
     name = models.CharField(max_length = 200, null = False)
+    description = models.TextField(max_length = 500, null = True, default = None)
     creator = models.ForeignKey(User, null = False)
     created_at = models.DateTimeField(default = timezone.now)
+    folder = models.CharField(max_length = 200, null = False)
 
     reporttype = models.CharField(max_length = 16, choices = [ (x, TYPE_LOOKUP[x]) for x in TYPE_LIST ], default = TP_STATIC)
 #TODO: scope: public, internal
@@ -43,10 +47,12 @@ class Report(models.Model):
         return "<Report %s@%s>" % (self.name, self.creator)
 
 
-#@receiver(pre_save, sender = Container)
-#def container_image_change(sender, instance, **kwargs):
-#    is_new = instance.id is None
-#    old_instance = Container() if is_new else Container.objects.get(id = instance.id)
-#    if not is_new and old_instance.image != instance.image:
-#         instance.marked_to_remove = True
+@receiver(pre_save, sender = Report)
+def snapshot_report(sender, instance, **kwargs):
+    from kooplex.lib.filesystem import snapshot_report
+    is_new = instance.id is None
+    if not is_new:
+        return
+    instance.created_at = now()
+    snapshot_report(instance)
 

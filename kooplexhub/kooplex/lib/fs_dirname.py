@@ -1,6 +1,7 @@
 import os
 
 from kooplex.settings import KOOPLEX
+from kooplex.lib import  standardize_str
 
 class Dirname:
     mountpoint = KOOPLEX.get('mountpoint', {})
@@ -10,8 +11,16 @@ class Dirname:
         return os.path.join(Dirname.mountpoint['home'], user.username)
 
     @staticmethod
-    def reportprepare(user):
+    def reportroot(user):
         return os.path.join(Dirname.mountpoint['report'], user.username)
+
+    @staticmethod
+    def reportprepare(user):
+        return os.path.join(self.reportroot(user), '_prepare')
+
+    @staticmethod
+    def report(report):
+        return os.path.join(self.reportroot(report.creator.username), standardize_str(report.name), report.created_at.strftime('%Y_%m_%d'))
 
     @staticmethod
     def share(userprojectbinding):
@@ -88,7 +97,7 @@ class Dirname:
         elif volume.volumetype == volume.COURSE_ASSIGNMENTDIR['tag']:
             yield "FIXME" #Dirname.courseworkdir(container.course)
         elif volume.volumetype == volume.REPORT['tag']:
-            yield Dirname.reportprepare(container.user)
+            yield Dirname.reportroot(container.user)
         else:
             raise NotImplementedError("DIRNAME %s" % volume.volumetype)
 
