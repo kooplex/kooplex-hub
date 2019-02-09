@@ -87,14 +87,14 @@ class Project(models.Model):
     def functional_volumes(self):
         from .volume import Volume
         for volume in self.volumes:
-            if volume.is_volumetype(Volume.FUNCTIONAL):
+            if volume.volumetype == Volume.FUNCTIONAL:
                 yield volume
 
     @property
     def storage_volumes(self):
         from .volume import Volume
         for volume in self.volumes:
-            if volume.is_volumetype(Volume.STORAGE):
+            if volume.volumetype == Volume.STORAGE:
                 yield volume
 
     @property

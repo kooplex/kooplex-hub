@@ -11,6 +11,10 @@ class Dirname:
         return os.path.join(Dirname.mountpoint['home'], user.username)
 
     @staticmethod
+    def usergarbage(user):
+        return os.path.join(Dirname.mountpoint['garbage'], user.username)
+
+    @staticmethod
     def reportroot(user):
         return os.path.join(Dirname.mountpoint['report'], user.username)
 
@@ -20,22 +24,19 @@ class Dirname:
 
     @staticmethod
     def report(report):
-        return os.path.join(Dirname.reportroot(report.creator), standardize_str(report.name), report.created_at.strftime('%Y_%m_%d'))
+        return os.path.join(Dirname.reportroot(report.creator), standardize_str(report.name), report.created_at.strftime('%Y_%m_%d-%H:%M:%S'))
 
     @staticmethod
     def share(userprojectbinding):
-        v_share = Dirname.mountpoint['share']
-        return os.path.join(v_share, userprojectbinding.project.uniquename)
+        return os.path.join(Dirname.mountpoint['share'], userprojectbinding.project.uniquename)
 
     @staticmethod
     def workdir(userprojectbinding):
-        v_workdir = Dirname.mountpoint['workdir']
-        return os.path.join(v_workdir, userprojectbinding.uniquename)
+        return os.path.join(Dirname.mountpoint['workdir'], userprojectbinding.uniquename)
 
     @staticmethod
     def vcpcache(vcproject):
-        v_vccache = Dirname.mountpoint['git']
-        return os.path.join(v_vccache, vcproject.uniquename)
+        return os.path.join(Dirname.mountpoint['git'], vcproject.uniquename)
 
     @staticmethod
     def course(course):
@@ -65,25 +66,27 @@ class Dirname:
     @staticmethod
     def containervolume_listfolders(container, volume):
         from hub.models import UserCourseBinding
-        if volume.volumetype == volume.HOME['tag']:
+        if volume.volumetype == volume.HOME:
             yield Dirname.userhome(container.user)
-        elif volume.volumetype == volume.SHARE['tag']:
+        elif volume.volumetype == volume.GARBAGE:
+            yield Dirname.usergarbage(container.user)
+        elif volume.volumetype == volume.SHARE:
             for upb in container.userprojectbindings:
                 yield Dirname.share(upb)
-        elif volume.volumetype == volume.WORKDIR['tag']:
+        elif volume.volumetype == volume.WORKDIR:
             for upb in container.userprojectbindings:
                 yield Dirname.workdir(upb)
-        elif volume.volumetype == volume.GIT['tag']:
+        elif volume.volumetype == volume.GIT:
             for vcppb in container.vcprojectprojectbindings:
                 yield Dirname.vcpcache(vcppb.vcproject)
-        elif volume.volumetype == volume.COURSE_SHARE['tag']:
+        elif volume.volumetype == volume.COURSE_SHARE:
             if container.course in container.user.profile.courses_taught():
                 yield Dirname.course(container.course)
             elif container.course in container.user.profile.courses_attend():
                 yield Dirname.coursepublic(container.course)
             else:
                 logger.error("Silly situation, cannot map %s %s" % (volume, container))
-        elif volume.volumetype == volume.COURSE_WORKDIR['tag']:
+        elif volume.volumetype == volume.COURSE_WORKDIR:
             try:
                 usercoursebinding = UserCourseBinding.objects.get(user = container.user, course = container.course)
             except UserCourseBinding.DoesNotExist:
@@ -94,9 +97,9 @@ class Dirname:
                 yield Dirname.usercourseworkdir(usercoursebinding)
             else:
                 logger.error("Silly situation, cannot map %s %s" % (volume, container))
-        elif volume.volumetype == volume.COURSE_ASSIGNMENTDIR['tag']:
+        elif volume.volumetype == volume.COURSE_ASSIGNMENTDIR:
             yield "FIXME" #Dirname.courseworkdir(container.course)
-        elif volume.volumetype == volume.REPORT['tag']:
+        elif volume.volumetype == volume.REPORT:
             yield Dirname.reportroot(container.user)
         else:
             raise NotImplementedError("DIRNAME %s" % volume.volumetype)

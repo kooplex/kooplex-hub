@@ -11,63 +11,40 @@ from kooplex.settings import KOOPLEX
 
 logger = logging.getLogger(__name__)
 
+TYPE_LOOKUP = {
+  'home': 'Home volume',
+  'garbage': 'Garbage volume',
+  'report': 'Report volume',
+  'share': 'Share volume',
+  'workdir': 'Workdir volume',
+  'git': 'Git cache volume',
+  'functional': 'Functional volume',
+  'storage': 'Storage volume',
+  'course': 'Course share volume',
+  'usercourse': 'Course workdir volume',
+  'assignment': 'Course assignment volume',
+}
+
 class Volume(models.Model):
-    volumeconf = KOOPLEX.get('docker', {}) #FIXME: namespace
-    HOME = {
-        'tag': 'home', 
-        'description': 'Home volume',
-        'pattern': volumeconf.get('pattern_homevolumename_filter', r'^(home)$'),
-    }
-    REPORT = {
-        'tag': 'report', 
-        'description': 'Report volume',
-        'pattern': volumeconf.get('pattern_reportvolumename_filter', r'^(report)$'),
-    }
-    SHARE = {
-        'tag': 'share', 
-        'description': 'Share volume',
-        'pattern': volumeconf.get('pattern_sharevolumename_filter', r'^(share)$'),
-    }
-    WORKDIR = {
-        'tag': 'workdir', 
-        'description': 'Workdir volume',
-        'pattern': volumeconf.get('pattern_workdirvolumename_filter', r'^(workdir)$'),
-    }
-    GIT = {
-        'tag': 'git', 
-        'description': 'Git cache volume',
-        'pattern': volumeconf.get('pattern_gitvolumename_filter', r'^(git)$'),
-    }
-    FUNCTIONAL = {
-        'tag': 'functional', 
-        'description': 'Functional volume',
-        'pattern': volumeconf.get('pattern_functionalvolumename_filter', r'^fun-(\w+)$'),
-    }
-    STORAGE = {
-        'tag': 'storage', 
-        'description': 'Storage volume',
-        'pattern': volumeconf.get('pattern_storagevolumename_filter', r'^stg-(\w+)$'),
-    }
-    COURSE_SHARE = {
-        'tag': 'course', 
-        'description': 'Course share volume',
-        'pattern': volumeconf.get('pattern_coursevolumename_filter', r'^(course)$'),
-    }
-    COURSE_WORKDIR = {
-        'tag': 'usercourse', 
-        'description': 'Course workdir volume',
-        'pattern': volumeconf.get('pattern_usercoursevolumename_filter', r'^(usercourse)$'),
-    }
-    COURSE_ASSIGNMENTDIR = {
-        'tag': 'assignment', 
-        'description': 'Course assignment volume',
-        'pattern': volumeconf.get('pattern_assignmentvolumename_filter', r'^(assignment)$'),
-    }
-    VOLUME_TYPE_LIST = [HOME, GIT, SHARE, WORKDIR, FUNCTIONAL, STORAGE, COURSE_SHARE, COURSE_WORKDIR, COURSE_ASSIGNMENTDIR, REPORT]
+    pattern = KOOPLEX.get('volumepattern', {})
+
+    HOME = 'home'
+    GARBAGE = 'garbage'
+    GIT = 'git'
+    SHARE = 'share'
+    WORKDIR = 'workdir'
+    FUNCTIONAL = 'functional'
+    STORAGE = 'storage'
+    COURSE_SHARE = 'course'
+    COURSE_WORKDIR = 'usercourse'
+    COURSE_ASSIGNMENTDIR = 'assignment'
+    REPORT = 'report'
+    VOLUME_TYPE_LIST = [ HOME, GARBAGE, GIT, SHARE, WORKDIR, FUNCTIONAL, STORAGE, COURSE_SHARE, COURSE_WORKDIR, COURSE_ASSIGNMENTDIR, REPORT ]
+
     name = models.CharField(max_length = 64, unique = True)
     displayname = models.CharField(max_length = 64)
     description = models.TextField(null = True)
-    volumetype = models.CharField(max_length = 16, choices = [ (x['tag'], x['tag']) for x in VOLUME_TYPE_LIST ])
+    volumetype = models.CharField(max_length = 16, choices = [ (x, TYPE_LOOKUP[x]) for x in VOLUME_TYPE_LIST ])
     is_present = models.BooleanField(default = True)
 
     def __str__(self):
@@ -76,16 +53,16 @@ class Volume(models.Model):
     @staticmethod
     def try_create(volumename):
         for x in Volume.VOLUME_TYPE_LIST:
-            pattern = x['pattern']
+            pattern = Volume.pattern.get(x, r'^(%s)$' % x)
             if re.match(pattern, volumename):
                 _, dirname, _ = re.split(pattern, volumename)
-                return Volume.objects.create(name = volumename, displayname = dirname, description = '%s (%s)' % (x['description'], dirname), volumetype = x['tag'])
+                return Volume.objects.create(name = volumename, displayname = dirname, description = '%s (%s)' % (TYPE_LOOKUP[x], dirname), volumetype = x)
 
-    @staticmethod
-    def lookup(volumetype, **kw): #FIXME: check if still used somewhere
-        if not volumetype in Volume.VOLUME_TYPE_LIST:
-            raise Volume.DoesNotExist
-        return Volume.objects.get(volumetype = volumetype['tag'], **kw)
+#    @staticmethod
+#    def lookup(volumetype, **kw): #FIXME: check if still used somewhere
+#        if not volumetype in Volume.VOLUME_TYPE_LIST:
+#            raise Volume.DoesNotExist
+#        return Volume.objects.get(volumetype = volumetype['tag'], **kw)
 
     @staticmethod
     def filter(volumetype, **kw):
@@ -95,22 +72,22 @@ class Volume(models.Model):
         if user:
             logger.error("NotImplementedError") #FIXME
             pass
-        for volume in Volume.objects.filter(volumetype = volumetype['tag'], **kw):
+        for volume in Volume.objects.filter(volumetype = volumetype, **kw):
             yield volume
 
-    def is_volumetype(self, volumetype):
-        try:
-            return self.volumetype == volumetype['tag']
-        except KeyError:
-            return False
+#    def is_volumetype(self, volumetype):
+#        try:
+#            return self.volumetype == volumetype['tag']
+#        except KeyError:
+#            return False
 
     def mode(self, user):
-        if self.is_volumetype(Volume.FUNCTIONAL):
+        if self.volumetype == Volume.FUNCTIONAL:
             for binding in VolumeOwnerBinding.objects.filter(volume = self):
                 if binding.owner == user:
                     return 'rw'
             return 'ro'
-        if self.is_volumetype(Volume.STORAGE):
+        if self.volumetype == Volume.STORAGE:
             if hasattr(self, 'extrafields'):
                 return 'rw' if self.extrafields.readwrite else 'ro'
             else:
@@ -119,15 +96,13 @@ class Volume(models.Model):
 
     @property
     def mountpoint(self):
-        for x in Volume.VOLUME_TYPE_LIST:
-            if x['tag'] == self.volumetype:
-                break
-        _, dirname, _ = re.split(x['pattern'], self.name)
-        if self.is_volumetype(Volume.FUNCTIONAL):
-            return self.volumeconf.get('pattern_functional_mnt', '/vol/%(name)s') % { 'name': dirname }
-        if self.is_volumetype(Volume.STORAGE):
-            return self.volumeconf.get('pattern_functional_mnt', '/data/%(name)s') % { 'name': dirname }
-        return self.volumeconf.get('pattern_mnt', '/mnt/.volumes/%(name)s') % { 'name': dirname }
+        pattern = self.pattern.get(self.volumetype, r'^(%s)$' % self.volumetype)
+        _, dirname, _ = re.split(pattern, self.name)
+        if self.volumetype == Volume.FUNCTIONAL:
+            return os.path.join('/vol', dirname)
+        if self.volumetype == Volume.STORAGE:
+            return os.path.join('/data', dirname)
+        return os.path.join('/mnt/.volumes', dirname)
 
 
 class VolumeOwnerBinding(models.Model):

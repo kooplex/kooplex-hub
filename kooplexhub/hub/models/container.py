@@ -296,7 +296,7 @@ def container_message_change(sender, instance, **kwargs):
 def bind_home(sender, instance, created, **kwargs):
     if created:
         try:
-            v_home = Volume.objects.get(volumetype = Volume.HOME['tag'])
+            v_home = Volume.objects.get(volumetype = Volume.HOME)
             VolumeContainerBinding.objects.create(container = instance, volume = v_home)
         except Exception as e:
             logger.error('Home not bound -- %s' % e)
@@ -306,10 +306,20 @@ def bind_home(sender, instance, created, **kwargs):
 def bind_report(sender, instance, created, **kwargs):
     if created:
         try:
-            v_report = Volume.objects.get(volumetype = Volume.REPORT['tag'])
+            v_report = Volume.objects.get(volumetype = Volume.REPORT)
             VolumeContainerBinding.objects.create(container = instance, volume = v_report)
         except Exception as e:
             logger.error('Report not bound -- %s' % e)
+
+
+@receiver(post_save, sender = Container)
+def bind_garbage(sender, instance, created, **kwargs):
+    if created:
+        try:
+            v_garbage = Volume.objects.get(volumetype = Volume.GARBAGE)
+            VolumeContainerBinding.objects.create(container = instance, volume = v_garbage)
+        except Exception as e:
+            logger.error('Garbage not bound -- %s' % e)
 
 
 class ProjectContainerBinding(models.Model):
@@ -325,7 +335,7 @@ def bind_share(sender, instance, created, **kwargs):
     if created:
         c = instance.container
         try:
-            v_share = Volume.objects.get(volumetype = Volume.SHARE['tag'])
+            v_share = Volume.objects.get(volumetype = Volume.SHARE)
             VolumeContainerBinding.objects.get(container = c, volume = v_share)
             logger.debug('Share already bound to container %s' % c)
         except VolumeContainerBinding.DoesNotExist:
@@ -339,7 +349,7 @@ def remove_bind_share(sender, instance, **kwargs):
     c = instance.container
     if not ProjectContainerBinding.objects.filter(container = c):
         try:
-            v_share = Volume.objects.get(volumetype = Volume.SHARE['tag'])
+            v_share = Volume.objects.get(volumetype = Volume.SHARE)
             VolumeContainerBinding.objects.get(container = c, volume = v_share).delete()
             logger.debug('Share unbound from container %s' % instance)
         except Exception as e:
@@ -352,7 +362,7 @@ def bind_workdir(sender, instance, created, **kwargs):
     if created:
         c = instance.container
         try:
-            v_workdir = Volume.objects.get(volumetype = Volume.WORKDIR['tag'])
+            v_workdir = Volume.objects.get(volumetype = Volume.WORKDIR)
             VolumeContainerBinding.objects.get(container = c, volume = v_workdir)
             logger.debug('Workdir already bound to container %s' % c)
         except VolumeContainerBinding.DoesNotExist:
@@ -366,7 +376,7 @@ def remove_bind_workdir(sender, instance, **kwargs):
     c = instance.container
     if not ProjectContainerBinding.objects.filter(container = c):
         try:
-            v_workdir = Volume.objects.get(volumetype = Volume.WORKDIR['tag'])
+            v_workdir = Volume.objects.get(volumetype = Volume.WORKDIR)
             VolumeContainerBinding.objects.get(container = c, volume = v_workdir).delete()
             logger.debug('Workdir unbound from container %s' % instance)
         except Exception as e:
@@ -378,7 +388,7 @@ def bind_git(sender, instance, created, **kwargs):
     if created:
         c = instance.container
         try:
-            v_git = Volume.objects.get(volumetype = Volume.GIT['tag'])
+            v_git = Volume.objects.get(volumetype = Volume.GIT)
             VolumeContainerBinding.objects.get(container = c, volume = v_git)
             logger.debug('Git cache already bound to container %s' % c)
         except VolumeContainerBinding.DoesNotExist:
@@ -392,7 +402,7 @@ def remove_bind_git(sender, instance, **kwargs):
     c = instance.container
     if not ProjectContainerBinding.objects.filter(container = c):
         try:
-            v_git = Volume.objects.get(volumetype = Volume.GIT['tag'])
+            v_git = Volume.objects.get(volumetype = Volume.GIT)
             VolumeContainerBinding.objects.get(container = c, volume = v_git).delete()
             logger.debug('Git cache unbound from container %s' % instance)
         except Exception as e:
@@ -511,6 +521,6 @@ def bind_courserelatedvolumes(sender, instance, created, **kwargs):
                 binding = VolumeContainerBinding.objects.create(container = instance.container, volume = volume)
                 logger.debug("binding created %s" % binding)
             except Volume.DoesNotExist:
-                logger.error("cannot create binding coursecontainerbinding %s volume %s" % (instance, key['tag']))
+                logger.error("cannot create binding coursecontainerbinding %s volume %s" % (instance, key))
 
 

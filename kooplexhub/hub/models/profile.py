@@ -138,11 +138,12 @@ def create_user_profile(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender = User)
 def create_user_home_and_reportprepare(sender, instance, created, **kwargs):
-    from kooplex.lib.filesystem import mkdir_home, mkdir_reportprepare
+    from kooplex.lib.filesystem import mkdir_home, mkdir_reportprepare, mkdir_usergarbage
     if created:
         try:
             mkdir_home(instance)
             mkdir_reportprepare(instance)
+            mkdir_usergarbage(instance)
         except Exception as e:
             logger.error("Failed to create home for %s -- %s" % (instance, e))
 

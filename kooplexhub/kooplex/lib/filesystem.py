@@ -35,8 +35,8 @@ def _mkdir(path, uid = 0, gid = 0, mode = 0b111101000):
     os.chmod(path, mode)
 
 
-def _grantaccess(user, folder):
-    bash("setfacl -R -m u:%d:rwX %s" % (user.profile.userid, folder))
+def _grantaccess(user, folder, acl = 'rwX'):
+    bash("setfacl -R -m u:%d:%s %s" % (user.profile.userid, acl, folder))
 
 def _revokeaccess(user, folder):
     bash("setfacl -R -x u:%d %s" % (user.profile.userid, folder))
@@ -99,6 +99,11 @@ def garbagedir_home(user):
 def mkdir_reportprepare(user):
     dir_reportprepare = Dirname.reportprepare(user)
     _mkdir(dir_reportprepare, uid = user.profile.userid, gid = user.profile.groupid)
+
+
+def mkdir_usergarbage(user):
+    dir_usergarbage = Dirname.usergarbage(user)
+    _mkdir(dir_usergarbage, uid = user.profile.userid, gid = user.profile.groupid)
 
 
 def mkdir_share(userprojectbinding):
@@ -165,6 +170,8 @@ def snapshot_report(report):
     dir_source = os.path.join(Dirname.reportprepare(report.creator), report.folder)
     dir_target = Dirname.report(report)
     _copy_dir(dir_source, dir_target, remove = False)
+    dir_reportroot = Dirname.reportroot(report.creator)
+    _grantaccess(report.creator, dir_reportroot, acl = 'rX')
 
 ########################################
 

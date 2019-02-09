@@ -249,7 +249,7 @@ def bind_coursevolumes(sender, instance, created, **kwargs):
                 binding = VolumeCourseBinding.objects.create(course = instance, volume = volume)
                 logger.debug("binding created %s" % binding)
             except Volume.DoesNotExist:
-                logger.error("cannot create binding course %s volume %s" % (instance, key['tag']))
+                logger.error("cannot create binding course %s volume %s" % (instance, key))
 
 
 @receiver(post_save, sender = UserCourseBinding)
