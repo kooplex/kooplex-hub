@@ -515,12 +515,12 @@ class CourseContainerBinding(models.Model):
 @receiver(post_save, sender = CourseContainerBinding)
 def bind_courserelatedvolumes(sender, instance, created, **kwargs):
     if created:
-        for key in [ Volume.COURSE_SHARE, Volume.COURSE_WORKDIR, Volume.COURSE_ASSIGNMENTDIR ]:
+        for vt in [ Volume.COURSE_SHARE, Volume.COURSE_WORKDIR, Volume.COURSE_ASSIGNMENTDIR ]:
             try:
-                volume = Volume.lookup(key)
+                volume = Volume.objects.get(volumetype = vt)
                 binding = VolumeContainerBinding.objects.create(container = instance.container, volume = volume)
                 logger.debug("binding created %s" % binding)
             except Volume.DoesNotExist:
-                logger.error("cannot create binding coursecontainerbinding %s volume %s" % (instance, key))
+                logger.error("cannot create binding coursecontainerbinding %s volume %s" % (instance, vt))
 
 

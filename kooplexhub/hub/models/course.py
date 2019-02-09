@@ -182,8 +182,18 @@ class CourseCode(models.Model):
     def safecourseid(self):
         return standardize_str(self.courseid)
 
-
-
+    @staticmethod
+    def parse(attributelist):
+        coursecodes = []
+        for courseid in attributelist:
+            courseid = standardize_str(courseid)
+            try:
+                coursecode = CourseCode.objects.get(courseid = courseid)
+            except CourseCode.DoesNotExist:
+                coursecode = CourseCode.objects.create(courseid = courseid)
+                logger.info('New coursecode %s' % (coursecode))
+            coursecodes.append(coursecode)
+        return coursecodes
 
 
 class UserCourseCodeBinding(models.Model):
@@ -195,7 +205,25 @@ class UserCourseCodeBinding(models.Model):
     def __str__(self):
         return "%s code: %s, teacher: %s" % (self.user, self.coursecode, self.is_teacher)
 
-#FIXME:
+    @staticmethod
+    def userattributes(user, coursecodes, is_teacher):
+        former_bindings = [ b for b in UserCourseCodeBinding.objects.filter(user = user, is_teacher = is_teacher, is_protected = False) ]
+        logger.debug('%s has %d former unprotected bindings' % (user, len(former_bindings)))
+        for coursecode in coursecodes:
+            try:
+                binding = UserCourseCodeBinding.objects.get(user = user, coursecode = coursecode, is_teacher = is_teacher)
+                former_bindings.remove(binding)
+            except UserCourseCodeBinding.DoesNotExist:
+                binding = UserCourseCodeBinding.objects.create(user = user, coursecode = coursecode, is_teacher = is_teacher)
+                logger.info('New usercoursecodebinding %s' % (binding))
+            except ValueError:
+                # protected bindings not in former_bindings
+                pass
+        for binding in former_bindings:
+            logger.info('Removing usercoursecodebinding %s' % (binding))
+            binding.delete()
+
+
 class UserCourseBinding(models.Model):
     user = models.ForeignKey(User, null = False)
     course = models.ForeignKey(Course, null = False)
@@ -212,6 +240,28 @@ class UserCourseBinding(models.Model):
         for a in Assignment.objects.filter(course = self.course):
             yield a
 
+
+@receiver(pre_save, sender = CourseCode)
+def manage_usercoursebindings(sender, instance, **kwargs):
+    if instance.course is None:
+        return
+    is_new = instance.id is None
+    if not is_new:
+        old = CourseCode.objects.get(id = instance.id)
+        if old.course == instance.course:
+            return
+        for b in UserCourseCodeBinding.objects.filter(coursecode = instance):
+            for binding in UserCourseBinding.objects.filter(user = b.user, course = old.course):
+                binding.delete()
+                logger.info('Delete binding %s (remapped coursecode %s %s -> %s' % (binding, instance, old.course, instance.course))
+    for b in UserCourseCodeBinding.objects.filter(coursecode = instance):
+        binding, created = UserCourseBinding.objects.get_or_create(user = b.user, course = instance.course, is_teacher = b.is_teacher, is_protected = b.is_protected)
+        if created:
+            logger.info('New binding %s' % binding)
+
+
+
+
 @receiver(post_save, sender = UserCourseCodeBinding)
 def map_uccb2ucb(sender, instance, created, **kwargs):
     if instance.coursecode.course == None:
@@ -225,31 +275,19 @@ def map_uccb2ucb(sender, instance, created, **kwargs):
         b = UserCourseBinding.objects.create(user = instance.user, course = instance.coursecode.course, is_teacher = instance.is_teacher)
         logger.info("New mapping for %s: %s" % (instance, b))
 
+
 @receiver(post_save, sender = Course)
 def mkdir_course(sender, instance, created, **kwargs):
     from kooplex.lib.filesystem import mkdir_course_share
     if created:
         mkdir_course_share(instance)
 
+
 @receiver(post_delete, sender = Course)
 def garbagedir_course(sender, instance, **kwargs):
     from kooplex.lib.filesystem import garbagedir_course_share, rmdir_course_workdir
     garbagedir_course_share(instance)
     rmdir_course_workdir(instance)
-
-
-#FIXME: EZ NEM KELL
-@receiver(post_save, sender = Course)
-def bind_coursevolumes(sender, instance, created, **kwargs):
-    from .volume import Volume, VolumeCourseBinding
-    if created:
-        for key in [ Volume.HOME, Volume.COURSE_SHARE, Volume.COURSE_WORKDIR, Volume.COURSE_ASSIGNMENTDIR ]:
-            try:
-                volume = Volume.lookup(key)
-                binding = VolumeCourseBinding.objects.create(course = instance, volume = volume)
-                logger.debug("binding created %s" % binding)
-            except Volume.DoesNotExist:
-                logger.error("cannot create binding course %s volume %s" % (instance, key))
 
 
 @receiver(post_save, sender = UserCourseBinding)
@@ -270,42 +308,4 @@ def movedir_usercourse(sender, instance, **kwargs):
 
 
 
-
-def lookup_course(courseid):
-    safe_courseid = standardize_str(courseid)
-    try:
-        course = Course.objects.get(courseid = courseid)
-    except Course.DoesNotExist:
-        try:
-            project = Project.objects.get(name = 'c_%s' % safe_courseid)
-            logger.debug("Course %s associated project found" % courseid)
-        except Project.DoesNotExist:
-            project = Project.objects.create(name = 'c_%s' % safe_courseid)
-            logger.debug("Course %s associated project created" % courseid)
-        course = Course.objects.create(courseid = courseid, project = project)
-        logger.warn('Course with courseid %s is created. Provide a description in admin panel' % courseid)
-    return course
-
-def update_UserCourseBindings(user, newbindings):
-    return
-#FIXME:
-    bindings = list(UserCourseBinding.objects.filter(user = user))
-    for newbinding in newbindings:
-        course = newbinding['course']
-        #flag = newbinding['flag']
-        is_teacher = newbinding['is_teacher']
-        try:
-            binding = UserCourseBinding.objects.get(user = user, course = course, is_teacher = is_teacher)
-            if binding in bindings:
-                bindings.remove(binding)
-            continue
-        except UserCourseBinding.DoesNotExist:
-            UserCourseBinding.objects.create(user = user, course = course, is_teacher = is_teacher)
-            logger.info("User %s binds to course %s/%s (is teacher: %s)" % (user, course, is_teacher))
-    for binding in bindings:
-        if binding.is_protected:
-            logger.warn("According to IDP user %s is not bound to course %s any longer. Binding is not removed because it is protected" % (user, binding.course))
-        else:
-            logger.info("User %s is not bound to course %s any longer" % (user, binding.course))
-            binding.delete()
 
