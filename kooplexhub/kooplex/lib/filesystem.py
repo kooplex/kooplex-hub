@@ -282,6 +282,7 @@ def cp_assignmentsnapshot(userassignmentbinding):
         _grantaccess(userassignmentbinding.user, dir_target)
         for binding in UserCourseBinding.objects.filter(course = assignment.coursecode.course, is_teacher = True):
             _grantaccess(binding.user, dir_target, acl = 'rX')
+#FIXME: remove is necessary
     except Exception as e:
         logger.error("Cannot cp snapshot dir %s -- %s" % (userassignmentbinding, e))
 
@@ -289,8 +290,6 @@ def cp_userassignment(userassignmentbinding):
     dir_source = Dirname.assignmentworkdir(userassignmentbinding)
     archive = Filename.assignmentcollection(userassignmentbinding)
     _archivedir(dir_source, archive, remove = False)
-        #bash("chmod -R 0 %s" % dir_target)
-        #bash("setfacl -R -m u:%d:rX %s" % (userassignmentbinding.user.profile.userid, dir_target))
 
 def cp_userassignment2correct(userassignmentbinding):
     try:
@@ -298,17 +297,9 @@ def cp_userassignment2correct(userassignmentbinding):
         dir_target = Dirname.assignmentcorrectdir(userassignmentbinding)
         with tarfile.open(archivefile, mode='r') as archive:
             archive.extractall(path = dir_target)
-#        bash("chmod -R 0 %s" % dir_target)
-        bash("setfacl -R -m u:%d:rwX %s" % (userassignmentbinding.corrector.profile.userid, dir_target))
+        _grantaccess(userassignmentbinding.corrector, dir_target, acl = 'rwX')
+        _grantaccess(userassignmentbinding.user, dir_target, acl = 'rX')
     except Exception as e:
         logger.error("Cannot copy correct dir %s -- %s" % (userassignmentbinding, e))
 
-def manageacl_feedback(userassignmentbinding):
-    try:
-        dir_target = Dirname.assignmentcorrectdir(userassignmentbinding)
-#        bash("setfacl -R -x u:%d %s" % (userassignmentbinding.corrector.profile.userid, dir_target))
-#        bash("setfacl -R -m u:%d:rX %s" % (userassignmentbinding.corrector.profile.userid, dir_target))
-        bash("setfacl -R -m u:%d:rX %s" % (userassignmentbinding.user.profile.userid, dir_target))
-    except Exception as e:
-        logger.error("Cannot revoke acl from feedback dir %s -- %s" % (userassignmentbinding, e))
 

@@ -75,7 +75,10 @@ class Dirname:
     @staticmethod
     def assignmentcorrectdir(userassignmentbinding):
         assignment = userassignmentbinding.assignment
-        return os.path.join(Dirname.mountpoint['assignment'], assignment.coursecode.course.folder, 'feedback-%s-%s.%s' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.strftime('%Y_%m_%d')))
+        user = userassignmentbinding.user
+        namefield = "%s%s_%s" % (user.first_name, user.last_name, user.username)
+        datefield = userassignmentbinding.submitted_at.strftime('%Y_%m_%d')
+        return os.path.join(Dirname.mountpoint['assignment'], assignment.coursecode.course.folder, 'feedback-%s-%s-%s' % (assignment.safename, namefield, datefield))
 
 
     @staticmethod

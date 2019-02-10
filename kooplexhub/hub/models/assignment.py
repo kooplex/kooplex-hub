@@ -167,22 +167,20 @@ def add_userassignmentbinding(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender = UserAssignmentBinding)
 def copy_userassignment(sender, instance, created, **kwargs):
-    from kooplex.lib.filesystem import cp_assignmentsnapshot, cp_userassignment, cp_userassignment2correct, manageacl_feedback, Dirname, Filename
+    from kooplex.lib.filesystem import cp_assignmentsnapshot, cp_userassignment, cp_userassignment2correct
     from .container import Container
     if created:
         cp_assignmentsnapshot(instance)
-#FIXME: find right container and managemount()
     elif instance.state in [ UserAssignmentBinding.ST_SUBMITTED, UserAssignmentBinding.ST_COLLECTED ]:
         cp_userassignment(instance)
     elif instance.state == UserAssignmentBinding.ST_CORRECTING:
         cp_userassignment2correct(instance)
-        #Container.manage_report_mount(user = instance.corrector, project =instance.assignment.course.project, mapping = mapping)
-#    elif instance.state == UserAssignmentBinding.ST_FEEDBACK:
-#        manageacl_feedback(instance)
-#        mapping = instance.report_map(instance.user)
-#        Container.manage_report_mount(user = instance.user, project =instance.assignment.course.project, mapping = mapping)
-#    elif instance.state == UserAssignmentBinding.ST_WORKINPROGRESS:
-#        mapping = instance.report_map(instance.corrector)
-#        Container.manage_report_mount(user = instance.corrector, project =instance.assignment.course.project, mapping = mapping)
+        for c in Container.objects.filter(user = instance.corrector):
+            if c.course == instance.assignment.coursecode.course:
+                c.managemount()
+    elif instance.state == UserAssignmentBinding.ST_FEEDBACK:
+        for c in Container.objects.filter(user = instance.user):
+            if c.course == instance.assignment.coursecode.course:
+                c.managemount()
 
 
