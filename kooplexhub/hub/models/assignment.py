@@ -138,18 +138,6 @@ class UserAssignmentBinding(models.Model):
         self.save()
         logger.info(self)
 
-#FIXME: deprecated
-#    def report_map(self, user):
-#        if self.user == user and self.state == UserAssignmentBinding.ST_FEEDBACK:
-#            return "+:%s:%s" % (Dirname.assignmentcorrectdir(self), self.assignment.safename)  
-#        elif self.user == user and self.state == UserAssignmentBinding.ST_WORKINPROGRESS and self.corrector is not None:
-#            return "+:%s:%s" % (Dirname.assignmentcorrectdir(self), self.assignment.safename)  
-#        elif self.corrector == user and self.state in [ UserAssignmentBinding.ST_CORRECTING, UserAssignmentBinding.ST_FEEDBACK ]:
-#            student = self.user
-#            return "+:%s:%s" % (Dirname.assignmentcorrectdir(self), os.path.join(self.assignment.safename, "%s_%s" % (student.username, student.profile.safename))) 
-#        elif self.corrector == user and self.state in [ UserAssignmentBinding.ST_COLLECTED, UserAssignmentBinding.ST_SUBMITTED, UserAssignmentBinding.ST_WORKINPROGRESS ]:
-#            student = self.user
-#            return "-:%s" % os.path.join(self.assignment.safename, "%s_%s" % (student.username, student.profile.safename)) 
 
 
 @receiver(post_save, sender = Assignment)

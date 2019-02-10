@@ -1,7 +1,10 @@
 import os
+import logging
 
 from kooplex.settings import KOOPLEX
 from kooplex.lib import  standardize_str
+
+logger = logging.getLogger(__name__)
 
 class Dirname:
     mountpoint = KOOPLEX.get('mountpoint', {})
@@ -62,6 +65,13 @@ class Dirname:
     def assignmentsource(assignment):
         return os.path.join(Dirname.courseprivate(assignment.coursecode.course), assignment.folder)
 
+    @staticmethod
+    def assignmentworkdir(userassignmentbinding):
+        from hub.models import UserCourseBinding
+        usercoursebinding = UserCourseBinding.objects.get(user = userassignmentbinding.user, course = userassignmentbinding.assignment.coursecode.course)
+        wd = Dirname.usercourseworkdir(usercoursebinding)
+        return os.path.join(wd, userassignmentbinding.assignment.safename)
+
 
     @staticmethod
     def containervolume_listfolders(container, volume):
@@ -104,13 +114,6 @@ class Dirname:
         else:
             raise NotImplementedError("DIRNAME %s" % volume.volumetype)
 
-
-    @staticmethod
-    def assignmentworkdir(userassignmentbinding):
-        from hub.models import UserCourseBinding
-        usercoursebinding = UserCourseBinding.objects.get(user = userassignmentbinding.user, course = userassignmentbinding.assignment.courseid.course)
-        wd = Dirname.courseworkdir(usercoursebinding)
-        return os.path.join(wd, userassignmentbinding.assignment.safename)
 
     @staticmethod
     def assignmentcorrectdir(userassignmentbinding):

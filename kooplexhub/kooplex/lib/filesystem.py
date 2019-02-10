@@ -272,12 +272,16 @@ def garbage_assignmentsnapshot(assignment):
         logger.error("move %s -> %s fails -- %s" % (archive, garbage, e))
 
 def cp_assignmentsnapshot(userassignmentbinding):
+    from hub.models import UserCourseBinding
     try:
-        archivefile = Filename.assignmentsnapshot(userassignmentbinding.assignment)
+        assignment = userassignmentbinding.assignment
+        archivefile = Filename.assignmentsnapshot(assignment)
         dir_target = Dirname.assignmentworkdir(userassignmentbinding)
-        with tarfile.open(archivefile, mode='r') as archive:
+        with tarfile.open(archivefile, mode = 'r') as archive:
             archive.extractall(path = dir_target)
-        bash("setfacl -R -m u:%d:rwX %s" % (userassignmentbinding.user.profile.userid, dir_target))
+        _grantaccess(userassignmentbinding.user, dir_target)
+        for binding in UserCourseBinding.objects.filter(course = assignment.coursecode.course, is_teacher = True):
+            _grantaccess(binding.user, dir_target, acl = 'rX')
     except Exception as e:
         logger.error("Cannot cp snapshot dir %s -- %s" % (userassignmentbinding, e))
 
