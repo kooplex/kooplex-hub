@@ -17,9 +17,9 @@ logger = logging.getLogger(__name__)
 
 
 class Course(models.Model):
-    name = models.CharField(max_length = 30, null = False)
-    folder = models.CharField(max_length = 30, null = False)
-    description = models.TextField(max_length = 500, blank = True)
+    name = models.CharField(max_length = 64, null = False)
+    folder = models.CharField(max_length = 64, null = False)
+    description = models.TextField(max_length = 512, blank = True)
     image = models.ForeignKey(Image, null = True)
 
     def __str__(self):
