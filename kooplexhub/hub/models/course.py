@@ -317,9 +317,12 @@ def garbagedir_course(sender, instance, **kwargs):
 def mkdir_usercourse(sender, instance, created, **kwargs):
     from kooplex.lib.filesystem import mkdir_course_workdir, grantacl_course_workdir, grantacl_course_share
     if created:
+        grantacl_course_share(instance)
         mkdir_course_workdir(instance)
         grantacl_course_workdir(instance)
-        grantacl_course_share(instance)
+        if instance.is_teacher == False:
+            for binding in UserCourseBinding.objects.filter(course = instance.course, is_teacher = True):
+                grantacl_course_workdir(binding)
 
 
 @receiver(pre_delete, sender = UserCourseBinding)

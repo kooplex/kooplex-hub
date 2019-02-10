@@ -304,7 +304,7 @@ def bind_home(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender = Container)
 def bind_report(sender, instance, created, **kwargs):
-    if created:
+    if created and instance.course:
         try:
             v_report = Volume.objects.get(volumetype = Volume.REPORT)
             VolumeContainerBinding.objects.create(container = instance, volume = v_report)

@@ -173,7 +173,6 @@ def snapshot_report(report):
     dir_reportroot = Dirname.reportroot(report.creator)
     _grantaccess(report.creator, dir_reportroot, acl = 'rX')
 
-########################################
 
 def mkdir_course_share(course):
     try:
@@ -185,16 +184,16 @@ def mkdir_course_share(course):
     except KeyError as e:
         logger.error("Cannot create course dir, KOOPLEX['mountpoint']['course'] is missing")
 
+
 def grantacl_course_share(usercoursebinding):
     try:
         dir_coursepublic = Dirname.coursepublic(usercoursebinding.course)
         dir_courseprivate = Dirname.courseprivate(usercoursebinding.course)
         if usercoursebinding.is_teacher:
-            bash("setfacl -R -m u:%d:rwX %s" % (usercoursebinding.user.profile.userid, dir_coursepublic)) #FIXME: use _grantaccess
-            bash("setfacl -R -m u:%d:rwX %s" % (usercoursebinding.user.profile.userid, dir_courseprivate))
+            _grantaccess(usercoursebinding.user, dir_coursepublic)
+            _grantaccess(usercoursebinding.user, dir_courseprivate)
         else:
-            bash("setfacl -R -m u:%d:rX %s" % (usercoursebinding.user.profile.userid, dir_coursepublic))
-        logger.debug("acl granted %s" % usercoursebinding)
+            _grantaccess(usercoursebinding.user, dir_coursepublic, acl = 'rX')
     except Exception as e:
         logger.error("Cannot grant acl %s -- %s" % (usercoursebinding, e))
 
@@ -203,16 +202,17 @@ def revokeacl_course_share(usercoursebinding):
         dir_coursepublic = Dirname.coursepublic(usercoursebinding.course)
         dir_courseprivate = Dirname.courseprivate(usercoursebinding.course)
         if usercoursebinding.is_teacher:
-            bash("setfacl -R -x u:%d %s" % (usercoursebinding.user.profile.userid, dir_courseprivate)) #FIXME: use _revokeaccess
-        bash("setfacl -R -x u:%d %s" % (usercoursebinding.user.profile.userid, dir_coursepublic))
-        logger.debug("acl revoked %s" % usercoursebinding)
+            _revokeaccess(usercoursebinding.user, dir_courseprivate)
+        _revokeaccess(usercoursebinding.user, dir_coursepublic)
     except Exception as e:
         logger.error("Cannot revoke acl %s -- %s" % (usercoursebinding, e))
+
 
 def garbagedir_course_share(course):
     dir_course = Dirname.course(course)
     garbage = Filename.course_garbage(course)
     _archivedir(dir_course, garbage)
+
 
 def mkdir_course_workdir(usercoursebinding):
     try:
@@ -223,11 +223,12 @@ def mkdir_course_workdir(usercoursebinding):
     except KeyError as e:
         logger.error("Cannot create course dir, KOOPLEX['mountpoint']['usercourse'] is missing")
 
+
 def grantacl_course_workdir(usercoursebinding):
     try:
         if usercoursebinding.is_teacher:
             dir_usercourse = Dirname.courseworkdir(usercoursebinding)
-            bash("setfacl -R -m u:%d:rwX %s" % (usercoursebinding.user.profile.userid, dir_usercourse))
+            _grantaccess(usercoursebinding.user, dir_usercourse, acl = 'rX') #NOTE: formerly rw access was granted
     except Exception as e:
         logger.error("Cannot grant acl %s -- %s" % (usercoursebinding, e))
 
@@ -235,9 +236,10 @@ def revokeacl_course_workdir(usercoursebinding):
     try:
         if usercoursebinding.is_teacher:
             dir_usercourse = Dirname.courseworkdir(usercoursebinding)
-            bash("setfacl -R -x u:%d %s" % (usercoursebinding.user.profile.userid, dir_usercourse))
+            _revokeaccess(usercoursebinding.user, dir_usercourse)
     except Exception as e:
         logger.error("Cannot revoke acl %s -- %s" % (usercoursebinding, e))
+
 
 def archive_course_workdir(usercoursebinding):
     if usercoursebinding.is_teacher:
