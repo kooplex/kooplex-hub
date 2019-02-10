@@ -43,7 +43,7 @@ class CourseCodeAdmin(admin.ModelAdmin):
 
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'safename', 'description', 'image')
+    list_display = ('id', 'name', 'folder', 'description', 'image')
 
 @admin.register(UserCourseCodeBinding)
 class UserCourseCodeBindingAdmin(admin.ModelAdmin):

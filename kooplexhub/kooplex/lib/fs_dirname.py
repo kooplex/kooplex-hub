@@ -40,7 +40,7 @@ class Dirname:
 
     @staticmethod
     def course(course):
-        return os.path.join(Dirname.mountpoint['course'], course.safename)
+        return os.path.join(Dirname.mountpoint['course'], course.folder)
 
     @staticmethod
     def courseprivate(course):
@@ -52,7 +52,7 @@ class Dirname:
 
     @staticmethod
     def courseworkdir(usercoursebinding):
-        return os.path.join(Dirname.mountpoint['usercourse'], usercoursebinding.course.safename)
+        return os.path.join(Dirname.mountpoint['usercourse'], usercoursebinding.course.folder)
 
     @staticmethod
     def usercourseworkdir(usercoursebinding):
@@ -116,4 +116,4 @@ class Dirname:
     def assignmentcorrectdir(userassignmentbinding):
         assignment = userassignmentbinding.assignment
         flag = assignment.flag if assignment.flag else '_'
-        return os.path.join(Dirname.mountpoint['assignment'], assignment.coursecode.course.safename, 'feedback-%s-%s.%d' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp()))
+        return os.path.join(Dirname.mountpoint['assignment'], assignment.coursecode.course.folder, 'feedback-%s-%s.%d' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp()))

@@ -172,7 +172,7 @@ class Container(models.Model):
                 logger.debug("container in db %s" % binding.container)
                 return binding.container
         if create:
-            containername = "%s-%s" % (course.safename, user.username) #FIXME: rename safename -> cleanname
+            containername = "%s-%s" % (user.username, course.folder)
             container = Container.objects.create(name = containername, user = user)
             CourseContainerBinding.objects.create(course = course, container = container)
             logger.debug("new container in db %s" % container)

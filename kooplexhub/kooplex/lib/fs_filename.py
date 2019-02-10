@@ -25,23 +25,23 @@ class Filename:
 
     @staticmethod
     def course_garbage(course):
-        return os.path.join(Dirname.mountpoint['garbage'], "course-%s.%f.tar.gz" % (course.safename, time.time()))
+        return os.path.join(Dirname.mountpoint['garbage'], "course-%s.%f.tar.gz" % (course.folder, time.time()))
 
     @staticmethod
     def courseworkdir_archive(usercoursebinding):
-        return os.path.join(Dirname.mountpoint['home'], usercoursebinding.user.username, "garbage", "%s.%f.tar.gz" % (usercoursebinding.course.safename, time.time()))
+        return os.path.join(Dirname.mountpoint['home'], usercoursebinding.user.username, "garbage", "%s.%f.tar.gz" % (usercoursebinding.course.folder, time.time()))
 
     @staticmethod
     def assignmentsnapshot(assignment):
-        return os.path.join(Dirname.mountpoint['assignment'], assignment.coursecode.course.safename, 'assignmentsnapshot-%s.%d.tar.gz' % (assignment.safename, assignment.created_at.timestamp()))
+        return os.path.join(Dirname.mountpoint['assignment'], assignment.coursecode.course.folder, 'assignmentsnapshot-%s.%d.tar.gz' % (assignment.safename, assignment.created_at.timestamp()))
 
     @staticmethod
     def assignmentsnapshot_garbage(assignment):
-        return os.path.join(Dirname.mountpoint['garbage'], 'assignmentsnapshot-%s.%s-%s.%d-%f.tar.gz' % (assignment.coursecode.course.safename, assignment.safename, assignment.created_at.timestamp(), time.time()))
+        return os.path.join(Dirname.mountpoint['garbage'], 'assignmentsnapshot-%s-%s-%s-%f.tar.gz' % (assignment.coursecode.course.folder, assignment.safename, assignment.created_at.timestamp(), time.time()))
 
     @staticmethod
     def assignmentcollection(userassignmentbinding):
         assignment = userassignmentbinding.assignment
-        return os.path.join(Dirname.mountpoint['assignment'], assignment.coursecode.course.safename, 'submitted-%s-%s.%d.tar.gz' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp()))
+        return os.path.join(Dirname.mountpoint['assignment'], assignment.coursecode.course.fodler, 'submitted-%s-%s.%d.tar.gz' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp()))
 
 

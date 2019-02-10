@@ -18,15 +18,12 @@ logger = logging.getLogger(__name__)
 
 class Course(models.Model):
     name = models.CharField(max_length = 30, null = False)
+    folder = models.CharField(max_length = 30, null = False)
     description = models.TextField(max_length = 500, blank = True)
     image = models.ForeignKey(Image, null = True)
 
     def __str__(self):
         return "Course: %s" % self.name
-
-    @property
-    def safename(self):
-        return standardize_str(self.name)
 
 
     @register.filter
@@ -241,6 +238,9 @@ class UserCourseBinding(models.Model):
             yield a
 
 
+
+
+
 @receiver(pre_save, sender = CourseCode)
 def manage_usercoursebindings(sender, instance, **kwargs):
     if instance.course is None:
@@ -276,11 +276,34 @@ def map_uccb2ucb(sender, instance, created, **kwargs):
         logger.info("New mapping for %s: %s" % (instance, b))
 
 
-@receiver(post_save, sender = Course)
-def mkdir_course(sender, instance, created, **kwargs):
+@receiver(pre_save, sender = Course)
+def mkdir_course(sender, instance, **kwargs):
     from kooplex.lib.filesystem import mkdir_course_share
-    if created:
+    from kooplex.lib.fs_dirname import Dirname
+    instance.folder = standardize_str(instance.folder)
+    assert len(instance.folder), "Clean folder name must not be empty"
+    assert len([ c for c in Course.objects.filter(folder = instance.folder) ]) == 0, "Folder name %s is already taken" % instance.folder
+    is_new = instance.id is None
+    if is_new:
         mkdir_course_share(instance)
+    else:
+        old = Course.objects.get(id = instance.id)
+        f_o = Dirname.course(old)
+        f_n = Dirname.course(instance)
+        try:
+            os.rename(f_o, f_n)
+            logger.info("%s folder rename %s -> %s" % (instance, f_o, f_n))
+        except Exception as e:
+            logger.warning("failed to rename %s folder rename %s -> %s -- %s" % (instance, f_o, f_n, e))
+        for b in UserCourseBinding.objects.filter(course = old):
+            f_o = Dirname.courseworkdir(b)
+            b_ = UserCourseBinding(course = instance, user = b.user)
+            f_n = Dirname.courseworkdir(b_)
+            try:
+                os.rename(f_o, f_n)
+                logger.info("%s folder rename %s -> %s" % (instance, f_o, f_n))
+            except Exception as e:
+                logger.warning("failed to rename %s folder rename %s -> %s -- %s" % (instance, f_o, f_n, e))
 
 
 @receiver(post_delete, sender = Course)
