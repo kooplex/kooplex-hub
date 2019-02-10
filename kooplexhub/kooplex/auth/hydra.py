@@ -42,8 +42,7 @@ class HydraOpenID(OpenIdConnectAuth):
         except:
             pass
         # currently held courses
-        a = response.get('niifEduPersonHeldCourse', {}) #FIXME
-        a = response.get('niifEduPersonArchiveCourse', {})
+        a = response.get('niifEduPersonHeldCourse', {})
         coursecodes = CourseCode.parse(a)
         UserCourseCodeBinding.userattributes(user, coursecodes, is_teacher = True)
         # currently attended courses
