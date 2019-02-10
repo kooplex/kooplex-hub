@@ -85,15 +85,15 @@ class UserAssignmentBinding(models.Model):
 
     user = models.ForeignKey(User, null = False)
     assignment = models.ForeignKey(Assignment, null = False)
-    received_at = models.DateTimeField(null = True)
-    valid_from = models.DateTimeField(null = True)
-    expires_at = models.DateTimeField(null = True)
+    received_at = models.DateTimeField(null = True, default = None)
+    valid_from = models.DateTimeField(null = True, default = None)
+    expires_at = models.DateTimeField(null = True, default = None)
     state = models.CharField(max_length = 16, choices = [ (x, ST_LOOKUP[x]) for x in STATE_LIST ], default = ST_WORKINPROGRESS)
-    submitted_at = models.DateTimeField(null = True)
+    submitted_at = models.DateTimeField(null = True, default = None)
     corrector = models.ForeignKey(User, null = True, related_name = 'corrector')
-    corrected_at = models.DateTimeField(null = True)
-    score = models.FloatField(null = True)
-    feedback_text = models.TextField(null = True)
+    corrected_at = models.DateTimeField(null = True, default = None)
+    score = models.FloatField(null = True, default = None)
+    feedback_text = models.TextField(null = True, default = None)
 
     def __str__(self):
         return "%s by %s" % (self.assignment, self.user)
@@ -172,12 +172,11 @@ def copy_userassignment(sender, instance, created, **kwargs):
     if created:
         cp_assignmentsnapshot(instance)
 #FIXME: find right container and managemount()
-#    elif instance.state in [ UserAssignmentBinding.ST_SUBMITTED, UserAssignmentBinding.ST_COLLECTED ]:
-#        cp_userassignment(instance)
-#    elif instance.state == UserAssignmentBinding.ST_CORRECTING:
-#        cp_userassignment2correct(instance)
-#        mapping = instance.report_map(instance.corrector)
-#        Container.manage_report_mount(user = instance.corrector, project =instance.assignment.course.project, mapping = mapping)
+    elif instance.state in [ UserAssignmentBinding.ST_SUBMITTED, UserAssignmentBinding.ST_COLLECTED ]:
+        cp_userassignment(instance)
+    elif instance.state == UserAssignmentBinding.ST_CORRECTING:
+        cp_userassignment2correct(instance)
+        #Container.manage_report_mount(user = instance.corrector, project =instance.assignment.course.project, mapping = mapping)
 #    elif instance.state == UserAssignmentBinding.ST_FEEDBACK:
 #        manageacl_feedback(instance)
 #        mapping = instance.report_map(instance.user)

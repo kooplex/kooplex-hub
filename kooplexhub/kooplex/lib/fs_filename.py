@@ -42,6 +42,6 @@ class Filename:
     @staticmethod
     def assignmentcollection(userassignmentbinding):
         assignment = userassignmentbinding.assignment
-        return os.path.join(Dirname.mountpoint['assignment'], assignment.coursecode.course.fodler, 'submitted-%s-%s.%d.tar.gz' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp()))
+        return os.path.join(Dirname.mountpoint['assignment'], assignment.coursecode.course.folder, 'submitted-%s-%s.%d.tar.gz' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp()))
 
 

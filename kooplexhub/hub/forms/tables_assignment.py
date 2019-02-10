@@ -119,7 +119,7 @@ class T_SUBMIT_ASSIGNMENT(tables.Table):
             return format_html("—")
 
     def render_corrector(self, value):
-        return format_html('%s %s' % (value.first_name, value.last_name))
+        return format_html('%s %s' % (value.first_name, value.last_name)) if value else format_html("—")
 
     def render_folder(self, record):
         return str(record.assignment.folder)

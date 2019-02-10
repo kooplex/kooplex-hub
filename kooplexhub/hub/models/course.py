@@ -143,13 +143,17 @@ class Course(models.Model):
         if 'state' in kw:
             extra_b['state'] = kw['state']
         user_name = kw.get('user', None)
-        U = User.objects.filter(Q(last_name__icontains = user_name) | Q(first_name__icontains = user_name)) if 'user' in kw else None
+        if 'student' in kw:
+            U = [ kw['student'] ] #FIXME: very ugly
+        else:
+            U = User.objects.filter(Q(last_name__icontains = user_name) | Q(first_name__icontains = user_name)) if 'user' in kw else None
         bindings = set()
         for coursecode in CourseCode.objects.filter(course = self):
            for assignment in Assignment.objects.filter(coursecode = coursecode, **extra_a):
                for binding in UserAssignmentBinding.objects.filter(assignment = assignment, **extra_b):
                    if U is None or (U is not None and binding.user in U):
                        bindings.add(binding)
+        logger.debug(bindings)
         return bindings
 
 

@@ -313,7 +313,7 @@ def submitassignment(request, course_id):
         logger.error("Invalid request with course id %s and user %s -- %s" % (course_id, user, e))
         return redirect('indexpage')
     if request.method == 'GET':
-        table_submit = T_SUBMIT_ASSIGNMENT(course.userassignmentbindings())
+        table_submit = T_SUBMIT_ASSIGNMENT(course.userassignmentbindings(student = user)) #FIXME: 
         RequestConfig(request).configure(table_submit)
         context_dict = {
             'course': course,

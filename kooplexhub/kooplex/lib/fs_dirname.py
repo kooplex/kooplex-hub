@@ -72,10 +72,29 @@ class Dirname:
         wd = Dirname.usercourseworkdir(usercoursebinding)
         return os.path.join(wd, userassignmentbinding.assignment.safename)
 
+    @staticmethod
+    def assignmentcorrectdir(userassignmentbinding):
+        assignment = userassignmentbinding.assignment
+        return os.path.join(Dirname.mountpoint['assignment'], assignment.coursecode.course.folder, 'feedback-%s-%s.%s' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.strftime('%Y_%m_%d')))
+
 
     @staticmethod
     def containervolume_listfolders(container, volume):
-        from hub.models import UserCourseBinding
+        from hub.models import UserCourseBinding, UserAssignmentBinding
+        def get_usercoursebinding_userstate():
+            try:
+                usercoursebinding = UserCourseBinding.objects.get(user = container.user, course = container.course)
+            except UserCourseBinding.DoesNotExist:
+                logger.error("Silly situation, cannot map %s %s COZ user course binding instance is missing" % (volume, container))
+                return None, None
+            if container.course in container.user.profile.courses_taught():
+                return usercoursebinding, 'teacher'
+            elif container.course in container.user.profile.courses_attend():
+                return usercoursebinding, 'student'
+            else:
+                logger.error("Silly situation, cannot map %s %s" % (volume, container))
+                return None, None
+
         if volume.volumetype == volume.HOME:
             yield Dirname.userhome(container.user)
         elif volume.volumetype == volume.GARBAGE:
@@ -96,27 +115,31 @@ class Dirname:
                 yield Dirname.coursepublic(container.course)
             else:
                 logger.error("Silly situation, cannot map %s %s" % (volume, container))
-        elif volume.volumetype == volume.COURSE_WORKDIR:
-            try:
-                usercoursebinding = UserCourseBinding.objects.get(user = container.user, course = container.course)
-            except UserCourseBinding.DoesNotExist:
-                logger.error("Silly situation, cannot map %s %s COZ user course binding instance is missing" % (volume, container))
-            if container.course in container.user.profile.courses_taught():
+        elif volume.volumetype == volume.COURSE_WORKDIR and container.course:
+            usercoursebinding, userstatus = get_usercoursebinding_userstate()
+            if userstatus == 'teacher':
                 yield Dirname.courseworkdir(usercoursebinding)
-            elif container.course in container.user.profile.courses_attend():
+            elif userstatus == 'student':
                 yield Dirname.usercourseworkdir(usercoursebinding)
             else:
-                logger.error("Silly situation, cannot map %s %s" % (volume, container))
-        elif volume.volumetype == volume.COURSE_ASSIGNMENTDIR:
-            yield "FIXME" #Dirname.courseworkdir(container.course)
+                yield "OOPS_%s" % volume.volumetype
+        elif volume.volumetype == volume.COURSE_ASSIGNMENTDIR and container.course:
+            _, userstatus = get_usercoursebinding_userstate()
+            if userstatus == 'teacher':
+                for binding in UserAssignmentBinding.objects.all():
+                    if binding.state == UserAssignmentBinding.ST_QUEUED or binding.corrector is None or binding.assignment.coursecode.course != container.course:
+                        continue
+                    yield Dirname.assignmentcorrectdir(binding)
+            elif userstatus == 'student':
+                for binding in UserAssignmentBinding.objects.filter(user = container.user):
+                    if binding.state == UserAssignmentBinding.ST_QUEUED or binding.corrector is None or binding.assignment.coursecode.course != container.course:
+                        continue
+                    yield Dirname.assignmentcorrectdir(binding)
+            else:
+                yield "OOPS_%s" % volume.volumetype
         elif volume.volumetype == volume.REPORT:
             yield Dirname.reportroot(container.user)
         else:
-            raise NotImplementedError("DIRNAME %s" % volume.volumetype)
+            yield "MISSING_DIRNAME_%s" % volume.volumetype
 
 
-    @staticmethod
-    def assignmentcorrectdir(userassignmentbinding):
-        assignment = userassignmentbinding.assignment
-        flag = assignment.flag if assignment.flag else '_'
-        return os.path.join(Dirname.mountpoint['assignment'], assignment.coursecode.course.folder, 'feedback-%s-%s.%d' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp()))
