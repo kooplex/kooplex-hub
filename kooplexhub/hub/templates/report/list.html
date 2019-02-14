@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block content %}
-  {% for report in user.profile.reports %}
+  {% for report, table in user.profile.reports %}
     {% include 'report/partial.html' %}
   {% endfor %}
 {% endblock %}

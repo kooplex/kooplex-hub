@@ -43,7 +43,27 @@ def courses(request):
 
 @login_required
 def conf_meta(request, course_id, next_page):
-    raise NotImplementedError
+    user = request.user
+    logger.debug("method: %s, course id: %s, user: %s" % (request.method, course_id, user))
+    try:
+        course = Course.get_usercourse(course_id = course_id, user = request.user)
+    except Course.DoesNotExist as e:
+        logger.error('abuse by %s course id: %s -- %s' % (user, course_id, e))
+        messages.error(request, 'Course does not exist')
+        return redirect(next_page)
+
+    if request.method == 'POST' and request.POST.get('button') == 'apply':
+        course.scope = request.POST['project_scope']
+        course.description = request.POST.get('description')
+        course.save()
+        return redirect(next_page)
+    else:
+        context_dict = {
+            'course': course,
+            'submenu': 'meta',
+            'next_page': next_page,
+        }
+        return render(request, 'edu/configure.html', context = context_dict)
 
 
 @login_required

@@ -173,6 +173,11 @@ def snapshot_report(report):
     dir_reportroot = Dirname.reportroot(report.creator)
     _grantaccess(report.creator, dir_reportroot, acl = 'rX')
 
+def garbage_report(report):
+    dir_source = Dirname.report(report)
+    garbage = Filename.report_garbage(report)
+    _archivedir(dir_source, garbage, remove = True)
+
 
 def mkdir_course_share(course):
     try:

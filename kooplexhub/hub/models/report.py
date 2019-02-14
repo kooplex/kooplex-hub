@@ -3,7 +3,7 @@ import logging
 
 from django.db import models
 from django.utils import timezone
-from django.db.models.signals import pre_save, post_save, post_delete
+from django.db.models.signals import pre_save, post_save, post_delete, pre_delete
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 
@@ -71,6 +71,7 @@ class Report(models.Model):
     def groupby(self):
         return [ r for r in Report.objects.filter(name = self.name, creator = self.creator) ]
 
+    @property
     def latest(self):
         r_latest = None
         for r in self.groupby():
@@ -93,4 +94,14 @@ def snapshot_report(sender, instance, **kwargs):
     snapshot_report(instance)
     if instance.reporttype == Report.TP_STATIC:
         addroute(instance)
+
+
+@receiver(pre_delete, sender = Report)
+def garbage_report(sender, instance, **kwargs):
+    from kooplex.lib.filesystem import garbage_report
+    from kooplex.lib.proxy import addroute, removeroute
+    garbage_report(instance)
+    if instance.reporttype == Report.TP_STATIC and instance != instance.latest:
+        addroute(instance.latest)
+    removeroute(instance)
 

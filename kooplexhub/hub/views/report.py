@@ -44,7 +44,8 @@ def newreport(request):#, next_page):
                 folder = request.POST['folder'],
                 password = request.POST['password'],
             )
-            return redirect('indexpage')
+            messages.info(request, "Report %s is created" % request.POST['name'])
+            return redirect('report:list')
         except Exception as e:
             logger.error(e)
             raise
@@ -58,7 +59,6 @@ def listreport(request):#, next_page):
     user = request.user
     logger.debug("user %s, method: %s" % (user, request.method))
     context_dict = {
-#        'f_report': FormReport(user = user),
         'menu_report': 'active',
         'next_page': 'indexpage', #next_page,
     }
@@ -80,10 +80,24 @@ def openreport(request, report_id):
     return redirect(url_external)
 
 
+@login_required
+def deletereport(request, report_id):
+    user = request.user
+    logger.debug("user %s, method: %s" % (user, request.method))
+    try:
+        report = Report.objects.get(id = report_id, creator = user)
+        report.delete()
+        messages.info(request, "Deleted your report: %s" % report)
+    except Exception as e:
+        logger.warning('Cannot remove report id: %s -- %s' % (report_id, e))
+        messages.warning(request, "Cannot delete requested report.")
+    return redirect('report:list')
+
+
 
 urlpatterns = [
     url(r'^newreport/?$', newreport, name = 'new'),
     url(r'^listreport/?$', listreport, name = 'list'),
     url(r'^openreport/(?P<report_id>\d+)$', openreport, name = 'openreport'),
-#    url(r'^configurecourse/(?P<course_id>\d+)/meta/(?P<next_page>\w+:?\w*)$', conf_meta, name = 'conf_meta'), 
+    url(r'^deletereport/(?P<report_id>\d+)$', deletereport, name = 'deletereport'), 
 ]

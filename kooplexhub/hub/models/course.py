@@ -23,8 +23,8 @@ class Course(models.Model):
     image = models.ForeignKey(Image, null = True)
 
     def __str__(self):
-        return "Course: %s" % self.name
-
+        #return "Course: %s" % self.name #FIXME: OperationalError at /admin/hub/course/31/change/ (1366, "Incorrect string value: '\\xC5\\xB1s\\xC3\\xA9g...' for column 'object_repr' at row 1")
+        return "Course: {}".format(self.name)
 
     @register.filter
     def get_usercoursecontainer(self, user):
@@ -286,7 +286,11 @@ def mkdir_course(sender, instance, **kwargs):
     from kooplex.lib.fs_dirname import Dirname
     instance.folder = standardize_str(instance.folder)
     assert len(instance.folder), "Clean folder name must not be empty"
-    assert len([ c for c in Course.objects.filter(folder = instance.folder) ]) == 0, "Folder name %s is already taken" % instance.folder
+    c_ids = [ c.id for c in Course.objects.filter(folder = instance.folder) ]
+    if len(c_ids) == 1:
+        c_id = c_ids.pop()
+        assert c_id == instance.id, "Folder name %s is already taken" % instance.folder
+    assert len(c_ids) == 0, "Folder name %s is already taken" % instance.folder
     is_new = instance.id is None
     if is_new:
         mkdir_course_share(instance)

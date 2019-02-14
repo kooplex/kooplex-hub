@@ -70,10 +70,10 @@ def addroute(instance):
         return _addroute_container(instance)
     elif isinstance(instance, Report):
         return _addroute_report(instance)
-    logger.error('Not implemented')
+    logger.error('Not implemented %s type %s' % (instance, type(instance)))
 
 
-def removeroute(container):
+def _removeroute_container(container):
     proxyconf = KOOPLEX.get('proxy', {})
     kw = {
         'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', container.proxy_path), 
@@ -81,3 +81,21 @@ def removeroute(container):
     }
     logging.debug("- %s -/-> %s" % (kw['url'], container.url))
     return keeptrying(requests.delete, 5, **kw)
+
+def _removeroute_report(report):
+    proxyconf = KOOPLEX.get('proxy', {})
+    target_url = os.path.join('http://kooplex-test-report-nginx') # FIXME: settings.py
+    kw = {
+        'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', report.proxy_path), 
+        'headers': {'Authorization': 'token %s' % proxyconf.get('auth_token', '') },
+    }
+    logging.debug("- %s -/-> %s" % (kw['url'], target_url))
+    return keeptrying(requests.delete, 5, **kw)
+
+def removeroute(instance):
+    if isinstance(instance, Container):
+        return _removeroute_container(instance)
+    elif isinstance(instance, Report):
+        return _removeroute_report(instance)
+    logger.error('Not implemented')
+

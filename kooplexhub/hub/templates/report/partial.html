@@ -1,3 +1,4 @@
+{% load render_table from django_tables2 %}
 <div class="card bg-light mb-3">
   <div class="card-header" id="heading-{{ report.id }}">
     <a href="{% url 'report:openreport' report.id %}" target="_blank" role="button" class="btn btn-info" style="min-width: 6em; text-align: left;">
@@ -9,24 +10,10 @@
 
     <div id="collapse-{{ report.id }}" class="collapse" aria-labelledby="heading-{{ report.id }}" data-parent="#reportList">
       <div class="card-body">
-        <strong>Creator: </strong>{{ report.creator }}<br>
+        <strong>Creator: </strong>{{ report.creator.first_name }} {{ report.creator.last_name }} ({{ report.creator }})<br>
         <strong>Description: </strong>{{ report.description }}<br>
         <strong>Url to latest: </strong><code>{{ report.url_external_latest }}</code><br>
-        <strong>Versions: </strong>
-         {% for r in report.groupby %}
-          <a href="{% url 'report:openreport' r.id %}" target="_blank" role="button" class="btn btn-info" style="min-width: 6em; text-align: left;">
-            <span class="oi oi-external-link" aria-hidden="true">{{ r.ts_human }}</span></a>
-         {% endfor %}
-        <br>
-        <div style="float: right;">
-          {% if report.creator == user %}
-          <a href="#" role="button" class="btn btn-secondary" data-toggle="tooltip" title="BLA" data-placement="top">
-            <span class="oi oi-wrench" aria-hidden="true"></span></a>
-          {% else %}
-          <a href="#" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Not your report" data-placement="top">
-            <span class="oi oi-wrench" aria-hidden="true"></span></a>
-          {% endif %}
-        </div>  <!-- float //-->
+        {% render_table table %}
       </div>   <!-- card-body -->
     </div>
   </div>

@@ -59,12 +59,15 @@ class Profile(models.Model):
     @property
     def reports(self):
         from .report import Report
+        from hub.forms import T_REPORTS, T_REPORTS_DEL
         reports_shown = set()
         for report in Report.objects.all():#FIXME: filter those you can see
              if report in reports_shown:
                  continue
-             yield report.latest
-             reports_shown.update(set(report.groupby()))
+             g = report.groupby()
+             T = T_REPORTS_DEL(g) if self.user == report.creator else T_REPORTS(g)
+             yield report.latest, T
+             reports_shown.update(set(g))
 
     def usercoursebindings(self, **kw):
         from .course import UserCourseBinding

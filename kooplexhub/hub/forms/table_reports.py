@@ -1,0 +1,39 @@
+from django import forms
+from django.urls import reverse
+from django.utils.translation import gettext_lazy as _
+from django.utils.html import format_html
+import django_tables2 as tables
+
+from hub.models import Report
+
+
+class T_REPORTS(tables.Table):
+    openreport = tables.Column(verbose_name = 'Open', empty_values = ())
+
+    def render_openreport(self, record):
+        return format_html("""
+<a href="%s" target="_blank" role="button" class="btn btn-info" style="min-width: 6em; text-align: left;"><span class="oi oi-external-link" aria-hidden="true">Open</span></a>
+        """ % reverse('report:openreport', kwargs = {'report_id': record.id}))
+
+    class Meta:
+        model = Report
+        orderable = False
+        fields = ('openreport', 'created_at')
+        exclude = ('id', 'creator', 'name')
+        attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
+
+
+class T_REPORTS_DEL(T_REPORTS):
+    deletereport = tables.Column(verbose_name = 'Delete', empty_values = ())
+
+    def render_deletereport(self, record):
+        return format_html("""
+<a href="%s" role="button" class="btn btn-danger" style="min-width: 6em; text-align: left;"><span class="oi oi-trash" aria-hidden="true"></span></a>
+        """ % reverse('report:deletereport', kwargs = {'report_id': record.id}))
+
+    class Meta:
+        model = Report
+        orderable = False
+        fields = ('openreport', 'deletereport', 'created_at')
+        exclude = ('id', 'creator', 'name')
+        attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }

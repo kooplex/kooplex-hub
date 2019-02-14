@@ -44,4 +44,7 @@ class Filename:
         assignment = userassignmentbinding.assignment
         return os.path.join(Dirname.mountpoint['assignment'], assignment.coursecode.course.folder, 'submitted-%s-%s.%d.tar.gz' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp()))
 
+    @staticmethod
+    def report_garbage(report):
+        return os.path.join(Dirname.mountpoint['garbage'], report.creator.username, "report-%s-%s.%f.tar.gz" % (report.name, report.ts_human, time.time()))
 
