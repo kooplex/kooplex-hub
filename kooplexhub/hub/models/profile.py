@@ -59,8 +59,12 @@ class Profile(models.Model):
     @property
     def reports(self):
         from .report import Report
+        reports_shown = set()
         for report in Report.objects.all():#FIXME: filter those you can see
-             yield report
+             if report in reports_shown:
+                 continue
+             yield report.latest
+             reports_shown.update(set(report.groupby()))
 
     def usercoursebindings(self, **kw):
         from .course import UserCourseBinding

@@ -31,6 +31,10 @@ def translate_date(d):
         logger.warn("Cannot convert date time %s -- %s" % (d, e))
         return None
 
+def human_localtime(d):
+    return d.astimezone(local_timezone).strftime('%Y_%m_%d-%H:%M:%S')
+
+
 def keeptrying(method, times, **kw):
     """
     @summary: run an arbitrary method with keyword arguments. In case an exception is raised during the call, 

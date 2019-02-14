@@ -27,7 +27,7 @@ class Dirname:
 
     @staticmethod
     def report(report):
-        return os.path.join(Dirname.reportroot(report.creator), standardize_str(report.name), report.created_at.strftime('%Y_%m_%d-%H:%M:%S'))
+        return os.path.join(Dirname.reportroot(report.creator), standardize_str(report.name), report.ts_human)
 
     @staticmethod
     def share(userprojectbinding):

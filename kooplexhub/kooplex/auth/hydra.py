@@ -25,12 +25,22 @@ class HydraOpenID(OpenIdConnectAuth):
         return uri
 
     def get_user_details(self, response):
+        try:
+           return {#FIXME: a hydra most furan tolja az attributumokat!
+               'username': response['idp_user'],
+               'email': response['mail'][0],
+               'fullname': response['displayName'][0],
+               'first_name': response['givenName'][0],
+               'last_name': response['sn'][0],
+           }
+        except: 
+            1==1
         return {#FIXME: a hydra most furan tolja az attributumokat!
             'username': response['idp_user'],
-            'email': response['mail'][0],
-            'fullname': response['displayName'][0],
-            'first_name': response['givenName'][0],
-            'last_name': response['sn'][0],
+            'email': response['mail'],#[0],
+            'fullname': response['displayName'],#[0],
+            'first_name': response['displayName'],#[0],
+            'last_name': response['displayName'],#[0],
         }
 
     def authenticate(self, request, **credentials):

@@ -9,10 +9,11 @@ from django.contrib.auth.decorators import login_required
 def indexpage(request):
     return render(request, 'index.html', { 'next_page': 'indexpage' })
 
+
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     
-    url(r'^hub/mock/', include('kooplex.mock', namespace = 'mock')), #FIXME: REMOVE FROM PRODUCTION
+#    url(r'^hub/mock/', include('kooplex.mock', namespace = 'mock')), #FIXME: REMOVE FROM PRODUCTION
 
     url(r'^hub/oauth/', include('social_django.urls', namespace = 'social')),
     url(r'^hub/project/', include('hub.views.project', namespace = 'project')),
@@ -21,6 +22,9 @@ urlpatterns = [
     url(r'^hub/assignment/', include('hub.views.assignment', namespace = 'assignment')),
     url(r'^hub/container/', include('hub.views.container', namespace = 'container')),
     url(r'^hub/user/', include('hub.views.user', namespace = 'user')),
+    url(r'^hub/manual/', include('hub.views.manual', namespace = 'manual')),
     url(r'^hub/?', indexpage, name = 'indexpage'),
     url(r'^accounts/logout/', auth_views.logout, { 'next_page': 'indexpage' }, name = 'logout'),
 ]
+
+

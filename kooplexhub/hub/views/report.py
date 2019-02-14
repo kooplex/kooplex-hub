@@ -13,6 +13,7 @@ from hub.models import Report
 from hub.forms import FormReport
 
 from kooplex.lib import now, translate_date
+from kooplex.settings import KOOPLEX
 
 logger = logging.getLogger(__name__)
 
@@ -64,10 +65,25 @@ def listreport(request):#, next_page):
     return render(request, 'report/list.html', context = context_dict)
 
 
+@login_required
+def openreport(request, report_id):
+    """Renders new report list."""
+    user = request.user
+    logger.debug("user %s, method: %s" % (user, request.method))
+    try:
+        report = Report.objects.get(id = report_id)
+    except Exception as e:
+        logger.warning('Cannot resolve report id: %s -- %s' % (report_id, e))
+        return redirect('indexpage')
+    url_external = report.url_external
+    logger.debug('redirect: %s' % url_external)
+    return redirect(url_external)
+
 
 
 urlpatterns = [
-#    url(r'^configurecourse/(?P<course_id>\d+)/meta/(?P<next_page>\w+:?\w*)$', conf_meta, name = 'conf_meta'), 
     url(r'^newreport/?$', newreport, name = 'new'),
     url(r'^listreport/?$', listreport, name = 'list'),
+    url(r'^openreport/(?P<report_id>\d+)$', openreport, name = 'openreport'),
+#    url(r'^configurecourse/(?P<course_id>\d+)/meta/(?P<next_page>\w+:?\w*)$', conf_meta, name = 'conf_meta'), 
 ]
