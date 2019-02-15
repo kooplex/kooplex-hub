@@ -41,6 +41,10 @@ class ProjectContainerBindingAdmin(admin.ModelAdmin):
 class CourseCodeAdmin(admin.ModelAdmin):
     list_display = ('id', 'courseid', 'safecourseid', 'course')
 
+@admin.register(CourseContainerBinding)
+class CourseContainerBindingAdmin(admin.ModelAdmin):
+    list_display = ('id', 'container', 'course')
+
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'folder', 'description', 'image')

@@ -479,10 +479,6 @@ def update_image(sender, instance, **kwargs):
 
 
 
-
-
-
-
 @receiver(pre_save, sender = Project)
 def container_check_image(sender, instance, **kwargs):
     try:
@@ -511,6 +507,18 @@ class CourseContainerBinding(models.Model):
     def __str__(self):
         return "<CourseContainerBinding %s-%s>" % (self.course, self.container)
 
+@receiver(pre_save, sender = Course)
+def update_courseimage(sender, instance, **kwargs):
+    ccbs = CourseContainerBinding.objects.filter(course = instance)
+    for ccb in ccbs:
+       c = ccb.container
+       if c.is_running or c.is_stopped:
+               c.marked_to_remove = True
+       c.image = instance.image
+       c.image = instance.image
+       c.save()
+
+       logger.debug("container (%s) image is set %s" % (c, c.image))
 
 @receiver(post_save, sender = CourseContainerBinding)
 def bind_courserelatedvolumes(sender, instance, created, **kwargs):

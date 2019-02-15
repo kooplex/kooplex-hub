@@ -10,6 +10,7 @@ from django_tables2 import RequestConfig
 
 from hub.models import CourseCode, Course, UserCourseCodeBinding, UserCourseBinding
 from hub.models import Assignment, UserAssignmentBinding
+from hub.models import Image
 
 from kooplex.lib import now, translate_date
 
@@ -53,12 +54,14 @@ def conf_meta(request, course_id, next_page):
         return redirect(next_page)
 
     if request.method == 'POST' and request.POST.get('button') == 'apply':
-        course.scope = request.POST['project_scope']
         course.description = request.POST.get('description')
+        imagename = request.POST['course_image']
+        course.image = Image.objects.get(name = imagename) if imagename != 'None' else None
         course.save()
         return redirect(next_page)
     else:
         context_dict = {
+            'images': Image.objects.all(),
             'course': course,
             'submenu': 'meta',
             'next_page': next_page,
