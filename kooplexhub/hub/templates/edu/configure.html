@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+
+{% block submenu %}
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSubmenu" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarSubmenu">
+    <h5><span class="badge badge-secondary">Configure course {{ course }}</span></h5>
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item"><a {% if submenu == 'meta' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'education:conf_meta' course.id next_page %}" {% endif %}>Meta</a></li>
+    {% comment %}
+
+      <li class="nav-item"><a {% if submenu == 'environment' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'education:conf_environment' course.id next_page %}" {% endif %}>Environment</a></li>
+      <li class="nav-item"><a {% if submenu == 'collaboration' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'education:conf_collaboration' course.id next_page %}" {% endif %}>Collaboration</a></li>
+      <li class="nav-item"><a {% if submenu == 'storage' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'education:conf_storage' course.id next_page %}" {% endif %}>Data</a></li>
+      <li class="nav-item"><a {% if submenu == 'versioncontrol' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'education:conf_versioncontrol' course.id next_page %}" {% endif %}>Versioncontrol</a></li>
+    {% endcomment %}
+    </ul>
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="content">
+  {% if submenu == 'meta' %}
+    {% include 'edu/conf-meta.html' %}
+    {% comment %}
+  {% elif submenu == 'environment' %}
+    {% include 'course/conf-environment.html' %}
+    {% elif submenu == 'collaboration' %}
+    {% include 'course/conf-collaboration.html' %}
+  {% elif submenu == 'storage' %}
+     {% include 'course/conf-storage.html' %}
+  {% elif submenu == 'versioncontrol' %}
+     {% include 'course/conf-versioncontrol.html' %}
+     {% endcomment %}
+  {% endif %}
+</div>     <!-- tab-content -->
+{% endblock %}
+
