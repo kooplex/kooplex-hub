@@ -202,6 +202,8 @@ class Container(models.Model):
             'NB_TOKEN': self.user.profile.token,
             'CONTAINER_NAME': self.name,
         }
+        for ce in ContainerEnvironment.objects.filter(container = self):
+            envs[ce.name] = ce.value
         return envs
 
     @property
@@ -237,13 +239,33 @@ class Container(models.Model):
         except TypeError:
             pass
 
+class ContainerEnvironment(models.Model):
+    name = models.CharField(max_length = 200, null = False)
+    value = models.CharField(max_length = 200, null = False)
+    container = models.ForeignKey(Container, null = False)
+
+
 
 @receiver(pre_save, sender = Container)
 def container_image_change(sender, instance, **kwargs):
+    import pwgen
     is_new = instance.id is None
     old_instance = Container() if is_new else Container.objects.get(id = instance.id)
     if not is_new and old_instance.image != instance.image:
          instance.marked_to_remove = True
+    if instance.image is None:
+        return
+    if instance.image.name == 'rstudio': #FIXME: hard coded stuf!!!!!!!!!!!!!!!!!
+         try:
+             ContainerEnvironment.objects.get(container = instance, name = 'PASSWORD')
+         except:
+             ContainerEnvironment.objects.get_or_create(container = instance, name = 'PASSWORD', value = pwgen.pwgen(16))
+    else:
+         try:
+             for ce in Container.objects.filter(container = instance, name = 'PASSWORD'):
+                 ce.delete()
+         except:
+             pass
 
 
 @receiver(pre_save, sender = Container)
