@@ -13,7 +13,7 @@ from kooplex.lib import standardize_str
 from hub.forms import table_projects
 from hub.models import Image
 from hub.models import Project, UserProjectBinding
-from hub.models import Container
+from hub.models import Container, ContainerEnvironment
 from hub.models import ProjectContainerBinding
 
 logger = logging.getLogger(__name__)
@@ -50,6 +50,13 @@ def listcontainers(request):
     return render(request, 'container/list.html', context = context_dict)
 
 
+def showpass(request, container):
+    try:
+        pw = ContainerEnvironment.objects.get(container = container, name = 'PASSWORD').value
+        messages.warning(request, 'Until we find a better way to authorize your access to rstudio server, we created a password for you: %s' % pw)
+    except:
+        pass
+
 @login_required
 def startprojectcontainer(request, project_id, next_page):
     """Starts the project container."""
@@ -57,6 +64,7 @@ def startprojectcontainer(request, project_id, next_page):
     try:
         container = Container.get_userprojectcontainer(user = user, project_id = project_id, create = True)
         container.docker_start()
+        showpass(request, container)
     except Container.DoesNotExist:
         messages.error(request, 'Project does not exist')
     except Exception as e:
@@ -73,6 +81,7 @@ def startcoursecontainer(request, course_id, next_page):
     try:
         container = Container.get_usercoursecontainer(user = user, course_id = course_id, create = True)
         container.docker_start()
+        showpass(request, container)
     except Container.DoesNotExist:
         messages.error(request, 'Course does not exist')
     except Exception as e:
@@ -88,6 +97,7 @@ def startcontainer(request, container_id, next_page):
     try:
         container = Container.objects.get(user = user, id = container_id)
         container.docker_start()
+        showpass(request, container)
     except Container.DoesNotExist:
         messages.error(request, 'Container does not exist')
     except Exception as e:
