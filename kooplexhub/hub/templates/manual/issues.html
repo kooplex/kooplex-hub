@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="jumbotron jumbotron-fluid">
+  <div class="container">
+    <h1 class="display-6">Known Issues</h1>
+    <p class="lead">Bugs, workarounds etc.</p>
+
+    <h4> Login</h4>
+* <b> Account registration </b><br>
+At the moment mailing is not working and administrators don't get notified when you registered. To activate your account you will need their approval, therefore please send an email to them directly to <code>kooplex at complex.elte.hu</code> to notify them. Thank you!
+<br><br>
+<br><br>
+
+<h4> RStudio server</h4>
+* <b> When entering into Rstudio it gives an R session Error </b><br>
+<img src="/static/content/manual/rsessionerror.png"> <br>
+You can safely ignore this message. In case you do notice some kind of malfunction then please, report it to the administrators!
+<br><br>
+<br><br>
+{% endblock %}
+

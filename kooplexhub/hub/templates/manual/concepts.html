@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="jumbotron jumbotron-fluid">
+  <div class="container">
+    <h1 class="display-6">Main concepts</h1>
+    <p class="lead"><a href="#docker">Docker and containers</a>, <a href="#notebooks">Notebooks</a>, <a href=""></a></p>
+
+<p class="lead" id="docker"> Docker engine </p>
+<p><a href="https://www.docker.com/why-docker" target="_blank">Docker </a>is a virtualization engine, which allows services to run on the same machine but with completely indepentent environments. 
+These environments are called docker images and their instance is a container. 
+A container is like a leightweight virtual machine.
+</p>
+<p class="lead" id="notebooks"> Notebooks </p>
+<p>In <b>Kooplex</b> we call 'notebooks' all browser based environments like Jupyter or Rstudio, that users can use for coding and development. These notebooks have well established communities, they are open source and used by millions around the world. <br>
+Plese visit <a href="https://jupyter.org/" target="_blank">Jupyter </a> and  <a href="https://www.rstudio.com/products/rstudio/" target="_blank">Rstudio Server </a> for further informations.
+</p>
+<p class="lead" id="dd"> Notebooks and containers</p>
+<p>All notebooks run in a separate docker container.  These containers have limited resources, that are sufficient for writing new code, but not enough for large calculations. 
+
+Containers can be stopped and then deleted. Stopped containers don't consume any resources. Deleting containers is needed if you want ot switch image or use an updated image. No data will be deleted, which reside in any of the /home folders (<a href="{% url 'manual:folder' %}">Folder structure explained</a>). 
+<br>
+When the user clicks on 
+<a href="#" role="button" class="btn btn-secondary" style="min-width: 6em; text-align: left;">
+  <span class="oi oi-external-link" aria-hidden="true"> Start</span></a>
+under the Projects or Courses menu<br>
+<img src=/static/content/manual/course.png class="center" width=90%> <br>
+then a docker container starts. Clicking the  
+<a href="#" role="button" class="btn btn-success" style="min-width: 6em; text-align: left;">
+  <span class="oi oi-external-link" aria-hidden="true"> Open</span></a> 
+button will redirect to the notebook servers url.
+<br>
+</p>
+<h5> Always stop your containers, when not using them! That will save resources for others. Thank You!</h5>
+<img src=/static/content/manual/running-container-panel-stop.png class="center" width=90%> <br>
+
+<br><br>
+{% endblock %}
+

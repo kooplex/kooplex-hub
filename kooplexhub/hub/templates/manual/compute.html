@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="jumbotron jumbotron-fluid">
+  <div class="container">
+    <h1 class="display-6">Compute nodes</h1>
+    <p class="lead"><a href="#docker">Docker and containers</a>, <a href="#notebooks">Notebooks</a>, <a href=""></a></p>
+
+    <p>
+Computationally intensive jobs can be submitted to a compute node that is managed by Slurm. This compute node is the <strong>kooplex-cn16</strong>. It has 48 CPUs and 232 GB memory.
+Submitting jobs to this compute node should be done like:
+<br>
+sbatch -n $NCPU --partition=normal thescript.sh
+<br>
+where NCPU is the number of cpus.
+<br>
+There is a prepared jobscript under .... <br>
+Please refer to this <a href="https://slurm.schedmd.com/quickstart.html" target="_blank">manual</a> for further instructions on how to submit jobs.
+<br>
+When submitting a job the access paths are the same for /home/<username> and the large data storages. All other folders won't be accessible for the submnitted scripts.
+    </p>
+<p class="lead">customizing environment</p>
+There <a href="https://singularity.lbl.gov/quickstart">Singularity</a> lightweight virtualization package installed into the docker images. These allow to build environments that makes sure that your code will use the same every time and this can be shared.<br>
+These singularity "layers" or images can be saved to ... which is publicly accessible.
+{% endblock %}
+

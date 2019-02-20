@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="jumbotron jumbotron-fluid">
+  <div class="container">
+    <h1 class="display-6">Projects and collaboration</h1>
+    <p class="lead"><a href="#roles">Roles</a>, <a href="#scope">scope</a>, <a href="#env">environment</a>, <a href="#vc">version control</a> etc</p>
+
+    <p>Projects can be created by users and can be shared in two ways: either by inviting/adding other users or making it public and let others to join in. 
+<br>
+A <code>/share</code> folder belongs to each Project, that are visible and/or writable to other users depending ond their role.
+</p>
+<p class="lead">Roles and project scopes</p>
+<p>Users can be creators, administrators and collaborators. Collaborators can not alter any property of the project.
+<br>
+A project can be private, internal or public. Internal projects are visible to only group members and public projects are visible to every user. Users can join only those projects that are visible to them.
+</p>
+<p class="lead" id="vc">Version control</p>
+<p>First Manage secrets
+Create token at github under developer settings
+Create ssh key in kooplex into .ssh folder and copy key.pub into github ssh keys
+Then go to project settings and Versioncontrol
+</p>
+<br><br>
+  </div>
+</div>
+{% endblock %}
+
