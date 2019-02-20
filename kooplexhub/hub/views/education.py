@@ -114,7 +114,7 @@ def newassignment(request, course_id):
             for coursecodeid in coursecode_ids:
                 coursecode = CourseCode.objects.get(id = coursecodeid)
                 assert coursecode.course == course, "Course code mismatch"
-                UserCourseCodeBinding.objects.get(coursecode = coursecode, user = user, is_teacher = True)
+                #UserCourseCodeBinding.objects.get(coursecode = coursecode, user = user, is_teacher = True)
                 logger.debug("coursecode id %s" % coursecodeid)
                 with transaction.atomic():
                     assignments = Assignment.objects.filter(

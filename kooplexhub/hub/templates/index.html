@@ -39,6 +39,12 @@
 
 <!--h2> CPU Usage of Kooplex.vo </h2-->
 <div id="myplot4"> </div>
+{% if user.is_authenticated %}
+<div class="jumbotron" style="padding-top: 10px; padding-bottom: 10px; background-color: #bdbdbd; box-shadow: 5px 10px 8px #888888;">
+       Important note: Courses are not imported automatically anymore. If you want to use notebooks for any of your courses please contact the administrators with the <code>course code  </code> and <code> the title of the course</code> at <strong> kooplex@complex.elte.hu</strong>
+</div>
+{% endif %}
+
 
 <div class="jumbotron" style="padding-top: 10px; padding-bottom: 10px; background-color: #bdbdbd; box-shadow: 5px 10px 8px #888888;">
   <div class="row">

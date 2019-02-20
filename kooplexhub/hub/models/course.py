@@ -42,11 +42,12 @@ class Course(models.Model):
 
     def coursecodes(self, user):
         for coursecode in CourseCode.objects.filter(course = self):
-            try:
-                UserCourseCodeBinding.objects.get(user = user, coursecode = coursecode)
-                yield coursecode
-            except UserCourseCodeBinding.DoesNotExist:
-                pass
+            yield coursecode
+            #try:
+            #    UserCourseCodeBinding.objects.get(user = user, coursecode = coursecode)
+            #    yield coursecode
+            #except UserCourseCodeBinding.DoesNotExist:
+            #    pass
 
     @register.filter
     def coursecodes_joined(self, user):
@@ -80,8 +81,10 @@ class Course(models.Model):
     def listdirs_private(self):
         dir_courseprivate = Dirname.courseprivate(self)
         for d in os.listdir(dir_courseprivate):
-            if os.path.isdir(os.path.join(dir_courseprivate, d)):
-                yield d
+            f = os.path.join(dir_courseprivate, d)
+            if os.path.isdir(f):
+                if len(os.listdir(f) ) > 0:
+                    yield d
 
     def dirs_assignmentcandidate(self):
         from .assignment import Assignment
@@ -187,7 +190,7 @@ class CourseCode(models.Model):
     def parse(attributelist):
         coursecodes = []
         for courseid in attributelist:
-            courseid = standardize_str(courseid)
+            #courseid = standardize_str(courseid)
             try:
                 coursecode = CourseCode.objects.get(courseid = courseid)
             except CourseCode.DoesNotExist:
@@ -285,7 +288,11 @@ def mkdir_course(sender, instance, **kwargs):
     from kooplex.lib.filesystem import mkdir_course_share
     from kooplex.lib.fs_dirname import Dirname
     instance.folder = standardize_str(instance.folder)
-    assert len(instance.folder), "Clean folder name must not be empty"
+    c_ids = [ c.id for c in Course.objects.filter(folder = instance.folder) ]
+    if len(c_ids) == 1:
+        c_id = c_ids.pop()
+        assert c_id == instance.id, "Folder name %s is already taken" % instance.folder
+    assert len(c_ids) == 0, "Folder name %s is already taken" % instance.folder
     c_ids = [ c.id for c in Course.objects.filter(folder = instance.folder) ]
     if len(c_ids) == 1:
         c_id = c_ids.pop()

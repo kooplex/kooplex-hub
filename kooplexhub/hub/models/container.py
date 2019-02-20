@@ -245,6 +245,7 @@ def container_image_change(sender, instance, **kwargs):
     if not is_new and old_instance.image != instance.image:
          instance.marked_to_remove = True
 
+
 @receiver(pre_save, sender = Container)
 def container_state_change(sender, instance, **kwargs):
     from kooplex.lib import Docker
@@ -281,6 +282,7 @@ def container_state_change(sender, instance, **kwargs):
         instance.marked_to_remove = False
     else:
          logger.critical(msg)
+
 
 @receiver(pre_save, sender = Container)
 def container_message_change(sender, instance, **kwargs):
@@ -343,7 +345,8 @@ def bind_share(sender, instance, created, **kwargs):
             logger.debug('Share bound to container %s' % c)
         except Exception as e:
             logger.error('Share not bound to container %s -- %s' % (c, e))
-  
+
+
 @receiver(post_delete, sender = ProjectContainerBinding)
 def remove_bind_share(sender, instance, **kwargs):
     c = instance.container
@@ -370,7 +373,8 @@ def bind_workdir(sender, instance, created, **kwargs):
             logger.debug('Workdir bound to container %s' % c)
         except Exception as e:
             logger.error('Workdir not bound to container %s -- %s' % (c, e))
-  
+
+
 @receiver(post_delete, sender = ProjectContainerBinding)
 def remove_bind_workdir(sender, instance, **kwargs):
     c = instance.container
@@ -396,7 +400,8 @@ def bind_git(sender, instance, created, **kwargs):
             logger.debug('Git cache bound to container %s' % c)
         except Exception as e:
             logger.error('Git cache not bound to container %s -- %s' % (c, e))
-  
+
+
 @receiver(post_delete, sender = ProjectContainerBinding)
 def remove_bind_git(sender, instance, **kwargs):
     c = instance.container
@@ -418,6 +423,7 @@ def managemount_add_project(sender, instance, created, **kwargs):
         except Exception as e:
             logger.error('Container %s -- %s' % (c, e))
 
+
 @receiver(post_delete, sender = ProjectContainerBinding)
 def managemount_remove_project(sender, instance, **kwargs):
     c = instance.container
@@ -435,6 +441,7 @@ def managemount_add_vcprojectprojectbinding(sender, instance, created, **kwargs)
                 c.managemount()
             except Exception as e:
                 logger.error('Container %s -- %s' % (c, e))
+
 
 @receiver(post_delete, sender = VCProjectProjectBinding)
 def managemount_remove_vcprojectprojectbinding(sender, instance, **kwargs):
@@ -507,18 +514,28 @@ class CourseContainerBinding(models.Model):
     def __str__(self):
         return "<CourseContainerBinding %s-%s>" % (self.course, self.container)
 
+
 @receiver(pre_save, sender = Course)
 def update_courseimage(sender, instance, **kwargs):
     ccbs = CourseContainerBinding.objects.filter(course = instance)
     for ccb in ccbs:
-       c = ccb.container
-       if c.is_running or c.is_stopped:
-               c.marked_to_remove = True
-       c.image = instance.image
-       c.image = instance.image
-       c.save()
+        c = ccb.container
+        if c.is_running or c.is_stopped:
+            c.marked_to_remove = True
+        c.image = instance.image
+        c.save()
+        logger.debug("container (%s) image is set %s" % (c, c.image))
 
-       logger.debug("container (%s) image is set %s" % (c, c.image))
+
+@receiver(pre_save, sender = CourseContainerBinding)
+def update_course_image(sender, instance, **kwargs):
+    if instance.container.image is None:
+        instance.container.image = instance.course.image
+        instance.container.save()
+        logger.debug("container (%s) image is set %s" % (instance.container, instance.container.image))
+    if instance.course.image is not None:
+        assert instance.container.image == instance.course.image, "Conflicting images %s =/= %s" % (instance.container.image, instance.course.image)
+
 
 @receiver(post_save, sender = CourseContainerBinding)
 def bind_courserelatedvolumes(sender, instance, created, **kwargs):

@@ -40,6 +40,7 @@ class ProjectContainerBindingAdmin(admin.ModelAdmin):
 @admin.register(CourseCode)
 class CourseCodeAdmin(admin.ModelAdmin):
     list_display = ('id', 'courseid', 'safecourseid', 'course')
+    search_fields = ('courseid', )
 
 @admin.register(CourseContainerBinding)
 class CourseContainerBindingAdmin(admin.ModelAdmin):
