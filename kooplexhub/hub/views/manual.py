@@ -6,25 +6,25 @@ from django.shortcuts import redirect, render
 logger = logging.getLogger(__name__)
 
 def man_login(request):
-    return render(request, 'manual/login.html',  { 'next_page': 'indexpage' })
+    return render(request, 'manual/login.html',  { 'submenu': 'login', 'next_page': 'indexpage' })
 
 def man_folder(request):
-    return render(request, 'manual/folders.html',  { 'next_page': 'indexpage' })
+    return render(request, 'manual/folders.html',  { 'submenu': 'folders', 'next_page': 'indexpage' })
 
 def man_issues(request):
-    return render(request, 'manual/issues.html',  { 'next_page': 'indexpage' })
+    return render(request, 'manual/issues.html',  { 'submenu': 'issues', 'next_page': 'indexpage' })
 
 def man_concepts(request):
-    return render(request, 'manual/concepts.html',  { 'next_page': 'indexpage' })
+    return render(request, 'manual/concepts.html',  { 'submenu': 'concepts', 'next_page': 'indexpage' })
 
 def man_compute(request):
-    return render(request, 'manual/compute.html',  { 'next_page': 'indexpage' })
+    return render(request, 'manual/compute.html',  { 'submenu': 'compute', 'next_page': 'indexpage' })
 
 def man_projects(request):
-    return render(request, 'manual/projects.html',  { 'next_page': 'indexpage' })
+    return render(request, 'manual/projects.html',  { 'submenu': 'projects', 'next_page': 'indexpage' })
 
 def man_reports(request):
-    return render(request, 'manual/reports.html',  { 'next_page': 'indexpage' })
+    return render(request, 'manual/reports.html',  { 'submenu': 'reports', 'next_page': 'indexpage' })
 
 urlpatterns = [
     url(r'^login/?$', man_login, name = 'login'),

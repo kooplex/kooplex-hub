@@ -1,4 +1,5 @@
-{% extends "layout.html" %}
+{% extends "manual/submenus.html" %}
+
 {% block content %}
 <div class="jumbotron jumbotron-fluid">
   <div class="container">
@@ -7,15 +8,22 @@
 
     <h4> Login</h4>
 * <b> Account registration </b><br>
-At the moment mailing is not working and administrators don't get notified when you registered. To activate your account you will need their approval, therefore please send an email to them directly to <code>kooplex at complex.elte.hu</code> to notify them. Thank you!
-<br><br>
-<br><br>
+<p>At the moment mailing is not working and administrators don't get notified when you registered. To activate your account you will need their approval, therefore please send an email to them directly to <code>kooplex at complex.elte.hu</code> to notify them. Thank you!
+</p>
+
+<h4> Duplicate of a UserCourseBinding</h4>
+* <b> When someone changes from one group to another within a course  </b><br>
+<p> an error will occur. It is best if you notify an administrator when this occurs.</p>
 
 <h4> RStudio server</h4>
 * <b> When entering into Rstudio it gives an R session Error </b><br>
-<img src="/static/content/manual/rsessionerror.png"> <br>
+<p><img src="/static/content/manual/rsessionerror.png"> <br>
 You can safely ignore this message. In case you do notice some kind of malfunction then please, report it to the administrators!
-<br><br>
-<br><br>
+</p>
+
+<h4> Report preview in user container</h4>
+* <b> When running <code>preview-bokeh.sh</code> or <code>preview-nb-api.sh</code>  </b><br>
+<p> the preview is completely public. Anyone who can guess the ur can see it
+</p>
 {% endblock %}
 

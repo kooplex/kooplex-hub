@@ -12,6 +12,7 @@ from django.dispatch import receiver
 from django.contrib.auth.models import User
 
 from .project import Project, UserProjectBinding
+from .report import Report
 from .course import Course
 from .volume import Volume
 from .image import Image
@@ -93,6 +94,13 @@ class Container(models.Model):
         try:
             return CourseContainerBinding.objects.get(container = self).course
         except CourseContainerBinding.DoesNotExist:
+            return None
+
+    @property
+    def report(self):
+        try:
+            return ReportContainerBinding.objects.get(container = self).report
+        except ReportContainerBinding.DoesNotExist:
             return None
 
     @property
@@ -179,6 +187,21 @@ class Container(models.Model):
             return container 
         raise Container.DoesNotExist
 
+    @staticmethod
+    def get_reportcontainer(report, create):
+        logger.debug("report %s" % (report))
+        try:
+            return ReportContainerBinding.objects.get(report = report).container
+        except ReportContainerBinding.DoesNotExist:
+            logger.debug("ReportContainer for report %s does not exist" % report)
+        if create:
+            containername = "report-%s-%s-%s" % (report.creator.username, report.cleanname, report.ts_human.replace(':', '').replace('_', ''))
+            container = Container.objects.create(name = containername, user = report.creator)
+            ReportContainerBinding.objects.create(report = report, container = container)
+            logger.debug("new container in db %s" % container)
+            return container 
+        raise Container.DoesNotExist
+
     def docker_start(self):
         self.state = self.ST_RUNNING
         self.save()
@@ -204,6 +227,11 @@ class Container(models.Model):
         }
         for ce in ContainerEnvironment.objects.filter(container = self):
             envs[ce.name] = ce.value
+        report = self.report
+        if report:
+            envs['REPORT_TYPE'] = report.reporttype
+            envs['REPORT_DIR'] = os.path.join('/home/', 'report', report.cleanname, report.ts_human)
+            envs['REPORT_PORT'] = 8000
         return envs
 
     @property
@@ -280,7 +308,7 @@ def container_state_change(sender, instance, **kwargs):
     msg += "%s statchange %s -> %s" % (instance, ST_LOOKUP[old_instance.state], ST_LOOKUP[instance.state])
     logger.debug(msg)
     docker = Docker()
-    assert instance.n_projects > 0 or instance.course or instance.state == Container.ST_NOTPRESENT, 'container %s with 0 projects' % instance
+    assert instance.n_projects > 0 or instance.course or instance.report or instance.state == Container.ST_NOTPRESENT, 'container %s with 0 projects' % instance
     if old_instance.state == Container.ST_NOTPRESENT and instance.state == Container.ST_RUNNING:
         docker.run_container(instance)
         addroute(instance)
@@ -571,3 +599,19 @@ def bind_courserelatedvolumes(sender, instance, created, **kwargs):
                 logger.error("cannot create binding coursecontainerbinding %s volume %s" % (instance, vt))
 
 
+class ReportContainerBinding(models.Model):
+    report = models.ForeignKey(Report, null = False)
+    container = models.ForeignKey(Container, null = False)
+
+    def __str__(self):
+        return "<ReportContainerBinding %s-%s>" % (self.report, self.container)
+
+@receiver(post_save, sender = ReportContainerBinding)
+def bind_reportvolume(sender, instance, created, **kwargs):
+    if created:
+        try:
+            volume = Volume.objects.get(volumetype = Volume.REPORT)
+            binding = VolumeContainerBinding.objects.create(container = instance.container, volume = volume)
+            logger.debug("binding created %s" % binding)
+        except Volume.DoesNotExist:
+            logger.error("cannot create binding coursecontainerbinding %s volume %s" % (instance, vt))

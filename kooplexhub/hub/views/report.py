@@ -9,7 +9,7 @@ from django.shortcuts import redirect, render
 from django_tables2 import RequestConfig
 
 
-from hub.models import Report
+from hub.models import Report, Container
 from hub.forms import FormReport
 
 from kooplex.lib import now, translate_date
@@ -75,9 +75,20 @@ def openreport(request, report_id):
     except Exception as e:
         logger.warning('Cannot resolve report id: %s -- %s' % (report_id, e))
         return redirect('indexpage')
-    url_external = report.url_external
-    logger.debug('redirect: %s' % url_external)
-    return redirect(url_external)
+    if report.reporttype == report.TP_STATIC: 
+        url_external = report.url_external
+        logger.debug('redirect: %s' % url_external)
+        return redirect(url_external)
+    elif report.reporttype == report.TP_DYNAMIC:
+        pass 
+    elif report.reporttype == report.TP_BOKEH:
+        container = Container.get_reportcontainer(report, create = True)
+        container.docker_start()
+        url_external = "%s/notebook/%s/report" % (KOOPLEX.get('base_url', 'localhost'), container.name)
+        logger.debug('redirect: %s' % url_external)
+        return redirect(url_external)
+    messages.error(request, "Rendering report type %s is not implemeted yet" % report.reporttype)
+    return redirect('report:list')
 
 
 @login_required
