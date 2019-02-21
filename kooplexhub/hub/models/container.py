@@ -232,6 +232,7 @@ class Container(models.Model):
             envs['REPORT_TYPE'] = report.reporttype
             envs['REPORT_DIR'] = os.path.join('/home/', 'report', report.cleanname, report.ts_human)
             envs['REPORT_PORT'] = 8000
+            envs['REPORT_INDEX'] = report.index
         return envs
 
     @property
@@ -615,3 +616,4 @@ def bind_reportvolume(sender, instance, created, **kwargs):
             logger.debug("binding created %s" % binding)
         except Volume.DoesNotExist:
             logger.error("cannot create binding coursecontainerbinding %s volume %s" % (instance, vt))
+

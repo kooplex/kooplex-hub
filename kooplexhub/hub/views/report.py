@@ -80,13 +80,25 @@ def openreport(request, report_id):
         logger.debug('redirect: %s' % url_external)
         return redirect(url_external)
     elif report.reporttype == report.TP_DYNAMIC:
-        pass 
+        container = Container.get_reportcontainer(report, create = True)
+        container.docker_start()
+        url_external = "%s/notebook/%s/report" % (KOOPLEX.get('base_url', 'localhost'), container.name)
+        logger.debug('redirect: %s' % url_external)
+        return redirect(url_external)
     elif report.reporttype == report.TP_BOKEH:
         container = Container.get_reportcontainer(report, create = True)
         container.docker_start()
         url_external = "%s/notebook/%s/report" % (KOOPLEX.get('base_url', 'localhost'), container.name)
         logger.debug('redirect: %s' % url_external)
         return redirect(url_external)
+    elif report.reporttype == report.TP_SERVICE:
+        container = Container.get_reportcontainer(report, create = True)
+        container.docker_start()
+        url_external = "%s/notebook/%s/report" % (KOOPLEX.get('base_url', 'localhost'), container.name)
+        msg = "Report %s is started. API is at %s" % (report.name, url_external)
+        logger.info(msg)
+        messages.info(request, msg)
+        return redirect('report:list')
     messages.error(request, "Rendering report type %s is not implemeted yet" % report.reporttype)
     return redirect('report:list')
 
