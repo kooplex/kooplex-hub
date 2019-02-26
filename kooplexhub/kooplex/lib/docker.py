@@ -61,7 +61,12 @@ class Docker:
         logger.debug("container %s binds %s" % (container, binds))
         host_config = self.client.create_host_config(
             binds = binds,
-            privileged = True
+            privileged = True,
+            mem_limit = '170m',
+            memswap_limit = '170m',
+            mem_swappiness = 0,
+#            oom_kill_disable = True,
+            cpu_shares = 2,
         )
         network = self.dockerconf.get('network', 'host')
         networking_config = { 'EndpointsConfig': { network: {} } }

@@ -81,6 +81,11 @@ def _createfile(fn, content, uid = 0, gid = 0, mode = 0b111101000):
 
 ########################################
 
+def check_home(user):
+    dir_home = Dirname.userhome(user)
+    assert os.path.exists(dir_home), "Folder %s does not exist" % dir_home
+#TODO: check permissions
+
 def mkdir_home(user):
     """
     @summary: create a home directory for the user
@@ -95,15 +100,27 @@ def garbagedir_home(user):
     garbage = Filename.userhome_garbage(user)
     _archivedir(dir_home, garbage)
 
+########################################
+
+def check_usergarbage(user):
+    dir_usergarbage = Dirname.usergarbage(user)
+    assert os.path.exists(dir_usergarbage), "Folder %s does not exist" % dir_usergarbage
+
+def mkdir_usergarbage(user):
+    dir_usergarbage = Dirname.usergarbage(user)
+    _mkdir(dir_usergarbage, uid = user.profile.userid, gid = user.profile.groupid)
+
+########################################
+
+def check_reportprepare(user):
+    dir_reportprepare = Dirname.reportprepare(user)
+    assert os.path.exists(dir_reportprepare), "Folder %s does not exist" % dir_reportprepare
 
 def mkdir_reportprepare(user):
     dir_reportprepare = Dirname.reportprepare(user)
     _mkdir(dir_reportprepare, uid = user.profile.userid, gid = user.profile.groupid)
 
-
-def mkdir_usergarbage(user):
-    dir_usergarbage = Dirname.usergarbage(user)
-    _mkdir(dir_usergarbage, uid = user.profile.userid, gid = user.profile.groupid)
+########################################
 
 
 def mkdir_share(userprojectbinding):
