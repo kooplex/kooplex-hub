@@ -157,7 +157,6 @@ def newassignment(request, course_id):
 def bindassignment(request, course_id):
     from django.contrib.auth.models import User
     """Bind assignment and user"""
-#FIXME: implement search
     user = request.user
     logger.debug("user %s, method: %s" % (user, request.method))
     try:
@@ -167,11 +166,17 @@ def bindassignment(request, course_id):
         logger.error("Invalid request with course id %s and user %s -- %s" % (course_id, user, e))
         return redirect('indexpage')
     if request.method == 'GET':
+        s_name = request.GET.get('name', '')
+        s_username = request.GET.get('username', '')
+        s_assignment = request.GET.get('assignment', '')
         table_bind = T_BIND_ASSIGNMENT(course.bindableassignments())
         RequestConfig(request).configure(table_bind)
         context_dict = {
             'course': course,
             't_bind': table_bind,
+            'search_name': s_name,
+            'search_username': s_username,
+            'search_assignment': s_assignment,
             'menu_teaching': 'active',
             'submenu': 'bind',
             'next_page': 'education:teaching', 
@@ -226,12 +231,27 @@ def collectassignment(request, course_id):
     except Exception as e:
         logger.error("Invalid request with course id %s and user %s -- %s" % (course_id, user, e))
         return redirect('indexpage')
-    if request.method == 'GET':
-        table_collect = T_COLLECT_ASSIGNMENT(course.collectableassignments())
+    if request.method == 'POST' and request.POST['button'] == 'search':
+        s_name = request.POST.get('name')
+        s_username = request.POST.get('username')
+        s_assignment = request.POST.get('assignment')
+        render_page = True
+    elif request.method == 'GET':
+        s_name = None
+        s_username = None
+        s_assignment = None
+        render_page = True
+    else:
+        render_page = False
+    if render_page:
+        table_collect = T_COLLECT_ASSIGNMENT(course.collectableassignments(s_assignment = s_assignment, s_name = s_name, s_username = s_username))
         RequestConfig(request).configure(table_collect)
         context_dict = {
             'course': course,
             't_collect': table_collect,
+            'search_name': s_name,
+            'search_username': s_username,
+            'search_assignment': s_assignment,
             'menu_teaching': 'active',
             'submenu': 'collect',
             'next_page': 'education:feedback',

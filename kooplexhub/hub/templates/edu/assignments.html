@@ -19,6 +19,9 @@
       <li class="nav-item"><a {% if submenu == 'bind' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'education:bindassignment' course.id %}" {% endif %}>Assign</a></li>
       <li class="nav-item"><a {% if submenu == 'collect' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'education:collectassignment' course.id %}" {% endif %}>Collect</a></li>
       <li class="nav-item"><a {% if submenu == 'feedback' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'education:feedback' course.id %}" {% endif %}>Feedback</a></li>
+      <li class="nav-item">
+        {% include 'container/startopen.html' with container=course|get_usercoursecontainer:user %}
+      </li>
     </ul>
   </div>
 </nav>

@@ -101,11 +101,21 @@ class Course(models.Model):
                 candidates.append(d)
         return candidates
 
-    def collectableassignments(self):
+    def collectableassignments(self, **kw):
         from .assignment import Assignment, UserAssignmentBinding
+        s_a = kw.pop('s_assignment', None)
+        s_n = kw.pop('s_name', None)
+        s_u = kw.pop('s_username', None)
         for coursecode in CourseCode.objects.filter(course = self):
             for assignment in Assignment.objects.filter(coursecode = coursecode):
-                for binding in UserAssignmentBinding.objects.filter(assignment = assignment, state = UserAssignmentBinding.ST_WORKINPROGRESS):
+                query = models.Q(assignment = assignment, state = UserAssignmentBinding.ST_WORKINPROGRESS)
+                if s_a is not None:
+                    query &= models.Q(assignment__name__icontains = s_a)
+                if s_n is not None:
+                    query &= models.Q(user__first_name__icontains = s_n) | models.Q(user__last_name__icontains = s_n)
+                if s_u is not None:
+                    query &= models.Q(user__username__icontains = s_u)
+                for binding in UserAssignmentBinding.objects.filter(query):
                     yield binding
 
 #FIXME: deprecated

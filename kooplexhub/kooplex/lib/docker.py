@@ -62,7 +62,7 @@ class Docker:
         host_config = self.client.create_host_config(
             binds = binds,
             privileged = True,
-            mem_limit = '170m',
+            mem_limit = '2g',
             memswap_limit = '170m',
             mem_swappiness = 0,
 #            oom_kill_disable = True,

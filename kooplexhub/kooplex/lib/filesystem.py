@@ -81,6 +81,7 @@ def _createfile(fn, content, uid = 0, gid = 0, mode = 0b111101000):
 
 ########################################
 
+
 def check_home(user):
     dir_home = Dirname.userhome(user)
     assert os.path.exists(dir_home), "Folder %s does not exist" % dir_home
@@ -110,6 +111,7 @@ def mkdir_usergarbage(user):
     dir_usergarbage = Dirname.usergarbage(user)
     _mkdir(dir_usergarbage, uid = user.profile.userid, gid = user.profile.groupid)
 
+
 ########################################
 
 def check_reportprepare(user):
@@ -119,6 +121,19 @@ def check_reportprepare(user):
 def mkdir_reportprepare(user):
     dir_reportprepare = Dirname.reportprepare(user)
     _mkdir(dir_reportprepare, uid = user.profile.userid, gid = user.profile.groupid)
+
+def snapshot_report(report):
+    dir_source = os.path.join(Dirname.reportprepare(report.creator), report.folder)
+    dir_target = Dirname.report(report)
+    _copy_dir(dir_source, dir_target, remove = False)
+    dir_reportroot = Dirname.reportroot(report.creator)
+    _grantaccess(report.creator, dir_reportroot, acl = 'rX')
+
+def garbage_report(report):
+    dir_source = Dirname.report(report)
+    garbage = Filename.report_garbage(report)
+    _archivedir(dir_source, garbage, remove = True)
+
 
 ########################################
 
@@ -181,19 +196,6 @@ def archivedir_vcpcache(vcproject):
     dir_cache = Dirname.vcpcache(vcproject)
     target = Filename.vcpcache_archive(vcproject)
     _archivedir(dir_cache, target)
-
-
-def snapshot_report(report):
-    dir_source = os.path.join(Dirname.reportprepare(report.creator), report.folder)
-    dir_target = Dirname.report(report)
-    _copy_dir(dir_source, dir_target, remove = False)
-    dir_reportroot = Dirname.reportroot(report.creator)
-    _grantaccess(report.creator, dir_reportroot, acl = 'rX')
-
-def garbage_report(report):
-    dir_source = Dirname.report(report)
-    garbage = Filename.report_garbage(report)
-    _archivedir(dir_source, garbage, remove = True)
 
 
 def mkdir_course_share(course):
