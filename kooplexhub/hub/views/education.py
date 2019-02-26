@@ -249,9 +249,9 @@ def collectassignment(request, course_id):
         context_dict = {
             'course': course,
             't_collect': table_collect,
-            'search_name': s_name,
-            'search_username': s_username,
-            'search_assignment': s_assignment,
+            'search_name': s_name if s_name else '',
+            'search_username': s_username if s_username else '',
+            'search_assignment': s_assignment if s_assignment else '',
             'menu_teaching': 'active',
             'submenu': 'collect',
             'next_page': 'education:feedback',
