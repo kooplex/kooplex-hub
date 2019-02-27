@@ -9,6 +9,7 @@ import subprocess
 import shlex
 import datetime
 import pytz
+import unidecode
 
 from django.conf import settings
 
@@ -86,3 +87,6 @@ def standardize_str(s):
     s_clean = "".join(re.split(r'[^0-9a-z]*([a-z0-9]+)[^0-9a-z]*', s.lower()))
     assert len(s_clean), "No characters kept after standardization"
     return s_clean
+
+def deaccent_str(s):
+    return unidecode.unidecode(s)
