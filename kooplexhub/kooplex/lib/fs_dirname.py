@@ -76,7 +76,7 @@ class Dirname:
     def assignmentcorrectdir(userassignmentbinding):
         assignment = userassignmentbinding.assignment
         user = userassignmentbinding.user
-        namefield = "%s%s_%s" % (user.first_name, user.last_name, user.username)
+        namefield = "%s%s_%s" % (standardize_str(user.first_name), standardize_str(user.last_name), user.username)
         datefield = userassignmentbinding.submitted_at.strftime('%Y_%m_%d')
         return os.path.join(Dirname.mountpoint['assignment'], assignment.coursecode.course.folder, 'feedback-%s-%s-%s' % (assignment.safename, namefield, datefield))
 
