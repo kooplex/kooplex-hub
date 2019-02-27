@@ -1,19 +1,19 @@
-
 <form id="assignments-feedbackform-{{ course.id }}" class="form-horizontal" action="{% url 'education:feedback' course.id %}" method="post">
   {% csrf_token %}
   <input type="hidden" name="course_id" value="{{ course.id }}">
   {% load render_table from django_tables2 %}
     <div class="alert alert-warning">Select assignments to correct, feedback or reassign.</div>
     <div  class="alert alert-warning">
-      <input type="text" name="user" placeholder="student's name">
-      <input type="text" name="name" placeholder="assignment name">
-      <select id="holkeres" name="state">
+      <input type="text" name="name" placeholder="Name" value="{{ search_name }}">
+      <input type="text" name="username" placeholder="Username (Neptun code)" value="{{ search_username }}">
+      <input type="text" name="assignment" placeholder="Assignment" value="{{ search_assignment }}">
+      <select id="holkeres" name="assignmentstate">
           <option value="">  assignment's state  </option>
       {% for stkey, stval in states.items %}
-          <option value="{{ stkey }}">{{ stval }}</option>
+          <option value="{{ stkey }}" {% if stkey == search_assignmentstate %} selected {% endif %}>{{ stval }}</option>
       {% endfor %}
       </select>
-      <button type="submit" class="btn btn-primary">Search</button>
+      <button type="submit" class="btn btn-primary" name="button" value="search">Search</button>
       <input type="hidden" name="pager" value="{{ pager }}">
     </div>
   {% if t_feedback.data|length > 0 %}

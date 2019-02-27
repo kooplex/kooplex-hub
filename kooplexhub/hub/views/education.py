@@ -244,7 +244,7 @@ def collectassignment(request, course_id):
     else:
         render_page = False
     if render_page:
-        table_collect = T_COLLECT_ASSIGNMENT(course.collectableassignments(s_assignment = s_assignment, s_name = s_name, s_username = s_username))
+        table_collect = T_COLLECT_ASSIGNMENT(course.userassignmentbindings(s_assignment = s_assignment, s_name = s_name, s_username = s_username, s_assignmentstate = UserAssignmentBinding.ST_WORKINPROGRESS))
         RequestConfig(request).configure(table_collect)
         context_dict = {
             'course': course,
@@ -289,17 +289,30 @@ def feedbackassignment(request, course_id):
     except Exception as e:
         logger.error("Invalid request with course id %s and user %s -- %s" % (course_id, user, e))
         return redirect('indexpage')
-    if request.method == 'GET':
-        extra = {}
-        for k in [ 'state', 'name', 'user' ]:
-            v = request.GET.get(k)
-            if v:
-                extra[k] = v
-        table_feedback = T_FEEDBACK_ASSIGNMENT(course.userassignmentbindings(**extra))
+    if request.method == 'POST' and request.POST['button'] == 'search':
+        s_name = request.POST.get('name')
+        s_username = request.POST.get('username')
+        s_assignment = request.POST.get('assignment')
+        s_assignmentstate = request.POST.get('assignmentstate') if request.POST.get('assignmentstate') else None
+        render_page = True
+    elif request.method == 'GET':
+        s_name = None
+        s_username = None
+        s_assignment = None
+        s_assignmentstate = None
+        render_page = True
+    else:
+        render_page = False
+    if render_page:
+        table_feedback = T_FEEDBACK_ASSIGNMENT(course.userassignmentbindings(s_assignment = s_assignment, s_name = s_name, s_username = s_username, s_assignmentstate = s_assignmentstate))
         RequestConfig(request).configure(table_feedback)
         context_dict = {
             'course': course,
             't_feedback': table_feedback,
+            'search_name': s_name if s_name else '',
+            'search_username': s_username if s_username else '',
+            'search_assignment': s_assignment if s_assignment else '',
+            'search_assignmentstate': s_assignmentstate if s_assignmentstate else '',
             'states': ST_LOOKUP,
             'menu_teaching': 'active',
             'submenu': 'feedback',
