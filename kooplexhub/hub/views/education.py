@@ -264,7 +264,8 @@ def collectassignment(request, course_id):
                 binding = UserAssignmentBinding.objects.get(id = binding_id)
                 coursecode = binding.assignment.coursecode
                 assert coursecode.course == course, "course code mismatch"
-                UserCourseCodeBinding.objects.get(user = user, coursecode = coursecode, is_teacher = True)
+                #UserCourseCodeBinding.objects.get(user = user, coursecode = coursecode, is_teacher = True)
+                UserCourseBinding.objects.get(user = user, course = binding.assignment.coursecode.course, is_teacher = True)
                 binding.do_collect()
                 messages.info(request, 'Assignment %s of %s for course code %s is collected' % (binding.assignment.name, binding.user, coursecode))
             except Exception as e:
@@ -330,7 +331,8 @@ def feedbackassignment(request, course_id):
                 continue
             try:
                 binding = UserAssignmentBinding.objects.get(id = binding_id)
-                UserCourseCodeBinding.objects.get(user = user, coursecode = binding.assignment.coursecode, is_teacher = True)
+                #UserCourseCodeBinding.objects.get(user = user, coursecode = binding.assignment.coursecode, is_teacher = True)
+                UserCourseBinding.objects.get(user = user, course = binding.assignment.coursecode.course, is_teacher = True)
                 score = request.POST.get('score_%s' % binding_id)
                 feedback_text = request.POST.get('feedback_text_%s' % binding_id)
                 if task == 'correct':
