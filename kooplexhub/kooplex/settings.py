@@ -207,5 +207,8 @@ KOOPLEX = {
         'base_url': 'http://%s-proxy:8001' % PREFIX,
         'auth_token': os.getenv('HUBPROXY_PW'),
     },
+    'reportserver': {
+        'base_url': 'http://%s-report-nginx' % PREFIX,
+    }
 }
 

@@ -48,7 +48,8 @@ def _addroute_container(container):
  
 def _addroute_report(report):
     proxyconf = KOOPLEX.get('proxy', {})
-    target_url = os.path.join('http://kooplex-test-report-nginx') # FIXME: settings.py
+    reportconf = KOOPLEX.get('reportserver', {})
+    target_url = reportconf.get('base_url', 'localhost')
     kw = {
         'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', 'report', report.proxy_path), 
         'headers': {'Authorization': 'token %s' % proxyconf.get('auth_token', '') },
@@ -84,7 +85,8 @@ def _removeroute_container(container):
 
 def _removeroute_report(report):
     proxyconf = KOOPLEX.get('proxy', {})
-    target_url = os.path.join('http://kooplex-test-report-nginx') # FIXME: settings.py
+    reportconf = KOOPLEX.get('reportserver', {})
+    target_url = reportconf.get('base_url', 'localhost')
     kw = {
         'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', report.proxy_path), 
         'headers': {'Authorization': 'token %s' % proxyconf.get('auth_token', '') },
