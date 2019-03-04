@@ -60,6 +60,7 @@ class Command(BaseCommand):
                 logger.debug("%s mark as present" % volume)
                 if not dry:
                     volume.is_present = True
+                    volume.save()
             except Volume.DoesNotExist:
                 logger.debug("try volume %s" % volumename)
                 if not dry:

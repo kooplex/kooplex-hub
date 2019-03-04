@@ -14,7 +14,7 @@ from django.contrib.auth.models import User
 from .project import Project, UserProjectBinding
 from .report import Report
 from .course import Course
-from .volume import Volume
+from .volume import Volume, VolumeProjectBinding
 from .image import Image
 from .versioncontrol import VCProjectProjectBinding
 
@@ -463,6 +463,25 @@ def remove_bind_git(sender, instance, **kwargs):
             logger.debug('Git cache unbound from container %s' % instance)
         except Exception as e:
             logger.error('Git cache was not unbound from container %s -- %s' % (instance, e))
+
+
+@receiver(post_save, sender = ProjectContainerBinding)
+def bind_stg(sender, instance, created, **kwargs):
+    if created:
+        c = instance.container
+        for vpb in VolumeProjectBinding.objects.filter(project = instance.project, volume__volumetype = Volume.STORAGE):
+            v = vpb.volume
+            try:
+                VolumeContainerBinding.objects.get(container = c, volume = v)
+                logger.debug('Storage bound to container %s' % c)
+            except VolumeContainerBinding.DoesNotExist:
+                VolumeContainerBinding.objects.create(container = c, volume = v)
+                logger.debug('Storage bound to container %s' % c)
+            except Exception as e:
+                logger.error('Storage not bound to container %s -- %s' % (c, e))
+
+
+#FIXME: remove_bind_stg
 
 
 @receiver(post_save, sender = ProjectContainerBinding)

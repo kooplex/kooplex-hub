@@ -195,6 +195,7 @@ class Project(models.Model):
         return msg
 
     def set_volumes(self, volumes):
+        from .volume import VolumeProjectBinding, Volume
         volumes = set(volumes)
         old_volumes = set(self.functional_volumes).union(self.storage_volumes)
         if old_volumes != volumes:
@@ -202,10 +203,10 @@ class Project(models.Model):
             vol_add = volumes.difference( old_volumes )
             logger.debug("- %s" % vol_remove)
             for volume in vol_remove:
-                VolumeProjectBinding.objects.get(volume = volume, project = project).delete()
+                VolumeProjectBinding.objects.get(volume = volume, project = self).delete()
             logger.debug("+ %s" % vol_add)
             for volume in vol_add:
-                VolumeProjectBinding.objects.create(volume = volume, project = project)
+                VolumeProjectBinding.objects.create(volume = volume, project = self)
 
 
 
