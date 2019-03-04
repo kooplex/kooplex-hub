@@ -107,9 +107,12 @@ class Course(models.Model):
         s_n = kw.pop('s_name', None)
         s_u = kw.pop('s_username', None)
         s_s = kw.pop('s_assignmentstate', None)
+        user = kw.pop('user', None)
         for coursecode in CourseCode.objects.filter(course = self):
             for assignment in Assignment.objects.filter(coursecode = coursecode):
                 query = models.Q(assignment = assignment)
+                if user is not None:
+                    query &= models.Q(user = user)
                 if s_s is not None:
                     query &= models.Q(state = s_s)
                 if s_a is not None:
