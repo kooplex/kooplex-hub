@@ -13,7 +13,7 @@ def indexpage(request):
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     
-#    url(r'^hub/mock/', include('kooplex.mock', namespace = 'mock')), #FIXME: REMOVE FROM PRODUCTION
+    url(r'^hub/mock/', include('kooplex.mock', namespace = 'mock')), #FIXME: REMOVE FROM PRODUCTION
 
     url(r'^hub/oauth/', include('social_django.urls', namespace = 'social')),
     url(r'^hub/project/', include('hub.views.project', namespace = 'project')),
