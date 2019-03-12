@@ -303,17 +303,16 @@ def cp_assignmentsnapshot(userassignmentbinding):
         dir_target = Dirname.assignmentworkdir(userassignmentbinding)
         with tarfile.open(archivefile, mode = 'r') as archive:
             archive.extractall(path = dir_target)
-        _grantaccess(userassignmentbinding.user, dir_target)
+        _revokeaccess(userassignmentbinding.user, dir_target)
         for binding in UserCourseBinding.objects.filter(course = assignment.coursecode.course, is_teacher = True):
             _grantaccess(binding.user, dir_target, acl = 'rX')
-#FIXME: remove is necessary
     except Exception as e:
         logger.error("Cannot cp snapshot dir %s -- %s" % (userassignmentbinding, e))
 
 def cp_userassignment(userassignmentbinding):
     dir_source = Dirname.assignmentworkdir(userassignmentbinding)
     archive = Filename.assignmentcollection(userassignmentbinding)
-    _archivedir(dir_source, archive, remove = False)
+    _archivedir(dir_source, archive, remove = userassignmentbinding.assignment.remove_collected)
 
 def cp_userassignment2correct(userassignmentbinding):
     try:
