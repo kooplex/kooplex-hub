@@ -132,6 +132,8 @@ class Dirname:
                 for binding in UserAssignmentBinding.objects.all():
                     if binding.state == UserAssignmentBinding.ST_QUEUED or binding.corrector is None or binding.assignment.coursecode.course != container.course:
                         continue
+                    if binding.corrector != container.user:
+                        continue
                     yield Dirname.assignmentcorrectdir(binding)
             elif userstatus == 'student':
                 for binding in UserAssignmentBinding.objects.filter(user = container.user):
