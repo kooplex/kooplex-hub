@@ -156,6 +156,9 @@ class CourseCode(models.Model):
     courseid = models.CharField(max_length = 30, null = False)
     course = models.ForeignKey(Course, null = True, default = None)
 
+    class Meta:
+        ordering = [ 'courseid' ]
+
     def __str__(self):
         return self.courseid
 
