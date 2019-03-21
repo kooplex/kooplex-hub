@@ -76,6 +76,10 @@ class Container(models.Model):
         return "http://%s:%d" % (self.name, KOOPLEX.get('spawner', {}).get('port', 8000))
 
     @property
+    def url_test(self):
+        return "http://%s:%d" % (self.name, KOOPLEX.get('spawner', {}).get('port_test', 9000))
+
+    @property
     def url_external(self):
         return os.path.join(KOOPLEX['base_url'], self.proxy_path, '?token=%s' % self.user.profile.token)
 
@@ -83,6 +87,11 @@ class Container(models.Model):
     def proxy_path(self):
         info = { 'containername': self.name }
         return KOOPLEX['spawner']['pattern_proxypath'] % info
+
+    @property
+    def proxy_path_test(self):
+        info = { 'containername': self.name }
+        return KOOPLEX['spawner']['pattern_proxypath_test'] % info
 
     @property
     def projects(self):
