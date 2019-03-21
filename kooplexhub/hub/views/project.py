@@ -56,6 +56,7 @@ def join(request):
         table_joinable = T_JOINABLEPROJECT([ UserProjectBinding.objects.get(project = p, role = UserProjectBinding.RL_CREATOR) for p in project_joinable ])
         RequestConfig(request).configure(table_joinable)
         context_dict = {
+            'next_page': 'project:list',
             't_joinable': table_joinable,
         }
         return render(request, 'project/join.html', context = context_dict)
@@ -209,6 +210,7 @@ def conf_environment(request, project_id, next_page):
             'images': Image.objects.all(),
             'project': project, 
             't_volumes_fun': sel_table(user = user, project = project, volumetype = 'functional'), #FIXME: tables placed in forms/ ReqConfig
+            't_volumes_stg': sel_table(user = user, project = project, volumetype = 'storage'),    #FIXME: like above
             'submenu': 'environment',
             'next_page': next_page,
         }

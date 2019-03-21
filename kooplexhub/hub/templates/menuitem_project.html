@@ -8,13 +8,15 @@
 
 {% if user.profile.can_createproject %}
   {% include "project/new.html" %}
+{% endif %}
   <li class="nav-item dropdown">
     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownProject" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></a>
     <div class="dropdown-menu" aria-labelledby="navbarDropdownProject">
+{% if user.profile.can_createproject %}
       <a class="dropdown-item" href="#" data-toggle="modal" data-target="#project-new">New project</a>
+{% endif %}
       <a class="dropdown-item" href="{% url 'project:join' %}">Join a project</a>
       <a class="dropdown-item" href="{% url 'project:list' %}">List projects</a>
       <a class="dropdown-item" href="{% url 'project:showhide' 'project:list' %}">Show/hide projects</a>
     </div>
   </li>
-{% endif %}

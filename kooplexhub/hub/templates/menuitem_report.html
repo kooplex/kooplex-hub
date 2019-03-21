@@ -6,7 +6,6 @@
     {% endif %}
   </li>
 
-{% if user.profile.can_createproject %}  <!-- FIXME: -->
   <li class="nav-item dropdown">
     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownReport" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></a>
     <div class="dropdown-menu" aria-labelledby="navbarDropdownReport">
@@ -14,4 +13,3 @@
       <a class="dropdown-item" href="{% url 'report:list' %}">List reports</a>
     </div>
   </li>
-{% endif %}

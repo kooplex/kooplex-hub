@@ -480,6 +480,21 @@ def bind_stg(sender, instance, created, **kwargs):
             except Exception as e:
                 logger.error('Storage not bound to container %s -- %s' % (c, e))
 
+@receiver(post_save, sender = ProjectContainerBinding)
+def bind_vol(sender, instance, created, **kwargs):
+    if created:
+        c = instance.container
+        for vpb in VolumeProjectBinding.objects.filter(project = instance.project, volume__volumetype = Volume.FUNCTIONAL):
+            v = vpb.volume
+            try:
+                VolumeContainerBinding.objects.get(container = c, volume = v)
+                logger.debug('Functional volume bound to container %s' % c)
+            except VolumeContainerBinding.DoesNotExist:
+                VolumeContainerBinding.objects.create(container = c, volume = v)
+                logger.debug('Functional volume was not bound, binding now to container %s' % c)
+            except Exception as e:
+                logger.error('Functional volume not bound to container %s -- %s' % (c, e))
+
 
 #FIXME: remove_bind_stg
 
