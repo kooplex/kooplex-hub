@@ -76,6 +76,10 @@ class Container(models.Model):
         return "http://%s:%d" % (self.name, KOOPLEX.get('spawner', {}).get('port', 8000))
 
     @property
+    def url_test(self):
+        return "http://%s:%d" % (self.name, KOOPLEX.get('spawner', {}).get('port_test', 9000))
+
+    @property
     def url_external(self):
         return os.path.join(KOOPLEX['base_url'], self.proxy_path, '?token=%s' % self.user.profile.token)
 
@@ -83,6 +87,11 @@ class Container(models.Model):
     def proxy_path(self):
         info = { 'containername': self.name }
         return KOOPLEX['spawner']['pattern_proxypath'] % info
+
+    @property
+    def proxy_path_test(self):
+        info = { 'containername': self.name }
+        return KOOPLEX['spawner']['pattern_proxypath_test'] % info
 
     @property
     def projects(self):
@@ -479,6 +488,21 @@ def bind_stg(sender, instance, created, **kwargs):
                 logger.debug('Storage bound to container %s' % c)
             except Exception as e:
                 logger.error('Storage not bound to container %s -- %s' % (c, e))
+
+@receiver(post_save, sender = ProjectContainerBinding)
+def bind_vol(sender, instance, created, **kwargs):
+    if created:
+        c = instance.container
+        for vpb in VolumeProjectBinding.objects.filter(project = instance.project, volume__volumetype = Volume.FUNCTIONAL):
+            v = vpb.volume
+            try:
+                VolumeContainerBinding.objects.get(container = c, volume = v)
+                logger.debug('Functional volume bound to container %s' % c)
+            except VolumeContainerBinding.DoesNotExist:
+                VolumeContainerBinding.objects.create(container = c, volume = v)
+                logger.debug('Functional volume was not bound, binding now to container %s' % c)
+            except Exception as e:
+                logger.error('Functional volume not bound to container %s -- %s' % (c, e))
 
 
 #FIXME: remove_bind_stg

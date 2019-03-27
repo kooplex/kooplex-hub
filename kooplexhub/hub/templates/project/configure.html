@@ -11,7 +11,7 @@
       <li class="nav-item"><a {% if submenu == 'meta' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'project:conf_meta' project.id next_page %}" {% endif %}>Meta</a></li>
       <li class="nav-item"><a {% if submenu == 'collaboration' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'project:conf_collaboration' project.id next_page %}" {% endif %}>Collaboration</a></li>
       <li class="nav-item"><a {% if submenu == 'environment' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'project:conf_environment' project.id next_page %}" {% endif %}>Environment</a></li>
-      <li class="nav-item"><a {% if submenu == 'storage' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'project:conf_storage' project.id next_page %}" {% endif %}>Data</a></li>
+      <!--li class="nav-item"><a {% if submenu == 'storage' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'project:conf_storage' project.id next_page %}" {% endif %}>Data</a></li-->
       <li class="nav-item"><a {% if submenu == 'versioncontrol' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'project:conf_versioncontrol' project.id next_page %}" {% endif %}>Versioncontrol</a></li>
     </ul>
   </div>

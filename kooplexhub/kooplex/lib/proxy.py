@@ -35,13 +35,21 @@ def droproutes():
     return resp_latest
 
 
-def _addroute_container(container):
+def _addroute_container(container, test=False):
     proxyconf = KOOPLEX.get('proxy', {})
-    kw = {
-        'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', container.proxy_path), 
-        'headers': {'Authorization': 'token %s' % proxyconf.get('auth_token', '') },
-        'data': json.dumps({ 'target': container.url }),
-    }
+    if test:
+        kw = {
+            'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', container.proxy_path_test), 
+            'headers': {'Authorization': 'token %s' % proxyconf.get('auth_token', '') },
+            'data': json.dumps({ 'target': container.url_test }),
+        }
+    else:
+        kw = {
+            'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', container.proxy_path), 
+            'headers': {'Authorization': 'token %s' % proxyconf.get('auth_token', '') },
+            'data': json.dumps({ 'target': container.url }),
+        }
+
     logging.debug("+ %s ---> %s" % (kw['url'], container.url))
     return keeptrying(requests.post, 50, **kw)
 
@@ -68,7 +76,8 @@ def _addroute_report(report):
 
 def addroute(instance):
     if isinstance(instance, Container):
-        return _addroute_container(instance)
+        _addroute_container(instance, test=False)
+        return _addroute_container(instance, test=True)
     elif isinstance(instance, Report):
         return _addroute_report(instance)
     logger.error('Not implemented %s type %s' % (instance, type(instance)))
