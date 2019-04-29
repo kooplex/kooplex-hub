@@ -48,52 +48,66 @@
 		}
 		//If the reassign radio is checked
 		else {
-		  	for( i = 0; i < radios.length; i++ ) {
-			      //And the elements are radios
-			      if( radios[i].type == "radio" ) {
-			        //And the radio elements's value are 0
-				if (radios[i].value == "skip" ) {
-			          //Check all radio elements with value = 0
-			 	  radios[i].checked = true;
-				}
-			      }//if
-			}//for
-		};//if
-		  return null;
-       }
+		for( i = 0; i < radios.length; i++ ) {
+		      //And the elements are radios
+		      if( radios[i].type == "radio" ) {
+			//And the radio elements's value are 0
+			if (radios[i].value == "skip" ) {
+			  //Check all radio elements with value = 0
+			  radios[i].checked = true;
+			}
+		      }//if
+		}//for
+	};//if
+	  return null;
+}
 </script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 
 <script>
-  $( document ).ready(function() {
-	$('textarea').click(function() { var vv = $(this).attr('what'); $("#"+vv).trigger('click'); });
-	$('input').click(function() { var vv = $(this).attr('what'); $("#"+vv).trigger('click'); });
+$( document ).ready(function() {
+$('textarea').click(function() { var vv = $(this).attr('what'); $("#"+vv).trigger('click'); });
+$('input').click(function() { var vv = $(this).attr('what'); $("#"+vv).trigger('click'); });
 
-  });
+});
+</script>
+<script>
+$( document ).ready(function() {
+	document.getElementById('per_page').value={{ per_page }};
+});
 </script>
 
 
 <form id="assignments-feedbackform-{{ course.id }}" class="form-horizontal" action="{% url 'education:feedback' course.id %}" method="post" name="radios">
-  {% csrf_token %}
-  <input type="hidden" name="course_id" value="{{ course.id }}">
-  {% load render_table from django_tables2 %}
-    <div class="alert alert-warning">Select assignments to correct, feedback or reassign.</div>
-    <div  class="alert alert-warning">
-      <input type="text" name="name" placeholder="Name" value="{{ search_name }}">
-      <input type="text" name="username" placeholder="Username (Neptun code)" value="{{ search_username }}">
-      <input type="text" name="assignment" placeholder="Assignment" value="{{ search_assignment }}">
-      <select id="holkeres" name="assignmentstate">
-          <option value="">  assignment's state  </option>
-      {% for stkey, stval in states.items %}
-          <option value="{{ stkey }}" {% if stkey == search_assignmentstate %} selected {% endif %}>{{ stval }}</option>
-      {% endfor %}
-      </select>
-      <button type="submit" class="btn btn-primary" name="button" value="search">Search</button>
-      <input type="hidden" name="pager" value="{{ pager }}">
-    </div>
-  <input type="checkbox" name="correctall" onClick="correct(this)" /> Correct all 
-  <input type="checkbox" name="reassignall" onClick="toggle(this)" /> Reassign all <br/>
-  {% if t_feedback.data|length > 0 %}
+{% csrf_token %}
+<input type="hidden" name="course_id" value="{{ course.id }}">
+<input type="hidden" name="search_name" value="{{ search_name }}">
+<input type="hidden" name="search_assignment" value="{{ search_assignment}}">
+<input type="hidden" name="search_assignmentstate" value="{{ search_assignmentstate }}">
+{% load render_table from django_tables2 %}
+<div class="alert alert-warning">Select assignments to correct, feedback or reassign.</div>
+<div  class="alert alert-warning">
+<select name="per_page" id="per_page">
+<option value="10">10</option>
+<option value="20">20</option>
+<option value="50">50</option>
+<option value="100">100</option>
+</select> 
+<input type="text" name="name" placeholder="Name" value="{{ search_name }}">
+<input type="text" name="username" placeholder="Username (Neptun code)" value="{{ search_username }}">
+<input type="text" name="assignment" placeholder="Assignment" value="{{ search_assignment }}">
+<select id="holkeres" name="assignmentstate">
+  <option value="">  assignment's state  </option>
+{% for stkey, stval in states.items %}
+  <option value="{{ stkey }}" {% if stkey == search_assignmentstate %} selected {% endif %}>{{ stval }}</option>
+{% endfor %}
+</select>
+<button type="submit" class="btn btn-primary" name="button" value="search">Search</button>
+<input type="hidden" name="pager" value="{{ pager }}">
+</div>
+<input type="checkbox" name="correctall" onClick="correct(this)" /> Correct all 
+<input type="checkbox" name="reassignall" onClick="toggle(this)" /> Reassign all <br/>
+{% if t_feedback.data|length > 0 %}
     {% render_table t_feedback %}
     <div class="modal-footer">
       <button type="submit" class="btn btn-default" name="button" value="apply"> Apply</button>

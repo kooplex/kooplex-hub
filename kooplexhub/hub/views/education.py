@@ -284,6 +284,7 @@ def feedbackassignment(request, course_id):
     from hub.models.assignment import ST_LOOKUP
     user = request.user
     logger.debug("user %s, method: %s" % (user, request.method))
+    per_page=20
     try:
         course = Course.objects.get(id = course_id)
         assert len(list(UserCourseBinding.objects.filter(user = user, course = course, is_teacher = True))) > 0, "%s is not a teacher of course %s" % (user, course)
@@ -291,6 +292,7 @@ def feedbackassignment(request, course_id):
         logger.error("Invalid request with course id %s and user %s -- %s" % (course_id, user, e))
         return redirect('indexpage')
     if request.method == 'POST' and request.POST['button'] == 'search':
+        per_page = request.POST.get('per_page')
         s_name = request.POST.get('name')
         s_username = request.POST.get('username')
         s_assignment = request.POST.get('assignment')
@@ -306,7 +308,7 @@ def feedbackassignment(request, course_id):
         render_page = False
     if render_page:
         table_feedback = T_FEEDBACK_ASSIGNMENT(course.userassignmentbindings(s_assignment = s_assignment, s_name = s_name, s_username = s_username, s_assignmentstate = s_assignmentstate))
-        RequestConfig(request).configure(table_feedback)
+        RequestConfig(request,  paginate={'per_page': per_page}).configure(table_feedback)
         context_dict = {
             'course': course,
             't_feedback': table_feedback,
@@ -317,6 +319,7 @@ def feedbackassignment(request, course_id):
             'states': ST_LOOKUP,
             'menu_teaching': 'active',
             'submenu': 'feedback',
+            'per_page': per_page,
             'next_page': 'education:feedback',
         }
         return render(request, 'edu/assignments.html', context = context_dict)

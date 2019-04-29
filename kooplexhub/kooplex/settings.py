@@ -144,6 +144,9 @@ LOGGING = {
    }
 }
 
+DJANGO_TABLES2_TEMPLATE = "django_tables2/bootstrap4.html"
+
+
 KOOPLEX = {
     'base_url': 'https://%s' % DOMAIN,
 #    'hydra_oidc_endpoint':  'https://%s-hydra:4444' % PREFIX,

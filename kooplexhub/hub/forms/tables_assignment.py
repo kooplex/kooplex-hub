@@ -104,8 +104,7 @@ class T_FEEDBACK_ASSIGNMENT(tables.Table, common):
         model = UserAssignmentBinding
         sequence = ('id', 'user', 'username', 'assignment', 'received_at', 'expires_at', 'state', 'score', 'feedback_text')
         exclude = ('valid_from', 'submitted_at', 'corrector', 'corrected_at')
-        attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
-
+        attrs = { "class": "table table-sm table-striped table-bordered", "td": { "style": "padding:.5ex" } }
 
 
 class T_SUBMIT_ASSIGNMENT(tables.Table):
