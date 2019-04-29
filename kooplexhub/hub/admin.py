@@ -13,6 +13,8 @@ logger = logging.getLogger(__name__)
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'userid', 'groupid', 'location', 'bio', 'is_teacher', 'is_student', 'can_createproject')
+    search_fields = ('user__username', )
+
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
