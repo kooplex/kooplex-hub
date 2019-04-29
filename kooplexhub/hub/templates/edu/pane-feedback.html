@@ -29,6 +29,37 @@
 			}//for
 		};//if
 		  return null;
+       };
+        function correct(source) {
+		var check = document.getElementsByName("correctall"),
+		    radios = document.radios.elements;
+		if (check[0].checked) {
+			for( i = 0; i < radios.length; i++ ) {
+			    //And the elements are radios
+			    if( radios[i].type == "radio" ) {
+			        //And the radio elements's value are 1
+				if (radios[i].value == "correct" ) {
+			       //Check all radio elements with value = 1
+			   	   radios[i].checked = true;
+				}
+			    }//if
+			}//for
+			    
+		}
+		//If the reassign radio is checked
+		else {
+		  	for( i = 0; i < radios.length; i++ ) {
+			      //And the elements are radios
+			      if( radios[i].type == "radio" ) {
+			        //And the radio elements's value are 0
+				if (radios[i].value == "skip" ) {
+			          //Check all radio elements with value = 0
+			 	  radios[i].checked = true;
+				}
+			      }//if
+			}//for
+		};//if
+		  return null;
        }
 </script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
@@ -60,6 +91,7 @@
       <button type="submit" class="btn btn-primary" name="button" value="search">Search</button>
       <input type="hidden" name="pager" value="{{ pager }}">
     </div>
+  <input type="checkbox" name="correctall" onClick="correct(this)" /> Correct all 
   <input type="checkbox" name="reassignall" onClick="toggle(this)" /> Reassign all <br/>
   {% if t_feedback.data|length > 0 %}
     {% render_table t_feedback %}
