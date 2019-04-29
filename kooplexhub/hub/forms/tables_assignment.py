@@ -79,26 +79,26 @@ class T_FEEDBACK_ASSIGNMENT(tables.Table, common):
         elif record.state in [ UserAssignmentBinding.ST_CORRECTING, UserAssignmentBinding.ST_FEEDBACK ]:
             return format_html("""
 <input type="radio" name="task_%s" value="skip" checked> skip<br>
-<input type="radio" name="task_%s" value="ready"> ready<br>
+<input type="radio" name="task_%s" value="ready" id="task_%s"> ready<br>
 <input type="radio" name="task_%s" value="reassign"> reassign
-            """ % (record.id, record.id, record.id))
+            """ % (record.id, record.id, record.id, record.id))
         elif record.state == UserAssignmentBinding.ST_WORKINPROGRESS and record.corrector is not None:
             return format_html("""
 <input type="radio" name="task_%s" value="skip" checked> skip<br>
-<input type="radio" name="task_%s" value="ready"> ready
-            """ % (record.id, record.id))
+<input type="radio" name="task_%s" value="ready" id="task_%s"> ready
+            """ % (record.id, record.id, record.id))
         else:
             return format_html("—")
 
     def render_score(self, record):
         representation = "score_%d" % (record.id)
         value_attr = "" if record.score is None else str(record.score)
-        return format_html('<input type="text" name="%s" id="%s" value="%s" style="width: 3em"/>' % (representation, representation, value_attr) )
+        return format_html('<input type="text" name="%s" id="%s" what="task_%d" value="%s" style="width: 3em"/>' % (representation, representation, record.id, value_attr) )
   
     def render_feedback_text(self, record):
         representation = "feedback_text_%d" % (record.id)
         value_attr = "" if record.feedback_text is None else str(record.feedback_text)
-        return format_html('<textarea name="%s" id="%s" cols="30">%s</textarea>' % (representation, representation, value_attr) )
+        return format_html('<textarea name="%s" what="task_%d" id="%s" cols="30">%s</textarea>' % (representation, record.id, representation, value_attr) )
 
     class Meta:
         model = UserAssignmentBinding

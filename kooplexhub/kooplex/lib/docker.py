@@ -70,7 +70,7 @@ class Docker:
         )
         network = self.dockerconf.get('network', 'host')
         networking_config = { 'EndpointsConfig': { network: {} } }
-        ports = self.dockerconf.get('container_ports', [ 8000, 9000 ])
+        ports = self.dockerconf.get('container_ports', [ 8000, 9000])
         imagename = container.image.imagename if container.image else self.dockerconf.get('default_image', 'basic')
         args = {
             'name': container.name,

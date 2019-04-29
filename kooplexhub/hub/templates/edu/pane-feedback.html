@@ -1,4 +1,48 @@
-<form id="assignments-feedbackform-{{ course.id }}" class="form-horizontal" action="{% url 'education:feedback' course.id %}" method="post">
+<script>
+        function toggle(source) {
+		var check = document.getElementsByName("reassignall"),
+		    radios = document.radios.elements;
+		if (check[0].checked) {
+			for( i = 0; i < radios.length; i++ ) {
+			    //And the elements are radios
+			    if( radios[i].type == "radio" ) {
+			        //And the radio elements's value are 1
+				if (radios[i].value == "reassign" ) {
+			       //Check all radio elements with value = 1
+			   	   radios[i].checked = true;
+				}
+			    }//if
+			}//for
+			    
+		}
+		//If the reassign radio is checked
+		else {
+		  	for( i = 0; i < radios.length; i++ ) {
+			      //And the elements are radios
+			      if( radios[i].type == "radio" ) {
+			        //And the radio elements's value are 0
+				if (radios[i].value == "skip" ) {
+			          //Check all radio elements with value = 0
+			 	  radios[i].checked = true;
+				}
+			      }//if
+			}//for
+		};//if
+		  return null;
+       }
+</script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+<script>
+  $( document ).ready(function() {
+	$('textarea').click(function() { var vv = $(this).attr('what'); $("#"+vv).trigger('click'); });
+	$('input').click(function() { var vv = $(this).attr('what'); $("#"+vv).trigger('click'); });
+
+  });
+</script>
+
+
+<form id="assignments-feedbackform-{{ course.id }}" class="form-horizontal" action="{% url 'education:feedback' course.id %}" method="post" name="radios">
   {% csrf_token %}
   <input type="hidden" name="course_id" value="{{ course.id }}">
   {% load render_table from django_tables2 %}
@@ -16,6 +60,7 @@
       <button type="submit" class="btn btn-primary" name="button" value="search">Search</button>
       <input type="hidden" name="pager" value="{{ pager }}">
     </div>
+  <input type="checkbox" name="reassignall" onClick="toggle(this)" /> Reassign all <br/>
   {% if t_feedback.data|length > 0 %}
     {% render_table t_feedback %}
     <div class="modal-footer">

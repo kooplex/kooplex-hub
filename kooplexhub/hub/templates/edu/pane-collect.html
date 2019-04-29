@@ -1,6 +1,16 @@
+<script language="JavaScript">
+	function toggle(source) {
+		  checkboxes = document.getElementsByName('userassignmentbinding_ids');
+		 for(var i=0, n=checkboxes.length;i<n;i++) {
+			     checkboxes[i].checked = source.checked;
+			   }
+	}
+</script>
+
 <form id="assignmentcollect-form-{{ course.id }}" class="form-horizontal" action="{% url 'education:collectassignment' course.id %}" method="post">
   {% csrf_token %}
   <input type="hidden" name="course_id" value="{{ course.id }}">
+
   {% load render_table from django_tables2 %}
     <div class="alert alert-warning">Select assignments to collect right now.</div>
     <div  class="alert alert-warning">
@@ -12,6 +22,7 @@
       <input type="hidden" name="sort" value="{{ sort }}">
     </div>
     <input type="hidden" name="pager" value="{{ pager }}">
+  <input type="checkbox" onClick="toggle(this)" /> Select All<br/>
   {% if t_collect.data|length > 0 %}
     {% render_table t_collect %}
     <div class="modal-footer">
