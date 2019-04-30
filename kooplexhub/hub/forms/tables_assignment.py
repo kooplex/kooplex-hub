@@ -14,9 +14,11 @@ class common:
         return format_html(record.user.username)
 
     def render_assignment(self, value):
+        validfrom = "" if value.valid_from is None else str(value.valid_from)
+        expiresat = "" if value.expires_at is None else str(value.expires_at)
         return format_html(
-            "<span data-toggle='tooltip' title='Assigned by %s %s\nFolder: %s' data-placement='right'>%s</span>" % 
-            (value.creator.first_name, value.creator.last_name, value.folder, value.name)
+                "<span data-toggle='tooltip' title='Assigned by %s %s\nFolder: %s\nValid from: %s\nExpires at: %s' data-placement='right'>%s</span>" % 
+            (value.creator.first_name, value.creator.last_name, value.folder, validfrom, expiresat, value.name)
         )
 
 
@@ -63,7 +65,6 @@ class T_COLLECT_ASSIGNMENT(tables.Table, common):
         attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
 
 
-
 class T_FEEDBACK_ASSIGNMENT(tables.Table, common):
     id = tables.Column(verbose_name = 'Select', orderable = False)
     username = tables.Column(verbose_name = 'Username', orderable = False, empty_values = ())
@@ -90,6 +91,10 @@ class T_FEEDBACK_ASSIGNMENT(tables.Table, common):
         else:
             return format_html("—")
 
+    def render_user(self, record, value):
+#        return format_html('<div style="display: block;float: right;"><span class="badge badge-secondary">%s</span></div><div style="display: block;float: left;">%s %s</div>' % (record.user.username, value.first_name, value.last_name ) )
+        return format_html('<div style="display: block;"><span class="badge badge-secondary">%s</span></br>%s %s</div>' % (record.user.username, value.first_name, value.last_name ) )
+
     def render_score(self, record):
         representation = "score_%d" % (record.id)
         value_attr = "" if record.score is None else str(record.score)
@@ -98,12 +103,12 @@ class T_FEEDBACK_ASSIGNMENT(tables.Table, common):
     def render_feedback_text(self, record):
         representation = "feedback_text_%d" % (record.id)
         value_attr = "" if record.feedback_text is None else str(record.feedback_text)
-        return format_html('<textarea name="%s" what="task_%d" id="%s" cols="30">%s</textarea>' % (representation, record.id, representation, value_attr) )
+        return format_html('<textarea name="%s" what="task_%d" id="%s" cols="43">%s</textarea>' % (representation, record.id, representation, value_attr) )
 
     class Meta:
         model = UserAssignmentBinding
-        sequence = ('id', 'user', 'username', 'assignment', 'received_at', 'expires_at', 'state', 'score', 'feedback_text')
-        exclude = ('valid_from', 'submitted_at', 'corrector', 'corrected_at')
+        sequence = ('id', 'user',  'assignment', 'state', 'score', 'feedback_text')
+        exclude = ('valid_from', 'submitted_at', 'corrector', 'username','corrected_at', 'received_at', 'expires_at')
         attrs = { "class": "table table-sm table-striped table-bordered", "td": { "style": "padding:.5ex" } }
 
 
