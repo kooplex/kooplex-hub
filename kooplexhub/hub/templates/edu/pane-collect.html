@@ -1,3 +1,5 @@
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
 <script language="JavaScript">
 	function toggle(source) {
 		  checkboxes = document.getElementsByName('userassignmentbinding_ids');
@@ -6,6 +8,11 @@
 			   }
 	}
 </script>
+<script>
+	$( document ).ready(function() {
+		        document.getElementById('per_page').value={{ per_page }};
+	});
+</script>
 
 <form id="assignmentcollect-form-{{ course.id }}" class="form-horizontal" action="{% url 'education:collectassignment' course.id %}" method="post">
   {% csrf_token %}
@@ -13,6 +20,13 @@
 
   {% load render_table from django_tables2 %}
     <div  class="alert alert-warning">
+       <select name="per_page" id="per_page">
+	    <option value="10">10</option>
+	    <option value="20">20</option>
+	    <option value="50">50</option>
+	    <option value="100">100</option>
+      </select>
+
       <input type="text" name="name" placeholder="Name" value="{{ search_name }}">
       <input type="text" name="username" placeholder="Username (Neptun code)" value="{{ search_username }}">
       <input type="text" name="assignment" placeholder="Assignment" value="{{ search_assignment }}">

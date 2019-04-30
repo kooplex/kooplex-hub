@@ -225,6 +225,7 @@ def collectassignment(request, course_id):
     """Handle assignment collection"""
     user = request.user
     logger.debug("user %s, method: %s" % (user, request.method))
+    per_page=20
     try:
         course = Course.objects.get(id = course_id)
         assert len(list(UserCourseBinding.objects.filter(user = user, course = course, is_teacher = True))) > 0, "%s is not a teacher of course %s" % (user, course)
@@ -233,6 +234,7 @@ def collectassignment(request, course_id):
         return redirect('indexpage')
     if request.method == 'POST' and request.POST['button'] == 'search':
         s_name = request.POST.get('name')
+        per_page = request.POST.get('per_page')
         s_username = request.POST.get('username')
         s_assignment = request.POST.get('assignment')
         render_page = True
@@ -245,13 +247,14 @@ def collectassignment(request, course_id):
         render_page = False
     if render_page:
         table_collect = T_COLLECT_ASSIGNMENT(course.userassignmentbindings(s_assignment = s_assignment, s_name = s_name, s_username = s_username, s_assignmentstate = UserAssignmentBinding.ST_WORKINPROGRESS))
-        RequestConfig(request).configure(table_collect)
+        RequestConfig(request,  paginate={'per_page': per_page}).configure(table_collect)
         context_dict = {
             'course': course,
             't_collect': table_collect,
             'search_name': s_name if s_name else '',
             'search_username': s_username if s_username else '',
             'search_assignment': s_assignment if s_assignment else '',
+            'per_page': per_page,
             'menu_teaching': 'active',
             'submenu': 'collect',
             'next_page': 'education:feedback',
