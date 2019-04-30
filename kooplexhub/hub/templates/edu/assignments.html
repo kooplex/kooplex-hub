@@ -22,6 +22,18 @@
       <li class="nav-item">
         {% include 'container/startopen.html' with container=course|get_usercoursecontainer:user %}
       </li>
+      <li>
+              {% if submenu == 'new' %}
+	        <div class="col"> <div class="alert alert-warning">Select a folder and add a name to the new assigment.</div>  </div>
+              {% elif submenu == 'bind' %}
+	        <div class="col"> <div class="alert alert-warning">Select assignment and student to bind right now.</div>  </div>
+              {% elif submenu == 'collect' %}
+	        <div class="col"> <div class="alert alert-warning">Select assignments to collect right now.</div>  </div>
+              {% elif submenu == 'feedback' %}
+	        <div class="col"> <div class="alert alert-warning">Select assignments to correct, feedback or reassign.</div>  </div>
+              {% endif %}
+
+      </li>
     </ul>
   </div>
 </nav>

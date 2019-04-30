@@ -2,7 +2,6 @@
   {% csrf_token %}
   <input type="hidden" name="course_id" value="{{ course.id }}">
   {% if course.dirs_assignmentcandidate %}
-    <div class="alert alert-warning">Select a folder and add a name to the new assigment.</div>
       <div style="position: relative">
         <table>
           {{ f_assignment.as_table }}
