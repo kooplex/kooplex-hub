@@ -6,7 +6,7 @@ import time
 
 from django.db import models
 from django.utils import timezone
-from django.db.models.signals import pre_save, post_save, post_delete
+from django.db.models.signals import pre_save, post_save, pre_delete, post_delete
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.contrib.auth.models import User
@@ -283,29 +283,6 @@ class ContainerEnvironment(models.Model):
     container = models.ForeignKey(Container, null = False)
 
 
-
-@receiver(pre_save, sender = Container)
-def container_image_change(sender, instance, **kwargs):
-    import pwgen
-    is_new = instance.id is None
-    old_instance = Container() if is_new else Container.objects.get(id = instance.id)
-    if not is_new and old_instance.image != instance.image:
-         instance.marked_to_remove = True
-    if instance.image is None:
-        return
-    if instance.image.name == 'rstudio': #FIXME: hard coded stuf!!!!!!!!!!!!!!!!!
-         try:
-             ContainerEnvironment.objects.get(container = instance, name = 'PASSWORD')
-         except:
-             ContainerEnvironment.objects.get_or_create(container = instance, name = 'PASSWORD', value = pwgen.pwgen(16))
-    else:
-         try:
-             for ce in Container.objects.filter(container = instance, name = 'PASSWORD'):
-                 ce.delete()
-         except:
-             pass
-
-
 @receiver(pre_save, sender = Container)
 def container_state_change(sender, instance, **kwargs):
     from kooplex.lib import Docker
@@ -322,6 +299,8 @@ def container_state_change(sender, instance, **kwargs):
     if old_instance.state == Container.ST_NOTPRESENT and instance.state == Container.ST_RUNNING:
         docker.run_container(instance)
         addroute(instance)
+        instance.marked_to_remove = False
+
     elif old_instance.state == Container.ST_RUNNING and instance.state == Container.ST_NOTRUNNING:
         docker.stop_container(instance)
         removeroute(instance)
@@ -343,6 +322,39 @@ def container_state_change(sender, instance, **kwargs):
     else:
          logger.critical(msg)
 
+def remove_container_environment(instance, env):
+    logger.debug("Removing environment from %s"%(instance))
+    try:
+         for ce in ContainerEnvironment.objects.filter(container = instance, name = env):
+             ce.delete()
+    except:
+         logger.error('Container %s environments had no environments or couldn''t deleted. %s' % (instance, e))   
+
+@receiver(pre_save, sender = Container)
+def container_image_change(sender, instance, **kwargs):
+    import pwgen
+    is_new = instance.id is None
+    old_instance = Container() if is_new else Container.objects.get(id = instance.id)
+    logger.debug("Changing image from %s to %s"%(old_instance.image, instance.image))
+    if not is_new and old_instance.image != instance.image:
+         remove_container_environment(instance, 'PASSWORD')
+         instance.marked_to_remove = True
+         if instance.state == Container.ST_NOTRUNNING:
+             from kooplex.lib import Docker
+             docker = Docker()
+             docker.remove_container(instance)
+             instance.state = Container.ST_NOTPRESENT
+         if instance.state == Container.ST_NOTPRESENT:
+             instance.marked_to_remove = False
+    if instance.image is None:
+        return
+    if instance.marked_to_remove:
+         remove_container_environment(instance, 'PASSWORD')
+    if instance.image.name == 'rstudio' and not instance.marked_to_remove: #FIXME: hard coded stuf!!!!!!!!!!!!!!!!!
+         try:
+             ContainerEnvironment.objects.get(container = instance, name = 'PASSWORD')
+         except:
+             ContainerEnvironment.objects.get_or_create(container = instance, name = 'PASSWORD', value = pwgen.pwgen(16))
 
 @receiver(pre_save, sender = Container)
 def container_message_change(sender, instance, **kwargs):
@@ -406,6 +418,20 @@ def bind_share(sender, instance, created, **kwargs):
         except Exception as e:
             logger.error('Share not bound to container %s -- %s' % (c, e))
 
+@receiver(pre_delete, sender = ProjectContainerBinding)
+def container_to_be_removed(sender, instance, **kwargs):
+        logger.debug('Set %s container to be removed' % instance)
+        c = instance.container
+        c.marked_to_remove = True
+        c.save()
+
+
+#@receiver(pre_delete, sender = ProjectContainerBinding)                                                   
+@receiver(pre_delete, sender = Container)    
+def container_environmentS(sender, instance, **kwargs):                                                   
+        c = instance                                                                             
+        remove_container_environment(c, 'PASSWORD')
+                                                                                                                                                                          
 
 @receiver(post_delete, sender = ProjectContainerBinding)
 def remove_bind_share(sender, instance, **kwargs):
