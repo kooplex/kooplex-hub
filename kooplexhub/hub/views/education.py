@@ -92,7 +92,7 @@ def newassignment(request, course_id):
             'submenu': 'new',
             'next_page': 'education:teaching',
         }
-        return render(request, 'edu/assignments.html', context = context_dict)
+        return render(request, 'edu/assignment-teacher.html', context = context_dict)
     elif request.method == 'POST':
         coursecode_ids = request.POST.getlist("coursecodes")
         name = request.POST.get("name").strip()
@@ -105,7 +105,7 @@ def newassignment(request, course_id):
         can_studentsubmit = bool(request.POST.get("can_studentsubmit"))
         remove_collected = bool(request.POST.get("remove_collected"))
         try:
-            assert valid_from >= timenow, "You try to chedule assignment behind time."
+            assert valid_from >= timenow, "You try to shedule assignment behind time."
             assert len(name), "You need to provide a name"
             assert len(coursecode_ids), "You need to select at least one course code"
             extra = {}
@@ -181,7 +181,7 @@ def bindassignment(request, course_id):
             'submenu': 'bind',
             'next_page': 'education:teaching', 
         }
-        return render(request, 'edu/assignments.html', context = context_dict)
+        return render(request, 'edu/assignment-teacher.html', context = context_dict)
     elif request.method == 'POST':
         thetime = now()
         oopses = 0
@@ -259,7 +259,7 @@ def collectassignment(request, course_id):
             'submenu': 'collect',
             'next_page': 'education:feedback',
         }
-        return render(request, 'edu/assignments.html', context = context_dict)
+        return render(request, 'edu/assignment-teacher.html', context = context_dict)
     elif request.method == 'POST':
         userassignmentbinding_ids = request.POST.getlist('userassignmentbinding_ids')
         for binding_id in userassignmentbinding_ids:
@@ -325,7 +325,7 @@ def feedbackassignment(request, course_id):
             'per_page': per_page,
             'next_page': 'education:feedback',
         }
-        return render(request, 'edu/assignments.html', context = context_dict)
+        return render(request, 'edu/assignment-teacher.html', context = context_dict)
     elif request.method == 'POST':
         for k, v in request.POST.items():
             try:
@@ -364,6 +364,59 @@ def feedbackassignment(request, course_id):
     else:
         return redirect('education:teaching')
 
+@login_required
+def summaryassignment(request, course_id):
+    """Summary of the grades for each assignment"""
+    from hub.models.assignment import ST_LOOKUP
+    from pandas import DataFrame 
+    from django_pandas.io import read_frame
+    from hub.models import UserAssignmentBinding
+
+    user = request.user
+    logger.debug("user %s, method: %s" % (user, request.method))
+    per_page=20
+    course = Course.objects.get(id = course_id)
+    qs = UserAssignmentBinding.objects.filter(assignment__coursecode__course__id=course_id)
+    if len(list(qs)) == 0:
+        newdf = DataFrame()
+        messages.warning(request, 'Course %s has no assignments yet' % (course.name))
+    else:
+        try:
+            df = read_frame(qs)
+            df['Assignments'] = df.assignment.apply(lambda x: x.split("[")[0].strip())   
+            df.score.fillna(0, inplace=True)
+            assert len(list(UserCourseBinding.objects.filter(user = user, course = course, is_teacher = True))) > 0, "%s is not a teacher of course %s" % (user, course)
+            newdf = df.pivot_table(index='user', columns='Assignments', values='score')#, aggfunc='count')
+            #qs.to_dataframe(['age', 'wage'], index='full_name'])
+            #qs.filter(age__gt=20, department='IT').to_dataframe(index='full_name')
+            newdf['Sum'] = df.groupby(['user']).sum().score
+        except Exception as e:
+            logger.error("Invalid request with course id %s and user %s -- %s" % (course_id, user, e))
+            try:
+                 assert len(list(UserCourseBinding.objects.filter(user = user, course = course, is_teacher = False))) > 0, "%s is not even a student of course %s" % (user, course)
+                 df = df[df.user == user.username]
+                 newdf = df.pivot_table(index='user', columns='Assignments', values='score')#, aggfunc='count')
+                 newdf['Sum'] = df.groupby(['user']).sum().score
+            except Exception as e:
+                 logger.error("Invalid request with course id %s and user %s -- %s" % (course_id, user, e))
+                 return redirect('indexpage')
+    if request.method == 'GET':
+        render_page = True
+    else:
+        render_page = False
+    if render_page:
+        context_dict = {
+            'course': course,
+            'pd': newdf.to_html(table_id='datatable', col_space=300),
+            'menu_teaching': 'active',
+            'submenu': 'summary',
+            'per_page': per_page,
+            'next_page': 'education:summary',
+        }
+        return render(request, 'edu/assignment-teacher.html', context = context_dict)
+    else:
+        return redirect('education:teaching')
+
 
 @login_required
 def submitassignment(request, course_id):
@@ -383,9 +436,10 @@ def submitassignment(request, course_id):
             'course': course,
             't_submit': table_submit,
             'menu_teaching': 'active',
+            'submenu': 'submit',
             'next_page': 'education:course',
         }
-        return render(request, 'edu/assignment-submit.html', context = context_dict)
+        return render(request, 'edu/assignment-student.html', context = context_dict)
     elif request.method == 'POST':
         userassignmentbinding_ids = request.POST.getlist('userassignmentbinding_ids')
         for binding_id in userassignmentbinding_ids:
@@ -412,5 +466,6 @@ urlpatterns = [
     url(r'^bindassignment/(?P<course_id>\d+)$', bindassignment, name = 'bindassignment'),
     url(r'^collectassignment/(?P<course_id>\d+)$', collectassignment, name = 'collectassignment'),
     url(r'^feedback/(?P<course_id>\d+)$', feedbackassignment, name = 'feedback'),
+    url(r'^summary/(?P<course_id>\d+)$', summaryassignment, name = 'summary'),
     url(r'^submitassignment/(?P<course_id>\d+)$', submitassignment, name = 'submitassignment'),
 ]

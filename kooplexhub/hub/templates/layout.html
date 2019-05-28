@@ -22,17 +22,30 @@
 </style>
   </head>
 
-  <body>
+  <body style="overflow:auto; min-height: 100vh;   position: relative;   margin: 0;">
     {% include 'navbar.html' %}
     {% block submenu %}{% endblock %}
     {% include 'message.html' %}
-    <div class="container body-content">
+    <div class="container body-content" style="box-sizing: border-box;
+    border-radius: .3rem;min-height: 100%;
+    padding-bottom: .1em;
+    margin-bottom: 1em;
+    border: 2px;
+    border-top-color: currentcolor;
+    border-right-color: currentcolor;
+    border-bottom-color: currentcolor;
+    border-left-color: currentcolor;
+    border-color: aliceblue;
+    box-shadow: rgb(136, 136, 136) 5px 10px 8px 0px;
+    margin-top: 0.3em;
+    padding-top: .8em;
+    background-color: snow;
+    padding-bottom: 10px;">
       {% block content %}{% endblock %}
     </div>
-    {% include 'footer.html' %}
-    <hr/>
+
     <footer>
-      <p>&copy; 2018 - Kooplex Hub</p>
+    {% include 'footer.html' %}
     </footer>
 
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->

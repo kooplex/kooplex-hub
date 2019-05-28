@@ -1,0 +1,25 @@
+
+{% load staticfiles %}
+
+<style>
+.dataframe {
+font-weight: bold;
+}
+
+.dataframe td {
+text-align: center;
+}
+.dataframe th {
+padding: 10px 10px;
+margin: 10px 10px;
+}
+.dataframe thead th {
+padding: 50px 10px;
+margin: 10px 10px;
+transform: rotate(-50deg);
+}
+</style>
+{{ pd|safe }}
+
+
+
