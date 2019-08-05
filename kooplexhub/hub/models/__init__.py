@@ -6,6 +6,7 @@ from .volume import Volume, VolumeOwnerBinding, ExtraFields, UserPrivilegeVolume
 from .container import Container, ContainerEnvironment, ProjectContainerBinding, CourseContainerBinding, VolumeContainerBinding
 
 from .versioncontrol import VCRepository, VCToken, VCProject, VCProjectProjectBinding
+from .filesync import FSServer, FSToken, FSLibrary, FSLibraryProjectBinding
 
 from .project import Project,  UserProjectBinding, GroupProjectBinding
 
