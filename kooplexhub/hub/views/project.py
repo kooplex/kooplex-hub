@@ -23,7 +23,7 @@ from hub.models import Project, UserProjectBinding, Volume
 from hub.models import Image
 from hub.models import Profile
 from hub.models import VCToken, VCProject, VCProjectProjectBinding, ProjectContainerBinding
-from hub.models import FSToken, FSLibrary#, VCProjectProjectBinding, ProjectContainerBinding
+from hub.models import FSToken, FSLibrary, FSLibraryProjectBinding#, ProjectContainerBinding
 
 from django.utils.safestring import mark_safe
 
@@ -325,26 +325,26 @@ def conf_filesync(request, project_id, next_page):
     sort_info = request.GET.get('sort') if request.method == 'GET' else request.POST.get('sort')
     if request.method == 'POST' and request.POST.get('button') == 'apply':
         msgs = []
-#        for id_create in request.POST.getlist('vcp_ids'):
-#            vcp = VCProject.objects.get(id = id_create)
-#            if vcp.token.user != user:
-#                logger.error("Unauthorized request vcp: %s, user: %s" % (vcp, user))
-#                continue
-#            VCProjectProjectBinding.objects.create(project = project, vcproject = vcp)
-#            msgs.append('Bound %s to repotsitory %s.' % (project, vcp))
-#        for id_remove in set(request.POST.getlist('vcppb_ids_before')).difference(set(request.POST.getlist('vcppb_ids_after'))):
-#            try:
-#                vcppb = VCProjectProjectBinding.objects.get(id = id_remove, project = project)
-#                if vcppb.vcproject.token.user != user:
-#                    logger.error("Unauthorized request vcp: %s, user: %s" % (vcp, user))
-#                    continue
-#                msgs.append('Project %s is not bound to repository %s any more.' % (project, vcppb.vcproject))
-#                vcppb.delete()
-#            except VCProjectProjectBinding.DoesNotExist:
-#                logger.error("Is %s hacking" % user)
-#        if len(msgs):
-#            messages.info(request, ' '.join(msgs))
-#        return redirect(next_page)
+        for id_create in request.POST.getlist('fsl_ids'):
+            fsl = FSLibrary.objects.get(id = id_create)
+            if fsl.token.user != user:
+                logger.error("Unauthorized request fsl: %s, user: %s" % (fsl, user))
+                continue
+            FSLibraryProjectBinding.objects.create(project = project, fslibrary = fsl)
+            msgs.append('Bound library %s to project %s.' % (fsl, project))
+        for id_remove in set(request.POST.getlist('fslpb_ids_before')).difference(set(request.POST.getlist('fslpb_ids_after'))):
+            try:
+                fslpb = FSLibraryProjectBinding.objects.get(id = id_remove, project = project)
+                if fslpb.fslibrary.token.user != user:
+                    logger.error("Unauthorized request fsl: %s, user: %s" % (fsl, user))
+                    continue
+                msgs.append('Library %s is not bound to project %s any more.' % (fslpb.fslibrary, project))
+                fslpb.delete()
+            except FSLibraryProjectBinding.DoesNotExist:
+                logger.error("Is %s hacking" % user)
+        if len(msgs):
+            messages.info(request, ' '.join(msgs))
+        return redirect(next_page)
     elif (request.method == 'POST' and request.POST.get('button') == 'search') or request.method == 'GET':
         t = table_fslibrary(project)
         pattern = request.POST.get('library', '')

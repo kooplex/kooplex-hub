@@ -31,7 +31,7 @@ class FSToken(models.Model):
     user = models.ForeignKey(User, null = False)
     syncserver = models.ForeignKey(FSServer, null = False)
     token = models.CharField(max_length = 256, null = False) # FIXME: dont store as clear text
-    last_used = models.DateTimeField(null = True)
+    last_used = models.DateTimeField(null = True, default = None)
     error_flag = models.BooleanField(default = False)       # TODO: save error message maybe stored in a separate table
 
 
@@ -67,7 +67,7 @@ class FSLibrary(models.Model):
 
     @staticmethod
     def f_user_namelike(user, l):
-        for l in FSLibrary.objects.filter(models.Q(project_name__icontains = l)):
+        for l in FSLibrary.objects.filter(models.Q(library_name__icontains = l)):
             if l.token.user == user:
                 yield l
 
@@ -88,9 +88,9 @@ class FSLibraryProjectBinding(models.Model):
             yield b.project
 
 
-@receiver(post_save, sender = FSLibraryProjectBinding)
-def mkdir_fslcache(sender, instance, created, **kwargs):
-    raise NotImplementedError
+##@receiver(post_save, sender = FSLibraryProjectBinding)
+##def mkdir_fslcache(sender, instance, created, **kwargs):
+##    raise NotImplementedError
 # sync = True
 ##    from kooplex.lib.filesystem import mkdir_vcpcache
 ##    from kooplex.lib import Docker
