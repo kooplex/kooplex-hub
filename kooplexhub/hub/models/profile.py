@@ -132,6 +132,12 @@ class Profile(models.Model):
         for t in VCToken.objects.filter(user = self.user):
             yield t
    
+    @property
+    def fstokens(self):
+        from .filesync import FSToken
+        for t in FSToken.objects.filter(user = self.user):
+            yield t
+
 
 @receiver(post_save, sender = User)
 def create_user_profile(sender, instance, created, **kwargs):

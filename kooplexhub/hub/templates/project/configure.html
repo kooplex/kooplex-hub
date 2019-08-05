@@ -13,6 +13,7 @@
       <li class="nav-item"><a {% if submenu == 'environment' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'project:conf_environment' project.id next_page %}" {% endif %}>Environment</a></li>
       <!--li class="nav-item"><a {% if submenu == 'storage' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'project:conf_storage' project.id next_page %}" {% endif %}>Data</a></li-->
       <li class="nav-item"><a {% if submenu == 'versioncontrol' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'project:conf_versioncontrol' project.id next_page %}" {% endif %}>Versioncontrol</a></li>
+      <li class="nav-item"><a {% if submenu == 'filesync' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'project:conf_filesync' project.id next_page %}" {% endif %}>Synchronization</a></li>
     </ul>
   </div>
 </nav>
@@ -30,6 +31,8 @@
      {% include 'project/conf-storage.html' %}
   {% elif submenu == 'versioncontrol' %}
      {% include 'project/conf-versioncontrol.html' %}
+  {% elif submenu == 'filesync' %}
+     {% include 'project/conf-filesync.html' %}
   {% endif %}
 </div>     <!-- tab-content -->
 {% endblock %}

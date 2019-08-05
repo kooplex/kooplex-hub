@@ -12,15 +12,20 @@ from django.utils.translation import gettext_lazy as _
 from django.db.models import Q
 
 from kooplex.lib import list_projects
+from kooplex.lib import list_libraries
 from kooplex.lib import now
 
 from hub.forms import FormProject
 from hub.forms import table_collaboration, T_JOINABLEPROJECT
 from hub.forms import table_vcproject
+from hub.forms import table_fslibrary
 from hub.models import Project, UserProjectBinding, Volume
 from hub.models import Image
 from hub.models import Profile
-from hub.models import VCToken, VCProject, VCProjectProjectBinding
+from hub.models import VCToken, VCProject, VCProjectProjectBinding, ProjectContainerBinding
+from hub.models import FSToken, FSLibrary#, VCProjectProjectBinding, ProjectContainerBinding
+
+from django.utils.safestring import mark_safe
 
 logger = logging.getLogger(__name__)
 
@@ -201,6 +206,10 @@ def conf_environment(request, project_id, next_page):
     if request.method == 'POST' and request.POST.get('button') == 'apply':
         volumes = [ Volume.objects.get(id = x) for x in request.POST.getlist('selection') ]
         project.set_volumes(volumes)
+        for binding in ProjectContainerBinding.objects.filter(project = project):
+            logger.debug('Sent message about container removal')
+            #FIXME: the link or different mechanism
+            messages.warning(request, mark_safe("This project is bound to <strong>%s</strong>. In order to access the set volume(s), <a href='/hub/container/list'>delete the container</a> first! " % (binding.container.name)))
         imagename = request.POST['project_image']
         project.image = Image.objects.get(name = imagename) if imagename != 'None' else None
         project.save()
@@ -232,6 +241,11 @@ def conf_voldata(request, project_id, next_page):
     if request.method == 'POST' and request.POST.get('button') == 'apply':
         volumes = [ Volume.objects.get(id = x) for x in request.POST.getlist('selection') ]
         project.set_volumes(volumes)
+        logger.debug('IIIIIIII')
+        for binding in ProjectContainerBinding.objects.filter(project = project):
+            logger.debug('Sent message about container removal')
+            messages.warning(request, "This project is bound to %s. In order to access the set volume(s), you have to delete the container!" % (binding.container))
+
         return redirect(next_page)
     else:
         context_dict = {
@@ -289,6 +303,59 @@ def conf_versioncontrol(request, project_id, next_page):
             'submenu': 'versioncontrol',
             'next_page': next_page,
             'search_repository': pattern,
+            'sort': sort_info,
+        }
+        return render(request, 'project/configure.html', context = context_dict)
+    else:
+        return redirect(next_page)
+
+
+@login_required
+def conf_filesync(request, project_id, next_page):
+    user = request.user
+    logger.debug("method: %s, project id: %s, user: %s" % (request.method, project_id, user))
+    try:
+        project = Project.get_userproject(project_id = project_id, user = request.user)
+        assert project.is_admin(user), "%s is not admin of %s" % (user, project)
+    except Exception as e:
+        logger.error('abuse by %s project id: %s -- %s' % (user, project_id, e))
+        messages.error(request, 'Unauthorized request.')
+        return redirect(next_page)
+
+    sort_info = request.GET.get('sort') if request.method == 'GET' else request.POST.get('sort')
+    if request.method == 'POST' and request.POST.get('button') == 'apply':
+        msgs = []
+#        for id_create in request.POST.getlist('vcp_ids'):
+#            vcp = VCProject.objects.get(id = id_create)
+#            if vcp.token.user != user:
+#                logger.error("Unauthorized request vcp: %s, user: %s" % (vcp, user))
+#                continue
+#            VCProjectProjectBinding.objects.create(project = project, vcproject = vcp)
+#            msgs.append('Bound %s to repotsitory %s.' % (project, vcp))
+#        for id_remove in set(request.POST.getlist('vcppb_ids_before')).difference(set(request.POST.getlist('vcppb_ids_after'))):
+#            try:
+#                vcppb = VCProjectProjectBinding.objects.get(id = id_remove, project = project)
+#                if vcppb.vcproject.token.user != user:
+#                    logger.error("Unauthorized request vcp: %s, user: %s" % (vcp, user))
+#                    continue
+#                msgs.append('Project %s is not bound to repository %s any more.' % (project, vcppb.vcproject))
+#                vcppb.delete()
+#            except VCProjectProjectBinding.DoesNotExist:
+#                logger.error("Is %s hacking" % user)
+#        if len(msgs):
+#            messages.info(request, ' '.join(msgs))
+#        return redirect(next_page)
+    elif (request.method == 'POST' and request.POST.get('button') == 'search') or request.method == 'GET':
+        t = table_fslibrary(project)
+        pattern = request.POST.get('library', '')
+        table_fsl = t(FSLibrary.f_user(user = user)) if pattern == '' else t(FSLibrary.f_user_namelike(user = user, l = pattern))
+        RequestConfig(request).configure(table_fsl)
+        context_dict = {
+            'project': project, 
+            't_fsl': table_fsl, 
+            'submenu': 'filesync',
+            'next_page': next_page,
+            'search_library': pattern,
             'sort': sort_info,
         }
         return render(request, 'project/configure.html', context = context_dict)
@@ -403,8 +470,48 @@ def vcrefresh(request, token_id, project_id):
         token.last_used = now_
         token.save()
     except VCToken.DoesNotExist:
-        messages.error(requset, "System abuse")
+        messages.error(request, "System abuse")
     return redirect('project:conf_versioncontrol', project_id, 'project:list')
+
+
+@login_required
+def fsrefresh(request, token_id, project_id):
+    """Refresh users file snchronization libraries."""
+    user = request.user
+    logger.debug("user %s (project_id %s)" % (user, project_id))
+    try:
+        now_ = now()
+        token = FSToken.objects.get(user = user, id = token_id)
+        old_list = list(FSLibrary.objects.filter(token = token))
+        cnt_new = 0
+        cnt_del = 0
+        for l_name in list_libraries(token):
+            try:
+                l = FSLibrary.objects.get(token = token, library_name = l_name)
+                l.last_seen = now_
+                l.save()
+                old_list.remove(l)
+                logger.debug('still present: %s' % l_name)
+            except FSLibrary.DoesNotExist:
+                FSLibrary.objects.create(token = token, library_name = l_name)
+                logger.debug('inserted present: %s' % l_name)
+                cnt_new += 1
+        while len(old_list):
+            l = old_list.pop()
+            l.remove()
+            logger.debug('removed: %s' % l.library_name)
+            cnt_del += 1
+        if cnt_new:
+            messages.info(request, "%d new libraries found" % cnt_new)
+        if cnt_del:
+            messages.warning(request, "%d libraries removed" % cnt_del)
+        token.last_used = now_
+        token.save()
+    except FSToken.DoesNotExist:
+        messages.error(request, "System abuse")
+    except Exception as e:
+        messages.error(request, "System abuse -- %s" % e)
+    return redirect('project:conf_filesync', project_id, 'project:list')
 
 
 urlpatterns = [
@@ -416,7 +523,9 @@ urlpatterns = [
     url(r'^configure/(?P<project_id>\d+)/environment/(?P<next_page>\w+:?\w*)$', conf_environment, name = 'conf_environment'), 
     url(r'^configure/(?P<project_id>\d+)/storage/(?P<next_page>\w+:?\w*)$', conf_voldata, name = 'conf_storage'), 
     url(r'^configure/(?P<project_id>\d+)/versioncontrol/(?P<next_page>\w+:?\w*)$', conf_versioncontrol, name = 'conf_versioncontrol'), 
+    url(r'^configure/(?P<project_id>\d+)/filesync/(?P<next_page>\w+:?\w*)$', conf_filesync, name = 'conf_filesync'), 
     url(r'^vcrefresh/(?P<token_id>\d+)/(?P<project_id>\d+)$', vcrefresh, name = 'vcrefresh'), 
+    url(r'^fsrefresh/(?P<token_id>\d+)/(?P<project_id>\d+)$', fsrefresh, name = 'fsrefresh'), 
     url(r'^delete/(?P<project_id>\d+)/(?P<next_page>\w+:?\w*)$', delete_leave, name = 'delete'), 
     url(r'^show/(?P<next_page>\w+:?\w*)$', show_hide, name = 'showhide'),
     url(r'^hide/(?P<project_id>\d+)/(?P<next_page>\w+:?\w*)$', hide, name = 'hide'), 
