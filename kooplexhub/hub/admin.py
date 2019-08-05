@@ -157,6 +157,24 @@ class VCProjectAdmin(admin.ModelAdmin):
 class VCProjectProjectBindingAdmin(admin.ModelAdmin):
     list_display = ('id', 'project', 'vcproject')
 
+
+@admin.register(FSServer)
+class FSServerAdmin(admin.ModelAdmin):
+    list_display = ('id', 'backend_type', 'url')
+
+@admin.register(FSToken)
+class FSTokenAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'syncserver')
+
+@admin.register(FSLibrary)
+class FSLibraryAdmin(admin.ModelAdmin):
+    pass
+
+@admin.register(FSLibraryProjectBinding)
+class FSLibraryProjectBindingAdmin(admin.ModelAdmin):
+    list_display = ('id', 'project', 'fslibrary')
+
+
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'creator', 'created_at', 'reporttype', 'index') 
