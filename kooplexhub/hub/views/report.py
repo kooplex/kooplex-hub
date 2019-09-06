@@ -14,6 +14,7 @@ from hub.forms import FormReport
 
 from kooplex.lib import now, translate_date
 from kooplex.settings import KOOPLEX
+from kooplex.lib.filesystem import prepare_dashboardreport_withinitcell
 
 logger = logging.getLogger(__name__)
 
@@ -82,8 +83,8 @@ def openreport(request, report_id):
     elif report.reporttype == report.TP_DYNAMIC:
         container = Container.get_reportcontainer(report, create = True)
         container.docker_start()
-        url_external = "%s/notebook/%s/report" % (KOOPLEX.get('base_url', 'localhost'), container.name)
-        logger.debug('redirect: %s' % url_external)
+        url_external = "%s/notebook/%s/notebooks/%s?token=%s" % (KOOPLEX.get('base_url', 'localhost'), container.name, report.index, user.profile.token)
+        logger.debug('redirect: %s ' % url_external)
         return redirect(url_external)
     elif report.reporttype == report.TP_BOKEH:
         container = Container.get_reportcontainer(report, create = True)
@@ -94,7 +95,7 @@ def openreport(request, report_id):
     elif report.reporttype == report.TP_SERVICE:
         container = Container.get_reportcontainer(report, create = True)
         container.docker_start()
-        url_external = "%s/notebook/%s/report" % (KOOPLEX.get('base_url', 'localhost'), container.name)
+        url_external = "%s/notebook/%s/report/help" % (KOOPLEX.get('base_url', 'localhost'), container.name)
         msg = "Report %s is started. API is at %s" % (report.name, url_external)
         logger.info(msg)
         messages.info(request, msg)

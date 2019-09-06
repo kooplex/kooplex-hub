@@ -27,116 +27,122 @@
 </script>
 {% endblock %}
 
-{% block content %}
+{% block main_content_left %}
 
-<div class="jumbotron" style="box-shadow: 5px 10px 8px #888888; padding: 10px;">
-  <div class="row">
-    <div class="col-md-6">
-      <img src="/static/content/logo-transparent.png" style="width: 300px;" alt="kooplex">
-    </div>
-  </div>
-</div>
-
-<!--h2> CPU Usage of Kooplex.vo </h2-->
-<div id="myplot4"> </div>
-{% if user.is_authenticated %}
-<div class="jumbotron" style="padding-top: 10px; padding-bottom: 10px; background-color: #bdbdbd; box-shadow: 5px 10px 8px #888888;">
-       Important note: Courses are not imported automatically anymore. If you want to use notebooks for any of your courses please contact the administrators with the <code>course code  </code> and <code> the title of the course</code> at <strong> kooplex@complex.elte.hu</strong>
-</div>
-{% endif %}
-
-
-<div class="jumbotron" style="padding-top: 10px; padding-bottom: 10px; background-color: #bdbdbd; box-shadow: 5px 10px 8px #888888;">
-  <div class="row">
-    <div class="col-md-7">
-      <div style="width: 100%;">
-        {% comment %} {% include "slideshow.html" %} {% endcomment %}
-        <img class="d-block w-100" src="/static/content/Kooplex-frontpage.png" alt="Access private cloud file system, share data and results">
-
-
-      </div>
-    </div>
-
-    <div class="col-md-5" style="text-align: right">
-      <div class="row">
-        Dive into various fields of computational physics, modeling and numerical analysis of data with the help of Jupyter notebooks.
-      </div>
-      <div class="row">Powered by</div>
-      <div class="row">
-       <img src="/static/content/dockerlogo.png" style="height: 40px; padding-right: 10px" alt="docker">
-       <img src="/static/content/django.png" style="height: 40px; padding-right: 10px" alt="django">
-       <img src="/static/content/jupyter.png" style="height: 40px; padding-right: 10px" alt="jupyter">
-       <img src="/static/content/rstudio.png" style="height: 40px; padding-right: 10px" alt="rstudio">
-       <img src="/static/content/Nginx-Logo.png" style="height: 40px; padding-right: 10px" alt="nginx">
-       <img src="/static/content/slurm.png" style="height: 40px; padding-right: 10px" alt="slurm">
-       <img src="/static/content/singularity.png" style="height: 40px; padding-right: 10px" alt="singularity">
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Manual -->
-<div class="row">
-
-  <div class="card" style="width: 25%;">
-    <div class="card-body">
-      <h5 class="card-title">Login </h5>
-      <p class="card-text">Users can choose from several login methods. At the moment it is not possible to connect accounts created with different identity providers.</p>
-      <a href="{% url 'manual:login' %}" class="btn btn-primary">Read more</a>
-
-    </div>
-  </div>
-  
-  <div class="card" style="width: 25%;">
-    <div class="card-body">
-      <h5 class="card-title">Projects and collaboration</h5>
-      <p class="card-text">Users can create projects and invite other users to collaborate.</p>
-      <a href="{% url 'manual:projects' %}" class="btn btn-primary">Read more</a>
-    </div>
-  </div>
-
-  <div class="card" style="width: 25%;">
-    <div class="card-body">
-      <h5 class="card-title">Reports</h5>
-      <p class="card-text">Reports are a good way to present our results or create interactive pages that others can learn from. </p>
-      <a href="{% url 'manual:reports' %}" class="btn btn-primary">Read more</a>
-    </div>
-  </div>
-
-  <div class="card" style="width: 25%;">
-    <div class="card-body">
-      <h5 class="card-title">Folder structure</h5>
-      <p class="card-text">There are permanent private folders, project related shared folders and folders that are connected to services (Slurm, Github etc) </p>
-      <a href="{% url 'manual:folder' %}" class="btn btn-primary">Read more</a>
-    </div>
-  </div>
-</div>
-
-<div class="row">
-  <div class="card" style="width: 50%;">
-    <div class="card-body">
-      <h5 class="card-title">Main concepts</h5>
-      <p class="card-text"> Kooplex consists of many components that might be useful to understand if the user want to make use of all capabilities. </p>
-      <a href="{% url 'manual:concepts' %}" class="btn btn-primary">Read more</a>
-    </div>
-  </div>
-
-  <div class="card" style="width: 50%;">
-    <div class="card-body">
-      <h5 class="card-title">Known issues</h5>
-      <p class="card-text">Please read this short list of workarounds or problematic issues!</p>
-      <a href="{% url 'manual:issues' %}" class="btn btn-primary">Read more</a>
-    </div>
-  </div>
-</div>
-
-<div class="row">
-  <div class="card" style="width: 100%">
-    <div class="card-body">
-      <h5 class="card-title">Compute nodes</h5>
-      <p class="card-text"> There is a workload manager (SLURM) to which users can submit computationally intensive jobs.</p>
-      <a href="{% url 'manual:compute' %}" class="btn btn-primary">Read more</a>
-    </div>
-  </div>
-</div>
 {% endblock %}
+
+{!% block content %}
+{% block main_content_center %}
+   <div class="jumbotron" style="box-shadow: 5px 10px 8px #888888; padding: 10px;">
+     <div class="row">
+       <div class="col-md-6">
+         <img src="/static/content/logo-transparent.png" style="width: 300px;" alt="kooplex">
+       </div>
+     </div>
+   </div>
+   
+   <!--h2> CPU Usage of Kooplex.vo </h2-->
+   <div id="myplot4"> </div>
+   {% if user.is_authenticated %}
+   <div class="jumbotron" style="padding-top: 10px; padding-bottom: 10px; background-color: #bdbdbd; box-shadow: 5px 10px 8px #888888;">
+          Important note: Courses are not imported automatically anymore. If you want to use notebooks for any of your courses please contact the administrators with the <code>course code  </code> and <code> the title of the course</code> at <strong> kooplex@complex.elte.hu</strong>
+   </div>
+   {% endif %}
+   
+   
+   <div class="jumbotron" style="padding-top: 10px; padding-bottom: 10px; background-color: #bdbdbd; box-shadow: 5px 10px 8px #888888;">
+     <div class="row">
+       <div class="col-md-7">
+         <div style="width: 100%;">
+           {% comment %} {% include "slideshow.html" %} {% endcomment %}
+           <img class="d-block w-100" src="/static/content/Kooplex-frontpage.png" alt="Access private cloud file system, share data and results">
+   
+   
+         </div>
+       </div>
+   
+       <div class="col-md-5" style="text-align: right">
+         <div class="row">
+           Dive into various fields of computational physics, modeling and numerical analysis of data with the help of Jupyter notebooks.
+         </div>
+         <div class="row">Powered by</div>
+         <div class="row">
+          <img src="/static/content/dockerlogo.png" style="height: 40px; padding-right: 10px" alt="docker">
+          <img src="/static/content/django.png" style="height: 40px; padding-right: 10px" alt="django">
+          <img src="/static/content/jupyter.png" style="height: 40px; padding-right: 10px" alt="jupyter">
+          <img src="/static/content/rstudio.png" style="height: 40px; padding-right: 10px" alt="rstudio">
+          <img src="/static/content/Nginx-Logo.png" style="height: 40px; padding-right: 10px" alt="nginx">
+          <img src="/static/content/slurm.png" style="height: 40px; padding-right: 10px" alt="slurm">
+          <img src="/static/content/singularity.png" style="height: 40px; padding-right: 10px" alt="singularity">
+         </div>
+       </div>
+     </div>
+   </div>
+   
+   <!-- Manual -->
+   <div class="row">
+   
+     <div class="card" style="width: 25%;">
+       <div class="card-body">
+         <h5 class="card-title">Login </h5>
+         <p class="card-text">Users can choose from several login methods. At the moment it is not possible to connect accounts created with different identity providers.</p>
+         <a href="{% url 'manual:login' %}" class="btn btn-primary">Read more</a>
+   
+       </div>
+     </div>
+     
+     <div class="card" style="width: 25%;">
+       <div class="card-body">
+         <h5 class="card-title">Projects and collaboration</h5>
+         <p class="card-text">Users can create projects and invite other users to collaborate.</p>
+         <a href="{% url 'manual:projects' %}" class="btn btn-primary">Read more</a>
+       </div>
+     </div>
+   
+     <div class="card" style="width: 25%;">
+       <div class="card-body">
+         <h5 class="card-title">Reports</h5>
+         <p class="card-text">Reports are a good way to present our results or create interactive pages that others can learn from. </p>
+         <a href="{% url 'manual:reports' %}" class="btn btn-primary">Read more</a>
+       </div>
+     </div>
+   
+     <div class="card" style="width: 25%;">
+       <div class="card-body">
+         <h5 class="card-title">Folder structure</h5>
+         <p class="card-text">There are permanent private folders, project related shared folders and folders that are connected to services (Slurm, Github etc) </p>
+         <a href="{% url 'manual:folder' %}" class="btn btn-primary">Read more</a>
+       </div>
+     </div>
+   </div>
+   
+   <div class="row">
+     <div class="card" style="width: 50%;">
+       <div class="card-body">
+         <h5 class="card-title">Main concepts</h5>
+         <p class="card-text"> Kooplex consists of many components that might be useful to understand if the user want to make use of all capabilities. </p>
+         <a href="{% url 'manual:concepts' %}" class="btn btn-primary">Read more</a>
+       </div>
+     </div>
+   
+     <div class="card" style="width: 50%;">
+       <div class="card-body">
+         <h5 class="card-title">Known issues</h5>
+         <p class="card-text">Please read this short list of workarounds or problematic issues!</p>
+         <a href="{% url 'manual:issues' %}" class="btn btn-primary">Read more</a>
+       </div>
+     </div>
+   </div>
+   
+   <div class="row">
+     <div class="card" style="width: 100%">
+       <div class="card-body">
+         <h5 class="card-title">Compute nodes</h5>
+         <p class="card-text"> There is a workload manager (SLURM) to which users can submit computationally intensive jobs.</p>
+         <a href="{% url 'manual:compute' %}" class="btn btn-primary">Read more</a>
+       </div>
+     </div>
+   </div>
+   {% endblock %}
+ 
+{% block main_content_right %}{% endblock %}

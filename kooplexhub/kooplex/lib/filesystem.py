@@ -134,6 +134,22 @@ def garbage_report(report):
     garbage = Filename.report_garbage(report)
     _archivedir(dir_source, garbage, remove = True)
 
+def prepare_dashboardreport_withinitcell(report):
+    import json
+    fn = os.path.join(Dirname.report(report), report.index)
+    d=json.load(open(fn))
+    for ic in range(len(d['cells'])):
+        d['cells'][ic]['metadata']['init_cell']=True
+
+    # Get rid of unnecessray info    
+    kernel = d['metadata']['kernelspec']
+    language = d['metadata']['language_info']
+    d['metadata'].clear()
+    d['metadata']['kernelspec'] = kernel
+    d['metadata']['language_info'] = language
+    json.dump(d, open(fn, 'w'))
+
+
 
 ########################################
 

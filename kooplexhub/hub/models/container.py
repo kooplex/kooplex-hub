@@ -236,11 +236,12 @@ class Container(models.Model):
         }
         for ce in ContainerEnvironment.objects.filter(container = self):
             envs[ce.name] = ce.value
+            logger.debug("Adding extra envs: %s"%ce.value)
         report = self.report
         if report:
             envs['REPORT_TYPE'] = report.reporttype
             envs['REPORT_DIR'] = os.path.join('/home/', 'report', report.cleanname, report.ts_human)
-            envs['REPORT_PORT'] = 8000
+            envs['REPORT_PORT'] = 9000
             envs['REPORT_INDEX'] = report.index
         return envs
 
@@ -295,7 +296,8 @@ def container_state_change(sender, instance, **kwargs):
     msg += "%s statchange %s -> %s" % (instance, ST_LOOKUP[old_instance.state], ST_LOOKUP[instance.state])
     logger.debug(msg)
     docker = Docker()
-    assert instance.n_projects > 0 or instance.course or instance.report or instance.state == Container.ST_NOTPRESENT, 'container %s with 0 projects' % instance
+    # FIXME
+    #assert instance.n_projects > 0 or instance.course or instance.report or instance.state == Container.ST_NOTPRESENT, 'container %s with 0 projects' % instance
     if old_instance.state == Container.ST_NOTPRESENT and instance.state == Container.ST_RUNNING:
         docker.run_container(instance)
         addroute(instance)

@@ -103,7 +103,8 @@ class T_FEEDBACK_ASSIGNMENT(tables.Table, common):
     def render_feedback_text(self, record):
         representation = "feedback_text_%d" % (record.id)
         value_attr = "" if record.feedback_text is None else str(record.feedback_text)
-        return format_html('<textarea name="%s" what="task_%d" id="%s" cols="43">%s</textarea>' % (representation, record.id, representation, value_attr) )
+        disabled = "" if record.corrector else " disabled"
+        return format_html('<textarea name="%s" what="task_%d" id="%s" cols="43"%s>%s</textarea>' % (representation, record.id, representation, disabled, value_attr) )
 
     class Meta:
         model = UserAssignmentBinding

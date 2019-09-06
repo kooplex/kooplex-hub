@@ -43,6 +43,7 @@ def new(request):
 def listcontainers(request):
     """Renders the containerlist page."""
     logger.debug('Rendering container/list.html')
+    #TODO: make volume/image etc changes visible, so the user will know which one needs to be deleted. 
     context_dict = {
         'next_page': 'container:list',
         'menu_container': 'active',

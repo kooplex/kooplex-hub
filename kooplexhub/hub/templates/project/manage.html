@@ -7,7 +7,8 @@
 </div>
 {% endblock %}
 
-{% block content %}
+{!% block content %}
+{% block main_content_center %}
 <div class="row">
   <form id="project-manage" class="form-horizontal" action="{% url 'project:showhide' next_page %}" method="post">
     {% csrf_token %}

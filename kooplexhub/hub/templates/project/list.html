@@ -1,12 +1,99 @@
 {% extends "layout.html" %}
 
+{% block header_extra %}
+
+<!--script src="https://kit.fontawesome.com/27d0a7c7d0.js"></script-->
+<link rel="stylesheet" href="/static/fontawesome-free-5.10.2-web/css/all.css">
+
+
+<style>
+.card-header .btn-link {
+	color: #343a40;
+
+}
+.card-header .btn-link.collapsed:before {
+    content:"\f105";
+}
+.card-header .btn-link:before {
+   content:"\f107";
+    padding-right: 4px;
+}
+.card-header .btn:hover,
+.card-header .btn:focus  {
+    text-decoration:none;
+    border-color: darkgrey;
+}
+</style>
+{% endblock %}
+
 {% block submenu %}
 <div class="navbar navbar-expand-lg navbar-light bg-light">
   <h5><span class="badge badge-secondary">The list of your projects</span></h5>
 </div>
 {% endblock %}
 
-{% block content %}
+{% block main_content_left %}
+<div class="card">
+     <div class="card-body">
+        <h5 class="card-title">Notebook resources:</h5>
+	<table class="table table-hover table-sm">
+           <thead>
+               <tr class="table-active">
+                 <th scope="col">Node #</th>
+                 <th scope="col">CPU</th>
+                 <th scope="col">Memory</th>
+                 <th scope="col"># Notebooks</th>
+               </tr>
+             </thead>
+             <tbody>
+               <tr>
+                 <th scope="row">kooplex-cn1</th>
+                 <td>5/<strong>16</strong></td>
+                 <td>10%</td>
+                 <td>14</td>
+               </tr>
+               <tr>
+                 <th scope="row">kooplex-cn2</th>
+                 <td>16/<strong>16</strong></td>
+                 <td>79%</td>
+                 <td>4</td>
+               </tr>
+               <tr>
+                 <th scope="row">kooplex-cn3</th>
+                 <td>3/<strong>24</strong></td>
+                 <td>67%</td>
+                 <td>2</td>
+               </tr>
+             </tbody>
+        </table>
+   </div>
+
+     <div class="card-body">
+        <h5>Computing resources:</h5>
+	<table class="table table-hover table-sm">
+           <thead class="f">
+               <tr class="table-active">
+                 <th scope="col">Node #</th>
+                 <th scope="col">CPU</th>
+                 <th scope="col">Memory</th>
+                 <th scope="col"># jobs</th>
+               </tr>
+             </thead>
+             <tbody>
+               <tr>
+                 <th scope="row">kooplex-cn16</th>
+                 <td>36/48</td>
+                 <td>124 GB / 256 GB</td>
+                 <td>14</td>
+               </tr>
+             </tbody>
+        </table>
+   </div>
+</div>
+{% endblock %}
+
+{!% block content %}
+{% block main_content_center %}
   {% for binding in user.profile.projectbindings %}
     {% if not binding.is_hidden %}
       {% with project=binding.project %}
@@ -16,3 +103,7 @@
   {% endfor %}
 {% endblock %}
 
+{% block main_content_right %}
+<div class="jumbotron">
+</div>
+{% endblock %}

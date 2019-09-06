@@ -3,6 +3,8 @@ import logging
 from django.conf.urls import url
 from django.shortcuts import redirect, render
 
+from kooplex.settings import DOMAIN
+
 logger = logging.getLogger(__name__)
 
 def man_login(request):

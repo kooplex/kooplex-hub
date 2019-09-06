@@ -27,14 +27,14 @@ class ProjectsColumn(tables.Column):
 def table_vcproject(project):
     sc = s_column(project)
     class T_VCPROJECT(tables.Table):
-        id = sc(verbose_name = 'Select', orderable = False)
+        id = sc(verbose_name = '', orderable = False)
         projects = ProjectsColumn(verbose_name = 'Bound to projects', empty_values = (), orderable = False)
 
         class Meta:
             model = VCProject
             fields = ('id', 'repository', 'projects')
             sequence = ('id', 'repository', 'projects')
-            attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
+            attrs = { "class": "table-striped table-bordered", "td": { "style": "padding: 5px 10px 5px 15px" } }
 
     return T_VCPROJECT
 

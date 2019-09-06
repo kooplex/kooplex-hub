@@ -7,6 +7,7 @@ from .tables_assignment import T_BIND_ASSIGNMENT, T_COLLECT_ASSIGNMENT, T_FEEDBA
 from .table_collaborators import table_collaboration
 from .table_projects import table_projects, T_JOINABLEPROJECT
 from .table_reports import T_REPORTS, T_REPORTS_DEL
+from .table_volumes import table_volume
 from .table_versioncontrol import table_vcproject, table_vctoken
 from .table_filesync import table_fslibrary#, table_vctoken
 

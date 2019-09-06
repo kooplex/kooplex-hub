@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block content %}
-  <form id="newreportForm" class="form-horizontal" action="{% url 'report:new' %}" method="post">
+  <form id="newreportForm" class="form-horizontal form-control" action="{% url 'report:new' %}" method="post">
     {% csrf_token %}
     <table>
       {{ f_report.as_table }}

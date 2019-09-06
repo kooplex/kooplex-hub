@@ -32,7 +32,7 @@ def droproutes():
         }
         logging.debug("- %s -/-> %s" % (kw['url'], v['target']))
         resp_latest = keeptrying(requests.delete, 5, **kw)
-    return resp_latest
+#    return resp_latest
 
 
 def _addroute_container(container, test=False):

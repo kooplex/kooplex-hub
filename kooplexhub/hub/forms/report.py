@@ -3,8 +3,14 @@ from django.utils.translation import gettext_lazy as _
 
 from hub.models import Report
 
+# Todo: dynamic update of files list
+# https://simpleisbetterthancomplex.com/tutorial/2018/01/29/how-to-implement-dependent-or-chained-dropdown-list-with-django.html
+
 class FormReport(forms.ModelForm):
     folder = forms.ChoiceField(
+            help_text = _('A snapshot will be created of all files in the selected folder.')
+        )
+    index = forms.ChoiceField(
             help_text = _('A snapshot will be created of all files in the selected folder.')
         )
 
@@ -14,6 +20,7 @@ class FormReport(forms.ModelForm):
         labels = {
             'name': _('The name of your report'),
             'description': _('A short description'),
+            'reporttype': _('Type fo report'),
             'index': _('Index file'),
         }
         help_texts = {
@@ -29,10 +36,15 @@ class FormReport(forms.ModelForm):
         self.fields["description"].widget.attrs["rows"] = 3
         self.fields["description"].widget.attrs["cols"] = 20
         folders = list(user.profile.dirs_reportprepare())
+        files = list(user.profile.files_reportprepare())
         if len(folders):
             C_folder = zip(folders, folders)
             self.fields["folder"].choices = C_folder
             self.fields["folder"].widget.attrs["style"] = "width: 27ex"
+        if len(files):
+            C_files = zip(files, files)
+            self.fields["index"].choices = C_files
+            self.fields["index"].widget.attrs["style"] = "width: 27ex"
         for field in self.fields:
             help_text = self.fields[field].help_text
             self.fields[field].help_text = None

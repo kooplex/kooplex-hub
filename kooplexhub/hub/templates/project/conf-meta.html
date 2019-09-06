@@ -1,22 +1,24 @@
-<form id="projectSettingsForm" class="form-horizontal" action="{% url 'project:conf_meta' project.id next_page %}" method="post">
+<form id="projectSettingsForm" class="form-horizontal form-control" action="{% url 'project:conf_meta' project.id next_page %}" method="post">
 {% load render_table from django_tables2 %}
   {% csrf_token %}
 
-  <label for="description">Describe project</label><br>
-  <textarea rows="6" cols="50" id="description" name="description">{{ project.description }}</textarea>
+  <h5 class="card-title">Describe the project </strong>
+  </h5>
+  <div class="form-group">
+  <textarea class="form-control" rows="6" cols="50" id="description" name="description">{{ project.description }}</textarea>
+  </div>
+  <p>The current scope for project {{ project.name }} is <strong>{{ project.scope }}</strong>.
   
-  <p>The current scope for project {{ project.name }} is <strong>{{ project.scope }}</strong>.</p>
-  
-  <label>Your choice for the new scope:</label>
+  <label> Change the scope for this project:</label>
   <select id="project_scopes-{{ project.id }}" name="project_scope">
     {% for scope in project.SCOPE_LIST %}
       <option value="{{ scope }}" {% if project.scope == scope %} selected {% endif %}>{{ scope }}</option>
     {% endfor %}
   </select>
-
+  </p>
   <div class="modal-footer">
     <button type="submit" class="btn btn-default" name="button" value="apply"> Apply settings</button>
-    <button class="btn btn-default" data-dismiss="modal">Cancel</button>
+    <button class="btn btn-default" data-dismiss="modal" name="button" value="cancel">Cancel</button>
   </div>
 
 </form>

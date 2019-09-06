@@ -17,6 +17,7 @@ from kooplex.lib import now
 
 from hub.forms import FormProject
 from hub.forms import table_collaboration, T_JOINABLEPROJECT
+from hub.forms import table_volume
 from hub.forms import table_vcproject
 from hub.forms import table_fslibrary
 from hub.models import Project, UserProjectBinding, Volume
@@ -147,6 +148,12 @@ def conf_meta(request, project_id, next_page):
         project.description = request.POST.get('description')
         project.save()
         return redirect(next_page)
+    elif request.method == 'POST' and request.POST.get('button') == 'cancel':
+        context_dict = {
+             'next_page': 'project:list',
+             'menu_project': 'active',
+        }
+        return render(request, 'project/list.html', context = context_dict)
     else:
         context_dict = {
             'project': project, 
@@ -189,6 +196,12 @@ def conf_collab(request, project_id, next_page):
             'sort': sort_info,
         }
         return render(request, 'project/configure.html', context = context_dict)
+    elif request.method == 'POST' and request.POST.get('button') == 'cancel':
+        context_dict = {
+             'next_page': 'project:list',
+             'menu_project': 'active',
+        }
+        return render(request, 'project/list.html', context = context_dict)
 
 
 @login_required
@@ -214,12 +227,18 @@ def conf_environment(request, project_id, next_page):
         project.image = Image.objects.get(name = imagename) if imagename != 'None' else None
         project.save()
         return redirect(next_page)
+    elif request.method == 'POST' and request.POST.get('button') == 'cancel':
+        context_dict = {
+             'next_page': 'project:list',
+             'menu_project': 'active',
+        }
+        return render(request, 'project/list.html', context = context_dict)
     else:
         context_dict = {
             'images': Image.objects.all(),
             'project': project, 
-            't_volumes_fun': sel_table(user = user, project = project, volumetype = 'functional'), #FIXME: tables placed in forms/ ReqConfig
-            't_volumes_stg': sel_table(user = user, project = project, volumetype = 'storage'),    #FIXME: like above
+            't_volumes_fun': table_volume(project, user, volumetype='functional'),
+            't_volumes_stg': table_volume(project, user, volumetype='storage'),
             'submenu': 'environment',
             'next_page': next_page,
         }
@@ -247,6 +266,12 @@ def conf_voldata(request, project_id, next_page):
             messages.warning(request, "This project is bound to %s. In order to access the set volume(s), you have to delete the container!" % (binding.container))
 
         return redirect(next_page)
+    elif request.method == 'POST' and request.POST.get('button') == 'cancel':
+        context_dict = {
+             'next_page': 'project:list',
+             'menu_project': 'active',
+        }
+        return render(request, 'project/list.html', context = context_dict)
     else:
         context_dict = {
             'project': project, 
@@ -278,7 +303,7 @@ def conf_versioncontrol(request, project_id, next_page):
                 logger.error("Unauthorized request vcp: %s, user: %s" % (vcp, user))
                 continue
             VCProjectProjectBinding.objects.create(project = project, vcproject = vcp)
-            msgs.append('Bound %s to repotsitory %s.' % (project, vcp))
+            msgs.append('Bound %s to repository %s.' % (project, vcp))
         for id_remove in set(request.POST.getlist('vcppb_ids_before')).difference(set(request.POST.getlist('vcppb_ids_after'))):
             try:
                 vcppb = VCProjectProjectBinding.objects.get(id = id_remove, project = project)
@@ -306,6 +331,12 @@ def conf_versioncontrol(request, project_id, next_page):
             'sort': sort_info,
         }
         return render(request, 'project/configure.html', context = context_dict)
+    elif request.method == 'POST' and request.POST.get('button') == 'cancel':
+        context_dict = {
+             'next_page': 'project:list',
+             'menu_project': 'active',
+        }
+        return render(request, 'project/list.html', context = context_dict)
     else:
         return redirect(next_page)
 
@@ -359,6 +390,12 @@ def conf_filesync(request, project_id, next_page):
             'sort': sort_info,
         }
         return render(request, 'project/configure.html', context = context_dict)
+    elif request.method == 'POST' and request.POST.get('button') == 'cancel':
+        context_dict = {
+             'next_page': 'project:list',
+             'menu_project': 'active',
+        }
+        return render(request, 'project/list.html', context = context_dict)
     else:
         return redirect(next_page)
 

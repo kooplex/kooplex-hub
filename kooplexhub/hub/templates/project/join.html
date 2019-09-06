@@ -6,7 +6,8 @@
 </div>
 {% endblock %}
 
-{% block content %}
+{!% block content %}
+{% block main_content_center %}
 {% load render_table from django_tables2 %}
 
 <form id="project-manage" class="form-horizontal" action="{% url 'project:join' %}" method="post">

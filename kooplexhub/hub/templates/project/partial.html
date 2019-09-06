@@ -1,39 +1,62 @@
+
+
 <div class="card bg-light mb-3">
-  <div class="card-header" id="heading-{{ project.id }}">
-    {% include 'container/startopen.html' %}
-    <button class="btn btn-outline-dark" data-toggle="collapse" data-target="#collapse-{{ project.id }}" aria-expanded="true" aria-controls="collapse-{{ project.id }}" style="min-width: 15em; text-align: left;">
-      <strong>{{ project.name }}</strong>
-    </button>
-    {% include 'container/stopremove.html' %}
-    {% include 'container/containerstatus.html' %}
-    <a href="{% url 'project:hide' project.id next_page %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="You can hide {{ project.name }} from your list." data-placement="top" style="padding: 3px 6px 6px 6px; float: right;">
-      <span class="oi oi-eye" aria-hidden="true"></span></a>
-    <button class="btn" data-toggle="collapse" data-target="#collapse-{{ project.id }}" aria-expanded="true" aria-controls="collapse-{{ project.id }}" style="float: right;">
-{% if container.is_running  %}
-      <span class="badge badge-pill badge-success">Using image:<strong>{{ project.image }}</strong></span>
-{% else %}
-      <span class="badge badge-pill badge-secondary">Using image:<strong>{{ project.image }}</strong></span>
-{% endif %}
-    </button>
-  </div>
+    <div class="card-header" id="heading-{{ course.id }}">
+          <div class="row">
+                  <div class="col-6">
+                          {% include 'container/startopen.html' %}
+                          <button class="btn btn-outline-dark fas btn-link collapsed" data-toggle="collapse" data-target="#collapse-{{ project.id }}" aria-expanded="true" aria-controls="collapse-{{ project.id }}" style="min-width: 15em; text-align: left;">
+                               <strong>{{ project.name }}</strong>
+                          </button>
+                  </div> <!-- col -->
+                  <div class="col-2">
+
+                         {% if project|is_admin:user %}
+                              <a href="{% url 'project:conf_meta' project.id next_page %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Settings of project {{ project.name }}. You can change the image, modify volume attachments." data-placement="top">
+                              <span class="oi oi-wrench" aria-hidden="true"></span></a>
+                         {% else %}
+                              <button type="button" class="btn btn-secondary" disabled>
+                              <span class="oi oi-wrench" aria-hidden="true"></span></button>
+                         {% endif %}
+                         <a href="{% url 'project:hide' project.id next_page %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="You can hide {{ project.name }} from your list." data-placement="top">
+                         <span class="oi oi-eye" aria-hidden="true"></span></a>
+                  </div> <!-- col -->
+                  <div class="col-4">
+                          {% include 'container/stopremove.html' %}
+                          {% include 'container/containerstatus.html' %}
+                          <button class="btn" data-toggle="collapse" data-target="#collapse-{{ project.id }}" aria-expanded="true" aria-controls="collapse-{{ project.id }}" style="float: right;">
+                          {% if container.is_running  %}
+                               <span class="badge badge-pill badge-success">Using image:<strong>{{ project.image }}</strong></span>
+                          {% else %}
+                               <span class="badge badge-pill badge-secondary">Using image:<strong>{{ project.image }}</strong></span>
+                          {% endif %}
+                          </button>
+                  </div> <!-- col -->
+          </div>
+    </div> <!-- card header -->
+
+
 
     <div id="collapse-{{ project.id }}" class="collapse" aria-labelledby="heading-{{ project.id }}" data-parent="#projectList">
       <div class="card-body">
-        <strong>Description: </strong>{{ project.description }}<br>
-        <div style="float: right;">
-          {% if project|is_admin:user %}
-            <a href="{% url 'project:conf_meta' project.id next_page %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Settings of project {{ project.name }}. You can change the image, modify volume attachments." data-placement="top">
-              <span class="oi oi-wrench" aria-hidden="true"></span></a>
-            <a href="{% url 'project:delete' project.id  next_page %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Delete project {{ project.name }}." data-placement="top">
-              <span class="oi oi-trash" aria-hidden="true"></span></a>
-          {% else %}
-            <button type="button" class="btn btn-secondary" disabled>
-              <span class="oi oi-wrench" aria-hidden="true"></span></button>
-            <a href="{% url 'project:delete' project.id  next_page %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Leave project {{ project.name }}." data-placement="top">
-              <span class="oi oi-transfer" aria-hidden="true"></span></a>
-          {% endif %}
-        </div>  <!-- float //-->
-      </div>   <!-- card-body -->
-    </div>
-  </div>
+             <div class="row">
+                <div class="col-10">
+                   <strong>Description: </strong>{{ project.description }}<br>
+                </div>
+                <div class="col-2">
+                 <div style="float: right;">
+                    {% if project|is_admin:user %}
+                      <a href="{% url 'project:delete' project.id  next_page %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Delete project {{ project.name }}." data-placement="top">
+                      <span class="oi oi-trash" aria-hidden="true"></span></a>
+                    {% else %}
+                      <a href="{% url 'project:delete' project.id  next_page %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Leave project {{ project.name }}." data-placement="top">
+                      <span class="oi oi-transfer" aria-hidden="true"></span></a>
+                    {% endif %}
+                 </div>  <!-- float //-->
+                </div>  <!-- col //-->
+              </div>  <!-- row //-->
 
+      </div>   <!-- card-body -->
+    </div> <!-- collapse -->
+    
+</div>

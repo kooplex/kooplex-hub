@@ -6,7 +6,8 @@
 </div>
 {% endblock %}
 
-{% block content %}
+{!% block content %}
+{% block main_content_center %}
   {% for container in user.profile.containers %}
      {% include 'container/partial.html' %}
   {% endfor %}

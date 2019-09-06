@@ -1,12 +1,21 @@
 {% extends "layout.html" %}
 
+{% block header_extra %}
+<style>
+a.active {
+background-color: #ccc;
+border-radius: 5px;
+}
+</style>
+{% endblock %}
+
 {% block submenu %}
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSubmenu" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
   </button>
   <div class="collapse navbar-collapse" id="navbarSubmenu">
-    <h5><span class="badge badge-secondary">Configure project {{ project }}</span></h5>
+    <h5><span class="badge badge-secondary" style="margin-right: 50px">Configure project {{ project }}</span></h5>
     <ul class="navbar-nav mr-auto">
       <li class="nav-item"><a {% if submenu == 'meta' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'project:conf_meta' project.id next_page %}" {% endif %}>Meta</a></li>
       <li class="nav-item"><a {% if submenu == 'collaboration' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'project:conf_collaboration' project.id next_page %}" {% endif %}>Collaboration</a></li>
@@ -19,7 +28,8 @@
 </nav>
 {% endblock %}
 
-{% block content %}
+{!% block content %}
+{% block main_content_center %}
 <div class="content">
   {% if submenu == 'meta' %}
     {% include 'project/conf-meta.html' %}

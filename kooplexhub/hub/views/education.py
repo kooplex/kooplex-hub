@@ -407,7 +407,7 @@ def summaryassignment(request, course_id):
     if render_page:
         context_dict = {
             'course': course,
-            'pd': newdf.to_html(table_id='datatable', col_space=300),
+            'pd': newdf.sort_values(by=['Sum'], ascending=True).to_html(table_id='datatable', col_space=300),
             'menu_teaching': 'active',
             'submenu': 'summary',
             'per_page': per_page,

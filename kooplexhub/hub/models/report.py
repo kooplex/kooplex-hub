@@ -54,7 +54,16 @@ class Report(models.Model):
 
     @property
     def url_external(self):
-        return os.path.join(KOOPLEX['base_url'], 'report', self.proxy_path, self.index)
+        #FIXME worng urls e.g. service
+        if self.reporttype == self.TP_STATIC:
+            return os.path.join(KOOPLEX['base_url'], 'report', self.proxy_path, self.index)
+        elif self.reporttype == self.TP_BOKEH:
+            return os.path.join(KOOPLEX['base_url'], 'report', self.proxy_path, self.index)
+        elif self.reporttype == self.TP_DYNAMIC:
+            return os.path.join(KOOPLEX['base_url'], 'report', self.proxy_path, self.index)
+        elif self.reporttype == self.TP_SERVICE:
+            #https://kooplex-test.elte.hu/notebook/report-jegesm-simpleapi-20190827-101002/report/help 
+            return os.path.join(KOOPLEX['base_url'], 'notebook', self.proxy_path, self.index, 'report/help')
 
     @property
     def url_external_latest(self):
@@ -85,13 +94,15 @@ class Report(models.Model):
 
 @receiver(pre_save, sender = Report)
 def snapshot_report(sender, instance, **kwargs):
-    from kooplex.lib.filesystem import snapshot_report
+    from kooplex.lib.filesystem import snapshot_report, prepare_dashboardreport_withinitcell
     from kooplex.lib.proxy import addroute#, removeroute
     is_new = instance.id is None
     if not is_new:
         return
     instance.created_at = now()
     snapshot_report(instance)
+    if instance.reporttype == instance.TP_DYNAMIC:
+        prepare_dashboardreport_withinitcell(instance)
     if instance.reporttype == Report.TP_STATIC:
         addroute(instance)
 

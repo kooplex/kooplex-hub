@@ -15,7 +15,8 @@ logger = logging.getLogger(__name__)
 class VCRepository(models.Model):
     TP_GITHUB = 'github'
     TP_GITLAB = 'gitlab'
-    TYPE_LIST = [ TP_GITHUB, TP_GITLAB ]
+    TP_GITEA = 'gitea'
+    TYPE_LIST = [ TP_GITHUB, TP_GITLAB, TP_GITEA]
 
     url = models.CharField(max_length = 128, null = True)
     backend_type = models.CharField(max_length = 16, choices = [ (x, x) for x in TYPE_LIST ], default = TP_GITHUB)

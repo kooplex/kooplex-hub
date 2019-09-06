@@ -12,7 +12,7 @@ class T_REPORTS(tables.Table):
 
     def render_openreport(self, record):
         return format_html("""
-<a href="%s" target="_blank" role="button" class="btn btn-info" style="min-width: 6em; text-align: left;"><span class="oi oi-external-link" aria-hidden="true">Open</span></a>
+<a href="%s" target="_blank" role="button" class="btn btn-info" style="min-width: 3em; text-align: left;"  title="Open this version"><span class="oi oi-external-link" aria-hidden="true"></span></a>
         """ % reverse('report:openreport', kwargs = {'report_id': record.id}))
 
     class Meta:
@@ -28,7 +28,7 @@ class T_REPORTS_DEL(T_REPORTS):
 
     def render_deletereport(self, record):
         return format_html("""
-<a href="%s" role="button" class="btn btn-danger" style="min-width: 6em; text-align: left;"><span class="oi oi-trash" aria-hidden="true"></span></a>
+<a href="%s" role="button" class="btn btn-danger" style="text-align: left;"><span class="oi oi-trash" aria-hidden="true"></span></a>
         """ % reverse('report:deletereport', kwargs = {'report_id': record.id}))
 
     class Meta:
