@@ -93,7 +93,7 @@ DATABASES = {
         'NAME': os.getenv('HUBDB', 'kooplexhub'),
         'USER': os.getenv('HUBDB_USER', PREFIX),
         'PASSWORD': os.getenv('HUBDB_PW'),
-        'HOST': '%s-hub-mysql' % PREFIX,
+        'HOST': os.getenv('HUBDB_HOSTNAME', 'localhost'),
         'PORT': '3306',
     }
 }
