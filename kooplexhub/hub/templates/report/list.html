@@ -43,18 +43,39 @@
 {% endblock %}
 
 {% block main_content_left %}
-<ul>
-	<li><span class="badge badge-pill badge-secondary">HTML</span> - static or interactive </li>
-	<li><span class="badge badge-pill badge-success">NB</span> - notebook</li>
-	<li><span class="badge badge-pill badge-warning">API</span> - a served host application with functional endpoints</li>
-	<li><span class="badge badge-pill badge-dark">BOKEH</span> - bokeh application</li>
-</ul>
+<form id="reportListSettingsForm" class="form-horizontal form-control" action="{% url 'report:filter_reports' %}" method="post">
+	{% csrf_token %}
+
+        <div  class="alert alert-secondary">
+            <input type="text" name="name" placeholder="name" value="{{ search_name }}">
+            <button type="submit" class="btn btn-primary" name="button" value="search">Search</button>
+            <button type="submit" class="btn btn-primary" name="button" value="showall">Show all</button>
+	    <input type="hidden" name="pager" value="{{ pager }}">
+	    <input type="hidden" name="sort" value="{{ sort }}">
+	</div>
+
+</form>
 {% endblock %}
 {% block main_content_center %}
-<div class="row">
-  {% for report, table in user.profile.reports %}
-    {% include 'report/partial.html' %}
-  {% endfor %}
-</div>
+           {% for directory_name, reports  in report_cats.items %}
+		<h4><span class="label label-default">  {{ directory_name }} </span></h4>
+            {% for report, table  in reports %}
+              {% include 'report/partial.html' %}
+            {% endfor %}
+           {% endfor %}
+{% endblock %}
+
+{% block main_content_right %}
+<ul>
+	<li><span class="badge badge-pill badge-info">HTML</span> - static or interactive 
+		<a href="https://kooplex-test.elte.hu/manual/Reports/index.html"><span class="oi oi-external-link" aria-hidden="true"> </span></a> </li>
+	<li><span class="badge badge-pill badge-success">NB</span> - notebook
+         	<a href="https://kooplex-test.elte.hu/manual/Reports/index.html"><span class="oi oi-external-link" aria-hidden="true"> </span></a> </li>
+	<li><span class="badge badge-pill badge-warning">API</span> - an application with functional endpoints
+         	<a href="https://kooplex-test.elte.hu/manual/Reports/index.html"><span class="oi oi-external-link" aria-hidden="true"> </span></a> </li>
+	<li><span class="badge badge-pill badge-primary">BOKEH</span> - bokeh application
+         	<a href="https://kooplex-test.elte.hu/manual/Reports/index.html"><span class="oi oi-external-link" aria-hidden="true"> </span></a> </li>
+</ul>
+{{block.super}}
 {% endblock %}
 

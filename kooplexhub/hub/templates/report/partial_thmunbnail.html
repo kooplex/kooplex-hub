@@ -1,7 +1,7 @@
 {% load render_table from django_tables2 %}
-<div class="col-md-6" >
-  <div class="row" >
-      <div class="report-row" style="border-top: #173651; border-top-style: none; border-top-style: double;">
+<div class="col-md-6" style="max-width:450px;min-width:250px">
+  <div class="card bg-light mb-2">
+	  <div class="kep-cont">
 	  <div style="position: absolute; top: 10px; right: 10px; ">
 		{% if report.reporttype == report.TP_STATIC  %}
 	              <span class="badge badge-pill badge-info" style="min-width: 50px; padding-top: 5px; padding-bottom: 5px;">HTML</span>
@@ -14,12 +14,15 @@
 	        {% endif %}
  	  </div>
 	  
-		  <h6  id="heading-{{ report.id }}">
-			  <a href="{% url 'report:openreport' report.id %}" {% if report.reporttype != report.TP_SERVICE %} target="_blank" {% endif %} role="button" class="btn btn-secondary" style="text-align: right;" title="Open">  <span class="oi oi-eye" aria-hidden="true"> </span></a>
+		  <h6 class="card-title bottom-left" id="heading-{{ report.id }}">
+			  <a href="{% url 'report:openreport' report.id %}" {% if report.reporttype != report.TP_SERVICE %} target="_blank" {% endif %} role="button" class="btn btn-info" style="text-align: right;" title="Open">  <span class="oi oi-external-link" aria-hidden="true"> </span></a>
 			  <button class="fas btn btn-vmi collapsed" data-toggle="collapse" data-target="#collapse-{{ report.id }}" aria-expanded="true" aria-controls="collapse-{{ report.id }}">
 				  <strong>{{ report.name }}</strong>
 			  </button>
 		  </h6>
+		  <button class="btn" data-toggle="collapse" data-target="#collapse-{{ report.id }}" aria-expanded="true" aria-controls="collapse-{{ report.id }}">
+			  <img class="card-img-top" src="/static/content/dummy-640x400.png" alt="Card image cap">
+		  </button>
 	  </div>
 	  <div id="collapse-{{ report.id }}" class="collapse" aria-labelledby="heading-{{ report.id }}" data-parent="#reportList">
 		  <div class="card-body" style="font-size: small;">
@@ -28,7 +31,7 @@
 			  <strong>Url to latest: </strong><code>{{ report.url_external_latest }}</code><br>
 			  {% render_table table %}
 		  </div>   <!-- card-body -->
-       </div>
+	  </div>
   </div>
 </div>
 

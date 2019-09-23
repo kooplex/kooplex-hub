@@ -9,6 +9,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 
+SESSION_COOKIE_NAME = "kooplexhub_sessionid"
+
+
 DEBUG = True
 
 PREFIX = os.getenv('PREFIX', 'kooplex')
@@ -44,7 +47,7 @@ AUTHENTICATION_BACKENDS = (
 SOCIAL_AUTH_ELTEOIDC_KEY = '%s-hub' % PREFIX
 SOCIAL_AUTH_ELTEOIDC_SECRET = os.getenv('ELTEOIDC_SECRET')
 SOCIAL_AUTH_HYDRAOIDC_KEY = '%s-hub' % PREFIX
-SOCIAL_AUTH_HYDRAOIDC_SECRET = "4trhoikSfxpH" # os.getenv('ELTEOIDC_SECRET')
+SOCIAL_AUTH_HYDRAOIDC_SECRET = os.getenv('HYDRA_OIDC_SECRET_HUB')
 SOCIAL_AUTH_USER_FIELDS = [ 'username', 'email' ]
 SOCIAL_AUTH_URL_NAMESPACE = 'social'
 
@@ -93,7 +96,7 @@ DATABASES = {
         'NAME': os.getenv('HUBDB', 'kooplexhub'),
         'USER': os.getenv('HUBDB_USER', PREFIX),
         'PASSWORD': os.getenv('HUBDB_PW'),
-        'HOST': os.getenv('HUBDB_HOSTNAME', 'localhost'),
+        'HOST': '%s-hub-mysql' % PREFIX,
         'PORT': '3306',
     }
 }
@@ -149,8 +152,8 @@ DJANGO_TABLES2_TEMPLATE = "django_tables2/bootstrap4.html"
 
 KOOPLEX = {
     'base_url': 'https://%s' % DOMAIN,
-#    'hydra_oidc_endpoint':  'https://%s-hydra:4444' % PREFIX,
-    'hydra_oidc_endpoint':  'https://kooplex-test.elte.hu/hydra',
+    'hydra_oidc_endpoint':  'https://%s/hydra' % DOMAIN,
+#    'hydra_oidc_endpoint':  'https://kooplex-test.elte.hu/hydra',
     'mountpoint': {
         'home': '/mnt/.volumes/home',
 

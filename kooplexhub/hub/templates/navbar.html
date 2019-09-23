@@ -10,7 +10,9 @@
       <!-- FIXME: no active item indicated: li class="nav-item active" -->
     {% if user.is_authenticated %}
       {% include "menuitem_project.html" with active=menu_project %}
+    {% endif %}
       {% include "menuitem_report.html" with active=menu_report %}
+    {% if user.is_authenticated %}
       {% include "menuitem_edu.html" with active=menu_teaching %}
       {% include "menuitem_container.html" with active=menu_container %}
       {% include "menuitem_services.html" with active=menu_service %}

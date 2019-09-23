@@ -11,17 +11,20 @@ class FormReport(forms.ModelForm):
             help_text = _('A snapshot will be created of all files in the selected folder.')
         )
     index = forms.ChoiceField(
-            help_text = _('A snapshot will be created of all files in the selected folder.')
+            help_text = _('A snapshot will be created of all files in the selected folder.'),
+            label= _('Index file')
         )
+    password = forms.CharField(required = False)
+    directory_name = forms.CharField(required = False)
 
     class Meta:
         model = Report
-        fields = [ 'name', 'folder', 'description', 'reporttype', 'index', 'password' ]
+        fields = [ 'name', 'folder', 'description', 'reporttype', 'index', 'image', 'password', 'directory_name' ]
         labels = {
             'name': _('The name of your report'),
             'description': _('A short description'),
-            'reporttype': _('Type fo report'),
-            'index': _('Index file'),
+            'reporttype': _('Type of report'),
+            'directory_name': _('Directory name'),
         }
         help_texts = {
             'name': _('Report name should be unique.'),

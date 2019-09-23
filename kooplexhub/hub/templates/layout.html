@@ -28,11 +28,13 @@
     {% include 'message.html' %}
     <!--div class="container body-content" style="box-sizing: border-box;-->
     <!--div class="body-content" style="box-sizing: border-box;-->
-    <div class="body-content" style="box-sizing: border-box;
-       border-radius: .3rem;min-height: 100%;
-       padding-bottom: .1em;
+    <div class="body-content" style="
+       box-sizing: 
+       border-box;
+       min-height: 90%;
        margin-bottom: 1em;
 #       border: 2px;
+      # border-radius: .3rem;
 #       border-top-color: currentcolor;
 #       border-right-color: currentcolor;
 #       border-bottom-color: currentcolor;
@@ -42,7 +44,7 @@
        margin-top: 0.3em;
        padding-top: .8em;
        background-color: #f8f9fa;
-       padding-bottom: 10px;">
+       ">
          {% block content %}{% endblock %}
 
       <div class="row">
@@ -53,14 +55,15 @@
            {% block main_content_center %}{% endblock %}
         </div>
         <div class="col-md-3">
-           {% block main_content_right %}{% endblock %}
+           {% block main_content_right %}
+            {% include 'footer_right.html' %}
+	   {% endblock %}
         </div>
       </div>
     </div>
 
 
     <footer>
-    {% include 'footer.html' %}
     </footer>
 
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->

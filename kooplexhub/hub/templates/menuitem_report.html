@@ -1,9 +1,9 @@
   <li class="nav-item {{ active }}">
-    {% if user.profile.reports %}
-      <a href="{% url 'report:list' %}" class="nav-link" data-toggle="tooltip" title="List and manage your reports" data-placement="bottom">Reports</a>
+      <a href="{% url 'report:list'  %}" class="nav-link" data-toggle="tooltip" title="List and manage your reports" data-placement="bottom">Reports</a>
+      {% comment %}    {% if user.profile.reports %}
     {% else %}
       <a href="#" class="nav-link disabled" data-toggle="tooltip" title="You do not have a project yet" data-placement="bottom">Reports</a>
-    {% endif %}
+    {% endif %}{% endcomment %}
   </li>
 
   <li class="nav-item dropdown">

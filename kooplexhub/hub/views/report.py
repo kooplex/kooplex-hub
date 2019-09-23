@@ -1,6 +1,7 @@
 import logging
 
 from django.db import transaction
+from django.db import models
 from django.conf.urls import url
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
@@ -43,7 +44,8 @@ def newreport(request):#, next_page):
                 reporttype = reporttype,
                 index = index,
                 folder = request.POST['folder'],
-                password = request.POST['password'],
+                password = request.POST['password'] if 'password' in request.POST else '',
+                directory_name = request.POST['directory_name'] if 'directory_name' in request.POST else '',
             )
             messages.info(request, "Report %s is created" % request.POST['name'])
             return redirect('report:list')
@@ -54,19 +56,50 @@ def newreport(request):#, next_page):
         return redirect('indexpage')
 
 
-@login_required
+#@login_required
 def listreport(request):#, next_page):
     """Renders new report list."""
     user = request.user
     logger.debug("user %s, method: %s" % (user, request.method))
+    if (request.method == 'POST' and request.POST.get('button') == 'search') or request.method == 'GET':
+        pattern = request.POST.get('name', '')
+        report_cats = filter_reports(user, pattern)
+        #table = table_collaboration(project)
+        #table_collaborators = table(user.profile.everybodyelse) if pattern == '' else table(user.profile.everybodyelse_like(pattern))
+    elif request.method == 'POST' and request.POST.get('button') == 'showall':
+        report_cats = filter_reports(user)
+    else:
+        report_cats = filter_reports(user)
+
     context_dict = {
         'menu_report': 'active',
         'next_page': 'indexpage', #next_page,
+        'report_cats' : report_cats,
     }
     return render(request, 'report/list.html', context = context_dict)
 
+#FIXME https://django-taggit.readthedocs.io/en/latest/getting_started.html
+def filter_reports(user, pattern = ''):
+    from .report import Report
+    from hub.forms import T_REPORTS, T_REPORTS_DEL
+    
+    report_cats = {}
+    if pattern:
+        query_reports = Report.objects.filter(models.Q(directory_name__icontains = pattern) | models.Q(name__icontains = pattern) )
+    else:
+        query_reports = Report.objects.all()
+        
+    for report in query_reports:
+        report_cats[report.directory_name] = [] 
 
-@login_required
+    for report in query_reports:
+         g = report.groupby()
+         T = T_REPORTS_DEL(g) if user == report.creator else T_REPORTS(g)
+         #yield report.latest, T, report.directory_name
+         report_cats[report.directory_name].append((report.latest, T))
+    return report_cats
+
+#@login_required
 def openreport(request, report_id):
     """Renders new report list."""
     user = request.user
@@ -122,6 +155,7 @@ def deletereport(request, report_id):
 urlpatterns = [
     url(r'^newreport/?$', newreport, name = 'new'),
     url(r'^listreport/?$', listreport, name = 'list'),
+    url(r'^filter_reports/?$', listreport, name = 'filter_reports'),
     url(r'^openreport/(?P<report_id>\d+)$', openreport, name = 'openreport'),
     url(r'^deletereport/(?P<report_id>\d+)$', deletereport, name = 'deletereport'), 
 ]

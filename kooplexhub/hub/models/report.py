@@ -7,16 +7,18 @@ from django.db.models.signals import pre_save, post_save, post_delete, pre_delet
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 
+from .image import Image
+
 from kooplex.settings import KOOPLEX
 from kooplex.lib import  standardize_str, now, human_localtime
 
 logger = logging.getLogger(__name__)
 
 TYPE_LOOKUP = {
-    'static': 'Static content served by an nginx server.',
-    'bokeh': 'Dynamic content: runs a bokeh server behind the scene.',
-    'dynamic': 'Dynamic content requires a running kernel in the back.',
-    'service': 'Dynamic content requires a service implemented by user.',
+    'static': 'HTML - content hosted on a webserver.',
+    'bokeh': 'BOKEH - an interactive applications, runs served by a bokeh.',
+    'dynamic': 'NB - A jupyter notebook.',
+    'service': 'API - A REST API run in a notebook.',
 }
 
 class Report(models.Model):
@@ -35,8 +37,12 @@ class Report(models.Model):
     reporttype = models.CharField(max_length = 16, choices = [ (x, TYPE_LOOKUP[x]) for x in TYPE_LIST ], default = TP_STATIC)
 #TODO: scope: public, internal
 
+    image = models.ForeignKey(Image, null = True)
+    # To be able to sort (e.g. useful for courses)
+    directory_name = models.CharField(max_length = 50, null = False, default='default')
+    
     index = models.CharField(max_length = 128, null = False)
-    password = models.CharField(max_length = 64, null = False)
+    password = models.CharField(max_length = 64, null = True, default = '')
 
     def __lt__(self, c):
         return self.launched_at < c.launched_at

@@ -66,7 +66,7 @@ class Profile(models.Model):
                  continue
              g = report.groupby()
              T = T_REPORTS_DEL(g) if self.user == report.creator else T_REPORTS(g)
-             yield report.latest, T
+             yield report.latest, T, report.directory_name
              reports_shown.update(set(g))
 
     def usercoursebindings(self, **kw):
