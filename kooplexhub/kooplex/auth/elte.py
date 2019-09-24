@@ -3,7 +3,7 @@ import os
 
 from social_core.backends.open_id_connect import OpenIdConnectAuth
 
-from hub.models import lookup_course, update_UserCourseBindings
+from hub.models import CourseCode, UserCourseCodeBinding
 from kooplex.settings import KOOPLEX
 
 logger = logging.getLogger(__name__)
@@ -21,9 +21,11 @@ class my_ElteOpenID(OpenIdConnectAuth):
             uri = url_add_parameters(url, {'redirect_state': state})
         else:
             uri = url
+        logger.debug("init: %s" % uri)
         return uri
 
     def get_user_details(self, response):
+        logger.debug(str(response))
         return {
             'username': response['idp_user'],
             'email': response['mail'][0],
@@ -33,29 +35,21 @@ class my_ElteOpenID(OpenIdConnectAuth):
         }
 
     def authenticate(self, request, **credentials):
-        def updater(key, is_teacher):
-            for courseid in response.get(key, []):
-                if '/' in courseid:
-                    coursename, flag = courseid.split('/', 1)
-                    if flag.count('/') > 0:
-                        flag = flag.replace('/', '.')
-                        logger.error("Too many '/' symbol in course id: %s (user %s) flag is now: %s" % (courseid, request.user, flag))
-                else:
-                    coursename = courseid
-                    flag = None
-                course = lookup_course(coursename)
-                bindings.append({ 'course': course, 'flag': flag, 'is_teacher': is_teacher })
+        logger.debug(str(request))
         user = super(my_ElteOpenID, self).authenticate(request, **credentials)
+        logger.debug(str(user))
         response = credentials.get('response', {})
-#        logger.debug("IDP resp %s" % response)
+        logger.debug("IDP resp %s" % response)
         try:
             logger.debug("Authenticated (username) %s" % user.username)
         except:
             pass
-        bindings = []
         # currently held courses
-        updater('niifEduPersonHeldCourse', is_teacher = True)
+        a = response.get('niifEduPersonHeldCourse', {})
+        coursecodes = CourseCode.parse(a)
+        UserCourseCodeBinding.userattributes(user, coursecodes, is_teacher = True)
         # currently attended courses
-        updater('niifEduPersonAttendedCourse', is_teacher = False)
-        update_UserCourseBindings(user, bindings)
+        a = response.get('niifEduPersonAttendedCourse', {})
+        coursecodes = CourseCode.parse(a)
+        UserCourseCodeBinding.userattributes(user, coursecodes, is_teacher = False)
         return user
