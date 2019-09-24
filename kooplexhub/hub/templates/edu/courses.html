@@ -6,7 +6,8 @@
 </div>
 {% endblock %}
 
-{% block content %}
+
+{% block main_content_center %}
 
   {% for course in user.profile.courses_attend %}
      {% include 'edu/partial.html' with container=course|get_usercoursecontainer:user url_assignment="education:submitassignment" tooltip="You can submit assignments." %}

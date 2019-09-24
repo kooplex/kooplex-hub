@@ -61,7 +61,7 @@ def listreport(request):#, next_page):
     """Renders new report list."""
     user = request.user
     logger.debug("user %s, method: %s" % (user, request.method))
-    if (request.method == 'POST' and request.POST.get('button') == 'search') or request.method == 'GET':
+    if (request.method == 'POST' and request.POST.get('button', 'search') == 'search') or request.method == 'GET':
         pattern = request.POST.get('name', '')
         report_cats = filter_reports(user, pattern)
         #table = table_collaboration(project)
