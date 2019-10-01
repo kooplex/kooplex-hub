@@ -3,15 +3,21 @@
 from django.conf.urls import url, include
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 
 def indexpage(request):
     return render(request, 'index.html', { 'next_page': 'indexpage' })
 
+@login_required
+def do_logout(request):
+    return redirect('https://kooplex-test.elte.hu/consent/auth/logout') #FIXME: add urlarg redirect_url=
+
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
+
+    url(r'^hub/logout/', do_logout, name = 'do_logout'),
     
     url(r'^hub/mock/', include('kooplex.mock', namespace = 'mock')), #FIXME: REMOVE FROM PRODUCTION
 

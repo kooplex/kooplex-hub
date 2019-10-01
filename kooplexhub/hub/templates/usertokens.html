@@ -13,7 +13,10 @@
 <form class="form-horizontal" action="{% url 'user:managetokens' next_page %}" method="post">
   {% csrf_token %}
   <p>You can request a new token to access your notebook servers:
-    <button class="btn btn-danger" name="button" value="resettoken">Reset token</button>
+    <button class="btn btn-danger" name="button" value="reset_notebook_token">Reset token</button>
+  </p>
+  <p>You can request a new token to access seafile server:
+    <button class="btn btn-danger" name="button" value="reset_seaf_token">Reset token</button>
   </p>
   <p>List of your version control system tokens:</p>
     {% render_table t_vctoken %}

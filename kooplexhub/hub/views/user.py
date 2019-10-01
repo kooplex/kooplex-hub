@@ -38,8 +38,10 @@ def managetoken(request, next_page):
             'next_page': next_page,
         }
         return render(request, 'usertokens.html', context = context_dict)
-    elif button == 'resettoken':
+    elif button == 'reset_notebook_token':
         return redirect('user:changetoken', next_page)
+    elif button == 'reset_seaf_token':
+        return redirect('user:changeseaftoken', next_page)
     elif button == 'apply':
         token_ids = request.POST.getlist('token_ids')
         for rm_token_id in request.POST.getlist('rm_token_ids'):
@@ -82,8 +84,8 @@ def managetoken(request, next_page):
                 logger.error("user %s cannot save vctoken" % (user))
         return redirect(next_page)
     else:
+        messages.error(request, 'Abused call')
         return redirect(next_page)
-
 
 
 @login_required
@@ -95,9 +97,22 @@ def changetoken(request, next_page):
     messages.warning(request, 'Your secret token is updated. You will not be able to access your running containers until you restart them.')
     return redirect(next_page)
 
+
+@login_required
+def changeseaftoken(request, next_page):
+    logger.debug("user %s" % request.user)
+    profile = request.user.profile
+    profile.seafile_token = pwgen.pwgen(64)
+    profile.save()
+    #TODO: also update seafile pw store
+    messages.warning(request, 'Your seafile secret token is updated. You may experience problem with running file syncronization tasks.')
+    return redirect(next_page)
+
+
 urlpatterns = [
     url(r'^profile/(?P<next_page>\w+:?\w*)$', updateprofile, name = 'updateprofile'),
     url(r'^token/(?P<next_page>\w+:?\w*)$', changetoken, name = 'changetoken'),
+    url(r'^token/seafile/(?P<next_page>\w+:?\w*)$', changeseaftoken, name = 'changeseaftoken'),
     url(r'^manage/(?P<next_page>\w+:?\w*)$', managetoken, name = 'managetokens'),
 ]
 

@@ -19,6 +19,7 @@ class Profile(models.Model):
     location = models.CharField(max_length = 30, blank = True)
     userid = models.IntegerField(null = False)
     token = models.CharField(max_length = 64, null = True)
+    seafile_token = models.CharField(max_length = 64, null = True)
     can_createproject = models.BooleanField(default = False) 
 
     @property
