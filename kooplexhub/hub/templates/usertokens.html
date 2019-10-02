@@ -8,8 +8,7 @@
 </div>
 {% endblock %}
 
-{% block content %}
-
+{% block main_content_center %}
 <form class="form-horizontal" action="{% url 'user:managetokens' next_page %}" method="post">
   {% csrf_token %}
   <p>You can request a new token to access your notebook servers:

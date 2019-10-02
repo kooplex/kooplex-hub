@@ -9,6 +9,7 @@ from django.contrib import messages
 from hub.forms import FormBiography
 from hub.forms import table_vctoken
 from hub.models import VCRepository, VCToken, FSServer, FSToken
+from kooplex.lib import seafilepw_update
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +101,7 @@ def changetoken(request, next_page):
 
 @login_required
 def changeseaftoken(request, next_page):
-    #TODO: what is more fs servers present???
+    #TODO: what if more fs servers present???
     logger.debug("user %s" % request.user)
     try:
         token = FSToken.objects.get(user = request.user)
@@ -112,7 +113,7 @@ def changeseaftoken(request, next_page):
         token = FSToken.objects.create(user = request.user, syncserver = fsserver, token = pwgen.pwgen(64))
         token.save()
         messages.info(request, 'New seafile secret token is created for %s' % fsserver)
-    #TODO: also update seafile pw store
+    seafilepw_update(request.user.username, token.token)
     return redirect(next_page)
 
 
