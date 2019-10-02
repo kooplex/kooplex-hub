@@ -8,7 +8,7 @@ from django.contrib import messages
 
 from hub.forms import FormBiography
 from hub.forms import table_vctoken
-from hub.models import VCRepository, VCToken
+from hub.models import VCRepository, VCToken, FSServer, FSToken
 
 logger = logging.getLogger(__name__)
 
@@ -100,12 +100,19 @@ def changetoken(request, next_page):
 
 @login_required
 def changeseaftoken(request, next_page):
+    #TODO: what is more fs servers present???
     logger.debug("user %s" % request.user)
-    profile = request.user.profile
-    profile.seafile_token = pwgen.pwgen(64)
-    profile.save()
+    try:
+        token = FSToken.objects.get(user = request.user)
+        token.token = pwgen.pwgen(64)
+        token.save()
+        messages.warning(request, 'Your seafile secret token is updated. You may experience problem with running file syncronization tasks.')
+    except FSToken.DoesNotExist:
+        fsserver = FSServer.objects.all()[0]  #FIXME: ugly
+        token = FSToken.objects.create(user = request.user, syncserver = fsserver, token = pwgen.pwgen(64))
+        token.save()
+        messages.info(request, 'New seafile secret token is created for %s' % fsserver)
     #TODO: also update seafile pw store
-    messages.warning(request, 'Your seafile secret token is updated. You may experience problem with running file syncronization tasks.')
     return redirect(next_page)
 
 

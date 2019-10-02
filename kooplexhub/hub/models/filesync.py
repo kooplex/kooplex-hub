@@ -38,11 +38,12 @@ class FSToken(models.Model):
 class FSLibrary(models.Model):
     token = models.ForeignKey(FSToken, null = False)
     library_name = models.CharField(max_length = 512, null = False)
+    library_id = models.CharField(max_length = 36, null = False)
     last_seen = models.DateTimeField(auto_now_add = True)
     syncing = models.BooleanField(default = False)
 
     def __str__(self):
-        return "FSLibrary %s/%s" % (self.token.syncserver.url, self.library_name)
+        return "FSLibrary %s: %s" % (self.token.syncserver.url, self.library_name)
 
     @property
     def cleanname(self):

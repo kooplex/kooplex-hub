@@ -522,16 +522,16 @@ def fsrefresh(request, token_id, project_id):
         old_list = list(FSLibrary.objects.filter(token = token))
         cnt_new = 0
         cnt_del = 0
-        for l_name in list_libraries(token):
+        for r in list_libraries(token):
             try:
-                l = FSLibrary.objects.get(token = token, library_name = l_name)
+                l = FSLibrary.objects.get(token = token, library_name = r.name, library_id = r.id)
                 l.last_seen = now_
                 l.save()
                 old_list.remove(l)
-                logger.debug('still present: %s' % l_name)
+                logger.debug('still present: %s' % r.name)
             except FSLibrary.DoesNotExist:
-                FSLibrary.objects.create(token = token, library_name = l_name)
-                logger.debug('inserted present: %s' % l_name)
+                FSLibrary.objects.create(token = token, library_name = r.name, library_id = r.id)
+                logger.debug('inserted present: %s' % r.name)
                 cnt_new += 1
         while len(old_list):
             l = old_list.pop()
@@ -548,6 +548,7 @@ def fsrefresh(request, token_id, project_id):
         messages.error(request, "System abuse")
     except Exception as e:
         messages.error(request, "System abuse -- %s" % e)
+        messages.info(request, dir(r))
     return redirect('project:conf_filesync', project_id, 'project:list')
 
 
