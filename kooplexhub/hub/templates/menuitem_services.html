@@ -1,6 +1,13 @@
+  <li class="nav-item {{ active }}">
+      <a href="{% url 'service:filesync' %}" class="nav-link" data-toggle="tooltip" title="Manage file synchronization and version control" data-placement="bottom">Services</a>
+  </li>
+
   <li class="nav-item dropdown">
-    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownService" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Services </a>
+    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownService" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></a>
     <div class="dropdown-menu" aria-labelledby="navbarDropdownService">
+      <a class="dropdown-item" href="{% url 'service:filesync' %}" rel="noreferrer">File synchronization</a>
+      <a class="dropdown-item" href="{% url 'service:versioncontrol' %}" rel="noreferrer">Version control</a>
+      <hr>
       <a class="dropdown-item" href="/seafile/" rel="noreferrer">Seafile</a>
     </div>
   </li>

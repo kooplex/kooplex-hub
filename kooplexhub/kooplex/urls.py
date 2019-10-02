@@ -27,6 +27,7 @@ urlpatterns = [
     url(r'^hub/education/', include('hub.views.education', namespace = 'education')),
     url(r'^hub/assignment/', include('hub.views.assignment', namespace = 'assignment')),
     url(r'^hub/container/', include('hub.views.container', namespace = 'container')),
+    url(r'^hub/service/', include('hub.views.service', namespace = 'service')),
     url(r'^hub/user/', include('hub.views.user', namespace = 'user')),
     url(r'^hub/manual/', include('hub.views.manual', namespace = 'manual')),
     url(r'^hub/?', indexpage, name = 'indexpage'),
