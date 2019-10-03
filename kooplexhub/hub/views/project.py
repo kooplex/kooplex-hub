@@ -513,6 +513,7 @@ def vcrefresh(request, token_id, project_id):
 
 @login_required
 def fsrefresh(request, token_id, project_id):
+    #FIXME: remove duplicate!!! in favor of service
     """Refresh users file snchronization libraries."""
     user = request.user
     logger.debug("user %s (project_id %s)" % (user, project_id))
@@ -563,7 +564,7 @@ urlpatterns = [
     url(r'^configure/(?P<project_id>\d+)/versioncontrol/(?P<next_page>\w+:?\w*)$', conf_versioncontrol, name = 'conf_versioncontrol'), 
     url(r'^configure/(?P<project_id>\d+)/filesync/(?P<next_page>\w+:?\w*)$', conf_filesync, name = 'conf_filesync'), 
     url(r'^vcrefresh/(?P<token_id>\d+)/(?P<project_id>\d+)$', vcrefresh, name = 'vcrefresh'), 
-    url(r'^fsrefresh/(?P<token_id>\d+)/(?P<project_id>\d+)$', fsrefresh, name = 'fsrefresh'), 
+    url(r'^fsrefresh/(?P<token_id>\d+)/(?P<project_id>\d+)$', fsrefresh, name = 'fsrefresh'), #FIXME: belongs to service!!!
     url(r'^delete/(?P<project_id>\d+)/(?P<next_page>\w+:?\w*)$', delete_leave, name = 'delete'), 
     url(r'^show/(?P<next_page>\w+:?\w*)$', show_hide, name = 'showhide'),
     url(r'^hide/(?P<project_id>\d+)/(?P<next_page>\w+:?\w*)$', hide, name = 'hide'), 

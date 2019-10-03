@@ -38,6 +38,15 @@ def table_fslibrary(project):
 
     return T_FSLIBRARY
 
+class T_FSLIBRARY_SYNC(tables.Table):
+    def render_syncing(self, record):
+        st = 'checked' if record.syncing else ''
+        return format_html("<input type='checkbox' name='sync_library_id' value='%s' %s>" % (record.library_id, st))
+    class Meta:
+        model = FSLibrary
+        fields = ('library_name', 'syncing')
+        sequence = ('library_name', 'syncing')
+        attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
 
 ## def table_vctoken(user):
 ##     tokens = [ t for t in user.profile.vctokens ]
