@@ -35,7 +35,6 @@ logger = logging.getLogger(__name__)
 def filesynchronization(request):
     user = request.user
     logger.debug("user %s" % user)
-    messages.error(request, 'NOT IMPLEMETED YET')
     fs_tokens = FSToken.objects.filter(user = user)
     pattern = request.POST.get('library', '')
     libraries = FSLibrary.f_user(user = user) if pattern == '' else FSLibrary.f_user_namelike(user = user, l = pattern)
@@ -44,6 +43,7 @@ def filesynchronization(request):
     context_dict = {
         'next_page': 'service:filesync',
         'menu_service': 'active',
+        'submenu': 'filesynch',
         'fs_tokens': fs_tokens,
         'tbl_libraries': tbl_libraries,
         'search_library': pattern,

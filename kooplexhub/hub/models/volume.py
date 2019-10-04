@@ -18,6 +18,7 @@ TYPE_LOOKUP = {
   'share': 'Share volume',
   'workdir': 'Workdir volume',
   'git': 'Git cache volume',
+  'filesync': 'File synchronization cache volume',
   'functional': 'Functional volume',
   'storage': 'Storage volume',
   'course': 'Course share volume',
@@ -31,6 +32,7 @@ class Volume(models.Model):
     HOME = 'home'
     GARBAGE = 'garbage'
     GIT = 'git'
+    FILESYNC = 'filesync'
     SHARE = 'share'
     WORKDIR = 'workdir'
     FUNCTIONAL = 'functional'
@@ -39,7 +41,7 @@ class Volume(models.Model):
     COURSE_WORKDIR = 'usercourse'
     COURSE_ASSIGNMENTDIR = 'assignment'
     REPORT = 'report'
-    VOLUME_TYPE_LIST = [ HOME, GARBAGE, GIT, SHARE, WORKDIR, FUNCTIONAL, STORAGE, COURSE_SHARE, COURSE_WORKDIR, COURSE_ASSIGNMENTDIR, REPORT ]
+    VOLUME_TYPE_LIST = [ HOME, GARBAGE, GIT, FILESYNC, SHARE, WORKDIR, FUNCTIONAL, STORAGE, COURSE_SHARE, COURSE_WORKDIR, COURSE_ASSIGNMENTDIR, REPORT ]
 
     name = models.CharField(max_length = 64, unique = True)
     displayname = models.CharField(max_length = 64)

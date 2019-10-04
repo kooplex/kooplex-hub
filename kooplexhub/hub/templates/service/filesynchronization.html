@@ -11,7 +11,7 @@
 }
 .card-header .btn-vmi:before {
     font-weight:900;
-   content:"\f107";
+    content:"\f107";
     padding-right: 4px;
 }
 .card-header .btn:hover, 
@@ -22,23 +22,25 @@
 
 /* Container holding the image and the text */
 .kept-cont {
-	position: relative;
-	text-align: center;
-	color: white;
+    position: relative;
+    text-align: center;
+    color: white;
 }
 /* Bottom left text */
 .bottom-left {
-	position: absolute;
-	top: 30px;
-	left: 10%;
+    position: absolute;
+    top: 30px;
+    left: 10%;
+}
+a.active {
+    background-color: #ccc;
+    border-radius: 5px;
 }
 </style>
 {% endblock %}
 
 {% block submenu %}
-<div class="navbar navbar-expand-lg navbar-light bg-light">
-  <h5><span class="badge badge-secondary">Services</span></h5>
-</div>
+{% include "service/service_submenu.html" %}
 {% endblock %}
 
 {% block main_content_left %}

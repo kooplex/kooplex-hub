@@ -17,6 +17,7 @@ from .course import Course
 from .volume import Volume, VolumeProjectBinding
 from .image import Image
 from .versioncontrol import VCProjectProjectBinding
+from .filesync import FSLibraryProjectBinding
 
 from kooplex.settings import KOOPLEX
 from kooplex.lib import  standardize_str, now
@@ -132,6 +133,12 @@ class Container(models.Model):
         for vcppb in serve_history.values():
             if vcppb is not None:
                 yield vcppb
+
+    @property
+    def fslibraryprojectbindings(self):
+        for project in self.projects:
+            for fslpb in FSLibraryProjectBinding.objects.filter(project = project, fslibrary__token__user = self.user):
+                yield fslpb
 
     @property
     def projects_addable(self):
@@ -397,6 +404,14 @@ def bind_garbage(sender, instance, created, **kwargs):
         except Exception as e:
             logger.error('Garbage not bound -- %s' % e)
 
+@receiver(post_save, sender = Container)
+def bind_filesync(sender, instance, created, **kwargs):
+    if created:
+        try:
+            v_filesync = Volume.objects.get(volumetype = Volume.FILESYNC)
+            VolumeContainerBinding.objects.create(container = instance, volume = v_filesync)
+        except Exception as e:
+            logger.error('Filesync not bound -- %s' % e)
 
 class ProjectContainerBinding(models.Model):
     project = models.ForeignKey(Project, null = False)

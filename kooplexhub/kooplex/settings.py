@@ -161,6 +161,7 @@ KOOPLEX = {
 
         'workdir': '/mnt/.volumes/workdir',
         'git': '/mnt/.volumes/git',
+        'filesync': '/mnt/.volumes/cache-seafile',
         'share': '/mnt/.volumes/share',
         'report': '/mnt/.volumes/report',
 
@@ -188,6 +189,7 @@ KOOPLEX = {
         'report': r'^%s-(report)$' % PREFIX,
         'share': r'^%s-(share)$' % PREFIX,
         'git': r'^%s-(git)$' % PREFIX,
+        'filesync': r'^%s-(cache-seafile)$' % PREFIX,
         'workdir': r'^%s-(workdir)$' % PREFIX,
         'functional': r'^vol-([_\w-]+)$',
         'storage': r'^stg-([_\w-]+)$',

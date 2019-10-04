@@ -42,6 +42,10 @@ class Dirname:
         return os.path.join(Dirname.mountpoint['git'], vcproject.uniquename)
 
     @staticmethod
+    def fscache(fslibrary):
+        return os.path.join(Dirname.mountpoint['filesync'], fslibrary.token.user.username, 'synchron', fslibrary.library_name)
+
+    @staticmethod
     def course(course):
         return os.path.join(Dirname.mountpoint['course'], course.folder)
 
@@ -111,6 +115,9 @@ class Dirname:
         elif volume.volumetype == volume.GIT:
             for vcppb in container.vcprojectprojectbindings:
                 yield Dirname.vcpcache(vcppb.vcproject)
+        elif volume.volumetype == volume.FILESYNC:
+            for fslpb in container.fslibraryprojectbindings:
+                yield Dirname.fscache(fslpb.fslibrary)
         elif volume.volumetype == volume.COURSE_SHARE:
             if container.course in container.user.profile.courses_taught():
                 yield Dirname.course(container.course)
