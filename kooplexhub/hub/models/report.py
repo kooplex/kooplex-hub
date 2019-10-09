@@ -21,12 +21,23 @@ TYPE_LOOKUP = {
     'service': 'API - A REST API run in a notebook.',
 }
 
+SCOPE_LOOKUP = {
+    'private': 'private - Only the creator can view the report.',
+    'internal': 'internal - The creator and collaborators can view the report.',
+    'public': 'public - Anyone can view the report.',
+}
+
 class Report(models.Model):
     TP_STATIC = 'static'
     TP_BOKEH = 'bokeh'
     TP_DYNAMIC = 'dynamic'
     TP_SERVICE = 'service'
     TYPE_LIST = [ TP_STATIC, TP_DYNAMIC, TP_SERVICE, TP_BOKEH ]
+
+    SC_PRIVATE = 'private'
+    SC_INTERNAL = 'internal'
+    SC_PUBLIC = 'public'
+    SCOPE_LIST = [ SC_PRIVATE, SC_INTERNAL, SC_PUBLIC ]
 
     name = models.CharField(max_length = 200, null = False)
     description = models.TextField(max_length = 500, null = True, default = None)
@@ -35,7 +46,7 @@ class Report(models.Model):
     folder = models.CharField(max_length = 200, null = False)
 
     reporttype = models.CharField(max_length = 16, choices = [ (x, TYPE_LOOKUP[x]) for x in TYPE_LIST ], default = TP_STATIC)
-#TODO: scope: public, internal
+    scope = models.CharField(max_length = 16, choices = [ (x, SCOPE_LOOKUP[x]) for x in SCOPE_LIST ], default = SC_INTERNAL)
 
     image = models.ForeignKey(Image, null = True)
     # To be able to sort (e.g. useful for courses)

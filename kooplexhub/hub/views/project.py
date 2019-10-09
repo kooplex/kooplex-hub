@@ -511,47 +511,6 @@ def vcrefresh(request, token_id, project_id):
     return redirect('project:conf_versioncontrol', project_id, 'project:list')
 
 
-@login_required
-def fsrefresh(request, token_id, project_id):
-    #FIXME: remove duplicate!!! in favor of service
-    """Refresh users file snchronization libraries."""
-    user = request.user
-    logger.debug("user %s (project_id %s)" % (user, project_id))
-    try:
-        now_ = now()
-        token = FSToken.objects.get(user = user, id = token_id)
-        old_list = list(FSLibrary.objects.filter(token = token))
-        cnt_new = 0
-        cnt_del = 0
-        for r in list_libraries(token):
-            try:
-                l = FSLibrary.objects.get(token = token, library_name = r.name, library_id = r.id)
-                l.last_seen = now_
-                l.save()
-                old_list.remove(l)
-                logger.debug('still present: %s' % r.name)
-            except FSLibrary.DoesNotExist:
-                FSLibrary.objects.create(token = token, library_name = r.name, library_id = r.id)
-                logger.debug('inserted present: %s' % r.name)
-                cnt_new += 1
-        while len(old_list):
-            l = old_list.pop()
-            l.remove()
-            logger.debug('removed: %s' % l.library_name)
-            cnt_del += 1
-        if cnt_new:
-            messages.info(request, "%d new libraries found" % cnt_new)
-        if cnt_del:
-            messages.warning(request, "%d libraries removed" % cnt_del)
-        token.last_used = now_
-        token.save()
-    except FSToken.DoesNotExist:
-        messages.error(request, "System abuse")
-    except Exception as e:
-        messages.error(request, "System abuse -- %s" % e)
-        messages.info(request, dir(r))
-    return redirect('project:conf_filesync', project_id, 'project:list')
-
 
 urlpatterns = [
     url(r'^list', listprojects, name = 'list'), 
@@ -564,7 +523,6 @@ urlpatterns = [
     url(r'^configure/(?P<project_id>\d+)/versioncontrol/(?P<next_page>\w+:?\w*)$', conf_versioncontrol, name = 'conf_versioncontrol'), 
     url(r'^configure/(?P<project_id>\d+)/filesync/(?P<next_page>\w+:?\w*)$', conf_filesync, name = 'conf_filesync'), 
     url(r'^vcrefresh/(?P<token_id>\d+)/(?P<project_id>\d+)$', vcrefresh, name = 'vcrefresh'), 
-    url(r'^fsrefresh/(?P<token_id>\d+)/(?P<project_id>\d+)$', fsrefresh, name = 'fsrefresh'), #FIXME: belongs to service!!!
     url(r'^delete/(?P<project_id>\d+)/(?P<next_page>\w+:?\w*)$', delete_leave, name = 'delete'), 
     url(r'^show/(?P<next_page>\w+:?\w*)$', show_hide, name = 'showhide'),
     url(r'^hide/(?P<project_id>\d+)/(?P<next_page>\w+:?\w*)$', hide, name = 'hide'), 

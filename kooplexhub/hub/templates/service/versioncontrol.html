@@ -44,34 +44,36 @@ a.active {
 {% endblock %}
 
 {% block main_content_left %}
-  <form id="fsFilterLibForm" class="form-horizontal form-control" action="{% url 'service:fs_search' %}" method="post">
-    <h5>Search library</h5>
+  <form id="vcFilterRepoForm" class="form-horizontal form-control" action="{% url 'service:vc_search' %}" method="post">
+    <h5>Search repository</h5>
     {% csrf_token %}
     <div  class="alert alert-warning">
-      <input type="text" name="library" placeholder="library" value="{{ search_library }}">
+      <input type="text" name="repository" placeholder="repository" value="{{ search_repository }}">
       <button type="submit" class="btn btn-primary" name="button" value="apply"> Search</button>
     </div>
     <div class="modal-footer">
       Currently connected apps:
-      <img src="/static/content/logos/seafile.png" alt="SeaFile" height="50px">
+      <img src="/static/content/logos/github.png" alt="Github" height="50px">
+      <img src="/static/content/logos/gitlab.png" alt="GitLab" height="50px" style="opacity: 0.5; background: #CCC;">
+      <img src="/static/content/logos/gitea.png" alt="Gitea" height="50px" style="opacity: 0.5; background: #CCC;">
     </div>
   </form>
 {% endblock %}
 
 {% block main_content_center %}
   <form id="fsRefreshLibForm" class="form-horizontal form-control">
-    <h5>Refresh your library list</h5>
+    <h5>Refresh your repository list</h5>
     <div  class="alert alert-warning">
-      {% for t in fs_tokens %}
-        <a href="{% url 'service:fs_refresh' t.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Last updated: {{ t.last_used }}" data-placement="top">{{ t.syncserver.url }}</a> <br style="margin:1ex">
+      {% for t in vc_tokens %}
+        <a href="{% url 'service:vc_refresh' t.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Last updated: {{ t.last_used }}" data-placement="top">{{ t.repository.url }}</a> <br style="margin:1ex">
       {% endfor %}
     </div>
   </form>
   {% load render_table from django_tables2 %}
-  <form id="fsSyncForm" class="form-horizontal form-control" action="{% url 'service:commit_sync' %}" method="post">
-    <h5>Select libraries to synchronize</h5>
+  <form id="vcRepoForm" class="form-horizontal form-control" action="{% url 'service:commit_repo' %}" method="post">
+    <h5>Select repositories to clone</h5>
     {% csrf_token %}
-    {% render_table tbl_libraries %}
+    {% render_table tbl_repositories %}
     <div class="modal-footer">
       <button type="submit" class="btn btn-default" name="button" value="apply"> Apply settings</button>
     </div>

@@ -8,6 +8,20 @@ from hub.models import VCToken
 from hub.models import VCProject
 from hub.models import VCProjectProjectBinding 
 
+class ReposColumn(tables.Column):
+    def render(self, record):
+        return format_html(record.token.repository.url)#",".join(map(lambda b: str(b.project), record.vcprojectprojectbindings)))
+
+class T_REPOSITORY_CLONE(tables.Table):
+    repos = ReposColumn(verbose_name = 'Repositories', empty_values = (), orderable = False)
+    def render_id(self, record):
+        st = 'checked' if record else '' #FIXME: cloned?
+        return format_html("<input type='checkbox' name='clone_repository_id' value='%s' %s>" % (record.id, st))
+    class Meta:
+        model = VCRepository
+        fields = ('id', 'repos', 'project_name')
+        sequence = ('id', 'repos', 'project_name')
+        attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
 
 def s_column(project):
     lookup = dict([ (b.vcproject, b.id) for b in VCProjectProjectBinding.objects.filter(project = project) ])

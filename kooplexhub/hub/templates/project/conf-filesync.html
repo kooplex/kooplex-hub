@@ -1,21 +1,7 @@
 {% load render_table from django_tables2 %}
 <form id="projectSettingsForm" class="form-horizontal form-control" action="{% url 'project:conf_filesync' project.id next_page %}" method="post">
   {% csrf_token %}
-  <div class="row">
-	  <div class="col-md-9"> 
-		  <h5 class="card-title"> Refresh your libraries.</h5>
-		  <h6 class="card-subtitle mb-2 text-muted">Bind libraries to this project</h6>
-	  </div>
-          <div class="col-md-3">
-            Currently connected apps:
-              <img src="/static/content/logos/seafile.png" alt="SeaFile" height="50px">
-          </div>
-  </div>
-  {% for t in user.profile.fstokens %}
-    <a href="{% url 'project:fsrefresh' t.id project.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Last updated: {{ t.last_used }}" data-placement="top">Refresh {{ t.syncserver.url }}</a> <br>
-  {% endfor %}
-
-  
+  <h5>Connect libraries to projects</h5>
   <div  class="alert alert-warning">
     <input type="text" name="library" placeholder="library" value="{{ search_library }}">
     <button type="submit" class="btn btn-primary" name="button" value="search">Search</button>

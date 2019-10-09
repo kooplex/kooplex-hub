@@ -19,7 +19,7 @@ class FormReport(forms.ModelForm):
 
     class Meta:
         model = Report
-        fields = [ 'name', 'folder', 'description', 'reporttype', 'index', 'image', 'password', 'directory_name' ]
+        fields = [ 'name', 'folder', 'description', 'reporttype', 'index', 'image', 'scope', 'password', 'directory_name' ]
         labels = {
             'name': _('The name of your report'),
             'description': _('A short description'),

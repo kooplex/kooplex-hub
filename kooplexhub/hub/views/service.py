@@ -20,10 +20,11 @@ from kooplex.lib import now
 #from hub.forms import table_volume
 #from hub.forms import table_vcproject
 from hub.forms import T_FSLIBRARY_SYNC
+from hub.forms import T_REPOSITORY_CLONE
 #from hub.models import Project, UserProjectBinding, Volume
 #from hub.models import Image
 #from hub.models import Profile
-#from hub.models import VCToken, VCProject, VCProjectProjectBinding, ProjectContainerBinding
+from hub.models import VCToken, VCProject#, VCProjectProjectBinding, ProjectContainerBinding
 from hub.models import FSToken, FSLibrary#, FSLibraryProjectBinding#, ProjectContainerBinding
 #
 #from django.utils.safestring import mark_safe
@@ -128,6 +129,27 @@ def fs_commit(request):
     return redirect('service:filesync')
 
 
+
+@login_required
+def versioncontrol(request):
+    user = request.user
+    messages.error(request, "not implemented fully yet")
+    logger.debug("user %s" % user)
+    vc_tokens = VCToken.objects.filter(user = user)  #FIXME: user.profile.vctokens HASZNALJUK VALAHOL
+    pattern = request.POST.get('repository', '')
+    repositories = VCProject.f_user(user = user) if pattern == '' else VCProject.f_user_namelike(user = user, l = pattern)
+    tbl_repositories = T_REPOSITORY_CLONE(repositories)
+    RequestConfig(request).configure(tbl_repositories)
+    context_dict = {
+        'next_page': 'service:versioncontrol',
+        'menu_service': 'active',
+        'submenu': 'versioncontrol',
+        'vc_tokens': vc_tokens,
+        'tbl_repositories': tbl_repositories,
+        'search_repo': pattern,
+    }
+    return render(request, 'service/versioncontrol.html', context = context_dict)
+
 def nothing(request):
     messages.error(request, 'NOT IMPLEMETED YET')
     return redirect('indexpage')
@@ -138,6 +160,9 @@ urlpatterns = [
     url(r'^fs_refresh/(?P<token_id>\d+)', fs_refresh, name = 'fs_refresh'), 
     url(r'^fs_commit', fs_commit, name = 'commit_sync'), 
 
-    url(r'^versioncontrol', nothing, name = 'versioncontrol'), 
+    url(r'^versioncontrol', versioncontrol, name = 'versioncontrol'), 
+    url(r'^vc_search', nothing, name = 'vc_search'), 
+    url(r'^vc_refresh/(?P<token_id>\d+)', nothing, name = 'vc_refresh'), 
+    url(r'^commit_repo', nothing, name = 'commit_repo'), 
 ]
 
