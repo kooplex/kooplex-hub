@@ -1,5 +1,6 @@
 {% extends "layout.html" %}
 
+
 {% block submenu %}
 <div class="navbar navbar-expand-lg navbar-light bg-light">
   <h5><span class="badge badge-secondary">New report</span></h5>
@@ -7,7 +8,7 @@
 {% endblock %}
 
   {% block main_content_center %}
-  <form id="newreportForm" class="form-horizontal form-control" action="{% url 'report:new' %}" method="post">
+  <form id="newreportForm" class="form-horizontal form-control" action="{% url 'report:new' %}" data-files-url="{% url 'report:ajax_load_files' %}" method="post">
     {% csrf_token %}
     <table>
       {{ f_report.as_table }}
@@ -27,5 +28,42 @@
           <li><span class="badge badge-pill badge-warning">API</span> - a served host application with functional endpoints</li>
           <li><span class="badge badge-pill badge-primary">BOKEH</span> - bokeh application</li>
   </ul>
+  {% endblock %}
+
+
+    {% block scripts %}
+<script>
+	// Load files for the chosen folder
+    $("#id_folder").change(function () {
+      var url = $("#newreportForm").attr("data-files-url");  // get the url of the `load_files` view
+      var folder_name = $(this).val();  // get the selected folder name from the HTML input
+
+      $.ajax({                       // initialize an AJAX request
+        url: url,                    // set the url of the request (= localhost:8000/hr/ajax/load-files/)
+        data: {
+          'folder': folder_name       // add the folder name to the GET parameters
+        },
+        success: function (data) {   // `data` is the return of the `load_files` view function
+          $("#id_index").html(data);  // replace the contents of the file input with the data that came from the server
+        }
+      });
+
+    });
+    
+      var url = $("#newreportForm").attr("data-files-url");  // get the url of the `load_files` view
+      var folder_name = $("#id_folder").val();  // get the selected folder name from the HTML input
+
+      $.ajax({                       // initialize an AJAX request
+        url: url,                    // set the url of the request (= localhost:8000/hr/ajax/load-files/)
+        data: {
+          'folder': folder_name       // add the folder name to the GET parameters
+        },
+        success: function (data) {   // `data` is the return of the `load_files` view function
+          $("#id_index").html(data);  // replace the contents of the file input with the data that came from the server
+        }
+      });
+
+    
+</script>
   {% endblock %}
 

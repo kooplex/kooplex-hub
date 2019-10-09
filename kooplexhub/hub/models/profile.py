@@ -114,13 +114,14 @@ class Profile(models.Model):
             if os.path.isdir(os.path.join(dir_reportprepare, d)):
                 yield d
  
-    def files_reportprepare(self):
+    def files_reportprepare(self, folder_name):
         dir_prefix = Dirname.reportprepare(self.user)
         dirs = self.dirs_reportprepare()
         for d in dirs:
-            for f in os.listdir("%s/%s"%(dir_prefix, d)):
-                if f.endswith('.ipynb') or f.endswith('.html') or f.endswith('.py'):
-                    yield f
+            if d == folder_name:
+                for f in os.listdir("%s/%s"%(dir_prefix, d)):
+                    if f.endswith('.ipynb') or f.endswith('.html') or f.endswith('.py'):
+                       yield f
 
     @property
     def functional_volumes(self):
