@@ -1,6 +1,7 @@
 
 from .vc_github import list_projects as lp_gh
 from .vc_gitlab import list_projects as lp_gl
+from .vc_gitea import list_projects as lp_gt
 
 def list_projects(vctoken):
     repository = vctoken.repository
@@ -8,6 +9,8 @@ def list_projects(vctoken):
         return lp_gh(vctoken)
     elif repository.backend_type == repository.TP_GITLAB:
         return lp_gl(vctoken)
+    elif repository.backend_type == repository.TP_GITEA:
+        return lp_gt(vctoken)
     else:
         raise NotImplementedError("Unknown version control system type: %s" % vctoken.type)
 
