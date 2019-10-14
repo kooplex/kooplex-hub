@@ -8,8 +8,10 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.shortcuts import redirect, render
 from django_tables2 import RequestConfig
+from django.views.generic import ListView, CreateView, UpdateView
+from django.urls import reverse_lazy
 
-
+from hub.models import Image
 from hub.models import Report, Container
 from hub.forms import FormReport
 
@@ -37,12 +39,15 @@ def newreport(request):#, next_page):
         try:
             reporttype = request.POST['reporttype']
             index = request.POST['index'] if reporttype != Report.TP_BOKEH else ''
+            image_id = request.POST['image']
+            image = Image.objects.get(id = image_id) if image_id != 'None' else 1
             Report.objects.create(
                 name = request.POST['name'],
                 creator = user,
                 description = request.POST['description'], 
                 reporttype = reporttype,
                 index = index,
+                image = image,
                 folder = request.POST['folder'],
                 password = request.POST['password'] if 'password' in request.POST else '',
                 directory_name = request.POST['directory_name'] if 'directory_name' in request.POST else '',
@@ -55,9 +60,15 @@ def newreport(request):#, next_page):
     else:
         return redirect('indexpage')
 
+def load_files(request):
+    user = request.user
+    folder_name = request.GET.get('folder')
+    files = list(user.profile.files_reportprepare(folder_name))
+    logger.debug("report file %s" % (files[0]))
+    return render(request, 'report/newreport_files_dropdown.html', context = { 'files': files })
 
 #@login_required
-def listreport(request):#, next_page):
+def listreport(request, files = []):#, next_page):
     """Renders new report list."""
     user = request.user
     logger.debug("user %s, method: %s" % (user, request.method))
@@ -75,6 +86,7 @@ def listreport(request):#, next_page):
         'menu_report': 'active',
         'next_page': 'indexpage', #next_page,
         'report_cats' : report_cats,
+        'files' : files,
     }
     return render(request, 'report/list.html', context = context_dict)
 
@@ -158,4 +170,7 @@ urlpatterns = [
     url(r'^filter_reports/?$', listreport, name = 'filter_reports'),
     url(r'^openreport/(?P<report_id>\d+)$', openreport, name = 'openreport'),
     url(r'^deletereport/(?P<report_id>\d+)$', deletereport, name = 'deletereport'), 
-]
+
+    url(r'^load_files/?$', load_files, name = 'ajax_load_files'),  
+
+ ]

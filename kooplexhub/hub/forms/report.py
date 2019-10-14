@@ -19,7 +19,7 @@ class FormReport(forms.ModelForm):
 
     class Meta:
         model = Report
-        fields = [ 'name', 'folder', 'description', 'reporttype', 'index', 'image', 'scope', 'password', 'directory_name' ]
+        fields = [ 'name', 'description', 'reporttype', 'folder', 'index', 'image', 'scope', 'password', 'directory_name' ]
         labels = {
             'name': _('The name of your report'),
             'description': _('A short description'),
@@ -36,18 +36,22 @@ class FormReport(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         super(FormReport, self).__init__(*args, **kwargs)
+        self.fields['image'].empty_label = None
         self.fields["description"].widget.attrs["rows"] = 3
         self.fields["description"].widget.attrs["cols"] = 20
         folders = list(user.profile.dirs_reportprepare())
-        files = list(user.profile.files_reportprepare())
+        files = []
+        #files = list(user.profile.files_reportprepare())
         if len(folders):
             C_folder = zip(folders, folders)
             self.fields["folder"].choices = C_folder
-            self.fields["folder"].widget.attrs["style"] = "width: 27ex"
-        if len(files):
-            C_files = zip(files, files)
-            self.fields["index"].choices = C_files
-            self.fields["index"].widget.attrs["style"] = "width: 27ex"
+        #if len(files):
+        #    C_files = zip(files, files)
+        #    self.fields["index"].choices = C_files
+        #    self.fields["index"].widget.attrs["style"] = "width: 27ex"
+        for field in self.fields.keys():
+            self.fields[field].widget.attrs["class"] = "form-control"
+
         for field in self.fields:
             help_text = self.fields[field].help_text
             self.fields[field].help_text = None

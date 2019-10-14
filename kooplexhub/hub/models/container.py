@@ -212,7 +212,7 @@ class Container(models.Model):
             logger.debug("ReportContainer for report %s does not exist" % report)
         if create:
             containername = "report-%s-%s-%s" % (report.creator.username, report.cleanname, report.ts_human.replace(':', '').replace('_', ''))
-            container = Container.objects.create(name = containername, user = report.creator)
+            container = Container.objects.create(name = containername, user = report.creator, image=report.image)
             ReportContainerBinding.objects.create(report = report, container = container)
             logger.debug("new container in db %s" % container)
             return container 
@@ -296,6 +296,7 @@ def container_state_change(sender, instance, **kwargs):
     from kooplex.lib import Docker
     from kooplex.lib.proxy import addroute, removeroute
     is_new = instance.id is None
+    logger.debug("DDDD %s"%instance.image)
     old_instance = Container() if is_new else Container.objects.get(id = instance.id)
     msg = "%s %s" % (instance.id, is_new)
     if not is_new and instance.state == old_instance.state:
