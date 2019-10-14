@@ -11,9 +11,6 @@ from django_tables2 import RequestConfig
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Q
 
-from kooplex.lib import list_projects
-from kooplex.lib import list_libraries
-from kooplex.lib import now
 
 from hub.forms import FormProject
 from hub.forms import table_collaboration, T_JOINABLEPROJECT
@@ -23,8 +20,8 @@ from hub.forms import table_fslibrary
 from hub.models import Project, UserProjectBinding, Volume
 from hub.models import Image
 from hub.models import Profile
-from hub.models import VCToken, VCProject, VCProjectProjectBinding, ProjectContainerBinding
-from hub.models import FSToken, FSLibrary, FSLibraryProjectBinding#, ProjectContainerBinding
+from hub.models import VCProject, VCProjectProjectBinding, ProjectContainerBinding
+from hub.models import FSLibrary, FSLibraryProjectBinding#, ProjectContainerBinding
 
 from django.utils.safestring import mark_safe
 
@@ -320,7 +317,8 @@ def conf_versioncontrol(request, project_id, next_page):
     elif (request.method == 'POST' and request.POST.get('button') == 'search') or request.method == 'GET':
         t = table_vcproject(project)
         pattern = request.POST.get('repository', '')
-        table_vcp = t(VCProject.f_user(user = user)) if pattern == '' else t(VCProject.f_user_namelike(user = user, l = pattern))
+        qs = VCProject.objects.filter(token__user = user, cloned = True) if pattern == '' else VCProject.objects.filter(token__user = user, cloned = True, project_name__icontains = pattern)
+        table_vcp = t(qs)
         RequestConfig(request).configure(table_vcp)
         context_dict = {
             'project': project, 
@@ -379,7 +377,7 @@ def conf_filesync(request, project_id, next_page):
     elif (request.method == 'POST' and request.POST.get('button') == 'search') or request.method == 'GET':
         t = table_fslibrary(project)
         pattern = request.POST.get('library', '')
-        table_fsl = t(FSLibrary.f_user(user = user)) if pattern == '' else t(FSLibrary.f_user_namelike(user = user, l = pattern))
+        table_fsl = t(FSLibrary.objects.filter(token__user = user)) if pattern == '' else t(FSLibrary.objects.filter(token__user = user, library_name__icontains = pattern))
         RequestConfig(request).configure(table_fsl)
         context_dict = {
             'project': project, 
@@ -473,44 +471,39 @@ def hide(request, project_id, next_page):
     return redirect(next_page)
 
 
+
 @login_required
-def vcrefresh(request, token_id, project_id):
-    """Refresh users version control repository projects."""
-    user = request.user
-    logger.debug("user %s (project_id %s)" % (user, project_id))
-    try:
-        now_ = now()
-        token = VCToken.objects.get(user = user, id = token_id)
-        old_list = list(VCProject.objects.filter(token = token))
-        cnt_new = 0
-        cnt_del = 0
-        for p_name in list_projects(token):
-            try:
-                p = VCProject.objects.get(token = token, project_name = p_name)
-                p.last_seen = now_
-                p.save()
-                old_list.remove(p)
-                logger.debug('still present: %s' % p_name)
-            except VCProject.DoesNotExist:
-                VCProject.objects.create(token = token, project_name = p_name)
-                logger.debug('inserted present: %s' % p_name)
-                cnt_new += 1
-        while len(old_list):
-            p = old_list.pop()
-            p.remove()
-            logger.debug('removed: %s' % p.project_name)
-            cnt_del += 1
-        if cnt_new:
-            messages.info(request, "%d new project items found" % cnt_new)
-        if cnt_del:
-            messages.warning(request, "%d project items removed" % cnt_del)
-        token.last_used = now_
-        token.save()
-    except VCToken.DoesNotExist:
-        messages.error(request, "System abuse")
-    return redirect('project:conf_versioncontrol', project_id, 'project:list')
+def stat(request):
+    logger.debug('Printing stats')
+    from pandas import DataFrame 
+    from django_pandas.io import read_frame
 
+    uprojects = UserProjectBinding.objects.all()
+    if len(list(uprojects)) == 0:
+        df_uprojects = DataFrame()
+    else:
+        try:
+            df_uprojects = read_frame(uprojects)
+            df_p_count = df_uprojects.groupby(['project']).count().drop(['is_hidden', 'id', 'role'], axis=1)#, values='score')
+        except Exception as e:
+            logger.error("Invalid request with ??? %s"% e)
 
+    from hub.models import UserCourseBinding
+    ucourses = UserCourseBinding.objects.all()
+    if len(list(uprojects)) == 0:
+        df_ucourses = DataFrame()
+    else:
+        try:
+            df_ucourses = read_frame(ucourses)
+            df_c_count = df_ucourses.groupby(['course']).count().drop(['id', 'is_teacher', 'is_protected'], axis=1)
+        except Exception as e:
+            logger.error("Invalid request with ??? %s"% e)
+    context_dict = {
+            'uprojects': df_p_count.to_html(table_id='datatable', col_space=100),
+            'ucourses': df_c_count.to_html(table_id='datatable', col_space=100),
+
+        }
+    return render(request, 'project/statistics.html', context = context_dict)
 
 urlpatterns = [
     url(r'^list', listprojects, name = 'list'), 
@@ -522,9 +515,9 @@ urlpatterns = [
     url(r'^configure/(?P<project_id>\d+)/storage/(?P<next_page>\w+:?\w*)$', conf_voldata, name = 'conf_storage'), 
     url(r'^configure/(?P<project_id>\d+)/versioncontrol/(?P<next_page>\w+:?\w*)$', conf_versioncontrol, name = 'conf_versioncontrol'), 
     url(r'^configure/(?P<project_id>\d+)/filesync/(?P<next_page>\w+:?\w*)$', conf_filesync, name = 'conf_filesync'), 
-    url(r'^vcrefresh/(?P<token_id>\d+)/(?P<project_id>\d+)$', vcrefresh, name = 'vcrefresh'), 
     url(r'^delete/(?P<project_id>\d+)/(?P<next_page>\w+:?\w*)$', delete_leave, name = 'delete'), 
     url(r'^show/(?P<next_page>\w+:?\w*)$', show_hide, name = 'showhide'),
     url(r'^hide/(?P<project_id>\d+)/(?P<next_page>\w+:?\w*)$', hide, name = 'hide'), 
+    url(r'^stat', stat, name = 'stat'), 
 ]
 

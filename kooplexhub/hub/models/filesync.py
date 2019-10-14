@@ -60,18 +60,6 @@ class FSLibrary(models.Model):
         for b in FSLibraryProjectBinding.objects.filter(fslibrary = self):
             yield b
 
-    @staticmethod
-    def f_user(user):
-        for l in FSLibrary.objects.all():
-            if l.token.user == user:
-                yield l
-
-    @staticmethod
-    def f_user_namelike(user, l):
-        for l in FSLibrary.objects.filter(models.Q(library_name__icontains = l)):
-            if l.token.user == user:
-                yield l
-
     
 class FSLibraryProjectBinding(models.Model):
     project = models.ForeignKey(Project, null = False)

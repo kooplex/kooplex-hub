@@ -1,32 +1,20 @@
-{% load render_table from django_tables2 %}
+{% block main_content_left %}
+  <form id="vcFilterRepoForm" class="form-horizontal form-control" action="{% url 'project:conf_versioncontrol' project.id next_page %}" method="post">
+    <h5>Search repository</h5>
+    {% csrf_token %}
+    <div  class="alert alert-warning">
+      <input type="text" name="repository" placeholder="repository" value="{{ search_repository }}">
+      <button type="submit" class="btn btn-primary" name="button" value="apply"> Search</button>
+    </div>
+  </form>
+{% endblock %}
+
+{% block main_content_center %}
+
 <form id="projectSettingsForm" class="form-horizontal form-control" action="{% url 'project:conf_versioncontrol' project.id next_page %}" method="post">
   {% csrf_token %}
-  <div class="row">
-	  <div class="col-md-9">
-               <h5 class="card-title">Refresh information about your version control repositories.</h5>
-                    <h6 class="card-subtitle mb-2 text-muted">Bind version control repositories to this project </h6>
-          
-              
-	  </div>
-	  <div class="col-md-3">
-		  Currently connected apps:</br>
-		  <!-- FIXME -->
-           <img src="/static/content/logos/github.png" alt="Github" height="50px">
-           <img src="/static/content/logos/gitlab.png" alt="GitLab" height="50px" style="opacity: 0.5; background: #CCC;">
-           <img src="/static/content/logos/gitea.png" alt="Gitea" height="50px" style="opacity: 0.5; background: #CCC;">
-          </div>
-   </div>
-               {% for t in user.profile.vctokens %}
-                 <a href="{% url 'project:vcrefresh' t.id project.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Last updated: {{ t.last_used }}" data-placement="top">Refresh {{ t.repository.url }}</a> <br>
-               {% endfor %}
-       <div  class="alert alert-warning">
-         <input type="text" name="repository" placeholder="repository" value="{{ search_repository }}">
-         <button type="submit" class="btn btn-primary" name="button" value="search">Search</button>
-         <input type="hidden" name="pager" value="{{ pager }}">
-         <input type="hidden" name="sort" value="{{ sort }}">
-       </div>
+    <h5>Bind version control repositories to this project</h5>
      {% load render_table from django_tables2 %}
-     
      {% render_table t_vcp %}
 
      <div class="modal-footer">
@@ -34,3 +22,4 @@
        <button class="btn btn-default" data-dismiss="modal" name="button" value="cancel">Cancel</button>
      </div>
 </form>
+{% endblock %}

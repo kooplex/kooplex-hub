@@ -15,8 +15,10 @@ class ReposColumn(tables.Column):
 class T_REPOSITORY_CLONE(tables.Table):
     repos = ReposColumn(verbose_name = 'Repositories', empty_values = (), orderable = False)
     def render_id(self, record):
-        st = 'checked' if record else '' #FIXME: cloned?
-        return format_html("<input type='checkbox' name='clone_repository_id' value='%s' %s>" % (record.id, st))
+        if record.cloned:
+            return format_html('rm <input type="checkbox" name="removecache" value="{}" data-toggle="toggle" data-on="Clone" data-off="Skip" data-onstyle="success" data-offstyle="default"'.format(record.id))
+        else:
+            return format_html('clone <input type="checkbox" name="clone" value="{}" data-toggle="toggle" data-on="Remove" data-off="Skip" data-onstyle="danger" data-offstyle="default">'.format(record.id))
     class Meta:
         model = VCRepository
         fields = ('id', 'repos', 'project_name')

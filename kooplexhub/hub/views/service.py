@@ -11,7 +11,7 @@ from django_tables2 import RequestConfig
 #from django.utils.translation import gettext_lazy as _
 #from django.db.models import Q
 #
-#from kooplex.lib import list_projects
+from kooplex.lib import list_projects, impersonator_clone, impersonator_removecache
 from kooplex.lib import list_libraries, impersonator_sync
 from kooplex.lib import now
 #
@@ -38,7 +38,7 @@ def filesynchronization(request):
     logger.debug("user %s" % user)
     fs_tokens = FSToken.objects.filter(user = user)
     pattern = request.POST.get('library', '')
-    libraries = FSLibrary.f_user(user = user) if pattern == '' else FSLibrary.f_user_namelike(user = user, l = pattern)
+    libraries = FSLibrary.objects.filter(token__user = user) if pattern == '' else FSLibrary.objects.filter(token__user = user, library_name__icontains = pattern)
     tbl_libraries = T_FSLIBRARY_SYNC(libraries)
     RequestConfig(request).configure(tbl_libraries)
     context_dict = {
@@ -75,7 +75,7 @@ def fs_refresh(request, token_id):
                 cnt_new += 1
         while len(old_list):
             l = old_list.pop()
-            l.remove()
+            l.delete()
             logger.debug('removed: %s' % l.library_name)
             cnt_del += 1
         if cnt_new:
@@ -137,7 +137,7 @@ def versioncontrol(request):
     logger.debug("user %s" % user)
     vc_tokens = VCToken.objects.filter(user = user)  #FIXME: user.profile.vctokens HASZNALJUK VALAHOL
     pattern = request.POST.get('repository', '')
-    repositories = VCProject.f_user(user = user) if pattern == '' else VCProject.f_user_namelike(user = user, l = pattern)
+    repositories = VCProject.objects.filter(token__user = user) if pattern == '' else VCProject.objects.filter(token__user = user, project_name__icontains = pattern)
     tbl_repositories = T_REPOSITORY_CLONE(repositories)
     RequestConfig(request).configure(tbl_repositories)
     context_dict = {
@@ -150,6 +150,82 @@ def versioncontrol(request):
     }
     return render(request, 'service/versioncontrol.html', context = context_dict)
 
+@login_required
+def vc_refresh(request, token_id):
+    """Refresh users version control repositories."""
+    user = request.user
+    logger.debug("user %s" % user)
+    try:
+        now_ = now()
+        token = VCToken.objects.get(user = user, id = token_id)
+        old_list = list(VCProject.objects.filter(token = token))
+        cnt_new = 0
+        cnt_del = 0
+        for p_name in list_projects(token):
+            try:
+                p = VCProject.objects.get(token = token, project_name = p_name)
+                p.last_seen = now_
+                p.save()
+                old_list.remove(p)
+                logger.debug('still present: %s' % p_name)
+            except VCProject.DoesNotExist:
+                VCProject.objects.create(token = token, project_name = p_name)
+                logger.debug('inserted present: %s' % p_name)
+                cnt_new += 1
+        while len(old_list):
+            p = old_list.pop()
+            p.delete()
+            logger.debug('removed: %s' % p.project_name)
+            cnt_del += 1
+        if cnt_new:
+            messages.info(request, "%d new project items found" % cnt_new)
+        if cnt_del:
+            messages.warning(request, "%d project items removed" % cnt_del)
+        token.last_used = now_
+        token.save()
+    except VCToken.DoesNotExist:
+        messages.error(request, "System abuse")
+    except Exception as e:
+        messages.error(request, "System abuse -- %s" % e)
+    return redirect('service:versioncontrol')
+
+
+@login_required
+def vc_commit(request):
+    user = request.user
+    logger.debug("user %s" % user)
+    request_clone = request.POST.getlist('clone')
+    request_rmcache = request.POST.getlist('removecache')
+    n_clone = 0
+    n_rmcache = 0
+    for r_id in request_clone:
+        try:
+            r = VCProject.objects.get(token__user = user, cloned = False, id = r_id)
+            impersonator_clone(r)
+            r.cloned = True
+            r.save()
+            n_clone += 1
+        except Exception as e:
+            logger.error(e)
+            raise #FIXME
+    for r_id in request_rmcache:
+        try:
+            r = VCProject.objects.get(token__user = user, cloned = True, id = r_id)
+            impersonator_removecache(r)
+            r.cloned = False
+            r.save()
+            n_rmcache += 1
+        except Exception as e:
+            logger.error(e)
+            raise #FIXME
+    if n_clone:
+        messages.info(request, "{} version control projects cloned".format(n_clone))
+    if n_rmcache:
+        messages.info(request, "{} version control project folders removed".format(n_rmcache))
+    return redirect('service:versioncontrol')
+
+
+
 def nothing(request):
     messages.error(request, 'NOT IMPLEMETED YET')
     return redirect('indexpage')
@@ -161,8 +237,8 @@ urlpatterns = [
     url(r'^fs_commit', fs_commit, name = 'commit_sync'), 
 
     url(r'^versioncontrol', versioncontrol, name = 'versioncontrol'), 
-    url(r'^vc_search', nothing, name = 'vc_search'), 
-    url(r'^vc_refresh/(?P<token_id>\d+)', nothing, name = 'vc_refresh'), 
-    url(r'^commit_repo', nothing, name = 'commit_repo'), 
+    url(r'^vc_search', versioncontrol, name = 'vc_search'), 
+    url(r'^vc_refresh/(?P<token_id>\d+)', vc_refresh, name = 'vc_refresh'), 
+    url(r'^vc_clone', vc_commit, name = 'commit_repo'), 
 ]
 

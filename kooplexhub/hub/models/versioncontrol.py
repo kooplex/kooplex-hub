@@ -42,6 +42,7 @@ class VCProject(models.Model):
     token = models.ForeignKey(VCToken, null = False)
     project_name = models.CharField(max_length = 512, null = False)
     last_seen = models.DateTimeField(auto_now_add = True)
+    cloned = models.BooleanField(default = False)
 
     def __str__(self):
         return "VCProject %s/%s" % (self.token.repository.url, self.project_name)
@@ -64,18 +65,6 @@ class VCProject(models.Model):
     def vcprojectprojectbindings(self):
         for vcpb in VCProjectProjectBinding.objects.filter(vcproject = self):
             yield vcpb
-
-    @staticmethod
-    def f_user(user):
-        for vcp in VCProject.objects.all():
-            if vcp.token.user == user:
-                yield vcp
-
-    @staticmethod
-    def f_user_namelike(user, l):
-        for vcp in VCProject.objects.filter(models.Q(project_name__icontains = l)):
-            if vcp.token.user == user:
-                yield vcp
 
     
 class VCProjectProjectBinding(models.Model):
