@@ -9,15 +9,25 @@
 {% endblock %}
 
 {% block main_content_center %}
+<h2> Service Tokens</h2>
 <form class="form-horizontal" action="{% url 'user:managetokens' next_page %}" method="post">
   {% csrf_token %}
+<h4> Notebook servers</h4>
   <p>You can request a new token to access your notebook servers:
     <button class="btn btn-danger" name="button" value="reset_notebook_token">Reset token</button>
   </p>
-  <p>You can request a new token to access seafile server:
-    <button class="btn btn-danger" name="button" value="reset_seaf_token">Reset token</button>
+<h4> Seafile</h4>
+<p> In order to start using Seafile services: 
+<ul>
+	<li>First you need to <a href="/seafile/" rel="noreferrer" target="blank">login to Seafile <span class="oi oi-external-link" aria-hidden="true"></a></li>
+	<li>Second you needto create a new token to access seafile server:
+		<button class="btn btn-danger" name="button" value="reset_seaf_token">New/Reset token</button></li>
+</ul>
   </p>
-  <p>List of your version control system tokens:</p>
+<h2> Version control Tokens</h2>
+<ul>
+	<li><a href="https://kooplex-test.elte.hu/manual/ExternalComponents/index.html">How to create token? <span class="oi oi-external-link" aria-hidden="true"></a></li>
+</ul>
     {% render_table t_vctoken %}
   </p>
   <div class="modal-footer">

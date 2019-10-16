@@ -31,7 +31,6 @@
 
 {% endblock %}
 
-{!% block content %}
 {% block main_content_center %}
    <div class="jumbotron" style="box-shadow: 5px 10px 8px #888888; padding: 10px;">
      <div class="row">
@@ -79,70 +78,6 @@
      </div>
    </div>
    
-   <!-- Manual -->
-   <div class="row">
-   
-     <div class="card" style="width: 25%;">
-       <div class="card-body">
-         <h5 class="card-title">Login </h5>
-         <p class="card-text">Users can choose from several login methods. At the moment it is not possible to connect accounts created with different identity providers.</p>
-         <a href="{% url 'manual:login' %}" class="btn btn-primary">Read more</a>
-   
-       </div>
-     </div>
-     
-     <div class="card" style="width: 25%;">
-       <div class="card-body">
-         <h5 class="card-title">Projects and collaboration</h5>
-         <p class="card-text">Users can create projects and invite other users to collaborate.</p>
-         <a href="{% url 'manual:projects' %}" class="btn btn-primary">Read more</a>
-       </div>
-     </div>
-   
-     <div class="card" style="width: 25%;">
-       <div class="card-body">
-         <h5 class="card-title">Reports</h5>
-         <p class="card-text">Reports are a good way to present our results or create interactive pages that others can learn from. </p>
-         <a href="{% url 'manual:reports' %}" class="btn btn-primary">Read more</a>
-       </div>
-     </div>
-   
-     <div class="card" style="width: 25%;">
-       <div class="card-body">
-         <h5 class="card-title">Folder structure</h5>
-         <p class="card-text">There are permanent private folders, project related shared folders and folders that are connected to services (Slurm, Github etc) </p>
-         <a href="{% url 'manual:folder' %}" class="btn btn-primary">Read more</a>
-       </div>
-     </div>
-   </div>
-   
-   <div class="row">
-     <div class="card" style="width: 50%;">
-       <div class="card-body">
-         <h5 class="card-title">Main concepts</h5>
-         <p class="card-text"> Kooplex consists of many components that might be useful to understand if the user want to make use of all capabilities. </p>
-         <a href="{% url 'manual:concepts' %}" class="btn btn-primary">Read more</a>
-       </div>
-     </div>
-   
-     <div class="card" style="width: 50%;">
-       <div class="card-body">
-         <h5 class="card-title">Known issues</h5>
-         <p class="card-text">Please read this short list of workarounds or problematic issues!</p>
-         <a href="{% url 'manual:issues' %}" class="btn btn-primary">Read more</a>
-       </div>
-     </div>
-   </div>
-   
-   <div class="row">
-     <div class="card" style="width: 100%">
-       <div class="card-body">
-         <h5 class="card-title">Compute nodes</h5>
-         <p class="card-text"> There is a workload manager (SLURM) to which users can submit computationally intensive jobs.</p>
-         <a href="{% url 'manual:compute' %}" class="btn btn-primary">Read more</a>
-       </div>
-     </div>
-   </div>
-   {% endblock %}
- 
+ {% endblock %}
+
 {% block main_content_right %}{% endblock %}
