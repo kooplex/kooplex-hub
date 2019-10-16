@@ -1,7 +1,13 @@
+import requests
+import requests.auth
+import logging
 
 from .vc_github import list_projects as lp_gh
 from .vc_gitlab import list_projects as lp_gl
 from .vc_gitea import list_projects as lp_gt
+
+
+logger = logging.getLogger(__name__)
 
 def list_projects(vctoken):
     repository = vctoken.repository
@@ -22,9 +28,20 @@ def impersonator_clone(vcproject):
     except ConnectionError:
         logger.critical('impersonator API is not running')
         raise
-    url = '{}/api/versioncontrol/clone/{}/{}'.format(url_base, vcproject.token.user.username) #FIXME: api signature not complete
+    rs = vcproject.repository #FIXME: modify model!!!
+    port = 222
+    srv = rs.split('/')[-2]
+    be = 'gitea'
+    params = {
+        'server': srv,
+        'port': 222,
+        'project': vcproject.project_name,
+        'prefix': be, 
+        'username': vcproject.token.user.username,
+            }
+    url = '{}/api/versioncontrol/clone'.format(url_base)
     try:
-        resp_info = requests.get(url, auth = A)
+        resp_info = requests.get(url, auth = A, params = params)
         rj = resp_info.json()
         if 'error' in rj:
             logger.warning('error to clone {} for user {} -- daemon response: {}'.format(vcproject, vcproject.token.user.username, rj))
@@ -39,7 +56,7 @@ def impersonator_removecache(vcproject):
     except ConnectionError:
         logger.critical('impersonator API is not running')
         raise
-    url = '{}/api/versioncontrol/removecache/{}/{}'.format(url_base, vcproject.token.user.username) #FIXME: api signature not complete
+    url = '{}/api/versioncontrol/removecache/{}/{}'.format(url_base, vcproject.token.user.username, vcproject.project_name.split('/')[-1]) #FIXME: api signature not complete
     try:
         resp_info = requests.get(url, auth = A)
         rj = resp_info.json()

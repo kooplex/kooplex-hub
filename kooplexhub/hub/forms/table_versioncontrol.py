@@ -10,19 +10,29 @@ from hub.models import VCProjectProjectBinding
 
 class ReposColumn(tables.Column):
     def render(self, record):
-        return format_html(record.token.repository.url)#",".join(map(lambda b: str(b.project), record.vcprojectprojectbindings)))
+        repo = record.token.repository
+        if repo.backend_type == repo.TP_GITHUB:
+            return format_html('<img src="/static/content/logos/github.png" alt="github" width="30px">') # FIXME: float url
+        elif repo.backend_type == repo.TP_GITLAB:
+            return format_html('<img src="/static/content/logos/gitlab.png" alt="gitlab" width="30px">') # FIXME: float url
+        elif repo.backend_type == repo.TP_GITEA:
+            return format_html('<img src="/static/content/logos/gitea.png" alt="gitea" width="30px">') # FIXME: float url
+        else:
+            return format_html(record)
 
 class T_REPOSITORY_CLONE(tables.Table):
-    repos = ReposColumn(verbose_name = 'Repositories', empty_values = (), orderable = False)
+    repos = ReposColumn(verbose_name = 'Src', empty_values = (), orderable = False)
     def render_id(self, record):
         if record.cloned:
             return format_html('rm <input type="checkbox" name="removecache" value="{}" data-toggle="toggle" data-on="Clone" data-off="Skip" data-onstyle="success" data-offstyle="default"'.format(record.id))
         else:
             return format_html('clone <input type="checkbox" name="clone" value="{}" data-toggle="toggle" data-on="Remove" data-off="Skip" data-onstyle="danger" data-offstyle="default">'.format(record.id))
+    def render_project_name(self, record):
+        return format_html('<span data-toggle="tooltip" title="{}" data-placement="bottom">{} of {}</span>'.format(record.project_description, record.project_name, record.project_owner))
     class Meta:
         model = VCRepository
-        fields = ('id', 'repos', 'project_name')
-        sequence = ('id', 'repos', 'project_name')
+        fields = ('id', 'repos', 'project_name', 'project_created_at')
+        sequence = ('id', 'repos', 'project_name', 'project_created_at')
         attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
 
 def s_column(project):

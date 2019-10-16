@@ -151,7 +151,10 @@ class VCTokenAdmin(admin.ModelAdmin):
 
 @admin.register(VCProject)
 class VCProjectAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('id', 'repo', 'project_name', 'project_id', 'project_description', 'project_created_at', 'project_updated_at', 'project_fullname', 'project_owner', 'project_ssh_url', 'last_seen', 'cloned')
+    search_fields = ('project_name', 'project_owner', 'token__repository__url', )
+    def repo(self, instance):
+        return instance.token.repository.url
 
 @admin.register(VCProjectProjectBinding)
 class VCProjectProjectBindingAdmin(admin.ModelAdmin):

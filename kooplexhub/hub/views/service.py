@@ -161,21 +161,30 @@ def vc_refresh(request, token_id):
         old_list = list(VCProject.objects.filter(token = token))
         cnt_new = 0
         cnt_del = 0
-        for p_name in list_projects(token):
+        for p_dict in list_projects(token):
             try:
-                p = VCProject.objects.get(token = token, project_name = p_name)
+                p = VCProject.objects.get(token = token, project_id = p_dict['id'])
                 p.last_seen = now_
                 p.save()
                 old_list.remove(p)
-                logger.debug('still present: %s' % p_name)
+                logger.debug('still present: {p[name]} of {p[owner_name]}'.format(p = p_dict))
             except VCProject.DoesNotExist:
-                VCProject.objects.create(token = token, project_name = p_name)
-                logger.debug('inserted present: %s' % p_name)
+                VCProject.objects.create(token = token, 
+                       project_id = p_dict['id'],
+                       project_name = p_dict['name'],
+                       project_description = p_dict['description'],
+                       project_created_at = p_dict['created_at'],
+                       project_updated_at = p_dict['updated_at'],
+                       project_fullname = p_dict['full_name'],
+                       project_owner = p_dict['owner_name'],
+                       project_ssh_url = p_dict['ssh_url']
+                        )
+                logger.debug('inserted present: {p[name]} of {p[owner_name]}'.format(p = p_dict))
                 cnt_new += 1
         while len(old_list):
             p = old_list.pop()
             p.delete()
-            logger.debug('removed: %s' % p.project_name)
+            #logger.debug('removed: {p.project_name} of {p.project_owner}'.format(p = p))
             cnt_del += 1
         if cnt_new:
             messages.info(request, "%d new project items found" % cnt_new)

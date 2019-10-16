@@ -16,7 +16,7 @@ class VCRepository(models.Model):
     TP_GITHUB = 'github'
     TP_GITLAB = 'gitlab'
     TP_GITEA = 'gitea'
-    TYPE_LIST = [ TP_GITHUB, TP_GITLAB, TP_GITEA]
+    TYPE_LIST = [ TP_GITHUB, TP_GITLAB, TP_GITEA ]
 
     url = models.CharField(max_length = 128, null = True)
     backend_type = models.CharField(max_length = 16, choices = [ (x, x) for x in TYPE_LIST ], default = TP_GITHUB)
@@ -41,6 +41,13 @@ class VCToken(models.Model):
 class VCProject(models.Model):
     token = models.ForeignKey(VCToken, null = False)
     project_name = models.CharField(max_length = 512, null = False)
+    project_id = models.IntegerField(null = False)
+    project_description = models.TextField(null = True)
+    project_created_at = models.DateTimeField(null = True)
+    project_updated_at = models.DateTimeField(null = True)
+    project_fullname = models.CharField(max_length = 512, null = False)
+    project_owner = models.CharField(max_length = 512, null = False)
+    project_ssh_url = models.CharField(max_length = 512, null = False)
     last_seen = models.DateTimeField(auto_now_add = True)
     cloned = models.BooleanField(default = False)
 
