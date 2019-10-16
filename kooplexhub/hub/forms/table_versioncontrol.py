@@ -12,11 +12,11 @@ class ReposColumn(tables.Column):
     def render(self, record):
         repo = record.token.repository
         if repo.backend_type == repo.TP_GITHUB:
-            return format_html('<img src="/static/content/logos/github.png" alt="github" width="30px">') # FIXME: float url
+            return format_html('<img src="/static/content/logos/github.png" alt="github" width="30px" data-toggle="tooltip" title="{}" data-placement="bottom">'.format(repo.url))
         elif repo.backend_type == repo.TP_GITLAB:
-            return format_html('<img src="/static/content/logos/gitlab.png" alt="gitlab" width="30px">') # FIXME: float url
+            return format_html('<img src="/static/content/logos/gitlab.png" alt="gitlab" width="30px" data-toggle="tooltip" title="{}" data-placement="bottom">'.format(repo.url))
         elif repo.backend_type == repo.TP_GITEA:
-            return format_html('<img src="/static/content/logos/gitea.png" alt="gitea" width="30px">') # FIXME: float url
+            return format_html('<img src="/static/content/logos/gitea.png" alt="gitea" width="30px" data-toggle="tooltip" title="{}" data-placement="bottom">'.format(repo.url))
         else:
             return format_html(record)
 
