@@ -10,9 +10,9 @@ def s_column(project):
     class SelectColumn(tables.Column):
         def render(self, record):
             if record in lookup.keys():
-                return format_html("<input type='hidden' name='fslpb_ids_before' value='%d'><input type='checkbox' name='fslpb_ids_after' value='%d' checked>" % (lookup[record], lookup[record]))
+                return format_html('<input type="hidden" name="fslpb_ids_before" value="{0}"><input type="checkbox" name="fslpb_ids_after" value="{0}" checked data-toggle="toggle" data-on="Attached" data-off="Detach" data-onstyle="success" data-offstyle="dark" data-size="xs">'.format(lookup[record]))
             else:
-                return format_html("<input type='checkbox' name='fsl_ids' value='%d'>" % (record.id))
+                return format_html('<input type="checkbox" name="fsl_ids" data-toggle="toggle" value="{}" data-on="Attach" data-off="Unused" data-onstyle="success" data-offstyle="dark" data-size="xs">'.format(record.id))
     return SelectColumn
 
 class ProjectsColumn(tables.Column):
@@ -23,7 +23,7 @@ class ProjectsColumn(tables.Column):
 def table_fslibrary(project):
     sc = s_column(project)
     class T_FSLIBRARY(tables.Table):
-        id = sc(verbose_name = 'Select', orderable = False)
+        id = sc(verbose_name = 'Task', orderable = False)
         projects = ProjectsColumn(verbose_name = 'Bound to projects', empty_values = (), orderable = False)
 
         class Meta:

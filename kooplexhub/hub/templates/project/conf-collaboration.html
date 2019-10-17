@@ -1,18 +1,27 @@
+{% extends "project/configure.html" %}
+
+{% block main_content_left %}
 <form id="projectSettingsForm" class="form-horizontal form-control" action="{% url 'project:conf_collaboration' project.id next_page %}" method="post">
-{% load render_table from django_tables2 %}
+  <h5 class="card-title">Search collaborator</h5>
   {% csrf_token %}
 
-  <div>
-	 
-	  <h5 class="card-title">Manage your collaboration  </h5>
-	        <h6 class="card-subtitle mb-2 text-muted"> Collaborators share directories and have access to each other reports</h6>
-
-  </div>
   <div  class="alert alert-warning">
     <input type="text" name="name" placeholder="name" value="{{ search_name }}">
     <button type="submit" class="btn btn-primary" name="button" value="search">Search</button>
     <input type="hidden" name="pager" value="{{ pager }}">
     <input type="hidden" name="sort" value="{{ sort }}">
+  </div>
+{% endblock %}
+
+{% block main_content_center %}
+<form id="projectSettingsForm" class="form-horizontal form-control" action="{% url 'project:conf_collaboration' project.id next_page %}" method="post">
+{% load render_table from django_tables2 %}
+  {% csrf_token %}
+  <div>
+	 
+	  <h5 class="card-title">Manage your collaboration  </h5>
+	        <h6 class="card-subtitle mb-2 text-muted"> Collaborators share directories and have access to each other reports</h6>
+
   </div>
     {% render_table t_collaborators %}
 
@@ -23,3 +32,4 @@
   </div>
 
 </form>
+{% endblock %}

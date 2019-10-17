@@ -1,3 +1,12 @@
+{% extends "project/configure.html" %}
+
+{% block header_extra %}
+{% load staticfiles %}
+
+<link rel="stylesheet" href="{% static 'css/bootstrap4-toggle.min.css' %}">
+<script src="{% static 'scripts/bootstrap4-toggle.min.js' %}"></script>
+{% endblock %}
+
 {% block main_content_left %}
   <form id="vcFilterRepoForm" class="form-horizontal form-control" action="{% url 'project:conf_versioncontrol' project.id next_page %}" method="post">
     <h5>Search repository</h5>
@@ -10,7 +19,6 @@
 {% endblock %}
 
 {% block main_content_center %}
-
 <form id="projectSettingsForm" class="form-horizontal form-control" action="{% url 'project:conf_versioncontrol' project.id next_page %}" method="post">
   {% csrf_token %}
     <h5>Bind version control repositories to this project</h5>

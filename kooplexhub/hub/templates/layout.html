@@ -28,38 +28,26 @@
     {% include 'navbar.html' %}
     {% block submenu %}{% endblock %}
     {% include 'message.html' %}
-    <!--div class="container body-content" style="box-sizing: border-box;-->
-    <!--div class="body-content" style="box-sizing: border-box;-->
     <div class="body-content" style="
        box-sizing: 
        border-box;
        min-height: 90%;
        margin-bottom: 1em;
-#       border: 2px;
-      # border-radius: .3rem;
-#       border-top-color: currentcolor;
-#       border-right-color: currentcolor;
-#       border-bottom-color: currentcolor;
-#       border-left-color: currentcolor;
-#       border-color: aliceblue;
-#       box-shadow: rgb(136, 136, 136) 5px 10px 8px 0px;
        margin-top: 0.3em;
        padding-top: .8em;
        background-color: #f8f9fa;
        ">
-         {% block content %}{% endblock %}
 
       <div class="row">
         <div class="col-md-3">
            {% block main_content_left %}{% endblock %}
         </div>
-        <div class="col-md-6">
+        <div class="col-md-7">
            {% block main_content_center %}{% endblock %}
         </div>
-        <div class="col-md-3">
-           {% block main_content_right %}
-            {% include 'footer_right.html' %}
-	   {% endblock %}
+        <div class="col-md-2">
+           {% block main_content_right %}{% endblock %}
+           {% include 'footer_right.html' %}
         </div>
       </div>
     </div>

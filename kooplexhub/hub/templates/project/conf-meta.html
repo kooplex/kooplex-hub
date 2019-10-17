@@ -1,3 +1,6 @@
+{% extends "project/configure.html" %}
+
+{% block main_content_center %}
 <form id="projectSettingsForm" class="form-horizontal form-control" action="{% url 'project:conf_meta' project.id next_page %}" method="post">
 {% load render_table from django_tables2 %}
   {% csrf_token %}
@@ -22,3 +25,4 @@
   </div>
 
 </form>
+{% endblock %}

@@ -157,7 +157,7 @@ def conf_meta(request, project_id, next_page):
             'submenu': 'meta',
             'next_page': next_page,
         }
-        return render(request, 'project/configure.html', context = context_dict)
+        return render(request, 'project/conf-meta.html', context = context_dict)
 
 
 @login_required
@@ -192,7 +192,7 @@ def conf_collab(request, project_id, next_page):
             'search_name': pattern,
             'sort': sort_info,
         }
-        return render(request, 'project/configure.html', context = context_dict)
+        return render(request, 'project/conf-collaboration.html', context = context_dict)
     elif request.method == 'POST' and request.POST.get('button') == 'cancel':
         context_dict = {
              'next_page': 'project:list',
@@ -239,7 +239,7 @@ def conf_environment(request, project_id, next_page):
             'submenu': 'environment',
             'next_page': next_page,
         }
-        return render(request, 'project/configure.html', context = context_dict)
+        return render(request, 'project/conf-environment.html', context = context_dict)
 
 
 @login_required
@@ -328,7 +328,7 @@ def conf_versioncontrol(request, project_id, next_page):
             'search_repository': pattern,
             'sort': sort_info,
         }
-        return render(request, 'project/configure.html', context = context_dict)
+        return render(request, 'project/conf-versioncontrol.html', context = context_dict)
     elif request.method == 'POST' and request.POST.get('button') == 'cancel':
         context_dict = {
              'next_page': 'project:list',
@@ -387,7 +387,7 @@ def conf_filesync(request, project_id, next_page):
             'search_library': pattern,
             'sort': sort_info,
         }
-        return render(request, 'project/configure.html', context = context_dict)
+        return render(request, 'project/conf-filesync.html', context = context_dict)
     elif request.method == 'POST' and request.POST.get('button') == 'cancel':
         context_dict = {
              'next_page': 'project:list',
