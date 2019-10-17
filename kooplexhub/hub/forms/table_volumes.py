@@ -34,7 +34,7 @@ def sel_col(project):
     class VolumeSelectionColumn(tables.Column):
         def render(self, record):
             state = "checked" if record in project.volumes else ""
-            return format_html('<input type="checkbox" name="selection" value="%s" %s>' % (record.id, state))
+            return format_html('<input type="checkbox" data-toggle="toggle" data-on="Mounted" data-off="Unmounted" data-onstyle="danger" data-offstyle="success" data-size="xs" name="selection" value="%s">' % (record.id))
     return VolumeSelectionColumn
 
 class VolumePresentColumn(tables.Column):

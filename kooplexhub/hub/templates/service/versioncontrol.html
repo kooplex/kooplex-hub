@@ -2,8 +2,15 @@
 
 {% block header_extra %}
 
+{% load staticfiles %}
+
 <!--script src="https://kit.fontawesome.com/27d0a7c7d0.js"></script-->
-<link rel="stylesheet" href="/static/fontawesome-free-5.10.2-web/css/all.css">
+<link rel="stylesheet" href="{% static 'fontawesome-free-5.10.2-web/css/all.css' %}">
+
+<!-- FIXME: toggle https://www.bootstraptoggle.com/, https://gitbrent.github.io/bootstrap4-toggle/ -->
+<link rel="stylesheet" href="{% static 'css/bootstrap4-toggle.min.css' %}">
+<script src="{% static 'scripts/bootstrap4-toggle.min.js' %}"></script>
+
 
 <style>
 .card-header .btn-vmi.collapsed:before {
@@ -39,6 +46,7 @@ a.active {
 </style>
 {% endblock %}
 
+
 {% block submenu %}
 {% include "service/service_submenu.html" %}
 {% endblock %}
@@ -53,9 +61,9 @@ a.active {
     </div>
     <div class="modal-footer">
       Currently connected apps:
-      <img src="/static/content/logos/github.png" alt="Github" height="50px">
-      <img src="/static/content/logos/gitlab.png" alt="GitLab" height="50px" style="opacity: 0.5; background: #CCC;">
-      <img src="/static/content/logos/gitea.png" alt="Gitea" height="50px" style="opacity: 0.5; background: #CCC;">
+      <a href="{% url 'user:managetokens' next_page %}" title="manage token for github"><img src="/static/content/logos/github.png" alt="Github" height="50px"></a>
+      <a href="{% url 'user:managetokens' next_page %}" title="manage token for gitlab"><img src="/static/content/logos/gitlab.png" alt="GitLab" height="50px" style="opacity: 0.5; background: #CCC;"></a>
+      <a href="{% url 'user:managetokens' next_page %}" title="manage token for gitea"><img src="/static/content/logos/gitea.png" alt="Gitea" height="50px" style="opacity: 0.5; background: #CCC;"></a>
     </div>
   </form>
 {% endblock %}
@@ -65,7 +73,7 @@ a.active {
     <h5>Refresh your repository list</h5>
     <div  class="alert alert-warning">
       {% for t in vc_tokens %}
-        <a href="{% url 'service:vc_refresh' t.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Last updated: {{ t.last_used }}" data-placement="top">{{ t.repository.url }}</a> <br style="margin:1ex">
+        <a href="{% url 'service:vc_refresh' t.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Last updated: {{ t.last_used }}" data-placement="top">Update {{ t.repository.url }}</a> <br style="margin:1ex">
       {% endfor %}
     </div>
   </form>

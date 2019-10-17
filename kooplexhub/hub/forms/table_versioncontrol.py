@@ -21,12 +21,13 @@ class ReposColumn(tables.Column):
             return format_html(record)
 
 class T_REPOSITORY_CLONE(tables.Table):
+    id = tables.Column(verbose_name = 'Task', orderable = False)
     repos = ReposColumn(verbose_name = 'Src', empty_values = (), orderable = False)
     def render_id(self, record):
         if record.cloned:
-            return format_html('rm <input type="checkbox" name="removecache" value="{}" data-toggle="toggle" data-on="Clone" data-off="Skip" data-onstyle="success" data-offstyle="default"'.format(record.id))
+            return format_html('<input type="checkbox" data-toggle="toggle" name="removecache" value="{}" data-on="Remove" data-off="Cloned" data-onstyle="danger" data-offstyle="success" data-size="xs"'.format(record.id))
         else:
-            return format_html('clone <input type="checkbox" name="clone" value="{}" data-toggle="toggle" data-on="Remove" data-off="Skip" data-onstyle="danger" data-offstyle="default">'.format(record.id))
+            return format_html('<input type="checkbox" data-toggle="toggle" name="clone" value="{}" data-on="Clone" data-off="Unused" data-onstyle="success" data-offstyle="secondary" data-size="xs">'.format(record.id))
     def render_project_name(self, record):
         return format_html('<span data-toggle="tooltip" title="{}" data-placement="bottom">{} of {}</span>'.format(record.project_description, record.project_name, record.project_owner))
     class Meta:

@@ -216,7 +216,7 @@ def vc_commit(request):
             n_clone += 1
         except Exception as e:
             logger.error(e)
-            raise #FIXME
+            messages.error(request, "clone oops -- {}".format(e))
     for r_id in request_rmcache:
         try:
             r = VCProject.objects.get(token__user = user, cloned = True, id = r_id)
@@ -226,7 +226,7 @@ def vc_commit(request):
             n_rmcache += 1
         except Exception as e:
             logger.error(e)
-            raise #FIXME
+            messages.error(request, "rm oops -- {}".format(e))
     if n_clone:
         messages.info(request, "{} version control projects cloned".format(n_clone))
     if n_rmcache:

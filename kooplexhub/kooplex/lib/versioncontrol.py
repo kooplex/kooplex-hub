@@ -21,25 +21,21 @@ def list_projects(vctoken):
         raise NotImplementedError("Unknown version control system type: %s" % vctoken.type)
 
 def impersonator_clone(vcproject):
-    url_base = 'http://kooplex-test-impersonator:5000'
+    url_base = 'http://kooplex-test-impersonator:5000' #FIXME: hardcoded
     A = requests.auth.HTTPBasicAuth('hub', 'blabla')
     try:
         resp_echo = requests.get(url_base, auth = A)
     except ConnectionError:
         logger.critical('impersonator API is not running')
         raise
-    rs = vcproject.repository #FIXME: modify model!!!
-    port = 222
-    srv = rs.split('/')[-2]
-    be = 'gitea'
     params = {
-        'server': srv,
-        'port': 222,
-        'project': vcproject.project_name,
-        'prefix': be, 
+        'clone': vcproject.project_ssh_url,
         'username': vcproject.token.user.username,
+        'port': 222, #FIXME: from model
+        'prefix': vcproject.token.repository.backend_type,
+        'rsa_file': '/home/{}/.ssh/{}'.format(vcproject.token.user.username, vcproject.token.fn_rsa), #TODO: store rsa keys automagically in a separate folder in cache volume (?)
             }
-    url = '{}/api/versioncontrol/clone'.format(url_base)
+    url = '{}/api/versioncontrol/clone/{}'.format(url_base, vcproject.token.user.username)
     try:
         resp_info = requests.get(url, auth = A, params = params)
         rj = resp_info.json()
@@ -47,6 +43,7 @@ def impersonator_clone(vcproject):
             logger.warning('error to clone {} for user {} -- daemon response: {}'.format(vcproject, vcproject.token.user.username, rj))
     except Exception as e:
         logger.error('error to clone {} for user {} -- {}'.format(vcproject, vcproject.token.user.username, e))
+        raise
 
 def impersonator_removecache(vcproject):
     url_base = 'http://kooplex-test-impersonator:5000'
@@ -56,9 +53,14 @@ def impersonator_removecache(vcproject):
     except ConnectionError:
         logger.critical('impersonator API is not running')
         raise
-    url = '{}/api/versioncontrol/removecache/{}/{}'.format(url_base, vcproject.token.user.username, vcproject.project_name.split('/')[-1]) #FIXME: api signature not complete
+    params = {
+        'clone': vcproject.project_ssh_url,
+        'username': vcproject.token.user.username,
+        'prefix': vcproject.token.repository.backend_type,
+            }
+    url = '{}/api/versioncontrol/removecache/{}'.format(url_base, vcproject.token.user.username)
     try:
-        resp_info = requests.get(url, auth = A)
+        resp_info = requests.get(url, auth = A, params = params)
         rj = resp_info.json()
         if 'error' in rj:
             logger.warning('error to clone {} for user {} -- daemon response: {}'.format(vcproject, vcproject.token.user.username, rj))
