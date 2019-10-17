@@ -43,6 +43,10 @@ class ContainerEnvironmentAdmin(admin.ModelAdmin):
 class ProjectContainerBindingAdmin(admin.ModelAdmin):
     list_display = ('id', 'container', 'project')
 
+@admin.register(ReportContainerBinding)
+class ReportContainerBindingAdmin(admin.ModelAdmin):
+    list_display = ('id', 'container', 'report')
+
 @admin.register(CourseCode)
 class CourseCodeAdmin(admin.ModelAdmin):
     list_display = ('id', 'courseid', 'safecourseid', 'course')
@@ -151,7 +155,7 @@ class VCTokenAdmin(admin.ModelAdmin):
 
 @admin.register(VCProject)
 class VCProjectAdmin(admin.ModelAdmin):
-    list_display = ('id', 'repo', 'project_name', 'project_id', 'project_description', 'project_created_at', 'project_updated_at', 'project_fullname', 'project_owner', 'project_ssh_url', 'last_seen', 'cloned')
+    list_display = ('id', 'repo', 'project_name', 'project_id', 'project_description', 'project_created_at', 'project_updated_at', 'project_fullname', 'project_owner', 'project_ssh_url', 'last_seen', 'cloned', 'clone_folder')
     search_fields = ('project_name', 'project_owner', 'token__repository__url', )
     def repo(self, instance):
         return instance.token.repository.url
@@ -171,7 +175,7 @@ class FSTokenAdmin(admin.ModelAdmin):
 
 @admin.register(FSLibrary)
 class FSLibraryAdmin(admin.ModelAdmin):
-    list_display = ('id', 'get_user', 'get_syncserver', 'library_name', 'library_id')
+    list_display = ('id', 'get_user', 'get_syncserver', 'library_name', 'library_id', 'sync_folder')
     search_fields = ('token__user__username', 'library_name')
     def get_user(self, obj):
         return obj.token.user.username

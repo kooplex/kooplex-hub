@@ -186,27 +186,29 @@ def archivedir_workdir(userprojectbinding):
     _archivedir(dir_workdir, target)
 
 
-def mkdir_vcpcache(vcprojectprojectbinding):
-    profile = vcprojectprojectbinding.vcproject.token.user.profile
-    dir_cache = Dirname.vcpcache(vcprojectprojectbinding.vcproject)
-    _mkdir(dir_cache, uid = profile.userid, gid = profile.groupid)
-    clonescript_vcpcache(vcprojectprojectbinding)
+#FIXME: obsoleted
+##def mkdir_vcpcache(vcprojectprojectbinding):
+##    profile = vcprojectprojectbinding.vcproject.token.user.profile
+##    dir_cache = Dirname.vcpcache(vcprojectprojectbinding.vcproject)
+##    _mkdir(dir_cache, uid = profile.userid, gid = profile.groupid)
+##    clonescript_vcpcache(vcprojectprojectbinding)
 
-def clonescript_vcpcache(vcprojectprojectbinding):
-    vcp = vcprojectprojectbinding.vcproject
-    profile = vcp.token.user.profile
-    dir_target = Dirname.vcpcache(vcprojectprojectbinding.vcproject)
-    fn_script = os.path.join(dir_target, "clone.sh")
-    script = """
-#! /bin/bash
-
-set -v
-
-mv $0 $(mktemp)
-
-git clone ssh://git@%s/%s %s
-    """ % (vcp.token.repository.domain, vcp.project_name, dir_target)
-    _createfile(fn_script, script, uid = profile.userid, gid = profile.groupid)
+#FIXME: obsoleted
+##def clonescript_vcpcache(vcprojectprojectbinding):
+##    vcp = vcprojectprojectbinding.vcproject
+##    profile = vcp.token.user.profile
+##    dir_target = Dirname.vcpcache(vcprojectprojectbinding.vcproject)
+##    fn_script = os.path.join(dir_target, "clone.sh")
+##    script = """
+###! /bin/bash
+##
+##set -v
+##
+##mv $0 $(mktemp)
+##
+##git clone ssh://git@%s/%s %s
+##    """ % (vcp.token.repository.domain, vcp.project_name, dir_target)
+##    _createfile(fn_script, script, uid = profile.userid, gid = profile.groupid)
 
 def archivedir_vcpcache(vcproject):
     dir_cache = Dirname.vcpcache(vcproject)

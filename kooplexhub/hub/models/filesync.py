@@ -41,6 +41,7 @@ class FSLibrary(models.Model):
     library_id = models.CharField(max_length = 36, null = False)
     last_seen = models.DateTimeField(auto_now_add = True)
     syncing = models.BooleanField(default = False)
+    sync_folder = models.CharField(max_length = 512, null = False)
 
     def __str__(self):
         return "FSLibrary %s: %s" % (self.token.syncserver.url, self.library_name)

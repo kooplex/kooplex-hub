@@ -378,7 +378,7 @@ def container_message_change(sender, instance, **kwargs):
 
 @receiver(post_save, sender = Container)
 def bind_home(sender, instance, created, **kwargs):
-    if created:
+    if created and instance.report is None:
         try:
             v_home = Volume.objects.get(volumetype = Volume.HOME)
             VolumeContainerBinding.objects.create(container = instance, volume = v_home)
@@ -398,7 +398,7 @@ def bind_report(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender = Container)
 def bind_garbage(sender, instance, created, **kwargs):
-    if created:
+    if created and instance.report is None:
         try:
             v_garbage = Volume.objects.get(volumetype = Volume.GARBAGE)
             VolumeContainerBinding.objects.create(container = instance, volume = v_garbage)
@@ -407,7 +407,7 @@ def bind_garbage(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender = Container)
 def bind_filesync(sender, instance, created, **kwargs):
-    if created:
+    if created and instance.report is None:
         try:
             v_filesync = Volume.objects.get(volumetype = Volume.FILESYNC)
             VolumeContainerBinding.objects.create(container = instance, volume = v_filesync)

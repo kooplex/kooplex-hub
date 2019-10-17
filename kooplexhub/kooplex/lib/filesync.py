@@ -35,6 +35,8 @@ def impersonator_sync(library, start):
         rj = resp_info.json()
         if 'error' in rj:
             logger.warning('error to start={} synchronizing {} for user {} -- daemon response: {}'.format(start, library.library_id, library.token.user.username, rj))
+            raise Exception(rj['error'])
+        return rj['sync_folder'] if start else None
     except Exception as e:
         logger.error('error to start={} synchronizing {} for user {} -- {}'.format(start, library.library_id, library.token.user.username, e))
 

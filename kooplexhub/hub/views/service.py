@@ -105,7 +105,7 @@ def fs_commit(request):
         else:
             try:
                 l = FSLibrary.objects.get(token__user = user, syncing = False, library_id = l_id)
-                impersonator_sync(l, start = True)
+                l.sync_folder = impersonator_sync(l, start = True)
                 l.syncing = True
                 l.save()
                 n_start += 1
@@ -133,7 +133,6 @@ def fs_commit(request):
 @login_required
 def versioncontrol(request):
     user = request.user
-    messages.error(request, "not implemented fully yet")
     logger.debug("user %s" % user)
     vc_tokens = VCToken.objects.filter(user = user)  #FIXME: user.profile.vctokens HASZNALJUK VALAHOL
     pattern = request.POST.get('repository', '')
@@ -205,15 +204,15 @@ def vc_commit(request):
     logger.debug("user %s" % user)
     request_clone = request.POST.getlist('clone')
     request_rmcache = request.POST.getlist('removecache')
-    n_clone = 0
-    n_rmcache = 0
+    clone_folders = []
+    rmcache = []
     for r_id in request_clone:
         try:
             r = VCProject.objects.get(token__user = user, cloned = False, id = r_id)
-            impersonator_clone(r)
+            r.clone_folder = impersonator_clone(r)
             r.cloned = True
             r.save()
-            n_clone += 1
+            clone_folders.append(r.clone_folder)
         except Exception as e:
             logger.error(e)
             messages.error(request, "clone oops -- {}".format(e))
@@ -221,16 +220,17 @@ def vc_commit(request):
         try:
             r = VCProject.objects.get(token__user = user, cloned = True, id = r_id)
             impersonator_removecache(r)
+            rmcache.append(r.clone_folder)
             r.cloned = False
+            r.clone_folder = None
             r.save()
-            n_rmcache += 1
         except Exception as e:
             logger.error(e)
             messages.error(request, "rm oops -- {}".format(e))
-    if n_clone:
-        messages.info(request, "{} version control projects cloned".format(n_clone))
-    if n_rmcache:
-        messages.info(request, "{} version control project folders removed".format(n_rmcache))
+    if clone_folders:
+        messages.info(request, "version control projects cloned in folders: {}".format(', '.join(clone_folders)))
+    if rmcache:
+        messages.info(request, "removed version control project folders: {}".format(', '.join(rmcache)))
     return redirect('service:versioncontrol')
 
 

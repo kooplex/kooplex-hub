@@ -50,6 +50,7 @@ class VCProject(models.Model):
     project_ssh_url = models.CharField(max_length = 512, null = False)
     last_seen = models.DateTimeField(auto_now_add = True)
     cloned = models.BooleanField(default = False)
+    clone_folder = models.CharField(max_length = 512, null = True)
 
     def __str__(self):
         return "VCProject %s/%s" % (self.token.repository.url, self.project_name)
@@ -90,18 +91,19 @@ class VCProjectProjectBinding(models.Model):
             yield b.project
 
 
-@receiver(post_save, sender = VCProjectProjectBinding)
-def mkdir_vcpcache(sender, instance, created, **kwargs):
-    from kooplex.lib.filesystem import mkdir_vcpcache
-    from kooplex.lib import Docker
-    if created:
-        mkdir_vcpcache(instance)
-        Docker().trigger_impersonator(instance.vcproject) #FIXME: ne egyesevel!!
-
-@receiver(post_delete, sender = VCProjectProjectBinding)
-def archivedir_vcpcache(sender, instance, **kwargs):
-    from kooplex.lib.filesystem import archivedir_vcpcache
-    if len(list(instance.vcproject.vcprojectprojectbindings)) == 0:
-        archivedir_vcpcache(instance.vcproject)
+#FIXME: obsoleted
+##@receiver(post_save, sender = VCProjectProjectBinding)
+##def mkdir_vcpcache(sender, instance, created, **kwargs):
+##    from kooplex.lib.filesystem import mkdir_vcpcache
+##    from kooplex.lib import Docker
+##    if created:
+##        mkdir_vcpcache(instance)
+##        Docker().trigger_impersonator(instance.vcproject) #FIXME: ne egyesevel!!
+##
+##@receiver(post_delete, sender = VCProjectProjectBinding)
+##def archivedir_vcpcache(sender, instance, **kwargs):
+##    from kooplex.lib.filesystem import archivedir_vcpcache
+##    if len(list(instance.vcproject.vcprojectprojectbindings)) == 0:
+##        archivedir_vcpcache(instance.vcproject)
 
 

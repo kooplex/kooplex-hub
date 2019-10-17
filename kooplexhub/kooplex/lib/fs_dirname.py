@@ -39,11 +39,11 @@ class Dirname:
 
     @staticmethod
     def vcpcache(vcproject):
-        return os.path.join(Dirname.mountpoint['git'], vcproject.uniquename)
+        return os.path.join(Dirname.mountpoint['git'], vcproject.clone_folder)
 
     @staticmethod
     def fscache(fslibrary):
-        return os.path.join(Dirname.mountpoint['filesync'], fslibrary.token.user.username, 'synchron', fslibrary.library_name)
+        return os.path.join(Dirname.mountpoint['filesync'], fslibrary.sync_folder)
 
     @staticmethod
     def course(course):

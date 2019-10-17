@@ -41,6 +41,8 @@ def impersonator_clone(vcproject):
         rj = resp_info.json()
         if 'error' in rj:
             logger.warning('error to clone {} for user {} -- daemon response: {}'.format(vcproject, vcproject.token.user.username, rj))
+            raise Exception(rj['error'])
+        return rj['clone_folder']
     except Exception as e:
         logger.error('error to clone {} for user {} -- {}'.format(vcproject, vcproject.token.user.username, e))
         raise
