@@ -1,5 +1,13 @@
 {% extends "project/configure.html" %}
 
+{% block header_extra %}
+{% load staticfiles %}
+
+<link rel="stylesheet" href="{% static 'css/bootstrap4-toggle.min.css' %}">
+<script src="{% static 'scripts/bootstrap4-toggle.min.js' %}"></script>
+{% endblock %}
+
+
 {% block main_content_center %}
 {% load render_table from django_tables2 %}
 <form id="projectSettingsForm" class="form-horizontal" action="{% url 'project:conf_environment' project.id next_page %}" method="post">
