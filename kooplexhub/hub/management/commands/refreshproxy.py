@@ -7,7 +7,7 @@ from django.core.management.base import BaseCommand, CommandError
 from hub.models import Container, Report
 
 from kooplex.lib.proxy import getroutes, addroute, droproutes
-
+from kooplex.settings import KOOPLEX
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ class Command(BaseCommand):
                 addroute(c)
         for r in Report.objects.all():
             if options['dry']:
-                target_url = os.path.join('http://kooplex-test-report-nginx') # FIXME: settings.py
+                target_url = KOOPLEX['reportserver'].get('base_url', 'http://localhost')
                 print ("%s --> %s" % (r.proxy_path, target_url))
             else:
                 addroute(r)

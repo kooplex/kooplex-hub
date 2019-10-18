@@ -3,6 +3,8 @@ import seafileapi
 import requests
 import requests.auth
 
+from kooplex.settings import KOOPLEX
+
 logger = logging.getLogger(__name__)
 
 def list_libraries(fstoken):
@@ -15,12 +17,12 @@ def list_libraries(fstoken):
         raise NotImplementedError("Unknown version control system type: %s" % fstoken.type)
 
 def seafilepw_update(username, password):
-    #FIXME: url hardcoded
-    requests.get('http://kooplex-test-seafile-pw:5000/api/setpass/{}/{}'.format(username, password), auth = requests.auth.HTTPBasicAuth('hub', 'blabla'))
+    A = requests.auth.HTTPBasicAuth(KOOPLEX['impersonator'].get('username'), KOOPLEX['impersonator'].get('password'))
+    requests.get('{}/api/setpass/{}/{}'.format(KOOPLEX['impersonator'].get('seafile_api', 'http://localhost'), username, password), auth = A)
 
 def impersonator_sync(library, start):
-    url_base = 'http://kooplex-test-impersonator:5000'
-    A = requests.auth.HTTPBasicAuth('hub', 'blabla')
+    url_base = KOOPLEX['impersonator'].get('base_url', 'http://localhost')
+    A = requests.auth.HTTPBasicAuth(KOOPLEX['impersonator'].get('username'), KOOPLEX['impersonator'].get('password'))
     try:
         resp_echo = requests.get(url_base, auth = A)
     except ConnectionError:

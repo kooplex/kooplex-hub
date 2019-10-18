@@ -83,6 +83,7 @@ TEMPLATES = [
                 'kooplex.lib.context_processors.form_container',
                 'kooplex.lib.context_processors.user',
                 'kooplex.lib.context_processors.table',
+                'kooplex.lib.context_processors.manual',
             ],
         },
     },
@@ -121,6 +122,7 @@ STATICFILES_FINDERS = (
 
 
 LOGIN_REDIRECT_URL = 'indexpage'
+LOGOUT_URL = 'https://%s.elte.hu/consent/auth/logout' % PREFIX
 
 LOGGING = {
     'version': 1,
@@ -152,8 +154,8 @@ DJANGO_TABLES2_TEMPLATE = "django_tables2/bootstrap4.html"
 
 KOOPLEX = {
     'base_url': 'https://%s' % DOMAIN,
+    'url_manual': 'https://kooplex-test.elte.hu/manual',
     'hydra_oidc_endpoint':  'https://%s/hydra' % DOMAIN,
-#    'hydra_oidc_endpoint':  'https://kooplex-test.elte.hu/hydra',
     'mountpoint': {
         'home': '/mnt/.volumes/home',
 
@@ -204,7 +206,13 @@ KOOPLEX = {
         'default_image': os.getenv('DEFAULT_IMAGE', '%s-notebook-basic' % PREFIX),
         'mountconf': '/tmp/mount.conf',
         'gitcommandconf': '/tmp/gitcommand.conf',
-        'impersonator': '%s-impersonator' % PREFIX,
+        'impersonator': '%s-impersonator' % PREFIX, #FIXME: is it still used?
+    },
+    'impersonator': {
+        'base_url': 'http://%s-impersonator:5000' % PREFIX,
+        'username': 'hub',
+        'password': 'blabla',
+        'seafile_api': 'http://%s-seafile-pw:5000' % PREFIX,
     },
     'spawner': {
         'pattern_proxypath': 'notebook/%(containername)s',

@@ -2,6 +2,8 @@ import requests
 import requests.auth
 import logging
 
+from kooplex.settings import KOOPLEX
+
 from .vc_github import list_projects as lp_gh
 from .vc_gitlab import list_projects as lp_gl
 from .vc_gitea import list_projects as lp_gt
@@ -21,8 +23,8 @@ def list_projects(vctoken):
         raise NotImplementedError("Unknown version control system type: %s" % vctoken.type)
 
 def impersonator_clone(vcproject):
-    url_base = 'http://kooplex-test-impersonator:5000' #FIXME: hardcoded
-    A = requests.auth.HTTPBasicAuth('hub', 'blabla')
+    url_base = KOOPLEX['impersonator'].get('base_url', 'http://localhost')
+    A = requests.auth.HTTPBasicAuth(KOOPLEX['impersonator'].get('username'), KOOPLEX['impersonator'].get('password'))
     try:
         resp_echo = requests.get(url_base, auth = A)
     except ConnectionError:
@@ -48,8 +50,8 @@ def impersonator_clone(vcproject):
         raise
 
 def impersonator_removecache(vcproject):
-    url_base = 'http://kooplex-test-impersonator:5000'
-    A = requests.auth.HTTPBasicAuth('hub', 'blabla')
+    url_base = KOOPLEX['impersonator'].get('base_url', 'http://localhost')
+    A = requests.auth.HTTPBasicAuth(KOOPLEX['impersonator'].get('username'), KOOPLEX['impersonator'].get('password'))
     try:
         resp_echo = requests.get(url_base, auth = A)
     except ConnectionError:

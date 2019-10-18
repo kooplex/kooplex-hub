@@ -3,6 +3,8 @@ from hub.forms import FormProject
 from hub.forms import FormContainer
 from hub.models import Project
 
+from kooplex.settings import KOOPLEX
+
 def form_biography(request):
     return { 'f_bio': FormBiography(instance = request.user.profile) } if hasattr(request.user, 'profile') else {}
 
@@ -14,6 +16,9 @@ def form_container(request):
 
 def user(request):
     return { 'user': request.user } if request.user.is_authenticated else {}
+
+def manual(request):
+    return { 'url_manual': KOOPLEX['url_manual'] }
 
 def table(request):
     state_req = []

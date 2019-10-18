@@ -32,7 +32,7 @@
   <div class="card" style="width: 100%;">
     <div class="card-body">
       <h5 class="card-title">Functional volumes</h5>
-      <h6 class="card-subtitle mb-2 text-muted"> Extra packages can be installed to these volumes. Visit the <a href="https://kooplex-test.elte.hu/manual/Containers/image.html">manual</a> for further informations!</h6>
+      <h6 class="card-subtitle mb-2 text-muted"> Extra packages can be installed to these volumes. Visit the <a href="{{ url_manual }}/Containers/image.html">manual</a> for further informations!</h6>
       <div class="row">
       {% render_table t_volumes_fun %}
       </div>
@@ -43,7 +43,7 @@
   <div class="card" style="width: 100%;">
     <div class="card-body">
       <h5 class="card-title">Storage volumes</h5>
-      <h6 class="card-subtitle mb-2 text-muted"> Large data is stored in these volumes. Visit the <a href="https://kooplex-test.elte.hu/manual/Containers/image.html">manual</a> for further informations!</h6>
+      <h6 class="card-subtitle mb-2 text-muted"> Large data is stored in these volumes. Visit the <a href="{{ url_manual }}/Containers/image.html">manual</a> for further informations!</h6>
       {% render_table t_volumes_stg %}
     </div>
   </div>

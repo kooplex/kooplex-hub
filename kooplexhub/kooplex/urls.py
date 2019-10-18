@@ -6,12 +6,14 @@ from django.contrib.auth import views as auth_views
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 
+from kooplex.settings import LOGOUT_URL
+
 def indexpage(request):
     return render(request, 'index.html', { 'next_page': 'indexpage' })
 
 @login_required
 def do_logout(request):
-    return redirect('https://kooplex-test.elte.hu/consent/auth/logout') #FIXME: add urlarg redirect_url=
+    return redirect(LOGOUT_URL) #FIXME: add urlarg redirect_url=
 
 
 urlpatterns = [
