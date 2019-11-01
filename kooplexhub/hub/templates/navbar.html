@@ -15,6 +15,7 @@
     {% if user.is_authenticated %}
       {% include "menuitem_edu.html" with active=menu_teaching %}
       {% include "menuitem_container.html" with active=menu_container %}
+      {% include "menuitem_volume.html" with active=menu_volume %}
       {% include "menuitem_services.html" with active=menu_service %}
 
     {% endif %}

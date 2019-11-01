@@ -4,6 +4,8 @@ import os
 
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models.signals import pre_save, post_save, pre_delete, post_delete
+from django.dispatch import receiver
 
 from .project import Project
 from .course import Course
@@ -24,6 +26,7 @@ TYPE_LOOKUP = {
   'course': 'Course share volume',
   'usercourse': 'Course workdir volume',
   'assignment': 'Course assignment volume',
+  'private' : 'User created and private',
 }
 
 class Volume(models.Model):
@@ -37,11 +40,13 @@ class Volume(models.Model):
     WORKDIR = 'workdir'
     FUNCTIONAL = 'functional'
     STORAGE = 'storage'
+    PRIVATE = 'private'
     COURSE_SHARE = 'course'
     COURSE_WORKDIR = 'usercourse'
     COURSE_ASSIGNMENTDIR = 'assignment'
     REPORT = 'report'
-    VOLUME_TYPE_LIST = [ HOME, GARBAGE, GIT, FILESYNC, SHARE, WORKDIR, FUNCTIONAL, STORAGE, COURSE_SHARE, COURSE_WORKDIR, COURSE_ASSIGNMENTDIR, REPORT ]
+    VOLUME_TYPE_LIST = [ HOME, GARBAGE, GIT, FILESYNC, SHARE, WORKDIR, FUNCTIONAL, STORAGE, COURSE_SHARE, COURSE_WORKDIR, COURSE_ASSIGNMENTDIR, REPORT, PRIVATE ]
+    VOLUME_TYPE_LIST_USER = [ FUNCTIONAL ]#, STORAGE, PRIVATE ]
 
     name = models.CharField(max_length = 64, unique = True)
     displayname = models.CharField(max_length = 64)
@@ -106,6 +111,30 @@ class Volume(models.Model):
             return os.path.join('/data', dirname)
         return os.path.join('/mnt/.volumes', dirname)
 
+@receiver(pre_save, sender = Volume)
+def create_volume(sender, instance, **kwargs):
+    from kooplex.lib import Docker
+    try:
+        docker = Docker()
+        docker.create_volume(instance)
+
+        logger.INFO("Volume %s created"%instance.name) 
+    except :
+        logger.error("NotImplementedError")
+        pass
+
+@receiver(pre_delete, sender = Volume)
+def delete_volume(sender, instance, **kwargs):
+    from kooplex.lib import Docker
+    try:
+        docker = Docker()
+        docker.delete_volume(instance)
+
+        logger.info("Volume %s deleted"%instance.name) 
+    except Exception as e:
+        logger.info(" %s "%e) 
+        logger.error("NotImplementedError")
+        pass
 
 class VolumeOwnerBinding(models.Model):
     volume = models.ForeignKey(Volume, null = True)

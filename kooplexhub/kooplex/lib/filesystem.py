@@ -103,10 +103,28 @@ def garbagedir_home(user):
 
 ########################################
 
+def check_volume(volume_dir):
+#    volume_dir  
+    return True
+
+def mkdir_volume(volume_dir, user):
+    _mkdir(volume_dir, uid = user.profile.userid, gid = user.profile.groupid)
+
+########################################
+
 def check_usergarbage(user):
     dir_usergarbage = Dirname.usergarbage(user)
     assert os.path.exists(dir_usergarbage), "Folder %s does not exist" % dir_usergarbage
 
+def mkdir_usergarbage(user):
+    dir_usergarbage = Dirname.usergarbage(user)
+    _mkdir(dir_usergarbage, uid = user.profile.userid, gid = user.profile.groupid)
+
+
+########################################
+
+def check_reportprepare(user):
+    dir_reportprepare = Dirname.reportprepare(user)
 def mkdir_usergarbage(user):
     dir_usergarbage = Dirname.usergarbage(user)
     _mkdir(dir_usergarbage, uid = user.profile.userid, gid = user.profile.groupid)
@@ -342,5 +360,4 @@ def cp_userassignment2correct(userassignmentbinding):
         _grantaccess(userassignmentbinding.user, dir_target, acl = 'rX')
     except Exception as e:
         logger.error("Cannot copy correct dir %s -- %s" % (userassignmentbinding, e))
-
 

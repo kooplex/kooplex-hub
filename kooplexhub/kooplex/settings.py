@@ -204,6 +204,7 @@ KOOPLEX = {
         'pattern_imagename': '%s-notebook-%%(imagename)s' % PREFIX,
         'network': '%s-net' % PREFIX,
         'default_image': os.getenv('DEFAULT_IMAGE', '%s-notebook-basic' % PREFIX),
+        'volume_dir': os.getenv('DOCKER_VOLUME_DIR', None),
         'mountconf': '/tmp/mount.conf',
         'gitcommandconf': '/tmp/gitcommand.conf',
         'impersonator': '%s-impersonator' % PREFIX, #FIXME: is it still used?

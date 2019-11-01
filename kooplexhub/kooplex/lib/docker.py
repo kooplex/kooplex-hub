@@ -42,6 +42,28 @@ class Docker:
         for volume in volumes['Volumes']:
             yield volume['Name']
 
+    def create_volume(self, volume):
+        volume_dir = None #self.dockerconf.get('volume_dir', '')
+        if volume_dir:
+            self.client.create_volume(
+                name = volume.name, 
+                driver='local', 
+                driver_opts = {
+                    'device': '%s/%s/'%(volume_dir, volume.name), 
+                    'o': 'bind', 
+                    'type': 'none'}
+                )
+        else:
+            self.client.create_volume(
+                name = volume.name, 
+                )
+        logger.debug("Volume %s created"%volume.name)
+        return True #self.get_container(container)
+
+    def delete_volume(self, volume):
+        self.client.remove_volume(name = volume.name)
+        logger.debug("Volume %s deleted"%volume.name)
+
     def get_container(self, container):
         for item in self.client.containers(all = True):
             # docker API prepends '/' in front of container names
