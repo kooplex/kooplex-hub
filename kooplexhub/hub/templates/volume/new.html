@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+
+{% block submenu %}
+<div class="navbar navbar-expand-lg navbar-light bg-light">
+  <h5><span class="badge badge-secondary">New volume</span></h5>
+</div>
+{% endblock %}
+
+  {% block main_content_center %}
+  <form id="newvolumeForm" class="form-horizontal form-control" action="{% url 'volume:new' %}" method="post">
+    {% csrf_token %}
+    <table>
+      {{ f_volume.as_table }}
+    </table>
+    <div class="modal-footer">
+      <button type="submit" class="btn btn-default" name="button" value="apply"> Create</button>
+      <button class="btn btn-default" data-dismiss="modal">Cancel</button>
+    </div>
+  
+  </form>
+{% endblock %}
+
+  {% block main_content_left %}
+  <ul>
+          <li><span class="badge badge-pill badge-info">Functional</span> - packages or modules </li>
+          <li><span class="badge badge-pill badge-success">Storage</span> - large datasets</li>
+          <li><span class="badge badge-pill badge-warning">Private</span> - private</li>
+  </ul>
+  {% endblock %}
