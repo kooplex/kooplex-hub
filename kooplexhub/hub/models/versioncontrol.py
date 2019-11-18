@@ -33,6 +33,7 @@ class VCRepository(models.Model):
 class VCToken(models.Model):
     user = models.ForeignKey(User, null = False)
     repository = models.ForeignKey(VCRepository, null = False)
+    username = models.CharField(max_length = 256, null = False)
     token = models.CharField(max_length = 256, null = False) # FIXME: dont store as clear text
     fn_rsa = models.CharField(max_length = 256, null = False)
     last_used = models.DateTimeField(null = True)

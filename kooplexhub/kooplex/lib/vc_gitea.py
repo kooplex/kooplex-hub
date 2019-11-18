@@ -5,8 +5,8 @@ logger = logging.getLogger(__name__)
 
 def list_projects(vctoken):
     client = pytea.API(vctoken.repository.url, token = vctoken.token)
-    R = client.get('/users/{}/repos'.format(vctoken.user.username))
-    r = None
+    R = client.get('/users/{}/repos'.format(vctoken.username))
+    assert R.status_code == 200, R.reason
     for r in R.json():
         yield {
                 'id': r['id'],

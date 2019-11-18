@@ -58,9 +58,10 @@ def managetoken(request, next_page):
                 repository = VCRepository.objects.get(id = new_repository_id)
                 fn_rsa = request.POST.get('fn_rsa-%s' % new_repository_id)
                 token = request.POST.get('token-%s' % new_repository_id)
+                un = request.POST.get('username-%s' % new_repository_id)
                 assert len(fn_rsa), "The RSA filename cannot be empty"
                 assert len(token), "Your token cannot be empty"
-                vctoken = VCToken.objects.create(repository = repository, user = user, fn_rsa = fn_rsa, token = token)
+                vctoken = VCToken.objects.create(repository = repository, user = user, username = un, fn_rsa = fn_rsa, token = token)
                 messages.info(request, "Your vctoken %s token is saved" % vctoken)
             except Exception as e:
                 messages.error(request, "Cannot create your token -- %s" % e)
@@ -69,15 +70,18 @@ def managetoken(request, next_page):
             try:
                 fn_rsa_before = request.POST.get('fn_rsa_before-%s' % tid)
                 token_before = request.POST.get('token_before-%s' % tid)
+                un_before = request.POST.get('username_before-%s' % tid)
                 fn_rsa = request.POST.get('fn_rsa_after-%s' % tid)
                 token = request.POST.get('token_after-%s' % tid)
+                un = request.POST.get('username_after-%s' % tid)
                 assert len(fn_rsa), "The RSA filename cannot be empty"
                 assert len(token), "Your token cannot be empty"
-                if fn_rsa_before == fn_rsa and token_before == token:
+                if fn_rsa_before == fn_rsa and token_before == token and un_before == un:
                     continue
-                vctoken = VCToken.objects.get(id = tid, user = user, fn_rsa = fn_rsa_before, token = token_before)
+                vctoken = VCToken.objects.get(id = tid, user = user, username = un_before, fn_rsa = fn_rsa_before, token = token_before)
                 vctoken.fn_rsa = fn_rsa
                 vctoken.token = token
+                vctoken.username = un
                 vctoken.save()
                 messages.info(request, "Your vctoken %s token is updated" % vctoken)
             except Exception as e:

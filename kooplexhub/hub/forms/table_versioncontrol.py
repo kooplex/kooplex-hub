@@ -75,6 +75,7 @@ def table_vctoken(user):
  
     class T_VCTOKEN(tables.Table):
         id = tables.Column(verbose_name = 'Job', empty_values = ())
+        username = tables.Column(verbose_name = 'Registered username', empty_values = ())
         token = tables.Column(empty_values = ())
         fn_rsa = tables.Column(empty_values = ())
 
@@ -96,10 +97,16 @@ def table_vctoken(user):
             else:
                 return format_html("<input type='text' name='fn_rsa-%d' value='' placeholder='Filename in .ssh folder'>" % (record.repository.id))
 
+        def render_username(self, record):
+            if record.id:
+                return format_html("<input type='hidden' name='username_before-%d' value='%s'><input type='text' name='username_after-%d' value='%s'>" % (record.id, record.username, record.id, record.username))
+            else:
+                return format_html("<input type'text' name='username-%d' value='%s'>" % (record.repository.id, user.username))
+
         class Meta:
             model = VCToken
             orderable = False
-            fields = ('id', 'repository', 'fn_rsa', 'token', 'last_used', 'error_flag')
+            fields = ('id', 'repository', 'username', 'fn_rsa', 'token', 'last_used', 'error_flag')
 #            sequence = ('id', 'repository', 'projects')
             attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
 
