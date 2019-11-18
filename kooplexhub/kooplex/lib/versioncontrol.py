@@ -33,7 +33,7 @@ def impersonator_clone(vcproject):
     params = {
         'clone': vcproject.project_ssh_url,
         'username': vcproject.token.user.username,
-        'port': 222, #FIXME: from model
+        'port': vcproject.token.repository.ssh_port,
         'prefix': vcproject.token.repository.backend_type,
         'rsa_file': '/home/{}/.ssh/{}'.format(vcproject.token.user.username, vcproject.token.fn_rsa), #TODO: store rsa keys automagically in a separate folder in cache volume (?)
             }

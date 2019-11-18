@@ -147,7 +147,7 @@ class UserGroupBindingAdmin(admin.ModelAdmin):
 
 @admin.register(VCRepository)
 class VCRepositoryAdmin(admin.ModelAdmin):
-    list_display = ('id', 'backend_type', 'url')
+    list_display = ('id', 'backend_type', 'url', 'ssh_port')
 
 @admin.register(VCToken)
 class VCTokenAdmin(admin.ModelAdmin):

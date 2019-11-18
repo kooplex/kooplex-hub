@@ -20,6 +20,7 @@ class VCRepository(models.Model):
 
     url = models.CharField(max_length = 128, null = True)
     backend_type = models.CharField(max_length = 16, choices = [ (x, x) for x in TYPE_LIST ], default = TP_GITHUB)
+    ssh_port = models.IntegerField(default = 22)
 
     def __str__(self):
         return self.url
