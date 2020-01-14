@@ -136,7 +136,7 @@ LOGGING = {
         'dfile': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': '/tmp/debug.log',
+            'filename': '/var/log/hub/hub.log',
             'formatter': 'verbose',
         },
     },
