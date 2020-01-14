@@ -38,7 +38,7 @@ def newreport(request):#, next_page):
     elif request.method == 'POST' and request.POST['button'] == 'apply':
         try:
             reporttype = request.POST['reporttype']
-            index = request.POST['index'] if reporttype != Report.TP_BOKEH else ''
+            index = request.POST['index'] #if reporttype != Report.TP_BOKEH else ''
             image_id = request.POST['image']
             image = Image.objects.get(id = image_id) if image_id != 'None' else 1
             Report.objects.create(
