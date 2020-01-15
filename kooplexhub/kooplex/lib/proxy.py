@@ -49,6 +49,19 @@ def _addroute_container(container, test=False):
             'headers': {'Authorization': 'token %s' % proxyconf.get('auth_token', '') },
             'data': json.dumps({ 'target': container.url }),
         }
+        try:
+             rc = ReportContainerBinding.objects.get(container = container)
+             report = rc.report
+             kw = {
+                 'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', 'notebook', report.proxy_path_latest), 
+                 'headers': {'Authorization': 'token %s' % proxyconf.get('auth_token', '') },
+                 'data': json.dumps({ 'target': container.url }),
+             }
+             logging.debug("+ %s ---> %s" % (kw['url'], container.url))
+             keeptrying(requests.post, 50, **kw)
+        except: 
+             logging.debug("Container is not for report")
+
 
     logging.debug("+ %s ---> %s" % (kw['url'], container.url))
     return keeptrying(requests.post, 50, **kw)
@@ -58,8 +71,13 @@ def _addroute_report(report):
     proxyconf = KOOPLEX.get('proxy', {})
     reportconf = KOOPLEX.get('reportserver', {})
     target_url = reportconf.get('base_url', 'localhost')
+    route_prefix = 'report'
+    if report.reporttype != report.TP_STATIC:
+        route_prefix = 'notebook'
+        target_url = report.url_external
+
     kw = {
-        'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', 'report', report.proxy_path), 
+        'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', route_prefix, report.proxy_path), 
         'headers': {'Authorization': 'token %s' % proxyconf.get('auth_token', '') },
         'data': json.dumps({ 'target': target_url }),
     }
@@ -67,11 +85,11 @@ def _addroute_report(report):
     keeptrying(requests.post, 50, **kw)
 
     kw = {
-        'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', 'report', report.proxy_path_latest), 
+        'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', route_prefix, report.proxy_path_latest), 
         'headers': {'Authorization': 'token %s' % proxyconf.get('auth_token', '') },
         'data': json.dumps({ 'target': target_url }),
     }
-    logging.debug("+ %s ---> %s" % (kw['url'], target_url))
+    logging.debug("Report proxy + %s ---> %s" % (kw['url'], target_url))
     return keeptrying(requests.post, 50, **kw)
 
 def addroute(instance):

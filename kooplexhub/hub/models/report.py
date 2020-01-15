@@ -70,12 +70,21 @@ class Report(models.Model):
         return human_localtime(self.created_at)
 
     @property
+    def container_name(self):
+        container_name_dict = {
+                'un': self.creator.username, 
+                'rn': self.cleanname,
+                'ts': self.ts_human.replace(':', '').replace('_', '')
+                }
+        return 'report-%(un)s-%(rn)s-%(ts)s' % container_name_dict
+
+    @property
     def url_external(self):
         #FIXME worng urls e.g. service
         if self.reporttype == self.TP_STATIC:
             return os.path.join(KOOPLEX['base_url'], 'report', self.proxy_path, self.index)
         elif self.reporttype == self.TP_BOKEH:
-            return os.path.join(KOOPLEX['base_url'], 'report', self.proxy_path, self.index)
+            return "http://%s:8000"%self.container_name
         elif self.reporttype == self.TP_DYNAMIC:
             return os.path.join(KOOPLEX['base_url'], 'report', self.proxy_path, self.index)
         elif self.reporttype == self.TP_SERVICE:
@@ -84,15 +93,26 @@ class Report(models.Model):
 
     @property
     def url_external_latest(self):
-        return os.path.join(KOOPLEX['base_url'], 'report', self.proxy_path_latest, self.index)
+        if self.reporttype == Report.TP_STATIC:
+            return os.path.join(KOOPLEX['base_url'], 'report', self.proxy_path_latest, self.index)
+        else:
+            return os.path.join(KOOPLEX['base_url'], 'notebook', self.proxy_path_latest, 'report')
 
     @property
     def proxy_path(self):
         return os.path.join(self.creator.username, self.cleanname, self.ts_human)
-        
+
     @property
     def proxy_path_latest(self):
-        return os.path.join(self.creator.username, self.cleanname)
+        if self.reporttype == Report.TP_STATIC:
+            return os.path.join(self.creator.username, self.cleanname)
+        else:
+            container_name_dict = {
+                    'un': self.creator.username, 
+                    'rn': self.cleanname,
+                    }
+            return 'report-%(un)s-%(rn)s' % container_name_dict
+
 
     def groupby(self):
         return [ r for r in Report.objects.filter(name = self.name, creator = self.creator) ]
@@ -121,6 +141,8 @@ def snapshot_report(sender, instance, **kwargs):
     if instance.reporttype == instance.TP_DYNAMIC:
         prepare_dashboardreport_withinitcell(instance)
     if instance.reporttype == Report.TP_STATIC:
+        addroute(instance)
+    if instance.reporttype == Report.TP_BOKEH:
         addroute(instance)
 
 

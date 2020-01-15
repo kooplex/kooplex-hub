@@ -211,7 +211,12 @@ class Container(models.Model):
         except ReportContainerBinding.DoesNotExist:
             logger.debug("ReportContainer for report %s does not exist" % report)
         if create:
-            containername = "report-%s-%s-%s" % (report.creator.username, report.cleanname, report.ts_human.replace(':', '').replace('_', ''))
+            container_name_dict = {
+                    'un': report.creator.username, 
+                    'rn': report.cleanname,
+                    'ts': report.ts_human.replace(':', '').replace('_', '')
+                    }
+            containername = KOOPLEX.get('pattern_report_containername','report-%(un)s-%(rn)s-%(ts)s') % container_name_dict
             container = Container.objects.create(name = containername, user = report.creator, image=report.image)
             ReportContainerBinding.objects.create(report = report, container = container)
             logger.debug("new container in db %s" % container)
@@ -248,6 +253,7 @@ class Container(models.Model):
         if report:
             envs['REPORT_TYPE'] = report.reporttype
             envs['REPORT_DIR'] = os.path.join('/home/', 'report', report.cleanname, report.ts_human)
+            envs['REPORT_ABS'] = os.path.join('notebook/', 'report-%s-%s'%(self.user.username, report.cleanname))
             envs['REPORT_PORT'] = 9000
             envs['REPORT_INDEX'] = report.index
         return envs
