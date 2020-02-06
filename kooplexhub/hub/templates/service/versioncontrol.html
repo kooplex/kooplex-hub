@@ -68,17 +68,28 @@ a.active {
 {% endblock %}
 
 {% block main_content_center %}
+    <h3>Connected repositories</h3>
   <form id="fsRefreshLibForm" class="form-horizontal form-control">
-    <h5>Refresh your repository list</h5>
-    <div  class="alert alert-warning">
+
       {% for t in vc_tokens %}
-        <a href="{% url 'service:vc_refresh' t.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Last updated: {{ t.last_used }}" data-placement="top">Update {{ t.repository.url }}</a> <br style="margin:1ex">
-      {% endfor %}
-    </div>
+          <div class="card bg-light mb-3">
+              <div class="card-header">
+                 <div class="row">
+                      <div class="col-10">
+       		       <h4>{{ t.repository.url }} </h4> (Last updated: {{ t.last_used }})
+                      </div>
+                      <div class="col-2">
+                        <a href="{% url 'service:vc_refresh' t.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Last updated: {{ t.last_used }}" data-placement="top">Refresh </a> <br style="margin:1ex">
+                      </div>
+                 </div>
+              </div>
+          </div>
+          {% endfor %}
+
   </form>
   {% load render_table from django_tables2 %}
+    <h3>Select repositories to clone</h3>
   <form id="vcRepoForm" class="form-horizontal form-control" action="{% url 'service:commit_repo' %}" method="post">
-    <h5>Select repositories to clone</h5>
     {% csrf_token %}
     {% render_table tbl_repositories %}
     <div class="modal-footer">
