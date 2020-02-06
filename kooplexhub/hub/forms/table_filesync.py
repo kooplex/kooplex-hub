@@ -23,7 +23,7 @@ class ProjectsColumn(tables.Column):
 def table_fslibrary(project):
     sc = s_column(project)
     class T_FSLIBRARY(tables.Table):
-        id = sc(verbose_name = 'Task', orderable = False)
+        id = sc(verbose_name = 'Status', orderable = False)
         projects = ProjectsColumn(verbose_name = 'Bound to projects', empty_values = (), orderable = False)
 
         class Meta:
@@ -35,7 +35,7 @@ def table_fslibrary(project):
     return T_FSLIBRARY
 
 class T_FSLIBRARY_SYNC(tables.Table):
-    syncing = tables.Column(verbose_name = 'Task', orderable = False)
+    syncing = tables.Column(verbose_name = 'Status', orderable = False)
     def render_syncing(self, record):
         if record.syncing:
             return format_html('<input type="checkbox" data-toggle="toggle" name="sync_library_id" value="{}" data-on="Synchronizing" data-off="Pause" data-onstyle="success" data-offstyle="dark" data-size="xs" checked>'.format(record.library_id))

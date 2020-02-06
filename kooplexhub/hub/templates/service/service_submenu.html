@@ -3,11 +3,15 @@
     <span class="navbar-toggler-icon"></span>
   </button>
   <div class="collapse navbar-collapse" id="navbarSubmenu">
-    <h5><span class="badge badge-secondary" style="margin-right: 50px">Services</span></h5>
-    <ul class="navbar-nav mr-auto">
-      <li class="nav-item"><a {% if submenu == 'versioncontrol' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'service:versioncontrol' %}" {% endif %}>Version control</a></li>
-      <li class="nav-item"><a {% if submenu == 'filesynch' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'service:filesync' %}" {% endif %}>File synchronization</a></li>
-    </ul>
+     <div class="col-3">
+        <h5><span class="badge badge-secondary" style="margin-right: 50px">Services</span></h5>
+     </div>
+     <div class="col-8">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item"><a {% if submenu == 'versioncontrol' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'service:versioncontrol' %}" {% endif %}>Version control</a></li>
+          <li class="nav-item"><a {% if submenu == 'filesynch' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'service:filesync' %}" {% endif %}>File synchronization</a></li>
+        </ul>
+     </div>
   </div>
 </nav>
 

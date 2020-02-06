@@ -15,7 +15,10 @@ border-radius: 5px;
     <span class="navbar-toggler-icon"></span>
   </button>
   <div class="collapse navbar-collapse" id="navbarSubmenu">
+     <div class="col-3">
     <h5><span class="badge badge-secondary" style="margin-right: 50px">Configure project {{ project }}</span></h5>
+     </div>
+     <div class="col-8">
     <ul class="navbar-nav mr-auto">
       <li class="nav-item"><a {% if submenu == 'meta' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'project:conf_meta' project.id next_page %}" {% endif %}>Meta</a></li>
       <li class="nav-item"><a {% if submenu == 'collaboration' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'project:conf_collaboration' project.id next_page %}" {% endif %}>Collaboration</a></li>
@@ -24,6 +27,7 @@ border-radius: 5px;
       <li class="nav-item"><a {% if submenu == 'versioncontrol' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'project:conf_versioncontrol' project.id next_page %}" {% endif %}>Versioncontrol</a></li>
       <li class="nav-item"><a {% if submenu == 'filesync' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'project:conf_filesync' project.id next_page %}" {% endif %}>Synchronization</a></li>
     </ul>
+     </div>
   </div>
 </nav>
 {% endblock %}

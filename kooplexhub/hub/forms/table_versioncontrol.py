@@ -21,7 +21,7 @@ class ReposColumn(tables.Column):
             return format_html(record)
 
 class T_REPOSITORY_CLONE(tables.Table):
-    id = tables.Column(verbose_name = 'Task', orderable = False)
+    id = tables.Column(verbose_name = 'Status', orderable = False)
     repos = ReposColumn(verbose_name = 'Src', empty_values = (), orderable = False)
     def render_id(self, record):
         if record.cloned:
@@ -54,7 +54,7 @@ class ProjectsColumn(tables.Column):
 def table_vcproject(project):
     sc = s_column(project)
     class T_VCPROJECT(tables.Table):
-        id = sc(verbose_name = 'Task', orderable = False)
+        id = sc(verbose_name = 'status', orderable = False)
         projects = ProjectsColumn(verbose_name = 'Bound to projects', empty_values = (), orderable = False)
 
         class Meta:
