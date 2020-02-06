@@ -154,7 +154,7 @@ DJANGO_TABLES2_TEMPLATE = "django_tables2/bootstrap4.html"
 
 KOOPLEX = {
     'base_url': 'https://%s' % DOMAIN,
-    'url_manual': 'https://kooplex-test.elte.hu/manual',
+    'url_manual': 'https://%s/manual' % DOMAIN,
     'hydra_oidc_endpoint':  'https://%s/hydra' % DOMAIN,
     'mountpoint': {
         'home': '/mnt/.volumes/home',
