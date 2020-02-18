@@ -75,7 +75,6 @@ def _addroute_report(report):
     if report.reporttype != report.TP_STATIC:
         route_prefix = 'notebook'
         target_url = report.url_external
-
     kw = {
         'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', route_prefix, report.proxy_path), 
         'headers': {'Authorization': 'token %s' % proxyconf.get('auth_token', '') },

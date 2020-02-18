@@ -141,14 +141,22 @@ def mkdir_reportprepare(user):
     _mkdir(dir_reportprepare, uid = user.profile.userid, gid = user.profile.groupid)
 
 def snapshot_report(report):
+    #create permanent dir
     dir_source = os.path.join(Dirname.reportprepare(report.creator), report.folder)
-    dir_target = Dirname.report(report)
+    dir_target = os.path.join(Dirname.report(report), 'latest')
     _copy_dir(dir_source, dir_target, remove = False)
+    #create tagged dir, if there is any tag
+    if report.tag_name:
+        dir_source = os.path.join(Dirname.reportprepare(report.creator), report.folder)
+        dir_target = Dirname.report_with_tag(report)
+        _copy_dir(dir_source, dir_target, remove = False)
+
     dir_reportroot = Dirname.reportroot(report.creator)
     _grantaccess(report.creator, dir_reportroot, acl = 'rX')
 
 def garbage_report(report):
-    dir_source = Dirname.report(report)
+    #remove tagged report
+    dir_source = Dirname.report_with_tag(report)
     garbage = Filename.report_garbage(report)
     _archivedir(dir_source, garbage, remove = True)
 

@@ -27,7 +27,11 @@ class Dirname:
 
     @staticmethod
     def report(report):
-        return os.path.join(Dirname.reportroot(report.creator), standardize_str(report.name), report.ts_human)
+        return os.path.join(Dirname.reportroot(report.creator), standardize_str(report.name))
+
+    @staticmethod
+    def report_with_tag(report):
+        return os.path.join(Dirname.reportroot(report.creator), standardize_str(report.name), report.tag_name)
 
     @staticmethod
     def share(userprojectbinding):

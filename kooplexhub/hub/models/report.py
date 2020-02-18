@@ -48,12 +48,13 @@ class Report(models.Model):
     reporttype = models.CharField(max_length = 16, choices = [ (x, TYPE_LOOKUP[x]) for x in TYPE_LIST ], default = TP_STATIC)
     scope = models.CharField(max_length = 16, choices = [ (x, SCOPE_LOOKUP[x]) for x in SCOPE_LIST ], default = SC_INTERNAL)
 
-    image = models.ForeignKey(Image, null = True)
+    image = models.ForeignKey(Image, null = True, blank=True)
     # To be able to sort (e.g. useful for courses)
-    directory_name = models.CharField(max_length = 50, null = False, default='default')
+    subcategory_name = models.CharField(max_length = 50, null = False, default='default', blank=True)
+    tag_name = models.CharField(max_length = 50, null = False, default='default', blank=True)
     
     index = models.CharField(max_length = 128, null = False)
-    password = models.CharField(max_length = 64, null = True, default = '')
+    password = models.CharField(max_length = 64, null = True, default = '', blank=True)
 
     def __lt__(self, c):
         return self.launched_at < c.launched_at
@@ -66,6 +67,14 @@ class Report(models.Model):
         return standardize_str(self.name)
 
     @property
+    def cleansubcategory_name(self):
+        return 'default' if self.subcategory_name else standardize_str(self.subcategory_name)
+
+    @property
+    def cleantag_name(self):
+        return '' if self.tag_name == '' else standardize_str(self.tag_name)
+
+    @property
     def ts_human(self):
         return human_localtime(self.created_at)
 
@@ -74,9 +83,10 @@ class Report(models.Model):
         container_name_dict = {
                 'un': self.creator.username, 
                 'rn': self.cleanname,
-                'ts': self.ts_human.replace(':', '').replace('_', '')
+                'tn': self.cleantag_name,
+#                'ts': self.ts_human.replace(':', '').replace('_', '')
                 }
-        return 'report-%(un)s-%(rn)s-%(ts)s' % container_name_dict
+        return 'report-%(un)s-%(rn)s-%(tn)s' % container_name_dict
 
     @property
     def url_external(self):
@@ -100,12 +110,15 @@ class Report(models.Model):
 
     @property
     def proxy_path(self):
-        return os.path.join(self.creator.username, self.cleanname, self.ts_human)
+        if self.cleantag_name == '':
+            return self.proxy_path_latest
+        else:
+            return os.path.join(self.creator.username, self.cleanname, self.cleantag_name)
 
     @property
     def proxy_path_latest(self):
         if self.reporttype == Report.TP_STATIC:
-            return os.path.join(self.creator.username, self.cleanname)
+            return os.path.join(self.creator.username, self.cleanname, 'latest')
         else:
             container_name_dict = {
                     'un': self.creator.username, 

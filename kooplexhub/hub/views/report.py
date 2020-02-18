@@ -50,7 +50,8 @@ def newreport(request):#, next_page):
                 image = image,
                 folder = request.POST['folder'],
                 password = request.POST['password'] if 'password' in request.POST else '',
-                directory_name = request.POST['directory_name'] if 'directory_name' in request.POST else '',
+                tag_name = request.POST['tag_name'] if 'tag_name' in request.POST else 'default',
+                subcategory_name = request.POST['subcategory_name'] if 'subcategory_name' in request.POST else 'default',
             )
             messages.info(request, "Report %s is created" % request.POST['name'])
             return redirect('report:list')
@@ -97,26 +98,25 @@ def filter_reports(user, pattern = ''):
     
     report_cats = {}
     if pattern:
-        query_reports = Report.objects.filter(models.Q(directory_name__icontains = pattern) | models.Q(name__icontains = pattern) )
+        query_reports = Report.objects.filter(models.Q(subcategory_name__icontains = pattern) | models.Q(name__icontains = pattern) )
     else:
         query_reports = Report.objects.all()
         
     for report in query_reports:
-        report_cats[report.directory_name] = [] 
+        report_cats[report.subcategory_name] = [] 
 
     for report in query_reports:
 
         g = report.groupby()
         T = T_REPORTS_DEL(g) if user == report.creator else T_REPORTS(g)
-        #yield report.latest, T, report.directory_name
-        for v in report_cats[report.directory_name]:
+        for v in report_cats[report.subcategory_name]:
             logger.debug("RReport: %s ? %s, %s ? %s" % (report.name, v[0].name, report.creator, v[0].creator))
             if report.name == v[0].name and report.creator == v[0].creator:
                 pass
             else:
-                report_cats[report.directory_name].append((report.latest, T))
-        if len(report_cats[report.directory_name]) == 0:
-           report_cats[report.directory_name].append((report.latest, T))
+                report_cats[report.subcategory_name].append((report.latest, T))
+        if len(report_cats[report.subcategory_name]) == 0:
+           report_cats[report.subcategory_name].append((report.latest, T))
     return report_cats
 
 #@login_required

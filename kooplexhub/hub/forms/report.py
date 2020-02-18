@@ -15,16 +15,24 @@ class FormReport(forms.ModelForm):
             label= _('Index file')
         )
     password = forms.CharField(required = False)
-    directory_name = forms.CharField(required = False)
+    tag_name = forms.CharField(
+            help_text = _('You will have a separate url fo this version of the report. Tag should one word without any special characters.'),
+            label= _('Tag'),
+            required = False
+        )
+    subcategory_name = forms.CharField(
+            help_text = _('When reports are listed it will be in this subcategory. Subcategory should one word without any special characters.'),
+            label= _('Subcategory'),
+            required = False
+        )
 
     class Meta:
         model = Report
-        fields = [ 'name', 'description', 'reporttype', 'folder', 'index', 'image', 'scope', 'password', 'directory_name' ]
+        fields = [ 'name', 'description', 'reporttype', 'folder', 'index', 'image', 'scope', 'password', 'tag_name', 'subcategory_name' ]
         labels = {
             'name': _('The name of your report'),
             'description': _('A short description'),
             'reporttype': _('Type of report'),
-            'directory_name': _('Directory name'),
         }
         help_texts = {
             'name': _('Report name should be unique.'),
