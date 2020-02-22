@@ -18,7 +18,7 @@ class T_REPORTS(tables.Table):
     class Meta:
         model = Report
         orderable = False
-        fields = ('openreport', 'created_at')
+        fields = ('openreport', 'created_at', 'tag_name')
         exclude = ('id', 'creator', 'name')
         attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
 
@@ -34,6 +34,6 @@ class T_REPORTS_DEL(T_REPORTS):
     class Meta:
         model = Report
         orderable = False
-        fields = ('openreport', 'deletereport', 'created_at')
+        fields = ('openreport', 'deletereport', 'created_at', 'tag_name')
         exclude = ('id', 'creator', 'name')
         attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }

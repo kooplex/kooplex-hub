@@ -16,12 +16,12 @@
 	  
 		  <h6  id="heading-{{ report.id }}">
 			  <a href="{% url 'report:openreport' report.id %}" {% if report.reporttype != report.TP_SERVICE %} target="_blank" {% endif %} role="button" class="btn btn-secondary" style="text-align: right;" title="Open">  <span class="oi oi-eye" aria-hidden="true"> </span></a>
-			  <button class="fas btn btn-vmi collapsed" data-toggle="collapse" data-target="#collapse-{{ report.id }}" aria-expanded="true" aria-controls="collapse-{{ report.id }}">
+			  <button class="fas btn btn-vmi collapsed" data-toggle="collapse" data-target="#collapse-{{ report.tag }}-{{ report.id }}" aria-expanded="true" aria-controls="collapse-{{ report.tag }}-{{ report.id }}">
 				  <strong>{{ report.name }}</strong>
 			  </button>
 		  </h6>
 	  </div>
-	  <div id="collapse-{{ report.id }}" class="collapse" aria-labelledby="heading-{{ report.id }}" data-parent="#reportList">
+	  <div id="collapse-{{ report.tag }}-{{ report.id }}" class="collapse" aria-labelledby="heading-{{ report.id }}" data-parent="#reportList">
 		  <div class="card-body" style="font-size: small;">
 			  <strong>Creator: </strong>{{ report.creator.first_name }} {{ report.creator.last_name }} ({{ report.creator }})<br>
 			  <strong>Description: </strong>{{ report.description }}<br>

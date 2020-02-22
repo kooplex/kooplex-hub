@@ -10,7 +10,7 @@ from django.dispatch import receiver
 from .image import Image
 
 from kooplex.settings import KOOPLEX
-from kooplex.lib import  standardize_str, now, human_localtime
+from kooplex.lib import  standardize_str, now, human_localtime, add_report_nginx_api, remove_report_nginx_api
 
 logger = logging.getLogger(__name__)
 
@@ -141,7 +141,6 @@ class Report(models.Model):
         return r
               
 
-
 @receiver(pre_save, sender = Report)
 def snapshot_report(sender, instance, **kwargs):
     from kooplex.lib.filesystem import snapshot_report, prepare_dashboardreport_withinitcell
@@ -155,6 +154,8 @@ def snapshot_report(sender, instance, **kwargs):
         prepare_dashboardreport_withinitcell(instance)
     if instance.reporttype == Report.TP_STATIC:
         addroute(instance)
+        if instance.password:
+            add_report_nginx_api(instance)
     if instance.reporttype == Report.TP_BOKEH:
         addroute(instance)
 
@@ -164,7 +165,10 @@ def garbage_report(sender, instance, **kwargs):
     from kooplex.lib.filesystem import garbage_report
     from kooplex.lib.proxy import addroute, removeroute
     garbage_report(instance)
+    if instance.password:
+        remove_report_nginx_api(instance)
+        removeroute(instance)
     if instance.reporttype == Report.TP_STATIC and instance != instance.latest:
-        addroute(instance.latest)
+        removeroute(instance.latest)
     removeroute(instance)
 

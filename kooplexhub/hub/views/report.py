@@ -41,16 +41,27 @@ def newreport(request):#, next_page):
             index = request.POST['index'] #if reporttype != Report.TP_BOKEH else ''
             image_id = request.POST['image']
             image = Image.objects.get(id = image_id) if image_id != 'None' else 1
+            name = request.POST['name']
+            tag_name = request.POST['tag_name'] if request.POST['tag_name'] else '--'
+            folder = request.POST['folder']
+            try:
+                prev_report = Report.objects.get(tag_name = tag_name, name = name, creator = user)
+                prev_report.delete()
+                logger.debug("Previous report with the same tag is removed")
+            except Exception as e:
+                logger.error(e)
+                pass
+
             Report.objects.create(
-                name = request.POST['name'],
+                name = name,
                 creator = user,
                 description = request.POST['description'], 
                 reporttype = reporttype,
                 index = index,
                 image = image,
-                folder = request.POST['folder'],
+                folder = folder,
                 password = request.POST['password'] if 'password' in request.POST else '',
-                tag_name = request.POST['tag_name'] if 'tag_name' in request.POST else 'default',
+                tag_name = tag_name if tag_name else 'latest',
                 subcategory_name = request.POST['subcategory_name'] if 'subcategory_name' in request.POST else 'default',
             )
             messages.info(request, "Report %s is created" % request.POST['name'])
@@ -102,21 +113,29 @@ def filter_reports(user, pattern = ''):
     else:
         query_reports = Report.objects.all()
         
-    for report in query_reports:
-        report_cats[report.subcategory_name] = [] 
+    # The structure is
+    # subcategory
+    #  - tag_name
 
     for report in query_reports:
 
         g = report.groupby()
         T = T_REPORTS_DEL(g) if user == report.creator else T_REPORTS(g)
-        for v in report_cats[report.subcategory_name]:
-            logger.debug("RReport: %s ? %s, %s ? %s" % (report.name, v[0].name, report.creator, v[0].creator))
-            if report.name == v[0].name and report.creator == v[0].creator:
-                pass
-            else:
-                report_cats[report.subcategory_name].append((report.latest, T))
-        if len(report_cats[report.subcategory_name]) == 0:
-           report_cats[report.subcategory_name].append((report.latest, T))
+        logger.debug("RReport: %s ? %s - subcategory: %s, tag: %s" % (report.name, report.creator, report.subcategory_name, report.tag_name))
+        if report.subcategory_name in report_cats.keys():
+            report_cats[report.subcategory_name].append((report, T))
+            for iv,v in enumerate(report_cats[report.subcategory_name]):
+                logger.debug("RReport: %s ? %s, %s ? %s - subcategory: %s" % (report.name, v[0].name, report.creator, v[0].creator, report.subcategory_name))
+                if report.name == v[0].name and report.creator == v[0].creator and report.tag_name != v[0].tag_name:
+                    report_cats[report.subcategory_name].pop(iv)
+#                    report_cats[report.subcategory_name].append((report.latest, T))
+                    
+#                else:
+    #                report_cats[report.subcategory_name].append((report.latest, T))
+#                    logger.debug("RReport: len %d " %len(report_cats) )
+        else:
+            report_cats[report.subcategory_name] = []
+            report_cats[report.subcategory_name].append((report, T))
     return report_cats
 
 #@login_required

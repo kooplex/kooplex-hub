@@ -23,7 +23,8 @@ class FormReport(forms.ModelForm):
     subcategory_name = forms.CharField(
             help_text = _('When reports are listed it will be in this subcategory. Subcategory should one word without any special characters.'),
             label= _('Subcategory'),
-            required = False
+            required = False,
+            initial = 'Default'
         )
 
     class Meta:

@@ -59,9 +59,9 @@
 </form>
 {% endblock %}
 {% block main_content_center %}
-           {% for directory_name, reports  in report_cats.items %}
-		<h4><span class="label label-default">  {{ directory_name }} </span></h4>
-            {% for report, table  in reports %}
+           {% for cat_name, report_list  in report_cats.items %}
+		<h4><span class="label label-default">  {{ cat_name }} </span></h4>
+            {% for report, table  in report_list %}
               {% include 'report/partial.html' %}
             {% endfor %}
            {% endfor %}
