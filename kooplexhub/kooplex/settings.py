@@ -228,6 +228,7 @@ KOOPLEX = {
     },
     'reportserver': {
         'base_url': 'http://%s-report-nginx' % PREFIX,
-    }
+        'api_url': 'http://%s-report-nginx:5000' % PREFIX,
+        }
 }
 

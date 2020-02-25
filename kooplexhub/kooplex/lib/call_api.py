@@ -11,13 +11,7 @@ from kooplex.lib import keeptrying, standardize_str
 
 logger = logging.getLogger(__name__)
 
-
- 
-#    proxyconf = KOOPLEX.get('proxy', {})
-#    reportconf = KOOPLEX.get('reportserver', {})
-#    target_url = reportconf.get('base_url', 'localhost')
-#    route_prefix = 'report'
-
+reportconf = KOOPLEX.get('reportserver', {})
 
 def removeroute(instance):
     if isinstance(instance, Container):
@@ -27,7 +21,7 @@ def removeroute(instance):
     logger.error('Not implemented')
 
 def add_report_nginx_api(report):
-    import htpasswd
+#    import htpasswd
     str_name = standardize_str(report.proxy_path)
     conf_text="""
 location /report/%s {
@@ -38,8 +32,7 @@ auth_basic_user_file /etc/passwords/%s;
     """%(report.proxy_path, standardize_str(report.proxy_path))
     logging.debug("+ pw registration ---> %s" % (str_name))
     kw = {
-#          'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', route_prefix, report.proxy_path), 
-          'url': os.path.join('http://fifi-report-nginx:5000', 'api', 'new', str_name),
+          'url': os.path.join(reportconf.get('api_url','localhost'), 'api', 'new', str_name),
           'data': json.dumps({ 
               'conf': conf_text,
               'username' : 'report',
@@ -54,7 +47,7 @@ auth_basic_user_file /etc/passwords/%s;
 def remove_report_nginx_api(report):
     str_name = standardize_str(report.proxy_path)
     kw = {
-          'url': os.path.join('http://fifi-report-nginx:5000', 'api', 'remove', str_name),
+          'url': os.path.join(reportconf.get('api_url','localhost'), 'api', 'remove', str_name),
           'data': json.dumps({ 
               }),
           'auth': ("nginxuser", 'nginxpw'),
