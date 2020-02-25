@@ -25,7 +25,7 @@ def add_report_nginx_api(report):
     str_name = standardize_str(report.proxy_path)
     conf_text="""
 location /report/%s {
-auth_basic "Administrator Login";
+auth_basic "username is 'report'  ";
 auth_basic_user_file /etc/passwords/%s;
 
 }
