@@ -43,21 +43,23 @@ def _addroute_container(container, test=False):
             'headers': {'Authorization': 'token %s' % proxyconf.get('auth_token', '') },
             'data': json.dumps({ 'target': container.url_test }),
         }
+        logging.debug("+ %s ---> %s test port" % (kw['url'], container.url_test))
     else:
         kw = {
             'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', container.proxy_path), 
             'headers': {'Authorization': 'token %s' % proxyconf.get('auth_token', '') },
             'data': json.dumps({ 'target': container.url }),
         }
+        logging.debug("+ %s ---> %s proxy path" % (kw['url'], container.url))
         try:
              rc = ReportContainerBinding.objects.get(container = container)
              report = rc.report
              kw = {
                  'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', 'notebook', report.proxy_path_latest), 
                  'headers': {'Authorization': 'token %s' % proxyconf.get('auth_token', '') },
-                 'data': json.dumps({ 'target': container.url }),
+                 'data': json.dumps({ 'target': container.url_test }),
              }
-             logging.debug("+ %s ---> %s" % (kw['url'], container.url))
+             logging.debug("+ %s ---> %s report proxy path latest" % (kw['url'], container.url))
              keeptrying(requests.post, 50, **kw)
         except: 
              logging.debug("Container is not for report")

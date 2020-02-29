@@ -222,6 +222,7 @@ KOOPLEX = {
     'spawner': {
         'pattern_proxypath': 'notebook/%(containername)s',
         'pattern_proxypath_test': 'notebook/%(containername)s/report',
+        'pattern_proxypath_latest': 'notebook/%(reportuser)s-%(reportname)s/report',
         'pattern_courseproject_containername': 'course-%(projectname)s-%(username)s',
         'port': 8000,
         'port_test': 9000,

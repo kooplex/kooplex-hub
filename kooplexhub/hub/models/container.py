@@ -95,6 +95,14 @@ class Container(models.Model):
         return KOOPLEX['spawner']['pattern_proxypath_test'] % info
 
     @property
+    def proxy_path_latest(self):
+        info = { 
+                'reportuser': self.report.creator,
+                'reportname': standardize_str(self.report.name),
+                }
+        return KOOPLEX['spawner']['pattern_proxypath_latest'] % info
+
+    @property
     def projects(self):
         for binding in ProjectContainerBinding.objects.filter(container = self):
             yield binding.project
@@ -214,9 +222,10 @@ class Container(models.Model):
             container_name_dict = {
                     'un': report.creator.username, 
                     'rn': report.cleanname,
-                    'ts': report.ts_human.replace(':', '').replace('_', '')
+                    'tn': report.tag_name,
+#                    'ts': report.ts_human.replace(':', '').replace('_', '')
                     }
-            containername = KOOPLEX.get('pattern_report_containername','report-%(un)s-%(rn)s-%(ts)s') % container_name_dict
+            containername = KOOPLEX.get('pattern_report_containername','report-%(un)s-%(rn)s-%(tn)s') % container_name_dict
             container = Container.objects.create(name = containername, user = report.creator, image=report.image)
             ReportContainerBinding.objects.create(report = report, container = container)
             logger.debug("new container in db %s" % container)
@@ -252,7 +261,7 @@ class Container(models.Model):
         report = self.report
         if report:
             envs['REPORT_TYPE'] = report.reporttype
-            envs['REPORT_DIR'] = os.path.join('/home/', 'report', report.cleanname, report.ts_human)
+            envs['REPORT_DIR'] = os.path.join('/home/', 'report', report.cleanname, report.tag_name)
             envs['REPORT_ABS'] = os.path.join('notebook/', 'report-%s-%s'%(self.user.username, report.cleanname))
             envs['REPORT_PORT'] = 9000
             envs['REPORT_INDEX'] = report.index
