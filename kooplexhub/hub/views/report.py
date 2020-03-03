@@ -164,6 +164,12 @@ def openreport(request, report_id):
         url_external = "%s/notebook/%s/report" % (KOOPLEX.get('base_url', 'localhost'), container.name)
         logger.debug('redirect: %s' % url_external)
         return redirect(url_external)
+    elif report.reporttype == report.TP_DASH:
+        container = Container.get_reportcontainer(report, create = True)
+        container.docker_start()
+        url_external = "%s/notebook/%s/report" % (KOOPLEX.get('base_url', 'localhost'), container.name)
+        logger.debug('redirect: %s' % url_external)
+        return redirect(url_external)
     elif report.reporttype == report.TP_SERVICE:
         container = Container.get_reportcontainer(report, create = True)
         container.docker_start()

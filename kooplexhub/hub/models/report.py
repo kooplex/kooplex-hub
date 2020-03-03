@@ -16,7 +16,8 @@ logger = logging.getLogger(__name__)
 
 TYPE_LOOKUP = {
     'static': 'HTML - content hosted on a webserver.',
-    'bokeh': 'BOKEH - an interactive applications, runs served by a bokeh.',
+    'bokeh': 'BOKEH - an interactive applications, served by a bokeh.',
+    'plotly_dash': 'Plotly Dash - an interactive applications, served by a dash server.',
     'dynamic': 'NB - A jupyter notebook.',
     'service': 'API - A REST API run in a notebook.',
 }
@@ -30,9 +31,10 @@ SCOPE_LOOKUP = {
 class Report(models.Model):
     TP_STATIC = 'static'
     TP_BOKEH = 'bokeh'
+    TP_DASH = 'plotly_dash'
     TP_DYNAMIC = 'dynamic'
     TP_SERVICE = 'service'
-    TYPE_LIST = [ TP_STATIC, TP_DYNAMIC, TP_SERVICE, TP_BOKEH ]
+    TYPE_LIST = [ TP_STATIC, TP_DYNAMIC, TP_SERVICE, TP_BOKEH, TP_DASH ]
 
     SC_PRIVATE = 'private'
     SC_INTERNAL = 'internal'
