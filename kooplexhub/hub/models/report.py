@@ -20,6 +20,8 @@ TYPE_LOOKUP = {
     'plotly_dash': 'Plotly Dash - an interactive applications, served by a dash server.',
     'dynamic': 'NB - A jupyter notebook.',
     'service': 'API - A REST API run in a notebook.',
+    'shiny': 'R - shiny application',
+#    'dashboard server': 'Dashboard and an API for remote embeddingdd',
 }
 
 SCOPE_LOOKUP = {
@@ -34,7 +36,8 @@ class Report(models.Model):
     TP_DASH = 'plotly_dash'
     TP_DYNAMIC = 'dynamic'
     TP_SERVICE = 'service'
-    TYPE_LIST = [ TP_STATIC, TP_DYNAMIC, TP_SERVICE, TP_BOKEH, TP_DASH ]
+    TP_SHINY = 'shiny'
+    TYPE_LIST = [ TP_STATIC, TP_DYNAMIC, TP_SERVICE, TP_BOKEH, TP_DASH, TP_SHINY ]
 
     SC_PRIVATE = 'private'
     SC_INTERNAL = 'internal'
@@ -92,7 +95,7 @@ class Report(models.Model):
 
     @property
     def url_external(self):
-        #FIXME worng urls e.g. service
+        #FIXME wrong urls e.g. service
         if self.reporttype == self.TP_STATIC:
             return os.path.join(KOOPLEX['base_url'], 'report', self.proxy_path, self.index)
         elif self.reporttype == self.TP_BOKEH:
@@ -102,11 +105,15 @@ class Report(models.Model):
         elif self.reporttype == self.TP_SERVICE:
             #https://kooplex-test.elte.hu/notebook/report-jegesm-simpleapi-20190827-101002/report/help 
             return os.path.join(KOOPLEX['base_url'], 'notebook', self.proxy_path, self.index, 'report/help')
+        elif self.reporttype == self.TP_SHINY:
+            return os.path.join(KOOPLEX['base_url'], 'shiny', self.proxy_path, self.index)
 
     @property
     def url_external_latest(self):
         if self.reporttype == Report.TP_STATIC:
             return os.path.join(KOOPLEX['base_url'], 'report', self.proxy_path_latest, self.index)
+        elif self.reporttype == self.TP_SHINY:
+            return os.path.join(KOOPLEX['base_url'], 'shiny', self.proxy_path, self.index)
         else:
             return os.path.join(KOOPLEX['base_url'], 'notebook', self.proxy_path_latest, 'report')
 
@@ -141,7 +148,7 @@ class Report(models.Model):
             elif r.created_at > r_latest.created_at:
                 r_latest = r
         return r
-              
+
 
 @receiver(pre_save, sender = Report)
 def snapshot_report(sender, instance, **kwargs):
@@ -158,7 +165,7 @@ def snapshot_report(sender, instance, **kwargs):
         addroute(instance)
         if instance.password:
             add_report_nginx_api(instance)
-    if instance.reporttype == Report.TP_BOKEH:
+    if instance.reporttype == Report.TP_BOKEH or instance.reporttype == Report.TP_SHINY:
         addroute(instance)
 
 
@@ -169,8 +176,7 @@ def garbage_report(sender, instance, **kwargs):
     garbage_report(instance)
     if instance.password:
         remove_report_nginx_api(instance)
-        removeroute(instance)
-    if instance.reporttype == Report.TP_STATIC and instance != instance.latest:
-        removeroute(instance.latest)
     removeroute(instance)
+    if instance.reporttype != Report.TP_DYNAMIC and instance == instance.latest:
+       removeroute(instance.latest)
 

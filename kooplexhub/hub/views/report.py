@@ -100,7 +100,8 @@ def listreport(request, files = []):#, next_page):
         'report_cats' : report_cats,
         'files' : files,
     }
-    return render(request, 'report/list.html', context = context_dict)
+#    return render(request, 'report/list.html', context = context_dict)
+    return render(request, 'report/list_thumbnail.html', context = context_dict)
 
 #FIXME https://django-taggit.readthedocs.io/en/latest/getting_started.html
 def filter_reports(user, pattern = ''):

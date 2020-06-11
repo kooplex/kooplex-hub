@@ -252,6 +252,7 @@ class Container(models.Model):
             'NB_GID': self.user.profile.groupid,
             'NB_URL': self.proxy_path,
             'NB_PORT': KOOPLEX.get('spawner', {}).get('port', 8000),
+            'NB_HOST': KOOPLEX.get('base_url', 'localhost'),
             'NB_TOKEN': self.user.profile.token,
             'CONTAINER_NAME': self.name,
         }

@@ -14,21 +14,35 @@
 	        {% endif %}
  	  </div>
 	  
-		  <h6  id="heading-{{ report.id }}">
-			  <a href="{% url 'report:openreport' report.id %}" {% if report.reporttype != report.TP_SERVICE %} target="_blank" {% endif %} role="button" class="btn btn-secondary" style="text-align: right;" title="Open">  <span class="oi oi-eye" aria-hidden="true"> </span></a>
-			  <button class="fas btn btn-vmi collapsed" data-toggle="collapse" data-target="#collapse-{{ report.tag }}-{{ report.id }}" aria-expanded="true" aria-controls="collapse-{{ report.tag }}-{{ report.id }}">
-				  <strong>{{ report.name }}</strong>
+	  <h6  id="heading-{{ report.id }}">
+		 <a href="{% url 'report:openreport' report.id %}" {% if report.reporttype != report.TP_SERVICE %} target="_blank" {% endif %} role="button" class="btn btn-secondary" style="text-align: right;" title="Open">  <span class="oi oi-eye" aria-hidden="true"> </span>
+			  <strong>{{ report.name }}</strong>
+		 </a>
+			  <button class="fas btn btn-vmi collapsed" data-toggle="modal" data-target="#modal-{{ report.tag }}-{{ report.id }}" aria-expanded="true" aria-controls="modal-{{ report.tag }}-{{ report.id }}">
+				  <span class="oi oi-pencil"></span>
 			  </button>
-		  </h6>
-	  </div>
-	  <div id="collapse-{{ report.tag }}-{{ report.id }}" class="collapse" aria-labelledby="heading-{{ report.id }}" data-parent="#reportList">
-		  <div class="card-body" style="font-size: small;">
+	</h6>
+	</div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal" id="modal-{{ report.tag }}-{{ report.id }}" tabindex="-1" role="dialog" aria-labelledby="heading-{{ report.id }}" aria-hidden="false">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content" style="width: 700px;">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">{{ report.name }}</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
 			  <strong>Creator: </strong>{{ report.creator.first_name }} {{ report.creator.last_name }} ({{ report.creator }})<br>
 			  <strong>Description: </strong>{{ report.description }}<br>
 			  <strong>Url to latest: </strong><code>{{ report.url_external_latest }}</code><br>
 			  {% render_table table %}
-		  </div>   <!-- card-body -->
-       </div>
+      </div>
+    </div>
   </div>
 </div>
 

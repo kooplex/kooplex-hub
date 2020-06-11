@@ -6,11 +6,25 @@
     <title>Kooplex Hub</title>
     {% load staticfiles %}
 
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<meta name="description" content="">
+	<meta name="author" content="">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" >
     <!--integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous"-->
     <!-- open iconic -->
     <link rel="stylesheet" href="{% static 'fonts/open-iconic-master/font/css/open-iconic-bootstrap.css' %}">
+	<!--link rel="stylesheet" href="/static/css/bootstrap.css"  type="text/css"-->
+	<!-- Template CSS -->
+	<link rel="stylesheet" href="/static/css/animate.css"  type="text/css">
+	<link rel="stylesheet" href="/static/css/font-awesome.css" type="text/css">
+	<link rel="stylesheet" href="/static/css/nexus.css"  type="text/css">
+	<link rel="stylesheet" href="/static/css/responsive.css"  type="text/css">
+	<link rel="stylesheet" href="/static/css/custom.css"  type="text/css">
+	<!-- Google Fonts-->
+	<link href="http://fonts.googleapis.com/css?family=Lato:400,300" rel="stylesheet" type="text/css">
+	<link href="http://fonts.googleapis.com/css?family=Open+Sans:400,300" rel="stylesheet" type="text/css">
 
     <script src="https://code.jquery.com/jquery-3.3.1.min.js"  crossorigin="anonymous"></script>
     {% block header_extra %}{% endblock %}
@@ -20,6 +34,11 @@
 	display: block;
 	margin-left: auto;
 	margin-right: auto;
+}
+.card {
+margin-bottom: 15px; 
+box-shadow: 5px 3px lightgray;
+margin-right: 6px;
 }
 </style>
   </head>
