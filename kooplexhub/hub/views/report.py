@@ -38,7 +38,7 @@ def newreport(request):#, next_page):
     elif request.method == 'POST' and request.POST['button'] == 'apply':
         try:
             reporttype = request.POST['reporttype']
-            index = request.POST['index'] #if reporttype != Report.TP_BOKEH else ''
+            index = request.POST['index'] #if reporttype != Report.TP_SHINY else ''
             image_id = request.POST['image']
             image = Image.objects.get(id = image_id) if image_id != 'None' else 1
             name = request.POST['name']
@@ -55,7 +55,7 @@ def newreport(request):#, next_page):
             Report.objects.create(
                 name = name,
                 creator = user,
-                description = request.POST['description'], 
+                description = request.POST['description'],
                 reporttype = reporttype,
                 index = index,
                 image = image,
@@ -149,7 +149,11 @@ def openreport(request, report_id):
     except Exception as e:
         logger.warning('Cannot resolve report id: %s -- %s' % (report_id, e))
         return redirect('indexpage')
-    if report.reporttype == report.TP_STATIC: 
+    if report.reporttype == report.TP_STATIC:
+        url_external = report.url_external
+        logger.debug('redirect: %s' % url_external)
+        return redirect(url_external)
+    elif report.reporttype == report.TP_SHINY:
         url_external = report.url_external
         logger.debug('redirect: %s' % url_external)
         return redirect(url_external)

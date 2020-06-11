@@ -120,7 +120,7 @@ class Profile(models.Model):
         for d in dirs:
             if d == folder_name:
                 for f in os.listdir("%s/%s"%(dir_prefix, d)):
-                    if f.endswith('.ipynb') or f.endswith('.html') or f.endswith('.py'):
+                    if f.endswith('.ipynb') or f.endswith('.html') or f.endswith('.py') or f.endswith('.R') or f.endswith('.r'):
                        yield f
 
     @property

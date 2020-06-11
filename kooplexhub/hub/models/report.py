@@ -21,7 +21,7 @@ TYPE_LOOKUP = {
     'dynamic': 'NB - A jupyter notebook.',
     'service': 'API - A REST API run in a notebook.',
     'shiny': 'R - shiny application',
-#    'dashboard server': 'Dashboard and an API for remote embeddingdd',
+    'plot_server': 'Dashboard and an API for remote embedding',
 }
 
 SCOPE_LOOKUP = {
@@ -37,7 +37,8 @@ class Report(models.Model):
     TP_DYNAMIC = 'dynamic'
     TP_SERVICE = 'service'
     TP_SHINY = 'shiny'
-    TYPE_LIST = [ TP_STATIC, TP_DYNAMIC, TP_SERVICE, TP_BOKEH, TP_DASH, TP_SHINY ]
+    TP_PLOTSERVER = 'plot_server'
+    TYPE_LIST = [ TP_STATIC, TP_DYNAMIC, TP_SERVICE, TP_BOKEH, TP_DASH, TP_SHINY, TP_PLOTSERVER ]
 
     SC_PRIVATE = 'private'
     SC_INTERNAL = 'internal'
@@ -102,11 +103,11 @@ class Report(models.Model):
             return "http://%s:8000"%self.container_name
         elif self.reporttype == self.TP_DYNAMIC:
             return os.path.join(KOOPLEX['base_url'], 'report', self.proxy_path, self.index)
-        elif self.reporttype == self.TP_SERVICE:
+        elif self.reporttype == self.TP_SERVICE or self.reporttype == self.TP_PLOTSERVER:
             #https://kooplex-test.elte.hu/notebook/report-jegesm-simpleapi-20190827-101002/report/help 
             return os.path.join(KOOPLEX['base_url'], 'notebook', self.proxy_path, self.index, 'report/help')
         elif self.reporttype == self.TP_SHINY:
-            return os.path.join(KOOPLEX['base_url'], 'shiny', self.proxy_path, self.index)
+            return os.path.join(KOOPLEX['base_url'], 'shiny', self.proxy_path)
 
     @property
     def url_external_latest(self):
