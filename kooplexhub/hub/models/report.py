@@ -114,7 +114,7 @@ class Report(models.Model):
         if self.reporttype == Report.TP_STATIC:
             return os.path.join(KOOPLEX['base_url'], 'report', self.proxy_path_latest, self.index)
         elif self.reporttype == self.TP_SHINY:
-            return os.path.join(KOOPLEX['base_url'], 'shiny', self.proxy_path, self.index)
+            return os.path.join(KOOPLEX['base_url'], 'shiny', self.proxy_path_latest)
         else:
             return os.path.join(KOOPLEX['base_url'], 'notebook', self.proxy_path_latest, 'report')
 
@@ -127,11 +127,11 @@ class Report(models.Model):
 
     @property
     def proxy_path_latest(self):
-        if self.reporttype == Report.TP_STATIC:
+        if self.reporttype == Report.TP_STATIC or self.reporttype == Report.TP_SHINY:
             return os.path.join(self.creator.username, self.cleanname, 'latest')
         else:
             container_name_dict = {
-                    'un': self.creator.username, 
+                    'un': self.creator.username,
                     'rn': self.cleanname,
                     }
             return 'report-%(un)s-%(rn)s' % container_name_dict
