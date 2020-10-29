@@ -15,6 +15,19 @@ class ProfileAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'userid', 'groupid', 'location', 'bio', 'is_teacher', 'is_student', 'can_createproject')
     search_fields = ('user__username', )
 
+@admin.register(ServiceEnvironment)
+class ServiceEnvironmentAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'state', 'image')
+
+@admin.register(Proxy)
+class ProxyAdmin(admin.ModelAdmin):
+    def serviceenvironment_name(self, instance): return instance.serviceenvironment.name
+    def serviceenvironment_user(self, instance): return instance.serviceenvironment.user
+    list_display = ('id', 'is_hub_entry', 'url_public', 'path', 'env_prefix', 'serviceenvironment_name', 'port', 'serviceenvironment_user')
+
+@admin.register(ProjectServiceEnvironmentBinding)
+class ProjectServiceEnvironmentBindingAdmin(admin.ModelAdmin):
+    list_display = ('id', 'project', 'serviceenvironment')
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
@@ -27,9 +40,9 @@ class UserProjectBindingAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'project', 'role', 'is_hidden')
     search_fields = ('user__username','project__name')
 
-@admin.register(GroupProjectBinding)
-class GroupProjectBindingAdmin(admin.ModelAdmin):
-    list_display = ('id', 'project', 'group')
+#@admin.register(GroupProjectBinding)
+#class GroupProjectBindingAdmin(admin.ModelAdmin):
+#    list_display = ('id', 'project', 'group')
 
 @admin.register(Container)
 class ContainerAdmin(admin.ModelAdmin):

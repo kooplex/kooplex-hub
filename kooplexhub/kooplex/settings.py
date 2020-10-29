@@ -12,6 +12,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 SESSION_COOKIE_NAME = "kooplexhub_sessionid"
 
 
+
 DEBUG = True
 
 PREFIX = os.getenv('PREFIX', 'kooplex')
@@ -82,6 +83,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'social_django.context_processors.backends',
                 'social_django.context_processors.login_redirect',
+                'kooplex.lib.context_processors.next_page',
                 'kooplex.lib.context_processors.form_biography',
                 'kooplex.lib.context_processors.form_project',
                 'kooplex.lib.context_processors.form_container',
@@ -161,28 +163,29 @@ KOOPLEX = {
     'url_manual': 'https://%s/manual' % DOMAIN,
     'hydra_oidc_endpoint':  'https://%s/hydra' % DOMAIN,
     'mountpoint': {
-        'home': '/mnt/.volumes/home',
+        'home': '/mnt/home',
+        'garbage': '/mnt/garbage',
+        'project': '/mnt/projects',
+        'report': '/mnt/reports',
+        'report_prepare': '/mnt/prepare_reports',
 
-        'report': '/mnt/.volumes/report',
-
-        'workdir': '/mnt/.volumes/workdir',
+        #####
+        # ezt hasznalja a hub?
         'git': '/mnt/.volumes/git',
         'filesync': '/mnt/.volumes/cache-seafile',
-        'share': '/mnt/.volumes/share',
-        'report': '/mnt/.volumes/report',
+        ####
 
         'course': '/mnt/.volumes/course',
         'usercourse': '/mnt/.volumes/usercourse',
         'assignment': '/mnt/.volumes/assignment',
 
-        'garbage': '/mnt/.volumes/garbage',
     },
     'volume': {
         'home': '%s-home' % PREFIX,
         'course': '%s-course' % PREFIX,
     },
     'ldap': {
-        'host': '%s-ldap' % PREFIX,
+        'host': 'svc-%s-ldap' % PREFIX,
         'port': os.getenv('HUBLDAP_PORT', 389),
         'bind_dn': 'cn=%s,%s' % (LDAP_ADMIN, LDAP_DOMAIN),
         'base_dn': LDAP_DOMAIN,
@@ -203,7 +206,7 @@ KOOPLEX = {
         'usercourse': r'^%s-(usercourse)$' % PREFIX,
         'assignment': r'^%s-(assignment)$' % PREFIX,
     },
-    'docker': {
+    'docker': {#FIXME
         'pattern_imagename_filter': r'^%s-notebook-(\w+):\w+$' % PREFIX,
         'pattern_imagename': '%s-notebook-%%(imagename)s' % PREFIX,
         'network': '%s-net' % PREFIX,
@@ -217,9 +220,15 @@ KOOPLEX = {
         'base_url': 'http://%s-impersonator:5000' % PREFIX,
         'username': 'hub',
         'password': 'blabla',
-        'seafile_api': 'http://%s-seafile-pw:5000' % PREFIX,
+        'seafile_api': 'http://svc-%s-seafile-pw-api:5000' % PREFIX,
     },
-    'spawner': {
+    'spawner': {#FIXME
+        'driver': 'kubernetes',
+        'volume_mount': '/v',
+        'project_subdir': 'workdir_projects',
+        'report_prepare': 'report_prepare',
+        'report_subdir': 'published_reports',
+
         'pattern_proxypath': 'notebook/%(containername)s',
         'pattern_proxypath_test': 'notebook/%(containername)s/report',
         'pattern_proxypath_latest': 'notebook/%(reportuser)s-%(reportname)s/report',
@@ -228,7 +237,7 @@ KOOPLEX = {
         'port_test': 9000,
     },
     'proxy': {
-        'base_url': 'http://%s-proxy:8001' % PREFIX,
+        'base_url': 'http://svc-%s-proxy:8001' % PREFIX,
         'auth_token': os.getenv('HUBPROXY_PW'),
     },
     'reportserver': {

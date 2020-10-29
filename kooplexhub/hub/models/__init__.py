@@ -8,11 +8,12 @@ from .container import Container, ContainerEnvironment, ProjectContainerBinding,
 from .versioncontrol import VCRepository, VCToken, VCProject, VCProjectProjectBinding
 from .filesync import FSServer, FSToken, FSLibrary, FSLibraryProjectBinding
 
-from .project import Project,  UserProjectBinding, GroupProjectBinding
+from .project import Project,  UserProjectBinding#, GroupProjectBinding
 
 from .report import Report
 
 from .course import CourseCode, Course, UserCourseBinding, UserCourseCodeBinding
 from .assignment import Assignment, UserAssignmentBinding
 
-
+from .serviceenvironment import ServiceEnvironment, ProjectServiceEnvironmentBinding
+from .proxy import Proxy

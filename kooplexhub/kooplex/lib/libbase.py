@@ -12,6 +12,7 @@ import pytz
 import unidecode
 
 from django.conf import settings
+from django.http import HttpResponseRedirect
 
 from kooplex import settings as kooplex_settings
 
@@ -35,6 +36,16 @@ def translate_date(d):
 def human_localtime(d):
     return d.astimezone(local_timezone).strftime('%Y_%m_%d-%H:%M:%S')
 
+def custom_redirect(url_name, *args, **kwargs):
+    from django.core.urlresolvers import reverse 
+    #import urllib #FIXME
+    try:
+        url = reverse(url_name, args = args)
+    except: #FIXME: NoReverseMatch
+        url = url_name
+    #params = urllib.urlencode(kwargs)
+    params = '&'.join(f'{k}={v}' for k, v in kwargs.items())
+    return HttpResponseRedirect(url + "?%s" % params)
 
 def keeptrying(method, times, **kw):
     """

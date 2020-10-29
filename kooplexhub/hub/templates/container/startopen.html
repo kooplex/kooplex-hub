@@ -1,18 +1,8 @@
-{% if container.is_running %}
-<a href="{% url 'container:open' container.id next_page %}" target="_blank" role="button" class="btn btn-success" style="min-width: 6em; text-align: left;">
+{% if container.state == container.ST_RUNNING %}
+<a href="{% url 'container:open' container.id next_page %}" target="_blank" role="button" class="btn btn-success" style="min-width: 6em; text-align: left;" data-toggle="tooltip" title="Access environment {{ container.name }}">
   <span class="oi oi-external-link" aria-hidden="true"> Open</span></a>
 {% else %}
-<a
-  {% if container %}
-  href="{% url 'container:start' container.id next_page %}"
-  {% elif project %}
-  href="{% url 'container:startprojectcontainer' project.id next_page %}"
-  {% elif course %}
-  href="{% url 'container:startcoursecontainer' course.id next_page %}"
-  {% else %}
-  href="#"
-  {% endif %}
-  role="button" class="btn btn-outline-secondary" style="min-width: 6em; text-align: left;">
-    <span class="oi oi-flash" aria-hidden="true"> Start</span></a>
+<a href="{% url 'container:start' container.id next_page %}" role="button" class="btn btn-outline-secondary" style="min-width: 6em; text-align: left;" data-toggle="tooltip" title="Start environment {{ container.name }}">
+  <span class="oi oi-flash" aria-hidden="true"> Start</span></a>
 {% endif %}
 

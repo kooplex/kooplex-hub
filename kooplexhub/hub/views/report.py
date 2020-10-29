@@ -11,7 +11,7 @@ from django_tables2 import RequestConfig
 from django.views.generic import ListView, CreateView, UpdateView
 from django.urls import reverse_lazy
 
-from hub.models import Image
+from hub.models import Image, Project
 from hub.models import Report, Container
 from hub.forms import FormReport
 
@@ -43,9 +43,11 @@ def newreport(request):#, next_page):
             image = Image.objects.get(id = image_id) if image_id != 'None' else 1
             name = request.POST['name']
             tag_name = request.POST['tag_name'] if request.POST['tag_name'] else '--'
+            project_id = int(request.POST['project'])
+            project = Project.objects.get(id = project_id)
             folder = request.POST['folder']
             try:
-                prev_report = Report.objects.get(tag_name = tag_name, name = name, creator = user)
+                prev_report = Report.objects.get(tag_name = tag_name, name = name, creator = user, project = project)
                 prev_report.delete()
                 logger.debug("Previous report with the same tag is removed")
             except Exception as e:
@@ -59,10 +61,11 @@ def newreport(request):#, next_page):
                 reporttype = reporttype,
                 index = index,
                 image = image,
+                project = project,
                 folder = folder,
                 password = request.POST['password'] if 'password' in request.POST else '',
                 tag_name = tag_name if tag_name else 'latest',
-                subcategory_name = request.POST['subcategory_name'] if 'subcategory_name' in request.POST else 'default',
+                subcategory_name = request.POST['subcategory_name'] if request.POST['subcategory_name'] else project.uniquename,
             )
             messages.info(request, "Report %s is created" % request.POST['name'])
             return redirect('report:list')
@@ -100,8 +103,8 @@ def listreport(request, files = []):#, next_page):
         'report_cats' : report_cats,
         'files' : files,
     }
-#    return render(request, 'report/list.html', context = context_dict)
-    return render(request, 'report/list_thumbnail.html', context = context_dict)
+    return render(request, 'report/list.html', context = context_dict)
+#    return render(request, 'report/list_thumbnail.html', context = context_dict)
 
 #FIXME https://django-taggit.readthedocs.io/en/latest/getting_started.html
 def filter_reports(user, pattern = ''):

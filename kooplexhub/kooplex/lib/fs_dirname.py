@@ -18,28 +18,24 @@ class Dirname:
         return os.path.join(Dirname.mountpoint['garbage'], user.username)
 
     @staticmethod
-    def reportroot(user):
-        return os.path.join(Dirname.mountpoint['report'], user.username)
+    def project(project):
+        return os.path.join(Dirname.mountpoint['project'], project.uniquename)
 
     @staticmethod
-    def reportprepare(user):
-        return os.path.join(Dirname.reportroot(user), '_prepare')
+    def reportroot(project):
+        return os.path.join(Dirname.mountpoint['report'], project.uniquename)
+
+    @staticmethod
+    def reportprepare(project):
+        return os.path.join(Dirname.mountpoint['report_prepare'], project.uniquename)
 
     @staticmethod
     def report(report):
-        return os.path.join(Dirname.reportroot(report.creator), standardize_str(report.name))
+        return os.path.join(Dirname.reportroot(report.project), standardize_str(report.name))
 
     @staticmethod
     def report_with_tag(report):
-        return os.path.join(Dirname.reportroot(report.creator), standardize_str(report.name), report.tag_name)
-
-    @staticmethod
-    def share(userprojectbinding):
-        return os.path.join(Dirname.mountpoint['share'], userprojectbinding.project.uniquename)
-
-    @staticmethod
-    def workdir(userprojectbinding):
-        return os.path.join(Dirname.mountpoint['workdir'], userprojectbinding.uniquename)
+        return os.path.join(Dirname.reportroot(report.project), standardize_str(report.name), report.tag_name)
 
     @staticmethod
     def vcpcache(vcproject):

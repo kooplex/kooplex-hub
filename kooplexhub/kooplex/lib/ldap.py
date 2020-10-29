@@ -60,7 +60,7 @@ class Ldap:
             'sn': user.username,
             'uidNumber': user.profile.userid,
             'gidNumber': user.profile.groupid,
-            'homeDirectory': '/home/%s' % user.username,
+            'homeDirectory': '/v/%s' % user.username,
             'loginShell': '/bin/bash',
         }
         success = self.connection.add(dn, object_class, attributes)

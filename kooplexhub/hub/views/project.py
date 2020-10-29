@@ -17,7 +17,9 @@ from hub.forms import table_collaboration, T_JOINABLEPROJECT
 from hub.forms import table_volume
 from hub.forms import table_vcproject
 from hub.forms import table_fslibrary
-from hub.models import Project, UserProjectBinding, Volume
+from hub.models import Project, UserProjectBinding
+from hub.models import ServiceEnvironment, ProjectServiceEnvironmentBinding
+from hub.models import Volume
 from hub.models import Image
 from hub.models import Profile
 from hub.models import VCProject, VCProjectProjectBinding, ProjectContainerBinding
@@ -33,17 +35,32 @@ def new(request):
     logger.debug("user %s" % request.user)
     user_id = request.POST.get('user_id')
     try:
-        assert user_id is not None and int(user_id) == request.user.id, "user id mismatch: %s tries to save %s %s" % (request.user, request.user.id, request.POST.get('user_id'))
-        projectname = request.POST.get('name')
-        for upb in UserProjectBinding.objects.filter(user = request.user):
-            assert upb.project.name != projectname, "Not a unique name"
-        form = FormProject(request.POST)
-        form.save()
-        UserProjectBinding.objects.create(user = request.user, project = form.instance, role = UserProjectBinding.RL_CREATOR)
-        messages.info(request, 'Your new project is created')
+        assert user_id is not None and int(user_id) == request.user.id, f'user id mismatch {request.user}: {request.user_id} =/= {user_id}'
+        form = FormProject(request.POST, user = request.user)
+        if form.is_valid():
+            logger.info(form.cleaned_data)
+            projectname = form.cleaned_data['name']
+            for upb in UserProjectBinding.objects.filter(user = request.user):
+                if upb.project.name == projectname:
+                    msg = f'Project name {projectname} is not unique'
+                    messages.error(request, msg)
+                    raise Exception(msg)
+            project = Project.objects.create(name = projectname, description = form.cleaned_data['description'])
+            UserProjectBinding.objects.create(user = request.user, project = project, role = UserProjectBinding.RL_CREATOR)
+            messages.info(request, f'New project {project} is created')
+            if len(form.cleaned_data['environments']) > 0:
+                for environment in form.cleaned_data['environments']:
+                    ProjectServiceEnvironmentBinding.objects.create(project = project, serviceenvironment = environment)
+                    messages.info(request, f'Project {project} is added to environment {environment}')
+            else:
+                environment = ServiceEnvironment.objects.create(name = f'{request.user}-{projectname}', user = request.user)
+                ProjectServiceEnvironmentBinding.objects.create(project = project, serviceenvironment = environment)
+                environment.add_notebook_proxy()
+                messages.info(request, f'New environment {environment} is created')
         return redirect('project:list')
     except Exception as e:
-        logger.error("New project not created -- %s" % e)
+        logger.error(f'New project not created -- {e}')
+        raise
         messages.error(request, 'Creation of a new project is refused.')
         return redirect('indexpage')
         

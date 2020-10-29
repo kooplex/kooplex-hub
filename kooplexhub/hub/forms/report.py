@@ -24,12 +24,11 @@ class FormReport(forms.ModelForm):
             help_text = _('When reports are listed it will be in this subcategory. Subcategory should one word without any special characters.'),
             label= _('Subcategory'),
             required = False,
-            initial = 'Default'
         )
 
     class Meta:
         model = Report
-        fields = [ 'name', 'description', 'reporttype', 'folder', 'index', 'image', 'scope', 'password', 'tag_name', 'subcategory_name' ]
+        fields = [ 'name', 'description', 'reporttype', 'project', 'folder', 'index', 'image', 'scope', 'password', 'tag_name', 'subcategory_name' ]
         labels = {
             'name': _('The name of your report'),
             'description': _('A short description'),
@@ -48,6 +47,7 @@ class FormReport(forms.ModelForm):
         self.fields['image'].empty_label = None
         self.fields["description"].widget.attrs["rows"] = 3
         self.fields["description"].widget.attrs["cols"] = 20
+        self.fields["project"].choices = list(user.profile.projects_reportprepare())
         folders = list(user.profile.dirs_reportprepare())
         files = []
         #files = list(user.profile.files_reportprepare())

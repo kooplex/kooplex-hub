@@ -12,12 +12,8 @@ class Filename:
         return os.path.join(Dirname.mountpoint['garbage'], "user-%s.%f.tar.gz" % (user.username, time.time()))
 
     @staticmethod
-    def share_garbage(userprojectbinding):
-        return os.path.join(Dirname.mountpoint['garbage'], "projectshare-%s.%f.tar.gz" % (userprojectbinding.project.uniquename, time.time()))
-
-    @staticmethod
-    def workdir_archive(userprojectbinding):
-        return os.path.join(Dirname.mountpoint['home'], userprojectbinding.user.username, "garbage", "workdir-%s.%f.tar.gz" % (userprojectbinding.uniquename, time.time()))
+    def project_garbage(project):
+        return os.path.join(Dirname.mountpoint['garbage'], "project-%s.%f.tar.gz" % (project.uniquename, time.time()))
 
     @staticmethod
     def vcpcache_archive(vcproject):

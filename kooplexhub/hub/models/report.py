@@ -7,6 +7,7 @@ from django.db.models.signals import pre_save, post_save, post_delete, pre_delet
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 
+from .project import Project
 from .image import Image
 
 from kooplex.settings import KOOPLEX
@@ -48,6 +49,7 @@ class Report(models.Model):
     name = models.CharField(max_length = 200, null = False)
     description = models.TextField(max_length = 500, null = True, default = None)
     creator = models.ForeignKey(User, null = False)
+    project = models.ForeignKey(Project, null = False)
     created_at = models.DateTimeField(default = timezone.now)
     folder = models.CharField(max_length = 200, null = False)
 
@@ -123,12 +125,12 @@ class Report(models.Model):
         if self.cleantag_name == '':
             return self.proxy_path_latest
         else:
-            return os.path.join(self.creator.username, self.cleanname, self.cleantag_name)
+            return os.path.join(self.project.uniquename, self.cleanname, self.cleantag_name)
 
     @property
     def proxy_path_latest(self):
         if self.reporttype == Report.TP_STATIC or self.reporttype == Report.TP_SHINY:
-            return os.path.join(self.creator.username, self.cleanname, 'latest')
+            return os.path.join(self.project.uniquename, self.cleanname, 'latest')
         else:
             container_name_dict = {
                     'un': self.creator.username,

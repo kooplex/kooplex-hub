@@ -69,7 +69,6 @@ def _copy_dir(f_source, f_target, remove = False):
     if remove:
         dir_util.remove_tree(f_source)
         logger.debug("Folder %s removed" % folder)
-    
 
 
 def _createfile(fn, content, uid = 0, gid = 0, mode = 0b111101000):
@@ -137,21 +136,20 @@ def check_reportprepare(user):
     assert os.path.exists(dir_reportprepare), "Folder %s does not exist" % dir_reportprepare
 
 def mkdir_reportprepare(user):
-    dir_reportprepare = Dirname.reportprepare(user)
-    _mkdir(dir_reportprepare, uid = user.profile.userid, gid = user.profile.groupid)
+    raise Exception('OBSOLETED')
 
 def snapshot_report(report):
     #create permanent dir
-    dir_source = os.path.join(Dirname.reportprepare(report.creator), report.folder)
+    dir_source = os.path.join(Dirname.reportprepare(report.project), report.folder)
     dir_target = os.path.join(Dirname.report(report), 'latest')
     _copy_dir(dir_source, dir_target, remove = False)
     #create tagged dir, if there is any tag
     if report.tag_name:
-        dir_source = os.path.join(Dirname.reportprepare(report.creator), report.folder)
+        dir_source = os.path.join(Dirname.reportprepare(report.project), report.folder)
         dir_target = Dirname.report_with_tag(report)
         _copy_dir(dir_source, dir_target, remove = False)
 
-    dir_reportroot = Dirname.reportroot(report.creator)
+    dir_reportroot = Dirname.reportroot(report.project)
     _grantaccess(report.creator, dir_reportroot, acl = 'rX')
 
 def garbage_report(report):
@@ -179,37 +177,36 @@ def prepare_dashboardreport_withinitcell(report):
 
 ########################################
 
+def mkdir_project(project):
+    dir_project = Dirname.project(project)
+    _mkdir(dir_project, uid = project.fs_uid, gid = project.fs_gid)
+    dir_report = Dirname.reportroot(project)
+    _mkdir(dir_report, uid = project.fs_uid, gid = project.fs_gid)
+    dir_reportprepare = Dirname.reportprepare(project)
+    _mkdir(dir_reportprepare, uid = project.fs_uid, gid = project.fs_gid)
 
-def mkdir_share(userprojectbinding):
-    project = userprojectbinding.project
-    dir_share = Dirname.share(userprojectbinding)
-    _mkdir(dir_share, uid = project.fs_uid, gid = project.fs_gid)
-
-def garbagedir_share(userprojectbinding):
-    dir_share = Dirname.share(userprojectbinding)
-    garbage = Filename.share_garbage(userprojectbinding)
-    _archivedir(dir_share, garbage)
-
-
-def grantaccess_share(userprojectbinding):
+def grantaccess_project(userprojectbinding):
     user = userprojectbinding.user
-    dir_share = Dirname.share(userprojectbinding)
-    _grantaccess(user, dir_share)
+    dir_project = Dirname.project(userprojectbinding.project)
+    _grantaccess(user, dir_project)
+    dir_report = Dirname.reportroot(userprojectbinding.project)
+    _grantaccess(user, dir_report)
+    dir_reportprepare = Dirname.reportprepare(userprojectbinding.project)
+    _grantaccess(user, dir_reportprepare)
 
-def revokeaccess_share(userprojectbinding):
+def revokeaccess_project(userprojectbinding):
     user = userprojectbinding.user
-    dir_share = Dirname.share(userprojectbinding)
-    _revokeaccess(user, dir_share)
+    dir_project = Dirname.project(userprojectbinding.project)
+    _revokeaccess(user, dir_project)
+    dir_report = Dirname.reportroot(userprojectbinding.project)
+    _revokeaccess(user, dir_report)
+    dir_reportprepare = Dirname.reportprepare(userprojectbinding.project)
+    _revokeaccess(user, dir_reportprepare)
 
-
-def mkdir_workdir(userprojectbinding):
-    dir_workdir = Dirname.workdir(userprojectbinding)
-    _mkdir(dir_workdir, uid = userprojectbinding.user.profile.userid, gid = userprojectbinding.user.profile.groupid)
-
-def archivedir_workdir(userprojectbinding):
-    dir_workdir = Dirname.workdir(userprojectbinding)
-    target = Filename.workdir_archive(userprojectbinding)
-    _archivedir(dir_workdir, target)
+def garbagedir_project(project):
+    dir_project = Dirname.project(project)
+    garbage = Filename.project_garbage(project)
+    _archivedir(dir_project, garbage)
 
 
 #FIXME: obsoleted

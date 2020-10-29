@@ -1,3 +1,4 @@
+#FIXME: rename environment
 import re
 import logging
 
@@ -8,13 +9,15 @@ from django.shortcuts import render, redirect
 import django_tables2 as tables
 from django_tables2 import RequestConfig
 
-from kooplex.lib import standardize_str
+from kooplex.lib import standardize_str, custom_redirect
 
 from hub.forms import table_projects
 from hub.models import Image
 from hub.models import Project, UserProjectBinding
-from hub.models import Container, ContainerEnvironment
-from hub.models import ProjectContainerBinding
+from hub.models import Container, ContainerEnvironment #FIXME: deprecate
+from hub.models import ProjectContainerBinding         #FIXME: deprecate
+from hub.models import ServiceEnvironment
+from hub.models import ProjectServiceEnvironmentBinding
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +43,7 @@ def new(request):
         
 
 @login_required
-def listcontainers(request):
+def listcontainers(request): #FIXME: rename
     """Renders the containerlist page."""
     logger.debug('Rendering container/list.html')
     #TODO: make volume/image etc changes visible, so the user will know which one needs to be deleted. 
@@ -92,43 +95,46 @@ def startcoursecontainer(request, course_id, next_page):
  
 
 @login_required
-def startcontainer(request, container_id, next_page):
+def startcontainer(request, container_id, next_page):#FIXME: rename
     """Starts the container."""
     user = request.user
     try:
-        container = Container.objects.get(user = user, id = container_id)
-        container.docker_start()
-        showpass(request, container)
-    except Container.DoesNotExist:
-        messages.error(request, 'Container does not exist')
+        environment = ServiceEnvironment.objects.get(user = user, id = container_id)
+        environment.start()
+        ###showpass(request, container)
+    except ServiceEnvironment.DoesNotExist:
+        messages.error(request, 'Environment does not exist')
     except Exception as e:
-        logger.error('Cannot start the container %s -- %s' % (container, e))
-        messages.error(request, 'Cannot start the container -- %s' % e)
+        logger.error(f'Cannot start the environment {environment} -- {e}')
+        messages.error(request, f'Cannot start environment {e}')
     return redirect(next_page)
 
 
 @login_required
-def opencontainer(request, container_id, next_page):
+def opencontainer(request, container_id, next_page):#FIXME: rename
     """Opens a container"""
     user = request.user
     try:
-        container = Container.objects.get(id = container_id, user = user, state = Container.ST_RUNNING)
-        container.wait_until_ready()
-        return redirect(container.url_external)
+        environment = ServiceEnvironment.objects.get(id = container_id, user = user, state = Container.ST_RUNNING)
+        environment.wait_until_ready()
+        return custom_redirect(environment.url_public, token = environment.user.profile.token)
     except Container.DoesNotExist:
         messages.error(request, 'Container is missing or stopped')
     return redirect(next_page)
 
 
 @login_required
-def stopcontainer(request, container_id, next_page):
+def stopcontainer(request, container_id, next_page):#FIXME: rename
     """Stops a container"""
     user = request.user
     try:
-        container = Container.objects.get(id = container_id, user = user, state = Container.ST_RUNNING)
-        container.docker_stop()
-    except Container.DoesNotExist:
-        messages.error(request, 'Container is missing or stopped')
+        environment = ServiceEnvironment.objects.get(user = user, id = container_id)
+        environment.stop()
+    except ServiceEnvironment.DoesNotExist:
+        messages.error(request, 'Environment does not exist')
+    except Exception as e:
+        logger.error(f'Cannot stop the environment {environment} -- {e}')
+        messages.error(request, f'Cannot stop environment {e}')
     return redirect(next_page)
 
 

@@ -52,9 +52,12 @@ class Profile(models.Model):
 
     @property
     def containers(self):
-        from .container import Container
-        for container in Container.objects.filter(user = self.user):
-             yield container
+        #from .container import Container
+        #for container in Container.objects.filter(user = self.user):
+        #     yield container
+        from .serviceenvironment import ServiceEnvironment
+        for environment in ServiceEnvironment.objects.filter(user = self.user):
+             yield environment
 
     @property
     def reports(self):
@@ -106,22 +109,27 @@ class Profile(models.Model):
                 yield coursebinding.course.project
                 duplicate.add(coursebinding.course.project)
 
+    def projects_reportprepare(self):
+        for b in self.projectbindings:
+            yield (b.project.id, b.project.uniquename)
+
     def dirs_reportprepare(self):
-        dir_reportprepare = Dirname.reportprepare(self.user)
-        for d in os.listdir(dir_reportprepare):
-            if d.startswith('.'):
-                continue
-            if os.path.isdir(os.path.join(dir_reportprepare, d)):
-                yield d
- 
+        for b in self.projectbindings:
+            report_dir = Dirname.reportprepare(b.project)
+            for d in os.listdir(report_dir):
+                if d.startswith('.'):
+                    continue
+                if os.path.isdir(os.path.join(report_dir, d)):
+                    yield d
+
     def files_reportprepare(self, folder_name):
-        dir_prefix = Dirname.reportprepare(self.user)
-        dirs = self.dirs_reportprepare()
-        for d in dirs:
-            if d == folder_name:
-                for f in os.listdir("%s/%s"%(dir_prefix, d)):
-                    if f.endswith('.ipynb') or f.endswith('.html') or f.endswith('.py') or f.endswith('.R') or f.endswith('.r'):
-                       yield f
+        for b in self.projectbindings:
+            report_dir = Dirname.reportprepare(b.project)
+            for d in os.listdir(report_dir):
+                if d == folder_name:
+                    for f in os.listdir("%s/%s"%(report_dir, d)):
+                        if f.endswith('.ipynb') or f.endswith('.html') or f.endswith('.py') or f.endswith('.R') or f.endswith('.r'):
+                           yield f
 
     @property
     def functional_volumes(self):
@@ -140,7 +148,7 @@ class Profile(models.Model):
         from .versioncontrol import VCToken
         for t in VCToken.objects.filter(user = self.user):
             yield t
-   
+
     @property
     def fstokens(self):
         from .filesync import FSToken
@@ -170,12 +178,6 @@ def create_user_home_and_reportprepare(sender, instance, created, **kwargs):
             logger.error("Failed to create home for %s -- %s" % (instance, e))
 
 
-@receiver(post_delete, sender = Profile)
-def remove_django_user(sender, instance, **kwargs):
-    instance.user.delete()
-    logger.info("Deleted user %s" % instance.user)
-
-
 @receiver(pre_delete, sender = User)
 def garbage_user_home(sender, instance, **kwargs):
     from kooplex.lib.filesystem import garbagedir_home
@@ -195,7 +197,7 @@ def ldap_create_user(sender, instance, created, **kwargs):
             regenerate = True
     except Exception as e:
         logger.error("Failed to get ldap entry for %s -- %s" % (instance, e))
-    if created or regenerate:
+    if not created or regenerate:
         try:
             ldap.adduser(instance)
         except Exception as e:

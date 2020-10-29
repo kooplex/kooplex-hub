@@ -107,17 +107,25 @@ def changetoken(request, next_page):
 def changeseaftoken(request, next_page):
     #TODO: what if more fs servers present???
     logger.debug("user %s" % request.user)
-    try:
-        token = FSToken.objects.get(user = request.user)
-        token.token = pwgen.pwgen(64)
-        token.save()
-        messages.warning(request, 'Your seafile secret token is updated. You may experience problem with running file syncronization tasks.')
-    except FSToken.DoesNotExist:
-        fsserver = FSServer.objects.all()[0]  #FIXME: ugly
-        token = FSToken.objects.create(user = request.user, syncserver = fsserver, token = pwgen.pwgen(64))
-        token.save()
-        messages.info(request, 'New seafile secret token is created for %s' % fsserver)
-    seafilepw_update(request.user.username, token.token)
+    fsservers = FSServer.objects.all()
+    if len(fsservers) < 1:
+        logger.error('No File synchronization services added yet')
+        messages.error(request, 'Ask administrator to add a filesynchronization service endpoint')
+        return redirect(next_page)
+    for fsserver in fsservers:
+        try:
+            token = FSToken.objects.get(user = request.user, syncserver = fsserver)
+            token.token = pwgen.pwgen(64)
+            token.save()
+            messages.info(request, f'Your seafile secret token is updated for {fsserver}')
+        except FSToken.DoesNotExist:
+            token = FSToken.objects.create(user = request.user, syncserver = fsserver, token = pwgen.pwgen(64))
+            messages.info(request, f'A new secret token is created for {fsserver}')
+        if fsserver.backend_type == fsserver.TP_SEAFILE:
+            seafilepw_update(request.user.username, token.token)
+        else:
+            raise NotImplementedError(f'unknown filesynchronisation server backend_type {fsserver.backend_type} for {fsserver}')
+    messages.warning(request, 'You may experience problem with running file syncronization tasks.')
     return redirect(next_page)
 
 

@@ -53,10 +53,7 @@ class Project(models.Model):
 
     @property
     def uniquename(self):
-        try:
-            return "%s-%s" % (self.creator.username, standardize_str(self.name))
-        except AttributeError:
-            return standardize_str(self.name)
+        return f'{self.cleanname}-{self.creator.username}'
 
     @property
     def fs_uid(self):
@@ -98,10 +95,12 @@ class Project(models.Model):
                 yield volume
 
     @property
-    def containers(self):
-        from .container import ProjectContainerBinding
-        for binding in ProjectContainerBinding.objects.filter(project = self):
-            yield binding.container
+    def containers(self): #FIXME: rename
+        #from .container import ProjectContainerBinding
+        #for binding in ProjectContainerBinding.objects.filter(project = self):
+        #    yield binding.container
+        from .serviceenvironment import ProjectServiceEnvironmentBinding
+        return [ binding.serviceenvironment for binding in ProjectServiceEnvironmentBinding.objects.filter(project = self) ]
 
     @register.filter
     def get_userprojectcontainer(self, user):
@@ -254,49 +253,31 @@ def assert_single_creator(sender, instance, **kwargs):
             assert upb.id == instance.id, "Project %s cannot have more than one creator" % p
     except UserProjectBinding.DoesNotExist:
         assert instance.role == UserProjectBinding.RL_CREATOR, "The first user project binding must be the creator %s" % instance
-        
 
 @receiver(post_save, sender = UserProjectBinding)
-def mkdir_share(sender, instance, created, **kwargs):
-    from kooplex.lib.filesystem import mkdir_share
-    if created and instance.role == UserProjectBinding.RL_CREATOR:
-        mkdir_share(instance)
-
-@receiver(pre_delete, sender = UserProjectBinding)
-def garbagedir_share(sender, instance, **kwargs):
-    from kooplex.lib.filesystem import garbagedir_share
+def mkdir_project(sender, instance, created, **kwargs):
+    from kooplex.lib.filesystem import mkdir_project
     if instance.role == UserProjectBinding.RL_CREATOR:
-        garbagedir_share(instance)
-
-
-@receiver(post_save, sender = UserProjectBinding)
-def grantaccess_share(sender, instance, created, **kwargs):
-    from kooplex.lib.filesystem import grantaccess_share
-    if created:
-        grantaccess_share(instance)
-
-@receiver(pre_delete, sender = UserProjectBinding)
-def revokeaccess_share(sender, instance, **kwargs):
-    from kooplex.lib.filesystem import revokeaccess_share
-    revokeaccess_share(instance)
-
+        mkdir_project(instance.project)
 
 @receiver(post_save, sender = UserProjectBinding)
-def mkdir_workdir(sender, instance, created, **kwargs):
-    from kooplex.lib.filesystem import mkdir_workdir
-    mkdir_workdir(instance)
+def grantaccess_project(sender, instance, created, **kwargs):
+    from kooplex.lib.filesystem import grantaccess_project
+    if created and instance.role != UserProjectBinding.RL_CREATOR:
+        grantaccess_project(instance)
 
 @receiver(pre_delete, sender = UserProjectBinding)
-def archivedir_workdir(sender, instance, **kwargs):
-    from kooplex.lib.filesystem import archivedir_workdir
-    archivedir_workdir(instance)
+def revokeaccess_project(sender, instance, **kwargs):
+    from kooplex.lib.filesystem import revokeaccess_project
+    revokeaccess_project(instance)
 
+@receiver(pre_delete, sender = UserProjectBinding)
+def garbagedir_project(sender, instance, **kwargs):
+    from kooplex.lib.filesystem import garbagedir_project
+    garbagedir_project(instance)
 
-
-
-class GroupProjectBinding(models.Model):
-    group = models.ForeignKey(Group, null = False)
-    project = models.ForeignKey(Project, null = False)
-
-
-
+@receiver(pre_delete, sender = UserProjectBinding)
+def assert_not_shared(sender, instance, **kwargs):
+    bindings = UserProjectBinding.objects.filter(project = instance.project)
+    if instance.role == UserProjectBinding.RL_CREATOR:
+        assert len(bindings) == 1, f'Cannot delete creator binding because {len(bindings)} project bindings exists'

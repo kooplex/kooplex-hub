@@ -62,13 +62,21 @@ a.active {
   <h2>Connected services</h2>
   <!-- We should organize into tabs each service -->
   <form id="fsRefreshLibForm" class="form-horizontal form-control">
-	  <h3>   <img src="/static/content/logos/seafile.png" alt="SeaFile" height="50px"> </h3>
           {% for t in fs_tokens %}
+            {% with s=t.syncserver %}
           <div class="card bg-light mb-3">
               <div class="card-header">
                  <div class="row">
                       <div class="col-10">
-       		       <h4>{{ t.syncserver.url }}</h4> (Last updated: {{ t.last_used }})
+       		       <h4>
+		       {% if s.backend_type == s.TP_SEAFILE %}
+	                   <img src="/static/content/logos/seafile.png" alt="SeaFile" height="50px">
+		       {% else %}
+		         {{ s.backend_type }}
+		       {% endif %}
+		       {{ t.syncserver.url }}
+		       <span class="badge badge-pill badge-info">Last updated: {{ t.last_used }}</span>
+		       </h4>
                       </div>
                       <div class="col-2">
                          <a href="{% url 'service:fs_refresh' t.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Last updated: {{ t.last_used }}" data-placement="top">Refresh</a> <br style="margin:1ex">
@@ -76,6 +84,7 @@ a.active {
                  </div>
               </div>
           </div>
+	    {% endwith %}
           {% endfor %}
   </form>
   {% load render_table from django_tables2 %}

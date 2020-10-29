@@ -1,4 +1,7 @@
+import os
 import logging
+import hashlib
+import MySQLdb
 import seafileapi
 import requests
 import requests.auth
@@ -14,7 +17,27 @@ def list_libraries(fstoken):
         for r in client.repos.list_repos():
             yield r
     else:
-        raise NotImplementedError("Unknown version control system type: %s" % fstoken.type)
+        raise NotImplementedError("Unknown filesyncronization service type: %s" % fstoken.backend_type)
+
+
+
+def code_password_for_seafile(password):
+    salt = os.urandom(32)
+    key = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 10000)
+    return "PBKDF2SHA256$10000$" + F(salt) +"$"+ F(key)
+
+def store_user_pw(username, password):
+    code = code_password_for_seafile(password)
+    sqlq = "update EmailUser set passwd = '%s' where email = '%s';" % (code, username)
+    dbhost = 'svc-seafile-mysql' #FIXME: hardcode os.getenv('MYSQL_HOST', 'seafile-mysql')
+    pw = 'ALMAFA321' #FIXME: os.getenv('MYSQL_ROOT_PASSWORD')
+    db = MySQLdb.connect(dbhost, "root", pw, "ccnet_db")
+    c = db.cursor()
+    c.execute(sqlq)
+    c.close()
+    db.commit()
+    db.close()
+
 
 def seafilepw_update(username, password):
     A = requests.auth.HTTPBasicAuth(KOOPLEX['impersonator'].get('username'), KOOPLEX['impersonator'].get('password'))
