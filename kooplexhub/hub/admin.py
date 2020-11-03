@@ -44,30 +44,14 @@ class UserProjectBindingAdmin(admin.ModelAdmin):
 #class GroupProjectBindingAdmin(admin.ModelAdmin):
 #    list_display = ('id', 'project', 'group')
 
-@admin.register(Container)
-class ContainerAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'image', 'user', 'state', 'n_projects', 'marked_to_remove')
-
-@admin.register(ContainerEnvironment)
-class ContainerEnvironmentAdmin(admin.ModelAdmin):
-    list_display = ('id', 'container', 'name', 'value')
-
-@admin.register(ProjectContainerBinding)
-class ProjectContainerBindingAdmin(admin.ModelAdmin):
-    list_display = ('id', 'container', 'project')
-
-@admin.register(ReportContainerBinding)
-class ReportContainerBindingAdmin(admin.ModelAdmin):
-    list_display = ('id', 'container', 'report')
-
 @admin.register(CourseCode)
 class CourseCodeAdmin(admin.ModelAdmin):
     list_display = ('id', 'courseid', 'safecourseid', 'course')
     search_fields = ('courseid', )
 
-@admin.register(CourseContainerBinding)
-class CourseContainerBindingAdmin(admin.ModelAdmin):
-    list_display = ('id', 'container', 'course')
+#@admin.register(CourseContainerBinding)
+#class CourseContainerBindingAdmin(admin.ModelAdmin):
+#    list_display = ('id', 'container', 'course')
 
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
@@ -141,10 +125,6 @@ class VolumeProjectBindingAdmin(admin.ModelAdmin):
 #            self.delete_model(request, vpb)
 #    delete_vpb.short_description = 'Delete volume project bindings'
     
-@admin.register(VolumeContainerBinding)
-class VolumeContainerBindingAdmin(admin.ModelAdmin):
-    list_display = ('id', 'container', 'volume' )
-
 @admin.register(Image)
 class ImageAdmin(admin.ModelAdmin):
     list_display = ('id', 'name')

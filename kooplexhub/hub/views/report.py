@@ -12,12 +12,15 @@ from django.views.generic import ListView, CreateView, UpdateView
 from django.urls import reverse_lazy
 
 from hub.models import Image, Project
-from hub.models import Report, Container
+from hub.models import Report#, Container
 from hub.forms import FormReport
 
 from kooplex.lib import now, translate_date
 from kooplex.settings import KOOPLEX
 from kooplex.lib.filesystem import prepare_dashboardreport_withinitcell
+
+#FIXME:
+Container = None
 
 logger = logging.getLogger(__name__)
 

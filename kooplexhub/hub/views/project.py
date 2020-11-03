@@ -22,7 +22,7 @@ from hub.models import ServiceEnvironment, ProjectServiceEnvironmentBinding
 from hub.models import Volume
 from hub.models import Image
 from hub.models import Profile
-from hub.models import VCProject, VCProjectProjectBinding, ProjectContainerBinding
+from hub.models import VCProject, VCProjectProjectBinding#, ProjectContainerBinding
 from hub.models import FSLibrary, FSLibraryProjectBinding#, ProjectContainerBinding
 
 from django.utils.safestring import mark_safe

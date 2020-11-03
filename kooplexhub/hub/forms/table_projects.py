@@ -4,18 +4,18 @@ from django.utils.html import format_html
 import django_tables2 as tables
 
 from hub.models import UserProjectBinding
-from hub.models import ProjectContainerBinding
+#from hub.models import ProjectContainerBinding
 
-def select_column(container):
-    bound_projects = [ b.project for b in ProjectContainerBinding.objects.filter(container = container) ]
-    class SelectColumn(tables.Column):
-        def render(self, record):
-            p = record.project
-            if p in bound_projects:
-                return format_html("<input type='hidden' name='project_ids_before' value='%d'><input type='checkbox' name='project_ids_after' value='%d' checked>" % (p.id, p.id))
-            else:
-                return format_html("<input type='checkbox' name='project_ids_after' value='%d'>" % p.id)
-    return SelectColumn
+#def select_column(container):
+#    bound_projects = [ b.project for b in ProjectContainerBinding.objects.filter(container = container) ]
+#    class SelectColumn(tables.Column):
+#        def render(self, record):
+#            p = record.project
+#            if p in bound_projects:
+#                return format_html("<input type='hidden' name='project_ids_before' value='%d'><input type='checkbox' name='project_ids_after' value='%d' checked>" % (p.id, p.id))
+#            else:
+#                return format_html("<input type='checkbox' name='project_ids_after' value='%d'>" % p.id)
+#    return SelectColumn
 
 def image_column(container):
     class ImageColumn(tables.Column):

@@ -13,7 +13,7 @@ from django.views.generic import ListView, CreateView, UpdateView
 from django.urls import reverse_lazy
 
 from hub.models import Image
-from hub.models import Report, Container, Volume
+from hub.models import Report, Volume
 
 from hub.forms import table_listvolume, FormVolume
 

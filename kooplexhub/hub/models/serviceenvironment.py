@@ -45,7 +45,6 @@ class ServiceEnvironment(models.Model):
     user = models.ForeignKey(User, null = False)
     image = models.ForeignKey(Image, null = True)
     launched_at = models.DateTimeField(null = True)
-    marked_to_remove = models.BooleanField(default = False)
 
     state = models.CharField(max_length = 16, choices = [ (x, ST_LOOKUP[x]) for x in STATE_LIST ], default = ST_NOTPRESENT)
     last_message = models.CharField(max_length = 512, null = True)

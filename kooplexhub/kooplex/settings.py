@@ -49,10 +49,7 @@ AUTHENTICATION_BACKENDS = (
 SOCIAL_AUTH_ELTEOIDC_KEY = '%s-hub' % PREFIX
 SOCIAL_AUTH_ELTEOIDC_SECRET = os.getenv('ELTEOIDC_SECRET')
 SOCIAL_AUTH_HYDRAOIDC_KEY = '%s-hub' % PREFIX
-#SOCIAL_AUTH_HYDRAOIDC_SECRET = os.getenv('HYDRA_OIDC_SECRET_HUB')
-SOCIAL_AUTH_HYDRAOIDC_SECRET = "" #'WQbsPptQZWDE' # os.getenv('HYDRA_OIDC_SECRET_HUB')
-with open("/etc/secrets/%s-hub-hydra.secret"%PREFIX) as f:
-    SOCIAL_AUTH_HYDRAOIDC_SECRET = f.readline().strip()
+SOCIAL_AUTH_HYDRAOIDC_SECRET = os.getenv('HYDRA_OIDC_SECRET_HUB')
 SOCIAL_AUTH_USER_FIELDS = [ 'username', 'email' ]
 SOCIAL_AUTH_URL_NAMESPACE = 'social'
 
@@ -86,7 +83,7 @@ TEMPLATES = [
                 'kooplex.lib.context_processors.next_page',
                 'kooplex.lib.context_processors.form_biography',
                 'kooplex.lib.context_processors.form_project',
-                'kooplex.lib.context_processors.form_container',
+                'kooplex.lib.context_processors.form_environment',
                 'kooplex.lib.context_processors.user',
                 'kooplex.lib.context_processors.table',
                 'kooplex.lib.context_processors.manual',
@@ -220,7 +217,7 @@ KOOPLEX = {
         'base_url': 'http://%s-impersonator:5000' % PREFIX,
         'username': 'hub',
         'password': 'blabla',
-        'seafile_api': 'http://svc-%s-seafile-pw-api:5000' % PREFIX,
+        'seafile_api': 'http://svc-%s-seafile-pwapi:5000' % PREFIX,
     },
     'spawner': {#FIXME
         'driver': 'kubernetes',

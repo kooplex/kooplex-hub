@@ -14,8 +14,6 @@ from kooplex.lib import standardize_str, custom_redirect
 from hub.forms import table_projects
 from hub.models import Image
 from hub.models import Project, UserProjectBinding
-from hub.models import Container, ContainerEnvironment #FIXME: deprecate
-from hub.models import ProjectContainerBinding         #FIXME: deprecate
 from hub.models import ServiceEnvironment
 from hub.models import ProjectServiceEnvironmentBinding
 
@@ -41,7 +39,7 @@ def new(request):
         
 
 @login_required
-def listserviceenvironments(request): #FIXME: rename
+def listserviceenvironments(request):
     """Renders the containerlist page."""
     logger.debug('Rendering container/list.html')
     #TODO: make volume/image etc changes visible, so the user will know which one needs to be deleted. 
@@ -93,11 +91,11 @@ def startcoursecontainer(request, course_id, next_page):
  
 
 @login_required
-def startcontainer(request, container_id, next_page):#FIXME: rename
+def startserviceenvironment(request, environment_id, next_page):
     """Starts the container."""
     user = request.user
     try:
-        environment = ServiceEnvironment.objects.get(user = user, id = container_id)
+        environment = ServiceEnvironment.objects.get(user = user, id = environment_id)
         environment.start()
         ###showpass(request, container)
     except ServiceEnvironment.DoesNotExist:
@@ -109,24 +107,27 @@ def startcontainer(request, container_id, next_page):#FIXME: rename
 
 
 @login_required
-def opencontainer(request, container_id, next_page):#FIXME: rename
+def openserviceenvironment(request, environment_id, next_page):
     """Opens a container"""
     user = request.user
     try:
-        environment = ServiceEnvironment.objects.get(id = container_id, user = user, state = Container.ST_RUNNING)
-        environment.wait_until_ready()
-        return custom_redirect(environment.url_public, token = environment.user.profile.token)
-    except Container.DoesNotExist:
-        messages.error(request, 'Container is missing or stopped')
+        environment = ServiceEnvironment.objects.get(id = environment_id, user = user)
+        if environment.state in [ ServiceEnvironment.ST_RUNNING, ServiceEnvironment.ST_NEED_RESTART ]:
+            environment.wait_until_ready()
+            return custom_redirect(environment.url_public, token = environment.user.profile.token)
+        else:
+            messages.error(request, f'Cannot open {environment.name} of state {environment.state}')
+    except ServiceEnvironment.DoesNotExist:
+        messages.error(request, 'Environment is missing')
     return redirect(next_page)
 
 
 @login_required
-def stopcontainer(request, container_id, next_page):#FIXME: rename
+def stopserviceenvironment(request, environment_id, next_page):
     """Stops a container"""
     user = request.user
     try:
-        environment = ServiceEnvironment.objects.get(user = user, id = container_id)
+        environment = ServiceEnvironment.objects.get(user = user, id = environment_id)
         environment.stop()
     except ServiceEnvironment.DoesNotExist:
         messages.error(request, 'Environment does not exist')
@@ -137,23 +138,11 @@ def stopcontainer(request, container_id, next_page):#FIXME: rename
 
 
 @login_required
-def removecontainer(request, container_id, next_page):
-    """Removes a container"""
-    user = request.user
-    try:
-        container = Container.objects.get(id = container_id, user = user)
-        container.docker_remove()
-    except Container.DoesNotExist:
-        messages.error(request, 'Container is missing or stopped')
-    return redirect(next_page)
-
-
-@login_required
-def destroyserviceenvironment(request, container_id, next_page):
+def destroyserviceenvironment(request, environment_id, next_page):
     """Deletes a container instance"""
     user = request.user
     try:
-        environment = ServiceEnvironment.objects.get(id = container_id, user = user)
+        environment = ServiceEnvironment.objects.get(id = environment_id, user = user)
         environment.stop()
         environment.delete()
     except ServiceEnvironment.DoesNotExist:
@@ -228,11 +217,10 @@ def refreshlogs(request, container_id):
 urlpatterns = [
     url(r'^new/?$', new, name = 'new'), 
     url(r'^list/?$', listserviceenvironments, name = 'list'), 
-    url(r'^start/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)$', startcontainer, name = 'start'),
-    url(r'^open/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)$', opencontainer, name = 'open'),
-    url(r'^stop/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)$', stopcontainer, name = 'stop'),
-    url(r'^remove/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)$', removecontainer, name = 'remove'),
-    url(r'^destroy/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)$', destroyserviceenvironment, name = 'destroy'),
+    url(r'^start/(?P<environment_id>\d+)/(?P<next_page>\w+:?\w*)$', startserviceenvironment, name = 'start'),
+    url(r'^open/(?P<environment_id>\d+)/(?P<next_page>\w+:?\w*)$', openserviceenvironment, name = 'open'),
+    url(r'^stop/(?P<environment_id>\d+)/(?P<next_page>\w+:?\w*)$', stopserviceenvironment, name = 'stop'),
+    url(r'^destroy/(?P<environment_id>\d+)/(?P<next_page>\w+:?\w*)$', destroyserviceenvironment, name = 'destroy'),
     url(r'^refreshlogs/(?P<container_id>\d+)$', refreshlogs, name = 'refreshlogs'),
 
     url(r'^addproject/(?P<container_id>\d+)$', addproject, name = 'addproject'),

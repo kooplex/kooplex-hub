@@ -11,7 +11,7 @@
       {% csrf_token %}
         <div class="modal-body">
           <table>
-            {{ f_container_meta.as_table }}
+            {{ f_environment_meta.as_table }}
           </table>
           <input type="hidden" name="user_id" value="{{ user.id }}">
         </div>     <!-- modal-body -->

@@ -3,7 +3,7 @@ from .group import Group, UserGroupBinding
 
 from .image import Image
 from .volume import Volume, VolumeOwnerBinding, ExtraFields, UserPrivilegeVolumeBinding, VolumeProjectBinding
-from .container import Container, ContainerEnvironment, ProjectContainerBinding, CourseContainerBinding, VolumeContainerBinding, ReportContainerBinding
+#from .container import Container, ContainerEnvironment, ProjectContainerBinding, CourseContainerBinding, VolumeContainerBinding, ReportContainerBinding
 
 from .versioncontrol import VCRepository, VCToken, VCProject, VCProjectProjectBinding
 from .filesync import FSServer, FSToken, FSLibrary, FSLibraryProjectBinding

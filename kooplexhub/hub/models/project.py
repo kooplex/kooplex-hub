@@ -102,12 +102,12 @@ class Project(models.Model):
         from .serviceenvironment import ProjectServiceEnvironmentBinding
         return [ binding.serviceenvironment for binding in ProjectServiceEnvironmentBinding.objects.filter(project = self) ]
 
-    @register.filter
-    def get_userprojectcontainer(self, user):
-        from .container import ProjectContainerBinding
-        for binding in ProjectContainerBinding.objects.filter(project = self):
-            if binding.container.user == user:
-                return binding.container #FIXME: the first container is returned
+##    @register.filter
+##    def get_userprojectcontainer(self, user):
+##        from .container import ProjectContainerBinding
+##        for binding in ProjectContainerBinding.objects.filter(project = self):
+##            if binding.container.user == user:
+##                return binding.container #FIXME: the first container is returned
 
     @register.filter
     def is_hiddenbyuser(self, user):
