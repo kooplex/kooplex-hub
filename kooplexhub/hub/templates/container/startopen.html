@@ -4,6 +4,9 @@
 {% elif container.state == container.ST_RUNNING %}
 <a href="{% url 'container:open' container.id next_page %}" target="_blank" role="button" class="btn btn-success" style="min-width: 6em; text-align: left;" data-toggle="tooltip" title="Access environment {{ container.name }}">
   <span class="oi oi-external-link" aria-hidden="true"> Open</span></a>
+{% elif container.state == container.ST_NEED_RESTART %}
+<a href="{% url 'container:open' container.id next_page %}" target="_blank" role="button" class="btn btn-warning" style="min-width: 6em; text-align: left;" data-toggle="tooltip" title="Access inconsistent environment {{ container.name }}">
+  <span class="oi oi-external-link" aria-hidden="true"> Open</span></a>
 {% else %}
 <a href="{% url 'container:start' container.id next_page %}" role="button" class="btn btn-outline-secondary" style="min-width: 6em; text-align: left;" data-toggle="tooltip" title="Start environment {{ container.name }}">
   <span class="oi oi-flash" aria-hidden="true"> Start</span></a>

@@ -30,14 +30,16 @@ logger = logging.getLogger(__name__)
 ST_LOOKUP = {
     'np': 'Not present.',
     'run': 'Running fine.',
+    'restart': 'Restart required',
     'oops': 'Error occured.',
 }
 
 class ServiceEnvironment(models.Model):
     ST_NOTPRESENT = 'np'
     ST_RUNNING = 'run'
+    ST_NEED_RESTART = 'restart'
     ST_ERROR = 'oops'
-    STATE_LIST = [ ST_NOTPRESENT, ST_RUNNING, ST_ERROR ]
+    STATE_LIST = [ ST_NOTPRESENT, ST_RUNNING, ST_NEED_RESTART, ST_ERROR ]
 
     name = models.CharField(max_length = 200, null = False)
     user = models.ForeignKey(User, null = False)

@@ -51,12 +51,17 @@ def new(request):
             if len(form.cleaned_data['environments']) > 0:
                 for environment in form.cleaned_data['environments']:
                     ProjectServiceEnvironmentBinding.objects.create(project = project, serviceenvironment = environment)
-                    messages.info(request, f'Project {project} is added to environment {environment}')
+                    if environment.state == environment.ST_RUNNING:
+                        environment.state = environment.ST_NEED_RESTART
+                        environment.save()
+                        messages.warning(request, f'Project {project} is added to running environment {environment.name}, which requires a restart to apply changes')
+                    else:
+                        messages.info(request, f'Project {project} is added to environment {environment.name}')
             else:
                 environment = ServiceEnvironment.objects.create(name = f'{request.user}-{projectname}', user = request.user)
                 ProjectServiceEnvironmentBinding.objects.create(project = project, serviceenvironment = environment)
                 environment.add_notebook_proxy()
-                messages.info(request, f'New environment {environment} is created')
+                messages.info(request, f'New environment {environment.name} is created')
         return redirect('project:list')
     except Exception as e:
         logger.error(f'New project not created -- {e}')

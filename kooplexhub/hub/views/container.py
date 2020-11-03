@@ -32,6 +32,7 @@ def new(request):
         image = Image.objects.get(id = request.POST.get('image'))
         env, created = ServiceEnvironment.objects.get_or_create(user = user, name = serviceenvironmentname, image = image)
         assert created, "Service environment with name %s is not unique" % serviceenvironmentname
+        env.add_notebook_proxy()
         messages.info(request, 'Your new service environment is created with name %s' % serviceenvironmentname)
     except Exception as e:
         logger.error("New container not created -- %s" % e)
