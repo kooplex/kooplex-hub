@@ -7,12 +7,16 @@
 </div>
 {% endblock %}
 
-{!% block main_content_center %}
 {% block main_content_center %}
+{% load staticfiles %}
+<link rel="stylesheet" href="{% static 'fontawesome-free-5.10.2-web/css/all.css' %}">
+<link rel="stylesheet" href="{% static 'css/bootstrap4-toggle.min.css' %}">
+<script src="{% static 'scripts/bootstrap4-toggle.min.js' %}"></script>
+
 <div class="row">
   <form id="project-manage" class="form-horizontal" action="{% url 'project:showhide' next_page %}" method="post">
     {% csrf_token %}
-    <p>Tick the checkbox next to the project you want to hide.</p>
+    <h5>Use the switch to hide or show some of your projects</h5>
     {% if t_project.data|length > 0 %}
       {% render_table t_project %}
     {% else %}

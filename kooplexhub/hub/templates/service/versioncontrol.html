@@ -52,17 +52,10 @@ a.active {
 
 {% block main_content_left %}
   <form id="vcFilterRepoForm" class="form-horizontal form-control" action="{% url 'service:vc_search' %}" method="post">
-    <h5>Search repository</h5>
     {% csrf_token %}
     <div  class="alert alert-warning">
       <input type="text" name="repository" placeholder="repository" value="{{ search_repository }}">
       <button type="submit" class="btn btn-primary" name="button" value="apply"> Search</button>
-    </div>
-    <div class="modal-footer">
-      Currently connected apps:
-      <a href="{% url 'user:managetokens' next_page %}" title="manage token for github"><img src="/static/content/logos/github.png" alt="Github" height="50px"></a>
-      <a href="{% url 'user:managetokens' next_page %}" title="manage token for gitlab"><img src="/static/content/logos/gitlab.png" alt="GitLab" height="50px" style="opacity: 0.5; background: #CCC;"></a>
-      <a href="{% url 'user:managetokens' next_page %}" title="manage token for gitea"><img src="/static/content/logos/gitea.png" alt="Gitea" height="50px" style="opacity: 0.5; background: #CCC;"></a>
     </div>
   </form>
 {% endblock %}
@@ -72,18 +65,32 @@ a.active {
   <form id="fsRefreshLibForm" class="form-horizontal form-control">
 
       {% for t in vc_tokens %}
+        {% with s=t.repository %}
           <div class="card bg-light mb-3">
               <div class="card-header">
                  <div class="row">
                       <div class="col-10">
-       		       <h4>{{ t.repository.url }} </h4> (Last updated: {{ t.last_used }})
+       		       <h4>
+		       {% if s.backend_type == s.TP_GITEA %}
+	                   <img src="/static/content/logos/gitea.png" alt="gitea" height="50px">
+		       {% elif s.backend_type == s.TP_GITHUB %}
+	                   <img src="/static/content/logos/github.png" alt="github" height="50px">
+		       {% elif s.backend_type == s.TP_GITLAB %}
+	                   <img src="/static/content/logos/gitlab.png" alt="github" height="50px" style="opacity: 0.5; background: #CCC;">
+		       {% else %}
+		         {{ s.backend_type }}
+		       {% endif %}
+		       {{ s.url }}
+		       <span class="badge badge-pill badge-info">Last updated: {{ t.last_used }}</span>
+		       </h4>
                       </div>
                       <div class="col-2">
-                        <a href="{% url 'service:vc_refresh' t.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Last updated: {{ t.last_used }}" data-placement="top">Refresh </a> <br style="margin:1ex">
+                         <a href="{% url 'service:vc_refresh' t.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Last updated: {{ t.last_used }}" data-placement="top">Refresh</a> <br style="margin:1ex">
                       </div>
                  </div>
               </div>
           </div>
+	    {% endwith %}
           {% endfor %}
 
   </form>

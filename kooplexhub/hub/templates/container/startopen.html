@@ -1,5 +1,5 @@
 {% if container.proxies|length == 0 %}
-  <a href="#" target="_blank" role="button" class="btn btn-warning" style="min-width: 6em; text-align: left;" data-toggle="tooltip" title="Missing proxy {{ container.name }}">
+  <a href="#" role="button" class="btn btn-warning" style="min-width: 6em; text-align: left;" data-toggle="tooltip" title="Missing proxy {{ container.name }}">
     <span class="oi oi-x" aria-hidden="true"> Open</span></a>
 {% elif container.state == container.ST_RUNNING %}
 <a href="{% url 'container:open' container.id next_page %}" target="_blank" role="button" class="btn btn-success" style="min-width: 6em; text-align: left;" data-toggle="tooltip" title="Access environment {{ container.name }}">
