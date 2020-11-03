@@ -73,7 +73,13 @@ class ServiceEnvironment(models.Model):
 
     def wait_until_ready(self):
         from kooplex.lib import keeptrying
-        return keeptrying(method = requests.get, times = 20, url = self.url_public)
+        for _ in range(5):
+            resp = keeptrying(method = requests.get, times = 5, url = self.url_public, timeout = .05)
+            logger.info('Get %s -> [%d]' % (self.url_public, resp.status_code))
+            time.sleep(.1)
+            if resp.status_code != 503:
+                return resp
+            logger.warning('Proxy target missing: %s' % self.url_public)
 
     @property
     def uptime(self):
@@ -84,8 +90,9 @@ class ServiceEnvironment(models.Model):
     @property
     def proxies(self):
         from .proxy import Proxy
-        for proxy in Proxy.objects.filter(serviceenvironment = self):
-            yield proxy
+        return list(Proxy.objects.filter(serviceenvironment = self))
+        #for proxy in Proxy.objects.filter(serviceenvironment = self):
+        #    yield proxy
 
     @property
     def projects(self):

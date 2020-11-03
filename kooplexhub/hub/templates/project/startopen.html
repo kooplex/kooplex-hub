@@ -1,4 +1,6 @@
-{% if project.containers|length == 1 %}
+{% if project.containers|length == 0 %}
+  <a href="#" role="button" class="btn btn-warning" style="min-width: 6em; text-align: left;" data-toggle="tooltip" title="Missing environment"><span class="oi oi-x" aria-hidden="true"> Open</span></a>
+{% elif project.containers|length == 1 %}
   {% include 'container/startopen.html' with container=project.containers|first %}
 {% else %}
   <div class="btn-group">

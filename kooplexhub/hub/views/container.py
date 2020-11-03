@@ -28,22 +28,19 @@ def new(request):
     user_id = request.POST.get('user_id')
     try:
         assert user_id is not None and int(user_id) == user.id, "user id mismatch: %s tries to save %s %s" % (request.user, request.user.id, request.POST.get('user_id'))
-        containername = "%s-%s" % (user.username, standardize_str(request.POST.get('name')))
-        for container in user.profile.containers:
-            assert container.name != containername, "Not a unique name"
-        logger.debug("name is okay: %s" % containername)
+        serviceenvironmentname = "%s-%s" % (user.username, standardize_str(request.POST.get('name')))
         image = Image.objects.get(id = request.POST.get('image'))
-        Container.objects.create(user = user, name = containername, image = image)
-        messages.info(request, 'Your new container is created with name %s' % containername)
-        return redirect('container:list')
+        env, created = ServiceEnvironment.objects.get_or_create(user = user, name = serviceenvironmentname, image = image)
+        assert created, "Service environment with name %s is not unique" % serviceenvironmentname
+        messages.info(request, 'Your new service environment is created with name %s' % serviceenvironmentname)
     except Exception as e:
         logger.error("New container not created -- %s" % e)
-        messages.error(request, 'Creation of a new container is refused.')
-        return redirect('indexpage')
+        messages.error(request, 'Service environment is not created: %s' % e)
+    return redirect('container:list')
         
 
 @login_required
-def listcontainers(request): #FIXME: rename
+def listserviceenvironments(request): #FIXME: rename
     """Renders the containerlist page."""
     logger.debug('Rendering container/list.html')
     #TODO: make volume/image etc changes visible, so the user will know which one needs to be deleted. 
@@ -151,15 +148,15 @@ def removecontainer(request, container_id, next_page):
 
 
 @login_required
-def destroycontainer(request, container_id, next_page):
+def destroyserviceenvironment(request, container_id, next_page):
     """Deletes a container instance"""
     user = request.user
     try:
-        container = Container.objects.get(id = container_id, user = user)
-        container.docker_remove()
-        container.delete()
-    except Container.DoesNotExist:
-        messages.error(request, 'Container is missing or stopped')
+        environment = ServiceEnvironment.objects.get(id = container_id, user = user)
+        environment.stop()
+        environment.delete()
+    except ServiceEnvironment.DoesNotExist:
+        messages.error(request, 'Service environment does not exist')
         raise
     return redirect(next_page)
 
@@ -229,12 +226,12 @@ def refreshlogs(request, container_id):
 
 urlpatterns = [
     url(r'^new/?$', new, name = 'new'), 
-    url(r'^list/?$', listcontainers, name = 'list'), 
+    url(r'^list/?$', listserviceenvironments, name = 'list'), 
     url(r'^start/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)$', startcontainer, name = 'start'),
     url(r'^open/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)$', opencontainer, name = 'open'),
     url(r'^stop/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)$', stopcontainer, name = 'stop'),
     url(r'^remove/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)$', removecontainer, name = 'remove'),
-    url(r'^destroy/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)$', destroycontainer, name = 'destroy'),
+    url(r'^destroy/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)$', destroyserviceenvironment, name = 'destroy'),
     url(r'^refreshlogs/(?P<container_id>\d+)$', refreshlogs, name = 'refreshlogs'),
 
     url(r'^addproject/(?P<container_id>\d+)$', addproject, name = 'addproject'),

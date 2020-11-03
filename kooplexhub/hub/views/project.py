@@ -113,6 +113,11 @@ class ProjectSelectionColumn(tables.Column):
     def render(self, record):
         state = "checked" if record.is_hidden else ""
         return format_html('<input type="checkbox" name="selection" value="%s" %s>' % (record.id, state))
+        #FIXME    
+        #return format_html('<input type="checkbox" name="selection" data-toggle="toggle" value="{}" data-on="Attach" data-off="Unused" data-onstyle="success" data-offstyle="dark" data-size="xs">'.format(record.id))
+
+
+
 
 class T_PROJECT(tables.Table):
     id = ProjectSelectionColumn(verbose_name = 'Hide', orderable = False)

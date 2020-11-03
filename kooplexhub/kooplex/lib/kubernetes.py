@@ -77,7 +77,7 @@ def start(environment):
         })
         volumes.append({
             "name": "pv-k8plex-hub-cache-report",
-            "persistentVolumeClaim": { "claimName": "pvc-cache.report-k8plex", }
+            "persistentVolumeClaim": { "claimName": "pvc-cache-k8plex", }
         })
 
 #FIXME: hardcode
@@ -94,7 +94,7 @@ def start(environment):
             "spec": {
                 "containers": [{
                     "name": environment.name,
-                    "image": f"kooplex-test:5000/k8plex-image-{image}",
+                    "image": f"kooplex/k8plex-ei-jupyter-basic",
                     "volumeMounts": volume_mounts,
                     "ports": pod_ports,
                     "imagePullPolicy": "IfNotPresent",

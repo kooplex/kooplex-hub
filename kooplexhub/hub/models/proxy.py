@@ -1,4 +1,5 @@
 import logging
+import os
 
 from django.db import models
 
@@ -18,8 +19,9 @@ class Proxy(models.Model):
         return f'http://{self.serviceenvironment.name}:{self.port}/{self.path}'
 
     @property
-    def url_public(self):#FIXME: config
-        return f'https://kooplex-test.elte.hu/{self.path}'
+    def url_public(self):
+        fqdn = os.environ.get('DOMAIN', 'localhost')
+        return f'https://{fqdn}/{self.path}'
 
     @property
     def env_variables(self):

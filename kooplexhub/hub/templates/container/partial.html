@@ -5,7 +5,8 @@
       <strong>{{ container.name }}</strong>
     </button>
     {% include 'container/stopremove.html' %}
-    {% include 'container/containerstatus.html' %}
+    <a href="{% url 'container:destroy' container.id next_page %}" role="button" class="btn btn-danger" style="padding: 3px 6px 6px 6px; margin-right: 3px; float: right;" data-toggle="tooltip" title="Remove {{ container.name }}">
+       <span class="oi oi-fire" aria-hidden="true"></span></a>
     <button class="btn" data-toggle="collapse" data-target="#collapse-{{ container.id }}" aria-expanded="true" aria-controls="collapse-{{ container.id }}" style="float: right;">
 {% if container.marked_to_remove %}
       <span class="badge badge-pill badge-danger">Restart with image:<strong>{{ container.image }}</strong></span>
