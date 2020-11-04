@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 class Image(models.Model):
     name = models.CharField(max_length = 32)
     present = models.BooleanField(default = True)
+    require_home = models.BooleanField(default = True)
     description = models.CharField(max_length = 250, default="description missing")
 
     def __str__(self):

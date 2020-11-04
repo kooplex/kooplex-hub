@@ -3,29 +3,23 @@ import os
 
 from django.db import models
 
-from .serviceenvironment import ServiceEnvironment
+from .image import Image
 
 logger = logging.getLogger(__name__)
 
 class Proxy(models.Model):
-    env_prefix = models.CharField(max_length = 64, null = True)
+    name = models.CharField(max_length = 64, null = True)
     port = models.IntegerField(null = False)
     path = models.CharField(max_length = 64, null = True)
-    is_hub_entry = models.BooleanField(null = False)
-    serviceenvironment = models.ForeignKey(ServiceEnvironment, null = False)
+    image = models.ForeignKey(Image, null = False)
+    default = models.BooleanField(default = True)
  
-    @property
-    def url(self): #FIXME: rename url_internal
-        return f'http://{self.serviceenvironment.name}:{self.port}/{self.path}'
+    def proxy_route(self, service):
+        return self.path.format(service = service)
 
-    @property
-    def url_public(self):
+    def url_internal(self, service):
+        return f'http://{service.name}:{self.port}'
+
+    def url_public(self, service):
         fqdn = os.environ.get('DOMAIN', 'localhost')
-        return f'https://{fqdn}/{self.path}'
-
-    @property
-    def env_variables(self):
-        if self.env_prefix:
-            yield { 'name': f'{self.env_prefix}_URL', 'value': self.path }
-            yield { 'name': f'{self.env_prefix}_PORT', 'value': str(self.port) }
-
+        return f'https://{fqdn}/{self.path}'.format(service = service)

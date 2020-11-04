@@ -24,6 +24,9 @@ from kooplex.lib import  standardize_str, now
 
 from kooplex.lib import start_environment, stop_environment, check_environment
 
+from .envvar import EnvVarMapping
+from .proxy import Proxy
+
 logger = logging.getLogger(__name__)
 
 
@@ -32,18 +35,20 @@ ST_LOOKUP = {
     'run': 'Running fine.',
     'restart': 'Restart required',
     'oops': 'Error occured.',
+    'stopping': 'Stopping...',
 }
 
-class ServiceEnvironment(models.Model):
+class Service(models.Model):
     ST_NOTPRESENT = 'np'
     ST_RUNNING = 'run'
     ST_NEED_RESTART = 'restart'
     ST_ERROR = 'oops'
-    STATE_LIST = [ ST_NOTPRESENT, ST_RUNNING, ST_NEED_RESTART, ST_ERROR ]
+    ST_STOPPING = 'stopping'
+    STATE_LIST = [ ST_NOTPRESENT, ST_RUNNING, ST_NEED_RESTART, ST_ERROR, ST_STOPPING ]
 
     name = models.CharField(max_length = 200, null = False)
     user = models.ForeignKey(User, null = False)
-    image = models.ForeignKey(Image, null = True)
+    image = models.ForeignKey(Image, null = False)
     launched_at = models.DateTimeField(null = True)
 
     state = models.CharField(max_length = 16, choices = [ (x, ST_LOOKUP[x]) for x in STATE_LIST ], default = ST_NOTPRESENT)
@@ -57,20 +62,36 @@ class ServiceEnvironment(models.Model):
         return self.launched_at < c.launched_at
 
     def __str__(self):
-        return f"<ServiceEnvironment {self.name}@{self.user} -- {self.state}>"
+        return f"<Service {self.name}@{self.user} -- {self.state}>"
 
     @property
     def label(self):
         return f"{self.user}-{self.name}"
 
     @property
+    def proxy_route(self):
+        default_proxy = Proxy.objects.get(image = self.image, default = True)
+        return default_proxy.proxy_route(self)
+
+    @property
+    def url_internal(self):
+        default_proxy = Proxy.objects.get(image = self.image, default = True)
+        return default_proxy.url_internal(self)
+
+    @property
     def url_public(self):
-        from .proxy import Proxy
-        try:
-            proxy = Proxy.objects.get(serviceenvironment = self, is_hub_entry = True)
-            return proxy.url_public
-        except Exception as e:
-            logger.warning(f'No unique public proxy url for serviceenvironment {self} -- {e}')
+        default_proxy = Proxy.objects.get(image = self.image, default = True)
+        return default_proxy.url_public(self)
+
+
+    #@property
+    #def url_public(self):
+    #    from .proxy import Proxy
+    #    try:
+    #        proxy = Proxy.objects.get(service = self, is_hub_entry = True)
+    #        return proxy.url_public
+    #    except Exception as e:
+    #        logger.warning(f'No unique public proxy url for service {self} -- {e}')
 
     def wait_until_ready(self):
         from kooplex.lib import keeptrying
@@ -83,6 +104,12 @@ class ServiceEnvironment(models.Model):
             logger.warning('Proxy target missing: %s' % self.url_public)
 
     @property
+    def env_variables(self):
+        for envmap in EnvVarMapping.objects.filter(image = self.image):
+            yield { "name": envmap.name, "value": envmap.valuemap.format(service = self) }
+
+
+    @property
     def uptime(self):
         timenow = now()
         delta = timenow - self.launched_at
@@ -91,13 +118,11 @@ class ServiceEnvironment(models.Model):
     @property
     def proxies(self):
         from .proxy import Proxy
-        return list(Proxy.objects.filter(serviceenvironment = self))
-        #for proxy in Proxy.objects.filter(serviceenvironment = self):
-        #    yield proxy
+        return list(Proxy.objects.filter(image = self.image))
 
     @property
     def projects(self):
-        for binding in ProjectServiceEnvironmentBinding.objects.filter(serviceenvironment = self):
+        for binding in ProjectServiceBinding.objects.filter(service = self):
             yield binding.project
 
     def start(self):
@@ -108,10 +133,6 @@ class ServiceEnvironment(models.Model):
 
     def check_state(self):
         return check_environment(self)
-
-    def add_notebook_proxy(self):
-        from .proxy import Proxy
-        Proxy.objects.create(env_prefix = 'NB', port = 8000, path = f'notebook/{self.name}', serviceenvironment = self, is_hub_entry = True)
 
     def addproject(self, project):
         raise NotImplementedError
@@ -484,12 +505,12 @@ class ServiceEnvironment(models.Model):
 #        except Exception as e:
 #            logger.error('Filesync not bound -- %s' % e)
 #
-class ProjectServiceEnvironmentBinding(models.Model):
+class ProjectServiceBinding(models.Model):
     project = models.ForeignKey(Project, null = False)
-    serviceenvironment = models.ForeignKey(ServiceEnvironment, null = False)
+    service = models.ForeignKey(Service, null = False)
 
     def __str__(self):
-        return f"<ProjectServiceEnvironmentBinding {self.project}-{self.serviceenvironment}>"
+        return f"<ProjectServiceBinding {self.project}-{self.service}>"
 
 
 #@receiver(post_save, sender = ProjectContainerBinding)

@@ -1,14 +1,11 @@
-{% if container.proxies|length == 0 %}
-  <a href="#" role="button" class="btn btn-warning" style="padding: 3px 6px 6px 6px; float: right;" data-toggle="tooltip" title="Missing proxy {{ container.name }}">
-    <span class="oi oi-x" aria-hidden="true"></span></a>
-{% elif container.state == container.ST_RUNNING %}
-   <a href="{% url 'container:stop' container.id next_page %}" role="button" class="btn btn-danger" style="padding: 3px 6px 6px 6px; float: right;" data-toggle="tooltip" title="Stop environment {{ container.name }}">
+{% if container.state == container.ST_RUNNING %}
+   <a href="{% url 'service:stop' container.id next_page %}" role="button" class="btn btn-danger" style="padding: 3px 6px 6px 6px; float: right;" data-toggle="tooltip" title="Stop environment {{ container.name }}">
      <span class="oi oi-x" aria-hidden="true"></span></a>
 {% elif container.state == container.ST_NEED_RESTART %}
-   <a href="{% url 'container:stop' container.id next_page %}" role="button" class="btn btn-warning" style="padding: 3px 6px 6px 6px; float: right;" data-toggle="tooltip" title="Stop inconsistent environment {{ container.name }}">
+   <a href="{% url 'service:stop' container.id next_page %}" role="button" class="btn btn-warning" style="padding: 3px 6px 6px 6px; float: right;" data-toggle="tooltip" title="Stop inconsistent environment {{ container.name }}">
      <span class="oi oi-x" aria-hidden="true"></span></a>
 {% elif container.state == container.ST_ERROR %}
-   <a href="{% url 'container:stop' container.id next_page %}" role="button" class="btn btn-danger" style="padding: 3px 6px 6px 6px; float: right;" data-toggle="tooltip" title="Clean up resources of environment {{ container.name }}">
+   <a href="{% url 'service:stop' container.id next_page %}" role="button" class="btn btn-danger" style="padding: 3px 6px 6px 6px; float: right;" data-toggle="tooltip" title="Clean up resources of environment {{ container.name }}">
        <span class="oi oi-fire" aria-hidden="true"></span></a>
 {% else %}
    <a href="#" role="button" class="btn btn-default disabled" style="padding: 3px 6px 6px 6px; float: right;">

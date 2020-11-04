@@ -1,13 +1,12 @@
-#FIXME: rename file
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
-from hub.models import ServiceEnvironment
+from hub.models import Service
 
-class FormEnvironment(forms.ModelForm):
+class FormService(forms.ModelForm):
 
     class Meta:
-        model = ServiceEnvironment
+        model = Service
         fields = [ 'name', 'image' ]
         help_texts = {
             'name': _('A short name you recall your project, but it has to be unique among your container names.'),
@@ -15,7 +14,7 @@ class FormEnvironment(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        super(FormEnvironment, self).__init__(*args, **kwargs)
+        super(FormService, self).__init__(*args, **kwargs)
         self.fields['name'].widget.attrs['rows'] = 1
         self.fields['name'].widget.attrs['cols'] = 20
         for field in self.fields:

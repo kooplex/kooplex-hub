@@ -8,7 +8,7 @@ from .proxy import addroute, removeroute
 
 logger = logging.getLogger(__name__)
 
-def start(environment):
+def start(service):
     spawner_conf = KOOPLEX.get('spawner', {})
     mount_point = spawner_conf.get('volume_mount', '/mnt')
     project_subdir = spawner_conf.get('project_subdir', 'project')
@@ -23,11 +23,10 @@ def start(environment):
     env_variables = [
         { "name": "LANG", "value": "en_US.UTF-8" },
         { "name": "PREFIX", "value": "k8plex" },
-        { "name": "NB_USER", "value": environment.user.username },
-        { "name": "NB_TOKEN", "value": environment.user.profile.token }
     ]
-    for proxy in environment.proxies:
-        env_variables.extend(proxy.env_variables)
+    for env in service.env_variables:
+        env_variables.append(env)
+    for proxy in service.proxies:
         pod_ports.append({
             "containerPort": proxy.port,
             "name": "http", 
@@ -37,18 +36,20 @@ def start(environment):
             "targetPort": proxy.port,
             "protocol": "TCP",
         })
-    #FIXME: report env should not have the home
-    volumes = [{
-        "name": "pv-k8plex-hub-home",
-        "persistentVolumeClaim": { "claimName": "pvc-home-k8plex", }
-    }]
-    volume_mounts = [{
-        "name": "pv-k8plex-hub-home",
-        "mountPath": os.path.join(mount_point, environment.user.username),
-        "subPath": environment.user.username,
-    }]
+    volumes = []
+    volume_mounts = []
+    if service.image.require_home:
+        volumes.append({
+            "name": "pv-k8plex-hub-home",
+            "persistentVolumeClaim": { "claimName": "pvc-home-k8plex", }
+        })
+        volume_mounts.append({
+            "name": "pv-k8plex-hub-home",
+            "mountPath": os.path.join(mount_point, service.user.username),
+            "subPath": service.user.username,
+        })
     has_project = False
-    for project in environment.projects:
+    for project in service.projects:
         volume_mounts.append({
             "name": "pv-k8plex-hub-project",
             "mountPath": os.path.join(mount_point, project_subdir, project.uniquename),
@@ -80,21 +81,18 @@ def start(environment):
             "persistentVolumeClaim": { "claimName": "pvc-cache-k8plex", }
         })
 
-#FIXME: hardcode
-    logger.debug(environment.image)
-    image = "basic"
     pod_definition = {
             "apiVersion": "v1",
             "kind": "Pod",
             "metadata": {
-                "name": environment.name,
+                "name": service.name,
                 "namespace": "default",
-                "labels": { "lbl": f"lbl-{environment.name}", }
+                "labels": { "lbl": f"lbl-{service.name}", }
             },
             "spec": {
                 "containers": [{
-                    "name": environment.name,
-                    "image": f"kooplex/k8plex-ei-jupyter-basic",
+                    "name": service.name,
+                    "image": service.image.name,
                     "volumeMounts": volume_mounts,
                     "ports": pod_ports,
                     "imagePullPolicy": "IfNotPresent",
@@ -108,11 +106,11 @@ def start(environment):
             "apiVersion": "v1",
             "kind": "Service",
             "metadata": {
-                "name": environment.name,
+                "name": service.name,
             },
             "spec": {
                 "selector": {
-                    "lbl": f"lbl-{environment.name}",
+                    "lbl": f"lbl-{service.name}",
                     },
                 "ports": svc_ports,
             }
@@ -134,30 +132,30 @@ def start(environment):
         if json.loads(e.body)['code'] != 409: # already exists
             logger.debug(pod_definition)
             raise
-    environment.state = environment.ST_RUNNING
-    environment.save()
-    addroute(environment)
+    service.state = service.ST_RUNNING
+    service.save()
+    addroute(service)
 
-def stop(environment):
+def stop(service):
     config.load_kube_config()
     v1 = client.CoreV1Api()
-    removeroute(environment)
+    removeroute(service)
     try:
-        msg = v1.delete_namespaced_pod(namespace = "default", name = environment.name)
+        msg = v1.delete_namespaced_pod(namespace = "default", name = service.name)
         logger.debug(msg)
     except client.rest.ApiException as e:
         logger.warning(e)
         if json.loads(e.body)['code'] != 404: # doesnt exists
             raise
     try:
-        msg = v1.delete_namespaced_service(namespace = "default", name = environment.name)
+        msg = v1.delete_namespaced_service(namespace = "default", name = service.name)
         logger.debug(msg)
     except client.rest.ApiException as e:
         logger.warning(e)
         if json.loads(e.body)['code'] != 404: # doesnt exists
             raise
-    environment.state = environment.ST_NOTPRESENT
-    environment.save()
+    service.state = service.ST_NOTPRESENT
+    service.save()
 
-def check(environment):
-    raise NotImplementedError(environment)
+def check(service):
+    raise NotImplementedError(service)

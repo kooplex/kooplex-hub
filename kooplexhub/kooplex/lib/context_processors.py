@@ -1,6 +1,6 @@
 from hub.forms import FormBiography
 from hub.forms import FormProject
-from hub.forms import FormEnvironment
+from hub.forms import FormService
 from hub.models import Project
 
 from kooplex.settings import KOOPLEX
@@ -15,7 +15,7 @@ def form_project(request):
     return { 'f_project_meta': FormProject(user = request.user) } if request.user.is_authenticated else {}
 
 def form_environment(request):
-    return { 'f_environment_meta': FormEnvironment() } if request.user.is_authenticated else {}
+    return { 'f_environment_meta': FormService() } if request.user.is_authenticated else {}
 
 def user(request):
     return { 'user': request.user } if request.user.is_authenticated else {}

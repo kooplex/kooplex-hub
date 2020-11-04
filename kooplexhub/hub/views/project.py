@@ -18,12 +18,12 @@ from hub.forms import table_volume
 from hub.forms import table_vcproject
 from hub.forms import table_fslibrary
 from hub.models import Project, UserProjectBinding
-from hub.models import ServiceEnvironment, ProjectServiceEnvironmentBinding
+from hub.models import Service, ProjectServiceBinding
 from hub.models import Volume
 from hub.models import Image
 from hub.models import Profile
-from hub.models import VCProject, VCProjectProjectBinding#, ProjectContainerBinding
-from hub.models import FSLibrary, FSLibraryProjectBinding#, ProjectContainerBinding
+from hub.models import VCProject, VCProjectProjectBinding
+from hub.models import FSLibrary, FSLibraryProjectBinding
 
 from django.utils.safestring import mark_safe
 
@@ -49,19 +49,18 @@ def new(request):
             UserProjectBinding.objects.create(user = request.user, project = project, role = UserProjectBinding.RL_CREATOR)
             messages.info(request, f'New project {project} is created')
             if len(form.cleaned_data['environments']) > 0:
-                for environment in form.cleaned_data['environments']:
-                    ProjectServiceEnvironmentBinding.objects.create(project = project, serviceenvironment = environment)
-                    if environment.state == environment.ST_RUNNING:
-                        environment.state = environment.ST_NEED_RESTART
-                        environment.save()
-                        messages.warning(request, f'Project {project} is added to running environment {environment.name}, which requires a restart to apply changes')
+                for svc in form.cleaned_data['environments']:
+                    ProjectServiceBinding.objects.create(project = project, service = svc)
+                    if svc.state == svc.ST_RUNNING:
+                        svc.state = svc.ST_NEED_RESTART
+                        svc.save()
+                        messages.warning(request, f'Project {project} is added to running svc {svc.name}, which requires a restart to apply changes')
                     else:
-                        messages.info(request, f'Project {project} is added to environment {environment.name}')
+                        messages.info(request, f'Project {project} is added to svc {svc.name}')
             else:
-                environment = ServiceEnvironment.objects.create(name = f'{request.user}-{projectname}', user = request.user)
-                ProjectServiceEnvironmentBinding.objects.create(project = project, serviceenvironment = environment)
-                environment.add_notebook_proxy()
-                messages.info(request, f'New environment {environment.name} is created')
+                svc = Service.objects.create(name = f'{request.user}-{projectname}', user = request.user)
+                ProjectServiceBinding.objects.create(project = project, service = svc)
+                messages.info(request, f'New service {svc.name} is created')
         return redirect('project:list')
     except Exception as e:
         logger.error(f'New project not created -- {e}')

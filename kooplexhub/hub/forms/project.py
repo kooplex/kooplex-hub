@@ -1,7 +1,7 @@
 from django import forms
 #from django.utils.translation import gettext_lazy as _
 
-from hub.models import ServiceEnvironment, Project
+from hub.models import Service, Project
 
 
 #class FormProject(forms.ModelForm):
@@ -39,7 +39,7 @@ class FormProject(forms.Form):
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user')
         super().__init__(*args, **kwargs)
-        self.fields['environments'].queryset = ServiceEnvironment.objects.filter(user = user)
+        self.fields['environments'].queryset = Service.objects.filter(user = user)
         self.fields['description'].widget.attrs.update({ 'rows': 6, 'cols': 30 })
         for field in self.fields:
             help_text = self.fields[field].help_text

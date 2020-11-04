@@ -1,6 +1,6 @@
   <li class="nav-item {{ active }}">
     {% if user.profile.containers %}
-      <a href="{% url 'container:list' %}" class="nav-link" data-toggle="tooltip" title="List and manage your service environments, also know as containers" data-placement="bottom">Environments</a>
+      <a href="{% url 'service:list' %}" class="nav-link" data-toggle="tooltip" title="List and manage your service environments, also know as containers" data-placement="bottom">Environments</a>
     {% else %}
       <a href="#" class="nav-link disabled" data-toggle="tooltip" title="You do not have a service environment yet" data-placement="bottom">Environment</a>
     {% endif %}
@@ -12,7 +12,7 @@
     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownContainer" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></a>
     <div class="dropdown-menu" aria-labelledby="navbarDropdownContainer">
       <a class="dropdown-item" href="#" data-toggle="modal" data-target="#container-new">New environment</a>
-      <a class="dropdown-item" href="{% url 'container:list' %}">List environments</a>
+      <a class="dropdown-item" href="{% url 'service:list' %}">List environments</a>
     </div>
   </li>
 {% endif %}

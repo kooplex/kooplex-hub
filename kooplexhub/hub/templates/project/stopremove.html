@@ -8,9 +8,9 @@
     <div class="dropdown-menu">
     {% for container in project.containers %}
       {% if container.state == container.ST_RUNNING %}
-      <a class="dropdown-item" href="{% url 'container:stop' container.id next_page %}" class="btn btn-danger"><span class="oi oi-x" aria-hidden="true"> Stop {{ container.name }}</span></a>
+      <a class="dropdown-item" href="{% url 'service:stop' container.id next_page %}" class="btn btn-danger"><span class="oi oi-x" aria-hidden="true"> Stop {{ container.name }}</span></a>
       {% elif container.state == container.ST_ERROR %}
-      <a class="dropdown-item" href="{% url 'container:stop' container.id next_page %}" class="btn btn-danger"><span class="oi oi-x" aria-hidden="true"> Stop {{ container.name }}</span></a>
+      <a class="dropdown-item" href="{% url 'service:stop' container.id next_page %}" class="btn btn-danger"><span class="oi oi-x" aria-hidden="true"> Stop {{ container.name }}</span></a>
       {% else %}
       <a class="dropdown-item" class="btn btn-default disabled" href="#"><span class="oi oi-link-broken" aria-hidden="true"> {{ container.name }}</span></a>
       {% endif %}
@@ -18,9 +18,9 @@
     </div>
     {% with fc=project.containers|first %}
       {% if fc.state == fc.ST_RUNNING %}
-    <button type="button" class="btn btn-danger"><a href="{% url 'container:stop' fc.id next_page %}" role="button" class="btn-danger" data-toggle="tooltip" title="Stop environment {{ fc.name }}"><span class="oi oi-x" aria-hidden="true"></a></button>
+    <button type="button" class="btn btn-danger"><a href="{% url 'service:stop' fc.id next_page %}" role="button" class="btn-danger" data-toggle="tooltip" title="Stop environment {{ fc.name }}"><span class="oi oi-x" aria-hidden="true"></a></button>
       {% elif fc.state == container.ST_ERROR %}
-    <button type="button" class="btn btn-danger"><a href="{% url 'container:stop' fc.id next_page %}" role="button" class="btn-danger" data-toggle="tooltip" title="Cleanup resources of environment {{ fc.name }}"><span class="oi oi-x" aria-hidden="true"></a></button>
+    <button type="button" class="btn btn-danger"><a href="{% url 'service:stop' fc.id next_page %}" role="button" class="btn-danger" data-toggle="tooltip" title="Cleanup resources of environment {{ fc.name }}"><span class="oi oi-x" aria-hidden="true"></a></button>
       {% else %}
     <button type="button" class="btn btn-outline-secondary"><a href="#"><span class="oi oi-link-broken" aria-hidden="true"></a></button>
       {% endif %}

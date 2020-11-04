@@ -52,12 +52,13 @@ class Profile(models.Model):
 
     @property
     def containers(self):
+        #FIXME:
         #from .container import Container
         #for container in Container.objects.filter(user = self.user):
         #     yield container
-        from .serviceenvironment import ServiceEnvironment
-        for environment in ServiceEnvironment.objects.filter(user = self.user):
-             yield environment
+        from .service import Service
+        for svc in Service.objects.filter(user = self.user):
+             yield svc
 
     @property
     def reports(self):

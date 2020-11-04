@@ -34,23 +34,23 @@ def droproutes():
         resp_latest = keeptrying(requests.delete, 5, **kw)
 #    return resp_latest
 
-def addroute(environment):
+def addroute(service):
     proxyconf = KOOPLEX.get('proxy', {})
     kw = {
-        'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', f'notebook/{environment.name}'), #FIXME 
+        'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', service.proxy_route),
         'headers': {'Authorization': 'token %s' % proxyconf.get('auth_token', '') },
-        'data': json.dumps({ 'target': f'http://{environment.name}:8000' }), #FIXME
+        'data': json.dumps({ 'target': service.url_internal }),
     }
-    logging.debug(f'+ proxy {kw["url"]} ---> http://{environment.name}:8000') #FIXME
+    logging.debug(f'+ proxy {kw["url"]} ---> {service.url_internal}')
     return keeptrying(requests.post, 50, **kw)
 
-def removeroute(environment):
+def removeroute(service):
     proxyconf = KOOPLEX.get('proxy', {})
     kw = {
-        'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', f'notebook/{environment.name}'), #FIXME 
+        'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', service.proxy_route),
         'headers': {'Authorization': 'token %s' % proxyconf.get('auth_token', '') },
     }
-    logging.debug(f'- proxy {kw["url"]} -/-> http://{environment.name}:8000') #FIXME
+    logging.debug(f'- proxy {kw["url"]} -/-> {service.url_internal}')
     return keeptrying(requests.delete, 5, **kw)
 
 #def _removeroute_report(report):

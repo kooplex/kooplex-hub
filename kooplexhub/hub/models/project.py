@@ -7,7 +7,6 @@ from django.template.defaulttags import register
 from django.db.models.signals import pre_save, post_save, pre_delete, post_delete
 from django.dispatch import receiver
 
-from .image import Image
 from .group import Group
 
 from kooplex.settings import KOOPLEX
@@ -30,7 +29,6 @@ class Project(models.Model):
 
     name = models.TextField(max_length = 200, null = False)
     description = models.TextField(null = True)
-    image = models.ForeignKey(Image, null = True)
     scope = models.CharField(max_length = 16, choices = [ (x, SCP_LOOKUP[x]) for x in SCOPE_LIST ], default = SCP_PRIVATE)
 
     def __str__(self):
@@ -99,8 +97,8 @@ class Project(models.Model):
         #from .container import ProjectContainerBinding
         #for binding in ProjectContainerBinding.objects.filter(project = self):
         #    yield binding.container
-        from .serviceenvironment import ProjectServiceEnvironmentBinding
-        return [ binding.serviceenvironment for binding in ProjectServiceEnvironmentBinding.objects.filter(project = self) ]
+        from .service import ProjectServiceBinding
+        return [ binding.service for binding in ProjectServiceBinding.objects.filter(project = self) ]
 
 ##    @register.filter
 ##    def get_userprojectcontainer(self, user):

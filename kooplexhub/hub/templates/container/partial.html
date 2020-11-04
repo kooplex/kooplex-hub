@@ -5,7 +5,7 @@
       <strong>{{ container.name }}</strong>
     </button>
     {% include 'container/stopremove.html' %}
-    <a href="{% url 'container:destroy' container.id next_page %}" role="button" class="btn btn-danger" style="padding: 3px 6px 6px 6px; margin-right: 3px; float: right;" data-toggle="tooltip" title="Remove {{ container.name }}">
+    <a href="{% url 'service:destroy' container.id next_page %}" role="button" class="btn btn-danger" style="padding: 3px 6px 6px 6px; margin-right: 3px; float: right;" data-toggle="tooltip" title="Remove {{ container.name }}">
        <span class="oi oi-fire" aria-hidden="true"></span></a>
     <button class="btn" data-toggle="collapse" data-target="#collapse-{{ container.id }}" aria-expanded="true" aria-controls="collapse-{{ container.id }}" style="float: right;">
 {% if container.marked_to_remove %}
@@ -33,14 +33,14 @@
           {% endfor %}
         </div>
         <div class="card-header">Last message ({{ container.last_message_at }}):
-          <a href="{% url 'container:refreshlogs' container.id %}" role="button" class="btn" style="padding: 6px; float: right;">
+          <a href="{% url 'service:refreshlogs' container.id %}" role="button" class="btn" style="padding: 6px; float: right;">
             <span class="oi oi-reload" aria-hidden="true" data-toggle="tooltip" title="Refresh container information" data-placement="bottom"></span></a>
         </div>
         <div class="card-body">
           <p>{{ container.last_message }}</p>
         </div>
 
-        <a href="{% url 'container:addproject' container.id %}" role="button" class="btn" style="padding: 6px; float: right;">
+        <a href="{% url 'service:addproject' container.id %}" role="button" class="btn" style="padding: 6px; float: right;">
           <span class="oi oi-wrench" aria-hidden="true" data-toggle="tooltip" title="Add/remove project to the container" data-placement="bottom"></span></a>
 
       </div>   <!-- card-body -->

@@ -1,253 +1,226 @@
+import re
 import logging
 
-from django.contrib import messages
-from django.conf.urls import url, include
-from django.shortcuts import render, redirect
+from django.conf.urls import url
 from django.contrib.auth.decorators import login_required
-#from django.contrib.auth.models import User
-#from django.utils.html import format_html
-#import django_tables2 as tables
+from django.contrib import messages
+from django.shortcuts import render, redirect
+import django_tables2 as tables
 from django_tables2 import RequestConfig
-#from django.utils.translation import gettext_lazy as _
-#from django.db.models import Q
-#
-from kooplex.lib import list_projects, impersonator_clone, impersonator_removecache
-from kooplex.lib import list_libraries, impersonator_sync
-from kooplex.lib import now
-#
-#from hub.forms import FormProject
-#from hub.forms import table_collaboration, T_JOINABLEPROJECT
-#from hub.forms import table_volume
-#from hub.forms import table_vcproject
-from hub.forms import T_FSLIBRARY_SYNC
-from hub.forms import T_REPOSITORY_CLONE
-#from hub.models import Project, UserProjectBinding, Volume
-#from hub.models import Image
-#from hub.models import Profile
-from hub.models import VCToken, VCProject#, VCProjectProjectBinding, ProjectContainerBinding
-from hub.models import FSToken, FSLibrary#, FSLibraryProjectBinding#, ProjectContainerBinding
-#
-#from django.utils.safestring import mark_safe
-#
+
+from kooplex.lib import standardize_str, custom_redirect
+
+from hub.forms import table_projects
+from hub.models import Image
+from hub.models import Project, UserProjectBinding
+from hub.models import Service
+from hub.models import ProjectServiceBinding
+
 logger = logging.getLogger(__name__)
 
-
 @login_required
-def filesynchronization(request):
+def new(request):
+    logger.debug("user %s" % request.user)
     user = request.user
-    logger.debug("user %s" % user)
-    fs_tokens = FSToken.objects.filter(user = user)
-    pattern = request.POST.get('library', '')
-    libraries = FSLibrary.objects.filter(token__user = user) if pattern == '' else FSLibrary.objects.filter(token__user = user, library_name__icontains = pattern)
-    tbl_libraries = T_FSLIBRARY_SYNC(libraries)
-    RequestConfig(request).configure(tbl_libraries)
-    context_dict = {
-        'next_page': 'service:filesync',
-        'menu_service': 'active',
-        'submenu': 'filesynch',
-        'fs_tokens': fs_tokens,
-        'tbl_libraries': tbl_libraries,
-        'search_library': pattern,
-    }
-    return render(request, 'service/filesynchronization.html', context = context_dict)
-
-@login_required
-def fs_refresh(request, token_id):
-    """Refresh users file snchronization libraries."""
-    user = request.user
-    logger.debug("user %s" % user)
+    user_id = request.POST.get('user_id')
     try:
-        now_ = now()
-        token = FSToken.objects.get(user = user, id = token_id)
-        old_list = list(FSLibrary.objects.filter(token = token))
-        cnt_new = 0
-        cnt_del = 0
-        for r in list_libraries(token):
-            try:
-                l = FSLibrary.objects.get(token = token, library_name = r.name, library_id = r.id)
-                l.last_seen = now_
-                l.save()
-                old_list.remove(l)
-                logger.debug('still present: %s' % r.name)
-            except FSLibrary.DoesNotExist:
-                FSLibrary.objects.create(token = token, library_name = r.name, library_id = r.id)
-                logger.debug('inserted present: %s' % r.name)
-                cnt_new += 1
-        while len(old_list):
-            l = old_list.pop()
-            l.delete()
-            logger.debug('removed: %s' % l.library_name)
-            cnt_del += 1
-        if cnt_new:
-            messages.info(request, "%d new libraries found" % cnt_new)
-        if cnt_del:
-            messages.warning(request, "%d libraries removed" % cnt_del)
-        token.last_used = now_
-        token.save()
-    except FSToken.DoesNotExist:
-        messages.error(request, "System abuse")
+        assert user_id is not None and int(user_id) == user.id, "user id mismatch: %s tries to save %s %s" % (request.user, request.user.id, request.POST.get('user_id'))
+        servicename = "%s-%s" % (user.username, standardize_str(request.POST.get('name')))
+        image = Image.objects.get(id = request.POST.get('image'))
+        env, created = Service.objects.get_or_create(user = user, name = servicename, image = image)
+        assert created, "Service environment with name %s is not unique" % servicename
+        messages.info(request, 'Your new service environment is created with name %s' % servicename)
     except Exception as e:
-        messages.error(request, "System abuse -- %s" % e)
-    return redirect('service:filesync')
+        logger.error("New container not created -- %s" % e)
+        messages.error(request, 'Service environment is not created: %s' % e)
+    return redirect('service:list')
+        
+
+@login_required
+def listservices(request):
+    """Renders the containerlist page."""
+    logger.debug('Rendering container/list.html')
+    #TODO: make volume/image etc changes visible, so the user will know which one needs to be deleted. 
+    context_dict = {
+        'next_page': 'service:list',
+        'menu_container': 'active',
+    }
+    return render(request, 'container/list.html', context = context_dict)
+
+
+def showpass(request, container):
+    try:
+        pw = ContainerEnvironment.objects.get(container = container, name = 'PASSWORD').value
+        messages.warning(request, 'Until we find a better way to authorize your access to rstudio server, we created a password for you: %s' % pw)
+    except:
+        pass
+
+@login_required
+def startprojectcontainer(request, project_id, next_page):
+    """Starts the project container."""
+    user = request.user
+    try:
+        container = Container.get_userprojectcontainer(user = user, project_id = project_id, create = True)
+        container.docker_start()
+        showpass(request, container)
+    except Container.DoesNotExist:
+        messages.error(request, 'Project does not exist')
+    except Exception as e:
+        logger.error('Cannot start the container %s (project id: %s) -- %s' % (container, project_id, e))
+        messages.error(request, 'Cannot start the container -- %s' % e)
+    return redirect(next_page)
 
 
 @login_required
-def fs_commit(request):
+def startcoursecontainer(request, course_id, next_page):
+    """Starts the project container."""
     user = request.user
-    logger.debug("user %s" % user)
-    currently_syncing = [ l.library_id for l in FSLibrary.objects.filter(token__user = user, syncing = True) ]
-    request_syncing = request.POST.getlist('sync_library_id')
-    n_start = 0
-    n_stop = 0
-    for l_id in request_syncing:
-        if l_id in currently_syncing:
-            currently_syncing.remove(l_id)
+    container = None
+    try:
+        container = Container.get_usercoursecontainer(user = user, course_id = course_id, create = True)
+        container.docker_start()
+        showpass(request, container)
+    except Container.DoesNotExist:
+        messages.error(request, 'Course does not exist')
+    except Exception as e:
+        logger.error('Cannot start the container %s (course id: %s) -- %s' % (container, course_id, e))
+        messages.error(request, 'Cannot start the container -- %s' % e)
+    return redirect(next_page)
+ 
+
+@login_required
+def startservice(request, environment_id, next_page):
+    """Starts the container."""
+    user = request.user
+    try:
+        svc = Service.objects.get(user = user, id = environment_id)
+        svc.start()
+    except Service.DoesNotExist:
+        messages.error(request, 'Service environment does not exist')
+    except Exception as e:
+        logger.error(f'Cannot start the environment {svc} -- {e}')
+        messages.error(request, f'Cannot start service environment {e}')
+    return redirect(next_page)
+
+
+@login_required
+def openservice(request, environment_id, next_page):
+    """Opens a container"""
+    user = request.user
+    try:
+        environment = Service.objects.get(id = environment_id, user = user)
+        if environment.state in [ Service.ST_RUNNING, Service.ST_NEED_RESTART ]:
+            environment.wait_until_ready()
+            return custom_redirect(environment.url_public, token = environment.user.profile.token)
         else:
-            try:
-                l = FSLibrary.objects.get(token__user = user, syncing = False, library_id = l_id)
-                l.sync_folder = impersonator_sync(l, start = True)
-                l.syncing = True
-                l.save()
-                n_start += 1
-            except Exception as e:
-                logger.error(e)
-                raise #FIXME
-    for l_id in currently_syncing:
-        try:
-            l = FSLibrary.objects.get(token__user = user, syncing = True, library_id = l_id)
-            impersonator_sync(l, start = False)
-            l.syncing = False
-            l.save()
-            n_stop += 1
-        except Exception as e:
-            logger.error(e)
-            raise #FIXME
-    if n_start:
-        messages.info(request, "{} new synchronization processes started".format(n_start))
-    if n_stop:
-        messages.info(request, "{} old synchronization processes stopped".format(n_stop))
-    return redirect('service:filesync')
-
+            messages.error(request, f'Cannot open {environment.name} of state {environment.state}')
+    except Service.DoesNotExist:
+        messages.error(request, 'Environment is missing')
+    return redirect(next_page)
 
 
 @login_required
-def versioncontrol(request):
+def stopservice(request, environment_id, next_page):
+    """Stops a container"""
     user = request.user
-    logger.debug("user %s" % user)
-    vc_tokens = VCToken.objects.filter(user = user)  #FIXME: user.profile.vctokens HASZNALJUK VALAHOL
-    pattern = request.POST.get('repository', '')
-    repositories = VCProject.objects.filter(token__user = user) if pattern == '' else VCProject.objects.filter(token__user = user, project_name__icontains = pattern)
-    tbl_repositories = T_REPOSITORY_CLONE(repositories)
-    RequestConfig(request).configure(tbl_repositories)
-    context_dict = {
-        'next_page': 'service:versioncontrol',
-        'menu_service': 'active',
-        'submenu': 'versioncontrol',
-        'vc_tokens': vc_tokens,
-        'tbl_repositories': tbl_repositories,
-        'search_repo': pattern,
-    }
-    return render(request, 'service/versioncontrol.html', context = context_dict)
-
-@login_required
-def vc_refresh(request, token_id):
-    """Refresh users version control repositories."""
-    user = request.user
-    logger.debug("user %s" % user)
     try:
-        now_ = now()
-        token = VCToken.objects.get(user = user, id = token_id)
-        old_list = list(VCProject.objects.filter(token = token))
-        cnt_new = 0
-        cnt_del = 0
-        for p_dict in list_projects(token):
-            try:
-                p = VCProject.objects.get(token = token, project_id = p_dict['id'])
-                p.last_seen = now_
-                p.save()
-                old_list.remove(p)
-                logger.debug('still present: {p[name]} of {p[owner_name]}'.format(p = p_dict))
-            except VCProject.DoesNotExist:
-                VCProject.objects.create(token = token, 
-                       project_id = p_dict['id'],
-                       project_name = p_dict['name'],
-                       project_description = p_dict['description'],
-                       project_created_at = p_dict['created_at'],
-                       project_updated_at = p_dict['updated_at'],
-                       project_fullname = p_dict['full_name'],
-                       project_owner = p_dict['owner_name'],
-                       project_ssh_url = p_dict['ssh_url']
-                        )
-                logger.debug('inserted present: {p[name]} of {p[owner_name]}'.format(p = p_dict))
-                cnt_new += 1
-        while len(old_list):
-            p = old_list.pop()
-            p.delete()
-            #logger.debug('removed: {p.project_name} of {p.project_owner}'.format(p = p))
-            cnt_del += 1
-        if cnt_new:
-            messages.info(request, "%d new project items found" % cnt_new)
-        if cnt_del:
-            messages.warning(request, "%d project items removed" % cnt_del)
-        token.last_used = now_
-        token.save()
-    except VCToken.DoesNotExist:
-        messages.error(request, "System abuse")
+        svc = Service.objects.get(user = user, id = environment_id)
+        svc.stop()
+    except Service.DoesNotExist:
+        messages.error(request, 'Environment does not exist')
     except Exception as e:
-        messages.error(request, "System abuse -- %s" % e)
-    return redirect('service:versioncontrol')
+        logger.error(f'Cannot stop the environment {svc} -- {e}')
+        messages.error(request, f'Cannot stop environment {e}')
+    return redirect(next_page)
 
 
 @login_required
-def vc_commit(request):
+def destroyservice(request, environment_id, next_page):
+    """Deletes a container instance"""
     user = request.user
-    logger.debug("user %s" % user)
-    request_clone = request.POST.getlist('clone')
-    request_rmcache = request.POST.getlist('removecache')
-    clone_folders = []
-    rmcache = []
-    for r_id in request_clone:
-        try:
-            r = VCProject.objects.get(token__user = user, cloned = False, id = r_id)
-            r.clone_folder = impersonator_clone(r)
-            r.cloned = True
-            r.save()
-            clone_folders.append(r.clone_folder)
-        except Exception as e:
-            logger.error(e)
-            messages.error(request, "clone oops -- {}".format(e))
-    for r_id in request_rmcache:
-        try:
-            r = VCProject.objects.get(token__user = user, cloned = True, id = r_id)
-            impersonator_removecache(r)
-            rmcache.append(r.clone_folder)
-            r.cloned = False
-            r.clone_folder = None
-            r.save()
-        except Exception as e:
-            logger.error(e)
-            messages.error(request, "rm oops -- {}".format(e))
-    if clone_folders:
-        messages.info(request, "version control projects cloned in folders: {}".format(', '.join(clone_folders)))
-    if rmcache:
-        messages.info(request, "removed version control project folders: {}".format(', '.join(rmcache)))
-    return redirect('service:versioncontrol')
+    try:
+        environment = Service.objects.get(id = environment_id, user = user)
+        environment.stop()
+        environment.delete()
+    except Service.DoesNotExist:
+        messages.error(request, 'Service environment does not exist')
+        raise
+    return redirect(next_page)
 
 
+@login_required
+def addproject(request, container_id):
+    """Manage your projects"""
+    next_page = 'service:list'
+    user = request.user
+    logger.debug("user %s method %s" % (user, request.method))
+    try:
+        container = Container.objects.get(id = container_id, user = user)
+    except Container.DoesNotExist:
+        messages.error(request, 'Container is missing or stopped')
+        return redirect(next_page)
+    if request.method == 'GET':
+        table = table_projects(container)
+        table_project = table(UserProjectBinding.objects.filter(user = user))
+        RequestConfig(request).configure(table_project)
+        context_dict = {
+            'images': Image.objects.all(),
+            'container': container,
+            't_projects': table_project,
+            'next_page': 'service:list',
+        }
+        return render(request, 'container/manage.html', context = context_dict)
+    else:
+        container.image = Image.objects.get(id = request.POST.get('container_image_id'))
+        container.save()
+        project_ids_before = set(request.POST.getlist('project_ids_before'))
+        project_ids_after = set(request.POST.getlist('project_ids_after'))
+        oops = 0
+        added = []
+        for project_id in project_ids_after.difference(project_ids_before):
+            try:
+                project = Project.get_userproject(project_id = project_id, user = user)
+                ProjectContainerBinding.objects.create(container = container, project = project)
+                added.append(str(project))
+                logger.debug('added project %s to container %s' % (project, container))
+            except Exception as e:
+                logger.error('not authorized to add project_id %s to container %s -- %s' % (project_id, container, e))
+                oops += 1
+        removed = []
+        for project_id in project_ids_before.difference(project_ids_after):
+            try:
+                project = Project.get_userproject(project_id = project_id, user = user)
+                ProjectContainerBinding.objects.get(container = container, project = project).delete()
+                removed.append(str(project))
+                logger.debug('removed project %s from container %s' % (project, container))
+            except Exception as e:
+                logger.error('not authorized to remove project_id %s from container %s -- %s' % (project_id, container, e))
+                oops += 1
+        if len(added):
+            messages.info(request, 'Added projects %s to container %s' % (",".join(added), container))
+        if len(removed):
+            messages.info(request, 'Removed projects %s from container %s' % (",".join(removed), container))
+        if oops:
+            messages.warning(request, 'Some problems (%d) occured during handling yout request.' % (oops))
+        return redirect(next_page)
 
-def nothing(request):
-    messages.error(request, 'NOT IMPLEMETED YET')
-    return redirect('indexpage')
+
+@login_required
+def refreshlogs(request, container_id):
+    container = Container.objects.get(id = container_id)
+    container.refresh_state()
+    return redirect('service:list')
 
 urlpatterns = [
-    url(r'^filesynchronization', filesynchronization, name = 'filesync'), 
-    url(r'^fs_search', filesynchronization, name = 'fs_search'), 
-    url(r'^fs_refresh/(?P<token_id>\d+)', fs_refresh, name = 'fs_refresh'), 
-    url(r'^fs_commit', fs_commit, name = 'commit_sync'), 
+    url(r'^new/?$', new, name = 'new'), 
+    url(r'^list/?$', listservices, name = 'list'), 
+    url(r'^start/(?P<environment_id>\d+)/(?P<next_page>\w+:?\w*)$', startservice, name = 'start'),
+    url(r'^open/(?P<environment_id>\d+)/(?P<next_page>\w+:?\w*)$', openservice, name = 'open'),
+    url(r'^stop/(?P<environment_id>\d+)/(?P<next_page>\w+:?\w*)$', stopservice, name = 'stop'),
+    url(r'^destroy/(?P<environment_id>\d+)/(?P<next_page>\w+:?\w*)$', destroyservice, name = 'destroy'),
+    url(r'^refreshlogs/(?P<container_id>\d+)$', refreshlogs, name = 'refreshlogs'),
 
-    url(r'^versioncontrol', versioncontrol, name = 'versioncontrol'), 
-    url(r'^vc_search', versioncontrol, name = 'vc_search'), 
-    url(r'^vc_refresh/(?P<token_id>\d+)', vc_refresh, name = 'vc_refresh'), 
-    url(r'^vc_clone', vc_commit, name = 'commit_repo'), 
+    url(r'^addproject/(?P<container_id>\d+)$', addproject, name = 'addproject'),
+    url(r'^startproject/(?P<project_id>\d+)/(?P<next_page>\w+:?\w*)$', startprojectcontainer, name = 'startprojectcontainer'),
+    url(r'^startcourse/(?P<course_id>\d+)/(?P<next_page>\w+:?\w*)$', startcoursecontainer, name = 'startcoursecontainer'),
 ]
-

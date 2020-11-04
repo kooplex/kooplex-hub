@@ -15,25 +15,31 @@ class ProfileAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'userid', 'groupid', 'location', 'bio', 'is_teacher', 'is_student', 'can_createproject')
     search_fields = ('user__username', )
 
-@admin.register(ServiceEnvironment)
-class ServiceEnvironmentAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'state', 'image')
+@admin.register(Image)
+class ImageAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'require_home')
 
 @admin.register(Proxy)
 class ProxyAdmin(admin.ModelAdmin):
-    def serviceenvironment_name(self, instance): return instance.serviceenvironment.name
-    def serviceenvironment_user(self, instance): return instance.serviceenvironment.user
-    list_display = ('id', 'is_hub_entry', 'url_public', 'path', 'env_prefix', 'serviceenvironment_name', 'port', 'serviceenvironment_user')
+    list_display = ('id', 'image', 'path', 'port')
 
-@admin.register(ProjectServiceEnvironmentBinding)
-class ProjectServiceEnvironmentBindingAdmin(admin.ModelAdmin):
-    list_display = ('id', 'project', 'serviceenvironment')
+@admin.register(EnvVarMapping)
+class EnvVarMappingAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'valuemap')
+
+@admin.register(Service)
+class ServiceAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'state', 'image')
+
+@admin.register(ProjectServiceBinding)
+class ProjectServiceBindingAdmin(admin.ModelAdmin):
+    list_display = ('id', 'project', 'service')
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
     def project_creator(self, instance):
         return instance.creator
-    list_display = ('id', 'name', 'image', 'project_creator') 
+    list_display = ('id', 'name', 'project_creator') 
 
 @admin.register(UserProjectBinding)
 class UserProjectBindingAdmin(admin.ModelAdmin):
@@ -125,10 +131,6 @@ class VolumeProjectBindingAdmin(admin.ModelAdmin):
 #            self.delete_model(request, vpb)
 #    delete_vpb.short_description = 'Delete volume project bindings'
     
-@admin.register(Image)
-class ImageAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name')
-
 @admin.register(Group)
 class GroupAdmin(admin.ModelAdmin):
     list_display = ('id', 'groupid', 'name' )
