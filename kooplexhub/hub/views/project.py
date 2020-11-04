@@ -29,7 +29,6 @@ from django.utils.safestring import mark_safe
 
 logger = logging.getLogger(__name__)
 
-
 @login_required
 def new(request):
     logger.debug("user %s" % request.user)
@@ -58,13 +57,13 @@ def new(request):
                     else:
                         messages.info(request, f'Project {project} is added to svc {svc.name}')
             else:
-                svc = Service.objects.create(name = f'{request.user}-{projectname}', user = request.user)
+                image = Image.objects.all().first() #TODO: make it possible to select a default
+                svc = Service.objects.create(name = f'{request.user}-{projectname}', user = request.user, image = image)
                 ProjectServiceBinding.objects.create(project = project, service = svc)
-                messages.info(request, f'New service {svc.name} is created')
+                messages.info(request, f'New service {svc.name} is created with image {svc.image.name}')
         return redirect('project:list')
     except Exception as e:
         logger.error(f'New project not created -- {e}')
-        raise
         messages.error(request, 'Creation of a new project is refused.')
         return redirect('indexpage')
         

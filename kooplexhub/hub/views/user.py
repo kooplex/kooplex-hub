@@ -9,7 +9,6 @@ from django.contrib import messages
 from hub.forms import FormBiography
 from hub.forms import table_vctoken
 from hub.models import VCRepository, VCToken, FSServer, FSToken
-from kooplex.lib import seafilepw_update
 
 logger = logging.getLogger(__name__)
 
@@ -41,8 +40,6 @@ def managetoken(request, next_page):
         return render(request, 'usertokens.html', context = context_dict)
     elif button == 'reset_notebook_token':
         return redirect('user:changetoken', next_page)
-    elif button == 'reset_seaf_token':
-        return redirect('user:changeseaftoken', next_page)
     elif button == 'apply':
         token_ids = request.POST.getlist('token_ids')
         for rm_token_id in request.POST.getlist('rm_token_ids'):
@@ -103,36 +100,11 @@ def changetoken(request, next_page):
     return redirect(next_page)
 
 
-@login_required
-def changeseaftoken(request, next_page):
-    #TODO: what if more fs servers present???
-    logger.debug("user %s" % request.user)
-    fsservers = FSServer.objects.all()
-    if len(fsservers) < 1:
-        logger.error('No File synchronization services added yet')
-        messages.error(request, 'Ask administrator to add a filesynchronization service endpoint')
-        return redirect(next_page)
-    for fsserver in fsservers:
-        try:
-            token = FSToken.objects.get(user = request.user, syncserver = fsserver)
-            token.token = pwgen.pwgen(64)
-            token.save()
-            messages.info(request, f'Your seafile secret token is updated for {fsserver}')
-        except FSToken.DoesNotExist:
-            token = FSToken.objects.create(user = request.user, syncserver = fsserver, token = pwgen.pwgen(64))
-            messages.info(request, f'A new secret token is created for {fsserver}')
-        if fsserver.backend_type == fsserver.TP_SEAFILE:
-            seafilepw_update(request.user.username, token.token)
-        else:
-            raise NotImplementedError(f'unknown filesynchronisation server backend_type {fsserver.backend_type} for {fsserver}')
-    messages.warning(request, 'You may experience problem with running file syncronization tasks.')
-    return redirect(next_page)
 
 
 urlpatterns = [
     url(r'^profile/(?P<next_page>\w+:?\w*)$', updateprofile, name = 'updateprofile'),
     url(r'^token/(?P<next_page>\w+:?\w*)$', changetoken, name = 'changetoken'),
-    url(r'^token/seafile/(?P<next_page>\w+:?\w*)$', changeseaftoken, name = 'changeseaftoken'),
     url(r'^manage/(?P<next_page>\w+:?\w*)$', managetoken, name = 'managetokens'),
 ]
 

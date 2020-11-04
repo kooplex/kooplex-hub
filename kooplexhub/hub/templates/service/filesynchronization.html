@@ -49,7 +49,7 @@ a.active {
 {% endblock %}
 
 {% block main_content_left %}
-  <form id="fsFilterLibForm" class="form-horizontal form-control" action="{% url 'service:fs_search' %}" method="post">
+  <form id="fsFilterLibForm" class="form-horizontal form-control" action="{% url 'service_external:fs_search' %}" method="post">
     {% csrf_token %}
     <div  class="alert alert-warning">
       <input type="text" name="library" placeholder="library" value="{{ search_library }}">
@@ -62,33 +62,58 @@ a.active {
   <h2>Connected services</h2>
   <!-- We should organize into tabs each service -->
   <form id="fsRefreshLibForm" class="form-horizontal form-control">
+	  {% if fs_tokens|length == 0 %}
+          {% for s in syncservers %}
+          <div class="card bg-light mb-3">
+              <div class="card-header">
+                 <div class="row">
+                      <div class="col-8">
+		       {% if s.backend_type == s.TP_SEAFILE %}
+		           <a href="{{ s.url }}" rel="noreferrer" target="blank" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Login Seafile at {{ s.url }}" data-placement="top"><span class="oi oi-external-link" aria-hidden="true"></span></a>
+		       {% else %}
+		         {{ s.backend_type }}
+		       {% endif %}
+		       <span class="badge badge-pill badge-warning">Make sure you login to Seafile server so your account exists there as well</span>
+                      </div>
+                      <div class="col-2">
+                         <a href="{% url 'service_external:fs_newtoken' s.id %}" role="button" class="btn btn-danger" data-toggle="tooltip" title="Create a new token" data-placement="top">New token</a> <br style="margin:1ex">
+                      </div>
+                      <div class="col-2">
+                         <a href="#" role="button" class="btn btn-disabled" data-toggle="tooltip" title="Disabled" data-placement="top">Refresh</a> <br style="margin:1ex">
+                      </div>
+                 </div>
+              </div>
+          </div>
+          {% endfor %}
+	  {% else %}
           {% for t in fs_tokens %}
             {% with s=t.syncserver %}
           <div class="card bg-light mb-3">
               <div class="card-header">
                  <div class="row">
-                      <div class="col-10">
-       		       <h4>
+                      <div class="col-8">
 		       {% if s.backend_type == s.TP_SEAFILE %}
-	                   <img src="/static/content/logos/seafile.png" alt="SeaFile" height="50px">
+		           <a href="{{ s.url }}" rel="noreferrer" target="blank" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Login Seafile at {{ s.url }}" data-placement="top"><span class="oi oi-external-link" aria-hidden="true"></span></a>
 		       {% else %}
 		         {{ s.backend_type }}
 		       {% endif %}
-		       {{ t.syncserver.url }}
 		       <span class="badge badge-pill badge-info">Last updated: {{ t.last_used }}</span>
-		       </h4>
                       </div>
                       <div class="col-2">
-                         <a href="{% url 'service:fs_refresh' t.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Last updated: {{ t.last_used }}" data-placement="top">Refresh</a> <br style="margin:1ex">
+                         <a href="{% url 'service_external:fs_resettoken' t.id %}" role="button" class="btn btn-danger" data-toggle="tooltip" title="Create a new token" data-placement="top">New token</a> <br style="margin:1ex">
+                      </div>
+                      <div class="col-2">
+                         <a href="{% url 'service_external:fs_refresh' t.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Last updated: {{ t.last_used }}" data-placement="top">Refresh</a> <br style="margin:1ex">
                       </div>
                  </div>
               </div>
           </div>
 	    {% endwith %}
           {% endfor %}
+	  {% endif %}
   </form>
   {% load render_table from django_tables2 %}
-  <form id="fsSyncForm" class="form-horizontal form-control" action="{% url 'service:commit_sync' %}" method="post">
+  <form id="fsSyncForm" class="form-horizontal form-control" action="{% url 'service_external:commit_sync' %}" method="post">
   <h3> Libraries to synchronize</h3>
     {% csrf_token %}
     {% render_table tbl_libraries %}

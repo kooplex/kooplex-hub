@@ -1,4 +1,5 @@
 import logging
+import pwgen
 
 from django.contrib import messages
 from django.conf.urls import url, include
@@ -25,10 +26,13 @@ from hub.forms import T_REPOSITORY_CLONE
 #from hub.models import Image
 #from hub.models import Profile
 from hub.models import VCToken, VCProject#, VCProjectProjectBinding, ProjectContainerBinding
-from hub.models import FSToken, FSLibrary#, FSLibraryProjectBinding#, ProjectContainerBinding
+from hub.models import FSServer, FSToken, FSLibrary#, FSLibraryProjectBinding#, ProjectContainerBinding
 #
 #from django.utils.safestring import mark_safe
 #
+
+from kooplex.lib import seafilepw_update
+
 logger = logging.getLogger(__name__)
 
 
@@ -42,10 +46,11 @@ def filesynchronization(request):
     tbl_libraries = T_FSLIBRARY_SYNC(libraries)
     RequestConfig(request).configure(tbl_libraries)
     context_dict = {
-        'next_page': 'service_externale:filesync',
+        'next_page': 'service_external:filesync',
         'menu_service': 'active',
         'submenu': 'filesynch',
         'fs_tokens': fs_tokens,
+        'syncservers': FSServer.objects.all(),
         'tbl_libraries': tbl_libraries,
         'search_library': pattern,
     }
@@ -92,6 +97,35 @@ def fs_refresh(request, token_id):
 
 
 @login_required
+def fs_newtoken(request, server_id):
+    """Request a new token for the user"""
+    user = request.user
+    logger.debug("user %s" % user)
+    try:
+        fsserver = FSServer.objects.get(id = server_id)
+        token = FSToken.objects.create(user = request.user, syncserver = fsserver, token = pwgen.pwgen(64))
+        seafilepw_update(request.user.username, token.token)
+        messages.info(request, f'Your seafile secret token is updated for {token.syncserver}')
+    except Exception as e:
+        logger.error(f"System abuse {request.user} {server_id} -- {e}")
+        message.error(request, f"System abuse {e}")
+    return redirect('service_external:filesync')
+
+
+@login_required
+def fs_resettoken(request, token_id):
+    """Request a new password for the user"""
+    user = request.user
+    logger.debug("user %s" % user)
+    token = FSToken.objects.get(user = request.user, id = token_id)
+    token.token = pwgen.pwgen(64)
+    token.save()
+    seafilepw_update(request.user.username, token.token)
+    messages.info(request, f'Your seafile secret token is updated for {token.syncserver}')
+    return redirect('service_external:filesync')
+
+
+@login_required
 def fs_commit(request):
     user = request.user
     logger.debug("user %s" % user)
@@ -126,7 +160,7 @@ def fs_commit(request):
         messages.info(request, "{} new synchronization processes started".format(n_start))
     if n_stop:
         messages.info(request, "{} old synchronization processes stopped".format(n_stop))
-    return redirect('service:filesync')
+    return redirect('service_external:filesync')
 
 
 
@@ -140,7 +174,7 @@ def versioncontrol(request):
     tbl_repositories = T_REPOSITORY_CLONE(repositories)
     RequestConfig(request).configure(tbl_repositories)
     context_dict = {
-        'next_page': 'service:versioncontrol',
+        'next_page': 'service_external:versioncontrol',
         'menu_service': 'active',
         'submenu': 'versioncontrol',
         'vc_tokens': vc_tokens,
@@ -195,7 +229,7 @@ def vc_refresh(request, token_id):
         messages.error(request, "System abuse")
     except Exception as e:
         messages.error(request, "System abuse -- %s" % e)
-    return redirect('service:versioncontrol')
+    return redirect('service_external:versioncontrol')
 
 
 @login_required
@@ -231,7 +265,7 @@ def vc_commit(request):
         messages.info(request, "version control projects cloned in folders: {}".format(', '.join(clone_folders)))
     if rmcache:
         messages.info(request, "removed version control project folders: {}".format(', '.join(rmcache)))
-    return redirect('service:versioncontrol')
+    return redirect('service_external:versioncontrol')
 
 
 
@@ -243,6 +277,8 @@ urlpatterns = [
     url(r'^filesynchronization', filesynchronization, name = 'filesync'), 
     url(r'^fs_search', filesynchronization, name = 'fs_search'), 
     url(r'^fs_refresh/(?P<token_id>\d+)', fs_refresh, name = 'fs_refresh'), 
+    url(r'^fs_newtoken/(?P<server_id>\d+)', fs_newtoken, name = 'fs_newtoken'), 
+    url(r'^fs_resettoken/(?P<token_id>\d+)', fs_resettoken, name = 'fs_resettoken'), 
     url(r'^fs_commit', fs_commit, name = 'commit_sync'), 
 
     url(r'^versioncontrol', versioncontrol, name = 'versioncontrol'), 
