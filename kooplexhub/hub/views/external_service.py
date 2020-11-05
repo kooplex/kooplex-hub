@@ -40,7 +40,6 @@ logger = logging.getLogger(__name__)
 def filesynchronization(request):
     user = request.user
     logger.debug("user %s" % user)
-    fs_tokens = FSToken.objects.filter(user = user)
     pattern = request.POST.get('library', '')
     libraries = FSLibrary.objects.filter(token__user = user) if pattern == '' else FSLibrary.objects.filter(token__user = user, library_name__icontains = pattern)
     tbl_libraries = T_FSLIBRARY_SYNC(libraries)
@@ -49,7 +48,6 @@ def filesynchronization(request):
         'next_page': 'service_external:filesync',
         'menu_service': 'active',
         'submenu': 'filesynch',
-        'fs_tokens': fs_tokens,
         'syncservers': FSServer.objects.all(),
         'tbl_libraries': tbl_libraries,
         'search_library': pattern,

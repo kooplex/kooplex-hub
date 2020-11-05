@@ -5,6 +5,7 @@ from django.db import models
 from django.db.models.signals import post_save, pre_delete, post_delete
 from django.dispatch import receiver
 from django.contrib.auth.models import User
+from django.template.defaulttags import register
 
 from kooplex.lib import standardize_str
 
@@ -26,6 +27,12 @@ class FSServer(models.Model):
     def domain(self):
         return re.split(r'https?://([^/]+)', self.url)[1]
 
+    @register.filter
+    def get_usertoken(self, user):
+        try:
+            return FSToken.objects.get(syncserver = self, user = user)
+        except FSToken.DoesNotExist:
+            return None
 
 class FSToken(models.Model):
     user = models.ForeignKey(User, null = False)
