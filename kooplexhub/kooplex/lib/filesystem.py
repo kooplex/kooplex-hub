@@ -8,7 +8,6 @@ import os
 import ast
 import time
 import glob
-import base64
 from distutils import dir_util
 from distutils import file_util
 import tarfile

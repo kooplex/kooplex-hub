@@ -3,6 +3,8 @@ import logging
 import hashlib
 import MySQLdb
 import seafileapi
+import pickle
+import base64
 import requests
 import requests.auth
 
@@ -51,17 +53,25 @@ def impersonator_sync(library, start):
     except ConnectionError:
         logger.critical('impersonator API is not running')
         raise
+    data_dict = {
+            'service_url': library.token.syncserver.url, 
+            'username': library.token.user.username,
+            'password': library.token.token, 
+            'libraryid': library.library_id, 
+            'librarypassword': None,  #TODO
+            }
+    data = base64.b64encode(pickle.dumps(data_dict, protocol = 2))
     if start:
-        url = '{}/api/sync/sync/{}/{}/{}/none'.format(url_base, library.token.user.username, library.token.token, library.library_id) #FIXME: encryption not yet implemented
+        url = f'{url_base}/api/sync/sync/{data}'
     else:
-        url = '{}/api/sync/desync/{}/{}'.format(url_base, library.token.user.username, library.library_id)
+        url = '{url_base}/api/sync/desync/{data}'
     try:
         resp_info = requests.get(url, auth = A)
         rj = resp_info.json()
         if 'error' in rj:
-            logger.warning('error to start={} synchronizing {} for user {} -- daemon response: {}'.format(start, library.library_id, library.token.user.username, rj))
+            logger.warning(f'error to start={start} synchronizing {library.library_id} for user {library.token.user.username} -- daemon response: {rj}')
             raise Exception(rj['error'])
         return rj['sync_folder'] if start else None
     except Exception as e:
-        logger.error('error to start={} synchronizing {} for user {} -- {}'.format(start, library.library_id, library.token.user.username, e))
+        logger.error(f'error to start={start} synchronizing {library.library_id} for user {library.token.user.username} -- daemon response: {rj}')
 

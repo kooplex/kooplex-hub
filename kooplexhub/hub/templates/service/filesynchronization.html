@@ -59,9 +59,9 @@ a.active {
 {% endblock %}
 
 {% block main_content_center %}
-  <h2>Connected services</h2>
   <!-- We should organize into tabs each service -->
   <form id="fsRefreshLibForm" class="form-horizontal form-control">
+    <h3>Connected services</h3>
     {% for s in syncservers %}
       {% with t=s|get_usertoken:user %}
         <div class="card bg-light mb-3">
@@ -73,6 +73,7 @@ a.active {
                 {% else %}
                   <a href="{{ s.url }}" rel="noreferrer" target="blank" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Login {{s.backend_type }} at {{ s.url }}" data-placement="top"><span class="oi oi-external-link" aria-hidden="true"></span></a>
                 {% endif %}
+                <span class="badge badge-pill badge-secondary">{{ s.url }}</span>
                 {% if t %}
                   <span class="badge badge-pill badge-info">Last updated: {{ t.last_used }}</span>
                 {% else %}

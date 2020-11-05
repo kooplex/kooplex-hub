@@ -164,7 +164,7 @@ KOOPLEX = {
         'garbage': '/mnt/garbage',
         'project': '/mnt/projects',
         'report': '/mnt/reports',
-        'report_prepare': '/mnt/prepare_reports',
+        'report_prepare': '/mnt/report_prepare',
 
         #####
         # ezt hasznalja a hub?
@@ -214,9 +214,9 @@ KOOPLEX = {
         'impersonator': '%s-impersonator' % PREFIX, #FIXME: is it still used?
     },
     'impersonator': {
-        'base_url': 'http://%s-impersonator:5000' % PREFIX,
+        'base_url': 'http://svc-%s-impersonator:5000' % PREFIX,
         'username': 'hub',
-        'password': 'blabla',
+        'password': 'blabla',#FIXME: get PW from envvar?
         'seafile_api': 'http://svc-%s-seafile-pwapi:5000' % PREFIX,
     },
     'spawner': {#FIXME

@@ -4,6 +4,13 @@ import django_tables2 as tables
 from hub.models import FSLibrary
 from hub.models import FSLibraryProjectBinding 
 
+class BackendColumn(tables.Column):
+    def render(self, record):
+        svc = record.token.syncserver
+        if svc.backend_type == svc.TP_SEAFILE:
+            return format_html('<img src="/static/content/logos/seafile.png" alt="seafile" width="55px" data-toggle="tooltip" title="{}" data-placement="bottom">'.format(svc.url))
+        else:
+            return format_html(record)
 
 def s_column(project):
     lookup = dict([ (b.fslibrary, b.id) for b in FSLibraryProjectBinding.objects.filter(project = project) ])
@@ -36,6 +43,8 @@ def table_fslibrary(project):
 
 class T_FSLIBRARY_SYNC(tables.Table):
     syncing = tables.Column(verbose_name = 'Status', orderable = False)
+    backend_type = BackendColumn(verbose_name = 'Service', empty_values = (), orderable = False)
+
     def render_syncing(self, record):
         if record.syncing:
             return format_html('<input type="checkbox" data-toggle="toggle" name="sync_library_id" value="{}" data-on="Synchronizing" data-off="Pause" data-onstyle="success" data-offstyle="dark" data-size="xs" checked>'.format(record.library_id))
@@ -45,7 +54,7 @@ class T_FSLIBRARY_SYNC(tables.Table):
             return format_html('<input type="checkbox" data-toggle="toggle" name="sync_library_id" value="{}" data-on="Synchronize" data-off="Unused" data-onstyle="success" data-offstyle="secondary" data-size="xs">'.format(record.library_id))
     class Meta:
         model = FSLibrary
-        fields = ('library_name', 'syncing')
-        sequence = ('syncing', 'library_name')
+        fields = ('library_name', 'syncing', 'backend_type')
+        sequence = ('syncing', 'backend_type', 'library_name')
         attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
 
