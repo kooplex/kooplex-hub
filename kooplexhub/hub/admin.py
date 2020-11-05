@@ -170,7 +170,7 @@ class FSTokenAdmin(admin.ModelAdmin):
 
 @admin.register(FSLibrary)
 class FSLibraryAdmin(admin.ModelAdmin):
-    list_display = ('id', 'get_user', 'get_syncserver', 'library_name', 'library_id', 'sync_folder')
+    list_display = ('id', 'get_user', 'get_syncserver', 'library_name', 'library_id', 'sync_folder', 'syncing', 'last_seen')
     search_fields = ('token__user__username', 'library_name')
     def get_user(self, obj):
         return obj.token.user.username

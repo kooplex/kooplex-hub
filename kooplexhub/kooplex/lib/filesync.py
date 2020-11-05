@@ -46,6 +46,7 @@ def seafilepw_update(username, password):
     requests.get('{}/api/setpass/{}/{}'.format(KOOPLEX['impersonator'].get('seafile_api', 'http://localhost'), username, password), auth = A)
 
 def impersonator_sync(library, start):
+    do = 'start' if start else 'stop'
     url_base = KOOPLEX['impersonator'].get('base_url', 'http://localhost')
     A = requests.auth.HTTPBasicAuth(KOOPLEX['impersonator'].get('username'), KOOPLEX['impersonator'].get('password'))
     try:
@@ -59,19 +60,17 @@ def impersonator_sync(library, start):
             'password': library.token.token, 
             'libraryid': library.library_id, 
             'librarypassword': None,  #TODO
+            'do': do
             }
     data = base64.b64encode(pickle.dumps(data_dict, protocol = 2))
-    if start:
-        url = f'{url_base}/api/sync/sync/{data}'
-    else:
-        url = '{url_base}/api/sync/desync/{data}'
+    url = f'{url_base}/api/sync/{data}'
     try:
         resp_info = requests.get(url, auth = A)
         rj = resp_info.json()
         if 'error' in rj:
-            logger.warning(f'error to start={start} synchronizing {library.library_id} for user {library.token.user.username} -- daemon response: {rj}')
+            logger.warning(f'error to {do} synchronizing {library.library_id} for user {library.token.user.username} -- daemon response: {rj}')
             raise Exception(rj['error'])
-        return rj['sync_folder'] if start else None
+        return rj.get('sync_folder', None)
     except Exception as e:
-        logger.error(f'error to start={start} synchronizing {library.library_id} for user {library.token.user.username} -- daemon response: {rj}')
+        logger.error(f'error to {do} synchronizing {library.library_id} for user {library.token.user.username}')
 
