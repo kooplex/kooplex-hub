@@ -16,14 +16,13 @@ from hub.forms import FormProject
 from hub.forms import table_collaboration, T_JOINABLEPROJECT
 from hub.forms import table_volume
 from hub.forms import table_vcproject
-from hub.forms import table_fslibrary
 from hub.models import Project, UserProjectBinding
 from hub.models import Service, ProjectServiceBinding
 from hub.models import Volume
 from hub.models import Image
 from hub.models import Profile
 from hub.models import VCProject, VCProjectProjectBinding
-from hub.models import FSLibrary, FSLibraryProjectBinding
+from hub.models import FSLibrary
 
 from django.utils.safestring import mark_safe
 
@@ -362,64 +361,6 @@ def conf_versioncontrol(request, project_id, next_page):
         return redirect(next_page)
 
 
-@login_required
-def conf_filesync(request, project_id, next_page):
-    user = request.user
-    logger.debug("method: %s, project id: %s, user: %s" % (request.method, project_id, user))
-    try:
-        project = Project.get_userproject(project_id = project_id, user = request.user)
-        assert project.is_admin(user), "%s is not admin of %s" % (user, project)
-    except Exception as e:
-        logger.error('abuse by %s project id: %s -- %s' % (user, project_id, e))
-        messages.error(request, 'Unauthorized request.')
-        return redirect(next_page)
-
-    sort_info = request.GET.get('sort') if request.method == 'GET' else request.POST.get('sort')
-    if request.method == 'POST' and request.POST.get('button') == 'apply':
-        msgs = []
-        for id_create in request.POST.getlist('fsl_ids'):
-            fsl = FSLibrary.objects.get(id = id_create)
-            if fsl.token.user != user:
-                logger.error("Unauthorized request fsl: %s, user: %s" % (fsl, user))
-                continue
-            FSLibraryProjectBinding.objects.create(project = project, fslibrary = fsl)
-            msgs.append('Bound library %s to project %s.' % (fsl, project))
-        for id_remove in set(request.POST.getlist('fslpb_ids_before')).difference(set(request.POST.getlist('fslpb_ids_after'))):
-            try:
-                fslpb = FSLibraryProjectBinding.objects.get(id = id_remove, project = project)
-                if fslpb.fslibrary.token.user != user:
-                    logger.error("Unauthorized request fsl: %s, user: %s" % (fsl, user))
-                    continue
-                msgs.append('Library %s is not bound to project %s any more.' % (fslpb.fslibrary, project))
-                fslpb.delete()
-            except FSLibraryProjectBinding.DoesNotExist:
-                logger.error("Is %s hacking" % user)
-        if len(msgs):
-            messages.info(request, ' '.join(msgs))
-        return redirect(next_page)
-    elif (request.method == 'POST' and request.POST.get('button') == 'search') or request.method == 'GET':
-        t = table_fslibrary(project)
-        pattern = request.POST.get('library', '')
-        table_fsl = t(FSLibrary.objects.filter(token__user = user)) if pattern == '' else t(FSLibrary.objects.filter(token__user = user, library_name__icontains = pattern))
-        RequestConfig(request).configure(table_fsl)
-        context_dict = {
-            'project': project, 
-            't_fsl': table_fsl, 
-            'submenu': 'filesync',
-            'next_page': next_page,
-            'search_library': pattern,
-            'sort': sort_info,
-        }
-        return render(request, 'project/conf-filesync.html', context = context_dict)
-    elif request.method == 'POST' and request.POST.get('button') == 'cancel':
-        context_dict = {
-             'next_page': 'project:list',
-             'menu_project': 'active',
-        }
-        return render(request, 'project/list.html', context = context_dict)
-    else:
-        return redirect(next_page)
-
 
 @login_required
 def delete_leave(request, project_id, next_page):
@@ -537,7 +478,6 @@ urlpatterns = [
     url(r'^configure/(?P<project_id>\d+)/environment/(?P<next_page>\w+:?\w*)$', conf_environment, name = 'conf_environment'), 
     url(r'^configure/(?P<project_id>\d+)/storage/(?P<next_page>\w+:?\w*)$', conf_voldata, name = 'conf_storage'), 
     url(r'^configure/(?P<project_id>\d+)/versioncontrol/(?P<next_page>\w+:?\w*)$', conf_versioncontrol, name = 'conf_versioncontrol'), 
-    url(r'^configure/(?P<project_id>\d+)/filesync/(?P<next_page>\w+:?\w*)$', conf_filesync, name = 'conf_filesync'), 
     url(r'^delete/(?P<project_id>\d+)/(?P<next_page>\w+:?\w*)$', delete_leave, name = 'delete'), 
     url(r'^show/(?P<next_page>\w+:?\w*)$', show_hide, name = 'showhide'),
     url(r'^hide/(?P<project_id>\d+)/(?P<next_page>\w+:?\w*)$', hide, name = 'hide'), 

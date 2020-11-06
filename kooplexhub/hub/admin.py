@@ -181,9 +181,9 @@ class FSLibraryAdmin(admin.ModelAdmin):
     get_syncserver.short_description = 'Sync server'
     get_syncserver.admin_order_field = 'token__syncserver'
 
-@admin.register(FSLibraryProjectBinding)
-class FSLibraryProjectBindingAdmin(admin.ModelAdmin):
-    list_display = ('id', 'project', 'fslibrary')
+@admin.register(FSLibraryServiceBinding)
+class FSLibraryServiceBindingAdmin(admin.ModelAdmin):
+    list_display = ('id', 'fslibrary', 'service')
 
 
 @admin.register(Report)

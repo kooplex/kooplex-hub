@@ -9,7 +9,7 @@ from django.template.defaulttags import register
 
 from kooplex.lib import standardize_str
 
-from .project import Project
+from .service import Service
 
 logger = logging.getLogger(__name__)
 
@@ -64,25 +64,24 @@ class FSLibrary(models.Model):
         return "%s-%s-%s-%s" % (s.backend_type, s.domain, t.user.username, self.cleanname)
 
     @property
-    def fslibraryprojectbindings(self):
-        for b in FSLibraryProjectBinding.objects.filter(fslibrary = self):
-            yield b
+    def services(self):
+        return [ b.service for b in FSLibraryServiceBinding.objects.filter(fslibrary = self) ]
 
     
-class FSLibraryProjectBinding(models.Model):
-    project = models.ForeignKey(Project, null = False)
+class FSLibraryServiceBinding(models.Model):
     fslibrary = models.ForeignKey(FSLibrary, null = False)
+    service = models.ForeignKey(Service, null = False)
 
-    @staticmethod
-    def getbinding(user, project):
-        for b in FSLibraryProjectBinding.objects.filter(project = project):
-            if b.fslibrary.token.user == user:
-                yield b
-
-    @property
-    def otherprojects(self):
-        for b in FSLibraryProjectBinding.objects.filter(fslibrary = self.fslibrary):
-            yield b.project
+#    @staticmethod
+#    def getbinding(user, project):
+#        for b in FSLibraryProjectBinding.objects.filter(project = project):
+#            if b.fslibrary.token.user == user:
+#                yield b
+#
+#    @property
+#    def otherprojects(self):
+#        for b in FSLibraryProjectBinding.objects.filter(fslibrary = self.fslibrary):
+#            yield b.project
 
 
 ##@receiver(post_save, sender = FSLibraryProjectBinding)

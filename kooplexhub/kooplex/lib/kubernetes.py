@@ -2,6 +2,7 @@ import logging
 import os
 import json
 from kubernetes import client, config
+from urllib.parse import urlparse
 
 from kooplex.settings import KOOPLEX
 from .proxy import addroute, removeroute
@@ -49,35 +50,54 @@ def start(service):
             "subPath": service.user.username,
         })
     has_project = False
+    has_report = False
+    has_cache = False
     for project in service.projects:
         volume_mounts.append({
             "name": "pv-k8plex-hub-project",
             "mountPath": os.path.join(mount_point, project_subdir, project.uniquename),
             "subPath": project.uniquename
         })
+        has_project = True
         volume_mounts.append({
             "name": "pv-k8plex-hub-report",
             "mountPath": os.path.join(mount_point, report_subdir, project.uniquename),
             "subPath": project.uniquename,
             "readOnly": True
         })
+        has_report = True
         volume_mounts.append({
-            "name": "pv-k8plex-hub-cache-report",
+            "name": "pv-k8plex-hub-cache",
             "mountPath": os.path.join(mount_point, report_prepare_subdir, project.uniquename),
             "subPath": project.uniquename
         })
-        has_project = True
+        has_cache = True
+
+    for sync_lib in service.synced_libraries:
+        o = urlparse(sync_lib.token.syncserver.url)
+        server = o.netloc.replace('.', '_')
+        volume_mounts.append({
+            "name": "pv-k8plex-hub-cache",
+            "mountPath": os.path.join(mount_point, 'synchron', f'{sync_lib.library_name}-{server}'),
+            "subPath": os.path.join('fs', service.user.username, server, 'synchron', sync_lib.library_name),
+        })
+        has_cache = True
+
     if has_project:
         volumes.append({
             "name": "pv-k8plex-hub-project",
             "persistentVolumeClaim": { "claimName": "pvc-project-k8plex", }
         })
+
+    if has_report:
         volumes.append({
             "name": "pv-k8plex-hub-report",
             "persistentVolumeClaim": { "claimName": "pvc-report-k8plex", }
         })
+    
+    if has_cache:
         volumes.append({
-            "name": "pv-k8plex-hub-cache-report",
+            "name": "pv-k8plex-hub-cache",
             "persistentVolumeClaim": { "claimName": "pvc-cache-k8plex", }
         })
 

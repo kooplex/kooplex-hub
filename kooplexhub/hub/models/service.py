@@ -17,7 +17,6 @@ from .course import Course
 from .volume import Volume, VolumeProjectBinding
 from .image import Image
 from .versioncontrol import VCProjectProjectBinding
-from .filesync import FSLibraryProjectBinding
 
 from kooplex.settings import KOOPLEX
 from kooplex.lib import  standardize_str, now
@@ -122,8 +121,12 @@ class Service(models.Model):
 
     @property
     def projects(self):
-        for binding in ProjectServiceBinding.objects.filter(service = self):
-            yield binding.project
+        return [ binding.project for binding in ProjectServiceBinding.objects.filter(service = self) ]
+
+    @property
+    def synced_libraries(self):
+        from .filesync import FSLibraryServiceBinding
+        return [ binding.fslibrary for binding in FSLibraryServiceBinding.objects.filter(service = self) ]
 
     def start(self):
         return start_environment(self)

@@ -1,49 +1,73 @@
 <div class="card bg-light mb-3">
   <div class="card-header" id="heading-{{ container.id }}">
     {% include 'container/startopen.html' %}
+    {% comment %} fas btn-link collapsed
+    {% endcomment %}
     <button class="btn btn-outline-dark" data-toggle="collapse" data-target="#collapse-{{ container.id }}" aria-expanded="true" aria-controls="collapse-{{ container.id }}" style="min-width: 15em; text-align: left;">
       <strong>{{ container.name }}</strong>
     </button>
-    {% include 'container/stopremove.html' %}
-    <a href="{% url 'service:destroy' container.id next_page %}" role="button" class="btn btn-danger" style="padding: 3px 6px 6px 6px; margin-right: 3px; float: right;" data-toggle="tooltip" title="Remove {{ container.name }}">
-       <span class="oi oi-fire" aria-hidden="true"></span></a>
-    <button class="btn" data-toggle="collapse" data-target="#collapse-{{ container.id }}" aria-expanded="true" aria-controls="collapse-{{ container.id }}" style="float: right;">
-{% if container.marked_to_remove %}
-      <span class="badge badge-pill badge-danger">Restart with image:<strong>{{ container.image }}</strong></span>
-{% elif container.is_running  %}
-      <span class="badge badge-pill badge-success">Using image:<strong>{{ container.image }}</strong></span>
-{% else %}
-      <span class="badge badge-pill badge-secondary">Using image:<strong>{{ container.image }}</strong></span>
-{% endif %}
-    </button>
+    <div style="float:right">
+      <button class="btn" data-toggle="collapse" data-target="#collapse-{{ container.id }}" aria-expanded="true" aria-controls="collapse-{{ container.id }}">
+        {% if container.state == container.ST_NEED_RESTART %}
+          <span class="badge badge-pill badge-danger">Restart with image:<strong>{{ container.image }}</strong></span>
+        {% elif container.state == container.ST_RUNNING  %}
+          <span class="badge badge-pill badge-success">Using image:<strong>{{ container.image }}</strong></span>
+        {% else %}
+          <span class="badge badge-pill badge-secondary">Using image:<strong>{{ container.image }}</strong></span>
+        {% endif %}
+      </button>
+      {% include 'container/stopremove.html' %}
+    </div>
   </div>
 
     <div id="collapse-{{ container.id }}" class="collapse" aria-labelledby="heading-{{ container.id }}" data-parent="#containerList">
-      <div class="card-body">
-        <div class="card-header">Projects: </div>
-        <div class="card-body">
-          {% for p in container.projects %}
-            <p>{{ p }}</p>
-          {% endfor %}
-        </div>
-        <div class="card-header">Volumes: </div>
-        <div class="card-body">
-          {% for v in container.volumes %}
-            <p>{{ v }} ({{ v.description }})</p>
-          {% endfor %}
-        </div>
-        <div class="card-header">Last message ({{ container.last_message_at }}):
-          <a href="{% url 'service:refreshlogs' container.id %}" role="button" class="btn" style="padding: 6px; float: right;">
-            <span class="oi oi-reload" aria-hidden="true" data-toggle="tooltip" title="Refresh container information" data-placement="bottom"></span></a>
+      <div class="card" style="margin: 10px">
+        <div class="card-header">Control: 
+          <div style="float: right;">
+            <span class="badge badge-pill badge-secondary">Last message:<strong>{{ container.last_message_at }}</strong></span>
+	    <a href="{% url 'service:refreshlogs' container.id %}" role="button" class="btn btn-primary" style="padding: 3px 6px 6px 6px; margin-right: 3px">
+              <span class="oi oi-reload" aria-hidden="true" data-toggle="tooltip" title="Refresh container information" data-placement="bottom"></span></a>
+            <a href="{% url 'service:destroy' container.id next_page %}" role="button" class="btn btn-danger" style="padding: 3px 6px 6px 6px; margin-right: 3px">
+              <span class="oi oi-fire" aria-hidden="true" data-toggle="tooltip" title="Remove {{ container.name }}"></span></a>
+            <a href="{% url 'service:addproject' container.id %}" role="button" class="btn btn-secondary" style="padding: 3px 6px 6px 6px; margin-right: 3px">
+              <span class="oi oi-wrench" aria-hidden="true" data-toggle="tooltip" title="Add/remove project to the container" data-placement="bottom"></span></a>
+          </div>
         </div>
         <div class="card-body">
-          <p>{{ container.last_message }}</p>
+          <div class="card-deck">
+            <div class="card">
+              {% if container.projects|length == 0 %}
+                <h5 class="card-title">No projects associated</h5>
+              {% else %}
+                <h5 class="card-title">Projects</h5>
+                {% for p in container.projects %}
+                  <p>{{ p }}</p>
+                {% endfor %}
+	      {% endif %}
+	    </div>
+            <div class="card">
+              {% if container.volumes|length == 0 %}
+                <h5 class="card-title">No volumes associated</h5>
+              {% else %}
+                <h5 class="card-title">Volumes</h5>
+                {% for v in container.volumes %}
+                  <p>{{ v }} ({{ v.description }})</p>
+                {% endfor %}
+              {% endif %}
+	    </div>
+            <div class="card">
+              {% if container.synced_libraries|length == 0 %}
+                <h5 class="card-title">No file synchron folders associated</h5>
+              {% else %}
+                <h5 class="card-title">Synchronized folders</h5>
+                {% for l in container.synced_libraries %}
+		  <p>{{ l.library_name }} from server {{ l.sync_server.url }}</p>
+                {% endfor %}
+              {% endif %}
+	    </div>
+	  </div>
         </div>
-
-        <a href="{% url 'service:addproject' container.id %}" role="button" class="btn" style="padding: 6px; float: right;">
-          <span class="oi oi-wrench" aria-hidden="true" data-toggle="tooltip" title="Add/remove project to the container" data-placement="bottom"></span></a>
-
-      </div>   <!-- card-body -->
+      </div>
     </div>
   </div>
 

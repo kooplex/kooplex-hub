@@ -2,7 +2,7 @@ from django.utils.html import format_html
 import django_tables2 as tables
 
 from hub.models import FSLibrary
-from hub.models import FSLibraryProjectBinding 
+from hub.models import FSLibraryServiceBinding 
 
 class BackendColumn(tables.Column):
     def render(self, record):
@@ -12,31 +12,30 @@ class BackendColumn(tables.Column):
         else:
             return format_html(record)
 
-def s_column(project):
-    lookup = dict([ (b.fslibrary, b.id) for b in FSLibraryProjectBinding.objects.filter(project = project) ])
+
+def table_fslibrary(service):
+    lookup = dict([ (b.fslibrary, b.id) for b in FSLibraryServiceBinding.objects.filter(service = service) ])
     class SelectColumn(tables.Column):
         def render(self, record):
             if record in lookup.keys():
+                #FIXME: name also in the template!!
                 return format_html('<input type="hidden" name="fslpb_ids_before" value="{0}"><input type="checkbox" name="fslpb_ids_after" value="{0}" checked data-toggle="toggle" data-on="Attached" data-off="Detach" data-onstyle="success" data-offstyle="dark" data-size="xs">'.format(lookup[record]))
             else:
                 return format_html('<input type="checkbox" name="fsl_ids" data-toggle="toggle" value="{}" data-on="Attach" data-off="Unused" data-onstyle="success" data-offstyle="dark" data-size="xs">'.format(record.id))
-    return SelectColumn
+    sc = SelectColumn
 
-class ProjectsColumn(tables.Column):
-    def render(self, record):
-        return format_html(",".join(map(lambda b: str(b.project), record.fslibraryprojectbindings)))
+    class ServiceColumn(tables.Column):
+        def render(self, record):
+            return format_html(", ".join([ s.name for s in record.services ]))
 
-
-def table_fslibrary(project):
-    sc = s_column(project)
     class T_FSLIBRARY(tables.Table):
         id = sc(verbose_name = 'Status', orderable = False)
-        projects = ProjectsColumn(verbose_name = 'Bound to projects', empty_values = (), orderable = False)
+        services = ServiceColumn(verbose_name = 'Bound to service', empty_values = (), orderable = False)
 
         class Meta:
             model = FSLibrary
-            fields = ('id', 'library_name', 'projects')
-            sequence = ('id', 'library_name', 'projects')
+            fields = ('id', 'library_name', 'services', 'syncing')
+            sequence = ('id', 'library_name', 'syncing', 'services')
             attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
 
     return T_FSLIBRARY

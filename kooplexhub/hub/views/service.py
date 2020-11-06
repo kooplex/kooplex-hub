@@ -11,10 +11,12 @@ from django_tables2 import RequestConfig
 from kooplex.lib import standardize_str, custom_redirect
 
 from hub.forms import table_projects
+from hub.forms import table_fslibrary
 from hub.models import Image
 from hub.models import Project, UserProjectBinding
 from hub.models import Service
 from hub.models import ProjectServiceBinding
+from hub.models import FSLibrary, FSLibraryServiceBinding
 
 logger = logging.getLogger(__name__)
 
@@ -139,9 +141,9 @@ def destroyservice(request, environment_id, next_page):
     """Deletes a container instance"""
     user = request.user
     try:
-        environment = Service.objects.get(id = environment_id, user = user)
-        environment.stop()
-        environment.delete()
+        svc = Service.objects.get(id = environment_id, user = user)
+        svc.stop()
+        svc.delete()
     except Service.DoesNotExist:
         messages.error(request, 'Service environment does not exist')
         raise
@@ -149,30 +151,45 @@ def destroyservice(request, environment_id, next_page):
 
 
 @login_required
-def addproject(request, container_id):
+def configureservice(request, environment_id):
     """Manage your projects"""
     next_page = 'service:list'
     user = request.user
     logger.debug("user %s method %s" % (user, request.method))
     try:
-        container = Container.objects.get(id = container_id, user = user)
-    except Container.DoesNotExist:
-        messages.error(request, 'Container is missing or stopped')
+        svc = Service.objects.get(id = environment_id, user = user)
+    except Service.DoesNotExist:
+        messages.error(request, 'Service environment does not exist')
         return redirect(next_page)
     if request.method == 'GET':
-        table = table_projects(container)
+        table = table_projects(svc)
+        #TODO: search fields
         table_project = table(UserProjectBinding.objects.filter(user = user))
         RequestConfig(request).configure(table_project)
+
+        table = table_fslibrary(svc)
+        #FIXME: pattern = request.POST.get('library', '')
+        #FIXME: table_synclibs = t(FSLibrary.objects.filter(token__user = user)) if pattern == '' else t(FSLibrary.objects.filter(token__user = user, library_name__icontains = pattern))
+        table_synclibs = table(FSLibrary.objects.filter(token__user = user).exclude(sync_folder__exact = ''))
+        RequestConfig(request).configure(table_synclibs)
+
         context_dict = {
             'images': Image.objects.all(),
-            'container': container,
+            'container': svc,
             't_projects': table_project,
+            't_synclibs': table_synclibs,
             'next_page': 'service:list',
         }
         return render(request, 'container/manage.html', context = context_dict)
     else:
-        container.image = Image.objects.get(id = request.POST.get('container_image_id'))
-        container.save()
+        is_running = svc.state == svc.ST_RUNNING
+
+        image_before = svc.image
+        image_after = Image.objects.get(id = request.POST.get('container_image_id'))
+        svc.image = image_after
+        if is_running and image_after != image_before:
+            svc.state = svc.ST_NEED_RESTART
+
         project_ids_before = set(request.POST.getlist('project_ids_before'))
         project_ids_after = set(request.POST.getlist('project_ids_after'))
         oops = 0
@@ -180,35 +197,70 @@ def addproject(request, container_id):
         for project_id in project_ids_after.difference(project_ids_before):
             try:
                 project = Project.get_userproject(project_id = project_id, user = user)
-                ProjectContainerBinding.objects.create(container = container, project = project)
-                added.append(str(project))
-                logger.debug('added project %s to container %s' % (project, container))
+                ProjectServiceBinding.objects.create(service = svc, project = project)
+                added.append(f'project {project.name}')
+                logger.debug('added project %s to container %s' % (project, svc))
             except Exception as e:
-                logger.error('not authorized to add project_id %s to container %s -- %s' % (project_id, container, e))
+                logger.error('not authorized to add project_id %s to container %s -- %s' % (project_id, svc, e))
                 oops += 1
         removed = []
         for project_id in project_ids_before.difference(project_ids_after):
             try:
                 project = Project.get_userproject(project_id = project_id, user = user)
-                ProjectContainerBinding.objects.get(container = container, project = project).delete()
-                removed.append(str(project))
-                logger.debug('removed project %s from container %s' % (project, container))
+                ProjectServiceBinding.objects.get(service = svc, project = project).delete()
+                removed.append(f'project {project.name}')
+                logger.debug('removed project %s from container %s' % (project, svc))
             except Exception as e:
-                logger.error('not authorized to remove project_id %s from container %s -- %s' % (project_id, container, e))
+                logger.error('not authorized to remove project_id %s from container %s -- %s' % (project_id, svc, e))
                 oops += 1
+
+        for id_create in request.POST.getlist('fsl_ids'):
+            fsl = FSLibrary.objects.get(id = id_create)
+            if fsl.token.user != user:
+                logger.error("Unauthorized request fsl: %s, user: %s" % (fsl, user))
+                oops += 1
+                continue
+            FSLibraryServiceBinding.objects.create(service = svc, fslibrary = fsl)
+            added.append(f'synchron library {fsl.library_name}')
+        for id_remove in set(request.POST.getlist('fslpb_ids_before')).difference(set(request.POST.getlist('fslpb_ids_after'))):
+            try:
+                fslsb = FSLibraryServiceBinding.objects.get(id = id_remove, service = svc)
+                if fslsb.fslibrary.token.user != user:
+                    logger.error("Unauthorized request fsl: %s, user: %s" % (fsl, user))
+                    oops += 1
+                    continue
+                removed.append(f'synchron library {fsl.library_name}')
+                fslsb.delete()
+            except FSLibraryServiceBinding.DoesNotExist:
+                logger.error("Is %s hacking" % user)
+                oops += 1
+
         if len(added):
-            messages.info(request, 'Added projects %s to container %s' % (",".join(added), container))
+            if is_running:
+                svc.state = svc.ST_NEED_RESTART
+            messages.info(request, 'Added %s to service environment %s' % (",".join(added), svc))
         if len(removed):
-            messages.info(request, 'Removed projects %s from container %s' % (",".join(removed), container))
+            if is_running:
+                svc.state = svc.ST_NEED_RESTART
+            messages.info(request, 'Removed %s from service environmtn %s' % (",".join(removed), svc))
         if oops:
             messages.warning(request, 'Some problems (%d) occured during handling yout request.' % (oops))
+
+        svc.save()
         return redirect(next_page)
 
 
 @login_required
-def refreshlogs(request, container_id):
-    container = Container.objects.get(id = container_id)
-    container.refresh_state()
+def refreshlogs(request, environment_id):
+    user = request.user
+    try:
+        svc = Service.objects.get(user = user, id = environment_id)
+        svc.refresh_state()
+    except Service.DoesNotExist:
+        messages.error(request, 'Environment does not exist')
+    except Exception as e:
+        logger.error(f'Cannot refresh service environment information {svc} -- {e}')
+        messages.error(request, f'Cannot refresh service environment information {svc}')
     return redirect('service:list')
 
 urlpatterns = [
@@ -218,9 +270,11 @@ urlpatterns = [
     url(r'^open/(?P<environment_id>\d+)/(?P<next_page>\w+:?\w*)$', openservice, name = 'open'),
     url(r'^stop/(?P<environment_id>\d+)/(?P<next_page>\w+:?\w*)$', stopservice, name = 'stop'),
     url(r'^destroy/(?P<environment_id>\d+)/(?P<next_page>\w+:?\w*)$', destroyservice, name = 'destroy'),
-    url(r'^refreshlogs/(?P<container_id>\d+)$', refreshlogs, name = 'refreshlogs'),
+    url(r'^refreshlogs/(?P<environment_id>\d+)$', refreshlogs, name = 'refreshlogs'),
 
-    url(r'^addproject/(?P<container_id>\d+)$', addproject, name = 'addproject'),
+    url(r'^configure/(?P<environment_id>\d+)$', configureservice, name = 'addproject'),  #FIXME: rename
+
+    #FIXME: the below 2 used?
     url(r'^startproject/(?P<project_id>\d+)/(?P<next_page>\w+:?\w*)$', startprojectcontainer, name = 'startprojectcontainer'),
     url(r'^startcourse/(?P<course_id>\d+)/(?P<next_page>\w+:?\w*)$', startcoursecontainer, name = 'startcoursecontainer'),
 ]

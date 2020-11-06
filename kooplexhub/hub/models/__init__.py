@@ -4,10 +4,9 @@ from .image import Image
 from .proxy import Proxy
 from .envvar import EnvVarMapping
 from .service import Service, ProjectServiceBinding
-#from .envvar import EnvVarMapping
 
 from .versioncontrol import VCRepository, VCToken, VCProject, VCProjectProjectBinding
-from .filesync import FSServer, FSToken, FSLibrary, FSLibraryProjectBinding
+from .filesync import FSServer, FSToken, FSLibrary, FSLibraryServiceBinding
 
 from .project import Project,  UserProjectBinding#, GroupProjectBinding
 

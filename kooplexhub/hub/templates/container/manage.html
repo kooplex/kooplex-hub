@@ -2,36 +2,88 @@
 
 {% load render_table from django_tables2 %}
 
+{% comment %}
+FIXME: styling info in layout?
+{% endcomment %}
+
+{% block header_extra %}
+{% load staticfiles %}
+
+<!--script src="https://kit.fontawesome.com/27d0a7c7d0.js"></script-->
+<link rel="stylesheet" href="{% static 'fontawesome-free-5.10.2-web/css/all.css' %}">
+
+<link rel="stylesheet" href="{% static 'css/bootstrap4-toggle.min.css' %}">
+<script src="{% static 'scripts/bootstrap4-toggle.min.js' %}"></script>
+{% endblock %}
+
+
 {% block submenu %}
 <div class="navbar navbar-expand-lg navbar-light bg-light">
-  <h5><span class="badge badge-secondary">Add and remove projects to {{ container.name }}</span></h5>
+  <h5><span class="badge badge-secondary">Configure service environment {{ container.name }}</span></h5>
 </div>
 {% endblock %}
 
 {% block main_content_center %}
-<form id="container-manage" class="form-horizontal" action="{% url 'container:addproject' container.id %}" method="post">
-   <div class="form-control">
-          {% csrf_token %}
-	  <h5 class="card-title">Choose an <strong data-toggle="tooltip" data-placement="bottom" title="Images are the frameworks...">image </strong>for this project 
-		                <span class="badge badge-secondary">{{ project.image }}</span>
-	  
-            <select name="container_image_id">
-              {% for image in images %}
-                {% if image.present %}
-                  <option value="{{ image.id }}" {% if container.image == image %} selected {% endif %}>{{ image }}</option>
-                {% endif %}
-              {% endfor %}
-            </select>
-	  </h5>
-	        <h6 class="card-subtitle mb-2 text-muted"> This define the basic working environment</h6>
+<form id="container-manage" class="form-horizontal" action="{% url 'service:addproject' container.id %}" method="post">
+{% csrf_token %}
 
-      <hr>
-          <h5 class="card-title">Select those projects that should be available in this container environment.</h5>
-          {% render_table t_projects %}
-          <div class="modal-footer">
-            <button type="submit" class="btn btn-default" name="button" value="apply"> Apply settings</button>
-            <button class="btn btn-default" data-dismiss="modal">Cancel</button>
-          </div>
-   </div>
+<div class="card">
+  <div class="card-header">
+    <ul class="nav nav-tabs card-header-tabs" id="projectConfigTabs" role="tablist">
+      <li class="nav-item">
+        <a class="nav-link" id="tab-image" data-toggle="tab" href="#image" role="tab" aria-controls="home" aria-selected="false">Image</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link active" id="tab-projects" data-toggle="tab" href="#projects" role="tab" aria-controls="contact" aria-selected="true">Projects</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="tab-volumes" data-toggle="tab" href="#volumes" role="tab" aria-controls="contact" aria-selected="false">Volumes</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="tab-filesync" data-toggle="tab" href="#filesync" role="tab" aria-controls="contact" aria-selected="false">Synchronized files</a>
+      </li>
+      <li class="nav-item disabled">
+        <a class="nav-link" id="tab-vc" data-toggle="tab" href="#versioncontrol" role="tab" aria-controls="contact" aria-selected="false">Version control</a>
+      </li>
+    </ul>
+  </div>
+
+  <div class="card-body tab-content" id="projectConfigTabContent">
+    <div class="tab-pane fade" id="image" role="tabpanel" aria-labelledby="tab-image">
+      <input type="hidden" name="active_tab" value="image">
+      <h5 class="card-title">Image selection</h5>
+      <select name="container_image_id">
+        {% for image in images %}
+          {% if image.present %}
+            <option value="{{ image.id }}" {% if container.image == image %} selected {% endif %}>{{ image }}</option>
+          {% endif %}
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="tab-pane fade show active" id="projects" role="tabpanel" aria-labelledby="tab-projects">
+      <input type="hidden" name="active_tab" value="projects">
+      <h5 class="card-title">Select projects to associate with the service environment</h5>
+      {% render_table t_projects %}
+    </div>
+    
+    <div class="tab-pane fade" id="volumes" role="tabpanel" aria-labelledby="tab-volumes">...</div>
+
+    <div class="tab-pane fade" id="filesync" role="tabpanel" aria-labelledby="tab-filesync">
+      <input type="hidden" name="active_tab" value="filesync">
+      <h5 class="card-title">Select synchronized libraries to associate with the service environment</h5>
+      {% render_table t_synclibs %}
+    </div>
+
+    <div class="tab-pane fade" id="versioncontrol" role="tabpanel" aria-labelledby="tab-vc">...</div>
+
+
+    <div class="card-footer text-right">
+      <button type="submit" class="btn btn-default" name="button" value="apply">Apply settings</button>
+      <button class="btn btn-default" data-dismiss="modal">Cancel</button>
+    </div>
+  </div>
+</div>
+
 </form>
 {% endblock %}
