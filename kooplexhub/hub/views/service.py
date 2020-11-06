@@ -226,10 +226,10 @@ def configureservice(request, environment_id):
             try:
                 fslsb = FSLibraryServiceBinding.objects.get(id = id_remove, service = svc)
                 if fslsb.fslibrary.token.user != user:
-                    logger.error("Unauthorized request fsl: %s, user: %s" % (fsl, user))
+                    logger.error("Unauthorized request fsl: %s, user: %s" % (fslsb.fslibrary, user))
                     oops += 1
                     continue
-                removed.append(f'synchron library {fsl.library_name}')
+                removed.append(f'synchron library {fslsb.fslibrary.library_name}')
                 fslsb.delete()
             except FSLibraryServiceBinding.DoesNotExist:
                 logger.error("Is %s hacking" % user)
@@ -238,11 +238,11 @@ def configureservice(request, environment_id):
         if len(added):
             if is_running:
                 svc.state = svc.ST_NEED_RESTART
-            messages.info(request, 'Added %s to service environment %s' % (",".join(added), svc))
+            messages.info(request, 'Added %s to service environment %s' % (", ".join(added), svc))
         if len(removed):
             if is_running:
                 svc.state = svc.ST_NEED_RESTART
-            messages.info(request, 'Removed %s from service environmtn %s' % (",".join(removed), svc))
+            messages.info(request, 'Removed %s from service environmtn %s' % (", ".join(removed), svc))
         if oops:
             messages.warning(request, 'Some problems (%d) occured during handling yout request.' % (oops))
 
@@ -271,8 +271,7 @@ urlpatterns = [
     url(r'^stop/(?P<environment_id>\d+)/(?P<next_page>\w+:?\w*)$', stopservice, name = 'stop'),
     url(r'^destroy/(?P<environment_id>\d+)/(?P<next_page>\w+:?\w*)$', destroyservice, name = 'destroy'),
     url(r'^refreshlogs/(?P<environment_id>\d+)$', refreshlogs, name = 'refreshlogs'),
-
-    url(r'^configure/(?P<environment_id>\d+)$', configureservice, name = 'addproject'),  #FIXME: rename
+    url(r'^configure/(?P<environment_id>\d+)$', configureservice, name = 'configure'),
 
     #FIXME: the below 2 used?
     url(r'^startproject/(?P<project_id>\d+)/(?P<next_page>\w+:?\w*)$', startprojectcontainer, name = 'startprojectcontainer'),

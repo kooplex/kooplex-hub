@@ -24,31 +24,31 @@ FIXME: styling info in layout?
 {% endblock %}
 
 {% block main_content_center %}
-<form id="container-manage" class="form-horizontal" action="{% url 'service:addproject' container.id %}" method="post">
+<form id="container-manage" class="form-horizontal" action="{% url 'service:configure' container.id %}" method="post">
 {% csrf_token %}
 
 <div class="card">
   <div class="card-header">
-    <ul class="nav nav-tabs card-header-tabs" id="projectConfigTabs" role="tablist">
+    <ul class="nav nav-tabs card-header-tabs" id="serviceConfigTabs" role="tablist">
       <li class="nav-item">
-        <a class="nav-link" id="tab-image" data-toggle="tab" href="#image" role="tab" aria-controls="home" aria-selected="false">Image</a>
+        <a class="nav-link" id="tab-image" data-toggle="tab" href="#image" role="tab" aria-controls="image" aria-selected="false">Image</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link active" id="tab-projects" data-toggle="tab" href="#projects" role="tab" aria-controls="contact" aria-selected="true">Projects</a>
+        <a class="nav-link active" id="tab-projects" data-toggle="tab" href="#projects" role="tab" aria-controls="projects" aria-selected="true">Projects</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" id="tab-volumes" data-toggle="tab" href="#volumes" role="tab" aria-controls="contact" aria-selected="false">Volumes</a>
+        <a class="nav-link" id="tab-volumes" data-toggle="tab" href="#volumes" role="tab" aria-controls="volumes" aria-selected="false">Volumes</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" id="tab-filesync" data-toggle="tab" href="#filesync" role="tab" aria-controls="contact" aria-selected="false">Synchronized files</a>
+        <a class="nav-link" id="tab-filesync" data-toggle="tab" href="#filesync" role="tab" aria-controls="filesync" aria-selected="false">Synchronized files</a>
       </li>
       <li class="nav-item disabled">
-        <a class="nav-link" id="tab-vc" data-toggle="tab" href="#versioncontrol" role="tab" aria-controls="contact" aria-selected="false">Version control</a>
+        <a class="nav-link" id="tab-vc" data-toggle="tab" href="#versioncontrol" role="tab" aria-controls="versioncontrol" aria-selected="false">Version control</a>
       </li>
     </ul>
   </div>
 
-  <div class="card-body tab-content" id="projectConfigTabContent">
+  <div class="card-body tab-content" id="serviceConfigTabContent">
     <div class="tab-pane fade" id="image" role="tabpanel" aria-labelledby="tab-image">
       <input type="hidden" name="active_tab" value="image">
       <h5 class="card-title">Image selection</h5>

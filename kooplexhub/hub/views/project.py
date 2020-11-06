@@ -78,7 +78,6 @@ def join(request):
         table_joinable = T_JOINABLEPROJECT([ UserProjectBinding.objects.get(project = p, role = UserProjectBinding.RL_CREATOR) for p in project_joinable ])
         RequestConfig(request).configure(table_joinable)
         context_dict = {
-            'next_page': 'project:list',
             't_joinable': table_joinable,
         }
         return render(request, 'project/join.html', context = context_dict)
@@ -105,7 +104,6 @@ def listprojects(request):
     """Renders the projectlist page for courses taught."""
     logger.debug('Rendering project.html')
     context_dict = {
-        'next_page': 'project:list',
         'menu_project': 'active',
     }
     return render(request, 'project/list.html', context = context_dict)
@@ -152,7 +150,7 @@ def sel_table(user, project, volumetype):
 
 
 @login_required
-def conf_meta(request, project_id, next_page):
+def configure(request, project_id):
     user = request.user
     logger.debug("method: %s, project id: %s, user: %s" % (request.method, project_id, user))
     try:
@@ -160,205 +158,167 @@ def conf_meta(request, project_id, next_page):
     except Project.DoesNotExist as e:
         logger.error('abuse by %s project id: %s -- %s' % (user, project_id, e))
         messages.error(request, 'Project does not exist')
-        return redirect(next_page)
+        return redirect('project:list')
 
     if request.method == 'POST' and request.POST.get('button') == 'apply':
+
+        # meta
         project.scope = request.POST['project_scope']
         project.description = request.POST.get('description')
         project.save()
-        return redirect(next_page)
-    elif request.method == 'POST' and request.POST.get('button') == 'cancel':
-        context_dict = {
-             'next_page': 'project:list',
-             'menu_project': 'active',
-        }
-        return render(request, 'project/list.html', context = context_dict)
+        
+        assert project.is_admin(user), "You don't have the necessary rights"
+        # collaboration
+        collaborator_ids_before = set(request.POST.getlist('collaborator_ids_before'))
+        collaborator_ids_after = set(request.POST.getlist('collaborator_ids_after'))
+        admin_ids_before = set(request.POST.getlist('admin_ids_before'))
+        admin_ids_after = set(request.POST.getlist('admin_ids_after'))
+
+        # removal
+        removed = []
+        collaborator_ids_to_remove = collaborator_ids_before.difference(collaborator_ids_after)
+        for i in collaborator_ids_to_remove:
+            b = UserProjectBinding.objects.get(user__id = i, project = project)
+            removed.append(b.user.username)
+            b.delete()
+
+        # addition
+        added = []
+        collaborator_ids_to_add = collaborator_ids_after.difference(collaborator_ids_before)
+        for i in collaborator_ids_to_add:
+            collaborator = User.objects.get(id = i)
+            if i in admin_ids_after:
+                b = UserProjectBinding.objects.create(user = collaborator, project = project, role = UserProjectBinding.RL_ADMIN)
+            else:
+                b = UserProjectBinding.objects.create(user = collaborator, project = project, role = UserProjectBinding.RL_COLLABORATOR)
+            added.append(b.user.username)
+
+        # role change
+        changed = []
+        collaborator_ids_to_admin = admin_ids_after.difference(admin_ids_before).intersection(collaborator_ids_after).difference(collaborator_ids_to_add)
+        collaborator_ids_to_revokeadmin = admin_ids_before.difference(admin_ids_after).intersection(collaborator_ids_after).difference(collaborator_ids_to_add)
+        for i in collaborator_ids_to_admin:
+            b = UserProjectBinding.objects.filter(user__id = i, project = project).exclude(role = UserProjectBinding.RL_CREATOR)
+            assert len(b) == 1
+            b = b[0]
+            b.role = UserProjectBinding.RL_ADMIN
+            changed.append(b.user.username)
+            b.save()
+        for i in collaborator_ids_to_revokeadmin:
+            b = UserProjectBinding.objects.filter(user__id = i, project = project).exclude(role = UserProjectBinding.RL_CREATOR)
+            assert len(b) == 1
+            b = b[0]
+            b.role = UserProjectBinding.RL_COLLABORATOR
+            changed.append(b.user.username)
+            b.save()
+
+        if added:
+            messages.info(request, 'Added {} as colaborators'.format(', '.join(added)))
+        if removed:
+            messages.info(request, 'Removed {} from colaboration'.format(', '.join(removed)))
+        if changed:
+            messages.info(request, 'Changed collaboration roles of {}'.format(', '.join(changed)))
+
+        return redirect('project:list')
     else:
+        if project.is_admin(user):
+            table = table_collaboration(project)
+            table_collaborators = table(user.profile.everybodyelse) #FIXME: if pattern == '' else table(user.profile.everybodyelse_like(pattern))
+            RequestConfig(request).configure(table_collaborators)
+        else:
+            table_collaborators = None
         context_dict = {
             'project': project, 
-            'submenu': 'meta',
-            'next_page': next_page,
-        }
-        return render(request, 'project/conf-meta.html', context = context_dict)
-
-
-@login_required
-def conf_collab(request, project_id, next_page):
-    user = request.user
-    logger.debug("method: %s, project id: %s, user: %s" % (request.method, project_id, user))
-    try:
-        project = Project.get_userproject(project_id = project_id, user = request.user)
-        assert project.is_admin(user), "%s is not admin of %s" % (user, project)
-    except Exception as e:
-        logger.error('abuse by %s project id: %s -- %s' % (user, project_id, e))
-        messages.error(request, 'Unauthorized request.')
-        return redirect(next_page)
-
-    sort_info = request.GET.get('sort') if request.method == 'GET' else request.POST.get('sort')
-    if request.method == 'POST' and request.POST.get('button') == 'apply':
-        msg = project.set_roles(request.POST.getlist('role_map'))
-        if len(msg):
-            messages.info(request, '\n'.join(msg))
-        return redirect(next_page)
-    elif (request.method == 'POST' and request.POST.get('button') == 'search') or request.method == 'GET':
-        pattern = request.POST.get('name', '')
-        table = table_collaboration(project)
-        table_collaborators = table(user.profile.everybodyelse) if pattern == '' else table(user.profile.everybodyelse_like(pattern))
-        RequestConfig(request).configure(table_collaborators)
-        context_dict = {
-            'project': project, 
-            'can_configure': True,
             't_collaborators': table_collaborators,
-            'submenu': 'collaboration',
-            'next_page': next_page,
-            'search_name': pattern,
-            'sort': sort_info,
-        }
-        return render(request, 'project/conf-collaboration.html', context = context_dict)
-    elif request.method == 'POST' and request.POST.get('button') == 'cancel':
-        context_dict = {
-             'next_page': 'project:list',
-             'menu_project': 'active',
-        }
-        return render(request, 'project/list.html', context = context_dict)
-
-
-@login_required
-def conf_environment(request, project_id, next_page):
-    user = request.user
-    logger.debug("method: %s, project id: %s, user: %s" % (request.method, project_id, user))
-    try:
-        project = Project.get_userproject(project_id = project_id, user = request.user)
-        assert project.is_admin(user), "%s is not admin of %s" % (user, project)
-    except Exception as e:
-        logger.error('abuse by %s project id: %s -- %s' % (user, project_id, e))
-        messages.error(request, 'Unauthorized request.')
-        return redirect(next_page)
-
-    if request.method == 'POST' and request.POST.get('button') == 'apply':
-        volumes = [ Volume.objects.get(id = x) for x in request.POST.getlist('selection') ]
-        project.set_volumes(volumes)
-        for binding in ProjectContainerBinding.objects.filter(project = project):
-            logger.debug('Sent message about container removal')
-            #FIXME: the link or different mechanism
-            messages.warning(request, mark_safe("This project is bound to <strong>%s</strong>. In order to access the set volume(s), <a href='/hub/container/list'>delete the container</a> first! " % (binding.container.name)))
-        imagename = request.POST['project_image']
-        project.image = Image.objects.get(name = imagename) if imagename != 'None' else None
-        project.save()
-        return redirect(next_page)
-    elif request.method == 'POST' and request.POST.get('button') == 'cancel':
-        context_dict = {
-             'next_page': 'project:list',
-             'menu_project': 'active',
-        }
-        return render(request, 'project/list.html', context = context_dict)
-    else:
-        context_dict = {
-            'images': Image.objects.all(),
-            'project': project, 
-            't_volumes_fun': table_volume(project, user, volumetype='functional'),
-            't_volumes_stg': table_volume(project, user, volumetype='storage'),
-            'submenu': 'environment',
-            'next_page': next_page,
-        }
-        return render(request, 'project/conf-environment.html', context = context_dict)
-
-
-@login_required
-def conf_voldata(request, project_id, next_page):
-    user = request.user
-    logger.debug("method: %s, project id: %s, user: %s" % (request.method, project_id, user))
-    try:
-        project = Project.get_userproject(project_id = project_id, user = request.user)
-        assert project.is_admin(user), "%s is not admin of %s" % (user, project)
-    except Exception as e:
-        logger.error('abuse by %s project id: %s -- %s' % (user, project_id, e))
-        messages.error(request, 'Unauthorized request.')
-        return redirect(next_page)
-
-    if request.method == 'POST' and request.POST.get('button') == 'apply':
-        volumes = [ Volume.objects.get(id = x) for x in request.POST.getlist('selection') ]
-        project.set_volumes(volumes)
-        logger.debug('IIIIIIII')
-        for binding in ProjectContainerBinding.objects.filter(project = project):
-            logger.debug('Sent message about container removal')
-            messages.warning(request, "This project is bound to %s. In order to access the set volume(s), you have to delete the container!" % (binding.container))
-
-        return redirect(next_page)
-    elif request.method == 'POST' and request.POST.get('button') == 'cancel':
-        context_dict = {
-             'next_page': 'project:list',
-             'menu_project': 'active',
-        }
-        return render(request, 'project/list.html', context = context_dict)
-    else:
-        context_dict = {
-            'project': project, 
-            't_volumes_stg': sel_table(user = user, project = project, volumetype = 'storage'),    #FIXME: like above
-            'submenu': 'storage',
-            'next_page': next_page,
         }
         return render(request, 'project/configure.html', context = context_dict)
 
 
-@login_required
-def conf_versioncontrol(request, project_id, next_page):
-    user = request.user
-    logger.debug("method: %s, project id: %s, user: %s" % (request.method, project_id, user))
-    try:
-        project = Project.get_userproject(project_id = project_id, user = request.user)
-        assert project.is_admin(user), "%s is not admin of %s" % (user, project)
-    except Exception as e:
-        logger.error('abuse by %s project id: %s -- %s' % (user, project_id, e))
-        messages.error(request, 'Unauthorized request.')
-        return redirect(next_page)
+#    sort_info = request.GET.get('sort') if request.method == 'GET' else request.POST.get('sort')
+#    if request.method == 'POST' and request.POST.get('button') == 'apply':
+#        msg = project.set_roles(request.POST.getlist('role_map'))
+#        if len(msg):
+#            messages.info(request, '\n'.join(msg))
+#        return redirect(next_page)
+#    elif (request.method == 'POST' and request.POST.get('button') == 'search') or request.method == 'GET':
+#        pattern = request.POST.get('name', '')
+#        context_dict = {
+#            'project': project, 
+#            'can_configure': True,
+#            'submenu': 'collaboration',
+#            'next_page': next_page,
+#            'search_name': pattern,
+#            'sort': sort_info,
+#        }
+#        return render(request, 'project/conf-collaboration.html', context = context_dict)
+#    elif request.method == 'POST' and request.POST.get('button') == 'cancel':
+#        context_dict = {
+#             'next_page': 'project:list',
+#             'menu_project': 'active',
+#        }
+#        return render(request, 'project/list.html', context = context_dict)
 
-    sort_info = request.GET.get('sort') if request.method == 'GET' else request.POST.get('sort')
-    if request.method == 'POST' and request.POST.get('button') == 'apply':
-        msgs = []
-        for id_create in request.POST.getlist('vcp_ids'):
-            vcp = VCProject.objects.get(id = id_create)
-            if vcp.token.user != user:
-                logger.error("Unauthorized request vcp: %s, user: %s" % (vcp, user))
-                continue
-            VCProjectProjectBinding.objects.create(project = project, vcproject = vcp)
-            msgs.append('Bound %s to repository %s.' % (project, vcp))
-        for id_remove in set(request.POST.getlist('vcppb_ids_before')).difference(set(request.POST.getlist('vcppb_ids_after'))):
-            try:
-                vcppb = VCProjectProjectBinding.objects.get(id = id_remove, project = project)
-                if vcppb.vcproject.token.user != user:
-                    logger.error("Unauthorized request vcp: %s, user: %s" % (vcp, user))
-                    continue
-                msgs.append('Project %s is not bound to repository %s any more.' % (project, vcppb.vcproject))
-                vcppb.delete()
-            except VCProjectProjectBinding.DoesNotExist:
-                logger.error("Is %s hacking" % user)
-        if len(msgs):
-            messages.info(request, ' '.join(msgs))
-        return redirect(next_page)
-    elif (request.method == 'POST' and request.POST.get('button') == 'search') or request.method == 'GET':
-        t = table_vcproject(project)
-        pattern = request.POST.get('repository', '')
-        qs = VCProject.objects.filter(token__user = user, cloned = True) if pattern == '' else VCProject.objects.filter(token__user = user, cloned = True, project_name__icontains = pattern)
-        table_vcp = t(qs)
-        RequestConfig(request).configure(table_vcp)
-        context_dict = {
-            'project': project, 
-            't_vcp': table_vcp, 
-            'submenu': 'versioncontrol',
-            'next_page': next_page,
-            'search_repository': pattern,
-            'sort': sort_info,
-        }
-        return render(request, 'project/conf-versioncontrol.html', context = context_dict)
-    elif request.method == 'POST' and request.POST.get('button') == 'cancel':
-        context_dict = {
-             'next_page': 'project:list',
-             'menu_project': 'active',
-        }
-        return render(request, 'project/list.html', context = context_dict)
-    else:
-        return redirect(next_page)
+
+
+
+#@login_required
+#def conf_versioncontrol(request, project_id, next_page):
+#    user = request.user
+#    logger.debug("method: %s, project id: %s, user: %s" % (request.method, project_id, user))
+#    try:
+#        project = Project.get_userproject(project_id = project_id, user = request.user)
+#        assert project.is_admin(user), "%s is not admin of %s" % (user, project)
+#    except Exception as e:
+#        logger.error('abuse by %s project id: %s -- %s' % (user, project_id, e))
+#        messages.error(request, 'Unauthorized request.')
+#        return redirect(next_page)
+#
+#    sort_info = request.GET.get('sort') if request.method == 'GET' else request.POST.get('sort')
+#    if request.method == 'POST' and request.POST.get('button') == 'apply':
+#        msgs = []
+#        for id_create in request.POST.getlist('vcp_ids'):
+#            vcp = VCProject.objects.get(id = id_create)
+#            if vcp.token.user != user:
+#                logger.error("Unauthorized request vcp: %s, user: %s" % (vcp, user))
+#                continue
+#            VCProjectProjectBinding.objects.create(project = project, vcproject = vcp)
+#            msgs.append('Bound %s to repository %s.' % (project, vcp))
+#        for id_remove in set(request.POST.getlist('vcppb_ids_before')).difference(set(request.POST.getlist('vcppb_ids_after'))):
+#            try:
+#                vcppb = VCProjectProjectBinding.objects.get(id = id_remove, project = project)
+#                if vcppb.vcproject.token.user != user:
+#                    logger.error("Unauthorized request vcp: %s, user: %s" % (vcp, user))
+#                    continue
+#                msgs.append('Project %s is not bound to repository %s any more.' % (project, vcppb.vcproject))
+#                vcppb.delete()
+#            except VCProjectProjectBinding.DoesNotExist:
+#                logger.error("Is %s hacking" % user)
+#        if len(msgs):
+#            messages.info(request, ' '.join(msgs))
+#        return redirect(next_page)
+#    elif (request.method == 'POST' and request.POST.get('button') == 'search') or request.method == 'GET':
+#        t = table_vcproject(project)
+#        pattern = request.POST.get('repository', '')
+#        qs = VCProject.objects.filter(token__user = user, cloned = True) if pattern == '' else VCProject.objects.filter(token__user = user, cloned = True, project_name__icontains = pattern)
+#        table_vcp = t(qs)
+#        RequestConfig(request).configure(table_vcp)
+#        context_dict = {
+#            'project': project, 
+#            't_vcp': table_vcp, 
+#            'submenu': 'versioncontrol',
+#            'next_page': next_page,
+#            'search_repository': pattern,
+#            'sort': sort_info,
+#        }
+#        return render(request, 'project/conf-versioncontrol.html', context = context_dict)
+#    elif request.method == 'POST' and request.POST.get('button') == 'cancel':
+#        context_dict = {
+#             'next_page': 'project:list',
+#             'menu_project': 'active',
+#        }
+#        return render(request, 'project/list.html', context = context_dict)
+#    else:
+#        return redirect(next_page)
 
 
 
@@ -382,21 +342,16 @@ def delete_leave(request, project_id, next_page):
 
 
 @login_required
-def show_hide(request, next_page):
+def show_hide(request):
     """Manage your projects"""
     user = request.user
     logger.debug("user %s method %s" % (user, request.method))
     userprojectbindings = user.profile.projectbindings
-    #userprojectbindings_course = user.profile.courseprojects_taught_NEW() #FIXME: diak is hideolhat ?
     if request.method == 'GET':
         table_project = T_PROJECT(userprojectbindings)
-        #table_course = T_PROJECT(userprojectbindings_course)
         RequestConfig(request).configure(table_project)
-        #RequestConfig(request).configure(table_course)
         context_dict = {
             't_project': table_project,
-            #'t_course': table_course,
-            'next_page': next_page,
         }
         return render(request, 'project/manage.html', context = context_dict)
     else:
@@ -419,10 +374,10 @@ def show_hide(request, next_page):
             msgs.append('%d projects are unhidden.' % n_unhide)
         if len(msgs):
             messages.info(request, ' '.join(msgs))
-        return redirect(next_page)
+        return redirect('project:list')
 
 @login_required
-def hide(request, project_id, next_page):
+def hide(request, project_id):
     """Hide project from the list."""
     logger.debug("project id %s, user %s" % (project_id, request.user))
     try:
@@ -432,7 +387,7 @@ def hide(request, project_id, next_page):
         messages.error(request, 'You cannot hide the requested project.')
     except ProjectDoesNotExist:
         messages.error(request, 'You cannot hide the requested project.')
-    return redirect(next_page)
+    return redirect('project:list')
 
 
 
@@ -472,15 +427,19 @@ def stat(request):
 urlpatterns = [
     url(r'^list', listprojects, name = 'list'), 
     url(r'^new/?$', new, name = 'new'), 
+    url(r'^show/?$', show_hide, name = 'showhide'),
+    url(r'^hide/(?P<project_id>\d+)/?$', hide, name = 'hide'), 
+    url(r'^delete/(?P<project_id>\d+)/?$', delete_leave, name = 'delete'), 
+    url(r'^configure/(?P<project_id>\d+)/?$', configure, name = 'configure'), 
+
+
+    #FIXME:
     url(r'^join/?$', join, name = 'join'), 
-    url(r'^configure/(?P<project_id>\d+)/meta/(?P<next_page>\w+:?\w*)$', conf_meta, name = 'conf_meta'), 
-    url(r'^configure/(?P<project_id>\d+)/collaboration/(?P<next_page>\w+:?\w*)$', conf_collab, name = 'conf_collaboration'), 
-    url(r'^configure/(?P<project_id>\d+)/environment/(?P<next_page>\w+:?\w*)$', conf_environment, name = 'conf_environment'), 
-    url(r'^configure/(?P<project_id>\d+)/storage/(?P<next_page>\w+:?\w*)$', conf_voldata, name = 'conf_storage'), 
-    url(r'^configure/(?P<project_id>\d+)/versioncontrol/(?P<next_page>\w+:?\w*)$', conf_versioncontrol, name = 'conf_versioncontrol'), 
-    url(r'^delete/(?P<project_id>\d+)/(?P<next_page>\w+:?\w*)$', delete_leave, name = 'delete'), 
-    url(r'^show/(?P<next_page>\w+:?\w*)$', show_hide, name = 'showhide'),
-    url(r'^hide/(?P<project_id>\d+)/(?P<next_page>\w+:?\w*)$', hide, name = 'hide'), 
+#    url(r'^configure/(?P<project_id>\d+)/meta/(?P<next_page>\w+:?\w*)$', conf_meta, name = 'conf_meta'), 
+#    url(r'^configure/(?P<project_id>\d+)/collaboration/(?P<next_page>\w+:?\w*)$', conf_collab, name = 'conf_collaboration'), 
+#    url(r'^configure/(?P<project_id>\d+)/environment/(?P<next_page>\w+:?\w*)$', conf_environment, name = 'conf_environment'), 
+#    url(r'^configure/(?P<project_id>\d+)/storage/(?P<next_page>\w+:?\w*)$', conf_voldata, name = 'conf_storage'), 
+#    url(r'^configure/(?P<project_id>\d+)/versioncontrol/(?P<next_page>\w+:?\w*)$', conf_versioncontrol, name = 'conf_versioncontrol'), 
     url(r'^stat', stat, name = 'stat'), 
 ]
 

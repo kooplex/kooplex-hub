@@ -6,46 +6,41 @@ import django_tables2 as tables
 from hub.models import Profile
 from hub.models import UserProjectBinding
 
-def role_column(project):
-    class RoleColumn(tables.Column):
-        def render(self, record):
-            try:
-                role = UserProjectBinding.objects.get(user = record.user, project = project).role
-            except UserProjectBinding.DoesNotExist:
-                role = 'Skip'
-            s0 = 'selected' if role == 'Skip' else role
-            s1 = 'selected' if role == 'member' else role
-            s2 = 'selected' if role == 'administrator' else role
-            widget_str = """
-<select name="role_map">
-  <option value="skip-%d" %s>Skip/Remove</option>
-  <option value="collaborator-%d" %s>Collaborator</option>
-  <option value="admin-%d" %s>Administrator</option>
-</select>
-<input type='hidden' name='role_map_before' value='%s-%d'>
-""" % (record.user.id, s0, record.user.id, s1, record.user.id, s2, role, record.user.id)
-            return format_html(widget_str)
-    return RoleColumn
 
 from django.db import models
 
 def table_collaboration(project):
-    rc = role_column(project)
+    class SelectColumn(tables.Column):
+        def render(self, record):
+            user = record.user
+            if user in project.collaborators:
+                return format_html('<input type="hidden" name="collaborator_ids_before" value="{0}"><input type="checkbox" name="collaborator_ids_after" value="{0}" checked data-toggle="toggle" data-on="Keep added" data-off="Remove" data-onstyle="success" data-offstyle="dark" data-size="xs" checked>'.format(user.id))
+            else:
+                return format_html('<input type="checkbox" name="collaborator_ids_after" data-toggle="toggle" value="{}" data-on="Add" data-off="Skip" data-onstyle="success" data-offstyle="dark" data-size="xs">'.format(record.id))
+    sc = SelectColumn
+
+    class RoleColumn(tables.Column):
+        def render(self, record):
+            user = record.user
+            if user in project.admins:
+                return format_html('<input type="hidden" name="admin_ids_before" value="{0}"><input type="checkbox" name="admin_ids_after" value="{0}" checked data-toggle="toggle" data-on="Admin" data-off="Collaborator" data-onstyle="danger" data-offstyle="success" data-size="xs" checked>'.format(user.id))
+            else:
+                return format_html('<input type="checkbox" name="admin_ids_after" data-toggle="toggle" value="{}" data-on="Admin" data-off="Collaborator" data-onstyle="danger" data-offstyle="success" data-size="xs">'.format(record.id))
+    rc = RoleColumn
+
     class T_COLLABORATORS(tables.Table):
-        id = rc(verbose_name = 'Role', orderable = False)
-        name = tables.Column(order_by = ('user__first_name', 'user__last_name')) #FIXME: concatenate
-        username = tables.Column(order_by = ('user__username'))
+        id = SelectColumn(verbose_name = 'Associate', orderable = False)
+        role = RoleColumn(verbose_name = 'Role', empty_values = (), orderable = False)
+        name = tables.Column(order_by = ('user__first_name', 'user__last_name'))
+
+        def render_name(self, record):
+            user = record.user
+            return format_html(f'<span data-toggle="tooltip" title="Username {user.username}." data-placement="top" style="font-weight: bold;">{user.first_name}</span> {user.last_name}')
     
         class Meta:
             model = Profile
-            fields = ('id', 'name', 'username', 'bio', 'location')
-            sequence = ('id', 'name', 'username', 'location', 'bio')
+            fields = ('id', 'role' 'name', 'location')
+            sequence = ('id', 'role', 'name', 'location')
             attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
-
-#        def order_name(self, QuerySet, is_descending):
-#            QuerySet = QuerySet.annotate(
-#                #FIXME: concat names
-#            )#.order_by(('-' if is_descending else '') + 'name')
-#            return (QuerySet, True)
 
     return T_COLLABORATORS

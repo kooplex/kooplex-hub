@@ -6,13 +6,13 @@
                           </button>
 		          {% include 'project/stopremove.html' %}
                          {% if project|is_admin:user %}
-                              <a href="{% url 'project:conf_meta' project.id next_page %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Settings of project {{ project.name }}. You can change the image, modify volume attachments." data-placement="top" style="padding: 3px 6px 6px 6px; margin-right: 3px; float: right;">
+                              <a href="{% url 'project:configure' project.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Settings of project {{ project.name }}. You can change the image, modify volume attachments." data-placement="top" style="padding: 3px 6px 6px 6px; margin-right: 3px; float: right;">
                               <span class="oi oi-wrench" aria-hidden="true"></span></a>
                          {% else %}
                               <button type="button" class="btn btn-secondary" disabled>
                               <span class="oi oi-wrench" aria-hidden="true"></span></button>
                          {% endif %}
-                         <a href="{% url 'project:hide' project.id next_page %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="You can hide {{ project.name }} from your list." data-placement="top" style="padding: 3px 6px 6px 6px; margin-right: 3px; float: right;">
+                         <a href="{% url 'project:hide' project.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="You can hide {{ project.name }} from your list." data-placement="top" style="padding: 3px 6px 6px 6px; margin-right: 3px; float: right;">
                          <span class="oi oi-eye" aria-hidden="true"></span></a>
     </div> <!-- card header -->
 
@@ -32,10 +32,10 @@
                 <div class="col-2">
                  <div style="float: right;">
                     {% if project|is_admin:user %}
-                      <a href="{% url 'project:delete' project.id  next_page %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Delete project {{ project.name }}." data-placement="top">
+                      <a href="{% url 'project:delete' project.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Delete project {{ project.name }}." data-placement="top">
                       <span class="oi oi-trash" aria-hidden="true"></span></a>
                     {% else %}
-                      <a href="{% url 'project:delete' project.id  next_page %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Leave project {{ project.name }}." data-placement="top">
+                      <a href="{% url 'project:delete' project.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Leave project {{ project.name }}." data-placement="top">
                       <span class="oi oi-transfer" aria-hidden="true"></span></a>
                     {% endif %}
                  </div>  <!-- float //-->

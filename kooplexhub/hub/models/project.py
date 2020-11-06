@@ -69,43 +69,11 @@ class Project(models.Model):
         except UserProjectBinding.DoesNotExist:
             return self.cleanname
 
-    _volumes = None
-    @property
-    def volumes(self):
-        from .volume import VolumeProjectBinding, Volume
-        if self._volumes is None:
-            self._volumes = [ binding.volume for binding in VolumeProjectBinding.objects.filter(project = self) ]
-        for volume in self._volumes:
-            yield volume
-
-    @property
-    def functional_volumes(self):
-        from .volume import Volume
-        for volume in self.volumes:
-            if volume.volumetype == Volume.FUNCTIONAL:
-                yield volume
-
-    @property
-    def storage_volumes(self):
-        from .volume import Volume
-        for volume in self.volumes:
-            if volume.volumetype == Volume.STORAGE:
-                yield volume
-
     @property
     def containers(self): #FIXME: rename
-        #from .container import ProjectContainerBinding
-        #for binding in ProjectContainerBinding.objects.filter(project = self):
-        #    yield binding.container
         from .service import ProjectServiceBinding
         return [ binding.service for binding in ProjectServiceBinding.objects.filter(project = self) ]
 
-##    @register.filter
-##    def get_userprojectcontainer(self, user):
-##        from .container import ProjectContainerBinding
-##        for binding in ProjectContainerBinding.objects.filter(project = self):
-##            if binding.container.user == user:
-##                return binding.container #FIXME: the first container is returned
 
     @register.filter
     def is_hiddenbyuser(self, user):
@@ -129,25 +97,24 @@ class Project(models.Model):
         except UserProjectBinding.DoesNotExist:
             return False
 
+    @property
+    def admins(self):
+        return [ b.user for b in UserProjectBinding.objects.filter(project = self, role__in = [ UserProjectBinding.RL_CREATOR, UserProjectBinding.RL_ADMIN ]) ]
+
     def is_collaborator(self, user):
         try:
             return UserProjectBinding.objects.get(project = self, user = user).role == UserProjectBinding.RL_COLLABORATOR
         except UserProjectBinding.DoesNotExist:
             return False
 
+    @property
+    def collaborators(self):
+        return [ b.user for b in UserProjectBinding.objects.filter(project = self) ]
+
+
     @staticmethod
     def get_userproject(project_id, user):
         return UserProjectBinding.objects.get(user = user, project_id = project_id).project
-
-#FIXME: deprecated
-#    def report_mapping4user(self, user):
-#        from .course import Course
-#        try:
-#            for mapping in self.course.report_mapping4user(user):
-#                yield mapping
-#        except Course.DoesNotExist:
-#            pass
-#        logger.warn("NotImplementedError")
 
     def set_roles(self, roles):
         msg = []
@@ -190,20 +157,6 @@ class Project(models.Model):
                 if len(users):
                     msg.append("User(s) set as administrator(s) of the collaboration: %s" % ','.join(users))
         return msg
-
-    def set_volumes(self, volumes):
-        from .volume import VolumeProjectBinding, Volume
-        volumes = set(volumes)
-        old_volumes = set(self.functional_volumes).union(self.storage_volumes)
-        if old_volumes != volumes:
-            vol_remove = old_volumes.difference( volumes )
-            vol_add = volumes.difference( old_volumes )
-            logger.debug("- %s" % vol_remove)
-            for volume in vol_remove:
-                VolumeProjectBinding.objects.get(volume = volume, project = self).delete()
-            logger.debug("+ %s" % vol_add)
-            for volume in vol_add:
-                VolumeProjectBinding.objects.create(volume = volume, project = self)
 
 
 

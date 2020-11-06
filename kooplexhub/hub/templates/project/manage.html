@@ -14,7 +14,7 @@
 <script src="{% static 'scripts/bootstrap4-toggle.min.js' %}"></script>
 
 <div class="row">
-  <form id="project-manage" class="form-horizontal" action="{% url 'project:showhide' next_page %}" method="post">
+  <form id="project-manage" class="form-horizontal" action="{% url 'project:showhide' %}" method="post">
     {% csrf_token %}
     <h5>Use the switch to hide or show some of your projects</h5>
     {% if t_project.data|length > 0 %}

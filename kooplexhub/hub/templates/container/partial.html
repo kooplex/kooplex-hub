@@ -29,7 +29,7 @@
               <span class="oi oi-reload" aria-hidden="true" data-toggle="tooltip" title="Refresh container information" data-placement="bottom"></span></a>
             <a href="{% url 'service:destroy' container.id next_page %}" role="button" class="btn btn-danger" style="padding: 3px 6px 6px 6px; margin-right: 3px">
               <span class="oi oi-fire" aria-hidden="true" data-toggle="tooltip" title="Remove {{ container.name }}"></span></a>
-            <a href="{% url 'service:addproject' container.id %}" role="button" class="btn btn-secondary" style="padding: 3px 6px 6px 6px; margin-right: 3px">
+            <a href="{% url 'service:configure' container.id %}" role="button" class="btn btn-secondary" style="padding: 3px 6px 6px 6px; margin-right: 3px">
               <span class="oi oi-wrench" aria-hidden="true" data-toggle="tooltip" title="Add/remove project to the container" data-placement="bottom"></span></a>
           </div>
         </div>
