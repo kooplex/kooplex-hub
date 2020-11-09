@@ -25,23 +25,16 @@ class HydraOpenID(OpenIdConnectAuth):
         return uri
 
     def get_user_details(self, response):
-        try:
-           return {#FIXME: a hydra most furan tolja az attributumokat!
+        first_name = response['givenName'][0] if 'givenName' in response else ' '.join(response['displayName'].split()[:-1])
+        last_name = response['sn'][0] if 'sn' in response else response['displayName'].split()[-1]
+        email = response['mail'][0] if isinstance(response['mail'], list) else response['mail']
+        return {
                'username': response['idp_user'],
-               'email': response['mail'][0],
+               'email': email,
                'fullname': response['displayName'][0],
-               'first_name': response['givenName'][0],
-               'last_name': response['sn'][0],
+               'first_name': first_name,
+               'last_name': last_name,
            }
-        except: 
-            1==1
-        return {#FIXME: a hydra most furan tolja az attributumokat!
-            'username': response['idp_user'],
-            'email': response['mail'],#[0],
-            'fullname': response['displayName'],#[0],
-            'first_name': response['displayName'],#[0],
-            'last_name': response['displayName'],#[0],
-        }
 
     def authenticate(self, request, **credentials):
         user = super(HydraOpenID, self).authenticate(request, **credentials)

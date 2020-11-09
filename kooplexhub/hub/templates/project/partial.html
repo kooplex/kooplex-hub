@@ -1,48 +1,74 @@
 <div class="card bg-light mb-3">
-    <div class="card-header" id="heading-{{ course.id }}">
-                         {% include 'project/startopen.html' %}
-                          <button class="btn btn-outline-dark fas btn-link collapsed" data-toggle="collapse" data-target="#collapse-{{ project.id }}" aria-expanded="true" aria-controls="collapse-{{ project.id }}" style="min-width: 15em; text-align: left;">
-                               <strong>{{ project.name }}</strong>
-                          </button>
-		          {% include 'project/stopremove.html' %}
-                         {% if project|is_admin:user %}
-                              <a href="{% url 'project:configure' project.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Settings of project {{ project.name }}. You can change the image, modify volume attachments." data-placement="top" style="padding: 3px 6px 6px 6px; margin-right: 3px; float: right;">
-                              <span class="oi oi-wrench" aria-hidden="true"></span></a>
-                         {% else %}
-                              <button type="button" class="btn btn-secondary" disabled>
-                              <span class="oi oi-wrench" aria-hidden="true"></span></button>
-                         {% endif %}
-                         <a href="{% url 'project:hide' project.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="You can hide {{ project.name }} from your list." data-placement="top" style="padding: 3px 6px 6px 6px; margin-right: 3px; float: right;">
-                         <span class="oi oi-eye" aria-hidden="true"></span></a>
-    </div> <!-- card header -->
+  <div class="card-header" id="heading-{{ project.id }}">
+    {% include 'project/startopen.html' %}
+    <button class="btn btn-outline-dark fas btn-link collapsed" data-toggle="collapse" data-target="#collapse-{{ project.id }}" aria-expanded="true" aria-controls="collapse-{{ project.id }}" style="min-width: 15em; text-align: left;">
+      <strong>{{ project.name }}</strong>
+    </button>
+    <div style="float:right">
+      {% include 'project/stopremove.html' %}
+    </div>
+  </div>
 
-
-
-    <div id="collapse-{{ project.id }}" class="collapse" aria-labelledby="heading-{{ project.id }}" data-parent="#projectList">
+  <div id="collapse-{{ project.id }}" class="collapse" aria-labelledby="heading-{{ project.id }}" data-parent="#projectList">
+    <div class="card" style="margin: 10px">
+      <div class="card-header">Control: 
+        <div style="float: right;">
+          {% if project|is_admin:user %}
+            <a href="{% url 'project:configure' project.id %}" role="button" class="btn btn-secondary" style="padding: 3px 6px 6px 6px; margin-right: 3px;">
+              <span class="oi oi-wrench" aria-hidden="true" data-toggle="tooltip" title="Settings of project {{ project.name }}. You can change the image, modify volume attachments." data-placement="top" ></span></a>
+          {% else %}
+            <button type="button" class="btn btn-secondary" style="padding: 3px 6px 6px 6px; margin-right: 3px;" disabled>
+              <span class="oi oi-wrench" aria-hidden="true"></span></button>
+          {% endif %}
+          <a href="{% url 'project:hide' project.id %}" role="button" class="btn btn-secondary" style="padding: 3px 6px 6px 6px; margin-right: 3px;">
+            <span class="oi oi-eye" aria-hidden="true" data-toggle="tooltip" title="You can hide {{ project.name }} from your list." data-placement="top"></span></a>
+          <a href="{% url 'project:delete' project.id %}" role="button" class="btn btn-secondary" style="padding: 3px 6px 6px 6px; margin-right: 3px;">
+            <span class="oi oi-trash" aria-hidden="true" data-toggle="tooltip" title="Delete project {{ project.name }}." data-placement="top"></span></a>
+        </div>
+      </div>
       <div class="card-body">
-             <div class="row">
-                <div class="col-10">
-                   <strong>Description: </strong>{{ project.description }}<br>
+        <div class="card-deck">
+          <div class="card">
+            <h5 class="card-title">Description</h5>
+            {{ project.description }}
+          </div>
+          <div class="card">
+            {% if project.userprojectbindings|length == 0 %}
+              <h5 class="card-title">No collaborators</h5>
+            {% else %}
+              <h5 class="card-title">Project collaborators</h5>
+              {% for b in project.userprojectbindings %}
+	      <p><span data-toggle="tooltip" title="Username {{ b.user.username }}" data-placement="bottom">{{ b.user.first_name }} {{ b.user.last_name }}</span> {{ b.role }}</p>
+              {% endfor %}
+            {% endif %}
+          </div>
+          <div class="card">
+            {% if services|length == 0 %}
+              <h5 class="card-title">Environments associated</h5>
+            {% else %}
+              <h5 class="card-title">Environments</h5>
+              {% for svc in services %}
+	      <p>{{ svc.name }} ({{ svc.state }})</p>
+              {% endfor %}
+            {% endif %}
+          </div>
+          <div class="card">
+            {% if project.reports|length == 0 %}
+              <h5 class="card-title">No project reports</h5>
+            {% else %}
+              <h5 class="card-title">Reports</h5>
 		   <form method="POST" action="{% url 'report:list'  %}">
 	              {% csrf_token %}
 			   <input type="hidden" name="name" value="Data">
 			   <input type="submit" name="barmi" value="Show reports for this project">
 		   </form>
-                </div>
-                <div class="col-2">
-                 <div style="float: right;">
-                    {% if project|is_admin:user %}
-                      <a href="{% url 'project:delete' project.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Delete project {{ project.name }}." data-placement="top">
-                      <span class="oi oi-trash" aria-hidden="true"></span></a>
-                    {% else %}
-                      <a href="{% url 'project:delete' project.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Leave project {{ project.name }}." data-placement="top">
-                      <span class="oi oi-transfer" aria-hidden="true"></span></a>
-                    {% endif %}
-                 </div>  <!-- float //-->
-                </div>  <!-- col //-->
-              </div>  <!-- row //-->
-
-      </div>   <!-- card-body -->
-    </div> <!-- collapse -->
-    
+              {% for r in project.reports %}
+              {% endfor %}
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
+

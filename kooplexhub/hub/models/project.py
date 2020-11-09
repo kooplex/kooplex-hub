@@ -69,10 +69,10 @@ class Project(models.Model):
         except UserProjectBinding.DoesNotExist:
             return self.cleanname
 
-    @property
-    def containers(self): #FIXME: rename
+    @register.filter
+    def get_userz_services(self, user):
         from .service import ProjectServiceBinding
-        return [ binding.service for binding in ProjectServiceBinding.objects.filter(project = self) ]
+        return [ binding.service for binding in ProjectServiceBinding.objects.filter(project = self, service__user = user) ]
 
 
     @register.filter
@@ -110,6 +110,12 @@ class Project(models.Model):
     @property
     def collaborators(self):
         return [ b.user for b in UserProjectBinding.objects.filter(project = self) ]
+
+    @property
+    def userprojectbindings(self):
+        return list(UserProjectBinding.objects.filter(project = self))
+
+
 
 
     @staticmethod
@@ -229,6 +235,10 @@ def garbagedir_project(sender, instance, **kwargs):
 
 @receiver(pre_delete, sender = UserProjectBinding)
 def assert_not_shared(sender, instance, **kwargs):
+    from .service import Service, ProjectServiceBinding
     bindings = UserProjectBinding.objects.filter(project = instance.project)
     if instance.role == UserProjectBinding.RL_CREATOR:
         assert len(bindings) == 1, f'Cannot delete creator binding because {len(bindings)} project bindings exists'
+    for psb in ProjectServiceBinding.objects.filter(project = instance.project, service__user = instance.user, service__state = Service.ST_RUNNING):
+        psb.service.state = Service.ST_NEED_RESTART
+        psb.service.save()

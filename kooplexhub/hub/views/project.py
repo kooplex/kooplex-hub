@@ -13,7 +13,7 @@ from django.db.models import Q
 
 
 from hub.forms import FormProject
-from hub.forms import table_collaboration, T_JOINABLEPROJECT
+from hub.forms import table_collaboration, T_SERVICE, T_JOINABLEPROJECT
 from hub.forms import table_volume
 from hub.forms import table_vcproject
 from hub.models import Project, UserProjectBinding
@@ -109,6 +109,7 @@ def listprojects(request):
     return render(request, 'project/list.html', context = context_dict)
 
 
+#FIXME: place in forms
 class ProjectSelectionColumn(tables.Column):
     def render(self, record):
         if record.is_hidden:
@@ -147,7 +148,7 @@ def sel_table(user, project, volumetype):
             exclude = ('name', 'volumetype')
             attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
     return T_VOLUME(user_volumes)
-
+########################
 
 @login_required
 def configure(request, project_id):
@@ -184,6 +185,7 @@ def configure(request, project_id):
 
         # addition
         added = []
+        service_ids = request.POST.getlist('service_ids')
         collaborator_ids_to_add = collaborator_ids_after.difference(collaborator_ids_before)
         for i in collaborator_ids_to_add:
             collaborator = User.objects.get(id = i)
@@ -192,6 +194,12 @@ def configure(request, project_id):
             else:
                 b = UserProjectBinding.objects.create(user = collaborator, project = project, role = UserProjectBinding.RL_COLLABORATOR)
             added.append(b.user.username)
+            # copy service information
+            for sid in service_ids:
+                svc = ProjectServiceBinding.objects.get(id = sid, service__user = user).service
+                svc_copy = Service.objects.create(user = collaborator, image = svc.image, name = f'{b.user.username}-{project.name}-{user.username}')
+                ProjectServiceBinding.objects.create(service = svc_copy, project = project)
+                #TODO: handle volumes
 
         # role change
         changed = []
@@ -219,17 +227,22 @@ def configure(request, project_id):
         if changed:
             messages.info(request, 'Changed collaboration roles of {}'.format(', '.join(changed)))
 
+
         return redirect('project:list')
     else:
         if project.is_admin(user):
             table = table_collaboration(project)
             table_collaborators = table(user.profile.everybodyelse) #FIXME: if pattern == '' else table(user.profile.everybodyelse_like(pattern))
             RequestConfig(request).configure(table_collaborators)
+
+            table_services = T_SERVICE(ProjectServiceBinding.objects.filter(service__user = user, project = project))
+            RequestConfig(request).configure(table_services)
         else:
             table_collaborators = None
         context_dict = {
             'project': project, 
             't_collaborators': table_collaborators,
+            't_services': table_services,
         }
         return render(request, 'project/configure.html', context = context_dict)
 
@@ -323,22 +336,31 @@ def configure(request, project_id):
 
 
 @login_required
-def delete_leave(request, project_id, next_page):
+def delete_leave(request, project_id):
     """Delete or leave a project."""
     user = request.user
     logger.debug("method: %s, project id: %s, user: %s" % (request.method, project_id, user))
     try:
         project = Project.get_userproject(project_id = project_id, user = request.user)
+        upb = UserProjectBinding.objects.get(user = user, project = project)
     except Project.DoesNotExist:
         messages.error(request, 'Project does not exist')
-        return redirect(next_page)
-    if project.is_admin(request.user):
+        return redirect('project:list')
+    if upb.role == upb.RL_CREATOR:
+        collab = []
+        for upb_i in UserProjectBinding.objects.filter(project = project):
+            if upb != upb_i:
+                collab.append(upb_i.user)
+                upb_i.delete()
+        upb.delete()
         project.delete()
+        if len(collab):
+            messages.info(request, 'Users removed from collaboration: {}'.format(', '.join([  f'{u.first_name} {u.last_name} ({u.username})' for u in collab ])))
         messages.info(request, 'Project %s is deleted' % (project))
-    elif project.is_collaborator(request.user):
-        UserProjectBinding.objects.get(project = project, user = request.user).delete()
+    else:
+        upb.delete()
         messages.info(request, 'You left project %s' % (project))
-    return redirect(next_page)
+    return redirect('project:list')
 
 
 @login_required

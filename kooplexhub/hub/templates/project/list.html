@@ -42,8 +42,10 @@
 {% block main_content_center %}
   {% for binding in user.profile.projectbindings %}
     {% if not binding.is_hidden %}
-      {% with project=binding.project %}
-         {% include 'project/partial.html' %}
+      {% with project=binding.project next_page='project:list' %}
+        {% with services=project|get_userz_services:user %}
+          {% include 'project/partial.html' %}
+        {% endwith %}
       {% endwith %}
     {% endif %}
   {% endfor %}

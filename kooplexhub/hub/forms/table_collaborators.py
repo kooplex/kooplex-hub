@@ -14,7 +14,7 @@ def table_collaboration(project):
         def render(self, record):
             user = record.user
             if user in project.collaborators:
-                return format_html('<input type="hidden" name="collaborator_ids_before" value="{0}"><input type="checkbox" name="collaborator_ids_after" value="{0}" checked data-toggle="toggle" data-on="Keep added" data-off="Remove" data-onstyle="success" data-offstyle="dark" data-size="xs" checked>'.format(user.id))
+                return format_html('<input type="hidden" name="collaborator_ids_before" value="{0}"><input type="checkbox" name="collaborator_ids_after" value="{0}" data-toggle="toggle" data-on="Keep added" data-off="Remove" data-onstyle="success" data-offstyle="dark" data-size="xs" checked>'.format(user.id))
             else:
                 return format_html('<input type="checkbox" name="collaborator_ids_after" data-toggle="toggle" value="{}" data-on="Add" data-off="Skip" data-onstyle="success" data-offstyle="dark" data-size="xs">'.format(record.id))
     sc = SelectColumn
@@ -23,7 +23,7 @@ def table_collaboration(project):
         def render(self, record):
             user = record.user
             if user in project.admins:
-                return format_html('<input type="hidden" name="admin_ids_before" value="{0}"><input type="checkbox" name="admin_ids_after" value="{0}" checked data-toggle="toggle" data-on="Admin" data-off="Collaborator" data-onstyle="danger" data-offstyle="success" data-size="xs" checked>'.format(user.id))
+                return format_html('<input type="hidden" name="admin_ids_before" value="{0}"><input type="checkbox" name="admin_ids_after" value="{0}" data-toggle="toggle" data-on="Admin" data-off="Collaborator" data-onstyle="danger" data-offstyle="success" data-size="xs" checked>'.format(user.id))
             else:
                 return format_html('<input type="checkbox" name="admin_ids_after" data-toggle="toggle" value="{}" data-on="Admin" data-off="Collaborator" data-onstyle="danger" data-offstyle="success" data-size="xs">'.format(record.id))
     rc = RoleColumn

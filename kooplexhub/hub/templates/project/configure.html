@@ -60,8 +60,9 @@ FIXME: add shortcuts here? join
       <h5 class="card-title">Select collaborators of this project</h5>
       {% if t_collaborators %}
         {% render_table t_collaborators %}
+	<hr>
         <h5 class="card-title">Select environments to create for your collaborators</h5>
-        TBA
+	{% render_table t_services %}
       {% else %}
         You cannot manage collaboration of this project.
       {% endif %}
