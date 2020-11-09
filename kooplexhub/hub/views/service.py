@@ -43,6 +43,12 @@ def listservices(request):
     """Renders the containerlist page."""
     logger.debug('Rendering container/list.html')
     #TODO: make volume/image etc changes visible, so the user will know which one needs to be deleted. 
+    unbound = Service.objects.filter(user = request.user).exclude(projectservicebinding__gt = 0)
+    if unbound:
+        messages.warning(request, 'Note, you have environments unbound to a project, namely: {}'.format(', '.join([ s.name for s in unbound ])))
+    restart = Service.objects.filter(user = request.user, state = Service.ST_NEED_RESTART)
+    if restart:
+        messages.warning(request, 'Your services {} are in inconsistent state. Save your changes and restart them as soon as you can.'.format(', '.join([ s.name for s in restart ])))
     context_dict = {
         'next_page': 'service:list',
         'menu_container': 'active',

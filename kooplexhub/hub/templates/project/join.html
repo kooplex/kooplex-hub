@@ -1,9 +1,9 @@
 {% extends "layout.html" %}
 
 {% block submenu %}
-<div class="navbar navbar-expand-lg navbar-light bg-light">
-  <h5><span class="badge badge-secondary">Join projects</span></h5>
-</div>
+  {% with title="Join a collaboration" submenu="join" %}
+    {% include 'project/project_submenu.html' %}
+  {% endwith %}
 {% endblock %}
 
 {% block main_content_center %}
