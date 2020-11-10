@@ -29,7 +29,7 @@ class EnvVarMappingAdmin(admin.ModelAdmin):
 
 @admin.register(Service)
 class ServiceAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'state', 'image')
+    list_display = ('id', 'name', 'user', 'state', 'image')
 
 @admin.register(ProjectServiceBinding)
 class ProjectServiceBindingAdmin(admin.ModelAdmin):
@@ -157,9 +157,9 @@ class VCProjectAdmin(admin.ModelAdmin):
     def repo(self, instance):
         return instance.token.repository.url
 
-@admin.register(VCProjectProjectBinding)
-class VCProjectProjectBindingAdmin(admin.ModelAdmin):
-    list_display = ('id', 'project', 'vcproject')
+#@admin.register(VCProjectProjectBinding)
+#class VCProjectProjectBindingAdmin(admin.ModelAdmin):
+#    list_display = ('id', 'project', 'vcproject')
 
 
 @admin.register(FSServer)

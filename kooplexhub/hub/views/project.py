@@ -21,7 +21,7 @@ from hub.models import Service, ProjectServiceBinding
 from hub.models import Volume
 from hub.models import Image
 from hub.models import Profile
-from hub.models import VCProject, VCProjectProjectBinding
+from hub.models import VCProject
 from hub.models import FSLibrary
 
 from django.utils.safestring import mark_safe
@@ -57,7 +57,7 @@ def new(request):
                         messages.info(request, f'Project {project} is added to svc {svc.name}')
             else:
                 image = Image.objects.all().first() #TODO: make it possible to select a default
-                svc = Service.objects.create(name = f'{request.user}-{projectname}', user = request.user, image = image)
+                svc = Service.objects.create(name = projectname, user = request.user, image = image)
                 ProjectServiceBinding.objects.create(project = project, service = svc)
                 messages.info(request, f'New service {svc.name} is created with image {svc.image.name}')
         return redirect('project:list')

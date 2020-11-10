@@ -28,7 +28,7 @@ class FSServer(models.Model):
         return re.split(r'https?://([^/]+)', self.url)[1]
 
     @register.filter
-    def get_usertoken(self, user):
+    def get_userz_fstoken(self, user):
         try:
             return FSToken.objects.get(syncserver = self, user = user)
         except FSToken.DoesNotExist:

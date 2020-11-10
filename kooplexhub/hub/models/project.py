@@ -240,7 +240,8 @@ def assert_not_shared(sender, instance, **kwargs):
     bindings = UserProjectBinding.objects.filter(project = instance.project)
     if instance.role == UserProjectBinding.RL_CREATOR:
         assert len(bindings) == 1, f'Cannot delete creator binding because {len(bindings)} project bindings exists'
-    for psb in ProjectServiceBinding.objects.filter(project = instance.project, service__user = instance.user, service__state = Service.ST_RUNNING):
-        psb.service.state = Service.ST_NEED_RESTART
-        psb.service.save()
+    for psb in ProjectServiceBinding.objects.filter(project = instance.project, service__user = instance.user):
+        if psb.service.state == Service.ST_RUNNING:
+            psb.service.state = Service.ST_NEED_RESTART
+            psb.service.save()
         psb.delete()

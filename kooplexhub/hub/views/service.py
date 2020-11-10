@@ -27,14 +27,14 @@ def new(request):
     user_id = request.POST.get('user_id')
     try:
         assert user_id is not None and int(user_id) == user.id, "user id mismatch: %s tries to save %s %s" % (request.user, request.user.id, request.POST.get('user_id'))
-        servicename = "%s-%s" % (user.username, standardize_str(request.POST.get('name')))
+        servicename = standardize_str(request.POST.get('name'))
         image = Image.objects.get(id = request.POST.get('image'))
         env, created = Service.objects.get_or_create(user = user, name = servicename, image = image)
-        assert created, "Service environment with name %s is not unique" % servicename
-        messages.info(request, 'Your new service environment is created with name %s' % servicename)
+        assert created, f"Service environment with name {servicename} is not unique"
+        messages.info(request, f'Your new service environment {servicename} is created')
     except Exception as e:
         logger.error("New container not created -- %s" % e)
-        messages.error(request, 'Service environment is not created: %s' % e)
+        messages.error(request, 'Error: %s' % e)
     return redirect('service:list')
         
 
@@ -45,7 +45,7 @@ def listservices(request):
     #TODO: make volume/image etc changes visible, so the user will know which one needs to be deleted. 
     unbound = Service.objects.filter(user = request.user).exclude(projectservicebinding__gt = 0)
     if unbound:
-        messages.warning(request, 'Note, you have environments unbound to a project, namely: {}'.format(', '.join([ s.name for s in unbound ])))
+        messages.warning(request, 'Note, your environments {} are not bound to any projects'.format(', '.join([ s.name for s in unbound ])))
     restart = Service.objects.filter(user = request.user, state = Service.ST_NEED_RESTART)
     if restart:
         messages.warning(request, 'Your services {} are in inconsistent state. Save your changes and restart them as soon as you can.'.format(', '.join([ s.name for s in restart ])))
@@ -55,13 +55,6 @@ def listservices(request):
     }
     return render(request, 'container/list.html', context = context_dict)
 
-
-def showpass(request, container):
-    try:
-        pw = ContainerEnvironment.objects.get(container = container, name = 'PASSWORD').value
-        messages.warning(request, 'Until we find a better way to authorize your access to rstudio server, we created a password for you: %s' % pw)
-    except:
-        pass
 
 @login_required
 def startprojectcontainer(request, project_id, next_page):

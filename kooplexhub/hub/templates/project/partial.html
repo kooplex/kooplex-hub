@@ -2,9 +2,23 @@
   <div class="card-header" id="heading-{{ project.id }}">
     {% include 'project/startopen.html' %}
     <button class="btn btn-outline-dark fas btn-link collapsed" data-toggle="collapse" data-target="#collapse-{{ project.id }}" aria-expanded="true" aria-controls="collapse-{{ project.id }}" style="min-width: 15em; text-align: left;">
+      {% if project.scope == project.SCP_PRIVATE %}
+        <span class="oi oi-key" aria-hidden="true" data-toggle="tooltip" title="Private project" data-placement="top"></span>
+      {% else %}
+        <span class="oi oi-cloud" aria-hidden="true" data-toggle="tooltip" title="Public project" data-placement="top"></span>
+      {% endif %}
       <strong>{{ project.name }}</strong>
     </button>
     <div style="float:right">
+      {% if project.reports|length > 0 %}
+        <span class="oi oi-graph" aria-hidden="true" data-toggle="tooltip" title="Reports {{project.reports|length}}" data-placement="top"></span>
+      {% endif %}
+      {% if project.userprojectbindings|length > 1 %}
+        <span class="oi oi-people" aria-hidden="true" data-toggle="tooltip" title="Collaborators {{project.userprojectbindings|length}}" data-placement="top"></span>
+      {% endif %}
+      {% if services|length > 0 %}
+        <span class="oi oi-terminal" aria-hidden="true" data-toggle="tooltip" title="Service environments {{services|length}}" data-placement="top"></span>
+      {% endif %}
       {% include 'project/stopremove.html' %}
     </div>
   </div>

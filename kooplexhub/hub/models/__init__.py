@@ -5,7 +5,7 @@ from .proxy import Proxy
 from .envvar import EnvVarMapping
 from .service import Service, ProjectServiceBinding
 
-from .versioncontrol import VCRepository, VCToken, VCProject, VCProjectProjectBinding
+from .versioncontrol import VCRepository, VCToken, VCProject, VCProjectServiceBinding
 from .filesync import FSServer, FSToken, FSLibrary, FSLibraryServiceBinding
 
 from .project import Project,  UserProjectBinding#, GroupProjectBinding

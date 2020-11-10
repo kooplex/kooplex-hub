@@ -16,7 +16,6 @@ from .report import Report
 from .course import Course
 from .volume import Volume, VolumeProjectBinding
 from .image import Image
-from .versioncontrol import VCProjectProjectBinding
 
 from kooplex.settings import KOOPLEX
 from kooplex.lib import  standardize_str, now
@@ -47,6 +46,7 @@ class Service(models.Model):
 
     name = models.CharField(max_length = 200, null = False)
     user = models.ForeignKey(User, null = False)
+    suffix = models.CharField(max_length = 200, null = True, default = None)
     image = models.ForeignKey(Image, null = False)
     launched_at = models.DateTimeField(null = True)
 
@@ -55,7 +55,7 @@ class Service(models.Model):
     last_message_at = models.DateTimeField(default = None, null = True)
 
     class Meta:
-        unique_together = [['user', 'name']]
+        unique_together = [['user', 'name', 'suffix']]
 
     def __lt__(self, c):
         return self.launched_at < c.launched_at
@@ -65,7 +65,7 @@ class Service(models.Model):
 
     @property
     def label(self):
-        return f"{self.user}-{self.name}"
+        return f"{self.user}-{self.name}-{self.suffix}" if self.suffix else f"{self.user}-{self.name}"
 
     @property
     def proxy_route(self):

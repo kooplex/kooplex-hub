@@ -59,11 +59,10 @@ a.active {
 {% endblock %}
 
 {% block main_content_center %}
-  <!-- We should organize into tabs each service -->
-  <form id="fsRefreshLibForm" class="form-horizontal form-control">
+  <div class="form-horizontal form-control">
     <h3>Connected services</h3>
     {% for s in syncservers %}
-      {% with t=s|get_usertoken:user %}
+      {% with t=s|get_userz_fstoken:user %}
         <div class="card bg-light mb-3">
           <div class="card-header">
             <div class="row">
@@ -99,7 +98,7 @@ a.active {
         </div>
       {% endwith %}
     {% endfor %}
-  </form>
+  </div>
   {% load render_table from django_tables2 %}
   <form id="fsSyncForm" class="form-horizontal form-control" action="{% url 'service_external:commit_sync' %}" method="post">
   <h3> Libraries to synchronize</h3>

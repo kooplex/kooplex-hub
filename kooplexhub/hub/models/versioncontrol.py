@@ -5,10 +5,12 @@ from django.db import models
 from django.db.models.signals import post_save, pre_delete, post_delete
 from django.dispatch import receiver
 from django.contrib.auth.models import User
+from django.template.defaulttags import register
 
 from kooplex.lib import standardize_str
 
 from .project import Project
+from .service import Service
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +31,12 @@ class VCRepository(models.Model):
     def domain(self):
         return re.split(r'https?://([^/]+)', self.url)[1]
 
+    @register.filter
+    def get_userz_vctoken(self, user):
+        try:
+            return VCToken.objects.get(repository = self, user = user)
+        except VCToken.DoesNotExist:
+            return None
 
 class VCToken(models.Model):
     user = models.ForeignKey(User, null = False)
@@ -72,26 +80,28 @@ class VCProject(models.Model):
         return "%s-%s-%s-%s" % (r.backend_type, r.domain, t.user.username, self.cleanname)
 
     @property
-    def vcprojectprojectbindings(self):
-        for vcpb in VCProjectProjectBinding.objects.filter(vcproject = self):
-            yield vcpb
+    def services(self):
+        return [ b.service for b in VCProjectServiceBinding.objects.filter(vcproject = self) ]
 
     
-class VCProjectProjectBinding(models.Model):
-    project = models.ForeignKey(Project, null = False)
+class VCProjectServiceBinding(models.Model):
     vcproject = models.ForeignKey(VCProject, null = False)
+    service = models.ForeignKey(Service, null = False)
 
-    @staticmethod
-    def getbinding(user, project):
-        for b in VCProjectProjectBinding.objects.filter(project = project):
-            if b.vcproject.token.user == user:
-                yield b
-
-    @property
-    def otherprojects(self):
-        for b in VCProjectProjectBinding.objects.filter(vcproject = self.vcproject):
-            yield b.project
-
+    class Meta:
+        unique_together = [['vcproject', 'service']]
+##
+##    @staticmethod
+##    def getbinding(user, project):
+##        for b in VCProjectProjectBinding.objects.filter(project = project):
+##            if b.vcproject.token.user == user:
+##                yield b
+##
+##    @property
+##    def otherprojects(self):
+##        for b in VCProjectProjectBinding.objects.filter(vcproject = self.vcproject):
+##            yield b.project
+##
 
 #FIXME: obsoleted
 ##@receiver(post_save, sender = VCProjectProjectBinding)

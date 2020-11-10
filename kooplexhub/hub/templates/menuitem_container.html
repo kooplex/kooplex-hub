@@ -1,18 +1,37 @@
-  <li class="nav-item {{ active }}">
-    {% if user.profile.containers %}
-      <a href="{% url 'service:list' %}" class="nav-link" data-toggle="tooltip" title="List and manage your service environments, also know as containers" data-placement="bottom">Environments</a>
-    {% else %}
-      <a href="#" class="nav-link disabled" data-toggle="tooltip" title="You do not have a service environment yet" data-placement="bottom">Environment</a>
-    {% endif %}
-  </li>
+<style>
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
 
-{% if user.profile.can_createproject %}
-  {% include "container/new.html" %}
-  <li class="nav-item dropdown">
-    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownContainer" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></a>
-    <div class="dropdown-menu" aria-labelledby="navbarDropdownContainer">
-      <a class="dropdown-item" href="#" data-toggle="modal" data-target="#container-new">New environment</a>
-      <a class="dropdown-item" href="{% url 'service:list' %}">List environments</a>
-    </div>
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #f1f1f1;
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  z-index: 1;
+}
+
+.dropdown-content a {
+  color: black;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+}
+
+.dropdown-content a:hover {background-color: #ddd;}
+
+.dropdown:hover .dropdown-content {display: block;}
+</style>
+
+<div class="dropdown">
+  <li class="nav-item {{ active }}">
+     <a href="{% url 'service:list' %}" class="nav-link" data-toggle="tooltip" title="List and manage your service environments, also know as containers" data-placement="bottom">Environments</a>
   </li>
-{% endif %}
+  <div class="dropdown-content" aria-labelledby="navbarDropdownContainer">
+    <a href="#" data-toggle="modal" data-target="#container-new">New environment</a>
+    <a href="{% url 'service:list' %}">List environments</a>
+  </div>
+</div>
+{% include "container/new.html" %}

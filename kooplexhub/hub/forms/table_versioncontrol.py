@@ -6,34 +6,39 @@ import django_tables2 as tables
 from hub.models import VCRepository
 from hub.models import VCToken
 from hub.models import VCProject
-from hub.models import VCProjectProjectBinding 
 
-class ReposColumn(tables.Column):
-    def render(self, record):
-        repo = record.token.repository
-        if repo.backend_type == repo.TP_GITHUB:
-            return format_html('<img src="/static/content/logos/github.png" alt="github" width="30px" data-toggle="tooltip" title="{}" data-placement="bottom">'.format(repo.url))
-        elif repo.backend_type == repo.TP_GITLAB:
-            return format_html('<img src="/static/content/logos/gitlab.png" alt="gitlab" width="30px" data-toggle="tooltip" title="{}" data-placement="bottom">'.format(repo.url))
-        elif repo.backend_type == repo.TP_GITEA:
-            return format_html('<img src="/static/content/logos/gitea.png" alt="gitea" width="30px" data-toggle="tooltip" title="{}" data-placement="bottom">'.format(repo.url))
-        else:
-            return format_html(record)
 
 class T_REPOSITORY_CLONE(tables.Table):
     id = tables.Column(verbose_name = 'Status', orderable = False)
-    repos = ReposColumn(verbose_name = 'Src', empty_values = (), orderable = False)
+    class ReposColumn(tables.Column):
+        def render(self, record):
+            repo = record.token.repository
+            if repo.backend_type == repo.TP_GITHUB:
+                return format_html('<img src="/static/content/logos/github.png" alt="github" width="30px" data-toggle="tooltip" title="{}" data-placement="bottom">'.format(repo.url))
+            elif repo.backend_type == repo.TP_GITLAB:
+                return format_html('<img src="/static/content/logos/gitlab.png" alt="gitlab" width="30px" data-toggle="tooltip" title="{}" data-placement="bottom">'.format(repo.url))
+            elif repo.backend_type == repo.TP_GITEA:
+                return format_html('<img src="/static/content/logos/gitea.png" alt="gitea" width="30px" data-toggle="tooltip" title="{}" data-placement="bottom">'.format(repo.url))
+            else:
+                return format_html(record)
+    repos = ReposColumn(verbose_name = 'Service', empty_values = (), orderable = False)
+    service = tables.Column(verbose_name = 'Service environments', empty_values = (), orderable = False)
+
+    def render_service(self, record):
+        return format_html(', '.join([ s.name for s in record.services ]))
+
     def render_id(self, record):
         if record.cloned:
             return format_html('<input type="checkbox" data-toggle="toggle" name="removecache" value="{}" data-on="Remove" data-off="Cloned" data-onstyle="danger" data-offstyle="success" data-size="xs"'.format(record.id))
         else:
             return format_html('<input type="checkbox" data-toggle="toggle" name="clone" value="{}" data-on="Clone" data-off="Unused" data-onstyle="success" data-offstyle="secondary" data-size="xs">'.format(record.id))
     def render_project_name(self, record):
-        return format_html('<span data-toggle="tooltip" title="{}" data-placement="bottom">{} of {}</span>'.format(record.project_description, record.project_name, record.project_owner))
+        return format_html(f'<span data-toggle="tooltip" title="Description: {record.project_description}\nCreated at: {record.project_created_at}" data-placement="bottom">{record.project_name} ({record.project_owner})</span>')
+
     class Meta:
         model = VCRepository
-        fields = ('id', 'repos', 'project_name', 'project_created_at')
-        sequence = ('id', 'repos', 'project_name', 'project_created_at')
+        fields = ('id', 'repos', 'project_name', 'service', 'repo_folder')
+        sequence = ('id', 'repos', 'project_name', 'service', 'repo_folder')
         attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
 
 def s_column(project):

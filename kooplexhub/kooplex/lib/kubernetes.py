@@ -105,7 +105,7 @@ def start(service):
             "apiVersion": "v1",
             "kind": "Pod",
             "metadata": {
-                "name": service.name,
+                "name": service.label,
                 "namespace": "default",
                 "labels": { "lbl": f"lbl-{service.name}", }
             },

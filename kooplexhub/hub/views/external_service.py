@@ -5,33 +5,17 @@ from django.contrib import messages
 from django.conf.urls import url, include
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-#from django.contrib.auth.models import User
-#from django.utils.html import format_html
-#import django_tables2 as tables
 from django_tables2 import RequestConfig
-#from django.utils.translation import gettext_lazy as _
-#from django.db.models import Q
-#
+
 from kooplex.lib import list_projects, impersonator_clone, impersonator_removecache
 from kooplex.lib import list_libraries, impersonator_sync
 from kooplex.lib import now
-#
-#from hub.forms import FormProject
-#from hub.forms import table_collaboration, T_JOINABLEPROJECT
-#from hub.forms import table_volume
-#from hub.forms import table_vcproject
+from kooplex.lib import seafilepw_update
+
 from hub.forms import T_FSLIBRARY_SYNC
 from hub.forms import T_REPOSITORY_CLONE
-#from hub.models import Project, UserProjectBinding, Volume
-#from hub.models import Image
-#from hub.models import Profile
-from hub.models import VCToken, VCProject#, VCProjectProjectBinding, ProjectContainerBinding
-from hub.models import FSServer, FSToken, FSLibrary#, FSLibraryProjectBinding#, ProjectContainerBinding
-#
-#from django.utils.safestring import mark_safe
-#
-
-from kooplex.lib import seafilepw_update
+from hub.models import VCRepository, VCToken, VCProject
+from hub.models import FSServer, FSToken, FSLibrary
 
 logger = logging.getLogger(__name__)
 
@@ -175,7 +159,7 @@ def versioncontrol(request):
         'next_page': 'service_external:versioncontrol',
         'menu_service': 'active',
         'submenu': 'versioncontrol',
-        'vc_tokens': vc_tokens,
+        'reposervers': VCRepository.objects.all(),
         'tbl_repositories': tbl_repositories,
         'search_repo': pattern,
     }
@@ -266,10 +250,27 @@ def vc_commit(request):
     return redirect('service_external:versioncontrol')
 
 
+def vc_tokenmanagement(request, server_id):
+    user = request.user
+    logger.debug("user %s" % user)
+    token_id = request.POST.get('token_id')
+    repository = VCRepository.objects.get(id = server_id)
 
-def nothing(request):
-    messages.error(request, 'NOT IMPLEMETED YET')
-    return redirect('indexpage')
+    if token_id:
+        raise Exception(token_id)
+    else:
+        try:
+            fn_rsa = request.POST.get('fn_rsa')
+            token = request.POST.get('token')
+            un = request.POST.get('username')
+            assert len(fn_rsa), "The RSA filename cannot be empty"
+            assert len(token), "Your token cannot be empty"
+            vctoken = VCToken.objects.create(repository = repository, user = user, username = un, fn_rsa = fn_rsa, token = token)
+            messages.info(request, "Your vctoken %s token is saved" % vctoken)
+        except Exception as e:
+            messages.error(request, "Cannot create your token -- %s" % e)
+            logger.error("user %s cannot save vctoken" % (user))
+        return redirect('service_external:versioncontrol')
 
 urlpatterns = [
     url(r'^filesynchronization', filesynchronization, name = 'filesync'), 
@@ -282,6 +283,7 @@ urlpatterns = [
     url(r'^versioncontrol', versioncontrol, name = 'versioncontrol'), 
     url(r'^vc_search', versioncontrol, name = 'vc_search'), 
     url(r'^vc_refresh/(?P<token_id>\d+)', vc_refresh, name = 'vc_refresh'), 
+    url(r'^vc_tokenmanagement/(?P<server_id>\d+)', vc_tokenmanagement, name = 'vc_tokenmanagement'), 
     url(r'^vc_clone', vc_commit, name = 'commit_repo'), 
 ]
 

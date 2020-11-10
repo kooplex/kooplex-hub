@@ -61,41 +61,66 @@ a.active {
 {% endblock %}
 
 {% block main_content_center %}
-  <form id="fsRefreshLibForm" class="form-horizontal form-control">
+  <div class="form-horizontal form-control">
     <h3>Connected services</h3>
-      {% for t in vc_tokens %}
-        {% with s=t.repository %}
-          <div class="card bg-light mb-3">
-              <div class="card-header">
-                 <div class="row">
-                      <div class="col-10">
-       		       <h4>
-		       {% if s.backend_type == s.TP_GITEA %}
-	                   <img src="/static/content/logos/gitea.png" alt="gitea" height="50px">
-		       {% elif s.backend_type == s.TP_GITHUB %}
-	                   <img src="/static/content/logos/github.png" alt="github" height="50px">
-		       {% elif s.backend_type == s.TP_GITLAB %}
-	                   <img src="/static/content/logos/gitlab.png" alt="github" height="50px" style="opacity: 0.5; background: #CCC;">
-		       {% else %}
-		         {{ s.backend_type }}
-		       {% endif %}
-		       {{ s.url }}
-		       <span class="badge badge-pill badge-info">Last updated: {{ t.last_used }}</span>
-		       </h4>
-                      </div>
-                      <div class="col-2">
-                         <a href="{% url 'service_external:vc_refresh' t.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Last updated: {{ t.last_used }}" data-placement="top">Refresh</a> <br style="margin:1ex">
-                      </div>
-                 </div>
+    {% for s in reposervers %}
+      {% with t=s|get_userz_vctoken:user %}
+        <div class="card bg-light mb-3">
+          <div class="card-header">
+            <div class="row">
+              <div class="col-8">
+                {% if s.backend_type == s.TP_GITEA %}
+	          <a href="{{ s.url }}" rel="noreferrer" target="blank" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Login Gitea at {{ s.url }}" data-placement="top"><span class="oi oi-external-link" aria-hidden="true"></span></a>
+                {% elif s.backend_type == s.TP_GITHUB %}
+	          <a href="{{ s.url }}" rel="noreferrer" target="blank" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Login GitHub at {{ s.url }}" data-placement="top"><span class="oi oi-external-link" aria-hidden="true"></span></a>
+                {% elif s.backend_type == s.TP_GITLAB %}
+	          <a href="{{ s.url }}" rel="noreferrer" target="blank" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Login GitLab at {{ s.url }}" data-placement="top"><span class="oi oi-external-link" aria-hidden="true"></span></a>
+                {% else %}
+                  <a href="{{ s.url }}" rel="noreferrer" target="blank" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Login {{ s.backend_type }} at {{ s.url }}" data-placement="top"><span class="oi oi-external-link" aria-hidden="true"></span></a>
+                {% endif %}
+                <span class="badge badge-pill badge-secondary">{{ s.url }}</span>
+                {% if t %}
+                  <span class="badge badge-pill badge-info">Last updated: {{ t.last_used }}</span>
+                {% else %}
+                  <span class="badge badge-pill badge-warning">Make sure you login to git repository server so your account exists there as well, and generate a token</span>
+                {% endif %}
               </div>
+              <div class="col-2">
+                {% if t %}
+                  <a href="{% url 'service_external:vc_refresh' t.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Last updated: {{ t.last_used }}" data-placement="top">Refresh</a> <br style="margin:1ex">
+                {% else %}
+                  <a href="#" role="button" class="btn btn-secondary disabled" data-toggle="tooltip" title="Unconfigured service" data-placement="top">Refresh</a> <br style="margin:1ex">
+                {% endif %}
+              </div>
+            </div>
+            <hr>
+	    <form class="row" id="vc_details_{{ s.id }}" method="post" action="{% url 'service_external:vc_tokenmanagement' s.id %}">
+              {% csrf_token %}
+	      <input type="hidden" name="token_id" value="{{ t.id }}">
+              <table>
+                <thead><tr>
+                  <th>Registered username at<br>{{ s.url }}</th>
+                  <th>Generated token</th>
+                  <th>Private RSA keyfile</th>
+                  <th></th>
+                </tr></thead>
+                <tbody><tr>
+	          <td><input type="text" name="username" value="{% if t %}{{ t.username }}{% else %}{{ user.username }}{% endif %}"></td>
+	          <td><input type="password" name="token" value="{% if t %}{{ t.token }}{% endif %}" placeholder="copied from git server"></td>
+	          <td><input type="text" name="fn_rsa" value="{% if t %}{{ t.fn_rsa }}{% endif %}" placeholder="located in .ssh folder"></td>
+		  <td><input type="submit" name="do" value="{% if t %} Update {% else %} Add {% endif %}"></td>
+                </tr></tbody>
+              </table>
+	    </form>
           </div>
-	    {% endwith %}
-          {% endfor %}
+        </div>
+      {% endwith %}
+    {% endfor %}
+  </div>
 
-  </form>
   {% load render_table from django_tables2 %}
-    <h3>Select repositories to clone</h3>
   <form id="vcRepoForm" class="form-horizontal form-control" action="{% url 'service_external:commit_repo' %}" method="post">
+    <h3>Repositories to clone</h3>
     {% csrf_token %}
     {% render_table tbl_repositories %}
     <div class="modal-footer">

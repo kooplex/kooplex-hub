@@ -9,11 +9,11 @@
     <div style="float:right">
       <button class="btn" data-toggle="collapse" data-target="#collapse-{{ container.id }}" aria-expanded="true" aria-controls="collapse-{{ container.id }}">
         {% if container.state == container.ST_NEED_RESTART %}
-          <span class="badge badge-pill badge-danger">Restart with image:<strong>{{ container.image }}</strong></span>
+          <span class="badge badge-pill badge-danger"><strong>{{ container.image }}</strong></span>
         {% elif container.state == container.ST_RUNNING  %}
-          <span class="badge badge-pill badge-success">Using image:<strong>{{ container.image }}</strong></span>
+          <span class="badge badge-pill badge-success"><strong>{{ container.image }}</strong></span>
         {% else %}
-          <span class="badge badge-pill badge-secondary">Using image:<strong>{{ container.image }}</strong></span>
+          <span class="badge badge-pill badge-secondary"><strong>{{ container.image }}</strong></span>
         {% endif %}
       </button>
       {% include 'container/stopremove.html' %}
