@@ -1,5 +1,16 @@
 {% extends "layout.html" %}
 
+{% block header_extra %}
+{% load staticfiles %}
+
+<!--script src="https://kit.fontawesome.com/27d0a7c7d0.js"></script-->
+<link rel="stylesheet" href="{% static 'fontawesome-free-5.10.2-web/css/all.css' %}">
+
+<link rel="stylesheet" href="{% static 'css/bootstrap4-toggle.min.css' %}">
+<script src="{% static 'scripts/bootstrap4-toggle.min.js' %}"></script>
+{% endblock %}
+
+
 {% block submenu %}
   {% with title="Join a collaboration" submenu="join" %}
     {% include 'project/project_submenu.html' %}

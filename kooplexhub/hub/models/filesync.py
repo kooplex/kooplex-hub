@@ -50,6 +50,9 @@ class FSLibrary(models.Model):
     syncing = models.BooleanField(default = False)
     sync_folder = models.CharField(max_length = 512, null = False)
 
+    class Meta:
+        unique_together = [['token', 'library_id']]
+
     def __str__(self):
         return "FSLibrary %s: %s" % (self.token.syncserver.url, self.library_name)
 
@@ -71,6 +74,9 @@ class FSLibrary(models.Model):
 class FSLibraryServiceBinding(models.Model):
     fslibrary = models.ForeignKey(FSLibrary, null = False)
     service = models.ForeignKey(Service, null = False)
+
+    class Meta:
+        unique_together = [['fslibrary', 'service']]
 
 #    @staticmethod
 #    def getbinding(user, project):

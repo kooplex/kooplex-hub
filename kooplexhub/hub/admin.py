@@ -41,7 +41,7 @@ class ProjectAdmin(admin.ModelAdmin):
         return instance.creator
     def project_Nusers(self, instance):
         return len(instance.userprojectbindings)
-    list_display = ('id', 'name', 'project_creator', 'project_Nusers') 
+    list_display = ('id', 'name', 'project_creator', 'scope', 'project_Nusers') 
 
 @admin.register(UserProjectBinding)
 class UserProjectBindingAdmin(admin.ModelAdmin):

@@ -6,7 +6,6 @@ import django_tables2 as tables
 from hub.models import UserProjectBinding
 from hub.models import ProjectServiceBinding
 
-
 def image_column(service):
     class ImageColumn(tables.Column):
         def render(self, record):
@@ -49,27 +48,29 @@ def table_projects(service):
 
     return T_PROJECTS
 
-class SelectColumn(tables.Column):
-    def render(self, record):
-        p = record.project
-        return format_html("<input type='checkbox' name='project_ids' value='%d'>" % (p.id))
 
-class ProjectColumn(tables.Column):
-    def render(self, record):
-        p = record.project
-        return format_html("%s (%s)" % (p.name, p.image))
-
-class UserColumn(tables.Column):
-    def render(self, record):
-        u = record.user
-        return format_html("%s %s (%s)" % (u.first_name, u.last_name, u.username))
 
 class T_JOINABLEPROJECT(tables.Table):
+    class SelectColumn(tables.Column):
+        def render(self, record):
+            p = record.project
+            return format_html('<input type="checkbox" name="project_ids" data-toggle="toggle" value="{}" data-on="Join" data-off="Skip" data-onstyle="success" data-offstyle="dark" data-size="xs">'.format(p.id))
     id = SelectColumn(verbose_name = 'Select', orderable = False)
-    project = ProjectColumn(verbose_name = 'Project (image)', orderable = False)
-    user = UserColumn(verbose_name = 'Creator name', orderable = False)
+    class UserColumn(tables.Column):
+        def render(self, record):
+            user = record.user
+            return format_html(f'<span data-toggle="tooltip" title="Username {user.username}." data-placement="top" style="font-weight: bold;">{user.first_name}</span> {user.last_name}')
+    user = UserColumn(verbose_name = 'Creator name', order_by = ('user__first_name', 'user__last_name'))
+    class ImageColumn(tables.Column):
+        def render(self, record):
+            p = record.project
+            images = set([ psb.service.image for psb in ProjectServiceBinding.objects.filter(project = p, service__user = p.creator) ])
+            image_selection = '<br>'.join([ f'<input type="checkbox" name="image_ids_{p.id}" data-toggle="toggle" value="{i.id}" data-on="Create service" data-off="Skip" data-onstyle="success" data-offstyle="dark" data-size="xs">{i.name}' for i in images ])
+            return format_html(image_selection)
+    images = ImageColumn(verbose_name = 'Service environment images', orderable = False, empty_values = ())
+
     class Meta:
         model = UserProjectBinding
-        fields = ('id', 'project', 'user')
-        sequence = ('id', 'project', 'user')
+        fields = ('id', 'project', 'user', 'images')
+        sequence = ('id', 'project', 'user', 'images')
         attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }

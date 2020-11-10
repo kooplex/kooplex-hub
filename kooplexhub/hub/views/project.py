@@ -83,18 +83,26 @@ def join(request):
         return render(request, 'project/join.html', context = context_dict)
     else:
         joined = []
+        svcs = []
         for project_id in request.POST.getlist('project_ids'):
             try:
-                project = Project.objects.get(id = project_id)
-                assert project.scope in [ Project.SCP_INTERNAL, Project.SCP_PUBLIC ], 'Permission denied to join %s' % project
+                project = Project.objects.get(id = project_id, scope__in = [ Project.SCP_INTERNAL, Project.SCP_PUBLIC ])
                 UserProjectBinding.objects.create(user = user, project = project, role = UserProjectBinding.RL_COLLABORATOR)
-                joined.append(str(project))
+                joined.append(project)
                 logger.info("%s joined project %s as a member" % (user, project))
+                for image_id in request.POST.getlist(f'image_ids_{project_id}'):
+                    i = Image.objects.get(id = image_id)
+                    svc = Service.objects.create(user = user, image = i, name = f'{user.username}-{project.name}-{project.creator.username}')
+                    psb = ProjectServiceBinding.objects.create(project = project, service = svc)
+                    logger.info(f'created service {svc} and binding {psb}')
+                    svcs.append(svc)
             except Exception as e:
-                logger.warning("%s cannot join project %s -- %s" % (user, project, e))
-                messages.error(request, 'You cannot join project % s' % project)
+                logger.warning("%s cannot join project id %s -- %s" % (user, project_id, e))
+                messages.error(request, 'You cannot join project')
         if len(joined):
-            messages.info(request, 'Joined projects: %s' % '\n'.join(joined))
+            messages.info(request, 'Joined projects: {}'.format(', '.join([ p.name for p in joined ])))
+        if len(svcs):
+            messages.info(request, 'Created services: {}'.format(', '.join([ s.name for s in svcs ])))
 
         return redirect('project:list')
 

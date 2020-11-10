@@ -231,7 +231,8 @@ def revokeaccess_project(sender, instance, **kwargs):
 @receiver(pre_delete, sender = UserProjectBinding)
 def garbagedir_project(sender, instance, **kwargs):
     from kooplex.lib.filesystem import garbagedir_project
-    garbagedir_project(instance)
+    if instance.role == UserProjectBinding.RL_CREATOR:
+        garbagedir_project(instance)
 
 @receiver(pre_delete, sender = UserProjectBinding)
 def assert_not_shared(sender, instance, **kwargs):
@@ -242,3 +243,4 @@ def assert_not_shared(sender, instance, **kwargs):
     for psb in ProjectServiceBinding.objects.filter(project = instance.project, service__user = instance.user, service__state = Service.ST_RUNNING):
         psb.service.state = Service.ST_NEED_RESTART
         psb.service.save()
+        psb.delete()
