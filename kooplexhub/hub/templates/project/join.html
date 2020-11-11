@@ -6,9 +6,7 @@
 {% endblock %}
 
 {% block submenu %}
-  {% with title="Join a collaboration" submenu="join" %}
-    {% include 'project/project_submenu.html' %}
-  {% endwith %}
+  {% include 'project/project_submenu.html' with title="Join a collaboration" submenu="join" %}
 {% endblock %}
 
 {% block main_content_center %}
@@ -25,3 +23,6 @@
   </form>
 {% endblock %}
 
+{% block main_content_right %}
+  {% include 'project/hint_join.html' %}
+{% endblock %}

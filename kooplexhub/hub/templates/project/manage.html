@@ -2,9 +2,7 @@
 {% load render_table from django_tables2 %}
 
 {% block submenu %}
-  {% with title="Show or hide your projects" submenu="showhide" %}
-    {% include 'project/project_submenu.html' %}
-  {% endwith %}
+  {% include 'project/project_submenu.html' with title="Show or hide your projects" submenu="showhide" %}
 {% endblock %}
 
 {% block main_content_center %}
@@ -28,4 +26,8 @@
     </div>
   </form>
 </div> <!-- container -->
+{% endblock %}
+
+{% block main_content_right %}
+  {% include 'project/hint_showhide.html' %}
 {% endblock %}

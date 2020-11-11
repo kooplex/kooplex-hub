@@ -1,9 +1,7 @@
 {% extends "layout.html" %}
 
 {% block submenu %}
-  {% with submenu="filesync" %}
-    {% include "service/service_submenu.html" %}
-  {% endwith %}
+  {% include "service/service_submenu.html" with submenu="filesync" %}
 {% endblock %}
 
 {% block main_content_center %}
@@ -60,6 +58,6 @@
 {% endblock %}
 
 {% block main_content_right %}
-{{block.super}}
+  {% include 'service/hint_sync.html' %}
 {% endblock %}
 

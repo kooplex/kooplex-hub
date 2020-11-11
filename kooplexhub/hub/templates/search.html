@@ -2,12 +2,10 @@
 <div class="card">
   <form id="searchForm" class="form-horizontal form-control card-body" action="{% url search_form.action %}" method="post">
     {% csrf_token %}
-    <div class="card-header">
-      <h5>Narrow selection</h5>
-    </div>
-    <div  class="card-body alert alert-warning">
+    <h6 class="card-header">Narrow selection</h6>
+    <div class="card-body">
       {% for i in search_form.items %}
-        <input type="text" name="{{ i.name }}" placeholder="{{ i.placeholder }}" value="{{ i.value }}"><br>
+        <input type="text" name="{{ i.name }}" placeholder="{{ i.placeholder }}" value="{{ i.value }}" data-toggle="tooltip" title="Enter {{ i.placeholder }}" data-placement="top"><br>
       {% endfor %}
     </div>
     <div class="card-footer">

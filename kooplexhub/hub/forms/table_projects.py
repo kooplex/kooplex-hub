@@ -74,3 +74,19 @@ class T_JOINABLEPROJECT(tables.Table):
         fields = ('id', 'project', 'user', 'images')
         sequence = ('id', 'project', 'user', 'images')
         attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
+
+
+class T_PROJECT(tables.Table):
+    class ProjectSelectionColumn(tables.Column):
+        def render(self, record):
+            if record.is_hidden:
+                return format_html('<input type="checkbox" name="selection" data-toggle="toggle" value="{0}" data-off="Show" data-on="Hidden" data-onstyle="dark" data-offstyle="success" data-size="xs" checked>'.format(record.id))
+            else:
+                return format_html('<input type="checkbox" name="selection" data-toggle="toggle" value="{0}" data-off="Shown" data-on="Hide" data-onstyle="dark" data-offstyle="success" data-size="xs">'.format(record.id))
+    id = ProjectSelectionColumn(verbose_name = 'Visibility', orderable = False)
+    class Meta:
+        model = UserProjectBinding
+        fields = ('id', 'project')
+        sequence = ('id', 'project')
+        attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
+

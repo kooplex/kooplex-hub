@@ -1,9 +1,7 @@
 {% extends "layout.html" %}
 
 {% block submenu %}
-  {% with submenu="versioncontrol" %}
-    {% include "service/service_submenu.html" %}
-  {% endwith %}
+  {% include "service/service_submenu.html" with submenu="versioncontrol" %}
 {% endblock %}
 
 {% block main_content_center %}
@@ -77,6 +75,6 @@
 {% endblock %}
 
 {% block main_content_right %}
-{{block.super}}
+  {% include 'service/hint_repo.html' %}
 {% endblock %}
 

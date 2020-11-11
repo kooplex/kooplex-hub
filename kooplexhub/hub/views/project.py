@@ -13,7 +13,7 @@ from django.db.models import Q
 
 
 from hub.forms import FormProject
-from hub.forms import table_collaboration, T_SERVICE, T_JOINABLEPROJECT
+from hub.forms import table_collaboration, T_SERVICE, T_JOINABLEPROJECT, T_PROJECT
 from hub.forms import table_volume
 from hub.forms import table_vcproject
 from hub.models import Project, UserProjectBinding
@@ -76,14 +76,12 @@ def join(request):
     search = request.POST.get('button', '') == 'search'
     listing = request.method == 'GET' or (request.method == 'POST' and search)
     if listing:
-        project_public_and_internal = Project.objects.filter(scope__in = [ Project.SCP_INTERNAL, Project.SCP_PUBLIC ])
+        joinable_bindings = UserProjectBinding.objects.filter(project__scope__in = [ Project.SCP_INTERNAL, Project.SCP_PUBLIC ], role = UserProjectBinding.RL_CREATOR).exclude(user = user)
         if pattern_name:
-            project_public_and_internal = project_public_and_internal.filter(name__icontains = pattern_name)
+            joinable_bindings = joinable_bindings.filter(Q(project__name__icontains = pattern_name))
         if pattern_creator:
-            raise NotImplementedError('ez meg nincs kesz')
-        project_mine = set([ upb.project for upb in UserProjectBinding.objects.filter(user = user) ])
-        project_joinable = set(project_public_and_internal).difference(project_mine)
-        table_joinable = T_JOINABLEPROJECT([ UserProjectBinding.objects.get(project = p, role = UserProjectBinding.RL_CREATOR) for p in project_joinable ])
+            joinable_bindings = joinable_bindings.filter(Q(user__first_name__icontains = pattern_creator) | Q(user__last_name__icontains = pattern_creator) | Q(user__username__icontains = pattern_creator))
+        table_joinable = T_JOINABLEPROJECT(joinable_bindings)
         RequestConfig(request).configure(table_joinable)
         context_dict = {
             't_joinable': table_joinable,
@@ -137,23 +135,7 @@ def listprojects(request):
     return render(request, 'project/list.html', context = context_dict)
 
 
-#FIXME: place in forms
-class ProjectSelectionColumn(tables.Column):
-    def render(self, record):
-        if record.is_hidden:
-            return format_html('<input type="checkbox" name="selection" data-toggle="toggle" value="{0}" data-off="Show" data-on="Hidden" data-onstyle="dark" data-offstyle="success" data-size="xs" checked>'.format(record.id))
-        else:
-            return format_html('<input type="checkbox" name="selection" data-toggle="toggle" value="{0}" data-off="Shown" data-on="Hide" data-onstyle="dark" data-offstyle="success" data-size="xs">'.format(record.id))
-
-
-class T_PROJECT(tables.Table):
-    id = ProjectSelectionColumn(verbose_name = 'Visibility', orderable = False)
-    class Meta:
-        model = UserProjectBinding
-        fields = ('id', 'project')
-        sequence = ('id', 'project')
-        attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
-
+#FIXME remove from here
 def sel_col(project):
     class VolumeSelectionColumn(tables.Column):
         def render(self, record):
@@ -396,12 +378,19 @@ def show_hide(request):
     """Manage your projects"""
     user = request.user
     logger.debug("user %s method %s" % (user, request.method))
-    userprojectbindings = user.profile.projectbindings
-    if request.method == 'GET':
+    pattern_name = request.POST.get('project', '')
+    if pattern_name:
+        userprojectbindings = UserProjectBinding.objects.filter(user = user, project__name__icontains = pattern_name)
+    else:
+        userprojectbindings = UserProjectBinding.objects.filter(user = user)
+    search = request.POST.get('button', '') == 'search'
+    listing = request.method == 'GET' or (request.method == 'POST' and search)
+    if listing:
         table_project = T_PROJECT(userprojectbindings)
         RequestConfig(request).configure(table_project)
         context_dict = {
             't_project': table_project,
+            'search_form': { 'action': "project:sh_search", 'items': [ { 'name': "project", 'placeholder': "project name", 'value': pattern_name } ] },
         }
         return render(request, 'project/manage.html', context = context_dict)
     else:
@@ -495,6 +484,7 @@ urlpatterns = [
     url(r'^show/?$', show_hide, name = 'showhide'),
     url(r'^hide/(?P<project_id>\d+)/?$', hide, name = 'hide'), 
     url(r'^show/(?P<project_id>\d+)/?$', show, name = 'show'), 
+    url(r'^sh_search/?$', show_hide, name = 'sh_search'),
     url(r'^delete/(?P<project_id>\d+)/?$', delete_leave, name = 'delete'), 
     url(r'^configure/(?P<project_id>\d+)/?$', configure, name = 'configure'), 
     url(r'^join/?$', join, name = 'join'), 
