@@ -21,7 +21,7 @@ class ImageAdmin(admin.ModelAdmin):
 
 @admin.register(Proxy)
 class ProxyAdmin(admin.ModelAdmin):
-    list_display = ('id', 'image', 'default', 'path', 'port')
+    list_display = ('id', 'name', 'image', 'default', 'path', 'port')
 
 @admin.register(EnvVarMapping)
 class EnvVarMappingAdmin(admin.ModelAdmin):

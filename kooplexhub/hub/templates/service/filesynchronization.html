@@ -1,61 +1,9 @@
 {% extends "layout.html" %}
 
-{% block header_extra %}
-
-{% load staticfiles %}
-
-<!--script src="https://kit.fontawesome.com/27d0a7c7d0.js"></script-->
-<link rel="stylesheet" href="{% static 'fontawesome-free-5.10.2-web/css/all.css' %}">
-
-<link rel="stylesheet" href="{% static 'css/bootstrap4-toggle.min.css' %}">
-<script src="{% static 'scripts/bootstrap4-toggle.min.js' %}"></script>
-
-<style>
-.card-header .btn-vmi.collapsed:before {
-    content:"\f105";
-}
-.card-header .btn-vmi:before {
-    font-weight:900;
-    content:"\f107";
-    padding-right: 4px;
-}
-.card-header .btn:hover, 
-.card-header .btn:active, 
-.card-header .btn:focus  {
-    text-decoration:none;
-}
-
-/* Container holding the image and the text */
-.kept-cont {
-    position: relative;
-    text-align: center;
-    color: white;
-}
-/* Bottom left text */
-.bottom-left {
-    position: absolute;
-    top: 30px;
-    left: 10%;
-}
-a.active {
-    background-color: #ccc;
-    border-radius: 5px;
-}
-</style>
-{% endblock %}
-
 {% block submenu %}
-{% include "service/service_submenu.html" %}
-{% endblock %}
-
-{% block main_content_left %}
-  <form id="fsFilterLibForm" class="form-horizontal form-control" action="{% url 'service_external:fs_search' %}" method="post">
-    {% csrf_token %}
-    <div  class="alert alert-warning">
-      <input type="text" name="library" placeholder="library" value="{{ search_library }}">
-      <button type="submit" class="btn btn-primary" name="button" value="apply"> Search</button>
-    </div>
-  </form>
+  {% with submenu="filesync" %}
+    {% include "service/service_submenu.html" %}
+  {% endwith %}
 {% endblock %}
 
 {% block main_content_center %}

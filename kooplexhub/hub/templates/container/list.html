@@ -1,37 +1,11 @@
 {% extends "layout.html" %}
 
-{% block header_extra %}
-<link rel="stylesheet" href="/static/fontawesome-free-5.10.2-web/css/all.css">
-
-<style>
-.card-header .btn-link {
-	color: #343a40;
-
-}
-.card-header .btn-link.collapsed:before {
-    content:"\f105";
-}
-.card-header .btn-link:before {
-   content:"\f107";
-    padding-right: 4px;
-}
-.card-header .btn:hover,
-.card-header .btn:focus  {
-    text-decoration:none;
-    border-color: darkgrey;
-}
-</style>
-{% endblock %}
-
-
 {% block submenu %}
-  {% with title="List of your service environments" submenu="list" %}
-    {% include 'container/service_submenu.html' %}
-  {% endwith %}
+  {% include 'container/service_submenu.html' with title="List of your service environments" submenu="list" %}
 {% endblock %}
 
 {% block main_content_center %}
-  {% for container in user.profile.containers %}
+  {% for service in services %}
      {% include 'container/partial.html' %}
   {% endfor %}
 {% endblock %}

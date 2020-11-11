@@ -1,6 +1,5 @@
 <div class="card bg-light mb-3">
   <div class="card-header" id="heading-{{ project.id }}">
-    {% include 'project/startopen.html' %}
     <button class="btn btn-outline-dark fas btn-link collapsed" data-toggle="collapse" data-target="#collapse-{{ project.id }}" aria-expanded="true" aria-controls="collapse-{{ project.id }}" style="min-width: 15em; text-align: left;">
       {% if project.scope == project.SCP_PRIVATE %}
         <span class="oi oi-key" aria-hidden="true" data-toggle="tooltip" title="Private project" data-placement="top"></span>
@@ -19,7 +18,6 @@
       {% if services|length > 0 %}
         <span class="oi oi-terminal" aria-hidden="true" data-toggle="tooltip" title="Service environments {{services|length}}" data-placement="top"></span>
       {% endif %}
-      {% include 'project/stopremove.html' %}
     </div>
   </div>
 
@@ -34,8 +32,13 @@
             <button type="button" class="btn btn-secondary" style="padding: 3px 6px 6px 6px; margin-right: 3px;" disabled>
               <span class="oi oi-wrench" aria-hidden="true"></span></button>
           {% endif %}
-          <a href="{% url 'project:hide' project.id %}" role="button" class="btn btn-secondary" style="padding: 3px 6px 6px 6px; margin-right: 3px;">
-            <span class="oi oi-eye" aria-hidden="true" data-toggle="tooltip" title="You can hide {{ project.name }} from your list." data-placement="top"></span></a>
+	  {% if binding.is_hidden %}
+            <a href="{% url 'project:show' project.id %}" role="button" class="btn btn-secondary" style="padding: 3px 6px 6px 6px; margin-right: 3px;">
+            <span class="oi oi-eye" aria-hidden="true" data-toggle="tooltip" title="You can unhide {{ project.name }}." data-placement="top"></span></a>
+	  {% else %}
+            <a href="{% url 'project:hide' project.id %}" role="button" class="btn btn-secondary" style="padding: 3px 6px 6px 6px; margin-right: 3px;">
+              <span class="oi oi-eye" aria-hidden="true" data-toggle="tooltip" title="You can hide {{ project.name }} from your list." data-placement="top"></span></a>
+	  {% endif %}
           <a href="{% url 'project:delete' project.id %}" role="button" class="btn btn-secondary" style="padding: 3px 6px 6px 6px; margin-right: 3px;">
             <span class="oi oi-trash" aria-hidden="true" data-toggle="tooltip" title="Delete project {{ project.name }}." data-placement="top"></span></a>
         </div>
@@ -62,7 +65,13 @@
             {% else %}
               <h5 class="card-title">Environments</h5>
               {% for svc in services %}
-	      <p>{{ svc.name }} ({{ svc.state }})</p>
+	        <div class="card-body">
+                  <span data-toggle="tooltip" title="Image: {{ svc.image }}">{{ svc.name }}</span>
+                  <div style="float: right;">
+                    {% include 'container/startopen.html' with service=svc next_page="project:list" %}
+                    {% include 'container/stopremove.html' with service=svc next_page="project:list" %}
+                  </div>
+	        </div>
               {% endfor %}
             {% endif %}
           </div>

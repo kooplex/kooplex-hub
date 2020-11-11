@@ -71,14 +71,26 @@ def new(request):
 def join(request):
     logger.debug("user %s" % request.user)
     user = request.user
-    if request.method == 'GET':
-        project_public_and_internal = set(Project.objects.filter(Q(scope = Project.SCP_INTERNAL) | Q(scope = Project.SCP_PUBLIC)))
+    pattern_name = request.POST.get('project', '')
+    pattern_creator = request.POST.get('creator', '')
+    search = request.POST.get('button', '') == 'search'
+    listing = request.method == 'GET' or (request.method == 'POST' and search)
+    if listing:
+        project_public_and_internal = Project.objects.filter(scope__in = [ Project.SCP_INTERNAL, Project.SCP_PUBLIC ])
+        if pattern_name:
+            project_public_and_internal = project_public_and_internal.filter(name__icontains = pattern_name)
+        if pattern_creator:
+            raise NotImplementedError('ez meg nincs kesz')
         project_mine = set([ upb.project for upb in UserProjectBinding.objects.filter(user = user) ])
-        project_joinable = project_public_and_internal.difference(project_mine)
+        project_joinable = set(project_public_and_internal).difference(project_mine)
         table_joinable = T_JOINABLEPROJECT([ UserProjectBinding.objects.get(project = p, role = UserProjectBinding.RL_CREATOR) for p in project_joinable ])
         RequestConfig(request).configure(table_joinable)
         context_dict = {
             't_joinable': table_joinable,
+            'search_form': { 'action': "project:j_search", 'items': [ 
+                { 'name': "project", 'placeholder': "project name", 'value': pattern_name },
+                { 'name': "creator", 'placeholder': "project creator", 'value': pattern_creator },
+            ] },
         }
         return render(request, 'project/join.html', context = context_dict)
     else:
@@ -110,9 +122,17 @@ def join(request):
 @login_required
 def listprojects(request):
     """Renders the projectlist page for courses taught."""
-    logger.debug('Rendering project.html')
+    user = request.user
+    logger.debug(f'Rendering project.html {user}')
+    pattern_name = request.POST.get('project', '')
+    if pattern_name:
+        projectbindings = UserProjectBinding.objects.filter(user = user, project__name__icontains = pattern_name)
+    else:
+        projectbindings = UserProjectBinding.objects.filter(user = user, is_hidden = False)
     context_dict = {
         'menu_project': 'active',
+        'projectbindings': projectbindings,
+        'search_form': { 'action': "project:l_search", 'items': [ { 'name': "project", 'placeholder': "project name", 'value': pattern_name } ] },
     }
     return render(request, 'project/list.html', context = context_dict)
 
@@ -407,6 +427,19 @@ def show_hide(request):
         return redirect('project:list')
 
 @login_required
+def show(request, project_id):
+    """Unhide project from the list."""
+    logger.debug("project id %s, user %s" % (project_id, request.user))
+    try:
+        project = Project.objects.get(id = project_id)
+        UserProjectBinding.setvisibility(project, request.user, hide = False)
+    except Project.DoesNotExist:
+        messages.error(request, 'You cannot unhide the requested project.')
+    except ProjectDoesNotExist:
+        messages.error(request, 'You cannot unhide the requested project.')
+    return redirect('project:list')
+
+@login_required
 def hide(request, project_id):
     """Hide project from the list."""
     logger.debug("project id %s, user %s" % (project_id, request.user))
@@ -418,6 +451,7 @@ def hide(request, project_id):
     except ProjectDoesNotExist:
         messages.error(request, 'You cannot hide the requested project.')
     return redirect('project:list')
+
 
 
 
@@ -456,15 +490,15 @@ def stat(request):
 
 urlpatterns = [
     url(r'^list', listprojects, name = 'list'), 
+    url(r'^l_search', listprojects, name = 'l_search'), 
     url(r'^new/?$', new, name = 'new'), 
     url(r'^show/?$', show_hide, name = 'showhide'),
     url(r'^hide/(?P<project_id>\d+)/?$', hide, name = 'hide'), 
+    url(r'^show/(?P<project_id>\d+)/?$', show, name = 'show'), 
     url(r'^delete/(?P<project_id>\d+)/?$', delete_leave, name = 'delete'), 
     url(r'^configure/(?P<project_id>\d+)/?$', configure, name = 'configure'), 
-
-
-    #FIXME:
     url(r'^join/?$', join, name = 'join'), 
+    url(r'^j_search/?$', join, name = 'j_search'), 
 #    url(r'^configure/(?P<project_id>\d+)/meta/(?P<next_page>\w+:?\w*)$', conf_meta, name = 'conf_meta'), 
 #    url(r'^configure/(?P<project_id>\d+)/collaboration/(?P<next_page>\w+:?\w*)$', conf_collab, name = 'conf_collaboration'), 
 #    url(r'^configure/(?P<project_id>\d+)/environment/(?P<next_page>\w+:?\w*)$', conf_environment, name = 'conf_environment'), 

@@ -1,26 +1,30 @@
+{% if messages %}
+<div class="card"> 
 {% for message in messages %}
   {% if message.level == 25 %}
-      <div class="alert alert-success">
+      <div class="alert alert-successi card-body">
          <a href="#" class="close" data-dismiss="alert">&times;</a>
          {{ message }}
       </div>
   {% endif %}
   {% if message.level == 20 %}
-      <div class="alert alert-info">
+      <div class="alert alert-info card-body">
          <a href="#" class="close" data-dismiss="alert">&times;</a>
          <strong>Info: </strong>  {{ message }}
       </div>
   {% endif %}
   {% if message.level == 30 %}
-      <div class="alert alert-warning">
+      <div class="alert alert-warning card-body">
          <a href="#" class="close" data-dismiss="alert">&times;</a>
          <strong>Warning!</strong>  {{ message }}
       </div>
   {% endif %}
   {% if message.level == 40 %}
-      <div class="alert alert-danger">
+      <div class="alert alert-danger card-body">
          <a href="#" class="close" data-dismiss="alert">&times;</a>
          <strong>ERROR!</strong>  {{ message }}
       </div>
   {% endif %}
 {% endfor %}
+</div>
+{% endif %}

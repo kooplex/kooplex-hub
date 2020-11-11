@@ -31,10 +31,9 @@ def filesynchronization(request):
     context_dict = {
         'next_page': 'service_external:filesync',
         'menu_service': 'active',
-        'submenu': 'filesynch',
         'syncservers': FSServer.objects.all(),
         'tbl_libraries': tbl_libraries,
-        'search_library': pattern,
+        'search_form': { 'action': "service_external:fs_search", 'items': [ { 'name': "library", 'placeholder': "library", 'value': pattern } ] },
     }
     return render(request, 'service/filesynchronization.html', context = context_dict)
 
@@ -158,10 +157,9 @@ def versioncontrol(request):
     context_dict = {
         'next_page': 'service_external:versioncontrol',
         'menu_service': 'active',
-        'submenu': 'versioncontrol',
         'reposervers': VCRepository.objects.all(),
         'tbl_repositories': tbl_repositories,
-        'search_repo': pattern,
+        'search_form': { 'action': "service_external:vc_search", 'items': [ { 'name': "repository", 'placeholder': "vc. project", 'value': pattern } ] },
     }
     return render(request, 'service/versioncontrol.html', context = context_dict)
 

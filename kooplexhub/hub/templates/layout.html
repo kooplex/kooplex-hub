@@ -1,32 +1,29 @@
+{% load staticfiles %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
     <title>Kooplex Hub</title>
-    {% load staticfiles %}
-
-	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
-	<meta name="description" content="">
-	<meta name="author" content="">
-	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
-    <!-- Bootstrap CSS -->
+    <meta charset="utf-8" />
+    <!-- meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no" -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="description" content="">
+    <meta name="author" content="">
+    
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" >
-    <!--integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous"-->
-    <!-- open iconic -->
+    <link rel="stylesheet" href="/static/css/animate.css"  type="text/css">
+    <link rel="stylesheet" href="/static/css/font-awesome.css" type="text/css">
+    <link rel="stylesheet" href="/static/css/nexus.css"  type="text/css">
+    <link rel="stylesheet" href="/static/css/responsive.css"  type="text/css">
+    <link rel="stylesheet" href="/static/css/custom.css"  type="text/css">
+    <link rel="stylesheet" href="{% static 'fontawesome-free-5.10.2-web/css/all.css' %}">
     <link rel="stylesheet" href="{% static 'fonts/open-iconic-master/font/css/open-iconic-bootstrap.css' %}">
-	<!--link rel="stylesheet" href="/static/css/bootstrap.css"  type="text/css"-->
-	<!-- Template CSS -->
-	<link rel="stylesheet" href="/static/css/animate.css"  type="text/css">
-	<link rel="stylesheet" href="/static/css/font-awesome.css" type="text/css">
-	<link rel="stylesheet" href="/static/css/nexus.css"  type="text/css">
-	<link rel="stylesheet" href="/static/css/responsive.css"  type="text/css">
-	<link rel="stylesheet" href="/static/css/custom.css"  type="text/css">
-	<!-- Google Fonts-->
-	<link href="http://fonts.googleapis.com/css?family=Lato:400,300" rel="stylesheet" type="text/css">
-	<link href="http://fonts.googleapis.com/css?family=Open+Sans:400,300" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="{% static 'css/bootstrap4-toggle.min.css' %}">
+    <link href="http://fonts.googleapis.com/css?family=Lato:400,300" rel="stylesheet" type="text/css">
+    <link href="http://fonts.googleapis.com/css?family=Open+Sans:400,300" rel="stylesheet" type="text/css">
 
     <script src="https://code.jquery.com/jquery-3.3.1.min.js"  crossorigin="anonymous"></script>
+    <script src="{% static 'scripts/bootstrap4-toggle.min.js' %}"></script>
     {% block header_extra %}{% endblock %}
 
 <style>
@@ -36,9 +33,28 @@
 	margin-right: auto;
 }
 .card {
-margin-bottom: 15px; 
-box-shadow: 5px 3px lightgray;
-margin-right: 6px;
+        margin-bottom: 15px; 
+        box-shadow: 5px 3px lightgray;
+        margin-right: 6px;
+}
+a.active {
+    background-color: #ccc;
+    border-radius: 5px;
+}
+.card-header .btn-link {
+	color: #343a40;
+}
+.card-header .btn-link.collapsed:before {
+    content:"\f105";
+}
+.card-header .btn-link:before {
+   content:"\f107";
+    padding-right: 4px;
+}
+.card-header .btn:hover,
+.card-header .btn:focus  {
+    text-decoration:none;
+    border-color: darkgrey;
 }
 </style>
   </head>
@@ -46,7 +62,6 @@ margin-right: 6px;
   <body style="overflow:auto; min-height: 100vh;   position: relative;   margin: 0;">
     {% include 'navbar.html' %}
     {% block submenu %}{% endblock %}
-    {% include 'message.html' %}
     <div class="body-content" style="
        box-sizing: 
        border-box;
@@ -59,36 +74,25 @@ margin-right: 6px;
 
       <div class="row">
         <div class="col-md-3">
+           {% include 'search.html' %}
            {% block main_content_left %}{% endblock %}
         </div>
         <div class="col-md-7">
            {% block main_content_center %}{% endblock %}
         </div>
         <div class="col-md-2">
+           {% include 'message.html' %}
            {% block main_content_right %}{% endblock %}
            {% include 'footer_right.html' %}
         </div>
       </div>
     </div>
 
-
-    <footer>
-    </footer>
-
+    <script src="{% static 'scripts/bootstrap4-toggle.min.js' %}"></script>
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
-    {% block scripts %}
-    <script>
-        async function user_current_usage(username) {
-          const url = "https://kooplex.vo.elte.hu/stats/user?user_name="+username; //FIXME: 
-          const response = await fetch(url);
-          const stats = await response.json(); //extract JSON from the http response
-          document.getElementById('navstat').innerHTML = "Current CPU usage: "+stats['current_cpu'] + " % -- Current Memory usage: "+stats['current_mem'] + " MB";
-        }
-
-    </script>
-    {% endblock %}
+    {% block scripts %}{% endblock %}
 
   </body>
 </html>

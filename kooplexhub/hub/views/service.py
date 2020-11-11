@@ -41,8 +41,13 @@ def new(request):
 @login_required
 def listservices(request):
     """Renders the containerlist page."""
-    logger.debug('Rendering container/list.html')
-    #TODO: make volume/image etc changes visible, so the user will know which one needs to be deleted. 
+    user = request.user
+    logger.debug(f'Rendering service.html {user}')
+    pattern_name = request.POST.get('service', '')
+    if pattern_name:
+        services = Service.objects.filter(user = user, name__icontains = pattern_name)
+    else:
+        services = Service.objects.filter(user = user)
     unbound = Service.objects.filter(user = request.user).exclude(projectservicebinding__gt = 0)
     if unbound:
         messages.warning(request, 'Note, your environments {} are not bound to any projects'.format(', '.join([ s.name for s in unbound ])))
@@ -52,42 +57,11 @@ def listservices(request):
     context_dict = {
         'next_page': 'service:list',
         'menu_container': 'active',
+        'services': services,
+        'search_form': { 'action': "service:l_search", 'items': [ { 'name': "service", 'placeholder': "service name", 'value': pattern_name } ] },
     }
     return render(request, 'container/list.html', context = context_dict)
 
-
-@login_required
-def startprojectcontainer(request, project_id, next_page):
-    """Starts the project container."""
-    user = request.user
-    try:
-        container = Container.get_userprojectcontainer(user = user, project_id = project_id, create = True)
-        container.docker_start()
-        showpass(request, container)
-    except Container.DoesNotExist:
-        messages.error(request, 'Project does not exist')
-    except Exception as e:
-        logger.error('Cannot start the container %s (project id: %s) -- %s' % (container, project_id, e))
-        messages.error(request, 'Cannot start the container -- %s' % e)
-    return redirect(next_page)
-
-
-@login_required
-def startcoursecontainer(request, course_id, next_page):
-    """Starts the project container."""
-    user = request.user
-    container = None
-    try:
-        container = Container.get_usercoursecontainer(user = user, course_id = course_id, create = True)
-        container.docker_start()
-        showpass(request, container)
-    except Container.DoesNotExist:
-        messages.error(request, 'Course does not exist')
-    except Exception as e:
-        logger.error('Cannot start the container %s (course id: %s) -- %s' % (container, course_id, e))
-        messages.error(request, 'Cannot start the container -- %s' % e)
-    return redirect(next_page)
- 
 
 @login_required
 def startservice(request, environment_id, next_page):
@@ -265,14 +239,11 @@ def refreshlogs(request, environment_id):
 urlpatterns = [
     url(r'^new/?$', new, name = 'new'), 
     url(r'^list/?$', listservices, name = 'list'), 
+    url(r'^l_search/?$', listservices, name = 'l_search'), 
     url(r'^start/(?P<environment_id>\d+)/(?P<next_page>\w+:?\w*)$', startservice, name = 'start'),
     url(r'^open/(?P<environment_id>\d+)/(?P<next_page>\w+:?\w*)$', openservice, name = 'open'),
     url(r'^stop/(?P<environment_id>\d+)/(?P<next_page>\w+:?\w*)$', stopservice, name = 'stop'),
     url(r'^destroy/(?P<environment_id>\d+)/(?P<next_page>\w+:?\w*)$', destroyservice, name = 'destroy'),
     url(r'^refreshlogs/(?P<environment_id>\d+)$', refreshlogs, name = 'refreshlogs'),
     url(r'^configure/(?P<environment_id>\d+)$', configureservice, name = 'configure'),
-
-    #FIXME: the below 2 used?
-    url(r'^startproject/(?P<project_id>\d+)/(?P<next_page>\w+:?\w*)$', startprojectcontainer, name = 'startprojectcontainer'),
-    url(r'^startcourse/(?P<course_id>\d+)/(?P<next_page>\w+:?\w*)$', startcoursecontainer, name = 'startcoursecontainer'),
 ]

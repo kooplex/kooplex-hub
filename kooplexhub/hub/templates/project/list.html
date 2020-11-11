@@ -1,50 +1,14 @@
 {% extends "layout.html" %}
 
-{% block header_extra %}
-<link rel="stylesheet" href="/static/fontawesome-free-5.10.2-web/css/all.css">
-
-<style>
-.card-header .btn-link {
-	color: #343a40;
-
-}
-.card-header .btn-link.collapsed:before {
-    content:"\f105";
-}
-.card-header .btn-link:before {
-   content:"\f107";
-    padding-right: 4px;
-}
-.card-header .btn:hover,
-.card-header .btn:focus  {
-    text-decoration:none;
-    border-color: darkgrey;
-}
-</style>
-{% endblock %}
-
 {% block submenu %}
-  {% with title="The list of your projects" submenu="list" %}
-    {% include 'project/project_submenu.html' %}
-  {% endwith %}
-{% endblock %}
-
-{% block main_content_left %}
-{% comment %}
-<iframe src="https://kooplex-fiek.elte.hu/grafana/d-solo/GSx3U1SMz/memory?orgId=1&panelId=4" width="330" height="200" frameborder="0"></iframe>
-<iframe src="https://kooplex-fiek.elte.hu/grafana/d-solo/GSx3U1SMz/memory?orgId=1&theme=light&panelId=2" width="330" height="600" frameborder="0"></iframe>
-{% endcomment %}
+  {% include 'project/project_submenu.html' with title="The list of your projects" submenu="list" %}
 {% endblock %}
 
 {% block main_content_center %}
-  {% for binding in user.profile.projectbindings %}
-    {% if not binding.is_hidden %}
-      {% with project=binding.project next_page='project:list' %}
-        {% with services=project|get_userz_services:user %}
-          {% include 'project/partial.html' %}
-        {% endwith %}
-      {% endwith %}
-    {% endif %}
+  {% for binding in projectbindings %}
+    {% with project=binding.project %}
+      {% include 'project/partial.html' with next_page='project:list' services=project|get_userz_services:user %}
+    {% endwith %}
   {% endfor %}
 {% endblock %}
 

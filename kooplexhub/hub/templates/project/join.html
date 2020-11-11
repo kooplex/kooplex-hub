@@ -1,15 +1,9 @@
 {% extends "layout.html" %}
 
 {% block header_extra %}
-{% load staticfiles %}
-
-<!--script src="https://kit.fontawesome.com/27d0a7c7d0.js"></script-->
-<link rel="stylesheet" href="{% static 'fontawesome-free-5.10.2-web/css/all.css' %}">
-
-<link rel="stylesheet" href="{% static 'css/bootstrap4-toggle.min.css' %}">
-<script src="{% static 'scripts/bootstrap4-toggle.min.js' %}"></script>
+  {% load staticfiles %}
+  <script src="{% static 'scripts/bootstrap4-toggle.min.js' %}"></script>
 {% endblock %}
-
 
 {% block submenu %}
   {% with title="Join a collaboration" submenu="join" %}
@@ -18,16 +12,16 @@
 {% endblock %}
 
 {% block main_content_center %}
-{% load render_table from django_tables2 %}
-
-<form id="project-manage" class="form-horizontal" action="{% url 'project:join' %}" method="post">
-  {% csrf_token %}
-  <p>Select those projects you want to join.</p>
-  {% render_table t_joinable %}
-  <div class="modal-footer">
-    <button type="submit" class="btn btn-default" name="button" value="apply"> Join projects</button>
-    <button class="btn btn-default" data-dismiss="modal">Cancel</button>
-  </div>
-</form>
+  {% load render_table from django_tables2 %}
+  
+  <form id="project-manage" class="form-horizontal" action="{% url 'project:join' %}" method="post">
+    {% csrf_token %}
+    <p>Select those projects you want to join.</p>
+    {% render_table t_joinable %}
+    <div class="modal-footer">
+      <button type="submit" class="btn btn-default" name="button" value="apply"> Join projects</button>
+      <button class="btn btn-default" data-dismiss="modal">Cancel</button>
+    </div>
+  </form>
 {% endblock %}
 

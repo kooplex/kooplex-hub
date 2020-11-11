@@ -1,66 +1,64 @@
 <div class="card bg-light mb-3">
-  <div class="card-header" id="heading-{{ container.id }}">
-    {% include 'container/startopen.html' %}
-    {% comment %} fas btn-link collapsed
-    {% endcomment %}
-    <button class="btn btn-outline-dark fas btn-link collapsed" data-toggle="collapse" data-target="#collapse-{{ container.id }}" aria-expanded="true" aria-controls="collapse-{{ container.id }}" style="min-width: 15em; text-align: left;">
-      <strong>{{ container.name }}</strong>
+  <div class="card-header" id="heading-{{ service.id }}">
+    {% include 'container/startopen.html' with service=service next_page="service:list" label_open="Open" label_start="Start" %}
+    <button class="btn btn-outline-dark fas btn-link collapsed" data-toggle="collapse" data-target="#collapse-{{ service.id }}" aria-expanded="true" aria-controls="collapse-{{ service.id }}" style="min-width: 15em; text-align: left;">
+      <strong>{{ service.name }}</strong>
     </button>
     <div style="float:right">
-      <button class="btn" data-toggle="collapse" data-target="#collapse-{{ container.id }}" aria-expanded="true" aria-controls="collapse-{{ container.id }}">
-        {% if container.state == container.ST_NEED_RESTART %}
-          <span class="badge badge-pill badge-danger"><strong>{{ container.image }}</strong></span>
-        {% elif container.state == container.ST_RUNNING  %}
-          <span class="badge badge-pill badge-success"><strong>{{ container.image }}</strong></span>
+      <button class="btn" data-toggle="collapse" data-target="#collapse-{{ service.id }}" aria-expanded="true" aria-controls="collapse-{{ service.id }}">
+        {% if service.state == service.ST_NEED_RESTART %}
+          <span class="badge badge-pill badge-danger"><strong>{{ service.image }}</strong></span>
+        {% elif service.state == service.ST_RUNNING  %}
+          <span class="badge badge-pill badge-success"><strong>{{ service.image }}</strong></span>
         {% else %}
-          <span class="badge badge-pill badge-secondary"><strong>{{ container.image }}</strong></span>
+          <span class="badge badge-pill badge-secondary"><strong>{{ service.image }}</strong></span>
         {% endif %}
       </button>
-      {% include 'container/stopremove.html' %}
+      {% include 'container/stopremove.html' with service=service next_page="service:list" %}
     </div>
   </div>
 
-  <div id="collapse-{{ container.id }}" class="collapse" aria-labelledby="heading-{{ container.id }}" data-parent="#containerList">
+  <div id="collapse-{{ service.id }}" class="collapse" aria-labelledby="heading-{{ service.id }}" data-parent="#serviceList">
     <div class="card" style="margin: 10px">
       <div class="card-header">Control: 
         <div style="float: right;">
-          <span class="badge badge-pill badge-secondary">Last message:<strong>{{ container.last_message_at }}</strong></span>
-          <a href="{% url 'service:refreshlogs' container.id %}" role="button" class="btn btn-primary" style="padding: 3px 6px 6px 6px; margin-right: 3px">
-            <span class="oi oi-reload" aria-hidden="true" data-toggle="tooltip" title="Refresh container information" data-placement="bottom"></span></a>
-          <a href="{% url 'service:destroy' container.id next_page %}" role="button" class="btn btn-danger" style="padding: 3px 6px 6px 6px; margin-right: 3px">
-            <span class="oi oi-fire" aria-hidden="true" data-toggle="tooltip" title="Remove {{ container.name }}"></span></a>
-          <a href="{% url 'service:configure' container.id %}" role="button" class="btn btn-secondary" style="padding: 3px 6px 6px 6px; margin-right: 3px">
-            <span class="oi oi-wrench" aria-hidden="true" data-toggle="tooltip" title="Add/remove project to the container" data-placement="bottom"></span></a>
+          <span class="badge badge-pill badge-secondary">Last message:<strong>{{ service.last_message_at }}</strong></span>
+          <a href="{% url 'service:refreshlogs' service.id %}" role="button" class="btn btn-primary" style="padding: 3px 6px 6px 6px; margin-right: 3px">
+            <span class="oi oi-reload" aria-hidden="true" data-toggle="tooltip" title="Refresh service information" data-placement="bottom"></span></a>
+          <a href="{% url 'service:destroy' service.id next_page %}" role="button" class="btn btn-danger" style="padding: 3px 6px 6px 6px; margin-right: 3px">
+            <span class="oi oi-fire" aria-hidden="true" data-toggle="tooltip" title="Remove {{ service.name }}"></span></a>
+          <a href="{% url 'service:configure' service.id %}" role="button" class="btn btn-secondary" style="padding: 3px 6px 6px 6px; margin-right: 3px">
+            <span class="oi oi-wrench" aria-hidden="true" data-toggle="tooltip" title="Add/remove project to the service" data-placement="bottom"></span></a>
         </div>
       </div>
       <div class="card-body">
         <div class="card-deck">
           <div class="card">
-            {% if container.projects|length == 0 %}
+            {% if service.projects|length == 0 %}
               <h5 class="card-title">No projects associated</h5>
             {% else %}
               <h5 class="card-title">Projects</h5>
-              {% for p in container.projects %}
+              {% for p in service.projects %}
                 <p>{{ p }}</p>
               {% endfor %}
             {% endif %}
           </div>
           <div class="card">
-            {% if container.volumes|length == 0 %}
+            {% if service.volumes|length == 0 %}
               <h5 class="card-title">No volumes associated</h5>
             {% else %}
               <h5 class="card-title">Volumes</h5>
-              {% for v in container.volumes %}
+              {% for v in service.volumes %}
                 <p>{{ v }} ({{ v.description }})</p>
               {% endfor %}
             {% endif %}
           </div>
           <div class="card">
-            {% if container.synced_libraries|length == 0 %}
+            {% if service.synced_libraries|length == 0 %}
               <h5 class="card-title">No file synchron folders associated</h5>
             {% else %}
               <h5 class="card-title">Synchronized folders</h5>
-              {% for l in container.synced_libraries %}
+              {% for l in service.synced_libraries %}
       	  <p>{{ l.library_name }} from server {{ l.sync_server.url }}</p>
               {% endfor %}
             {% endif %}
