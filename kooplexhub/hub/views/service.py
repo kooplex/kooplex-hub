@@ -228,7 +228,7 @@ def refreshlogs(request, environment_id):
     user = request.user
     try:
         svc = Service.objects.get(user = user, id = environment_id)
-        svc.refresh_state()
+        svc.check_state()
     except Service.DoesNotExist:
         messages.error(request, 'Environment does not exist')
     except Exception as e:

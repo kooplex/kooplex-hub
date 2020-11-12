@@ -39,7 +39,7 @@ def table_collaboration(project):
     
         class Meta:
             model = Profile
-            fields = ('id', 'role' 'name', 'location')
+            fields = ('id', 'role', 'name', 'location')
             sequence = ('id', 'role', 'name', 'location')
             attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
 

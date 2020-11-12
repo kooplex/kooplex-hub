@@ -5,6 +5,7 @@ import django_tables2 as tables
 
 from hub.models import UserProjectBinding
 from hub.models import ProjectServiceBinding
+from hub.models import Service
 
 def image_column(service):
     class ImageColumn(tables.Column):
@@ -90,3 +91,22 @@ class T_PROJECT(tables.Table):
         sequence = ('id', 'project')
         attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
 
+def table_services(userprojectbinding):
+    class T_PROJECTSERVICE(tables.Table):
+        class ServiceSelectionColumn(tables.Column):
+            def render(self, record):
+                stl_add = 'danger' if record.state in [ record.ST_RUNNING, record.ST_NEED_RESTART ] else 'success'
+                stl_rem = 'danger' if record.state in [ record.ST_RUNNING, record.ST_NEED_RESTART ] else 'dark'
+                try:
+                    psb = ProjectServiceBinding.objects.get(project = userprojectbinding.project, service = record)
+                    return format_html(f'<input type="hidden" name="psb_ids_before" value="{psb.id}"><input type="checkbox" name="psb_ids_after" data-toggle="toggle" value="{psb.id}" data-on="Bound" data-off="Detach" data-onstyle="success" data-offstyle="{stl_rem}" data-size="xs" checked>')
+                except ProjectServiceBinding.DoesNotExist:
+                    return format_html(f'<input type="checkbox" name="svc_ids" data-toggle="toggle" value="{record.id}" data-off="Skip" data-on="Attach" data-onstyle="{stl_add}" data-offstyle="dark" data-size="xs">')
+
+        id = ServiceSelectionColumn(verbose_name = 'Environment', orderable = False)
+        class Meta:
+            model = Service
+            fields = ('id', 'name', 'image', 'state')
+            sequence = ('id', 'name', 'image', 'state')
+            attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
+    return T_PROJECTSERVICE

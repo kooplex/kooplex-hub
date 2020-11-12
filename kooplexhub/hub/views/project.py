@@ -13,7 +13,7 @@ from django.db.models import Q
 
 
 from hub.forms import FormProject
-from hub.forms import table_collaboration, T_SERVICE, T_JOINABLEPROJECT, T_PROJECT
+from hub.forms import table_collaboration, table_services, T_SERVICE, T_JOINABLEPROJECT, T_PROJECT
 from hub.forms import table_volume
 from hub.forms import table_vcproject
 from hub.models import Project, UserProjectBinding
@@ -127,6 +127,11 @@ def listprojects(request):
         projectbindings = UserProjectBinding.objects.filter(user = user, project__name__icontains = pattern_name)
     else:
         projectbindings = UserProjectBinding.objects.filter(user = user, is_hidden = False)
+    no_svc = lambda pb: len(pb.project.get_userz_services(user)) == 0
+    no_svc_msg = ', '.join([ pb.project.name for pb in filter(no_svc, projectbindings) ])
+    if no_svc_msg:
+        messages.warning(request, f'Your projects: {no_svc_msg} are not bound to an environment service')
+
     context_dict = {
         'menu_project': 'active',
         'projectbindings': projectbindings,
@@ -164,6 +169,14 @@ def sel_table(user, project, volumetype):
 def configure(request, project_id):
     user = request.user
     logger.debug("method: %s, project id: %s, user: %s" % (request.method, project_id, user))
+    pattern_collaborator = request.POST.get('collaborator', '')
+    search = request.POST.get('button', '') == 'search'
+    cancel = request.POST.get('button', '') == 'cancel'
+    submit = request.POST.get('button', '') == 'apply'
+    if cancel:
+        return redirect('project:list')
+
+    listing = request.method == 'GET' or (request.method == 'POST' and search)
     try:
         project = Project.get_userproject(project_id = project_id, user = request.user)
     except Project.DoesNotExist as e:
@@ -171,20 +184,19 @@ def configure(request, project_id):
         messages.error(request, 'Project does not exist')
         return redirect('project:list')
 
-    if request.method == 'POST' and request.POST.get('button') == 'apply':
+    if submit:
 
         # meta
         project.scope = request.POST['project_scope']
         project.description = request.POST.get('description')
         project.save()
         
-        assert project.is_admin(user), "You don't have the necessary rights"
         # collaboration
+        assert project.is_admin(user), "You don't have the necessary rights"
         collaborator_ids_before = set(request.POST.getlist('collaborator_ids_before'))
         collaborator_ids_after = set(request.POST.getlist('collaborator_ids_after'))
         admin_ids_before = set(request.POST.getlist('admin_ids_before'))
         admin_ids_after = set(request.POST.getlist('admin_ids_after'))
-
         # removal
         removed = []
         collaborator_ids_to_remove = collaborator_ids_before.difference(collaborator_ids_after)
@@ -192,7 +204,6 @@ def configure(request, project_id):
             b = UserProjectBinding.objects.get(user__id = i, project = project)
             removed.append(b.user.username)
             b.delete()
-
         # addition
         added = []
         service_ids = request.POST.getlist('service_ids')
@@ -210,7 +221,6 @@ def configure(request, project_id):
                 svc_copy = Service.objects.create(user = collaborator, image = svc.image, name = f'{b.user.username}-{project.name}-{user.username}')
                 ProjectServiceBinding.objects.create(service = svc_copy, project = project)
                 #TODO: handle volumes
-
         # role change
         changed = []
         collaborator_ids_to_admin = admin_ids_after.difference(admin_ids_before).intersection(collaborator_ids_after).difference(collaborator_ids_to_add)
@@ -229,7 +239,6 @@ def configure(request, project_id):
             b.role = UserProjectBinding.RL_COLLABORATOR
             changed.append(b.user.username)
             b.save()
-
         if added:
             messages.info(request, 'Added {} as colaborators'.format(', '.join(added)))
         if removed:
@@ -237,50 +246,68 @@ def configure(request, project_id):
         if changed:
             messages.info(request, 'Changed collaboration roles of {}'.format(', '.join(changed)))
 
+        # service
+        psb_ids_before = set(request.POST.getlist('psb_ids_before'))
+        psb_ids_after = set(request.POST.getlist('psb_ids_after'))
+        # removal
+        removed = []
+        restart = []
+        psb_ids_to_remove = psb_ids_before.difference(psb_ids_after)
+        for i in psb_ids_to_remove:
+            b = ProjectServiceBinding.objects.get(id = i, project = project, service__user = user)
+            svc = b.service
+            removed.append(svc.name)
+            if svc.state == svc.ST_RUNNING:
+                svc.state = svc.ST_NEED_RESTART
+                svc.save()
+                restart.append(svc.name)
+            b.delete()
+        # addition
+        added = []
+        svc_ids = request.POST.getlist('svc_ids')
+        for i in svc_ids:
+            svc = Service.objects.get(id = i, user = user)
+            ProjectServiceBinding.objects.create(service = svc, project = project)
+            added.append(svc.name)
+            if svc.state == svc.ST_RUNNING:
+                svc.state = svc.ST_NEED_RESTART
+                svc.save()
+                restart.append(svc.name)
+        if added:
+            messages.info(request, 'Added service environments {0} to project {1}'.format(', '.join(added), project.name))
+        if removed:
+            messages.info(request, 'Removed service environments {0} from project {1}'.format(', '.join(removed), project.name))
+        if restart:
+            messages.warning(request, 'Restart service environments {} because they became inconsistent'.format(', '.join(restart)))
 
         return redirect('project:list')
     else:
         if project.is_admin(user):
             table = table_collaboration(project)
-            table_collaborators = table(user.profile.everybodyelse) #FIXME: if pattern == '' else table(user.profile.everybodyelse_like(pattern))
+            if pattern_collaborator:
+                table_collaborators = table(user.profile.everybodyelse_like(pattern_collaborator))
+            else:
+                table_collaborators = table(user.profile.everybodyelse)
             RequestConfig(request).configure(table_collaborators)
 
-            table_services = T_SERVICE(ProjectServiceBinding.objects.filter(service__user = user, project = project))
-            RequestConfig(request).configure(table_services)
+            table_project_services = T_SERVICE(ProjectServiceBinding.objects.filter(service__user = user, project = project))
+            RequestConfig(request).configure(table_project_services)
+
+            table = table_services(UserProjectBinding.objects.get(user = user, project = project))
+            table_all_services = table(Service.objects.filter(user = user))
+            RequestConfig(request).configure(table_all_services)
         else:
             table_collaborators = None
         context_dict = {
             'project': project, 
             't_collaborators': table_collaborators,
-            't_services': table_services,
+            't_services': table_project_services,
+            't_all_services': table_all_services,
+            'search_form': { 'action': "project:c_search", 'extra': project.id, 'items': [ 
+                { 'name': "collaborator", 'placeholder': "collaborator", 'value': pattern_collaborator },
+            ] },
         }
         return render(request, 'project/configure.html', context = context_dict)
-
-
-#    sort_info = request.GET.get('sort') if request.method == 'GET' else request.POST.get('sort')
-#    if request.method == 'POST' and request.POST.get('button') == 'apply':
-#        msg = project.set_roles(request.POST.getlist('role_map'))
-#        if len(msg):
-#            messages.info(request, '\n'.join(msg))
-#        return redirect(next_page)
-#    elif (request.method == 'POST' and request.POST.get('button') == 'search') or request.method == 'GET':
-#        pattern = request.POST.get('name', '')
-#        context_dict = {
-#            'project': project, 
-#            'can_configure': True,
-#            'submenu': 'collaboration',
-#            'next_page': next_page,
-#            'search_name': pattern,
-#            'sort': sort_info,
-#        }
-#        return render(request, 'project/conf-collaboration.html', context = context_dict)
-#    elif request.method == 'POST' and request.POST.get('button') == 'cancel':
-#        context_dict = {
-#             'next_page': 'project:list',
-#             'menu_project': 'active',
-#        }
-#        return render(request, 'project/list.html', context = context_dict)
-
 
 
 
@@ -487,6 +514,7 @@ urlpatterns = [
     url(r'^sh_search/?$', show_hide, name = 'sh_search'),
     url(r'^delete/(?P<project_id>\d+)/?$', delete_leave, name = 'delete'), 
     url(r'^configure/(?P<project_id>\d+)/?$', configure, name = 'configure'), 
+    url(r'^c_search/(?P<project_id>\d+)/?$', configure, name = 'c_search'), 
     url(r'^join/?$', join, name = 'join'), 
     url(r'^j_search/?$', join, name = 'j_search'), 
 #    url(r'^configure/(?P<project_id>\d+)/meta/(?P<next_page>\w+:?\w*)$', conf_meta, name = 'conf_meta'), 

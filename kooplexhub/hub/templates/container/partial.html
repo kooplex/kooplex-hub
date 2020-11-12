@@ -22,13 +22,10 @@
     <div class="card" style="margin: 10px">
       <div class="card-header">Control: 
         <div style="float: right;">
-          <span class="badge badge-pill badge-secondary">Last message:<strong>{{ service.last_message_at }}</strong></span>
-          <a href="{% url 'service:refreshlogs' service.id %}" role="button" class="btn btn-primary" style="padding: 3px 6px 6px 6px; margin-right: 3px">
-            <span class="oi oi-reload" aria-hidden="true" data-toggle="tooltip" title="Refresh service information" data-placement="bottom"></span></a>
-          <a href="{% url 'service:destroy' service.id next_page %}" role="button" class="btn btn-danger" style="padding: 3px 6px 6px 6px; margin-right: 3px">
-            <span class="oi oi-fire" aria-hidden="true" data-toggle="tooltip" title="Remove {{ service.name }}"></span></a>
-          <a href="{% url 'service:configure' service.id %}" role="button" class="btn btn-secondary" style="padding: 3px 6px 6px 6px; margin-right: 3px">
-            <span class="oi oi-wrench" aria-hidden="true" data-toggle="tooltip" title="Add/remove project to the service" data-placement="bottom"></span></a>
+          <span class="badge badge-pill badge-secondary">Last message:<strong>{{ service.last_message }}</strong></span>
+          <a href="{% url 'service:refreshlogs' service.id %}" role="button" class="btn btn-secondary myctrl"><span class="oi oi-reload" aria-hidden="true" data-toggle="tooltip" title="Refresh service information" data-placement="bottom"></span></a>
+          <a href="{% url 'service:configure' service.id %}" role="button" class="btn btn-secondary myctrl"><span class="oi oi-wrench" aria-hidden="true" data-toggle="tooltip" title="Add/remove project to the service" data-placement="bottom"></span></a>
+          <a href="{% url 'service:destroy' service.id next_page %}" role="button" class="btn btn-danger myctrl"><span class="oi oi-fire" aria-hidden="true" data-toggle="tooltip" title="Remove {{ service.name }}"></span></a>
         </div>
       </div>
       <div class="card-body">

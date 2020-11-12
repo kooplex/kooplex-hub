@@ -1,13 +1,9 @@
 {% if service.state == service.ST_RUNNING %}
-   <a href="{% url 'service:stop' service.id next_page %}" role="button" class="btn btn-danger" data-toggle="tooltip" title="Stop environment {{ service.name }}">
-     <span class="oi oi-x" aria-hidden="true"></span></a>
+   <a href="{% url 'service:stop' service.id next_page %}" role="button" class="btn btn-danger myctrl" data-toggle="tooltip" title="Stop environment {{ service.name }}"><span class="oi oi-x" aria-hidden="true"></span></a>
 {% elif service.state == service.ST_NEED_RESTART %}
-   <a href="{% url 'service:stop' service.id next_page %}" role="button" class="btn btn-warning" data-toggle="tooltip" title="Stop inconsistent environment {{ service.name }}">
-     <span class="oi oi-x" aria-hidden="true"></span></a>
+   <a href="{% url 'service:stop' service.id next_page %}" role="button" class="btn btn-warning myctrl" data-toggle="tooltip" title="Stop inconsistent environment {{ service.name }}"><span class="oi oi-x" aria-hidden="true"></span></a>
 {% elif service.state == service.ST_ERROR %}
-   <a href="{% url 'service:stop' service.id next_page %}" role="button" class="btn btn-danger" data-toggle="tooltip" title="Clean up resources of environment {{ service.name }}">
-     <span class="oi oi-fire" aria-hidden="true"></span></a>
+   <a href="{% url 'service:stop' service.id next_page %}" role="button" class="btn btn-danger myctrl" data-toggle="tooltip" title="Clean up resources of environment {{ service.name }}"><span class="oi oi-fire" aria-hidden="true"></span></a>
 {% else %}
-   <a href="#" role="button" class="btn btn-danger disabled">
-     <span class="oi oi-x" aria-hidden="true"></span></a>
+   <a href="#" role="button" class="btn btn-danger myctrl disabled"><span class="oi oi-x" aria-hidden="true"></span></a>
 {% endif %}

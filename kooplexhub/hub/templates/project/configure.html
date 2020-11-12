@@ -2,28 +2,13 @@
 
 {% load render_table from django_tables2 %}
 
-{% comment %}
-FIXME: styling info in layout?
-{% endcomment %}
-
 {% block header_extra %}
-{% load staticfiles %}
-
-<!--script src="https://kit.fontawesome.com/27d0a7c7d0.js"></script-->
-<link rel="stylesheet" href="{% static 'fontawesome-free-5.10.2-web/css/all.css' %}">
-
-<link rel="stylesheet" href="{% static 'css/bootstrap4-toggle.min.css' %}">
-<script src="{% static 'scripts/bootstrap4-toggle.min.js' %}"></script>
+  {% load staticfiles %}
+  <script src="{% static 'scripts/bootstrap4-toggle.min.js' %}"></script>
 {% endblock %}
 
-
 {% block submenu %}
-<div class="navbar navbar-expand-lg navbar-light bg-light">
-  <h5><span class="badge badge-secondary">Configure project {{ project.name }}</span></h5>
-</div>
-{% comment %}
-FIXME: add shortcuts here? join
-{% endcomment %}
+  {% include 'project/project_submenu.html' with title="Configure project" %}
 {% endblock %}
 
 {% block main_content_center %}
@@ -38,6 +23,9 @@ FIXME: add shortcuts here? join
       </li>
       <li class="nav-item">
         <a class="nav-link active" id="tab-collaboration" data-toggle="tab" href="#collaboration" role="tab" aria-controls="collaboration" aria-selected="true">Collaboration</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="tab-service" data-toggle="tab" href="#service" role="tab" aria-controls="service" aria-selected="true">Service environments</a>
       </li>
     </ul>
   </div>
@@ -68,9 +56,17 @@ FIXME: add shortcuts here? join
       {% endif %}
     </div>
     
+    <div class="tab-pane fade show" id="service" role="tabpanel" aria-labelledby="tab-service">
+      <input type="hidden" name="active_tab" value="service">
+      <h5 class="card-title">Manage project environment bindings</h5>
+      {% if t_all_services %}
+        {% render_table t_all_services %}
+      {% endif %}
+    </div>
+
     <div class="card-footer text-right">
       <button type="submit" class="btn btn-default" name="button" value="apply">Apply settings</button>
-      <button class="btn btn-default" data-dismiss="modal">Cancel</button>
+      <button type="submit" class="btn btn-default" name="button" value="cancel">Cancel</button>
     </div>
   </div>
 </div>
@@ -78,3 +74,6 @@ FIXME: add shortcuts here? join
 </form>
 {% endblock %}
 
+{% block main_content_right %}
+  {% include 'project/hint_config.html' %}
+{% endblock %}

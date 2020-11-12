@@ -18,7 +18,7 @@ class Proxy(models.Model):
         return self.path.format(service = service)
 
     def url_internal(self, service):
-        return f'http://{service.name}:{self.port}'
+        return f'http://{service.label}:{self.port}'
 
     def url_public(self, service):
         fqdn = os.environ.get('DOMAIN', 'localhost')

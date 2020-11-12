@@ -26,21 +26,16 @@
       <div class="card-header">Control: 
         <div style="float: right;">
           {% if project|is_admin:user %}
-            <a href="{% url 'project:configure' project.id %}" role="button" class="btn btn-secondary" style="padding: 3px 6px 6px 6px; margin-right: 3px;">
-              <span class="oi oi-wrench" aria-hidden="true" data-toggle="tooltip" title="Settings of project {{ project.name }}. You can change the image, modify volume attachments." data-placement="top" ></span></a>
+            <a href="{% url 'project:configure' project.id %}" role="button" class="btn btn-secondary myctrl"><span class="oi oi-wrench" aria-hidden="true" data-toggle="tooltip" title="Settings of project {{ project.name }}. You can modify collaboration and bind environments." data-placement="top" ></span></a>
           {% else %}
-            <button type="button" class="btn btn-secondary" style="padding: 3px 6px 6px 6px; margin-right: 3px;" disabled>
-              <span class="oi oi-wrench" aria-hidden="true"></span></button>
+            <a href="#" role="button" class="btn btn-secondary myctrl disabled"><span class="oi oi-wrench" aria-hidden="true" data-toggle="tooltip" title="You don't have permission to configure project {{ project.name }}." data-placement="top" ></span></a>
           {% endif %}
 	  {% if binding.is_hidden %}
-            <a href="{% url 'project:show' project.id %}" role="button" class="btn btn-secondary" style="padding: 3px 6px 6px 6px; margin-right: 3px;">
-            <span class="oi oi-eye" aria-hidden="true" data-toggle="tooltip" title="You can unhide {{ project.name }}." data-placement="top"></span></a>
+            <a href="{% url 'project:show' project.id %}" role="button" class="btn btn-secondary myctrl"><span class="oi oi-eye" aria-hidden="true" data-toggle="tooltip" title="You can unhide {{ project.name }}." data-placement="top"></span></a>
 	  {% else %}
-            <a href="{% url 'project:hide' project.id %}" role="button" class="btn btn-secondary" style="padding: 3px 6px 6px 6px; margin-right: 3px;">
-              <span class="oi oi-eye" aria-hidden="true" data-toggle="tooltip" title="You can hide {{ project.name }} from your list." data-placement="top"></span></a>
+            <a href="{% url 'project:hide' project.id %}" role="button" class="btn btn-secondary myctrl"><span class="oi oi-eye" aria-hidden="true" data-toggle="tooltip" title="You can hide {{ project.name }} from your list." data-placement="top"></span></a>
 	  {% endif %}
-          <a href="{% url 'project:delete' project.id %}" role="button" class="btn btn-secondary" style="padding: 3px 6px 6px 6px; margin-right: 3px;">
-            <span class="oi oi-trash" aria-hidden="true" data-toggle="tooltip" title="Delete project {{ project.name }}." data-placement="top"></span></a>
+          <a href="{% url 'project:delete' project.id %}" role="button" class="btn btn-danger myctrl"><span class="oi oi-trash" aria-hidden="true" data-toggle="tooltip" title="Delete project {{ project.name }}." data-placement="top"></span></a>
         </div>
       </div>
       <div class="card-body">

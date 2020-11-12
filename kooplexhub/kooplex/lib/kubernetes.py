@@ -4,6 +4,7 @@ import json
 from kubernetes import client, config
 from urllib.parse import urlparse
 
+from kooplex.lib import now
 from kooplex.settings import KOOPLEX
 from .proxy import addroute, removeroute
 
@@ -107,11 +108,11 @@ def start(service):
             "metadata": {
                 "name": service.label,
                 "namespace": "default",
-                "labels": { "lbl": f"lbl-{service.name}", }
+                "labels": { "lbl": f"lbl-{service.label}", }
             },
             "spec": {
                 "containers": [{
-                    "name": service.name,
+                    "name": service.label,
                     "image": service.image.name,
                     "volumeMounts": volume_mounts,
                     "ports": pod_ports,
@@ -126,11 +127,11 @@ def start(service):
             "apiVersion": "v1",
             "kind": "Service",
             "metadata": {
-                "name": service.name,
+                "name": service.label,
             },
             "spec": {
                 "selector": {
-                    "lbl": f"lbl-{service.name}",
+                    "lbl": f"lbl-{service.label}",
                     },
                 "ports": svc_ports,
             }
@@ -161,14 +162,14 @@ def stop(service):
     v1 = client.CoreV1Api()
     removeroute(service)
     try:
-        msg = v1.delete_namespaced_pod(namespace = "default", name = service.name)
+        msg = v1.delete_namespaced_pod(namespace = "default", name = service.label)
         logger.debug(msg)
     except client.rest.ApiException as e:
         logger.warning(e)
         if json.loads(e.body)['code'] != 404: # doesnt exists
             raise
     try:
-        msg = v1.delete_namespaced_service(namespace = "default", name = service.name)
+        msg = v1.delete_namespaced_service(namespace = "default", name = service.label)
         logger.debug(msg)
     except client.rest.ApiException as e:
         logger.warning(e)
@@ -178,4 +179,27 @@ def stop(service):
     service.save()
 
 def check(service):
-    raise NotImplementedError(service)
+    config.load_kube_config()
+    v1 = client.CoreV1Api()
+    try:
+        msg = v1.read_namespaced_pod_log(namespace='default', name = service.label)
+        logger.debug(msg)
+        try:
+            msg_extract = json.loads(msg)
+            message = msg['message']
+        except json.decoder.JSONDecodeError:
+            msg = msg.splitlines()
+            while True:
+                message = msg.pop().strip()
+                if message:
+                    break
+    except client.rest.ApiException as e:
+        e_extract = json.loads(e.body)
+        message = e_extract['message']
+        if service.state in [ service.ST_RUNNING, service.ST_NEED_RESTART ]:
+            service.state = service.ST_ERROR
+        logger.warning(e)
+    finally:
+        service.last_message = message
+        service.last_message_at = now()
+        service.save()

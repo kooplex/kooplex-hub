@@ -1,5 +1,10 @@
 {% extends "layout.html" %}
 
+{% block header_extra %}
+  {% load staticfiles %}
+  <script src="{% static 'scripts/bootstrap4-toggle.min.js' %}"></script>
+{% endblock %}
+
 {% block submenu %}
   {% include "service/service_submenu.html" with submenu="versioncontrol" %}
 {% endblock %}
