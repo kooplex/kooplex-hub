@@ -35,7 +35,7 @@ def filesynchronization(request):
         'tbl_libraries': tbl_libraries,
         'search_form': { 'action': "service_external:fs_search", 'items': [ { 'name': "library", 'placeholder': "library", 'value': pattern } ] },
     }
-    return render(request, 'service/filesynchronization.html', context = context_dict)
+    return render(request, 'external_service/filesynchronization.html', context = context_dict)
 
 @login_required
 def fs_refresh(request, token_id):
@@ -107,6 +107,20 @@ def fs_resettoken(request, token_id):
 
 
 @login_required
+def fs_droptoken(request, token_id):
+    """Drop user's password"""
+    user = request.user
+    logger.debug("user %s" % user)
+    try:
+        token = FSToken.objects.get(user = request.user, id = token_id)
+        token.delete()
+        messages.info(request, f'Your seafile secret token for {token.syncserver} is deleted')
+    except FSToken.DoesNotExist:
+        messages.error(request, f'Token deletion is denied')
+    return redirect('service_external:filesync')
+
+
+@login_required
 def fs_commit(request):
     user = request.user
     logger.debug("user %s" % user)
@@ -161,7 +175,7 @@ def versioncontrol(request):
         'tbl_repositories': tbl_repositories,
         'search_form': { 'action': "service_external:vc_search", 'items': [ { 'name': "repository", 'placeholder': "vc. project", 'value': pattern } ] },
     }
-    return render(request, 'service/versioncontrol.html', context = context_dict)
+    return render(request, 'external_service/versioncontrol.html', context = context_dict)
 
 @login_required
 def vc_refresh(request, token_id):
@@ -276,6 +290,7 @@ urlpatterns = [
     url(r'^fs_refresh/(?P<token_id>\d+)', fs_refresh, name = 'fs_refresh'), 
     url(r'^fs_newtoken/(?P<server_id>\d+)', fs_newtoken, name = 'fs_newtoken'), 
     url(r'^fs_resettoken/(?P<token_id>\d+)', fs_resettoken, name = 'fs_resettoken'), 
+    url(r'^fs_droptoken/(?P<token_id>\d+)', fs_droptoken, name = 'fs_droptoken'), 
     url(r'^fs_commit', fs_commit, name = 'commit_sync'), 
 
     url(r'^versioncontrol', versioncontrol, name = 'versioncontrol'), 

@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block submenu %}
-  {% include "service/service_submenu.html" with submenu="versioncontrol" %}
+  {% include "external_service/service_submenu.html" with submenu="versioncontrol" %}
 {% endblock %}
 
 {% block main_content_center %}
@@ -80,6 +80,6 @@
 {% endblock %}
 
 {% block main_content_right %}
-  {% include 'service/hint_repo.html' %}
+  {% include 'external_service/hint_repo.html' %}
 {% endblock %}
 
