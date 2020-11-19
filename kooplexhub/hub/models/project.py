@@ -14,22 +14,22 @@ from kooplex.lib import standardize_str
 
 logger = logging.getLogger(__name__)
 
-SCP_LOOKUP = {
-    'public': 'Authenticated users can list and may join this project.',
-    'internal': 'Users in specific groups can list and may join this project.',
-    'private': 'Creator can invite collaborators to this project.',
-}
 
 
 class Project(models.Model):
     SCP_PUBLIC = 'public'
     SCP_INTERNAL = 'internal'
     SCP_PRIVATE = 'private'
+    SCP_LOOKUP = {
+        SCP_PRIVATE: 'Creator can invite collaborators to this project.',
+        SCP_INTERNAL: 'Users in specific groups can list and may join this project.',
+        SCP_PUBLIC: 'Authenticated users can list and may join this project.',
+    }
     SCOPE_LIST = [ SCP_PUBLIC, SCP_INTERNAL, SCP_PRIVATE ]
 
     name = models.TextField(max_length = 200, null = False)
     description = models.TextField(null = True)
-    scope = models.CharField(max_length = 16, choices = [ (x, SCP_LOOKUP[x]) for x in SCOPE_LIST ], default = SCP_PRIVATE)
+    scope = models.CharField(max_length = 16, choices = SCP_LOOKUP.items(), default = SCP_PRIVATE)
 
     def __str__(self):
         return self.name

@@ -37,13 +37,13 @@ def new(request):
         form = FormProject(request.POST, user = request.user)
         if form.is_valid():
             logger.info(form.cleaned_data)
-            projectname = form.cleaned_data['name']
+            projectname = form.cleaned_data['name'].strip()
             for upb in UserProjectBinding.objects.filter(user = request.user):
                 if upb.project.name == projectname:
                     msg = f'Project name {projectname} is not unique'
                     messages.error(request, msg)
                     raise Exception(msg)
-            project = Project.objects.create(name = projectname, description = form.cleaned_data['description'])
+            project = Project.objects.create(name = projectname, description = form.cleaned_data['description'], scope = form.cleaned_data['scope'])
             UserProjectBinding.objects.create(user = request.user, project = project, role = UserProjectBinding.RL_CREATOR)
             messages.info(request, f'New project {project} is created')
             if len(form.cleaned_data['environments']) > 0:
@@ -56,7 +56,7 @@ def new(request):
                     else:
                         messages.info(request, f'Project {project} is added to svc {svc.name}')
             else:
-                image = Image.objects.all().first() #TODO: make it possible to select a default
+                image = Image.objects.get(id = form.cleaned_data['image'])
                 svc = Service.objects.create(name = projectname, user = request.user, image = image)
                 ProjectServiceBinding.objects.create(project = project, service = svc)
                 messages.info(request, f'New service {svc.name} is created with image {svc.image.name}')
