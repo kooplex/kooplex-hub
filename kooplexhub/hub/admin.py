@@ -17,11 +17,11 @@ class ProfileAdmin(admin.ModelAdmin):
 
 @admin.register(Image)
 class ImageAdmin(admin.ModelAdmin):
-    list_display = ('id', 'present', 'name', 'require_home', 'description')
+    list_display = ('id', 'present', 'name', 'require_home', 'mount_report', 'mount_project', 'description')
 
 @admin.register(Proxy)
 class ProxyAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'image', 'default', 'path', 'port')
+    list_display = ('id', 'name', 'image', 'default', 'token_as_argument', 'path', 'port')
 
 @admin.register(EnvVarMapping)
 class EnvVarMappingAdmin(admin.ModelAdmin):

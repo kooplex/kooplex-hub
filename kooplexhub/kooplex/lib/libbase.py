@@ -40,12 +40,12 @@ def custom_redirect(url_name, *args, **kwargs):
     from django.core.urlresolvers import reverse 
     #import urllib #FIXME
     try:
-        url = reverse(url_name, args = args)
+        url = reverse(url_name, args = args) if args else reverse(url_name)
     except: #FIXME: NoReverseMatch
         url = url_name
     #params = urllib.urlencode(kwargs)
     params = '&'.join(f'{k}={v}' for k, v in kwargs.items())
-    return HttpResponseRedirect(url + "?%s" % params)
+    return HttpResponseRedirect(url + "?%s" % params) if params else HttpResponseRedirect(url)
 
 def keeptrying(method, times, **kw):
     """

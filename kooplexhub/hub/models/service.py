@@ -68,19 +68,20 @@ class Service(models.Model):
         return f"{self.user}-{self.name}-{self.suffix}" if self.suffix else f"{self.user}-{self.name}"
 
     @property
+    def default_proxy(self):
+        return Proxy.objects.get(image = self.image, default = True)
+
+    @property
     def proxy_route(self):
-        default_proxy = Proxy.objects.get(image = self.image, default = True)
-        return default_proxy.proxy_route(self)
+        return self.default_proxy.proxy_route(self)
 
     @property
     def url_internal(self):
-        default_proxy = Proxy.objects.get(image = self.image, default = True)
-        return default_proxy.url_internal(self)
+        return self.default_proxy.url_internal(self)
 
     @property
     def url_public(self):
-        default_proxy = Proxy.objects.get(image = self.image, default = True)
-        return default_proxy.url_public(self)
+        return self.default_proxy.url_public(self)
 
 
     #@property

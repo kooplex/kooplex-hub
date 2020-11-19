@@ -13,6 +13,7 @@ class Proxy(models.Model):
     path = models.CharField(max_length = 64, null = True)
     image = models.ForeignKey(Image, null = False)
     default = models.BooleanField(default = True)
+    token_as_argument = models.BooleanField(default = False)
  
     def proxy_route(self, service):
         return self.path.format(service = service)

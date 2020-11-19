@@ -86,7 +86,10 @@ def openservice(request, environment_id, next_page):
         environment = Service.objects.get(id = environment_id, user = user)
         if environment.state in [ Service.ST_RUNNING, Service.ST_NEED_RESTART ]:
             environment.wait_until_ready()
-            return custom_redirect(environment.url_public, token = environment.user.profile.token)
+            if environment.default_proxy.token_as_argument:
+                return custom_redirect(environment.url_public, token = environment.user.profile.token)
+            else:
+                return custom_redirect(environment.url_public)
         else:
             messages.error(request, f'Cannot open {environment.name} of state {environment.state}')
     except Service.DoesNotExist:
