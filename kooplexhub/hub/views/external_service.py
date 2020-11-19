@@ -15,7 +15,7 @@ from kooplex.lib import seafilepw_update
 from hub.forms import T_FSLIBRARY_SYNC
 from hub.forms import T_REPOSITORY_CLONE
 from hub.models import VCRepository, VCToken, VCProject
-from hub.models import FSServer, FSToken, FSLibrary
+from hub.models import FSServer, FSToken, FSLibrary, FSLibraryServiceBinding
 
 logger = logging.getLogger(__name__)
 
@@ -127,17 +127,39 @@ def fs_commit(request):
     currently_syncing = [ l.library_id for l in FSLibrary.objects.filter(token__user = user, syncing = True) ]
     request_syncing = request.POST.getlist('sync_library_id')
     drop_cache = request.POST.getlist('dropcache_library_id')
-    if drop_cache:
-        messages.error(request, "DROP CACHE IS NOT IMPLEMENTED YET IN IMPERSONATOR API")
     n_start = 0
     n_stop = 0
+    n_drop = 0
+    unbound = []
+    for l_id in drop_cache:
+        if l_id in request_syncing:
+            request_syncing.remove(l_id)
+        if l_id in currently_syncing:
+            currently_syncing.remove(l_id)
+        try:
+            l = FSLibrary.objects.get(token__user = user, library_id = l_id)
+            impersonator_sync(l, 'drop')
+            for b in FSLibraryServiceBinding.objects.filter(fslibrary = l):
+                unbound.append(b.service.name)
+                if b.service.state == b.service.ST_RUNNING:
+                    b.service.state = b.service.ST_NEED_RESTART
+                    #FIXME: add causes
+                    b.service.save()
+                b.delete()
+            l.sync_folder = None
+            l.syncing = False
+            l.save()
+            n_drop += 1
+        except Exception as e:
+            logger.error(e)
+            raise #FIXME
     for l_id in request_syncing:
         if l_id in currently_syncing:
             currently_syncing.remove(l_id)
         else:
             try:
                 l = FSLibrary.objects.get(token__user = user, syncing = False, library_id = l_id)
-                l.sync_folder = impersonator_sync(l, start = True)
+                l.sync_folder = impersonator_sync(l, 'start')
                 l.syncing = True
                 l.save()
                 n_start += 1
@@ -147,7 +169,7 @@ def fs_commit(request):
     for l_id in currently_syncing:
         try:
             l = FSLibrary.objects.get(token__user = user, syncing = True, library_id = l_id)
-            impersonator_sync(l, start = False)
+            impersonator_sync(l, 'stop')
             l.syncing = False
             l.save()
             n_stop += 1
@@ -158,6 +180,10 @@ def fs_commit(request):
         messages.info(request, "{} new synchronization processes started".format(n_start))
     if n_stop:
         messages.info(request, "{} old synchronization processes stopped".format(n_stop))
+    if n_drop:
+        messages.info(request, "{} synchronization folders droped".format(n_drop))
+    if unbound:
+        messages.warning(request, 'Your environments {} need to be restarted'.format(', '.join(unbound)))
     return redirect('service_external:filesync')
 
 

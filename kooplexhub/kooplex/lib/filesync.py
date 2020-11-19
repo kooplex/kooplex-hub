@@ -45,8 +45,7 @@ def seafilepw_update(username, password):
     A = requests.auth.HTTPBasicAuth(KOOPLEX['impersonator'].get('username'), KOOPLEX['impersonator'].get('password'))
     requests.get('{}/api/setpass/{}/{}'.format(KOOPLEX['impersonator'].get('seafile_api', 'http://localhost'), username, password), auth = A)
 
-def impersonator_sync(library, start):
-    do = 'start' if start else 'stop'
+def impersonator_sync(library, do):
     url_base = KOOPLEX['impersonator'].get('base_url', 'http://localhost')
     A = requests.auth.HTTPBasicAuth(KOOPLEX['impersonator'].get('username'), KOOPLEX['impersonator'].get('password'))
     try:
@@ -65,6 +64,7 @@ def impersonator_sync(library, start):
     data = base64.b64encode(pickle.dumps(data_dict, protocol = 2))
     url = f'{url_base}/api/sync/{data}'
     try:
+        assert do in [ 'start', 'stop', 'drop' ], f'Wrong command {do}'
         resp_info = requests.get(url, auth = A)
         rj = resp_info.json()
         if 'error' in rj:
