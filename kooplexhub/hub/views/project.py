@@ -49,9 +49,7 @@ def new(request):
             if len(form.cleaned_data['environments']) > 0:
                 for svc in form.cleaned_data['environments']:
                     ProjectServiceBinding.objects.create(project = project, service = svc)
-                    if svc.state == svc.ST_RUNNING:
-                        svc.state = svc.ST_NEED_RESTART
-                        svc.save()
+                    if svc.mark_restart(f'project {project.name} added'):
                         messages.warning(request, f'Project {project} is added to running svc {svc.name}, which requires a restart to apply changes')
                     else:
                         messages.info(request, f'Project {project} is added to svc {svc.name}')
@@ -257,9 +255,7 @@ def configure(request, project_id):
             b = ProjectServiceBinding.objects.get(id = i, project = project, service__user = user)
             svc = b.service
             removed.append(svc.name)
-            if svc.state == svc.ST_RUNNING:
-                svc.state = svc.ST_NEED_RESTART
-                svc.save()
+            if svc.mark_restart(f'project {project.name} removed'):
                 restart.append(svc.name)
             b.delete()
         # addition
@@ -269,9 +265,7 @@ def configure(request, project_id):
             svc = Service.objects.get(id = i, user = user)
             ProjectServiceBinding.objects.create(service = svc, project = project)
             added.append(svc.name)
-            if svc.state == svc.ST_RUNNING:
-                svc.state = svc.ST_NEED_RESTART
-                svc.save()
+            if svc.mark_restart(f'project {project.name} added'):
                 restart.append(svc.name)
         if added:
             messages.info(request, 'Added service environments {0} to project {1}'.format(', '.join(added), project.name))

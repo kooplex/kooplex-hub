@@ -141,10 +141,7 @@ def fs_commit(request):
             impersonator_sync(l, 'drop')
             for b in FSLibraryServiceBinding.objects.filter(fslibrary = l):
                 unbound.append(b.service.name)
-                if b.service.state == b.service.ST_RUNNING:
-                    b.service.state = b.service.ST_NEED_RESTART
-                    #FIXME: add causes
-                    b.service.save()
+                b.service.mark_restart(f'synced library {l.library_name} deleted')
                 b.delete()
             l.sync_folder = None
             l.syncing = False

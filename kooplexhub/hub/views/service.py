@@ -51,9 +51,8 @@ def listservices(request):
     unbound = Service.objects.filter(user = request.user).exclude(projectservicebinding__gt = 0)
     if unbound:
         messages.warning(request, 'Note, your environments {} are not bound to any projects'.format(', '.join([ s.name for s in unbound ])))
-    restart = Service.objects.filter(user = request.user, state = Service.ST_NEED_RESTART)
-    if restart:
-        messages.warning(request, 'Your services {} are in inconsistent state. Save your changes and restart them as soon as you can.'.format(', '.join([ s.name for s in restart ])))
+    for svc in Service.objects.filter(user = request.user, state = Service.ST_NEED_RESTART):
+        messages.warning(request, f'Your service {svc.name} is in inconsistent state, because {svc.restart_reasons}. Save your changes and restart them as soon as you can.')
     context_dict = {
         'next_page': 'service:list',
         'menu_container': 'active',
@@ -158,38 +157,46 @@ def configureservice(request, environment_id):
         }
         return render(request, 'container/manage.html', context = context_dict)
     else:
-        is_running = svc.state == svc.ST_RUNNING
+        msgs = []
 
+        # handle image change
         image_before = svc.image
         image_after = Image.objects.get(id = request.POST.get('container_image_id'))
-        svc.image = image_after
-        if is_running and image_after != image_before:
-            svc.state = svc.ST_NEED_RESTART
+        if image_before != image_after:
+            svc.image = image_after
+            svc.save()
+            msg = f'image changed from {image_before} to {image_after}'
+            if not svc.mark_restart(msg):
+                msgs.append(msg)
 
+        # handle project binding changes
         project_ids_before = set(request.POST.getlist('project_ids_before'))
         project_ids_after = set(request.POST.getlist('project_ids_after'))
         oops = 0
-        added = []
         for project_id in project_ids_after.difference(project_ids_before):
             try:
                 project = Project.get_userproject(project_id = project_id, user = user)
                 ProjectServiceBinding.objects.create(service = svc, project = project)
-                added.append(f'project {project.name}')
+                msg = f'project {project.name} added'
+                if not svc.mark_restart(msg):
+                    msgs.append(msg)
                 logger.debug('added project %s to container %s' % (project, svc))
             except Exception as e:
                 logger.error('not authorized to add project_id %s to container %s -- %s' % (project_id, svc, e))
                 oops += 1
-        removed = []
         for project_id in project_ids_before.difference(project_ids_after):
             try:
                 project = Project.get_userproject(project_id = project_id, user = user)
                 ProjectServiceBinding.objects.get(service = svc, project = project).delete()
-                removed.append(f'project {project.name}')
+                msg = f'project {project.name} removed'
+                if not svc.mark_restart(msg):
+                    msgs.append(msg)
                 logger.debug('removed project %s from container %s' % (project, svc))
             except Exception as e:
                 logger.error('not authorized to remove project_id %s from container %s -- %s' % (project_id, svc, e))
                 oops += 1
 
+        # handle synchron caches
         for id_create in request.POST.getlist('fsl_ids'):
             fsl = FSLibrary.objects.get(id = id_create)
             if fsl.token.user != user:
@@ -197,7 +204,9 @@ def configureservice(request, environment_id):
                 oops += 1
                 continue
             FSLibraryServiceBinding.objects.create(service = svc, fslibrary = fsl)
-            added.append(f'synchron library {fsl.library_name}')
+            msg = f'synchron library {fsl.library_name} atached'
+            if not svc.mark_restart(msg):
+                msgs.append(msg)
         for id_remove in set(request.POST.getlist('fslpb_ids_before')).difference(set(request.POST.getlist('fslpb_ids_after'))):
             try:
                 fslsb = FSLibraryServiceBinding.objects.get(id = id_remove, service = svc)
@@ -205,24 +214,21 @@ def configureservice(request, environment_id):
                     logger.error("Unauthorized request fsl: %s, user: %s" % (fslsb.fslibrary, user))
                     oops += 1
                     continue
-                removed.append(f'synchron library {fslsb.fslibrary.library_name}')
+                msg = f'synchron library {fslsb.fslibrary.library_name} removed'
+                if not svc.mark_restart(msg):
+                    msgs.append(msg)
                 fslsb.delete()
             except FSLibraryServiceBinding.DoesNotExist:
                 logger.error("Is %s hacking" % user)
                 oops += 1
 
-        if len(added):
-            if is_running:
-                svc.state = svc.ST_NEED_RESTART
-            messages.info(request, 'Added %s to service environment %s' % (", ".join(added), svc))
-        if len(removed):
-            if is_running:
-                svc.state = svc.ST_NEED_RESTART
-            messages.info(request, 'Removed %s from service environmtn %s' % (", ".join(removed), svc))
+        if svc.restart_reasons:
+            messages.warning(request, f'Configuration of {svc.name} is done, but needs a restart because {svc.restart_reasons}.')
+        if msgs:
+            messages.info(request, 'Configuration of {} is done. Summary: {}.'.format(svc.name, ', '.join(msgs)))
         if oops:
             messages.warning(request, 'Some problems (%d) occured during handling yout request.' % (oops))
 
-        svc.save()
         return redirect(next_page)
 
 

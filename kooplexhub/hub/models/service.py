@@ -28,13 +28,6 @@ from .proxy import Proxy
 logger = logging.getLogger(__name__)
 
 
-ST_LOOKUP = {
-    'np': 'Not present.',
-    'run': 'Running fine.',
-    'restart': 'Restart required',
-    'oops': 'Error occured.',
-    'stopping': 'Stopping...',
-}
 
 class Service(models.Model):
     ST_NOTPRESENT = 'np'
@@ -42,7 +35,13 @@ class Service(models.Model):
     ST_NEED_RESTART = 'restart'
     ST_ERROR = 'oops'
     ST_STOPPING = 'stopping'
-    STATE_LIST = [ ST_NOTPRESENT, ST_RUNNING, ST_NEED_RESTART, ST_ERROR, ST_STOPPING ]
+    ST_LOOKUP = {
+        ST_NOTPRESENT: 'Not present.',
+        ST_RUNNING: 'Running fine.',
+        ST_NEED_RESTART: 'Restart required',
+        ST_ERROR: 'Error occured.',
+        ST_STOPPING: 'Stopping...',
+    }
 
     name = models.CharField(max_length = 200, null = False)
     user = models.ForeignKey(User, null = False)
@@ -50,7 +49,8 @@ class Service(models.Model):
     image = models.ForeignKey(Image, null = False)
     launched_at = models.DateTimeField(null = True)
 
-    state = models.CharField(max_length = 16, choices = [ (x, ST_LOOKUP[x]) for x in STATE_LIST ], default = ST_NOTPRESENT)
+    state = models.CharField(max_length = 16, choices = ST_LOOKUP.items(), default = ST_NOTPRESENT)
+    restart_reasons = models.CharField(max_length = 512, null = True)
     last_message = models.CharField(max_length = 512, null = True)
     last_message_at = models.DateTimeField(default = None, null = True)
 
@@ -133,37 +133,24 @@ class Service(models.Model):
         return start_environment(self)
 
     def stop(self):
+        self.restart_reasons = None
+        self.save()
         return stop_environment(self)
 
     def check_state(self):
         return check_environment(self)
 
-#
-#@receiver(pre_save, sender = Container)
-#def container_image_change(sender, instance, **kwargs):
-#    import pwgen
-#    is_new = instance.id is None
-#    old_instance = Container() if is_new else Container.objects.get(id = instance.id)
-#    logger.debug("Changing image from %s to %s"%(old_instance.image, instance.image))
-#    if not is_new and old_instance.image != instance.image:
-#         remove_container_environment(instance, 'PASSWORD')
-#         instance.marked_to_remove = True
-#         if instance.state == Container.ST_NOTRUNNING:
-#             from kooplex.lib import Docker
-#             docker = Docker()
-#             docker.remove_container(instance)
-#             instance.state = Container.ST_NOTPRESENT
-#         if instance.state == Container.ST_NOTPRESENT:
-#             instance.marked_to_remove = False
-#    if instance.image is None:
-#        return
-#    if instance.marked_to_remove:
-#         remove_container_environment(instance, 'PASSWORD')
-#    if instance.image.name == 'rstudio' and not instance.marked_to_remove: #FIXME: hard coded stuf!!!!!!!!!!!!!!!!!
-#         try:
-#             ContainerEnvironment.objects.get(container = instance, name = 'PASSWORD')
-#         except:
-#             ContainerEnvironment.objects.get_or_create(container = instance, name = 'PASSWORD', value = pwgen.pwgen(16))
+    def mark_restart(self, reason):
+        if self.state not in [ self.ST_RUNNING, self.ST_NEED_RESTART ]:
+            return False
+        if self.restart_reasons:
+            self.restart_reasons += ', ' + reason
+        else:
+            self.restart_reasons = reason
+        self.state = self.ST_NEED_RESTART
+        self.save()
+        return True
+
 #
 #@receiver(pre_save, sender = Container)
 #def container_message_change(sender, instance, **kwargs):
