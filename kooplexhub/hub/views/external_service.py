@@ -126,6 +126,9 @@ def fs_commit(request):
     logger.debug("user %s" % user)
     currently_syncing = [ l.library_id for l in FSLibrary.objects.filter(token__user = user, syncing = True) ]
     request_syncing = request.POST.getlist('sync_library_id')
+    drop_cache = request.POST.getlist('dropcache_library_id')
+    if drop_cache:
+        messages.error(request, "DROP CACHE IS NOT IMPLEMENTED YET IN IMPERSONATOR API")
     n_start = 0
     n_stop = 0
     for l_id in request_syncing:

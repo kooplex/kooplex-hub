@@ -33,7 +33,6 @@ def table_fslibrary(service):
     return T_FSLIBRARY
 
 class T_FSLIBRARY_SYNC(tables.Table):
-    syncing = tables.Column(verbose_name = 'Status', orderable = False)
     class BackendColumn(tables.Column):
         def render(self, record):
             svc = record.token.syncserver
@@ -41,8 +40,11 @@ class T_FSLIBRARY_SYNC(tables.Table):
                 return format_html('<img src="/static/content/logos/seafile.png" alt="seafile" width="55px" data-toggle="tooltip" title="{}" data-placement="bottom">'.format(svc.url))
             else:
                 return format_html(record)
+
+    syncing = tables.Column(verbose_name = 'Status', orderable = False)
     backend_type = BackendColumn(verbose_name = 'Service', empty_values = (), orderable = False)
     service = tables.Column(verbose_name = 'Service environments', empty_values = (), orderable = False)
+    drop_cache = tables.Column(verbose_name = 'Empty cache', empty_values = (), orderable = False)
 
     def render_syncing(self, record):
         if record.syncing:
@@ -54,6 +56,12 @@ class T_FSLIBRARY_SYNC(tables.Table):
 
     def render_service(self, record):
         return format_html(', '.join([ s.name for s in record.services ]))
+
+    def render_drop_cache(self, record):
+        if record.sync_folder:
+            return format_html('<input type="checkbox" data-toggle="toggle" name="dropcache_library_id" value="{}" data-on="Delete" data-off="Keep" data-onstyle="danger" data-offstyle="success" data-size="xs">'.format(record.library_id))
+        else:
+            return format_html('<input type="checkbox" data-toggle="toggle" data-off="Not present" data-offstyle="dark" data-size="xs" disabled>')
 
     class Meta:
         model = FSLibrary
