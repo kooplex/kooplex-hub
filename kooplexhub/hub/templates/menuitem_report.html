@@ -1,6 +1,7 @@
+{% if user.is_authenticated %}
 <div class="dropdown">
   <li class="nav-item {{ active }}">
-    <a href="{% url 'report:list'  %}" class="nav-link" data-toggle="tooltip" title="List and manage your reports" data-placement="bottom">Reports</a>
+    <a href="{% url 'report:list'  %}" class="nav-link">Reports</a>
   </li>
 
   <div class="dropdown-content" aria-labelledby="navbarDropdownReport">
@@ -8,3 +9,8 @@
     <a href="{% url 'report:list' %}">List reports</a>
   </div>
 </div>
+{% else %}
+<li class="nav-item">
+  <a href="{% url 'report:list'  %}" class="nav-link" data-toggle="tooltip" title="List and manage your reports" data-placement="bottom">Reports</a>
+</li>
+{% endif %}

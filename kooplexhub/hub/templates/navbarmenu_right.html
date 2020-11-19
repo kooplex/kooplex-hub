@@ -5,33 +5,35 @@
 
 <ul class="navbar-nav navbar-right">
   <li class="nav-item">
-    <a class="nav-link" href="/manual/" style="color: white" target="_blank">Documentation </a>
+    <a class="nav-link" href="/manual/" target="_blank">Documentation </a>
   </li>
 
-  <li class="nav-item dropdown">
-    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownProfile" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+  <div class="dropdown">
+    <li class="nav-item">
+      <a class="nav-link" href="#" role="button">
     {% if user.is_authenticated %}
       Hello {{ user.first_name }}!
     {% else %}
       Help
     {% endif %}
-    </a>
-    <div class="dropdown-menu" aria-labelledby="navbarDropdownProfile">
+      </a>
+    </li>
+    <div class="dropdown-content" aria-labelledby="navbarDropdownProfile">
     {% if user.is_authenticated %}
-      <a class="dropdown-item" href="{% url 'logout' %}">Logout (insecure) <span class="oi oi-account-logout"></span></a>
-      <a class="dropdown-item" href="#" data-toggle="modal" data-target="#update-bio">Update bio</a>
-      <a class="dropdown-item" href="{% url 'user:managetokens' next_page %}">Manage secrets</a>
+      <a href="{% url 'logout' %}">Logout <span class="oi oi-account-logout"></span></a>
+      <a href="#" data-toggle="modal" data-target="#update-bio">Update bio</a>
+      <a href="{% url 'user:managetokens' next_page %}">Manage secrets</a>
       <div class="dropdown-divider"></div>
     {% endif %}
-      <a class="dropdown-item" href="https://github.com/kooplex/kooplex-hub/wiki" target="_blank">Kooplex Hub Wiki</a>
-      <a class="dropdown-item" href="#" data-toggle="modal" data-target="#about-contacts">Contacts and about</a>
+      <a href="https://github.com/kooplex/kooplex-hub/wiki" target="_blank">Kooplex Hub Wiki</a>
+      <a href="#" data-toggle="modal" data-target="#about-contacts">Contacts and about</a>
     </div>
-  </li>
+  </div>
   <li class="nav-item">
   {% if user.is_authenticated %}
     <a class="nav-link" href="{% url 'do_logout' %}">Log off <span class="oi oi-account-logout"></span></a>
   {% else %}
-  <a class="nav-link" href="{% url 'social:begin' 'hydraoidc' %}" style="color: white">Log in <span class="oi oi-account-login"></span></a>
+    <a class="nav-link" href="{% url 'social:begin' 'hydraoidc' %}" style="color: white">Log in <span class="oi oi-account-login"></span></a>
   {% endif %}
   </li>
 </ul>

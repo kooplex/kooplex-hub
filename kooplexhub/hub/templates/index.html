@@ -28,52 +28,54 @@
 {% endblock %}
 
 {% block main_content_left %}
-
+  <div class="card"> 
+    <h6 class="card-title">Powered by</h6>
+    <div class="card-body">
+      <img src="/static/content/dockerlogo.png" style="height: 40px; padding-right: 10px" alt="docker">
+      <img src="/static/content/kuberneteslogo.png" style="height: 40px; padding-right: 10px" alt="k8s">
+      <img src="/static/content/django.png" style="height: 40px; padding-right: 10px" alt="django">
+      <img src="/static/content/Nginx-Logo.png" style="height: 40px; padding-right: 10px" alt="nginx">
+      <img src="/static/content/jupyter.png" style="height: 40px; padding-right: 10px" alt="jupyter">
+      <img src="/static/content/rstudio.png" style="height: 40px; padding-right: 10px" alt="rstudio">
+      <img src="/static/content/logos/gitea.png" style="height: 40px; padding-right: 10px" alt="singularity">
+      <img src="/static/content/logos/seafile.png" style="height: 40px; padding-right: 10px" alt="singularity">
+      <img src="/static/content/slurm.png" style="height: 40px; padding-right: 10px" alt="slurm">
+      <img src="/static/content/singularity.png" style="height: 40px; padding-right: 10px" alt="singularity">
+    </div>
+  </div>
 {% endblock %}
 
 {% block main_content_center %}
-   <div class="jumbotron" style="box-shadow: 5px 10px 8px #888888; padding: 10px;">
-     <div class="row">
-       <div class="col-md-6">
-         <img src="/static/content/logo-transparent.png" style="width: 300px;" alt="kooplex">
-       </div>
-     </div>
-   </div>
-   
-   <!--h2> CPU Usage of Kooplex.vo </h2-->
-   <div id="myplot4"> </div>
-   
-   <div class="jumbotron" style="padding-top: 10px; padding-bottom: 10px; background-color: #bdbdbd; box-shadow: 5px 10px 8px #888888;">
-     <div class="row">
-       <div class="col-md-7">
-         <div style="width: 100%;">
-           {% comment %} {% include "slideshow.html" %} {% endcomment %}
-           <img class="d-block w-100" src="/static/content/Kooplex-frontpage.png" alt="Access private cloud file system, share data and results">
-   
-   
-         </div>
-       </div>
-   
-       <div class="col-md-5" style="text-align: right">
-         <div class="row">
-           Dive into various fields of computational physics, modeling and numerical analysis of data with the help of Jupyter notebooks.
-         </div>
-         <div class="row">Powered by</div>
-         <div class="row">
-          <img src="/static/content/dockerlogo.png" style="height: 40px; padding-right: 10px" alt="docker">
-          <img src="/static/content/kuberneteslogo.png" style="height: 40px; padding-right: 10px" alt="k8s">
-          <img src="/static/content/django.png" style="height: 40px; padding-right: 10px" alt="django">
-          <img src="/static/content/jupyter.png" style="height: 40px; padding-right: 10px" alt="jupyter">
-          <img src="/static/content/rstudio.png" style="height: 40px; padding-right: 10px" alt="rstudio">
-          <img src="/static/content/Nginx-Logo.png" style="height: 40px; padding-right: 10px" alt="nginx">
-          <img src="/static/content/slurm.png" style="height: 40px; padding-right: 10px" alt="slurm">
-          <img src="/static/content/singularity.png" style="height: 40px; padding-right: 10px" alt="singularity">
-         </div>
-       </div>
-     </div>
-   </div>
-   
- {% endblock %}
+  <div class="jumbotron" style="box-shadow: 5px 10px 8px #888888; padding: 10px;">
+    <div class="row">
+      <div class="col-md-12">
+        <img src="/static/content/logo-transparent.png" style="transform: translate(0, 22px); width: 350px;" alt="kooplex">
+	<!-- platform specific -->
+        <img src="/static/content/VEO-logo-trp.png" style="width: 200px;" alt="VEO test platform">
+	<!-- platform specific -->
+      </div>
+    </div>
+  </div>
+  
+  <!--h2> CPU Usage of Kooplex.vo </h2-->
+  <div id="myplot4"> </div>
+  
+  <div class="jumbotron" style="padding-top: 10px; padding-bottom: 10px; background-color: #bdbdbd; box-shadow: 5px 10px 8px #888888;">
+    <div class="row">
+      <div class="col-md-7">
+        <div style="width: 100%;">
+          {% comment %} {% include "slideshow.html" %} {% endcomment %}
+          <img class="d-block w-100" src="/static/content/Kooplex-frontpage.png" alt="Access private cloud file system, share data and results">
+        </div>
+      </div>
+      <div class="col-md-5" style="text-align: right">
+        <div class="row">
+          Dive into various fields of computational physics, modeling and numerical analysis of data with the help of Jupyter notebooks.
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
 
 {% block main_content_right %}
   {% include 'footer_right.html' %}

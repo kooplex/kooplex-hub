@@ -53,26 +53,31 @@ def start(service):
     has_project = False
     has_report = False
     has_cache = False
-    for project in service.projects:
-        volume_mounts.append({
-            "name": "pv-k8plex-hub-project",
-            "mountPath": os.path.join(mount_point, project_subdir, project.uniquename),
-            "subPath": project.uniquename
-        })
-        has_project = True
-        volume_mounts.append({
-            "name": "pv-k8plex-hub-report",
-            "mountPath": os.path.join(mount_point, report_subdir, project.uniquename),
-            "subPath": project.uniquename,
-            "readOnly": True
-        })
-        has_report = True
-        volume_mounts.append({
-            "name": "pv-k8plex-hub-cache",
-            "mountPath": os.path.join(mount_point, report_prepare_subdir, project.uniquename),
-            "subPath": project.uniquename
-        })
-        has_cache = True
+
+    if service.image.mount_project:
+        for project in service.projects:
+            volume_mounts.append({
+                "name": "pv-k8plex-hub-project",
+                "mountPath": os.path.join(mount_point, project_subdir, project.uniquename),
+                "subPath": project.uniquename
+            })
+            has_project = True
+
+    if service.image.mount_report:
+        for project in service.projects:
+            volume_mounts.append({
+                "name": "pv-k8plex-hub-report",
+                "mountPath": os.path.join(mount_point, report_subdir, project.uniquename),
+                "subPath": project.uniquename,
+                "readOnly": True
+            })
+            has_report = True
+            volume_mounts.append({
+                "name": "pv-k8plex-hub-cache",
+                "mountPath": os.path.join(mount_point, report_prepare_subdir, project.uniquename),
+                "subPath": project.uniquename
+            })
+            has_cache = True
 
     for sync_lib in service.synced_libraries:
         o = urlparse(sync_lib.token.syncserver.url)

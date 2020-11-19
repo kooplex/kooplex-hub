@@ -45,7 +45,7 @@ def table_projects(service):
         class Meta:
             model = UserProjectBinding
             fields = ('id', 'project', 'collaborator')
-            attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
+            attrs = { "class": "table table-striped table-bordered", "thead": { "class": "thead-dark table-sm" }, "td": { "style": "padding:.5ex" } }
 
     return T_PROJECTS
 
@@ -74,7 +74,7 @@ class T_JOINABLEPROJECT(tables.Table):
         model = UserProjectBinding
         fields = ('id', 'project', 'user', 'images')
         sequence = ('id', 'project', 'user', 'images')
-        attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
+        attrs = { "class": "table table-striped table-bordered", "thead": { "class": "thead-dark table-sm" }, "td": { "style": "padding:.5ex" } }
 
 
 class T_PROJECT(tables.Table):
@@ -89,7 +89,7 @@ class T_PROJECT(tables.Table):
         model = UserProjectBinding
         fields = ('id', 'project')
         sequence = ('id', 'project')
-        attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
+        attrs = { "class": "table table-striped table-bordered", "thead": { "class": "thead-dark table-sm" }, "td": { "style": "padding:.5ex" } }
 
 def table_services(userprojectbinding):
     class T_PROJECTSERVICE(tables.Table):
@@ -108,5 +108,5 @@ def table_services(userprojectbinding):
             model = Service
             fields = ('id', 'name', 'image', 'state')
             sequence = ('id', 'name', 'image', 'state')
-            attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
+            attrs = { "class": "table table-striped table-bordered", "thead": { "class": "thead-dark table-sm" }, "td": { "style": "padding:.5ex" } }
     return T_PROJECTSERVICE

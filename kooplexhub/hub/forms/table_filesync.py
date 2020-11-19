@@ -28,7 +28,7 @@ def table_fslibrary(service):
             model = FSLibrary
             fields = ('id', 'library_name', 'services', 'syncing')
             sequence = ('id', 'library_name', 'syncing', 'services')
-            attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
+            attrs = { "class": "table table-striped table-bordered", "thead": { "class": "thead-dark table-sm" }, "td": { "style": "padding:.5ex" } }
 
     return T_FSLIBRARY
 
@@ -59,5 +59,5 @@ class T_FSLIBRARY_SYNC(tables.Table):
         model = FSLibrary
         fields = ('library_name', 'syncing', 'backend_type', 'service', 'sync_folder')
         sequence = ('syncing', 'backend_type', 'library_name', 'service', 'sync_folder')
-        attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
+        attrs = { "class": "table table-striped table-bordered", "thead": { "class": "thead-dark table-sm" }, "td": { "style": "padding:.5ex" } }
 

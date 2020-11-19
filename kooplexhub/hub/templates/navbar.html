@@ -7,19 +7,14 @@
 
   <div class="collapse navbar-collapse" id="navbarSupportedContent">
     <ul class="navbar-nav mr-auto">
-      <!-- FIXME: no active item indicated: li class="nav-item active" -->
     {% if user.is_authenticated %}
       {% include "menuitem_project.html" with active=menu_project %}
-    {% endif %}
       {% include "menuitem_report.html" with active=menu_report %}
-    {% if user.is_authenticated %}
       {% include "menuitem_edu.html" with active=menu_teaching %}
       {% include "menuitem_container.html" with active=menu_container %}
-      {% comment %}
-      {% include "menuitem_volume.html" with active=menu_volume %}
-      {% endcomment %}
       {% include "menuitem_services.html" with active=menu_service %}
-
+    {% else %}
+      {% include "menuitem_report.html" with active=menu_report %}
     {% endif %}
     </ul>
     {% include "navbarmenu_right.html" %}

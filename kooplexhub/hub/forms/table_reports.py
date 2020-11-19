@@ -20,7 +20,7 @@ class T_REPORTS(tables.Table):
         orderable = False
         fields = ('openreport', 'created_at', 'tag_name')
         exclude = ('id', 'creator', 'name')
-        attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
+        attrs = { "class": "table table-striped table-bordered", "thead": { "class": "thead-dark table-sm" }, "td": { "style": "padding:.5ex" } }
 
 
 class T_REPORTS_DEL(T_REPORTS):
@@ -36,4 +36,4 @@ class T_REPORTS_DEL(T_REPORTS):
         orderable = False
         fields = ('openreport', 'deletereport', 'created_at', 'tag_name')
         exclude = ('id', 'creator', 'name')
-        attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
+        attrs = { "class": "table table-striped table-bordered", "thead": { "class": "thead-dark table-sm" }, "td": { "style": "padding:.5ex" } }

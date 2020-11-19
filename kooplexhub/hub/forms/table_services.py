@@ -17,6 +17,6 @@ class T_SERVICE(tables.Table):
         model = ProjectServiceBinding
         fields = ('id', 'service__name', 'service__state')
         sequence = ('id', 'service__name', 'service__state')
-        attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
+        attrs = { "class": "table table-striped table-bordered", "thead": { "class": "thead-dark table-sm" }, "td": { "style": "padding:.5ex" } }
 
 

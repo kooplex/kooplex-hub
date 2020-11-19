@@ -39,7 +39,7 @@ class T_REPOSITORY_CLONE(tables.Table):
         model = VCRepository
         fields = ('id', 'repos', 'project_name', 'service', 'repo_folder')
         sequence = ('id', 'repos', 'project_name', 'service', 'repo_folder')
-        attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
+        attrs = { "class": "table table-striped table-bordered", "thead": { "class": "thead-dark table-sm" }, "td": { "style": "padding:.5ex" } }
 
 def s_column(project):
     lookup = dict([ (b.vcproject, b.id) for b in VCProjectProjectBinding.objects.filter(project = project) ])
@@ -66,7 +66,7 @@ def table_vcproject(project):
             model = VCProject
             fields = ('id', 'repository', 'projects')
             sequence = ('id', 'repository', 'projects')
-            attrs = { "class": "table-striped table-bordered", "td": { "style": "padding: 5px 10px 5px 15px" } }
+            attrs = { "class": "table table-striped table-bordered", "thead": { "class": "thead-dark table-sm" }, "td": { "style": "padding:.5ex" } }
 
     return T_VCPROJECT
 
@@ -113,6 +113,6 @@ def table_vctoken(user):
             orderable = False
             fields = ('id', 'repository', 'username', 'fn_rsa', 'token', 'last_used', 'error_flag')
 #            sequence = ('id', 'repository', 'projects')
-            attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
+            attrs = { "class": "table table-striped table-bordered", "thead": { "class": "thead-dark table-sm" }, "td": { "style": "padding:.5ex" } }
 
     return T_VCTOKEN(tokens)
