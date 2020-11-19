@@ -262,27 +262,63 @@ def vc_commit(request):
     return redirect('service_external:versioncontrol')
 
 
-def vc_tokenmanagement(request, server_id):
+def vc_updatetoken(request, server_id):
     user = request.user
     logger.debug("user %s" % user)
-    token_id = request.POST.get('token_id')
-    repository = VCRepository.objects.get(id = server_id)
-
-    if token_id:
-        raise Exception(token_id)
-    else:
-        try:
-            fn_rsa = request.POST.get('fn_rsa')
-            token = request.POST.get('token')
-            un = request.POST.get('username')
-            assert len(fn_rsa), "The RSA filename cannot be empty"
-            assert len(token), "Your token cannot be empty"
-            vctoken = VCToken.objects.create(repository = repository, user = user, username = un, fn_rsa = fn_rsa, token = token)
-            messages.info(request, "Your vctoken %s token is saved" % vctoken)
-        except Exception as e:
-            messages.error(request, "Cannot create your token -- %s" % e)
-            logger.error("user %s cannot save vctoken" % (user))
+    button = request.POST.get('do')
+    fn_rsa = request.POST.get('fn_rsa').strip()
+    token = request.POST.get('token').strip()
+    un = request.POST.get('username').strip()
+    try:
+        assert len(fn_rsa), "The RSA filename cannot be empty"
+        assert len(token), "Your token cannot be empty"
+        assert len(un), "Your username cannot be empty"
+        repository = VCRepository.objects.get(id = server_id)
+    except AssertionError as e:
+        messages.error(request, "Cannot create your token: %s" % e)
+        logger.error("user %s cannot save vctoken -- %s" % (user, e))
         return redirect('service_external:versioncontrol')
+    except VCRepositoty.DoesNotExist:
+        messages.error(request, "Do not abuse system")
+        logger.error("user %s tries to access undefined repository" % (user))
+        return redirect('service_external:versioncontrol')
+    if button == 'Add':
+        try:
+            vctoken = VCToken.objects.create(repository = repository, user = user, username = un, fn_rsa = fn_rsa, token = token)
+            messages.info(request, "Your vctoken for %s token is saved" % vctoken.repository)
+            logger.info(f'Token created for {user} at {repository}')
+        except Exception as e:
+            messages.error(request, "Cannot create your token")
+            logger.error("user %s cannot save vctoken -- %s" % (user, e))
+    elif button == 'Update':
+        try:
+            token_id = request.POST.get('token_id')
+            vctoken = VCToken.objects.get(repository = repository, user = user, id = token_id)
+            vctoken.username = un
+            vctoken.fn_rsa = fn_rsa
+            vctoken.token = token
+            vctoken.save()
+            messages.info(request, "Your vctoken for %s token is updated" % vctoken.repository)
+            logger.info(f'Token updated for {user} at {repository}')
+        except Exception as e:
+            messages.error(request, "Cannot update your token")
+            logger.error("user %s cannot update vctoken -- %s" % (user, e))
+    return redirect('service_external:versioncontrol')
+
+
+@login_required
+def vc_droptoken(request, token_id):
+    """Drop user's password"""
+    user = request.user
+    logger.debug("user %s" % user)
+    try:
+        token = VCToken.objects.get(user = request.user, id = token_id)
+        token.delete()
+        messages.info(request, f'Your seafile secret token for {token.repository} is deleted')
+    except VCToken.DoesNotExist:
+        messages.error(request, f'Token deletion is denied')
+    return redirect('service_external:versioncontrol')
+
 
 urlpatterns = [
     url(r'^filesynchronization', filesynchronization, name = 'filesync'), 
@@ -296,7 +332,8 @@ urlpatterns = [
     url(r'^versioncontrol', versioncontrol, name = 'versioncontrol'), 
     url(r'^vc_search', versioncontrol, name = 'vc_search'), 
     url(r'^vc_refresh/(?P<token_id>\d+)', vc_refresh, name = 'vc_refresh'), 
-    url(r'^vc_tokenmanagement/(?P<server_id>\d+)', vc_tokenmanagement, name = 'vc_tokenmanagement'), 
+    url(r'^vc_updatetoken/(?P<server_id>\d+)', vc_updatetoken, name = 'vc_tokenmanagement'), 
+    url(r'^vc_droptoken/(?P<token_id>\d+)', vc_droptoken, name = 'vc_droptoken'), 
     url(r'^vc_clone', vc_commit, name = 'commit_repo'), 
 ]
 

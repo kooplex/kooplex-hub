@@ -15,7 +15,7 @@
     {% for s in syncservers %}
       {% with t=s|get_userz_fstoken:user %}
         <div class="panel panel-default card bg-light mb-3">
-	  <div class="panel-heading card-header" role="tab" id="heading-{{ s.id }}">
+          <div class="panel-heading card-header" role="tab" id="heading-{{ s.id }}">
             <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapse-{{ s.id }}" aria-expanded="true" aria-controls="collapse-{{ s.id }}">
                 {% if s.backend_type == s.TP_SEAFILE %}
 	          <a href="{{ s.url }}" rel="noreferrer" target="blank" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Login Seafile at {{ s.url }}" data-placement="top"><span class="oi oi-external-link" aria-hidden="true"></span></a>

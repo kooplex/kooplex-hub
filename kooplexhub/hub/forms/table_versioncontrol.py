@@ -94,7 +94,7 @@ def table_vctoken(user):
             if record.id:
                 return format_html("<input type='hidden' name='token_before-%d' value='%s'><input type='password' name='token_after-%d' value='%s'>" % (record.id, record.token, record.id, record.token))
             else:
-                return format_html("<input type='password' name='token-%d' value='' placeholder='Paste your token'>" % (record.repository.id))
+                return format_html("<input type='password' name='token-%d' value='' placeholder=''>" % (record.repository.id))
 
         def render_fn_rsa(self, record):
             if record.id:

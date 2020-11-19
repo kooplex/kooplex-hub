@@ -14,10 +14,9 @@
     <h3>Connected services</h3>
     {% for s in reposervers %}
       {% with t=s|get_userz_vctoken:user %}
-        <div class="card bg-light mb-3">
-          <div class="card-header">
-            <div class="row">
-              <div class="col-8">
+        <div class="panel panel-default card bg-light mb-3">
+          <div class="panel-heading card-header" role="tab" id="heading-{{ s.id }}">
+            <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapse-{{ s.id }}" aria-expanded="true" aria-controls="collapse-{{ s.id }}">
                 {% if s.backend_type == s.TP_GITEA %}
 	          <a href="{{ s.url }}" rel="noreferrer" target="blank" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Login Gitea at {{ s.url }}" data-placement="top"><span class="oi oi-external-link" aria-hidden="true"></span></a>
                 {% elif s.backend_type == s.TP_GITHUB %}
@@ -28,39 +27,49 @@
                   <a href="{{ s.url }}" rel="noreferrer" target="blank" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Login {{ s.backend_type }} at {{ s.url }}" data-placement="top"><span class="oi oi-external-link" aria-hidden="true"></span></a>
                 {% endif %}
                 <span class="badge badge-pill badge-secondary">{{ s.url }}</span>
+		<div style="float: right;">
+                {% if t %}
+                  <a href="{% url 'service_external:vc_refresh' t.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Last updated: {{ t.last_used }}" data-placement="top">Refresh</a>
+                {% else %}
+                  <a href="#" role="button" class="btn btn-secondary disabled" data-toggle="tooltip" title="Disabled" data-placement="top">Refresh</a>
+                {% endif %}
+		</div>
+            </a>
+          </div>
+          <div id="collapse-{{ s.id }}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading-{{ s.id }}">
+            <div class="panel-body" style="padding: 1ex;">
                 {% if t %}
                   <span class="badge badge-pill badge-info">Last updated: {{ t.last_used }}</span>
                 {% else %}
                   <span class="badge badge-pill badge-warning">Make sure you login to git repository server so your account exists there as well, and generate a token</span>
                 {% endif %}
-              </div>
-              <div class="col-2">
+              <div style="float: right;">
                 {% if t %}
-                  <a href="{% url 'service_external:vc_refresh' t.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Last updated: {{ t.last_used }}" data-placement="top">Refresh</a> <br style="margin:1ex">
+                  <a href="{% url 'service_external:vc_droptoken' t.id %}" role="button" class="btn btn-danger" data-toggle="tooltip" title="Drop token" data-placement="top">Drop token</a>
                 {% else %}
-                  <a href="#" role="button" class="btn btn-secondary disabled" data-toggle="tooltip" title="Unconfigured service" data-placement="top">Refresh</a> <br style="margin:1ex">
+                  <a href="#" role="button" class="btn btn-danger disabled" data-toggle="tooltip" title="Drop token" data-placement="top">Drop token</a>
                 {% endif %}
               </div>
+              <hr>
+	      <form id="vc_details_{{ s.id }}" method="post" action="{% url 'service_external:vc_tokenmanagement' s.id %}">
+                {% csrf_token %}
+	        <input type="hidden" name="token_id" value="{{ t.id }}">
+                <table>
+                  <thead><tr>
+                    <th>Registered username at<br>{{ s.url }}</th>
+                    <th>Generated token</th>
+                    <th>Private RSA keyfile</th>
+                    <th></th>
+                  </tr></thead>
+                  <tbody><tr>
+                    <td><input type="text" name="username" value="{% if t %}{{ t.username }}{% else %}{{ user.username }}{% endif %}"></td>
+                    <td><input type="password" name="token" value="{% if t %}{{ t.token }}{% endif %}" placeholder="copied from git server"></td>
+                    <td><input type="text" name="fn_rsa" value="{% if t %}{{ t.fn_rsa }}{% endif %}" placeholder="located in .ssh folder"></td>
+                    <td><input type="submit" name="do" class="btn btn-secondary" value="{% if t %}Update{% else %}Add{% endif %}"></td>
+                  </tr></tbody>
+                </table>
+              </form>
             </div>
-            <hr>
-	    <form class="row" id="vc_details_{{ s.id }}" method="post" action="{% url 'service_external:vc_tokenmanagement' s.id %}">
-              {% csrf_token %}
-	      <input type="hidden" name="token_id" value="{{ t.id }}">
-              <table>
-                <thead><tr>
-                  <th>Registered username at<br>{{ s.url }}</th>
-                  <th>Generated token</th>
-                  <th>Private RSA keyfile</th>
-                  <th></th>
-                </tr></thead>
-                <tbody><tr>
-	          <td><input type="text" name="username" value="{% if t %}{{ t.username }}{% else %}{{ user.username }}{% endif %}"></td>
-	          <td><input type="password" name="token" value="{% if t %}{{ t.token }}{% endif %}" placeholder="copied from git server"></td>
-	          <td><input type="text" name="fn_rsa" value="{% if t %}{{ t.fn_rsa }}{% endif %}" placeholder="located in .ssh folder"></td>
-		  <td><input type="submit" name="do" value="{% if t %} Update {% else %} Add {% endif %}"></td>
-                </tr></tbody>
-              </table>
-	    </form>
           </div>
         </div>
       {% endwith %}
@@ -79,7 +88,20 @@
 
 {% endblock %}
 
+
 {% block main_content_right %}
   {% include 'external_service/hint_repo.html' %}
 {% endblock %}
 
+
+{% block scripts %}
+<script>
+$(".panel-heading").parent('.panel').hover(
+  function() {
+    $(this).children('.collapse').collapse('show');
+  }, function() {
+    $(this).children('.collapse').collapse('hide');
+  }
+);
+</script>
+{% endblock %}
