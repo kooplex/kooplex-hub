@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" >
     <link rel="stylesheet" href="/static/css/animate.css"  type="text/css">
     <link rel="stylesheet" href="/static/css/font-awesome.css" type="text/css">
+    <link rel="stylesheet" href="/static/fonts/remixicon.css" type="text/css">
     <link rel="stylesheet" href="/static/css/nexus.css"  type="text/css">
     <link rel="stylesheet" href="/static/css/responsive.css"  type="text/css">
     <link rel="stylesheet" href="/static/css/custom.css"  type="text/css">
@@ -44,12 +45,12 @@ a.active {
 .card-header .btn-link {
 	color: #343a40;
 }
-.card-header .btn-link.collapsed:before {
+.card-header.collapsed .drpdn:before {
     content:"\f105";
+    padding-right: 2px;
 }
-.card-header .btn-link:before {
-   content:"\f107";
-    padding-right: 4px;
+.card-header .drpdn:before {
+    content:"\f107";
 }
 .card-header .btn:hover,
 .card-header .btn:focus  {

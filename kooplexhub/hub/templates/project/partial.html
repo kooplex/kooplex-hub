@@ -1,23 +1,50 @@
 <div class="card bg-light mb-3">
-  <div class="card-header" id="heading-{{ project.id }}">
-    <button class="btn btn-outline-dark fas btn-link collapsed" data-toggle="collapse" data-target="#collapse-{{ project.id }}" aria-expanded="true" aria-controls="collapse-{{ project.id }}" style="min-width: 15em; text-align: left;">
-      {% if project.scope == project.SCP_PRIVATE %}
-        <span class="oi oi-key" aria-hidden="true" data-toggle="tooltip" title="Private project" data-placement="top"></span>
-      {% else %}
-        <span class="oi oi-cloud" aria-hidden="true" data-toggle="tooltip" title="Public project" data-placement="top"></span>
-      {% endif %}
-      <strong>{{ project.name }}</strong>
-    </button>
-    <div style="float:right">
-      {% if project.reports|length > 0 %}
-        <span class="oi oi-graph" aria-hidden="true" data-toggle="tooltip" title="Reports {{project.reports|length}}" data-placement="top"></span>
-      {% endif %}
-      {% if project.userprojectbindings|length > 1 %}
-        <span class="oi oi-people" aria-hidden="true" data-toggle="tooltip" title="Collaborators {{project.userprojectbindings|length}}" data-placement="top"></span>
-      {% endif %}
-      {% if services|length > 0 %}
-        <span class="oi oi-terminal" aria-hidden="true" data-toggle="tooltip" title="Service environments {{services|length}}" data-placement="top"></span>
-      {% endif %}
+  <div id="heading-{{ project.id }}" class="card-header btn btn-outline-secondary collapsed" data-toggle="collapse" data-target="#collapse-{{ project.id }}" aria-expanded="true" aria-controls="collapse-{{ project.id }}">
+    <div class="row no-gutters justify-content-between">
+      <div class="col-8">
+        <div class="row">
+          <div class="col-1 text-left">
+            <i class="fas drpdn"></i>
+	    <span class="badge badge-pill badge-dark">
+            {% if project.scope == project.SCP_PRIVATE %}
+              <i class="oi oi-key" aria-hidden="true" data-toggle="tooltip" title="Private project" data-placement="top"></i>
+            {% else %}
+              <i class="oi oi-cloud" aria-hidden="true" data-toggle="tooltip" title="Public project" data-placement="top"></i>
+            {% endif %}
+            {% if project.creator == user %}
+              <i class="ri-admin-fill" aria-hidden="true" data-toggle="tooltip" title="You created it" data-placement="top"></i>
+            {% else %}
+              <i class="ri-team-fill" aria-hidden="true" data-toggle="tooltip" title="You are collaborator" data-placement="top"></i>
+            {% endif %}
+	    </span>
+          </div>
+          <div class="col-2 text-left">
+            <strong>{{ project.name }}</strong>
+          </div>
+          <div class="col-9 text-left">
+            {% if project.description %}
+            <span class="badge badge-pill badge-dark" {% if project.description_is_long %}data-toggle="tooltip" title="{{ project.description }}" data-placement="bottom"{% endif %}>
+              Description: {{ project.short_description }}
+            </span>
+            {% else %}
+            <span class="badge badge-pill badge-warning">
+              Please provide a description to your project
+            </span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="col-2 text-right">
+        {% if project.reports|length > 0 %}
+          <span class="badge badge-pill badge-dark" aria-hidden="true" data-toggle="tooltip" title="Reports" data-placement="top"><i class="oi oi-graph"></i>: {{project.reports|length}}</span>
+        {% endif %}
+        {% if project.userprojectbindings|length > 1 %}
+          <span class="badge badge-pill badge-dark" aria-hidden="true" data-toggle="tooltip" title="Collaborators" data-placement="top"><i class="oi oi-people"></i>: {{project.userprojectbindings|length}}</span>
+        {% endif %}
+        {% if services|length > 0 %}
+          <span class="badge badge-pill badge-dark" aria-hidden="true" data-toggle="tooltip" title="Service environments" data-placement="top"><i class="oi oi-terminal"></i>: {{services|length}}</span>
+        {% endif %}
+      </div>
     </div>
   </div>
 
@@ -35,15 +62,18 @@
 	  {% else %}
             <a href="{% url 'project:hide' project.id %}" role="button" class="btn btn-secondary myctrl"><span class="oi oi-eye" aria-hidden="true" data-toggle="tooltip" title="You can hide {{ project.name }} from your list." data-placement="top"></span></a>
 	  {% endif %}
+	  {% comment %}
           <a href="{% url 'project:delete' project.id %}" role="button" class="btn btn-danger myctrl"><span class="oi oi-trash" aria-hidden="true" data-toggle="tooltip" title="Delete project {{ project.name }}." data-placement="top"></span></a>
+	  <a href="#" data-toggle="modal" data-target="#confirm-{{ project.id }}" role="button" class="btn btn-danger myctrl"><span class="oi oi-trash" aria-hidden="true" data-toggle="tooltip" title="Delete project {{ project.name }}." data-placement="top"></span></a>
+	  {% with "Do you really want to delete project "{{ project.name }}"?" as message %}
+	  {% include 'confirm.html' with cid=project.id title="Delete project" url_ok="#" %}
+	  {% endwith %}
+	  {% endcomment %}
+          <a href="{% url 'project:delete' project.id %}" role="button" class="btn btn-danger myctrl" onclick="return confirm('Are you sure?');"><span class="oi oi-trash" aria-hidden="true" data-toggle="tooltip" title="Delete project {{ project.name }}." data-placement="top"></span></a>
         </div>
       </div>
       <div class="card-body">
         <div class="card-deck">
-          <div class="card">
-            <h5 class="card-title">Description</h5>
-            {{ project.description }}
-          </div>
           <div class="card">
             {% if project.userprojectbindings|length == 0 %}
               <h5 class="card-title">No collaborators</h5>

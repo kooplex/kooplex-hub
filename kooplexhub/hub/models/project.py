@@ -38,6 +38,13 @@ class Project(models.Model):
         return self.name < p.name
 
     @property
+    def description_is_long(self):
+        return len(self.description) >= 20
+    @property
+    def short_description(self):
+        return self.description[:17] + "..." if self.description_is_long else self.description
+
+    @property
     def creator(self):
         try:
             return UserProjectBinding.objects.get(project = self, role = UserProjectBinding.RL_CREATOR).user

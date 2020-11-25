@@ -1,22 +1,48 @@
 <div class="card bg-light mb-3">
-  <div class="card-header" id="heading-{{ service.id }}">
-    {% include 'container/startopen.html' with service=service next_page="service:list" label_open="Open" label_start="Start" %}
-    <button class="btn btn-outline-dark fas btn-link collapsed" data-toggle="collapse" data-target="#collapse-{{ service.id }}" aria-expanded="true" aria-controls="collapse-{{ service.id }}" style="min-width: 15em; text-align: left;">
-      <strong>{{ service.name }}</strong>
-    </button>
-    <div style="float:right">
-      <button class="btn" data-toggle="collapse" data-target="#collapse-{{ service.id }}" aria-expanded="true" aria-controls="collapse-{{ service.id }}">
-        {% if service.state == service.ST_NEED_RESTART %}
-          <span class="badge badge-pill badge-danger"><strong>{{ service.image }}</strong></span>
-        {% elif service.state == service.ST_RUNNING  %}
-          <span class="badge badge-pill badge-success"><strong>{{ service.image }}</strong></span>
-        {% else %}
-          <span class="badge badge-pill badge-secondary"><strong>{{ service.image }}</strong></span>
-        {% endif %}
-      </button>
-      {% include 'container/stopremove.html' with service=service next_page="service:list" %}
+  <div id="heading-{{ service.id }}" class="card-header btn btn-outline-secondary collapsed" data-toggle="collapse" data-target="#collapse-{{ service.id }}" aria-expanded="true" aria-controls="collapse-{{ service.id }}">
+    <div class="row no-gutters justify-content-between">
+      <div class="col-8">
+        <div class="row">
+          <div class="col-2 text-left">
+            <i class="fas drpdn"></i>
+            {% include 'container/startopen.html' with service=service next_page="service:list" label_open="Open" label_start="Start" %}
+          </div>
+          <div class="col-2 text-left">
+            <strong>{{ service.name }}</strong>
+	    {% if service.restart_reasons %}
+              <span class="badge badge-pill badge-warning" data-toggle="tooltip" title="{{ service.restart_reasons }} " data-placement="top"><i class="ri-alarm-warning-line"></i></span>
+	    {% endif %}
+          </div>
+          <div class="col-8 text-left">
+            {% if service.state == service.ST_NEED_RESTART %}
+              <span class="badge badge-pill badge-danger"><i class="ri-image-2-line"></i>: <strong>{{ service.image }}</strong></span>
+            {% elif service.state == service.ST_RUNNING  %}
+              <span class="badge badge-pill badge-success"><i class="ri-image-2-line"></i>: <strong>{{ service.image }}</strong></span>
+            {% else %}
+              <span class="badge badge-pill badge-dark"><i class="ri-image-2-line"></i>: <strong>{{ service.image }}</strong></span>
+            {% endif %}
+
+	    {% if service.projects|length > 0 %}
+              <span class="badge badge-pill badge-dark" aria-hidden="true" data-toggle="tooltip" title="Projects" data-placement="top"><i class="ri-product-hunt-line"></i>: {{service.projects|length}}</span>
+	    {% endif %}
+	    {% if service.synced_libraries|length > 0 %}
+              <span class="badge badge-pill badge-dark" aria-hidden="true" data-toggle="tooltip" title="Synchron folders" data-placement="top"><i class="ri-refresh-fill"></i>: {{service.synced_libraries|length}}</span>
+	    {% endif %}
+	    {% if service.repos|length > 0 %}
+              <span class="badge badge-pill badge-dark" aria-hidden="true" data-toggle="tooltip" title="Version control repositories" data-placement="top"><i class="ri-git-repository-line"></i>: {{service.repos|length}}</span>
+	    {% endif %}
+	    {% if service.volumes|length > 0 %}
+              <span class="badge badge-pill badge-dark" aria-hidden="true" data-toggle="tooltip" title="Volumes" data-placement="top"><i class="ri-database-2-line"></i>: {{service.volumes|length}}</span>
+	    {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="col-1 text-right">
+        {% include 'container/stopremove.html' with service=service next_page="service:list" %}
+      </div>
     </div>
   </div>
+
 
   <div id="collapse-{{ service.id }}" class="collapse" aria-labelledby="heading-{{ service.id }}" data-parent="#serviceList">
     <div class="card" style="margin: 10px">
@@ -35,29 +61,38 @@
               <h5 class="card-title">No projects associated</h5>
             {% else %}
               <h5 class="card-title">Projects</h5>
+	      <ul>
               {% for p in service.projects %}
-                <p>{{ p }}</p>
+	      <li>{{ p.name }} ({{ p.description }})</li>
               {% endfor %}
+	      </ul>
             {% endif %}
           </div>
           <div class="card">
-            {% if service.volumes|length == 0 %}
-              <h5 class="card-title">No volumes associated</h5>
-            {% else %}
-              <h5 class="card-title">Volumes</h5>
+            <h5 class="card-title">Attachments</h5>
+	    {% if service.volumes|length > 0 %}
+              <h6>Volumes</h6>
+	      <ul>
               {% for v in service.volumes %}
-                <p>{{ v }} ({{ v.description }})</p>
+                <li>{{ v }} ({{ v.description }})</li>
               {% endfor %}
+	      </ul>
             {% endif %}
-          </div>
-          <div class="card">
-            {% if service.synced_libraries|length == 0 %}
-              <h5 class="card-title">No file synchron folders associated</h5>
-            {% else %}
-              <h5 class="card-title">Synchronized folders</h5>
+	    {% if service.synced_libraries|length > 0 %}
+              <h6>Synchron foders</h6>
+	      <ul>
               {% for l in service.synced_libraries %}
-      	  <p>{{ l.library_name }} from server {{ l.sync_server.url }}</p>
+      	        <li>{{ l.library_name }} from server {{ l.sync_server.url }}</li>
               {% endfor %}
+	      </ul>
+            {% endif %}
+	    {% if service.repos|length > 0 %}
+              <h6>Version control repositories</h6>
+	      <ul>
+              {% for r in service.repos %}
+      	        <li>{{ r.repo_name }} from server {{ r.repository_server.url }}</li>
+              {% endfor %}
+	      </ul>
             {% endif %}
           </div>
         </div>
