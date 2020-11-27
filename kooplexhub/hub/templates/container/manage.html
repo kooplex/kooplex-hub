@@ -64,7 +64,11 @@
       {% render_table t_synclibs %}
     </div>
 
-    <div class="tab-pane fade" id="versioncontrol" role="tabpanel" aria-labelledby="tab-vc">...</div>
+    <div class="tab-pane fade" id="versioncontrol" role="tabpanel" aria-labelledby="tab-vc">
+      <input type="hidden" name="active_tab" value="versioncontrol">
+      <h5 class="card-title">Select version control repositores to associate with the service environment</h5>
+      {% render_table t_repositories %}
+    </div>
 
 
     <div class="card-footer text-right">

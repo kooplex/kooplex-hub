@@ -17,7 +17,7 @@ from .report import Report
 from .course import Course
 from .volume import Volume, VolumeProjectBinding
 from .image import Image
-from .versioncontrol import VCProjectProjectBinding
+#from .versioncontrol import VCProjectProjectBinding
 from .filesync import FSLibraryProjectBinding
 
 from kooplex.settings import KOOPLEX
@@ -127,21 +127,21 @@ class Container(models.Model):
         for project in self.projects:
             yield UserProjectBinding.objects.get(user = self.user, project = project)
 
-    @property
-    def vcprojectprojectbindings(self):
-        serve_history = {}
-        for project in self.projects:
-            creator = project.creator
-            for vcppb in VCProjectProjectBinding.objects.filter(project = project):
-                if vcppb.vcproject.token.user == self.user:
-                    yield vcppb
-                    serve_history[project] = None
-                if vcppb.vcproject.token.user == creator:
-                    if not project in serve_history:
-                        serve_history[project] = vcppb
-        for vcppb in serve_history.values():
-            if vcppb is not None:
-                yield vcppb
+#    @property
+#    def vcprojectprojectbindings(self):
+#        serve_history = {}
+#        for project in self.projects:
+#            creator = project.creator
+#            for vcppb in VCProjectProjectBinding.objects.filter(project = project):
+#                if vcppb.vcproject.token.user == self.user:
+#                    yield vcppb
+#                    serve_history[project] = None
+#                if vcppb.vcproject.token.user == creator:
+#                    if not project in serve_history:
+#                        serve_history[project] = vcppb
+#        for vcppb in serve_history.values():
+#            if vcppb is not None:
+#                yield vcppb
 
     @property
     def fslibraryprojectbindings(self):
@@ -588,23 +588,23 @@ def managemount_remove_project(sender, instance, **kwargs):
         logger.error('Container %s -- %s' % (c, e))
 
 
-@receiver(post_save, sender = VCProjectProjectBinding)
-def managemount_add_vcprojectprojectbinding(sender, instance, created, **kwargs):
-    if created:
-        for c in Container.objects.filter(user = instance.vcproject.token.user, state = Container.ST_RUNNING):
-            try:
-                c.managemount()
-            except Exception as e:
-                logger.error('Container %s -- %s' % (c, e))
-
-
-@receiver(post_delete, sender = VCProjectProjectBinding)
-def managemount_remove_vcprojectprojectbinding(sender, instance, **kwargs):
-    for c in Container.objects.filter(user = instance.vcproject.token.user, state = Container.ST_RUNNING):
-        try:
-            c.managemount()
-        except Exception as e:
-            logger.error('Container %s -- %s' % (c, e))
+#@receiver(post_save, sender = VCProjectProjectBinding)
+#def managemount_add_vcprojectprojectbinding(sender, instance, created, **kwargs):
+#    if created:
+#        for c in Container.objects.filter(user = instance.vcproject.token.user, state = Container.ST_RUNNING):
+#            try:
+#                c.managemount()
+#            except Exception as e:
+#                logger.error('Container %s -- %s' % (c, e))
+#
+#
+#@receiver(post_delete, sender = VCProjectProjectBinding)
+#def managemount_remove_vcprojectprojectbinding(sender, instance, **kwargs):
+#    for c in Container.objects.filter(user = instance.vcproject.token.user, state = Container.ST_RUNNING):
+#        try:
+#            c.managemount()
+#        except Exception as e:
+#            logger.error('Container %s -- %s' % (c, e))
 
 
 @receiver(post_delete, sender = ProjectContainerBinding)

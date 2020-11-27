@@ -25,6 +25,7 @@ def start(service):
     env_variables = [
         { "name": "LANG", "value": "en_US.UTF-8" },
         { "name": "PREFIX", "value": "k8plex" },
+        { "name": "SSH_AUTH_SOCK", "value": f"/tmp/{service.user.username}" },
     ]
     for env in service.env_variables:
         env_variables.append(env)
@@ -86,6 +87,16 @@ def start(service):
             "name": "pv-k8plex-hub-cache",
             "mountPath": os.path.join(mount_point, 'synchron', f'{sync_lib.library_name}-{server}'),
             "subPath": os.path.join('fs', service.user.username, server, 'synchron', sync_lib.library_name),
+        })
+        has_cache = True
+
+    for repo in service.repos:
+        o = urlparse(repo.token.repository.url)
+        server = o.netloc.replace('.', '_')
+        volume_mounts.append({
+            "name": "pv-k8plex-hub-cache",
+            "mountPath": os.path.join(mount_point, 'git', f'{repo.clone_folder}-{server}'),
+            "subPath": os.path.join('git', service.user.username, server, repo.clone_folder),
         })
         has_cache = True
 

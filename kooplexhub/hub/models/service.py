@@ -129,6 +129,11 @@ class Service(models.Model):
         from .filesync import FSLibraryServiceBinding
         return [ binding.fslibrary for binding in FSLibraryServiceBinding.objects.filter(service = self) ]
 
+    @property
+    def repos(self):
+        from .versioncontrol import VCProjectServiceBinding
+        return [ binding.vcproject for binding in VCProjectServiceBinding.objects.filter(service = self) ]
+
     def start(self):
         return start_environment(self)
 

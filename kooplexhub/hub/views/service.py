@@ -12,11 +12,13 @@ from kooplex.lib import standardize_str, custom_redirect
 
 from hub.forms import table_projects
 from hub.forms import table_fslibrary
+from hub.forms import table_vcproject
 from hub.models import Image
 from hub.models import Project, UserProjectBinding
 from hub.models import Service
 from hub.models import ProjectServiceBinding
 from hub.models import FSLibrary, FSLibraryServiceBinding
+from hub.models import VCProject, VCProjectServiceBinding
 
 logger = logging.getLogger(__name__)
 
@@ -148,11 +150,16 @@ def configureservice(request, environment_id):
         table_synclibs = table(FSLibrary.objects.filter(token__user = user).exclude(sync_folder__exact = ''))
         RequestConfig(request).configure(table_synclibs)
 
+        table = table_vcproject(svc)
+        table_repos = table(VCProject.objects.filter(token__user = user).exclude(clone_folder__exact = ''))
+        RequestConfig(request).configure(table_repos)
+
         context_dict = {
             'images': Image.objects.all(),
             'container': svc,
             't_projects': table_project,
             't_synclibs': table_synclibs,
+            't_repositories': table_repos,
             'next_page': 'service:list',
         }
         return render(request, 'container/manage.html', context = context_dict)
@@ -204,7 +211,7 @@ def configureservice(request, environment_id):
                 oops += 1
                 continue
             FSLibraryServiceBinding.objects.create(service = svc, fslibrary = fsl)
-            msg = f'synchron library {fsl.library_name} atached'
+            msg = f'synchron library {fsl.library_name} attached'
             if not svc.mark_restart(msg):
                 msgs.append(msg)
         for id_remove in set(request.POST.getlist('fslpb_ids_before')).difference(set(request.POST.getlist('fslpb_ids_after'))):
@@ -219,6 +226,32 @@ def configureservice(request, environment_id):
                     msgs.append(msg)
                 fslsb.delete()
             except FSLibraryServiceBinding.DoesNotExist:
+                logger.error("Is %s hacking" % user)
+                oops += 1
+
+        # handle repository caches
+        for id_create in request.POST.getlist('vcp_ids'):
+            vcp = VCProject.objects.get(id = id_create)
+            if vcp.token.user != user:
+                logger.error("Unauthorized request vcp: %s, user: %s" % (vcp, user))
+                oops += 1
+                continue
+            VCProjectServiceBinding.objects.create(service = svc, vcproject = vcp)
+            msg = f'version control project {vcp.project_name} attached'
+            if not svc.mark_restart(msg):
+                msgs.append(msg)
+        for id_remove in set(request.POST.getlist('vcpsb_ids_before')).difference(set(request.POST.getlist('vcpsb_ids_after'))):
+            try:
+                vcpsb = VCProjectServiceBinding.objects.get(id = id_remove, service = svc)
+                if vcpsb.vcproject.token.user != user:
+                    logger.error("Unauthorized request vcp: %s, user: %s" % (vcpsb.vcproject, user))
+                    oops += 1
+                    continue
+                msg = f'version control project {vcpsb.vcproject.project_name} removed'
+                if not svc.mark_restart(msg):
+                    msgs.append(msg)
+                vcpsb.delete()
+            except VCProjectServiceBinding.DoesNotExist:
                 logger.error("Is %s hacking" % user)
                 oops += 1
 

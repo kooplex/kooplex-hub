@@ -157,9 +157,9 @@ class VCProjectAdmin(admin.ModelAdmin):
     def repo(self, instance):
         return instance.token.repository.url
 
-#@admin.register(VCProjectProjectBinding)
-#class VCProjectProjectBindingAdmin(admin.ModelAdmin):
-#    list_display = ('id', 'project', 'vcproject')
+@admin.register(VCProjectServiceBinding)
+class VCProjectServiceBindingAdmin(admin.ModelAdmin):
+    list_display = ('id', 'service', 'vcproject')
 
 
 @admin.register(FSServer)

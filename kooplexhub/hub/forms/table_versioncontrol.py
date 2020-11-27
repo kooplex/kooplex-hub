@@ -5,7 +5,34 @@ import django_tables2 as tables
 
 from hub.models import VCRepository
 from hub.models import VCToken
-from hub.models import VCProject
+from hub.models import VCProject, VCProjectServiceBinding
+
+def table_vcproject(service):
+    lookup = dict([ (b.vcproject, b.id) for b in VCProjectServiceBinding.objects.filter(service = service) ])
+
+    class SelectColumn(tables.Column):
+        def render(self, record):
+            if record in lookup.keys():
+                return format_html('<input type="hidden" name="vcpsb_ids_before" value="{0}"><input type="checkbox" name="vcpsb_ids_after" value="{0}" checked data-toggle="toggle" data-on="Attached" data-off="Detach" data-onstyle="success" data-offstyle="dark" data-size="xs">'.format(lookup[record]))
+            else:
+                return format_html('<input type="checkbox" name="vcp_ids" data-toggle="toggle" value="{}" data-on="Attach" data-off="Unused" data-onstyle="success" data-offstyle="dark" data-size="xs">'.format(record.id))
+    sc = SelectColumn
+    
+    class ServiceColumn(tables.Column):
+        def render(self, record):
+            return format_html(", ".join([ s.name for s in record.services ]))
+
+    class T_VCPROJECT(tables.Table):
+        id = sc(verbose_name = 'status', orderable = False)
+        services = ServiceColumn(verbose_name = 'Bound to service', empty_values = (), orderable = False)
+
+        class Meta:
+            model = VCProject
+            fields = ('id', 'repository', 'services')
+            sequence = ('id', 'repository', 'services')
+            attrs = { "class": "table table-striped table-bordered", "thead": { "class": "thead-dark table-sm" }, "td": { "style": "padding:.5ex" } }
+
+    return T_VCPROJECT
 
 
 class T_REPOSITORY_CLONE(tables.Table):
@@ -37,8 +64,8 @@ class T_REPOSITORY_CLONE(tables.Table):
 
     class Meta:
         model = VCRepository
-        fields = ('id', 'repos', 'project_name', 'service', 'repo_folder')
-        sequence = ('id', 'repos', 'project_name', 'service', 'repo_folder')
+        fields = ('id', 'repos', 'project_name', 'service', 'clone_folder')
+        sequence = ('id', 'repos', 'project_name', 'service', 'clone_folder')
         attrs = { "class": "table table-striped table-bordered", "thead": { "class": "thead-dark table-sm" }, "td": { "style": "padding:.5ex" } }
 
 def s_column(project):
@@ -55,20 +82,6 @@ class ProjectsColumn(tables.Column):
     def render(self, record):
         return format_html(",".join(map(lambda b: str(b.project), record.vcprojectprojectbindings)))
 
-
-def table_vcproject(project):
-    sc = s_column(project)
-    class T_VCPROJECT(tables.Table):
-        id = sc(verbose_name = 'status', orderable = False)
-        projects = ProjectsColumn(verbose_name = 'Bound to projects', empty_values = (), orderable = False)
-
-        class Meta:
-            model = VCProject
-            fields = ('id', 'repository', 'projects')
-            sequence = ('id', 'repository', 'projects')
-            attrs = { "class": "table table-striped table-bordered", "thead": { "class": "thead-dark table-sm" }, "td": { "style": "padding:.5ex" } }
-
-    return T_VCPROJECT
 
 
 def table_vctoken(user):

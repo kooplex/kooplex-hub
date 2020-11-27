@@ -82,7 +82,7 @@
               <h6>Synchron foders</h6>
 	      <ul>
               {% for l in service.synced_libraries %}
-      	        <li>{{ l.library_name }} from server {{ l.sync_server.url }}</li>
+      	        <li>{{ l.library_name }} from server {{ l.token.syncserver.url }}</li>
               {% endfor %}
 	      </ul>
             {% endif %}
@@ -90,7 +90,7 @@
               <h6>Version control repositories</h6>
 	      <ul>
               {% for r in service.repos %}
-      	        <li>{{ r.repo_name }} from server {{ r.repository_server.url }}</li>
+      	        <li>{{ r.project_name }} from server {{ r.token.repository.url }}</li>
               {% endfor %}
 	      </ul>
             {% endif %}

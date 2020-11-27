@@ -1,6 +1,8 @@
 import requests
 import requests.auth
 import logging
+import pickle
+import base64
 
 from kooplex.settings import KOOPLEX
 
@@ -22,7 +24,7 @@ def list_projects(vctoken):
     else:
         raise NotImplementedError("Unknown version control system type: %s" % vctoken.type)
 
-def impersonator_clone(vcproject):
+def impersonator_repo(vcproject, do):
     url_base = KOOPLEX['impersonator'].get('base_url', 'http://localhost')
     A = requests.auth.HTTPBasicAuth(KOOPLEX['impersonator'].get('username'), KOOPLEX['impersonator'].get('password'))
     try:
@@ -30,44 +32,23 @@ def impersonator_clone(vcproject):
     except ConnectionError:
         logger.critical('impersonator API is not running')
         raise
-    params = {
-        'clone': vcproject.project_ssh_url,
-        'username': vcproject.token.user.username,
-        'port': vcproject.token.repository.ssh_port,
-        'prefix': vcproject.token.repository.backend_type,
-        'rsa_file': '/home/{}/.ssh/{}'.format(vcproject.token.user.username, vcproject.token.fn_rsa), #TODO: store rsa keys automagically in a separate folder in cache volume (?)
+    data_dict = {
+            'url_clone_repo': vcproject.project_ssh_url,
+            'service_url': vcproject.token.repository.url, 
+            'username': vcproject.token.user.username,
+            'rsa': open('/home/{}/.ssh/{}'.format(vcproject.token.user.username, vcproject.token.fn_rsa)).read(), #FIXME: mount home/.ssh
+            'do': do
             }
-    url = '{}/api/versioncontrol/clone/{}'.format(url_base, vcproject.token.user.username)
+    data = base64.b64encode(pickle.dumps(data_dict, protocol = 2))
+    url = f'{url_base}/api/versioncontrol/{data}'
     try:
-        resp_info = requests.get(url, auth = A, params = params)
+        assert do in [ 'clone', 'drop' ], f'Wrong command {do}'
+        resp_info = requests.get(url, auth = A)
         rj = resp_info.json()
         if 'error' in rj:
-            logger.warning('error to clone {} for user {} -- daemon response: {}'.format(vcproject, vcproject.token.user.username, rj))
+            logger.warning(f'error to {do} repomanage of {vcproject.project_ssh_url} for user {vcproject.token.user.username} -- daemon response: {rj}')
             raise Exception(rj['error'])
-        return rj['clone_folder']
+        return rj.get('clone_folder', None) #FIXME: rename repo_folder
     except Exception as e:
-        logger.error('error to clone {} for user {} -- {}'.format(vcproject, vcproject.token.user.username, e))
-        raise
-
-def impersonator_removecache(vcproject):
-    url_base = KOOPLEX['impersonator'].get('base_url', 'http://localhost')
-    A = requests.auth.HTTPBasicAuth(KOOPLEX['impersonator'].get('username'), KOOPLEX['impersonator'].get('password'))
-    try:
-        resp_echo = requests.get(url_base, auth = A)
-    except ConnectionError:
-        logger.critical('impersonator API is not running')
-        raise
-    params = {
-        'clone': vcproject.project_ssh_url,
-        'username': vcproject.token.user.username,
-        'prefix': vcproject.token.repository.backend_type,
-            }
-    url = '{}/api/versioncontrol/removecache/{}'.format(url_base, vcproject.token.user.username)
-    try:
-        resp_info = requests.get(url, auth = A, params = params)
-        rj = resp_info.json()
-        if 'error' in rj:
-            logger.warning('error to clone {} for user {} -- daemon response: {}'.format(vcproject, vcproject.token.user.username, rj))
-    except Exception as e:
-        logger.error('error to clone {} for user {} -- {}'.format(vcproject, vcproject.token.user.username, e))
+        logger.error(f'error to {do} repomanage of {vcproject.project_ssh_url} for user {vcproject.token.user.username}')
 

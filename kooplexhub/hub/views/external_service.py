@@ -263,7 +263,7 @@ def vc_commit(request):
     for r_id in request_clone:
         try:
             r = VCProject.objects.get(token__user = user, cloned = False, id = r_id)
-            r.clone_folder = impersonator_clone(r)
+            r.clone_folder = impersonator_repo(r, 'clone')
             r.cloned = True
             r.save()
             clone_folders.append(r.clone_folder)
@@ -273,7 +273,7 @@ def vc_commit(request):
     for r_id in request_rmcache:
         try:
             r = VCProject.objects.get(token__user = user, cloned = True, id = r_id)
-            impersonator_removecache(r)
+            impersonator_repo(r, 'drop')
             rmcache.append(r.clone_folder)
             r.cloned = False
             r.clone_folder = None
