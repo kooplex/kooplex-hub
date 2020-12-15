@@ -7,14 +7,14 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django_tables2 import RequestConfig
 
-from kooplex.lib import list_projects, impersonator_clone, impersonator_removecache
+from kooplex.lib import list_projects, impersonator_repo
 from kooplex.lib import list_libraries, impersonator_sync
 from kooplex.lib import now
 from kooplex.lib import seafilepw_update
 
 from hub.forms import T_FSLIBRARY_SYNC
 from hub.forms import T_REPOSITORY_CLONE
-from hub.models import VCRepository, VCToken, VCProject
+from hub.models import VCRepository, VCToken, VCProject, VCProjectServiceBinding
 from hub.models import FSServer, FSToken, FSLibrary, FSLibraryServiceBinding
 
 logger = logging.getLogger(__name__)
@@ -260,6 +260,7 @@ def vc_commit(request):
     request_rmcache = request.POST.getlist('removecache')
     clone_folders = []
     rmcache = []
+    unbound = []
     for r_id in request_clone:
         try:
             r = VCProject.objects.get(token__user = user, cloned = False, id = r_id)
@@ -274,6 +275,10 @@ def vc_commit(request):
         try:
             r = VCProject.objects.get(token__user = user, cloned = True, id = r_id)
             impersonator_repo(r, 'drop')
+            for b in VCProjectServiceBinding.objects.filter(vcproject = r):
+                unbound.append(b.service.name)
+                b.service.mark_restart(f'version control repo {r.project_name} deleted')
+                b.delete()
             rmcache.append(r.clone_folder)
             r.cloned = False
             r.clone_folder = None
@@ -285,6 +290,8 @@ def vc_commit(request):
         messages.info(request, "version control projects cloned in folders: {}".format(', '.join(clone_folders)))
     if rmcache:
         messages.info(request, "removed version control project folders: {}".format(', '.join(rmcache)))
+    if unbound:
+        messages.warning(request, 'Your environments {} need to be restarted'.format(', '.join(unbound)))
     return redirect('service_external:versioncontrol')
 
 
@@ -292,11 +299,11 @@ def vc_updatetoken(request, server_id):
     user = request.user
     logger.debug("user %s" % user)
     button = request.POST.get('do')
-    fn_rsa = request.POST.get('fn_rsa').strip()
+    rsa = request.POST.get('rsa').strip()
     token = request.POST.get('token').strip()
     un = request.POST.get('username').strip()
     try:
-        assert len(fn_rsa), "The RSA filename cannot be empty"
+        assert len(rsa), "The RSA key cannot be empty"
         assert len(token), "Your token cannot be empty"
         assert len(un), "Your username cannot be empty"
         repository = VCRepository.objects.get(id = server_id)
@@ -310,7 +317,7 @@ def vc_updatetoken(request, server_id):
         return redirect('service_external:versioncontrol')
     if button == 'Add':
         try:
-            vctoken = VCToken.objects.create(repository = repository, user = user, username = un, fn_rsa = fn_rsa, token = token)
+            vctoken = VCToken.objects.create(repository = repository, user = user, username = un, rsa = rsa, token = token)
             messages.info(request, "Your vctoken for %s token is saved" % vctoken.repository)
             logger.info(f'Token created for {user} at {repository}')
         except Exception as e:
@@ -321,7 +328,7 @@ def vc_updatetoken(request, server_id):
             token_id = request.POST.get('token_id')
             vctoken = VCToken.objects.get(repository = repository, user = user, id = token_id)
             vctoken.username = un
-            vctoken.fn_rsa = fn_rsa
+            vctoken.rsa = rsa
             vctoken.token = token
             vctoken.save()
             messages.info(request, "Your vctoken for %s token is updated" % vctoken.repository)

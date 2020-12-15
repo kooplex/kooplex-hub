@@ -58,13 +58,16 @@
                   <thead><tr>
                     <th>Registered username at<br>{{ s.url }}</th>
                     <th>Generated token</th>
-                    <th>Private RSA keyfile</th>
+                    <th>Private RSA key</th>
                     <th></th>
                   </tr></thead>
                   <tbody><tr>
                     <td><input type="text" name="username" value="{% if t %}{{ t.username }}{% else %}{{ user.username }}{% endif %}"></td>
                     <td><input type="password" name="token" value="{% if t %}{{ t.token }}{% endif %}" placeholder="copied from git server"></td>
-                    <td><input type="text" name="fn_rsa" value="{% if t %}{{ t.fn_rsa }}{% endif %}" placeholder="located in .ssh folder"></td>
+		    {% comment %}
+                    <td><input type="text" name="rsa" value="{% if t %}{{ t.rsa }}{% endif %}" placeholder="Private RSA key"></td>
+		    {% endcomment %}
+		    <td><textarea name="rsa" placeholder="Private RSA key">{% if t %}{{ t.rsa }}{% endif %}</textarea></td>
                     <td><input type="submit" name="do" class="btn btn-secondary" value="{% if t %}Update{% else %}Add{% endif %}"></td>
                   </tr></tbody>
                 </table>

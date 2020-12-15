@@ -43,7 +43,7 @@ class VCToken(models.Model):
     repository = models.ForeignKey(VCRepository, null = False)
     username = models.CharField(max_length = 256, null = False)
     token = models.CharField(max_length = 256, null = False) # FIXME: dont store as clear text
-    fn_rsa = models.CharField(max_length = 256, null = False)
+    rsa = models.CharField(max_length = 2048, null = False)
     last_used = models.DateTimeField(null = True)
     error_flag = models.BooleanField(default = False)       # TODO: save error message maybe stored in a separate table
 

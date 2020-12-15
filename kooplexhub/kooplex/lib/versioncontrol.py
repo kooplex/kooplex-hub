@@ -36,7 +36,7 @@ def impersonator_repo(vcproject, do):
             'url_clone_repo': vcproject.project_ssh_url,
             'service_url': vcproject.token.repository.url, 
             'username': vcproject.token.user.username,
-            'rsa': open('/home/{}/.ssh/{}'.format(vcproject.token.user.username, vcproject.token.fn_rsa)).read(), #FIXME: mount home/.ssh
+            'rsa': vcproject.token.rsa,
             'do': do
             }
     data = base64.b64encode(pickle.dumps(data_dict, protocol = 2))

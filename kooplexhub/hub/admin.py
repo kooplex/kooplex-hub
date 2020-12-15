@@ -148,7 +148,7 @@ class VCRepositoryAdmin(admin.ModelAdmin):
 
 @admin.register(VCToken)
 class VCTokenAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'username', 'repository', 'fn_rsa')
+    list_display = ('id', 'user', 'username', 'repository')
 
 @admin.register(VCProject)
 class VCProjectAdmin(admin.ModelAdmin):

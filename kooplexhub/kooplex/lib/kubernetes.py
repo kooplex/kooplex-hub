@@ -136,6 +136,9 @@ def start(service):
                     "env": env_variables,
                 }],
                 "volumes": volumes,
+#                "nodeSelector": { "kubernetes.io/hostname": "veo2" }, # FIXME:
+#                "nodeSelector": { "kubernetes.io/hostname": "kooplex-deploy" }, # FIXME:
+#                "nodeSelector": { "kubernetes.io/hostname": "work" }, # FIXME:
             }
         }
 
