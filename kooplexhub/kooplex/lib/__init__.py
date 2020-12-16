@@ -1,4 +1,4 @@
-from .libbase import standardize_str, deaccent_str, keeptrying, bash, now, translate_date, human_localtime, custom_redirect
+from .libbase import standardize_str, deaccent_str, keeptrying, bash, now, translate_date, human_localtime, custom_redirect, sudo
 from .docker import Docker
 from .versioncontrol import list_projects, impersonator_repo
 from .filesync import list_libraries, seafilepw_update, impersonator_sync

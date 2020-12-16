@@ -7,8 +7,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth.models import User
 
 from kooplex.lib.filesystem import check_home, mkdir_home 
-from kooplex.lib.filesystem import check_usergarbage, mkdir_usergarbage 
-from kooplex.lib.filesystem import check_reportprepare, mkdir_reportprepare
+from kooplex.lib.filesystem import check_usergarbage
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +30,4 @@ class Command(BaseCommand):
         logger.info("call %s %s" % (args, options))
         for u in User.objects.all():
             self._do_it("Create home folder", check_home, mkdir_home, u, dry = options['dry'])
-            self._do_it("Create garbage folder", check_usergarbage, mkdir_usergarbage, u, dry = options['dry'])
-            self._do_it("Create report prepare folder", check_reportprepare, mkdir_reportprepare, u, dry = options['dry'])
 

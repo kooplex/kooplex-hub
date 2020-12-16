@@ -76,7 +76,7 @@ def start(service):
             volume_mounts.append({
                 "name": "pv-k8plex-hub-cache",
                 "mountPath": os.path.join(mount_point, report_prepare_subdir, project.uniquename),
-                "subPath": project.uniquename
+                "subPath": os.path.join('report_prepare', project.uniquename)
             })
             has_cache = True
 

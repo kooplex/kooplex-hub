@@ -12,35 +12,49 @@ from distutils import dir_util
 from distutils import file_util
 import tarfile
 
-from kooplex.lib import bash, Dirname, Filename
+from kooplex.lib import bash, Dirname, Filename, sudo
 
 logger = logging.getLogger(__name__)
 
-def _mkdir(path, uid = 0, gid = 0, mode = 0b111101000):
+
+@sudo
+def _mkdir(path):
     """
-    @summary: make directory, set ownership and mode. (A helper method)
+    @summary: make a directory
     @param path: the directory to make
     @type path: str
-    @param uid: filesystem level user id, default 0
-    @type uid: int
-    @param gid: filesystem level group id, default 0
-    @type gid: int
-    @param mode: filesystem access flags (9 bits), default 0b111101000
-    @type mode: int
     """
-    logger.debug("dir: %s uid/gid: %d/%d" % (path, uid, gid))
     dir_util.mkpath(path)
-    os.chown(path, uid, gid)
-    os.chmod(path, mode)
+    assert os.path.exists(path), f"{path} is not present in the filesystem"
+    logger.info(f"+ created dir: {path}")
+
+@sudo
+def _rmdir(path):
+    """
+    @summary: remove a directory recursively
+    @param path: the directory to remove
+    @type path: str
+    """
+    dir_util.remove_tree(path)
+    logger.info(f"- removed dir: {path}")
 
 
-def _grantaccess(user, folder, acl = 'rwX'):
-    bash("setfacl -R -m u:%d:%s %s" % (user.profile.userid, acl, folder))
 
+#FIXME: posix/nfs
+@sudo
+def _grantaccess(user, folder, acl = 'rwaDxtcy'):
+#    bash("setfacl -R -m u:%d:%s %s" % (user.profile.userid, acl, folder))
+    bash("nfs4_setfacl -R -a A::%d:%s %s" % (user.profile.userid, acl, folder))
+    logger.info(f"+ access granted on dir {folder} to user {user}")
+
+@sudo
 def _revokeaccess(user, folder):
-    bash("setfacl -R -x u:%d %s" % (user.profile.userid, folder))
+#    bash("setfacl -R -x u:%d %s" % (user.profile.userid, folder))
+    bash(f"nfs4_setfacl -R -x A::{user.profile.userid}:$(nfs4_getfacl {folder} | grep {user.profile.userid} | sed s,.*:,,) {folder}")
+    logger.info(f"- access revoked on dir {folder} from user {user}")
 
 
+@sudo
 def _archivedir(folder, target, remove = True):
     if not os.path.exists(folder):
         logger.warning("Folder %s is missing" % folder)
@@ -55,9 +69,10 @@ def _archivedir(folder, target, remove = True):
         logger.error("Cannot create archive %s -- %s" % (folder, e))
     finally:
         if remove:
-            dir_util.remove_tree(folder)
-            logger.debug("Folder %s removed" % folder)
+            _rmdir(folder)
 
+
+@sudo
 def _copy_dir(f_source, f_target, remove = False):
     if not os.path.exists(f_source):
         msg = "Folder %s not found" % f_source
@@ -66,76 +81,108 @@ def _copy_dir(f_source, f_target, remove = False):
     dir_util.copy_tree(f_source, f_target)
     logger.info("copied %s -> %s" % (f_source, f_target))
     if remove:
-        dir_util.remove_tree(f_source)
-        logger.debug("Folder %s removed" % folder)
+        _rmdir(f_source)
 
 
-def _createfile(fn, content, uid = 0, gid = 0, mode = 0b111101000):
-    with open(fn, 'w') as f:
-        f.write(content)
-    os.chown(fn, uid, gid)
-    os.chmod(fn, mode)
-    logger.info("Created file: %s" % fn)
+#FIXME:
+#@sudo
+#def _createfile(fn, content, uid = 0, gid = 0, mode = 0b111101000):
+#    with open(fn, 'w') as f:
+#        f.write(content)
+#    os.chown(fn, uid, gid)
+#    os.chmod(fn, mode)
+#    logger.info("Created file: %s" % fn)
 
 ########################################
 
 
-def check_home(user):
+def check_home(user): #FIXME: add to _mkdir silent no exception 2 raise
     dir_home = Dirname.userhome(user)
     assert os.path.exists(dir_home), "Folder %s does not exist" % dir_home
 #TODO: check permissions
 
+##################
+# per user folders
+
 def mkdir_home(user):
     """
-    @summary: create a home directory for the user
+    @summary: create a home directory and garbage folder for the user
     @param user: the user
     @type user: kooplex.hub.models.User
     """
     dir_home = Dirname.userhome(user)
-    _mkdir(dir_home, uid = user.profile.userid, gid = user.profile.groupid)
+    _mkdir(dir_home)
+    _grantaccess(user, dir_home)
+    dir_usergarbage = Dirname.usergarbage(user)
+    _mkdir(dir_usergarbage)
+    _grantaccess(user, dir_usergarbage)
 
 def garbagedir_home(user):
     dir_home = Dirname.userhome(user)
     garbage = Filename.userhome_garbage(user)
     _archivedir(dir_home, garbage)
 
-########################################
+##################
+# per project folders
 
+def mkdir_project(project):
+    dir_project = Dirname.project(project)
+    _mkdir(dir_project)
+    _grantaccess(project.creator, dir_project)
+    dir_report = Dirname.reportroot(project)
+    _mkdir(dir_report)
+    _grantaccess(project.creator, dir_report)
+    dir_reportprepare = Dirname.reportprepare(project)
+    _mkdir(dir_reportprepare)
+    _grantaccess(project.creator, dir_reportprepare)
+
+def grantaccess_project(userprojectbinding):
+    user = userprojectbinding.user
+    dir_project = Dirname.project(userprojectbinding.project)
+    _grantaccess(user, dir_project)
+    dir_report = Dirname.reportroot(userprojectbinding.project)
+    _grantaccess(user, dir_report)
+    dir_reportprepare = Dirname.reportprepare(userprojectbinding.project)
+    _grantaccess(user, dir_reportprepare)
+
+def revokeaccess_project(userprojectbinding):
+    user = userprojectbinding.user
+    dir_project = Dirname.project(userprojectbinding.project)
+    _revokeaccess(user, dir_project)
+    #FIXME: create report folder rather only when reports are created?
+    dir_report = Dirname.reportroot(userprojectbinding.project)
+    _revokeaccess(user, dir_report)
+    dir_reportprepare = Dirname.reportprepare(userprojectbinding.project)
+    _revokeaccess(user, dir_reportprepare)
+
+def garbagedir_project(project):
+    dir_project = Dirname.project(project)
+    garbage = Filename.project_garbage(project)
+    _archivedir(dir_project, garbage)
+    dir_reportprepare = Dirname.reportprepare(project)
+    _rmdir(dir_reportprepare)
+
+
+
+
+########################################
+#FIXME: not yet used
 def check_volume(volume_dir):
 #    volume_dir  
     return True
 
 def mkdir_volume(volume_dir, user):
-    _mkdir(volume_dir, uid = user.profile.userid, gid = user.profile.groupid)
+    _mkdir(volume_dir)
+    _grantaccess(user, volume_dir)
 
 ########################################
 
-def check_usergarbage(user):
-    dir_usergarbage = Dirname.usergarbage(user)
-    assert os.path.exists(dir_usergarbage), "Folder %s does not exist" % dir_usergarbage
 
-def mkdir_usergarbage(user):
-    dir_usergarbage = Dirname.usergarbage(user)
-    _mkdir(dir_usergarbage, uid = user.profile.userid, gid = user.profile.groupid)
-
-
-########################################
-
-def check_reportprepare(user):
-    dir_reportprepare = Dirname.reportprepare(user)
-def mkdir_usergarbage(user):
-    dir_usergarbage = Dirname.usergarbage(user)
-    _mkdir(dir_usergarbage, uid = user.profile.userid, gid = user.profile.groupid)
-
-
-########################################
 
 def check_reportprepare(user):
     dir_reportprepare = Dirname.reportprepare(user)
     assert os.path.exists(dir_reportprepare), "Folder %s does not exist" % dir_reportprepare
 
-def mkdir_reportprepare(user):
-    raise Exception('OBSOLETED')
 
 def snapshot_report(report):
     #create permanent dir
@@ -176,68 +223,10 @@ def prepare_dashboardreport_withinitcell(report):
 
 ########################################
 
-def mkdir_project(project):
-    dir_project = Dirname.project(project)
-    _mkdir(dir_project, uid = project.fs_uid, gid = project.fs_gid)
-    dir_report = Dirname.reportroot(project)
-    _mkdir(dir_report, uid = project.fs_uid, gid = project.fs_gid)
-    dir_reportprepare = Dirname.reportprepare(project)
-    _mkdir(dir_reportprepare, uid = project.fs_uid, gid = project.fs_gid)
 
-def grantaccess_project(userprojectbinding):
-    user = userprojectbinding.user
-    dir_project = Dirname.project(userprojectbinding.project)
-    _grantaccess(user, dir_project)
-    dir_report = Dirname.reportroot(userprojectbinding.project)
-    _grantaccess(user, dir_report)
-    dir_reportprepare = Dirname.reportprepare(userprojectbinding.project)
-    _grantaccess(user, dir_reportprepare)
+#################################################################################
 
-def revokeaccess_project(userprojectbinding):
-    user = userprojectbinding.user
-    dir_project = Dirname.project(userprojectbinding.project)
-    _revokeaccess(user, dir_project)
-    dir_report = Dirname.reportroot(userprojectbinding.project)
-    _revokeaccess(user, dir_report)
-    dir_reportprepare = Dirname.reportprepare(userprojectbinding.project)
-    _revokeaccess(user, dir_reportprepare)
-
-def garbagedir_project(project):
-    dir_project = Dirname.project(project)
-    garbage = Filename.project_garbage(project)
-    _archivedir(dir_project, garbage)
-
-
-#FIXME: obsoleted
-##def mkdir_vcpcache(vcprojectprojectbinding):
-##    profile = vcprojectprojectbinding.vcproject.token.user.profile
-##    dir_cache = Dirname.vcpcache(vcprojectprojectbinding.vcproject)
-##    _mkdir(dir_cache, uid = profile.userid, gid = profile.groupid)
-##    clonescript_vcpcache(vcprojectprojectbinding)
-
-#FIXME: obsoleted
-##def clonescript_vcpcache(vcprojectprojectbinding):
-##    vcp = vcprojectprojectbinding.vcproject
-##    profile = vcp.token.user.profile
-##    dir_target = Dirname.vcpcache(vcprojectprojectbinding.vcproject)
-##    fn_script = os.path.join(dir_target, "clone.sh")
-##    script = """
-###! /bin/bash
-##
-##set -v
-##
-##mv $0 $(mktemp)
-##
-##git clone ssh://git@%s/%s %s
-##    """ % (vcp.token.repository.domain, vcp.project_name, dir_target)
-##    _createfile(fn_script, script, uid = profile.userid, gid = profile.groupid)
-
-def archivedir_vcpcache(vcproject):
-    dir_cache = Dirname.vcpcache(vcproject)
-    target = Filename.vcpcache_archive(vcproject)
-    _archivedir(dir_cache, target)
-
-
+#FIXME:
 def mkdir_course_share(course):
     try:
         dir_courseprivate = Dirname.courseprivate(course)

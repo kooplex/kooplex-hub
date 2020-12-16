@@ -2,6 +2,7 @@
 @author: Jozsef Steger
 @summary: 
 """
+import os
 import re
 import time
 import logging
@@ -10,6 +11,7 @@ import shlex
 import datetime
 import pytz
 import unidecode
+import multiprocessing
 
 from django.conf import settings
 from django.http import HttpResponseRedirect
@@ -101,3 +103,31 @@ def standardize_str(s):
 
 def deaccent_str(s):
     return unidecode.unidecode(s)
+
+def sudo(F):
+    def wrapper(*args, **kwargs):
+        uid = 989 #FIXME: hardcoded
+        gid = 989 #FIXME: hardcoded
+        logger.info('sudo {} calls {}({}, {})'.format(uid, F, args, kwargs))
+        q = multiprocessing.Queue()
+        def worker():
+            logger.debug('thread started, changing uid {}'.format(uid))
+            os.setgid(gid)
+            os.setuid(uid)
+            try:
+                result = F(*args, **kwargs)
+                q.put_nowait((0, result))
+                logger.debug('executed {}'.format(F))
+            except Exception as e:
+                logger.warn('executed {} -- exception {}'.format(F, e))
+                q.put_nowait((1, e))
+            logger.debug("thread ended")
+        p = multiprocessing.Process(target = worker)
+        p.start()
+        p.join()
+        status, result = q.get_nowait()
+        if status != 0:
+            raise result
+        return result
+    return wrapper
+

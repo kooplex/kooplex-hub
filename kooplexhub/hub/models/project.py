@@ -60,14 +60,6 @@ class Project(models.Model):
     def uniquename(self):
         return f'{self.cleanname}-{self.creator.username}'
 
-    @property
-    def fs_uid(self):
-        return self.creator.profile.userid
-
-    @property
-    def fs_gid(self):
-        return self.creator.profile.groupid
-
     #FIXME: is it used anywhere?
     @property
     def safename(self):
@@ -239,7 +231,7 @@ def revokeaccess_project(sender, instance, **kwargs):
 def garbagedir_project(sender, instance, **kwargs):
     from kooplex.lib.filesystem import garbagedir_project
     if instance.role == UserProjectBinding.RL_CREATOR:
-        garbagedir_project(instance)
+        garbagedir_project(instance.project)
 
 @receiver(pre_delete, sender = UserProjectBinding)
 def assert_not_shared(sender, instance, **kwargs):

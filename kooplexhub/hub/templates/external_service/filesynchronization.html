@@ -10,6 +10,17 @@
 {% endblock %}
 
 {% block main_content_center %}
+
+  {% load render_table from django_tables2 %}
+  <form id="fsSyncForm" class="form-horizontal form-control" action="{% url 'service_external:commit_sync' %}" method="post">
+  <h3> Libraries to synchronize</h3>
+    {% csrf_token %}
+    {% render_table tbl_libraries %}
+    <div class="modal-footer">
+      <button type="submit" class="btn btn-default" name="button" value="apply"> Apply settings</button>
+    </div>
+  </form>
+
   <div class="form-horizontal form-control">
     <h3>Connected services</h3>
     {% for s in syncservers %}
@@ -55,15 +66,7 @@
       {% endwith %}
     {% endfor %}
   </div>
-  {% load render_table from django_tables2 %}
-  <form id="fsSyncForm" class="form-horizontal form-control" action="{% url 'service_external:commit_sync' %}" method="post">
-  <h3> Libraries to synchronize</h3>
-    {% csrf_token %}
-    {% render_table tbl_libraries %}
-    <div class="modal-footer">
-      <button type="submit" class="btn btn-default" name="button" value="apply"> Apply settings</button>
-    </div>
-  </form>
+
 {% endblock %}
 
 
