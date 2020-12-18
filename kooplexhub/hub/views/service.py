@@ -70,7 +70,14 @@ def startservice(request, environment_id, next_page):
     user = request.user
     try:
         svc = Service.objects.get(user = user, id = environment_id)
-        svc.start()
+        if svc.state == Service.ST_NOTPRESENT:
+            svc.start()
+        elif svc.state == Service.ST_STOPPING:
+            messages.warning(request, f'Wait a second service {svc.name} is still stopping.')
+        elif svc.state == Service.ST_STARTING:
+            messages.warning(request, f'Wait a second service {svc.name} is starting.')
+        else:
+            messages.warning(request, f'Not starting service {svc.name}, which is already running.')
     except Service.DoesNotExist:
         messages.error(request, 'Service environment does not exist')
     except Exception as e:

@@ -21,7 +21,7 @@ class ImageAdmin(admin.ModelAdmin):
 
 @admin.register(Proxy)
 class ProxyAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'image', 'default', 'token_as_argument', 'path', 'port')
+    list_display = ('id', 'name', 'image', 'default', 'token_as_argument', 'path', 'path_open', 'port')
 
 @admin.register(EnvVarMapping)
 class EnvVarMappingAdmin(admin.ModelAdmin):
@@ -29,7 +29,7 @@ class EnvVarMappingAdmin(admin.ModelAdmin):
 
 @admin.register(Service)
 class ServiceAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'user', 'image', 'state', 'restart_reasons')
+    list_display = ('id', 'name', 'user', 'image', 'state', 'restart_reasons', 'last_message')
 
 @admin.register(ProjectServiceBinding)
 class ProjectServiceBindingAdmin(admin.ModelAdmin):

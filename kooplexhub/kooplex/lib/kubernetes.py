@@ -3,6 +3,8 @@ import os
 import json
 from kubernetes import client, config
 from urllib.parse import urlparse
+from threading import Timer
+
 
 from kooplex.lib import now
 from kooplex.settings import KOOPLEX
@@ -11,6 +13,7 @@ from .proxy import addroute, removeroute
 logger = logging.getLogger(__name__)
 
 def start(service):
+    assert service.state == service.ST_NOTPRESENT, f'wrong state {service.name} {service.state}'
     spawner_conf = KOOPLEX.get('spawner', {})
     mount_point = spawner_conf.get('volume_mount', '/mnt')
     project_subdir = spawner_conf.get('project_subdir', 'project')
@@ -157,24 +160,39 @@ def start(service):
         }
 
     try:
-        msg = v1.create_namespaced_service(namespace = "default", body = svc_definition)
-        logger.debug(msg)
+        v1.create_namespaced_service(namespace = "default", body = svc_definition)
     except client.rest.ApiException as e:
         logger.warning(e)
         if json.loads(e.body)['code'] != 409: # already exists
             logger.debug(svc_definition)
             raise
     try:
-        msg = v1.create_namespaced_pod(namespace = "default", body = pod_definition)
-        logger.debug(msg)
+        v1.create_namespaced_pod(namespace = "default", body = pod_definition)
     except client.rest.ApiException as e:
         logger.warning(e)
         if json.loads(e.body)['code'] != 409: # already exists
             logger.debug(pod_definition)
             raise
-    service.state = service.ST_RUNNING
+    service.state = service.ST_STARTING
     service.save()
-    addroute(service)
+    Timer(.2, _check_starting, args = (service.id,)).start()
+
+def _check_starting(service_id):
+    from hub.models import Service
+    try:
+        service = Service.objects.get(id = service_id)
+        assert service.state == service.ST_STARTING, f'wrong state {service.name} {service.state}'
+    except Exception as e:
+        logger.warning(e)
+        return
+    if check(service):
+        service.state = service.ST_RUNNING
+        service.save()
+        logger.info(f'+ pod of {service.name} is ready')
+        addroute(service)
+    else:
+        Timer(.5, _check_starting, args = (service.id,)).start()
+        logger.debug(f'service {service.name} is still starting')
 
 def stop(service):
     config.load_kube_config()
@@ -194,30 +212,47 @@ def stop(service):
         logger.warning(e)
         if json.loads(e.body)['code'] != 404: # doesnt exists
             raise
-    service.state = service.ST_NOTPRESENT
+    service.state = service.ST_STOPPING
     service.save()
+    Timer(.2, _check_stopping, args = (service.id,)).start()
+
+def _check_stopping(service_id):
+    from hub.models import Service
+    try:
+        service = Service.objects.get(id = service_id)
+        assert service.state == service.ST_STOPPING, f'wrong state {service.name} {service.state}'
+    except Exception as e:
+        logger.warning(e)
+        return
+    if check(service) == -1:
+        service.state = service.ST_NOTPRESENT
+        service.save()
+        logger.info(f'- pod of {service.name} is not present')
+    else:
+        Timer(.5, _check_stopping, args = (service.id,)).start()
+        logger.debug(f'service {service.name} is still present')
 
 def check(service):
     config.load_kube_config()
     v1 = client.CoreV1Api()
     try:
-        msg = v1.read_namespaced_pod_log(namespace='default', name = service.label)
-        logger.debug(msg)
-        try:
-            msg_extract = json.loads(msg)
-            message = msg['message']
-        except json.decoder.JSONDecodeError:
-            msg = msg.splitlines()
-            while True:
-                message = msg.pop().strip()
-                if message:
-                    break
+        podstatus = v1.read_namespaced_pod_status(namespace='default', name = service.label)
+        st = podstatus.status.container_statuses[0]
+        indicators = []
+        if st.started:
+            indicators.append('started')
+        if st.ready:
+            indicators.append('ready')
+        indicators.append(f'restarted {st.restart_count} times')
+        message = ', '.join(indicators)
+        logger.debug(message)
+        return st.ready
     except client.rest.ApiException as e:
         e_extract = json.loads(e.body)
         message = e_extract['message']
         if service.state in [ service.ST_RUNNING, service.ST_NEED_RESTART ]:
             service.state = service.ST_ERROR
-        logger.warning(e)
+        return -1
     finally:
         service.last_message = message
         service.last_message_at = now()

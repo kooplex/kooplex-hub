@@ -11,6 +11,7 @@ class Proxy(models.Model):
     name = models.CharField(max_length = 64, null = True)
     port = models.IntegerField(null = False)
     path = models.CharField(max_length = 64, null = True)
+    path_open = models.CharField(max_length = 64, null = True)
     image = models.ForeignKey(Image, null = False)
     default = models.BooleanField(default = True)
     token_as_argument = models.BooleanField(default = False)
@@ -23,4 +24,4 @@ class Proxy(models.Model):
 
     def url_public(self, service):
         fqdn = os.environ.get('DOMAIN', 'localhost')
-        return f'https://{fqdn}/{self.path}'.format(service = service)
+        return f'https://{fqdn}/{self.path_open}'.format(service = service)

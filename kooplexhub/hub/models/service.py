@@ -31,12 +31,14 @@ logger = logging.getLogger(__name__)
 
 class Service(models.Model):
     ST_NOTPRESENT = 'np'
+    ST_STARTING = 'starting'
     ST_RUNNING = 'run'
     ST_NEED_RESTART = 'restart'
     ST_ERROR = 'oops'
     ST_STOPPING = 'stopping'
     ST_LOOKUP = {
         ST_NOTPRESENT: 'Not present.',
+        ST_STARTING: 'Starting...',
         ST_RUNNING: 'Running fine.',
         ST_NEED_RESTART: 'Restart required',
         ST_ERROR: 'Error occured.',
