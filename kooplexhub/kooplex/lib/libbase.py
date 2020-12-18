@@ -106,8 +106,8 @@ def deaccent_str(s):
 
 def sudo(F):
     def wrapper(*args, **kwargs):
-        uid = 989 #FIXME: hardcoded
-        gid = 989 #FIXME: hardcoded
+        uid = kooplex_settings.HUB.pw_uid
+        gid = kooplex_settings.HUB.pw_gid
         logger.info('sudo {} calls {}({}, {})'.format(uid, F, args, kwargs))
         q = multiprocessing.Queue()
         def worker():

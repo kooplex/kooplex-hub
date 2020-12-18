@@ -13,6 +13,7 @@ from distutils import file_util
 import tarfile
 
 from kooplex.lib import bash, Dirname, Filename, sudo, now
+from kooplex import settings as kooplex_settings
 
 logger = logging.getLogger(__name__)
 
@@ -27,17 +28,17 @@ def _mkdir(path):
     dir_util.mkpath(path)
     assert os.path.exists(path), f"{path} is not present in the filesystem"
     assert os.path.isdir(path), f"{path} is present but not a directory"
-    acl = """
+    acl = f"""
 A::OWNER@:rwaDxtTcCy
-A::989:rwaDxtcy
+A::{kooplex_settings.HUB.pw_uid}:rwaDxtcy
 A::GROUP@:tcy
-A:g:989:rwaDxtcy
+A:g:{kooplex_settings.HUB.pw_gid}:rwaDxtcy
 A::EVERYONE@:tcy
 A:fdi:OWNER@:rwaDxtTcCy
 A:fdi:GROUP@:tcy
-A:fdig:989:rwaDxtcy
+A:fdig:{kooplex_settings.HUB.pw_gid}:rwaDxtcy
 A:fdi:EVERYONE@:tcy
-    """ #FIXME: 989 hardcoded (get from sudo)
+    """
     fn_acl = '/tmp/acl.dat'
     open(fn_acl, 'w').write(acl)
     bash(f'nfs4_setfacl -S {fn_acl} {path}')

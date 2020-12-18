@@ -4,6 +4,9 @@ Django settings for kooplex project.
 
 import os
 
+from pwd import getpwnam
+
+HUB = getpwnam('hub')
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
