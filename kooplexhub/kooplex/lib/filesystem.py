@@ -12,7 +12,7 @@ from distutils import dir_util
 from distutils import file_util
 import tarfile
 
-from kooplex.lib import bash, Dirname, Filename, sudo
+from kooplex.lib import bash, Dirname, Filename, sudo, now
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +26,21 @@ def _mkdir(path):
     """
     dir_util.mkpath(path)
     assert os.path.exists(path), f"{path} is not present in the filesystem"
+    assert os.path.isdir(path), f"{path} is present but not a directory"
+    acl = """
+A::OWNER@:rwaDxtTcCy
+A::989:rwaDxtcy
+A::GROUP@:tcy
+A:g:989:rwaDxtcy
+A::EVERYONE@:tcy
+A:fdi:OWNER@:rwaDxtTcCy
+A:fdi:GROUP@:tcy
+A:fdig:989:rwaDxtcy
+A:fdi:EVERYONE@:tcy
+    """ #FIXME: 989 hardcoded (get from sudo)
+    fn_acl = '/tmp/acl.dat'
+    open(fn_acl, 'w').write(acl)
+    bash(f'nfs4_setfacl -S {fn_acl} {path}')
     logger.info(f"+ created dir: {path}")
 
 @sudo
@@ -35,6 +50,10 @@ def _rmdir(path):
     @param path: the directory to remove
     @type path: str
     """
+    if not os.path.exists(path):
+        logger.warning(f"! cannot remove dir: {path}, it does not exist")
+        return
+    assert os.path.isdir(path), f"{path} is present but not a directory"
     dir_util.remove_tree(path)
     logger.info(f"- removed dir: {path}")
 
@@ -44,13 +63,15 @@ def _rmdir(path):
 @sudo
 def _grantaccess(user, folder, acl = 'rwaDxtcy'):
 #    bash("setfacl -R -m u:%d:%s %s" % (user.profile.userid, acl, folder))
-    bash("nfs4_setfacl -R -a A::%d:%s %s" % (user.profile.userid, acl, folder))
+    bash(f'nfs4_setfacl -R -a A::{user.profile.userid}:{acl} {folder}')
+    bash(f'nfs4_setfacl -R -a A:fdig:{user.profile.userid}:{acl} {folder}')
     logger.info(f"+ access granted on dir {folder} to user {user}")
 
 @sudo
 def _revokeaccess(user, folder):
 #    bash("setfacl -R -x u:%d %s" % (user.profile.userid, folder))
-    bash(f"nfs4_setfacl -R -x A::{user.profile.userid}:$(nfs4_getfacl {folder} | grep {user.profile.userid} | sed s,.*:,,) {folder}")
+    bash(f'nfs4_setfacl -R -x A:fdig:{user.profile.userid}:$(nfs4_getfacl {folder} | grep :fdig:{user.profile.userid}: | sed s,.*:,,) {folder}')
+    bash(f'nfs4_setfacl -R -x A::{user.profile.userid}:$(nfs4_getfacl {folder} | grep ::{user.profile.userid}: | sed s,.*:,,) {folder}')
     logger.info(f"- access revoked on dir {folder} from user {user}")
 
 
@@ -66,7 +87,7 @@ def _archivedir(folder, target, remove = True):
             archive.add(folder, arcname = '.', recursive = True)
             logger.debug("tar %s -> %s" % (folder, target))
     except Exception as e:
-        logger.error("Cannot create archive %s -- %s" % (folder, e))
+        logger.error(f"Cannot create archive {target} -- {e}")
     finally:
         if remove:
             _rmdir(folder)
@@ -121,6 +142,16 @@ def garbagedir_home(user):
     dir_home = Dirname.userhome(user)
     garbage = Filename.userhome_garbage(user)
     _archivedir(dir_home, garbage)
+    dir_usergarbage = Dirname.usergarbage(user)
+    if not os.path.exists(dir_usergarbage):
+        logger.warning(f'! usergarbage dir {dir_usergarbage} does not exist')
+        return
+    if not os.listdir(dir_usergarbage):
+        logger.info(f'- usergarbage dir {dir_usergarbage} is empty, removed')
+    else:
+        d_new = f'{dir_usergarbage}-{now()}'
+        os.rename(dir_usergarbage, d_new)
+        logger.info(f'+ usergarbage dir {dir_usergarbage} rename {d_new}')
 
 ##################
 # per project folders

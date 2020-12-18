@@ -383,11 +383,14 @@ def delete_leave(request, project_id):
             if upb != upb_i:
                 collab.append(upb_i.user)
                 upb_i.delete()
-        upb.delete()
-        project.delete()
-        if len(collab):
-            messages.info(request, 'Users removed from collaboration: {}'.format(', '.join([  f'{u.first_name} {u.last_name} ({u.username})' for u in collab ])))
-        messages.info(request, 'Project %s is deleted' % (project))
+        try:
+            upb.delete()
+            project.delete()
+            if len(collab):
+                messages.info(request, 'Users removed from collaboration: {}'.format(', '.join([  f'{u.first_name} {u.last_name} ({u.username})' for u in collab ])))
+            messages.info(request, 'Project %s is deleted' % (project))
+        except Exception as e:
+            messages.error(request, f'Cannot delete project {project.name}. Ask the administrator to solve this error {e}')
     else:
         upb.delete()
         messages.info(request, 'You left project %s' % (project))

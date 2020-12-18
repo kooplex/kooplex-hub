@@ -13,7 +13,7 @@ class Filename:
 
     @staticmethod
     def project_garbage(project):
-        return os.path.join(Dirname.mountpoint['garbage'], "project-%s.%f.tar.gz" % (project.uniquename, time.time()))
+        return os.path.join(Dirname.mountpoint['garbage'], project.creator.username, "project-%s.%f.tar.gz" % (project.uniquename, time.time()))
 
     @staticmethod
     def vcpcache_archive(vcproject):

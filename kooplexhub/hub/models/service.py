@@ -83,16 +83,6 @@ class Service(models.Model):
     def url_public(self):
         return self.default_proxy.url_public(self)
 
-
-    #@property
-    #def url_public(self):
-    #    from .proxy import Proxy
-    #    try:
-    #        proxy = Proxy.objects.get(service = self, is_hub_entry = True)
-    #        return proxy.url_public
-    #    except Exception as e:
-    #        logger.warning(f'No unique public proxy url for service {self} -- {e}')
-
     def wait_until_ready(self):
         from kooplex.lib import keeptrying
         for _ in range(5):
@@ -107,7 +97,6 @@ class Service(models.Model):
     def env_variables(self):
         for envmap in EnvVarMapping.objects.filter(image = self.image):
             yield { "name": envmap.name, "value": envmap.valuemap.format(service = self) }
-
 
     @property
     def uptime(self):
@@ -156,7 +145,15 @@ class Service(models.Model):
         self.save()
         return True
 
-#
+@receiver(pre_delete, sender = Service)
+def container_to_be_removed(sender, instance, **kwargs):
+    try:
+        stop_environment(instance)
+        logger.info(f'- removed pod/container {instance.label}')
+    except Exception as e:
+        logger.warning(f'! check pod/container {instance.label}, during removal exception raised: -- {e}')
+
+
 #@receiver(pre_save, sender = Container)
 #def container_message_change(sender, instance, **kwargs):
 #    is_new = instance.id is None

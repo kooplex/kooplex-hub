@@ -29,7 +29,7 @@ class EnvVarMappingAdmin(admin.ModelAdmin):
 
 @admin.register(Service)
 class ServiceAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'user', 'state', 'image')
+    list_display = ('id', 'name', 'user', 'image', 'state', 'restart_reasons')
 
 @admin.register(ProjectServiceBinding)
 class ProjectServiceBindingAdmin(admin.ModelAdmin):
