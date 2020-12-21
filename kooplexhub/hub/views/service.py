@@ -71,7 +71,10 @@ def startservice(request, environment_id, next_page):
     try:
         svc = Service.objects.get(user = user, id = environment_id)
         if svc.state == Service.ST_NOTPRESENT:
-            svc.start()
+            if svc.start().wait(timeout = 10):
+                messages.info(request, f'Service {svc.name} is started.')
+            else:
+                messages.warning(request, f'Service {svc.name} did not start within 10 seconds, reload the page later to check if it is already ready.')
         elif svc.state == Service.ST_STOPPING:
             messages.warning(request, f'Wait a second service {svc.name} is still stopping.')
         elif svc.state == Service.ST_STARTING:
@@ -111,12 +114,34 @@ def stopservice(request, environment_id, next_page):
     user = request.user
     try:
         svc = Service.objects.get(user = user, id = environment_id)
-        svc.stop()
+        if svc.stop().wait(timeout = 10):
+            messages.info(request, f'Service {svc.name} is stopped.')
+        else:
+            messages.warning(request, f'Service {svc.name} did not stop within 10 seconds, reload the page later to recheck its state.')
     except Service.DoesNotExist:
         messages.error(request, 'Environment does not exist')
     except Exception as e:
         logger.error(f'Cannot stop the environment {svc} -- {e}')
         messages.error(request, f'Cannot stop environment {e}')
+    return redirect(next_page)
+
+
+@login_required
+def restartservice(request, environment_id, next_page):
+    """Restart a container"""
+    user = request.user
+    try:
+        svc = Service.objects.get(user = user, id = environment_id)
+        ev = svc.restart()
+        if ev.wait(timeout = 10):
+            messages.info(request, f'Service {svc.name} is restarted.')
+        else:
+            messages.warning(request, f'Service {svc.name} was stopped and it did not start within 10 seconds, reload the page later to recheck its state.')
+    except Service.DoesNotExist:
+        messages.error(request, 'Environment does not exist')
+    except Exception as e:
+        logger.error(f'Cannot restart the environment {svc} -- {e}')
+        messages.error(request, f'Cannot restart environment: {e}')
     return redirect(next_page)
 
 
@@ -292,6 +317,7 @@ urlpatterns = [
     url(r'^start/(?P<environment_id>\d+)/(?P<next_page>\w+:?\w*)$', startservice, name = 'start'),
     url(r'^open/(?P<environment_id>\d+)/(?P<next_page>\w+:?\w*)$', openservice, name = 'open'),
     url(r'^stop/(?P<environment_id>\d+)/(?P<next_page>\w+:?\w*)$', stopservice, name = 'stop'),
+    url(r'^restart/(?P<environment_id>\d+)/(?P<next_page>\w+:?\w*)$', restartservice, name = 'restart'),
     url(r'^destroy/(?P<environment_id>\d+)/(?P<next_page>\w+:?\w*)$', destroyservice, name = 'destroy'),
     url(r'^refreshlogs/(?P<environment_id>\d+)$', refreshlogs, name = 'refreshlogs'),
     url(r'^configure/(?P<environment_id>\d+)$', configureservice, name = 'configure'),

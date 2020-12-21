@@ -10,7 +10,7 @@ from kooplex.settings import KOOPLEX
 
 driver = KOOPLEX.get('spawner').get('driver')
 if driver == 'kubernetes':
-    from .kubernetes import start as start_environment, stop as stop_environment, check as check_environment
+    from .kubernetes import start as start_environment, stop as stop_environment, restart as restart_environment, check as check_environment
 elif driver == 'docker':
     raise NotImplementedError
 else:

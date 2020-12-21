@@ -20,7 +20,7 @@ from .image import Image
 from kooplex.settings import KOOPLEX
 from kooplex.lib import  standardize_str, now
 
-from kooplex.lib import start_environment, stop_environment, check_environment
+from kooplex.lib import start_environment, stop_environment, restart_environment, check_environment
 
 from .envvar import EnvVarMapping
 from .proxy import Proxy
@@ -132,6 +132,12 @@ class Service(models.Model):
         self.restart_reasons = None
         self.save()
         return stop_environment(self)
+
+    def restart(self):
+        self.restart_reasons = None
+        self.save()
+        return restart_environment(self)
+
 
     def check_state(self):
         return check_environment(self)

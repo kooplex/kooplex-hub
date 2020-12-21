@@ -3,7 +3,7 @@ import os
 import json
 from kubernetes import client, config
 from urllib.parse import urlparse
-from threading import Timer
+from threading import Timer, Event
 
 
 from kooplex.lib import now
@@ -13,7 +13,8 @@ from .proxy import addroute, removeroute
 logger = logging.getLogger(__name__)
 
 def start(service):
-    assert service.state == service.ST_NOTPRESENT, f'wrong state {service.name} {service.state}'
+    assert service.state == service.ST_NOTPRESENT, f'service {service.name} is in wrong state {service.state}'
+    event = Event()
     spawner_conf = KOOPLEX.get('spawner', {})
     mount_point = spawner_conf.get('volume_mount', '/mnt')
     project_subdir = spawner_conf.get('project_subdir', 'project')
@@ -175,9 +176,10 @@ def start(service):
             raise
     service.state = service.ST_STARTING
     service.save()
-    Timer(.2, _check_starting, args = (service.id,)).start()
+    Timer(.2, _check_starting, args = (service.id, event)).start()
+    return event
 
-def _check_starting(service_id):
+def _check_starting(service_id, event):
     from hub.models import Service
     try:
         service = Service.objects.get(id = service_id)
@@ -190,11 +192,14 @@ def _check_starting(service_id):
         service.save()
         logger.info(f'+ pod of {service.name} is ready')
         addroute(service)
+        event.set()
     else:
-        Timer(.5, _check_starting, args = (service.id,)).start()
+        Timer(.5, _check_starting, args = (service.id, event)).start()
         logger.debug(f'service {service.name} is still starting')
 
 def stop(service):
+    event = Event()
+    service.state = service.ST_STOPPING
     config.load_kube_config()
     v1 = client.CoreV1Api()
     removeroute(service)
@@ -205,6 +210,7 @@ def stop(service):
         logger.warning(e)
         if json.loads(e.body)['code'] != 404: # doesnt exists
             raise
+        service.state = service.ST_NOTPRESENT
     try:
         msg = v1.delete_namespaced_service(namespace = "default", name = service.label)
         logger.debug(msg)
@@ -212,14 +218,20 @@ def stop(service):
         logger.warning(e)
         if json.loads(e.body)['code'] != 404: # doesnt exists
             raise
-    service.state = service.ST_STOPPING
     service.save()
-    Timer(.2, _check_stopping, args = (service.id,)).start()
+    if service.state == service.ST_STOPPING:
+        Timer(.2, _check_stopping, args = (service.id, event)).start()
+    else:
+        event.set()
+    return event
 
-def _check_stopping(service_id):
+def _check_stopping(service_id, event):
     from hub.models import Service
     try:
         service = Service.objects.get(id = service_id)
+        if service.state == service.ST_NOTPRESENT:
+            event.set()
+            return
         assert service.state == service.ST_STOPPING, f'wrong state {service.name} {service.state}'
     except Exception as e:
         logger.warning(e)
@@ -227,10 +239,22 @@ def _check_stopping(service_id):
     if check(service) == -1:
         service.state = service.ST_NOTPRESENT
         service.save()
+        event.set()
         logger.info(f'- pod of {service.name} is not present')
     else:
-        Timer(.5, _check_stopping, args = (service.id,)).start()
+        Timer(.5, _check_stopping, args = (service.id, event)).start()
         logger.debug(f'service {service.name} is still present')
+
+def restart(service):
+    from hub.models import Service
+    assert service.state != service.ST_NOTPRESENT, f'service {service.name} is not present.'
+    ev_stop = stop(service)
+    if ev_stop.wait(timeout = 30):
+        service = Service.objects.get(id = service.id)
+        return start(service)
+    else:
+        logger.error(f'Not restarting service {service.name}. It is taking very long to stop')
+        raise Exception(f'Not restarting service {service.name}. It is taking very long to stop.')
 
 def check(service):
     config.load_kube_config()
