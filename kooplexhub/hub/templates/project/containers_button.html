@@ -1,0 +1,20 @@
+{% if services|length > 0 %}
+<div class="dropdown">
+  <a class="btn btn-secondary dropdown-toggle btn-sm" type="button" id="dc-svcs-{{ project.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+    <i class="oi oi-terminal"></i>: {{services|length}}
+  </a>
+  <ul class="dropdown-menu" aria-labelledby="dc-svcs-{{ project.id }}">
+    {% for svc in services %}
+      <li><span class="dropdown-item">
+        <div class="btn-group" role="group" aria-label="control buttons">
+          <span class="badge rounded-spill bg-secondary">{{ svc.name }}
+            {% include 'container/startopen.html' with service=svc next_page="project:list" %}
+            {% include 'container/stopremove.html' with service=svc next_page="project:list" %}
+	  </span>
+      </span></div></li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+

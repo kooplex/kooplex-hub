@@ -1,10 +1,10 @@
-<div class="dropdown">
-  <li class="nav-item {{ active }}">
-     <a href="{% url 'service:list' %}" class="nav-link">Environments</a>
-  </li>
-  <div class="dropdown-content" aria-labelledby="navbarDropdownContainer">
-    <a href="#" data-toggle="modal" data-target="#container-new">New environment</a>
-    <a href="{% url 'service:list' %}">List environments</a>
-  </div>
-</div>
+<li class="nav-item dropdown {{ active }}">
+  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownContainer" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+    Environments
+  </a>
+  <ul class="dropdown-menu" aria-labelledby="navbarDropdownContainer">
+    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#container-new">New environment</a></li>
+    <li><a class="dropdown-item" href="{% url 'service:list' %}">List Environments</a></li>
+  </ul>
+</li>
 {% include "container/new.html" %}

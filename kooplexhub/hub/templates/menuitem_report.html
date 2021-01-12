@@ -1,16 +1,15 @@
 {% if user.is_authenticated %}
-<div class="dropdown">
-  <li class="nav-item {{ active }}">
-    <a href="{% url 'report:list'  %}" class="nav-link">Reports</a>
-  </li>
-
-  <div class="dropdown-content" aria-labelledby="navbarDropdownReport">
-    <a href="{% url 'report:new' %}">New report</a>
-    <a href="{% url 'report:list' %}">List reports</a>
-  </div>
-</div>
+<li class="nav-item dropdown {{ active }}">
+  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownReport" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+    Reports
+  </a>
+  <ul class="dropdown-menu" aria-labelledby="navbarDropdownReport">
+    <li><a class="dropdown-item" href="{% url 'report:new' %}">New report</a></li>
+    <li><a class="dropdown-item" href="{% url 'report:list' %}">List reports</a></li>
+  </ul>
+</li>
 {% else %}
-<li class="nav-item">
+<li class="nav-item {{ active }}">
   <a href="{% url 'report:list'  %}" class="nav-link" data-toggle="tooltip" title="List and manage your reports" data-placement="bottom">Reports</a>
 </li>
 {% endif %}

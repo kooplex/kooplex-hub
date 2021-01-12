@@ -10,8 +10,14 @@ from django.db import models
 class T_SERVICE(tables.Table):
     class SelectColumn(tables.Column):
         def render(self, record):
-            return format_html('<input type="checkbox" name="service_ids" value="{0}" data-toggle="toggle" data-on="Copy" data-off="Skip" data-onstyle="success" data-offstyle="dark" data-size="xs">'.format(record.id))
-    id = SelectColumn(verbose_name = 'Associate', orderable = False)
+            template = f"""
+<div class="form-check form-switch">
+  <input class="form-check-input" type="checkbox" id="cb_svcid-{record.id}" name="service_ids" value="{record.id}" />
+  <label class="form-check-label" for="cb_svid-{record.id}"> Create</label>
+</div>
+            """
+            return format_html(template)
+    id = SelectColumn(verbose_name = 'Template', orderable = False)
 
     class Meta:
         model = ProjectServiceBinding

@@ -14,23 +14,47 @@ def table_collaboration(project):
         def render(self, record):
             user = record.user
             if user in project.collaborators:
-                return format_html('<input type="hidden" name="collaborator_ids_before" value="{0}"><input type="checkbox" name="collaborator_ids_after" value="{0}" data-toggle="toggle" data-on="Keep added" data-off="Remove" data-onstyle="success" data-offstyle="dark" data-size="xs" checked>'.format(user.id))
+                template = f"""
+<div class="form-check form-switch">
+  <input type="hidden" name="collaborator_ids_before" value="{user.id}" />
+  <input class="form-check-input" type="checkbox" id="cb_id-{user.id}" name="collaborator_ids_after" value="{user.id}" checked />
+  <label class="form-check-label" for="cb_id-{user.id}"> Remove</label>
+</div>
+                """
             else:
-                return format_html('<input type="checkbox" name="collaborator_ids_after" data-toggle="toggle" value="{}" data-on="Add" data-off="Skip" data-onstyle="success" data-offstyle="dark" data-size="xs">'.format(record.id))
+                template = f"""
+<div class="form-check form-switch">
+  <input class="form-check-input" type="checkbox" id="cb_id-{user.id}" name="collaborator_ids_after" value="{user.id}" />
+  <label class="form-check-label" for="cb_id-{user.id}"> Add</label>
+</div>
+                """
+            return format_html(template)
     sc = SelectColumn
 
     class RoleColumn(tables.Column):
         def render(self, record):
             user = record.user
             if user in project.admins:
-                return format_html('<input type="hidden" name="admin_ids_before" value="{0}"><input type="checkbox" name="admin_ids_after" value="{0}" data-toggle="toggle" data-on="Admin" data-off="Collaborator" data-onstyle="danger" data-offstyle="success" data-size="xs" checked>'.format(user.id))
+                template = f"""
+<div class="form-check form-switch">
+  <input type="hidden" name="admin_ids_before" value="{user.id}" />
+  <input class="form-check-input" type="checkbox" id="cb_admid-{user.id}" name="admin_ids_after" value="{user.id}" checked />
+  <label class="form-check-label" for="cb_admid-{user.id}"> Revoke</label>
+</div>
+                """
             else:
-                return format_html('<input type="checkbox" name="admin_ids_after" data-toggle="toggle" value="{}" data-on="Admin" data-off="Collaborator" data-onstyle="danger" data-offstyle="success" data-size="xs">'.format(record.id))
+                template = f"""
+<div class="form-check form-switch">
+  <input class="form-check-input" type="checkbox" id="cb_admid-{user.id}" name="admin_ids_after" value="{user.id}" />
+  <label class="form-check-label" for="cb_admid-{user.id}"> Grant</label>
+</div>
+                """
+            return format_html(template)
     rc = RoleColumn
 
     class T_COLLABORATORS(tables.Table):
-        id = SelectColumn(verbose_name = 'Associate', orderable = False)
-        role = RoleColumn(verbose_name = 'Role', empty_values = (), orderable = False)
+        id = SelectColumn(verbose_name = 'Collaboration', orderable = False)
+        role = RoleColumn(verbose_name = 'Admin role', empty_values = (), orderable = False)
         name = tables.Column(order_by = ('user__first_name', 'user__last_name'))
 
         def render_name(self, record):

@@ -1,23 +1,30 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-  <a href="{% url 'indexpage' %}" class="navbar-brand"><img src="/static/content/logo_mono.png" style="height: 30px" alt="Kooplex Hub"></a>
-
-  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-    <span class="navbar-toggler-icon"></span>
-  </button>
-
-  <div class="collapse navbar-collapse" id="navbarSupportedContent">
-    <ul class="navbar-nav mr-auto">
-    {% if user.is_authenticated %}
-      {% include "menuitem_project.html" with active=menu_project %}
-      {% include "menuitem_report.html" with active=menu_report %}
-      {% include "menuitem_edu.html" with active=menu_teaching %}
-      {% include "menuitem_container.html" with active=menu_container %}
-      {% include "menuitem_services.html" with active=menu_service %}
-    {% else %}
-      {% include "menuitem_report.html" with active=menu_report %}
-    {% endif %}
-    </ul>
-    {% include "navbarmenu_right.html" %}
+  <div class="container-fluid">
+    <a class="navbar-brand" href="{% url 'indexpage' %}"><img src="/static/content/logo_mono.png" style="height: 30px" alt="Kooplex Hub"></a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        {% if user.is_authenticated %}
+          {% include "menuitem_project.html" with active=menu_project %}
+          {% include "menuitem_report.html" with active=menu_report %}
+          {% include "menuitem_edu.html" with active=menu_teaching %}
+          {% include "menuitem_container.html" with active=menu_container %}
+          {% include "menuitem_services.html" with active=menu_service %}
+        {% else %}
+          {% include "menuitem_report.html" with active=menu_report %}
+        {% endif %}
+        <li><a class="dropdown-item" href="/manual/" target="_blank">Documentation</a></li>
+      </ul>
+      {% block navserach %}
+      <form class="d-flex">
+        <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+        <button class="btn btn-outline-success" type="submit">Search</button>
+      </form>
+      {% endblock %}
+      {% include "navbarmenu_right.html" %}
+    </div>
   </div>
 </nav>
 

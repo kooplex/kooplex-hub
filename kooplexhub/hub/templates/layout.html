@@ -1,23 +1,61 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <title>Kooplex Hub</title>
-    <meta charset="utf-8" />
-    {% comment %}
-    <!-- meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no" -->
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
-    {% endcomment %}
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    {% comment %}
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" 
+      integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+    {% load staticfiles %}
+    <link rel="stylesheet" type="text/css" href="{% static 'fonts/remixicon.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'fonts/open-iconic-master/font/css/open-iconic-bootstrap.css' %}">
+    {% block css_extra %}{% endblock %}
+
+    <title>Kooplex Hub</title>
+  </head>
+  <body>
+    {% block navbar %}
+      {% include 'navbar.html' %}
+      {% block submenu %}{% endblock %}
+    {% endblock %}
+    {% block body %}
+      <div class="body-content">
+        <div class="row">
+          <div class="col-md-3">
+             {% include 'message.html' %}
+             {% block main_content_left %}{% endblock %}
+          </div>
+          <div class="col-md-7">
+             {% block main_content_center %}{% endblock %}
+          </div>
+          <div class="col-md-2">
+             {% block main_content_right %}{% endblock %}
+          </div>
+        </div>
+      </div>
+    {% endblock %}
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js" 
+      integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW" crossorigin="anonymous"></script>
+
+  </body>
+</html>
+
+{% comment %}
+
+
+<!doctype html>
+<html lang="en">
+  <head>
+
     <meta http-equiv="content-type" content="text/html; charset=utf-8" />
     <meta name="description" content="">
     <meta name="author" content="">
-    {% endcomment %}
     
 
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" rel="stylesheet"
-          integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
 
     {% load staticfiles %}
     <link rel="stylesheet" type="text/css" href="{% static 'css/animate.css' %}">
@@ -136,11 +174,10 @@ th>a:hover {
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
-    {% comment %}
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
 	    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous"></script>
-    {% endcomment %}
 
 
   </body>
 </html>
+{% endcomment %}

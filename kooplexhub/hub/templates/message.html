@@ -1,30 +1,33 @@
 {% if messages %}
 <div class="card"> 
-{% for message in messages %}
-  {% if message.level == 25 %}
-      <div class="alert alert-successi card-body">
-         <a href="#" class="close" data-dismiss="alert">&times;</a>
-         {{ message }}
-      </div>
-  {% endif %}
-  {% if message.level == 20 %}
-      <div class="alert alert-info card-body">
-         <a href="#" class="close" data-dismiss="alert">&times;</a>
-         <strong>Info: </strong>  {{ message }}
-      </div>
-  {% endif %}
-  {% if message.level == 30 %}
-      <div class="alert alert-warning card-body">
-         <a href="#" class="close" data-dismiss="alert">&times;</a>
-         <strong>Warning!</strong>  {{ message }}
-      </div>
-  {% endif %}
-  {% if message.level == 40 %}
-      <div class="alert alert-danger card-body">
-         <a href="#" class="close" data-dismiss="alert">&times;</a>
-         <strong>ERROR!</strong>  {{ message }}
-      </div>
-  {% endif %}
-{% endfor %}
+  <div class="card-body">
+    <h5 class="card-title">Messages</h5>
+    {% for message in messages %}
+      {% if message.level == 25 %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+	  <strong>Success</strong> {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endif %}
+      {% if message.level == 20 %}
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+	  <strong>Info</strong> {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endif %}
+      {% if message.level == 30 %}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+	  <strong>Warning:</strong> {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endif %}
+      {% if message.level == 40 %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+	  <strong>Error:</strong> {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
 </div>
 {% endif %}

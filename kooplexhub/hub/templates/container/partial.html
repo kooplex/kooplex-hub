@@ -1,75 +1,67 @@
-<div class="card bg-light mb-3">
-  <div id="heading-{{ service.id }}" class="card-header btn btn-outline-secondary collapsed" data-toggle="collapse" data-target="#collapse-{{ service.id }}" aria-expanded="true" aria-controls="collapse-{{ service.id }}">
-    <div class="row no-gutters justify-content-between">
-      <div class="col-8">
-        <div class="row">
-          <div class="col-2 text-left">
-            <i class="fas drpdn"></i>
-            {% include 'container/startopen.html' with service=service next_page="service:list" label_open="Open" label_start="Start" %}
+<div class="col">
+  <div class="card text-dark bg-light">
+{% comment %}
+    <img src="..." class="card-img-top" alt="...">
+{% endcomment %}
+    <div class="card-body">
+      <h5 class="card-title">
+        {% if service.state == service.ST_NEED_RESTART %}
+        <span class="badge rounded-pill bg-danger"><strong>{{ service.name }}</strong>: <i class="ri-image-2-line" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Service image is {{ service.image }}"></i></span>
+        {% elif service.state == service.ST_RUNNING  %}
+          <span class="badge rounded-pill bg-success"><strong>{{ service.name }}</strong>: <i class="ri-image-2-line" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Service image is {{ service.image }}"></i></span>
+        {% else %}
+          <span class="badge rounded-pill bg-secondary"><strong>{{ service.name }}</strong>: <i class="ri-image-2-line" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Service image is {{ service.image }}"></i></span>
+        {% endif %}
+      </h5>
+      <p class="card-text"><strong>Information:</strong>
+          {% if service.projects|length > 0 %}
+            <span class="badge rounded-pill bg-dark" aria-hidden="true" data-bs-toggle="tooltip" title="Projects:
+ for p in service.projects %}
+{{ p.name }} ({{ p.description }})
+ endfor %}" data-placement="top"><i class="ri-product-hunt-line"></i>: {{service.projects|length}}</span>
+          {% endif %}
+          {% if service.synced_libraries|length > 0 %}
+            <span class="badge rounded-pill bg-dark" aria-hidden="true" data-bs-toggle="tooltip" title="Synchron folders:
+ for l in service.synced_libraries %}
+{{ l.library_name }} from server {{ l.token.syncserver.url }}
+ endfor %}" data-placement="top"><i class="ri-refresh-fill"></i>: {{service.synced_libraries|length}}</span>
+          {% endif %}
+          {% if service.repos|length > 0 %}
+            <span class="badge rounded-pill bg-dark" aria-hidden="true" data-bs-toggle="tooltip" title="Version control repositories:
+ for r in service.repos %}
+{{ r.project_name }} from server {{ r.token.repository.url }}
+ endfor %}" data-placement="top"><i class="ri-git-repository-line"></i>: {{service.repos|length}}</span>
+          {% endif %}
+          {% if service.volumes|length > 0 %}
+            <span class="badge rounded-pill bg-dark" aria-hidden="true" data-bs-toggle="tooltip" title="Volumes:
+ for v in service.volumes %}
+{{ v }} ({{ v.description }})
+ endfor %}" data-placement="top"><i class="ri-database-2-line"></i>: {{service.volumes|length}}</span>
+          {% endif %}
+      </p>
+      <p class="card-text">
+        {% if service.restart_reasons %}
+          <div class="alert alert-warning" role="alert">
+            <strong>Needs restart:</strong> {{ service.restart_reasons }}
           </div>
-          <div class="col-2 text-left">
-            <strong>{{ service.name }}</strong>
-	    {% if service.restart_reasons %}
-              <span class="badge badge-pill badge-warning" data-toggle="tooltip" title="{{ service.restart_reasons }} " data-placement="top"><i class="ri-alarm-warning-line"></i></span>
-	    {% endif %}
-          </div>
-          <div class="col-8 text-left">
-            {% if service.state == service.ST_NEED_RESTART %}
-              <span class="badge badge-pill badge-danger"><i class="ri-image-2-line"></i>: <strong>{{ service.image }}</strong></span>
-            {% elif service.state == service.ST_RUNNING  %}
-              <span class="badge badge-pill badge-success"><i class="ri-image-2-line"></i>: <strong>{{ service.image }}</strong></span>
-            {% else %}
-              <span class="badge badge-pill badge-dark"><i class="ri-image-2-line"></i>: <strong>{{ service.image }}</strong></span>
-            {% endif %}
-
-	    {% if service.projects|length > 0 %}
-              <span class="badge badge-pill badge-dark" aria-hidden="true" data-toggle="tooltip" title="Projects:
-{% for p in service.projects %}
-- {{ p.name }} ({{ p.description }})
-{% endfor %}" data-placement="top"><i class="ri-product-hunt-line"></i>: {{service.projects|length}}</span>
-	    {% endif %}
-	    {% if service.synced_libraries|length > 0 %}
-              <span class="badge badge-pill badge-dark" aria-hidden="true" data-toggle="tooltip" title="Synchron folders:
-{% for l in service.synced_libraries %}
-- {{ l.library_name }} from server {{ l.token.syncserver.url }}
-{% endfor %}" data-placement="top"><i class="ri-refresh-fill"></i>: {{service.synced_libraries|length}}</span>
-	    {% endif %}
-	    {% if service.repos|length > 0 %}
-              <span class="badge badge-pill badge-dark" aria-hidden="true" data-toggle="tooltip" title="Version control repositories:
-{% for r in service.repos %}
-- {{ r.project_name }} from server {{ r.token.repository.url }}
-{% endfor %}" data-placement="top"><i class="ri-git-repository-line"></i>: {{service.repos|length}}</span>
-	    {% endif %}
-	    {% if service.volumes|length > 0 %}
-              <span class="badge badge-pill badge-dark" aria-hidden="true" data-toggle="tooltip" title="Volumes:
-{% for v in service.volumes %}
-- {{ v }} ({{ v.description }})
-{% endfor %}" data-placement="top"><i class="ri-database-2-line"></i>: {{service.volumes|length}}</span>
-	    {% endif %}
-          </div>
-        </div>
-      </div>
-      <div class="col-1 text-right">
+        {% endif %}
+      </p>
+      {% if service.last_message %}
+        <p class="card-text"><strong>Last message:</strong> {{ service.last_message }}
+          <a href="{% url 'service:refreshlogs' service.id %}" role="button" class="btn btn-secondary btn-sm"><span class="oi oi-reload" aria-hidden="true" data-toggle="tooltip" title="Refresh service information" data-placement="bottom"></span></a>
+	</p>
+      {% endif %}
+      <p class="card-text"><strong>Control:</strong>
+        {% include 'container/startopen.html' with service=service next_page="service:list" label_open="Open" label_start="Start" %}
         {% include 'container/stopremove.html' with service=service next_page="service:list" %}
-      </div>
-    </div>
-  </div>
-
-
-  <div id="collapse-{{ service.id }}" class="collapse" aria-labelledby="heading-{{ service.id }}" data-parent="#serviceList">
-    <div class="row" style="margin: 10px">
-      <div class="col-2 text-left">Control: </div>
-      <div class="col-10 text-right">
-        <span class="badge badge-pill badge-secondary">Last message:<strong>{{ service.last_message }}</strong></span>
-        <a href="{% url 'service:refreshlogs' service.id %}" role="button" class="btn btn-secondary myctrl"><span class="oi oi-reload" aria-hidden="true" data-toggle="tooltip" title="Refresh service information" data-placement="bottom"></span></a>
-	  {% if service.report %}
-            <a href="#" role="button" class="btn btn-secondary myctrl"><span class="oi oi-wrench disabled" aria-hidden="true" data-toggle="tooltip" title="TODO: attach volume" data-placement="bottom"></span></a>
-	    <a href="#" role="button" class="btn btn-danger myctrl"><span class="oi oi-fire disabled" aria-hidden="true" data-toggle="tooltip" title="Remove report {{ service.report.name }} to get rid of service environment {{ service.name }}"></span></a>
-	  {% else %}
-            <a href="{% url 'service:configure' service.id %}" role="button" class="btn btn-secondary myctrl"><span class="oi oi-wrench" aria-hidden="true" data-toggle="tooltip" title="Add/remove project to the service" data-placement="bottom"></span></a>
-            <a href="{% url 'service:destroy' service.id next_page %}" role="button" class="btn btn-danger myctrl"><span class="oi oi-fire" aria-hidden="true" data-toggle="tooltip" title="Remove {{ service.name }}"></span></a>
-	  {% endif %}
-      </div>
+        {% if service.report %}
+          <a href="#" role="button" class="btn btn-secondary btn-sm"><span class="oi oi-wrench disabled" aria-hidden="true" data-toggle="tooltip" title="TODO: attach volume" data-placement="bottom"></span></a>
+          <a href="#" role="button" class="btn btn-danger btn-sm"><span class="oi oi-fire disabled" aria-hidden="true" data-toggle="tooltip" title="Remove report {{ service.report.name }} to get rid of service environment {{ service.name }}"></span></a>
+        {% else %}
+          <a href="{% url 'service:configure' service.id %}" role="button" class="btn btn-secondary btn-sm"><span class="oi oi-wrench" aria-hidden="true" data-toggle="tooltip" title="Add/remove project to the service" data-placement="bottom"></span></a>
+          <a href="{% url 'service:destroy' service.id next_page %}" role="button" class="btn btn-danger btn-sm"><span class="oi oi-fire" aria-hidden="true" data-toggle="tooltip" title="Remove {{ service.name }}"></span></a>
+        {% endif %}
+      </p>
     </div>
   </div>
 </div>

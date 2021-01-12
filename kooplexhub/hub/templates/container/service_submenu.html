@@ -9,7 +9,7 @@
      <div class="col-8">
         <ul class="navbar-nav mr-auto">
 		{% comment %} FIXME: container -- service {% endcomment %}
-          <li class="nav-item"><a class="nav-link" href="#" data-toggle="modal" data-target="#container-new">New service environment</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#container-new">New service environment</a></li>
           <li class="nav-item"><a {% if submenu == 'list' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'service:list' %}" {% endif %}>List service environments</a></li>
         </ul>
      </div>

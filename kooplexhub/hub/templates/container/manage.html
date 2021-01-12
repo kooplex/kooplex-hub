@@ -2,11 +2,6 @@
 
 {% load render_table from django_tables2 %}
 
-{% block header_extra %}
- {% load staticfiles %}
- <script src="{% static 'scripts/bootstrap4-toggle.min.js' %}"></script>
-{% endblock %}
-
 
 {% block submenu %}
   {% include 'container/service_submenu.html' with title="Configure service environment" %}
@@ -15,35 +10,31 @@
 {% block main_content_center %}
 <form id="container-manage" class="form-horizontal" action="{% url 'service:configure' container.id %}" method="post">
 {% csrf_token %}
+  <ul class="nav nav-tabs" id="serviceConfigTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <a class="nav-link" id="tab-imageme" data-bs-toggle="tab" href="#image" role="tab" aria-controls="image" aria-selected="false">Image</a>
+    </li>
+    <li class="nav-item active" role="presentation">
+      <a class="nav-link" id="tab-projects" data-bs-toggle="tab" href="#projects" role="tab" aria-controls="projects" aria-selected="true">Projects</a>
+    </li>
+    <li class="nav-item" role="presentation">
+      <a class="nav-link" id="tab-volumes" data-bs-toggle="tab" href="#volumes" role="tab" aria-controls="volumes" aria-selected="false">Volumes</a>
+    </li>
+    <li class="nav-item" role="presentation">
+      <a class="nav-link" id="tab-filesync" data-bs-toggle="tab" href="#filesync" role="tab" aria-controls="filesync" aria-selected="false">Synchronized files</a>
+    </li>
+    <li class="nav-item" role="presentation">
+      <a class="nav-link" id="tab-vc" data-bs-toggle="tab" href="#versioncontrol" role="tab" aria-controls="versioncontrol" aria-selected="false">Version control</a>
+    </li>
+  </ul>
 
-<div class="card">
-  <div class="card-header">
-    <ul class="nav nav-tabs card-header-tabs" id="serviceConfigTabs" role="tablist">
-      <li class="nav-item">
-        <a class="nav-link" id="tab-image" data-toggle="tab" href="#image" role="tab" aria-controls="image" aria-selected="false">Image</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link active" id="tab-projects" data-toggle="tab" href="#projects" role="tab" aria-controls="projects" aria-selected="true">Projects</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" id="tab-volumes" data-toggle="tab" href="#volumes" role="tab" aria-controls="volumes" aria-selected="false">Volumes</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" id="tab-filesync" data-toggle="tab" href="#filesync" role="tab" aria-controls="filesync" aria-selected="false">Synchronized files</a>
-      </li>
-      <li class="nav-item disabled">
-        <a class="nav-link" id="tab-vc" data-toggle="tab" href="#versioncontrol" role="tab" aria-controls="versioncontrol" aria-selected="false">Version control</a>
-      </li>
-    </ul>
-  </div>
-
-  <div class="card-body tab-content" id="serviceConfigTabContent">
+  <div class="tab-content" id="serviceConfigTabContent">
     <div class="tab-pane fade" id="image" role="tabpanel" aria-labelledby="tab-image">
       <input type="hidden" name="active_tab" value="image">
       <h5 class="card-title">Image selection</h5>
       <select name="container_image_id">
         {% for image in images %}
-          {% if image.present %}
+          {% if image.present and image.imagetype == image.TP_PROJECT %}
             <option value="{{ image.id }}" {% if container.image == image %} selected {% endif %}>{{ image }}</option>
           {% endif %}
         {% endfor %}
@@ -69,14 +60,12 @@
       <h5 class="card-title">Select version control repositores to associate with the service environment</h5>
       {% render_table t_repositories %}
     </div>
-
-
-    <div class="card-footer text-right">
-      <button type="submit" class="btn btn-default" name="button" value="apply">Apply settings</button>
-      <button class="btn btn-default" data-dismiss="modal">Cancel</button>
-    </div>
   </div>
-</div>
+
+  <div class="float-end">
+    <button type="submit" class="btn btn-primary" name="button" value="aply">Apply settings</button>
+    <button type="submit" class="btn btn-secondary" name="button" value="cancel">Cancel</button>
+  </div>
 
 </form>
 {% endblock %}

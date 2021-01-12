@@ -2,11 +2,6 @@
 
 {% load render_table from django_tables2 %}
 
-{% block header_extra %}
-  {% load staticfiles %}
-  <script src="{% static 'scripts/bootstrap4-toggle.min.js' %}"></script>
-{% endblock %}
-
 {% block submenu %}
   {% include 'project/project_submenu.html' with title="Configure project" %}
 {% endblock %}
@@ -14,64 +9,54 @@
 {% block main_content_center %}
 <form id="project-manage" class="form-horizontal" action="{% url 'project:configure' project.id %}" method="post">
 {% csrf_token %}
-
-<div class="card">
-  <div class="card-header">
-    <ul class="nav nav-tabs card-header-tabs" id="projectConfigTabs" role="tablist">
-      <li class="nav-item">
-        <a class="nav-link" id="tab-meta" data-toggle="tab" href="#meta" role="tab" aria-controls="meta" aria-selected="false">Meta</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link active" id="tab-collaboration" data-toggle="tab" href="#collaboration" role="tab" aria-controls="collaboration" aria-selected="true">Collaboration</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" id="tab-service" data-toggle="tab" href="#service" role="tab" aria-controls="service" aria-selected="true">Service environments</a>
-      </li>
-    </ul>
-  </div>
-
-  <div class="card-body tab-content" id="projectConfigTabContent">
+  <ul class="nav nav-tabs" id="projectConfigTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <a class="nav-link" id="tab-meta" data-bs-toggle="tab" href="#meta" role="tab" aria-controls="meta" aria-selected="false">Meta</a>
+    </li>
+    <li class="nav-item active" role="presentation">
+      <a class="nav-link" id="tab-collaboration" data-bs-toggle="tab" href="#collaboration" role="tab" aria-controls="collaboration" aria-selected="true">Collaboration</a>
+    </li>
+    <li class="nav-item" role="presentation">
+      <a class="nav-link" id="tab-service" data-bs-toggle="tab" href="#service" role="tab" aria-controls="service" aria-selected="false">Service environments</a>
+    </li>
+  </ul>
+  <div class="tab-content" id="projectConfigTabContent">
     <div class="tab-pane fade" id="meta" role="tabpanel" aria-labelledby="tab-meta">
-      <input type="hidden" name="active_tab" value="meta">
-      <h5 class="card-title">Describe your project</h5>
-      <textarea class="form-control" rows="6" cols="50" id="description" name="description">{{ project.description }}</textarea>
-      <h5 class="card-title">Change the scope for this project</h5>
-      <select id="project_scopes-{{ project.id }}" name="project_scope">
-        {% for scope in project.SCOPE_LIST %}
-          <option value="{{ scope }}" {% if project.scope == scope %} selected {% endif %}>{{ scope }}</option>
-        {% endfor %}
-      </select>
+        <input type="hidden" name="active_tab" value="meta">
+        <h5 class="card-title">Describe your project</h5>
+        <textarea class="form-control" rows="6" cols="50" id="description" name="description">{{ project.description }}</textarea>
+        <h5 class="card-title">Change the scope for this project</h5>
+        <select id="project_scopes-{{ project.id }}" name="project_scope">
+          {% for scope in project.SCOPE_LIST %}
+            <option value="{{ scope }}" {% if project.scope == scope %} selected {% endif %}>{{ scope }}</option>
+          {% endfor %}
+        </select>
     </div>
-
     <div class="tab-pane fade show active" id="collaboration" role="tabpanel" aria-labelledby="tab-collaboration">
-      <input type="hidden" name="active_tab" value="collaboration">
-      <h5 class="card-title">Select collaborators of this project</h5>
-      {% if t_collaborators %}
-        {% render_table t_collaborators %}
-	<hr>
-        <h5 class="card-title">Select environments to create for your collaborators</h5>
-	Your collaborators are free to change this environment later.
-	{% render_table t_services %}
-      {% else %}
-        You cannot manage collaboration of this project.
-      {% endif %}
+        <input type="hidden" name="active_tab" value="collaboration">
+        <h5 class="card-title">Select collaborators of this project</h5>
+        {% if t_collaborators %}
+          {% render_table t_collaborators %}
+  	<hr>
+          <h5 class="card-title">Select environments to create for your collaborators</h5>
+  	Your collaborators are free to change this environment later.
+  	{% render_table t_services %}
+        {% else %}
+          You cannot manage collaboration of this project.
+        {% endif %}
     </div>
-    
-    <div class="tab-pane fade show" id="service" role="tabpanel" aria-labelledby="tab-service">
-      <input type="hidden" name="active_tab" value="service">
-      <h5 class="card-title">Manage project environment bindings</h5>
-      {% if t_all_services %}
-        {% render_table t_all_services %}
-      {% endif %}
-    </div>
-
-    <div class="card-footer text-right">
-      <button type="submit" class="btn btn-default" name="button" value="apply">Apply settings</button>
-      <button type="submit" class="btn btn-default" name="button" value="cancel">Cancel</button>
+    <div class="tab-pane fade" id="service" role="tabpanel" aria-labelledby="tab-service">
+        <input type="hidden" name="active_tab" value="service">
+        <h5 class="card-title">Manage project environment bindings</h5>
+        {% if t_all_services %}
+          {% render_table t_all_services %}
+        {% endif %}
     </div>
   </div>
-</div>
-
+  <div class="float-end">
+    <button type="submit" class="btn btn-primary" name="button" value="aply">Apply settings</button>
+    <button type="submit" class="btn btn-secondary" name="button" value="cancel">Cancel</button>
+  </div>
 </form>
 {% endblock %}
 

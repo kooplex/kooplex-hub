@@ -1,36 +1,9 @@
-{% if label_open or label_start %}
-
-<style>
-.l {
-  width: 80px;
-  height: 30px;
-}
-
-.l span {
-  transform: translate(-3px, -2px);
-}
-</style>
-
 {% if service.state == service.ST_RUNNING %}
-  <a href="{% url 'service:open' service.id next_page %}" target="_blank" role="button" class="btn btn-success l" data-toggle="tooltip" title="Access environment {{ service.name }}"><span class="oi oi-external-link" aria-hidden="true"> {{ label_open }}</span></a>
+  <a href="{% url 'service:open' service.id next_page %}" target="_blank" role="button" class="btn btn-success btn-sm" data-toggle="tooltip" title="Access environment {{ service.name }}"><span class="oi oi-external-link" aria-hidden="true"></span></a>
 {% elif service.state == service.ST_NEED_RESTART %}
-  <a href="{% url 'service:open' service.id next_page %}" target="_blank" role="button" class="btn btn-warning l" data-toggle="tooltip" title="Access inconsistent environment {{ service.name }}"><span class="oi oi-external-link" aria-hidden="true"> {{ label_open }}</span></a>
+  <a href="{% url 'service:open' service.id next_page %}" target="_blank" role="button" class="btn btn-warning btn-sm" data-toggle="tooltip" title="Access inconsistent environment {{ service.name }}"><span class="oi oi-external-link" aria-hidden="true"></span></a>
 {% elif service.state == service.ST_ERROR %}
-  <a href="#" role="button" class="btn btn-outline-danger l disabled" data-toggle="tooltip" title="Erronous environment {{ service.name }}"><span class="oi oi-flash" aria-hidden="true"> FIXME</span></a>
+  <a href="#" role="button" class="btn btn-outline-warning btn-sm disabled" data-toggle="tooltip" title="Access erronous environment {{ service.name }}"><span class="oi oi-flash" aria-hidden="true"></span></a>
 {% else %}
-  <a href="{% url 'service:start' service.id next_page %}" role="button" class="btn btn-outline-secondary l" data-toggle="tooltip" title="Start environment {{ service.name }}"><span class="oi oi-flash" aria-hidden="true"> {{ label_start }}</span></a>
-{% endif %}
-
-{% else %}
-
-{% if service.state == service.ST_RUNNING %}
-  <a href="{% url 'service:open' service.id next_page %}" target="_blank" role="button" class="btn btn-success myctrl" data-toggle="tooltip" title="Access environment {{ service.name }}"><span class="oi oi-external-link" aria-hidden="true"></span></a>
-{% elif service.state == service.ST_NEED_RESTART %}
-  <a href="{% url 'service:open' service.id next_page %}" target="_blank" role="button" class="btn btn-warning myctrl" data-toggle="tooltip" title="Access inconsistent environment {{ service.name }}"><span class="oi oi-external-link" aria-hidden="true"></span></a>
-{% elif service.state == service.ST_ERROR %}
-  <a href="#" role="button" class="btn btn-outline-warning myctrl disabled" data-toggle="tooltip" title="Access erronous environment {{ service.name }}"><span class="oi oi-flash" aria-hidden="true"></span></a>
-{% else %}
-  <a href="{% url 'service:start' service.id next_page %}" role="button" class="btn btn-outline-secondary myctrl" data-toggle="tooltip" title="Start environment {{ service.name }}"><span class="oi oi-flash" aria-hidden="true"></span></a>
-{% endif %}
-
+  <a href="{% url 'service:start' service.id next_page %}" role="button" class="btn btn-outline-secondary btn-sm" data-toggle="tooltip" title="Start environment {{ service.name }}"><span class="oi oi-flash" aria-hidden="true"></span></a>
 {% endif %}

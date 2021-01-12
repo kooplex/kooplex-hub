@@ -114,6 +114,11 @@ class Project(models.Model):
     def userprojectbindings(self):
         return list(UserProjectBinding.objects.filter(project = self))
 
+    @property
+    def reports(self):
+        from .report import Report
+        #FIXME: filter visible
+        return Report.objects.filter(project = self)
 
 
 

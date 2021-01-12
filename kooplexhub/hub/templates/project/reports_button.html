@@ -1,0 +1,12 @@
+{% if project.reports|length > 0 %}
+<div class="dropdown">
+  <button class="btn btn-secondary dropdown-toggle btn-sm" type="button" id="dc-reports-{{ project.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+    <i class="oi oi-graph"></i>: {{project.reports|length}}
+  </button>
+  <ul class="dropdown-menu" aria-labelledby="dc-collabs-{{ project.id }}">
+    {% for r in project.reports %}
+      <li><a class="dropdown-item" href="#">{{ r.name }} (by {{ r.creator.first_name }} {{ r.creator.last_name }})</a></li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}

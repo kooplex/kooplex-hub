@@ -5,11 +5,13 @@
 {% endblock %}
 
 {% block main_content_center %}
+<div class="row row-cols-1 row-cols-md-3 g-4">
   {% for binding in projectbindings %}
     {% with project=binding.project %}
       {% include 'project/partial.html' with next_page='project:list' services=project|get_userz_services:user %}
     {% endwith %}
   {% endfor %}
+</div>
 {% endblock %}
 
 {% block main_content_right %}

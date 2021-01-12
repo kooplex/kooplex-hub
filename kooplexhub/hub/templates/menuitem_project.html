@@ -1,16 +1,17 @@
-<div class="dropdown">
-  <li class="nav-item {{ active }}">
-    <a href="{% url 'project:list' %}" class="nav-link">Projects</a>
-  </li>
-  <div class="dropdown-content" aria-labelledby="navbarDropdownProject">
-{% if user.profile.can_createproject %}
-      <a href="#" data-toggle="modal" data-target="#project-new">New project</a>
-{% endif %}
-      <a href="{% url 'project:join' %}">Join a project</a>
-      <a href="{% url 'project:list' %}">List projects</a>
-      <a href="{% url 'project:showhide' %}">Show/hide projects</a>
-  </div>
-</div>
+<li class="nav-item dropdown {{ active }}">
+  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownProject" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+    Projects
+  </a>
+  <ul class="dropdown-menu" aria-labelledby="navbarDropdownProject">
+   {% if user.profile.can_createproject %}
+    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#project-new">New project</a></li>
+   {% endif %}
+    <li><a class="dropdown-item" href="{% url 'project:list' %}">List projects</a></li>
+    <li><a class="dropdown-item" href="{% url 'project:join' %}">Join a project</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><a class="dropdown-item" href="{% url 'project:showhide' %}">Show/hide projects</a></li>
+  </ul>
+</li>
 {% if user.profile.can_createproject %}
   {% include "project/new.html" %}
 {% endif %}

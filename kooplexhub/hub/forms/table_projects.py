@@ -26,9 +26,21 @@ def table_projects(service):
         def render(self, record):
             p = record.project
             if p in bound_projects:
-                return format_html('<input type="hidden" name="project_ids_before" value="{0}"><input type="checkbox" name="project_ids_after" value="{0}" checked data-toggle="toggle" data-on="Attached" data-off="Detach" data-onstyle="success" data-offstyle="dark" data-size="xs">'.format(p.id))
+                template = f"""
+<div class="form-check form-switch">
+  <input type="hidden" name="project_ids_before" value="{p.id}">
+  <input class="form-check-input" type="checkbox" id="cb_pid-{p.id}" name="project_ids_after" value="{p.id}" checked />
+  <label class="form-check-label" for="cb_pid-{p.id}"> Keep added</label>
+</div>
+                """
             else:
-                return format_html('<input type="checkbox" name="project_ids_after" data-toggle="toggle" value="{}" data-on="Attach" data-off="Unused" data-onstyle="success" data-offstyle="dark" data-size="xs">'.format(p.id))
+                template = f"""
+<div class="form-check form-switch">
+  <input class="form-check-input" type="checkbox" id="cb_pid-{p.id}" name="project_ids_after" value="{p.id}" />
+  <label class="form-check-label" for="cb_pid-{p.id}"> Add</label>
+</div>
+                """
+            return format_html(template)
     rc = SelectColumn
 
     class CollaboratorColumn(tables.Column):
@@ -81,9 +93,20 @@ class T_PROJECT(tables.Table):
     class ProjectSelectionColumn(tables.Column):
         def render(self, record):
             if record.is_hidden:
-                return format_html('<input type="checkbox" name="selection" data-toggle="toggle" value="{0}" data-off="Show" data-on="Hidden" data-onstyle="dark" data-offstyle="success" data-size="xs" checked>'.format(record.id))
+                template = f"""
+<div class="form-check form-switch">
+  <input class="form-check-input" type="checkbox" id="cb_vpid-{record.id}" name="selection" value="{record.id}" checked />
+  <label class="form-check-label" for="cb_vpid-{record.id}"> Shown</label>
+</div>
+                """
             else:
-                return format_html('<input type="checkbox" name="selection" data-toggle="toggle" value="{0}" data-off="Shown" data-on="Hide" data-onstyle="dark" data-offstyle="success" data-size="xs">'.format(record.id))
+                template = f"""
+<div class="form-check form-switch">
+  <input class="form-check-input" type="checkbox" id="cb_vpid-{record.id}" name="selection" value="{record.id}" />
+  <label class="form-check-label" for="cb_vpid-{record.id}"> Show</label>
+</div>
+                """
+            return format_html(template)
     id = ProjectSelectionColumn(verbose_name = 'Visibility', orderable = False)
     class Meta:
         model = UserProjectBinding
@@ -99,9 +122,21 @@ def table_services(userprojectbinding):
                 stl_rem = 'danger' if record.state in [ record.ST_RUNNING, record.ST_NEED_RESTART ] else 'dark'
                 try:
                     psb = ProjectServiceBinding.objects.get(project = userprojectbinding.project, service = record)
-                    return format_html(f'<input type="hidden" name="psb_ids_before" value="{psb.id}"><input type="checkbox" name="psb_ids_after" data-toggle="toggle" value="{psb.id}" data-on="Bound" data-off="Detach" data-onstyle="success" data-offstyle="{stl_rem}" data-size="xs" checked>')
+                    template = f"""
+<div class="form-check form-switch">
+  <input type="hidden" name="psb_ids_before" value="{psb.id}">
+  <input class="form-check-input" type="checkbox" id="cb_psbid-{psb.id}" name="psb_ids_after" value="{psb.id}" checked />
+  <label class="form-check-label" for="cb_psbid-{psb.id}"> Keep added</label>
+</div>
+                    """
                 except ProjectServiceBinding.DoesNotExist:
-                    return format_html(f'<input type="checkbox" name="svc_ids" data-toggle="toggle" value="{record.id}" data-off="Skip" data-on="Attach" data-onstyle="{stl_add}" data-offstyle="dark" data-size="xs">')
+                    template = f"""
+<div class="form-check form-switch">
+  <input class="form-check-input" type="checkbox" id="cb_svc-{record.id}" name="svc_ids" value="{record.id}" />
+  <label class="form-check-label" for="cb_svcid-{record.id}"> Attach</label>
+</div>
+                    """
+                return format_html(template)
 
         id = ServiceSelectionColumn(verbose_name = 'Environment', orderable = False)
         class Meta:
