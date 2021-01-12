@@ -72,9 +72,9 @@
           <a href="{% url 'project:delete' project.id %}" role="button" class="btn btn-danger myctrl" onclick="return confirm('Are you sure?');"><span class="oi oi-trash" aria-hidden="true" data-toggle="tooltip" title="Delete project {{ project.name }}." data-placement="top"></span></a>
         </div>
       </div>
-      <div class="card-body">
         <div class="card-deck">
           <div class="card">
+            <div class="card-body">
             {% if project.userprojectbindings|length == 0 %}
               <h5 class="card-title">No collaborators</h5>
             {% else %}
@@ -83,24 +83,26 @@
 	      <p><span data-toggle="tooltip" title="Username {{ b.user.username }}" data-placement="bottom">{{ b.user.first_name }} {{ b.user.last_name }}</span> {{ b.role }}</p>
               {% endfor %}
             {% endif %}
+            </div>
           </div>
           <div class="card">
+            <div class="card-body">
             {% if services|length == 0 %}
               <h5 class="card-title">Environments associated</h5>
             {% else %}
               <h5 class="card-title">Environments</h5>
               {% for svc in services %}
-	        <div class="card-body">
                   <span data-toggle="tooltip" title="Image: {{ svc.image }}">{{ svc.name }}</span>
                   <div style="float: right;">
                     {% include 'container/startopen.html' with service=svc next_page="project:list" %}
                     {% include 'container/stopremove.html' with service=svc next_page="project:list" %}
                   </div>
-	        </div>
               {% endfor %}
             {% endif %}
+            </div>
           </div>
           <div class="card">
+            <div class="card-body">
             {% if project.reports|length == 0 %}
               <h5 class="card-title">No project reports</h5>
             {% else %}
@@ -115,7 +117,8 @@
             {% endif %}
           </div>
         </div>
-      </div>
+	</div>  <!-- end of lower card deck-->
+
     </div>
   </div>
 </div>

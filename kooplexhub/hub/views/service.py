@@ -50,7 +50,7 @@ def listservices(request):
         services = Service.objects.filter(user = user, name__icontains = pattern_name)
     else:
         services = Service.objects.filter(user = user)
-    unbound = Service.objects.filter(user = request.user).exclude(projectservicebinding__gt = 0)
+    unbound = Service.objects.filter(user = request.user).exclude(projectservicebinding__gt = 0).exclude(reportservicebinding__gt = 0)
     if unbound:
         messages.warning(request, 'Note, your environments {} are not bound to any projects'.format(', '.join([ s.name for s in unbound ])))
     for svc in Service.objects.filter(user = request.user, state = Service.ST_NEED_RESTART):

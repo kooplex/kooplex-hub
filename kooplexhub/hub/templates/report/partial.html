@@ -3,8 +3,9 @@
   <div class="row" >
       <div class="report-row" style="border-top: #173651; border-top-style: none; border-top-style: double;width: 100%;">
 	  <div style="position: absolute; top: 10px; right: 10px; ">
-		{% if report.reporttype == report.TP_STATIC  %}
+		{% if image.imagetype == image.TP_REPORT_HTML  %}
 	              <span class="badge badge-pill badge-info" style="min-width: 50px; padding-top: 5px; padding-bottom: 5px;">HTML</span>
+		      <!-- FIXME -->
 		{% elif report.reporttype == report.TP_DYNAMIC  %}
 	              <span class="badge badge-pill badge-success" style="min-width: 50px; padding-top: 5px; padding-bottom: 5px;">NB</span>
 		{% elif report.reporttype == report.TP_SERVICE  %}
@@ -39,8 +40,10 @@
       <div class="modal-body">
 			  <strong>Creator: </strong>{{ report.creator.first_name }} {{ report.creator.last_name }} ({{ report.creator }})<br>
 			  <strong>Description: </strong>{{ report.description }}<br>
-			  <strong>Url to latest: </strong><code>{{ report.url_external_latest }}</code><br>
+			  <strong>Url: </strong><code>{{ report.url_external }}</code><br>
+			  {% comment %}
 			  {% render_table table %}
+			  {% endcomment %}
       </div>
     </div>
   </div>

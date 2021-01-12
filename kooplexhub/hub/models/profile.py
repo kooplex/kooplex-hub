@@ -10,6 +10,7 @@ from django.contrib.auth.models import User
 
 from kooplex.settings import KOOPLEX
 from kooplex.lib.filesystem import Dirname
+from kooplex.lib import sudo
 
 logger = logging.getLogger(__name__)
 
@@ -39,10 +40,6 @@ class Profile(models.Model):
 
     def everybodyelse_like(self, pattern):
         return Profile.objects.filter(~models.Q(id = self.id) & ~models.Q(user__is_superuser = True) & (models.Q(user__username__icontains = pattern) | models.Q(user__first_name__icontains = pattern) | models.Q(user__last_name__icontains = pattern)))
-
-    @property
-    def groupid(self):
-        return KOOPLEX.get('ldap', {}).get('gid_users', 1000)
 
     @property
     def projectbindings(self):
@@ -114,23 +111,19 @@ class Profile(models.Model):
         for b in self.projectbindings:
             yield (b.project.id, b.project.uniquename)
 
-    def dirs_reportprepare(self):
+    @sudo
+    def files_reportprepare(self):
+        tree = {}
         for b in self.projectbindings:
             report_dir = Dirname.reportprepare(b.project)
-            for d in os.listdir(report_dir):
-                if d.startswith('.'):
-                    continue
-                if os.path.isdir(os.path.join(report_dir, d)):
-                    yield d
-
-    def files_reportprepare(self, folder_name):
-        for b in self.projectbindings:
-            report_dir = Dirname.reportprepare(b.project)
-            for d in os.listdir(report_dir):
-                if d == folder_name:
-                    for f in os.listdir("%s/%s"%(report_dir, d)):
-                        if f.endswith('.ipynb') or f.endswith('.html') or f.endswith('.py') or f.endswith('.R') or f.endswith('.r'):
-                           yield f
+            sub_tree = {}
+            for d in list(filter(lambda d: not d.startswith('.') and os.path.isdir(os.path.join(report_dir, d)), os.listdir(report_dir))):
+                files = list(filter(lambda f: f.endswith('.ipynb') or f.endswith('.html') or f.endswith('.py') or f.endswith('.R') or f.endswith('.r'), os.listdir( os.path.join(report_dir, d) )))
+                if len(files):
+                    sub_tree[d] = files
+            if len(sub_tree):
+                tree[b.project] = sub_tree
+        return tree
 
     @property
     def functional_volumes(self):

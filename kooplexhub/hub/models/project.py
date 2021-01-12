@@ -61,12 +61,12 @@ class Project(models.Model):
         return f'{self.cleanname}-{self.creator.username}'
 
     #FIXME: is it used anywhere?
-    @property
-    def safename(self):
-        try:
-            return self.name_with_owner
-        except UserProjectBinding.DoesNotExist:
-            return self.cleanname
+###OBSOLETED    @property
+###OBSOLETED    def safename(self):
+###OBSOLETED        try:
+###OBSOLETED            return self.name_with_owner
+###OBSOLETED        except UserProjectBinding.DoesNotExist:
+###OBSOLETED            return self.cleanname
 
     @register.filter
     def get_userz_services(self, user):

@@ -12,12 +12,12 @@ logger = logging.getLogger(__name__)
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'userid', 'groupid', 'location', 'bio', 'is_teacher', 'is_student', 'can_createproject')
+    list_display = ('id', 'user', 'userid', 'location', 'bio', 'is_teacher', 'is_student', 'can_createproject')
     search_fields = ('user__username', )
 
 @admin.register(Image)
 class ImageAdmin(admin.ModelAdmin):
-    list_display = ('id', 'present', 'name', 'require_home', 'mount_report', 'mount_project', 'description')
+    list_display = ('id', 'present', 'name', 'imagetype', 'description')
 
 @admin.register(Proxy)
 class ProxyAdmin(admin.ModelAdmin):
@@ -34,6 +34,10 @@ class ServiceAdmin(admin.ModelAdmin):
 @admin.register(ProjectServiceBinding)
 class ProjectServiceBindingAdmin(admin.ModelAdmin):
     list_display = ('id', 'project', 'service')
+
+@admin.register(ReportServiceBinding)
+class ReportServiceBindingAdmin(admin.ModelAdmin):
+    list_display = ('id', 'report', 'service')
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
@@ -190,4 +194,4 @@ class FSLibraryServiceBindingAdmin(admin.ModelAdmin):
 
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'creator', 'created_at', 'reporttype', 'index', 'image') 
+    list_display = ('id', 'url_external', 'name', 'creator', 'created_at', 'image') 

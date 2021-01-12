@@ -67,22 +67,33 @@ def start(service):
                 "subPath": project.uniquename
             })
             has_project = True
-
-    if service.image.mount_report:
-        for project in service.projects:
-            volume_mounts.append({
-                "name": "pv-k8plex-hub-report",
-                "mountPath": os.path.join(mount_point, report_subdir, project.uniquename),
-                "subPath": project.uniquename,
-                "readOnly": True
-            })
-            has_report = True
             volume_mounts.append({
                 "name": "pv-k8plex-hub-cache",
                 "mountPath": os.path.join(mount_point, report_prepare_subdir, project.uniquename),
                 "subPath": os.path.join('report_prepare', project.uniquename)
             })
             has_cache = True
+
+    if service.image.mount_report:
+        for report in service.reports:
+            volume_mounts.append({
+                "name": "pv-k8plex-hub-report",
+                "mountPath": os.path.join(mount_point, report_subdir, report.project.uniquename),
+                "subPath": report.project.uniquename,
+                "readOnly": True
+            })
+            has_report = True
+        try:
+            report = service.report
+            volume_mounts.append({
+                "name": "pv-k8plex-hub-report",
+                "mountPath": os.path.join('/srv', 'report', report.cleanname),
+                "subPath": os.path.join(report.project.uniquename, report.cleanname),
+                "readOnly": True
+            })
+            has_report = True
+        except:
+            pass
 
     for sync_lib in service.synced_libraries:
         o = urlparse(sync_lib.token.syncserver.url)
@@ -179,7 +190,8 @@ def start(service):
     Timer(.2, _check_starting, args = (service.id, event)).start()
     return event
 
-def _check_starting(service_id, event):
+#FIXME: define and implement timeout so that no forever loop is happening
+def _check_starting(service_id, event, left = 1000):
     from hub.models import Service
     try:
         service = Service.objects.get(id = service_id)
@@ -187,14 +199,22 @@ def _check_starting(service_id, event):
     except Exception as e:
         logger.warning(e)
         return
-    if check(service):
+    chk = check(service)
+    if chk is True:
         service.state = service.ST_RUNNING
         service.save()
         logger.info(f'+ pod of {service.name} is ready')
         addroute(service)
         event.set()
+    elif chk == -1:
+        logger.error(f'? pod of {service.name} oopsed {service.message}')
     else:
-        Timer(.5, _check_starting, args = (service.id, event)).start()
+        if left == 0:
+            logger.error(f'service {service.name} not started')
+            service.state = service.ST_ERROR
+            service.save()
+            return
+        Timer(.5, _check_starting, args = (service.id, event, left - 1)).start()
         logger.debug(f'service {service.name} is still starting')
 
 def stop(service):
@@ -262,6 +282,13 @@ def check(service):
     try:
         podstatus = v1.read_namespaced_pod_status(namespace='default', name = service.label)
         st = podstatus.status.container_statuses[0]
+        try:
+            if st.state.waiting.reason == 'CreateContainerConfigError':
+                service.state = service.ST_ERROR
+                message = st.state.waiting.message
+                return -1
+        except:
+            pass
         indicators = []
         if st.started:
             indicators.append('started')

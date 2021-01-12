@@ -31,11 +31,7 @@ class Dirname:
 
     @staticmethod
     def report(report):
-        return os.path.join(Dirname.reportroot(report.project), standardize_str(report.name))
-
-    @staticmethod
-    def report_with_tag(report):
-        return os.path.join(Dirname.reportroot(report.project), standardize_str(report.name), report.tag_name)
+        return os.path.join(Dirname.reportroot(report.project), report.cleanname)
 
     @staticmethod
     def vcpcache(vcproject):

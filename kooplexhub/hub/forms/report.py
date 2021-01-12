@@ -1,38 +1,19 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
+from django.utils.html import format_html
 
 from hub.models import Report
 
-# Todo: dynamic update of files list
-# https://simpleisbetterthancomplex.com/tutorial/2018/01/29/how-to-implement-dependent-or-chained-dropdown-list-with-django.html
-
 class FormReport(forms.ModelForm):
-    folder = forms.ChoiceField(
-            help_text = _('A snapshot will be created of all files in the selected folder.')
-        )
-    index = forms.ChoiceField(
-            help_text = _('A snapshot will be created of all files in the selected folder.'),
-            label= _('Index file')
-        )
     password = forms.CharField(required = False)
-    tag_name = forms.CharField(
-            help_text = _('You will have a separate url fo this version of the report. Tag should one word without any special characters.'),
-            label= _('Tag'),
-            required = False
-        )
-    subcategory_name = forms.CharField(
-            help_text = _('When reports are listed it will be in this subcategory. Subcategory should one word without any special characters.'),
-            label= _('Subcategory'),
-            required = False,
-        )
 
     class Meta:
         model = Report
-        fields = [ 'name', 'description', 'reporttype', 'project', 'folder', 'index', 'image', 'scope', 'password', 'tag_name', 'subcategory_name' ]
+        fields = [ 'name', 'description', 'image', 'scope', 'password', ]
+        ##attrs = { "class": "form-control" }
         labels = {
             'name': _('The name of your report'),
             'description': _('A short description'),
-            'reporttype': _('Type of report'),
         }
         help_texts = {
             'name': _('Report name should be unique.'),
@@ -41,23 +22,33 @@ class FormReport(forms.ModelForm):
             'password': _('Leave it empty for the public.'),
         }
 
+    def r_tree(self):
+        tree = ""
+        icon_index = '<i class="fa fa-globe-europe fa-fw"></i>'
+        icon_folder = '<i class="fa fa-folder-open fa-fw"></i>'
+        icon_project = '<i class="fa fa-project-diagram fa-fw"></i>'
+        for p, s in self.tree.items():
+            sub_folders = ""
+            for f, ixs in s.items():
+                indices = ""
+                for i in ixs:
+                    r = f'<input type="radio" name="index_selector" value="({p.id},{f},{i})">'
+                    indices += f'<div role="treeitem" class="list-group-item">{r}{icon_index}{i}</div>'
+                div_indices = f'<div role="group" class="list-group collapse" id="{p.id}-{f}">{indices}</div>'
+                sub_folders += f'<div role="treeitem" class="list-group-item" data-toggle="collapse" data-target="#{p.id}-{f}" id="f-{p.id}-{f}" aria-expanded="true" aria-controls="c-{p.id}">{icon_folder}{f}{div_indices}</div>'
+            div_folders = f'<div role="group" class="list-group collapse" id="{p.id}">{sub_folders}</div>'
+            tree += f'<div role="treeitem" class="list-group-item" data-toggle="collapse" data-target="#{p.id}" id="c-{p.id}">{icon_project}{p.name}{div_folders}</div>'
+        html = f'<tr><td style="vertical-align: top;"><b>Select index:</b></td><td><div id="indextree" class="bstreeview">{tree}</div></td></tr>'
+        return format_html(html)
+
+
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         super(FormReport, self).__init__(*args, **kwargs)
         self.fields['image'].empty_label = None
         self.fields["description"].widget.attrs["rows"] = 3
         self.fields["description"].widget.attrs["cols"] = 20
-        self.fields["project"].choices = list(user.profile.projects_reportprepare())
-        folders = list(user.profile.dirs_reportprepare())
-        files = []
-        #files = list(user.profile.files_reportprepare())
-        if len(folders):
-            C_folder = zip(folders, folders)
-            self.fields["folder"].choices = C_folder
-        #if len(files):
-        #    C_files = zip(files, files)
-        #    self.fields["index"].choices = C_files
-        #    self.fields["index"].widget.attrs["style"] = "width: 27ex"
+        self.tree = user.profile.files_reportprepare()
         for field in self.fields.keys():
             self.fields[field].widget.attrs["class"] = "form-control"
 

@@ -116,6 +116,19 @@ class Service(models.Model):
         return [ binding.project for binding in ProjectServiceBinding.objects.filter(service = self) ]
 
     @property
+    def reports(self):
+        "relevant only for project containers"
+        reports = Report.objects.none()
+        for p in self.projects:
+            reports.union( Report.objects.filter(project = p) )
+        return reports
+
+    @property
+    def report(self):
+        "relevant only for report containers"
+        return ReportServiceBinding.objects.get(service = self).report
+
+    @property
     def synced_libraries(self):
         from .filesync import FSLibraryServiceBinding
         return [ binding.fslibrary for binding in FSLibraryServiceBinding.objects.filter(service = self) ]
@@ -138,7 +151,6 @@ class Service(models.Model):
         self.save()
         return restart_environment(self)
 
-
     def check_state(self):
         return check_environment(self)
 
@@ -154,7 +166,7 @@ class Service(models.Model):
         return True
 
 @receiver(pre_delete, sender = Service)
-def container_to_be_removed(sender, instance, **kwargs):
+def remove_container(sender, instance, **kwargs):
     try:
         stop_environment(instance)
         logger.info(f'- removed pod/container {instance.label}')
@@ -162,54 +174,7 @@ def container_to_be_removed(sender, instance, **kwargs):
         logger.warning(f'! check pod/container {instance.label}, during removal exception raised: -- {e}')
 
 
-#@receiver(pre_save, sender = Container)
-#def container_message_change(sender, instance, **kwargs):
-#    is_new = instance.id is None
-#    old_instance = Container() if is_new else Container.objects.get(id = instance.id)
-#    if old_instance.last_message != instance.last_message:
-#         logger.debug("msg of %s: %s" % (instance, instance.last_message))
-#         instance.last_message_at = now()
-#
-#
-#
-#@receiver(post_save, sender = Container)
-#def bind_home(sender, instance, created, **kwargs):
-#    if created and instance.report is None:
-#        try:
-#            v_home = Volume.objects.get(volumetype = Volume.HOME)
-#            VolumeContainerBinding.objects.create(container = instance, volume = v_home)
-#        except Exception as e:
-#            logger.error('Home not bound -- %s' % e)
-#
-#
-#@receiver(post_save, sender = Container)
-#def bind_report(sender, instance, created, **kwargs):
-#    if created:# and not instance.course:
-#        try:
-#            v_report = Volume.objects.get(volumetype = Volume.REPORT)
-#            VolumeContainerBinding.objects.create(container = instance, volume = v_report)
-#        except Exception as e:
-#            logger.error('Report not bound -- %s' % e)
-#
-#
-#@receiver(post_save, sender = Container)
-#def bind_garbage(sender, instance, created, **kwargs):
-#    if created and instance.report is None:
-#        try:
-#            v_garbage = Volume.objects.get(volumetype = Volume.GARBAGE)
-#            VolumeContainerBinding.objects.create(container = instance, volume = v_garbage)
-#        except Exception as e:
-#            logger.error('Garbage not bound -- %s' % e)
-#
-#@receiver(post_save, sender = Container)
-#def bind_filesync(sender, instance, created, **kwargs):
-#    if created and instance.report is None:
-#        try:
-#            v_filesync = Volume.objects.get(volumetype = Volume.FILESYNC)
-#            VolumeContainerBinding.objects.create(container = instance, volume = v_filesync)
-#        except Exception as e:
-#            logger.error('Filesync not bound -- %s' % e)
-#
+
 class ProjectServiceBinding(models.Model):
     project = models.ForeignKey(Project, null = False)
     service = models.ForeignKey(Service, null = False)
@@ -218,225 +183,30 @@ class ProjectServiceBinding(models.Model):
         return f"<ProjectServiceBinding {self.project}-{self.service}>"
 
 
-#@receiver(post_save, sender = ProjectContainerBinding)
-#def bind_share(sender, instance, created, **kwargs):
-#    if created:
-#        c = instance.container
-#        try:
-#            v_share = Volume.objects.get(volumetype = Volume.SHARE)
-#            VolumeContainerBinding.objects.get(container = c, volume = v_share)
-#            logger.debug('Share already bound to container %s' % c)
-#        except VolumeContainerBinding.DoesNotExist:
-#            VolumeContainerBinding.objects.create(container = c, volume = v_share)
-#            logger.debug('Share bound to container %s' % c)
-#        except Exception as e:
-#            logger.error('Share not bound to container %s -- %s' % (c, e))
-#
-#@receiver(pre_delete, sender = ProjectContainerBinding)
-#def container_to_be_removed(sender, instance, **kwargs):
-#        logger.debug('Set %s container to be removed' % instance)
-#        c = instance.container
-#        c.marked_to_remove = True
-#        c.save()
-#
-#
-##@receiver(pre_delete, sender = ProjectContainerBinding)                                                   
-#@receiver(pre_delete, sender = Container)    
-#def container_environmentS(sender, instance, **kwargs):                                                   
-#        c = instance                                                                             
-#        remove_container_environment(c, 'PASSWORD')
-#                                                                                                                                                                          
-#
-#@receiver(post_delete, sender = ProjectContainerBinding)
-#def remove_bind_share(sender, instance, **kwargs):
-#    c = instance.container
-#    if not ProjectContainerBinding.objects.filter(container = c):
-#        try:
-#            v_share = Volume.objects.get(volumetype = Volume.SHARE)
-#            VolumeContainerBinding.objects.get(container = c, volume = v_share).delete()
-#            logger.debug('Share unbound from container %s' % instance)
-#        except Exception as e:
-#            logger.error('Share was not unbound from container %s -- %s' % (instance, e))
-#
-#
-#
-#@receiver(post_save, sender = ProjectContainerBinding)
-#def bind_workdir(sender, instance, created, **kwargs):
-#    if created:
-#        c = instance.container
-#        try:
-#            v_workdir = Volume.objects.get(volumetype = Volume.WORKDIR)
-#            VolumeContainerBinding.objects.get(container = c, volume = v_workdir)
-#            logger.debug('Workdir already bound to container %s' % c)
-#        except VolumeContainerBinding.DoesNotExist:
-#            VolumeContainerBinding.objects.create(container = c, volume = v_workdir)
-#            logger.debug('Workdir bound to container %s' % c)
-#        except Exception as e:
-#            logger.error('Workdir not bound to container %s -- %s' % (c, e))
-#
-#
-#@receiver(post_delete, sender = ProjectContainerBinding)
-#def remove_bind_workdir(sender, instance, **kwargs):
-#    c = instance.container
-#    if not ProjectContainerBinding.objects.filter(container = c):
-#        try:
-#            v_workdir = Volume.objects.get(volumetype = Volume.WORKDIR)
-#            VolumeContainerBinding.objects.get(container = c, volume = v_workdir).delete()
-#            logger.debug('Workdir unbound from container %s' % instance)
-#        except Exception as e:
-#            logger.error('Workdir was not unbound from container %s -- %s' % (instance, e))
-#
-#
-#@receiver(post_save, sender = ProjectContainerBinding)
-#def bind_git(sender, instance, created, **kwargs):
-#    if created:
-#        c = instance.container
-#        try:
-#            v_git = Volume.objects.get(volumetype = Volume.GIT)
-#            VolumeContainerBinding.objects.get(container = c, volume = v_git)
-#            logger.debug('Git cache already bound to container %s' % c)
-#        except VolumeContainerBinding.DoesNotExist:
-#            VolumeContainerBinding.objects.create(container = c, volume = v_git)
-#            logger.debug('Git cache bound to container %s' % c)
-#        except Exception as e:
-#            logger.error('Git cache not bound to container %s -- %s' % (c, e))
-#
-#
-#@receiver(post_delete, sender = ProjectContainerBinding)
-#def remove_bind_git(sender, instance, **kwargs):
-#    c = instance.container
-#    if not ProjectContainerBinding.objects.filter(container = c):
-#        try:
-#            v_git = Volume.objects.get(volumetype = Volume.GIT)
-#            VolumeContainerBinding.objects.get(container = c, volume = v_git).delete()
-#            logger.debug('Git cache unbound from container %s' % instance)
-#        except Exception as e:
-#            logger.error('Git cache was not unbound from container %s -- %s' % (instance, e))
-#
-#
-#@receiver(post_save, sender = ProjectContainerBinding)
-#def bind_stg(sender, instance, created, **kwargs):
-#    if created:
-#        c = instance.container
-#        for vpb in VolumeProjectBinding.objects.filter(project = instance.project, volume__volumetype = Volume.STORAGE):
-#            v = vpb.volume
-#            try:
-#                VolumeContainerBinding.objects.get(container = c, volume = v)
-#                logger.debug('Storage bound to container %s' % c)
-#            except VolumeContainerBinding.DoesNotExist:
-#                VolumeContainerBinding.objects.create(container = c, volume = v)
-#                logger.debug('Storage bound to container %s' % c)
-#            except Exception as e:
-#                logger.error('Storage not bound to container %s -- %s' % (c, e))
-#
-#@receiver(post_save, sender = ProjectContainerBinding)
-#def bind_vol(sender, instance, created, **kwargs):
-#    if created:
-#        c = instance.container
-#        for vpb in VolumeProjectBinding.objects.filter(project = instance.project, volume__volumetype = Volume.FUNCTIONAL):
-#            v = vpb.volume
-#            try:
-#                VolumeContainerBinding.objects.get(container = c, volume = v)
-#                logger.debug('Functional volume bound to container %s' % c)
-#            except VolumeContainerBinding.DoesNotExist:
-#                VolumeContainerBinding.objects.create(container = c, volume = v)
-#                logger.debug('Functional volume was not bound, binding now to container %s' % c)
-#            except Exception as e:
-#                logger.error('Functional volume not bound to container %s -- %s' % (c, e))
-#
-#
-##FIXME: remove_bind_stg
-#
-#
-#@receiver(post_save, sender = ProjectContainerBinding)
-#def managemount_add_project(sender, instance, created, **kwargs):
-#    if created:
-#        c = instance.container
-#        try:
-#            c.managemount()
-#        except Exception as e:
-#            logger.error('Container %s -- %s' % (c, e))
-#
-#
-#@receiver(post_delete, sender = ProjectContainerBinding)
-#def managemount_remove_project(sender, instance, **kwargs):
-#    c = instance.container
-#    try:
-#        c.managemount()
-#    except Exception as e:
-#        logger.error('Container %s -- %s' % (c, e))
-#
-#
-#@receiver(post_save, sender = VCProjectProjectBinding)
-#def managemount_add_vcprojectprojectbinding(sender, instance, created, **kwargs):
-#    if created:
-#        for c in Container.objects.filter(user = instance.vcproject.token.user, state = Container.ST_RUNNING):
-#            try:
-#                c.managemount()
-#            except Exception as e:
-#                logger.error('Container %s -- %s' % (c, e))
-#
-#
-#@receiver(post_delete, sender = VCProjectProjectBinding)
-#def managemount_remove_vcprojectprojectbinding(sender, instance, **kwargs):
-#    for c in Container.objects.filter(user = instance.vcproject.token.user, state = Container.ST_RUNNING):
-#        try:
-#            c.managemount()
-#        except Exception as e:
-#            logger.error('Container %s -- %s' % (c, e))
-#
-#
-#@receiver(post_delete, sender = ProjectContainerBinding)
-#def assert_container_has_projects(sender, instance, **kwargs):
-#    container = instance.container
-#    if container.n_projects == 0:
-#        container.state = Container.ST_NOTPRESENT
-#        container.save()
-#         
-#
-#
-#
-#class VolumeContainerBinding(models.Model):
-#    volume = models.ForeignKey(Volume, null = False)
-#    container = models.ForeignKey(Container, null = False)
-#
-#    def __str__(self):
-#       return "%s-%s" % (self.container.name, self.volume.name)
-#
-#    @staticmethod
-#    def list_containervolumes(container):
-#        for binding in VolumeContainerBinding.objects.filter(container = container):
-#            yield binding.volume
-#               
-#
-#@receiver(pre_save, sender = ProjectContainerBinding)
-#def update_image(sender, instance, **kwargs):
-#    if instance.container.image is None:
-#        instance.container.image = instance.project.image
-#        instance.container.save()
-#        logger.debug("container (%s) image is set %s" % (instance.container, instance.container.image))
-#    if instance.project.image is not None:
-#        assert instance.container.image == instance.project.image, "Conflicting images %s =/= %s" % (instance.container.image, instance.project.image)
-#
-#
-#
-#@receiver(pre_save, sender = Project)
-#def container_check_image(sender, instance, **kwargs):
-#    try:
-#        old = sender.objects.get(id = instance.id)
-#    except sender.DoesNotExist:
-#        return
-#    if old.image != instance.image:
-#        pcbs = ProjectContainerBinding.objects.filter(project = instance)
-#        for pcb in pcbs:
-#            c = pcb.container
-#            #assert c.image is None or c.image == instance.image, "Conflict with container %s" % c #FIXME: ez igy nem jo
-#        for pcb in pcbs:
-#            c = pcb.container
-#            if c.is_running or c.is_stopped:
-#                c.marked_to_remove = True
-#            c.image = instance.image
-#            c.save()
+
+class ReportServiceBinding(models.Model):
+    report = models.ForeignKey(Report, null = False)
+    service = models.ForeignKey(Service, null = False)
+
+    def __str__(self):
+        return f"<ReportServiceBinding {self.report}-{self.service}>"
+
+@receiver(post_save, sender = Report)
+def create_report_service(sender, instance, created, **kwargs):
+    if created:
+        svc = Service.objects.create(name = instance.cleanname, user = instance.creator, suffix = 'report', image = instance.image)
+        logger.info(f'+ created service {svc.name} for report {instance.name}')
+        ReportServiceBinding.objects.create(report = instance, service = svc)
+        svc.start()
+        logger.info(f'started report service {svc.label}')
+
+@receiver(post_delete, sender = ReportServiceBinding)
+def remove_report_service(sender, instance, **kwargs):
+    svc = instance.service.delete()
+    logger.info(f'- deleted service {svc.name} of report {instance.report.name}')
+
+
+
 #
 #
 #

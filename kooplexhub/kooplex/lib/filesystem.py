@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 @sudo
-def _mkdir(path):
+def _mkdir(path, other_rx = False):
     """
     @summary: make a directory
     @param path: the directory to make
@@ -28,12 +28,13 @@ def _mkdir(path):
     dir_util.mkpath(path)
     assert os.path.exists(path), f"{path} is not present in the filesystem"
     assert os.path.isdir(path), f"{path} is present but not a directory"
+    rx = 'rx' if other_rx else ''
     acl = f"""
 A::OWNER@:rwaDxtTcCy
 A::{kooplex_settings.HUB.pw_uid}:rwaDxtcy
 A::GROUP@:tcy
 A:g:{kooplex_settings.HUB.pw_gid}:rwaDxtcy
-A::EVERYONE@:tcy
+A::EVERYONE@:{rx}tcy
 A:fdi:OWNER@:rwaDxtTcCy
 A:fdi:GROUP@:tcy
 A:fdig:{kooplex_settings.HUB.pw_gid}:rwaDxtcy
@@ -161,9 +162,6 @@ def mkdir_project(project):
     dir_project = Dirname.project(project)
     _mkdir(dir_project)
     _grantaccess(project.creator, dir_project)
-    dir_report = Dirname.reportroot(project)
-    _mkdir(dir_report)
-    _grantaccess(project.creator, dir_report)
     dir_reportprepare = Dirname.reportprepare(project)
     _mkdir(dir_reportprepare)
     _grantaccess(project.creator, dir_reportprepare)
@@ -172,8 +170,6 @@ def grantaccess_project(userprojectbinding):
     user = userprojectbinding.user
     dir_project = Dirname.project(userprojectbinding.project)
     _grantaccess(user, dir_project)
-    dir_report = Dirname.reportroot(userprojectbinding.project)
-    _grantaccess(user, dir_report)
     dir_reportprepare = Dirname.reportprepare(userprojectbinding.project)
     _grantaccess(user, dir_reportprepare)
 
@@ -181,9 +177,6 @@ def revokeaccess_project(userprojectbinding):
     user = userprojectbinding.user
     dir_project = Dirname.project(userprojectbinding.project)
     _revokeaccess(user, dir_project)
-    #FIXME: create report folder rather only when reports are created?
-    dir_report = Dirname.reportroot(userprojectbinding.project)
-    _revokeaccess(user, dir_report)
     dir_reportprepare = Dirname.reportprepare(userprojectbinding.project)
     _revokeaccess(user, dir_reportprepare)
 
@@ -215,27 +208,29 @@ def check_reportprepare(user):
     dir_reportprepare = Dirname.reportprepare(user)
     assert os.path.exists(dir_reportprepare), "Folder %s does not exist" % dir_reportprepare
 
-
+@sudo
 def snapshot_report(report):
-    #create permanent dir
+    project_report_root = Dirname.reportroot(report.project)
+    if not os.path.exists(project_report_root):
+        _mkdir(project_report_root, other_rx = True)
+        #FIXME svc need_restart
     dir_source = os.path.join(Dirname.reportprepare(report.project), report.folder)
-    dir_target = os.path.join(Dirname.report(report), 'latest')
+    dir_target = Dirname.report(report)
     _copy_dir(dir_source, dir_target, remove = False)
-    #create tagged dir, if there is any tag
-    if report.tag_name:
-        dir_source = os.path.join(Dirname.reportprepare(report.project), report.folder)
-        dir_target = Dirname.report_with_tag(report)
-        _copy_dir(dir_source, dir_target, remove = False)
+    #TODO _grantaccess report reader if different than hub
 
-    dir_reportroot = Dirname.reportroot(report.project)
-    _grantaccess(report.creator, dir_reportroot, acl = 'rX')
-
+@sudo
 def garbage_report(report):
-    #remove tagged report
-    dir_source = Dirname.report_with_tag(report)
+    dir_source = Dirname.report(report)
     garbage = Filename.report_garbage(report)
     _archivedir(dir_source, garbage, remove = True)
+    project_report_root = Dirname.reportroot(report.project)
+    if len(os.listdir(project_report_root)) == 0:
+        os.rmdir(project_report_root)
+        logger.info(f'- removed empty folder {project_report_root}')
+        #FIXME svc need_restart
 
+#OBSOLETED?
 def prepare_dashboardreport_withinitcell(report):
     import json
     fn = os.path.join(Dirname.report(report), report.index)
