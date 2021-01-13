@@ -25,7 +25,6 @@ class Project(models.Model):
         SCP_INTERNAL: 'Users in specific groups can list and may join this project.',
         SCP_PUBLIC: 'Authenticated users can list and may join this project.',
     }
-    SCOPE_LIST = [ SCP_PUBLIC, SCP_INTERNAL, SCP_PRIVATE ]
 
     name = models.TextField(max_length = 200, null = False)
     description = models.TextField(null = True)
@@ -169,24 +168,24 @@ class Project(models.Model):
         return msg
 
 
-
-
-RL_LOOKUP = {
-    'creator': 'The creator of this project.',
-    'administrator': 'Can modify project properties.',
-    'member': 'Member of this project.',
-}
-
 class UserProjectBinding(models.Model):
     RL_CREATOR = 'creator'
     RL_ADMIN = 'administrator'
     RL_COLLABORATOR = 'member'
+    RL_LOOKUP = {
+        RL_CREATOR: 'The creator of this project.',
+        RL_ADMIN: 'Can modify project properties.',
+        RL_COLLABORATOR: 'Member of this project.',
+    }
     ROLE_LIST = [ RL_CREATOR, RL_ADMIN, RL_COLLABORATOR ]
 
     user = models.ForeignKey(User, null = False)
     project = models.ForeignKey(Project, null = False)
     is_hidden = models.BooleanField(default = False)
-    role = models.CharField(max_length = 16, choices = [ (x, RL_LOOKUP[x]) for x in ROLE_LIST ], null = False)
+    role = models.CharField(max_length = 16, choices = RL_LOOKUP.items(), null = False)
+
+    class Meta:
+        unique_together = [['user', 'project']]
 
     def __str__(self):
        return "%s-%s" % (self.project.name, self.user.username)

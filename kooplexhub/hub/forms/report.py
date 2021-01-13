@@ -1,26 +1,16 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 from django.utils.html import format_html
+from django.db import models
 
-from hub.models import Report
+from hub.models import Report, Image, Report
 
-class FormReport(forms.ModelForm):
-    password = forms.CharField(required = False)
-
-    class Meta:
-        model = Report
-        fields = [ 'name', 'description', 'image', 'scope', 'password', ]
-        ##attrs = { "class": "form-control" }
-        labels = {
-            'name': _('The name of your report'),
-            'description': _('A short description'),
-        }
-        help_texts = {
-            'name': _('Report name should be unique.'),
-            'description': _('It is always a good idea to have a short memo.'),
-            'index': _('The name of the file the report service lands on. (Bokeh does not require it.)'),
-            'password': _('Leave it empty for the public.'),
-        }
+class FormReport(forms.Form):
+    name = forms.CharField(help_text = _('Report name should be unique.'), required = True)
+    description = forms.CharField(max_length = 100, help_text = _('It is always a good idea to have a short memo of your report.'), widget = forms.Textarea, required = True)
+    image = forms.ModelChoiceField(queryset = Image.objects.filter(~models.Q(imagetype = Image.TP_PROJECT)), help_text = _('Please select an image to serve your report.'), required = True)
+    password = forms.CharField(help_text = _('Leave it empty for the public.'), required = False)
+    scope = forms.ChoiceField(choices = Report.SC_LOOKUP.items(), help_text = _('Select the scope of the project'), required = True)
 
     def r_tree(self):
         tree = ""
@@ -33,28 +23,43 @@ class FormReport(forms.ModelForm):
                 indices = ""
                 for i in ixs:
                     r = f'<input type="radio" name="index_selector" value="({p.id},{f},{i})">'
-                    indices += f'<div role="treeitem" class="list-group-item">{r}{icon_index}{i}</div>'
-                div_indices = f'<div role="group" class="list-group collapse" id="{p.id}-{f}">{indices}</div>'
-                sub_folders += f'<div role="treeitem" class="list-group-item" data-toggle="collapse" data-target="#{p.id}-{f}" id="f-{p.id}-{f}" aria-expanded="true" aria-controls="c-{p.id}">{icon_folder}{f}{div_indices}</div>'
-            div_folders = f'<div role="group" class="list-group collapse" id="{p.id}">{sub_folders}</div>'
-            tree += f'<div role="treeitem" class="list-group-item" data-toggle="collapse" data-target="#{p.id}" id="c-{p.id}">{icon_project}{p.name}{div_folders}</div>'
+                    indices += f'<div class="p-2 bg-light border">{r}{icon_index}{i}</div>'
+                sub_folders += f"""
+<div class="p-1 bg-light border">
+  <button class="btn btn-secondary-light btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{p.id}-{f}" aria-expanded="false" aria-controls="collapse-{p.id}-{f}">
+    {icon_folder} {f}
+  </button>
+  <div class="collapse" id="collapse-{p.id}-{f}">
+    <div class="d-grid">
+      {indices}
+    </div>
+  </div>
+</div>
+                """
+            tree += f"""
+<div class="p-1 bg-light border">
+  <button class="btn btn-secondary-light btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{p.id}" aria-expanded="false" aria-controls="collapse-{p.id}">
+    {icon_project} {p.name}
+  </button><br>
+  <div class="collapse" id="collapse-{p.id}">
+    <div class="d-grid">
+      {sub_folders}
+    </div>
+  </div>
+</div>
+            """
         html = f'<tr><td style="vertical-align: top;"><b>Select index:</b></td><td><div id="indextree" class="bstreeview">{tree}</div></td></tr>'
         return format_html(html)
-
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         super(FormReport, self).__init__(*args, **kwargs)
-        self.fields['image'].empty_label = None
-        self.fields["description"].widget.attrs["rows"] = 3
-        self.fields["description"].widget.attrs["cols"] = 20
+        self.fields['description'].widget.attrs.update({ 'rows': 3, 'cols': 30 })
         self.tree = user.profile.files_reportprepare()
-        for field in self.fields.keys():
-            self.fields[field].widget.attrs["class"] = "form-control"
-
         for field in self.fields:
             help_text = self.fields[field].help_text
             self.fields[field].help_text = None
+            #self.fields[field].widget.attrs["class"] = "form-control"
             if help_text != '':
                 extra = {
                     'data-toggle': 'tooltip', 

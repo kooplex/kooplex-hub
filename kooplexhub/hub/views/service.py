@@ -59,7 +59,7 @@ def listservices(request):
         'next_page': 'service:list',
         'menu_container': 'active',
         'services': services,
-        'search_form': { 'action': "service:l_search", 'items': [ { 'name': "service", 'placeholder': "service name", 'value': pattern_name } ] },
+        'search_value': pattern_name,
     }
     return render(request, 'container/list.html', context = context_dict)
 

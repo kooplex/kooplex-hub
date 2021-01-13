@@ -1,11 +1,11 @@
 {% if project.reports|length > 0 %}
 <div class="dropdown">
-  <button class="btn btn-secondary dropdown-toggle btn-sm" type="button" id="dc-reports-{{ project.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+  <button class="btn btn-outline-secondary dropdown-toggle btn-sm" type="button" id="dc-reports-{{ project.id }}" data-bs-toggle="dropdown" aria-expanded="false">
     <i class="oi oi-graph"></i>: {{project.reports|length}}
   </button>
   <ul class="dropdown-menu" aria-labelledby="dc-collabs-{{ project.id }}">
     {% for r in project.reports %}
-      <li><a class="dropdown-item" href="#">{{ r.name }} (by {{ r.creator.first_name }} {{ r.creator.last_name }})</a></li>
+    <li><a class="dropdown-item" href="{% url 'report:openreport' r.id %}"><span class="oi oi-external-link" aria-hidden="true">{{ r.name }} by {{ r.creator.profile.name_and_username }}</span> </a></li>
     {% endfor %}
   </ul>
 </div>

@@ -31,6 +31,10 @@ class Profile(models.Model):
         return '{}'.format(self.user.username)
 
     @property
+    def name_and_username(self):
+        return f'{self.name} ({self.username})'
+
+    @property
     def safename(self):
         return "%s_%s" % (unidecode.unidecode(self.user.last_name), unidecode.unidecode(self.user.first_name).replace(' ', ''))
 

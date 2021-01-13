@@ -11,13 +11,43 @@
     {% load staticfiles %}
     <link rel="stylesheet" type="text/css" href="{% static 'fonts/remixicon.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'fonts/open-iconic-master/font/css/open-iconic-bootstrap.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'fontawesome-free-5.10.2-web/css/all.css' %}">
     {% block css_extra %}{% endblock %}
 
     <title>Kooplex Hub</title>
   </head>
   <body>
     {% block navbar %}
-      {% include 'navbar.html' %}
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="{% url 'indexpage' %}"><img src="/static/content/logo_mono.png" style="height: 30px" alt="Kooplex Hub"></a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" 
+		aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            {% if user.is_authenticated %}
+              {% include "menuitem_project.html" with active=menu_project %}
+              {% include "menuitem_report.html" with active=menu_report %}
+              {% include "menuitem_edu.html" with active=menu_teaching %}
+              {% include "menuitem_container.html" with active=menu_container %}
+              {% include "menuitem_services.html" with active=menu_service %}
+            {% else %}
+              {% include "menuitem_report.html" with active=menu_report %}
+            {% endif %}
+            <li><a class="dropdown-item" href="/manual/" target="_blank">Documentation</a></li>
+          </ul>
+          {% block navsearch %}
+          <form class="d-flex">
+            <input class="form-control me-2" disabled type="search" placeholder="Search" aria-label="Search">
+            <button class="btn btn-outline-secondary" type="submit" disabled>Search</button>
+          </form>
+          {% endblock %}
+          {% include "navbarmenu_right.html" %}
+        </div>
+      </div>
+    </nav>
       {% block submenu %}{% endblock %}
     {% endblock %}
     {% block body %}
@@ -64,7 +94,6 @@
     <link rel="stylesheet" type="text/css" href="{% static 'css/nexus.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'css/responsive.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'css/custom.css' %}">
-    <link rel="stylesheet" type="text/css" href="{% static 'fontawesome-free-5.10.2-web/css/all.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'fonts/open-iconic-master/font/css/open-iconic-bootstrap.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'css/bootstrap4-toggle.min.css' %}">
     <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Lato:400,300">

@@ -17,3 +17,15 @@
 {% block main_content_right %}
   {% include 'project/hint_list.html' %}
 {% endblock %}
+
+{% block navsearch %}
+<form class="d-flex" action="{% url 'project:l_search' %}" method="post">
+  {% csrf_token %}
+  <input class="form-control me-2" type="search" name="project" placeholder="Search project" 
+    {% if search_value %}  
+      value="{{ search_value }}" 
+    {% endif %}  
+      aria-label="Search">
+  <button class="btn btn-outline-secondary" type="submit" name="button" value="search">Search</button>
+</form>
+{% endblock %}

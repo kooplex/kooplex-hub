@@ -27,8 +27,8 @@
         <textarea class="form-control" rows="6" cols="50" id="description" name="description">{{ project.description }}</textarea>
         <h5 class="card-title">Change the scope for this project</h5>
         <select id="project_scopes-{{ project.id }}" name="project_scope">
-          {% for scope in project.SCOPE_LIST %}
-            <option value="{{ scope }}" {% if project.scope == scope %} selected {% endif %}>{{ scope }}</option>
+          {% for k, v in project.SCP_LOOKUP.items %}
+            <option value="{{ k }}" {% if project.scope == k %} selected {% endif %}>{{ v }}</option>
           {% endfor %}
         </select>
     </div>

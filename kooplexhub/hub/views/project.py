@@ -69,24 +69,20 @@ def new(request):
 def join(request):
     logger.debug("user %s" % request.user)
     user = request.user
-    pattern_name = request.POST.get('project', '')
-    pattern_creator = request.POST.get('creator', '')
+    pattern = request.POST.get('project_or_creator', '')
     search = request.POST.get('button', '') == 'search'
     listing = request.method == 'GET' or (request.method == 'POST' and search)
     if listing:
         joinable_bindings = UserProjectBinding.objects.filter(project__scope__in = [ Project.SCP_INTERNAL, Project.SCP_PUBLIC ], role = UserProjectBinding.RL_CREATOR).exclude(user = user)
-        if pattern_name:
-            joinable_bindings = joinable_bindings.filter(Q(project__name__icontains = pattern_name))
-        if pattern_creator:
-            joinable_bindings = joinable_bindings.filter(Q(user__first_name__icontains = pattern_creator) | Q(user__last_name__icontains = pattern_creator) | Q(user__username__icontains = pattern_creator))
+        joined_projects = [ upb.project for upb in UserProjectBinding.objects.filter(user = user, role__in = [ UserProjectBinding.RL_ADMIN, UserProjectBinding.RL_COLLABORATOR ]) ]
+        joinable_bindings = joinable_bindings.exclude(Q(project__in = joined_projects))
+        if pattern:
+            joinable_bindings = joinable_bindings.filter(Q(project__name__icontains = pattern) | Q(user__first_name__icontains = pattern) | Q(user__last_name__icontains = pattern) | Q(user__username__icontains = pattern))
         table_joinable = T_JOINABLEPROJECT(joinable_bindings)
         RequestConfig(request).configure(table_joinable)
         context_dict = {
             't_joinable': table_joinable,
-            'search_form': { 'action': "project:j_search", 'items': [ 
-                { 'name': "project", 'placeholder': "project name", 'value': pattern_name },
-                { 'name': "creator", 'placeholder': "project creator", 'value': pattern_creator },
-            ] },
+            'search_value': pattern,
         }
         return render(request, 'project/join.html', context = context_dict)
     else:
@@ -133,7 +129,7 @@ def listprojects(request):
     context_dict = {
         'menu_project': 'active',
         'projectbindings': projectbindings,
-        'search_form': { 'action': "project:l_search", 'items': [ { 'name': "project", 'placeholder': "project name", 'value': pattern_name } ] },
+        'search_value': pattern_name,
     }
     return render(request, 'project/list.html', context = context_dict)
 
@@ -414,7 +410,7 @@ def show_hide(request):
         RequestConfig(request).configure(table_project)
         context_dict = {
             't_project': table_project,
-            'search_form': { 'action': "project:sh_search", 'items': [ { 'name': "project", 'placeholder': "project name", 'value': pattern_name } ] },
+            'search_value': pattern_name,
         }
         return render(request, 'project/manage.html', context = context_dict)
     else:

@@ -67,20 +67,30 @@ class T_JOINABLEPROJECT(tables.Table):
     class SelectColumn(tables.Column):
         def render(self, record):
             p = record.project
-            return format_html('<input type="checkbox" name="project_ids" data-toggle="toggle" value="{}" data-on="Join" data-off="Skip" data-onstyle="success" data-offstyle="dark" data-size="xs">'.format(p.id))
+            template = f"""
+<div class="form-check form-switch">
+  <input class="form-check-input" type="checkbox" id="cb_pid-{p.id}" name="project_ids" value="{p.id}" />
+  <label class="form-check-label" for="cb_pid-{p.id}"> Join</label>
+</div>
+            """
+            return format_html(template)
     id = SelectColumn(verbose_name = 'Select', orderable = False)
     class UserColumn(tables.Column):
         def render(self, record):
-            user = record.user
-            return format_html(f'<span data-toggle="tooltip" title="Username {user.username}." data-placement="top" style="font-weight: bold;">{user.first_name}</span> {user.last_name}')
-    user = UserColumn(verbose_name = 'Creator name', order_by = ('user__first_name', 'user__last_name'))
+            return format_html(record.user.profile.name_and_username)
+    user = UserColumn(verbose_name = 'Creator name (username)', order_by = ('user__first_name', 'user__last_name'))
     class ImageColumn(tables.Column):
         def render(self, record):
             p = record.project
             images = set([ psb.service.image for psb in ProjectServiceBinding.objects.filter(project = p, service__user = p.creator) ])
-            image_selection = '<br>'.join([ f'<input type="checkbox" name="image_ids_{p.id}" data-toggle="toggle" value="{i.id}" data-on="Create service" data-off="Skip" data-onstyle="success" data-offstyle="dark" data-size="xs">{i.name}' for i in images ])
-            return format_html(image_selection)
-    images = ImageColumn(verbose_name = 'Service environment images', orderable = False, empty_values = ())
+            template = [ f"""
+<div class="form-check form-switch">
+  <input class="form-check-input" type="checkbox" id="cb_img_pid-{p.id}" name="image_ids" value="{i.id}" />
+  <label class="form-check-label" for="cb_img_pid-{p.id}"> {i.name}</label>
+</div>
+            """ for i in images ]
+            return format_html('<br>'.join(template))
+    images = ImageColumn(verbose_name = 'Create environment', orderable = False, empty_values = ())
 
     class Meta:
         model = UserProjectBinding

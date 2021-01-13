@@ -1,6 +1,6 @@
 {% if project.userprojectbindings|length > 1 %}
 <div class="dropdown">
-  <button class="btn btn-secondary dropdown-toggle btn-sm" type="button" id="dc-collabs-{{ project.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+  <button class="btn btn-outline-secondary dropdown-toggle btn-sm" type="button" id="dc-collabs-{{ project.id }}" data-bs-toggle="dropdown" aria-expanded="false">
     <i class="oi oi-people"></i>: {{project.userprojectbindings|length}}
   </button>
   <ul class="dropdown-menu" aria-labelledby="dc-collabs-{{ project.id }}">

@@ -1,22 +1,14 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
-from hub.models import Service
+from hub.models import Image
 
-class FormService(forms.ModelForm):
-
-    class Meta:
-        model = Service
-        fields = [ 'name', 'image' ]
-        help_texts = {
-            'name': _('A short name you recall your project, but it has to be unique among your container names.'),
-            'image': _('Please select an image to the new container environment.'),
-        }
+class FormService(forms.Form):
+    name = forms.CharField(max_length = 100, help_text = _('A short name you recall your project, but it has to be unique among your container names.'), required = True)
+    image = forms.ModelChoiceField(queryset = Image.objects.filter(imagetype = Image.TP_PROJECT), help_text = _('Please select an image to the new container environment.'), required = True)
 
     def __init__(self, *args, **kwargs):
         super(FormService, self).__init__(*args, **kwargs)
-        self.fields['name'].widget.attrs['rows'] = 1
-        self.fields['name'].widget.attrs['cols'] = 20
         for field in self.fields:
             help_text = self.fields[field].help_text
             self.fields[field].help_text = None
@@ -27,4 +19,5 @@ class FormService(forms.ModelForm):
                     'data-placement': 'bottom',
                 }
                 self.fields[field].widget.attrs.update(extra)
+
 

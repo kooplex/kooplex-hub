@@ -13,10 +13,10 @@
     {% if t_project.data|length > 0 %}
       {% render_table t_project %}
     {% else %}
-      <p> You do not have any projects to hide or show.
+      <p>You do not have any projects to hide or show.</p>
     {% endif %}
   <div class="float-end">
-    <button type="submit" class="btn btn-primary" name="button" value="aply">Apply settings</button>
+    <button type="submit" class="btn btn-primary" name="button" value="apply">Apply settings</button>
     <button type="submit" class="btn btn-secondary" name="button" value="cancel">Cancel</button>
   </div>
   </form>
@@ -25,4 +25,16 @@
 
 {% block main_content_right %}
   {% include 'project/hint_showhide.html' %}
+{% endblock %}
+
+{% block navsearch %}
+<form class="d-flex" action="{% url 'project:sh_search' %}" method="post">
+  {% csrf_token %}
+  <input class="form-control me-2" type="search" name="project" placeholder="Search project" 
+    {% if search_value %}  
+      value="{{ search_value }}" 
+    {% endif %}  
+      aria-label="Search">
+  <button class="btn btn-outline-secondary" type="submit" name="button" value="search">Search</button>
+</form>
 {% endblock %}

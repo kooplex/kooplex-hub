@@ -36,9 +36,9 @@ class Report(models.Model):
     image = models.ForeignKey(Image, null = False)
 
     folder = models.CharField(max_length = 200, null = False)
-    index = models.CharField(max_length = 128, null = False)
+    index = models.CharField(max_length = 128, null = True, default = None)
 
-    password = models.CharField(max_length = 64, null = True, default = '', blank=True)
+    password = models.CharField(max_length = 64, null = True, default = None, blank=True)
 
     class Meta:
         unique_together = [['name']]
