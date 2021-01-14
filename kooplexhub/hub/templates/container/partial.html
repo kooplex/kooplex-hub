@@ -18,7 +18,7 @@
     <div class="card-body">
       <p class="card-text"><strong>Information:</strong>
           {% if service.projects|length > 0 %}
-            <span class="badge rounded-pill bg-dark" aria-hidden="true" data-bs-toggle="tooltip" title="Projects:
+          <span class="badge rounded-pill bg-dark" aria-hidden="true" data-bs-toggle="tooltip" title="Projects:
 {% for p in service.projects %}
 {{ p.name }} ({{ p.description }})
 {% endfor %}" data-placement="top"><i class="ri-product-hunt-line"></i> {{service.projects|length}}</span>
@@ -27,7 +27,9 @@
 		title="Report service environment for {{ service.report.name }}"
                 data-placement="top"><i class="oi oi-graph"></i> {{service.report.name}}</span>
 	  {% else %}
-	    Remove it
+	  <span class="badge rounded-pill bg-warning"><i class="oi oi-warning"></i>
+            Not bound to any projects.
+          </span>
           {% endif %}
           {% if service.synced_libraries|length > 0 %}
             <span class="badge rounded-pill bg-dark" aria-hidden="true" data-bs-toggle="tooltip" title="Synchron folders:
@@ -48,13 +50,13 @@
 {% endfor %}" data-placement="top"><i class="ri-database-2-line"></i> {{service.volumes|length}}</span>
           {% endif %}
       </p>
+      {% if service.restart_reasons %}
       <p class="card-text">
-        {% if service.restart_reasons %}
           <div class="alert alert-warning" role="alert">
             <strong>Needs restart:</strong> {{ service.restart_reasons }}
           </div>
-        {% endif %}
       </p>
+      {% endif %}
       {% if service.last_message %}
         <p class="card-text"><strong>Last message:</strong> {{ service.last_message }}
           <a href="{% url 'service:refreshlogs' service.id %}" role="button" class="btn btn-secondary btn-sm"><span class="oi oi-reload" aria-hidden="true" data-toggle="tooltip" title="Refresh service information" data-placement="bottom"></span></a>

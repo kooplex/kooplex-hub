@@ -2,7 +2,6 @@
 
 {% load render_table from django_tables2 %}
 
-
 {% block submenu %}
   {% include 'container/service_submenu.html' with title="Configure service environment" %}
 {% endblock %}
@@ -62,11 +61,7 @@
     </div>
   </div>
 
-  <div class="float-end">
-    <button type="submit" class="btn btn-primary" name="button" value="aply">Apply settings</button>
-    <button type="submit" class="btn btn-secondary" name="button" value="cancel">Cancel</button>
-  </div>
-
+  {% include 'apply_cancel.html' %}
 </form>
 {% endblock %}
 

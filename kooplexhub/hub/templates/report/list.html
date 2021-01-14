@@ -5,12 +5,25 @@
 {% endblock %}
 
 {% block main_content_center %}
-  {% for r in reports %}
-    {% include 'report/partial.html' with report=r image=r.image %}
-  {% endfor %}
+  <div class="row row-cols-1 row-cols-md-5 g-3">
+    {% for r in reports %}
+      {% include 'report/partial.html' with report=r image=r.image %}
+    {% endfor %}
+  </div>
 {% endblock %}
 
 {% block main_content_right %}
   {% include 'report/hint_list.html' %}
 {% endblock %}
 
+{% block navsearch %}
+<form class="d-flex" action="{% url 'report:l_search' %}" method="post">
+  {% csrf_token %}
+  <input class="form-control me-2" type="search" name="report_or_creator" placeholder="Search report or creator" 
+    {% if search_value %}  
+      value="{{ search_value }}" 
+    {% endif %}  
+      aria-label="Search">
+  <button class="btn btn-outline-secondary" type="submit" name="button" value="search">Search</button>
+</form>
+{% endblock %}

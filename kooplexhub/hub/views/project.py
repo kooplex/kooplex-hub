@@ -43,6 +43,7 @@ def new(request):
                     msg = f'Project name {projectname} is not unique'
                     messages.error(request, msg)
                     raise Exception(msg)
+            assert len(form.cleaned_data['environments']) > 0 or form.cleaned_data['image'], "either select an image or select some environments"
             project = Project.objects.create(name = projectname, description = form.cleaned_data['description'], scope = form.cleaned_data['scope'])
             UserProjectBinding.objects.create(user = request.user, project = project, role = UserProjectBinding.RL_CREATOR)
             messages.info(request, f'New project {project} is created')
@@ -58,6 +59,9 @@ def new(request):
                 svc = Service.objects.create(name = projectname, user = request.user, image = image)
                 ProjectServiceBinding.objects.create(project = project, service = svc)
                 messages.info(request, f'New service {svc.name} is created with image {svc.image.name}')
+        return redirect('project:list')
+    except AssertionError as e:
+        messages.error(request, f'Creation of project is refused: {e}')
         return redirect('project:list')
     except Exception as e:
         logger.error(f'New project not created -- {e}')
@@ -133,31 +137,6 @@ def listprojects(request):
     }
     return render(request, 'project/list.html', context = context_dict)
 
-
-#FIXME remove from here
-def sel_col(project):
-    class VolumeSelectionColumn(tables.Column):
-        def render(self, record):
-            state = "checked" if record in project.volumes else ""
-            return format_html('<input type="checkbox" name="selection" value="%s" %s>' % (record.id, state))
-    return VolumeSelectionColumn
-
-def sel_table(user, project, volumetype):
-    if volumetype == 'functional': #FIXME: Volume.FUNCTIONAL
-        user_volumes = user.profile.functional_volumes
-    elif volumetype == 'storage':
-        user_volumes = user.profile.storage_volumes
-    column = sel_col(project)
-
-    class T_VOLUME(tables.Table):
-        id = column(verbose_name = 'Selection')
-    
-        class Meta:
-            model = Volume
-            exclude = ('name', 'volumetype')
-            attrs = { "class": "table-striped table-bordered", "td": { "style": "padding:.5ex" } }
-    return T_VOLUME(user_volumes)
-########################
 
 @login_required
 def configure(request, project_id):

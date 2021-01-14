@@ -1,94 +1,87 @@
 {% extends "layout.html" %}
 
-{% block header_extra %}
-  {% load staticfiles %}
-  <script src="{% static 'scripts/bootstrap4-toggle.min.js' %}"></script>
-{% endblock %}
-
 {% block submenu %}
-  {% include "external_service/service_submenu.html" with submenu="versioncontrol" %}
+  {% include "external_service/service_submenu.html" with submenu="versioncontrol" title="Version control" %}
 {% endblock %}
 
 {% block main_content_center %}
   {% load render_table from django_tables2 %}
   <form id="vcRepoForm" class="form-horizontal form-control" action="{% url 'service_external:commit_repo' %}" method="post">
-    <h3>Repositories to clone</h3>
     {% csrf_token %}
-    {% render_table tbl_repositories %}
-    <div class="modal-footer">
-      <button type="submit" class="btn btn-default" name="button" value="apply"> Apply settings</button>
+    <div class="card">
+      <div class="card-header">
+        <h3>Repositories to clone</h3>
+      </div>
+      <div class="card-body">
+        {% render_table tbl_repositories %}
+      </div>
+      <div class="card-footer">
+        {% include 'apply_cancel.html' with hide_cancel=True %}
+      </div>
     </div>
   </form>
 
-  <div class="form-horizontal form-control">
-    <h3>Connected services</h3>
-    {% for s in reposervers %}
-      {% with t=s|get_userz_vctoken:user %}
-        <div class="panel panel-default card bg-light mb-3">
-          <div class="panel-heading card-header" role="tab" id="heading-{{ s.id }}">
-            <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapse-{{ s.id }}" aria-expanded="true" aria-controls="collapse-{{ s.id }}">
-                {% if s.backend_type == s.TP_GITEA %}
-	          <a href="{{ s.url }}" rel="noreferrer" target="blank" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Login Gitea at {{ s.url }}" data-placement="top"><span class="oi oi-external-link" aria-hidden="true"></span></a>
-                {% elif s.backend_type == s.TP_GITHUB %}
-	          <a href="{{ s.url }}" rel="noreferrer" target="blank" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Login GitHub at {{ s.url }}" data-placement="top"><span class="oi oi-external-link" aria-hidden="true"></span></a>
-                {% elif s.backend_type == s.TP_GITLAB %}
-	          <a href="{{ s.url }}" rel="noreferrer" target="blank" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Login GitLab at {{ s.url }}" data-placement="top"><span class="oi oi-external-link" aria-hidden="true"></span></a>
-                {% else %}
-                  <a href="{{ s.url }}" rel="noreferrer" target="blank" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Login {{ s.backend_type }} at {{ s.url }}" data-placement="top"><span class="oi oi-external-link" aria-hidden="true"></span></a>
-                {% endif %}
-                <span class="badge badge-pill badge-secondary">{{ s.url }}</span>
-		<div style="float: right;">
-                {% if t %}
-                  <a href="{% url 'service_external:vc_refresh' t.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Last updated: {{ t.last_used }}" data-placement="top">Refresh</a>
-                {% else %}
-                  <a href="#" role="button" class="btn btn-secondary disabled" data-toggle="tooltip" title="Disabled" data-placement="top">Refresh</a>
-                {% endif %}
-		</div>
-            </a>
-          </div>
-          <div id="collapse-{{ s.id }}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading-{{ s.id }}">
-            <div class="panel-body" style="padding: 1ex;">
-                {% if t %}
-                  <span class="badge badge-pill badge-info">Last updated: {{ t.last_used }}</span>
-                {% else %}
-                  <span class="badge badge-pill badge-warning">Make sure you login to git repository server so your account exists there as well, and generate a token</span>
-                {% endif %}
-              <div style="float: right;">
-                {% if t %}
-                  <a href="{% url 'service_external:vc_droptoken' t.id %}" role="button" class="btn btn-danger" data-toggle="tooltip" title="Drop token" data-placement="top">Drop token</a>
-                {% else %}
-                  <a href="#" role="button" class="btn btn-danger disabled" data-toggle="tooltip" title="Drop token" data-placement="top">Drop token</a>
-                {% endif %}
+  <div class="card">
+    <div class="card-header">
+      <h3>Connected services</h3>
+    </div>
+    <div class="card-body">
+      <div class="card-group">
+        {% for s in reposervers %}
+          {% with t=s|get_userz_vctoken:user %}
+            <div class="card">
+              <div class="card-header">
+      	  <a href="{{ s.url }}" rel="noreferrer" target="_blank" role="button" class="btn btn-outline-secondary">{{ s.url }}</a>
               </div>
-              <hr>
+              <div class="card-body">
+              {% if t %}
+      	  <p class="card-text"><strong>Last updated:</strong> {{ t.last_used }}</p>
+              {% else %}
+      	  <p class="card-text"><strong>Note:</strong> Make sure you login to Seafile server so your account exists there as well and generate a token</p>
+              {% endif %}
+
 	      <form id="vc_details_{{ s.id }}" method="post" action="{% url 'service_external:vc_tokenmanagement' s.id %}">
                 {% csrf_token %}
 	        <input type="hidden" name="token_id" value="{{ t.id }}">
                 <table>
-                  <thead><tr>
-                    <th>Registered username at<br>{{ s.url }}</th>
-                    <th>Generated token</th>
-                    <th>Private RSA key</th>
-                    <th></th>
-                  </tr></thead>
-                  <tbody><tr>
-                    <td><input type="text" name="username" value="{% if t %}{{ t.username }}{% else %}{{ user.username }}{% endif %}"></td>
-                    <td><input type="password" name="token" value="{% if t %}{{ t.token }}{% endif %}" placeholder="copied from git server"></td>
-		    {% comment %}
-                    <td><input type="text" name="rsa" value="{% if t %}{{ t.rsa }}{% endif %}" placeholder="Private RSA key"></td>
-		    {% endcomment %}
-		    <td><textarea name="rsa" placeholder="Private RSA key">{% if t %}{{ t.rsa }}{% endif %}</textarea></td>
-                    <td><input type="submit" name="do" class="btn btn-secondary" value="{% if t %}Update{% else %}Add{% endif %}"></td>
-                  </tr></tbody>
-                </table>
+                  <tr>
+	            <th><label for="id_name-{t.id}">Registered username: </label></th>
+		    <td><input type="text" name="username" value="{% if t %}{{ t.username }}{% else %}{{ user.username }}{% endif %}" id="id_name-{t.id}"></td>
+		  </tr>
+                  <tr>
+	            <th><label for="id_token-{t.id}">Generated token: </label></th>
+		    <td><input type="password" name="token" value="{% if t %}{{ t.token }}{% endif %}" placeholder="copied from git server" id="id_token-{t.id}"></td>
+		  </tr>
+                  <tr>
+	            <th><label for="id_rsa-{t.id}">Private RSA key: </label></th>
+		    <td><textarea name="rsa" placeholder="Private RSA key">{% if t %}{{ t.token }}{% endif %}</textarea></td>
+		  </tr>
+		</table>
               </form>
-            </div>
-          </div>
-        </div>
-      {% endwith %}
-    {% endfor %}
-  </div>
 
+      	</div>
+              <div class="card-footer">
+      	  <a href="{{ s.url }}" rel="noreferrer" target="_blank" role="button" class="btn btn-secondary"><span class="oi oi-external-link" aria-hidden="true"></span></a>
+              {% if t %}
+                <a href="{% url 'service_external:fs_refresh' t.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Last updated: {{ t.last_used }}" data-placement="top">Refresh</a>
+                <div class="float-end">
+                  <a href="{% url 'service_external:vc_droptoken' t.id %}" role="button" class="btn btn-danger" data-toggle="tooltip" title="Drop token" data-placement="top">Drop token</a>
+                  <a href="{% url 'service_external:fs_resettoken' t.id %}" role="button" class="btn btn-danger" data-toggle="tooltip" title="Create a new token" data-placement="top">New token</a>
+                </div>
+              {% else %}
+                <a href="#" role="button" class="btn btn-secondary disabled" data-toggle="tooltip" title="Disabled" data-placement="top">Refresh</a>
+                <div class="float-end">
+                  <a href="#" role="button" class="btn btn-danger disabled" data-toggle="tooltip" title="Drop token" data-placement="top">Drop token</a>
+                  <a href="{% url 'service_external:fs_newtoken' s.id %}" role="button" class="btn btn-danger" data-toggle="tooltip" title="Create a new token" data-placement="top">New token</a>
+                </div>
+              {% endif %}
+              </div>
+            </div>
+          {% endwith %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
 {% endblock %}
 
 
@@ -96,15 +89,3 @@
   {% include 'external_service/hint_repo.html' %}
 {% endblock %}
 
-
-{% block scripts %}
-<script>
-$(".panel-heading").parent('.panel').hover(
-  function() {
-    $(this).children('.collapse').collapse('show');
-  }, function() {
-    $(this).children('.collapse').collapse('hide');
-  }
-);
-</script>
-{% endblock %}

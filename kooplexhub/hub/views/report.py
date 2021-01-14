@@ -1,7 +1,6 @@
 import logging
 import re
 
-from django.db import transaction
 from django.db import models
 from django.conf.urls import url
 from django.urls import reverse
@@ -12,13 +11,13 @@ from django_tables2 import RequestConfig
 from django.views.generic import ListView, CreateView, UpdateView
 from django.urls import reverse_lazy
 
-from hub.models import Image, Project
+from hub.models import Image, Project, UserProjectBinding
 from hub.models import Report, ReportServiceBinding, Service
 from hub.forms import FormReport
 
 from kooplex.lib import now, translate_date, custom_redirect
 from kooplex.settings import KOOPLEX
-from kooplex.lib.filesystem import prepare_dashboardreport_withinitcell
+from kooplex.lib.filesystem import prepare_dashboardreport_withinitcell, recreate_report
 
 
 logger = logging.getLogger(__name__)
@@ -75,17 +74,45 @@ def newreport(request):#, next_page):
         return redirect('indexpage')
 
 
+@login_required
+def refreshreport(request, report_id):
+    """Recreates report."""
+    user = request.user
+    logger.debug("user %s, method: %s" % (user, request.method))
+    try:
+        report = Report.objects.get(id = report_id)
+        UserProjectBinding.objects.get(user = user, project = report.project)
+        recreate_report(report)
+        messages.info(request, f"Report {report.name} is recreated")
+        ev = report.service.restart()
+        if ev.wait(timeout = 10):
+            messages.info(request, f'Service {report.service.name} is restarted.')
+        else:
+            messages.warning(request, f'Service {report.service.name} did not start within 10 seconds, wait some time.')
+    except UserProjectBinding.DoesNotExist:
+        logger.error(f'Permission denied {user} tries to recreate report {report.name}')
+        messages.error(request, "You do not have permission to recreate report {report.name}")
+    except Exception as e:
+        logger.error(f'Cannot fully recreate report -- {e}')
+        messages.error(request, f'Some problems occured -- {e}')
+    return redirect('report:list')
+
+
 #@login_required
 def listreport(request, files = []):#, next_page):
     """Renders new report list."""
     user = request.user
+    pattern = request.POST.get('report_or_creator', '')
+    search = request.POST.get('button', '') == 'search'
     logger.debug("user %s, method: %s" % (user, request.method))
-    if (request.method == 'POST' and request.POST.get('button', 'search') == 'search') or request.method == 'GET':
-        pattern = request.POST.get('name', '')
+    listing = request.method == 'GET' or (request.method == 'POST' and search)
+    if listing:
         if pattern:
-            reports = Report.objects.filter(name__icontains = pattern)
+            Q = models.Q
+            reports = Report.objects.filter(Q(name__icontains = pattern) | models.Q(creator__first_name__icontains = pattern) | Q(creator__last_name__icontains = pattern) | Q(creator__username__icontains = pattern))
         else:
             reports = Report.objects.all()
+            #FIXME: authorize!
     else:
         raise NotImplementedError("ide hogy kerulsz?")
 
@@ -93,6 +120,7 @@ def listreport(request, files = []):#, next_page):
         'menu_report': 'active',
         'next_page': 'indexpage', 
         'reports' : reports,
+        'search_value': pattern,
     }
     return render(request, 'report/list.html', context = context_dict)
 #    return render(request, 'report/list_thumbnail.html', context = context_dict)
@@ -134,7 +162,9 @@ def deletereport(request, report_id):
 
 urlpatterns = [
     url(r'^newreport/?$', newreport, name = 'new'),
+    url(r'^refreshreport/(?P<report_id>\d+)$', refreshreport, name = 'refresh'),
     url(r'^listreport/?$', listreport, name = 'list'),
+    url(r'^searchreport/?$', listreport, name = 'l_search'),
     url(r'^openreport/(?P<report_id>\d+)$', openreport, name = 'openreport'),
     url(r'^deletereport/(?P<report_id>\d+)$', deletereport, name = 'deletereport'), 
  ]

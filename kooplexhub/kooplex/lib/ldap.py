@@ -59,7 +59,7 @@ class Ldap:
             'uid': user.username,
             'sn': user.username,
             'uidNumber': user.profile.userid,
-            'gidNumber': user.profile.groupid,
+            'gidNumber': 1000, #FIXME: user.profile.groupid,
             'homeDirectory': '/v/%s' % user.username,
             'loginShell': '/bin/bash',
         }

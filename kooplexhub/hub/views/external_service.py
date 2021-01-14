@@ -33,7 +33,7 @@ def filesynchronization(request):
         'menu_service': 'active',
         'syncservers': FSServer.objects.all(),
         'tbl_libraries': tbl_libraries,
-        'search_form': { 'action': "service_external:fs_search", 'items': [ { 'name': "library", 'placeholder': "library", 'value': pattern } ] },
+        'search_value': pattern,
     }
     return render(request, 'external_service/filesynchronization.html', context = context_dict)
 

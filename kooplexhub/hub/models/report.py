@@ -4,6 +4,7 @@ import logging
 from django.db import models
 from django.utils import timezone
 from django.db.models.signals import pre_save, post_save, post_delete, pre_delete
+from django.template.defaulttags import register
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 
@@ -59,11 +60,19 @@ class Report(models.Model):
         return human_localtime(self.created_at)
 
     @property
-    def url_external(self):
+    def service(self):
         from .service import ReportServiceBinding
-        svc = ReportServiceBinding.objects.get(report = self).service
+        return ReportServiceBinding.objects.get(report = self).service
+
+    @property
+    def url_external(self):
+        svc = self.service
         return svc.default_proxy.url_public(svc)
 
+    @register.filter
+    def authorize(self, user):
+        from .project import UserProjectBinding
+        return self.creator == user or len(UserProjectBinding.objects.filter(user = user, project = self.project)) == 1
 
 
 @receiver(pre_save, sender = Report)

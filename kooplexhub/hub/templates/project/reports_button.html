@@ -5,7 +5,11 @@
   </button>
   <ul class="dropdown-menu" aria-labelledby="dc-collabs-{{ project.id }}">
     {% for r in project.reports %}
-    <li><a class="dropdown-item" href="{% url 'report:openreport' r.id %}"><span class="oi oi-external-link" aria-hidden="true">{{ r.name }} by {{ r.creator.profile.name_and_username }}</span> </a></li>
+      {% if r.service.state == r.service.ST_RUNNING %}
+        <li><a class="dropdown-item" href="{% url 'report:openreport' r.id %}" target="_blank"><span class="oi oi-external-link" aria-hidden="true"> {{ r.name }} by {{ r.creator.profile.name_and_username }}</span> </a></li>
+      {% else %}
+        <li><a class="dropdown-item" href="#"><span class="oi oi-link-broken" aria-hidden="true"> {{ r.name }} by {{ r.creator.profile.name_and_username }}</span> </a></li>
+      {% endif %}
     {% endfor %}
   </ul>
 </div>

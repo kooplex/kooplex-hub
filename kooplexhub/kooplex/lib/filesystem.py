@@ -66,13 +66,13 @@ def _rmdir(path):
 def _grantaccess(user, folder, acl = 'rwaDxtcy'):
 #    bash("setfacl -R -m u:%d:%s %s" % (user.profile.userid, acl, folder))
     bash(f'nfs4_setfacl -R -a A::{user.profile.userid}:{acl} {folder}')
-    bash(f'nfs4_setfacl -R -a A:fdig:{user.profile.userid}:{acl} {folder}')
+    bash(f'nfs4_setfacl -R -a A:fdi:{user.profile.userid}:{acl} {folder}')
     logger.info(f"+ access granted on dir {folder} to user {user}")
 
 @sudo
 def _revokeaccess(user, folder):
 #    bash("setfacl -R -x u:%d %s" % (user.profile.userid, folder))
-    bash(f'nfs4_setfacl -R -x A:fdig:{user.profile.userid}:$(nfs4_getfacl {folder} | grep :fdig:{user.profile.userid}: | sed s,.*:,,) {folder}')
+    bash(f'nfs4_setfacl -R -x A:fdi:{user.profile.userid}:$(nfs4_getfacl {folder} | grep :fdi:{user.profile.userid}: | sed s,.*:,,) {folder}')
     bash(f'nfs4_setfacl -R -x A::{user.profile.userid}:$(nfs4_getfacl {folder} | grep ::{user.profile.userid}: | sed s,.*:,,) {folder}')
     logger.info(f"- access revoked on dir {folder} from user {user}")
 
@@ -229,6 +229,12 @@ def garbage_report(report):
         os.rmdir(project_report_root)
         logger.info(f'- removed empty folder {project_report_root}')
         #FIXME svc need_restart
+
+def recreate_report(report):
+    project_report_root = Dirname.reportroot(report.project)
+    assert os.path.exists(project_report_root), f"report folder {project_report_root} does not exist"
+    _rmdir(project_report_root)
+    snapshot_report(report)
 
 #OBSOLETED?
 def prepare_dashboardreport_withinitcell(report):

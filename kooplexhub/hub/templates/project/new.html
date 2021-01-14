@@ -14,10 +14,7 @@
           <input type="hidden" name="user_id" value="{{ user.id }}">
         </div>
         <div class="modal-footer">
-          <div class="float-end">
-            <button type="submit" class="btn btn-primary" name="button" value="apply">Create</button>
-            <button type="submit" class="btn btn-secondary" name="button" value="cancel">Cancel</button>
-          </div>
+          {% include 'apply_cancel.html' with modal=True apply='Create' %}
         </div>
       </form>
     </div>

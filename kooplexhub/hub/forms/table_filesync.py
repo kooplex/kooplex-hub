@@ -44,24 +44,46 @@ class T_FSLIBRARY_SYNC(tables.Table):
     syncing = tables.Column(verbose_name = 'Status', orderable = False)
     backend_type = BackendColumn(verbose_name = 'Service', empty_values = (), orderable = False)
     service = tables.Column(verbose_name = 'Service environments', empty_values = (), orderable = False)
-    drop_cache = tables.Column(verbose_name = 'Empty cache', empty_values = (), orderable = False)
+    sync_folder = tables.Column(verbose_name = 'Empty cache', empty_values = (), orderable = False)
 
     def render_syncing(self, record):
         if record.syncing:
-            return format_html('<input type="checkbox" data-toggle="toggle" name="sync_library_id" value="{}" data-on="Synchronizing" data-off="Pause" data-onstyle="success" data-offstyle="dark" data-size="xs" checked>'.format(record.library_id))
+            template = f"""
+<div class="form-check form-switch">
+  <input class="form-check-input" type="checkbox" id="cb_s-{record.id}" name="sync_library_id" value="{record.library_id}" checked />
+  <label class="form-check-label" for="cb_s-{record.id}"> Keep synchronized</label>
+</div>
+            """
         elif record.sync_folder:
-            return format_html('<input type="checkbox" data-toggle="toggle" name="sync_library_id" value="{}" data-on="Synchronize" data-off="Pause" data-onstyle="success" data-offstyle="dark" data-size="xs">'.format(record.library_id))
+            template = f"""
+<div class="form-check form-switch">
+  <input class="form-check-input" type="checkbox" id="cb_s-{record.id}" name="sync_library_id" value="{record.library_id}" />
+  <label class="form-check-label" for="cb_s-{record.id}"> Unpause</label>
+</div>
+            """
         else:
-            return format_html('<input type="checkbox" data-toggle="toggle" name="sync_library_id" value="{}" data-on="Synchronize" data-off="Unused" data-onstyle="success" data-offstyle="secondary" data-size="xs">'.format(record.library_id))
+            template = f"""
+<div class="form-check form-switch">
+  <input class="form-check-input" type="checkbox" id="cb_s-{record.id}" name="sync_library_id" value="{record.library_id}" />
+  <label class="form-check-label" for="cb_s-{record.id}"> Synchronize</label>
+</div>
+            """
+        return format_html(template)
 
     def render_service(self, record):
         return format_html(', '.join([ s.name for s in record.services ]))
 
-    def render_drop_cache(self, record):
+    def render_sync_folder(self, record):
         if record.sync_folder:
-            return format_html('<input type="checkbox" data-toggle="toggle" name="dropcache_library_id" value="{}" data-on="Delete" data-off="Keep" data-onstyle="danger" data-offstyle="success" data-size="xs">'.format(record.library_id))
+            template = f"""
+<div class="form-check form-switch">
+  <input class="form-check-input" type="checkbox" id="cb_sf-{record.id}" name="dropcache_library_id" value="{record.library_id}" checked />
+  <label class="form-check-label" for="cb_sf-{record.id}"> {{ record.sync_folder }}</label>
+</div>
+            """
+            return format_html(template)
         else:
-            return format_html('<input type="checkbox" data-toggle="toggle" data-off="Not present" data-offstyle="dark" data-size="xs" disabled>')
+            return format_html('-')
 
     class Meta:
         model = FSLibrary

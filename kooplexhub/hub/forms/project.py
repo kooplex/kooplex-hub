@@ -19,7 +19,7 @@ class FormProject(forms.Form):
         for field in self.fields:
             help_text = self.fields[field].help_text
             self.fields[field].help_text = None
-            #self.fields[field].widget.attrs["class"] = "form-control"
+            self.fields[field].widget.attrs["class"] = "form-control"
             if help_text != '':
                 extra = {
                     'data-toggle': 'tooltip', 

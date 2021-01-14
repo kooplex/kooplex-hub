@@ -1,0 +1,8 @@
+<div class="float-end">
+  {% if not hide_apply %}
+    <button type="submit" class="btn btn-primary" name="button" value="apply">{% if apply %}{{ apply }}{% else %}Apply{% endif %}</button>
+  {% endif %}
+  {% if not hide_cancel %}
+    <button type="submit" class="btn btn-secondary" {% if modal %}data-bs-dismiss="modal"{% endif %}>{% if cancel %}{{ cancel }}{% else %}Cancel{% endif %}</button>
+  {% endif %}
+</div>

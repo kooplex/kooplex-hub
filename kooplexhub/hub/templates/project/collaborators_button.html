@@ -1,7 +1,8 @@
-{% if project.userprojectbindings|length > 1 %}
+{% with x=project.userprojectbindings|length %}
+{% if x > 1  %}
 <div class="dropdown">
   <button class="btn btn-outline-secondary dropdown-toggle btn-sm" type="button" id="dc-collabs-{{ project.id }}" data-bs-toggle="dropdown" aria-expanded="false">
-    <i class="oi oi-people"></i>: {{project.userprojectbindings|length}}
+    <i class="oi oi-people"></i>: {{x|add:"-1"}}
   </button>
   <ul class="dropdown-menu" aria-labelledby="dc-collabs-{{ project.id }}">
     {% for upb in project.userprojectbindings %}
@@ -14,4 +15,5 @@
   </ul>
 </div>
 {% endif %}
+{% endwith %}
 

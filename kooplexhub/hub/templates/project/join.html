@@ -15,10 +15,7 @@
     {% else %}
       <p>You do not have any projects to join.</p>
     {% endif %}
-  <div class="float-end">
-    <button type="submit" class="btn btn-primary" name="button" value="aply">Join projects</button>
-    <button type="submit" class="btn btn-secondary" name="button" value="cancel">Cancel</button>
-  </div>
+    {% include 'apply_cancel.html' with apply='Join projects' %}
 </form>
 {% endblock %}
 

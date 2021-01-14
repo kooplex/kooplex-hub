@@ -1,89 +1,84 @@
 {% extends "layout.html" %}
 
-{% block header_extra %}
-  {% load staticfiles %}
-  <script src="{% static 'scripts/bootstrap4-toggle.min.js' %}"></script>
-{% endblock %}
 
 {% block submenu %}
-  {% include "external_service/service_submenu.html" with submenu="filesync" %}
+  {% include "external_service/service_submenu.html" with title="File synchronization" submenu="filesync" %}
 {% endblock %}
 
 {% block main_content_center %}
 
   {% load render_table from django_tables2 %}
   <form id="fsSyncForm" class="form-horizontal form-control" action="{% url 'service_external:commit_sync' %}" method="post">
-  <h3> Libraries to synchronize</h3>
     {% csrf_token %}
-    {% render_table tbl_libraries %}
-    <div class="modal-footer">
-      <button type="submit" class="btn btn-default" name="button" value="apply"> Apply settings</button>
+    <div class="card">
+      <div class="card-header">
+        <h3>Libraries to synchronize</h3>
+      </div>
+      <div class="card-body">
+        {% render_table tbl_libraries %}
+      </div>
+      <div class="card-footer">
+        {% include 'apply_cancel.html' with hide_cancel=True %}
+      </div>
     </div>
-  </form>
 
-  <div class="form-horizontal form-control">
-    <h3>Connected services</h3>
-    {% for s in syncservers %}
-      {% with t=s|get_userz_fstoken:user %}
-        <div class="panel panel-default card bg-light mb-3">
-          <div class="panel-heading card-header" role="tab" id="heading-{{ s.id }}">
-            <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapse-{{ s.id }}" aria-expanded="true" aria-controls="collapse-{{ s.id }}">
-                {% if s.backend_type == s.TP_SEAFILE %}
-	          <a href="{{ s.url }}" rel="noreferrer" target="blank" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Login Seafile at {{ s.url }}" data-placement="top"><span class="oi oi-external-link" aria-hidden="true"></span></a>
-                {% else %}
-                  <a href="{{ s.url }}" rel="noreferrer" target="blank" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Login {{s.backend_type }} at {{ s.url }}" data-placement="top"><span class="oi oi-external-link" aria-hidden="true"></span></a>
-                {% endif %}
-                <span class="badge badge-pill badge-secondary">{{ s.url }}</span>
-		<div style="float: right;">
+    <div class="card">
+      <div class="card-header">
+	<h3>Connected services</h3>
+      </div>
+      <div class="card-body">
+	<div class="card-group">
+          {% for s in syncservers %}
+            {% with t=s|get_userz_fstoken:user %}
+              <div class="card">
+                <div class="card-header">
+		  <a href="{{ s.url }}" rel="noreferrer" target="_blank" role="button" class="btn btn-outline-secondary">{{ s.url }}</a>
+                </div>
+                <div class="card-body">
                 {% if t %}
-                  <a href="{% url 'service_external:fs_refresh' t.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Last updated: {{ t.last_used }}" data-placement="top">Refresh</a>
+		  <p class="card-text"><strong>Last updated:</strong> {{ t.last_used }}</p>
                 {% else %}
-                  <a href="#" role="button" class="btn btn-secondary disabled" data-toggle="tooltip" title="Disabled" data-placement="top">Refresh</a>
+		  <p class="card-text"><strong>Note:</strong> Make sure you login to Seafile server so your account exists there as well</p>
                 {% endif %}
 		</div>
-            </a>
-          </div>
-          <div id="collapse-{{ s.id }}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading-{{ s.id }}">
-            <div class="panel-body" style="padding: 1ex;">
+                <div class="card-footer">
+		  <a href="{{ s.url }}" rel="noreferrer" target="_blank" role="button" class="btn btn-secondary"><span class="oi oi-external-link" aria-hidden="true"></span></a>
                 {% if t %}
-                  <span class="badge badge-pill badge-info">Last updated: {{ t.last_used }}</span>
+                  <a href="{% url 'service_external:fs_refresh' t.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Last updated: {{ t.last_used }}" data-placement="top">Refresh</a>
+                  <div class="float-end">
+                    <a href="{% url 'service_external:fs_droptoken' t.id %}" role="button" class="btn btn-danger" data-toggle="tooltip" title="Drop token" data-placement="top">Drop token</a>
+                    <a href="{% url 'service_external:fs_resettoken' t.id %}" role="button" class="btn btn-danger" data-toggle="tooltip" title="Create a new token" data-placement="top">New token</a>
+                  </div>
                 {% else %}
-                  <span class="badge badge-pill badge-warning">Make sure you login to Seafile server so your account exists there as well</span>
+                  <a href="#" role="button" class="btn btn-secondary disabled" data-toggle="tooltip" title="Disabled" data-placement="top">Refresh</a>
+                  <div class="float-end">
+                    <a href="#" role="button" class="btn btn-danger disabled" data-toggle="tooltip" title="Drop token" data-placement="top">Drop token</a>
+                    <a href="{% url 'service_external:fs_newtoken' s.id %}" role="button" class="btn btn-danger" data-toggle="tooltip" title="Create a new token" data-placement="top">New token</a>
+                  </div>
                 {% endif %}
-              <div style="float: right;">
-                {% if t %}
-                  <a href="{% url 'service_external:fs_droptoken' t.id %}" role="button" class="btn btn-danger" data-toggle="tooltip" title="Drop token" data-placement="top">Drop token</a>
-                  <a href="{% url 'service_external:fs_resettoken' t.id %}" role="button" class="btn btn-danger" data-toggle="tooltip" title="Create a new token" data-placement="top">New token</a>
-                {% else %}
-                  <a href="#" role="button" class="btn btn-danger disabled" data-toggle="tooltip" title="Drop token" data-placement="top">Drop token</a>
-                  <a href="{% url 'service_external:fs_newtoken' s.id %}" role="button" class="btn btn-danger" data-toggle="tooltip" title="Create a new token" data-placement="top">New token</a>
-                {% endif %}
-		<br>
+                </div>
               </div>
-            </div>
-          </div>
+            {% endwith %}
+          {% endfor %}
         </div>
-      {% endwith %}
-    {% endfor %}
-  </div>
+      </div>
+    </div>
 
+  </form>
 {% endblock %}
-
 
 {% block main_content_right %}
   {% include 'external_service/hint_sync.html' %}
 {% endblock %}
 
-
-{% block scripts %}
-<script>
-$(".panel-heading").parent('.panel').hover(
-  function() {
-    $(this).children('.collapse').collapse('show');
-  }, function() {
-    $(this).children('.collapse').collapse('hide');
-  }
-);
-</script>
+{% block navsearch %}
+<form class="d-flex" action="{% url 'service_external:fs_search' %}" method="post">
+  {% csrf_token %}
+  <input class="form-control me-2" type="search" name="library" placeholder="Search library" 
+    {% if search_value %}  
+      value="{{ search_value }}" 
+    {% endif %}  
+      aria-label="Search">
+  <button class="btn btn-outline-secondary" type="submit" name="button" value="search">Search</button>
+</form>
 {% endblock %}
-
