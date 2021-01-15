@@ -75,15 +75,20 @@ def start(service):
             has_cache = True
 
     if service.image.mount_report:
-        for report in service.reports:
-            volume_mounts.append({
-                "name": "pv-k8plex-hub-report",
-                "mountPath": os.path.join(mount_point, report_subdir, report.project.uniquename),
-                "subPath": report.project.uniquename,
-                "readOnly": True
-            })
-            has_report = True
-        try:
+        if service.image.imagetype == service.image.TP_PROJECT:
+            report_root_folders = []
+            for report in service.reports:
+                if report.project.uniquename in report_root_folders:
+                    continue
+                report_root_folders.append(report.project.uniquename)
+                volume_mounts.append({
+                    "name": "pv-k8plex-hub-report",
+                    "mountPath": os.path.join(mount_point, report_subdir, report.project.uniquename),
+                    "subPath": report.project.uniquename,
+                    "readOnly": True
+                })
+                has_report = True
+        else:
             report = service.report
             volume_mounts.append({
                 "name": "pv-k8plex-hub-report",
@@ -92,8 +97,6 @@ def start(service):
                 "readOnly": True
             })
             has_report = True
-        except:
-            pass
 
     for sync_lib in service.synced_libraries:
         o = urlparse(sync_lib.token.syncserver.url)
@@ -218,11 +221,13 @@ def _check_starting(service_id, event, left = 1000):
         logger.debug(f'service {service.name} is still starting')
 
 def stop(service):
+    logger.debug(f"KKKK {service}")
     event = Event()
     service.state = service.ST_STOPPING
     config.load_kube_config()
     v1 = client.CoreV1Api()
     removeroute(service)
+    logger.debug(f"KKKK {service}")
     try:
         msg = v1.delete_namespaced_pod(namespace = "default", name = service.label)
         logger.debug(msg)

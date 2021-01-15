@@ -17,7 +17,7 @@ from hub.forms import FormReport
 
 from kooplex.lib import now, translate_date, custom_redirect
 from kooplex.settings import KOOPLEX
-from kooplex.lib.filesystem import prepare_dashboardreport_withinitcell, recreate_report
+from kooplex.lib.filesystem import recreate_report
 
 
 logger = logging.getLogger(__name__)
@@ -123,7 +123,6 @@ def listreport(request, files = []):#, next_page):
         'search_value': pattern,
     }
     return render(request, 'report/list.html', context = context_dict)
-#    return render(request, 'report/list_thumbnail.html', context = context_dict)
 
 #@login_required
 def openreport(request, report_id):
@@ -132,7 +131,7 @@ def openreport(request, report_id):
     logger.debug("user %s, method: %s" % (user, request.method))
     try:
         report = Report.objects.get(id = report_id)
-        environment = ReportServiceBinding.objects.get(report = report).service
+        environment = report.service
         if environment.state in [ Service.ST_RUNNING, Service.ST_NEED_RESTART ]:
             environment.wait_until_ready()
             if environment.default_proxy.token_as_argument:

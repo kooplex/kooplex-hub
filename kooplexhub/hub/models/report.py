@@ -19,7 +19,6 @@ logger = logging.getLogger(__name__)
 
 
 class Report(models.Model):
-    #FIXME: ennek van értelme még?
     SC_PRIVATE = 'private'
     SC_INTERNAL = 'internal'
     SC_PUBLIC = 'public'
@@ -73,6 +72,14 @@ class Report(models.Model):
     def authorize(self, user):
         from .project import UserProjectBinding
         return self.creator == user or len(UserProjectBinding.objects.filter(user = user, project = self.project)) == 1
+
+    def mark_projectservices_restart(self, reason):
+        from .service import ProjectServiceBinding, Service
+        n = 0
+        for psb in ProjectServiceBinding.objects.filter(project = self.project, service__state__in = [ Service.ST_RUNNING, Service.ST_NEED_RESTART ]):
+            if psb.service.mark_restart(reason):
+                n += 1
+        return n
 
 
 @receiver(pre_save, sender = Report)

@@ -65,7 +65,7 @@
     </div>
     <div class="card-footer">
       <div class="float-end">
-        {% include 'container/startopen.html' with service=service next_page="service:list" label_open="Open" label_start="Start" %}
+        {% include 'container/startopen.html' with service=service next_page="service:list" %}
         {% include 'container/stopremove.html' with service=service next_page="service:list" %}
         {% if not service.report %}
           <a href="{% url 'service:configure' service.id %}" role="button" class="btn btn-secondary btn-sm"><span class="oi oi-wrench" aria-hidden="true" data-toggle="tooltip" title="Add/remove project to the service" data-placement="bottom"></span></a>

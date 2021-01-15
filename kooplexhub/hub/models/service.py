@@ -118,9 +118,17 @@ class Service(models.Model):
     @property
     def reports(self):
         "relevant only for project containers"
-        reports = Report.objects.none()
+        ##This is elegant but is buggy in current django version! update() also sucks
+        ##reports = Report.objects.none()
+        ##for p in self.projects:
+        ##    reports = reports.union( Report.objects.filter(project = p) )
+        ##return reports
+        reports = None
         for p in self.projects:
-            reports.union( Report.objects.filter(project = p) )
+            if reports is None:
+                reports = Report.objects.filter(project = p)
+            else:
+                reports = reports.union( Report.objects.filter(project = p) )
         return reports
 
     @property
@@ -202,7 +210,8 @@ def create_report_service(sender, instance, created, **kwargs):
 
 @receiver(post_delete, sender = ReportServiceBinding)
 def remove_report_service(sender, instance, **kwargs):
-    svc = instance.service.delete()
+    svc = instance.service
+    svc.delete()
     logger.info(f'- deleted service {svc.name} of report {instance.report.name}')
 
 

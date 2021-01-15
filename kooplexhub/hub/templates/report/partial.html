@@ -36,6 +36,7 @@
       <div class="modal-body">
         <p><strong>Creator:</strong> {{ report.creator.profile.name_and_username }}</p>
         <p><strong>Description: </strong>{{ report.description }}</p>
+	<p><strong>Project (folder/index): </strong>{{ report.project.name }} ({{ report.folder }}/{{ report.index }})</p>
         <p><strong>Url: </strong><code>{{ report.url_external }}</code></p>
       </div>
       <div class="modal-footer">

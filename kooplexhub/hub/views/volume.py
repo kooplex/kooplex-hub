@@ -19,11 +19,12 @@ from hub.forms import table_listvolume, FormVolume
 
 from kooplex.lib import now, translate_date
 from kooplex.settings import KOOPLEX
-from kooplex.lib.filesystem import mkdir_volume
+#from kooplex.lib.filesystem import mkdir_volume
 
 logger = logging.getLogger(__name__)
 
-
+def mkdir_volume(*v, **kw):
+    pass
 
 @login_required
 def new_volume(request):#, next_page):

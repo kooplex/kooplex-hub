@@ -17,7 +17,7 @@ class ProfileAdmin(admin.ModelAdmin):
 
 @admin.register(Image)
 class ImageAdmin(admin.ModelAdmin):
-    list_display = ('id', 'present', 'name', 'imagetype', 'description')
+    list_display = ('id', 'present', 'name', 'imagetype', 'description', 'require_home', 'mount_project', 'mount_report')
 
 @admin.register(Proxy)
 class ProxyAdmin(admin.ModelAdmin):
@@ -194,4 +194,4 @@ class FSLibraryServiceBindingAdmin(admin.ModelAdmin):
 
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
-    list_display = ('id', 'url_external', 'name', 'creator', 'created_at', 'image') 
+    list_display = ('id', 'url_external', 'name', 'creator', 'project', 'folder', 'index', 'created_at', 'image') 

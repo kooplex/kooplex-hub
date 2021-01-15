@@ -48,7 +48,7 @@ class Project(models.Model):
         try:
             return UserProjectBinding.objects.get(project = self, role = UserProjectBinding.RL_CREATOR).user
         except UserProjectBinding.DoesNotExist:
-            logger.warning('no creator for %s' % self)
+            logger.warning(f'no creator for {self.name} {self.id}')
             return
 
     @property

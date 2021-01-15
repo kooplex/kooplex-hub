@@ -76,6 +76,17 @@ def _revokeaccess(user, folder):
     bash(f'nfs4_setfacl -R -x A::{user.profile.userid}:$(nfs4_getfacl {folder} | grep ::{user.profile.userid}: | sed s,.*:,,) {folder}')
     logger.info(f"- access revoked on dir {folder} from user {user}")
 
+@sudo
+def _grantgroupaccess(group_id, folder, acl = 'rxtcy'):
+    bash(f'nfs4_setfacl -R -a A:g:{group_id}:{acl} {folder}')
+    #bash(f'nfs4_setfacl -R -a A:fdig:{groupi_id}:{acl} {folder}')
+    logger.info(f"+ access granted on dir {folder} to group {group_id}")
+
+@sudo
+def _revokegroupaccess(group_id, folder):
+    #bash(f'nfs4_setfacl -R -x A:fdig:{group_id}:$(nfs4_getfacl {folder} | grep :fdig:{group_id}: | sed s,.*:,,) {folder}')
+    bash(f'nfs4_setfacl -R -x A:g:{group_id}:$(nfs4_getfacl {folder} | grep :g:{group_id}: | sed s,.*:,,) {folder}')
+    logger.info(f"- access revoked on dir {folder} from group {group_id}")
 
 @sudo
 def _archivedir(folder, target, remove = True):
@@ -124,8 +135,9 @@ def check_home(user): #FIXME: add to _mkdir silent no exception 2 raise
     assert os.path.exists(dir_home), "Folder %s does not exist" % dir_home
 #TODO: check permissions
 
-##################
-# per user folders
+
+########################################
+# user folder management
 
 def mkdir_home(user):
     """
@@ -155,8 +167,9 @@ def garbagedir_home(user):
         os.rename(dir_usergarbage, d_new)
         logger.info(f'+ usergarbage dir {dir_usergarbage} rename {d_new}')
 
-##################
-# per project folders
+
+########################################
+# project folder management
 
 def mkdir_project(project):
     dir_project = Dirname.project(project)
@@ -188,21 +201,8 @@ def garbagedir_project(project):
     _rmdir(dir_reportprepare)
 
 
-
-
 ########################################
-#FIXME: not yet used
-def check_volume(volume_dir):
-#    volume_dir  
-    return True
-
-def mkdir_volume(volume_dir, user):
-    _mkdir(volume_dir)
-    _grantaccess(user, volume_dir)
-
-########################################
-
-
+# report folder management
 
 def check_reportprepare(user):
     dir_reportprepare = Dirname.reportprepare(user)
@@ -213,10 +213,12 @@ def snapshot_report(report):
     project_report_root = Dirname.reportroot(report.project)
     if not os.path.exists(project_report_root):
         _mkdir(project_report_root, other_rx = True)
-        #FIXME svc need_restart
+        n = report.mark_projectservices_restart(f"Need to mount report folder for project {report.project}")
+        logger.info(f'{n} services marked as need to restart, due to creation of folder {project_report_root}')
     dir_source = os.path.join(Dirname.reportprepare(report.project), report.folder)
     dir_target = Dirname.report(report)
     _copy_dir(dir_source, dir_target, remove = False)
+    _grantgroupaccess(1000, dir_target) #FIXME hardcoded
     #TODO _grantaccess report reader if different than hub
 
 @sudo
@@ -225,33 +227,24 @@ def garbage_report(report):
     garbage = Filename.report_garbage(report)
     _archivedir(dir_source, garbage, remove = True)
     project_report_root = Dirname.reportroot(report.project)
+    if not os.path.exists(project_report_root):
+        logger.warning(f'! folder {project_report_root} missing...')
+        return
     if len(os.listdir(project_report_root)) == 0:
         os.rmdir(project_report_root)
         logger.info(f'- removed empty folder {project_report_root}')
-        #FIXME svc need_restart
+        n = report.mark_projectservices_restart(f"need to umount emptied report folder for project {report.project}")
+        logger.info(f'{n} services marked as need to restart, due to removal of folder {project_report_root}')
 
+@sudo
 def recreate_report(report):
-    project_report_root = Dirname.reportroot(report.project)
-    assert os.path.exists(project_report_root), f"report folder {project_report_root} does not exist"
-    _rmdir(project_report_root)
+    dir_source = os.path.join(Dirname.reportprepare(report.project), report.folder)
+    assert os.path.exists(dir_source), f"Report folder {dir_source} does not exist."
+    index_source = os.path.join(Dirname.reportprepare(report.project), report.folder, report.index)
+    assert os.path.exists(index_source), f"Report index {index_source} in folder {dir_source} does not exist."
+    dir_target = Dirname.report(report)
+    _rmdir(dir_target)
     snapshot_report(report)
-
-#OBSOLETED?
-def prepare_dashboardreport_withinitcell(report):
-    import json
-    fn = os.path.join(Dirname.report(report), report.index)
-    d=json.load(open(fn))
-    for ic in range(len(d['cells'])):
-        d['cells'][ic]['metadata']['init_cell']=True
-
-    # Get rid of unnecessray info    
-    kernel = d['metadata']['kernelspec']
-    language = d['metadata']['language_info']
-    d['metadata'].clear()
-    d['metadata']['kernelspec'] = kernel
-    d['metadata']['language_info'] = language
-    json.dump(d, open(fn, 'w'))
-
 
 
 ########################################
