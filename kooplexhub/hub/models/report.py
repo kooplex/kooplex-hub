@@ -71,7 +71,7 @@ class Report(models.Model):
     @register.filter
     def authorize(self, user):
         from .project import UserProjectBinding
-        return self.creator == user or len(UserProjectBinding.objects.filter(user = user, project = self.project)) == 1
+        return user.is_authenticated and (self.creator == user or len(UserProjectBinding.objects.filter(user = user, project = self.project)) == 1)
 
     def mark_projectservices_restart(self, reason):
         from .service import ProjectServiceBinding, Service

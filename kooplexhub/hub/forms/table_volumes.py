@@ -23,10 +23,11 @@ def table_volume(project, user, volumetype):
         class Meta:
             model = Volume
             exclude = ('name', 'volumetype')
-            attrs = { "class": "table-striped table-bordered", "style": "margin-left: 20px", "td": { "style": "padding:6px;" }, 
-                    'th' : {"style":"display:none;"},
-                    'tr' : {"style":"padding-bottom:15px;"},
-
+            attrs = {
+                     "class": "table table-striped table-bordered",
+                     "thead": { "class": "thead-dark table-sm" },
+                     "td": { "style": "padding:.5ex" },
+                     "th": { "style": "padding:.5ex", "class": "table-secondary" }
                     }
     return T_VOLUME(user_volumes)
 
@@ -59,10 +60,11 @@ def table_listvolume(user, volumetype):
         class Meta:
             model = Volume
 #            exclude = ('name', 'volumetype')
-            attrs = { "class": "table-striped table-bordered", "style": "margin-left: 20px", "td": { "style": "padding:6px;" }, 
-                    'th' : {"style":"display:none;"},
-                    'tr' : {"style":"padding-bottom:15px;"},
-
+            attrs = {
+                     "class": "table table-striped table-bordered",
+                     "thead": { "class": "thead-dark table-sm" },
+                     "td": { "style": "padding:.5ex" },
+                     "th": { "style": "padding:.5ex", "class": "table-secondary" }
                     }
     return T_VOLUME(user_volumes)
 

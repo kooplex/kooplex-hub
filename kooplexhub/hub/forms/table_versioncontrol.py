@@ -30,7 +30,12 @@ def table_vcproject(service):
             model = VCProject
             fields = ('id', 'repository', 'services')
             sequence = ('id', 'repository', 'services')
-            attrs = { "class": "table table-striped table-bordered", "thead": { "class": "thead-dark table-sm" }, "td": { "style": "padding:.5ex" } }
+            attrs = {
+                     "class": "table table-striped table-bordered",
+                     "thead": { "class": "thead-dark table-sm" },
+                     "td": { "style": "padding:.5ex" },
+                     "th": { "style": "padding:.5ex", "class": "table-secondary" }
+                    }
 
     return T_VCPROJECT
 
@@ -66,7 +71,12 @@ class T_REPOSITORY_CLONE(tables.Table):
         model = VCRepository
         fields = ('id', 'repos', 'project_name', 'service', 'clone_folder')
         sequence = ('id', 'repos', 'project_name', 'service', 'clone_folder')
-        attrs = { "class": "table table-striped table-bordered", "thead": { "class": "thead-dark table-sm" }, "td": { "style": "padding:.5ex" } }
+        attrs = {
+                     "class": "table table-striped table-bordered",
+                     "thead": { "class": "thead-dark table-sm" },
+                     "td": { "style": "padding:.5ex" },
+                     "th": { "style": "padding:.5ex", "class": "table-secondary" }
+                    }
 
 def s_column(project):
     lookup = dict([ (b.vcproject, b.id) for b in VCProjectProjectBinding.objects.filter(project = project) ])
@@ -126,6 +136,11 @@ def table_vctoken(user):
             orderable = False
             fields = ('id', 'repository', 'username', 'rsa', 'token', 'last_used', 'error_flag')
 #            sequence = ('id', 'repository', 'projects')
-            attrs = { "class": "table table-striped table-bordered", "thead": { "class": "thead-dark table-sm" }, "td": { "style": "padding:.5ex" } }
+            attrs = {
+                     "class": "table table-striped table-bordered",
+                     "thead": { "class": "thead-dark table-sm" },
+                     "td": { "style": "padding:.5ex" },
+                     "th": { "style": "padding:.5ex", "class": "table-secondary" }
+                    }
 
     return T_VCTOKEN(tokens)

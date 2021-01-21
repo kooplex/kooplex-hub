@@ -42,15 +42,17 @@ def newreport(request):#, next_page):
             description = request.POST['description']
             image_id = request.POST['image']
             image = Image.objects.get(id = image_id)
-            #scope
-            #password
-            _, project_id, folder, index, _ = re.split(r'^\((\d+),([^,]+),([^,]+)\)$', request.POST['index_selector'])
-            #FIXME: nem lehet , a dir/index fájlnevekben
+            scope = request.POST['scope']
+            pfi = request.POST['index_selector']
+            if pfi.count(',') != 2:
+                messages.error(request, f'Report {name} is not created. Make sure there is no comma (,) in file or folder name.')
+                return redirect('report:list')
+            _, project_id, folder, index, _ = re.split(r'^\((\d+),([^,]+),([^,]+)\)$', pfi)
             project = Project.objects.get(id = project_id)
             try:
                 prev_report = Report.objects.get(name = name, creator = user, project = project)
                 prev_report.delete()
-                logger.debug("Previous report with the same tag is removed")
+                logger.debug(f'Previous report {name} removed')
             except Exception as e:
                 logger.error(e)
                 pass
@@ -63,15 +65,16 @@ def newreport(request):#, next_page):
                 image = image,
                 project = project,
                 folder = folder,
+                scope = scope,
                 password = request.POST['password'] if 'password' in request.POST else '',
             )
-            messages.info(request, "Report %s is created" % request.POST['name'])
+            messages.info(request, f'Report {name} is created')
             return redirect('report:list')
         except Exception as e:
             logger.error(e)
             raise
     else:
-        return redirect('indexpage')
+        return redirect('report:list')
 
 
 @login_required
@@ -99,22 +102,23 @@ def refreshreport(request, report_id):
 
 
 #@login_required
-def listreport(request, files = []):#, next_page):
+def listreport(request):
     """Renders new report list."""
     user = request.user
     pattern = request.POST.get('report_or_creator', '')
     search = request.POST.get('button', '') == 'search'
     logger.debug("user %s, method: %s" % (user, request.method))
     listing = request.method == 'GET' or (request.method == 'POST' and search)
-    if listing:
-        if pattern:
-            Q = models.Q
-            reports = Report.objects.filter(Q(name__icontains = pattern) | models.Q(creator__first_name__icontains = pattern) | Q(creator__last_name__icontains = pattern) | Q(creator__username__icontains = pattern))
-        else:
-            reports = Report.objects.all()
-            #FIXME: authorize!
+    if not listing:
+        return redirect('report:list')
+    Q = models.Q
+    if user.is_authenticated:
+        projects = [ upb.project for upb in UserProjectBinding.objects.filter(user = user) ]
+        reports = Report.objects.filter(Q(scope__in = [ Report.SC_PUBLIC, Report.SC_INTERNAL ]) | Q(scope = Report.SC_PRIVATE, project__in = projects))
     else:
-        raise NotImplementedError("ide hogy kerulsz?")
+        reports = Report.objects.filter(scope = Report.SC_PUBLIC)
+    if pattern:
+        reports = reports.filter(Q(name__icontains = pattern) | models.Q(creator__first_name__icontains = pattern) | Q(creator__last_name__icontains = pattern) | Q(creator__username__icontains = pattern))
 
     context_dict = {
         'menu_report': 'active',

@@ -1,7 +1,9 @@
 {% extends "layout.html" %}
 
 {% block submenu %}
-  {% include 'report/report_submenu.html' with title="List of reports" submenu="list" %}
+  {% if user.is_authenticated %}
+    {% include 'report/report_submenu.html' with title="List of reports" submenu="list" %}
+  {% endif %}
 {% endblock %}
 
 {% block main_content_center %}
@@ -13,7 +15,9 @@
 {% endblock %}
 
 {% block main_content_right %}
-  {% include 'report/hint_list.html' %}
+  {% if user.is_authenticated %}
+    {% include 'report/hint_list.html' %}
+  {% endif %}
 {% endblock %}
 
 {% block navsearch %}

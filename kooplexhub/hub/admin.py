@@ -194,4 +194,4 @@ class FSLibraryServiceBindingAdmin(admin.ModelAdmin):
 
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
-    list_display = ('id', 'url_external', 'name', 'creator', 'project', 'folder', 'index', 'created_at', 'image') 
+    list_display = ('id', 'scope', 'url_external', 'name', 'creator', 'project', 'folder', 'index', 'created_at', 'image') 

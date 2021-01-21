@@ -57,7 +57,12 @@ def table_projects(service):
         class Meta:
             model = UserProjectBinding
             fields = ('id', 'project', 'collaborator')
-            attrs = { "class": "table table-striped table-bordered", "thead": { "class": "thead-dark table-sm" }, "td": { "style": "padding:.5ex" } }
+            attrs = {
+                     "class": "table table-striped table-bordered",
+                     "thead": { "class": "thead-dark table-sm" },
+                     "td": { "style": "padding:.5ex" },
+                     "th": { "style": "padding:.5ex", "class": "table-secondary" }
+                    }
 
     return T_PROJECTS
 
@@ -96,33 +101,58 @@ class T_JOINABLEPROJECT(tables.Table):
         model = UserProjectBinding
         fields = ('id', 'project', 'user', 'images')
         sequence = ('id', 'project', 'user', 'images')
-        attrs = { "class": "table table-striped table-bordered", "thead": { "class": "thead-dark table-sm" }, "td": { "style": "padding:.5ex" } }
+        attrs = {
+                     "class": "table table-striped table-bordered",
+                     "thead": { "class": "thead-dark table-sm" },
+                     "td": { "style": "padding:.5ex" },
+                     "th": { "style": "padding:.5ex", "class": "table-secondary" }
+                    }
 
 
 class T_PROJECT(tables.Table):
+    #TODO: jQuery to change lable
     class ProjectSelectionColumn(tables.Column):
         def render(self, record):
             if record.is_hidden:
                 template = f"""
 <div class="form-check form-switch">
   <input class="form-check-input" type="checkbox" id="cb_vpid-{record.id}" name="selection" value="{record.id}" checked />
-  <label class="form-check-label" for="cb_vpid-{record.id}"> Shown</label>
+  <label class="form-check-label" for="cb_vpid-{record.id} id="lbl_vpid-{record.id}"> Hidden</label>
 </div>
                 """
+#$("#cb_vpid-{record.id}").on("change", function () {
+#    if ($(this).is(":checked")) {
+#        $('#cb_vpid-{record.id}').text("Hidden")
+#    } else {
+#        $('#lblauto').text("Show")
+#    }
+#})
             else:
                 template = f"""
 <div class="form-check form-switch">
   <input class="form-check-input" type="checkbox" id="cb_vpid-{record.id}" name="selection" value="{record.id}" />
-  <label class="form-check-label" for="cb_vpid-{record.id}"> Show</label>
+  <label class="form-check-label" for="cb_vpid-{record.id} id="lbl_vpid-{record.id}"> Shown</label>
 </div>
                 """
+#$("#cb_vpid-{record.id}").on("change", function () {
+#    if ($(this).is(":checked")) {
+#        $('#cb_vpid-{record.id}').text("Hide")
+#    } else {
+#        $('#lblauto').text("Shown")
+#    }
+#})
             return format_html(template)
     id = ProjectSelectionColumn(verbose_name = 'Visibility', orderable = False)
     class Meta:
         model = UserProjectBinding
         fields = ('id', 'project')
         sequence = ('id', 'project')
-        attrs = { "class": "table table-striped table-bordered", "thead": { "class": "thead-dark table-sm" }, "td": { "style": "padding:.5ex" } }
+        attrs = { 
+                 "class": "table table-striped table-bordered", 
+                 "thead": { "class": "thead-dark table-sm" }, 
+                 "td": { "style": "padding:.5ex" }, 
+                 "th": { "style": "padding:.5ex", "class": "table-secondary" } 
+                }
 
 def table_services(userprojectbinding):
     class T_PROJECTSERVICE(tables.Table):
@@ -153,5 +183,10 @@ def table_services(userprojectbinding):
             model = Service
             fields = ('id', 'name', 'image', 'state')
             sequence = ('id', 'name', 'image', 'state')
-            attrs = { "class": "table table-striped table-bordered", "thead": { "class": "thead-dark table-sm" }, "td": { "style": "padding:.5ex" } }
+            attrs = { 
+                     "class": "table table-striped table-bordered", 
+                     "thead": { "class": "thead-dark table-sm" }, 
+                     "td": { "style": "padding:.5ex" }, 
+                     "th": { "style": "padding:.5ex", "class": "table-secondary" } 
+                    }
     return T_PROJECTSERVICE

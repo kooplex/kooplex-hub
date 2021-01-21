@@ -65,6 +65,12 @@ def table_collaboration(project):
             model = Profile
             fields = ('id', 'role', 'name', 'location')
             sequence = ('id', 'role', 'name', 'location')
-            attrs = { "class": "table table-striped table-bordered", "thead": { "class": "thead-dark table-sm" }, "td": { "style": "padding:.5ex" } }
+            attrs = {
+                     "class": "table table-striped table-bordered",
+                     "thead": { "class": "thead-dark table-sm" },
+                     "td": { "style": "padding:.5ex" },
+                     "th": { "style": "padding:.5ex", "class": "table-secondary" }
+                    }
+
 
     return T_COLLABORATORS

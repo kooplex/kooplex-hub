@@ -11,7 +11,13 @@
           <li class="nav-item"><a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#project-new">New project</a></li>
           <li class="nav-item"><a {% if submenu == 'join' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'project:join' %}" {% endif %}>Join a project</a></li>
           <li class="nav-item"><a {% if submenu == 'list' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'project:list' %}" {% endif %}>List projects</a></li>
-          <li class="nav-item"><a {% if submenu == 'showhide' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'project:showhide' %}" {% endif %}>Show/hide projects</a></li>
+          <li class="nav-item"><a {% if submenu == 'showhide' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'project:showhide' %}" {% endif %}>Show/hide projects 
+            {% with x=user.profile.number_of_hidden_projects %}
+              {% if x %}
+                <span class="badge bg-secondary" data-bs-toggle="tooltip" title="The number of hidden projects">{{ x }}</span>
+	      {% endif %}
+	    {% endwith %}
+          </a></li>
         </ul>
      </div>
   </div>

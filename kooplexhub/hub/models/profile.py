@@ -52,11 +52,11 @@ class Profile(models.Model):
             yield binding
 
     @property
+    def number_of_hidden_projects(self):
+        return len(list(filter(lambda x: x.is_hidden, self.projectbindings)))
+
+    @property
     def containers(self):
-        #FIXME:
-        #from .container import Container
-        #for container in Container.objects.filter(user = self.user):
-        #     yield container
         from .service import Service
         for svc in Service.objects.filter(user = self.user):
              yield svc

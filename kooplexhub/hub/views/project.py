@@ -476,6 +476,14 @@ def stat(request):
         }
     return render(request, 'project/statistics.html', context = context_dict)
 
+
+
+
+#def cb(request):
+#    return render(request, 'cb.html', context = { "gombok": { 1: True, 2: False, 3: False, 4: True }})
+
+
+
 urlpatterns = [
     url(r'^list', listprojects, name = 'list'), 
     url(r'^l_search', listprojects, name = 'l_search'), 
@@ -495,5 +503,7 @@ urlpatterns = [
 #    url(r'^configure/(?P<project_id>\d+)/storage/(?P<next_page>\w+:?\w*)$', conf_voldata, name = 'conf_storage'), 
 #    url(r'^configure/(?P<project_id>\d+)/versioncontrol/(?P<next_page>\w+:?\w*)$', conf_versioncontrol, name = 'conf_versioncontrol'), 
     url(r'^stat', stat, name = 'stat'), 
+
+#    url(r'^cb', cb, name = 'cb'), 
 ]
 

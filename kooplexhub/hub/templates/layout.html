@@ -13,6 +13,7 @@
     <link rel="stylesheet" type="text/css" href="{% static 'fonts/open-iconic-master/font/css/open-iconic-bootstrap.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'fontawesome-free-5.10.2-web/css/all.css' %}">
     {% block css_extra %}{% endblock %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 
     <title>Kooplex Hub</title>
   </head>
@@ -36,7 +37,7 @@
             {% else %}
               {% include "menuitem_report.html" with active=menu_report %}
             {% endif %}
-            <li class="nav-item"><a class="nav-link" href="/manual/" target="_blank">Documentation</a></li>
+            <li class="nav-item"><a class="nav-link" href="/docs/" target="_blank">Documentation</a></li>
           </ul>
           {% block navsearch %}
           <form class="d-flex">
