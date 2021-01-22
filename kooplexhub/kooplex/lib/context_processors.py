@@ -12,10 +12,10 @@ def form_biography(request):
     return { 'f_bio': FormBiography(instance = request.user.profile) } if hasattr(request.user, 'profile') else {}
 
 def form_project(request):
-    return { 'f_project_meta': FormProject(user = request.user) } if request.user.is_authenticated else {}
+    return { 'f_project_meta': FormProject(user = request.user, auto_id = 'id_newproject_%s') } if request.user.is_authenticated else {}
 
 def form_environment(request):
-    return { 'f_environment_meta': FormService() } if request.user.is_authenticated else {}
+    return { 'f_environment_meta': FormService(auto_id = 'id_service_%s') } if request.user.is_authenticated else {}
 
 def user(request):
     return { 'user': request.user } if request.user.is_authenticated else {}

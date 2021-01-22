@@ -4,17 +4,50 @@
   {% include 'report/report_submenu.html' with title="Create a new report" submenu="new" %}
 {% endblock %}
 
-  {% block main_content_center %}
+{% block main_content_center %}
   <form id="newreportForm" class="form-horizontal form-control" action="{% url 'report:new' %}" method="post">
     {% csrf_token %}
-    <table>
-      {{ f_report.as_table }}
-      {{ f_report.r_tree }}
-    </table>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg">
+          <table>
+            {{ f_report.as_table }}
+            {{ f_report.r_tree }}
+          </table>
+          {{ f_report.r_image_descriptions }}
+        </div>
+        <div class="col-sm">
+          <div class="card">
+            <div class="card-header">
+              <h5 class="card-title">Image description</h5>
+            </div>
+            <div class="card-body">
+              <p class="card-text" id="image_description"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="modal-footer">
       {% include 'apply_cancel.html' with apply='Create' %}
     </div>
   </form>
+
+<script>
+  $("#id_image").on("change", function () {
+    var drpdown = $( this )
+    image_id = $( "#id_image option:selected" ).attr("value")
+    //console.log( image_id )
+    if (image_id) {
+      description = $( "#id_image_description-" + image_id ).attr("value")
+    } else {
+      description = ""
+    }
+    //console.log( description )
+    $( "#image_description" ).text(description)
+  })
+</script>
+
 {% endblock %}
 
 {% block main_content_right %}

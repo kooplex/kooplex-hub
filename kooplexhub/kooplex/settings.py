@@ -43,9 +43,8 @@ INSTALLED_APPS = (
 )
 
 AUTHENTICATION_BACKENDS = (
-# TODO: a place for google IDP modul,
-#    'kooplex.auth.elte.my_ElteOpenID',
     'kooplex.auth.hydra.HydraOpenID',
+    'kooplex.auth.k8plex-oauth.KooplexOpenID',
     'django.contrib.auth.backends.ModelBackend',
 )
 
@@ -56,6 +55,8 @@ SOCIAL_AUTH_HYDRAOIDC_SECRET = "vxbXd3rUH1Kz"
 SOCIAL_AUTH_USER_FIELDS = [ 'username', 'email' ]
 SOCIAL_AUTH_URL_NAMESPACE = 'social'
 
+SOCIAL_AUTH_OIDC_KEY = "FgJK7NUMOHUU33zbbF02AtQ0BG9FecFCDvN2Pizu"
+SOCIAL_AUTH_OIDC_SECRET = "iV87lpBX82xckU12woWuHjKcKlT08DhuHY0VE9CKTU2MpW8LwhR23UuDoYCMQXCRuoGLMTZfzi91KsPmr0urFy269miSwOyFzYtt3oqv0ICPhLidlBqKzBfjAeZL8KyX"
 
 
 MIDDLEWARE = (

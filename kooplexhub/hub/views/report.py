@@ -105,7 +105,6 @@ def refreshreport(request, report_id):
 def listreport(request):
     """Renders new report list."""
     user = request.user
-    pattern = request.POST.get('report_or_creator', '')
     search = request.POST.get('button', '') == 'search'
     logger.debug("user %s, method: %s" % (user, request.method))
     listing = request.method == 'GET' or (request.method == 'POST' and search)
@@ -115,16 +114,19 @@ def listreport(request):
     if user.is_authenticated:
         projects = [ upb.project for upb in UserProjectBinding.objects.filter(user = user) ]
         reports = Report.objects.filter(Q(scope__in = [ Report.SC_PUBLIC, Report.SC_INTERNAL ]) | Q(scope = Report.SC_PRIVATE, project__in = projects))
+        pattern = request.POST.get('report_or_creator', user.search.report_list)
+        if pattern:
+            reports = reports.filter(Q(name__icontains = pattern) | models.Q(creator__first_name__icontains = pattern) | Q(creator__last_name__icontains = pattern) | Q(creator__username__icontains = pattern))
+        if len(reports) and pattern != user.search.report_list:
+            user.search.report_list = pattern
+            user.search.save()
     else:
         reports = Report.objects.filter(scope = Report.SC_PUBLIC)
-    if pattern:
-        reports = reports.filter(Q(name__icontains = pattern) | models.Q(creator__first_name__icontains = pattern) | Q(creator__last_name__icontains = pattern) | Q(creator__username__icontains = pattern))
 
     context_dict = {
         'menu_report': 'active',
         'next_page': 'indexpage', 
         'reports' : reports,
-        'search_value': pattern,
     }
     return render(request, 'report/list.html', context = context_dict)
 

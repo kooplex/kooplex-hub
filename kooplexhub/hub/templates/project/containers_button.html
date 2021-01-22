@@ -1,5 +1,5 @@
 {% if services|length > 0 %}
-<div class="dropdown">
+<div class="dropdown" data-bs-toggle="tooltip" data-bs-placement="top" title="Service environments project {{ project.name }} is associated with">
   <a class="btn btn-outline-secondary dropdown-toggle btn-sm" type="button" id="dc-svcs-{{ project.id }}" data-bs-toggle="dropdown" aria-expanded="false">
     <i class="oi oi-terminal"></i>: {{services|length}}
   </a>

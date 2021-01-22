@@ -23,11 +23,7 @@
 {% block navsearch %}
 <form class="d-flex" action="{% url 'report:l_search' %}" method="post">
   {% csrf_token %}
-  <input class="form-control me-2" type="search" name="report_or_creator" placeholder="Search report or creator" 
-    {% if search_value %}  
-      value="{{ search_value }}" 
-    {% endif %}  
-      aria-label="Search">
+  <input class="form-control me-2" type="search" name="report_or_creator" placeholder="Search report or creator" value="{{ user.search.report_list }}" aria-label="Search">
   <button class="btn btn-outline-secondary" type="submit" name="button" value="search">Search</button>
 </form>
 {% endblock %}

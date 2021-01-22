@@ -11,24 +11,28 @@
 {% csrf_token %}
   <ul class="nav nav-tabs" id="serviceConfigTabs" role="tablist">
     <li class="nav-item" role="presentation">
-      <a class="nav-link" id="tab-imageme" data-bs-toggle="tab" href="#image" role="tab" aria-controls="image" aria-selected="false">Image</a>
-    </li>
-    <li class="nav-item active" role="presentation">
-      <a class="nav-link" id="tab-projects" data-bs-toggle="tab" href="#projects" role="tab" aria-controls="projects" aria-selected="true">Projects</a>
+      <a class="nav-link {% if active == "image" %}active{% endif %}" id="tab-image" data-bs-toggle="tab" href="#image" role="tab" aria-controls="image" aria-selected="{% if active == "image" %}true{% else %}false{% endif %}">Image</a>
     </li>
     <li class="nav-item" role="presentation">
-      <a class="nav-link" id="tab-volumes" data-bs-toggle="tab" href="#volumes" role="tab" aria-controls="volumes" aria-selected="false">Volumes</a>
+      <a class="nav-link {% if active == "projects" %}active{% endif %}" id="tab-projects" data-bs-toggle="tab" href="#projects" role="tab" aria-controls="projects" aria-selected="{% if active == "projects" %}true{% else %}false{% endif %}">Projects</a>
     </li>
     <li class="nav-item" role="presentation">
-      <a class="nav-link" id="tab-filesync" data-bs-toggle="tab" href="#filesync" role="tab" aria-controls="filesync" aria-selected="false">Synchronized files</a>
+	    {% comment %}
+      <a class="nav-link {% if active == "volumes" %}active{% endif %}" id="tab-volumes" data-bs-toggle="tab" href="#volumes" role="tab" aria-controls="volumes" aria-selected="{% if active == "volumes" %}true{% else %}false{% endif %}">Volumes</a>
+	    {% endcomment %}
     </li>
     <li class="nav-item" role="presentation">
-      <a class="nav-link" id="tab-vc" data-bs-toggle="tab" href="#versioncontrol" role="tab" aria-controls="versioncontrol" aria-selected="false">Version control</a>
+      <a class="nav-link {% if active == "filesync" %}active{% endif %}" id="tab-filesync" data-bs-toggle="tab" href="#filesync" role="tab" aria-controls="filesync" aria-selected="{% if active == "filesync" %}true{% else %}false{% endif %}">Synchronized files</a>
+    </li>
+    <li class="nav-item" role="presentation">
+	    {% comment %}
+      <a class="nav-link {% if active == "versioncontrol" %}active{% endif %}" id="tab-versioncontrol" data-bs-toggle="tab" href="#versioncontrol" role="tab" aria-controls="versioncontrol" aria-selected="{% if active == "versioncontrol" %}true{% else %}false{% endif %}">Version control</a>
+	    {% endcomment %}
     </li>
   </ul>
 
   <div class="tab-content" id="serviceConfigTabContent">
-    <div class="tab-pane fade" id="image" role="tabpanel" aria-labelledby="tab-image">
+    <div class="tab-pane fade {% if active == "image" %}show active{% endif %}" id="image" role="tabpanel" aria-labelledby="tab-image">
       <input type="hidden" name="active_tab" value="image">
       <h5 class="card-title">Image selection</h5>
       <select name="container_image_id">
@@ -40,21 +44,21 @@
       </select>
     </div>
 
-    <div class="tab-pane fade show active" id="projects" role="tabpanel" aria-labelledby="tab-projects">
+    <div class="tab-pane fade {% if active == "projects" %}show active{% endif %}" id="projects" role="tabpanel" aria-labelledby="tab-projects">
       <input type="hidden" name="active_tab" value="projects">
       <h5 class="card-title">Select projects to associate with the service environment</h5>
       {% render_table t_projects %}
     </div>
     
-    <div class="tab-pane fade" id="volumes" role="tabpanel" aria-labelledby="tab-volumes">...</div>
+    <div class="tab-pane fade {% if active == "volumes" %}show active{% endif %}" id="volumes" role="tabpanel" aria-labelledby="tab-volumes">...</div>
 
-    <div class="tab-pane fade" id="filesync" role="tabpanel" aria-labelledby="tab-filesync">
+    <div class="tab-pane fade {% if active == "filesync" %}show active{% endif %}" id="filesync" role="tabpanel" aria-labelledby="tab-filesync">
       <input type="hidden" name="active_tab" value="filesync">
       <h5 class="card-title">Select synchronized libraries to associate with the service environment</h5>
       {% render_table t_synclibs %}
     </div>
 
-    <div class="tab-pane fade" id="versioncontrol" role="tabpanel" aria-labelledby="tab-vc">
+    <div class="tab-pane fade {% if active == "versioncontrol" %}show active{% endif %}" id="versioncontrol" role="tabpanel" aria-labelledby="tab-vc">
       <input type="hidden" name="active_tab" value="versioncontrol">
       <h5 class="card-title">Select version control repositores to associate with the service environment</h5>
       {% render_table t_repositories %}
@@ -63,8 +67,60 @@
 
   {% include 'apply_cancel.html' %}
 </form>
+
+<script>
+  $("#serviceConfigTabs li a").on("click", function () {
+    var tab = $( this ).attr("id")
+    console.log( tab )
+
+    if (tab == "tab-projects") {
+      $("#active_tab").attr("value",  "projects")
+      $("#search_field").attr("placeholder",  "Search project")
+      $("#search_field").attr("value", $("#s_projects").attr("value") )
+	    //enable
+    } else if (tab == "tab-image") {
+      $("#active_tab").attr("value",  "image")
+      $("#search_field").attr("placeholder",  "Search")
+      $("#search_field").attr("value", "" )
+	    //disable
+    } else if (tab == "tab-filesync") {
+      $("#active_tab").attr("value",  "filesync")
+      $("#search_field").attr("placeholder",  "Search library")
+      $("#search_field").attr("value", $("#s_library").attr("value") )
+	    //enable
+    } else if (tab == "tab-volumes") {
+      $("#active_tab").attr("value",  "volumes")
+	    //fixme
+    } else if (tab == "tab-versioncontrol") {
+      $("#active_tab").attr("value",  "versioncontrol")
+	    //fixme
+    }
+    console.log( $("#active_tab").attr("value") )
+  })
+</script>
 {% endblock %}
 
 {% block main_content_right %}
   {% include 'container/hint_config.html' %}
 {% endblock %}
+
+{% block navsearch %}
+<form class="d-flex" action="{% url 'service:c_search' container.id %}" method="post">
+  {% csrf_token %}
+  <input type="hidden" name="active_tab" id="active_tab" value="{{ active }}">
+  <input type="hidden" id="s_projects" value="{{ user.search.service_projects }}">
+  <input type="hidden" id="s_library" value="{{ user.search.service_library }}">
+  <input class="form-control me-2" type="search" id="search_field" name="pattern"
+    {% if active == "projects" %}
+      value="{{ user.search.service_projects }}" placeholder="Search project"
+    {% elif active == "filesync" %}
+      value="{{ user.search.service_filesync }}" placeholder="Search library"
+    {% else %}
+      value="" placeholder="Search"
+    {% endif %}
+      aria-label="Search">
+  <button class="btn btn-outline-secondary" type="submit" name="button" value="search">Search</button>
+</form>
+{% endblock %}
+
+

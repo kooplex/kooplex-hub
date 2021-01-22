@@ -1,6 +1,6 @@
 {% with x=project.userprojectbindings|length %}
 {% if x > 1  %}
-<div class="dropdown">
+<div class="dropdown" data-bs-toggle="tooltip" data-bs-placement="top" title="Collaborators of project {{ project.name }}">
   <button class="btn btn-outline-secondary dropdown-toggle btn-sm" type="button" id="dc-collabs-{{ project.id }}" data-bs-toggle="dropdown" aria-expanded="false">
     <i class="oi oi-people"></i>: {{x|add:"-1"}}
   </button>

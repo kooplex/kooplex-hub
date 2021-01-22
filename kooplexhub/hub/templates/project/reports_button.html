@@ -1,5 +1,5 @@
 {% if project.reports|length > 0 %}
-<div class="dropdown">
+<div class="dropdown" data-bs-toggle="tooltip" data-bs-placement="top" title="Reports related to project {{ project.name }}">
   <button class="btn btn-outline-secondary dropdown-toggle btn-sm" type="button" id="dc-reports-{{ project.id }}" data-bs-toggle="dropdown" aria-expanded="false">
     <i class="oi oi-graph"></i>: {{project.reports|length}}
   </button>

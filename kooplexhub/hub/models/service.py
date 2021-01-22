@@ -47,14 +47,14 @@ class Service(models.Model):
 
     name = models.CharField(max_length = 200, null = False)
     user = models.ForeignKey(User, null = False)
-    suffix = models.CharField(max_length = 200, null = True, default = None)
+    suffix = models.CharField(max_length = 200, null = True, default = None, blank = True)
     image = models.ForeignKey(Image, null = False)
-    launched_at = models.DateTimeField(null = True)
+    launched_at = models.DateTimeField(null = True, blank = True)
 
     state = models.CharField(max_length = 16, choices = ST_LOOKUP.items(), default = ST_NOTPRESENT)
     restart_reasons = models.CharField(max_length = 512, null = True)
     last_message = models.CharField(max_length = 512, null = True)
-    last_message_at = models.DateTimeField(default = None, null = True)
+    last_message_at = models.DateTimeField(default = None, null = True, blank = True)
 
     class Meta:
         unique_together = [['user', 'name', 'suffix']]
@@ -123,9 +123,9 @@ class Service(models.Model):
         ##for p in self.projects:
         ##    reports = reports.union( Report.objects.filter(project = p) )
         ##return reports
-        reports = None
+        reports = Report.objects.none()
         for p in self.projects:
-            if reports is None:
+            if reports is Report.objects.none():
                 reports = Report.objects.filter(project = p)
             else:
                 reports = reports.union( Report.objects.filter(project = p) )

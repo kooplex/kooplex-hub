@@ -55,7 +55,7 @@ def new(request):
                     else:
                         messages.info(request, f'Project {project} is added to svc {svc.name}')
             else:
-                image = Image.objects.get(id = form.cleaned_data['image'])
+                image = form.cleaned_data['image']
                 svc = Service.objects.create(name = projectname, user = request.user, image = image)
                 ProjectServiceBinding.objects.create(project = project, service = svc)
                 messages.info(request, f'New service {svc.name} is created with image {svc.image.name}')
@@ -73,7 +73,7 @@ def new(request):
 def join(request):
     logger.debug("user %s" % request.user)
     user = request.user
-    pattern = request.POST.get('project_or_creator', '')
+    pattern = request.POST.get('project_or_creator', user.search.project_join)
     search = request.POST.get('button', '') == 'search'
     listing = request.method == 'GET' or (request.method == 'POST' and search)
     if listing:
@@ -82,11 +82,13 @@ def join(request):
         joinable_bindings = joinable_bindings.exclude(Q(project__in = joined_projects))
         if pattern:
             joinable_bindings = joinable_bindings.filter(Q(project__name__icontains = pattern) | Q(user__first_name__icontains = pattern) | Q(user__last_name__icontains = pattern) | Q(user__username__icontains = pattern))
+        if len(joinable_bindings) and pattern != user.search.project_join:
+            user.search.project_join = pattern
+            user.search.save()
         table_joinable = T_JOINABLEPROJECT(joinable_bindings)
         RequestConfig(request).configure(table_joinable)
         context_dict = {
             't_joinable': table_joinable,
-            'search_value': pattern,
         }
         return render(request, 'project/join.html', context = context_dict)
     else:
@@ -120,11 +122,14 @@ def listprojects(request):
     """Renders the projectlist page for courses taught."""
     user = request.user
     logger.debug(f'Rendering project.html {user}')
-    pattern_name = request.POST.get('project', '')
-    if pattern_name:
-        projectbindings = UserProjectBinding.objects.filter(user = user, project__name__icontains = pattern_name)
+    pattern = request.POST.get('project', user.search.project_list)
+    if pattern:
+        projectbindings = UserProjectBinding.objects.filter(user = user, project__name__icontains = pattern)
     else:
         projectbindings = UserProjectBinding.objects.filter(user = user, is_hidden = False)
+    if len(projectbindings) and pattern != user.search.project_list:
+        user.search.project_list = pattern
+        user.search.save()
     no_svc = lambda pb: len(pb.project.get_userz_services(user)) == 0
     no_svc_msg = ', '.join([ pb.project.name for pb in filter(no_svc, projectbindings) ])
     if no_svc_msg:
@@ -133,7 +138,6 @@ def listprojects(request):
     context_dict = {
         'menu_project': 'active',
         'projectbindings': projectbindings,
-        'search_value': pattern_name,
     }
     return render(request, 'project/list.html', context = context_dict)
 
@@ -142,14 +146,13 @@ def listprojects(request):
 def configure(request, project_id):
     user = request.user
     logger.debug("method: %s, project id: %s, user: %s" % (request.method, project_id, user))
-    pattern_collaborator = request.POST.get('collaborator', '')
+
     search = request.POST.get('button', '') == 'search'
     cancel = request.POST.get('button', '') == 'cancel'
     submit = request.POST.get('button', '') == 'apply'
     if cancel:
         return redirect('project:list')
 
-    listing = request.method == 'GET' or (request.method == 'POST' and search)
     try:
         project = Project.get_userproject(project_id = project_id, user = request.user)
     except Project.DoesNotExist as e:
@@ -253,28 +256,43 @@ def configure(request, project_id):
     else:
         if project.is_admin(user):
             table = table_collaboration(project)
-            if pattern_collaborator:
-                table_collaborators = table(user.profile.everybodyelse_like(pattern_collaborator))
+            if search and request.POST.get('active_tab') == 'collaboration':
+                pattern = request.POST.get('pattern', user.search.project_collaborator)
+                everybodyelse = user.profile.everybodyelse_like(pattern)
+                if len(everybodyelse) and pattern != user.search.project_collaborator:
+                    user.search.project_collaborator = pattern
+                    user.search.save()
+            elif user.search.project_collaborator:
+                everybodyelse = user.profile.everybodyelse_like(user.search.project_collaborator)
             else:
-                table_collaborators = table(user.profile.everybodyelse)
+                everybodyelse = user.profile.everybodyelse
+            table_collaborators = table(everybodyelse)
             RequestConfig(request).configure(table_collaborators)
 
             table_project_services = T_SERVICE(ProjectServiceBinding.objects.filter(service__user = user, project = project))
             RequestConfig(request).configure(table_project_services)
 
             table = table_services(UserProjectBinding.objects.get(user = user, project = project))
-            table_all_services = table(Service.objects.filter(user = user))
+            if search and request.POST.get('active_tab') == 'service':
+                pattern = request.POST.get('pattern', user.search.project_service)
+                svcs = Service.objects.filter(user = user, name__icontains = pattern)
+                if len(svcs) and pattern != user.search.project_service:
+                    user.search.project_service = pattern
+                    user.search.save()
+            elif user.search.project_service:
+                svcs = Service.objects.filter(user = user, name__icontains = user.search.project_service)
+            else:
+                svcs = Service.objects.filter(user = user)
+            table_all_services = table(svcs)
             RequestConfig(request).configure(table_all_services)
         else:
             table_collaborators = None
         context_dict = {
             'project': project, 
+            'active': request.POST.get('active_tab', 'collaboration'),
             't_collaborators': table_collaborators,
             't_services': table_project_services,
             't_all_services': table_all_services,
-            'search_form': { 'action': "project:c_search", 'extra': project.id, 'items': [ 
-                { 'name': "collaborator", 'placeholder': "collaborator", 'value': pattern_collaborator },
-            ] },
         }
         return render(request, 'project/configure.html', context = context_dict)
 
@@ -377,11 +395,14 @@ def show_hide(request):
     """Manage your projects"""
     user = request.user
     logger.debug("user %s method %s" % (user, request.method))
-    pattern_name = request.POST.get('project', '')
-    if pattern_name:
-        userprojectbindings = UserProjectBinding.objects.filter(user = user, project__name__icontains = pattern_name)
+    pattern = request.POST.get('project', user.search.project_showhide)
+    if pattern:
+        userprojectbindings = UserProjectBinding.objects.filter(user = user, project__name__icontains = pattern)
     else:
         userprojectbindings = UserProjectBinding.objects.filter(user = user)
+    if len(userprojectbindings) and pattern != user.search.project_showhide:
+        user.search.project_showhide = pattern
+        user.search.save()
     search = request.POST.get('button', '') == 'search'
     listing = request.method == 'GET' or (request.method == 'POST' and search)
     if listing:
@@ -389,7 +410,6 @@ def show_hide(request):
         RequestConfig(request).configure(table_project)
         context_dict = {
             't_project': table_project,
-            'search_value': pattern_name,
         }
         return render(request, 'project/manage.html', context = context_dict)
     else:

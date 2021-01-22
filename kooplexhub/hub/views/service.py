@@ -45,11 +45,14 @@ def listservices(request):
     """Renders the containerlist page."""
     user = request.user
     logger.debug(f'Rendering service.html {user}')
-    pattern_name = request.POST.get('service', '')
-    if pattern_name:
-        services = Service.objects.filter(user = user, name__icontains = pattern_name)
+    pattern = request.POST.get('service', user.search.service_list)
+    if pattern:
+        services = Service.objects.filter(user = user, name__icontains = pattern)
     else:
         services = Service.objects.filter(user = user)
+    if len(services) and pattern != user.search.service_list:
+        user.search.service_list = pattern
+        user.search.save()
     unbound = Service.objects.filter(user = request.user).exclude(projectservicebinding__gt = 0).exclude(reportservicebinding__gt = 0)
     if unbound:
         messages.warning(request, 'Note, your environments {} are not bound to any projects'.format(', '.join([ s.name for s in unbound ])))
@@ -59,7 +62,6 @@ def listservices(request):
         'next_page': 'service:list',
         'menu_container': 'active',
         'services': services,
-        'search_value': pattern_name,
     }
     return render(request, 'container/list.html', context = context_dict)
 
@@ -162,40 +164,23 @@ def destroyservice(request, environment_id, next_page):
 @login_required
 def configureservice(request, environment_id):
     """Manage your projects"""
-    next_page = 'service:list'
     user = request.user
     logger.debug("user %s method %s" % (user, request.method))
+
+    search = request.POST.get('button', '') == 'search'
+    cancel = request.POST.get('button', '') == 'cancel'
+    submit = request.POST.get('button', '') == 'apply'
+
+    if cancel:
+        return redirect('service:list')
+
     try:
         svc = Service.objects.get(id = environment_id, user = user)
     except Service.DoesNotExist:
         messages.error(request, 'Service environment does not exist')
-        return redirect(next_page)
-    if request.method == 'GET':
-        table = table_projects(svc)
-        #TODO: search fields
-        table_project = table(UserProjectBinding.objects.filter(user = user))
-        RequestConfig(request).configure(table_project)
+        return redirect('service:list')
 
-        table = table_fslibrary(svc)
-        #FIXME: pattern = request.POST.get('library', '')
-        #FIXME: table_synclibs = t(FSLibrary.objects.filter(token__user = user)) if pattern == '' else t(FSLibrary.objects.filter(token__user = user, library_name__icontains = pattern))
-        table_synclibs = table(FSLibrary.objects.filter(token__user = user).exclude(sync_folder__exact = ''))
-        RequestConfig(request).configure(table_synclibs)
-
-        table = table_vcproject(svc)
-        table_repos = table(VCProject.objects.filter(token__user = user).exclude(clone_folder__exact = ''))
-        RequestConfig(request).configure(table_repos)
-
-        context_dict = {
-            'images': Image.objects.all(),
-            'container': svc,
-            't_projects': table_project,
-            't_synclibs': table_synclibs,
-            't_repositories': table_repos,
-            'next_page': 'service:list',
-        }
-        return render(request, 'container/manage.html', context = context_dict)
-    else:
+    if submit:
         msgs = []
 
         # handle image change
@@ -294,7 +279,52 @@ def configureservice(request, environment_id):
         if oops:
             messages.warning(request, 'Some problems (%d) occured during handling yout request.' % (oops))
 
-        return redirect(next_page)
+        return redirect('service:list')
+    else: 
+
+        table = table_projects(svc)
+        if search and request.POST.get('active_tab') == 'projects':
+            pattern = request.POST.get('pattern', user.search.service_projects)
+            upbs = UserProjectBinding.objects.filter(user = user, project__name__icontains = pattern)
+            if len(upbs) and pattern != user.search.service_projects:
+                user.search.service_projects = pattern
+                user.search.save()
+        elif user.search.service_projects:
+            upbs = UserProjectBinding.objects.filter(user = user, project__name__icontains = user.search.service_projects)
+        else:
+            upbs = UserProjectBinding.objects.filter(user = user)
+        table_project = table(upbs)
+        RequestConfig(request).configure(table_project)
+
+        table = table_fslibrary(svc)
+        if search and request.POST.get('active_tab') == 'filesync':
+            pattern = request.POST.get('pattern', user.search.service_library)
+            fsls = FSLibrary.objects.filter(token__user = user, library_name__icontains = pattern).exclude(sync_folder__exact = '')
+            if len(fsls) and pattern != user.search.service_library:
+                user.search.service_library = pattern
+                user.search.save()
+        elif user.search.service_library:
+            fsls = FSLibrary.objects.filter(token__user = user, library_name__icontains = user.search.service_library).exclude(sync_folder__exact = '')
+        else:
+            fsls = FSLibrary.objects.filter(token__user = user).exclude(sync_folder__exact = '')
+        table_synclibs = table(fsls)
+        RequestConfig(request).configure(table_synclibs)
+
+#FIXME: todo search
+        table = table_vcproject(svc)
+        table_repos = table(VCProject.objects.filter(token__user = user).exclude(clone_folder__exact = ''))
+        RequestConfig(request).configure(table_repos)
+
+        context_dict = {
+            'images': Image.objects.all(),
+            'container': svc,
+            'active': request.POST.get('active_tab', 'projects'),
+            't_projects': table_project,
+            't_synclibs': table_synclibs,
+            't_repositories': table_repos,
+            'next_page': 'service:list', #FIXME: deprecate
+        }
+        return render(request, 'container/manage.html', context = context_dict)
 
 
 @login_required
@@ -321,4 +351,5 @@ urlpatterns = [
     url(r'^destroy/(?P<environment_id>\d+)/(?P<next_page>\w+:?\w*)$', destroyservice, name = 'destroy'),
     url(r'^refreshlogs/(?P<environment_id>\d+)$', refreshlogs, name = 'refreshlogs'),
     url(r'^configure/(?P<environment_id>\d+)$', configureservice, name = 'configure'),
+    url(r'^c_search/(?P<environment_id>\d+)$', configureservice, name = 'c_search'),
 ]

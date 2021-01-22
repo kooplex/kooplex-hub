@@ -1,4 +1,5 @@
 from .profile import Profile
+from .search import Search
 
 from .image import Image
 from .proxy import Proxy

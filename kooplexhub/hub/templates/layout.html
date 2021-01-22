@@ -15,6 +15,14 @@
     {% block css_extra %}{% endblock %}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 
+    <style>
+    @media all and (min-width: 992px) {
+    	.navbar .nav-item .dropdown-menu{ display: none; }
+    	.navbar .nav-item:hover .dropdown-menu{ display: block; }
+    	.navbar .nav-item .dropdown-menu{ margin-top: 0; }
+    }
+    </style>
+
     <title>Kooplex Hub</title>
   </head>
   <body>
@@ -57,12 +65,10 @@
           <div class="col-md-3">
              {% include 'message.html' %}
              {% block main_content_left %}{% endblock %}
-          </div>
-          <div class="col-md-7">
-             {% block main_content_center %}{% endblock %}
-          </div>
-          <div class="col-md-2">
              {% block main_content_right %}{% endblock %}
+          </div>
+          <div class="col-md-9">
+             {% block main_content_center %}{% endblock %}
           </div>
         </div>
       </div>

@@ -12,6 +12,9 @@ class FormReport(forms.Form):
     password = forms.CharField(help_text = _('Leave it empty for the public.'), required = False)
     scope = forms.ChoiceField(choices = Report.SC_LOOKUP.items(), help_text = _('Select the scope of the project'), required = True)
 
+    def r_image_descriptions(self):
+        return format_html(''.join([f'<input type="hidden" id="id_image_description-{i.id}" value="{i.description}">' for i in self.fields['image'].queryset ]))
+
     def r_tree(self):
         tree = ""
         icon_index = '<i class="fa fa-globe-europe fa-fw"></i>'

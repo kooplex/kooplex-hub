@@ -43,6 +43,7 @@ def start(service):
             "targetPort": proxy.port,
             "protocol": "TCP",
         })
+
     volumes = []
     volume_mounts = []
     if service.image.require_home:
