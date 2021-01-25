@@ -1,5 +1,6 @@
 
 import github
+import requests
 
 def test_token(vctoken):
     client = github.Github(vctoken.token)
@@ -23,4 +24,10 @@ def list_projects(vctoken):
                 }
 
 def upload_rsa(vctoken):
-    raise NotImplementedError("todo")
+    data = {
+        "key": vctoken.rsa_pub,
+        "title": "kooplex-hub"
+    }
+    headers = { 'Authorization': f'token {vctoken.token}' }
+    R = requests.post(f'https://api.github.com/user/keys', json = data, headers = headers)
+    assert R.status_code == 201, R.text

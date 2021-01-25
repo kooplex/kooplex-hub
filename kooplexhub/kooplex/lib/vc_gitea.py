@@ -1,7 +1,5 @@
 
 import requests
-import logging
-logger = logging.getLogger(__name__)
 
 def test_token(vctoken):
     R = requests.get(f'{vctoken.repository.url}/api/v1/version', params = { 'token': vctoken.token })

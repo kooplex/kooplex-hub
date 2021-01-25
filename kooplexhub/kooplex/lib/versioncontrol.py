@@ -13,6 +13,15 @@ from .vc_gitea import test_token as testtoken_gt, list_projects as lp_gt, upload
 
 logger = logging.getLogger(__name__)
 
+def log_decorator(msg):
+    def inner(func):
+        def wrapper(vctoken):
+            func(vctoken)
+            logger.info(msg.format(vctoken = vctoken))
+        return wrapper
+    return inner
+
+
 def list_projects(vctoken):
     repository = vctoken.repository
     if repository.backend_type == repository.TP_GITHUB:
@@ -24,6 +33,7 @@ def list_projects(vctoken):
     else:
         raise NotImplementedError("Unknown version control system type: %s" % vctoken.type)
 
+@log_decorator('Public RSA key added to {vctoken.repository.url} for user {vctoken.user}')
 def upload_rsa(vctoken):
     repository = vctoken.repository
     if repository.backend_type == repository.TP_GITEA:
@@ -35,6 +45,7 @@ def upload_rsa(vctoken):
     else:
         raise NotImplementedError("Unknown version control system type: %s" % vctoken.type)
 
+@log_decorator('User token match at {vctoken.repository.url} for user {vctoken.user}')
 def test_token(vctoken):
     repository = vctoken.repository
     if repository.backend_type == repository.TP_GITEA:
