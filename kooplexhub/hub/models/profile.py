@@ -21,6 +21,7 @@ class Profile(models.Model):
     userid = models.IntegerField(null = False)
     token = models.CharField(max_length = 64, null = True)
     can_createproject = models.BooleanField(default = True) 
+    can_createimage = models.BooleanField(default = False) 
 
     @property
     def name(self):

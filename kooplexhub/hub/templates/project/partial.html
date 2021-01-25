@@ -4,7 +4,8 @@
     <img src="..." class="card-img-top" alt="...">
 {% endcomment %}
     <div class="card-header bg-info">
-      <span class="badge rounded-pill bg-dark"><strong>{{ project.name }}</strong></span>
+      <!--span class="badge rounded-pill bg-dark"><strong>{{ project.name }}</strong></span-->
+	    <strong style="font-size: x-large;">{{ project.name }}</strong>
       <div class="float-end">
         {% if project.scope == project.SCP_PRIVATE %}
           <i class="oi oi-key" aria-hidden="true" data-bs-toggle="tooltip" title="Private project" data-placement="top"></i>

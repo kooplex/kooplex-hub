@@ -222,6 +222,16 @@ def snapshot_report(report):
     #TODO _grantaccess report reader if different than hub
 
 @sudo
+def grantaccess_report(report, user):
+    dir_report = Dirname.report(report)
+    _grantaccess(user, dir_report)
+
+@sudo
+def revokeaccess_report(report, user):
+    dir_report = Dirname.report(report)
+    _revokeaccess(user, dir_report)
+
+@sudo
 def garbage_report(report):
     dir_source = Dirname.report(report)
     garbage = Filename.report_garbage(report)

@@ -34,6 +34,7 @@
   <div class="tab-content" id="serviceConfigTabContent">
     <div class="tab-pane fade {% if active == "image" %}show active{% endif %}" id="image" role="tabpanel" aria-labelledby="tab-image">
       <input type="hidden" name="active_tab" value="image">
+      <div class="card shadow p-3 mb-5 bg-light rounded">
       <h5 class="card-title">Image selection</h5>
       <select name="container_image_id">
         {% for image in images %}
@@ -43,25 +44,32 @@
         {% endfor %}
       </select>
     </div>
+    </div>
 
     <div class="tab-pane fade {% if active == "projects" %}show active{% endif %}" id="projects" role="tabpanel" aria-labelledby="tab-projects">
       <input type="hidden" name="active_tab" value="projects">
+      <div class="card shadow p-3 mb-5 bg-light rounded">
       <h5 class="card-title">Select projects to associate with the service environment</h5>
       {% render_table t_projects %}
+    </div>
     </div>
     
     <div class="tab-pane fade {% if active == "volumes" %}show active{% endif %}" id="volumes" role="tabpanel" aria-labelledby="tab-volumes">...</div>
 
     <div class="tab-pane fade {% if active == "filesync" %}show active{% endif %}" id="filesync" role="tabpanel" aria-labelledby="tab-filesync">
       <input type="hidden" name="active_tab" value="filesync">
+      <div class="card shadow p-3 mb-5 bg-light rounded">
       <h5 class="card-title">Select synchronized libraries to associate with the service environment</h5>
       {% render_table t_synclibs %}
+    </div>
     </div>
 
     <div class="tab-pane fade {% if active == "versioncontrol" %}show active{% endif %}" id="versioncontrol" role="tabpanel" aria-labelledby="tab-vc">
       <input type="hidden" name="active_tab" value="versioncontrol">
+      <div class="card shadow p-3 mb-5 bg-light rounded">
       <h5 class="card-title">Select version control repositores to associate with the service environment</h5>
       {% render_table t_repositories %}
+    </div>
     </div>
   </div>
 

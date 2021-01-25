@@ -4,7 +4,7 @@
     <img src="..." class="card-img-top" alt="...">
 {% endcomment %}
     <div class="card-header">
-      <span class="badge rounded-pill bg-dark"><strong>{{ service.name }}</strong></span>
+	    <strong style="font-size: x-large;">{{ service.name }}</strong>
       <div class="float-end">
         {% if service.state == service.ST_NEED_RESTART %}
 	<span class="badge rounded-pill bg-danger"><i class="ri-image-2-line"></i>{{ service.image }}</span>

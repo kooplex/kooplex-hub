@@ -340,6 +340,10 @@ def refreshlogs(request, environment_id):
         messages.error(request, f'Cannot refresh service environment information {svc}')
     return redirect('service:list')
 
+@login_required
+def newimage(request):
+    raise NotImplementedError("TBA")
+
 urlpatterns = [
     url(r'^new/?$', new, name = 'new'), 
     url(r'^list/?$', listservices, name = 'list'), 
@@ -352,4 +356,5 @@ urlpatterns = [
     url(r'^refreshlogs/(?P<environment_id>\d+)$', refreshlogs, name = 'refreshlogs'),
     url(r'^configure/(?P<environment_id>\d+)$', configureservice, name = 'configure'),
     url(r'^c_search/(?P<environment_id>\d+)$', configureservice, name = 'c_search'),
+    url(r'^newimage/?$', newimage, name = 'newimage'), 
 ]

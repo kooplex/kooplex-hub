@@ -1,6 +1,13 @@
 
 import github
 
+def test_token(vctoken):
+    client = github.Github(vctoken.token)
+    try:
+        client.get_user(vctoken.username)
+    except github.GithubException as e:
+        raise Exception(e.data['message'])
+
 def list_projects(vctoken):
     client = github.Github(vctoken.token)
     for r in client.get_user().get_repos():
@@ -14,3 +21,6 @@ def list_projects(vctoken):
                 'owner_name': r.owner.login,
                 'ssh_url': r.ssh_url
                 }
+
+def upload_rsa(vctoken):
+    raise NotImplementedError("todo")

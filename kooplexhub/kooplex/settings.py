@@ -87,6 +87,7 @@ TEMPLATES = [
                 'kooplex.lib.context_processors.next_page',
                 'kooplex.lib.context_processors.form_biography',
                 'kooplex.lib.context_processors.form_project',
+                'kooplex.lib.context_processors.form_newimage',
                 'kooplex.lib.context_processors.form_environment',
                 'kooplex.lib.context_processors.user',
                 'kooplex.lib.context_processors.table',

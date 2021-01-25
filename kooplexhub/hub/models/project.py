@@ -15,7 +15,6 @@ from kooplex.lib import standardize_str
 logger = logging.getLogger(__name__)
 
 
-
 class Project(models.Model):
     SCP_PUBLIC = 'public'
     SCP_INTERNAL = 'internal'
@@ -116,9 +115,7 @@ class Project(models.Model):
     @property
     def reports(self):
         from .report import Report
-        #FIXME: filter visible
         return Report.objects.filter(project = self)
-
 
 
     @staticmethod
@@ -226,6 +223,13 @@ def grantaccess_project(sender, instance, created, **kwargs):
     if created and instance.role != UserProjectBinding.RL_CREATOR:
         grantaccess_project(instance)
 
+@receiver(post_save, sender = UserProjectBinding)
+def grantaccess_report(sender, instance, created, **kwargs):
+    from kooplex.lib.filesystem import grantaccess_report
+    if created:
+        for report in instance.project.reports:
+            grantaccess_report(report, instance.user)
+
 @receiver(pre_delete, sender = UserProjectBinding)
 def revokeaccess_project(sender, instance, **kwargs):
     from kooplex.lib.filesystem import revokeaccess_project
@@ -236,6 +240,13 @@ def garbagedir_project(sender, instance, **kwargs):
     from kooplex.lib.filesystem import garbagedir_project
     if instance.role == UserProjectBinding.RL_CREATOR:
         garbagedir_project(instance.project)
+
+@receiver(post_save, sender = UserProjectBinding)
+def revokeaccess_report(sender, instance, **kwargs):
+    from kooplex.lib.filesystem import revokeaccess_report
+    for report in instance.project.reports:
+        revokeaccess_report(report, instance.user)
+
 
 @receiver(pre_delete, sender = UserProjectBinding)
 def assert_not_shared(sender, instance, **kwargs):

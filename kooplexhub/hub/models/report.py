@@ -17,7 +17,6 @@ from kooplex.lib import  standardize_str, now, human_localtime, add_report_nginx
 logger = logging.getLogger(__name__)
 
 
-
 class Report(models.Model):
     SC_PRIVATE = 'private'
     SC_INTERNAL = 'internal'
@@ -97,11 +96,5 @@ def garbage_report(sender, instance, **kwargs):
     from kooplex.lib.filesystem import garbage_report
     garbage_report(instance)
 
-
-
-#TODO: make use of it
-###class ReportTag(models.Model):
-###    name = models.CharField(max_length = 200, null = False)
-###    report = models.ForeignKey(Report, null = False)
 
 

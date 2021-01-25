@@ -22,6 +22,9 @@ class Search(models.Model):
 
     report_list = models.CharField(max_length = 30, blank = True, null = True, default = "")
 
+    external_library = models.CharField(max_length = 30, blank = True, null = True, default = "")
+    external_repository = models.CharField(max_length = 30, blank = True, null = True, default = "")
+
 @receiver(post_save, sender = User)
 def create_user_search(sender, instance, created, **kwargs):
     try:

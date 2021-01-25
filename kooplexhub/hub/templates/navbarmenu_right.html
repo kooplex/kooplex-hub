@@ -12,7 +12,7 @@
       Log in
      {% endif %}
     </a>
-  <ul class="dropdown-menu" aria-labelledby="navbarDropdownRight">
+  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownRight">
    {% if user.is_authenticated %}
     <li><a class="dropdown-item" href="{% url 'logout' %}">Logout <span class="oi oi-account-logout"></span></a></li>
     <li><a class="dropdown-item" href="#" data-toggle="modal" data-target="#update-bio">Update bio</a></li>

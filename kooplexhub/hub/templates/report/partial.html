@@ -1,7 +1,7 @@
 <div class="col">
   <div class="card border-success shadow">
     <div class="card-header bg-secondary text-dark">
-      <strong>{{ report.name }}</strong>
+	    <strong style="font-size: large;">{{ report.name }}</strong>
       {% if report.service.state == report.service.ST_RUNNING %}
         <div class="float-end">
           <a href="{% url 'report:openreport' report.id %}" target="_blank" role="button" class="btn btn-dark btn-sm"><span class="oi oi-external-link" aria-hidden="true"></span></a>

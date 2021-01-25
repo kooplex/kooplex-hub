@@ -7,17 +7,22 @@
 {% block main_content_center %}
   <form id="newreportForm" class="form-horizontal form-control" action="{% url 'report:new' %}" method="post">
     {% csrf_token %}
-    <div class="container">
+    <div class="container" style="margin-left:0px">
       <div class="row">
         <div class="col-lg">
+         <div class="card shadow p-2 mb-5 bg-light rounded">
+           <div class="card-header">
+         <h5 class="card-title">Create new report</h5>
           <table>
             {{ f_report.as_table }}
             {{ f_report.r_tree }}
           </table>
+	   </div>
+	 </div>
           {{ f_report.r_image_descriptions }}
         </div>
         <div class="col-sm">
-          <div class="card">
+          <div class="card shadow p-3 mb-5 bg-light rounded">
             <div class="card-header">
               <h5 class="card-title">Image description</h5>
             </div>
@@ -51,11 +56,18 @@
 {% endblock %}
 
 {% block main_content_right %}
-<ul>
-        <li><span class="badge rounded-pill bg-info">HTML</span> - static or interactive </li>
-        <li><span class="badge rounded-pill bg-success">NB</span> - notebook</li>
-        <li><span class="badge rounded-pill bg-warning">API</span> - a served host application with functional endpoints</li>
-        <li><span class="badge rounded-pill bg-primary">BOKEH</span> - bokeh application</li>
-</ul>
+   <div class="card shadow p-3 mb-5 bg-light rounded">
+     <div class="card-header">
+       <h5 class="card-title">Report types</h5>
+     </div>
+     <div class="card-body">
+      <ul>
+              <li><span class="badge rounded-pill bg-info">HTML</span> - static or interactive </li>
+              <li><span class="badge rounded-pill bg-success">REPORT</span> - interactive report</li>
+              <li><span class="badge rounded-pill bg-warning">API</span> - a served host application with functional endpoints</li>
+              <!--li><span class="badge rounded-pill bg-primary">BOKEH</span> - bokeh application</li-->
+      </ul>
+     </div>
+   </div>
 {% endblock %}
 

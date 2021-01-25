@@ -1,8 +1,15 @@
 import logging
 import re
+import base64
+
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import padding
 
 from django.db import models
-from django.db.models.signals import post_save, pre_delete, post_delete
+from django.db.models.signals import pre_save, post_save, pre_delete, post_delete
 from django.dispatch import receiver
 from django.contrib.auth.models import User
 from django.template.defaulttags import register
@@ -43,10 +50,45 @@ class VCToken(models.Model):
     repository = models.ForeignKey(VCRepository, null = False)
     username = models.CharField(max_length = 256, null = False)
     token = models.CharField(max_length = 256, null = False) # FIXME: dont store as clear text
-    rsa = models.CharField(max_length = 2048, null = False)
-    last_used = models.DateTimeField(null = True)
-    error_flag = models.BooleanField(default = False)       # TODO: save error message maybe stored in a separate table
+    rsa = models.CharField(max_length = 4096, null = False, blank = True)
+    last_used = models.DateTimeField(null = True, blank = True)
+    error_flag = models.BooleanField(default = False, blank = True)
 
+    @property
+    def rsa_pub(self):
+        private_key = serialization.load_pem_private_key(
+            bytes(self.rsa, 'utf8'),
+            password = None,
+            backend = default_backend()
+        )
+        public_key = private_key.public_key()
+        return public_key.public_bytes(
+            encoding = serialization.Encoding.OpenSSH,
+            format = serialization.PublicFormat.OpenSSH
+        ).decode('utf8')
+
+@receiver(pre_save, sender = VCToken)
+def generate_rsa(sender, instance, **kwargs):
+    if not instance.id and not instance.rsa:
+        private_key = rsa.generate_private_key(
+            public_exponent = 65537,
+            key_size = 4096,
+            backend = default_backend()
+        )
+        instance.rsa = private_key.private_bytes(
+            encoding = serialization.Encoding.PEM,
+            format = serialization.PrivateFormat.PKCS8,
+            encryption_algorithm = serialization.NoEncryption()
+        )
+
+@receiver(post_save, sender = VCToken)
+def upload_rsa(sender, instance, created, **kwargs):
+    from kooplex.lib.versioncontrol import upload_rsa
+    if created:
+        try:
+            upload_rsa(instance)
+        except Exception as e:
+            logger.error(f'Cannot upload rsa {instance} -- {e}')
 
 class VCProject(models.Model):
     token = models.ForeignKey(VCToken, null = False)

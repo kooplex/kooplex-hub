@@ -7,7 +7,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django_tables2 import RequestConfig
 
-from kooplex.lib import list_projects, impersonator_repo
+from kooplex.lib import list_projects, test_token, upload_rsa, impersonator_repo
 from kooplex.lib import list_libraries, impersonator_sync
 from kooplex.lib import now
 from kooplex.lib import seafilepw_update
@@ -24,8 +24,14 @@ logger = logging.getLogger(__name__)
 def filesynchronization(request):
     user = request.user
     logger.debug("user %s" % user)
-    pattern = request.POST.get('library', '')
-    libraries = FSLibrary.objects.filter(token__user = user) if pattern == '' else FSLibrary.objects.filter(token__user = user, library_name__icontains = pattern)
+    pattern = request.POST.get('library', user.search.external_library)
+    if pattern:
+        libraries = FSLibrary.objects.filter(token__user = user, library_name__icontains = pattern)
+    else:
+        libraries = FSLibrary.objects.filter(token__user = user)
+    if len(libraries) and pattern != user.search.external_library:
+        user.search.external_library = pattern
+        user.search.save()
     tbl_libraries = T_FSLIBRARY_SYNC(libraries)
     RequestConfig(request).configure(tbl_libraries)
     context_dict = {
@@ -189,9 +195,14 @@ def fs_commit(request):
 def versioncontrol(request):
     user = request.user
     logger.debug("user %s" % user)
-    vc_tokens = VCToken.objects.filter(user = user)  #FIXME: user.profile.vctokens HASZNALJUK VALAHOL
-    pattern = request.POST.get('repository', '')
-    repositories = VCProject.objects.filter(token__user = user) if pattern == '' else VCProject.objects.filter(token__user = user, project_name__icontains = pattern)
+    pattern = request.POST.get('repository', user.search.external_repository)
+    if pattern:
+        repositories = VCProject.objects.filter(token__user = user, project_name__icontains = pattern)
+    else:
+        repositories = VCProject.objects.filter(token__user = user)
+    if len(repositories) and pattern != user.search.external_repository:
+        user.search.external_repository = pattern
+        user.search.save()
     tbl_repositories = T_REPOSITORY_CLONE(repositories)
     RequestConfig(request).configure(tbl_repositories)
     context_dict = {
@@ -199,9 +210,14 @@ def versioncontrol(request):
         'menu_service': 'active',
         'reposervers': VCRepository.objects.all(),
         'tbl_repositories': tbl_repositories,
-        'search_form': { 'action': "service_external:vc_search", 'items': [ { 'name': "repository", 'placeholder': "vc. project", 'value': pattern } ] },
     }
     return render(request, 'external_service/versioncontrol.html', context = context_dict)
+
+
+
+
+
+
 
 @login_required
 def vc_refresh(request, token_id):
@@ -295,46 +311,46 @@ def vc_commit(request):
     return redirect('service_external:versioncontrol')
 
 
-def vc_updatetoken(request, server_id):
+def vc_tokenmanagement(request, server_id):
     user = request.user
     logger.debug("user %s" % user)
-    button = request.POST.get('do')
-    rsa = request.POST.get('rsa').strip()
+    button = request.POST.get('button')
     token = request.POST.get('token').strip()
     un = request.POST.get('username').strip()
     try:
-        assert len(rsa), "The RSA key cannot be empty"
-        assert len(token), "Your token cannot be empty"
-        assert len(un), "Your username cannot be empty"
+        assert len(token), "your token cannot be empty"
+        assert len(un), "your username cannot be empty"
         repository = VCRepository.objects.get(id = server_id)
     except AssertionError as e:
         messages.error(request, "Cannot create your token: %s" % e)
         logger.error("user %s cannot save vctoken -- %s" % (user, e))
         return redirect('service_external:versioncontrol')
     except VCRepositoty.DoesNotExist:
-        messages.error(request, "Do not abuse system")
         logger.error("user %s tries to access undefined repository" % (user))
         return redirect('service_external:versioncontrol')
-    if button == 'Add':
+    if button == 'newtoken':
         try:
-            vctoken = VCToken.objects.create(repository = repository, user = user, username = un, rsa = rsa, token = token)
+            vctoken = VCToken.objects.create(repository = repository, user = user, username = un, token = token)
             messages.info(request, "Your vctoken for %s token is saved" % vctoken.repository)
             logger.info(f'Token created for {user} at {repository}')
+            test_token(vctoken)
+            upload_rsa(vctoken)
+            logger.info(f'Generated RSA public kes uploaded.')
         except Exception as e:
             messages.error(request, "Cannot create your token")
             logger.error("user %s cannot save vctoken -- %s" % (user, e))
-    elif button == 'Update':
+    elif button == 'updatetoken':
         try:
             token_id = request.POST.get('token_id')
             vctoken = VCToken.objects.get(repository = repository, user = user, id = token_id)
             vctoken.username = un
-            vctoken.rsa = rsa
             vctoken.token = token
+            test_token(vctoken)
             vctoken.save()
-            messages.info(request, "Your vctoken for %s token is updated" % vctoken.repository)
+            messages.info(request, f'Your token for {vctoken.repository} is updated')
             logger.info(f'Token updated for {user} at {repository}')
         except Exception as e:
-            messages.error(request, "Cannot update your token")
+            messages.error(request, f"Cannot update your token: {e}")
             logger.error("user %s cannot update vctoken -- %s" % (user, e))
     return redirect('service_external:versioncontrol')
 
@@ -365,8 +381,7 @@ urlpatterns = [
     url(r'^versioncontrol', versioncontrol, name = 'versioncontrol'), 
     url(r'^vc_search', versioncontrol, name = 'vc_search'), 
     url(r'^vc_refresh/(?P<token_id>\d+)', vc_refresh, name = 'vc_refresh'), 
-    url(r'^vc_updatetoken/(?P<server_id>\d+)', vc_updatetoken, name = 'vc_tokenmanagement'), 
-    url(r'^vc_droptoken/(?P<token_id>\d+)', vc_droptoken, name = 'vc_droptoken'), 
+    url(r'^vc_token/(?P<server_id>\d+)', vc_tokenmanagement, name = 'vc_tokenmanagement'),
     url(r'^vc_clone', vc_commit, name = 'commit_repo'), 
 ]
 

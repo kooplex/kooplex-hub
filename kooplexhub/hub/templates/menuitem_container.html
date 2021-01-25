@@ -5,6 +5,13 @@
   <ul class="dropdown-menu" aria-labelledby="navbarDropdownContainer">
     <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#container-new">New environment</a></li>
     <li><a class="dropdown-item" href="{% url 'service:list' %}">List Environments</a></li>
+    <li><hr class="dropdown-divider"></li>
+    {% if user.profile.can_createimage %}
+      <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#image-new">Create image</a></li>
+    {% else %}
+      <li><a class="dropdown-item disabled" href="#">Create image</a></li>
+    {% endif %}
   </ul>
 </li>
 {% include "container/new.html" %}
+{% include "container/newimage.html" %}

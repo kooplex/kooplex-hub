@@ -1,4 +1,5 @@
 from .profile import FormBiography
+from .image import FormImage
 from .project import FormProject
 from .report import FormReport
 from .service import FormService

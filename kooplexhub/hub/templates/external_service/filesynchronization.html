@@ -10,7 +10,7 @@
   {% load render_table from django_tables2 %}
   <form id="fsSyncForm" class="form-horizontal form-control" action="{% url 'service_external:commit_sync' %}" method="post">
     {% csrf_token %}
-    <div class="card">
+    <div class="card shadow bg-light p-1 mb-5  rounded">
       <div class="card-header">
         <h3>Libraries to synchronize</h3>
       </div>
@@ -22,7 +22,7 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card shadow bg-light p-1 mb-5  rounded">
       <div class="card-header">
 	<h3>Connected services</h3>
       </div>
@@ -74,11 +74,7 @@
 {% block navsearch %}
 <form class="d-flex" action="{% url 'service_external:fs_search' %}" method="post">
   {% csrf_token %}
-  <input class="form-control me-2" type="search" name="library" placeholder="Search library" 
-    {% if search_value %}  
-      value="{{ search_value }}" 
-    {% endif %}  
-      aria-label="Search">
+  <input class="form-control me-2" type="search" name="library" placeholder="Search library" value="{{ search_value }}" aria-label="Search">
   <button class="btn btn-outline-secondary" type="submit" name="button" value="search">Search</button>
 </form>
 {% endblock %}

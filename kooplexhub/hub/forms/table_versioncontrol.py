@@ -13,9 +13,22 @@ def table_vcproject(service):
     class SelectColumn(tables.Column):
         def render(self, record):
             if record in lookup.keys():
-                return format_html('<input type="hidden" name="vcpsb_ids_before" value="{0}"><input type="checkbox" name="vcpsb_ids_after" value="{0}" checked data-toggle="toggle" data-on="Attached" data-off="Detach" data-onstyle="success" data-offstyle="dark" data-size="xs">'.format(lookup[record]))
+                template = f"""
+<div class="form-check form-switch">
+  <input type="hidden" name="vcpsb_ids_before" value="{lookup[record]}">
+  <input class="form-check-input" type="checkbox" id="cb_vcpsb-{record.id}" name="vcpsb_ids_after" value="{lookup[record]}" checked />
+  <label class="form-check-label" for="cb_vcpsb-{record.id}"> Mounted</label>
+</div>
+                """
+                return format_html(template)
             else:
-                return format_html('<input type="checkbox" name="vcp_ids" data-toggle="toggle" value="{}" data-on="Attach" data-off="Unused" data-onstyle="success" data-offstyle="dark" data-size="xs">'.format(record.id))
+                template = f"""
+<div class="form-check form-switch">
+  <input class="form-check-input" type="checkbox" id="cb_vcp-{record.id}" name="vcp_ids" value="{record.id}" />
+  <label class="form-check-label" for="cb_vcp-{record.id}"> Unused</label>
+</div>
+                """
+                return format_html(template)
     sc = SelectColumn
     
     class ServiceColumn(tables.Column):
@@ -41,7 +54,7 @@ def table_vcproject(service):
 
 
 class T_REPOSITORY_CLONE(tables.Table):
-    id = tables.Column(verbose_name = 'Status', orderable = False)
+    id = tables.Column(verbose_name = 'Task', orderable = False)
     class ReposColumn(tables.Column):
         def render(self, record):
             repo = record.token.repository
@@ -61,9 +74,22 @@ class T_REPOSITORY_CLONE(tables.Table):
 
     def render_id(self, record):
         if record.cloned:
-            return format_html('<input type="checkbox" data-toggle="toggle" name="removecache" value="{}" data-on="Remove" data-off="Cloned" data-onstyle="danger" data-offstyle="success" data-size="xs"'.format(record.id))
+            template = f"""
+<div class="form-check form-switch">
+  <input class="form-check-input" type="checkbox" id="cb_rc-{record.id}" name="removecache" value="{record.id}" checked />
+  <label class="form-check-label" for="cb_rc-{record.id}"> Keep</label>
+</div>
+            """
+            return format_html(template)
         else:
-            return format_html('<input type="checkbox" data-toggle="toggle" name="clone" value="{}" data-on="Clone" data-off="Unused" data-onstyle="success" data-offstyle="secondary" data-size="xs">'.format(record.id))
+            template = f"""
+<div class="form-check form-switch">
+  <input class="form-check-input" type="checkbox" id="cb_cl-{record.id}" name="clone" value="{record.id}" />
+  <label class="form-check-label" for="cb_cl-{record.id}"> Clone</label>
+</div>
+            """
+            return format_html(template)
+ 
     def render_project_name(self, record):
         return format_html(f'<span data-toggle="tooltip" title="Description: {record.project_description}\nCreated at: {record.project_created_at}" data-placement="bottom">{record.project_name} ({record.project_owner})</span>')
 
@@ -83,9 +109,22 @@ def s_column(project):
     class SelectColumn(tables.Column):
         def render(self, record):
             if record in lookup.keys():
-                return format_html('<input type="hidden" name="vcppb_ids_before" value="{0}"><input type="checkbox" name="vcppb_ids_after" value="{0}" checked data-toggle="toggle" data-on="Attached" data-off="Detach" data-onstyle="success" data-offstyle="dark" data-size="xs">'.format(lookup[record]))
+                template = f"""
+<div class="form-check form-switch">
+  <input type="hidden" name="vcppb_ids_before" value="{lookup[record]}">
+  <input class="form-check-input" type="checkbox" id="cb_vcppb-{record.id}" name="vcppb_ids_after" value="{lookup[record]}" checked />
+  <label class="form-check-label" for="cb_vcppb-{record.id}"> Mounted</label>
+</div>
+                """
+                return format_html(template)
             else:
-                return format_html('<input type="checkbox" name="vcp_ids" data-toggle="toggle" value="{}" data-on="Attach" data-off="Unused" data-onstyle="success" data-offstyle="dark" data-size="xs">'.format(record.id))
+                template = f"""
+<div class="form-check form-switch">
+  <input class="form-check-input" type="checkbox" id="cb_vcp-{record.id}" name="vcp_ids" value="{record.id}" />
+  <label class="form-check-label" for="cb_vcp-{record.id}"> Unused</label>
+</div>
+                """
+                return format_html(template)
     return SelectColumn
 
 class ProjectsColumn(tables.Column):
