@@ -1,18 +1,18 @@
 <div class="col">
-  <div class="card text-dark bg-light border-info shadow">
+  <div class="card text-white bg-primary border-info shadow ">
 {% comment %}
     <img src="..." class="card-img-top" alt="...">
 {% endcomment %}
-    <div class="card-header bg-info">
-      <!--span class="badge rounded-pill bg-dark"><strong>{{ project.name }}</strong></span-->
-	    <strong style="font-size: x-large;">{{ project.name }}</strong>
-      <div class="float-end">
-        {% if project.scope == project.SCP_PRIVATE %}
-          <i class="oi oi-key" aria-hidden="true" data-bs-toggle="tooltip" title="Private project" data-placement="top"></i>
-        {% else %}
-          <i class="oi oi-cloud" aria-hidden="true" data-bs-toggle="tooltip" title="Public project" data-placement="top"></i>
-        {% endif %}
-      </div>
+    <div class="card-header bg-primary">
+      <h5 class="card-title">{{ project.name }}
+        <div class="float-end">
+          {% if project.scope == project.SCP_PRIVATE %}
+            <i class="oi oi-key h6" aria-hidden="true" data-bs-toggle="tooltip" title="Private project" data-placement="top"></i>
+          {% else %}
+            <i class="oi oi-cloud h6" aria-hidden="true" data-bs-toggle="tooltip" title="Public project" data-placement="top"></i>
+          {% endif %}
+        </div>
+      </h5>
     </div>
     <div class="card-body text-dark bg-light">
       {% if project.creator != user %}
@@ -28,7 +28,7 @@
        </div>
       </p>
     </div>
-    <div class="card-footer bg-info">
+    <div class="card-footer bg-primary">
       <div class="float-end">
         {% if project|is_admin:user %}
           <a href="{% url 'project:configure' project.id %}" role="button" class="btn btn-secondary btn-sm"><span class="oi oi-wrench" aria-hidden="true" data-toggle="tooltip" title="Settings of project {{ project.name }}. You can modify collaboration and bind environments." data-placement="top" ></span></a>

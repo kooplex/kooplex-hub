@@ -5,77 +5,77 @@
 {% endblock %}
 
 {% block main_content_center %}
-    <div class="card shadow bg-light p-1 mb-5  rounded">
-  {% load render_table from django_tables2 %}
-  <form id="vcRepoForm" class="form-horizontal form-control" action="{% url 'service_external:commit_repo' %}" method="post">
+<form id="vcRepoForm" action="{% url 'service_external:commit_repo' %}" method="post">
+  <div class="card shadow bg-light rounded p-1 mb-5">
+    {% load render_table from django_tables2 %}
     {% csrf_token %}
-      <div class="card-header">
-        <h3>Repositories to clone</h3>
-      </div>
-      <div class="card-body">
-        {% render_table tbl_repositories %}
-      </div>
-      <div class="card-footer">
-        {% include 'apply_cancel.html' with hide_cancel=True %}
-      </div>
-  </form>
-    </div>
-
-  <div class="card shadow bg-light p-1 mb-5  rounded">
     <div class="card-header">
-      <h3>Connected services</h3>
+      <h3>Repositories to clone</h3>
     </div>
     <div class="card-body">
-      <div class="card-group">
-        {% for s in reposervers %}
-          {% with t=s|get_userz_vctoken:user %}
-            <div class="card">
-	      <form id="vc_details_{{ s.id }}" method="post" action="{% url 'service_external:vc_tokenmanagement' s.id %}">
-                {% csrf_token %}
-                <div class="card-header">
-                  <a href="{{ s.url }}" rel="noreferrer" target="_blank" role="button" class="btn btn-outline-secondary">{{ s.url }}</a>
-                </div>
-                <div class="card-body">
-                {% if t %}
-      	          <p class="card-text"><strong>Last updated:</strong> {{ t.last_used }}</p>
-                {% else %}
-	          <p class="card-text"><strong>Note:</strong> Make sure you login to {{ s.url}} and generate a token. An RSA key pair is to be generated for you and to be uploaded as kooplex-hub.</p>
-                {% endif %}
-
-	          <input type="hidden" name="token_id" value="{{ t.id }}">
-                  <table>
-                    <tr>
-	              <th><label for="id_name-{s.id}">Registered username: </label></th>
-	              <td><input type="text" name="username" value="{% if t %}{{ t.username }}{% else %}{{ user.username }}{% endif %}" id="id_name-{s.id}"></td>
-	            </tr>
-                    <tr>
-	              <th><label for="id_token-{t.id}">Generated token: </label></th>
-	              <td><input type="password" name="token" placeholder="copied from git server" id="id_token-{s.id}"></td>
-	            </tr>
-	          </table>
-      	        </div>
-                <div class="card-footer">
-      	          <a href="{{ s.url }}" rel="noreferrer" target="_blank" role="button" class="btn btn-secondary"><span class="oi oi-external-link" aria-hidden="true"></span></a>
-                  {% if t %}
-                    <a href="{% url 'service_external:vc_refresh' t.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Last updated: {{ t.last_used }}" data-placement="top">Refresh</a>
-                    <div class="float-end">
-                      <button type="submit" class="btn btn-danger" name="button" value="updatetoken" data-toggle="tooltip" title="Create a new token" data-placement="top">Update token</button>
-                      <button type="submit" class="btn btn-danger" name="button" value="droptoken" data-toggle="tooltip" title="Drop token" data-placement="top">Drop token</button>
-                    </div>
-                  {% else %}
-                    <a href="#" role="button" class="btn btn-secondary disabled" data-toggle="tooltip" title="Disabled" data-placement="top">Refresh</a>
-                    <div class="float-end">
-                      <button type="submit" class="btn btn-danger" name="button" value="newtoken" data-toggle="tooltip" title="Create a new token" data-placement="top">New token</button>
-                    </div>
-                  {% endif %}
-                </div>
-              </form>
-            </div>
-          {% endwith %}
-        {% endfor %}
-      </div>
+      {% render_table tbl_repositories %}
+    </div>
+    <div class="card-footer">
+      {% include 'apply_cancel.html' with hide_cancel=True %}
     </div>
   </div>
+</form>
+
+<div class="card shadow bg-light p-1 mb-5">
+  <div class="card-header">
+    <h3>Connected services</h3>
+  </div>
+  <div class="card-body">
+    <div class="card-group">
+      {% for s in reposervers %}
+        {% with t=s|get_userz_vctoken:user %}
+          <div class="card">
+            <form id="vc_details_{{ s.id }}" method="post" action="{% url 'service_external:vc_tokenmanagement' s.id %}">
+              {% csrf_token %}
+              <div class="card-header">
+                <a href="{{ s.url }}" rel="noreferrer" target="_blank" role="button" class="btn btn-outline-secondary">{{ s.url }}</a>
+              </div>
+              <div class="card-body">
+              {% if t %}
+    	          <p class="card-text"><strong>Last updated:</strong> {{ t.last_used }}</p>
+              {% else %}
+                <p class="card-text"><strong>Note:</strong> Make sure you login to {{ s.url}} and generate a token. An RSA key pair is to be generated for you and to be uploaded as kooplex-hub.</p>
+              {% endif %}
+
+                <input type="hidden" name="token_id" value="{{ t.id }}">
+                <table>
+                  <tr>
+                    <th><label for="id_name-{s.id}">Registered username: </label></th>
+                    <td><input type="text" name="username" value="{% if t %}{{ t.username }}{% else %}{{ user.username }}{% endif %}" id="id_name-{s.id}"></td>
+                  </tr>
+                  <tr>
+                    <th><label for="id_token-{t.id}">Generated token: </label></th>
+                    <td><input type="password" name="token" placeholder="copied from git server" id="id_token-{s.id}"></td>
+                  </tr>
+                </table>
+    	        </div>
+              <div class="card-footer">
+    	          <a href="{{ s.url }}" rel="noreferrer" target="_blank" role="button" class="btn btn-secondary"><span class="oi oi-external-link" aria-hidden="true"></span></a>
+                {% if t %}
+                  <a href="{% url 'service_external:vc_refresh' t.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Last updated: {{ t.last_used }}" data-placement="top">Refresh</a>
+                  <div class="float-end">
+                    <button type="submit" class="btn btn-danger" name="button" value="updatetoken" data-toggle="tooltip" title="Create a new token" data-placement="top">Update token</button>
+                    <button type="submit" class="btn btn-danger" name="button" value="droptoken" data-toggle="tooltip" title="Drop token" data-placement="top">Drop token</button>
+                  </div>
+                {% else %}
+                  <a href="#" role="button" class="btn btn-secondary disabled" data-toggle="tooltip" title="Disabled" data-placement="top">Refresh</a>
+                  <div class="float-end">
+                    <button type="submit" class="btn btn-danger" name="button" value="newtoken" data-toggle="tooltip" title="Create a new token" data-placement="top">New token</button>
+                  </div>
+                {% endif %}
+              </div>
+            </form>
+          </div>
+        {% endwith %}
+      {% endfor %}
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 

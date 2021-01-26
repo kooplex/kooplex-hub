@@ -56,7 +56,7 @@ class Project(models.Model):
 
     @property
     def uniquename(self):
-        return f'{self.cleanname}-{self.creator.username}'
+        return f'{self.cleanname}-{self.creator.username}' if self.creator else f'{self.cleanname}-nobody'
 
     #FIXME: is it used anywhere?
 ###OBSOLETED    @property

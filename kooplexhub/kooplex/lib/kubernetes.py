@@ -47,15 +47,22 @@ def start(service):
     volumes = []
     volume_mounts = []
     if service.image.require_home:
-        volumes.append({
+        volumes.extend([{
             "name": "pv-k8plex-hub-home",
             "persistentVolumeClaim": { "claimName": "pvc-home-k8plex", }
-        })
-        volume_mounts.append({
+        }, {
+            "name": "pv-k8plex-hub-garbage",
+            "persistentVolumeClaim": { "claimName": "pvc-garbage-k8plex", }
+        }])
+        volume_mounts.extend([{
             "name": "pv-k8plex-hub-home",
             "mountPath": os.path.join(mount_point, service.user.username),
             "subPath": service.user.username,
-        })
+        }, {
+            "name": "pv-k8plex-hub-garbage",
+            "mountPath": os.path.join(mount_point, 'garbage'),
+            "subPath": service.user.username,
+        }])
     has_project = False
     has_report = False
     has_cache = False

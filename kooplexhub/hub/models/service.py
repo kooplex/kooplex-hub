@@ -67,7 +67,8 @@ class Service(models.Model):
 
     @property
     def label(self):
-        return f"{self.user}-{self.name}-{self.suffix}" if self.suffix else f"{self.user}-{self.name}"
+        n = standardize_str(self.name)
+        return f"{self.user}-{n}-{self.suffix}".lower() if self.suffix else f"{self.user}-{n}".lower()
 
     @property
     def default_proxy(self):
@@ -125,7 +126,7 @@ class Service(models.Model):
         ##return reports
         reports = Report.objects.none()
         for p in self.projects:
-            if reports is Report.objects.none():
+            if len( reports ) == 0:
                 reports = Report.objects.filter(project = p)
             else:
                 reports = reports.union( Report.objects.filter(project = p) )

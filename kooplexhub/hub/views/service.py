@@ -310,9 +310,18 @@ def configureservice(request, environment_id):
         table_synclibs = table(fsls)
         RequestConfig(request).configure(table_synclibs)
 
-#FIXME: todo search
         table = table_vcproject(svc)
-        table_repos = table(VCProject.objects.filter(token__user = user).exclude(clone_folder__exact = ''))
+        if search and request.POST.get('active_tab') == 'versioncontrol':
+            pattern = request.POST.get('pattern', user.search.service_repository)
+            vcps = VCProject.objects.filter(token__user = user, project_name__icontains = pattern).exclude(clone_folder__exact = '').exclude(clone_folder = None)
+            if len(vcps) and pattern != user.search.service_repository:
+                user.search.service_repository = pattern
+                user.search.save()
+        elif user.search.service_repository:
+            vcps = VCProject.objects.filter(token__user = user, project_name__icontains = user.search.service_repository).exclude(clone_folder__exact = '').exclude(clone_folder = None)
+        else:
+            vcps = VCProject.objects.filter(token__user = user).exclude(clone_folder__exact = '').exclude(clone_folder = None)
+        table_repos = table(vcps)
         RequestConfig(request).configure(table_repos)
 
         context_dict = {
@@ -322,7 +331,6 @@ def configureservice(request, environment_id):
             't_projects': table_project,
             't_synclibs': table_synclibs,
             't_repositories': table_repos,
-            'next_page': 'service:list', #FIXME: deprecate
         }
         return render(request, 'container/manage.html', context = context_dict)
 

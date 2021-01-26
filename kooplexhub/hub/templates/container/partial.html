@@ -4,16 +4,17 @@
     <img src="..." class="card-img-top" alt="...">
 {% endcomment %}
     <div class="card-header">
-	    <strong style="font-size: x-large;">{{ service.name }}</strong>
-      <div class="float-end">
-        {% if service.state == service.ST_NEED_RESTART %}
-	<span class="badge rounded-pill bg-danger"><i class="ri-image-2-line"></i>{{ service.image }}</span>
-        {% elif service.state == service.ST_RUNNING  %}
-          <span class="badge rounded-pill bg-success"><i class="ri-image-2-line"></i>{{ service.image }}</span>
-        {% else %}
-          <span class="badge rounded-pill bg-secondary"><i class="ri-image-2-line"></i>{{ service.image }}</span>
-        {% endif %}
-      </div>
+      <h5 class="card-title">{{ service.name }}
+        <div class="float-end">
+          {% if service.state == service.ST_NEED_RESTART %}
+          <span class="badge rounded-pill bg-danger"><i class="ri-image-2-line"></i>{{ service.image }}</span>
+          {% elif service.state == service.ST_RUNNING  %}
+            <span class="badge rounded-pill bg-success"><i class="ri-image-2-line"></i>{{ service.image }}</span>
+          {% else %}
+            <span class="badge rounded-pill bg-secondary"><i class="ri-image-2-line"></i>{{ service.image }}</span>
+          {% endif %}
+        </div>
+      </h5>
     </div>
     <div class="card-body">
       <p class="card-text"><strong>Information:</strong>
@@ -58,15 +59,14 @@
       </p>
       {% endif %}
       {% if service.last_message %}
-        <p class="card-text"><strong>Last message:</strong> {{ service.last_message }}
-          <a href="{% url 'service:refreshlogs' service.id %}" role="button" class="btn btn-secondary btn-sm"><span class="oi oi-reload" aria-hidden="true" data-toggle="tooltip" title="Refresh service information" data-placement="bottom"></span></a>
-	</p>
+        <p class="card-text"><strong>Last message:</strong> {{ service.last_message }}</p>
       {% endif %}
     </div>
     <div class="card-footer">
       <div class="float-end">
         {% include 'container/startopen.html' with service=service next_page="service:list" %}
         {% include 'container/stopremove.html' with service=service next_page="service:list" %}
+	<a href="{% url 'service:refreshlogs' service.id %}" role="button" class="btn btn-secondary btn-sm"><span class="oi oi-reload" aria-hidden="true" data-toggle="tooltip" title="Refresh service information (last message)" data-placement="bottom"></span></a>
         {% if not service.report %}
           <a href="{% url 'service:configure' service.id %}" role="button" class="btn btn-secondary btn-sm"><span class="oi oi-wrench" aria-hidden="true" data-toggle="tooltip" title="Add/remove project to the service" data-placement="bottom"></span></a>
           <a href="{% url 'service:destroy' service.id next_page %}" role="button" class="btn btn-danger btn-sm"><span class="oi oi-fire" aria-hidden="true" data-toggle="tooltip" title="Remove {{ service.name }}"></span></a>

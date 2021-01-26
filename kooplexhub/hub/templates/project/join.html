@@ -7,9 +7,9 @@
 {% block main_content_center %}
   {% load render_table from django_tables2 %}
   
+<div class="card shadow p-3 mb-5 bg-light rounded"> 
 <form id="project-manage" class="form-horizontal" action="{% url 'project:join' %}" method="post">
   {% csrf_token %}
-<div class="card shadow p-3 mb-5 bg-light rounded"> 
     <h5>Use the switch select those projects you want to join</h5>
   <div class="card-body">
     {% if t_joinable.data|length > 0 %}
@@ -19,8 +19,8 @@
     {% endif %}
     {% include 'apply_cancel.html' with apply='Join projects' %}
   </div>
-</div>
 </form>
+</div>
 {% endblock %}
 
 {% block main_content_right %}

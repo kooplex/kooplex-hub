@@ -7,6 +7,7 @@
 {% endblock %}
 
 {% block main_content_center %}
+<div class="card shadow p-3 mb-5 bg-light rounded">
 <form id="project-manage" class="form-horizontal" action="{% url 'project:configure' project.id %}" method="post">
 {% csrf_token %}
 
@@ -53,6 +54,7 @@
   </div>
   {% include 'apply_cancel.html' %}
 </form>
+</div>
 
 <script>
   $("#projectConfigTabs li a").on("click", function () {

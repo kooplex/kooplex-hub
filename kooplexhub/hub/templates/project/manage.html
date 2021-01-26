@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block main_content_center %}
-<div class="row">
+<div class="card shadow p-3 mb-5 bg-light rounded">
   <form id="project-manage" class="form-horizontal" action="{% url 'project:showhide' %}" method="post">
     {% csrf_token %}
     <h5>Use the switch to hide or show some of your projects</h5>

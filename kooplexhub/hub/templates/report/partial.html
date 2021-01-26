@@ -1,18 +1,16 @@
 <div class="col">
   <div class="card border-success shadow">
-    <div class="card-header bg-secondary text-dark">
-	    <strong style="font-size: large;">{{ report.name }}</strong>
-      {% if report.service.state == report.service.ST_RUNNING %}
-        <div class="float-end">
-          <a href="{% url 'report:openreport' report.id %}" target="_blank" role="button" class="btn btn-dark btn-sm"><span class="oi oi-external-link" aria-hidden="true"></span></a>
-        </div>
-      {% endif %}
+    <div class="card-header bg-success text-light">
+      <h5 class="card-title text-capitalize text-center">{{ report.name }}</h5>
     </div>
-    <div class="card-body">
+    <div class="card-body bg-light text-dark">
       <p class="card-text">{{ report.description }}</p>
     </div>
-    <div class="card-footer bg-secondary text-dark">
+    <div class="card-footer bg-success text-light">
       <div class="float-end">
+      {% if report.service.state == report.service.ST_RUNNING %}
+          <a href="{% url 'report:openreport' report.id %}" target="_blank" role="button" class="btn btn-dark btn-sm"><span class="oi oi-external-link" aria-hidden="true"></span></a>
+      {% endif %}
         <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#modal-{{ report.id }}" aria-expanded="true" aria-controls="modal-{{ report.id }}"><span class="oi oi-pencil"></span></button>
 	{% if report|authorize:user %}
           <a href="{% url 'report:refresh' report.id %}" role="button" class="btn btn-light btn-sm"><span class="oi oi-reload" aria-hidden="true"></span></a>
