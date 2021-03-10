@@ -16,6 +16,7 @@
     {% else %}
       <li><a class="dropdown-item disabled" href="#">Create attachment</a></li>
     {% endif %}
+    <li><a class="dropdown-item" href="{% url 'service:list_attachments' %}">List attachments</a></li>
   </ul>
 </li>
 {% include "container/new.html" %}

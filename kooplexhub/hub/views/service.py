@@ -431,6 +431,18 @@ def newattachment(request):
     return redirect('service:list')
 
 
+@login_required
+def listattachment(request):
+    """List attachments"""
+    user = request.user
+    logger.debug("user %s method %s" % (user, request.method))
+
+    context_dict = {
+        'attachments': Attachment.objects.all(),
+    }
+    return render(request, 'container/attachments.html', context = context_dict)
+
+
 urlpatterns = [
     url(r'^new/?$', new, name = 'new'), 
     url(r'^list/?$', listservices, name = 'list'), 
@@ -446,4 +458,5 @@ urlpatterns = [
     url(r'^layoutflip/?$', layoutflip, name = 'layout_flip'), 
     url(r'^newimage/?$', newimage, name = 'newimage'), 
     url(r'^newattachment/?$', newattachment, name = 'newattachment'), 
+    url(r'^listattachments/?$', listattachment, name = 'list_attachments'), 
 ]

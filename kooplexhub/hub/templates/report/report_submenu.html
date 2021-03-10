@@ -13,6 +13,7 @@
         </ul>
      </div>
      <div class="col-1">
+      {% if submenu == 'list' %}
        <div class="d-flex justify-content-end">
 	 {% if user.layout.report_list %}
            <a href="{% url 'report:layout_flip' %}" class="text-dark"><span class="oi oi-grid-two-up"></span></a>
@@ -20,6 +21,7 @@
            <a href="{% url 'report:layout_flip' %}" class="text-dark"><span class="oi oi-list"></span></a>
 	 {% endif %}
        </div>
+      {% endif %}
      </div>
   </div>
 </nav>

@@ -20,6 +20,10 @@ class Filename:
         return os.path.join(Dirname.mountpoint['home'], vcproject.token.user.username, "garbage", "git-%s.%f.tar.gz" % (vcproject.uniquename, time.time()))
 
     @staticmethod
+    def attachment_garbage(attachment):
+        return os.path.join(Dirname.mountpoint['garbage'], attachment.creator.username, "attachment-%s-%s.%f.tar.gz" % (attachment.name, attachment.folder, time.time()))
+
+    @staticmethod
     def course_garbage(course):
         return os.path.join(Dirname.mountpoint['garbage'], "course-%s.%f.tar.gz" % (course.folder, time.time()))
 

@@ -289,13 +289,14 @@ def recreate_report(report):
 @sudo
 def mkdir_attachment(attachment):
     dir_attachment = Dirname.attachment(attachment)
-    if not os.path.exists(dir_attachment):
-        _mkdir(dir_attachment, other_rx = True)
-        #FIXME
-        #n = report.mark_projectservices_restart(f"Need to mount report folder for project {report.project}")
-        #logger.info(f'{n} services marked as need to restart, due to creation of folder {project_report_root}')
+    _mkdir(dir_attachment, other_rx = True)
     _grantaccess(attachment.creator, dir_attachment)
 
+@sudo
+def garbage_attachment(attachment):
+    dir_attachment = Dirname.attachment(attachment)
+    garbage = Filename.attachment_garbage(attachment)
+    _archivedir(dir_attachment, garbage, remove = True)
 
 
 

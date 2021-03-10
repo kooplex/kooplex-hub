@@ -11,9 +11,11 @@
 		{% comment %} FIXME: container -- service {% endcomment %}
           <li class="nav-item"><a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#container-new">New service environment</a></li>
           <li class="nav-item"><a {% if submenu == 'list' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'service:list' %}" {% endif %}>List service environments</a></li>
+          <li class="nav-item"><a {% if submenu == 'attachments' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'service:list_attachments' %}" {% endif %}>List attachments</a></li>
         </ul>
      </div>
      <div class="col-1">
+      {% if submenu == 'list' %}
        <div class="d-flex justify-content-end">
 	 {% if user.layout.service_list %}
            <a href="{% url 'service:layout_flip' %}" class="text-dark"><span class="oi oi-grid-two-up"></span></a>
@@ -21,6 +23,7 @@
            <a href="{% url 'service:layout_flip' %}" class="text-dark"><span class="oi oi-list"></span></a>
 	 {% endif %}
        </div>
+      {% endif %}
      </div>
   </div>
 </nav>

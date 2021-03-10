@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+
+{% block submenu %}
+  {% include 'container/service_submenu.html' with title="List of attachments" submenu="attachments" %}
+{% endblock %}
+
+{% block main_content_center %}
+  {% for attachment in attachments %}
+    {% include 'container/attachments_partial_list.html' %}
+  {% endfor %}
+{% endblock %}
+
+{% block main_content_right %}
+  {#% include 'container/hint_list.html' %#}
+{% endblock %}
+
+{% comment %}
+{% block navsearch %}
+<form class="d-flex" action="{% url 'service:l_search' %}" method="post">
+  {% csrf_token %}
+  <input class="form-control me-2" type="search" name="service" placeholder="Search environment" value="{{ user.search.service_list }}" aria-label="Search">
+  <button class="btn btn-outline-secondary" type="submit" name="button" value="search">Search</button>
+</form>
+{% endblock %}
+{% endcomment %}

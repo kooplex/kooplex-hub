@@ -2,7 +2,7 @@ import logging
 
 from django.contrib.auth.models import User
 from django.db import models
-from django.db.models.signals import pre_save #, post_save, pre_delete, post_delete
+from django.db.models.signals import pre_save, pre_delete #, post_save, post_delete
 from django.dispatch import receiver
 
 from kooplex.settings import KOOPLEX
@@ -30,11 +30,22 @@ class AttachmentServiceBinding(models.Model):
     attachment = models.ForeignKey(Attachment, null = False)
     service = models.ForeignKey(Service, null = False)
 
+
 @receiver(pre_save, sender = Attachment)
 def mkdir_attachment(sender, instance, **kwargs):
     from kooplex.lib.filesystem import mkdir_attachment
     if instance.id is None:
         mkdir_attachment(instance)
+
+@receiver(pre_delete, sender = Attachment)
+def garbage_attachment(sender, instance, **kwargs):
+    from kooplex.lib.filesystem import garbage_attachment
+    garbage_attachment(instance)
+
+@receiver(pre_delete, sender = AttachmentServiceBinding)
+def mark_service_restart(sender, instance, **kwargs):
+    instance.service.mark_restart(f"attachment {instance.attachment.name} has been removed")
+
 
 #FIXME: atgondolni, hogy mi mivel kompatibilis vagy ajanlas
 #@receiver(pre_save, sender = AttachmentServiceBinding)

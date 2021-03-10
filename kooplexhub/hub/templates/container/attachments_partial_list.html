@@ -1,0 +1,16 @@
+<div class="card bg-light border-danger shadow mb-3">
+  <div class="card-header">
+    <div class="row">
+      <div class="col-2">
+	{{ attachment.name }}
+      </div>
+      <div class="col-2">
+        {{ attachment.folder }}
+      </div>
+      <div class="col-8">
+        {{ attachment.description }} (created by {{ attachment.creator.profile.name }})
+      </div>
+    </div>
+  </div>
+</div>
+
