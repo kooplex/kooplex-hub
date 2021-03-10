@@ -1,10 +1,11 @@
-<div class="col">
-  <div class="card text-dark bg-light border-success shadow">
-{% comment %}
-    <img src="..." class="card-img-top" alt="...">
-{% endcomment %}
-    <div class="card-header">
-      <h5 class="card-title">{{ service.name }}
+<div class="card bg-light border-secondary shadow mb-3">
+  <div class="card-header">
+    <div class="row">
+      <div class="col-1">
+        {% include 'container/startopen.html' with service=service next_page="service:list" %}
+      </div>
+      <div class="col-11" data-bs-toggle="collapse" data-bs-target="#collapse-{{ service.id }}" aria-expanded="false" aria-controls="collapse-{{ service.id }}">
+        {{ service.name }}
         <div class="float-end">
           {% if service.state == service.ST_NEED_RESTART %}
           <span class="badge rounded-pill bg-danger"><i class="ri-image-2-line"></i>{{ service.image }}</span>
@@ -14,9 +15,11 @@
             <span class="badge rounded-pill bg-secondary"><i class="ri-image-2-line"></i>{{ service.image }}</span>
           {% endif %}
         </div>
-      </h5>
+      </div>
     </div>
-    <div class="card-body">
+  </div> <!-- card header -->
+  <div class="collapse" id="collapse-{{ service.id }}">
+    <div class="card card-body">
       <p class="card-text"><strong>Information:</strong>
           {% if service.projects|length > 0 %}
           <span class="badge rounded-pill bg-dark" aria-hidden="true" data-bs-toggle="tooltip" title="Projects:
@@ -61,8 +64,6 @@
       {% if service.last_message %}
         <p class="card-text"><strong>Last message:</strong> {{ service.last_message }}</p>
       {% endif %}
-    </div>
-    <div class="card-footer">
       <div class="float-end">
         {% include 'container/startopen.html' with service=service next_page="service:list" %}
         {% include 'container/stopremove.html' with service=service next_page="service:list" %}

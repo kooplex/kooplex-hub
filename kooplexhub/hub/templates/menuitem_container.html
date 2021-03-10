@@ -11,7 +11,17 @@
     {% else %}
       <li><a class="dropdown-item disabled" href="#">Create image</a></li>
     {% endif %}
+    {% if user.profile.can_createattachment %}
+      <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#attachment-new">Create attachment</a></li>
+    {% else %}
+      <li><a class="dropdown-item disabled" href="#">Create attachment</a></li>
+    {% endif %}
   </ul>
 </li>
 {% include "container/new.html" %}
-{% include "container/newimage.html" %}
+{% if user.profile.can_createimage %}
+  {% include "container/newimage.html" %}
+{% endif %}
+{% if user.profile.can_createattachment %}
+  {% include "container/newattachment.html" %}
+{% endif %}

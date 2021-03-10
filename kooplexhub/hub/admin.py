@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'userid', 'location', 'bio', 'is_teacher', 'is_student', 'can_createproject')
+    list_display = ('id', 'user', 'userid', 'location', 'bio', 'is_teacher', 'is_student', 'can_createproject', 'can_createimage', 'can_createattachment')
     search_fields = ('user__username', )
 
 @admin.register(Image)
@@ -55,6 +55,18 @@ class UserProjectBindingAdmin(admin.ModelAdmin):
 #@admin.register(GroupProjectBinding)
 #class GroupProjectBindingAdmin(admin.ModelAdmin):
 #    list_display = ('id', 'project', 'group')
+
+@admin.register(Attachment)
+class AttachmentAdmin(admin.ModelAdmin):
+    list_display = ('id', 'creator', 'name', 'folder', 'description')
+
+@admin.register(AttachmentServiceBinding)
+class AttachmentServiceBindingAdmin(admin.ModelAdmin):
+    def attachment_creator(self, instance):
+        return instance.attachment.creator.username
+    def attachment_name(self, instance):
+        return instance.attachment.name
+    list_display = ('id', 'attachment_name', 'attachment_creator', 'service')
 
 @admin.register(CourseCode)
 class CourseCodeAdmin(admin.ModelAdmin):

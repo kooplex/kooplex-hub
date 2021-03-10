@@ -20,6 +20,7 @@ class Search(models.Model):
     service_projects = models.CharField(max_length = 30, blank = True, null = True, default = "")
     service_library = models.CharField(max_length = 30, blank = True, null = True, default = "")
     service_repository = models.CharField(max_length = 30, blank = True, null = True, default = "")
+    service_attachments = models.CharField(max_length = 30, blank = True, null = True, default = "")
 
     report_list = models.CharField(max_length = 30, blank = True, null = True, default = "")
 

@@ -1,11 +1,13 @@
 from .profile import FormBiography
 from .image import FormImage
+from .attachment import FormAttachment
 from .project import FormProject
 from .report import FormReport
 from .service import FormService
 from .assignment import FormAssignment
 from .tables_assignment import T_BIND_ASSIGNMENT, T_COLLECT_ASSIGNMENT, T_FEEDBACK_ASSIGNMENT, T_SUBMIT_ASSIGNMENT
 from .table_collaborators import table_collaboration
+from .table_attachments import table_attachments
 from .table_services import T_SERVICE
 from .table_projects import table_projects, table_services, T_JOINABLEPROJECT, T_PROJECT
 from .table_reports import T_REPORTS, T_REPORTS_DEL

@@ -42,6 +42,10 @@ class Dirname:
         return os.path.join(Dirname.mountpoint['filesync'], fslibrary.sync_folder)
 
     @staticmethod
+    def attachment(attachment):
+        return os.path.join(Dirname.mountpoint['attachment'], attachment.folder)
+
+    @staticmethod
     def course(course):
         return os.path.join(Dirname.mountpoint['course'], course.folder)
 

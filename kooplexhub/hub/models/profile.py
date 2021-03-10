@@ -22,6 +22,7 @@ class Profile(models.Model):
     token = models.CharField(max_length = 64, null = True)
     can_createproject = models.BooleanField(default = True) 
     can_createimage = models.BooleanField(default = False) 
+    can_createattachment = models.BooleanField(default = False) 
 
     @property
     def name(self):

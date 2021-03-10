@@ -89,7 +89,7 @@ class Service(models.Model):
     def wait_until_ready(self):
         from kooplex.lib import keeptrying
         for _ in range(5):
-            resp = keeptrying(method = requests.get, times = 5, url = self.url_public, timeout = .05)
+            resp = keeptrying(method = requests.get, times = 5, url = self.url_public, timeout = .05, allow_redirects = False)
             logger.info('Get %s -> [%d]' % (self.url_public, resp.status_code))
             time.sleep(.1)
             if resp.status_code != 503:
@@ -146,6 +146,11 @@ class Service(models.Model):
     def repos(self):
         from .versioncontrol import VCProjectServiceBinding
         return [ binding.vcproject for binding in VCProjectServiceBinding.objects.filter(service = self) ]
+
+    @property
+    def attachments(self):
+        from .attachment import AttachmentServiceBinding
+        return [ binding.attachment for binding in AttachmentServiceBinding.objects.filter(service = self) ]
 
     def start(self):
         return start_environment(self)

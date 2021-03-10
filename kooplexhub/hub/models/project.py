@@ -7,8 +7,6 @@ from django.template.defaulttags import register
 from django.db.models.signals import pre_save, post_save, pre_delete, post_delete
 from django.dispatch import receiver
 
-from .group import Group
-
 from kooplex.settings import KOOPLEX
 from kooplex.lib import standardize_str
 
@@ -58,13 +56,13 @@ class Project(models.Model):
     def uniquename(self):
         return f'{self.cleanname}-{self.creator.username}' if self.creator else f'{self.cleanname}-nobody'
 
-    #FIXME: is it used anywhere?
-###OBSOLETED    @property
-###OBSOLETED    def safename(self):
-###OBSOLETED        try:
-###OBSOLETED            return self.name_with_owner
-###OBSOLETED        except UserProjectBinding.DoesNotExist:
-###OBSOLETED            return self.cleanname
+    @property
+    def groupid(self):
+        return 20000 + self.id
+
+    @property
+    def groupname(self):
+        return f'pr{self.groupid}'
 
     @register.filter
     def get_userz_services(self, user):
@@ -217,6 +215,7 @@ def mkdir_project(sender, instance, created, **kwargs):
     if instance.role == UserProjectBinding.RL_CREATOR:
         mkdir_project(instance.project)
 
+#FIXME: ezekre elvben nincs szukseg, ha majd a group rendben megy
 @receiver(post_save, sender = UserProjectBinding)
 def grantaccess_project(sender, instance, created, **kwargs):
     from kooplex.lib.filesystem import grantaccess_project

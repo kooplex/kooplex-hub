@@ -13,5 +13,14 @@
           <li class="nav-item"><a {% if submenu == 'list' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'service:list' %}" {% endif %}>List service environments</a></li>
         </ul>
      </div>
+     <div class="col-1">
+       <div class="d-flex justify-content-end">
+	 {% if user.layout.service_list %}
+           <a href="{% url 'service:layout_flip' %}" class="text-dark"><span class="oi oi-grid-two-up"></span></a>
+	 {% else %}
+           <a href="{% url 'service:layout_flip' %}" class="text-dark"><span class="oi oi-list"></span></a>
+	 {% endif %}
+       </div>
+     </div>
   </div>
 </nav>

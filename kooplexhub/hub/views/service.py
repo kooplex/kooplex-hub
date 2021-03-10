@@ -1,5 +1,6 @@
 import re
 import logging
+import requests
 
 from django.conf.urls import url
 from django.contrib.auth.decorators import login_required
@@ -13,9 +14,11 @@ from kooplex.lib import standardize_str, custom_redirect
 from hub.forms import table_projects
 from hub.forms import table_fslibrary
 from hub.forms import table_vcproject
+from hub.forms import table_attachments
 from hub.models import Image
 from hub.models import Project, UserProjectBinding
 from hub.models import Service
+from hub.models import Attachment, AttachmentServiceBinding
 from hub.models import ProjectServiceBinding
 from hub.models import FSLibrary, FSLibraryServiceBinding
 from hub.models import VCProject, VCProjectServiceBinding
@@ -98,7 +101,9 @@ def openservice(request, environment_id, next_page):
     try:
         environment = Service.objects.get(id = environment_id, user = user)
         if environment.state in [ Service.ST_RUNNING, Service.ST_NEED_RESTART ]:
+            logger.debug(f'wait_until_ready {environment.url_public}')
             environment.wait_until_ready()
+            logger.debug(f'try to redirect to url {environment.url_public}')
             if environment.default_proxy.token_as_argument:
                 return custom_redirect(environment.url_public, token = environment.user.profile.token)
             else:
@@ -107,6 +112,8 @@ def openservice(request, environment_id, next_page):
             messages.error(request, f'Cannot open {environment.name} of state {environment.state}')
     except Service.DoesNotExist:
         messages.error(request, 'Environment is missing')
+    except requests.TooManyRedirects:
+        messages.error(request, f'Cannot redirect to url {environment.url_public}')
     return redirect(next_page)
 
 
@@ -180,6 +187,13 @@ def configureservice(request, environment_id):
         messages.error(request, 'Service environment does not exist')
         return redirect('service:list')
 
+    if svc.state == svc.ST_STOPPING:
+        messages.error(request, f'Service {svc.name} is still stopping, you cannot configure it right now.')
+        return redirect('service:list')
+    elif svc.state == svc.ST_STARTING:
+        messages.error(request, f'Service {svc.name} is starting up, you cannot configure it right now.')
+        return redirect('service:list')
+
     if submit:
         msgs = []
 
@@ -192,6 +206,24 @@ def configureservice(request, environment_id):
             msg = f'image changed from {image_before} to {image_after}'
             if not svc.mark_restart(msg):
                 msgs.append(msg)
+
+        # handle attachment changes
+        for id_create in request.POST.getlist('a_ids'):
+            attachment = Attachment.objects.get(id = id_create)
+            AttachmentServiceBinding.objects.create(service = svc, attachment = attachment)
+            msg = f'associated attachment {attachment.name}'
+            if not svc.mark_restart(msg):
+                msgs.append(msg)
+        for id_remove in set(request.POST.getlist('asb_ids_before')).difference(set(request.POST.getlist('asb_ids_after'))):
+            try:
+                asb = AttachmentServiceBinding.objects.get(id = id_remove, service = svc)
+                msg = f'removed attachment {asb.attachment.name}'
+                if not svc.mark_restart(msg):
+                    msgs.append(msg)
+                asb.delete()
+            except AttachmentServiceBinding.DoesNotExist:
+                logger.error("Is %s hacking" % user)
+                oops += 1
 
         # handle project binding changes
         project_ids_before = set(request.POST.getlist('project_ids_before'))
@@ -324,10 +356,25 @@ def configureservice(request, environment_id):
         table_repos = table(vcps)
         RequestConfig(request).configure(table_repos)
 
+        table = table_attachments(svc)
+        if search and request.POST.get('active_tab') == 'attachments':
+            pattern = request.POST.get('pattern', user.search.service_attachments)
+            attachments = Attachment.objects.filter(name__icontains = pattern)
+            if len(attachments) and pattern != user.search.service_attachments:
+                user.search.service_attachments = pattern
+                user.search.save()
+        elif user.search.service_attachments:
+            attachments = Attachment.objects.filter(name__icontains = user.search.service_attachments)
+        else:
+            attachments = Attachment.objects.all()
+        table_attachment = table(attachments)
+        RequestConfig(request).configure(table_attachment)
+
         context_dict = {
             'images': Image.objects.all(),
             'container': svc,
             'active': request.POST.get('active_tab', 'projects'),
+            't_attachments': table_attachment,
             't_projects': table_project,
             't_synclibs': table_synclibs,
             't_repositories': table_repos,
@@ -348,9 +395,41 @@ def refreshlogs(request, environment_id):
         messages.error(request, f'Cannot refresh service environment information {svc}')
     return redirect('service:list')
 
+
+@login_required
+def layoutflip(request):
+    from hub.models import Layout
+    if hasattr(request.user, 'layout'):
+        l = request.user.layout
+        l.service_list = not l.service_list
+        l.save()
+    else:
+        Layout.objects.create(user = request.user)
+    return redirect('service:list')
+
+
 @login_required
 def newimage(request):
     raise NotImplementedError("TBA")
+
+
+@login_required
+def newattachment(request):
+    try:
+        assert request.user.profile.can_createattachment, f"user {request.user} is not allowed to create attachment"
+        attachment = Attachment.objects.create(
+            name = request.POST.get('name'),
+            folder = request.POST.get('folder'),
+            description = request.POST.get('description'),
+            creator = request.user
+            )
+        logger.info(f'+ new attachment {attachment.name} by {request.user}')
+        messages.info(request, f'Created attachment {attachment.name} and folder {attachment.folder}. Attach to a container to populate with data.')
+    except Exception as e:
+        logger.error(f'attachment not created -- {e}')
+        messages.error(request, f'Attachment not created.')
+    return redirect('service:list')
+
 
 urlpatterns = [
     url(r'^new/?$', new, name = 'new'), 
@@ -364,5 +443,7 @@ urlpatterns = [
     url(r'^refreshlogs/(?P<environment_id>\d+)$', refreshlogs, name = 'refreshlogs'),
     url(r'^configure/(?P<environment_id>\d+)$', configureservice, name = 'configure'),
     url(r'^c_search/(?P<environment_id>\d+)$', configureservice, name = 'c_search'),
+    url(r'^layoutflip/?$', layoutflip, name = 'layout_flip'), 
     url(r'^newimage/?$', newimage, name = 'newimage'), 
+    url(r'^newattachment/?$', newattachment, name = 'newattachment'), 
 ]

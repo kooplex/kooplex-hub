@@ -1,0 +1,49 @@
+<div class="card bg-light border-info shadow mb-3">
+  <div class="card-header">
+    <div class="row">
+      <div class="col-1">
+        {% include 'project/containers_button.html' %}
+      </div>
+      <div class="col-11" data-bs-toggle="collapse" data-bs-target="#collapse-{{ project.id }}" aria-expanded="false" aria-controls="collapse-{{ project.id }}">
+        {{ project.name }}
+        <div class="float-end">
+          {% if project.scope == project.SCP_PRIVATE %}
+            <i class="oi oi-key h6" aria-hidden="true" data-bs-toggle="tooltip" title="Private project" data-placement="top"></i>
+          {% else %}
+            <i class="oi oi-cloud h6" aria-hidden="true" data-bs-toggle="tooltip" title="Public project" data-placement="top"></i>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div> <!-- card header -->
+  <div class="collapse" id="collapse-{{ project.id }}">
+    <div class="card card-body">
+      {% if project.creator != user %}
+        <p class="card-text"><strong>Creator:</strong> {{ project.creator.profile.name_and_username }}</p>
+      {% endif %}
+      <p class="card-text"><strong>Description:</strong> {{ project.description }}</p>
+      <p class="card-text">
+       <div class="btn-group" role="group">
+	<strong>Info:</strong>
+        {% include 'project/reports_button.html' %}
+        {% include 'project/collaborators_button.html' %}
+        {% include 'project/containers_button.html' %}
+       </div>
+      </p>
+      <p class="card-text">
+        {% if project|is_admin:user %}
+          <a href="{% url 'project:configure' project.id %}" role="button" class="btn btn-secondary btn-sm"><span class="oi oi-wrench" aria-hidden="true" data-toggle="tooltip" title="Settings of project {{ project.name }}. You can modify collaboration and bind environments." data-placement="top" ></span></a>
+        {% else %}
+          <a href="#" role="button" class="btn btn-secondary btn-sm disabled"><span class="oi oi-wrench" aria-hidden="true" data-toggle="tooltip" title="You don't have permission to configure project {{ project.name }}." data-placement="top" ></span></a>
+        {% endif %}
+        {% if binding.is_hidden %}
+          <a href="{% url 'project:show' project.id %}" role="button" class="btn btn-secondary btn-sm"><span class="oi oi-eye" aria-hidden="true" data-toggle="tooltip" title="You can unhide {{ project.name }}." data-placement="top"></span></a>
+        {% else %}
+          <a href="{% url 'project:hide' project.id %}" role="button" class="btn btn-secondary btn-sm"><span class="oi oi-eye" aria-hidden="true" data-toggle="tooltip" title="You can hide {{ project.name }} from your list." data-placement="top"></span></a>
+        {% endif %}
+        <a href="{% url 'project:delete' project.id %}" role="button" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?');"><span class="oi oi-trash" aria-hidden="true" data-toggle="tooltip" title="Delete project {{ project.name }}." data-placement="top"></span></a>
+      </p>
+    </div>
+  </div>
+</div>
+

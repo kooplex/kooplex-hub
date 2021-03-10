@@ -18,7 +18,7 @@ class Image(models.Model):
     name = models.CharField(max_length = 64)
     present = models.BooleanField(default = True)
     imagetype = models.CharField(max_length = 32, choices = TP_LOOKUP.items(), default = TP_PROJECT)
-    description = models.CharField(max_length = 250, default="description missing")
+    description = models.CharField(max_length = 250, default = "description missing")
     dockerfile = models.TextField(max_length = 4096)
 
     def __str__(self):

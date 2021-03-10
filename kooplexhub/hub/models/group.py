@@ -7,6 +7,8 @@ from django.contrib.auth.models import User
 
 from kooplex.settings import KOOPLEX
 
+from .project import Project, UserProjectBinding
+
 logger = logging.getLogger(__name__)
 
 class Group(models.Model):
@@ -19,7 +21,6 @@ class Group(models.Model):
 class UserGroupBinding(models.Model):
     user = models.ForeignKey(User, null = False)
     group = models.ForeignKey(Group, null = False)
-    #role TODO: if makes sense differentiate users within a group
 
 
 @receiver(post_save, sender = Group)
@@ -28,12 +29,12 @@ def ldap_create_group(sender, instance, created, **kwargs):
     if created:
         logger.info("Group %s registered in ldap" % instance)
         try:
-            Ldap().addgroup(instance) #FIXME: check existance
+            Ldap().addgroup(instance)
         except Exception as e:
             logger.error("cannot create group %s in ldap -- %s" % (instance, e))
 
 @receiver(post_delete, sender = Group)
-def ldap_remove_group2(sender, instance, **kwargs):
+def ldap_remove_group(sender, instance, **kwargs):
     from kooplex.lib.ldap import Ldap
     try:
         Ldap().removegroup(instance)
@@ -60,47 +61,42 @@ def ldap_remove_user_from_group(sender, instance, **kwargs):
     except Exception as e:
         logger.error("cannot deregister user %s from group %s in ldap -- %s" % (instance.user, instance.group, e))
 
-###@receiver(post_save, sender = Project)
-###def create_group_for_project(sender, instance, created, **kwargs):
-###    if created:
-###        logger.debug("%s" % instance)
-###        try:
-###            last_gid = Group.objects.all().aggregate(models.Max('groupid'))['groupid__max']
-###            gid = KOOPLEX.get('min_groupid', 10000) if last_gid is None else last_gid + 1
-###            logger.debug("gid %d" % gid)
-###            group = Group.objects.create(name = instance.safename, groupid = gid, project = instance)
-###            logger.info("created group: %s" % group)
-###        except Exception as e:
-###            logger.error("Cannot create new group for project %s -- %s" % (instance, e))
-###
-###@receiver(pre_delete, sender = Project)
-###def inactivate_group_for_project(sender, instance, **kwargs):
-###    logger.debug("%s" % instance)
-###    try:
-###        group = Group.objects.get(project = instance)
-###        group.is_active = False
-###        group.save()
-###        logger.info("inactivated group: %s" % group)
-###    except Group.DoesNotExist:
-###        logger.error("Cannot find group for project %s" % instance)
-###
-###@receiver(post_save, sender = UserProjectBinding)
-###def create_usergroupbinding_for_userprojectbinding(sender, instance, created, **kwargs):
-###    if created:
-###        try:
-###            group = Group.objects.get(name = instance.project.safename)
-###            binding = UserGroupBinding.objects.create(group = group, user = instance.user)
-###            logger.debug("new group binding: %s" % binding)
-###        except Exception as e:
-###            logger.error("Cannot create binding for %s -- %s" % (instance, e))
-###
-###@receiver(pre_delete, sender = UserProjectBinding)
-###def delete_usergroupbinding_for_userprojectbinding(sender, instance, **kwargs):
-###    try:
-###        group = Group.objects.get(name = instance.project.safename)
-###        binding = UserGroupBinding.objects.get(group = group, user = instance.user)
-###        binding.delete()
-###        logger.debug("deleted group binding: %s" % binding)
-###    except Exception as e:
-###        logger.error("Cannot delete binding for %s -- %s" % (instance, e))
+@receiver(post_save, sender = Project)
+def create_group_for_project(sender, instance, created, **kwargs):
+    if created:
+        logger.debug("%s" % instance)
+        try:
+            group = Group.objects.create(name = instance.groupname, groupid = instance.groupid)
+            logger.info(f"+ created group {group.name}({group.groupid})")
+        except Exception as e:
+            logger.error(f"Cannot create new group for project {instance} -- {e}")
+
+@receiver(pre_delete, sender = Project)
+def delete_group_for_project(sender, instance, **kwargs):
+    logger.debug("%s" % instance)
+    try:
+        group = Group.objects.get(name = instance.groupname, groupid = instance.groupid)
+        group.delete()
+        logger.info(f"- deleted group {group.name}({group.groupid})")
+    except Group.DoesNotExist:
+        logger.error("Cannot find group for project %s" % instance)
+
+@receiver(post_save, sender = UserProjectBinding)
+def create_usergroupbinding_for_userprojectbinding(sender, instance, created, **kwargs):
+    if created:
+        try:
+            group = Group.objects.get(name = instance.project.groupname, groupid = instance.project.groupid)
+            binding = UserGroupBinding.objects.create(group = group, user = instance.user)
+            logger.info(f"+ user {binding.user.username} added group {group.name}({group.groupid})")
+        except Exception as e:
+            logger.error("Cannot create binding for %s -- %s" % (instance, e))
+
+@receiver(pre_delete, sender = UserProjectBinding)
+def delete_usergroupbinding_for_userprojectbinding(sender, instance, **kwargs):
+    try:
+        binding = UserGroupBinding.objects.get(group__groupname = instance.project.groupname, group__groupid = instance.project.groupid, user = instance.user)
+        binding.delete()
+        logger.info(f"- user {binding.user.username} removed from group {group.name}({group.groupid})")
+    except Exception as e:
+        logger.error("Cannot delete binding for %s -- %s" % (instance, e))
 

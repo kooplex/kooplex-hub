@@ -3,6 +3,7 @@
 @summary: 
 """
 import os
+import pwd
 import re
 import time
 import logging
@@ -40,6 +41,7 @@ def human_localtime(d):
 
 def custom_redirect(url_name, *args, **kwargs):
     from django.core.urlresolvers import reverse 
+    #from django.shortcuts import redirect
     #import urllib #FIXME
     try:
         url = reverse(url_name, args = args) if args else reverse(url_name)
@@ -47,7 +49,11 @@ def custom_redirect(url_name, *args, **kwargs):
         url = url_name
     #params = urllib.urlencode(kwargs)
     params = '&'.join(f'{k}={v}' for k, v in kwargs.items())
-    return HttpResponseRedirect(url + "?%s" % params) if params else HttpResponseRedirect(url)
+    full_url = url + "?%s" % params if params else url
+    logger.info(f'redirect to {full_url}')
+    return HttpResponseRedirect(full_url)
+    #return HttpResponseRedirect(url + "?%s" % params) if params else HttpResponseRedirect(url)
+    #return HttpResponseRedirect(url + "?%s" % params) if params else redirect(url)
 
 def keeptrying(method, times, **kw):
     """
@@ -106,9 +112,9 @@ def deaccent_str(s):
 
 def sudo(F):
     def wrapper(*args, **kwargs):
-        uid = kooplex_settings.HUB.pw_uid
-        gid = kooplex_settings.HUB.pw_gid
-        logger.info('sudo {} calls {}({}, {})'.format(uid, F, args, kwargs))
+        uid = kwargs.pop('uid', kooplex_settings.HUB.pw_uid)
+        gid = kwargs.pop('gid', kooplex_settings.HUB.pw_gid)
+        logger.info('sudo {}[{}] calls {}({}, {})'.format(pwd.getpwuid(uid).pw_name, uid, F.__name__, args, kwargs))
         q = multiprocessing.Queue()
         def worker():
             logger.debug('thread started, changing uid {}'.format(uid))

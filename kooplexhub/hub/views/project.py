@@ -499,8 +499,16 @@ def stat(request):
 
 
 
-#def cb(request):
-#    return render(request, 'cb.html', context = { "gombok": { 1: True, 2: False, 3: False, 4: True }})
+@login_required
+def layoutflip(request):
+    from hub.models import Layout
+    if hasattr(request.user, 'layout'):
+        l = request.user.layout
+        l.project_list = not l.project_list
+        l.save()
+    else:
+        Layout.objects.create(user = request.user)
+    return redirect('project:list')
 
 
 
@@ -517,6 +525,7 @@ urlpatterns = [
     url(r'^c_search/(?P<project_id>\d+)/?$', configure, name = 'c_search'), 
     url(r'^join/?$', join, name = 'join'), 
     url(r'^j_search/?$', join, name = 'j_search'), 
+    url(r'^layoutflip/?$', layoutflip, name = 'layout_flip'), 
 #    url(r'^configure/(?P<project_id>\d+)/meta/(?P<next_page>\w+:?\w*)$', conf_meta, name = 'conf_meta'), 
 #    url(r'^configure/(?P<project_id>\d+)/collaboration/(?P<next_page>\w+:?\w*)$', conf_collab, name = 'conf_collaboration'), 
 #    url(r'^configure/(?P<project_id>\d+)/environment/(?P<next_page>\w+:?\w*)$', conf_environment, name = 'conf_environment'), 

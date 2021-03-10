@@ -66,21 +66,28 @@ def start(service):
     has_project = False
     has_report = False
     has_cache = False
+    has_attachment = False
 
     if service.image.mount_project:
+        groups = []
         for project in service.projects:
             volume_mounts.append({
                 "name": "pv-k8plex-hub-project",
-                "mountPath": os.path.join(mount_point, project_subdir, project.uniquename),
+                #"mountPath": os.path.join(mount_point, project_subdir, project.uniquename),
+                "mountPath": os.path.join(mount_point, project_subdir, f'{project.cleanname}-{project.groupname}'),
                 "subPath": project.uniquename
             })
             has_project = True
             volume_mounts.append({
                 "name": "pv-k8plex-hub-cache",
-                "mountPath": os.path.join(mount_point, report_prepare_subdir, project.uniquename),
+                #"mountPath": os.path.join(mount_point, report_prepare_subdir, project.uniquename),
+                "mountPath": os.path.join(mount_point, report_prepare_subdir, f'{project.cleanname}-{project.groupname}'),
                 "subPath": os.path.join('report_prepare', project.uniquename)
             })
             has_cache = True
+            groups.append(project.groupname)
+        if len(groups) == 1:
+            env_variables.append({ "name": "NEWGROUP", "value": groups[0] })
 
     if service.image.mount_report:
         if service.image.imagetype == service.image.TP_PROJECT:
@@ -91,7 +98,8 @@ def start(service):
                 report_root_folders.append(report.project.uniquename)
                 volume_mounts.append({
                     "name": "pv-k8plex-hub-report",
-                    "mountPath": os.path.join(mount_point, report_subdir, report.project.uniquename),
+                    #"mountPath": os.path.join(mount_point, report_subdir, report.project.uniquename),
+                    "mountPath": os.path.join(mount_point, report_subdir, f'{report.project.cleanname}-{report.project.groupname}'),
                     "subPath": report.project.uniquename,
                     "readOnly": True
                 })
@@ -126,6 +134,14 @@ def start(service):
         })
         has_cache = True
 
+    for attachment in service.attachments:
+        volume_mounts.append({
+            "name": "pv-k8plex-hub-attachment",
+            "mountPath": os.path.join(mount_point, 'attachments', attachment.folder),
+            "subPath": attachment.folder,
+        })
+        has_attachment = True
+
     if has_project:
         volumes.append({
             "name": "pv-k8plex-hub-project",
@@ -144,6 +160,12 @@ def start(service):
             "persistentVolumeClaim": { "claimName": "pvc-cache-k8plex", }
         })
 
+    if has_attachment:
+        volumes.append({
+            "name": "pv-k8plex-hub-attachment",
+            "persistentVolumeClaim": { "claimName": "pvc-attachment-k8plex", }
+        })
+
     pod_definition = {
             "apiVersion": "v1",
             "kind": "Pod",
@@ -158,7 +180,7 @@ def start(service):
                     "image": service.image.name,
                     "volumeMounts": volume_mounts,
                     "ports": pod_ports,
-                    "imagePullPolicy": "IfNotPresent",
+                    "imagePullPolicy": "Always", #IfNotPresent
                     "env": env_variables,
                 }],
                 "volumes": volumes,
@@ -212,10 +234,7 @@ def _check_starting(service_id, event, left = 1000):
         return
     chk = check(service)
     if chk is True:
-        service.state = service.ST_RUNNING
-        service.save()
         logger.info(f'+ pod of {service.name} is ready')
-        addroute(service)
         event.set()
     elif chk == -1:
         logger.error(f'? pod of {service.name} oopsed {service.message}')
@@ -310,6 +329,11 @@ def check(service):
         indicators.append(f'restarted {st.restart_count} times')
         message = ', '.join(indicators)
         logger.debug(message)
+
+        if service.state == service.ST_STARTING and st.ready:
+            service.state = service.ST_RUNNING
+            addroute(service)
+
         return st.ready
     except client.rest.ApiException as e:
         e_extract = json.loads(e.body)

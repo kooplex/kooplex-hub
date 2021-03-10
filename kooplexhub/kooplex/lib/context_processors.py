@@ -2,6 +2,7 @@ from hub.forms import FormBiography
 from hub.forms import FormProject
 from hub.forms import FormService
 from hub.forms import FormImage
+from hub.forms import FormAttachment
 from hub.models import Project
 
 from kooplex.settings import KOOPLEX
@@ -20,6 +21,9 @@ def form_environment(request):
 
 def form_newimage(request):
     return { 'f_newimage': FormImage(auto_id = 'id_newimage_%s') } if request.user.is_authenticated and request.user.profile.can_createimage else {}
+
+def form_newattachment(request):
+    return { 'f_newattachment': FormAttachment(auto_id = 'id_newattachment_%s') } if request.user.is_authenticated and request.user.profile.can_createattachment else {}
 
 def user(request):
     return { 'user': request.user } if request.user.is_authenticated else {}

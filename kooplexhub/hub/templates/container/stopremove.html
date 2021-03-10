@@ -3,6 +3,9 @@
 {% elif service.state == service.ST_NEED_RESTART or service.state == service.ST_ERROR %}
     <a href="{% url 'service:stop' service.id next_page %}" role="button" class="btn btn-danger btn-sm" data-toggle="tooltip" title="Stop environment {{ service.name }}"><span class="oi oi-x" aria-hidden="true"></span></a>
     <a href="{% url 'service:restart' service.id next_page %}" role="button" class="btn btn-warning btn-sm" data-toggle="tooltip" title="Restart inconsistent environment {{ service.name }}"><span class="oi oi-reload" aria-hidden="true"></span></a>
+    {% comment %}
+    <a href="{% url 'service:restart' service.id next_page %}" role="button" class="btn btn-warning btn-sm" data-toggle="tooltip" title="Restart inconsistent environment {{ service.name }}"><i class="bi bi-bootstrap-reboot" aria-hidden="true"></i></a>
+    {% endcomment %}
 {% else %}
    <a href="#" role="button" class="btn btn-danger btn-sm disabled"><span class="oi oi-x" aria-hidden="true"></span></a>
 {% endif %}

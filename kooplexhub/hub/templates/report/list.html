@@ -7,11 +7,17 @@
 {% endblock %}
 
 {% block main_content_center %}
+{% if user.layout.report_list %}
+  {% for r in reports %}
+    {% include 'report/partial_list.html' with report=r image=r.image %}
+  {% endfor %}
+{% else %}
   <div class="row row-cols-1 row-cols-md-5 g-3">
     {% for r in reports %}
       {% include 'report/partial.html' with report=r image=r.image %}
     {% endfor %}
   </div>
+{% endif %}
 {% endblock %}
 
 {% block main_content_right %}

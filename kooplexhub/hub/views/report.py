@@ -164,6 +164,17 @@ def deletereport(request, report_id):
     return redirect('report:list')
 
 
+@login_required
+def layoutflip(request):
+    from hub.models import Layout
+    if hasattr(request.user, 'layout'):
+        l = request.user.layout
+        l.report_list = not l.report_list
+        l.save()
+    else:
+        Layout.objects.create(user = request.user)
+    return redirect('report:list')
+
 
 urlpatterns = [
     url(r'^newreport/?$', newreport, name = 'new'),
@@ -172,4 +183,5 @@ urlpatterns = [
     url(r'^searchreport/?$', listreport, name = 'l_search'),
     url(r'^openreport/(?P<report_id>\d+)$', openreport, name = 'openreport'),
     url(r'^deletereport/(?P<report_id>\d+)$', deletereport, name = 'deletereport'), 
+    url(r'^layoutflip/?$', layoutflip, name = 'layout_flip'), 
  ]

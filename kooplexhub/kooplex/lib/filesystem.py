@@ -17,7 +17,7 @@ from kooplex import settings as kooplex_settings
 
 logger = logging.getLogger(__name__)
 
-
+#FIXME: users group (1000) hardcoded and adde extra (should be removed when acl handling is resolved)
 @sudo
 def _mkdir(path, other_rx = False):
     """
@@ -34,10 +34,12 @@ A::OWNER@:rwaDxtTcCy
 A::{kooplex_settings.HUB.pw_uid}:rwaDxtcy
 A::GROUP@:tcy
 A:g:{kooplex_settings.HUB.pw_gid}:rwaDxtcy
+A:g:1000:rwaDxtcy
 A::EVERYONE@:{rx}tcy
 A:fdi:OWNER@:rwaDxtTcCy
 A:fdi:GROUP@:tcy
 A:fdig:{kooplex_settings.HUB.pw_gid}:rwaDxtcy
+A:fdig:1000:rwaDxtcy
 A:fdi:EVERYONE@:tcy
     """
     fn_acl = '/tmp/acl.dat'
@@ -79,6 +81,7 @@ def _revokeaccess(user, folder):
 @sudo
 def _grantgroupaccess(group_id, folder, acl = 'rxtcy'):
     bash(f'nfs4_setfacl -R -a A:g:{group_id}:{acl} {folder}')
+    bash(f'nfs4_setfacl -R -a A:fdig:{group_id}:{acl} {folder}')
     #bash(f'nfs4_setfacl -R -a A:fdig:{groupi_id}:{acl} {folder}')
     logger.info(f"+ access granted on dir {folder} to group {group_id}")
 
@@ -175,22 +178,43 @@ def mkdir_project(project):
     dir_project = Dirname.project(project)
     _mkdir(dir_project)
     _grantaccess(project.creator, dir_project)
+    _grantgroupaccess(project.groupid, dir_project, acl = 'rwaDxtcy')
     dir_reportprepare = Dirname.reportprepare(project)
     _mkdir(dir_reportprepare)
     _grantaccess(project.creator, dir_reportprepare)
+    _grantgroupaccess(project.groupid, dir_reportprepare, acl = 'rwaDxtcy')
+
+#@sudo
+#def _dir_walker(root):
+#    records = []
+#    for path, dirs, files in os.walk(root):
+#        for folder in dirs:
+#            d = os.path.join(path, folder)
+#            o = os.stat(d)
+#            records.append((d, o.st_uid, o.st_gid))
+#    logger.debug(f'treewalk: {records}')
+#    return records
 
 def grantaccess_project(userprojectbinding):
     user = userprojectbinding.user
     dir_project = Dirname.project(userprojectbinding.project)
     _grantaccess(user, dir_project)
+#    for subdir, uid, gid in _dir_walker(dir_project):
+#        _grantaccess(user, subdir, uid = uid, gid = gid)
     dir_reportprepare = Dirname.reportprepare(userprojectbinding.project)
     _grantaccess(user, dir_reportprepare)
+#    for subdir, uid, gid in _dir_walker(dir_reportprepare):
+#        _grantaccess(user, subdir, uid = uid, gid = gid)
 
 def revokeaccess_project(userprojectbinding):
     user = userprojectbinding.user
     dir_project = Dirname.project(userprojectbinding.project)
+#    for subdir, uid, gid in _dir_walker(dir_project):
+#        _revokeaccess(user, subdir, uid = uid, gid = gid)
     _revokeaccess(user, dir_project)
     dir_reportprepare = Dirname.reportprepare(userprojectbinding.project)
+#    for subdir, uid, gid in _dir_walker(dir_reportprepare):
+#        _revokeaccess(user, subdir, uid = uid, gid = gid)
     _revokeaccess(user, dir_reportprepare)
 
 def garbagedir_project(project):
@@ -218,18 +242,20 @@ def snapshot_report(report):
     dir_source = os.path.join(Dirname.reportprepare(report.project), report.folder)
     dir_target = Dirname.report(report)
     _copy_dir(dir_source, dir_target, remove = False)
-    _grantgroupaccess(1000, dir_target) #FIXME hardcoded
+    _grantgroupaccess(1000, dir_target) #FIXME hardcoded, ez szerintem nem is kell!!!
+    _grantgroupaccess(report.project.groupid, dir_target)
     #TODO _grantaccess report reader if different than hub
 
+#FIXME: ha muxik a group majd nem kell
 @sudo
 def grantaccess_report(report, user):
     dir_report = Dirname.report(report)
-    _grantaccess(user, dir_report)
+    #_grantaccess(user, dir_report)
 
 @sudo
 def revokeaccess_report(report, user):
     dir_report = Dirname.report(report)
-    _revokeaccess(user, dir_report)
+    #_revokeaccess(user, dir_report)
 
 @sudo
 def garbage_report(report):
@@ -255,6 +281,22 @@ def recreate_report(report):
     dir_target = Dirname.report(report)
     _rmdir(dir_target)
     snapshot_report(report)
+
+
+########################################
+# attachment folder management
+
+@sudo
+def mkdir_attachment(attachment):
+    dir_attachment = Dirname.attachment(attachment)
+    if not os.path.exists(dir_attachment):
+        _mkdir(dir_attachment, other_rx = True)
+        #FIXME
+        #n = report.mark_projectservices_restart(f"Need to mount report folder for project {report.project}")
+        #logger.info(f'{n} services marked as need to restart, due to creation of folder {project_report_root}')
+    _grantaccess(attachment.creator, dir_attachment)
+
+
 
 
 ########################################

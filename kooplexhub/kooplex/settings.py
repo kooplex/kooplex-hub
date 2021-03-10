@@ -88,6 +88,7 @@ TEMPLATES = [
                 'kooplex.lib.context_processors.form_biography',
                 'kooplex.lib.context_processors.form_project',
                 'kooplex.lib.context_processors.form_newimage',
+                'kooplex.lib.context_processors.form_newattachment',
                 'kooplex.lib.context_processors.form_environment',
                 'kooplex.lib.context_processors.user',
                 'kooplex.lib.context_processors.table',
@@ -170,6 +171,7 @@ KOOPLEX = {
         'project': '/mnt/projects',
         'report': '/mnt/reports',
         'report_prepare': '/mnt/report_prepare',
+        'attachment': '/mnt/attachment',
 
         #####
         # ezt hasznalja a hub?
