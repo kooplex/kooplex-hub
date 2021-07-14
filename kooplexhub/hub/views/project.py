@@ -17,7 +17,7 @@ from hub.forms import table_collaboration, table_services, T_SERVICE, T_JOINABLE
 from hub.forms import table_volume
 from hub.forms import table_vcproject
 from hub.models import Project, UserProjectBinding
-from hub.models import Service, ProjectServiceBinding
+from hub.models import Service, ProjectServiceBinding, AttachmentServiceBinding
 from hub.models import Volume
 from hub.models import Image
 from hub.models import Profile
@@ -195,7 +195,12 @@ def configure(request, project_id):
             for sid in service_ids:
                 svc = ProjectServiceBinding.objects.get(id = sid, service__user = user).service
                 svc_copy = Service.objects.create(user = collaborator, image = svc.image, name = f'{b.user.username}-{project.name}-{user.username}')
+                logger.info(f'+ created service {svc_copy.name} templated by {svc.name}')
                 ProjectServiceBinding.objects.create(service = svc_copy, project = project)
+                # handle attachments
+                for a in svc.attachments:
+                    AttachmentServiceBinding.objects.create(attachment = a, service = svc_copy)
+                    logger.debug(f'+ attached {a.name} to service {svc_copy.name}')
                 #TODO: handle volumes
         # role change
         changed = []

@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+
+{% block main_content_center %}
+{% for k, v in gombok.items %} 
+<div class="form-check form-switch">
+	<input class="form-check-input" type="checkbox" id="cb_id-{{k}}" name="varname" value="{{k}}" {% if v %} checked {% endif %}/>
+	<label class="form-check-label" for="cb_id-{k}" id="cb_l_id-{{k}}"> {% if v %} pipa {% else %} nempipa {% endif %}</label>
+</div>
+
+
+	<script>
+		$("#cb_id-{{k}}").on("change", function () {
+    if ($(this).is(":checked")) {
+	    {% if v %}
+	    $('#cb_l_id-{{k}}').text("Marad pipa")
+	    {% else %}
+	    $('#cb_l_id-{{k}}').text("leszpipa")
+	    {% endif %}
+    } else {
+	    {% if v %}
+	    $('#cb_l_id-{{k}}').text("Felejtos")
+	    {% else %}
+	    $('#cb_l_id-{{k}}').text("szkippelos")
+	    {% endif %}
+    }
+})
+	</script>
+	{% endfor %}
+
+{% endblock %}

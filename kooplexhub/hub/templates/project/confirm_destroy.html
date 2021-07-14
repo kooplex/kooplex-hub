@@ -1,0 +1,20 @@
+
+<div class="modal fade" id="confirm-destroy-{{ service.id }}" tabindex="-1" role="dialog" aria-labelledby="titleAbout" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+	      <h5 class="modal-title" id="titleAbout">Delete  {{ service.name }}</h5>
+        <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+	      This will remove the enviroments configuration, but won't cause any loss in your or your projectss data.
+      </div>     <!-- model-body -->
+      <div class="modal-footer">
+          <a type="button" class="btn btn-danger" href="{% url 'service:destroy' service.id next_page %}">Yes, I am sure</a>
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>

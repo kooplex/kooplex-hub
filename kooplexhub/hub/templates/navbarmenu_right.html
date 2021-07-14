@@ -15,15 +15,14 @@
   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownRight">
    {% if user.is_authenticated %}
     <li><a class="dropdown-item" href="{% url 'logout' %}">Logout <span class="oi oi-account-logout"></span></a></li>
-    <li><a class="dropdown-item" href="#" data-toggle="modal" data-target="#update-bio">Update bio</a></li>
-    <li><a class="dropdown-item" href="#" data-toggle="modal" data-target="#reset-token">Reset token</a></li>
+    <!--li><a class="dropdown-item" href="#" data-toggle="modal" data-target="#update-bio">Update bio</a></li-->
+    <!--li><a class="dropdown-item" href="#" data-toggle="modal" data-target="#reset-token">Reset token</a></li-->
    {% else %}
     <li><a class="dropdown-item" href="{% url 'social:begin' 'hydraoidc' %}">Log in <span class="oi oi-account-login"></span></a>
     <!--li><a class="dropdown-item" href="{% url 'social:begin' 'kooplex' %}">Log in <span class="oi oi-account-login"></span></a-->
    {% endif %}
     <li><hr class="dropdown-divider"></li>
-    <li><a class="dropdown-item" href="https://github.com/kooplex/kooplex-hub/wiki" target="_blank">Kooplex Hub Wiki</a></li>
-    <li><a class="dropdown-item" href="#" data-toggle="modal" data-target="#about-contacts">Contacts and about</a></li>
+    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#about-contacts">Contacts and about</a></li>
   </ul>
 </ul>
 
