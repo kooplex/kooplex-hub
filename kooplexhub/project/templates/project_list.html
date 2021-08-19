@@ -1,0 +1,73 @@
+{% extends "layout.html" %}
+
+{% block submenu %}
+  {% include 'project_submenu.html' with title="The list of your projects" submenu="list" %}
+{% endblock %}
+
+{% block main_content_right %}
+{% if user.profile.layout_project_list %}
+<div id="projectListPane">
+  <input type="hidden" id="shown" name="shown" value="{{ expanded }}">
+  {% for upb in userprojectbindinglist %}
+  {% include 'project_partial_list.html' with next_page='project:list' project=upb.project projectcontainerbindings=upb.projectcontainerbindings is_admin=upb.is_admin %}
+  {% endfor %}
+</div>
+{% else %}
+<div class="row row-cols-1 row-cols-md-3 g-4">
+  {% for upb in userprojectbindinglist %}
+  {% include 'project_partial_card.html' with next_page='project:list' project=upb.project projectcontainerbindings=upb.projectcontainerbindings is_admin=upb.is_admin %}
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if userprojectbindinglist|length %}
+{% include 'pager.html' %}
+{% else %}
+<p>Your search expression is too strict to match a project or else you have not created any projects yet.</p>
+{% endif %}
+
+	<script>
+function onlyUnique(value, index, self) {
+  return self.indexOf(value) === index;
+}
+
+$("#projectListPane div div div").on("click", function () {
+    console.log( this )
+    var tgl = $( this ).attr("data-bs-toggle")
+    console.log( tgl )
+    if (tgl === 'collapse') {
+      var collapsed = $( this ).hasClass("collapsed")
+      var hid_shw = $( "#shown" )
+      console.log( "memo: " )
+      console.log( hid_shw )
+      var shw = JSON.parse( hid_shw.val() )
+      var tgl_id = $( this ).attr("data-bs-target").split('-')[1]
+      console.log( tgl_id )
+      console.log( "before: " + shw )
+      if (collapsed) {
+	  const index = shw.indexOf(tgl_id);
+          if (index > -1) {
+              shw.splice(index, 1);
+          }
+      } else {
+          shw.push( tgl_id )
+      }
+      shw = shw.filter(onlyUnique);
+      console.log( "after: " + shw )
+      hid_shw.val( JSON.stringify(shw) )
+    }
+})
+	</script>
+{% endblock %}
+
+{% block main_content_left %}
+  {#% include 'project/hint_list.html' %#}
+{% endblock %}
+
+{% block navsearch %}
+<form class="d-flex" action="{% url 'project:list' %}" method="get">
+  {#% csrf_token %#}
+  <input class="form-control me-2" type="search" name="project" placeholder="Search project" value="{{ user.profile.search_project_list }}" aria-label="Search">
+  <button class="btn btn-outline-secondary" type="submit" name="button" value="search">Search</button>
+</form>
+{% endblock %}

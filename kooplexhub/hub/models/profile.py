@@ -1,28 +1,54 @@
 import os
-import pwgen
 import logging
 import unidecode
+from pwd import getpwnam
 
 from django.db import models
-from django.db.models.signals import post_save, pre_delete, post_delete
-from django.dispatch import receiver
 from django.contrib.auth.models import User
-
-from kooplex.settings import KOOPLEX
-from kooplex.lib.filesystem import Dirname
-from kooplex.lib import sudo
 
 logger = logging.getLogger(__name__)
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete = models.CASCADE)
-    bio = models.TextField(max_length = 500, blank = True)
-    location = models.CharField(max_length = 30, blank = True)
-    userid = models.IntegerField(null = False)
+    #FIXME: userid = models.IntegerField(null = False)
     token = models.CharField(max_length = 64, null = True)
     can_createproject = models.BooleanField(default = True) 
     can_createimage = models.BooleanField(default = False) 
     can_createattachment = models.BooleanField(default = False) 
+
+    search_project_list = models.CharField(max_length = 30, blank = True, null = True, default = "")
+    search_project_join = models.CharField(max_length = 30, blank = True, null = True, default = "")
+    search_project_showhide = models.CharField(max_length = 30, blank = True, null = True, default = "")
+    search_project_collaborator = models.CharField(max_length = 30, blank = True, null = True, default = "")
+    search_project_container = models.CharField(max_length = 30, blank = True, null = True, default = "")
+
+    search_education_student = models.CharField(max_length = 30, blank = True, null = True, default = "")
+    search_education_teacher = models.CharField(max_length = 30, blank = True, null = True, default = "")
+
+    search_container_list = models.CharField(max_length = 30, blank = True, null = True, default = "")
+    search_container_projects = models.CharField(max_length = 30, blank = True, null = True, default = "")
+    search_container_library = models.CharField(max_length = 30, blank = True, null = True, default = "")
+    search_container_repository = models.CharField(max_length = 30, blank = True, null = True, default = "")
+    search_container_attachments = models.CharField(max_length = 30, blank = True, null = True, default = "")
+
+    search_attachment_list = models.CharField(max_length = 30, blank = True, null = True, default = "")
+
+    search_report_list = models.CharField(max_length = 30, blank = True, null = True, default = "")
+
+    search_external_library = models.CharField(max_length = 30, blank = True, null = True, default = "")
+    search_external_repository = models.CharField(max_length = 30, blank = True, null = True, default = "")
+
+    layout_project_list = models.BooleanField(default = True)
+    layout_container_list = models.BooleanField(default = True)
+    layout_report_list = models.BooleanField(default = True)
+
+    paginate_project_list = models.IntegerField(default = 16)
+    paginate_container_list = models.IntegerField(default = 16)
+    paginate_report_list = models.IntegerField(default = 16)
+
+    @property
+    def userid(self):
+        return getpwnam(self.username).pw_uid
 
     @property
     def name(self):
@@ -30,7 +56,7 @@ class Profile(models.Model):
 
     @property
     def username(self):
-        return '{}'.format(self.user.username)
+        return self.user.username
 
     @property
     def name_and_username(self):
@@ -49,7 +75,7 @@ class Profile(models.Model):
 
     @property
     def projectbindings(self):
-        from .project import UserProjectBinding
+        from project.models import UserProjectBinding
         for binding in UserProjectBinding.objects.filter(user = self.user):
             yield binding
 
@@ -77,71 +103,70 @@ class Profile(models.Model):
              reports_shown.update(set(g))
 
     def usercoursebindings(self, **kw):
-        from .course import UserCourseBinding
-        for binding in UserCourseBinding.objects.filter(user = self.user, **kw):
-            yield binding
+        from education.models import UserCourseBinding
+        return UserCourseBinding.objects.filter(user = self.user, **kw)
 
     @property
     def is_teacher(self):
-        return len(list(self.usercoursebindings(is_teacher = True))) > 0
+        return len(self.usercoursebindings(is_teacher = True)) > 0
 
     def courses_taught(self):
-        return set([ binding.course for binding in self.usercoursebindings(is_teacher = True) ])
+        return [ binding.course for binding in self.usercoursebindings(is_teacher = True) ]
 
     @property
     def is_student(self):
-        return len(list(self.usercoursebindings(is_teacher = False))) > 0
+        return len(self.usercoursebindings(is_teacher = False)) > 0
 
     def courses_attend(self):
-        return set([ binding.course for binding in self.usercoursebindings(is_teacher = False) ])
+        return [ binding.course for binding in self.usercoursebindings(is_teacher = False) ]
 
-    def is_coursecodeteacher(self, coursecode):
-        from .course import UserCourseCodeBinding
-        try:
-            UserCourseCodeBinding.objects.get(user = self.user, coursecode = coursecode, is_teacher = True)
-            return True
-        except UserCourseCodeBinding.DoesNotExist:
-            return False
-
-    @property
-    def courseprojects_attended(self): #FIXME
-        duplicate = set()
-        for coursebinding in self.coursebindings:
-            if not coursebinding.is_teacher:
-                if coursebinding.course.project in duplicate:
-                    continue
-                yield coursebinding.course.project
-                duplicate.add(coursebinding.course.project)
-
-    def projects_reportprepare(self):
-        for b in self.projectbindings:
-            yield (b.project.id, b.project.uniquename)
-
-    @sudo
-    def files_reportprepare(self):
-        tree = {}
-        for b in self.projectbindings:
-            report_dir = Dirname.reportprepare(b.project)
-            sub_tree = {}
-            for d in list(filter(lambda d: not d.startswith('.') and os.path.isdir(os.path.join(report_dir, d)), os.listdir(report_dir))):
-                files = list(filter(lambda f: f.endswith('.ipynb') or f.endswith('.html') or f.endswith('.py') or f.endswith('.R') or f.endswith('.r'), os.listdir( os.path.join(report_dir, d) )))
-                if len(files):
-                    sub_tree[d] = files
-            if len(sub_tree):
-                tree[b.project] = sub_tree
-        return tree
-
-    @property
-    def functional_volumes(self):
-        from .volume import Volume
-        for volume in Volume.filter(Volume.FUNCTIONAL):
-            yield volume
-
-    @property
-    def storage_volumes(self):
-        from .volume import Volume
-        for volume in Volume.filter(Volume.STORAGE, user = self.user):
-            yield volume
+#FIXME    def is_coursecodeteacher(self, coursecode):
+#FIXME        from .course import UserCourseCodeBinding
+#FIXME        try:
+#FIXME            UserCourseCodeBinding.objects.get(user = self.user, coursecode = coursecode, is_teacher = True)
+#FIXME            return True
+#FIXME        except UserCourseCodeBinding.DoesNotExist:
+#FIXME            return False
+#FIXME
+#FIXME    @property
+#FIXME    def courseprojects_attended(self): #FIXME
+#FIXME        duplicate = set()
+#FIXME        for coursebinding in self.coursebindings:
+#FIXME            if not coursebinding.is_teacher:
+#FIXME                if coursebinding.course.project in duplicate:
+#FIXME                    continue
+#FIXME                yield coursebinding.course.project
+#FIXME                duplicate.add(coursebinding.course.project)
+#FIXME
+#FIXME    def projects_reportprepare(self):
+#FIXME        for b in self.projectbindings:
+#FIXME            yield (b.project.id, b.project.uniquename)
+#FIXME
+#FIXME    @sudo
+#FIXME    def files_reportprepare(self):
+#FIXME        tree = {}
+#FIXME        for b in self.projectbindings:
+#FIXME            report_dir = Dirname.reportprepare(b.project)
+#FIXME            sub_tree = {}
+#FIXME            for d in list(filter(lambda d: not d.startswith('.') and os.path.isdir(os.path.join(report_dir, d)), os.listdir(report_dir))):
+#FIXME                files = list(filter(lambda f: f.endswith('.ipynb') or f.endswith('.html') or f.endswith('.py') or f.endswith('.R') or f.endswith('.r'), os.listdir( os.path.join(report_dir, d) )))
+#FIXME                if len(files):
+#FIXME                    sub_tree[d] = files
+#FIXME            if len(sub_tree):
+#FIXME                tree[b.project] = sub_tree
+#FIXME        return tree
+#FIXME
+#FIXME    @property
+#FIXME    def functional_volumes(self):
+#FIXME        from .volume import Volume
+#FIXME        for volume in Volume.filter(Volume.FUNCTIONAL):
+#FIXME            yield volume
+#FIXME
+#FIXME    @property
+#FIXME    def storage_volumes(self):
+#FIXME        from .volume import Volume
+#FIXME        for volume in Volume.filter(Volume.STORAGE, user = self.user):
+#FIXME            yield volume
 
     @property
     def vctokens(self):
@@ -154,60 +179,5 @@ class Profile(models.Model):
         from .filesync import FSToken
         for t in FSToken.objects.filter(user = self.user):
             yield t
-
-
-@receiver(post_save, sender = User)
-def create_user_profile(sender, instance, created, **kwargs):
-    if created:
-        logger.info("New user %s" % instance)
-        last_uid = Profile.objects.all().aggregate(models.Max('userid'))['userid__max']
-        uid = KOOPLEX.get('min_userid', 1000) if last_uid is None else last_uid + 1
-        token = pwgen.pwgen(64)
-        Profile.objects.create(user = instance, userid = uid, token = token)
-
-
-@receiver(post_save, sender = User)
-def create_user_home(sender, instance, created, **kwargs):
-    from kooplex.lib.filesystem import mkdir_home
-    if created:
-        try:
-            mkdir_home(instance)
-        except Exception as e:
-            logger.error("Failed to create home for %s -- %s" % (instance, e))
-
-
-@receiver(pre_delete, sender = User)
-def garbage_user_home(sender, instance, **kwargs):
-    from kooplex.lib.filesystem import garbagedir_home
-    garbagedir_home(instance)
-
-
-@receiver(post_save, sender = User)
-def ldap_create_user(sender, instance, created, **kwargs):
-    from kooplex.lib.ldap import Ldap
-    regenerate = False
-    try:
-        ldap = Ldap()
-        response = ldap.get_user(instance)
-        uidnumber = response.get('attributes', {}).get('uidNumber')
-        if uidnumber != instance.profile.userid:
-            ldap.removeuser(instance)
-            regenerate = True
-    except Exception as e:
-        logger.error("Failed to get ldap entry for %s -- %s " % (instance, e))
-    if not created or regenerate:
-        try:
-            ldap.adduser(instance)
-        except Exception as e:
-            logger.error("Failed to create ldap entry for %s -- %s" % (instance, e))
-
-
-@receiver(post_delete, sender = User)
-def ldap_delete_user(sender, instance, **kwargs):
-    from kooplex.lib.ldap import Ldap
-    try:
-        Ldap().removeuser(instance)
-    except Exception as e:
-        logger.error("Failed to remove ldap entry for %s -- %s" % (instance, e))
 
 

@@ -1,0 +1,42 @@
+{% load buttons %}
+{% load project_buttons %}
+
+<div class="col">
+  <div class="card text-white bg-primary border-info shadow ">
+{% comment %}
+    <img src="..." class="card-img-top" alt="...">
+{% endcomment %}
+    <div class="card-header bg-primary">
+      <h5 class="card-title">{{ project.name }}
+        <div class="float-end">
+          {% scope project %}
+        </div>
+      </h5>
+    </div>
+    <div class="card-body text-dark bg-light">
+      {% if project.creator != user %}
+        <p class="card-text"><strong>Creator:</strong> {{ project.creator.profile.name_and_username }}</p>
+      {% endif %}
+      <p class="card-text"><strong>Description:</strong> {{ project.description }}</p>
+      <p class="card-text">
+       <div class="btn-group" role="group">
+	<strong>Info:</strong>
+        {% include 'reports_button.html' %}
+        {% button_collaborator project user %}
+        {% dropdown_start_open_stop bindings=projectcontainerbindings ancestor=project ancestor_type='project' next_page='project:list' %}
+       </div>
+      </p>
+    </div>
+    <div class="card-footer bg-primary">
+      <div class="row">
+      <div class="float-start">
+	  {% button_project_conf project enabled=is_admin %}
+	  {% button_project_hide project %}
+      <div class="float-end">
+	  {% button_project_delete project %}
+      </div>
+      </div>
+      </div>
+    </div>
+  </div>
+</div>

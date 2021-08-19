@@ -1,0 +1,109 @@
+{% extends "layout.html" %}
+
+{% load render_table from django_tables2 %}
+
+{% block submenu %}
+  {% include 'project_submenu.html' with title="Configure project" %}
+{% endblock %}
+
+{% block main_content_right %}
+<div class="card shadow p-3 mb-5 bg-light rounded">
+<form id="project-manage" class="form-horizontal" action="{% url 'project:configure' project.id %}" method="post">
+{% csrf_token %}
+
+  <ul class="nav nav-tabs" id="projectConfigTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <a class="nav-link {% if active == "meta" %}active{% endif %}" id="tab-meta" data-bs-toggle="tab" href="#meta" role="tab" aria-controls="meta" aria-selected="{% if active == "meta" %}true{% else %}false{% endif %}">Meta</a>
+    </li>
+    <li class="nav-item" role="presentation">
+      <a class="nav-link {% if active == "collaboration" %}active{% endif %}" id="tab-collaboration" data-bs-toggle="tab" href="#collaboration" role="tab" aria-controls="collaboration" aria-selected="{% if active == "collaboration" %}true{% else %}false{% endif %}">Collaboration</a>
+    </li>
+    <li class="nav-item" role="presentation">
+      <a class="nav-link {% if active == "service" %}active{% endif %}" id="tab-service" data-bs-toggle="tab" href="#service" role="tab" aria-controls="service" aria-selected=""{% if active == "service" %}true{% else %}false{% endif %}>Container environments</a>
+    </li>
+  </ul>
+  <div class="tab-content" id="projectConfogTabsContent">
+    <div class="tab-pane fade {% if active == "meta" %}show active{% endif %}" id="meta" role="tabpanel" aria-labelledby="tab-meta">
+      <h5 class="card-title">Describe your project</h5>
+      <textarea class="form-control" rows="6" cols="50" id="description" name="description">{{ project.description }}</textarea>
+      <h5 class="card-title">Change the scope for this project</h5>
+      <select class="form-control" id="project_scopes-{{ project.id }}" name="project_scope">
+        {% for k, v in project.SCP_LOOKUP.items %}
+          <option value="{{ k }}" {% if project.scope == k %} selected {% endif %}>{{ v }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="tab-pane fade {% if active == "collaboration" %}show active{% endif %}" id="collaboration" role="tabpanel" aria-labelledby="tab-collaboration">
+      <h5 class="card-title">Select collaborators of this project</h5>
+      {% if t_collaborators %}
+        {% render_table t_collaborators %}
+        <hr>
+        <h5 class="card-title">Select environments to create for your collaborators</h5>
+        Your collaborators are free to change this environment later.
+        {% render_table t_services %}
+      {% else %}
+        You cannot manage collaboration of this project.
+      {% endif %}
+    </div>
+    <div class="tab-pane fade {% if active == "service" %}show active{% endif %}" id="service" role="tabpanel" aria-labelledby="tab-service">
+      <h5 class="card-title">Manage project environment bindings</h5>
+      <p>In these environments will you have access to the project folders and files</p>
+      {% if t_all_services %}
+        {% render_table t_all_services %}
+      {% endif %}
+    </div>
+  </div>
+  {% include 'apply_cancel.html' %}
+</form>
+</div>
+
+<script>
+  $("#projectConfigTabs li a").on("click", function () {
+    var tab = $( this ).attr("id")
+    console.log( tab )
+
+    if (tab == "tab-collaboration") {
+      $("#active_tab").attr("value",  "collaboration")
+      $("#search_field").attr("placeholder",  "Search name or username")
+      $("#search_field").attr("value", $("#s_collaboration").attr("value") )
+      $("#search_field").attr("disabled", false )
+    } else if (tab == "tab-meta") {
+      $("#active_tab").attr("value",  "meta")
+      $("#search_field").attr("placeholder",  "Search")
+      $("#search_field").attr("value", "" )
+      $("#search_field").attr("disabled", true )
+    } else if (tab == "tab-service") {
+      $("#active_tab").attr("value",  "service")
+      $("#search_field").attr("placeholder",  "Search service")
+      $("#search_field").attr("value", $("#s_service").attr("value") )
+      $("#search_field").attr("disabled", false )
+    }
+    console.log( $("#active_tab").attr("value") )
+  })
+</script>
+{% endblock %}
+
+{% block main_content_left %}
+  {#% include 'project/hint_config.html' %#}
+{% endblock %}
+
+{% block navsearch %}
+<form class="d-flex" action="{% url 'project:configure' project.id %}" method="get">
+  {#% csrf_token %#}
+  <input type="hidden" name="active_tab" id="active_tab" value="{{ active }}">
+  <input type="hidden" id="s_collaboration" value="{{ user.profile.search_project_collaborator }}">
+  <input type="hidden" id="s_service" value="{{ user.profile.search_project_container }}">
+  <input class="form-control me-2" type="search" id="search_field" name="pattern"
+    {% if active == "collaboration" %}
+      value="{{ user.profile.search_project_collaborator }}" placeholder="Search name or username"
+    {% elif active == "service" %}
+      value="{{ user.profile.search_project_service }}" placeholder="Search service"
+    {% else %}
+      value="" placeholder="Search"
+    {% endif %}
+      aria-label="Search">
+  <button class="btn btn-outline-secondary" type="submit" name="button" value="search">Search</button>
+</form>
+{% endblock %}
+
+

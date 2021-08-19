@@ -1,0 +1,34 @@
+{% extends "layout.html" %}
+
+{% block submenu %}
+  {% include 'container_submenu.html' with title="List of attachments" submenu="attachments" %}
+{% endblock %}
+
+{% block main_content_right %}
+    <div class="row">
+      <div class="col-2">
+      <strong>Attachment name</strong>
+      </div>
+      <div class="col-2">
+        <strong>Folder name </strong>
+      </div>
+      <div class="col-8">
+        <strong>Description </strong>
+      </div>
+    </div>
+  {% for attachment in attachments %}
+    {% include 'attachment_partial_list.html' %}
+  {% endfor %}
+{% endblock %}
+
+{% block main_content_left %}
+  {#% include 'container/hint_list.html' %#}
+{% endblock %}
+
+{% block navsearch %}
+<form class="d-flex" action="{% url 'container:list_attachments' %}" method="get">
+  {#% csrf_token %#}
+  <input class="form-control me-2" type="search" name="attachment" placeholder="Search attachments" value="{{ user.profile.search_attachment_list }}" aria-label="Search">
+  <button class="btn btn-outline-secondary" type="submit" name="button" value="search">Search</button>
+</form>
+{% endblock %}

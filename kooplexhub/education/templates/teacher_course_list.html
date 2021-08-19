@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+
+{% block submenu %}
+  {% include 'education_submenu.html' with title="Courses you teach" submenu="teacher" %}
+{% endblock %}
+
+{% block main_content_right %}
+
+  {% for ucb in teachercoursebindinglist %}
+     {% include 'course_partial_list.html' with next_page='education:student' course=ucb.course coursecontainerbindings=ucb.coursecontainerbindings is_teacher=True tooltip="Manage assignments" %}
+  {% endfor %}
+
+{% endblock %}
+
+{% comment %}
+{% block main_content_left %}
+  {#% include 'project/hint_join.html' %#}
+{% endblock %}
+
+{% block navsearch %}
+<form class="d-flex" action="{% url 'project:join' %}" method="get">
+  {#% csrf_token %#}
+  <input class="form-control me-2" type="search" name="project_or_creator" placeholder="Search project/creator" value="{{ user.profile.search_project_join }}" aria-label="Search">
+  <button class="btn btn-outline-secondary" type="submit" name="button" value="search">Search</button>
+</form>
+{% endblock %}
+{% endcomment %}

@@ -1,0 +1,70 @@
+{% load buttons %}
+{% load check_show %}
+
+<div class="card bg-light border-secondary shadow mb-3">
+  <div class="card-header">
+    <div class="row">
+      <div class="col-1">
+	{% button_start_open_restart container next_page='container:list' %}
+      </div>
+      <div class="col-11" data-bs-toggle="collapse" data-bs-target="#collapse-{{ container.id }}" aria-expanded="false" aria-controls="collapse-{{ container.id }}">
+        {{ container.name }}
+        <div class="float-end">
+	  {% container_image container %}
+        </div>
+      </div>
+    </div>
+  </div> <!-- card header -->
+  <div class="collapse {{ request|show:container }}" id="collapse-{{ container.id }}">
+    <div class="card card-body">
+      <p class="card-text"><strong>Information:</strong>
+	  {% projects projects=container.projects %}
+	  {% courses courses=container.courses %}
+	  {% attachments attachments=container.attachments %}
+	  
+	  {% if container.report %}
+	  <span class="badge rounded-pill bg-secondary" aria-hidden="true" data-bs-toggle="tooltip" 
+		title="Report service environment for {{ container.report.name }}"
+                data-placement="top"><i class="oi oi-graph"></i> {{container.report.name}}</span>
+          {% elif container.projects|length == 0 and container.courses|length == 0 %}
+	  <span class="badge rounded-pill bg-warning"><i class="oi oi-warning"></i>
+            Not bound to any projects, courses or report.
+          </span>
+          {% endif %}
+          {% if container.synced_libraries|length > 0 %}
+            <span class="badge rounded-pill bg-dark" aria-hidden="true" data-bs-toggle="tooltip" title="Synchron folders:
+{% for l in container.synced_libraries %}
+{{ l.library_name }} from server {{ l.token.syncserver.url }}
+{% endfor %}" data-placement="top"><i class="ri-refresh-fill"></i> {{container.synced_libraries|length}}</span>
+          {% endif %}
+          {% if container.repos|length > 0 %}
+            <span class="badge rounded-pill bg-dark" aria-hidden="true" data-bs-toggle="tooltip" title="Version control repositories:
+{% for r in container.repos %}
+{{ r.project_name }} from server {{ r.token.repository.url }}
+{% endfor %}" data-placement="top"><i class="ri-git-repository-line"></i> {{container.repos|length}}</span>
+          {% endif %}
+          {% if container.volumes|length > 0 %}
+            <span class="badge rounded-pill bg-dark" aria-hidden="true" data-bs-toggle="tooltip" title="Volumes:
+{% for v in container.volumes %}
+{{ v }} ({{ v.description }})
+{% endfor %}" data-placement="top"><i class="ri-database-2-line"></i> {{container.volumes|length}}</span>
+          {% endif %}
+      </p>
+      {% container_restart_reason container %}
+      {% container_last_message container %}
+      <div class="row">
+      <div class="float-start">
+        {% button_start_open container next_page="container:list" %}
+        {% button_restart container next_page="container:list" %}
+        {% button_stop container next_page="container:list" %}
+        {% button_refreshlog container next_page="container:list" %}
+        {% if not container.report %}
+	  {% button_configure container %}
+          {% button_delete_container container next_page="container:list" %}
+        {% endif %}
+      </div>
+      </div>
+    </div>
+  </div>
+</div>
+

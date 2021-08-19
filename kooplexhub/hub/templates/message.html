@@ -1,7 +1,52 @@
-{% if messages %}
+{% load extras %}
+{% if messages or unbound_containers or restart_containers or unbound_projects or due_assignments or unbound_courses or empty_course_groups or ungrouped_course_students %}
  <div class="card shadow p-3 mb-5 bg-light rounded"> 
   <div class="card-body">
     <h5 class="card-title">Messages</h5>
+    {% if due_assignments %}
+      <div class="alert alert-warning alert-dismissible fade show" role="warning">
+	      <strong data-bs-toggle="tooltip" title="Your have assignment{% if due_assignments|length > 1 %}s{% endif %} due: {{ due_assignments|join:", " }}.">Due assignment{% if due_assignments|length > 1 %}s{% endif %}</strong> {{ due_assignments|join:", " }}.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endif %}
+    {% if unbound_courses %}
+      <div class="alert alert-warning alert-dismissible fade show" role="warning">
+	      <strong data-bs-toggle="tooltip" title="Your course{% if unbound_courses|length > 1 %}s {{ unbound_courses|join:", " }} are{% else %} {{ unbound_courses|first }} is{% endif %} not bound to a container environment">Unbound course{% if unbound_courses|length > 1 %}s{% endif %}</strong> {{ unbound_courses|join_links:user }}.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endif %}
+    {% if unbound_projects %}
+      <div class="alert alert-warning alert-dismissible fade show" role="warning">
+              <strong data-bs-toggle="tooltip" title="Your project{% if unbound_projects|length > 1 %}s {{ unbound_projects|join:" " }} are {% else %} {{ unbound_projects|first }} is{% endif %} not bound to a container environment">Unbound project{% if unbound_projects|length > 1 %}s{% endif %}</strong> {{ unbound_projects|join:", " }}.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endif %}
+    {% if unbound_containers %}
+      <div class="alert alert-warning alert-dismissible fade show" role="warning">
+	      <strong data-bs-toggle="tooltip" title="Your container environment{% if unbound_containers|length > 1 %}s {{ unbound_containers|join:", " }} are{% else %} {{ unbound_containers|first }} is{% endif %} not bound to a project">Empty environment{% if unbound_containers|length > 1 %}s{% endif %}</strong> {{ unbound_containers|join:", " }}.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endif %}
+    {% if restart_containers %}
+      <div class="alert alert-warning alert-dismissible fade show" role="warning">
+	      <strong data-bs-toggle="tooltip" title="Your container environment{% if restart_containers|length > 1 %}s {{ restart_containers|join:", " }} are{% else %} {{ restart_containers|first }} is{% endif %} need to be restarted due to inconsistency">Restart environment{% if restart_containers|length > 1 %}s{% endif %}</strong> {{ restart_containers|join:", " }}.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endif %}
+    {% if empty_course_groups %}
+      <div class="alert alert-warning alert-dismissible fade show" role="warning">
+	      <strong data-bs-toggle="tooltip" title="Your course group{% if empty_course_groups|length > 1 %}s {{ empty_course_groups|join:", " }} are{% else %} {{ empty_course_groups|first }} is{% endif %} emtpy.">Empty group{% if empty_course_groups|length > 1 %}s{% endif %}</strong> {{ empty_course_groups|join:", " }}.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endif %}
+    {% if ungrouped_course_students %}
+      <div class="alert alert-warning alert-dismissible fade show" role="warning">
+	 {% for c, s in ungrouped_course_students.items %}
+	   <strong data-bs-toggle="tooltip" title="Your course student{% if s|length > 1 %}s {{ s|join:", " }} are{% else %} {{ s|first }} is{% endif %} not grouped.">Ungrouped course student{% if s|length > 1 %}s{% endif %} in {{c}}</strong> {{ s|join:", " }}.
+	  {% endfor %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endif %}
     {% for message in messages %}
       {% if message.level == 25 %}
         <div class="alert alert-success alert-dismissible fade show" role="alert">

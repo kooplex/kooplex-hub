@@ -1,0 +1,42 @@
+{% load buttons %}
+
+<div class="card bg-light border-info shadow mb-3">
+  <div class="card-header">
+    <div class="row">
+      <div class="col-1">
+        {% dropdown_start_open_stop bindings=coursecontainerbindings ancestor=course ancestor_type='course' next_page=next_page %}
+      </div>
+      <div class="col-11" data-bs-toggle="collapse" data-bs-target="#collapse-{{ course.id }}" aria-expanded="false" aria-controls="collapse-{{ course.id }}">
+        {{ course.name }}
+        <div class="float-end">
+          <span class="badge rounded-pill bg-secondary"><i class="ri-image-2-line"></i>{{ course.image }}</span>
+        </div>
+      </div>
+    </div>
+  </div> <!-- card header -->
+  <div class="collapse" id="collapse-{{ course.id }}">
+    <div class="card card-body">
+      <p class="card-text"><strong>Description:</strong> {{ course.description }}</p>
+      <p class="card-text"><strong>Teachers:</strong> {{ course.teachers }}</p>
+      <p class="card-text"><strong>Groups:</strong> {{ course|csv_groups }}</p>
+      <p class="card-text"><strong>Course codes:</strong> {{ course|csv_coursecodes }}</p>
+      <p class="card-text"><strong>Number of students:</strong> {{ course.studentbindings|length }}</p>
+      <p class="card-text"><strong>Assignments:</strong> {{ course|csv_assignments }} </p>
+      </p>
+    </div>
+      <div class="card card-footer">
+      <div class="row">
+	      <div class="col">
+      <div class="btn-group" role="group" aria-label="Basic example">
+        {#% include 'containers_button.html' %#}
+        {% if is_teacher %}
+          <a href="{% url 'education:configure' ucb.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Settings of course {{ course.name }}. You can change the image, modify description." data-placement="top"><span class="oi oi-wrench" aria-hidden="true"></span></a>
+        {% endif %}
+        <a href="{% url 'education:assignment' ucb.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="{{ tooltip }}" data-placement="top"><span class="oi oi-pencil" aria-hidden="true"></span></a>
+      </div>
+      </div>
+      </div>
+      </div>
+  </div>
+</div>
+

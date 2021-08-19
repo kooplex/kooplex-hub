@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+
+{% block submenu %}
+  {% include 'project_submenu.html' with title="Join a collaboration" submenu="join" %}
+{% endblock %}
+
+{% block main_content_right %}
+  {% load render_table from django_tables2 %}
+  
+<div class="card shadow p-3 mb-5 bg-light rounded"> 
+<form id="project-manage" class="form-horizontal" action="{% url 'project:join' %}" method="post">
+  {% csrf_token %}
+    <h5>Use the switch select those projects you want to join</h5>
+  <div class="card-body">
+    {% if t_joinable.data|length > 0 %}
+      {% render_table t_joinable %}
+    {% else %}
+      <p>You do not have any projects to join.</p>
+    {% endif %}
+    {% include 'apply_cancel.html' with apply='Join projects' %}
+  </div>
+</form>
+</div>
+{% endblock %}
+
+{% block main_content_left %}
+  {#% include 'project/hint_join.html' %#}
+{% endblock %}
+
+{% block navsearch %}
+<form class="d-flex" action="{% url 'project:join' %}" method="get">
+  {#% csrf_token %#}
+  <input class="form-control me-2" type="search" name="project_or_creator" placeholder="Search project/creator" value="{{ user.profile.search_project_join }}" aria-label="Search">
+  <button class="btn btn-outline-secondary" type="submit" name="button" value="search">Search</button>
+</form>
+{% endblock %}

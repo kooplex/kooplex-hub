@@ -1,0 +1,83 @@
+{% extends "layout.html" %}
+
+{% block submenu %}
+  {% include 'container_submenu.html' with title="List of your service environments" submenu="list" %}
+{% endblock %}
+
+{% block main_content_right %}
+{% if user.profile.layout_container_list %}
+<div id="containerListPane">
+  <input type="hidden" id="shown_containers" name="shown_containers" value="{{ shown_containers }}">
+  {% for container in containers %}
+     {% include 'container_partial_list.html' %}
+  {% endfor %}
+</div>
+{% else %}
+<div class="row row-cols-1 row-cols-md-3 g-4">
+  {% for container in containers %}
+     {% include 'container_partial_card.html' %}
+  {% endfor %}
+</div>
+{% endif %}
+
+{% include 'pager.html' %}
+
+	<script>
+$(".btn").on("click", function () {
+    console.log('klikk')
+    console.log( $( this ) )
+    console.log( $( this )[0].href )
+    var anchor = $( this )[0]
+    var href = anchor.getAttribute("href")
+    var shown = $( "#shown_containers" ).val()
+    href += JSON.stringify( shown ) 
+    console.log( "uj href: " + href )
+    anchor.setAttribute("href", href )
+
+    return true
+})
+
+function onlyUnique(value, index, self) {
+  return self.indexOf(value) === index;
+}
+
+$("#containerListPane div div div").on("click", function () {
+    console.log( this )
+    var tgl = $( this ).attr("data-bs-toggle")
+    console.log( tgl )
+    if (tgl === 'collapse') {
+      var collapsed = $( this ).hasClass("collapsed")
+      var hid_shw = $( "#shown_containers" )
+      console.log( "memo: " )
+      console.log( hid_shw )
+      var shw = JSON.parse( hid_shw.val() )
+      var tgl_id = parseInt( $( this ).attr("data-bs-target").split('-')[1] )
+      console.log( tgl_id )
+      console.log( "before: " + shw )
+      if (collapsed) {
+	  const index = shw.indexOf(tgl_id);
+          if (index > -1) {
+              shw.splice(index, 1);
+          }
+      } else {
+          shw.push( tgl_id )
+      }
+      shw = shw.filter(onlyUnique);
+      console.log( "after: " + shw )
+      hid_shw.val( JSON.stringify(shw) )
+    }
+})
+	</script>
+{% endblock %}
+
+{% block main_content_left %}
+  {#% include 'container/hint_list.html' %#}
+{% endblock %}
+
+{% block navsearch %}
+<form class="d-flex" action="{% url 'container:list' %}" method="get">
+  {#% csrf_token %#}
+  <input class="form-control me-2" type="search" name="container" placeholder="Search environment" value="{{ user.profile.search_container_list }}" aria-label="Search">
+  <button class="btn btn-outline-secondary" type="submit" name="button" value="search">Search</button>
+</form>
+{% endblock %}

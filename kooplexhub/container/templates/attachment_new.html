@@ -1,0 +1,22 @@
+<div class="modal fade shadow" id="attachment-new" data-bs-keyboard="false" tabindex="-1" aria-labelledby="newAttachment" aria-hidden="true">
+  <div class="modal-dialog shadow bg-light p-1 mb-5  rounded">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="newAttachment">Create a new attachment</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="attachment_new" class="form-horizontal" action="{% url 'container:new_attachment' %}" method="post">
+       {% csrf_token %}
+        <div class="modal-body">
+          <table>
+	    {{ f_newattachment.as_table }}
+          </table>
+          <input type="hidden" name="user_id" value="{{ user.id }}">
+        </div>
+        <div class="modal-footer">
+          {% include 'apply_cancel.html' with modal=True apply='Create' %}
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

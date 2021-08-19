@@ -1,10 +1,11 @@
 {% include 'about.html' %}
 {% if user.is_authenticated %}
-  {% include 'bio.html' %}
   {% include 'usertokens.html' %}
 {% endif %}
-<ul class="navbar-nav navbar-right">
-  <li class="nav-item dropdown">
+
+<ul class="navbar-nav navbar-right" style="margin-right: 1em;">
+
+  <li class="nav-item ">
     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownRight" role="button" data-bs-toggle="dropdown" aria-expanded="false">
      {% if user.is_authenticated %}
       {{ user.first_name }} {{ user.last_name }}
@@ -12,21 +13,17 @@
       Log in
      {% endif %}
     </a>
-  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownRight">
+  <ul class="dropdown-menu" aria-labelledby="navbarDropdownRight">
    {% if user.is_authenticated %}
-   {% comment %}
     <li><a class="dropdown-item" href="{% url 'logout' %}">Logout <span class="oi oi-account-logout"></span></a></li>
-   {% endcomment %}
-    <li><a class="dropdown-item" href="https://veo.vo.elte.hu/oauth/accounts/logout/">Logout <span class="oi oi-account-logout"></span></a></li>
+    {# FIXME: hardcoded url #}
     <li><a class="dropdown-item" href="https://veo.vo.elte.hu/oauth/accounts/profile/" data-toggle="modal" data-target="#profile">Profile</a></li>
     <li><a class="dropdown-item" href="#" data-toggle="modal" data-target="#reset-token">Reset token</a></li>
    {% else %}
     <li><a class="dropdown-item" href="{% url 'social:begin' 'kooplex' %}">Log in <span class="oi oi-account-login"></span></a>
-    <!--li><a class="dropdown-item" href="{% url 'social:begin' 'kooplex' %}">Log in <span class="oi oi-account-login"></span></a-->
    {% endif %}
     <li><hr class="dropdown-divider"></li>
-    <li><a class="dropdown-item" href="https://github.com/kooplex/kooplex-hub/wiki" target="_blank">Kooplex Hub Wiki</a></li>
-    <li><a class="dropdown-item" href="#" data-toggle="modal" data-target="#about-contacts">Contacts and about</a></li>
+    <li><a class="dropdown-item" href="#" data-toggle="modal" data-target="#about-contacts">About</a></li>
   </ul>
 </ul>
 

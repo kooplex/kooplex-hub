@@ -1,0 +1,136 @@
+{% extends "layout.html" %}
+{% load render_table from django_tables2 %}
+{% load static %}
+
+
+{% block css_extra %}
+    <link rel="stylesheet" type="text/css" href="{% static 'bootstrap-datetimepicker-master/css/bootstrap-datetimepicker.min.css' %}">
+{% endblock %}
+
+
+{% block submenu %}
+{% include 'education_submenu.html' with title="Your assignments" submenu="assignment" %}
+{% endblock %}
+
+
+{% block main_content_right %}
+  {% if t_submit.rows %}
+  <h6>Your assignments due</h6>
+    <form id="assignments-submitform" class="form-horizontal was-validated" action="{% url 'education:submit' %}" method="post">
+      {% csrf_token %}
+      {% render_table t_submit %}
+      {% include 'apply_cancel.html' %}
+    </form>
+  {% endif %}
+
+  {% if teacher %} 
+  {% if t_submit.rows %}
+  <hr>
+  {% endif %}
+  <h6>Assignments you can manage</h6>
+
+<ul class="nav nav-tabs" id="myTab" role="tablist">
+  {% if f_assignment %}
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active" id="new-tab" data-bs-toggle="tab" data-bs-target="#newAssignment" type="button" role="tab" aria-controls="newAssignment" aria-selected="true">New</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" id="conf-tab" data-bs-toggle="tab" data-bs-target="#confAssignment" type="button" role="tab" aria-controls="confAssignment" aria-selected="false">Configure</button>
+  </li>
+  {% else %}
+  <li class="nav-item" role="presentation">
+    <button class="nav-link disabled" id="new-tab" data-bs-toggle="tab" data-bs-target="#newAssignment" type="button" role="tab" aria-controls="newAssignment" aria-selected="true">New</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active" id="conf-tab" data-bs-toggle="tab" data-bs-target="#confAssignment" type="button" role="tab" aria-controls="confAssignment" aria-selected="false">Configure</button>
+  </li>
+  {% endif %}
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" id="collectmass-tab" data-bs-toggle="tab" data-bs-target="#massAssignment" type="button" role="tab" aria-controls="massAssignment" aria-selected="false">Mass</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" id="collect-tab" data-bs-toggle="tab" data-bs-target="#individualAssignment" type="button" role="tab" aria-controls="individualAssignment" aria-selected="false">Individual</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab" aria-controls="summary" aria-selected="false">Summary</button>
+  </li>
+</ul>
+<div class="tab-content" id="myTabContent">
+  {% if f_assignment %}
+  <div class="tab-pane fade show active" id="newAssignment" role="tabpanel" aria-labelledby="new-tab">
+  {% else %}
+  <div class="tab-pane fade" id="newAssignment" role="tabpanel" aria-labelledby="new-tab">
+  {% endif %}
+    <form id="assignments-form-new" class="form-horizontal" action="{% url 'education:newassignment' %}" method="post">
+      {% csrf_token %}
+      <input type="hidden" name="course_id" value="{{ course.id }}">
+      {% if course.dir_assignmentcandidate %}
+          <div style="position: relative">
+            <table>
+              <tr><th><label for="course_name">Course:</label></th><td>{{ course.name }}</td></tr>
+              {{ f_assignment.as_table }}
+            </table>
+          </div>
+      {% else %}
+      <div class="alert alert-warning">There are no candidate subfolders in <code>{{ dir_assignment_prepare }}</code> directory. Please create one and place all files into it to be part of a new assignment. Empty folders cannot be selected.</div>
+      {% endif %}
+    {% include 'apply_cancel.html' %}
+    </form>
+  </div>
+  {% if f_assignment %}
+  <div class="tab-pane fade" id="confAssignment" role="tabpanel" aria-labelledby="conf-tab">
+  {% else %}
+  <div class="tab-pane fade show active" id="confAssignment" role="tabpanel" aria-labelledby="conf-tab">
+  {% endif %}
+	  <h6>Delete or refresh assignments in course {{ course.name }}</h6>
+	  <form id="assignments-configform" class="form-horizontal" action="{% url 'education:configureassignment' %}" method="post">
+      {% csrf_token %}
+	  {% render_table t_assignment_config %}
+    {% include 'apply_cancel.html' %}
+    </form>
+  </div>
+  <div class="tab-pane fade" id="individualAssignment" role="tabpanel" aria-labelledby="collectindividual-tab">
+	  <h6>Collect, feedback or reassign assignments</h6>
+    <form id="assignments-collectform" class="form-horizontal" action="{% url 'education:handleassigment' %}" method="post">
+      {% csrf_token %}
+	  {% render_table t_assignment_collect %}
+    {% include 'apply_cancel.html' %}
+    </form>
+  </div>
+  <div class="tab-pane fade" id="massAssignment" role="tabpanel" aria-labelledby="collectmass-tab">
+	  <h6>Collect assignments</h6>
+    <form id="massassignments-collectform" class="form-horizontal" action="{% url 'education:massassignment' %}" method="post">
+      {% csrf_token %}
+	  {% render_table t_assignment_mass %}
+    {% include 'apply_cancel.html' %}
+    </form>
+  </div>
+  <div class="tab-pane fade" id="summary" role="tabpanel" aria-labelledby="summary-tab">
+	  <h6>Summary</h6>
+	  {% render_table t_assignment_summary %}
+  </div>
+</div>
+
+  {% endif %}
+
+{% endblock %}
+
+
+{% block scripts %}
+<script
+  type="text/javascript"
+  src="{% static 'bootstrap-datetimepicker-master/js/bootstrap-datetimepicker.min.js' %}"
+></script>
+	<script type="text/javascript">
+	function set_checkbox(x) { 
+	    console.log('set checkbox? ' + x);	
+            $('#'+x).prop("checked", true); 
+	}
+	</script>
+<script>
+$( document ).ready(function() {
+    console.log( "ready!" );
+    $('.datetimepicker').datetimepicker('hide');
+});
+</script>
+{% endblock %}

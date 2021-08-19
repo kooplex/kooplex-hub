@@ -6,15 +6,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" 
-      integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
-    {% load staticfiles %}
-    <link rel="stylesheet" type="text/css" href="{% static 'fonts/remixicon.css' %}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" 
+      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+    
+    {% load static %}
     <link rel="stylesheet" type="text/css" href="{% static 'fonts/open-iconic-master/font/css/open-iconic-bootstrap.css' %}">
-    <link rel="stylesheet" type="text/css" href="{% static 'fonts/icons-1.4.0/font/bootstrap-icons.css' %}">
-    <link rel="stylesheet" type="text/css" href="{% static 'fontawesome-free-5.10.2-web/css/all.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'fonts/remix-icon/remixicon.css' %}">
+
+
+
+    <link rel="stylesheet" type="text/css" href="{% static 'fonts/icons-1.5.0/font/bootstrap-icons.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'fonts/fontawesome-free-5.10.2-web/css/all.css' %}">
     {% block css_extra %}{% endblock %}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    {#<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>#}
+    {#<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>#}
+
+
+
+    {# FIXME: ez milyen url? #}
+    {#<script async="" src="//www.google-analytics.com/analytics.js"></script><script type="text/javascript" src="//code.jquery.com/jquery-2.1.1.min.js"></script>#}
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
 
     <style>
     @media all and (min-width: 992px) {
@@ -25,31 +39,39 @@
     </style>
 
     <title>Kooplex Hub</title>
+    {% block scripts %}{% endblock %}
   </head>
-  <body>
+  <body style="margin:0px 15px 0px 10px;">
     {% block navbar %}
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
       <div class="container-fluid">
-        <a class="navbar-brand" href="{% url 'indexpage' %}"><img src="/static/content/logo_mono.png" style="height: 30px" alt="Kooplex Hub"></a>
+        <a class="navbar-brand" href="{% url 'indexpage' %}"><img src="/static/logo_mono.png" style="height: 30px" alt="Kooplex Hub"></a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" 
 		aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-            {% if user.is_authenticated %}
-              {% include "menuitem_project.html" with active=menu_project %}
-              {% include "menuitem_report.html" with active=menu_report %}
-              {% include "menuitem_edu.html" with active=menu_teaching %}
+		  {% comment %}
+		  FIXME: active=menu_* better active_menu=*
+		  {% endcomment %}
+              {% if app_project_installed %}
+                {% include "menuitem_project.html" with active=menu_project %}
+              {% endif %}
+              {% if app_report_installed %}
+                {% include "menuitem_report.html" with active=menu_report %}
+              {% endif %}
+              {% if app_education_installed %}
+                {% include "menuitem_education.html" with active=menu_teaching %}
+              {% endif %}
               {% include "menuitem_container.html" with active=menu_container %}
-              {% include "menuitem_services.html" with active=menu_service %}
-            {% else %}
-              {% include "menuitem_report.html" with active=menu_report %}
-            {% endif %}
+              {% if app_plugin_installed %}
+                {% include "menuitem_plugin.html" with active=menu_service %}
+              {% endif %}
             <li class="nav-item"><a class="nav-link" href="/docs/" target="_blank">Documentation</a></li>
           </ul>
           {% block navsearch %}
-          <form class="d-flex">
+          <form class="d-flex" style="padding-left:40px">
             <input class="form-control me-2" disabled type="search" placeholder="Search" aria-label="Search">
             <button class="btn btn-outline-secondary" type="submit" disabled>Search</button>
           </form>
@@ -66,10 +88,9 @@
           <div class="col-md-3">
              {% include 'message.html' %}
              {% block main_content_left %}{% endblock %}
-             {% block main_content_right %}{% endblock %}
           </div>
-          <div class="col-md-9">
-             {% block main_content_center %}{% endblock %}
+          <div class="col-md-8">
+             {% block main_content_right %}{% endblock %}
           </div>
         </div>
       </div>
@@ -82,139 +103,3 @@
   </body>
 </html>
 
-{% comment %}
-
-
-<!doctype html>
-<html lang="en">
-  <head>
-
-    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-    <meta name="description" content="">
-    <meta name="author" content="">
-    
-
-
-    {% load staticfiles %}
-    <link rel="stylesheet" type="text/css" href="{% static 'css/animate.css' %}">
-    <link rel="stylesheet" type="text/css" href="{% static 'css/font-awesome.css' %}">
-    <link rel="stylesheet" type="text/css" href="{% static 'fonts/remixicon.css' %}">
-    <link rel="stylesheet" type="text/css" href="{% static 'css/nexus.css' %}">
-    <link rel="stylesheet" type="text/css" href="{% static 'css/responsive.css' %}">
-    <link rel="stylesheet" type="text/css" href="{% static 'css/custom.css' %}">
-    <link rel="stylesheet" type="text/css" href="{% static 'fonts/open-iconic-master/font/css/open-iconic-bootstrap.css' %}">
-    <link rel="stylesheet" type="text/css" href="{% static 'css/bootstrap4-toggle.min.css' %}">
-    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Lato:400,300">
-    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Open+Sans:400,300">
-
-    <script src="https://code.jquery.com/jquery-3.3.1.min.js"  crossorigin="anonymous"></script>
-    <script src="{% static 'scripts/bootstrap4-toggle.min.js' %}"></script>
-    {% block header_extra %}{% endblock %}
-
-    <style>
-.center {
-	display: block;
-	margin-left: auto;
-	margin-right: auto;
-}
-.card {
-        margin-bottom: 15px; 
-        box-shadow: 5px 3px lightgray;
-        margin-right: 6px;
-}
-a.active {
-    background-color: #ccc;
-    border-radius: 5px;
-}
-.card-header .btn-link {
-	color: #343a40;
-}
-.card-header.collapsed .drpdn:before {
-    content:"\f105";
-    padding-right: 2px;
-}
-.card-header .drpdn:before {
-    content:"\f107";
-}
-.card-header .btn:hover,
-.card-header .btn:focus  {
-    text-decoration:none;
-    border-color: darkgrey;
-}
-.myctrl {
-    width: 30px;
-    height: 30px;
-}
-.myctrl span {
-    margin: 0;
-    top: 50%;
-    left: 50%;
-    margin-right: -50%;
-    transform: translate(-50%, -60%);
-}
-.dropdown {
-  position: relative;
-  display: inline-block;
-}
-.dropdown-content {
-  display: none;
-  position: absolute;
-  background-color: #f1f1f1;
-  min-width: 160px;
-  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-  z-index: 1;
-}
-.dropdown-content a {
-  color: black;
-  padding: 12px 16px;
-  text-decoration: none;
-  display: block;
-}
-.dropdown-content a:hover {
-  background-color: #ddd;
-}
-.dropdown:hover .dropdown-content {
-  display: block;
-}
-th>a {
-  color: #f1f1f1;
-  text-decoration: none;
-}
-th>a:hover {
-  color: #808080;
-  text-decoration: none;
-}
-    </style>
-  </head>
-
-  <body>
-    {% include 'navbar.html' %}
-    {% block submenu %}{% endblock %}
-    <div class="body-content">
-      <div class="row">
-        <div class="col-md-3">
-           {% include 'search.html' %}
-           {% block main_content_left %}{% endblock %}
-        </div>
-        <div class="col-md-7">
-           {% block main_content_center %}{% endblock %}
-        </div>
-        <div class="col-md-2">
-           {% include 'message.html' %}
-           {% block main_content_right %}{% endblock %}
-        </div>
-      </div>
-    </div>
-
-    {% block scripts %}{% endblock %}
-    <script src="{% static 'scripts/bootstrap4-toggle.min.js' %}"></script>
-    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
-	    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous"></script>
-
-
-  </body>
-</html>
-{% endcomment %}

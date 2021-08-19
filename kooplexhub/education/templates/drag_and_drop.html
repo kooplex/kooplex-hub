@@ -1,0 +1,124 @@
+{% load drag %}
+
+<div class="container">
+  <h6>Group students</h6>
+
+  <div class="row">
+    <div class="col-sm-6">
+      <div id="modules">
+        <h6>Ungrouped students</h6>
+        {% for ucb in student_group_map.ungrouped %}
+          {{ ucb|drag }}
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="col-sm-6">
+      {% for g in student_group_map.groups.items %}
+        {{ g|dropgroup }}
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+
+<style>
+#modules {
+  padding: 20px;
+  background: #eee;
+  margin-bottom: 20px;
+  z-index: 1;
+  border-radius: 10px;
+}
+
+.drag {
+  border: solid 1px;
+}
+
+.dropzone {
+  padding: 20px;
+  background: #eee;
+  min-height: 100px;
+  margin-bottom: 20px;
+  z-index: 0;
+  border-radius: 10px;
+}
+
+.hover {
+  outline: 1px solid blue;
+}
+
+.drop-item {
+  cursor: pointer;
+  margin-bottom: 10px;
+  background-color: rgb(255, 255, 255);
+  padding: 5px 10px;
+  border-radisu: 3px;
+  border: 1px solid rgb(204, 204, 204);
+  position: relative;
+}
+
+.drop-item .remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+}
+</style>
+
+
+<script>
+
+function onlyUnique(value, index, self) {
+  return self.indexOf(value) === index;
+}
+
+$('.drag').draggable();
+
+$('.dropzone').droppable({
+  activeClass: 'active',
+  hoverClass: 'hover',
+  accept: ".drag",
+  over: function (e, ui) {
+	  console.log ("over")
+	  var i = $( this ).attr( "id" ).split( "-" )[1]
+	  var u = parseInt( $( ui ).attr( "draggable" ).attr( "id" ) )
+	  console.log ("uid: " + u )
+	  console.log ("grp id: " + i )
+	  var h = $( this ).find( "#grp-" + i )
+          console.log( h )
+	  var ha = JSON.parse( h.val() )
+	  console.log ("before: " + ha)
+	  ha.push( u )
+          ha = ha.filter(onlyUnique);
+	  console.log ("after: " + ha )
+	  h.val( JSON.stringify(ha) )
+	  var s = $( this ).find ( "span" )
+          s.text( ha.length )
+	  //$(this).append("<p/>")
+  },
+  out: function (e, ui) {
+	  console.log ("out")
+	  var i = $( this ).attr( "id" ).split( "-" )[1]
+	  var u = parseInt( $( ui ).attr( "draggable" ).attr( "id" ) )
+	  var h = $( this ).find( "#grp-" + i )
+	  var ha = JSON.parse( h.val() )
+	  console.log ("before: " + ha)
+	  const index = ha.indexOf(u);
+          if (index > -1) {
+              ha.splice(index, 1);
+          }
+	  console.log ("after: " + ha)
+	  h.val( JSON.stringify(ha) )
+	  var s = $( this ).find ( "span" )
+          s.text( ha.length )
+  }
+}).sortable({
+  items: '.drop-item',
+  sort: function() {
+    // gets added unintentionally by droppable interacting with sortable
+    // using connectWithSortable fixes this, but doesn't allow you to customize active/hoverClass options
+    $( this ).removeClass( "active" );
+  }
+});
+</script>
+

@@ -1,0 +1,133 @@
+{% extends "layout.html" %}
+{% load render_table from django_tables2 %}
+
+{% block submenu %}
+{% include 'education_submenu.html' with title="Configure course" submenu="configure" %}
+{% endblock %}
+
+{% block main_content_right %}
+
+<ul class="nav nav-tabs" id="courseConfigTabs" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button class="nav-link {% if active == "conf" %}active{% endif %}" id="tab-conf" data-bs-toggle="tab" data-bs-target="#configureCourse" type="button" role="tab" aria-controls="configureCourse" aria-selected="{% if active == "conf" %}true{% else %}false{% endif %}">Configure</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link {% if active == "group" %}active{% endif %}" id="tab-group" data-bs-toggle="tab" data-bs-target="#courseGroup" type="button" role="tab" aria-controls="confCourseGropu" aria-selected="{% if active == "group" %}true{% else %}false{% endif %}">Groups</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link {% if active == "teacher" %}active{% endif %}" id="tab-teacher" data-bs-toggle="tab" data-bs-target="#addteachersCourse" type="button" role="tab" aria-controls="addteachersCourse" aria-selected="{% if active == "teacher" %}true{% else %}false{% endif %}">Teachers</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link {% if active == "student" %}active{% endif %}" id="tab-student" data-bs-toggle="tab" data-bs-target="#addstudentsCourse" type="button" role="tab" aria-controls="addstudentsCourse" aria-selected="{% if active == "student" %}true{% else %}false{% endif %}">Students</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link {% if active == "grpstudent" %}active{% endif %}" id="tab-grpstudent" data-bs-toggle="tab" data-bs-target="#groupStudent" type="button" role="tab" aria-controls="groupStudent" aria-selected="{% if active == "grpstudent" %}true{% else %}false{% endif %}">Group students</button>
+  </li>
+</ul>
+<div class="tab-content" id="courseConfigTabsContent">
+  <div class="tab-pane fade {% if active == "conf" %}show active{% endif %}" id="configureCourse" role="tabpanel" aria-labelledby="tab-conf">
+    <form id="courseSettingsForm" class="form-horizontal" action="{% url 'education:configure' usercoursebinding_id %}" method="post">
+      {% csrf_token %}
+      {{ courseform }}
+      <input type='hidden' name='active_tab' value='conf'>
+      <div class="alert alert-warning" role="alert">If you decide to change the image. Do not forget to restart the course container to take effect and notify your students to do so as well.</div>
+      {% include 'apply_cancel.html' %}
+    </form>
+  </div>
+  <div class="tab-pane fade {% if active == "group" %}show active{% endif %}" id="courseGroup" role="tabpanel" aria-labelledby="tab-group">
+    <form id="groupSettingsAdd" class="form-horizontal" action="{% url 'education:configure' usercoursebinding_id %}" method="post">
+      {% csrf_token %}
+      {{ groupform }}
+      <input type='hidden' name='active_tab' value='group'>
+      {% include 'apply_cancel.html' %}
+    </form>
+    <form id="groupSettings" class="form-horizontal" action="{% url 'education:configure' usercoursebinding_id %}" method="post">
+      {% csrf_token %}
+      {% render_table t_group %}
+      <input type='hidden' name='active_tab' value='group'>
+      {% include 'apply_cancel.html' %}
+    </form>
+  </div>
+  <div class="tab-pane fade {% if active == "teacher" %}show active{% endif %}" id="addteachersCourse" role="tabpanel" aria-labelledby="tab-teacher">
+    <form id="courseAddTeacherForm" class="form-horizontal" action="{% url 'education:addteacher' usercoursebinding_id %}" method="post">
+      {% csrf_token %}
+      {% render_table t_teacher %}
+      {% include 'apply_cancel.html' %}
+    </form>
+  </div>
+  <div class="tab-pane fade {% if active == "student" %}show active{% else %}false{% endif %}" id="addstudentsCourse" role="tabpanel" aria-labelledby="tab-student">
+    <form id="courseAddStudentForm" class="form-horizontal" action="{% url 'education:addstudent' usercoursebinding_id %}" method="post">
+      {% csrf_token %}
+      {% render_table t_student %}
+      {% include 'apply_cancel.html' %}
+    </form>
+  </div>
+  <div class="tab-pane fade {% if active == "grpstudent" %}show active{% else %}false{% endif %}" id="groupStudent" role="tabpanel" aria-labelledby="tab-grpstudent">
+    <form id="groupSettingsChoose" class="form-horizontal" action="{% url 'education:groupstudent' usercoursebinding_id %}" method="post">
+      {% csrf_token %}
+      {% include 'drag_and_drop.html' %}
+      {% include 'apply_cancel.html' %}
+    </form>
+  </div>
+</div>
+
+<script>
+  $("#courseConfigTabs li button").on("click", function () {
+    var tab = $( this ).attr("id")
+    console.log( tab )
+
+    if (tab == "tab-conf") {
+      $("#active_tab").attr("value",  "conf")
+      $("#search_field").attr("placeholder",  "Search")
+      $("#search_field").attr("value", "" )
+      $("#search_field").attr("disabled", true )
+    } else if (tab == "tab-group") {
+      $("#active_tab").attr("value",  "group")
+      $("#search_field").attr("placeholder",  "Search")
+      $("#search_field").attr("value", "" )
+      $("#search_field").attr("disabled", true )
+    } else if (tab == "tab-teacher") {
+      $("#active_tab").attr("value",  "teacher")
+      $("#search_field").attr("placeholder",  "Search name or coursecode")
+      $("#search_field").attr("value", $("#s_teacher").attr("value") )
+      $("#search_field").attr("disabled", false )
+    } else if (tab == "tab-student") {
+      $("#active_tab").attr("value",  "student")
+      $("#search_field").attr("placeholder",  "Search name or coursecode")
+      $("#search_field").attr("value", $("#s_student").attr("value") )
+      $("#search_field").attr("disabled", false )
+    } else if (tab == "tab-grpstudent") {
+      $("#active_tab").attr("value",  "grpstudent")
+      $("#search_field").attr("placeholder",  "Search")
+      $("#search_field").attr("value", "" )
+      $("#search_field").attr("disabled", true )
+    }
+    console.log( $("#active_tab").attr("value") )
+  })
+</script>
+{% endblock %}
+
+{% comment %}
+{% block main_content_left %}
+  {#% include 'project/hint_join.html' %#}
+{% endblock %}
+{% endcomment %}
+
+{% block navsearch %}
+<form class="d-flex" action="{% url 'education:configure' course.id %}" method="get">
+  {#% csrf_token %#}
+  <input type="hidden" name="active_tab" id="active_tab" value="{{ active }}">
+  <input type="hidden" id="s_student" value="{{ user.profile.search_education_student }}">
+  <input type="hidden" id="s_teacher" value="{{ user.profile.search_education_teacher }}">
+  <input class="form-control me-2" type="search" id="search_field" name="pattern"
+    {% if active == "student" %}
+      value="{{ user.profile.search_education_student }}" placeholder="Search name or coursecode"
+    {% elif active == "teacher" %}
+      value="{{ user.profile.search_education_teacher }}" placeholder="Search name or coursecode"
+    {% else %}
+      value="" placeholder="Search" disabled
+    {% endif %}
+      aria-label="Search">
+  <button class="btn btn-outline-secondary" type="submit" name="button" value="search">Search</button>
+</form>
+{% endblock %}

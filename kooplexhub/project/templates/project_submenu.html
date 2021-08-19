@@ -1,0 +1,38 @@
+{% load project_buttons %}
+{% load extras %}
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSubmenu" 
+	  aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarSubmenu">
+     <div class="col-3">
+       <h5><span class="badge bg-secondary">{{ title }}</span></h5>
+     </div>
+     <div class="col-8">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item"><a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#project-new">New project</a></li>
+          <li class="nav-item"><a {% if submenu == 'join' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{#% url 'project:join' %#}" {% endif %}>Join a project</a></li>
+          <li class="nav-item"><a {% if submenu == 'list' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'project:list' %}" {% endif %}>List projects</a></li>
+          <li class="nav-item"><a {% if submenu == 'showhide' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'project:showhide' %}" {% endif %}>Show/hide projects 
+			  {% number_square user.profile.number_of_hidden_projects %}
+          </a></li>
+	  {% comment %}
+	  <li class="nav-item"><a {% if submenu == 'configure' %} class="nav-link active" href="#" {% else %} class="nav-link" href="#" {% endif %}>Configure project </a></li>
+	  {% endcomment %}
+        </ul>
+     </div>
+     <div class="col-1">
+      {% if submenu == 'list' %}
+       <div class="d-flex justify-content-end">
+	  <form action="{% url 'project:set_pagination' %}" method="post">
+		  {% csrf_token %}
+	    <input type="text" name="paginate_by" value="{{ user.profile.paginate_project_list }}" maxlength="3" size="3">
+	  </form>
+	  {% layout_flip user.profile.layout_project_list 'project:layout_flip' %}
+       </div>
+      {% endif %}
+     </div>
+  </div>
+</nav>

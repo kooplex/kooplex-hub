@@ -7,7 +7,7 @@
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
-      <form id="reset_token" class="form-horizontal" action="{% url 'user:managetokens' next_page %}" method="post">
+      <form id="reset_token" class="form-horizontal" action="{# % url 'user:managetokens' next_page % #}" method="post">
       {% csrf_token %}
         <div class="modal-body">
           You can request a new token to access your notebook servers

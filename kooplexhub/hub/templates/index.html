@@ -1,46 +1,48 @@
 {% extends "layout.html" %}
 
 
-{% block body %}
-  <div class="body-content">
-    <div class="row">
-      <div class="col-md-3">
-         {% include 'message.html' %}
+{% block main_content_left %}
          <div class="card shadow p-3 mb-5 bg-light rounded"> 
            <h6 class="card-title">Powered by</h6>
            <div class="card-body">
-             <img src="/static/content/dockerlogo.png" style="height: 40px; padding-right: 10px" alt="docker">
-             <img src="/static/content/kuberneteslogo.png" style="height: 40px; padding-right: 10px" alt="k8s">
-             <img src="/static/content/django.png" style="height: 40px; padding-right: 10px" alt="django">
-             <img src="/static/content/Nginx-Logo.png" style="height: 40px; padding-right: 10px" alt="nginx">
-             <img src="/static/content/jupyter.png" style="height: 40px; padding-right: 10px" alt="jupyter">
-             <img src="/static/content/rstudio.png" style="height: 40px; padding-right: 10px" alt="rstudio">
-             <img src="/static/content/logos/gitea.png" style="height: 40px; padding-right: 10px" alt="singularity">
-             <img src="/static/content/logos/seafile.png" style="height: 40px; padding-right: 10px" alt="singularity">
-             <img src="/static/content/slurm.png" style="height: 40px; padding-right: 10px" alt="slurm">
-             <img src="/static/content/singularity.png" style="height: 40px; padding-right: 10px" alt="singularity">
+             <img src="/static/dockerlogo.png" style="height: 40px; padding-right: 10px" alt="docker">
+             <img src="/static/kuberneteslogo.png" style="height: 40px; padding-right: 10px" alt="k8s">
+             <img src="/static/django.png" style="height: 40px; padding-right: 10px" alt="django">
+             <img src="/static/Nginx-Logo.png" style="height: 40px; padding-right: 10px" alt="nginx">
+             <img src="/static/jupyter.png" style="height: 40px; padding-right: 10px" alt="jupyter">
+             <img src="/static/rstudio.png" style="height: 40px; padding-right: 10px" alt="rstudio">
+             <img src="/static/gitea.png" style="height: 40px; padding-right: 10px" alt="gitea">
+             <img src="/static/seafile.png" style="height: 40px; padding-right: 10px" alt="seafile">
+             <img src="/static/slurm.png" style="height: 40px; padding-right: 10px" alt="slurm">
+             <img src="/static/singularity.png" style="height: 40px; padding-right: 10px" alt="singularity">
            </div>
          </div>
+	 
 
+{% if notes %}
 <div class="card shadow p-3 mb-5 bg-light rounded"> 
   <div class="card-body">
-    <h5 class="card-title">Note</h5>
-        <div class="alert alert-info show" role="alert">
-          <p>Mount points have been renamed. The new format is the project's clean name suffixed by a project identifier. In single project container project identifier serves as user's primary group id.</p>
-	  <p>In envirironments with more than one projects files are created in the users group. The creator of folders and file needs to take care of setting the proper group in order to enable collaborators to access their content. For that in a terminal <code>newgrp prXXXXX</code> and <code>chgrp prXXXXX &lt;file&gt;</code> are to be run, where prXXXXX stand for the project identifier.</p>
-        </div>
+    <h5 class="card-title">Note{% if notes|length > 1 %}s{% endif %}</h5>
+    <div class="alert alert-info show" role="alert">
+      {% for note in notes %}
+        <p>{{ note.message }}<br>{{ note.created_at }}</p>
+      {% endfor %}
+    </div>
   </div>
 </div>
+{% endif %}
+{% endblock %}
 
-      </div>
-      <div class="col-md-6">
+{% block main_content_right %}
         <div class="jumbotron shadow p-3 mb-5 bg-light rounded">
           <div class="row">
             <div class="col-md-12">
-              <img src="/static/content/logo-transparent.png" style="transform: translate(0, 22px); width: 350px;" alt="kooplex">
+              <img src="/static/logo-transparent.png" style="transform: translate(0, 22px); width: 350px;" alt="kooplex">
+	      {% comment %}
               <!-- platform specific -->
               <img src="/static/content/VEO-logo-trp.png" style="width: 200px;" alt="VEO test platform">
               <!-- platform specific -->
+	      {% endcomment %}
             </div>
           </div>
         </div>
@@ -49,7 +51,7 @@
             <div class="col-md-7">
               <div style="width: 100%;">
                 {% comment %} {% include "slideshow.html" %} {% endcomment %}
-                <img class="d-block w-100" src="/static/content/Kooplex-frontpage.png" alt="Access private cloud file system, share data and results">
+                <img class="d-block w-100" src="/static/Kooplex-frontpage.png" alt="Access private cloud file system, share data and results">
               </div>
             </div>
             <div class="col-md-5" style="text-align: right">
@@ -59,11 +61,5 @@
             </div>
           </div>
         </div>
-      </div>
-      <div class="col-md-3">
-       {% include 'footer_right.html' %}
-      </div>
-    </div>
-  </div>
 {% endblock %}
 

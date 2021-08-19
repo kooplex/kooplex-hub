@@ -1,0 +1,35 @@
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSubmenu" 
+	  aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarSubmenu">
+     <div class="col-3">
+       <h5><span class="badge bg-secondary">{{ title }}</span></h5>
+     </div>
+     <div class="col-8">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item"><a {% if submenu == 'teacher' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'education:teacher' %}" {% endif %}>Teaching</a></li>
+          <li class="nav-item"><a {% if submenu == 'student' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'education:student' %}" {% endif %}>Courses</a></li>
+	  <li class="nav-item"><a {% if submenu == 'assignment' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'education:assignment' %}" {% endif %}>Assignments</a></li>
+        </ul>
+     </div>
+     <div class="col-1">
+	     {% comment %}
+      {% if submenu == 'list' %}
+       <div class="d-flex justify-content-end">
+	  <form action="{% url 'project:set_pagination' %}" method="post">
+		  {% csrf_token %}
+	    <input type="text" name="paginate_by" value="{{ user.profile.paginate_project_list }}" maxlength="3" size="3">
+	  </form>
+	 {% if user.profile.layout_project_list %}
+           <a href="{% url 'project:layout_flip' %}" class="text-dark"><span class="oi oi-grid-two-up"></span></a>
+	 {% else %}
+           <a href="{% url 'project:layout_flip' %}" class="text-dark"><span class="oi oi-list"></span></a>
+	 {% endif %}
+       </div>
+      {% endif %}
+	     {% endcomment %}
+     </div>
+  </div>
+</nav>

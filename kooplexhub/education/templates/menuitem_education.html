@@ -1,0 +1,25 @@
+{% if user.is_authenticated %}
+{% if user.profile.is_student and user.profile.is_teacher %}
+  <li class="nav-item dropdown {{ active }}">
+    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownEdu" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Education</a>
+    <div class="dropdown-menu" aria-labelledby="navbarDropdownEdu">
+      <a class="dropdown-item" href="{% url 'education:teacher' %}">Teaching</a>
+      <a class="dropdown-item" href="{% url 'education:student' %}">Courses</a>
+      <a class="dropdown-item" href="{% url 'education:assignment' %}">Assignments</a>
+    </div>
+  </li>
+{% elif user.profile.is_student %}
+  <li class="nav-item {{ active }}">
+    <a href="{% url 'education:student' %}" class="nav-link" data-toggle="tooltip" title="Access notebook environments related to those courses you attend this semester" data-placement="bottom">Courses</a>
+  </li>
+{% elif user.profile.is_teacher %}
+  <li class="nav-item {{ active }}">
+    <a href="{% url 'education:teacher' %}" class="nav-link" data-toggle="tooltip" title="Access notebook environments related to those courses you teach this semester" data-placement="bottom">Teaching</a>
+  </li>
+{% else %}
+  <li class="nav-item">
+    <a href="#" class="nav-link disabled">Education</a>
+  </li>
+{% endif %}
+{% else %}
+{% endif %}
