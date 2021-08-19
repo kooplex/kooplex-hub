@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'userid', 'location', 'bio', 'is_teacher', 'is_student', 'can_createproject', 'can_createimage', 'can_createattachment')
+    list_display = ('id', 'username', 'user', 'userid', 'location', 'bio', 'is_teacher', 'is_student', 'can_createproject', 'can_createimage', 'can_createattachment')
     search_fields = ('user__username', )
 
 @admin.register(Image)

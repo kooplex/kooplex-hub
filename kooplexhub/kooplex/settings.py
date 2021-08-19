@@ -48,15 +48,16 @@ AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
 )
 
-SOCIAL_AUTH_ELTEOIDC_KEY = '%s-hub' % PREFIX
-SOCIAL_AUTH_ELTEOIDC_SECRET = os.getenv('ELTEOIDC_SECRET')
-SOCIAL_AUTH_HYDRAOIDC_KEY = '%s-hub' % PREFIX
-SOCIAL_AUTH_HYDRAOIDC_SECRET = "vxbXd3rUH1Kz"
+#SOCIAL_AUTH_ELTEOIDC_KEY = '%s-hub' % PREFIX
+#SOCIAL_AUTH_ELTEOIDC_SECRET = os.getenv('ELTEOIDC_SECRET')
+#SOCIAL_AUTH_HYDRAOIDC_KEY = '%s-hub' % PREFIX
+#SOCIAL_AUTH_HYDRAOIDC_SECRET = "vxbXd3rUH1Kz"
 SOCIAL_AUTH_USER_FIELDS = [ 'username', 'email' ]
+SOCIAL_AUTH_KOOPLEX_USER_FIELDS = [ 'username', 'email' ]
 SOCIAL_AUTH_URL_NAMESPACE = 'social'
 
-SOCIAL_AUTH_OIDC_KEY = "FgJK7NUMOHUU33zbbF02AtQ0BG9FecFCDvN2Pizu"
-SOCIAL_AUTH_OIDC_SECRET = "iV87lpBX82xckU12woWuHjKcKlT08DhuHY0VE9CKTU2MpW8LwhR23UuDoYCMQXCRuoGLMTZfzi91KsPmr0urFy269miSwOyFzYtt3oqv0ICPhLidlBqKzBfjAeZL8KyX"
+SOCIAL_AUTH_KOOPLEX_KEY = ""
+SOCIAL_AUTH_KOOPLEX_SECRET = ""
 
 
 MIDDLEWARE = (
@@ -131,7 +132,7 @@ STATICFILES_FINDERS = (
 
 
 LOGIN_REDIRECT_URL = 'indexpage'
-LOGOUT_URL = 'https://%s.elte.hu/consent/auth/logout' % PREFIX
+LOGOUT_URL = 'https://veo.vo.elte.hu/oauth/accounts/logout'
 
 LOGGING = {
     'version': 1,
@@ -189,7 +190,7 @@ KOOPLEX = {
         'course': '%s-course' % PREFIX,
     },
     'ldap': {
-        'host': 'svc-%s-ldap' % PREFIX,
+        'host': '%s-ldap.%s-ldap' % (PREFIX,PREFIX), #FIXME
         'port': os.getenv('HUBLDAP_PORT', 389),
         'bind_dn': 'cn=%s,%s' % (LDAP_ADMIN, LDAP_DOMAIN),
         'base_dn': LDAP_DOMAIN,

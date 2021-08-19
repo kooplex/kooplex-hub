@@ -194,7 +194,7 @@ def ldap_create_user(sender, instance, created, **kwargs):
             ldap.removeuser(instance)
             regenerate = True
     except Exception as e:
-        logger.error("Failed to get ldap entry for %s -- %s" % (instance, e))
+        logger.error("Failed to get ldap entry for %s -- %s " % (instance, e))
     if not created or regenerate:
         try:
             ldap.adduser(instance)

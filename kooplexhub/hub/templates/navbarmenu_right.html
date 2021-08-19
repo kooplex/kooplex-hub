@@ -14,11 +14,14 @@
     </a>
   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownRight">
    {% if user.is_authenticated %}
+   {% comment %}
     <li><a class="dropdown-item" href="{% url 'logout' %}">Logout <span class="oi oi-account-logout"></span></a></li>
-    <li><a class="dropdown-item" href="#" data-toggle="modal" data-target="#update-bio">Update bio</a></li>
+   {% endcomment %}
+    <li><a class="dropdown-item" href="https://veo.vo.elte.hu/oauth/accounts/logout/">Logout <span class="oi oi-account-logout"></span></a></li>
+    <li><a class="dropdown-item" href="https://veo.vo.elte.hu/oauth/accounts/profile/" data-toggle="modal" data-target="#profile">Profile</a></li>
     <li><a class="dropdown-item" href="#" data-toggle="modal" data-target="#reset-token">Reset token</a></li>
    {% else %}
-    <li><a class="dropdown-item" href="{% url 'social:begin' 'hydraoidc' %}">Log in <span class="oi oi-account-login"></span></a>
+    <li><a class="dropdown-item" href="{% url 'social:begin' 'kooplex' %}">Log in <span class="oi oi-account-login"></span></a>
     <!--li><a class="dropdown-item" href="{% url 'social:begin' 'kooplex' %}">Log in <span class="oi oi-account-login"></span></a-->
    {% endif %}
     <li><hr class="dropdown-divider"></li>
