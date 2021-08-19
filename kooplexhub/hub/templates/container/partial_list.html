@@ -1,9 +1,7 @@
-{% include 'container/confirm_destroy.html' %}
 <div class="card bg-light border-secondary shadow mb-3">
   <div class="card-header">
     <div class="row">
       <div class="col-1">
-	<i class="bi bi-hdd-network"></i>
         {% if service.state == service.ST_NEED_RESTART %}
           <a href="{% url 'service:restart' service.id next_page %}" role="button" class="btn btn-warning btn-sm" data-toggle="tooltip" title="Restart inconsistent environment {{ service.name }}"><span class="bi bi-bootstrap-reboot" aria-hidden="true"></span></a>
         {% else %}
@@ -80,8 +78,7 @@
 	  {% else %}
             <a href="{% url 'service:configure' service.id %}" role="button" class="btn btn-secondary btn-sm"><span class="oi oi-wrench" aria-hidden="true" data-toggle="tooltip" title="Add/remove project to the service" data-placement="bottom"></span></a>
 	  {% endif %}
-          <!--a href="{% url 'service:destroy' service.id next_page %}" role="button" class="btn btn-danger btn-sm"><span class="oi oi-fire" aria-hidden="true" data-toggle="tooltip" title="Remove {{ service.name }}"></span></a-->
-	  <a href="#" role="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#confirm-destroy-{{ service.id }}"><span class="oi oi-fire" aria-hidden="true" data-toggle="tooltip" title="Remove {{ service.name }}"></span></a>
+          <a href="{% url 'service:destroy' service.id next_page %}" role="button" class="btn btn-danger btn-sm"><span class="oi oi-fire" aria-hidden="true" data-toggle="tooltip" title="Remove {{ service.name }}"></span></a>
         {% endif %}
       </div>
     </div>

@@ -36,39 +36,22 @@ def droproutes():
 
 def addroute(service):
     proxyconf = KOOPLEX.get('proxy', {})
-    #kw = {
-    #    'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', service.proxy_route),
-    #    'headers': {'Authorization': 'token %s' % proxyconf.get('auth_token', '') },
-    #    'data': json.dumps({ 'target': service.url_internal }),
-    #}
-    #logging.debug(f'+ proxy {kw["url"]} ---> {service.url_internal}')
-    #return keeptrying(requests.post, 50, **kw)
-    for p in service.proxies:
-        kw = {
-            'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', p.proxy_route(service)),
-            'headers': {'Authorization': 'token %s' % proxyconf.get('auth_token', '') },
-            'data': json.dumps({ 'target': p.url_internal(service) }),
-        }
-        logging.debug(f'+ proxy {kw["url"]} ---> {p.url_internal(service)}')
-        keeptrying(requests.post, 50, **kw)
-        #FIXME: what to return?
-
+    kw = {
+        'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', service.proxy_route),
+        'headers': {'Authorization': 'token %s' % proxyconf.get('auth_token', '') },
+        'data': json.dumps({ 'target': service.url_internal }),
+    }
+    logging.debug(f'+ proxy {kw["url"]} ---> {service.url_internal}')
+    return keeptrying(requests.post, 50, **kw)
 
 def removeroute(service):
     proxyconf = KOOPLEX.get('proxy', {})
-    #kw = {
-    #    'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', service.proxy_route),
-    #    'headers': {'Authorization': 'token %s' % proxyconf.get('auth_token', '') },
-    #}
-    #logging.debug(f'- proxy {kw["url"]} -/-> {service.url_internal}')
-    #return keeptrying(requests.delete, 5, **kw)
-    for p in service.proxies:
-        kw = {
-            'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', p.proxy_route(service)),
-            'headers': {'Authorization': 'token %s' % proxyconf.get('auth_token', '') },
-        }
-        logging.debug(f'- proxy {kw["url"]} -/-> {p.url_internal(service)}')
-        keeptrying(requests.delete, 5, **kw)
+    kw = {
+        'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', service.proxy_route),
+        'headers': {'Authorization': 'token %s' % proxyconf.get('auth_token', '') },
+    }
+    logging.debug(f'- proxy {kw["url"]} -/-> {service.url_internal}')
+    return keeptrying(requests.delete, 5, **kw)
 
 #def _removeroute_report(report):
 #    proxyconf = KOOPLEX.get('proxy', {})

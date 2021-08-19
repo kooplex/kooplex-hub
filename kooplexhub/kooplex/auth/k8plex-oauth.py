@@ -9,8 +9,6 @@ from kooplex.settings import KOOPLEX
 
 logger = logging.getLogger(__name__)
 
-
-#class KooplexOpenID(OpenIdConnectAuth):
 class KooplexOpenID(BaseOAuth2):
     name = 'kooplex'
     AUTHORIZATION_URL = 'https://veo.vo.elte.hu/oauth/o/authorize/'
@@ -30,7 +28,8 @@ class KooplexOpenID(BaseOAuth2):
                  }
 
     def user_data( self, access_token, *args, **kwargs):
-        url = 'https://veo.vo.elte.hu/oauth/profile?'+urlencode({'access_token': access_token})
+        url = 'https://veo.vo.elte.hu/oauth/profile?'+urlencode({'access_token': access_token
+})
         return self.get_json(url)
 
 
@@ -38,23 +37,12 @@ class KooplexOpenID(BaseOAuth2):
 #class KooplexOpenID(OpenIdConnectAuth):
 #    name = 'kooplex'
 ##    OIDC_ENDPOINT = "https://veo.vo.elte.hu/oauth/accounts/login" #KOOPLEX.get('hydra_oidc_endpoint', 'https://localhost:4444')
-
-
-
-# OLD CODE commented out on 2021-03-11
-#    name = 'kooplex'
-#    OIDC_ENDPOINT = "https://veo.vo.elte.hu/oauth/accounts/login" #KOOPLEX.get('hydra_oidc_endpoint', 'https://localhost:4444')
->>>>>>> f23e992be7a1585868927badafff7d276a73520a
 #    OIDC_ENDPOINT = "https://veo.vo.elte.hu/oauth/o/authorize" #KOOPLEX.get('hydra_oidc_endpoint', 'https://localhost:4444')
 #
 #    def get_redirect_uri(self, state = None):
 #        """Build redirect with redirect_state parameter."""
 #        base_url = KOOPLEX.get('base_url', 'http://localhost')
-<<<<<<< HEAD
 #        url = os.path.join(base_url, "hub/oauth/complete/kooplex/")
-=======
-#        url = os.path.join(base_url, "hub/oauth/complete/oidc/")
->>>>>>> f23e992be7a1585868927badafff7d276a73520a
 #        logger.debug("IDP resp" )
 #        if self.REDIRECT_STATE and state:
 #            uri = url_add_parameters(url, {'redirect_state': state})

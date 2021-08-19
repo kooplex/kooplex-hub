@@ -36,14 +36,12 @@ def start(service):
     for proxy in service.proxies:
         pod_ports.append({
             "containerPort": proxy.port,
-            #"name": "http", 
-            "name": proxy.name, 
+            "name": "http", 
         })
         svc_ports.append({
             "port": proxy.port,
             "targetPort": proxy.port,
             "protocol": "TCP",
-            "name": proxy.name, 
         })
 
     volumes = []
@@ -135,7 +133,6 @@ def start(service):
             "subPath": os.path.join('git', service.user.username, server, repo.clone_folder),
         })
         has_cache = True
-        logger.warning("service creation %s"%volume_mounts[-1])
 
     for attachment in service.attachments:
         volume_mounts.append({
@@ -183,12 +180,11 @@ def start(service):
                     "image": service.image.name,
                     "volumeMounts": volume_mounts,
                     "ports": pod_ports,
-#                    "imagePullPolicy": "IfNotPresent", #"Always",
-                    "imagePullPolicy": "Always",
+                    "imagePullPolicy": "Always", #IfNotPresent
                     "env": env_variables,
                 }],
                 "volumes": volumes,
-#                "nodeSelector": { "kubernetes.io/hostname": "veo1" }, # FIXME:
+#                "nodeSelector": { "kubernetes.io/hostname": "veo2" }, # FIXME:
 #                "nodeSelector": { "kubernetes.io/hostname": "kooplex-deploy" }, # FIXME:
 #                "nodeSelector": { "kubernetes.io/hostname": "work" }, # FIXME:
             }
@@ -211,14 +207,14 @@ def start(service):
     try:
         v1.create_namespaced_service(namespace = "default", body = svc_definition)
     except client.rest.ApiException as e:
-        logger.warning(f"service creation fails: {e}")
+        logger.warning(e)
         if json.loads(e.body)['code'] != 409: # already exists
             logger.debug(svc_definition)
             raise
     try:
         v1.create_namespaced_pod(namespace = "default", body = pod_definition)
     except client.rest.ApiException as e:
-        logger.warning(f"pod creation fails: {e}")
+        logger.warning(e)
         if json.loads(e.body)['code'] != 409: # already exists
             logger.debug(pod_definition)
             raise
