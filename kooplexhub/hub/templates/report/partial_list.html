@@ -2,8 +2,11 @@
   <div class="card-header">
     <div class="row">
       <div class="col-1">
+	      <i class="bi bi-file-earmark-slides"></i>
         {% if report.service.state == report.service.ST_RUNNING %}
           <a href="{% url 'report:openreport' report.id %}" target="_blank" role="button" class="btn btn-dark btn-sm"><span class="oi oi-external-link" aria-hidden="true"></span></a>
+        {% elif report.service.state == report.service.ST_STOPPING or report.service.state == report.service.ST_STARTING %}
+	  <a href="{% url 'service:refreshlogs' report.service.id %}" role="button" class="btn btn-secondary btn-sm"><span class="oi oi-reload" aria-hidden="true" data-toggle="tooltip" title="Refresh service information (last message)" data-placement="bottom"></span></a>
         {% endif %}
       </div>
       <div class="col-11" data-bs-toggle="collapse" data-bs-target="#collapse-{{ report.id }}" aria-expanded="false" aria-controls="collapse-{{ report.id }}">
@@ -28,7 +31,7 @@
         <a href="{% url 'report:refresh' report.id %}" role="button" class="btn btn-light btn-sm"><span class="oi oi-reload" aria-hidden="true"></span></a>
       {% endif %}
       {% if report.creator == user %}
-        <a href="{% url 'report:deletereport' report.id %}" role="button" class="btn btn-danger btn-sm"><span class="oi oi-trash" aria-hidden="true"></span></a>
+        <a href="{% url 'report:deletereport' report.id %}" role="button" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?');"><span class="oi oi-trash" aria-hidden="true"></span></a>
       {% endif %}
     </div>
   </div>

@@ -3,6 +3,8 @@
 {% block submenu %}
   {% if user.is_authenticated %}
     {% include 'report/report_submenu.html' with title="List of reports" submenu="list" %}
+  {% else %}
+    {% include 'report/report_submenu_dummy.html' with title="List of reports" submenu="list" %}
   {% endif %}
 {% endblock %}
 
@@ -24,6 +26,9 @@
   {% if user.is_authenticated %}
     {% include 'report/hint_list.html' %}
   {% endif %}
+  <div class="row">
+    <img src="/static/content/ClipartKey_3263251.png" alt="">
+  </div>
 {% endblock %}
 
 {% block navsearch %}
