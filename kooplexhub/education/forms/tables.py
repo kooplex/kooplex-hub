@@ -183,7 +183,7 @@ class TableAssignmentCollect(tables.Table):
         try:
             g = UserCourseGroupBinding.objects.get(usercoursebinding__user = record.user, usercoursebinding__course = record.assignment.course).group
             return f"{record.assignment.course.name} ({g.name})"
-        except UserCourseGroupBinding.DoesNotExists:
+        except UserCourseGroupBinding.DoesNotExist:
             return record.assignment.course.name
 
     def render_assignment(self, record):

@@ -91,7 +91,7 @@ class Container(models.Model):
     @property
     def env_variables(self):
         for envmap in EnvVarMapping.objects.filter(image = self.image):
-            yield { "name": envmap.name, "value": envmap.valuemap.format(service = self) }
+            yield { "name": envmap.name, "value": envmap.valuemap.format(container = self) }
 
     @property
     def uptime(self):

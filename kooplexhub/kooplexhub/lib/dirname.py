@@ -72,8 +72,11 @@ def assignment_workdir(userassignmentbinding):
 def assignment_feedback_dir(userassignmentbinding):
     return os.path.join(userassignment_dir(userassignmentbinding), 'feedback')
 
+def assignment_correct_root(course):
+    return os.path.join(course_assignment_root(course), 'correctdir')
+
 def assignment_correct_dir(userassignmentbinding):
     from education.models import UserCourseBinding
     ucb = UserCourseBinding.objects.get(user = userassignmentbinding.user, course = userassignmentbinding.assignment.course)
-    return os.path.join(course_assignment_root(ucb.course), 'correctdir', userassignmentbinding.assignment.folder, userassignmentbinding.user.username)
+    return os.path.join(assignment_correct_root(ucb.course), userassignmentbinding.assignment.folder, userassignmentbinding.user.username)
 

@@ -30,17 +30,17 @@ DEBUG = True
 
 PREFIX = os.getenv('PREFIX', 'kooplex')
 DOMAIN = os.getenv('DOMAIN', 'localhost')
-DOMAIN = "k8plex-lts.vo.elte.hu" #FIXME
 
 ALLOWED_HOSTS = [
     DOMAIN,
+    "k8plex-test.vo.elte.hu",
         ]
 
 #HUB = getpwnam('hub')
 
 
-LOGIN_URL = 'https://k8plex-lts.vo.elte.hu/hub/oauth/login/kooplex' #FIXME:
-LOGOUT_URL = 'https://k8plex-lts.vo.elte.hu/hub/logout' #FIXME:
+LOGIN_URL = 'https://k8plex-test.vo.elte.hu/hub/oauth/login/kooplex'
+LOGOUT_URL = 'https://k8plex-test.vo.elte.hu/hub/logout'
 SOCIAL_AUTH_KOOPLEX_KEY = 'NhEpHQ7BDynMNPoYPm9QVmX7PqYvZ6IkKLudtzYU'
 SOCIAL_AUTH_KOOPLEX_SECRET = 'P5jiYse05hDWBd2KDs8Y8Kj3VXXB9Mr4e3R8VykO6u2YeRIvRKOB3KtKQ6h4seGzET7Z87XXILtjhWm03wjVKPNOvo5Zcga1EGGBNpSPVyfxgQoM5hhMPH2TUW5e6Gtr'
 SOCIAL_AUTH_USER_FIELDS = [ 'username', 'email' ]
@@ -103,7 +103,6 @@ TEMPLATES = [
                 'container.context_processors.form_container',
                 'container.context_processors.warnings',
                 'container.context_processors.form_attachment',
-                'container.context_processors.collapser',
                 'project.context_processors.form_project',
                 'project.context_processors.warnings',
                 'education.context_processors.assignment_warnings',
@@ -208,7 +207,7 @@ LOGGING = {
 }
 
 KOOPLEX = {
-    'fs_backend': 'posix',
+    'fs_backend': 'nfs4',
     'mountpoint_hub': {
         'home': '/mnt/home',
         'garbage': '/mnt/garbage',
@@ -226,26 +225,44 @@ KOOPLEX = {
     'proxy': {
         'url_api': 'http://k8plex-test-proxy.k8plex-test-proxy:8001/api',
         'auth_token': '', #FIXME: os.getenv('HUBPROXY_PW'),
-        'url_internal': 'http://{container.label}:{proxy.port}',
-        'url_public': 'https://k8plex-lts.vo.elte.hu/{proxy.path_open}',
+        'url_internal': 'http://{container.label}.k8plex-test-hub:{proxy.port}',
+        'url_public': 'https://k8plex-test.vo.elte.hu/{proxy.path_open}',
         'path': 'notebook/{container.name}',
     },
     'kubernetes': {
-        'namespace': 'k8plex-test-hub-django-lts',
+        'namespace': 'k8plex-test-hub',
         'imagePullPolicy': 'Always',
         'nslcd': {
             'mountPath_nslcd': '/etc/mnt'
             },
         'userdata': {
             'claim': 'pvc-userdata',
-            'subPath_home': 'home/{user.username}',
+            'claim-home': 'pvc-home',
+            'claim-garbage': 'pvc-garbage',
+            'claim-edu': 'pvc-edu',
+            'subPath_home': '{user.username}',
             'mountPath_home': '/v/{user.username}',
-            'subPath_project': 'projects',
+            'subPath_project': '',
             'mountPath_project': '/v/projects/{project.uniqname}',
             'subPath_report': 'reports',
             'mountPath_report': '/v/reports/{report.uniqname}',
-            'subPath_garbage': 'garbage/{user.username}',
+            'subPath_report_prepare': 'report_prepare',
+            'mountPath_report_prepare': '/v/report_prepare/{report.uniqname}',
+            'subPath_garbage': '{user.username}',
             'mountPath_garbage': '/v/garbage',
+            # EDU
+            'mountPath_course_workdir': '/v/courses/{course.folder}',
+            'subPath_course_workdir': 'course_workdir/{course.folder}/{user.username}',
+            'mountPath_course_public': '/v/courses/{course.folder}.public',
+            'subPath_course_public': 'courses/{course.folder}/public',
+            'mountPath_course_assignment_prepare': '/v/courses/{course.folder}.assignment_prepare',
+            'subPath_course_assignment_prepare': 'courses/{course.folder}/assignment_prepare',
+            'mountPath_course_assignment': '/v/courses/{course.folder}.assignments',
+            'subPath_course_assignment': 'course_assignments/{course.folder}/workdir/{user.username}',
+            'subPath_course_assignment_all': 'course_assignments/{course.folder}/workdir',
+            'mountPath_course_assignment_correct': '/v/courses/{course.folder}.correct',
+            'subPath_course_assignment_correct': 'course_assignments/{course.folder}/correctdir/{user.username}',
+            'subPath_course_assignment_correct_all': 'course_assignments/{course.folder}/correctdir',
         },
         'cache': {
             'claim': 'pvc-cache',

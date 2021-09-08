@@ -38,12 +38,10 @@ class FormAssignment(forms.ModelForm):
             help_text = _('If unspecified either you or students need to take care of collecting or submitting assignments respectively.'),
         )
 
-    def render_valid_from(self, record):
-        return "42"
 
     class Meta:
         model = Assignment
-        fields = [ 'name', 'folder', 'description', 'can_studentsubmit', 'remove_collected', 'valid_from', 'expires_at', ]
+        fields = [ 'name', 'folder', 'description', 'can_studentsubmit', 'remove_collected', 'valid_from', 'expires_at', 'max_number_of_files', 'max_size' ]
         labels = {
             'name': _('The name of the assignment'),
             'description': _('A short description of the excercises'),

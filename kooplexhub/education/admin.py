@@ -54,7 +54,7 @@ class CourseContainerBindingAdmin(admin.ModelAdmin):
 
 @admin.register(Assignment)
 class AssignmentAdmin(admin.ModelAdmin):
-    list_display = ('id', 'course', 'name', 'folder', 'creator', 'description', 'created_at', 'valid_from', 'expires_at', 'can_studentsubmit', 'remove_collected')
+    list_display = ('id', 'course', 'name', 'folder', 'creator', 'description', 'created_at', 'valid_from', 'expires_at', 'can_studentsubmit', 'remove_collected', 'max_number_of_files', 'max_size')
     search_fields = ('name', 'creator__first_name', 'creator__last_name', 'course__name')
 
 

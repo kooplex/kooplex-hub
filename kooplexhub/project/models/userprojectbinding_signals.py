@@ -66,11 +66,11 @@ def assert_not_shared(sender, instance, **kwargs):
     from container.models import Container
     from ..models import ProjectContainerBinding
     bindings = UserProjectBinding.objects.filter(project = instance.project)
-    if instance.role == UserProjectBinding.RL_CREATOR:
-        assert len(bindings) == 1, f'Cannot delete creator binding because {len(bindings)} project bindings exists'
+   #FIXME if instance.role == UserProjectBinding.RL_CREATOR:
+   #FIXME     assert len(bindings) == 1, f'Cannot delete creator binding because {len(bindings)} project bindings exists'
     for psb in ProjectContainerBinding.objects.filter(project = instance.project, container__user = instance.user):
-        if psb.service.state == Container.ST_RUNNING:
-            psb.service.state = Container.ST_NEED_RESTART
-            psb.service.save()
+        if psb.container.state == Container.ST_RUNNING:
+            psb.container.state = Container.ST_NEED_RESTART
+            psb.container.save()
         psb.delete()
 

@@ -5,9 +5,10 @@
 {% endblock %}
 
 {% block main_content_right %}
+
 {% if user.profile.layout_container_list %}
 <div id="containerListPane">
-  <input type="hidden" id="shown_containers" name="shown_containers" value="{{ shown_containers }}">
+  <input type="hidden" id="shown_containers" name="shown_containers" value="">
   {% for container in containers %}
      {% include 'container_partial_list.html' %}
   {% endfor %}
@@ -23,18 +24,26 @@
 {% include 'pager.html' %}
 
 	<script>
-$(".btn").on("click", function () {
-    console.log('klikk')
-    console.log( $( this ) )
-    console.log( $( this )[0].href )
-    var anchor = $( this )[0]
-    var href = anchor.getAttribute("href")
-    var shown = $( "#shown_containers" ).val()
-    href += JSON.stringify( shown ) 
-    console.log( "uj href: " + href )
-    anchor.setAttribute("href", href )
 
-    return true
+$( document ).ready(function() {
+      	var hid_shw = $( "#shown_containers" )
+	var c_val = $.cookie("show_container")
+	if (c_val) {
+		c_val = c_val.replaceAll('\\054', ',')
+		console.log( c_val )
+		$.removeCookie("show_container", { 'path': '/' })
+      		hid_shw.val( c_val )
+	} else {
+		console.log( "show container cookie entry missing" )
+      		hid_shw.val( JSON.stringify([]) )
+	}
+});
+
+$(".btn").on("click", function () {
+	var shown = $( "#shown_containers" ).val()
+	console.log( "shown: " + shown )
+	$.cookie("show_container", shown, { 'path': '/' })
+	return true
 })
 
 function onlyUnique(value, index, self) {
@@ -42,18 +51,13 @@ function onlyUnique(value, index, self) {
 }
 
 $("#containerListPane div div div").on("click", function () {
-    console.log( this )
     var tgl = $( this ).attr("data-bs-toggle")
-    console.log( tgl )
     if (tgl === 'collapse') {
       var collapsed = $( this ).hasClass("collapsed")
       var hid_shw = $( "#shown_containers" )
-      console.log( "memo: " )
-      console.log( hid_shw )
       var shw = JSON.parse( hid_shw.val() )
-      var tgl_id = parseInt( $( this ).attr("data-bs-target").split('-')[1] )
-      console.log( tgl_id )
       console.log( "before: " + shw )
+      var tgl_id = parseInt( $( this ).attr("data-bs-target").split('-')[1] )
       if (collapsed) {
 	  const index = shw.indexOf(tgl_id);
           if (index > -1) {

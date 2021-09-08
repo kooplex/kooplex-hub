@@ -1,3 +1,4 @@
+
 from .forms import FormContainer
 from .forms import FormAttachment
 from .models import Container
@@ -19,12 +20,4 @@ def warnings(request):
 def form_attachment(request):
     return { 'f_newattachment': FormAttachment(auto_id = 'id_newattachment_%s') } if request.user.is_authenticated and hasattr(request.user, 'profile') and request.user.profile.can_createattachment else {}
 
-
-def collapser(request):
-    if request.method == "GET":
-        return { 'shown_containers': request.GET.get('shown_containers', []) }
-    elif request.method == "POST":
-        return { 'shown_containers': request.POST.get('shown_containers', []) }
-    else:
-        return {}
 

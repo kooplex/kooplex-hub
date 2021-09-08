@@ -48,7 +48,10 @@ class Profile(models.Model):
 
     @property
     def userid(self):
-        return getpwnam(self.username).pw_uid
+        try:
+            return getpwnam(self.username).pw_uid
+        except:
+            return -1 # FIXME
 
     @property
     def name(self):

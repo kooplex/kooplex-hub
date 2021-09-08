@@ -5,6 +5,6 @@ obj
 *.xml
 __pycache__
 TestResults
-kooplexhub/hub/migrations/
+kooplexhub/*/migrations/
 *.sw?
 .idea/*

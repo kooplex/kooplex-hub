@@ -45,6 +45,12 @@ class Course(models.Model):
     def teachers(self):
         return ", ".join([ f"{ucb.user.first_name} {ucb.user.last_name}" for ucb in self.teacherbindings ])
 
+    def is_teacher(self, user):
+        try:
+            return UserCourseBinding.objects.get(course = self, user = user).is_teacher
+        except UserCourseBinding.DoesNotExist:
+            return False
+
     @property
     def studentbindings(self):
         return UserCourseBinding.objects.filter(course = self, is_teacher = False)

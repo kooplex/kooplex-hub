@@ -25,8 +25,27 @@ logger = logging.getLogger(__name__)
 acl_backend = KOOPLEX.get('fs_backend', 'nfs4')
 hub_uid = KOOPLEX.get('hub_uid', 0)
 hub_gid = KOOPLEX.get('hub_gid', 0)
+users_gid = KOOPLEX.get('users_gid', 1000) #FIXME: get from nsswitch (id)
 
 assert acl_backend in [ 'nfs4', 'posix' ], "Only 'nfs4' and 'posix' acl_backends are supported"
+
+
+def _count_files(path):
+    n = 0
+    for _, _, f in os.walk(path):
+        n += len(f)
+    return n
+
+
+def _du(path):
+    n = 0
+    for d, _, fs in os.walk(path):
+        for f in fs:
+            s = os.stat(os.path.join(d, f))
+            n += s.st_size
+    return n
+
+
 
 #FIXME: @sudo
 def _mkdir(path, other_rx = False):
@@ -103,7 +122,7 @@ def _revokeaccess(user, folder):
 
 
 ###FIXME: @sudo
-def _grantgroupaccess(group_id, folder, acl = 'rxtcy'):
+def _grantgroupaccess(group_id, folder, acl = 'rXtcy'):
     if acl_backend == 'nfs4':
         bash(f'nfs4_setfacl -R -a A:g:{group_id}:{acl} {folder}')
         bash(f'nfs4_setfacl -R -a A:fdig:{group_id}:{acl} {folder}')
@@ -139,6 +158,14 @@ def _archivedir(folder, target, remove = True):
     finally:
         if remove:
             _rmdir(folder)
+
+
+def _chown(path, uid = hub_uid, gid = hub_gid):
+    for root, dirs, files in os.walk(path):
+        for momo in dirs:
+          os.chown(os.path.join(root, momo), uid, gid)
+        for momo in files:
+          os.chown(os.path.join(root, momo), uid, gid)
 
 
 ###FIXME: @sudo
@@ -227,23 +254,15 @@ def grantaccess_project(userprojectbinding):
     user = userprojectbinding.user
     dir_project = dirname.project(userprojectbinding.project)
     _grantaccess(user, dir_project)
-#    for subdir, uid, gid in _dir_walker(dir_project):
-#        _grantaccess(user, subdir, uid = uid, gid = gid)
     dir_reportprepare = dirname.report_prepare(userprojectbinding.project)
     _grantaccess(user, dir_reportprepare)
-#    for subdir, uid, gid in _dir_walker(dir_reportprepare):
-#        _grantaccess(user, subdir, uid = uid, gid = gid)
 
 
 def revokeaccess_project(userprojectbinding):
     user = userprojectbinding.user
     dir_project = dirname.project(userprojectbinding.project)
-#    for subdir, uid, gid in _dir_walker(dir_project):
-#        _revokeaccess(user, subdir, uid = uid, gid = gid)
     _revokeaccess(user, dir_project)
     dir_reportprepare = dirname.report_prepare(userprojectbinding.project)
-#    for subdir, uid, gid in _dir_walker(dir_reportprepare):
-#        _revokeaccess(user, subdir, uid = uid, gid = gid)
     _revokeaccess(user, dir_reportprepare)
 
 
@@ -355,32 +374,38 @@ def mkdir_course(course):
     _mkdir(dir_workdir)
     dir_assignment = dirname.course_assignment_root(course)
     _mkdir(dir_assignment)
-    #FIXME: grantaccess
+    dir_correct = dirname.assignment_correct_root(course)
+    _mkdir(dir_correct)
 
 
-###FIXME: def grantacl_course_share(usercoursebinding):
-###FIXME:     try:
-###FIXME:         dir_coursepublic = Dirname.coursepublic(usercoursebinding.course)
-###FIXME:         dir_courseprivate = Dirname.courseprivate(usercoursebinding.course)
-###FIXME:         if usercoursebinding.is_teacher:
-###FIXME:             _grantaccess(usercoursebinding.user, dir_coursepublic)
-###FIXME:             _grantaccess(usercoursebinding.user, dir_courseprivate)
-###FIXME:         else:
-###FIXME:             _grantaccess(usercoursebinding.user, dir_coursepublic, acl = 'rX')
-###FIXME:     except Exception as e:
-###FIXME:         logger.error("Cannot grant acl %s -- %s" % (usercoursebinding, e))
-###FIXME: 
-###FIXME: def revokeacl_course_share(usercoursebinding):
-###FIXME:     try:
-###FIXME:         dir_coursepublic = Dirname.coursepublic(usercoursebinding.course)
-###FIXME:         dir_courseprivate = Dirname.courseprivate(usercoursebinding.course)
-###FIXME:         if usercoursebinding.is_teacher:
-###FIXME:             _revokeaccess(usercoursebinding.user, dir_courseprivate)
-###FIXME:         _revokeaccess(usercoursebinding.user, dir_coursepublic)
-###FIXME:     except Exception as e:
-###FIXME:         logger.error("Cannot revoke acl %s -- %s" % (usercoursebinding, e))
-###FIXME: 
-###FIXME: 
+def grantaccess_course(usercoursebinding):
+    '''
+    '''
+    course = usercoursebinding.course
+    dir_coursepublic = dirname.course_public(course)
+    dir_assignmentprepare = dirname.course_assignment_prepare_root(course)
+    dir_correct = dirname.assignment_correct_root(course)
+    if usercoursebinding.is_teacher:
+        _grantaccess(usercoursebinding.user, dir_coursepublic)
+        _grantaccess(usercoursebinding.user, dir_assignmentprepare)
+        _grantaccess(usercoursebinding.user, dir_correct, acl = 'rXtcy')
+    else:
+        _grantaccess(usercoursebinding.user, dir_coursepublic, acl = 'rXtcy')
+
+
+def revokeaccess_course(usercoursebinding):
+    '''
+    '''
+    course = usercoursebinding.course
+    dir_coursepublic = dirname.course_public(course)
+    dir_assignmentprepare = dirname.course_assignment_prepare_root(course)
+    dir_correct = dirname.assignment_correct_root(course)
+    _revokeaccess(usercoursebinding.user, dir_coursepublic)
+    if usercoursebinding.is_teacher:
+        _revokeaccess(usercoursebinding.user, dir_assignmentprepare)
+        _revokeaccess(usercoursebinding.user, dir_correct)
+
+
 ###FIXME: def garbagedir_course_share(course):
 ###FIXME:     dir_course = Dirname.course(course)
 ###FIXME:     garbage = Filename.course_garbage(course)
@@ -388,9 +413,11 @@ def mkdir_course(course):
 
 
 def get_assignment_prepare_subfolders(course):
+    from education.models import Assignment
     dir_assignmentprepare = dirname.course_assignment_prepare_root(course)
+    dir_used = [ a.folder for a in Assignment.objects.filter(course = course) ]
     abs_path = lambda x: os.path.join(dir_assignmentprepare, x)
-    not_empty_folder = lambda x: os.path.isdir(abs_path(x)) and len(os.listdir(abs_path(x))) > 0
+    not_empty_folder = lambda x: os.path.isdir(abs_path(x)) and len(os.listdir(abs_path(x))) > 0 and not x in dir_used
     return list(filter(not_empty_folder, os.listdir(dir_assignmentprepare)))
 
 
@@ -403,10 +430,18 @@ def mkdir_course_workdir(usercoursebinding):
     '''
     dir_workdir = dirname.course_workdir(usercoursebinding)
     _mkdir(dir_workdir)
-    if not usercoursebinding.is_teacher:
+    _grantaccess(usercoursebinding.user, dir_workdir)
+    if usercoursebinding.is_teacher:
+        for studentbinding in usercoursebinding.course.studentbindings:
+            dir_assignment_workdir = dirname.assignment_workdir_root(studentbinding)
+            _grantaccess(usercoursebinding.user, dir_assignment_workdir, acl = 'rXtcy')
+    else:
         dir_assignment_workdir = dirname.assignment_workdir_root(usercoursebinding)
         _mkdir(dir_assignment_workdir)
-    #FIXME: grantaccess
+        _grantaccess(usercoursebinding.user, dir_assignment_workdir)
+        for teacherbinding in usercoursebinding.course.teacherbindings:
+            _grantaccess(teacherbinding.user, dir_assignment_workdir, acl = 'rXtcy')
+#feedback
 
 
 ###FIXME: def grantacl_course_workdir(usercoursebinding):
@@ -467,13 +502,21 @@ def cp_assignmentsnapshot(userassignmentbinding):
     with tarfile.open(archivefile, mode = 'r') as archive:
         archive.extractall(path = dir_target)
     logger.info(f"+ extracted {archivefile} in folder {dir_target}")
-#FIXME        _revokeaccess(userassignmentbinding.user, dir_target)
-#FIXME        for binding in UserCourseBinding.objects.filter(course = assignment.coursecode.course, is_teacher = True):
-#FIXME            _grantaccess(binding.user, dir_target, acl = 'rX')
+    _chown(dir_target, userassignmentbinding.user.profile.userid, users_gid)
+    for teacherbinding in userassignmentbinding.assignment.course.teacherbindings:
+        _grantaccess(teacherbinding.user, dir_target, acl = 'rXtcy')
 
 
 def snapshot_userassignment(userassignmentbinding):
     dir_source = dirname.assignment_workdir(userassignmentbinding)
+    if userassignmentbinding.assignment.max_number_of_files:
+        n = _count_files(dir_source)
+        if n > userassignmentbinding.assignment.max_number_of_files:
+            raise Exception(f'Too many files in source folder {dir_source}: {n} > {userassignmentbinding.assignment.max_number_of_files}')
+    if userassignmentbinding.assignment.max_size:
+        du = _du(dir_source)
+        if du > userassignmentbinding.assignment.max_size:
+            raise Exception(f'Size exceeded {dir_source}: {du} > {userassignmentbinding.assignment.max_size}')
     archive = filename.assignment_collection(userassignmentbinding)
     _archivedir(dir_source, archive, remove = userassignmentbinding.assignment.remove_collected)
     logger.info(f"+ created {archive} of folder {dir_source}")
@@ -484,10 +527,22 @@ def cp_userassignment2correct(userassignmentbinding):
     dir_target = dirname.assignment_correct_dir(userassignmentbinding)
     with tarfile.open(archivefile, mode='r') as archive:
         archive.extractall(path = dir_target)
-    #FIXME: grant access
-    #    _grantaccess(userassignmentbinding.corrector, dir_target, acl = 'rwX')
-    #    _grantaccess(userassignmentbinding.user, dir_target, acl = 'rX')
+    for teacherbinding in userassignmentbinding.assignment.course.teacherbindings:
+        _grantaccess(teacherbinding.user, dir_target)
     logger.info(f"+ extracted {archivefile} in folder {dir_target}")
+
+
+def cp_userassignment_feedback(userassignmentbinding):
+    archivefile = filename.assignment_feedback(userassignmentbinding)
+    dir_source = dirname.assignment_correct_dir(userassignmentbinding)
+    dir_target = dirname.assignment_feedback_dir(userassignmentbinding)
+    _archivedir(dir_source, archivefile, remove = False)
+    logger.info(f"+ created {archivefile} of folder {dir_source}")
+    with tarfile.open(archivefile, mode='r') as archive:
+        archive.extractall(path = dir_target)
+    _chown(dir_target, userassignmentbinding.user.profile.userid, users_gid)
+    logger.info(f"+ extracted {archivefile} in folder {dir_target}")
+
 
 
 def delete_userassignment(userassignmentbinding):

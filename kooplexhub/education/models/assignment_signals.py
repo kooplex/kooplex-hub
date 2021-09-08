@@ -26,15 +26,15 @@ def snapshot_assignment(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender = UserAssignmentBinding)
 def copy_userassignment(sender, instance, created, **kwargs):
-    from kooplexhub.lib.filesystem import cp_assignmentsnapshot, snapshot_userassignment, cp_userassignment2correct
+    from kooplexhub.lib.filesystem import cp_assignmentsnapshot, snapshot_userassignment, cp_userassignment2correct, cp_userassignment_feedback
     if created:
         cp_assignmentsnapshot(instance)
     elif instance.state in [ UserAssignmentBinding.ST_SUBMITTED, UserAssignmentBinding.ST_COLLECTED ]:
         snapshot_userassignment(instance)
     elif instance.state == UserAssignmentBinding.ST_CORRECTED:
         cp_userassignment2correct(instance)
-#FIXME:    elif instance.state == UserAssignmentBinding.ST_FEEDBACK:
-### cp ha van valtozas!?
+    elif instance.state == UserAssignmentBinding.ST_READY:
+        cp_userassignment_feedback(instance)
 
 
 @receiver(pre_delete, sender = UserAssignmentBinding)

@@ -71,16 +71,15 @@ def button_delete_container(container, next_page):
 
 
 def button_start(container, next_page):
-    #FIXME: patch_href()
     link = reverse('container:start', args = [container.id, next_page])
     return format_html(f"""
-<a href="{link}" role="button" class="btn btn-outline-secondary btn-sm" data-toggle="tooltip" title="Start environment {container.name} onclick='return patch_href();'"><span class="oi oi-flash" aria-hidden="true"></span></a>
+<a href="{link}" role="button" class="btn btn-outline-secondary btn-sm" data-toggle="tooltip" title="Start environment {container.name}"><span class="oi oi-flash" aria-hidden="true"></span></a>
     """)
 
 
 @register.simple_tag
 def button_stop(container, next_page):
-    if container.state == container.ST_RUNNING:
+    if container.state in [ container.ST_RUNNING, container.ST_NEED_RESTART ]:
         link = reverse('container:stop', args = [container.id, next_page])
         return format_html(f"""
 <a href="{link}" role="button" class="btn btn-danger btn-sm" data-toggle="tooltip" title="Stop environment {container.name}"><span class="oi oi-x" aria-hidden="true"></span></a>
@@ -93,7 +92,7 @@ def button_stop(container, next_page):
 
 @register.simple_tag
 def button_restart(container, next_page):
-    if container.state in [ container.ST_RUNNING, container.ST_ERROR ]:
+    if container.state in [ container.ST_RUNNING, container.ST_ERROR, container.ST_NEED_RESTART ]:
         link = reverse('container:restart', args = [container.id, next_page])
         return format_html(f"""
 <a href="{link}" role="button" class="btn btn-warning btn-sm" data-toggle="tooltip" title="Restart inconsistent environment {container.name}"><span class="bi bi-bootstrap-reboot" aria-hidden="true"></span></a>
@@ -137,7 +136,7 @@ def button_start_open_restart(container, next_page):
 
 @register.simple_tag
 def button_start_open(container, next_page):
-    if container.state == container.ST_RUNNING:
+    if container.state in [ container.ST_RUNNING, container.ST_NEED_RESTART ]:
         return button_open(container, next_page)
     elif container.state == container.ST_NOTPRESENT:
         return button_start(container, next_page)

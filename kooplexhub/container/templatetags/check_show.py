@@ -9,11 +9,9 @@ register = template.Library()
 
 @register.filter(name = 'show')
 def check(request, container):
-    if 'Shown' in request.COOKIES.keys():
-        dd = json.loads(json.loads(request.COOKIES['Shown']))
-    else:
-        dd = []
-    return "show" if container.id in dd else ""
+    from ..views import _get_cookie
+    shown = _get_cookie(request)
+    return "show" if container.id in shown else ""
 
 
 

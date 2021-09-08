@@ -82,22 +82,70 @@ def start(container):
               ]}
       })
 
+    claim_userdata = False
+
     if container.image.require_home:
-        volumes.append({
-            "name": "userdata",
-            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim', 'userdata') }
-        })
-    if container.image.require_home:
+        logger.debug('mount home')
+        claim_userdata = True
         volume_mounts.extend([{
-            "name": "userdata",
+            "name": "home",
             "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_home', '/home/{user.username}').format(user = container.user),
             "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_home', 'home/{user.username}').format(user = container.user),
         }, {
-            "name": "userdata",
+            "name": "garbage",
             "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_garbage', '/home/garbage').format(user = container.user),
             "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_garbage', 'garbage/{user.username}').format(user = container.user),
         }])
 
+    for course in container.courses:
+        logger.debug(f'mount course folders {course.name}')
+        claim_userdata = True
+        volume_mounts.extend([{
+            "name": "edu",
+            "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_course_workdir', '/course/{course.folder}').format(course = course),
+            "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_course_workdir', 'course_workdir/{course.folder}/{user.username}').format(course = course, user = container.user),
+        }, {
+            "name": "edu",
+            "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_course_public', '/course/{course.folder}.public').format(course = course),
+            "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_course_public', 'course/{course.folder}/public').format(course = course),
+        }])
+        if course.is_teacher(container.user):
+            volume_mounts.extend([{
+                "name": "edu",
+                "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_course_assignment', '/course/{course.folder}.everyone').format(course = course),
+                "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_course_assignment_all', 'course_assignment/{course.folder}').format(course = course, user = container.user),
+            }, {
+                "name": "edu",
+                "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_course_assignment_prepare', '/course/{course.folder}.prepare').format(course = course),
+                "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_course_assignment_prepare', 'course/{course.folder}/assignment_prepare').format(course = course),
+            }, {
+                "name": "edu",
+                "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_course_assignment_correct', '/course/{course.folder}.correct').format(course = course),
+                "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_course_assignment_correct_all', 'course_assignment/{course.folder}/correctdir').format(course = course, user = container.user),
+            }])
+        else:
+            volume_mounts.extend([{
+                "name": "edu",
+                "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_course_assignment', '/course/{course.folder}.everyone').format(course = course),
+                "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_course_assignment', 'course_assignment/{course.folder}/{user.username}').format(course = course, user = container.user),
+            }])#CORRECTDIR
+
+
+    if claim_userdata:
+        volumes.extend([
+            {
+            "name": "home",
+            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-home', 'home') }
+        },
+            {
+            "name": "garbage",
+            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-garbage', 'garbage') }
+        },
+            {
+            "name": "edu",
+            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-edu', 'edu') }
+        },
+            ])
 #    has_project = False
 #    has_report = False
 #    has_cache = False
@@ -344,7 +392,7 @@ def restart(container):
     assert container.state != container.ST_NOTPRESENT, f'container {container.label} is not present.'
     ev_stop = stop(container)
     if ev_stop.wait(timeout = 30):
-        container = Service.objects.get(id = container.id)
+        #FIXME: no need for this!? container = Service.objects.get(id = container.id)
         return start(container)
     else:
         logger.error(f'Not restarting container {container.label}. It is taking very long to stop')

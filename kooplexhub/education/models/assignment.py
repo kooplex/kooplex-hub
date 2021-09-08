@@ -24,9 +24,11 @@ class Assignment(models.Model):
     expires_at = models.DateTimeField(null = True, blank = True)
     can_studentsubmit = models.BooleanField(default = True)
     remove_collected = models.BooleanField(default = False)
+    max_number_of_files = models.IntegerField(default = 5, null = False)
+    max_size = models.IntegerField(default = 500, null = False) 
 
     class Meta:
-        unique_together = [['course', 'name']]
+        unique_together = [['course', 'folder']]
 
     def __str__(self):
         return f"Assignment {self.name} (course {self.course.name}@{self.creator.username})"

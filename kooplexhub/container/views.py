@@ -17,6 +17,8 @@ from .models import Image, Container, Attachment, AttachmentContainerBinding
 from project.models import Project, UserProjectBinding, ProjectContainerBinding
 from education.models import Course, UserCourseBinding, CourseContainerBinding
 
+from kooplexhub.lib import custom_redirect
+
 from kooplexhub import settings
 
 logger = logging.getLogger(__name__)
@@ -90,11 +92,6 @@ class ContainerListView(LoginRequiredMixin, generic.ListView):
             profile.save()
         return containers
 
-    #FIXME: itt lehetne kinyotogatni
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['shown_containers'] = json.dumps([]) ## 35 ])
-        return context
 
 class AttachmentListView(LoginRequiredMixin, generic.ListView):
     template_name = 'attachment_list.html'
@@ -393,12 +390,9 @@ def configure(request, container_id):
 
 
 @login_required
-def start(request, container_id, next_page, shown = "[]"):
+def start(request, container_id, next_page):
     """Starts the container."""
     user = request.user
-    messages.warning(request, f'Shown {shown}.')
-    r =  redirect(next_page)
-    r.set_cookie('Shown', shown)
 
     try:
         svc = Container.objects.get(user = user, id = container_id)
@@ -418,12 +412,22 @@ def start(request, container_id, next_page, shown = "[]"):
     except Exception as e:
         logger.error(f'Cannot start the environment {svc} -- {e}')
         messages.error(request, f'Cannot start service environment {e}')
-    return r #redirect(next_page)
+    return redirect(next_page)
+
+
+def _get_cookie(request):
+    try:
+        cv = request.COOKIES.get('show_container', '[]')
+        return set( json.loads( cv.replace('%5B', '[').replace('%2C', ',').replace('%5D', ']') ) )
+    except Exception:
+        logger.error('stupid cookie value: {cv}')
+        return set()
 
 
 @login_required
 def refresh(request, container_id):
     user = request.user
+
     try:
         svc = Container.objects.get(user = user, id = container_id)
         svc.check_state()
@@ -432,7 +436,11 @@ def refresh(request, container_id):
     except Exception as e:
         logger.error(f'Cannot refresh service environment information {svc} -- {e}')
         messages.error(request, f'Cannot refresh service environment information {svc}')
-    return redirect('container:list')
+    redirection = redirect('container:list')
+    shown = _get_cookie(request)
+    shown.add( svc.id )
+    redirection.set_cookie('show_container', json.dumps( list(shown) ))
+    return redirection
 
 
 @login_required
@@ -450,7 +458,12 @@ def stop(request, container_id, next_page):
     except Exception as e:
         logger.error(f'Cannot stop the environment {svc} -- {e}')
         messages.error(request, f'Cannot stop environment {e}')
-    return redirect(next_page)
+    redirection = redirect(next_page)
+    shown = _get_cookie(request)
+    if svc.id in shown:
+        shown.remove( svc.id )
+    redirection.set_cookie('show_container', json.dumps( list(shown) ))
+    return redirection
 
 
 @login_required

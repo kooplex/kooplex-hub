@@ -42,7 +42,7 @@ def human_localtime(d):
     return d.astimezone(local_timezone).strftime('%Y_%m_%d-%H:%M:%S')
 
 def custom_redirect(url_name, *args, **kwargs):
-    from django.core.urlresolvers import reverse 
+    from django.urls import reverse 
     #from django.shortcuts import redirect
     #import urllib #FIXME
     try:
@@ -58,6 +58,7 @@ def custom_redirect(url_name, *args, **kwargs):
     #return HttpResponseRedirect(url + "?%s" % params) if params else redirect(url)
 
 def keeptrying(method, times, **kw):
+    from requests.exceptions import SSLError
     """
     @summary: run an arbitrary method with keyword arguments. In case an exception is raised during the call, 
     keep trying some more times with exponentially increasing waiting time between consecutive calls.
@@ -74,6 +75,9 @@ def keeptrying(method, times, **kw):
         logging.debug("executing %s" % method)
         times -= 1
         try:
+            return method(**kw)
+        except SSLError:
+            kw.update({'verify': False})
             return method(**kw)
         except Exception as e:
             logging.warning("exception (%s) while executing %s [backoff and try %d more]" % (method, e, times))
