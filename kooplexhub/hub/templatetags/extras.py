@@ -12,7 +12,7 @@ def join_links(courses, user):
     for c in courses:
         ucb = UserCourseBinding.objects.get(course = c, user = user)
         link = reverse('education:autoaddcontainer', args = [ucb.id])
-        links.append(f'<a href="{link}" data-toggle="tooltip" title="Following this link automatically creates course environmnet">{c.name} ({c.folder})</a>')
+        links.append(f'<a href="{link}" data-toggle="tooltip" title="Following this link automatically creates a course environment.">{c.name} ({c.folder})</a>')
     return format_html(', '.join(links))
 
 
