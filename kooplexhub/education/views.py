@@ -630,7 +630,7 @@ def addcontainer(request, usercoursebinding_id):
     try:
         course = UserCourseBinding.objects.get(id = usercoursebinding_id, user = user).course
         container, _ = Container.objects.get_or_create(
-            name = re.sub('[ _\.]', '', course.name), # course.name, #FIXME:why not validated?
+            name = course.cleanname,
             user = user,
             suffix = 'edu',
             image = course.image

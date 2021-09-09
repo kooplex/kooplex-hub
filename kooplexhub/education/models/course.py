@@ -5,6 +5,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.template.defaulttags import register
 
+from kooplexhub.lib import my_alphanumeric_validator
 from container.models import Image
 
 
@@ -13,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 class Course(models.Model):
     name = models.CharField(max_length = 64, null = False, unique = True)
+    cleanname = models.CharField(max_length = 64, null = False, unique = True, validators = [my_alphanumeric_validator('Enter a valid container name containing only letters and numbers.')])
     folder = models.CharField(max_length = 64, null = False, unique = True)
     description = models.TextField(max_length = 512, blank = True)
     image = models.ForeignKey(Image, null = True, on_delete = models.CASCADE)
