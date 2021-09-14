@@ -380,7 +380,7 @@ class TableUser(tables.Table):
         super(TableUser, self).__init__(users)
         self.course = course
         self.teacher_selector = teacher_selector
-        self.not_empty = len(users) > 0
+        self.empty = len(users) == 0
 
 
 class TableGroup(tables.Table):

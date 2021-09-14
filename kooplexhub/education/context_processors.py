@@ -34,3 +34,7 @@ def group_warnings(request):
             'empty_course_groups': empty,
             'ungrouped_course_students': ungrouped,
             }
+
+def active_tab(request):
+    active_tab = request.COOKIES.get('active_tab', None)
+    return { 'active_tab': active_tab } if active_tab else {}

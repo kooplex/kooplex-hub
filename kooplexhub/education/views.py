@@ -62,6 +62,27 @@ class StudentCourseBindingListView(LoginRequiredMixin, generic.ListView):
 
 
 @login_required
+def search(request, usercoursebinding_id):
+    user = request.user
+    profile = user.profile
+    logger.debug(f"method: {request.method}, user: {user.username}")
+    try:
+        course = UserCourseBinding.objects.get(id = usercoursebinding_id, user = request.user, is_teacher = True).course
+    except UserCourseBinding.DoesNotExist:
+        logger.error(f'abuse {user} tries to access usercoursebinding id {usercoursebinding_id}')
+        messages.error(request, 'Course does not exist')
+        return redirect('indexpage')
+
+    active_tab = request.COOKIES.get('active_tab', None)
+    if active_tab == 'tab-teacher':
+        profile.search_education_teacher = request.GET.get('pattern', '')
+    elif active_tab == 'tab-student':
+        profile.search_education_student= request.GET.get('pattern', '')
+    profile.save()
+    return configure(request, usercoursebinding_id)
+
+
+@login_required
 def configure(request, usercoursebinding_id, next_page = 'education:teacher'):
     user = request.user
     profile = user.profile
@@ -135,20 +156,21 @@ def configure(request, usercoursebinding_id, next_page = 'education:teacher'):
 
         return redirect(next_page)
     else:
-        active_tab = request.GET.get('active_tab', 'conf')
 
-        pattern = request.GET.get('pattern', profile.search_education_student) if active_tab == 'student' else profile.search_education_student
-        table_student = TableUser(course, teacher_selector = False, pattern = pattern)
-        if table_student.not_empty and pattern != profile.search_education_student:
-            profile.search_education_student = pattern
+        table_student = TableUser(course, teacher_selector = False, pattern = profile.search_education_student)
+        if table_student.empty:
+            profile.search_education_student = ''
             profile.save()
+            table_student = TableUser(course, teacher_selector = False, pattern = '')
         RequestConfig(request).configure(table_student)
-        pattern = request.GET.get('pattern', profile.search_education_teacher) if active_tab == 'teacher' else profile.search_education_teacher
-        table_teacher = TableUser(course, teacher_selector = True, pattern = pattern)
-        if table_teacher.not_empty and pattern != profile.search_education_teacher:
-            profile.search_education_teacher = pattern
+
+        table_teacher = TableUser(course, teacher_selector = True, pattern = profile.search_education_teacher)
+        if table_teacher.empty:
+            profile.search_education_teacher = ''
             profile.save()
+            table_teacher = TableUser(course, teacher_selector = True, pattern = '')
         RequestConfig(request).configure(table_teacher)
+
         table_group = TableGroup(Group.objects.filter(course = course))
         form_course = FormCourse({ 'name': course.name, 'description': course.description, 'image': course.image })
         form_group = FormGroup(course = course)
@@ -170,7 +192,6 @@ def configure(request, usercoursebinding_id, next_page = 'education:teacher'):
             'course': course,
             'submenu': 'meta',
             'next_page': next_page,
-            'active': active_tab,
             'student_group_map': student_group_map,
         }
         return render(request, 'course_configure.html', context = context_dict)
@@ -570,7 +591,8 @@ def _adduser(request, usercoursebinding_id, is_teacher):
     oops = []
     msgs = []
     if request.POST.get('button') != 'apply':
-        return redirect('education:teacher')
+        #return redirect('education:teacher')
+        return redirect('education:configure', usercoursebinding_id=usercoursebinding_id)
     try:
         course = UserCourseBinding.objects.get(id = usercoursebinding_id, user = user, is_teacher = True).course
     except UserCourseBinding.DoesNotExist:
@@ -606,7 +628,8 @@ def _adduser(request, usercoursebinding_id, is_teacher):
         messages.info(request, ' '.join(msgs))
     if len(oops):
         messages.error(request, ' '.join(oops))
-    return redirect('education:teacher')
+    #return redirect('education:teacher')
+    return redirect('education:configure', usercoursebinding_id=usercoursebinding_id)
 
 
 @login_required
@@ -630,7 +653,7 @@ def addcontainer(request, usercoursebinding_id):
     try:
         course = UserCourseBinding.objects.get(id = usercoursebinding_id, user = user).course
         container, _ = Container.objects.get_or_create(
-            name = course.cleanname,
+            name = re.sub('[ _\.]', '', course.name), # course.name, #FIXME:why not validated?
             user = user,
             suffix = 'edu',
             image = course.image
