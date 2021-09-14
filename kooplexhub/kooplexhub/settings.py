@@ -33,20 +33,19 @@ DOMAIN = os.getenv('DOMAIN', 'localhost')
 
 ALLOWED_HOSTS = [
     DOMAIN,
-    "k8plex-test.vo.elte.hu",
         ]
 
 #HUB = getpwnam('hub')
 
 
-LOGIN_URL = 'https://k8plex-test.vo.elte.hu/hub/oauth/login/kooplex'
-LOGOUT_URL = 'https://k8plex-test.vo.elte.hu/hub/logout'
-SOCIAL_AUTH_KOOPLEX_KEY = 'NhEpHQ7BDynMNPoYPm9QVmX7PqYvZ6IkKLudtzYU'
-SOCIAL_AUTH_KOOPLEX_SECRET = 'P5jiYse05hDWBd2KDs8Y8Kj3VXXB9Mr4e3R8VykO6u2YeRIvRKOB3KtKQ6h4seGzET7Z87XXILtjhWm03wjVKPNOvo5Zcga1EGGBNpSPVyfxgQoM5hhMPH2TUW5e6Gtr'
+LOGIN_URL = ''
+LOGOUT_URL = ''
+SOCIAL_AUTH_KOOPLEX_KEY = ''
+SOCIAL_AUTH_KOOPLEX_SECRET = ''
 SOCIAL_AUTH_USER_FIELDS = [ 'username', 'email' ]
 SOCIAL_AUTH_URL_NAMESPACE = 'social'
-KOOPLEX_OID_AUTHORIZATION_URL = 'https://veo.vo.elte.hu/oauth/o/authorize/' #FIXME:
-KOOPLEX_OID_ACCESS_TOKEN_URL = 'https://veo.vo.elte.hu/oauth/o/token/' #FIXME:
+KOOPLEX_OID_AUTHORIZATION_URL = ''
+KOOPLEX_OID_ACCESS_TOKEN_URL = ''
 LOGIN_REDIRECT_URL = 'indexpage'
 LOGOUT_REDIRECT_URL = 'indexpage'
 
@@ -108,6 +107,7 @@ TEMPLATES = [
                 'education.context_processors.assignment_warnings',
                 'education.context_processors.warnings',
                 'education.context_processors.group_warnings',
+                'education.context_processors.active_tab',
             ],
         },
     },
