@@ -9,19 +9,19 @@
 
 <ul class="nav nav-tabs" id="courseConfigTabs" role="tablist">
   <li class="nav-item" role="presentation">
-    <button class="nav-link {% if active_tab == "tab-conf" %}active{% endif %}" id="tab-conf" data-bs-toggle="tab" data-bs-target="#configureCourse" type="button" role="tab" aria-controls="configureCourse" aria-selected="{% if active == "conf" %}true{% else %}false{% endif %}">Configure</button>
+    <button class="nav-link {% if active_tab == "tab-conf" %}active{% endif %}" id="tab-conf" data-bs-toggle="tab" data-bs-target="#configureCourse" type="button" role="tab" aria-controls="configureCourse" aria-selected="{% if active_tab == "tab-conf" %}true{% else %}false{% endif %}">Configure</button>
   </li>
   <li class="nav-item" role="presentation">
-    <button class="nav-link {% if active_tab == "tab-group" %}active{% endif %}" id="tab-group" data-bs-toggle="tab" data-bs-target="#courseGroup" type="button" role="tab" aria-controls="confCourseGropu" aria-selected="{% if active == "group" %}true{% else %}false{% endif %}">Groups</button>
+    <button class="nav-link {% if active_tab == "tab-group" %}active{% endif %}" id="tab-group" data-bs-toggle="tab" data-bs-target="#courseGroup" type="button" role="tab" aria-controls="confCourseGropu" aria-selected="{% if active_tab == "tab-group" %}true{% else %}false{% endif %}">Groups</button>
   </li>
   <li class="nav-item" role="presentation">
-    <button class="nav-link {% if active_tab == "tab-teacher" %}active{% endif %}" id="tab-teacher" data-bs-toggle="tab" data-bs-target="#addteachersCourse" type="button" role="tab" aria-controls="addteachersCourse" aria-selected="{% if active == "teacher" %}true{% else %}false{% endif %}">Teachers</button>
+    <button class="nav-link {% if active_tab == "tab-teacher" %}active{% endif %}" id="tab-teacher" data-bs-toggle="tab" data-bs-target="#addteachersCourse" type="button" role="tab" aria-controls="addteachersCourse" aria-selected="{% if active_tab == "tab-teacher" %}true{% else %}false{% endif %}">Teachers</button>
   </li>
   <li class="nav-item" role="presentation">
-    <button class="nav-link {% if active_tab == "tab-student" %}active{% endif %}" id="tab-student" data-bs-toggle="tab" data-bs-target="#addstudentsCourse" type="button" role="tab" aria-controls="addstudentsCourse" aria-selected="{% if active == "student" %}true{% else %}false{% endif %}">Students</button>
+    <button class="nav-link {% if active_tab == "tab-student" %}active{% endif %}" id="tab-student" data-bs-toggle="tab" data-bs-target="#addstudentsCourse" type="button" role="tab" aria-controls="addstudentsCourse" aria-selected="{% if active_tab == "tab-student" %}true{% else %}false{% endif %}">Students</button>
   </li>
   <li class="nav-item" role="presentation">
-    <button class="nav-link {% if active_tab == "tab-grpstudent" %}active{% endif %}" id="tab-grpstudent" data-bs-toggle="tab" data-bs-target="#groupStudent" type="button" role="tab" aria-controls="groupStudent" aria-selected="{% if active == "grpstudent" %}true{% else %}false{% endif %}">Group students</button>
+    <button class="nav-link {% if active_tab == "tab-grpstudent" %}active{% endif %}" id="tab-grpstudent" data-bs-toggle="tab" data-bs-target="#groupStudent" type="button" role="tab" aria-controls="groupStudent" aria-selected="{% if active_tab == "tab-grpstudent" %}true{% else %}false{% endif %}">Group students</button>
   </li>
 </ul>
 <div class="tab-content" id="courseConfigTabsContent">
@@ -70,15 +70,7 @@
 
 <script>
   function set_search(tab) {
-    if (tab == "tab-conf") {
-      $("#search_field").attr("placeholder",  "Search")
-      $("#search_field").attr("value", "" )
-      $("#search_field").attr("disabled", true )
-    } else if (tab == "tab-group") {
-      $("#search_field").attr("placeholder",  "Search")
-      $("#search_field").attr("value", "" )
-      $("#search_field").attr("disabled", true )
-    } else if (tab == "tab-teacher") {
+    if (tab == "tab-teacher") {
       $("#search_field").attr("placeholder",  "Search name or coursecode")
       $("#search_field").attr("value", $("#s_teacher").attr("value") )
       $("#search_field").attr("disabled", false )
@@ -86,7 +78,11 @@
       $("#search_field").attr("placeholder",  "Search name or coursecode")
       $("#search_field").attr("value", $("#s_student").attr("value") )
       $("#search_field").attr("disabled", false )
-    } else if (tab == "tab-grpstudent") {
+    } /* else if (tab == "tab-group") {
+      $("#search_field").attr("placeholder",  "Search")
+      $("#search_field").attr("value", "" )
+      $("#search_field").attr("disabled", true )
+    } */ else {
       $("#search_field").attr("placeholder",  "Search")
       $("#search_field").attr("value", "" )
       $("#search_field").attr("disabled", true )
@@ -94,12 +90,13 @@
   }
 
   $( document ).ready(function() {
+      console.log( "ready: {{ active_tab }}" );
       set_search("{{ active_tab }}")
   });
 
-  $("#courseConfigTabs li button").on("click", function () {
+  $("#courseConfigTabs>li>button").on("click", function () {
     var tab = $( this ).attr("id")
-    $.cookie("active_tab", tab, { 'path': '/' })
+    $.cookie("active_tab", tab, { 'path': '/', 'secure': true })
     console.log( "tab: " + tab )
     set_search(tab)
   })
@@ -115,17 +112,10 @@
 {% block navsearch %}
 <form class="d-flex" action="{% url 'education:search' usercoursebinding_id %}" method="get">
   {#% csrf_token %#}
-  <input type="hidden" name="active_tab" id="active_tab" value="{{ active }}">
   <input type="hidden" id="s_student" value="{{ user.profile.search_education_student }}">
   <input type="hidden" id="s_teacher" value="{{ user.profile.search_education_teacher }}">
   <input class="form-control me-2" type="search" id="search_field" name="pattern"
-    {% if active == "student" %}
-      value="{{ user.profile.search_education_student }}" placeholder="Search name or coursecode"
-    {% elif active == "teacher" %}
-      value="{{ user.profile.search_education_teacher }}" placeholder="Search name or coursecode"
-    {% else %}
       value="" placeholder="Search" disabled
-    {% endif %}
       aria-label="Search">
   <button class="btn btn-outline-secondary" type="submit" name="button" value="search">Search</button>
 </form>

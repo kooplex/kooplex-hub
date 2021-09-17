@@ -11,7 +11,7 @@ from .models import Group, UserCourseGroupBinding
 class CourseAdmin(admin.ModelAdmin):
     def teachers(self, instance):
         return list(map(lambda x: x.user, UserCourseBinding.objects.filter(course = instance, is_teacher = True)))
-    list_display = ('id', 'name', 'folder', 'description', 'image', 'teacher_can_delete_foreign_assignment', 'teachers')
+    list_display = ('id', 'name', 'cleanname', 'folder', 'description', 'image', 'teacher_can_delete_foreign_assignment', 'teachers')
     search_fields = ('name', 'description')
 
 

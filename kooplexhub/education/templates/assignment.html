@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% load render_table from django_tables2 %}
-{% load static %}
 
+{% load static %}
 
 {% block css_extra %}
     <link rel="stylesheet" type="text/css" href="{% static 'bootstrap-datetimepicker-master/css/bootstrap-datetimepicker.min.css' %}">
@@ -11,7 +11,7 @@
 {% block submenu %}
 {% include 'education_submenu.html' with title="Your assignments" submenu="assignment" %}
 {% endblock %}
-
+{% load render_table from django_tables2 %}
 
 {% block main_content_right %}
   {% if t_submit.rows %}
@@ -24,42 +24,38 @@
   {% endif %}
 
   {% if teacher %} 
+
   {% if t_submit.rows %}
   <hr>
   {% endif %}
   <h6>Assignments you can manage</h6>
 
-<ul class="nav nav-tabs" id="myTab" role="tablist">
+<ul class="nav nav-tabs" id="assignmentConfigTabs" role="tablist">
+  <li class="nav-item" role="presentation">
   {% if f_assignment %}
-  <li class="nav-item" role="presentation">
-    <button class="nav-link active" id="new-tab" data-bs-toggle="tab" data-bs-target="#newAssignment" type="button" role="tab" aria-controls="newAssignment" aria-selected="true">New</button>
-  </li>
-  <li class="nav-item" role="presentation">
-    <button class="nav-link" id="conf-tab" data-bs-toggle="tab" data-bs-target="#confAssignment" type="button" role="tab" aria-controls="confAssignment" aria-selected="false">Configure</button>
-  </li>
+    <button class="nav-link {% if active_tab == "tab-new" %}active{% endif %}" id="tab-new" data-bs-toggle="tab" data-bs-target="#newAssignment" type="button" role="tab" aria-controls="newAssignment" aria-selected="{% if active_tab == "tab-new" %}true{% else %}false{% endif %}">New</button>
   {% else %}
-  <li class="nav-item" role="presentation">
-    <button class="nav-link disabled" id="new-tab" data-bs-toggle="tab" data-bs-target="#newAssignment" type="button" role="tab" aria-controls="newAssignment" aria-selected="true">New</button>
-  </li>
-  <li class="nav-item" role="presentation">
-    <button class="nav-link active" id="conf-tab" data-bs-toggle="tab" data-bs-target="#confAssignment" type="button" role="tab" aria-controls="confAssignment" aria-selected="false">Configure</button>
-  </li>
+    <button class="nav-link disabled" id="new-tab" data-bs-toggle="tab" data-bs-target="#newAssignment" type="button" role="tab" aria-controls="newAssignment" aria-selected="false">New</button>
   {% endif %}
-  <li class="nav-item" role="presentation">
-    <button class="nav-link" id="collectmass-tab" data-bs-toggle="tab" data-bs-target="#massAssignment" type="button" role="tab" aria-controls="massAssignment" aria-selected="false">Mass</button>
   </li>
   <li class="nav-item" role="presentation">
-    <button class="nav-link" id="collect-tab" data-bs-toggle="tab" data-bs-target="#individualAssignment" type="button" role="tab" aria-controls="individualAssignment" aria-selected="false">Individual</button>
+    <button class="nav-link {% if active_tab == "tab-conf" %}active{% endif %}" id="tab-conf" data-bs-toggle="tab" data-bs-target="#confAssignment" type="button" role="tab" aria-controls="confAssignment" aria-selected="{% if active_tab == "tab-conf" %}true{% else %}false{% endif %}">Configure</button>
   </li>
   <li class="nav-item" role="presentation">
-    <button class="nav-link" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab" aria-controls="summary" aria-selected="false">Summary</button>
+    <button class="nav-link {% if active_tab == "tab-collectmass" %}active{% endif %}" id="tab-collectmass" data-bs-toggle="tab" data-bs-target="#massAssignment" type="button" role="tab" aria-controls="massAssignment" aria-selected="{% if active_tab == "tab-collectmass" %}true{% else %}false{% endif %}">Mass</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link {% if active_tab == "tab-collectindividual" %}active{% endif %}" id="tab-collectindividual" data-bs-toggle="tab" data-bs-target="#individualAssignment" type="button" role="tab" aria-controls="individualAssignment" aria-selected="{% if active_tab == "tab-collectindividual" %}true{% else %}false{% endif %}">Individual</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link {% if active_tab == "tab-summary" %}active{% endif %}" id="tab-summary" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab" aria-controls="summary" aria-selected="{% if active_tab == "tab-summary" %}true{% else %}false{% endif %}">Summary</button>
   </li>
 </ul>
-<div class="tab-content" id="myTabContent">
+<div class="tab-content" id="assignmentTabContent">
   {% if f_assignment %}
-  <div class="tab-pane fade show active" id="newAssignment" role="tabpanel" aria-labelledby="new-tab">
+  <div class="tab-pane fade {% if active_tab == "tab-new" %}show active{% endif %}" id="newAssignment" role="tabpanel" aria-labelledby="tab-new">
   {% else %}
-  <div class="tab-pane fade" id="newAssignment" role="tabpanel" aria-labelledby="new-tab">
+  <div class="tab-pane fade" id="newAssignment" role="tabpanel" aria-labelledby="tab-new">
   {% endif %}
     <form id="assignments-form-new" class="form-horizontal" action="{% url 'education:newassignment' %}" method="post">
       {% csrf_token %}
@@ -77,11 +73,7 @@
     {% include 'apply_cancel.html' %}
     </form>
   </div>
-  {% if f_assignment %}
-  <div class="tab-pane fade" id="confAssignment" role="tabpanel" aria-labelledby="conf-tab">
-  {% else %}
-  <div class="tab-pane fade show active" id="confAssignment" role="tabpanel" aria-labelledby="conf-tab">
-  {% endif %}
+  <div class="tab-pane fade {% if active_tab == "tab-conf" %}show active{% endif %}" id="confAssignment" role="tabpanel" aria-labelledby="tab-conf">
 	  <h6>Delete or refresh assignments in course {{ course.name }}</h6>
 	  <form id="assignments-configform" class="form-horizontal" action="{% url 'education:configureassignment' %}" method="post">
       {% csrf_token %}
@@ -89,7 +81,7 @@
     {% include 'apply_cancel.html' %}
     </form>
   </div>
-  <div class="tab-pane fade" id="individualAssignment" role="tabpanel" aria-labelledby="collectindividual-tab">
+  <div class="tab-pane fade {% if active_tab == "tab-collectindividual" %}show active{% endif %}" id="individualAssignment" role="tabpanel" aria-labelledby="tab-collectindividual">
 	  <h6>Collect, feedback or reassign assignments</h6>
     <form id="assignments-collectform" class="form-horizontal" action="{% url 'education:handleassigment' %}" method="post">
       {% csrf_token %}
@@ -97,7 +89,7 @@
     {% include 'apply_cancel.html' %}
     </form>
   </div>
-  <div class="tab-pane fade" id="massAssignment" role="tabpanel" aria-labelledby="collectmass-tab">
+  <div class="tab-pane fade {% if active_tab == "tab-collectmass" %}show active{% endif %}" id="massAssignment" role="tabpanel" aria-labelledby="tab-collectmass">
 	  <h6>Collect assignments</h6>
     <form id="massassignments-collectform" class="form-horizontal" action="{% url 'education:massassignment' %}" method="post">
       {% csrf_token %}
@@ -105,7 +97,7 @@
     {% include 'apply_cancel.html' %}
     </form>
   </div>
-  <div class="tab-pane fade" id="summary" role="tabpanel" aria-labelledby="summary-tab">
+  <div class="tab-pane fade {% if active_tab == "tab-summary" %}show active{% endif %}" id="summary" role="tabpanel" aria-labelledby="tab-summary">
 	  <h6>Summary</h6>
 	  {% render_table t_assignment_summary %}
   </div>
@@ -113,24 +105,65 @@
 
   {% endif %}
 
-{% endblock %}
-
-
-{% block scripts %}
 <script
   type="text/javascript"
   src="{% static 'bootstrap-datetimepicker-master/js/bootstrap-datetimepicker.min.js' %}"
 ></script>
-	<script type="text/javascript">
-	function set_checkbox(x) { 
-	    console.log('set checkbox? ' + x);	
-            $('#'+x).prop("checked", true); 
-	}
-	</script>
 <script>
-$( document ).ready(function() {
-    console.log( "ready!" );
-    $('.datetimepicker').datetimepicker('hide');
-});
+  function set_search(tab) {
+    if (tab == "tab-conf") {
+      $("#search_field").attr("placeholder",  "Search course or assignment")
+      $("#search_field").attr("value", $("#s_assignment_config").attr("value") )
+      $("#search_field").attr("disabled", false )
+    } else if (tab == "tab-collectmass") {
+      $("#search_field").attr("placeholder",  "Search course or assignment")
+      $("#search_field").attr("value", $("#s_assignment_mass").attr("value") )
+      $("#search_field").attr("disabled", false )
+    } else if (tab == "tab-collectindividual") {
+      $("#search_field").attr("placeholder",  "Search user, course or assignment")
+      $("#search_field").attr("value", $("#s_assignment_individual").attr("value") )
+      $("#search_field").attr("disabled", false )
+    } /*else if (tab == "tab-summary") {
+      $("#search_field").attr("placeholder",  "Search")
+      $("#search_field").attr("value", "" )
+      $("#search_field").attr("disabled", true )
+    }*/ else {
+      $("#search_field").attr("placeholder",  "Search")
+      $("#search_field").attr("value", "" )
+      $("#search_field").attr("disabled", true )
+    }
+  }
+
+  $( document ).ready(function() {
+      console.log( "ready: {{ active_tab }}" );
+      set_search("{{ active_tab }}")
+      $('.datetimepicker').datetimepicker('hide');
+  });
+
+  $("#assignmentConfigTabs>li>button").on("click", function () {
+    var tab = $( this ).attr("id")
+    $.cookie("active_tab", tab, { 'path': '/', 'secure': true })
+    console.log( "tab: " + tab )
+    set_search(tab)
+  })
+
+  function set_checkbox(x) { 
+    console.log('set checkbox? ' + x);	
+    $('#'+x).prop("checked", true); 
+  }
 </script>
 {% endblock %}
+
+{% block navsearch %}
+<form class="d-flex" action="" method="get">
+  {#% csrf_token %#}
+  <input type="hidden" id="s_assignment_config" value="{{ user.profile.search_education_assignment_config }}">
+  <input type="hidden" id="s_assignment_mass" value="{{ user.profile.search_education_assignment_mass }}">
+  <input type="hidden" id="s_assignment_individual" value="{{ user.profile.search_education_assignment_individual }}">
+  <input class="form-control me-2" type="search" id="search_field" name="pattern"
+      value="" placeholder="Search" disabled
+      aria-label="Search">
+  <button class="btn btn-outline-secondary" type="submit" name="button" value="search">Search</button>
+</form>
+{% endblock %}
+

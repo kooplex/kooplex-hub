@@ -24,6 +24,9 @@ class Profile(models.Model):
 
     search_education_student = models.CharField(max_length = 30, blank = True, null = True, default = "")
     search_education_teacher = models.CharField(max_length = 30, blank = True, null = True, default = "")
+    search_education_assignment_config = models.CharField(max_length = 30, blank = True, null = True, default = "")
+    search_education_assignment_mass = models.CharField(max_length = 30, blank = True, null = True, default = "")
+    search_education_assignment_individual = models.CharField(max_length = 30, blank = True, null = True, default = "")
 
     search_container_list = models.CharField(max_length = 30, blank = True, null = True, default = "")
     search_container_projects = models.CharField(max_length = 30, blank = True, null = True, default = "")
