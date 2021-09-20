@@ -4,8 +4,10 @@
     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownEdu" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Education</a>
     <div class="dropdown-menu" aria-labelledby="navbarDropdownEdu">
       <a class="dropdown-item" href="{% url 'education:teacher' %}">Teaching</a>
+      <a class="dropdown-item" href="{% url 'education:assignment_teacher' %}">Assignment manager</a>
+      <hr class="dropdown-divider">
       <a class="dropdown-item" href="{% url 'education:student' %}">Courses</a>
-      <a class="dropdown-item" href="{% url 'education:assignment' %}">Assignments</a>
+      <a class="dropdown-item" href="{% url 'education:assignment_student' %}">Assignments due</a>
     </div>
   </li>
 {% elif user.profile.is_student %}

@@ -1,0 +1,35 @@
+{% extends "layout.html" %}
+{% load render_table from django_tables2 %}
+
+{% block submenu %}
+{% include 'education_submenu.html' with title="Your assignments" submenu="assignment" %}
+{% endblock %}
+{% load render_table from django_tables2 %}
+
+{% block main_content_right %}
+  <h6>Your assignments due</h6>
+  {% if t_submit.rows %}
+    <form id="assignments-submitform" class="form-horizontal was-validated" action="{% url 'education:submit' %}" method="post">
+      {% csrf_token %}
+      {% render_table t_submit %}
+      {% include 'apply_cancel.html' %}
+    </form>
+  {% endif %}
+
+{% endblock %}
+
+{% comment %}
+{% block navsearch %}
+<form class="d-flex" action="{% url 'education:search' usercoursebinding_id %}" method="get">
+  {#% csrf_token %#}
+  <input type="hidden" id="s_assignment_config" value="{{ user.profile.search_education_assignment_config }}">
+  <input type="hidden" id="s_assignment_mass" value="{{ user.profile.search_education_assignment_mass }}">
+  <input type="hidden" id="s_assignment_individual" value="{{ user.profile.search_education_assignment_individual }}">
+  <input class="form-control me-2" type="search" id="search_field" name="pattern"
+      value="" placeholder="Search" disabled
+      aria-label="Search">
+  <button class="btn btn-outline-secondary" type="submit" name="button" value="search">Search</button>
+</form>
+{% endblock %}
+{% endcomment %}
+

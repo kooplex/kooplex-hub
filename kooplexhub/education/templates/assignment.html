@@ -14,20 +14,6 @@
 {% load render_table from django_tables2 %}
 
 {% block main_content_right %}
-  {% if t_submit.rows %}
-  <h6>Your assignments due</h6>
-    <form id="assignments-submitform" class="form-horizontal was-validated" action="{% url 'education:submit' %}" method="post">
-      {% csrf_token %}
-      {% render_table t_submit %}
-      {% include 'apply_cancel.html' %}
-    </form>
-  {% endif %}
-
-  {% if teacher %} 
-
-  {% if t_submit.rows %}
-  <hr>
-  {% endif %}
   <h6>Assignments you can manage</h6>
 
 <ul class="nav nav-tabs" id="assignmentConfigTabs" role="tablist">
@@ -85,7 +71,7 @@
 	  <h6>Collect, feedback or reassign assignments</h6>
     <form id="assignments-collectform" class="form-horizontal" action="{% url 'education:handleassigment' %}" method="post">
       {% csrf_token %}
-	  {% render_table t_assignment_collect %}
+	  {% render_table t_assignment_individual %}
     {% include 'apply_cancel.html' %}
     </form>
   </div>
@@ -103,7 +89,6 @@
   </div>
 </div>
 
-  {% endif %}
 
 <script
   type="text/javascript"
@@ -155,7 +140,7 @@
 {% endblock %}
 
 {% block navsearch %}
-<form class="d-flex" action="" method="get">
+<form class="d-flex" action="{% url 'education:search' usercoursebinding_id %}" method="get">
   {#% csrf_token %#}
   <input type="hidden" id="s_assignment_config" value="{{ user.profile.search_education_assignment_config }}">
   <input type="hidden" id="s_assignment_mass" value="{{ user.profile.search_education_assignment_mass }}">
