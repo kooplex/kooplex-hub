@@ -109,13 +109,15 @@ Creator: {record.creator.first_name} {record.creator.last_name}
         """)
 
     def render_quota(self, record):
+        ms = record.max_size if record.max_size else ''
+        nf = record.max_number_of_files if record.max_number_of_files else ''
         return format_html(f"""
 Max size (bytes):
-<input class="form-text-input" type="text" id="max_size-{record.id}" name="max_size-{record.id}" value="{record.max_size}" />
-<input type="hidden" name="max_size-old-{record.id}" value="{record.max_size}" />
+<input class="form-text-input" type="text" id="max_size-{record.id}" name="max_size-{record.id}" value="{ms}" />
+<input type="hidden" name="max_size-old-{record.id}" value="{ms}" />
 Number of files:
-<input class="form-text-input" type="text" id="max_number_of_files-{record.id}" name="max_number_of_files-{record.id}" value="{record.max_number_of_files}" />
-<input type="hidden" name="max_number_of_files-old-{record.id}" value="{record.max_number_of_files}" />
+<input class="form-text-input" type="text" id="max_number_of_files-{record.id}" name="max_number_of_files-{record.id}" value="{nf}" />
+<input type="hidden" name="max_number_of_files-old-{record.id}" value="{nf}" />
         """)
 
     id = AssignmentSelectionColumn(verbose_name = 'Delete', orderable = False)

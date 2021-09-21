@@ -44,6 +44,14 @@ class FormAssignment(forms.ModelForm):
             required = False,
             help_text = _('If unspecified either you or students need to take care of collecting or submitting assignments respectively.'),
         )
+    max_number_of_files = forms.IntegerField(
+            required = False,
+            help_text = _('At most how many files can be handed in with the assignment.'),
+        )
+    max_size = forms.IntegerField(
+            required = False,
+            help_text = _('Total file size quota applied to the assignment.'),
+        )
 
 
     class Meta:

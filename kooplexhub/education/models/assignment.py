@@ -24,8 +24,8 @@ class Assignment(models.Model):
     expires_at = models.DateTimeField(null = True, blank = True)
     can_studentsubmit = models.BooleanField(default = True)
     remove_collected = models.BooleanField(default = False)
-    max_number_of_files = models.IntegerField(default = 5, null = False)
-    max_size = models.IntegerField(default = 500, null = False) 
+    max_number_of_files = models.IntegerField(default = 50, null = True)
+    max_size = models.IntegerField(default = None, null = True) 
 
     class Meta:
         unique_together = [['course', 'folder']]

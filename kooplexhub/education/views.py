@@ -239,6 +239,8 @@ def assignment_teacher(request, usercoursebinding_id = None):
         context_dict['f_assignment'] = FormAssignment(user = user, course = ucb.course)
     else:
         courses = [ ucb.course for ucb in UserCourseBinding.objects.filter(user = user, is_teacher = True) ]
+        if request.COOKIES.get('active_tab') == 'tab-new':
+            request.COOKIES['active_tab'] = 'tab-conf'
     if len(courses):
         p = profile.search_education_assignment_config
         assignments = Assignment.objects.filter(course__in = courses).filter(models.Q(course__name__icontains = p) | models.Q(name__icontains = p))
@@ -288,10 +290,10 @@ def assignment_teacher(request, usercoursebinding_id = None):
         complementary = set(descartes).difference(handedout_tuple)
         mock = [ UserAssignmentBinding(user = s, assignment = a) for a, s in complementary ]
         mock.extend(uab_handed_out)
-        if len(mock) == 0:
-            profile.search_education_assignment_individual = ''
-            profile.save()
-            return assignment_teacher(request, usercoursebinding_id)
+#        if len(mock) == 0:
+#            profile.search_education_assignment_individual = ''
+#            profile.save()
+#            return assignment_teacher(request, usercoursebinding_id)
         table_assignment_collect = TableAssignmentCollect(mock)
         RequestConfig(request).configure(table_assignment_collect)
 
@@ -417,9 +419,9 @@ def configureassignment(request):
             for attr in [ 'name', 'description', 'valid_from', 'expires_at', 'max_size', 'max_number_of_files' ]:
                 old = request.POST.get(f'{attr}-old-{aid}')
                 new = request.POST.get(f'{attr}-{aid}')
-                if attr in [ 'valid_from', 'expires_at' ]:
-                    if new == "":
-                        new = None
+                if new == "":
+                    new = None
+                if attr in [ 'valid_from', 'expires_at', 'max_size', 'max_number_of_files' ]:
                     if old == "":
                         old = None
                 if old == new:
