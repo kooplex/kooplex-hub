@@ -24,21 +24,18 @@
       <p class="card-text"><strong>Assignments:</strong> {{ course|csv_assignments }} </p>
       </p>
     </div>
-      <div class="card card-footer">
+    <div class="card card-footer">
       <div class="row">
-	      <div class="col">
-      <div class="btn-group" role="group" aria-label="Basic example">
-        {#% include 'containers_button.html' %#}
+	<div class="float-start">
         {% if ucb.is_teacher %}
           <a href="{% url 'education:configure' ucb.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Settings of course {{ course.name }}. You can change the image, modify description." data-placement="top"><span class="oi oi-wrench" aria-hidden="true"></span></a>
           <a href="{% url 'education:assignment_teacher' ucb.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="{{ tooltip }}" data-placement="top"><span class="oi oi-pencil" aria-hidden="true"></span></a>
 	{% else %}
           <a href="{% url 'education:assignment_student' ucb.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="{{ tooltip }}" data-placement="top"><span class="oi oi-pencil" aria-hidden="true"></span></a>
         {% endif %}
+        </div>
       </div>
-      </div>
-      </div>
-      </div>
+    </div>
   </div>
 </div>
 

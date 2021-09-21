@@ -3,6 +3,13 @@ from django.utils.translation import gettext_lazy as _
 
 from ..models import Assignment
 
+try:
+    from kooplexhub.settings import KOOPLEX
+except ImportError:
+    KOOPLEX = {}
+KOOPLEX['kubernetes'].update({})
+KOOPLEX['kubernetes']['userdata'].update({})
+
 
 class MyDescription(forms.Textarea):
     def __init__(self, *args, **kwargs):
@@ -80,6 +87,6 @@ class FormAssignment(forms.ModelForm):
 
         self.course = course
         self.okay = len(course.dir_assignmentcandidate()) > 0
-        self.folder_usercontainer = 'FIXME'
+        self.folder_usercontainer = KOOPLEX['kubernetes']['userdata'].get('mountPath_course_assignment_prepare', '/course/{course.folder}.prepare').format(course = course)
 
 
