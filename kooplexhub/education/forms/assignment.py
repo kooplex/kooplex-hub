@@ -78,3 +78,8 @@ class FormAssignment(forms.ModelForm):
         self.fields['valid_from'].widget.attrs["class"] = "form-control datetimepicker span2"
         self.fields['expires_at'].widget.attrs["class"] = "form-control datetimepicker span2"
 
+        self.course = course
+        self.okay = len(course.dir_assignmentcandidate()) > 0
+        self.folder_usercontainer = 'FIXME'
+
+

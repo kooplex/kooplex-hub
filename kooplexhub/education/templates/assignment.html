@@ -38,27 +38,25 @@
   </li>
 </ul>
 <div class="tab-content" id="assignmentTabContent">
-  {% if f_assignment %}
+  {% if f_assignment.okay %}
   <div class="tab-pane fade {% if active_tab == "tab-new" %}show active{% endif %}" id="newAssignment" role="tabpanel" aria-labelledby="tab-new">
-  {% else %}
-  <div class="tab-pane fade" id="newAssignment" role="tabpanel" aria-labelledby="tab-new">
-  {% endif %}
     <form id="assignments-form-new" class="form-horizontal" action="{% url 'education:newassignment' %}" method="post">
       {% csrf_token %}
-      <input type="hidden" name="course_id" value="{{ course.id }}">
-      {% if course.dir_assignmentcandidate %}
-          <div style="position: relative">
-            <table>
-              <tr><th><label for="course_name">Course:</label></th><td>{{ course.name }}</td></tr>
-              {{ f_assignment.as_table }}
-            </table>
-          </div>
-      {% else %}
-      <div class="alert alert-warning">There are no candidate subfolders in <code>{{ dir_assignment_prepare }}</code> directory. Please create one and place all files into it to be part of a new assignment. Empty folders cannot be selected.</div>
-      {% endif %}
+      <input type="hidden" name="course_id" value="{{ f_assignment.course.id }}">
+        <div style="position: relative">
+          <table>
+            <tr><th><label for="course_name">Course:</label></th><td>{{ f_assignment.course.name }}</td></tr>
+            {{ f_assignment.as_table }}
+          </table>
+        </div>
     {% include 'apply_cancel.html' %}
     </form>
   </div>
+  {% else %}
+  <div class="tab-pane fade" id="newAssignment" role="tabpanel" aria-labelledby="tab-new">
+      <div class="alert alert-warning">There are no candidate subfolders in <code>{{ f_assignment.folder_usercontainer }}</code> directory. Please create one and place all files into it to be part of a new assignment. Empty folders cannot be selected.</div>
+  </div>
+  {% endif %}
   <div class="tab-pane fade {% if active_tab == "tab-conf" %}show active{% endif %}" id="confAssignment" role="tabpanel" aria-labelledby="tab-conf">
 	  <h6>Delete or refresh assignments in course {{ course.name }}</h6>
 	  <form id="assignments-configform" class="form-horizontal" action="{% url 'education:configureassignment' %}" method="post">

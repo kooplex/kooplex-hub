@@ -214,7 +214,6 @@ def configure(request, usercoursebinding_id, next_page = 'education:teacher'):
 
 @login_required
 def assignment_teacher(request, usercoursebinding_id = None):
-    from kooplexhub.lib.dirname import course_assignment_prepare_root #FIXME: replace with container mount
     from django.db import models
     """
     @summary: handle assignment page. 
@@ -229,7 +228,6 @@ def assignment_teacher(request, usercoursebinding_id = None):
         'next_page': 'education:assignment_teacher', #FIXME: get rid of it
     }
     if usercoursebinding_id:
-        context_dict['usercoursebinding_id'] = usercoursebinding_id
         try:
             ucb = UserCourseBinding.objects.get(id = usercoursebinding_id, user = user, is_teacher = True)
         except UserCourseBinding.DoesNotExist:
@@ -237,6 +235,8 @@ def assignment_teacher(request, usercoursebinding_id = None):
             messages.error(request, 'You are not allowed to use this functionality')
             return redirect('indexpage')
         courses = [ ucb.course ]
+        context_dict['usercoursebinding_id'] = usercoursebinding_id
+        context_dict['f_assignment'] = FormAssignment(user = user, course = ucb.course)
     else:
         courses = [ ucb.course for ucb in UserCourseBinding.objects.filter(user = user, is_teacher = True) ]
     if len(courses):
@@ -368,6 +368,8 @@ def newassignment(request):
             expires_at = f.cleaned_data['expires_at'],
             can_studentsubmit = f.cleaned_data['can_studentsubmit'],
             remove_collected = f.cleaned_data['remove_collected'],
+            max_number_of_files = f.cleaned_data['max_number_of_files'],
+            max_size = f.cleaned_data['max_size'],
         )
         logger.info(f'+ new assignment {a.name} ({a.folder}) in course {course.name} by {user.username}')
         messages.info(request, f'Assignment {a.name} created.')
@@ -409,22 +411,32 @@ def configureassignment(request):
         messages.warning(request, f'You are not allowed to delete assignment(s) {a}.')
     m = []
     for aid in other_ids:
-        name = request.POST.get(f'name-{aid}')
-        description = request.POST.get(f'description-{aid}')
-        if (request.POST.get(f'name-old-{aid}') == name) and (request.POST.get('description-old-{aid}') == description):
-            continue
         try:
             a = Assignment.objects.get(id = aid, course__in = courses)
-            a.name = name
-            a.description = description
-            a.save()
-            logger.info(f'. modified assignment {a.name} ({a.folder}) from course {a.course.name} by {user.username}')
-            m.append(a.name)
+            changed = []
+            for attr in [ 'name', 'description', 'valid_from', 'expires_at', 'max_size', 'max_number_of_files' ]:
+                old = request.POST.get(f'{attr}-old-{aid}')
+                new = request.POST.get(f'{attr}-{aid}')
+                if attr in [ 'valid_from', 'expires_at' ]:
+                    if new == "":
+                        new = None
+                    if old == "":
+                        old = None
+                if old == new:
+                    continue
+                setattr(a, attr, new)
+                changed.append(f'new {attr} {new}')
+            if len(changed):
+                a.save()
+                logger.info(f'. modified assignment {a.name} ({a.folder}) from course {a.course.name} by {user.username}')
+                cl = ', '.join(changed)
+                m.append(f'{a.name}: {cl}')
         except Exception as e:
             logger.error(e)
+            raise
     if len(m):
-        a = ', '.join(m)
-        messages.info(request, f'Configured assignment(s) {a}.')
+        cl = '; '.join(m)
+        messages.info(request, f'Configured assignment(s) {cl}.')
     return redirect('education:assignment_teacher')
 
 

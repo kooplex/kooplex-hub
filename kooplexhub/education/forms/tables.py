@@ -65,33 +65,33 @@ class TableAssignment(tables.Table):
 class TableAssignmentConf(tables.Table):
     class AssignmentSelectionColumn(tables.Column):
         def render(self, record):
+            n = len(UserAssignmentBinding.objects.filter(assignment = record))
+            received = f"Received {n}" if n else ""
             return format_html(f"""
 <div class="form-check form-switch">
   <input class="form-check-input" type="checkbox" id="a-{record.id}" name="selection_delete" value="{record.id}" />
 </div>
 <input type="hidden" name="assignment_ids" value="{record.id}" />
+{received}
             """)
 
     def render_course(self, record):
         return record.course.name
 
-    def render_received(self, record):
-        return len(UserAssignmentBinding.objects.filter(assignment = record))
-
-    def render_valid_from(self, record):
-        d = record.valid_from.strftime("%Y-%m-%d %H:%M") if record.valid_from else ''
+    def render_dates(self, record):
+        d0 = record.created_at.strftime("%Y-%m-%d %H:%M")
+        d1 = record.valid_from.strftime("%Y-%m-%d %H:%M") if record.valid_from else ''
+        d2 = record.expires_at.strftime("%Y-%m-%d %H:%M") if record.expires_at else ''
         return format_html(f"""
-<div class="input-append date" id="datetimepicker-valid-{record.id}" date-date="{d}" data-date-format="yyyy-mm-dd hh:ii">
-    <input class="datetimepicker span2" size="16" type="text" value="{d}">
+Created at: {d0}<br>
+<div class="input-append date" id="datetimepicker-valid-{record.id}" date-date="{d1}" data-date-format="yyyy-mm-dd hh:ii">
+    Valid from: <input class="datetimepicker span2" size="16" type="text" value="{d1}" name="valid_from-{record.id}">
 </div>
-        """)
-
-    def render_expires_at(self, record):
-        d = record.expires_at.strftime("%Y-%m-%d %H:%M") if record.expires_at else ''
-        return format_html(f"""
-<div class="input-append date" id="datetimepicker-expiry-{record.id}" date-date="{d}" data-date-format="yyyy-mm-dd hh:ii">
-    <input class="datetimepicker span2" size="16" type="text" value="{d}">
+<div class="input-append date" id="datetimepicker-expiry-{record.id}" date-date="{d2}" data-date-format="yyyy-mm-dd hh:ii">
+    Collect at: <input class="datetimepicker span2" size="16" type="text" value="{d2}" name="expires_at-{record.id}">
 </div>
+<input type="hidden" id="valid_from-old-{record.id}" name="valid_from-old-{record.id}" value="{d1}" />
+<input type="hidden" id="expires_at-old-{record.id}" name="expires_at-old-{record.id}" value="{d2}" />
         """)
 
     def render_description(self, record):
@@ -104,14 +104,28 @@ class TableAssignmentConf(tables.Table):
         return format_html(f"""
 <input class="form-text-input" type="text" id="name-{record.id}" name="name-{record.id}" value="{record.name}" />
 <input type="hidden" id="name-old-{record.id}" name="name-old-{record.id}" value="{record.name}" />
+Folder: {record.folder}<br>
+Creator: {record.creator.first_name} {record.creator.last_name}
+        """)
+
+    def render_quota(self, record):
+        return format_html(f"""
+Max size (bytes):
+<input class="form-text-input" type="text" id="max_size-{record.id}" name="max_size-{record.id}" value="{record.max_size}" />
+<input type="hidden" name="max_size-old-{record.id}" value="{record.max_size}" />
+Number of files:
+<input class="form-text-input" type="text" id="max_number_of_files-{record.id}" name="max_number_of_files-{record.id}" value="{record.max_number_of_files}" />
+<input type="hidden" name="max_number_of_files-old-{record.id}" value="{record.max_number_of_files}" />
         """)
 
     id = AssignmentSelectionColumn(verbose_name = 'Delete', orderable = False)
     course = tables.Column(orderable = False, empty_values = ())
-    received = tables.Column(orderable = False, empty_values = ())
+    description = tables.Column(orderable = False)
+    dates = tables.Column(orderable = False, empty_values = ())
+    quota = tables.Column(orderable = False, empty_values = ())
     class Meta:
         model = Assignment
-        fields = ('id', 'course', 'creator', 'folder', 'name', 'description', 'created_at', 'valid_from', 'expires_at', 'received')
+        fields = ('id', 'course', 'name', 'description', 'dates', 'quota')
         attrs = { 
                  "class": "table table-striped table-bordered", 
                  "thead": { "class": "thead-dark table-sm" }, 
