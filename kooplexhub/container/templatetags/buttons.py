@@ -56,7 +56,7 @@ def container_restart_reason(container):
 
 @register.simple_tag
 def container_last_message(container):
-    return format_html(f"""<p class="card-text"><strong>Last message:</strong> {container.last_message}</p>""") if container.last_message else ""
+    return format_html("""<p class="card-text"><strong>Last message:</strong> {}</p>""", container.last_message) if container.last_message else ""
 
 
 @register.simple_tag
