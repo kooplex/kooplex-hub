@@ -223,34 +223,39 @@ KOOPLEX = {
 
     },
     'proxy': {
-        'url_api': 'http://k8plex-test-proxy.k8plex-test-proxy:8001/api',
-        'auth_token': '', #FIXME: os.getenv('HUBPROXY_PW'),
-        'url_internal': 'http://{container.label}.k8plex-test-hub:{proxy.port}',
-        'url_public': 'https://k8plex-test.vo.elte.hu/{proxy.path_open}',
+        'url_api': 'http://proxy:8001/api',
+        'auth_token': '',
+        'url_internal': 'http://{container.label}:{proxy.port}',
+        'url_public': 'https://%s/{proxy.path_open}' % DOMAIN,
         'path': 'notebook/{container.name}',
     },
     'kubernetes': {
-        'namespace': 'k8plex-test-hub',
+        'namespace': '',
         'imagePullPolicy': 'Always',
         'nslcd': {
             'mountPath_nslcd': '/etc/mnt'
             },
+        'nodeSelector_k8s': { "kubernetes.io/hostname": "" },
+#        'nodeSelector_k8s': { "nodetype": "worker" },
         'userdata': {
             'claim': 'pvc-userdata',
+            # USERDATA
             'claim-home': 'pvc-home',
             'claim-garbage': 'pvc-garbage',
-            'claim-edu': 'pvc-edu',
             'subPath_home': '{user.username}',
             'mountPath_home': '/v/{user.username}',
-            'subPath_project': '',
-            'mountPath_project': '/v/projects/{project.uniqname}',
-            'subPath_report': 'reports',
-            'mountPath_report': '/v/reports/{report.uniqname}',
-            'subPath_report_prepare': 'report_prepare',
-            'mountPath_report_prepare': '/v/report_prepare/{report.uniqname}',
             'subPath_garbage': '{user.username}',
             'mountPath_garbage': '/v/garbage',
+            # PROJECT
+            'claim-project': 'pvc-project',
+            'claim-report': 'pvc-report',
+            'mountPath_project': '/v/projects/{project.uniquename}',
+            'subPath_report': 'reports',
+            'mountPath_report': '/v/reports/{report.uniquename}',
+            'subPath_report_prepare': 'report_prepare/{project.uniquename}',
+            'mountPath_report_prepare': '/v/report_prepare/{project.uniquename}',
             # EDU
+            'claim-edu': 'pvc-edu',
             'mountPath_course_workdir': '/v/courses/{course.folder}',
             'subPath_course_workdir': 'course_workdir/{course.folder}/{user.username}',
             'mountPath_course_public': '/v/courses/{course.folder}.public',
