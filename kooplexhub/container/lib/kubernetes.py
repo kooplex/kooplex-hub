@@ -130,6 +130,28 @@ def start(container):
                 "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_course_assignment', 'course_assignment/{course.folder}/{user.username}').format(course = course, user = container.user),
             }])#CORRECTDIR
 
+    claim_project = False
+
+    for project in container.projects:
+        volume_mounts.extend([{
+             "name": "project",
+             "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_project', '/project/{project.uniquename}').format(project = project),
+             "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_project', '{project.uniquename}-{user.username}').format(project = project, user = container.user),
+        }, {
+             "name": "project",
+             "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_report_prepare', '/report_prepare/{project.uniquename}').format(project = project),
+             "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_report_prepare', '{project.uniquename}-{user.username}').format(project = project, user = container.user),
+        }])
+        claim_project = True
+
+         ##volume_mounts.append({
+         ##    "name": "pv-k8plex-hub-cache",
+         ##    "mountPath": os.path.join(mount_point, report_prepare_subdir, project.name),
+         ##    #"mountPath": os.path.join(mount_point, report_prepare_subdir, f'{project.name}-{project.groupname}'),
+         ##    "subPath": os.path.join('report_prepare', project.uniquename)
+         ##})
+         ##has_cache = True
+         #groups.append(project.groupname)
 
     if claim_userdata:
         volumes.extend([
@@ -141,36 +163,27 @@ def start(container):
             "name": "garbage",
             "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-garbage', 'garbage') }
         },
-            {
-            "name": "edu",
-            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-edu', 'edu') }
-        },
+#            {
+#            "name": "edu",
+#            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-edu', 'edu') }
+#        },
             ])
-#    has_project = False
+
+    if claim_project:
+        volumes.append(
+            {
+            "name": "project",
+            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-project', 'project') }
+        }
+            )
+
+
 #    has_report = False
 #    has_cache = False
 #    has_attachment = False
 #
 #    if container.image.mount_project:
 #        groups = []
-#        for project in container.projects:
-#            volume_mounts.append({
-#                "name": "pv-k8plex-hub-project",
-#                "mountPath": os.path.join(mount_point, project_subdir, project.name),
-#                #"mountPath": os.path.join(mount_point, project_subdir, f'{project.name}-{project.groupname}'),
-#                "subPath": project.uniquename
-#            })
-#            has_project = True
-#            volume_mounts.append({
-#                "name": "pv-k8plex-hub-cache",
-#                "mountPath": os.path.join(mount_point, report_prepare_subdir, project.name),
-#                #"mountPath": os.path.join(mount_point, report_prepare_subdir, f'{project.name}-{project.groupname}'),
-#                "subPath": os.path.join('report_prepare', project.uniquename)
-#            })
-#            has_cache = True
-#            #groups.append(project.groupname)
-#        if len(groups) == 1:
-#            env_variables.append({ "name": "NEWGROUP", "value": groups[0] })
 #
 #    if container.image.mount_report:
 #        if container.image.imagetype == container.image.TP_PROJECT:
@@ -265,12 +278,20 @@ def start(container):
                     "ports": pod_ports,
                     "imagePullPolicy": KOOPLEX['kubernetes'].get('imagePullPolicy', 'IfNotPresent'),
                     "env": env_variables,
+                    "resources": {
+                      "requests": {
+                        "cpu": "150m",
+                        "memory": "400Mi"
+                      },
+                      "limits": {
+                        "cpu": "5000m",
+                        "memory": "28Gi"
+                      },
+                    },
+                      
                 }],
                 "volumes": volumes,
-                "nodeSelector": { "kubernetes.io/hostname": "veo1" }, # FIXME: veo2-n nem látszanak a konyvtarak!
-#                "nodeSelector": { "kubernetes.io/hostname": "veo2" }, # FIXME:
-#                "nodeSelector": { "kubernetes.io/hostname": "kooplex-deploy" }, # FIXME:
-#                "nodeSelector": { "kubernetes.io/hostname": "work" }, # FIXME:
+                "nodeSelector": KOOPLEX['kubernetes'].get('nodeSelector_k8s'), 
             }
         }
 
