@@ -8,3 +8,4 @@ TestResults
 kooplexhub/*/migrations/
 *.sw?
 .idea/*
+settings.py
