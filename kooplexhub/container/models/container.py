@@ -134,7 +134,7 @@ class Container(models.Model):
     @property
     def report(self):
         "relevant only for report containers"
-        return None #FIXME: ReportContainerBinding.objects.get(service = self).report
+        return None #FIXME: ReportContainerBinding.objects.get(container = self).report
 
     @property
     def synced_libraries(self):

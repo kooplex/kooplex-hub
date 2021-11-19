@@ -60,27 +60,20 @@ def start(container):
     }]
 
     # SLURM slurm.conf
-    # TODO in container we need to
-    # mkdir /var/run/munge; chown 0 /var/log/munge /var/run/munge /var/lib/munge /etc/munge/munge.key /etc/munge
-    # munged
-    if 1==2:
-      volume_mounts.extend( [{
-          "name": "slurmconf",
-          "mountPath": '/etc/slurm',
-          "readOnly": True}])
+    if container.image.imagetype == container.image.TP_PROJECT:
+        volume_mounts.extend( [
+            {"name": "slurmconf",
+            "mountPath": '/etc/mntslurm/',
+            "readOnly": True},
+            ] )
       
-      volumes.append({
-          "name": "slurmconf",
-          "configMap": { "name": "slurm", "items": [
-              {"key": "slurm", "path": "slurm.conf" },
-              ]}
-      })
-      volumes.append({
-          "name": "munge",
-          "configMap": { "name": "slurm", "items": [
-              {"key": "munge", "path": "munge.key" }
-              ]}
-      })
+        volumes.append({
+            "name": "slurmconf",
+            "configMap": { "name": "slurm", "items": [
+                {"key": "slurm", "path": "slurm.conf" },
+                {"key": "munge", "path": "munge.key" },
+                ]}
+        })
 
     claim_userdata = False
 

@@ -91,8 +91,8 @@ class Profile(models.Model):
 
     @property
     def containers(self):
-        from .service import Service
-        for svc in Service.objects.filter(user = self.user):
+        from .container import Container
+        for svc in Container.objects.filter(user = self.user):
              yield svc
 
     @property

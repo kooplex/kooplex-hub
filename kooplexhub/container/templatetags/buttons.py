@@ -56,7 +56,7 @@ def container_restart_reason(container):
 
 @register.simple_tag
 def container_last_message(container):
-    return format_html("""<p class="card-text"><strong>Last message:</strong> {}</p>""", container.last_message) if container.last_message else ""
+    return format_html(f"""<p class="card-text"><strong>Last message:</strong> {container.last_message}</p>""") if container.last_message else ""
 
 
 @register.simple_tag
@@ -142,7 +142,7 @@ def button_start_open(container, next_page):
         return button_start(container, next_page)
     else:
         return format_html(f"""
-<a href="#" role="button" class="btn btn-outline-warning btn-sm disabled" data-toggle="tooltip" title="Access erronous environment {container.name}"><span class="oi oi-flash" aria-hidden="true"></span></a>
+<a href="#" role="button" class="btn btn-outline-warning btn-sm disabled" data-toggle="tooltip" title="Access erronous environment {container.name}"><span class="oi oi-flash" aria-hidden="true" ></span></a>
         """)
 
 

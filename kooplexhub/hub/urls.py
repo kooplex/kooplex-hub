@@ -8,3 +8,4 @@ urlpatterns = [
     path('logout/', ca_views.LogoutView.as_view(), name = 'logout'),
     path('', views.IndexView.as_view(), name = 'indexpage'),
 ]
+#TODO: custom 403 view https://docs.djangoproject.com/en/3.2/topics/http/views/

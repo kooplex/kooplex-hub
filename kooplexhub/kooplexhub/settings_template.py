@@ -222,6 +222,10 @@ KOOPLEX = {
         'course_assignment': '/mnt/course_assignment',
 
     },
+    'hub': {
+        'adminemail': '',
+        'smtpserver': '',
+    },
     'proxy': {
         'url_api': 'http://proxy:8001/api',
         'auth_token': '',

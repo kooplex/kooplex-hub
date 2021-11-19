@@ -25,6 +25,6 @@ class KooplexOpenID(BaseOAuth2):
                  }
 
     def user_data( self, access_token, *args, **kwargs):
-        url = 'https://veo.vo.elte.hu/oauth/profile?'+urlencode({'access_token': access_token})
+        url = 'https://veo.vo.elte.hu/oauth-test/profile?'+urlencode({'access_token': access_token})
         return self.get_json(url)
 

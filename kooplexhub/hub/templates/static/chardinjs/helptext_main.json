@@ -1,0 +1,27 @@
+{
+    "#search": {
+        "text": "Search in various fields. Your last search is remembered until you cancel it.",
+        "position": "bottom"
+    },
+    "#messages": {
+        "text": "Messages",
+        "position": "right"
+    },
+    "#projects": {
+        "text": "Adds collaborative features to environments",
+        "position": "bottom"
+    },
+    "#edu": {
+        "text": "Adds course features to environments. Handle assignments",
+        "position": "bottom"
+    },
+    "#envs": {
+        "text": "Manage environments, create attachments and images for the environments ",
+        "position": "bottom"
+    },
+    "#token": { 
+        "text": "Token",
+        "position": "left"	
+    }
+}
+

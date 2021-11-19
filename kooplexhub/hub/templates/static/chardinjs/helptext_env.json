@@ -1,0 +1,23 @@
+{
+    "#search": {
+        "text": "Search in name of the environments. Your last search is remembered until you cancel it.",
+        "position": "bottom"
+    },
+    "#cont-pane": {
+        "text": "Launch or configure your environment in the dropdown panel. The refresh button gives you update about the state of your environment",
+        "position": "bottom"
+    },
+    "#page-view": {
+        "text": "Change layout",
+        "position": "left"
+    },
+    "#start-btn": { 
+        "text": "Launch your environment",
+        "position": "left"	
+    },
+    "#messages": { 
+        "text": "You get info about the state of your environments",
+        "position": "right"	
+    }
+}
+

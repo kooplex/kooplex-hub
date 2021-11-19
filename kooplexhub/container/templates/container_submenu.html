@@ -13,13 +13,13 @@
         <ul class="navbar-nav mr-auto">
 		{% comment %} FIXME: container -- container {% endcomment %}
           <li class="nav-item"><a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#container-new">New container environment</a></li>
-          <li class="nav-item"><a {% if submenu == 'list' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'container:list' %}" {% endif %}>List container environments</a></li>
+          <li class="nav-item"><a {% if submenu == 'list' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'container:list' %}" {% endif %} data-intro="#cont-pane">List container environments</a></li>
           <li class="nav-item"><a {% if submenu == 'attachments' %} class="nav-link active" href="#" {% else %} class="nav-link" href="{% url 'container:list_attachments' %}" {% endif %}>List attachments</a></li>
         </ul>
      </div>
      <div class="col-1">
       {% if submenu == 'list' %}
-       <div class="d-flex justify-content-end">
+       <div class="d-flex justify-content-end" data-intro="#page-view">
 	  <form action="{% url 'container:set_pagination' %}" method="post">
 		  {% csrf_token %}
 	    <input type="text" name="paginate_by" value="{{ user.profile.paginate_container_list }}" maxlength="3" size="3">

@@ -1,6 +1,6 @@
 {% load extras %}
 {% if messages or unbound_containers or restart_containers or unbound_projects or due_assignments or unbound_courses or empty_course_groups or ungrouped_course_students %}
- <div class="card shadow p-3 mb-5 bg-light rounded"> 
+ <div class="card shadow p-3 mb-5 bg-light rounded" data-intro="#messages"> 
   <div class="card-body">
     <h5 class="card-title">Messages</h5>
     {% if due_assignments %}

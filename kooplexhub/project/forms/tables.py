@@ -72,7 +72,7 @@ class TableJoinProject(tables.Table):
     class ImageColumn(tables.Column):
         def render(self, record):
             p = record.project
-            images = set([ psb.service.image for psb in ProjectContainerBinding.objects.filter(project = p, container__user = p.creator) ])
+            images = set([ psb.container.image for psb in ProjectContainerBinding.objects.filter(project = p, container__user = p.creator) ])
             template = [ f"""
 <div class="form-check form-switch">
   <input class="form-check-input" type="checkbox" id="cb_img_pid-{p.id}" name="image_ids" value="{i.id}" />

@@ -1,6 +1,6 @@
 {% if user.is_authenticated %}
   <li class="nav-item dropdown {{ active }}">
-    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownEdu" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Education</a>
+    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownEdu" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-intro="#edu">Education</a>
     <div class="dropdown-menu" aria-labelledby="navbarDropdownEdu">
   {% if user.profile.is_teacher %}
       <a class="dropdown-item" href="{% url 'education:teacher' %}">Teaching</a>

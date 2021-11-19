@@ -281,7 +281,7 @@ def configure(request, project_id):
             added.append(b.user.username)
             # copy service information
             for sid in service_ids:
-                svc = ProjectContainerBinding.objects.get(id = sid, container__user = user).service
+                svc = ProjectContainerBinding.objects.get(id = sid, container__user = user).container
                 svc_copy = Container.objects.create(user = collaborator, image = svc.image, name = f'{b.user.username}-{project.name}-{user.username}')
                 ProjectContainerBinding.objects.create(container = svc_copy, project = project)
                 #TODO: handle volumes

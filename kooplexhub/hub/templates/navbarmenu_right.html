@@ -18,7 +18,7 @@
     <li><a class="dropdown-item" href="{% url 'logout' %}">Logout <span class="oi oi-account-logout"></span></a></li>
     {# FIXME: hardcoded url #}
     <li><a class="dropdown-item" href="https://veo.vo.elte.hu/oauth/accounts/profile/" data-toggle="modal" data-target="#profile">Profile</a></li>
-    <li><a class="dropdown-item" href="#" data-toggle="modal" data-target="#reset-token">Reset token</a></li>
+    <li><a class="dropdown-item" href="#" data-toggle="modal" data-target="#reset-token" data-intro="#token">Reset token</a></li>
    {% else %}
     <li><a class="dropdown-item" href="{% url 'social:begin' 'kooplex' %}">Log in <span class="oi oi-account-login"></span></a>
    {% endif %}
