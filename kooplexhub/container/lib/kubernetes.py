@@ -61,7 +61,7 @@ def start(container):
     }]
 
     # SLURM slurm.conf
-    if mp_scratch and (container.image.imagetype == container.image.TP_PROJECT):
+    if (mp_scratch in not None) and (container.image.imagetype == container.image.TP_PROJECT):
         volume_mounts.extend( [
             {"name": "slurmconf",
             "mountPath": '/etc/mntslurm/',
