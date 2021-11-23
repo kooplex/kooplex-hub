@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 from threading import Timer, Event
 
 from kooplexhub.lib import now
+from kooplexhub.lib.dirname import mp_scratch
 from .proxy import addroute, removeroute
 
 try:
@@ -60,20 +61,30 @@ def start(container):
     }]
 
     # SLURM slurm.conf
-    if container.image.imagetype == container.image.TP_PROJECT:
+    if mp_scratch and (container.image.imagetype == container.image.TP_PROJECT):
         volume_mounts.extend( [
             {"name": "slurmconf",
             "mountPath": '/etc/mntslurm/',
             "readOnly": True},
+            {
+            "name": "scratch",
+            "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_scratch', '/v/scratch/{user.username}').format(user = container.user),
+            "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_scratch', '{user.username}').format(user = container.user),
+            }
             ] )
       
-        volumes.append({
+        volumes.extend([{
             "name": "slurmconf",
             "configMap": { "name": "slurm", "items": [
                 {"key": "slurm", "path": "slurm.conf" },
                 {"key": "munge", "path": "munge.key" },
                 ]}
-        })
+        },
+            {
+            "name": "scratch",
+            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-scratch', 'scratch') }
+        },
+     ])
 
     claim_userdata = False
 

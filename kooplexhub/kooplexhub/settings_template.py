@@ -248,6 +248,9 @@ KOOPLEX = {
             'mountPath_home': '/v/{user.username}',
             'subPath_garbage': '{user.username}',
             'mountPath_garbage': '/v/garbage',
+            'claim-scratch': 'pvc-scratch',
+            'mountPath_scratch': '/v/scratch/',
+            'subPath_scratch': '{user.username}',
             # PROJECT
             'claim-project': 'pvc-project',
             'claim-report': 'pvc-report',
