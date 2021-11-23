@@ -8,6 +8,8 @@ import os
 import ast
 import time
 import glob
+from pwd import getpwnam
+from grp import getgrnam
 from distutils import dir_util
 from distutils import file_util
 import tarfile
@@ -23,9 +25,22 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 acl_backend = KOOPLEX.get('fs_backend', 'nfs4')
-hub_uid = KOOPLEX.get('hub_uid', 0)
-hub_gid = KOOPLEX.get('hub_gid', 0)
-users_gid = KOOPLEX.get('users_gid', 1000) #FIXME: get from nsswitch (id)
+
+try:
+    hub = getpwnam('hub')
+    hub_uid = hub.pw_uid
+    hub_gid = hub.pw_gid
+except KeyError:
+    logger.warning("hub user is not resolved")
+    hub_uid = 0
+    hub_gid = 0
+
+try:
+    users = getgrnam('users')
+    users_gid = users.gr_gid
+except KeyError:
+    logger.warning("users group is not resolved")
+    users_gid = 1000
 
 assert acl_backend in [ 'nfs4', 'posix' ], "Only 'nfs4' and 'posix' acl_backends are supported"
 
@@ -223,6 +238,20 @@ def mkdir_home(user):
 ###FIXME:         d_new = f'{dir_usergarbage}-{now()}'
 ###FIXME:         os.rename(dir_usergarbage, d_new)
 ###FIXME:         logger.info(f'+ usergarbage dir {dir_usergarbage} rename {d_new}')
+
+
+########################################
+# scratch folder management
+def mkdir_scratch(user):
+    """
+    @summary: create a scratch directory for the user
+    @param user: the user
+    @type user: kooplex.hub.models.User
+    """
+    dir_scratch = dirname.userscratch(user)
+    _mkdir(dir_scratch)
+    _grantaccess(user, dir_scratch)
+
 
 
 ########################################

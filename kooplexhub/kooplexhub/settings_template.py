@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 import os
-from pwd import getpwnam
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -34,8 +33,6 @@ DOMAIN = os.getenv('DOMAIN', 'localhost')
 ALLOWED_HOSTS = [
     DOMAIN,
         ]
-
-#HUB = getpwnam('hub')
 
 
 LOGIN_URL = ''
@@ -211,6 +208,7 @@ KOOPLEX = {
     'mountpoint_hub': {
         'home': '/mnt/home',
         'garbage': '/mnt/garbage',
+        'scratch': None,
 
         'project': '/mnt/project',
         

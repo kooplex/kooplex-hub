@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 @receiver(post_save, sender = User)
 def user_creation(sender, instance, created, **kwargs):
-    from kooplexhub.lib import mkdir_home
+    from kooplexhub.lib import mkdir_home, mkdir_scratch
     if created or not hasattr(instance, 'profile'):
         logger.info("New user %s" % instance)
         token = pwgen.pwgen(64)
@@ -21,6 +21,10 @@ def user_creation(sender, instance, created, **kwargs):
         mkdir_home(instance)
     except Exception as e:
         logger.error("Failed to create home for %s -- %s" % (instance, e))
+    try:
+        mkdir_scratch(instance)
+    except Exception as e:
+        logger.error("Failed to create scratch for %s -- %s" % (instance, e))
 
 
 #FIXME: @receiver(pre_delete, sender = User)
