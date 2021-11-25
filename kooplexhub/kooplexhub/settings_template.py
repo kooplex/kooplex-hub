@@ -224,6 +224,23 @@ KOOPLEX = {
         'adminemail': '',
         'smtpserver': '',
     },
+    'ldap': {
+        'host': '',
+        'base_dn': 'dc=',
+        'bind_dn': 'cn=admin,ou=',
+        'bind_password': '',
+        'userdn': 'uid={user.username},ou=users,dc=',
+        'usersearch': 'ou=users,dc=',
+        'manageuser': False,
+        'groupdn': 'cn={group.name},ou=groups,dc=',
+        'groupsearch': 'ou=groups,dc=',
+        'managegroup': True,
+        'offset': {
+            'project': 300000,
+            'course': 200000,
+            'volume': 100000,
+        },
+    },
     'proxy': {
         'url_api': 'http://proxy:8001/api',
         'auth_token': '',
