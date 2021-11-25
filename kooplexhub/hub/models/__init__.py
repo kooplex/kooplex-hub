@@ -1,4 +1,6 @@
 from .profile import Profile
 from .notes import Note
+from .group import Group, UserGroupBinding
 
 from .user_signals import *
+from .group_signals import *
