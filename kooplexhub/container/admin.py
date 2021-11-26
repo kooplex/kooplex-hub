@@ -34,3 +34,8 @@ class AttachmentContainerBindingAdmin(admin.ModelAdmin):
 class AttachmentImageBindingAdmin(admin.ModelAdmin):
     list_display = ('id', 'attachment', 'image')
 
+@admin.register(VolumeContainerBinding)
+class VolumeContainerBindingAdmin(admin.ModelAdmin):
+    list_display = ('id', 'volume', 'container')
+
+

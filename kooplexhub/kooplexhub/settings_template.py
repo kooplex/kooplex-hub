@@ -291,6 +291,8 @@ KOOPLEX = {
             'mountPath_course_assignment_correct': '/v/courses/{course.folder}.correct',
             'subPath_course_assignment_correct': 'course_assignments/{course.folder}/correctdir/{user.username}',
             'subPath_course_assignment_correct_all': 'course_assignments/{course.folder}/correctdir',
+            # VOLUMES
+            'mountPath_volumes': '/v/volumes/{volume.cleanname}',
         },
         'cache': {
             'claim': 'pvc-cache',

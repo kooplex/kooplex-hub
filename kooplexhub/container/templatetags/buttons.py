@@ -92,14 +92,14 @@ def button_stop(container, next_page):
 
 @register.simple_tag
 def button_restart(container, next_page):
-    if container.state in [ container.ST_RUNNING, container.ST_ERROR, container.ST_NEED_RESTART ]:
+    if container.state in [ container.ST_NOTPRESENT, container.ST_STOPPING ]:
+        return format_html(f"""
+<a href="#" role="button" class="btn btn-warning btn-sm disabled" data-toggle="tooltip" title="Restart inconsistent environment {container.name}"><span class="bi bi-bootstrap-reboot" aria-hidden="true"></span></a>
+        """)
+    else:
         link = reverse('container:restart', args = [container.id, next_page])
         return format_html(f"""
 <a href="{link}" role="button" class="btn btn-warning btn-sm" data-toggle="tooltip" title="Restart inconsistent environment {container.name}"><span class="bi bi-bootstrap-reboot" aria-hidden="true"></span></a>
-        """)
-    else:
-        return format_html(f"""
-<a href="#" role="button" class="btn btn-warning btn-sm disabled" data-toggle="tooltip" title="Restart inconsistent environment {container.name}"><span class="bi bi-bootstrap-reboot" aria-hidden="true"></span></a>
         """)
 
 

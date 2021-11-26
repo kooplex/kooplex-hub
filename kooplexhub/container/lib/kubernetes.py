@@ -61,7 +61,7 @@ def start(container):
     }]
 
     # SLURM slurm.conf
-    if (mp_scratch in not None) and (container.image.imagetype == container.image.TP_PROJECT):
+    if (mp_scratch is not None) and (container.image.imagetype == container.image.TP_PROJECT):
         volume_mounts.extend( [
             {"name": "slurmconf",
             "mountPath": '/etc/mntslurm/',
@@ -148,14 +148,16 @@ def start(container):
         }])
         claim_project = True
 
-         ##volume_mounts.append({
-         ##    "name": "pv-k8plex-hub-cache",
-         ##    "mountPath": os.path.join(mount_point, report_prepare_subdir, project.name),
-         ##    #"mountPath": os.path.join(mount_point, report_prepare_subdir, f'{project.name}-{project.groupname}'),
-         ##    "subPath": os.path.join('report_prepare', project.uniquename)
-         ##})
-         ##has_cache = True
-         #groups.append(project.groupname)
+    claims = set()
+    for volume in container.volumes:
+        volume_mounts.append({
+            "name": volume.claim,
+            "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_volume', '/volume/{volume.cleanname}').format(volume = volume),
+            "subPath": volume.subPath
+        })
+        claims.add(volume.claim)
+    claimdict = lambda c: { "name": c, "persistentVolumeClaim": { "claimName": c } }
+    volumes.extend(map(claimdict, claims))
 
     if claim_userdata:
         volumes.extend([
@@ -414,10 +416,10 @@ def _check_stopping(container_id, event):
 
 def restart(container):
     from container.models import Container
-    assert container.state != container.ST_NOTPRESENT, f'container {container.label} is not present.'
+    assert container.state not in [ container.ST_NOTPRESENT, container.ST_STOPPING ], f'container {container.label} is {container.ST_LOOKUP[container.state]}.'
     ev_stop = stop(container)
     if ev_stop.wait(timeout = 30):
-        #FIXME: no need for this!? container = Service.objects.get(id = container.id)
+        container = Container.objects.get(id = container.id)
         return start(container)
     else:
         logger.error(f'Not restarting container {container.label}. It is taking very long to stop')

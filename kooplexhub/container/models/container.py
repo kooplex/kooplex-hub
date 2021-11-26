@@ -153,6 +153,11 @@ class Container(models.Model):
         from .attachment import AttachmentContainerBinding
         return [ binding.attachment for binding in AttachmentContainerBinding.objects.filter(container = self) ]
 
+    @property
+    def volumes(self):
+        from ..models import VolumeContainerBinding
+        return [ binding.volume for binding in VolumeContainerBinding.objects.filter(container = self) ]
+
     def start(self):
         return start_environment(self)
 
