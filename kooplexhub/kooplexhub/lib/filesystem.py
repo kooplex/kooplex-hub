@@ -15,6 +15,7 @@ from distutils import file_util
 import tarfile
 
 from ..lib import dirname, filename, bash
+from hub.lib import background
 
 try:
     from kooplexhub.settings import KOOPLEX
@@ -74,6 +75,8 @@ def _mkdir(path, other_rx = False):
     dir_util.mkpath(path)
     assert os.path.exists(path), f"{path} is not present in the filesystem"
     assert os.path.isdir(path), f"{path} is present but not a directory"
+    if existed and KOOPLEX.get('fs_skipacl_if_dir_exists', True):
+        return
     rx = 'rx' if other_rx else ''
     if acl_backend == 'nfs4':
         acl = f"""
@@ -295,7 +298,10 @@ def revokeaccess_project(userprojectbinding):
     _revokeaccess(user, dir_reportprepare)
 
 
-def garbagedir_project(project):
+@background
+def garbagedir_project(userprojectbinding): #(project):
+    assert userprojectbinding.role == userprojectbinding.RL_CREATOR, "deny garbage collection coz user is not creator"
+    project = userprojectbinding.project
     dir_project = dirname.project(project)
     garbage = filename.project_garbage(project)
     _archivedir(dir_project, garbage)
