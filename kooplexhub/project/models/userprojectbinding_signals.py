@@ -51,7 +51,7 @@ def revokeaccess_project(sender, instance, **kwargs):
 def garbagedir_project(sender, instance, **kwargs):
     from kooplexhub.lib import garbagedir_project
     if instance.role == UserProjectBinding.RL_CREATOR:
-        garbagedir_project(instance.project)
+        garbagedir_project(instance) #.project)
 
 
 #FIXME:   @receiver(post_save, sender = UserProjectBinding)

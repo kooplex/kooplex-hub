@@ -1,7 +1,12 @@
 from django.contrib import admin
 
+from .models import Background
 from .models import Profile, Note
 from .models import Group, UserGroupBinding
+
+@admin.register(Background)
+class BackgroundAdmin(admin.ModelAdmin):
+    list_display = ('id', 'launched_at', 'function', 'user', 'error_at', 'error')
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):

@@ -1,3 +1,5 @@
+from .background import Background
+
 from .profile import Profile
 from .notes import Note
 from .group import Group, UserGroupBinding
