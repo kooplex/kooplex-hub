@@ -252,9 +252,11 @@ def mkdir_scratch(user):
     @type user: kooplex.hub.models.User
     """
     dir_scratch = dirname.userscratch(user)
+    existed = os.path.isdir(dir_scratch)
     _mkdir(dir_scratch)
+    if existed and KOOPLEX.get('fs_skipacl_if_dir_exists', True):
+        return
     _grantaccess(user, dir_scratch)
-
 
 
 ########################################
