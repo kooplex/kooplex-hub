@@ -72,28 +72,25 @@ def _mkdir(path, other_rx = False):
     """
     logger.info(f'acl_backend: {acl_backend}')
     existed = os.path.isdir(path)
-    dir_util.mkpath(path)
-    assert os.path.exists(path), f"{path} is not present in the filesystem"
-    assert os.path.isdir(path), f"{path} is present but not a directory"
-    rx = 'rx' if other_rx else ''
-    if acl_backend == 'nfs4':
-        acl = f"""
+    if not existed:
+        assert not os.path.exists(path), f"{path} is present in the filesystem, but not a directory"
+        dir_util.mkpath(path)
+        assert os.path.isdir(path), f"{path} directory not created"
+        rx = 'rx' if other_rx else ''
+        if acl_backend == 'nfs4':
+            acl = f"""
 A::OWNER@:rwaDxtTcCy
-A::{hub_uid}:rwaDxtcy
 A::GROUP@:tcy
-A:g:{hub_gid}:rwaDxtcy
 A::EVERYONE@:{rx}tcy
 A:fdi:OWNER@:rwaDxtTcCy
 A:fdi:GROUP@:tcy
-A:fdig:{hub_gid}:rwaDxtcy
 A:fdi:EVERYONE@:tcy
-    """
-        fn_acl = '/tmp/acl.dat'
-        open(fn_acl, 'w').write(acl)
-        bash(f'nfs4_setfacl -S {fn_acl} {path}')
-    else:
-        NotImplementedError(f'_mkdir acl_backend {acl_backend}')
-    if not existed:
+        """
+            fn_acl = '/tmp/acl.dat'
+            open(fn_acl, 'w').write(acl)
+            bash(f'nfs4_setfacl -S {fn_acl} {path}')
+        else:
+            NotImplementedError(f'_mkdir acl_backend {acl_backend}')
         logger.info(f"+ created dir: {path}")
     return not existed
 
@@ -114,6 +111,7 @@ def _rmdir(path):
 
 
 ##@sudo
+@background
 def _grantaccess(user, folder, acl = 'rwaDxtcy'):
     if acl_backend == 'nfs4':
         bash(f'nfs4_setfacl -R -a A::{user.profile.userid}:{acl} {folder}')
