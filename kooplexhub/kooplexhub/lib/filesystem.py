@@ -75,8 +75,6 @@ def _mkdir(path, other_rx = False):
     dir_util.mkpath(path)
     assert os.path.exists(path), f"{path} is not present in the filesystem"
     assert os.path.isdir(path), f"{path} is present but not a directory"
-    if existed and KOOPLEX.get('fs_skipacl_if_dir_exists', True):
-        return
     rx = 'rx' if other_rx else ''
     if acl_backend == 'nfs4':
         acl = f"""
@@ -97,6 +95,7 @@ A:fdi:EVERYONE@:tcy
         NotImplementedError(f'_mkdir acl_backend {acl_backend}')
     if not existed:
         logger.info(f"+ created dir: {path}")
+    return not existed
 
 
 ##FIXME: @sudo
@@ -214,49 +213,49 @@ def _chown(path, uid = hub_uid, gid = hub_gid):
 ########################################
 # user folder management
 
-def mkdir_home(user):
+def provision_home(user):
     """
     @summary: create a home directory and garbage folder for the user
     @param user: the user
     @type user: kooplex.hub.models.User
     """
     dir_home = dirname.userhome(user)
-    _mkdir(dir_home)
-    _grantaccess(user, dir_home)
+    created = _mkdir(dir_home)
+    if created or KOOPLEX.get('fs_force_acl', False):
+        _grantaccess(user, dir_home)
     dir_usergarbage = dirname.usergarbage(user)
-    _mkdir(dir_usergarbage)
-    _grantaccess(user, dir_usergarbage)
+    created = _mkdir(dir_usergarbage)
+    if created or KOOPLEX.get('fs_force_acl', False):
+        _grantaccess(user, dir_usergarbage)
 
-###FIXME: def garbagedir_home(user):
-###FIXME:     dir_home = Dirname.userhome(user)
-###FIXME:     garbage = Filename.userhome_garbage(user)
-###FIXME:     _archivedir(dir_home, garbage)
-###FIXME:     dir_usergarbage = Dirname.usergarbage(user)
-###FIXME:     if not os.path.exists(dir_usergarbage):
-###FIXME:         logger.warning(f'! usergarbage dir {dir_usergarbage} does not exist')
-###FIXME:         return
-###FIXME:     if not os.listdir(dir_usergarbage):
-###FIXME:         logger.info(f'- usergarbage dir {dir_usergarbage} is empty, removed')
-###FIXME:     else:
-###FIXME:         d_new = f'{dir_usergarbage}-{now()}'
-###FIXME:         os.rename(dir_usergarbage, d_new)
-###FIXME:         logger.info(f'+ usergarbage dir {dir_usergarbage} rename {d_new}')
+def garbagedir_home(user):
+    dir_home = Dirname.userhome(user)
+    garbage = Filename.userhome_garbage(user)
+    _archivedir(dir_home, garbage)
+    dir_usergarbage = Dirname.usergarbage(user)
+    if not os.path.exists(dir_usergarbage):
+        logger.warning(f'! usergarbage dir {dir_usergarbage} does not exist')
+        return
+    if not os.listdir(dir_usergarbage):
+        logger.info(f'- usergarbage dir {dir_usergarbage} is empty, removed')
+    else:
+        d_new = f'{dir_usergarbage}-{now()}'
+        os.rename(dir_usergarbage, d_new)
+        logger.info(f'+ usergarbage dir {dir_usergarbage} rename {d_new}')
 
 
 ########################################
 # scratch folder management
-def mkdir_scratch(user):
+def provision_scratch(user):
     """
     @summary: create a scratch directory for the user
     @param user: the user
     @type user: kooplex.hub.models.User
     """
     dir_scratch = dirname.userscratch(user)
-    existed = os.path.isdir(dir_scratch)
-    _mkdir(dir_scratch)
-    if existed and KOOPLEX.get('fs_skipacl_if_dir_exists', True):
-        return
-    _grantaccess(user, dir_scratch)
+    created = _mkdir(dir_scratch)
+    if created or KOOPLEX.get('fs_force_acl', False):
+        _grantaccess(user, dir_scratch)
 
 
 ########################################

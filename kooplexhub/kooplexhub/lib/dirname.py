@@ -12,7 +12,7 @@ MP = KOOPLEX.get('mountpoint_hub', {})
 
 mp_home = MP.get('home', '/mnt/home')
 mp_garbage = MP.get('garbage', '/mnt/garbage')
-mp_scratch = MP.get('scratch')
+mp_scratch = MP.get('scratch', '/mnt/scratch')
 
 mp_project = MP.get('project', '/mnt/project')
 
@@ -30,7 +30,6 @@ def usergarbage(user):
     return os.path.join(mp_garbage, user.username)
 
 def userscratch(user):
-    assert mp_scratch, "mount point for scratch folders is not set"
     return os.path.join(mp_scratch, user.username)
 
 def project(project):
