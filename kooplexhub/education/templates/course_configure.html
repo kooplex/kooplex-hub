@@ -55,6 +55,9 @@
   <div class="tab-pane fade {% if active_tab == "tab-student" %}show active{% else %}false{% endif %}" id="addstudentsCourse" role="tabpanel" aria-labelledby="tab-student">
     <form id="courseAddStudentForm" class="form-horizontal" action="{% url 'education:addstudent' usercoursebinding_id %}" method="post">
       {% csrf_token %}
+      <h6>Shortcuts</h6>
+      <button type="submit" class="btn btn-danger" name="button" value="reset" onclick="return confirm('Are you sure?');">Reset</button> Remove all student from this course at one click.
+      <h6>Table</h6>
       {% render_table t_student %}
       {% include 'apply_cancel.html' %}
     </form>

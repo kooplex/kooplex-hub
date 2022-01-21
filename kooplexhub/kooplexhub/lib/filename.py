@@ -19,11 +19,11 @@ def project_garbage(project):
 
 def assignment_garbage(userassignmentbinding):
     a = userassignmentbinding.assignment
-    return os.path.join(dirname.mp_home, userassignmentbinding.user.username, "garbage", "assignment_%s-%s.%f.tar.gz" % (a.course.cleanname, a.safename, time.time()))
+    return os.path.join(dirname.mp_garbage, userassignmentbinding.user.username, "assignment_%s-%s.%f.tar.gz" % (a.course.cleanname, a.safename, time.time()))
 
 
 def course_workdir_garbage(usercoursebinding):
-    return os.path.join(dirname.mp_home, usercoursebinding.user.username, "garbage", "course_workdir-%s.%f.tar.gz" % (usercoursebinding.course.cleanname, time.time()))
+    return os.path.join(dirname.mp_garbage, usercoursebinding.user.username, "course_workdir-%s.%f.tar.gz" % (usercoursebinding.course.cleanname, time.time()))
 
 
 def assignment_snapshot(assignment):

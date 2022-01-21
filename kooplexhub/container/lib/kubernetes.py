@@ -148,6 +148,17 @@ def start(container):
         }])
         claim_project = True
 
+    claim_attachment = False
+
+    for attachment in container.attachment:
+        volume_mounts.extend([{
+             "name": "attachment",
+             "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_attachment', '/attachments{attachment.uniquename}').format(project = project),
+             "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_project', '{attachment.uniquename}').format(project = project, user = container.user),
+        }
+        ])
+        claim_attachment = True
+
     claims = set()
     for volume in container.volumes:
         volume_mounts.append({
@@ -180,6 +191,14 @@ def start(container):
             {
             "name": "project",
             "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-project', 'project') }
+        }
+            )
+
+    if claim_attachment:
+        volumes.append(
+            {
+            "name": "attachment",
+            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-attachment', 'attachment') }
         }
             )
 
@@ -284,17 +303,7 @@ def start(container):
                     "ports": pod_ports,
                     "imagePullPolicy": KOOPLEX['kubernetes'].get('imagePullPolicy', 'IfNotPresent'),
                     "env": env_variables,
-                    "resources": {
-                      "requests": {
-                        "cpu": "150m",
-                        "memory": "400Mi"
-                      },
-                      "limits": {
-                        "cpu": "5000m",
-                        "memory": "28Gi"
-                      },
-                    },
-                      
+                    "resources": KOOPLEX['kubernetes'].get('resources', '{}'),
                 }],
                 "volumes": volumes,
                 "nodeSelector": KOOPLEX['kubernetes'].get('nodeSelector_k8s'), 

@@ -663,15 +663,24 @@ def _adduser(request, usercoursebinding_id, is_teacher):
     logger.debug(f"user {user}, method: {request.method}")
     oops = []
     msgs = []
-    if request.POST.get('button') != 'apply':
-        #return redirect('education:teacher')
-        return redirect('education:configure', usercoursebinding_id=usercoursebinding_id)
+    button = request.POST.get('button')
+    if button not in [ 'reset', 'apply' ]:
+        return redirect('education:configure', usercoursebinding_id = usercoursebinding_id)
     try:
         course = UserCourseBinding.objects.get(id = usercoursebinding_id, user = user, is_teacher = True).course
     except UserCourseBinding.DoesNotExist:
         logger.error(f'misused by {user}')
         messages.error(request, f'Not authorized to use this functionality')
         return redirect('indexpage')
+    if button == 'reset':
+        ucb = UserCourseBinding.objects.filter(course = course, is_teacher = False)
+        if len(ucb):
+            hrn = lambda x: f"{x.user.first_name} {x.user.last_name} ({x.user.username})"
+            users = ", ".join(list(map(hrn, ucb)))
+            logger.info(f'- removing {len(ucb)} students from course {course.name}: {users}')
+            messages.info(request, f'From course {course.name} removing students: {users}')
+            ucb.delete()
+        return redirect('education:configure', usercoursebinding_id = usercoursebinding_id)
     added = 0
     for uid in request.POST.getlist(f'selection_{f}', []):
         try:

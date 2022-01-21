@@ -254,9 +254,13 @@ KOOPLEX = {
         'imagePullPolicy': 'Always',
         'nslcd': {
             'mountPath_nslcd': '/etc/mnt'
-            },
+        },
         'nodeSelector_k8s': { "kubernetes.io/hostname": "" },
 #        'nodeSelector_k8s': { "nodetype": "worker" },
+        'resources': {
+            "requests": { "cpu": "150m", "memory": "150Mi" },
+            "limits": { "cpu": "500m", "memory": "7Gi" },
+        },
         'userdata': {
             'claim': 'pvc-userdata',
             # USERDATA
