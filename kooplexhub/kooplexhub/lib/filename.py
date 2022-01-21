@@ -13,13 +13,17 @@ def userhome_garbage(user):
 def project_garbage(project):
     return os.path.join(dirname.mp_garbage, project.creator.username, "project-%s.%f.tar.gz" % (project.uniquename, time.time()))
   
-#      @staticmethod
 #      def course_garbage(course):
 #          return os.path.join(Dirname.mountpoint['garbage'], "course-%s.%f.tar.gz" % (course.folder, time.time()))
-#  
-#      @staticmethod
-#      def courseworkdir_archive(usercoursebinding):
-#          return os.path.join(Dirname.mountpoint['home'], usercoursebinding.user.username, "garbage", "%s.%f.tar.gz" % (usercoursebinding.course.folder, time.time()))
+
+
+def assignment_garbage(userassignmentbinding):
+    a = userassignmentbinding.assignment
+    return os.path.join(dirname.mp_home, userassignmentbinding.user.username, "garbage", "assignment_%s-%s.%f.tar.gz" % (a.course.cleanname, a.safename, time.time()))
+
+
+def course_workdir_garbage(usercoursebinding):
+    return os.path.join(dirname.mp_home, usercoursebinding.user.username, "garbage", "course_workdir-%s.%f.tar.gz" % (usercoursebinding.course.cleanname, time.time()))
 
 
 def assignment_snapshot(assignment):

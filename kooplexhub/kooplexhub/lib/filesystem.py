@@ -217,6 +217,9 @@ def provision_home(user):
     @param user: the user
     @type user: kooplex.hub.models.User
     """
+    if user.is_superuser:
+        logger.debug(f"user {user.username} is a superuser, skip creating home and garbage folders")
+        return
     dir_home = dirname.userhome(user)
     created = _mkdir(dir_home)
     if created or KOOPLEX.get('fs_force_acl', False):
@@ -227,6 +230,9 @@ def provision_home(user):
         _grantaccess(user, dir_usergarbage)
 
 def garbagedir_home(user):
+    if user.is_superuser:
+        logger.debug(f"user {user.username} is a superuser, skip garbage collection")
+        return
     dir_home = Dirname.userhome(user)
     garbage = Filename.userhome_garbage(user)
     _archivedir(dir_home, garbage)
@@ -250,6 +256,9 @@ def provision_scratch(user):
     @param user: the user
     @type user: kooplex.hub.models.User
     """
+    if user.is_superuser:
+        logger.debug(f"user {user.username} is a superuser, skip creating scratch folder")
+        return
     dir_scratch = dirname.userscratch(user)
     created = _mkdir(dir_scratch)
     if created or KOOPLEX.get('fs_force_acl', False):
@@ -494,11 +503,21 @@ def mkdir_course_workdir(usercoursebinding):
 ###FIXME:     except Exception as e:
 ###FIXME:         logger.error("Cannot revoke acl %s -- %s" % (usercoursebinding, e))
 
+def garbagedir_project(userprojectbinding): #(project):
+    assert userprojectbinding.role == userprojectbinding.RL_CREATOR, "deny garbage collection coz user is not creator"
+    project = userprojectbinding.project
+    dir_project = dirname.project(project)
+    garbage = filename.project_garbage(project)
+    _archivedir(dir_project, garbage)
+    dir_reportprepare = dirname.report_prepare(project)
+    _rmdir(dir_reportprepare)
 
+@background
 def delete_usercourse(usercoursebinding):
-    #FIXME: garbage
     _rmdir(dirname.assignment_workdir_root(usercoursebinding))
-    _rmdir(dirname.course_workdir(usercoursebinding))
+    dir_workdir = dirname.course_workdir(usercoursebinding)
+    garbage = filename.course_workdir_garbage(usercoursebinding)
+    _archivedir(dir_workdir, garbage)
 
 
 def delete_course(course):
@@ -578,10 +597,15 @@ def cp_userassignment_feedback(userassignmentbinding):
     logger.info(f"+ extracted {archivefile} in folder {dir_target}")
 
 
-
+#@background
 def delete_userassignment(userassignmentbinding):
+    dir_assignment = dirname.userassignment_dir(userassignmentbinding)
+    if userassignmentbinding.assignment.remove_collected:
+        _rmdir(dir_assignment)
+    else:
+        garbage = filename.assignment_garbage(userassignmentbinding)
+        _archivedir(dir_assignment, garbage)
     #FIXME: garbage
-    _rmdir(dirname.userassignment_dir(userassignmentbinding))
     _rmdir(dirname.assignment_correct_dir(userassignmentbinding))
-    #FIXME: garbage/rm snapshots
+    #FIXME: archive snapshots
 

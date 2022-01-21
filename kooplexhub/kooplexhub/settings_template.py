@@ -35,6 +35,7 @@ ALLOWED_HOSTS = [
         ]
 
 
+URL_PROFILE= ''
 LOGIN_URL = ''
 LOGOUT_URL = ''
 SOCIAL_AUTH_KOOPLEX_KEY = ''

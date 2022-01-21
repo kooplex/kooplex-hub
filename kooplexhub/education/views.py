@@ -397,6 +397,11 @@ def configureassignment(request):
         try:
             a = Assignment.objects.get(id = aid, course__in = courses)
             assert (a.creator == user) or (a.course.teacher_can_delete_foreign_assignment), f"{user} is not the creator of assignment {a.name} in course {a.course.name} and delete foreign is not set"
+            ##################################################
+            # do not archive user's handout assignment folders
+            a.remove_collected = True
+            a.save()
+            ##################################################
             a.delete()
             logger.info(f'- deleted assignment {a.name} ({a.folder}) from course {a.course.name} by {user.username}')
             d.append(f'{a.name} by {a.creator}')
@@ -664,7 +669,6 @@ def _adduser(request, usercoursebinding_id, is_teacher):
     try:
         course = UserCourseBinding.objects.get(id = usercoursebinding_id, user = user, is_teacher = True).course
     except UserCourseBinding.DoesNotExist:
-        raise
         logger.error(f'misused by {user}')
         messages.error(request, f'Not authorized to use this functionality')
         return redirect('indexpage')
@@ -677,7 +681,7 @@ def _adduser(request, usercoursebinding_id, is_teacher):
             logger.info(f'+ user {u.username} bound to course {course.name} by {user.username} as {f}')
         except Exception as e:
             logger.error(e)
-            oops.append(e)
+            oops.append(str(e))
     if added:
         msgs.append(f'Bound {added} {f} to course {course.name}.')
     removed = 0
@@ -689,7 +693,7 @@ def _adduser(request, usercoursebinding_id, is_teacher):
             logger.info(f'- user {ucb.user.username} as {f} is removed from course {course.name} by {user.username}')
         except Exception as e:
             logger.error(e)
-            oops.append(e)
+            oops.append(str(e))
     if removed:
         msgs.append(f'Removed {removed} {f} from course {course.name}.')
     if len(msgs):
