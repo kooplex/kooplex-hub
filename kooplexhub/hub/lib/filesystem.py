@@ -14,14 +14,9 @@ from distutils import dir_util
 from distutils import file_util
 import tarfile
 
-from ..lib import dirname, filename, bash
-from hub.lib import background
-
-try:
-    from kooplexhub.settings import KOOPLEX
-except ImportError:
-    logger.warning('Missing KOOPLEX configuration dictionary from settings.py')
-    KOOPLEX = {}
+from kooplexhub.settings import KOOPLEX
+from kooplexhub.lib import bash
+from ..lib import dirname, filename
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +58,6 @@ def _du(path):
 
 
 
-#FIXME: @sudo
 def _mkdir(path, other_rx = False):
     """
     @summary: make a directory
@@ -95,7 +89,6 @@ A:fdi:EVERYONE@:tcy
     return not existed
 
 
-##FIXME: @sudo
 def _rmdir(path):
     """
     @summary: remove a directory recursively
@@ -110,8 +103,6 @@ def _rmdir(path):
     logger.info(f"- removed dir: {path}")
 
 
-##@sudo
-@background
 def _grantaccess(user, folder, acl = 'rwaDxtcy'):
     if acl_backend == 'nfs4':
         bash(f'nfs4_setfacl -R -a A::{user.profile.userid}:{acl} {folder}')
@@ -124,7 +115,6 @@ def _grantaccess(user, folder, acl = 'rwaDxtcy'):
     logger.info(f"+ access granted on dir {folder} to user {user}")
 
 
-###FIXME: @sudo
 def _revokeaccess(user, folder):
     if acl_backend == 'nfs4':
         bash(f'nfs4_setfacl -R -x A:fdi:{user.profile.userid}:$(nfs4_getfacl {folder} | grep :fdi:{user.profile.userid}: | sed s,.*:,,) {folder}')
@@ -136,28 +126,25 @@ def _revokeaccess(user, folder):
     logger.info(f"- access revoked on dir {folder} from user {user}")
 
 
-###FIXME: @sudo
-def _grantgroupaccess(group_id, folder, acl = 'rXtcy'):
+def _grantgroupaccess(group, folder, acl = 'rXtcy'):
     if acl_backend == 'nfs4':
-        bash(f'nfs4_setfacl -R -a A:g:{group_id}:{acl} {folder}')
-        bash(f'nfs4_setfacl -R -a A:fdig:{group_id}:{acl} {folder}')
+        bash(f'nfs4_setfacl -R -a A:g:{group.groupid}:{acl} {folder}')
+        bash(f'nfs4_setfacl -R -a A:fdig:{group.groupid}:{acl} {folder}')
         #bash(f'nfs4_setfacl -R -a A:fdig:{groupi_id}:{acl} {folder}')
     else:
         NotImplementedError(f'_grantaccess acl_backend {acl_backend}')
-    logger.info(f"+ access granted on dir {folder} to group {group_id}")
+    logger.info(f"+ access granted on dir {folder} to group {group.groupid}")
 
 
-###FIXME: @sudo
-def _revokegroupaccess(group_id, folder):
+def _revokegroupaccess(group, folder):
     if acl_backend == 'nfs4':
         #bash(f'nfs4_setfacl -R -x A:fdig:{group_id}:$(nfs4_getfacl {folder} | grep :fdig:{group_id}: | sed s,.*:,,) {folder}')
-        bash(f'nfs4_setfacl -R -x A:g:{group_id}:$(nfs4_getfacl {folder} | grep :g:{group_id}: | sed s,.*:,,) {folder}')
+        bash(f'nfs4_setfacl -R -x A:g:{group.groupid}:$(nfs4_getfacl {folder} | grep :g:{group.groupid}: | sed s,.*:,,) {folder}')
     else:
         NotImplementedError(f'_grantaccess acl_backend {acl_backend}')
-    logger.info(f"- access revoked on dir {folder} from group {group_id}")
+    logger.info(f"- access revoked on dir {folder} from group {group.groupid}")
 
 
-###FIXME: @sudo
 def _archivedir(folder, target, remove = True):
     if not os.path.exists(folder):
         logger.warning("Folder %s is missing" % folder)
@@ -173,6 +160,17 @@ def _archivedir(folder, target, remove = True):
     finally:
         if remove:
             _rmdir(folder)
+
+
+def _extracttarbal(tarbal, target):
+    if os.path.exists(target):
+        logger.warning(f"Extract target folder {target} exists, may overwrite content")
+    try:
+        with tarfile.open(tarbal, mode = 'r') as archive:
+            archive.extractall(path = target)
+        logger.info(f"Extracted archive {tarbal} to folder {target}")
+    except Exception as e:
+        logger.error(f"Cannot extract archive {tarbal} to folder {target} -- {e}")
 
 
 def _chown(path, uid = hub_uid, gid = hub_gid):
@@ -211,72 +209,63 @@ def _chown(path, uid = hub_uid, gid = hub_gid):
 ########################################
 # user folder management
 
-def provision_home(user):
-    """
-    @summary: create a home directory and garbage folder for the user
-    @param user: the user
-    @type user: kooplex.hub.models.User
-    """
-    if user.is_superuser:
-        logger.debug(f"user {user.username} is a superuser, skip creating home and garbage folders")
-        return
-    dir_home = dirname.userhome(user)
-    created = _mkdir(dir_home)
-    if created or KOOPLEX.get('fs_force_acl', False):
-        _grantaccess(user, dir_home)
-    dir_usergarbage = dirname.usergarbage(user)
-    created = _mkdir(dir_usergarbage)
-    if created or KOOPLEX.get('fs_force_acl', False):
-        _grantaccess(user, dir_usergarbage)
+#def provision_home(user):
+#    """
+#    @summary: create a home directory and garbage folder for the user
+#    @param user: the user
+#    @type user: kooplex.hub.models.User
+#    """
+#    if user.is_superuser:
+#        logger.debug(f"user {user.username} is a superuser, skip creating home and garbage folders")
+#        return
+#    dir_home = dirname.userhome(user)
+#    created = _mkdir(dir_home)
+#    if created or KOOPLEX.get('fs_force_acl', False):
+#        _grantaccess(user, dir_home)
+#    dir_usergarbage = dirname.usergarbage(user)
+#    created = _mkdir(dir_usergarbage)
+#    if created or KOOPLEX.get('fs_force_acl', False):
+#        _grantaccess(user, dir_usergarbage)
 
-def garbagedir_home(user):
-    if user.is_superuser:
-        logger.debug(f"user {user.username} is a superuser, skip garbage collection")
-        return
-    dir_home = Dirname.userhome(user)
-    garbage = Filename.userhome_garbage(user)
-    _archivedir(dir_home, garbage)
-    dir_usergarbage = Dirname.usergarbage(user)
-    if not os.path.exists(dir_usergarbage):
-        logger.warning(f'! usergarbage dir {dir_usergarbage} does not exist')
-        return
-    if not os.listdir(dir_usergarbage):
-        logger.info(f'- usergarbage dir {dir_usergarbage} is empty, removed')
-    else:
-        d_new = f'{dir_usergarbage}-{now()}'
-        os.rename(dir_usergarbage, d_new)
-        logger.info(f'+ usergarbage dir {dir_usergarbage} rename {d_new}')
+#def garbagedir_home(user):
+#    if user.is_superuser:
+#        logger.debug(f"user {user.username} is a superuser, skip garbage collection")
+#        return
+#    dir_home = Dirname.userhome(user)
+#    garbage = Filename.userhome_garbage(user)
+#    _archivedir(dir_home, garbage)
+#    dir_usergarbage = Dirname.usergarbage(user)
+#    if not os.path.exists(dir_usergarbage):
+#        logger.warning(f'! usergarbage dir {dir_usergarbage} does not exist')
+#        return
+#    if not os.listdir(dir_usergarbage):
+#        logger.info(f'- usergarbage dir {dir_usergarbage} is empty, removed')
+#    else:
+#        d_new = f'{dir_usergarbage}-{now()}'
+#        os.rename(dir_usergarbage, d_new)
+#        logger.info(f'+ usergarbage dir {dir_usergarbage} rename {d_new}')
 
 
 ########################################
 # scratch folder management
-def provision_scratch(user):
-    """
-    @summary: create a scratch directory for the user
-    @param user: the user
-    @type user: kooplex.hub.models.User
-    """
-    if user.is_superuser:
-        logger.debug(f"user {user.username} is a superuser, skip creating scratch folder")
-        return
-    dir_scratch = dirname.userscratch(user)
-    created = _mkdir(dir_scratch)
-    if created or KOOPLEX.get('fs_force_acl', False):
-        _grantaccess(user, dir_scratch)
+#def provision_scratch(user):
+#    """
+#    @summary: create a scratch directory for the user
+#    @param user: the user
+#    @type user: kooplex.hub.models.User
+#    """
+#    if user.is_superuser:
+#        logger.debug(f"user {user.username} is a superuser, skip creating scratch folder")
+#        return
+#    dir_scratch = dirname.userscratch(user)
+#    created = _mkdir(dir_scratch)
+#    if created or KOOPLEX.get('fs_force_acl', False):
+#        _grantaccess(user, dir_scratch)
 
 
 ########################################
 # project folder management
 
-def mkdir_project(project):
-    dir_project = dirname.project(project)
-    _mkdir(dir_project)
-    _grantaccess(project.creator, dir_project)
-    _grantgroupaccess(project.groupid, dir_project, acl = 'rwaDxtcy')
-    dir_reportprepare = dirname.report_prepare(project)
-    _mkdir(dir_reportprepare)
-    _grantaccess(project.creator, dir_reportprepare)
-    _grantgroupaccess(project.groupid, dir_reportprepare, acl = 'rwaDxtcy')
 
 ###FIXME: #@sudo
 ###FIXME: #def _dir_walker(root):
@@ -306,7 +295,7 @@ def revokeaccess_project(userprojectbinding):
     _revokeaccess(user, dir_reportprepare)
 
 
-@background
+##@background
 def garbagedir_project(userprojectbinding): #(project):
     assert userprojectbinding.role == userprojectbinding.RL_CREATOR, "deny garbage collection coz user is not creator"
     project = userprojectbinding.project
@@ -397,56 +386,30 @@ def garbagedir_project(userprojectbinding): #(project):
 ###FIXME: 
 ###FIXME: #################################################################################
 
-def mkdir_course(course):
-    '''
-@summary creates course related folders:
-    `mount_pointhub:course`/`course.folder`/public
-    `mount_pointhub:course`/`course.folder`/assignment_prepare
-    `mount_pointhub:course`/`course.folder`/assignment_snapshot
-    `mount_pointhub:course_workdir`/`course.folder`/
-    `mount_pointhub:course_assignment`/`course.folder`/
-    '''
-    logger.debug(f"mkdir_course for course {course.name}")
-    dir_coursepublic = dirname.course_public(course)
-    _mkdir(dir_coursepublic)
-    dir_assignmentprepare = dirname.course_assignment_prepare_root(course)
-    _mkdir(dir_assignmentprepare)
-    dir_assignmentsnapshot = dirname.course_assignment_snapshot(course)
-    _mkdir(dir_assignmentsnapshot)
-    dir_workdir = dirname.course_workdir_root(course)
-    _mkdir(dir_workdir)
-    dir_assignment = dirname.course_assignment_root(course)
-    _mkdir(dir_assignment)
-    dir_correct = dirname.assignment_correct_root(course)
-    _mkdir(dir_correct)
+#def mkdir_course(course):
+#    '''
+#@summary creates course related folders:
+#    `mount_pointhub:course`/`course.folder`/public
+#    `mount_pointhub:course`/`course.folder`/assignment_prepare
+#    `mount_pointhub:course`/`course.folder`/assignment_snapshot
+#    `mount_pointhub:course_workdir`/`course.folder`/
+#    `mount_pointhub:course_assignment`/`course.folder`/
+#    '''
+#    logger.debug(f"mkdir_course for course {course.name}")
+#    dir_coursepublic = dirname.course_public(course)
+#    _mkdir(dir_coursepublic)
+#    dir_assignmentprepare = dirname.course_assignment_prepare_root(course)
+#    _mkdir(dir_assignmentprepare)
+#    dir_assignmentsnapshot = dirname.course_assignment_snapshot(course)
+#    _mkdir(dir_assignmentsnapshot)
+#    dir_workdir = dirname.course_workdir_root(course)
+#    _mkdir(dir_workdir)
+#    dir_assignment = dirname.course_assignment_root(course)
+#    _mkdir(dir_assignment)
+#    dir_correct = dirname.assignment_correct_root(course)
+#    _mkdir(dir_correct)
 
 
-def grantaccess_course(usercoursebinding):
-    '''
-    '''
-    course = usercoursebinding.course
-    dir_coursepublic = dirname.course_public(course)
-    dir_assignmentprepare = dirname.course_assignment_prepare_root(course)
-    dir_correct = dirname.assignment_correct_root(course)
-    if usercoursebinding.is_teacher:
-        _grantaccess(usercoursebinding.user, dir_coursepublic)
-        _grantaccess(usercoursebinding.user, dir_assignmentprepare)
-        _grantaccess(usercoursebinding.user, dir_correct, acl = 'rXtcy')
-    else:
-        _grantaccess(usercoursebinding.user, dir_coursepublic, acl = 'rXtcy')
-
-
-def revokeaccess_course(usercoursebinding):
-    '''
-    '''
-    course = usercoursebinding.course
-    dir_coursepublic = dirname.course_public(course)
-    dir_assignmentprepare = dirname.course_assignment_prepare_root(course)
-    dir_correct = dirname.assignment_correct_root(course)
-    _revokeaccess(usercoursebinding.user, dir_coursepublic)
-    if usercoursebinding.is_teacher:
-        _revokeaccess(usercoursebinding.user, dir_assignmentprepare)
-        _revokeaccess(usercoursebinding.user, dir_correct)
 
 
 ###FIXME: def garbagedir_course_share(course):
@@ -464,27 +427,6 @@ def get_assignment_prepare_subfolders(course):
     return list(filter(not_empty_folder, os.listdir(dir_assignmentprepare)))
 
 
-def mkdir_course_workdir(usercoursebinding):
-    '''
-@summary creates course related subfolders for the user:
-    `mount_pointhub:course_workdir`/`course.folder`/`user.username`
-    for students:
-    `mount_pointhub:course_assignment`/`course.folder`/`user.username`
-    '''
-    dir_workdir = dirname.course_workdir(usercoursebinding)
-    _mkdir(dir_workdir)
-    _grantaccess(usercoursebinding.user, dir_workdir)
-    if usercoursebinding.is_teacher:
-        for studentbinding in usercoursebinding.course.studentbindings:
-            dir_assignment_workdir = dirname.assignment_workdir_root(studentbinding)
-            _grantaccess(usercoursebinding.user, dir_assignment_workdir, acl = 'rXtcy')
-    else:
-        dir_assignment_workdir = dirname.assignment_workdir_root(usercoursebinding)
-        _mkdir(dir_assignment_workdir)
-        _grantaccess(usercoursebinding.user, dir_assignment_workdir)
-        for teacherbinding in usercoursebinding.course.teacherbindings:
-            _grantaccess(teacherbinding.user, dir_assignment_workdir, acl = 'rXtcy')
-#feedback
 
 
 ###FIXME: def grantacl_course_workdir(usercoursebinding):
@@ -512,19 +454,6 @@ def garbagedir_project(userprojectbinding): #(project):
     dir_reportprepare = dirname.report_prepare(project)
     _rmdir(dir_reportprepare)
 
-@background
-def delete_usercourse(usercoursebinding):
-    _rmdir(dirname.assignment_workdir_root(usercoursebinding))
-    dir_workdir = dirname.course_workdir(usercoursebinding)
-    garbage = filename.course_workdir_garbage(usercoursebinding)
-    _archivedir(dir_workdir, garbage)
-
-
-def delete_course(course):
-    #FIXME: garbage
-    _rmdir(dirname.course_assignment_root(course))
-    _rmdir(dirname.course_workdir_root(course))
-    _rmdir(dirname.course_root(course))
 
 ###FIXME: def archive_course_workdir(usercoursebinding):
 ###FIXME:     if usercoursebinding.is_teacher:
@@ -534,10 +463,6 @@ def delete_course(course):
 ###FIXME:     _archivedir(dir_usercourse, archive)
 
 
-def snapshot_assignment(assignment):
-    dir_source = dirname.assignment_source(assignment)
-    archive = filename.assignment_snapshot(assignment)
-    _archivedir(dir_source, archive, remove = False)
 
 ###FIXME: def garbage_assignmentsnapshot(assignment):
 ###FIXME:     try:
@@ -547,65 +472,4 @@ def snapshot_assignment(assignment):
 ###FIXME:     except Exception as e:
 ###FIXME:         logger.error("move %s -> %s fails -- %s" % (archive, garbage, e))
 
-
-def cp_assignmentsnapshot(userassignmentbinding):
-    assignment = userassignmentbinding.assignment
-    archivefile = filename.assignment_snapshot(assignment)
-    dir_target = dirname.assignment_workdir(userassignmentbinding)
-    with tarfile.open(archivefile, mode = 'r') as archive:
-        archive.extractall(path = dir_target)
-    logger.info(f"+ extracted {archivefile} in folder {dir_target}")
-    _chown(dir_target, userassignmentbinding.user.profile.userid, users_gid)
-    for teacherbinding in userassignmentbinding.assignment.course.teacherbindings:
-        _grantaccess(teacherbinding.user, dir_target, acl = 'rXtcy')
-
-
-def snapshot_userassignment(userassignmentbinding):
-    dir_source = dirname.assignment_workdir(userassignmentbinding)
-    if userassignmentbinding.assignment.max_number_of_files:
-        n = _count_files(dir_source)
-        if n > userassignmentbinding.assignment.max_number_of_files:
-            raise Exception(f'Too many files in source folder {dir_source}: {n} > {userassignmentbinding.assignment.max_number_of_files}')
-    if userassignmentbinding.assignment.max_size:
-        du = _du(dir_source)
-        if du > userassignmentbinding.assignment.max_size:
-            raise Exception(f'Size exceeded {dir_source}: {du} > {userassignmentbinding.assignment.max_size}')
-    archive = filename.assignment_collection(userassignmentbinding)
-    _archivedir(dir_source, archive, remove = userassignmentbinding.assignment.remove_collected)
-    logger.info(f"+ created {archive} of folder {dir_source}")
-
-
-def cp_userassignment2correct(userassignmentbinding):
-    archivefile = filename.assignment_collection(userassignmentbinding)
-    dir_target = dirname.assignment_correct_dir(userassignmentbinding)
-    with tarfile.open(archivefile, mode='r') as archive:
-        archive.extractall(path = dir_target)
-    for teacherbinding in userassignmentbinding.assignment.course.teacherbindings:
-        _grantaccess(teacherbinding.user, dir_target)
-    logger.info(f"+ extracted {archivefile} in folder {dir_target}")
-
-
-def cp_userassignment_feedback(userassignmentbinding):
-    archivefile = filename.assignment_feedback(userassignmentbinding)
-    dir_source = dirname.assignment_correct_dir(userassignmentbinding)
-    dir_target = dirname.assignment_feedback_dir(userassignmentbinding)
-    _archivedir(dir_source, archivefile, remove = False)
-    logger.info(f"+ created {archivefile} of folder {dir_source}")
-    with tarfile.open(archivefile, mode='r') as archive:
-        archive.extractall(path = dir_target)
-    _chown(dir_target, userassignmentbinding.user.profile.userid, users_gid)
-    logger.info(f"+ extracted {archivefile} in folder {dir_target}")
-
-
-#@background
-def delete_userassignment(userassignmentbinding):
-    dir_assignment = dirname.userassignment_dir(userassignmentbinding)
-    if userassignmentbinding.assignment.remove_collected:
-        _rmdir(dir_assignment)
-    else:
-        garbage = filename.assignment_garbage(userassignmentbinding)
-        _archivedir(dir_assignment, garbage)
-    #FIXME: garbage
-    _rmdir(dirname.assignment_correct_dir(userassignmentbinding))
-    #FIXME: archive snapshots
 

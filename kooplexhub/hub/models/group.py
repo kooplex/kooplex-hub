@@ -6,16 +6,16 @@ from django.contrib.auth.models import User
 logger = logging.getLogger(__name__)
 
 class Group(models.Model):
-    TP_PROJECT = 'projectgroup'
-    TP_COURSE = 'coursegroup'
-    TP_VOLUME = 'volumegroup'
+    TP_PROJECT = 'project'
+    TP_COURSE = 'course'
+    TP_VOLUME = 'volume'
     TP_LOOKUP = {
         TP_PROJECT: 'projectgroup',
         TP_COURSE: 'coursegroup',
         TP_VOLUME: 'volumegroup'
     }
 
-    groupid = models.IntegerField(null = False, unique = True)
+    groupid = models.IntegerField(null = False, unique = True, blank = False)
     name = models.CharField(max_length = 32, unique = True, null = False)
     grouptype = models.CharField(max_length = 16, choices = TP_LOOKUP.items(), default = TP_PROJECT)
     #description = models.TextField(null = True)

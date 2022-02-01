@@ -36,7 +36,7 @@
 {% block main_content_right %}
 
 {% if user.profile.layout_container_list %}
-<div id="containerListPane">
+<div id="containerListPane" data-intro="#container_list" >
 	<input type="hidden" id="shown_containers" name="shown_containers" value=""> 
   {% for container in containers %}
      {% include 'container_partial_list.html' %}

@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 from ..models import Course, UserCourseBinding
 
-class Group(models.Model):
+class CGroup(models.Model):
     name = models.CharField(max_length = 64, null = False, unique = True)
     description = models.TextField(max_length = 512, blank = True)
     course = models.ForeignKey(Course, null = True, default = None, on_delete = models.CASCADE)
@@ -30,7 +30,7 @@ class Group(models.Model):
 
 class UserCourseGroupBinding(models.Model):
     usercoursebinding = models.OneToOneField(UserCourseBinding, null = False, on_delete = models.CASCADE)
-    group = models.ForeignKey(Group, null = False, on_delete = models.CASCADE)
+    group = models.ForeignKey(CGroup, null = False, on_delete = models.CASCADE)
 
 
 

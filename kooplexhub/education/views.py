@@ -15,7 +15,7 @@ from django_tables2 import RequestConfig
 from kooplexhub.lib import now
 
 from container.models import Image, Container
-from .models import UserCourseBinding, UserAssignmentBinding, Assignment, CourseContainerBinding, Group, UserCourseGroupBinding
+from .models import UserCourseBinding, UserAssignmentBinding, Assignment, CourseContainerBinding, CGroup as Group, UserCourseGroupBinding
 from .forms import FormCourse
 from .forms import FormGroup
 from .forms import FormAssignment
@@ -643,6 +643,7 @@ def massassignment(request):
         except Exception as e:
             logger.error(e)
             oops.append(str(e))
+            raise
     if n_assign:
         msgs.append(f'Sending out to {n_assign} students an assignment.')
     if len(msgs):

@@ -1,7 +1,7 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
-from ..models import Group
+from ..models import CGroup as Group
 
 
 class MyDescription(forms.Textarea):

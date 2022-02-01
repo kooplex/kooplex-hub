@@ -36,6 +36,8 @@ class AttachmentImageBindingAdmin(admin.ModelAdmin):
 
 @admin.register(VolumeContainerBinding)
 class VolumeContainerBindingAdmin(admin.ModelAdmin):
-    list_display = ('id', 'volume', 'container')
+    def container_username(self, instance):
+        return instance.container.user.username
+    list_display = ('id', 'volume', 'container', 'container_username')
 
 

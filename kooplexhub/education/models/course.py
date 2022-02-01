@@ -25,8 +25,8 @@ class Course(models.Model):
 
     @property
     def groups(self):
-        from ..models import Group
-        return Group.objects.filter(course = self)
+        from ..models import CGroup
+        return CGroup.objects.filter(course = self)
 
     @register.filter
     def csv_groups(self):
@@ -67,7 +67,7 @@ class Course(models.Model):
         return ', '.join(map(lambda x: x.name, self.assignments))
 
     def dir_assignmentcandidate(self):
-        from kooplexhub.lib import get_assignment_prepare_subfolders
+        from hub.lib.filesystem import get_assignment_prepare_subfolders
         return get_assignment_prepare_subfolders(self)
 
 

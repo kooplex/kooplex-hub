@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 from threading import Timer, Event
 
 from kooplexhub.lib import now
-from kooplexhub.lib.dirname import mp_scratch
+from hub.lib.dirname import mp_scratch #FIXME
 from .proxy import addroute, removeroute
 
 try:
@@ -61,30 +61,31 @@ def start(container):
     }]
 
     # SLURM slurm.conf
-    if (mp_scratch is not None) and (container.image.imagetype == container.image.TP_PROJECT):
-        volume_mounts.extend( [
-            {"name": "slurmconf",
-            "mountPath": '/etc/mntslurm/',
-            "readOnly": True},
-            {
-            "name": "scratch",
-            "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_scratch', '/v/scratch/{user.username}').format(user = container.user),
-            "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_scratch', '{user.username}').format(user = container.user),
-            }
-            ] )
-      
-        volumes.extend([{
-            "name": "slurmconf",
-            "configMap": { "name": "slurm", "items": [
-                {"key": "slurm", "path": "slurm.conf" },
-                {"key": "munge", "path": "munge.key" },
-                ]}
-        },
-            {
-            "name": "scratch",
-            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-scratch', 'scratch') }
-        },
-     ])
+#FIXME
+#    if (mp_scratch is not None) and (container.image.imagetype == container.image.TP_PROJECT):
+#        volume_mounts.extend( [
+#            {"name": "slurmconf",
+#            "mountPath": '/etc/mntslurm/',
+#            "readOnly": True},
+#            {
+#            "name": "scratch",
+#            "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_scratch', '/v/scratch/{user.username}').format(user = container.user),
+#            "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_scratch', '{user.username}').format(user = container.user),
+#            }
+#            ] )
+#      
+#        volumes.extend([{
+#            "name": "slurmconf",
+#            "configMap": { "name": "slurm", "items": [
+#                {"key": "slurm", "path": "slurm.conf" },
+#                {"key": "munge", "path": "munge.key" },
+#                ]}
+#        },
+#            {
+#            "name": "scratch",
+#            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-scratch', 'scratch') }
+#        },
+#     ])
 
     claim_userdata = False
 
@@ -150,14 +151,15 @@ def start(container):
 
     claim_attachment = False
 
-    for attachment in container.attachment:
-        volume_mounts.extend([{
-             "name": "attachment",
-             "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_attachment', '/attachments{attachment.uniquename}').format(project = project),
-             "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_project', '{attachment.uniquename}').format(project = project, user = container.user),
-        }
-        ])
-        claim_attachment = True
+#FIXME:
+#    for attachment in container.attachment:
+#        volume_mounts.extend([{
+#             "name": "attachment",
+#             "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_attachment', '/attachments{attachment.uniquename}').format(project = project),
+#             "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_project', '{attachment.uniquename}').format(project = project, user = container.user),
+#        }
+#        ])
+#        claim_attachment = True
 
     claims = set()
     for volume in container.volumes:
@@ -180,10 +182,10 @@ def start(container):
             "name": "garbage",
             "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-garbage', 'garbage') }
         },
-#            {
-#            "name": "edu",
-#            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-edu', 'edu') }
-#        },
+            {
+            "name": "edu",
+            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-edu', 'edu') }
+        },
             ])
 
     if claim_project:
@@ -371,6 +373,9 @@ def _check_starting(container_id, event, left = 1000):
 def stop(container):
     logger.debug(f"KKKK {container}")
     event = Event()
+    #FIXME
+    #event.set()
+    #return event
     container.state = container.ST_STOPPING
     config.load_kube_config()
     v1 = client.CoreV1Api()

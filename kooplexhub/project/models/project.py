@@ -139,6 +139,3 @@ class Project(models.Model):
         return msg
 
 
-    @property
-    def groupid(self):
-        return 10000 #FIXME

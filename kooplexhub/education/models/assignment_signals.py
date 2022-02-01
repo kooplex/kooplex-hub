@@ -1,43 +1,93 @@
 from django.db.models.signals import pre_save, post_save, pre_delete, post_delete
 from django.dispatch import receiver
 
+from hub.lib import filename, dirname
+from hub.models import FilesystemTask, Group
 from ..models import Assignment, UserAssignmentBinding
 
 @receiver(post_save, sender = Assignment)
 def snapshot_assignment(sender, instance, created, **kwargs):
-    from kooplexhub.lib.filesystem import snapshot_assignment
     if created:
-        snapshot_assignment(instance)
+        FilesystemTask.objects.create(
+            folder = dirname.assignment_source(instance),
+            tarbal = filename.assignment_snapshot(instance),
+            task = FilesystemTask.TSK_TAR
+        )
 
 
-#FIXME: @receiver(pre_delete, sender = Assignment)
-#FIXME: def garbage_assignmentsnapshot(sender, instance, **kwargs):
-#FIXME:     from kooplex.lib.filesystem import garbage_assignmentsnapshot
-#FIXME:     garbage_assignmentsnapshot(instance)
-#FIXME: 
-#FIXME: 
-#FIXME: @receiver(post_save, sender = UserCourseBinding)
-#FIXME: def add_userassignmentbinding(sender, instance, created, **kwargs):
-#FIXME:     if created and not instance.is_teacher:
-#FIXME:         for a in instance.assignments:
-#FIXME:             if a.state == a.ST_VALID:
-#FIXME:                 UserAssignmentBinding.objects.create(user = instance.user, assignment = a, expires_at = a.expires_at)
-
-
-@receiver(post_save, sender = UserAssignmentBinding)
-def copy_userassignment(sender, instance, created, **kwargs):
-    from kooplexhub.lib.filesystem import cp_assignmentsnapshot, snapshot_userassignment, cp_userassignment2correct, cp_userassignment_feedback
-    if created:
-        cp_assignmentsnapshot(instance)
+#FIXME: pre_save
+@receiver(pre_save, sender = UserAssignmentBinding)
+def copy_userassignment(sender, instance, **kwargs):
+    if instance.id is None:
+        group = Group.objects.get(name = instance.assignment.course.cleanname, grouptype = Group.TP_COURSE)
+        FilesystemTask.objects.create(
+            folder = dirname.assignment_workdir(instance),
+            tarbal = filename.assignment_snapshot(instance.assignment),
+            grantee_user = instance.user,
+            task = FilesystemTask.TSK_UNTAR
+        )
+        #FIXME: tanarak RO jog
     elif instance.state in [ UserAssignmentBinding.ST_SUBMITTED, UserAssignmentBinding.ST_COLLECTED ]:
-        snapshot_userassignment(instance)
+        #FIXME: QUOTA!
+        FilesystemTask.objects.create(
+            folder = dirname.assignment_workdir(instance),
+            tarbal = filename.assignment_collection(instance),
+            task = FilesystemTask.TSK_TAR
+        )
     elif instance.state == UserAssignmentBinding.ST_CORRECTED:
-        cp_userassignment2correct(instance)
+        FilesystemTask.objects.create(
+            folder = dirname.assignment_correct_dir(instance),
+            tarbal = filename.assignment_collection(instance),
+            task = FilesystemTask.TSK_UNTAR
+        )
+        for teacherbinding in instance.assignment.course.teacherbindings:
+            FilesystemTask.objects.create(
+                folder = dirname.assignment_correct_dir(instance),
+                grantee_user = teacherbinding.user,
+                task = FilesystemTask.TSK_GRANT_USER
+            )
     elif instance.state == UserAssignmentBinding.ST_READY:
-        cp_userassignment_feedback(instance)
+        FilesystemTask.objects.create(
+            folder = dirname.assignment_correct_dir(instance),
+            tarbal = filename.assignment_feedback(instance),
+            task = FilesystemTask.TSK_TAR
+        )
+    #FIXME: feedback csak student kérésére lesz kicsomagolva
+    #
+    #    FilesystemTask.objects.create(
+    #        folder = dirname.assignment_feedback_dir(instance),
+    #        tarbal = filename.assignment_feedback(instance.assignment),
+    #        grantee_user = instance.user.profile.userid,
+    #        readonly = True
+    #        task = FilesystemTask.TSK_UNTAR
+    #    )
+    #with tarfile.open(archivefile, mode='r') as archive:
+    #    archive.extractall(path = dir_target)
+    #_chown(dir_target, userassignmentbinding.user.profile.userid, users_gid)
+
+
 
 
 @receiver(pre_delete, sender = UserAssignmentBinding)
 def delete_userassignment(sender, instance, **kwargs):
-    from kooplexhub.lib.filesystem import delete_userassignment
-    delete_userassignment(instance)
+    dir_assignment = dirname.userassignment_dir(instance)
+    if instance.assignment.remove_collected:
+        FilesystemTask.objects.create(
+            folder = dir_assignment,
+            remove_folder = True,
+            task = FilesystemTask.TSK_REMOVE
+        )
+    else:
+        FilesystemTask.objects.create(
+            folder = dir_assignment,
+            tarbal = filename.assignment_garbage(instance),
+            remove_folder = True,
+            task = FilesystemTask.TSK_TAR
+        )
+    #FIXME: archive?
+        FilesystemTask.objects.create(
+            folder = dirname.assignment_correct_dir(instance),
+            remove_folder = True,
+            task = FilesystemTask.TSK_REMOVE
+        )
+

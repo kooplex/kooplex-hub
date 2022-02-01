@@ -1,17 +1,19 @@
 from django.contrib import admin
 
-from .models import Background
+from .models import FilesystemTask
 from .models import Profile, Note
 from .models import Group, UserGroupBinding
 
-@admin.register(Background)
-class BackgroundAdmin(admin.ModelAdmin):
-    list_display = ('id', 'launched_at', 'function', 'user', 'error_at', 'error')
+@admin.register(FilesystemTask)
+class FilesystemTaskAdmin(admin.ModelAdmin):
+    list_display = ('id', 'launched_at', 'task', 'folder', 'tarbal', 'grantee_user', 'readonly_user', 'grantee_group', 'readonly_group', 'create_folder', 'readonly_user', 'remove_folder', 'stop_at', 'error')
+
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
     list_display = ('id', 'username', 'user', 'userid', 'is_teacher', 'is_student', 'can_createproject', 'can_createimage', 'can_createattachment')
     search_fields = ('user__username', )
+
 
 @admin.register(Note)
 class NoteAdmin(admin.ModelAdmin):
@@ -21,6 +23,7 @@ class NoteAdmin(admin.ModelAdmin):
 @admin.register(Group)
 class GroupAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'groupid', 'grouptype')
+
 
 @admin.register(UserGroupBinding)
 class UserGroupBindingAdmin(admin.ModelAdmin):

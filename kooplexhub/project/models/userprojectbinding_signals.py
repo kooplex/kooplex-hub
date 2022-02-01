@@ -5,6 +5,7 @@ from django.dispatch import receiver
 
 logger = logging.getLogger(__name__)
 
+from hub.models import FilesystemTask
 from ..models import UserProjectBinding
 
 @receiver(pre_save, sender = UserProjectBinding)
@@ -20,25 +21,25 @@ def assert_single_creator(sender, instance, **kwargs):
 
 @receiver(post_save, sender = UserProjectBinding)
 def mkdir_project(sender, instance, created, **kwargs):
-    from kooplexhub.lib import mkdir_project
     if instance.role == UserProjectBinding.RL_CREATOR:
-        mkdir_project(instance.project)
-
-
-#FIXME:   #FIXME: ezekre elvben nincs szukseg, ha majd a group rendben megy
-@receiver(post_save, sender = UserProjectBinding)
-def grantaccess_project(sender, instance, created, **kwargs):
-    from kooplexhub.lib import grantaccess_project
-    if created and instance.role != UserProjectBinding.RL_CREATOR:
-        grantaccess_project(instance)
-
-
-#FIXME:   @receiver(post_save, sender = UserProjectBinding)
-#FIXME:   def grantaccess_report(sender, instance, created, **kwargs):
-#FIXME:       from kooplex.lib.filesystem import grantaccess_report
-#FIXME:       if created:
-#FIXME:           for report in instance.project.reports:
-#FIXME:               grantaccess_report(report, instance.user)
+        FilesystemTask.objects.create(
+            folder = dirname.project(instance.project),
+            grantee_user = instance.user,
+            create_folder = True,
+            task = FilesystemTask.TSK_GRANT_USER
+        )
+        FilesystemTask.objects.create(
+            folder = dirname.report_prepare(instance.project),
+            grantee_user = instance.user,
+            create_folder = True,
+            task = FilesystemTask.TSK_GRANT_USER
+        )
+    else:
+        raise NotImplementedError
+    # group bejegyzes
+       
+        #_grantgroupaccess(project.groupid, dir_project, acl = 'rwaDxtcy')
+        #_grantgroupaccess(project.groupid, dir_reportprepare, acl = 'rwaDxtcy')
 
 
 @receiver(pre_delete, sender = UserProjectBinding)
