@@ -1,9 +1,14 @@
+import json
+
 from django.db.models.signals import pre_save, post_save, pre_delete, post_delete
 from django.dispatch import receiver
 
 from hub.lib import filename, dirname
 from hub.models import FilesystemTask, Group
 from ..models import Assignment, UserAssignmentBinding
+
+code = lambda x: json.dumps([ i.id for i in x ])
+
 
 @receiver(post_save, sender = Assignment)
 def snapshot_assignment(sender, instance, created, **kwargs):
@@ -15,7 +20,6 @@ def snapshot_assignment(sender, instance, created, **kwargs):
         )
 
 
-#FIXME: pre_save
 @receiver(pre_save, sender = UserAssignmentBinding)
 def copy_userassignment(sender, instance, **kwargs):
     if instance.id is None:
@@ -23,10 +27,10 @@ def copy_userassignment(sender, instance, **kwargs):
         FilesystemTask.objects.create(
             folder = dirname.assignment_workdir(instance),
             tarbal = filename.assignment_snapshot(instance.assignment),
-            grantee_user = instance.user,
+            users_rw = code([instance.user]),
+            users_ro = code([ teacherbinding.user for teacherbinding in instance.assignment.course.teacherbindings ]),
             task = FilesystemTask.TSK_UNTAR
         )
-        #FIXME: tanarak RO jog
     elif instance.state in [ UserAssignmentBinding.ST_SUBMITTED, UserAssignmentBinding.ST_COLLECTED ]:
         #FIXME: QUOTA!
         FilesystemTask.objects.create(
@@ -43,8 +47,8 @@ def copy_userassignment(sender, instance, **kwargs):
         for teacherbinding in instance.assignment.course.teacherbindings:
             FilesystemTask.objects.create(
                 folder = dirname.assignment_correct_dir(instance),
-                grantee_user = teacherbinding.user,
-                task = FilesystemTask.TSK_GRANT_USER
+                users_rw = code([ teacherbinding.user ]),
+                task = FilesystemTask.TSK_GRANT
             )
     elif instance.state == UserAssignmentBinding.ST_READY:
         FilesystemTask.objects.create(

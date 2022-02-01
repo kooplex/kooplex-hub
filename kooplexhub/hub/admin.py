@@ -6,7 +6,7 @@ from .models import Group, UserGroupBinding
 
 @admin.register(FilesystemTask)
 class FilesystemTaskAdmin(admin.ModelAdmin):
-    list_display = ('id', 'launched_at', 'task', 'folder', 'tarbal', 'grantee_user', 'readonly_user', 'grantee_group', 'readonly_group', 'create_folder', 'readonly_user', 'remove_folder', 'stop_at', 'error')
+    list_display = ('id', 'launched_at', 'task', 'folder', 'tarbal', 'users_ro', 'users_rw', 'groups_ro', 'groups_rw', 'create_folder', 'remove_folder', 'stop_at', 'error')
 
 
 @admin.register(Profile)

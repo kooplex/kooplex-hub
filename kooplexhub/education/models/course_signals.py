@@ -1,8 +1,9 @@
 import logging
-import pwgen
+import json
 
 from django.contrib.auth.models import User
 from django.dispatch import receiver
+from django.db import transaction
 from django.db.models.signals import pre_save, post_save, pre_delete, post_delete
 
 from kooplexhub.settings import KOOPLEX
@@ -12,16 +13,18 @@ from ..models import Course, UserCourseBinding, UserAssignmentBinding
 
 logger = logging.getLogger(__name__)
 
+code = lambda x: json.dumps([ i.id for i in x ])
+
 
 @receiver(pre_save, sender = Course)
 def create_course(sender, instance, **kwargs):
-    group, _ = Group.objects.get_or_create(name = instance.cleanname, grouptype = Group.TP_COURSE) 
+    with transaction.atomic():
+        group, _ = Group.objects.select_for_update().get_or_create(name = instance.cleanname, grouptype = Group.TP_COURSE) 
     FilesystemTask.objects.create(
         folder = dirname.course_public(instance),
-        grantee_group = group,
-        readonly_group = True,
+        groups_ro = code([group]),
         create_folder = True,
-        task = FilesystemTask.TSK_GRANT_GROUP
+        task = FilesystemTask.TSK_GRANT
     )
     FilesystemTask.objects.create(
         folder = dirname.course_assignment_prepare_root(instance),
@@ -52,7 +55,10 @@ def create_course(sender, instance, **kwargs):
 
 @receiver(pre_delete, sender = Course)
 def delete_course(sender, instance, **kwargs):
-    Group.objects.get(name = instance.cleanname, grouptype = Group.TP_COURSE).delete()
+    try:
+        Group.objects.get(name = instance.cleanname, grouptype = Group.TP_COURSE).delete()
+    except Group.DoesNotExist:
+        pass
 #FIXME: archive?
     FilesystemTask.objects.create(
         folder = dirname.course_assignment_root(instance),
@@ -84,59 +90,55 @@ def add_usercourse(sender, instance, **kwargs):
     UserGroupBinding.objects.get_or_create(user = user, group = group)
     FilesystemTask.objects.create(
         folder = dirname.course_workdir(instance),
-        grantee_user = instance.user,
+        users_rw = code([instance.user]),
         create_folder = True,
-        task = FilesystemTask.TSK_GRANT_USER
+        task = FilesystemTask.TSK_GRANT
     )
     if instance.is_teacher:
         FilesystemTask.objects.create(
             folder = dirname.course_public(course),
-            grantee_user = user,
-            task = FilesystemTask.TSK_GRANT_USER
+            users_rw = code([user]),
+            task = FilesystemTask.TSK_GRANT
         )
         FilesystemTask.objects.create(
             folder = dirname.course_assignment_prepare_root(course),
-            grantee_user = user,
-            task = FilesystemTask.TSK_GRANT_USER
+            users_rw = code([user]),
+            task = FilesystemTask.TSK_GRANT
         )
         FilesystemTask.objects.create(
             folder = dirname.assignment_correct_root(course),
-            grantee_user = user,
-            task = FilesystemTask.TSK_GRANT_USER
+            users_rw = code([user]),
+            task = FilesystemTask.TSK_GRANT
         )
         for studentbinding in instance.course.studentbindings:
             FilesystemTask.objects.create(
                 folder = dirname.assignment_workdir_root(studentbinding),
-                grantee_user = user,
-                readonly_user = True,
-                task = FilesystemTask.TSK_GRANT_USER
+                users_ro = code([user]),
+                task = FilesystemTask.TSK_GRANT
             )
             FilesystemTask.objects.create(
                 folder = dirname.course_public(course),
-                grantee_user = user,
-                task = FilesystemTask.TSK_GRANT_USER
+                users_rw = code([user]),
+                task = FilesystemTask.TSK_GRANT
             )
             FilesystemTask.objects.create(
                 folder = dirname.course_assignment_prepare_root(course),
-                grantee_user = user,
-                task = FilesystemTask.TSK_GRANT_USER
+                users_rw = code([user]),
+                task = FilesystemTask.TSK_GRANT
             )
     else:
         dir_assignment_workdir = dirname.assignment_workdir_root(instance)
         FilesystemTask.objects.create(
             folder = dir_assignment_workdir,
-            grantee_user = instance.user,
-            readonly_user = True,
+            users_ro = code([instance.user]),
             create_folder = True,
-            task = FilesystemTask.TSK_GRANT_USER
+            task = FilesystemTask.TSK_GRANT
         )
-        for teacherbinding in instance.course.teacherbindings:
-            FilesystemTask.objects.create(
-                folder = dir_assignment_workdir,
-                grantee_user = teacherbinding.user,
-                readonly_user = True,
-                task = FilesystemTask.TSK_GRANT_USER
-            )
+        FilesystemTask.objects.create(
+            folder = dir_assignment_workdir,
+            users_ro = code([teacherbinding.user for teacherbinding in instance.course.teacherbindings]),
+            task = FilesystemTask.TSK_GRANT
+        )
 #FIXME: check feedback folder
 
 
@@ -153,18 +155,18 @@ def delete_usercourse(sender, instance, **kwargs):
     if instance.is_teacher:
         FilesystemTask.objects.create(
             folder = dirname.course_public(course),
-            grantee_user = user,
-            task = FilesystemTask.TSK_REVOKE_USER
+            users_rw = code([user]),
+            task = FilesystemTask.TSK_REVOKE
         )
         FilesystemTask.objects.create(
             folder = dirname.course_assignment_prepare_root(course),
-            grantee_user = user,
-            task = FilesystemTask.TSK_REVOKE_USER
+            users_rw = code([user]),
+            task = FilesystemTask.TSK_REVOKE
         )
         FilesystemTask.objects.create(
             folder = dirname.assignment_correct_root(course),
-            grantee_user = user,
-            task = FilesystemTask.TSK_REVOKE_USER
+            users_rw = code([user]),
+            task = FilesystemTask.TSK_REVOKE
         )
     FilesystemTask.objects.create(
         folder = dirname.assignment_workdir_root(instance),
