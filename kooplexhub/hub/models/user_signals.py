@@ -12,6 +12,9 @@ from ..models import Profile, FilesystemTask
 
 logger = logging.getLogger(__name__)
 
+code = lambda x: json.dumps([ i.id for i in x ])
+
+
 @receiver(post_save, sender = User)
 def user_creation(sender, instance, created, **kwargs):
     if instance.is_superuser:
@@ -23,22 +26,22 @@ def user_creation(sender, instance, created, **kwargs):
         Profile.objects.create(user = instance, token = token)
     FilesystemTask.objects.create(
         folder = dirname.userhome(instance),
-        grantee_user = instance,
+        users_rw = code([instance]),
         create_folder = True,
-        task = FilesystemTask.TSK_GRANT_USER
+        task = FilesystemTask.TSK_GRANT
     )
     FilesystemTask.objects.create(
         folder = dirname.usergarbage(instance),
-        grantee_user = instance,
+        users_rw = code([instance]),
         create_folder = True,
-        task = FilesystemTask.TSK_GRANT_USER
+        task = FilesystemTask.TSK_GRANT
     )
     if KOOPLEX.get('mountpoint_hub', {}).get('scratch') is not None:
         FilesystemTask.objects.create(
             folder = dirname.userscratch(instance),
-            grantee_user = instance,
+            users_rw = code([instance]),
             create_folder = True,
-            task = FilesystemTask.TSK_GRANT_USER
+            task = FilesystemTask.TSK_GRANT
         )
 
 

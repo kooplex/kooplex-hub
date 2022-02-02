@@ -3,10 +3,13 @@ import logging
 from django.db.models.signals import pre_save, post_save, pre_delete, post_delete
 from django.dispatch import receiver
 
-logger = logging.getLogger(__name__)
-
 from hub.models import FilesystemTask
 from ..models import UserProjectBinding
+
+logger = logging.getLogger(__name__)
+
+code = lambda x: json.dumps([ i.id for i in x ])
+
 
 @receiver(pre_save, sender = UserProjectBinding)
 def assert_single_creator(sender, instance, **kwargs):
@@ -24,15 +27,15 @@ def mkdir_project(sender, instance, created, **kwargs):
     if instance.role == UserProjectBinding.RL_CREATOR:
         FilesystemTask.objects.create(
             folder = dirname.project(instance.project),
-            grantee_user = instance.user,
+            users_rw = code([instance.user]),
             create_folder = True,
-            task = FilesystemTask.TSK_GRANT_USER
+            task = FilesystemTask.TSK_GRANT
         )
         FilesystemTask.objects.create(
             folder = dirname.report_prepare(instance.project),
-            grantee_user = instance.user,
+            users_rw = code([instance.user]),
             create_folder = True,
-            task = FilesystemTask.TSK_GRANT_USER
+            task = FilesystemTask.TSK_GRANT
         )
     else:
         raise NotImplementedError
