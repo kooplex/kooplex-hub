@@ -84,6 +84,12 @@ class UserCourseBinding(models.Model):
     class Meta:
         unique_together = [['user', 'course']]
 
+    def __str__(self):
+        if self.is_teacher:
+            return "teacher {} of course {}".format(self.user, self.course)
+        else:
+            return "student {} in course {}".format(self.user, self.course)
+
     @property
     def assignments(self):
         return []

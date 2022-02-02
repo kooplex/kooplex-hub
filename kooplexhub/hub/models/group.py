@@ -28,3 +28,5 @@ class UserGroupBinding(models.Model):
     user = models.ForeignKey(User, null = False, on_delete = models.CASCADE)
     group = models.ForeignKey(Group, null = False, on_delete = models.CASCADE)
 
+    def __str__(self):
+        return "{} in {}".format(self.user, self.group)
