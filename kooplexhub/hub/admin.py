@@ -27,9 +27,7 @@ class GroupAdmin(admin.ModelAdmin):
 
 @admin.register(UserGroupBinding)
 class UserGroupBindingAdmin(admin.ModelAdmin):
-    def username(instance): 
-        return instance.username
-    def groupname(instance):
-        return instance.name
-    list_display = ('id', 'username', 'groupname')
+    def name(_, instance):
+        return "{} {}".format(instance.user.first_name, instance.user.last_name)
+    list_display = ('id', 'name', 'user', 'group')
 
