@@ -15,7 +15,7 @@ from django_tables2 import RequestConfig
 from kooplexhub.lib import now
 
 from container.models import Image, Container
-from .models import UserCourseBinding, UserAssignmentBinding, Assignment, CourseContainerBinding, CGroup as Group, UserCourseGroupBinding
+from .models import UserCourseBinding, UserAssignmentBinding, Assignment, CourseContainerBinding, CourseGroup, UserCourseGroupBinding
 from .forms import FormCourse
 from .forms import FormGroup
 from .forms import FormAssignment
@@ -110,6 +110,7 @@ def configure(request, usercoursebinding_id, next_page = 'education:teacher'):
         return redirect(next_page)
     if request.POST.get('button') == 'apply':
         active_tab = request.POST.get('active_tab')
+        logger.debug(f'tab: {active_tab}')
 
         if active_tab == 'conf':
             form_course = FormCourse(request.POST)
@@ -139,7 +140,7 @@ def configure(request, usercoursebinding_id, next_page = 'education:teacher'):
             d = []
             for gid in delete_ids:
                 try:
-                    g = Group.objects.get(id = gid, course = course)
+                    g = CourseGroup.objects.get(id = gid, course = course)
                     g.delete()
                     logger.info(f'- deleted g {g.name} from course {course.name} by {user.username}')
                     d.append(f'{g.name}')
@@ -159,7 +160,7 @@ def configure(request, usercoursebinding_id, next_page = 'education:teacher'):
                 after_description = request.POST[f'description-{g}']
                 if (before_name == after_name) and (before_description == after_description):
                     continue
-                grp = Group.objects.get(id = g, course = course)
+                grp = CourseGroup.objects.get(id = g, course = course)
                 grp.name = after_name
                 grp.description = after_description
                 grp.save()
@@ -186,14 +187,14 @@ def configure(request, usercoursebinding_id, next_page = 'education:teacher'):
             table_teacher = TableUser(course, teacher_selector = True, pattern = '')
         RequestConfig(request).configure(table_teacher)
 
-        table_group = TableGroup(Group.objects.filter(course = course))
+        table_group = TableGroup(CourseGroup.objects.filter(course = course))
         form_course = FormCourse({ 'name': course.name, 'description': course.description, 'image': course.image })
         form_group = FormGroup(course = course)
 
         student_group_map = { 
                 'ungrouped': UserCourseBinding.objects.filter(course = course, is_teacher = False).exclude(usercoursegroupbinding__id__gt = 0),
                 'groups': dict([ (g, UserCourseBinding.objects.filter(course = course, is_teacher = False, usercoursegroupbinding__group = g)) 
-                        for g in Group.objects.filter(course = course)
+                        for g in CourseGroup.objects.filter(course = course)
                     ])
                 }
 
@@ -754,7 +755,7 @@ def groupstudent(request, usercoursebinding_id):
         course = UserCourseBinding.objects.get(id = usercoursebinding_id, user = user, is_teacher = True).course
         for k in filter(lambda x: x.startswith('grp-'), request.POST.keys()):
             gid = k.split('-')[1]
-            group = Group.objects.get(id = gid, course = course)
+            group = CourseGroup.objects.get(id = gid, course = course)
             ids_before = json.loads(request.POST[f'before_grp-{gid}'])
             ids_after = json.loads(request.POST[k])
             for ucbid in set(ids_before).difference(ids_after):
@@ -763,7 +764,7 @@ def groupstudent(request, usercoursebinding_id):
                 #FIXME: message
         for k in filter(lambda x: x.startswith('grp-'), request.POST.keys()):
             gid = k.split('-')[1]
-            group = Group.objects.get(id = gid, course = course)
+            group = CourseGroup.objects.get(id = gid, course = course)
             ids_before = json.loads(request.POST[f'before_grp-{gid}'])
             ids_after = json.loads(request.POST[k])
             for ucbid in set(ids_after).difference(ids_before):

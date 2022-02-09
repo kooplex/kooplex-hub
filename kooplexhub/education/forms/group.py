@@ -1,7 +1,7 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
-from ..models import CGroup as Group
+from ..models import CourseGroup
 
 
 class MyDescription(forms.Textarea):
@@ -19,7 +19,7 @@ class FormGroup(forms.ModelForm):
         )
 
     class Meta:
-        model = Group
+        model = CourseGroup
         fields = [ 'name', 'description', 'course' ]
         labels = {
             'name': _('Group name'),

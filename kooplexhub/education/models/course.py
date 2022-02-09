@@ -25,8 +25,8 @@ class Course(models.Model):
 
     @property
     def groups(self):
-        from ..models import CGroup
-        return CGroup.objects.filter(course = self)
+        from ..models import CourseGroup
+        return CourseGroup.objects.filter(course = self)
 
     @register.filter
     def csv_groups(self):

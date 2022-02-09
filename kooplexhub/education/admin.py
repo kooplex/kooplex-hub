@@ -4,7 +4,7 @@ from .models import Course, CourseCode
 from .models import UserCourseBinding, UserCourseCodeBinding
 from .models import CourseContainerBinding
 from .models import Assignment, UserAssignmentBinding
-#from .models import Group, UserCourseGroupBinding
+from .models import CourseGroup, UserCourseGroupBinding
 from .models import UserCourseGroupBinding
 
 
@@ -69,12 +69,12 @@ class UserAssignmentAdmin(admin.ModelAdmin):
     search_fields = ('assignment__name', 'user__first_name', 'user__last_name')
 
 
-#@admin.register(Group)
-#class GroupAdmin(admin.ModelAdmin):
-#    def course_name(self, instance):
-#        return instance.course.name
-#    list_display = ('id', 'course_name', 'name', 'description')
-#    search_fields = ('course__name', 'name')
+@admin.register(CourseGroup)
+class CourseGroupAdmin(admin.ModelAdmin):
+    def course_name(self, instance):
+        return instance.course.name
+    list_display = ('id', 'course_name', 'name', 'description')
+    search_fields = ('course__name', 'name')
 
 
 @admin.register(UserCourseGroupBinding)

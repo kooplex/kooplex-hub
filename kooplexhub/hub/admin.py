@@ -6,7 +6,11 @@ from .models import Group, UserGroupBinding
 
 @admin.register(FilesystemTask)
 class FilesystemTaskAdmin(admin.ModelAdmin):
-    list_display = ('id', 'launched_at', 'task', 'folder', 'tarbal', 'users_ro', 'users_rw', 'groups_ro', 'groups_rw', 'create_folder', 'remove_folder', 'stop_at', 'error')
+    def duration(_, instance):
+        return instance.stop_at - instance.launched_at \
+            if instance.launched_at and instance.stop_at \
+            else "--"
+    list_display = ('id', 'launched_at', 'task', 'folder', 'tarbal', 'users_ro', 'users_rw', 'groups_ro', 'groups_rw', 'create_folder', 'remove_folder', 'stop_at', 'duration', 'error')
 
 
 @admin.register(Profile)
