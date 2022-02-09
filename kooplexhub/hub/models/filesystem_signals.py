@@ -55,11 +55,10 @@ def worker(fstask: FilesystemTask):
             #    revokeaccess_group(Group.objects.get(id = g), fstask.folder)
         elif fstask.task == FilesystemTask.TSK_UNTAR:
             extracttarbal(fstask.tarbal, fstask.folder)
-            if fstask.grantee_user:
-                for u in decode(fstask.users_ro):
-                    grantaccess_user(User.objects.get(id = u), fstask.folder, acl = 'rXtcy')
-                for u in decode(fstask.users_rw):
-                    grantaccess_user(User.objects.get(id = u), fstask.folder)
+            for u in decode(fstask.users_ro):
+                grantaccess_user(User.objects.get(id = u), fstask.folder, acl = 'rXtcy')
+            for u in decode(fstask.users_rw):
+                grantaccess_user(User.objects.get(id = u), fstask.folder)
         else:
             raise NotImplementedError(FilesystemTask.TSK_LOOKUP[fstask.task])
     except Exception as e:
