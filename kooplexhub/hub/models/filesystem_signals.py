@@ -26,6 +26,8 @@ decode = lambda x: json.loads(x) if x else []
 
 def worker(fstask: FilesystemTask):
     global running_threads, event_thread_stop, running_threads_lock
+    fstask.launched_at = now()
+    fstask.save()
     error = None
     try:
         logger.info('starting {}'.format(fstask))
@@ -98,7 +100,7 @@ def sanity_check(sender, instance, **kwargs):
 def process(sender, instance, created, **kwargs):
     global running_threads, event_thread_stop, running_threads_lock
     # count threads and wait if necessary
-    if instance.stop_at is None:
+    if instance.launched_at is None:
         event_thread_stop.wait()
         with running_threads_lock:
             p = threading.Thread(target = worker, args = (instance, ))
