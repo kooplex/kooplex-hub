@@ -17,35 +17,32 @@ from ..models import FilesystemTask, Group
 
 logger = logging.getLogger(__name__)
 
-running_threads = 0
-running_threads_lock = threading.Lock()
-event_thread_stop = threading.Event()
-event_thread_stop.set()
+thread_id = 0
+semaphore = threading.Semaphore(value = KOOPLEX.get('parallel_fs_tasks', 2))
 
 decode = lambda x: json.loads(x) if x else []
 
 def worker(fstask: FilesystemTask):
-    global running_threads, event_thread_stop, running_threads_lock
-    fstask.launched_at = now()
-    fstask.save()
     error = None
     try:
         logger.info('starting {}'.format(fstask))
         if fstask.task == FilesystemTask.TSK_CREATE:
             mkdir(fstask.folder)
         elif fstask.task == FilesystemTask.TSK_GRANT:
-            logger.critical(f"kort {fstask}")
             if fstask.create_folder:
                 mkdir(fstask.folder)
             for u in decode(fstask.users_ro):
                 grantaccess_user(User.objects.get(id = u), fstask.folder, acl = 'rXtcy')
             for u in decode(fstask.users_rw):
                 grantaccess_user(User.objects.get(id = u), fstask.folder)
-            with transaction.atomic():
-                for g in decode(fstask.groups_ro):
-                    grantaccess_group(Group.objects.select_for_update().get(id = g), fstask.folder, acl = 'rXtcy')
-                for g in decode(fstask.groups_rw):
-                    grantaccess_group(Group.objects.select_for_update().get(id = g), fstask.folder)
+            for g in decode(fstask.groups_ro):
+                with transaction.atomic():
+                    go = Group.objects.select_for_update().get(id = g)
+                grantaccess_group(go, fstask.folder, acl = 'rXtcy')
+            for g in decode(fstask.groups_rw):
+                with transaction.atomic():
+                    go = Group.objects.select_for_update().get(id = g)
+                grantaccess_group(go, fstask.folder)
         elif fstask.task == FilesystemTask.TSK_TAR:
             archivedir(fstask.folder, fstask.tarbal, remove = fstask.remove_folder)
         elif fstask.task == FilesystemTask.TSK_REMOVE:
@@ -68,10 +65,6 @@ def worker(fstask: FilesystemTask):
         logger.error('oppsed with {} -- {}'.format(fstask, e))
     finally:
         logger.info('stopped {}'.format(fstask))
-        with running_threads_lock:
-            running_threads -= 1
-            logger.debug("{} threads are running in parallel".format(running_threads))
-            event_thread_stop.set()
         if error is None and not KOOPLEX.get('keep_fstask_in_db', True):
             fstask.delete()
             return
@@ -98,17 +91,13 @@ def sanity_check(sender, instance, **kwargs):
 
 @receiver(post_save, sender = FilesystemTask)
 def process(sender, instance, created, **kwargs):
-    global running_threads, event_thread_stop, running_threads_lock
-    # count threads and wait if necessary
+    global thread_id, semaphore
     if instance.launched_at is None:
-        event_thread_stop.wait()
-        with running_threads_lock:
-            p = threading.Thread(target = worker, args = (instance, ))
+        with semaphore:
+            thread_id += 1
+            instance.launched_at = now()
+            p = threading.Thread(target = worker, name = f"FilesystemTask-{thread_id}", args = (instance, ))
             p.start()
-            running_threads += 1
-            logger.debug("{} threads are running in parallel".format(running_threads))
-            if running_threads >= KOOPLEX.get('parallel_fs_tasks', 2):
-                event_thread_stop.clear()
 
 
 
