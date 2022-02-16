@@ -33,9 +33,14 @@ def new(request):
         form = FormContainer(request.POST)
         if form.is_valid():
             logger.info(form.cleaned_data)
-            env, created = Container.objects.get_or_create(user = user, name = form.cleaned_data['name'], image = form.cleaned_data['image'])
+            env, created = Container.objects.get_or_create(
+                    user = user, 
+                    name = form.cleaned_data['name'], 
+                    friendly_name = form.cleaned_data['friendly_name'], 
+                    image = form.cleaned_data['image']
+            )
             assert created, f"Service environment with name {form.cleaned_data['name']} is not unique"
-            messages.info(request, f'Your new service environment {form.cleaned_data["name"]} is created')
+            messages.info(request, f'Your new service environment {form.cleaned_data["friendly_name"]} is created')
         else:
             messages.error(request, form.errors)
     except Exception as e:
@@ -161,6 +166,13 @@ def configure(request, container_id):
     oops = 0
     if request.POST.get('button', '') == 'apply':
         msgs = []
+
+        # handle name change
+        friendly_name_before = svc.friendly_name
+        friendly_name_after = request.POST.get('friendly_name')
+        if friendly_name_before != friendly_name_after:
+            svc.friendly_name = friendly_name_after
+            svc.save()
 
         # handle image change
         image_before = svc.image

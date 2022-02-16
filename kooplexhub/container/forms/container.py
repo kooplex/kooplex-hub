@@ -7,9 +7,13 @@ from kooplexhub.lib import my_alphanumeric_validator
 
 
 class FormContainer(forms.Form):
+    friendly_name = forms.CharField(
+            max_length = 200, required = True,
+            help_text = _('A short friendly name makes your life easier to find yout container environments'), 
+            )
     name = forms.CharField(
             max_length = 100, required = True,
-            help_text = _('A short name you recall your project, but it has to be unique among your container names.'), 
+            help_text = _('A container name, the system uses to identify your environment. It has to be unique among your container names.'), 
             validators = [
                     my_alphanumeric_validator('Enter a valid container name containing only letters and numbers.'),
                 ],

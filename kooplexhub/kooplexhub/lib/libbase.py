@@ -94,9 +94,14 @@ def bash(command):
     @param command: the shell command to run
     @type command: str
     """
-    wrap = "bash -c \"%s\""
-    logger.info(command)
-    subprocess.call(shlex.split(command))
+    logger.debug(command)
+    completed_process = subprocess.run(shlex.split(command))
+    if completed_process.returncode == 0:
+        logger.info(command)
+    else:
+        logger.warning(f'{command} -> exits {completed_process.returncode}')
+    return completed_process
+
 
 
 def standardize_str(s):

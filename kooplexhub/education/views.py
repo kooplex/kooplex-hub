@@ -737,6 +737,7 @@ def addcontainer(request, usercoursebinding_id):
         course = UserCourseBinding.objects.get(id = usercoursebinding_id, user = user).course
         container, _ = Container.objects.get_or_create(
             name = course.cleanname, 
+            friendly_name = course.name,
             user = user,
             suffix = 'edu',
             image = course.image

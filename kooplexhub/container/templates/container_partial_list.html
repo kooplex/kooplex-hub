@@ -8,7 +8,7 @@
 	{% button_start_open_restart container next_page='container:list' %}
       </div>
       <div class="col-11" data-bs-toggle="collapse" data-bs-target="#collapse-{{ container.id }}" aria-expanded="false" aria-controls="collapse-{{ container.id }}">
-        {{ container.name }}
+        {{ container.friendly_name }}
         <div class="float-end">
 	  {% container_image container %}
         </div>

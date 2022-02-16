@@ -45,6 +45,8 @@
   <div class="tab-content" id="serviceConfigTabContent">
     <div class="tab-pane fade {% if active == "image" %}show active{% endif %}" id="image" role="tabpanel" aria-labelledby="tab-image">
       <input type="hidden" name="active_tab" value="image">
+      <h5 class="card-title">Modify friendly name</h5>
+      <input type="text" name="friendly_name" value="{{ container.friendly_name }}">
       <h5 class="card-title">Image selection</h5>
       <select class="form-control" name="container_image_id">
         {% for image in images %}

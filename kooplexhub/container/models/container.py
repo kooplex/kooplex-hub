@@ -37,6 +37,7 @@ class Container(models.Model):
     }
 
     name = models.CharField(max_length = 200, null = False, validators = [my_alphanumeric_validator('Enter a valid container name containing only letters and numbers.')])
+    friendly_name = models.CharField(max_length = 200, null = False)
     user = models.ForeignKey(User, on_delete = models.CASCADE, null = False)
     suffix = models.CharField(max_length = 200, null = True, default = None, blank = True)
     image = models.ForeignKey(Image, on_delete = models.CASCADE, null = False)
