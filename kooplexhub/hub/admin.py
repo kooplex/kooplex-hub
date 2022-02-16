@@ -11,6 +11,7 @@ class FilesystemTaskAdmin(admin.ModelAdmin):
             if instance.launched_at and instance.stop_at \
             else "--"
     list_display = ('id', 'launched_at', 'task', 'folder', 'tarbal', 'users_ro', 'users_rw', 'groups_ro', 'groups_rw', 'create_folder', 'remove_folder', 'stop_at', 'duration', 'error')
+    search_fields = ('folder', 'tarbal')
 
 
 @admin.register(Profile)
@@ -27,6 +28,7 @@ class NoteAdmin(admin.ModelAdmin):
 @admin.register(Group)
 class GroupAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'groupid', 'grouptype')
+    search_fields = ('name', 'grouptype')
 
 
 @admin.register(UserGroupBinding)
@@ -34,4 +36,5 @@ class UserGroupBindingAdmin(admin.ModelAdmin):
     def name(_, instance):
         return "{} {}".format(instance.user.first_name, instance.user.last_name)
     list_display = ('id', 'name', 'user', 'group')
+    search_fields = ('group__name', 'user__username', 'user__last_name')
 
