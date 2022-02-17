@@ -486,7 +486,7 @@ def handleassignment(request):
     for aid, uid in extr:
         try:
             a = Assignment.objects.get(id = aid, course__in = courses)
-            u = UserCourseBinding.objects.get(user__id = uid, course__in = courses, is_teacher = False).user
+            u = UserCourseBinding.objects.get(user__id = uid, course = a.course, is_teacher = False).user
             UserAssignmentBinding.objects.create(user = u, assignment = a, state = UserAssignmentBinding.ST_WORKINPROGRESS)
             n_handout += 1
         except Exception as e:
