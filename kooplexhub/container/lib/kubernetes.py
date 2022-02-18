@@ -151,15 +151,14 @@ def start(container):
 
     claim_attachment = False
 
-#FIXME:
-#    for attachment in container.attachment:
-#        volume_mounts.extend([{
-#             "name": "attachment",
-#             "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_attachment', '/attachments{attachment.uniquename}').format(project = project),
-#             "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_project', '{attachment.uniquename}').format(project = project, user = container.user),
-#        }
-#        ])
-#        claim_attachment = True
+    for attachment in container.attachments:
+        volume_mounts.extend([{
+             "name": "attachment",
+             "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_attachment', '/attachment/{attachment.folder}').format(attachment = attachment),
+             "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_attachment', '{attachment.folder}').format(attachment = attachment, user = container.user),
+        }
+        ])
+        claim_attachment = True
 
     claims = set()
     for volume in container.volumes:
@@ -257,14 +256,6 @@ def start(container):
 #        })
 #        has_cache = True
 #
-#    for attachment in container.attachments:
-#        volume_mounts.append({
-#            "name": "pv-k8plex-hub-attachment",
-#            "mountPath": os.path.join(mount_point, 'attachments', attachment.folder),
-#            "subPath": attachment.folder,
-#        })
-#        has_attachment = True
-#
 #    if has_project:
 #        volumes.append({
 #            "name": "pv-k8plex-hub-project",
@@ -283,11 +274,6 @@ def start(container):
 #            "persistentVolumeClaim": { "claimName": "pvc-cache-k8plex", }
 #        })
 #
-#    if has_attachment:
-#        volumes.append({
-#            "name": "pv-k8plex-hub-attachment",
-#            "persistentVolumeClaim": { "claimName": "pvc-attachment-k8plex", }
-#        })
 
     pod_definition = {
             "apiVersion": "v1",
