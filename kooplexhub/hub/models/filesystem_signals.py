@@ -54,9 +54,9 @@ def worker(fstask: FilesystemTask):
         elif fstask.task == FilesystemTask.TSK_UNTAR:
             extracttarbal(fstask.tarbal, fstask.folder)
             for u in decode(fstask.users_ro):
-                grantaccess_user(User.objects.get(id = u), fstask.folder, readonly = True)
+                grantaccess_user(User.objects.get(id = u), fstask.folder, readonly = True, recursive = True)
             for u in decode(fstask.users_rw):
-                grantaccess_user(User.objects.get(id = u), fstask.folder)
+                grantaccess_user(User.objects.get(id = u), fstask.folder, recursive = True)
         else:
             raise NotImplementedError(FilesystemTask.TSK_LOOKUP[fstask.task])
     except Exception as e:
