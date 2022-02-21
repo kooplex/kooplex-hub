@@ -8,7 +8,8 @@ class ImageAdmin(admin.ModelAdmin):
 
 @admin.register(Container)
 class ContainerAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'user', 'label', 'image', 'state', 'restart_reasons', 'last_message')
+    list_display = ('id', 'name', 'user', 'label', 'friendly_name', 'image', 'state', 'restart_reasons', 'last_message')
+    search_labels = ('name', 'user__username')
 
 @admin.register(Proxy)
 class ProxyAdmin(admin.ModelAdmin):

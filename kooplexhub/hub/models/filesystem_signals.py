@@ -25,20 +25,19 @@ decode = lambda x: json.loads(x) if x else []
 def worker(fstask: FilesystemTask):
     error = None
     try:
-        logger.info('starting {}'.format(fstask))
         if fstask.task == FilesystemTask.TSK_CREATE:
             mkdir(fstask.folder)
         elif fstask.task == FilesystemTask.TSK_GRANT:
             if fstask.create_folder:
                 mkdir(fstask.folder)
             for u in decode(fstask.users_ro):
-                grantaccess_user(User.objects.get(id = u), fstask.folder, acl = 'rXtcy')
+                grantaccess_user(User.objects.get(id = u), fstask.folder, readonly = True)
             for u in decode(fstask.users_rw):
                 grantaccess_user(User.objects.get(id = u), fstask.folder)
             for g in decode(fstask.groups_ro):
                 with transaction.atomic():
                     go = Group.objects.select_for_update().get(id = g)
-                grantaccess_group(go, fstask.folder, acl = 'rXtcy')
+                grantaccess_group(go, fstask.folder, readonly = True)
             for g in decode(fstask.groups_rw):
                 with transaction.atomic():
                     go = Group.objects.select_for_update().get(id = g)
@@ -55,7 +54,7 @@ def worker(fstask: FilesystemTask):
         elif fstask.task == FilesystemTask.TSK_UNTAR:
             extracttarbal(fstask.tarbal, fstask.folder)
             for u in decode(fstask.users_ro):
-                grantaccess_user(User.objects.get(id = u), fstask.folder, acl = 'rXtcy')
+                grantaccess_user(User.objects.get(id = u), fstask.folder, readonly = True)
             for u in decode(fstask.users_rw):
                 grantaccess_user(User.objects.get(id = u), fstask.folder)
         else:
@@ -64,7 +63,7 @@ def worker(fstask: FilesystemTask):
         error = e
         logger.error('oppsed with {} -- {}'.format(fstask, e))
     finally:
-        logger.info('stopped {}'.format(fstask))
+        #logger.debug('stopped {}'.format(fstask))
         if error is None and not KOOPLEX.get('keep_fstask_in_db', True):
             fstask.delete()
             return
@@ -74,19 +73,9 @@ def worker(fstask: FilesystemTask):
         fstask.save()
 
 
-@receiver(pre_save, sender = FilesystemTask)
-def sanity_check(sender, instance, **kwargs):
-    logger.critical('not implemented')
-#    from kooplexhub.lib import provision_home, provision_scratch
-#    #FIXME: exclude admins!
-#    if created or not hasattr(instance, 'profile'):
-#        logger.info("New user %s" % instance)
-#        token = pwgen.pwgen(64)
-#        Profile.objects.create(user = instance, token = token)
-#    provision_home(instance)
-#    provision_scratch(instance)
-
-
+#@receiver(pre_save, sender = FilesystemTask)
+#def sanity_check(sender, instance, **kwargs):
+#    logger.critical('not implemented')
 
 
 @receiver(post_save, sender = FilesystemTask)

@@ -94,12 +94,12 @@ def bash(command):
     @param command: the shell command to run
     @type command: str
     """
-    logger.debug(command)
-    completed_process = subprocess.run(shlex.split(command))
+    #FIXME: capture_output = True undefined argument
+    completed_process = subprocess.run(shlex.split(command), stderr = subprocess.PIPE)
     if completed_process.returncode == 0:
         logger.info(command)
     else:
-        logger.warning(f'{command} -> exits {completed_process.returncode}')
+        logger.warning(f'{command} -> exits {completed_process.returncode}. stderr: {completed_process.stderr}')
     return completed_process
 
 

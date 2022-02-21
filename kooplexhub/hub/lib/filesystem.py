@@ -64,7 +64,6 @@ def _mkdir(path, other_rx = False):
     @param path: the directory to make
     @type path: str
     """
-    logger.info(f'acl_backend: {acl_backend}')
     existed = os.path.isdir(path)
     if not existed:
         assert not os.path.exists(path), f"{path} is present in the filesystem, but not a directory"
@@ -103,13 +102,16 @@ def _rmdir(path):
     logger.info(f"- removed dir: {path}")
 
 
-def _grantaccess(user, folder, acl = 'rwaDxtcy'):
+def _grantaccess(user, folder, readonly = False, recursive = False):
+    R = '-R' if recursive else ''
+    uid = user.profile.userid
     if acl_backend == 'nfs4':
-        bash(f'nfs4_setfacl -R -a A::{user.profile.userid}:{acl} {folder}')
-        bash(f'nfs4_setfacl -R -a A:fdi:{user.profile.userid}:{acl} {folder}')
+        acl = 'rXtcy' if readonly else 'rwaDxtcy'
+        bash(f'nfs4_setfacl {R} -a A::{uid}:{acl} {folder}')
+        bash(f'nfs4_setfacl {R} -a A:fdi:{uid}:{acl} {folder}')
     elif acl_backend == 'posix':
-        acl = re.sub('[aDtcy]', '', acl)
-        bash("setfacl -R -m u:%d:%s %s" % (user.profile.userid, acl, folder))
+        acl = 'rX' if readonly else 'rwx'
+        bash(f'setfacl {R} -m u:{uid}:{acl} {folder}')
     else:
         NotImplementedError(f'_grantaccess acl_backend {acl_backend}')
     logger.info(f"+ access granted on dir {folder} to user {user}")
@@ -126,11 +128,13 @@ def _revokeaccess(user, folder):
     logger.info(f"- access revoked on dir {folder} from user {user}")
 
 
-def _grantgroupaccess(group, folder, acl = 'rXtcy'):
+def _grantgroupaccess(group, folder, readonly = False, recursive = False):
+    R = '-R' if recursive else ''
+    gid = group.groupid
     if acl_backend == 'nfs4':
-        bash(f'nfs4_setfacl -R -a A:g:{group.groupid}:{acl} {folder}')
-        bash(f'nfs4_setfacl -R -a A:fdig:{group.groupid}:{acl} {folder}')
-        #bash(f'nfs4_setfacl -R -a A:fdig:{groupi_id}:{acl} {folder}')
+        acl = 'rXtcy' if readonly else 'rwaDxtcy'
+        bash(f'nfs4_setfacl {R} -a A:g:{gid}:{acl} {folder}')
+        bash(f'nfs4_setfacl {R} -a A:fdig:{gid}:{acl} {folder}')
     else:
         NotImplementedError(f'_grantaccess acl_backend {acl_backend}')
     logger.info(f"+ access granted on dir {folder} to group {group.groupid}")
