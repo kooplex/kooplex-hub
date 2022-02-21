@@ -1,3 +1,4 @@
+import time
 import json
 import sys
 import logging
@@ -38,6 +39,7 @@ class Command(BaseCommand):
                         task = FilesystemTask.TSK_GRANT
                     )
                     print (f'Course: {c} {uab} fix')
+                    time.sleep(.02) # avoid flooding database
             except Exception as e:
                 print (f'EE: {e}')
 
