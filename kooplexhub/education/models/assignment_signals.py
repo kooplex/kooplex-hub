@@ -29,6 +29,7 @@ def copy_userassignment(sender, instance, **kwargs):
             tarbal = filename.assignment_snapshot(instance.assignment),
             users_rw = code([instance.user]),
             users_ro = code([ teacherbinding.user for teacherbinding in instance.assignment.course.teacherbindings ]),
+            recursive = True,
             task = FilesystemTask.TSK_UNTAR
         )
     elif instance.state in [ UserAssignmentBinding.ST_SUBMITTED, UserAssignmentBinding.ST_COLLECTED ]:
