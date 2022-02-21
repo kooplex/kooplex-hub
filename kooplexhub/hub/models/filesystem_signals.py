@@ -31,17 +31,17 @@ def worker(fstask: FilesystemTask):
             if fstask.create_folder:
                 mkdir(fstask.folder)
             for u in decode(fstask.users_ro):
-                grantaccess_user(User.objects.get(id = u), fstask.folder, readonly = True)
+                grantaccess_user(User.objects.get(id = u), fstask.folder, readonly = True, recursive = fstask.recursive)
             for u in decode(fstask.users_rw):
-                grantaccess_user(User.objects.get(id = u), fstask.folder)
+                grantaccess_user(User.objects.get(id = u), fstask.folder, recursive = fstask.recursive)
             for g in decode(fstask.groups_ro):
                 with transaction.atomic():
                     go = Group.objects.select_for_update().get(id = g)
-                grantaccess_group(go, fstask.folder, readonly = True)
+                grantaccess_group(go, fstask.folder, readonly = True, recursive = fstask.recursive)
             for g in decode(fstask.groups_rw):
                 with transaction.atomic():
                     go = Group.objects.select_for_update().get(id = g)
-                grantaccess_group(go, fstask.folder)
+                grantaccess_group(go, fstask.folder, recursive = fstask.recursive)
         elif fstask.task == FilesystemTask.TSK_TAR:
             archivedir(fstask.folder, fstask.tarbal, remove = fstask.remove_folder)
         elif fstask.task == FilesystemTask.TSK_REMOVE:
@@ -54,9 +54,9 @@ def worker(fstask: FilesystemTask):
         elif fstask.task == FilesystemTask.TSK_UNTAR:
             extracttarbal(fstask.tarbal, fstask.folder)
             for u in decode(fstask.users_ro):
-                grantaccess_user(User.objects.get(id = u), fstask.folder, readonly = True, recursive = True)
+                grantaccess_user(User.objects.get(id = u), fstask.folder, readonly = True, recursive = fstask.recursive)
             for u in decode(fstask.users_rw):
-                grantaccess_user(User.objects.get(id = u), fstask.folder, recursive = True)
+                grantaccess_user(User.objects.get(id = u), fstask.folder, recursive = fstask.recursive)
         else:
             raise NotImplementedError(FilesystemTask.TSK_LOOKUP[fstask.task])
     except Exception as e:

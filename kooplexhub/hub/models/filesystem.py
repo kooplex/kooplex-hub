@@ -30,6 +30,7 @@ class FilesystemTask(models.Model):
     groups_ro = models.CharField(max_length = 256, null = True, default = None, blank = True)
     create_folder = models.BooleanField(default = False)
     remove_folder = models.BooleanField(default = False)
+    recursive = models.BooleanField(default = False)
     task = models.CharField(max_length = 16, choices = TSK_LOOKUP.items())
     launched_at = models.DateTimeField(null = True, blank = True)
     stop_at = models.DateTimeField(null = True, blank = True)
