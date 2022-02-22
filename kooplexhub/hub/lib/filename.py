@@ -26,8 +26,8 @@ def course_workdir_garbage(usercoursebinding):
     return os.path.join(dirname.mp_garbage, usercoursebinding.user.username, "course_workdir-%s.%f.tar.gz" % (usercoursebinding.course.cleanname, time.time()))
 
 
-def assignment_snapshot(assignment):
-    return os.path.join(dirname.course_assignment_snapshot(assignment.course), 'assignment-snapshot-%s.%d.tar.gz' % (assignment.safename, assignment.created_at.timestamp()))
+#def assignment_snapshot(assignment):
+#    return os.path.join(dirname.course_assignment_snapshot(assignment.course), 'assignment-snapshot-%s.%d.tar.gz' % (assignment.safename, assignment.created_at.timestamp()))
 
 
 def assignment_collection(userassignmentbinding):

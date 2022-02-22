@@ -6,9 +6,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.template.defaulttags import register
 
+from hub.lib import dirname
 from ..models import Course, UserCourseBinding
-
-from kooplexhub.lib import now
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +25,7 @@ class Assignment(models.Model):
     remove_collected = models.BooleanField(default = False)
     max_number_of_files = models.IntegerField(default = 50, null = True)
     max_size = models.IntegerField(default = None, null = True) 
+    filename = models.CharField(max_length = 256, null = False, unique = True)
 
     class Meta:
         unique_together = [['course', 'folder']]
@@ -37,6 +37,9 @@ class Assignment(models.Model):
     def safename(self):
         return re.sub(r'[\.\ ]', '', self.name)
 
+    @property
+    def snapshot(self):
+        return os.path.join(dirname.course_assignment_snapshot(self.course), 'assignment-snapshot-%s.%d.tar.gz' % (self.safename, self.created_at.timestamp()))
 
 class UserAssignmentBinding(models.Model):
     ST_QUEUED = 'qed'

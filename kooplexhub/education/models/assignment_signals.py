@@ -13,11 +13,13 @@ code = lambda x: json.dumps([ i.id for i in x ])
 @receiver(post_save, sender = Assignment)
 def snapshot_assignment(sender, instance, created, **kwargs):
     if created:
+        instance.filename = instance.snapshot
         FilesystemTask.objects.create(
             folder = dirname.assignment_source(instance),
-            tarbal = filename.assignment_snapshot(instance),
+            tarbal = instance.filename,
             task = FilesystemTask.TSK_TAR
         )
+        instance.save()
 
 
 @receiver(pre_save, sender = UserAssignmentBinding)
@@ -26,7 +28,7 @@ def copy_userassignment(sender, instance, **kwargs):
         group = Group.objects.get(name = instance.assignment.course.cleanname, grouptype = Group.TP_COURSE)
         FilesystemTask.objects.create(
             folder = dirname.assignment_workdir(instance),
-            tarbal = filename.assignment_snapshot(instance.assignment),
+            tarbal = instance.assignment.filename,
             users_rw = code([instance.user]),
             users_ro = code([ teacherbinding.user for teacherbinding in instance.assignment.course.teacherbindings ]),
             recursive = True,
