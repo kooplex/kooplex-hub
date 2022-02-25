@@ -166,6 +166,8 @@ def dropdown_start_open_stop(bindings, ancestor, ancestor_type, next_page):
         for b in bindings:
             but_start_open = button_start_open(b.container, next_page)
             but_stop = button_stop(b.container, next_page)
+            but_refr = button_refreshlog(b.container, next_page)
+            but_restart = button_restart(b.container, next_page)
             items += f"""
 <li>
   <span class="dropdown-item">
@@ -173,6 +175,8 @@ def dropdown_start_open_stop(bindings, ancestor, ancestor_type, next_page):
       <span>
         {but_start_open}
         {but_stop}
+        {but_refr}
+        {but_restart}
         {b.container.name}
       </span>
     </span>
