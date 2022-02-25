@@ -1,4 +1,3 @@
-import os
 import logging
 
 from django.db import models
@@ -20,19 +19,26 @@ class Project(models.Model):
     name = models.TextField(max_length = 200, null = False)
     description = models.TextField(null = True)
     scope = models.CharField(max_length = 16, choices = SCP_LOOKUP.items(), default = SCP_PRIVATE)
+    subpath = models.TextField(max_length = 200, null = True, unique = True)
 
     def __str__(self):
-        return self.name
+        return "Project: {} ({}) created by {}; admins {} / collabs {}".format(
+                self.name, self.subpath, self.creator, 
+                len(self.admins), len(self.collaborators)
+                )
 
     def __lt__(self, p):
         return self.name < p.name
 
+    #FIXME: template function exists to it
     @property
     def description_is_long(self):
         return len(self.description) >= 20
     @property
     def short_description(self):
         return self.description[:17] + "..." if self.description_is_long else self.description
+    #####
+
 
     @property
     def creator(self):
@@ -42,10 +48,6 @@ class Project(models.Model):
         except UserProjectBinding.DoesNotExist:
             logger.warning(f'no creator for {self.name} {self.id}')
             return
-
-    @property
-    def uniquename(self):
-        return f'{self.name}-{self.creator.username}' if self.creator else f'{self.name}-nobody'
 
     def is_user_authorized(self, user):
         from .userprojectbinding import UserProjectBinding

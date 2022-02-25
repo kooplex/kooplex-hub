@@ -140,12 +140,12 @@ def start(container):
     for project in container.projects:
         volume_mounts.extend([{
              "name": "project",
-             "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_project', '/project/{project.uniquename}').format(project = project),
-             "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_project', '{project.uniquename}-{user.username}').format(project = project, user = container.user),
+             "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_project', '/project/{project.subpath}').format(project = project),
+             "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_project', '{project.subpath}').format(project = project, user = container.user),
         }, {
              "name": "project",
-             "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_report_prepare', '/report_prepare/{project.uniquename}').format(project = project),
-             "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_report_prepare', '{project.uniquename}-{user.username}').format(project = project, user = container.user),
+             "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_report_prepare', '/report_prepare/{project.subpath}').format(project = project),
+             "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_report_prepare', '{project.subpath}').format(project = project, user = container.user),
         }])
         claim_project = True
 

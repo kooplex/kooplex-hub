@@ -4,8 +4,10 @@ import logging
 from django.db.models.signals import pre_save, post_save, pre_delete, post_delete
 from django.dispatch import receiver
 
+from kooplexhub.lib.libbase import standardize_str
 from hub.models import FilesystemTask
 from ..models import UserProjectBinding
+from .. import filesystem as fs
 
 logger = logging.getLogger(__name__)
 
@@ -23,17 +25,22 @@ def assert_single_creator(sender, instance, **kwargs):
         assert instance.role == UserProjectBinding.RL_CREATOR, "The first user project binding must be the creator %s" % instance
 
 
-@receiver(post_save, sender = UserProjectBinding)
-def mkdir_project(sender, instance, created, **kwargs):
-    if instance.role == UserProjectBinding.RL_CREATOR:
+
+@receiver(pre_save, sender = UserProjectBinding)
+def mkdir_project(sender, instance, **kwargs):
+    p = instance.project
+    if instance.id is None and instance.role == UserProjectBinding.RL_CREATOR:
+        cleanname = standardize_str(p.name)
+        p.subpath = f'{cleanname}-{instance.user.username}'
+        p.save()
         FilesystemTask.objects.create(
-            folder = dirname.project(instance.project),
+            folder = fs.path_project(p),
             users_rw = code([instance.user]),
             create_folder = True,
             task = FilesystemTask.TSK_GRANT
         )
         FilesystemTask.objects.create(
-            folder = dirname.report_prepare(instance.project),
+            folder = fs.path_report_prepare(p),
             users_rw = code([instance.user]),
             create_folder = True,
             task = FilesystemTask.TSK_GRANT
@@ -48,34 +55,39 @@ def mkdir_project(sender, instance, created, **kwargs):
 
 @receiver(pre_delete, sender = UserProjectBinding)
 def revokeaccess_project(sender, instance, **kwargs):
-    from kooplexhub.lib import revokeaccess_project
-    revokeaccess_project(instance)
+    if instance.role != UserProjectBinding.RL_CREATOR:
+        FilesystemTask.objects.create(
+            folder = fs.path_project(instance.project),
+            users_rw = code([instance.user]),
+            task = FilesystemTask.TSK_REVOKE
+        )
+        FilesystemTask.objects.create(
+            folder = fs.path_report_prepare(instance.project),
+            users_rw = code([instance.user]),
+            task = FilesystemTask.TSK_REVOKE
+        )
 
 
 @receiver(pre_delete, sender = UserProjectBinding)
 def garbagedir_project(sender, instance, **kwargs):
-    from kooplexhub.lib import garbagedir_project
     if instance.role == UserProjectBinding.RL_CREATOR:
-        garbagedir_project(instance) #.project)
+        FilesystemTask.objects.create(
+            folder = fs.path_project(instance.project),
+            tarbal = fs.garbage_project(instance.project),
+            remove_folder = True,
+            task = FilesystemTask.TSK_TAR
+        )
+        FilesystemTask.objects.create(
+            folder = fs.path_report_prepare(instance.project),
+            remove_folder = True,
+            task = FilesystemTask.TSK_REMOVE
+        )
 
-
-#FIXME:   @receiver(post_save, sender = UserProjectBinding)
-#FIXME:   def revokeaccess_report(sender, instance, **kwargs):
-#FIXME:       from kooplex.lib.filesystem import revokeaccess_report
-#FIXME:       for report in instance.project.reports:
-#FIXME:           revokeaccess_report(report, instance.user)
-#FIXME:   
 
 @receiver(pre_delete, sender = UserProjectBinding)
 def assert_not_shared(sender, instance, **kwargs):
-    from container.models import Container
     from ..models import ProjectContainerBinding
-    bindings = UserProjectBinding.objects.filter(project = instance.project)
-   #FIXME if instance.role == UserProjectBinding.RL_CREATOR:
-   #FIXME     assert len(bindings) == 1, f'Cannot delete creator binding because {len(bindings)} project bindings exists'
-    for psb in ProjectContainerBinding.objects.filter(project = instance.project, container__user = instance.user):
-        if psb.container.state == Container.ST_RUNNING:
-            psb.container.state = Container.ST_NEED_RESTART
-            psb.container.save()
-        psb.delete()
+    for pcb in ProjectContainerBinding.objects.filter(project = instance.project, container__user = instance.user):
+        pcb.container.mark_restart(f"Revoked access to project {instance.project.name}")
+        pcb.delete()
 

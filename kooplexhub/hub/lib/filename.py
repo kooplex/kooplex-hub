@@ -10,12 +10,8 @@ except ImportError:
 def userhome_garbage(user):
     return os.path.join(dirname.mp_garbage, "user-%s.%f.tar.gz" % (user.username, time.time()))
 
-def project_garbage(project):
-    return os.path.join(dirname.mp_garbage, project.creator.username, "project-%s.%f.tar.gz" % (project.uniquename, time.time()))
-  
 #      def course_garbage(course):
 #          return os.path.join(Dirname.mountpoint['garbage'], "course-%s.%f.tar.gz" % (course.folder, time.time()))
-
 
 def assignment_garbage(userassignmentbinding):
     a = userassignmentbinding.assignment

@@ -14,10 +14,7 @@ mp_home = MP.get('home', '/mnt/home')
 mp_garbage = MP.get('garbage', '/mnt/garbage')
 mp_scratch = MP.get('scratch', '/mnt/scratch')
 
-mp_project = MP.get('project', '/mnt/project')
-
 mp_report = MP.get('report', '/mnt/report')
-mp_report_prepare = MP.get('report_prepare', '/mnt/report_prepare')
 
 mp_course = MP.get('course', '/mnt/course')
 mp_course_workdir = MP.get('course_workdir', '/mnt/course_workdir')
@@ -31,12 +28,6 @@ def usergarbage(user):
 
 def userscratch(user):
     return os.path.join(mp_scratch, user.username)
-
-def project(project):
-    return os.path.join(mp_project, project.uniquename)
-
-def report_prepare(project):
-    return os.path.join(mp_report_prepare, project.uniquename)
 
 def course_root(course):
     return os.path.join(mp_course, course.folder)

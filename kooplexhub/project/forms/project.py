@@ -19,11 +19,7 @@ class FormProject(forms.Form):
     name = forms.CharField(
             label = _("Project name"),
             help_text = _('A short name you recall your project, but it has to be unique among your project names.'), 
-            max_length = 100, required = True,            
-            validators = [
-                    my_slug_validator('Enter a valid project name containing only letters, numbers, underscores or hyphens.'),
-                    my_end_validator('Enter a valid project name ending with a letter or number.'),
-                ],
+            max_length = 100, required = True, 
             )
     description = forms.CharField(
             max_length = 100, required = True,
