@@ -31,8 +31,9 @@ def mkdir_project(sender, instance, **kwargs):
     p = instance.project
     if instance.id is None and instance.role == UserProjectBinding.RL_CREATOR:
         cleanname = standardize_str(p.name)
-        p.subpath = f'{cleanname}-{instance.user.username}'
-        p.save()
+        if p.subpath is None:
+            p.subpath = f'{cleanname}-{instance.user.username}'
+            p.save()
         FilesystemTask.objects.create(
             folder = fs.path_project(p),
             users_rw = code([instance.user]),

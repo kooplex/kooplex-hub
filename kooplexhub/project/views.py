@@ -26,22 +26,24 @@ def new(request):
         if form.is_valid():
             logger.info(form.cleaned_data)
             projectname = form.cleaned_data['name'].strip()
-            for upb in UserProjectBinding.objects.filter(user = request.user):
-                if upb.project.name == projectname:
-                    msg = f'Project name {projectname} is not unique'
-                    messages.error(request, msg)
-                    raise Exception(msg)
+            subpath = form.cleaned_data['subpath'].strip()
+            assert len(Project.objects.filter(subpath = subpath)) == 0, f'Project folder {subpath} is not unique'
+            assert len(UserProjectBinding.objects.filter(user = request.user, project__name = projectname)) == 0, f'Project name {projectname} is not unique'
             assert len(form.cleaned_data['environments']) > 0 or form.cleaned_data['image'], "either select an image or select some environments"
-            project = Project.objects.create(name = projectname, description = form.cleaned_data['description'], scope = form.cleaned_data['scope'])
+            
+            if subpath:
+                project = Project.objects.create(name = projectname, subpath = subpath, description = form.cleaned_data['description'], scope = form.cleaned_data['scope'])
+            else:
+                project = Project.objects.create(name = projectname, description = form.cleaned_data['description'], scope = form.cleaned_data['scope'])
             UserProjectBinding.objects.create(user = request.user, project = project, role = UserProjectBinding.RL_CREATOR)
-            messages.info(request, f'New project {project} is created')
+            messages.info(request, f'New {project}')
             if len(form.cleaned_data['environments']) > 0:
                 for svc in form.cleaned_data['environments']:
                     ProjectContainerBinding.objects.create(project = project, container = svc)
                     if svc.mark_restart(f'project {project.name} added'):
-                        messages.warning(request, f'Project {project} is added to running svc {svc.name}, which requires a restart to apply changes')
+                        messages.warning(request, f'Project {project.name} is added to running svc {svc.name}, which requires a restart to apply changes')
                     else:
-                        messages.info(request, f'Project {project} is added to svc {svc.name}')
+                        messages.info(request, f'Project {project.name} is added to svc {svc.name}')
             else:
                 image = form.cleaned_data['image']
                 svc = Container.objects.create(name = projectname, user = request.user, image = image)

@@ -1,6 +1,7 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
+from kooplexhub.lib import my_slug_validator, my_end_validator, my_alphanumeric_validator
 from container.models import Container, Image
 from ..models import Project
 
@@ -18,8 +19,16 @@ class FormProject(forms.Form):
     scope = forms.ChoiceField(choices = Project.SCP_LOOKUP.items(), help_text = _('Select the scope of the project'), required = True)
     name = forms.CharField(
             label = _("Project name"),
-            help_text = _('A short name you recall your project, but it has to be unique among your project names.'), 
-            max_length = 100, required = True, 
+            help_text = _('Name your project'), 
+            max_length = 200, required = True, 
+            )
+    subpath = forms.CharField(
+            label = _("Folder name"),
+            help_text = _('This folder is created for the project, which has to be unique. If left empty it is generated from the project name and username.'), 
+            validators = [
+                my_slug_validator('Enter a valid folder name containing only letters, numbers or dash.'),
+            ],
+            max_length = 200, required = False,
             )
     description = forms.CharField(
             max_length = 100, required = True,
