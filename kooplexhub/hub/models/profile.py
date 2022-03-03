@@ -51,7 +51,7 @@ class Profile(models.Model):
 
     @property
     def userid(self):
-        if self.user.is_admin:
+        if self.user.staff_status:
             return None
         return getpwnam(self.username).pw_uid
 
