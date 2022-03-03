@@ -60,32 +60,18 @@ def start(container):
         "configMap": { "name": "nslcd", "items": [{"key": "nslcd", "path": "nslcd.conf" }]}
     }]
 
-    # SLURM slurm.conf
-#FIXME
-#    if (mp_scratch is not None) and (container.image.imagetype == container.image.TP_PROJECT):
-#        volume_mounts.extend( [
-#            {"name": "slurmconf",
-#            "mountPath": '/etc/mntslurm/',
-#            "readOnly": True},
-#            {
-#            "name": "scratch",
-#            "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_scratch', '/v/scratch/{user.username}').format(user = container.user),
-#            "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_scratch', '{user.username}').format(user = container.user),
-#            }
-#            ] )
-#      
-#        volumes.extend([{
-#            "name": "slurmconf",
-#            "configMap": { "name": "slurm", "items": [
-#                {"key": "slurm", "path": "slurm.conf" },
-#                {"key": "munge", "path": "munge.key" },
-#                ]}
-#        },
-#            {
-#            "name": "scratch",
-#            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-scratch', 'scratch') }
-#        },
-#     ])
+    # jobs kubeconf
+    if container.user.profile.can_runjob:
+        volume_mounts.append({
+            "name": "kubeconf",
+            "mountPath": '/.secrets/kubeconfig/',
+            "readOnly": True})
+        env_variables.append({ "name": "KUBECONFIG", "value": "/.secrets/kubeconfig/config" })
+        volumes.append({
+            "name": "kubeconf",
+            "configMap": { "name": KOOPLEX['kubernetes'].get('kubeconfig_job', 'kubeconfig'), "items": [{"key": "kubejobsconfig", "path": "config" }]}
+        })
+
 
     claim_userdata = False
 
