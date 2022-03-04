@@ -59,6 +59,7 @@ def start(container):
         "configMap": { "name": "nslcd", "items": [{"key": "nslcd", "path": "nslcd.conf" }]}
     }]
 
+
     # jobs kubeconf
     if container.user.profile.can_runjob and container.image.access_kubeapi:
         env_variables.append({ "name": "KUBECONFIG", "value": "/.secrets/kubeconfig/config" })
@@ -71,6 +72,7 @@ def start(container):
             "name": "kubeconf",
             "configMap": { "name": KOOPLEX['kubernetes'].get('kubeconfig_job', 'kubeconfig'), "items": [{"key": "kubejobsconfig", "path": "config" }]}
         })
+
 
     # user's home and garbage
     claim_userdata = False
@@ -86,6 +88,17 @@ def start(container):
             "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_garbage', '/home/garbage').format(user = container.user),
             "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_garbage', 'garbage/{user.username}').format(user = container.user),
         }])
+    if claim_userdata:
+        volumes.extend([
+            {
+            "name": "home",
+            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-home', 'home') }
+        },
+            {
+            "name": "garbage",
+            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-garbage', 'garbage') }
+        }])
+
 
     # user's scratch folder
     if container.user.profile.has_scratch:
@@ -100,9 +113,11 @@ def start(container):
         })
 
 
+    # eduction
+    claim_edu = False
     for course in container.courses:
         logger.debug(f'mount course folders {course.name}')
-        claim_userdata = True
+        claim_edu = True
         volume_mounts.extend([{
             "name": "edu",
             "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_course_workdir', '/course/{course.folder}').format(course = course),
@@ -132,9 +147,15 @@ def start(container):
                 "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_course_assignment', '/course/{course.folder}.everyone').format(course = course),
                 "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_course_assignment', 'course_assignment/{course.folder}/{user.username}').format(course = course, user = container.user),
             }])#CORRECTDIR
+    if claim_edu:
+        volumes.append({
+            "name": "edu",
+            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-edu', 'edu') }
+        })
 
+
+    # project
     claim_project = False
-
     for project in container.projects:
         volume_mounts.extend([{
              "name": "project",
@@ -146,9 +167,15 @@ def start(container):
              "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_report_prepare', '{project.subpath}').format(project = project, user = container.user),
         }])
         claim_project = True
+    if claim_project:
+        volumes.append({
+            "name": "project",
+            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-project', 'project') }
+        })
 
+
+    # attachment
     claim_attachment = False
-
     for attachment in container.attachments:
         volume_mounts.extend([{
              "name": "attachment",
@@ -157,6 +184,12 @@ def start(container):
         }
         ])
         claim_attachment = True
+    if claim_attachment:
+        volumes.append({
+            "name": "attachment",
+            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-attachment', 'attachment') }
+        })
+
 
     claims = set()
     for volume in container.volumes:
@@ -169,45 +202,10 @@ def start(container):
     claimdict = lambda c: { "name": c, "persistentVolumeClaim": { "claimName": c } }
     volumes.extend(map(claimdict, claims))
 
-    if claim_userdata:
-        volumes.extend([
-            {
-            "name": "home",
-            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-home', 'home') }
-        },
-            {
-            "name": "garbage",
-            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-garbage', 'garbage') }
-        },
-            {
-            "name": "edu",
-            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-edu', 'edu') }
-        },
-            ])
-
-    if claim_project:
-        volumes.append(
-            {
-            "name": "project",
-            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-project', 'project') }
-        }
-            )
-
-    if claim_attachment:
-        volumes.append(
-            {
-            "name": "attachment",
-            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-attachment', 'attachment') }
-        }
-            )
 
 
 #    has_report = False
 #    has_cache = False
-#    has_attachment = False
-#
-#    if container.image.mount_project:
-#        groups = []
 #
 #    if container.image.mount_report:
 #        if container.image.imagetype == container.image.TP_PROJECT:
@@ -253,12 +251,6 @@ def start(container):
 #            "subPath": os.path.join('git', container.user.username, server, repo.clone_folder),
 #        })
 #        has_cache = True
-#
-#    if has_project:
-#        volumes.append({
-#            "name": "pv-k8plex-hub-project",
-#            "persistentVolumeClaim": { "claimName": "pvc-project-k8plex", }
-#        })
 #
 #    if has_report:
 #        volumes.append({
