@@ -6,7 +6,6 @@ from urllib.parse import urlparse
 from threading import Timer, Event
 
 from kooplexhub.lib import now
-from hub.lib.dirname import mp_scratch #FIXME
 from .proxy import addroute, removeroute
 
 try:
@@ -29,15 +28,15 @@ def start(container):
     config.load_kube_config()
     v1 = client.CoreV1Api()
 
-    pod_ports = []
-    svc_ports = []
     env_variables = [
         { "name": "LANG", "value": "en_US.UTF-8" },
         { "name": "PREFIX", "value": "k8plex" },
         { "name": "SSH_AUTH_SOCK", "value": f"/tmp/{container.user.username}" },
     ]
-    for env in container.env_variables:
-        env_variables.append(env)
+    env_variables.extend(container.env_variables)
+
+    pod_ports = []
+    svc_ports = []
     for proxy in container.proxies:
         pod_ports.append({
             "containerPort": proxy.port,
@@ -53,28 +52,28 @@ def start(container):
     volume_mounts = [{
         "name": "nslcd",
         "mountPath": KOOPLEX['kubernetes']['nslcd'].get('mountPath_nslcd', '/etc/mnt'),
-        "readOnly": True}]
-    
+        "readOnly": True
+    }]
     volumes = [{
         "name": "nslcd",
         "configMap": { "name": "nslcd", "items": [{"key": "nslcd", "path": "nslcd.conf" }]}
     }]
 
     # jobs kubeconf
-    if container.user.profile.can_runjob:
+    if container.user.profile.can_runjob and container.image.access_kubeapi:
+        env_variables.append({ "name": "KUBECONFIG", "value": "/.secrets/kubeconfig/config" })
         volume_mounts.append({
             "name": "kubeconf",
             "mountPath": '/.secrets/kubeconfig/',
-            "readOnly": True})
-        env_variables.append({ "name": "KUBECONFIG", "value": "/.secrets/kubeconfig/config" })
+            "readOnly": True
+        })
         volumes.append({
             "name": "kubeconf",
             "configMap": { "name": KOOPLEX['kubernetes'].get('kubeconfig_job', 'kubeconfig'), "items": [{"key": "kubejobsconfig", "path": "config" }]}
         })
 
-
+    # user's home and garbage
     claim_userdata = False
-
     if container.image.require_home:
         logger.debug('mount home')
         claim_userdata = True
