@@ -88,6 +88,19 @@ def start(container):
             "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_garbage', 'garbage/{user.username}').format(user = container.user),
         }])
 
+    # user's scratch folder
+    if container.user.profile.has_scratch:
+        volume_mounts.append({
+            "name": "scratch",
+            "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_scratch', '/v/scratch/{user.username}').format(user = container.user),
+            "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_scratch', '{user.username}').format(user = container.user),
+        })
+        volumes.append({
+            "name": "scratch",
+            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-scratch', 'scratch') }
+        })
+
+
     for course in container.courses:
         logger.debug(f'mount course folders {course.name}')
         claim_userdata = True

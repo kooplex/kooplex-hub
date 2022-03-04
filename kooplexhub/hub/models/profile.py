@@ -11,10 +11,11 @@ logger = logging.getLogger(__name__)
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete = models.CASCADE)
     token = models.CharField(max_length = 64, null = True)
-    can_createproject = models.BooleanField(default = True) 
-    can_createimage = models.BooleanField(default = False) 
-    can_createattachment = models.BooleanField(default = False) 
-    can_runjob = models.BooleanField(default = False) 
+    can_createproject = models.BooleanField(default = True)
+    can_createimage = models.BooleanField(default = False)
+    can_createattachment = models.BooleanField(default = False)
+    can_runjob = models.BooleanField(default = False)
+    has_scratch = models.BooleanField(default = False)
 
     search_project_list = models.CharField(max_length = 30, blank = True, null = True, default = "")
     search_project_join = models.CharField(max_length = 30, blank = True, null = True, default = "")
@@ -51,7 +52,7 @@ class Profile(models.Model):
 
     @property
     def userid(self):
-        if self.user.staff_status:
+        if hasattr(self.user, 'is_superuser') and (self.user.is_superuser == True):
             return None
         return getpwnam(self.username).pw_uid
 
