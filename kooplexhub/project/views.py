@@ -46,7 +46,7 @@ def new(request):
                         messages.info(request, f'Project {project.name} is added to svc {svc.name}')
             else:
                 image = form.cleaned_data['image']
-                svc = Container.objects.create(name = projectname, user = request.user, image = image)
+                svc = Container.objects.create(name = f"{request.user.username}-{project.subpath}", user = request.user, image = image)
                 ProjectContainerBinding.objects.create(project = project, container = svc)
                 messages.info(request, f'New service {svc.name} is created with image {svc.image.name}')
         else:
@@ -208,7 +208,7 @@ def join(request):
                 logger.info("%s joined project %s as a member" % (user, project))
                 for image_id in request.POST.getlist(f'image_ids_{project_id}'):
                     i = Image.objects.get(id = image_id)
-                    svc = Container.objects.create(user = user, image = i, name = f'{user.username}-{project.name}-{project.creator.username}')
+                    svc = Container.objects.create(user = user, image = i, name = f'{user.username}-{project.subpath}')
                     psb = ProjectContainerBinding.objects.create(project = project, container = svc)
                     logger.info(f'created service {svc} and binding {psb}')
                     svcs.append(svc)
@@ -284,7 +284,7 @@ def configure(request, project_id):
             # copy service information
             for sid in service_ids:
                 svc = ProjectContainerBinding.objects.get(id = sid, container__user = user).container
-                svc_copy = Container.objects.create(user = collaborator, image = svc.image, name = f'{b.user.username}-{project.name}-{user.username}')
+                svc_copy = Container.objects.create(user = collaborator, image = svc.image, name = f'{b.user.username}-{project.subpath}')
                 ProjectContainerBinding.objects.create(container = svc_copy, project = project)
                 #TODO: handle volumes
         # role change

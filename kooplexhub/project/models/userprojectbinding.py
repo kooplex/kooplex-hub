@@ -30,8 +30,12 @@ class UserProjectBinding(models.Model):
        return "%s-%s" % (self.project.name, self.user.username)
 
     @property
-    def uniquename(self):
+    def uniquename(self):#FIXME: deprecate
         return "%s-%s" % (self.project.uniquename, self.user.username)
+
+    @property
+    def groupname(self):
+        return f"p-{self.project.subpath}"
 
     def projectcontainerbindings(self):
         from ..models import ProjectContainerBinding

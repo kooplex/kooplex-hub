@@ -331,7 +331,7 @@ def start(container):
     return event
 
 
-def _check_starting(container_id, event, left = 1000):
+def _check_starting(container_id, event, left = 10):
     from container.models import Container
     try:
         container = Container.objects.get(id = container_id)
@@ -345,22 +345,17 @@ def _check_starting(container_id, event, left = 1000):
         event.set()
     elif chk == -1:
         logger.error(f'? pod of {container.label} oopsed {container.last_message}')
+    elif left == 0:
+        logger.warning(f'gave up on checking container {container.label}')
     else:
-        if left == 0:
-            logger.error(f'container {container.label} not started')
-            container.state = container.ST_ERROR
-            container.save()
-            return
-        Timer(.5, _check_starting, args = (container.id, event, left - 1)).start()
-        logger.debug(f'container {container.label} is still starting')
+        dt = 1.5 * max(1, 10 - left)
+        Timer(dt, _check_starting, args = (container.id, event, left - 1)).start()
+        logger.debug(f'container {container.label} is still starting check in {dt}')
 
 
 def stop(container):
     logger.debug(f"KKKK {container}")
     event = Event()
-    #FIXME
-    #event.set()
-    #return event
     container.state = container.ST_STOPPING
     config.load_kube_config()
     v1 = client.CoreV1Api()
@@ -409,7 +404,7 @@ def _check_stopping(container_id, event):
         event.set()
         logger.info(f'- pod of {container.label} is not present')
     else:
-        Timer(.5, _check_stopping, args = (container.id, event)).start()
+        Timer(1, _check_stopping, args = (container.id, event)).start()
         logger.debug(f'container {container.label} is still present')
 
 
