@@ -40,12 +40,13 @@ def start(container):
     for proxy in container.proxies:
         pod_ports.append({
             "containerPort": proxy.port,
-            "name": "http", 
+            "name": proxy.name, 
         })
         svc_ports.append({
             "port": proxy.port,
             "targetPort": proxy.port,
             "protocol": "TCP",
+            "name": proxy.name, 
         })
 
     # LDAP nslcd.conf
