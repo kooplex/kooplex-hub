@@ -19,7 +19,7 @@ class Project(models.Model):
     name = models.TextField(max_length = 200, null = False)
     description = models.TextField(null = True)
     scope = models.CharField(max_length = 16, choices = SCP_LOOKUP.items(), default = SCP_PRIVATE)
-    subpath = models.TextField(max_length = 200, null = True, unique = True)
+    subpath = models.CharField(max_length = 200, null = True, unique = True)
 
     def __str__(self):
         return "Project: {} ({}) created by {}; admins {} / collabs {}".format(
