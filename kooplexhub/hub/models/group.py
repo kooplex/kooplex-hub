@@ -28,5 +28,8 @@ class UserGroupBinding(models.Model):
     user = models.ForeignKey(User, null = False, on_delete = models.CASCADE)
     group = models.ForeignKey(Group, null = False, on_delete = models.CASCADE)
 
+    class Meta:
+        unique_together = [['user', 'group']]
+
     def __str__(self):
         return "{} in {}".format(self.user, self.group)
