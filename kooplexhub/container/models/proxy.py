@@ -17,14 +17,17 @@ logger = logging.getLogger(__name__)
 class Proxy(models.Model):
     name = models.CharField(max_length = 64, null = True)
     port = models.IntegerField(null = False)
-    path = models.CharField(max_length = 64, null = True)
-    path_open = models.CharField(max_length = 64, null = True)
+    path = models.CharField(max_length = 64, null = True, blank = True)
+    path_open = models.CharField(max_length = 64, null = True, blank = True)
     image = models.ForeignKey(Image, null = False, on_delete = models.CASCADE)
     default = models.BooleanField(default = True)
     token_as_argument = models.BooleanField(default = False)
  
+    class Meta:
+        unique_together = [['image', 'name']]
+
     def proxy_route(self, container):
-        return self.path.format(container = container)
+        return self.path.format(container = container) if self.path else None
 
     def url_internal(self, container):
         return KOOPLEX['proxy'].get('url_internal', 'http://{container.label}:{proxy.port}').format(container = container, proxy = self)

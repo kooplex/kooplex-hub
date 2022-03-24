@@ -20,6 +20,7 @@ class Image(models.Model):
     imagetype = models.CharField(max_length = 32, choices = TP_LOOKUP.items(), default = TP_PROJECT)
     description = models.CharField(max_length = 250, default = "description missing")
     dockerfile = models.TextField(max_length = 4096)
+    command = models.CharField(max_length = 250, default = "/entrypoint.sh")
     access_kubeapi = models.BooleanField(default = False)
 
     def __str__(self):

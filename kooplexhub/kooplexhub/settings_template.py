@@ -273,15 +273,20 @@ KOOPLEX = {
             'claim-scratch': 'pvc-scratch',
             'mountPath_scratch': '/v/scratch/',
             'subPath_scratch': '{user.username}',
-            # PROJECT
-            'claim-project': 'pvc-project',
+            #PROJECT
+            'claim-project': 'project',
+            'subPath_project': 'projects/{project.subpath}',
+            'mountPath_project': '/v/projects/{project.subpath}',
+            'subPath_report_prepare': 'report_prepare/{project.subpath}',
+            'mountPath_report_prepare': '/v/report_prepare/{project.subpath}',
+            #REPORT
             'claim-report': 'pvc-report',
-            'mountPath_project': '/v/projects/{project.uniquename}',
-            'subPath_project': 'projects',
-            'mountPath_report_prepare': '/v/report_prepare/{project.uniquename}',
-            'subPath_report_prepare': 'report_prepare/{project.uniquename}',
-            'mountPath_report': '/v/reports/{report.uniquename}',
             'subPath_report': 'reports',
+            'mountPath_report': '/v/reports/{report.uniquename}',
+            #ATTACHMENT
+            'claim-attachment': 'attachments',
+            'subPath_attachment': '{attachment.folder}',
+            'mountPath_attachment': '/v/attachments/{attachment.folder}',
             # EDU
             'claim-edu': 'pvc-edu',
             'mountPath_course_workdir': '/v/courses/{course.folder}',
@@ -296,8 +301,10 @@ KOOPLEX = {
             'mountPath_course_assignment_correct': '/v/courses/{course.folder}.correct',
             'subPath_course_assignment_correct': 'course_assignments/{course.folder}/correctdir/{user.username}',
             'subPath_course_assignment_correct_all': 'course_assignments/{course.folder}/correctdir',
-            # VOLUMES
-            'mountPath_volumes': '/v/volumes/{volume.cleanname}',
+            # VOLUME
+            'mountPath_volume': '/v/volumes/{volume.cleanname}',
+            # KUBE JOBS CONFIG
+            'mountPath_kubejobsconfig': '/etc/kubejobsconfig'
         },
         'cache': {
             'claim': 'pvc-cache',

@@ -2,6 +2,7 @@ import logging
 import os
 import json
 from kubernetes import client, config
+from kubernetes.client import *
 from urllib.parse import urlparse
 from threading import Timer, Event
 
@@ -30,8 +31,7 @@ def start(container):
 
     env_variables = [
         { "name": "LANG", "value": "en_US.UTF-8" },
-        { "name": "PREFIX", "value": "k8plex" },
-        { "name": "SSH_AUTH_SOCK", "value": f"/tmp/{container.user.username}" },
+        { "name": "SSH_AUTH_SOCK", "value": f"/tmp/{container.user.username}" }, #FIXME: move to db
     ]
     env_variables.extend(container.env_variables)
 
@@ -50,29 +50,45 @@ def start(container):
         })
 
     # LDAP nslcd.conf
+            #V1VolumeMount(name="nslcd", mount_path='/etc/mnt'),
     volume_mounts = [{
         "name": "nslcd",
         "mountPath": KOOPLEX['kubernetes']['nslcd'].get('mountPath_nslcd', '/etc/mnt'),
         "readOnly": True
     }]
+#            V1Volume(name="nslcd", config_map=V1ConfigMapVolumeSource(name="nslcd", default_mode=420, items=[V1KeyToPath(key="nslcd", path='nslcd.conf')])),
     volumes = [{
         "name": "nslcd",
         "configMap": { "name": "nslcd", "items": [{"key": "nslcd", "path": "nslcd.conf" }]}
     }]
 
+    volume_mounts.append(V1VolumeMount(name="initscripts", mount_path="/.init_scripts"))
+            
+    volumes.extend([
+            V1Volume(name="initscripts", config_map=V1ConfigMapVolumeSource(name="initscripts", default_mode=0o777, items=[
+                V1KeyToPath(key="nsswitch",path="01-nsswitch"),
+                V1KeyToPath(key="nslcd",path="02-nslcd"),
+                V1KeyToPath(key="usermod",path="03-usermod"),
+                V1KeyToPath(key="startnotebook",path="99-startnotebook")]))
+    #        V1Volume(name="initscripts", config_map=V1ConfigMapVolumeSource(name="initscripts", default_mode=0o777, items=[V1KeyToPath(key="entrypoint",path="entrypoint.sh")]))
+            ])
+            
 
     # jobs kubeconf
     if container.user.profile.can_runjob and container.image.access_kubeapi:
         env_variables.append({ "name": "KUBECONFIG", "value": "/.secrets/kubeconfig/config" })
-        volume_mounts.append({
-            "name": "kubeconf",
+        volume_mounts.append(
+#             volume_mounts.append(V1VolumeMount(name="kubeconf", mount_path="/.secrets/kubeconfig", read_only=True))
+               { "name": "kubeconf",
             "mountPath": '/.secrets/kubeconfig/',
-            "readOnly": True
-        })
-        volumes.append({
-            "name": "kubeconf",
-            "configMap": { "name": KOOPLEX['kubernetes'].get('kubeconfig_job', 'kubeconfig'), "items": [{"key": "kubejobsconfig", "path": "config" }]}
-        })
+            "readOnly": True }
+             )
+
+        volumes.append(
+            V1Volume(name="kubeconf", config_map=V1ConfigMapVolumeSource(name=KOOPLEX['kubernetes'].get('kubeconfig_job', 'kubeconfig'), items=[V1KeyToPath(key="kubejobsconfig",path="config")]))
+#                {"name": "kubeconf",
+#            "configMap": { "name": KOOPLEX['kubernetes'].get('kubeconfig_job', 'kubeconfig'), "items": [{"key": "kubejobsconfig", "path": "config" }]}}
+                )
 
 
     # user's home and garbage
@@ -277,6 +293,7 @@ def start(container):
             "spec": {
                 "containers": [{
                     "name": container.label,
+                    "command": ["/bin/bash", "-c", container.image.command],
                     "image": container.image.name,
                     "volumeMounts": volume_mounts,
                     "ports": pod_ports,
