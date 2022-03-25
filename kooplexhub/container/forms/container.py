@@ -18,7 +18,7 @@ class FormContainer(forms.Form):
                     my_alphanumeric_validator('Enter a valid container name containing only letters and numbers.'),
                 ],
             )
-    image = forms.ModelChoiceField(queryset = Image.objects.filter(imagetype = Image.TP_PROJECT), help_text = _('Please select an image to the new container environment.'), required = True, empty_label = 'Select image...')
+    image = forms.ModelChoiceField(queryset = Image.objects.filter(imagetype = Image.TP_PROJECT, present=True), help_text = _('Please select an image to the new container environment.'), required = True, empty_label = 'Select image...')
 
     def __init__(self, *args, **kwargs):
         super(FormContainer, self).__init__(*args, **kwargs)
