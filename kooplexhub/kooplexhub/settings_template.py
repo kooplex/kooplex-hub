@@ -251,6 +251,7 @@ KOOPLEX = {
     },
     'kubernetes': {
         'namespace': '',
+        'jobsnamespace': '',
         'imagePullPolicy': 'Always',
         'nslcd': {
             'mountPath_nslcd': '/etc/mnt'

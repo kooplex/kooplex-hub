@@ -68,8 +68,7 @@ def start(container):
             V1Volume(name="initscripts", config_map=V1ConfigMapVolumeSource(name="initscripts", default_mode=0o777, items=[
                 V1KeyToPath(key="nsswitch",path="01-nsswitch"),
                 V1KeyToPath(key="nslcd",path="02-nslcd"),
-                V1KeyToPath(key="usermod",path="03-usermod"),
-                V1KeyToPath(key="startnotebook",path="99-startnotebook")]))
+                V1KeyToPath(key="usermod",path="03-usermod")]))
     #        V1Volume(name="initscripts", config_map=V1ConfigMapVolumeSource(name="initscripts", default_mode=0o777, items=[V1KeyToPath(key="entrypoint",path="entrypoint.sh")]))
             ])
             
@@ -77,6 +76,7 @@ def start(container):
     # jobs kubeconf
     if container.user.profile.can_runjob and container.image.access_kubeapi:
         env_variables.append({ "name": "KUBECONFIG", "value": "/.secrets/kubeconfig/config" })
+        env_variables.append({ "name": "NS_JOBS", "value": KOOPLEX['kubernetes'].get('jobsnamespace', 'kube-jobs') })
         volume_mounts.append(
 #             volume_mounts.append(V1VolumeMount(name="kubeconf", mount_path="/.secrets/kubeconfig", read_only=True))
                { "name": "kubeconf",
