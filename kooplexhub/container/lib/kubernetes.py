@@ -293,7 +293,7 @@ def start(container):
             "spec": {
                 "containers": [{
                     "name": container.label,
-                    "command": ["/bin/bash", "-c", container.image.command],
+                    "command": ["/bin/bash", "-c", f"chmod a+x {container.image.command}; {container.image.command}"],                   
                     "image": container.image.name,
                     "volumeMounts": volume_mounts,
                     "ports": pod_ports,
