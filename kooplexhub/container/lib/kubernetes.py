@@ -68,7 +68,8 @@ def start(container):
             V1Volume(name="initscripts", config_map=V1ConfigMapVolumeSource(name="initscripts", default_mode=0o777, items=[
                 V1KeyToPath(key="nsswitch",path="01-nsswitch"),
                 V1KeyToPath(key="nslcd",path="02-nslcd"),
-                V1KeyToPath(key="usermod",path="03-usermod")]))
+                V1KeyToPath(key="usermod",path="03-usermod"),
+                V1KeyToPath(key="jobtools",path="11-jobtools")]))
     #        V1Volume(name="initscripts", config_map=V1ConfigMapVolumeSource(name="initscripts", default_mode=0o777, items=[V1KeyToPath(key="entrypoint",path="entrypoint.sh")]))
             ])
             
@@ -78,18 +79,18 @@ def start(container):
         env_variables.append({ "name": "KUBECONFIG", "value": "/.secrets/kubeconfig/config" })
         env_variables.append({ "name": "NS_JOBS", "value": KOOPLEX['kubernetes'].get('jobsnamespace', 'kube-jobs') })
         volume_mounts.append(
-#             volume_mounts.append(V1VolumeMount(name="kubeconf", mount_path="/.secrets/kubeconfig", read_only=True))
-               { "name": "kubeconf",
-            "mountPath": '/.secrets/kubeconfig/',
-            "readOnly": True }
+             V1VolumeMount(name="kubeconf", mount_path="/.secrets/kubeconfig", read_only=True)
+             )
+        volume_mounts.append(
+             V1VolumeMount(name="jobtools", mount_path="/etc/jobtools", read_only=True)
              )
 
         volumes.append(
             V1Volume(name="kubeconf", config_map=V1ConfigMapVolumeSource(name=KOOPLEX['kubernetes'].get('kubeconfig_job', 'kubeconfig'), items=[V1KeyToPath(key="kubejobsconfig",path="config")]))
-#                {"name": "kubeconf",
-#            "configMap": { "name": KOOPLEX['kubernetes'].get('kubeconfig_job', 'kubeconfig'), "items": [{"key": "kubejobsconfig", "path": "config" }]}}
+            )
+        volumes.append(
+            V1Volume(name=f"jobtools",persistent_volume_claim = V1PersistentVolumeClaimVolumeSource(claim_name="job-tools" , read_only=True))
                 )
-
 
     # user's home and garbage
     claim_userdata = False
@@ -130,7 +131,7 @@ def start(container):
         })
 
 
-    # eduction
+    # education
     claim_edu = False
     for course in container.courses:
         logger.debug(f'mount course folders {course.name}')
