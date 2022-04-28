@@ -383,6 +383,10 @@ class TableAssignmentMass(tables.Table):
   <label class="form-check-label" for="correct-{idx}"> <span class="bi bi-check-square-fill"> {n}</span></label>
 </div>
         """)
+    def render_correcting(self, record):
+        students = set(self.groups[record]).intersection([ b.user for b in self.uab.filter(state = UserAssignmentBinding.ST_CORRECTED) ])
+        n = len(students)
+        return format_html(f"<div>{n}</div>")
     def render_reassign(self, record):
         idx = 'n' if record is None else record.id
         students = set(self.groups[record]).intersection([ b.user for b in self.uab.filter(state = UserAssignmentBinding.ST_READY) ])
@@ -398,6 +402,7 @@ class TableAssignmentMass(tables.Table):
     handout = tables.Column(orderable = False, empty_values = ())
     collect = tables.Column(orderable = False, empty_values = ())
     correct = tables.Column(orderable = False, empty_values = ())
+    correcting = tables.Column(orderable = False, empty_values = ())
     reassign = tables.Column(orderable = False, empty_values = ())
     class Meta:
         attrs = { 
@@ -481,6 +486,15 @@ class TableAssignmentMassAll(tables.Table):
             """)
         return format_html("<br>".join( rows ))
 
+    def render_correcting(self, record):
+        rows = []
+        uab = UserAssignmentBinding.objects.filter(assignment__id = record.id)
+        for k, v in  record.course.groups.items():
+            students = set(v).intersection([ b.user for b in uab.filter(state = UserAssignmentBinding.ST_CORRECTED) ])
+            n = len(students)
+            rows.append(f"<div>{n}</div>")
+        return format_html("<br>".join( rows ))
+
     def render_reassign(self, record):
         rows = []
         uab = UserAssignmentBinding.objects.filter(assignment__id = record.id)
@@ -501,12 +515,13 @@ class TableAssignmentMassAll(tables.Table):
     group = tables.Column(orderable = False, empty_values = ())
     handout = tables.Column(orderable = False, empty_values = ())
     collect = tables.Column(orderable = False, empty_values = ())
+    correcting = tables.Column(orderable = False, empty_values = ())
     correct = tables.Column(orderable = False, empty_values = ())
     reassign = tables.Column(orderable = False, empty_values = ())
 
     class Meta:
         model = Assignment
-        fields = ('course', 'group', 'handout', 'collect', 'correct', 'reassign')
+        fields = ('course', 'group', 'handout', 'collect', 'correct', 'correcting', 'reassign')
         attrs = { 
                  "class": "table table-bordered", 
                  "thead": { "class": "thead-dark table-sm" }, 
