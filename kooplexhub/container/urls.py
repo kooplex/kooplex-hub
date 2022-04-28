@@ -9,7 +9,6 @@ urlpatterns = [
     re_path('^delete/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)/?', views.destroy, name = 'destroy'),
     path('list/', views.ContainerListView.as_view(), name = 'list'),
     path('layoutflip/', views.layout_flip, name = 'layout_flip'),
-    path('setpagination/', views.set_pagination, name = 'set_pagination'),
     re_path('^configure/(?P<container_id>\d+)/?', views.configure, name = 'configure'),
 
     re_path('^start/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)/?', views.start, name = 'start'),

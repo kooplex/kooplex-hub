@@ -10,7 +10,6 @@ urlpatterns = [
     path('list/', views.UserProjectBindingListView.as_view(), name = 'list'),
     path('join/', views.join, name = 'join'),
     path('layoutflip/', views.layout_flip, name = 'layout_flip'),
-    path('setpagination/', views.set_pagination, name = 'set_pagination'),
     re_path('hide/(?P<project_id>\d+)/?$', views.hide, name = 'hide'),
     re_path('show/(?P<project_id>\d+)/?$', views.show, name = 'show'),
     path('showhide/', views.show_hide, name = 'showhide'),

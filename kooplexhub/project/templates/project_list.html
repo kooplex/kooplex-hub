@@ -1,27 +1,85 @@
 {% extends "layout.html" %}
 
-{% block submenu %}
-  {% include 'project_submenu.html' with title="The list of your projects" submenu="list" %}
+{% load static %}
+
+{% block chardinhelp %}
+<link type="text/css" href="{% static 'chardinjs/chardinjs.css' %}" rel="stylesheet">
+<script src="{% static 'chardinjs/chardinjs.js' %}" type="text/javascript"></script>
+<script>
+   (function() {
+     $(function() {
+       $('body').chardinJs({
+         'attribute': 'data-intro',
+         url: "{% static 'chardinjs/menueducation_env.json' %}"
+       });
+   
+       // or trigger via an anchor tag
+       $('a[data-toggle="chardinjs"]').on('click', function (e) {
+         e.preventDefault();
+         $("div.envcard:first").find(".collapse").addClass('show');
+         return ($('body').data('chardinJs')).toggle();
+       });
+   
+         return $('body').on('chardinJs:stop', function () {
+         //$("div.envcard:first").find(".collapse").removeClass('show');
+
+       });
+
+     });
+   }).call(this);
+</script>
+
+<script>
+  function myFunction() {
+      var input, filter, ul, li, a, i, txtValue;
+      input = document.getElementById("myInput");
+      filter = input.value.toUpperCase();
+      ul = document.getElementById("projectListPane");
+      li = ul.getElementsByTagName("div");
+      for (i = 0; i < li.length; i++) {
+  a = li[i]; 
+  atag = li[i].getAttribute("class");   
+  if (atag.indexOf("search") > -1) {
+    //console.log(a);
+    txtValue = a.id;
+                      if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                          li[i].style.display = "";
+                      } else {
+                          li[i].style.display = "none";
+                      }
+  }
+      }
+  }
+</script>
 {% endblock %}
 
+{% block submenu %}
+  {% include 'project_submenu.html' with title="Projects" submenu="list" %}
+{% endblock %}
+
+
 {% block main_content_right %}
+
+<input class="form-control me-2 mb-3 mt-3" type="text" id="myInput" onkeyup="myFunction()" placeholder="Search project" title="Type in a name" autofocus data-intro="#search_project">
+
+
 {% if user.profile.layout_project_list %}
-<div id="projectListPane">
-  <input type="hidden" id="shown" name="shown" value="{{ expanded }}">
+<div id="projectListPane" data-intro="#project_list" style="cursor: pointer;">
   {% for upb in userprojectbindinglist %}
   {% include 'project_partial_list.html' with next_page='project:list' project=upb.project projectcontainerbindings=upb.projectcontainerbindings is_admin=upb.is_admin %}
   {% endfor %}
 </div>
 {% else %}
+<div id="projectListPane" data-intro="#project_list" style="cursor: pointer;">
 <div class="row row-cols-1 row-cols-md-3 g-4">
   {% for upb in userprojectbindinglist %}
   {% include 'project_partial_card.html' with next_page='project:list' project=upb.project projectcontainerbindings=upb.projectcontainerbindings is_admin=upb.is_admin %}
   {% endfor %}
 </div>
+</div>
 {% endif %}
 
 {% if userprojectbindinglist|length %}
-{% include 'pager.html' %}
 {% else %}
 <p>Your search expression is too strict to match a project or else you have not created any projects yet.</p>
 {% endif %}
@@ -64,10 +122,4 @@ $("#projectListPane div div div").on("click", function () {
   {#% include 'project/hint_list.html' %#}
 {% endblock %}
 
-{% block navsearch %}
-<form class="d-flex" action="{% url 'project:list' %}" method="get">
-  {#% csrf_token %#}
-  <input class="form-control me-2" type="search" name="project" placeholder="Search project" value="{{ user.profile.search_project_list }}" aria-label="Search">
-  <button class="btn btn-outline-secondary" type="submit" name="button" value="search">Search</button>
-</form>
-{% endblock %}
+

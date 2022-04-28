@@ -1,20 +1,24 @@
 {% load buttons %}
 {% load project_buttons %}
 
-<div class="card bg-light border-info shadow mb-3">
-  <div class="card-header">
-    <div class="row">
-      <div class="col-1">
+<div class="card bg-light border-info shadow mb-3 search" id="{{ project.name }}">
+  <div class="card-header" style="background-color:initial" onpointerenter="this.setAttribute('style', 'background-color: white')" onpointerleave="this.setAttribute('style', 'background-color: initial')">
+    <div class="row" style="color: black" onpointerenter="this.setAttribute('style', 'font-weight: bold')" onpointerleave="this.setAttribute('style', 'color: black')">
+     <div class="col-11" data-bs-toggle="collapse" data-bs-target="#collapse-{{ project.id }}" aria-expanded="false" aria-controls="collapse-{{ project.id }}" style="cursor: pointer; display: flex; flex-wrap: wrap; justify-content: space-between">
+      <div style="display:flex">
         {% dropdown_start_open_stop bindings=projectcontainerbindings ancestor=project ancestor_type='project' next_page='project:list' %}
-      </div>
-      <div class="col-11" data-bs-toggle="collapse" data-bs-target="#collapse-{{ project.id }}" aria-expanded="false" aria-controls="collapse-{{ project.id }}">
-        {{ project.name }}
-        <div class="float-end">
-          {% scope project %}
+        <div>
+          <span style="margin-left: 10px">{{ project.name }}</span> <i>(folder name: {{ project.subpath }})</i>
         </div>
       </div>
+      <div class="float-end">
+        {% scope project %}
+      </div>
+    </div>
     </div>
   </div> <!-- card header -->
+
+
   <div class="collapse" id="collapse-{{ project.id }}">
     <div class="card card-body">
       {% if project.creator != user %}
@@ -23,7 +27,7 @@
       <p class="card-text"><strong>Description:</strong> {{ project.description }}</p>
       <p class="card-text">
        <div class="btn-group" role="group">
-	<strong>Info:</strong>
+        <p class="card-text"><strong>Info:</strong></p>
         {% include 'reports_button.html' %}
         {% button_collaborator project user %}
        </div>

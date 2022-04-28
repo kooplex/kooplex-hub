@@ -2,21 +2,84 @@
 {% load render_table from django_tables2 %}
 
 {% block submenu %}
-  {% include 'project_submenu.html' with title="Show or hide your projects" submenu="showhide" %}
+  {% include 'project_submenu.html' with title="Projects" submenu="showhide" %}
+{% endblock %}
+
+{% load static %}
+
+{% block chardinhelp %}
+<link type="text/css" href="{% static 'chardinjs/chardinjs.css' %}" rel="stylesheet">
+<script src="{% static 'chardinjs/chardinjs.js' %}" type="text/javascript"></script>
+<script>
+   (function() {
+     $(function() {
+       $('body').chardinJs({
+         'attribute': 'data-intro',
+         url: "{% static 'chardinjs/menueducation_env.json' %}"
+       });
+   
+       // or trigger via an anchor tag
+       $('a[data-toggle="chardinjs"]').on('click', function (e) {
+         e.preventDefault();
+         $("div.envcard:first").find(".collapse").addClass('show');
+         return ($('body').data('chardinJs')).toggle();
+       });
+   
+         return $('body').on('chardinJs:stop', function () {
+         //$("div.envcard:first").find(".collapse").removeClass('show');
+
+       });
+
+     });
+   }).call(this);
+</script>
+
+<script>
+  function myFunction() {
+      var input, filter, ul, li, a, i, txtValue;
+      input = document.getElementById("myInput");
+      filter = input.value.toUpperCase();
+      ul = document.getElementById("projectListPane");
+      li = ul.getElementsByTagName("div");
+      for (i = 0; i < li.length; i++) {
+  a = li[i]; 
+  atag = li[i].getAttribute("class");   
+  if (atag.indexOf("search") > -1) {
+    //console.log(a);
+    txtValue = a.id;
+                      if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                          li[i].style.display = "";
+                      } else {
+                          li[i].style.display = "none";
+                      }
+  }
+      }
+  }
+</script>
 {% endblock %}
 
 {% block main_content_right %}
-  <form id="project-manage" class="form-horizontal" action="{% url 'project:showhide' %}" method="post">
-    {% csrf_token %}
-    <h5>Use the switch to hide or show some of your projects</h5>
-    {% if t_project.data|length > 0 %}
-      {% render_table t_project %}
-      {#% include 'pager.html' %#}
-      {% include 'apply_cancel.html' %}
-    {% else %}
-      <p>You do not have any projects to hide or show.</p>
-    {% endif %}
-  </form>
+{% block navsearch %}
+<form class="d-flex mb-3 mt-3" action="{% url 'project:showhide' %}" method="post">
+  {% csrf_token %}
+  <input data-intro="#search_project" class="form-control me-2" type="search" name="project" placeholder="Search project" value="{{ user.profile.search_project_showhide }}" aria-label="Search">
+  <button class="btn btn-outline-secondary" type="submit" name="button" value="search">Search</button>
+</form>
+{% endblock %}
+<form id="project-manage" class="form-horizontal" action="{% url 'project:showhide' %}" method="post">
+  {% csrf_token %}
+  <h5 data-intro="#project_list">Use the switch to hide or show some of your projects</h5>
+  {% if t_project.data|length > 0 %}
+  <div id="projectListPane">
+    {% render_table t_project %}
+    {#% include 'pager.html' %#}
+    {% include 'apply_cancel.html' %}
+  </div>
+  {% else %}
+    <p>You do not have any projects to hide or show.</p>
+  {% endif %}
+</form>
+
 
 {% endblock %}
 
@@ -24,10 +87,41 @@
   {#% include 'project/hint_list.html' %#}
 {% endblock %}
 
-{% block navsearch %}
-<form class="d-flex" action="{% url 'project:showhide' %}" method="post">
-  {% csrf_token %}
-  <input class="form-control me-2" type="search" name="project" placeholder="Search project" value="{{ user.profile.search_project_showhide }}" aria-label="Search">
-  <button class="btn btn-outline-secondary" type="submit" name="button" value="search">Search</button>
-</form>
-{% endblock %}
+
+
+{% comment %}
+<input class="form-control me-2 mb-3 mt-3" type="text" id="search_project" placeholder="Search project" title="Type in a name">
+
+
+<script>  
+  $("#search_project").keyup(function() {
+    var pattern = $( this ).val().toUpperCase();
+    console.log( "search student: " + pattern );
+    $( "#project-manage" ).find('tr').each(function() {
+      if ( $( this ).parent().is("thead") ) {
+        return;
+      }
+      var hide_it = true;
+      if (pattern.length > 0) {
+        $( this ).find("input[name='search_project'").each(function() {
+          var name = $( this ).val().toUpperCase();
+          if ( name.indexOf(pattern) > -1 ) {
+      hide_it = false;
+          }
+        });
+      } else {
+        hide_it = false;
+      }
+      if (hide_it) {
+        $( this ).hide();
+      } else {
+        $( this ).show();
+      }
+    });
+  });
+  </script>
+
+
+
+
+{% endcomment %}

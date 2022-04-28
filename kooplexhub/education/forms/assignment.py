@@ -72,7 +72,8 @@ class FormAssignment(forms.ModelForm):
         course = kwargs.pop('course', None)
         user = kwargs.pop('user', None)
         super(FormAssignment, self).__init__(*args, **kwargs)
-        self.fields["folder"].choices = map(lambda x: (x, x), course.dir_assignmentcandidate())
+        folders = course.dir_assignmentcandidate()
+        self.fields["folder"].choices = map(lambda x: (x, x), folders)
         for field in self.fields:
             help_text = self.fields[field].help_text
             self.fields[field].help_text = None
@@ -94,7 +95,7 @@ class FormAssignment(forms.ModelForm):
         self.fields['expires_at'].widget.attrs["class"] = "form-control datetimepicker span2"
 
         self.course = course
-        self.okay = len(course.dir_assignmentcandidate()) > 0
+        self.okay = len(folders) > 0
         self.folder_usercontainer = KOOPLEX['kubernetes']['userdata'].get('mountPath_course_assignment_prepare', '/course/{course.folder}.prepare').format(course = course)
 
 

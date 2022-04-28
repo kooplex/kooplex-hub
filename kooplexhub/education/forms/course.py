@@ -6,7 +6,6 @@ from ..models import Course
 
 from kooplexhub.lib import my_slug_validator, my_end_validator
 
-
 class MyDescription(forms.Textarea):
     def __init__(self, *args, **kwargs):
         super(MyDescription, self).__init__(*args, **kwargs)

@@ -1,38 +1,27 @@
 {% load drag %}
 
-<div class="container">
-  <h6>Group students</h6>
+  <h4>Group of students</h4>
 
+<div class="container-fluid">
   <div class="row">
-    <div class="col-sm-6">
-      <div id="modules">
-        <h6>Ungrouped students</h6>
-        {% for ucb in student_group_map.ungrouped %}
-          {{ ucb|drag }}
-        {% endfor %}
-      </div>
-    </div>
-
-    <div class="col-sm-6">
-      {% for g in student_group_map.groups.items %}
-        {{ g|dropgroup }}
-      {% endfor %}
-    </div>
+    {% for a in student_group_map.items %}
+      {{ a|dropgroup }}
+    {% endfor %}
   </div>
 </div>
 
 
 <style>
-#modules {
-  padding: 20px;
-  background: #eee;
-  margin-bottom: 20px;
-  z-index: 1;
+.col {
+  padding: 5px;
+  margin: 5px;
   border-radius: 10px;
 }
 
 .drag {
   border: solid 1px;
+  background: #efefef;
+  z-index: 5;
 }
 
 .dropzone {

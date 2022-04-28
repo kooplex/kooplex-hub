@@ -1,14 +1,78 @@
 {% extends "layout.html" %}
 
-{% block submenu %}
-  {% include 'education_submenu.html' with title="Courses you teach" submenu="teacher" %}
+{% load static %}
+
+
+{% block chardinhelp %}
+
+<script>
+  function myFunction() {
+      var input, filter, ul, li, a, i, txtValue;
+      input = document.getElementById("myInput");
+      filter = input.value.toUpperCase();
+      ul = document.getElementById("containerListPane");
+      li = ul.getElementsByTagName("div");
+      for (i = 0; i < li.length; i++) {
+  a = li[i]; 
+  atag = li[i].getAttribute("class");   
+  if (atag.indexOf("search") > -1) {
+    //console.log(a);
+    txtValue = a.id;
+                      if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                          li[i].style.display = "";
+                      } else {
+                          li[i].style.display = "none";
+                      }
+  }
+      }
+  }
+
+</script>
+<link type="text/css" href="{% static 'chardinjs/chardinjs.css' %}" rel="stylesheet">
+<script src="{% static 'chardinjs/chardinjs.js' %}" type="text/javascript"></script>
+<script>
+   (function() {
+     $(function() {
+       $('body').chardinJs({
+         'attribute': 'data-intro',
+         url: "{% static 'chardinjs/listofcourses.json' %}"
+       });
+   
+       // or trigger via an anchor tag
+       $('a[data-toggle="chardinjs"]').on('click', function (e) {
+         e.preventDefault();
+         $("div.envcard:first").find(".collapse").addClass('show');
+         return ($('body').data('chardinJs')).toggle();
+       });
+   
+         return $('body').on('chardinJs:stop', function () {
+         //$("div.envcard:first").find(".collapse").removeClass('show');
+
+       });
+
+     });
+   }).call(this);
+</script>
 {% endblock %}
+
+
+
+
+{% block submenu %}
+  {% include 'education_submenu.html' with title="Education" submenu="teacher" %}
+{% endblock %}
+
 
 {% block main_content_right %}
 
+<input class="form-control me-2 mb-3 mt-3" type="text" id="myInput" onkeyup="myFunction()" placeholder="Search course" title="Type in a name" autofocus data-intro="#searchforcourses">
+
+
+<div id="containerListPane" data-intro="#course_list">
   {% for ucb in teachercoursebindinglist %}
      {% include 'course_partial_list.html' with next_page='education:student' course=ucb.course coursecontainerbindings=ucb.coursecontainerbindings is_teacher=True tooltip="Manage assignments" %}
   {% endfor %}
+</div>
 
 {% endblock %}
 
@@ -17,11 +81,4 @@
   {#% include 'project/hint_join.html' %#}
 {% endblock %}
 
-{% block navsearch %}
-<form class="d-flex" action="{% url 'project:join' %}" method="get">
-  {#% csrf_token %#}
-  <input class="form-control me-2" type="search" name="project_or_creator" placeholder="Search project/creator" value="{{ user.profile.search_project_join }}" aria-label="Search">
-  <button class="btn btn-outline-secondary" type="submit" name="button" value="search">Search</button>
-</form>
-{% endblock %}
 {% endcomment %}

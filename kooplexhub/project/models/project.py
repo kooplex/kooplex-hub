@@ -5,7 +5,6 @@ from django.contrib.auth.models import User
 
 logger = logging.getLogger(__name__)
 
-
 class Project(models.Model):
     SCP_PUBLIC = 'public'
     SCP_INTERNAL = 'internal'
@@ -21,11 +20,9 @@ class Project(models.Model):
     scope = models.CharField(max_length = 16, choices = SCP_LOOKUP.items(), default = SCP_PRIVATE)
     subpath = models.CharField(max_length = 200, null = True, unique = True)
 
+
     def __str__(self):
-        return "Project: {} ({}) created by {}; admins {} / collabs {}".format(
-                self.name, self.subpath, self.creator, 
-                len(self.admins), len(self.collaborators)
-                )
+        return self.name 
 
     def __lt__(self, p):
         return self.name < p.name

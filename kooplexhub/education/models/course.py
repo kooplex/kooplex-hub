@@ -26,11 +26,17 @@ class Course(models.Model):
     @property
     def groups(self):
         from ..models import CourseGroup
-        return CourseGroup.objects.filter(course = self)
+        students = set([ b.user for b in self.studentbindings ])
+        groups = dict([ (g, g.students()) for g in CourseGroup.objects.filter(course = self) ])
+        for g in groups.values():
+            students.difference_update(g)
+        if len(students):
+            groups[None] = students
+        return groups
 
     @register.filter
     def csv_groups(self):
-        return ', '.join(map(lambda x: x.name, self.groups))
+        return ', '.join(map(lambda x: f'{"ungrouped" if x[0] is None else x[0].name} ({len(x[1])} students)', self.groups.items()))
 
     @property
     def coursecodes(self):

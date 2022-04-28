@@ -70,14 +70,6 @@ def layout_flip(request):
     return redirect('container:list')
 
 
-@login_required
-def set_pagination(request):
-    profile = request.user.profile
-    profile.paginate_container_list = max(1, int(request.POST.get('paginate_by')))
-    profile.save()
-    return redirect('container:list')
-
-
 class ContainerListView(LoginRequiredMixin, generic.ListView):
     template_name = 'container_list.html'
     context_object_name = 'containers'
@@ -86,7 +78,6 @@ class ContainerListView(LoginRequiredMixin, generic.ListView):
     def get_queryset(self):
         user = self.request.user
         profile = user.profile
-        self.paginate_by = profile.paginate_container_list
         pattern = self.request.GET.get('container', profile.search_container_list)
         if pattern:
             containers = Container.objects.filter(user = user, name__icontains = pattern).order_by('name')
@@ -106,7 +97,6 @@ class AttachmentListView(LoginRequiredMixin, generic.ListView):
     def get_queryset(self):
         user = self.request.user
         profile = user.profile
-   #     self.paginate_by = profile.paginate_container_list
         pattern = self.request.GET.get('attachment', profile.search_attachment_list)
         if pattern:
             attachments = Attachment.objects.filter(name__icontains = pattern).order_by('name')

@@ -18,22 +18,25 @@ def group_warnings(request):
     user = request.user
     if not user.is_authenticated:
         return {}
-    empty = []
-    ungrouped = {}
-    for c in user.profile.courses_taught():
-        students = set([ s.user for s in c.studentbindings ])
-        for g in c.groups:
-            group_students = g.students()
-            if len(group_students):
-                students.difference_update(group_students)
-            else:
-                empty.append(f'{g.name} ({g.course.name})')
-        if len(students) and len(c.groups):
-            ungrouped[c.name] = [ f'{s.first_name} {s.last_name}' for s in students ]
-    return {
-            'empty_course_groups': empty,
-            'ungrouped_course_students': ungrouped,
-            }
+    return {}
+#FIXME:    empty = []
+#FIXME:    ungrouped = {}
+#FIXME:    for c in user.profile.courses_taught():
+#FIXME:        G = g.groups
+#FIXME:        if len(G) > 0 and None in G:
+#FIXME:        students = set([ s.user for s in c.studentbindings ])
+#FIXME:        for g in c.groups:
+#FIXME:            group_students = g.students()
+#FIXME:            if len(group_students):
+#FIXME:                students.difference_update(group_students)
+#FIXME:            else:
+#FIXME:                empty.append(f'{g.name} ({g.course.name})')
+#FIXME:        if len(students) and len(c.groups):
+#FIXME:            ungrouped[c.name] = [ f'{s.first_name} {s.last_name}' for s in students ]
+#FIXME:    return {
+#FIXME:            'empty_course_groups': empty,
+#FIXME:            'ungrouped_course_students': ungrouped,
+#FIXME:            }
 
 def active_tab(request):
     active_tab = request.COOKIES.get('active_tab', None)

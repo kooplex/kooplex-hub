@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block main_content_right %}
-<div class="card shadow p-3 mb-5 bg-light rounded">
+<div class="card shadow p-3 mt-3 bg-light rounded">
 <form id="project-manage" class="form-horizontal" action="{% url 'project:configure' project.id %}" method="post">
 {% csrf_token %}
 
@@ -24,9 +24,9 @@
   </ul>
   <div class="tab-content" id="projectConfogTabsContent">
     <div class="tab-pane fade {% if active == "meta" %}show active{% endif %}" id="meta" role="tabpanel" aria-labelledby="tab-meta">
-      <h5 class="card-title">Describe your project</h5>
+      <h5 class="card-title mt-2">Describe your project</h5>
       <textarea class="form-control" rows="6" cols="50" id="description" name="description">{{ project.description }}</textarea>
-      <h5 class="card-title">Change the scope for this project</h5>
+      <h5 class="card-title mt-2">Change the scope for this project</h5>
       <select class="form-control" id="project_scopes-{{ project.id }}" name="project_scope">
         {% for k, v in project.SCP_LOOKUP.items %}
           <option value="{{ k }}" {% if project.scope == k %} selected {% endif %}>{{ v }}</option>
@@ -34,26 +34,32 @@
       </select>
     </div>
     <div class="tab-pane fade {% if active == "collaboration" %}show active{% endif %}" id="collaboration" role="tabpanel" aria-labelledby="tab-collaboration">
-      <h5 class="card-title">Select collaborators of this project</h5>
+      <h5 class="card-title mt-2">Select collaborators of this project</h5>
       {% if t_collaborators %}
         {% render_table t_collaborators %}
         <hr>
         <h5 class="card-title">Select environments to create for your collaborators</h5>
-        Your collaborators are free to change this environment later.
+        <span>Your collaborators are free to change this environment later.</span>
+        <div class='mt-2'>
         {% render_table t_services %}
+      </div>
       {% else %}
         You cannot manage collaboration of this project.
       {% endif %}
     </div>
     <div class="tab-pane fade {% if active == "service" %}show active{% endif %}" id="service" role="tabpanel" aria-labelledby="tab-service">
-      <h5 class="card-title">Manage project environment bindings</h5>
+      <h5 class="card-title mt-2">Manage project environment bindings</h5>
       <p>In these environments will you have access to the project folders and files</p>
       {% if t_all_services %}
+      <div class='mt-2'>
         {% render_table t_all_services %}
+      </div>
       {% endif %}
     </div>
   </div>
+  <div class="mt-1"></div>
   {% include 'apply_cancel.html' %}
+</div>
 </form>
 </div>
 

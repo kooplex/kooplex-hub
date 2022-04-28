@@ -16,6 +16,8 @@ class MyDescription(forms.Textarea):
 
 
 class FormProject(forms.Form):
+#    template_name = 'project_new.html' #FIXME: not used loads: project/templates/menuitem_project.html
+
     scope = forms.ChoiceField(choices = Project.SCP_LOOKUP.items(), help_text = _('Select the scope of the project'), required = True)
     name = forms.CharField(
             label = _("Project name"),

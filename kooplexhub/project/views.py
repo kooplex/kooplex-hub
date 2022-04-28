@@ -100,14 +100,6 @@ def layout_flip(request):
     return redirect('project:list')
 
 
-@login_required
-def set_pagination(request):
-    profile = request.user.profile
-    profile.paginate_project_list = max(1, int(request.POST.get('paginate_by')))
-    profile.save()
-    return redirect('project:list')
-
-
 class UserProjectBindingListView(LoginRequiredMixin, generic.ListView):
     template_name = 'project_list.html'
     context_object_name = 'userprojectbindinglist'
@@ -115,7 +107,6 @@ class UserProjectBindingListView(LoginRequiredMixin, generic.ListView):
     def get_queryset(self):
         user = self.request.user
         profile = user.profile
-        self.paginate_by = profile.paginate_project_list
         pattern = self.request.GET.get('project', profile.search_project_list)
         if pattern:
             projectbindings = UserProjectBinding.objects.filter(user = user, project__name__icontains = pattern).order_by('project__name')

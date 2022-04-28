@@ -46,9 +46,9 @@ class Profile(models.Model):
     layout_container_list = models.BooleanField(default = True)
     layout_report_list = models.BooleanField(default = True)
 
-    paginate_project_list = models.IntegerField(default = 16)
-    paginate_container_list = models.IntegerField(default = 16)
-    paginate_report_list = models.IntegerField(default = 16)
+#deprecate    paginate_project_list = models.IntegerField(default = 16)
+#    paginate_container_list = models.IntegerField(default = 16)
+#    paginate_report_list = models.IntegerField(default = 16)
 
     @property
     def userid(self):

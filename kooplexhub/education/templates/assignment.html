@@ -9,144 +9,307 @@
 
 
 {% block submenu %}
-{% include 'education_submenu.html' with title="Your assignments" submenu="assignment" %}
+{% include 'education_submenu.html' with title="Education" submenu="assignment" %}
 {% endblock %}
-{% load render_table from django_tables2 %}
+
+
+{% block chardinhelp %}
+<link type="text/css" href="{% static 'chardinjs/chardinjs.css' %}" rel="stylesheet">
+<script src="{% static 'chardinjs/chardinjs.js' %}" type="text/javascript"></script>
+<script>
+   (function() {
+     $(function() {
+       $('body').chardinJs({
+         'attribute': 'data-intro',
+         url: "{% static 'chardinjs/help_assignment.json' %}"
+       });
+   
+       // or trigger via an anchor tag
+       $('a[data-toggle="chardinjs"]').on('click', function (e) {
+         e.preventDefault();
+         $("div.envcard:first").find(".collapse").addClass('show');
+         return ($('body').data('chardinJs')).toggle();
+       });
+   
+         return $('body').on('chardinJs:stop', function () {
+         //$("div.envcard:first").find(".collapse").removeClass('show');
+
+       });
+
+     });
+   }).call(this);
+</script>
+{% endblock %}
+
+
 
 {% block main_content_right %}
-  <h6>Assignments you can manage</h6>
 
-<ul class="nav nav-tabs" id="assignmentConfigTabs" role="tablist">
+<ul class="nav nav-tabs  mb-2 mt-3" id="assignmentTeacherTabs" role="tablist">
   <li class="nav-item" role="presentation">
-  {% if f_assignment %}
-    <button class="nav-link {% if active_tab == "tab-new" %}active{% endif %}" id="tab-new" data-bs-toggle="tab" data-bs-target="#newAssignment" type="button" role="tab" aria-controls="newAssignment" aria-selected="{% if active_tab == "tab-new" %}true{% else %}false{% endif %}">New</button>
-  {% else %}
-    <button class="nav-link disabled" id="new-tab" data-bs-toggle="tab" data-bs-target="#newAssignment" type="button" role="tab" aria-controls="newAssignment" aria-selected="false">New</button>
-  {% endif %}
+    <button class="nav-link {% if active_tab == "tab-new" %}active{% endif %}" id="tab-new" data-bs-toggle="tab" data-bs-target="#newAssignment" type="button" role="tab" aria-controls="newAssignment" aria-selected="{% if active_tab == "tab-new" %}true{% else %}false{% endif %}">New Assignment</button>
   </li>
   <li class="nav-item" role="presentation">
-    <button class="nav-link {% if active_tab == "tab-conf" %}active{% endif %}" id="tab-conf" data-bs-toggle="tab" data-bs-target="#confAssignment" type="button" role="tab" aria-controls="confAssignment" aria-selected="{% if active_tab == "tab-conf" %}true{% else %}false{% endif %}">Configure</button>
+    <button class="nav-link {% if active_tab == "tab-conf" %}active{% endif %}" id="tab-conf" data-bs-toggle="tab" data-bs-target="#confAssignment" type="button" role="tab" aria-controls="confAssignment" aria-selected="{% if active_tab == "tab-conf" %}true{% else %}false{% endif %}">Configure Assignment</button>
   </li>
   <li class="nav-item" role="presentation">
-    <button class="nav-link {% if active_tab == "tab-collectmass" %}active{% endif %}" id="tab-collectmass" data-bs-toggle="tab" data-bs-target="#massAssignment" type="button" role="tab" aria-controls="massAssignment" aria-selected="{% if active_tab == "tab-collectmass" %}true{% else %}false{% endif %}">Mass</button>
+    <button class="nav-link {% if active_tab == "tab-handle" %}active{% endif %}" id="tab-handle" data-bs-toggle="tab" data-bs-target="#Assignment" type="button" role="tab" aria-controls="Assignment" aria-selected="{% if active_tab == "tab-handle" %}true{% else %}false{% endif %}">Handle Assignments</button>
   </li>
   <li class="nav-item" role="presentation">
-    <button class="nav-link {% if active_tab == "tab-collectindividual" %}active{% endif %}" id="tab-collectindividual" data-bs-toggle="tab" data-bs-target="#individualAssignment" type="button" role="tab" aria-controls="individualAssignment" aria-selected="{% if active_tab == "tab-collectindividual" %}true{% else %}false{% endif %}">Individual</button>
-  </li>
-  <li class="nav-item" role="presentation">
-    <button class="nav-link {% if active_tab == "tab-summary" %}active{% endif %}" id="tab-summary" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab" aria-controls="summary" aria-selected="{% if active_tab == "tab-summary" %}true{% else %}false{% endif %}">Summary</button>
+    <button class="nav-link {% if active_tab == "tab-summary" %}active{% endif %}" id="tab-summary" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab" aria-controls="summary" aria-selected="{% if active_tab == "tab-summary" %}true{% else %}false{% endif %}">Assignment Summary</button>
   </li>
 </ul>
-<div class="tab-content" id="assignmentTabContent">
-  {% if f_assignment.okay %}
+
+<div class="tab-content {#mb-2 mt-2#}" id="assignmentTeacherTabContent">
+  {# New #}
   <div class="tab-pane fade {% if active_tab == "tab-new" %}show active{% endif %}" id="newAssignment" role="tabpanel" aria-labelledby="tab-new">
-    <form id="assignments-form-new" class="form-horizontal" action="{% url 'education:newassignment' %}" method="post">
-      {% csrf_token %}
-      <input type="hidden" name="course_id" value="{{ f_assignment.course.id }}">
-        <div style="position: relative">
-          <table>
-            <tr><th><label for="course_name">Course:</label></th><td>{{ f_assignment.course.name }}</td></tr>
-            {{ f_assignment.as_table }}
-          </table>
-        </div>
-    {% include 'apply_cancel.html' %}
-    </form>
+    <div class="card shadow mt-3 p-3 mb-2 bg-light rounded">
+      {% if f_assignment|length > 0 %}
+      <form id="assignments-form-new" class="form-horizontal" action="{% url 'education:newassignment' %}" method="post">
+        {% csrf_token %}
+	<input type="hidden" name="course_id" id="course_id" value="">
+        <table>
+	  <thead>
+	    <tr>
+	      <th><label class="mt-2" for="course_selected">Selected course: </label></th>
+	      <td>
+                <select id="course_selected" name="course_selected" class="form-select" style="width: 100%">
+	          {% for f in f_assignment %}
+	            {% if f.okay %}
+	            <option value="{{ f.course.id }}">{{ f.course }}</option>
+	            {% endif %}
+                  {% endfor %}
+                </select>
+	      </td>
+	    </tr>
+	  </thead>
+	  {% for f in f_assignment %}
+	    {% if f.okay %}
+	    <tbody style="display: none" id="newAssignmentForm-{{ f.course.id }}">
+                {{ f.as_table }}
+            </tbody>
+	    {% endif %}
+          {% endfor %}
+        </table>
+        {% include 'apply_cancel.html' with hide_cancel=True %}
+      </form>
+      {% else %}
+      <div class="alert alert-warning">There are no candidate subfolders in <code>assignment_prepare</code> directory. Please create one and place all files into it to be part of a new assignment. Empty folders cannot be selected.</div>
+      {% endif %}
+    </div>
   </div>
-  {% else %}
-  <div class="tab-pane fade {% if active_tab == "tab-new" %}show active{% endif %}" id="newAssignment" role="tabpanel" aria-labelledby="tab-new">
-      <div class="alert alert-warning">There are no candidate subfolders in <code>{{ f_assignment.folder_usercontainer }}</code> directory. Please create one and place all files into it to be part of a new assignment. Empty folders cannot be selected.</div>
-  </div>
-  {% endif %}
+
+  {# Configure #}
   <div class="tab-pane fade {% if active_tab == "tab-conf" %}show active{% endif %}" id="confAssignment" role="tabpanel" aria-labelledby="tab-conf">
-	  <h6>Delete or refresh assignments in course {{ course.name }}</h6>
-	  <form id="assignments-configform" class="form-horizontal" action="{% url 'education:configureassignment' %}" method="post">
-      {% csrf_token %}
-	  {% render_table t_assignment_config %}
-    {% include 'apply_cancel.html' %}
-    </form>
+    <div class="mt-3">
+      <h4 style="margin-bottom: 0px;">Delete or refresh assignments</h4>
+      {% if t_assignment_config.data|length > 0 %}
+      {%endif %}
+      <form id='assignment-form-configure' class="mt-3" action="{% url 'education:configureassignment' %}" method="post">
+        {% csrf_token %}
+        <input data-intro="#configureassignmentsearch" class="form-control mb-3" style="margin-top: -10px;" type="text" id="search_configure" placeholder="Search course or assignment" title="Type in a name" autofocus>
+        <div data-intro="#configureassignmentarea">
+        {% render_table t_assignment_config %}
+        {% if t_assignment_config.data|length > 0 %}
+          {% include 'apply_cancel.html' with hide_cancel=True %}
+        {%endif %}
+      </div>
+      </form>
+    </div>
   </div>
-  <div class="tab-pane fade {% if active_tab == "tab-collectindividual" %}show active{% endif %}" id="individualAssignment" role="tabpanel" aria-labelledby="tab-collectindividual">
-	  <h6>Collect, feedback or reassign assignments</h6>
-    <form id="assignments-collectform" class="form-horizontal" action="{% url 'education:handleassigment' %}" method="post">
-      {% csrf_token %}
-	  {% render_table t_assignment_individual %}
-    {% include 'apply_cancel.html' %}
-    </form>
+
+  {# Handle Assignments #}
+  <div class="tab-pane fade {% if active_tab == "tab-handle" %}show active{% endif %}" id="Assignment" role="tabpanel" aria-labelledby="tab-handle">
+    <div class="mt-3">
+      {% if d_course_assignments|length > 0 %}
+        <h4 style="margin-bottom: 0px;">Select an assignment to handle</h4>
+        <form id='assignment-form-handle' style="margin-top: -8px;" class="mt-1 mb-4" action="{% url 'education:assignment_teacher' %}" method="post">
+          {% csrf_token %}
+          <div class="mb-2 mt-2">
+            <select class="form-select" id="assignment_selected" name="assignment_selected" autofocus>
+              {% for c_id, ass in d_course_assignments.items %}
+                {% with ass|first as a0 %}
+                <optgroup label="{{ a0.course.name }} ({{ a0.course.folder }})"> 
+                {% endwith %}
+                {% for a in ass %}
+                  <option class="dropdown-item" value="{{ a.id }}"
+                    {% if a.id == assignment_id %} selected {% endif %}
+                  >{{ a.name }} ({{ a.folder }})</option>
+                {% endfor %}
+                </optgroup>
+              {% endfor %}
+            </select>
+            <div style="display: none" id="operationPanelRefresh" class="alert alert-warning">
+              <h6>Refresh</h6>
+              <p>You selected a different assignment than the previous. Please use the Filter button to refresh the content. Any unapplied changes will be lost.</p>
+              <input type="submit" class="btn btn-primary ml-2" value="Filter">
+            </div>
+          </div>
+        </form>
+      {% else %}
+        <div class="alert alert-warning">You need to define an assignment before you can handle them.</div>
+      {% endif %}
+      <div id="operationPanel">
+      {% if assignment_id %}
+        <h5>Mass operation</h5>
+        <form id='assignment-form-mass' class="row mb-3 mt-3" action="{% url 'education:handle_mass' %}" method="post">
+          {% csrf_token %}
+          <input type="hidden" name="assignment" value="{{assignment_id}}" id="assignment_id">
+          {% render_table t_mass %}
+          <div style="justify-content: end;">
+          {% include 'apply_cancel.html' with hide_cancel=True %}
+        </div>
+        </form>
+        <div class="mt-4">
+          <h5>Individual operation</h5>
+        </div>
+        <input class="form-control me-2 mb-3 mt-3" type="text" id="search_student" placeholder="Search student by name or username" title="Type in a name">
+        <form  id='assignment-form-individual' class="mb-3 mt-3" action="{% url 'education:handleassigment' %}" method="post">
+          {% csrf_token %}
+          <input type="hidden" name="assignment" value="{{assignment_id}}" >
+          {% render_table t_assignments %}
+          {% include 'apply_cancel.html' with hide_cancel=True %}
+        </form>
+      {% endif %}
+      </div>
+    </div>
   </div>
-  <div class="tab-pane fade {% if active_tab == "tab-collectmass" %}show active{% endif %}" id="massAssignment" role="tabpanel" aria-labelledby="tab-collectmass">
-	  <h6>Collect assignments</h6>
-    <form id="massassignments-collectform" class="form-horizontal" action="{% url 'education:massassignment' %}" method="post">
-      {% csrf_token %}
-	  {% render_table t_assignment_mass %}
-    {% include 'apply_cancel.html' %}
-    </form>
-  </div>
+
+  {# Summary #}
   <div class="tab-pane fade {% if active_tab == "tab-summary" %}show active{% endif %}" id="summary" role="tabpanel" aria-labelledby="tab-summary">
-	  <h6>Summary</h6>
-	  {% render_table t_assignment_summary %}
+    <h4 class="mt-3">Summary</h4>
+    {% if t_assignment_summary %}
+      {% render_table t_assignment_summary %}
+    {% else %}
+      missing table assignment summary
+    {% endif %}
   </div>
 </div>
 
 
-<script
-  type="text/javascript"
-  src="{% static 'bootstrap-datetimepicker-master/js/bootstrap-datetimepicker.min.js' %}"
-></script>
+
+
+
 <script>
-  function set_search(tab) {
-    if (tab == "tab-conf") {
-      $("#search_field").attr("placeholder",  "Search course or assignment")
-      $("#search_field").attr("value", $("#s_assignment_config").attr("value") )
-      $("#search_field").attr("disabled", false )
-    } else if (tab == "tab-collectmass") {
-      $("#search_field").attr("placeholder",  "Search course or assignment")
-      $("#search_field").attr("value", $("#s_assignment_mass").attr("value") )
-      $("#search_field").attr("disabled", false )
-    } else if (tab == "tab-collectindividual") {
-      $("#search_field").attr("placeholder",  "Search user, course or assignment")
-      $("#search_field").attr("value", $("#s_assignment_individual").attr("value") )
-      $("#search_field").attr("disabled", false )
-    } /*else if (tab == "tab-summary") {
-      $("#search_field").attr("placeholder",  "Search")
-      $("#search_field").attr("value", "" )
-      $("#search_field").attr("disabled", true )
-    }*/ else {
-      $("#search_field").attr("placeholder",  "Search")
-      $("#search_field").attr("value", "" )
-      $("#search_field").attr("disabled", true )
-    }
-  }
+$("#assignmentTeacherTabs>li>button").on("click", function () {
+  var tab = $( this ).attr("id");
+  $.cookie("active_tab", tab, { 'path': '/', 'secure': true });
+  console.log( "tab: " + tab );
+});
 
-  $( document ).ready(function() {
-      console.log( "ready: {{ active_tab }}" );
-      set_search("{{ active_tab }}")
-      $('.datetimepicker').datetimepicker('hide');
+$("#course_selected").change(function () {
+  var old = $( "#course_id" ).val();
+  var sel;
+  $( "#course_selected>option:selected" ).each(function() {
+    sel = $( this ).val();
+    $( "#course_id" ).val( sel );
   });
-
-  $("#assignmentConfigTabs>li>button").on("click", function () {
-    var tab = $( this ).attr("id")
-    $.cookie("active_tab", tab, { 'path': '/', 'secure': true })
-    console.log( "tab: " + tab )
-    set_search(tab)
-  })
-
-  function set_checkbox(x) { 
-    console.log('set checkbox? ' + x);	
-    $('#'+x).prop("checked", true); 
+  if (old) {
+    $( "#newAssignmentForm-" + old ).hide();
+    $( "#newAssignmentForm-" + old ).find('input').each(function() {
+      $( this ).prop( "disabled", true );
+    });
+    $( "#newAssignmentForm-" + old ).find('textarea').each(function() {
+      $( this ).prop( "disabled", true );
+    });
+    $( "#newAssignmentForm-" + old ).find('select').each(function() {
+      $( this ).prop( "disabled", true );
+    });
+  } else {
+    $('[id^=newAssignmentForm-]').each(function() {
+      $( this ).find('input').each(function() {
+        $( this ).prop( "disabled", true );
+      });
+      $( this ).find('textarea').each(function() {
+        $( this ).prop( "disabled", true );
+      });
+      $( this ).find('select').each(function() {
+        $( this ).prop( "disabled", true );
+      });
+    });
   }
+  $( "#newAssignmentForm-" + sel ).show();
+  $( "#newAssignmentForm-" + sel ).find('input').each(function() {
+    $( this ).prop( "disabled", false );
+  });
+  $( "#newAssignmentForm-" + sel ).find('textarea').each(function() {
+    $( this ).prop( "disabled", false );
+  });
+  $( "#newAssignmentForm-" + sel ).find('select').each(function() {
+    $( this ).prop( "disabled", false );
+  });
+  console.log( "chg: " + old + " -> " + sel );
+}).change();
+
+$("#assignment_selected").change(function() {
+  if ( $( "#assignment_id" ).val() == $( this ).val() ) {
+    $( "#operationPanelRefresh" ).hide();
+    $( "#operationPanel" ).show();
+    console.log( "show assignment handler" );
+  } else {
+    $( "#operationPanelRefresh" ).show();
+    $( "#operationPanel" ).hide();
+    console.log( "refresh assignment handler" );
+  }
+});
+
+$("#search_configure").keyup(function() {
+  var pattern = $( this ).val().toUpperCase();
+  console.log( "search config: " + pattern );
+  $( "#assignment-form-configure" ).find('tr').each(function() {
+    if ( $( this ).parent().is("thead") ) {
+      return;
+    }
+    var hide_it = true;
+    if (pattern.length > 0) {
+      $( this ).find("input[name^='name-old-'").each(function() {
+        var name = $( this ).val().toUpperCase();
+        if ( name.indexOf(pattern) > -1 ) {
+	  hide_it = false;
+        }
+      });
+      $( this ).find("input[name='course'").each(function() {
+        var name = $( this ).val().toUpperCase();
+        if ( name.indexOf(pattern) > -1 ) {
+	  hide_it = false;
+        }
+      });
+    } else {
+      hide_it = false;
+    }
+    if (hide_it) {
+      $( this ).hide();
+    } else {
+      $( this ).show();
+    }
+  });
+});
+
+$("#search_student").keyup(function() {
+  var pattern = $( this ).val().toUpperCase();
+  console.log( "search student: " + pattern );
+  $( "#assignment-form-individual" ).find('tr').each(function() {
+    if ( $( this ).parent().is("thead") ) {
+      return;
+    }
+    var hide_it = true;
+    if (pattern.length > 0) {
+      $( this ).find("input[name='search_student'").each(function() {
+        var name = $( this ).val().toUpperCase();
+        if ( name.indexOf(pattern) > -1 ) {
+	  hide_it = false;
+        }
+      });
+    } else {
+      hide_it = false;
+    }
+    if (hide_it) {
+      $( this ).hide();
+    } else {
+      $( this ).show();
+    }
+  });
+});
 </script>
-{% endblock %}
 
-{% block navsearch %}
-<form class="d-flex" action="{% url 'education:search' usercoursebinding_id %}" method="get">
-  {#% csrf_token %#}
-  <input type="hidden" id="s_assignment_config" value="{{ user.profile.search_education_assignment_config }}">
-  <input type="hidden" id="s_assignment_mass" value="{{ user.profile.search_education_assignment_mass }}">
-  <input type="hidden" id="s_assignment_individual" value="{{ user.profile.search_education_assignment_individual }}">
-  <input class="form-control me-2" type="search" id="search_field" name="pattern"
-      value="" placeholder="Search" disabled
-      aria-label="Search">
-  <button class="btn btn-outline-secondary" type="submit" name="button" value="search">Search</button>
-</form>
 {% endblock %}
-

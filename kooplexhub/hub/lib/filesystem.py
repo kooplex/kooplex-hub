@@ -108,7 +108,7 @@ def _grantaccess(user, folder, readonly = False, recursive = False):
     if acl_backend == 'nfs4':
         acl = 'rXtcy' if readonly else 'rwaDxtcy'
         bash(f'nfs4_setfacl {R} -a A::{uid}:{acl} {folder}')
-        bash(f'nfs4_setfacl {R} -a A:fdi:{uid}:{acl} {folder}')
+        #bash(f'nfs4_setfacl {R} -a A:fdi:{uid}:{acl} {folder}')
     elif acl_backend == 'posix':
         acl = 'rX' if readonly else 'rwx'
         bash(f'setfacl {R} -m u:{uid}:{acl} {folder}')
@@ -133,8 +133,11 @@ def _grantgroupaccess(group, folder, readonly = False, recursive = False):
     gid = group.groupid
     if acl_backend == 'nfs4':
         acl = 'rXtcy' if readonly else 'rwaDxtcy'
+        #FIXME: disgusting coding
+        bash(f'nfs4_setfacl {R} -a A:fdig:{gid}:rXtcy {folder}') #FIXME: be more universal!!!
+        bash(f'nfs4_setfacl -R -a A:g:{gid}:rXtcy {folder}') #FIXME: be more universal!!!
         bash(f'nfs4_setfacl {R} -a A:g:{gid}:{acl} {folder}')
-        bash(f'nfs4_setfacl {R} -a A:fdig:{gid}:{acl} {folder}')
+        #bash(f'nfs4_setfacl {R} -a A:fdig:{gid}:{acl} {folder}')
     else:
         NotImplementedError(f'_grantaccess acl_backend {acl_backend}')
     logger.info(f"+ access granted on dir {folder} to group {group.groupid}")

@@ -1,15 +1,53 @@
 {% extends "layout.html" %}
+
+
+
 {% load render_table from django_tables2 %}
 
 {% block submenu %}
-{% include 'education_submenu.html' with title="Your assignments" submenu="assignment" %}
+{% include 'education_submenu.html' with title="Education" submenu="assignment" %}
 {% endblock %}
-{% load render_table from django_tables2 %}
+
+{% load static %}
+
+{% block chardinhelp %}
+<link type="text/css" href="{% static 'chardinjs/chardinjs.css' %}" rel="stylesheet">
+<script src="{% static 'chardinjs/chardinjs.js' %}" type="text/javascript"></script>
+<script>
+   (function() {
+     $(function() {
+       $('body').chardinJs({
+         'attribute': 'data-intro',
+         url: "{% static 'chardinjs/assignmentdue.json' %}"
+       });
+   
+       // or trigger via an anchor tag
+       $('a[data-toggle="chardinjs"]').on('click', function (e) {
+         e.preventDefault();
+         $("div.envcard:first").find(".collapse").addClass('show');
+         return ($('body').data('chardinJs')).toggle();
+       });
+   
+         return $('body').on('chardinJs:stop', function () {
+         //$("div.envcard:first").find(".collapse").removeClass('show');
+
+       });
+
+     });
+   }).call(this);
+</script>
+{% endblock %}
+
 
 {% block main_content_right %}
+
+
+<div class="mt-2 mb-2" data-intro="#assignment_due">
   <h6>Your assignments due</h6>
+</div>
   {% if t_submit.rows %}
     <form id="assignments-submitform" class="form-horizontal was-validated" action="{% url 'education:submit' %}" method="post">
+      
       {% csrf_token %}
       {% render_table t_submit %}
       {% include 'apply_cancel.html' %}
@@ -17,6 +55,7 @@
   {% endif %}
 
 {% endblock %}
+
 
 {% comment %}
 {% block navsearch %}
@@ -32,4 +71,3 @@
 </form>
 {% endblock %}
 {% endcomment %}
-

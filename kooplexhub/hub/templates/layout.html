@@ -29,7 +29,7 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
 
     {% block chardinhelp %}
     <link type="text/css" href="{% static 'chardinjs/chardinjs.css' %}" rel="stylesheet">
@@ -58,12 +58,32 @@
     {% endblock %}
 
     <style>
-    @media all and (min-width: 992px) {
-    	.navbar .nav-item .dropdown-menu{ display: none; }
-    	.navbar .nav-item:hover .dropdown-menu{ display: block; }
-    	.navbar .nav-item .dropdown-menu{ margin-top: 0; }
+    @media all and (min-width: 1265px) {
+      .navbar .nav-item .dropdown-menu{ display: none; }
+      .navbar .nav-item:hover .dropdown-menu{ display: block; }
+      .navbar .nav-item .dropdown-menu{ margin-top: 0; }
+    }    
+
+    @media all and (min-width: 1265px) {
+      .container {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+}
+
+.navigation-menu {
+  grid-column: span 3;
+  margin-left: -45px;
+}
+
+.main-content {
+  grid-column: span 7;
+  margin-left: 60px;
+}
+
     }
+
     </style>
+
 
     <title>Kooplex Hub</title>
     {% block scripts %}{% endblock %}
@@ -72,16 +92,16 @@
     {% block navbar %}
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
       <div class="container-fluid">
-        <a class="navbar-brand" href="{% url 'indexpage' %}"><img data-intro="#ch" src="/static/logo_mono.png" style="height: 30px" alt="Kooplex Hub"></a>
+        <a class="navbar-brand" href="{% url 'indexpage' %}"><img src="/static/logo_mono.png" style="height: 30px" alt="Kooplex Hub"></a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" 
-		aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-		  {% comment %}
-		  FIXME: active=menu_* better active_menu=*
-		  {% endcomment %}
+      {% comment %}
+      FIXME: active=menu_* better active_menu=*
+      {% endcomment %}
               {% if app_project_installed %}
                 {% include "menuitem_project.html" with active=menu_project %}
               {% endif %}
@@ -96,14 +116,9 @@
                 {% include "menuitem_plugin.html" with active=menu_service %}
               {% endif %}
             <li class="nav-item"><a class="nav-link" href="http://k8plex-test.vo.elte.hu:30666/" target="_blank">Documentation</a></li>
-	    <li class="nav-item"> <a href="#" class="nav-link" data-toggle="chardinjs">Help</a></li>
+      <li class="nav-item"> <a href="#" class="nav-link" data-toggle="chardinjs">Help</a></li>
           </ul>
-          {% block navsearch %}
-          <form class="d-flex" style="padding-left:40px">
-            <input class="form-control me-2" disabled type="search" placeholder="Search" aria-label="Search">
-            <button class="btn btn-outline-secondary" type="submit" disabled data-intro="#search">Search</button>
-          </form>
-          {% endblock %}
+         
           {% include "navbarmenu_right.html" %}
         </div>
       </div>
@@ -112,13 +127,17 @@
     {% endblock %}
     {% block body %}
       <div class="body-content">
-        <div class="row">
-          <div class="col-md-3">
-             {% include 'message.html' %}
-             {% block main_content_left %}{% endblock %}
+        <div class="container">
+          <div class="navigation-menu">
+            <div>
+              {% include 'message.html' %}
+              {% block main_content_left %}{% endblock %}
+            </div>
           </div>
-          <div class="col-md-8">
+          <div class="main-content">
+            <div>
              {% block main_content_right %}{% endblock %}
+            </div>
           </div>
         </div>
       </div>

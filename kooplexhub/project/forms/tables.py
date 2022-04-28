@@ -7,15 +7,21 @@ from ..models import ProjectContainerBinding
 from container.models import Container
 from hub.models import Profile
 
+
 class TableShowhideProject(tables.Table):
     #TODO: jQuery to change label
     class ProjectSelectionColumn(tables.Column):
         def render(self, record):
             if record.is_hidden:
                 template = f"""
-<div class="form-check form-switch">
-  <input class="form-check-input" type="checkbox" id="cb_vpid-{record.id}" name="selection" value="{record.id}" checked />
-  <label class="form-check-label" for="cb_vpid-{record.id} id="lbl_vpid-{record.id}"> Hidden</label>
+  <div class="container" style="width: 200px">
+  <div class="row" style="width: 160px">
+  <div class="col-sm"><span>Show</span></div>
+<div class="form-check col-sm form-switch" style="width: 140px">
+  <input class="form-check-input" type="checkbox" id="cb_vpid-{record.id}" name="selection" style="width: 30px" value="{record.id}" checked />
+  <label class="form-check-label" for="cb_vpid-{record.id} id="lbl_vpid-{record.id}"> Hide</label>
+</div>
+</div>
 </div>
                 """
 #$("#cb_vpid-{record.id}").on("change", function () {
@@ -27,9 +33,14 @@ class TableShowhideProject(tables.Table):
 #})
             else:
                 template = f"""
-<div class="form-check form-switch">
-  <input class="form-check-input" type="checkbox" id="cb_vpid-{record.id}" name="selection" value="{record.id}" />
-  <label class="form-check-label" for="cb_vpid-{record.id} id="lbl_vpid-{record.id}"> Shown</label>
+  <div class="container" style="width: 200px">
+  <div class="row" style="width: 160px">
+  <div class="col-sm"><span>Show</span></div>
+<div class="form-check col-sm form-switch" style="width: 140px">
+  <input class="form-check-input" type="checkbox" style="width: 30px" id="cb_vpid-{record.id}" name="selection" value="{record.id}" />
+  <label class="form-check-label" for="cb_vpid-{record.id} id="lbl_vpid-{record.id}"> Hide</label>
+</div>
+</div>
 </div>
                 """
 #$("#cb_vpid-{record.id}").on("change", function () {
@@ -39,17 +50,27 @@ class TableShowhideProject(tables.Table):
 #        $('#lblauto').text("Shown")
 #    }
 #})
+
+
             return format_html(template)
+            
+            
     id = ProjectSelectionColumn(verbose_name = 'Visibility', orderable = False)
+    project = tables.Column (orderable = False)
+
+
     class Meta:
         model = UserProjectBinding
         fields = ('id', 'project')
         sequence = ('id', 'project')
         attrs = { 
-                 "class": "table table-striped table-bordered", 
+                 "class": "table table-bordered", 
                  "thead": { "class": "thead-dark table-sm" }, 
                  "td": { "style": "padding:.5ex" }, 
                  "th": { "style": "padding:.5ex", "class": "table-secondary" } 
+                }
+        row_attrs = { 
+                 "class": "search",
                 }
 
 
@@ -58,7 +79,7 @@ class TableJoinProject(tables.Table):
         def render(self, record):
             p = record.project
             template = f"""
-<div class="form-check form-switch">
+<div class="form-check">
   <input class="form-check-input" type="checkbox" id="cb_pid-{p.id}" name="project_ids" value="{p.id}" />
   <label class="form-check-label" for="cb_pid-{p.id}"> Join</label>
 </div>
@@ -74,7 +95,7 @@ class TableJoinProject(tables.Table):
             p = record.project
             images = set([ psb.container.image for psb in ProjectContainerBinding.objects.filter(project = p, container__user = p.creator) ])
             template = [ f"""
-<div class="form-check form-switch">
+<div class="form-check">
   <input class="form-check-input" type="checkbox" id="cb_img_pid-{p.id}" name="image_ids" value="{i.id}" />
   <label class="form-check-label" for="cb_img_pid-{p.id}"> {i.name}</label>
 </div>
@@ -118,17 +139,28 @@ class TableCollaborator(tables.Table):
         user = record.user
         if user in self.project.collaborators:
             template = f"""
-<div class="form-check form-switch">
+  <div class="container" style="width: 170px">
+    <div class="row" style="width: 170px">
+  <div class="col-sm"><span>Add</span></div>
+<div class="form-check col-sm form-switch">
   <input type="hidden" name="collaborator_ids_before" value="{user.id}" />
   <input class="form-check-input" type="checkbox" id="cb_id-{user.id}" name="collaborator_ids_after" value="{user.id}" checked />
   <label class="form-check-label" for="cb_id-{user.id}"> Remove</label>
 </div>
+</div>
+</div>
+
             """
         else:
             template = f"""
-<div class="form-check form-switch">
+              <div class="container" style="width: 170px">
+                  <div class="row" style="width: 170px">
+                    <div class="col-sm"><span>Add</span></div>
+<div class="form-check col-sm form-switch">
   <input class="form-check-input" type="checkbox" id="cb_id-{user.id}" name="collaborator_ids_after" value="{user.id}" />
-  <label class="form-check-label" for="cb_id-{user.id}"> Add</label>
+  <label class="form-check-label" for="cb_id-{user.id}">Remove</label>
+</div>
+</div>
 </div>
             """
         return format_html(template)
@@ -137,17 +169,26 @@ class TableCollaborator(tables.Table):
         user = record.user
         if user in self.project.admins:
             template = f"""
-<div class="form-check form-switch">
-  <input type="hidden" name="admin_ids_before" value="{user.id}" />
+ <div class="container" style="width: 170px">
+                  <div class="row" style="width: 170px">
+                    <div class="col-sm"><span>Grant</span></div>
+<div class="form-check col-sm form-switch">
   <input class="form-check-input" type="checkbox" id="cb_admid-{user.id}" name="admin_ids_after" value="{user.id}" checked />
   <label class="form-check-label" for="cb_admid-{user.id}"> Revoke</label>
+</div>
+</div>
 </div>
             """
         else:
             template = f"""
-<div class="form-check form-switch">
+                          <div class="container" style="width: 170px">
+                  <div class="row" style="width: 170px">
+                    <div class="col-sm"><span>Grant</span></div>
+<div class="form-check col-sm form-switch">
   <input class="form-check-input" type="checkbox" id="cb_admid-{user.id}" name="admin_ids_after" value="{user.id}" />
-  <label class="form-check-label" for="cb_admid-{user.id}"> Grant</label>
+  <label class="form-check-label" for="cb_admid-{user.id}"> Revoke</label>
+</div>
+</div>
 </div>
             """
         return format_html(template)
@@ -172,7 +213,7 @@ class TableProjectContainer(tables.Table):
 
     def render_id(self, record):
         template = f"""
-<div class="form-check form-switch">
+<div class="form-check">
   <input class="form-check-input" type="checkbox" id="cb_svcid-{record.id}" name="service_ids" value="{record.id}" />
   <label class="form-check-label" for="cb_svid-{record.id}"> Create</label>
 </div>

@@ -1,13 +1,17 @@
+
 {% load buttons %}
 
-<div class="card bg-light border-info shadow mb-3">
-  <div class="card-header">
-    <div class="row">
-      <div class="col-1">
+
+<div class="card bg-light border-info shadow mb-3 mt-3 search" id="{{ course.name }}" data-intro="#list_courses">
+  <div class="card-header" style="background-color:initial" onpointerenter="this.setAttribute('style', 'background-color: white')" onpointerleave="this.setAttribute('style', 'background-color: initial')">
+    <div class="row" style="color: black" onpointerenter="this.setAttribute('style', 'font-weight: bold')" onpointerleave="this.setAttribute('style', 'color: black')">
+     <div data-bs-toggle="collapse" data-bs-target="#collapse-{{ course.id }}" class="col-11" aria-expanded="false" aria-controls="collapse-{{ course.id }}" style="cursor: pointer; display: flex; flex-wrap: wrap; justify-content: space-between">
+      <div style="display:flex">
+      <div>
         {% dropdown_start_open_stop bindings=coursecontainerbindings ancestor=course ancestor_type='course' next_page=next_page %}
-      </div>
-      <div class="col-11" data-bs-toggle="collapse" data-bs-target="#collapse-{{ course.id }}" aria-expanded="false" aria-controls="collapse-{{ course.id }}">
-        {{ course.name }}
+      </div>  
+      <div style="margin-left: 10px">{{ course.name }}</div>
+    </div>
         <div class="float-end">
           <span class="badge rounded-pill bg-secondary"><i class="ri-image-2-line"></i>{{ course.image }}</span>
         </div>
@@ -20,7 +24,6 @@
       <p class="card-text"><strong>Teachers:</strong> {{ course.teachers }}</p>
       <p class="card-text"><strong>Groups:</strong> {{ course|csv_groups }}</p>
       <p class="card-text"><strong>Course codes:</strong> {{ course|csv_coursecodes }}</p>
-      <p class="card-text"><strong>Number of students:</strong> {{ course.studentbindings|length }}</p>
       <p class="card-text"><strong>Assignments:</strong> {{ course|csv_assignments }} </p>
       </p>
     </div>
@@ -29,7 +32,6 @@
 	<div class="float-start">
         {% if ucb.is_teacher %}
           <a href="{% url 'education:configure' ucb.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Settings of course {{ course.name }}. You can change the image, modify description." data-placement="top"><span class="oi oi-wrench" aria-hidden="true"></span></a>
-          <a href="{% url 'education:assignment_teacher' ucb.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="{{ tooltip }}" data-placement="top"><span class="oi oi-pencil" aria-hidden="true"></span></a>
 	{% else %}
           <a href="{% url 'education:assignment_student' ucb.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="{{ tooltip }}" data-placement="top"><span class="oi oi-pencil" aria-hidden="true"></span></a>
         {% endif %}

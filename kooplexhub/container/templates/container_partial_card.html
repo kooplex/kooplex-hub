@@ -1,17 +1,16 @@
 {% load buttons %}
+{% load check_show %}
+
 
 <div class="col">
-  <div class="card text-dark bg-light border-success shadow">
-{% comment %}
-    <img src="..." class="card-img-top" alt="...">
-{% endcomment %}
+  <div class="card bg-light mt-3 border-success shadow search" id="{{ container.friendly_name }}">
     <div class="card-header">
       <h5 class="card-title">{{ container.friendly_name }}
-        <div class="float-end">
-	  {% container_image container %}
-        </div>
       </h5>
     </div>
+          <div style="margin-left: 5px; margin-top: 10px">
+        {% container_image container %}
+            </div>
     <div class="card-body">
       <p class="card-text"><strong>Information:</strong>
 	  {% projects projects=container.projects %}
@@ -44,14 +43,22 @@
     </div>
     <div class="card-footer">
       <div class="row">
-      <div class="float-start">
-        {% button_start_open container next_page="container:list" %}
-        {% button_restart container next_page="container:list" %}
-        {% button_stop container next_page="container:list" %}
-        {% button_refreshlog container next_page="container:list" %}
+      <div>
+        <div style="display: flex;">
+        <div style="width: 50px; height: 30px; padding-right: 5px; margin-top: 10px">        {% button_start_open container next_page="container:list" %}
+        </div>
+        <div style="width: 50px; height: 30px; padding-right: 5px; margin-top: 10px">        {% button_restart container next_page="container:list" %}
+        </div>
+        <div style="width: 50px; height: 30px; padding-right: 5px; margin-top: 10px">         {% button_stop container next_page="container:list" %}
+        </div>
+        <div  style="width: 50px; height: 30px; padding-right: 5px; margin-top: 10px">        {% button_refreshlog container next_page="container:list" %}
+        </div>
         {% if not container.report %}
-	  {% button_configure container %}
-          {% button_delete_container container next_page %}
+        <div style="width: 50px; height: 30px; padding-right: 5px; margin-top: 10px">	  {% button_configure container %}
+        </div>
+        <div style="width: 50px; height: 30px; padding-right: 5px; margin-top: 10px">	           {% button_delete_container container next_page %}
+        </div>
+  </div>
         {% endif %}
       </div>
       </div>
