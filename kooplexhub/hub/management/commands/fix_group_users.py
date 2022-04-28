@@ -24,5 +24,5 @@ class Command(BaseCommand):
                 bg = UserGroupBinding.objects.create(user = bc.user, group = g)
                 print (f'CREATED: {bc} maps to {bg}')
             except Group.DoesNotExist:
-                print ("ERROR: {bc} group is missing")
+                print (f"ERROR: {bc} group is missing")
 
