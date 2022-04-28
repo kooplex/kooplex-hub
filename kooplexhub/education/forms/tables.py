@@ -531,8 +531,8 @@ class TableUser(tables.Table):
         except UserCourseBinding.DoesNotExist:
             return format_html(f"""
 <div class="form-check col-sm form-switch">
-  <input class="form-check-input" type="checkbox" id="u-{record.id}" name="add_uid" value="{record.id}" />
-  <label class="form-check-label" for="u-{record.id}" id="lbl_u-{record.id}"> Add</label>
+  <input class="form-check-input" type="checkbox" id="u-{f}-{record.id}" name="add_uid" value="{record.id}" />
+  <label class="form-check-label" for="u-{f}-{record.id}" id="lbl_u-{f}-{record.id}"> Skip</label>
 </div>
 
             """)

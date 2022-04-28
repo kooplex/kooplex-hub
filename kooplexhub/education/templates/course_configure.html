@@ -67,6 +67,7 @@
       Remove all student from courses by clicking once here: <button type="submit" class="btn btn-danger" name="button" value="reset" onclick="return confirm('Are you sure?');">Reset</button> 
       <h6 class="mt-4">Manage individually by student:</h6>
       <input class="form-control me-2 mb-3 mt-3" type="text" id="search_student" placeholder="Search student" title="Type in a name" autofocus>
+      {% include 'apply_cancel.html' %}
       {% render_table t_student %}
       {% include 'apply_cancel.html' %}
     </form>
@@ -81,6 +82,31 @@
 </div>
 
 <script>
+$("input[id^='u-'").on("click", function() {
+  console.log( this )
+  var lbl = $("#lbl_" + $(this).attr("id"))
+  if( $( this ).is(':checked') ) {
+    lbl.text("Add")
+    $(this).css('background-color', "rgb(13, 253, 110)")
+  } else {
+    lbl.text("Skip")
+    $(this).css('background-color', "rgb(255, 255, 255)")
+  }
+})
+
+$("input[id^='ur-'").on("click", function() {
+  console.log( this )
+  console.log(  $(this).css('background-color') )
+  var lbl = $("#lbl_" + $(this).attr("id"))
+  if( $( this ).is(':checked') ) {
+    lbl.text("Added")
+    $(this).css('background-color', "rgb(13, 110, 253)")
+  } else {
+    lbl.text("Remove")
+    $(this).css('background-color', "rgb(253, 110, 13)")
+  }
+})
+
 $("#courseConfigTabs>li>button").on("click", function () {
   var tab = $( this ).attr("id")
   $.cookie("active_tab", tab, { 'path': '/', 'secure': true })
@@ -113,58 +139,39 @@ $("#search_student").keyup(function() {
     }
   });
 });
-</script>
 
-<script>
-  $("#courseConfigTabs>li>button").on("click", function () {
-    var tab = $( this ).attr("id")
-    $.cookie("active_tab", tab, { 'path': '/', 'secure': true })
-    console.log( "tab: " + tab )
-    set_search(tab)
-  })
-  
-  $("#search_studenttwo").keyup(function() {
-    var pattern = $( this ).val().toUpperCase();
-    console.log( "search student: " + pattern );
-    $( "#courseAddTeacherForm" ).find('tr').each(function() {
-      if ( $( this ).parent().is("thead") ) {
-        return;
-      }
-      var hide_it = true;
-      if (pattern.length > 0) {
-        $( this ).find("input[name='search_studenttwo'").each(function() {
-          var name = $( this ).val().toUpperCase();
-          if ( name.indexOf(pattern) > -1 ) {
+$("#courseConfigTabs>li>button").on("click", function () {
+  var tab = $( this ).attr("id")
+  $.cookie("active_tab", tab, { 'path': '/', 'secure': true })
+  console.log( "tab: " + tab )
+  set_search(tab)
+})
+
+$("#search_studenttwo").keyup(function() {
+  var pattern = $( this ).val().toUpperCase();
+  console.log( "search student: " + pattern );
+  $( "#courseAddTeacherForm" ).find('tr').each(function() {
+    if ( $( this ).parent().is("thead") ) {
+      return;
+    }
+    var hide_it = true;
+    if (pattern.length > 0) {
+      $( this ).find("input[name='search_studenttwo'").each(function() {
+        var name = $( this ).val().toUpperCase();
+        if ( name.indexOf(pattern) > -1 ) {
+    hide_it = false;
+        }
+      });
+    } else {
       hide_it = false;
-          }
-        });
-      } else {
-        hide_it = false;
-      }
-      if (hide_it) {
-        $( this ).hide();
-      } else {
-        $( this ).show();
-      }
-    });
+    }
+    if (hide_it) {
+      $( this ).hide();
+    } else {
+      $( this ).show();
+    }
   });
-  </script>
+});
+</script>
 {% endblock %}
 
-{% comment %}
-{% block main_content_left %}
-  {#% include 'project/hint_join.html' %#}
-{% endblock %}
-{% endcomment %}
-
-{% block navsearch %}
-<form class="d-flex" action="{% url 'education:search' usercoursebinding_id %}" method="get">
-  {#% csrf_token %#}
-  <input type="hidden" id="s_student" value="{{ user.profile.search_education_student }}">
-  <input type="hidden" id="s_teacher" value="{{ user.profile.search_education_teacher }}">
-  <input class="form-control me-2" type="search" id="search_field" name="pattern"
-      value="" placeholder="Search" disabled
-      aria-label="Search">
-  <button class="btn btn-outline-secondary" type="submit" name="button" value="search">Search</button>
-</form>
-{% endblock %}
