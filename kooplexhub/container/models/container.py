@@ -57,7 +57,7 @@ class Container(models.Model):
         return self.launched_at < c.launched_at
 
     def __str__(self):
-        return f"{self.user.username}-{self.name}"
+        return self.label
 
 
     @property
