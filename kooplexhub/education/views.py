@@ -630,12 +630,11 @@ def _adduser(request, usercoursebinding_id, is_teacher):
     @summary: the teacher of a course may add or remove students/teachers to the given course
               this function handles request
     """
-    f = 'teacher' if is_teacher else 'student'
     user = request.user
-    logger.debug(f"user {user}, method: {request.method}")
-    oops = []
-    msgs = []
     button = request.POST.get('button')
+    logger.debug(f"user {user}, method: {request.method}")
+    add_user_ids = request.POST.getlist('add_uid', [])
+    remove_usercoursebinding_ids = set(request.POST.getlist('bound_bid', [])).difference(request.POST.getlist('keep_bid', []))
     if button not in [ 'reset', 'apply' ]:
         return redirect('education:configure', usercoursebinding_id = usercoursebinding_id)
     try:
@@ -644,6 +643,7 @@ def _adduser(request, usercoursebinding_id, is_teacher):
         logger.error(f'misused by {user}')
         messages.error(request, f'Not authorized to use this functionality')
         return redirect('indexpage')
+
     if button == 'reset':
         ucb = UserCourseBinding.objects.filter(course = course, is_teacher = False)
         if len(ucb):
@@ -653,36 +653,34 @@ def _adduser(request, usercoursebinding_id, is_teacher):
             messages.info(request, f'From course {course.name} removing students: {users}')
             ucb.delete()
         return redirect('education:configure', usercoursebinding_id = usercoursebinding_id)
-    added = 0
-    for uid in request.POST.getlist(f'selection_{f}', []):
+
+    added = []
+    oops = []
+    f = 'teacher' if is_teacher else 'student'
+    for u in User.objects.filter(id__in = add_user_ids):
         try:
-            u = User.objects.get(id = uid)
             UserCourseBinding.objects.create(user = u, course = course, is_teacher = is_teacher)
-            added += 1
+            added.append(u)
             logger.info(f'+ user {u.username} bound to course {course.name} by {user.username} as {f}')
         except Exception as e:
             logger.error(e)
-            oops.append(str(e))
-    if added:
-        msgs.append(f'Bound {added} {f} to course {course.name}.')
-    removed = 0
-    for ucbid in request.POST.getlist(f'selection_{f}_removal', []):
-        try:
-            ucb = UserCourseBinding.objects.get(id = ucbid, course = course, is_teacher = is_teacher)
-            ucb.delete()
-            removed += 1
-            logger.info(f'- user {ucb.user.username} as {f} is removed from course {course.name} by {user.username}')
-        except Exception as e:
-            logger.error(e)
-            oops.append(str(e))
-    if removed:
-        msgs.append(f'Removed {removed} {f} from course {course.name}.')
-    if len(msgs):
-        messages.info(request, ' '.join(msgs))
+            oops.append(u)
+
+    ucb = UserCourseBinding.objects.filter(id__in = remove_usercoursebinding_ids, course = course, is_teacher = is_teacher)
+    removed = [ b.user for b in ucb ]
+    ucb.delete()
+
+    if len(added):
+        a = ', '.join(list(map(lambda x: str(x), added)))
+        messages.info(request, f'Bound {a} ({f}) to course {course.name}.')
+    if len(removed):
+        r = ', '.join(list(map(lambda x: str(x), removed)))
+        messages.info(request, f'Removed {r} ({f}) from course {course.name}.')
+        logger.info(f'- users {r} ({f}) removed from course {course.name}.')
     if len(oops):
-        messages.error(request, ' '.join(oops))
-    #return redirect('education:teacher')
-    return redirect('education:configure', usercoursebinding_id=usercoursebinding_id)
+        o = ', '.join(list(map(lambda x: str(x), oops)))
+        messages.error(request, f'Problem adding {o} ({f}) to course {course.name}.')
+    return redirect('education:configure', usercoursebinding_id = usercoursebinding_id)
 
 
 @login_required

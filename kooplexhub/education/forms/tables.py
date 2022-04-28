@@ -522,26 +522,17 @@ class TableUser(tables.Table):
         try:
             ucb = UserCourseBinding.objects.get(course = self.course, user = record, is_teacher = self.teacher_selector)
             return format_html(f"""
- <div class="container" style="width: 170px">
-                  <div class="row" style="width: 170px">
-                    <div class="col-sm"><span>Add</span></div>
 <div class="form-check col-sm form-switch">
-  <input class="form-check-input" type="checkbox" id="ur-{ucb.id}" name="selection_{f}_removal" value="{ucb.id}" checked />
-  <label class="form-check-label" for="ur-{ucb.id}" id="lbl_ur-{ucb.id}"> Remove</label>
-</div>
-</div>
+  <input class="form-check-input" type="checkbox" id="ur-{ucb.id}" name="keep_bid" value="{ucb.id}" checked />
+  <input type="hidden" id="ur-orig-{ucb.id}" name="bound_bid" value="{ucb.id}" />
+  <label class="form-check-label" for="ur-{ucb.id}" id="lbl_ur-{ucb.id}"> Added</label>
 </div>
             """)
-        except:# UserCourseBinding.NotExists:
+        except UserCourseBinding.DoesNotExist:
             return format_html(f"""
-                          <div class="container" style="width: 170px">
-                  <div class="row" style="width: 170px">
-                    <div class="col-sm"><span>Add</span></div>
 <div class="form-check col-sm form-switch">
-  <input class="form-check-input" type="checkbox" id="u-{record.id}" name="selection_{f}" value="{record.id}" />
-  <label class="form-check-label" for="u-{record.id}" id="lbl_u-{record.id}"> Remove</label>
-</div>
-</div>
+  <input class="form-check-input" type="checkbox" id="u-{record.id}" name="add_uid" value="{record.id}" />
+  <label class="form-check-label" for="u-{record.id}" id="lbl_u-{record.id}"> Add</label>
 </div>
 
             """)
