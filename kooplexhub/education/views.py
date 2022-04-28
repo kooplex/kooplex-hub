@@ -16,7 +16,6 @@ from kooplexhub.lib import now
 
 from container.models import Image, Container
 from .models import UserCourseBinding, UserAssignmentBinding, Assignment, CourseContainerBinding, CourseGroup, UserCourseGroupBinding
-from .forms import TableAssignment_new
 from .forms import FormCourse
 from .forms import FormGroup
 from .forms import FormAssignment

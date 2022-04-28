@@ -14,37 +14,6 @@ try:
 except ImportError:
     KOOPLEX = {}
 
-class TableAssignment_new(tables.Table):
-    def render_id(self, record):
-        if record.state in [ record.ST_WORKINPROGRESS, record.ST_SUBMITTED ]:
-            return format_html(f"""
-<div class="form-check form-switch">
-  <input class="form-check-input" type="checkbox" id="uab-{record.id}" name="selection" value="{record.id}" />
-</div>
-            """)
-        elif record.state in [ record.ST_COLLECTED, record.ST_CORRECTED, record.ST_QUEUED ]:
-            return format_html(f"""
-<span class="bi bi-hourglass-bottom" data-toggle="tooltip" title="{record.ST_LOOKUP[record.state]}" />
-            """)
-        else:
-            return format_html(f"""
-<span class="bi bi-hand-thumbs-up" data-toggle="tooltip" title="{record.ST_LOOKUP[record.state]}" />
-            """)
-
-    class Meta:
-        model = UserAssignmentBinding
-        fields = ('id', 'course', 'assignment', 'expires_at', 'score', 'feedback_text')
-        attrs = { 
-                 "class": "table table-striped table-bordered", 
-                 "thead": { "class": "thead-dark table-sm" }, 
-                 "td": { "style": "padding:.5ex" }, 
-                 "th": { "style": "padding:.5ex", "class": "table-secondary" }
-                }
-
-
-### old stuff
-
-
 class TableAssignment(tables.Table):
     class AssignmentSelectionColumn(tables.Column):
         def render(self, record):
@@ -290,12 +259,12 @@ class TableAssignmentHandle(tables.Table):
         s = record.score if record.score else ''
         if record.state == record.ST_CORRECTED:
             return format_html(f"""
-<input class="form-text-input" type="text" id="score-{record.id}" name="score-{record.id}" value="{s}" onchange="set_checkbox('uab-{record.id}');" />
+<input class="form-text-input" type="text" id="score-{record.id}" name="score-{record.id}" value="{s}" />
             """)
         elif record.state == record.ST_READY:
             return format_html(f"""
 <input class="form-text-input" type="text" id="score-{record.id}" name="score-{record.id}" value="{s}" />
-<input type="hidden" name="score-old-{record.id}" value="{s}" />
+<input type="hidden" name="old_score-{record.id}" value="{s}" />
 <input type="hidden" name="ready_ids" value="{record.id}" />
             """)
         else:
@@ -305,8 +274,8 @@ class TableAssignmentHandle(tables.Table):
         t = record.feedback_text if record.feedback_text else ''
         if record.state == record.ST_CORRECTED:
             return format_html(f"""
-<textarea class="form-textarea" id="feedback_text-{record.id}" name="feedback_text-{record.id}" onchange="set_checkbox('uab-{record.id}');">{t}</textarea>
-<input type="hidden" name="feedback_text-old-{record.id}" value="{t}" />
+<textarea class="form-textarea" id="feedback_text-{record.id}" name="feedback_text-{record.id}">{t}</textarea>
+<input type="hidden" name="old_feedback_text-{record.id}" value="{t}" />
             """)
         elif record.state == record.ST_READY:
             return format_html(f"""

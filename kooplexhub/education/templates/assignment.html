@@ -331,6 +331,28 @@ $("#search_student").keyup(function() {
     }
   });
 });
+
+$("input[id^='score-'").on("change", function() {
+  var old = $("#old_" + $(this).attr("id"))
+  console.log( $( this ).val() )
+  if ( $( this ).val() != old.val() ) {
+    var cb = $("#uab-" + $(this).attr("id").split('-')[1])
+    if (cb.attr("name") == "selection_finalize") {
+      cb.prop('checked', true) 
+    }
+  }
+})
+
+$("textarea[id^='feedback_text-'").on("change", function() {
+  var old = $("#old_" + $(this).attr("id"))
+  console.log( $( this ).val() )
+  if ( $( this ).val() != old.val() ) {
+    var cb = $("#uab-" + $(this).attr("id").split('-')[1])
+    if (cb.attr("name") == "selection_finalize") {
+      cb.prop('checked', true) 
+    }
+  }
+})
 </script>
 
 {% endblock %}
