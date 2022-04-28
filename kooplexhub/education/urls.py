@@ -11,6 +11,7 @@ urlpatterns = [
     path('configureassignment/', views.configureassignment, name = 'configureassignment'),
     path('assignment_teachers_view/', views.assignment_teacher, name = 'assignment_teacher'),
     path('assignment_mass/', views.handle_mass, name = 'handle_mass'),
+    path('assignment_mass_many/', views.handle_mass_many, name = 'handle_mass_many'),
     re_path('assignment_students_view/(?P<usercoursebinding_id>\d+)?/?$', views.assignment_student, name = 'assignment_student'),
     path('handleassigment/', views.handleassignment, name = 'handleassigment'),
     path('submitform/', views.submitform_submit, name = 'submit'),

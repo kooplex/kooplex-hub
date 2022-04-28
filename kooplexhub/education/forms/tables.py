@@ -355,7 +355,7 @@ class TableAssignmentMass(tables.Table):
         return format_html(f"""
 <div class="form-check form-switch">
   <input class="form-check-input" type="checkbox" id="handout-{idx}" name="handout" value="{idx}" {d}/>
-  <label class="form-check-label" for="handout-{idx}"> <span class="bi bi-box-arrow-up-right"> {n} students</span></label>
+  <label class="form-check-label" for="handout-{idx}"> <span class="bi bi-box-arrow-up-right"> {n}</span></label>
 </div>
         """)
     def render_collect(self, record):
@@ -366,7 +366,7 @@ class TableAssignmentMass(tables.Table):
         return format_html(f"""
 <div class="form-check form-switch">
   <input class="form-check-input" type="checkbox" id="collect-{idx}" name="collect" value="{idx}" {d}/>
-  <label class="form-check-label" for="collect-{idx}"> <span class="bi bi-box-arrow-in-down-right"> {n} students</span></label>
+  <label class="form-check-label" for="collect-{idx}"> <span class="bi bi-box-arrow-in-down-right"> {n}</span></label>
 </div>
         """)
     def render_correct(self, record):
@@ -380,7 +380,7 @@ class TableAssignmentMass(tables.Table):
         return format_html(f"""
 <div class="form-check form-switch">
   <input class="form-check-input" type="checkbox" id="correct-{idx}" name="correct" value="{idx}" {d}/>
-  <label class="form-check-label" for="correct-{idx}"> <span class="bi bi-check-square-fill"> {n} students</span></label>
+  <label class="form-check-label" for="correct-{idx}"> <span class="bi bi-check-square-fill"> {n}</span></label>
 </div>
         """)
     def render_reassign(self, record):
@@ -391,7 +391,7 @@ class TableAssignmentMass(tables.Table):
         return format_html(f"""
 <div class="form-check form-switch">
   <input class="form-check-input" type="checkbox" id="reassign-{idx}" name="reassign" value="{idx}" {d}/>
-  <label class="form-check-label" for="reassign-{idx}"> <span class="bi bi-recycle"> {n} students</span></label>
+  <label class="form-check-label" for="reassign-{idx}"> <span class="bi bi-recycle"> {n}</span></label>
 </div>
         """)
     group = tables.Column(orderable = False, empty_values = ())
@@ -414,6 +414,106 @@ class TableAssignmentMass(tables.Table):
         self.uab = UserAssignmentBinding.objects.filter(assignment__id = assignment.id)
         super().__init__(self.groups.keys())
 
+
+class TableAssignmentMassAll(tables.Table):
+    def render_group(self, record):
+        rows = []
+        for k, v in  record.course.groups.items():
+            gn = 'Ungrouped' if k is None else k.name
+            n = len(v)
+            rows.append(f"<div>{gn} ({n} students)</div>")
+        return format_html("<br>".join( rows ))
+
+    def render_handout(self, record):
+        rows = []
+        uab = UserAssignmentBinding.objects.filter(assignment__id = record.id)
+        for k, v in  record.course.groups.items():
+            idx = f'{record.id}-n' if k is None else f'{record.id}-{k.id}'
+            students = set(v).difference([ b.user for b in uab.filter(state__in = [
+                UserAssignmentBinding.ST_WORKINPROGRESS,
+                UserAssignmentBinding.ST_READY,
+                UserAssignmentBinding.ST_SUBMITTED, 
+                UserAssignmentBinding.ST_COLLECTED,
+                UserAssignmentBinding.ST_CORRECTED
+                ]) ])
+            n = len(students)
+            d = '' if n else 'disabled'
+            rows.append(f"""
+<div class="form-check form-switch">
+  <input class="form-check-input" type="checkbox" id="handout-{idx}" name="handout" value="{idx}" {d}/>
+  <label class="form-check-label" for="handout-{idx}"> <span class="bi bi-box-arrow-up-right"> {n}</span></label>
+</div>
+            """)
+        return format_html("<br>".join( rows ))
+        
+    def render_collect(self, record):
+        rows = []
+        uab = UserAssignmentBinding.objects.filter(assignment__id = record.id)
+        for k, v in  record.course.groups.items():
+            idx = f'{record.id}-n' if k is None else f'{record.id}-{k.id}'
+            students = set(v).intersection([ b.user for b in uab.filter(state = UserAssignmentBinding.ST_WORKINPROGRESS) ])
+            n = len(students)
+            d = '' if n else 'disabled'
+            rows.append(f"""
+<div class="form-check form-switch">
+  <input class="form-check-input" type="checkbox" id="collect-{idx}" name="collect" value="{idx}" {d}/>
+  <label class="form-check-label" for="collect-{idx}"> <span class="bi bi-box-arrow-in-down-right"> {n}</span></label>
+</div>
+            """)
+        return format_html("<br>".join( rows ))
+
+    def render_correct(self, record):
+        rows = []
+        uab = UserAssignmentBinding.objects.filter(assignment__id = record.id)
+        for k, v in  record.course.groups.items():
+            idx = f'{record.id}-n' if k is None else f'{record.id}-{k.id}'
+            students = set(v).intersection([ b.user for b in uab.filter(state__in = [
+                UserAssignmentBinding.ST_SUBMITTED, 
+                UserAssignmentBinding.ST_COLLECTED
+                ]) ])
+            n = len(students)
+            d = '' if n else 'disabled'
+            rows.append(f"""
+<div class="form-check form-switch">
+  <input class="form-check-input" type="checkbox" id="correct-{idx}" name="correct" value="{idx}" {d}/>
+  <label class="form-check-label" for="correct-{idx}"> <span class="bi bi-check-square-fill"> {n}</span></label>
+</div>
+            """)
+        return format_html("<br>".join( rows ))
+
+    def render_reassign(self, record):
+        rows = []
+        uab = UserAssignmentBinding.objects.filter(assignment__id = record.id)
+        for k, v in  record.course.groups.items():
+            idx = f'{record.id}-n' if k is None else f'{record.id}-{k.id}'
+            students = set(v).intersection([ b.user for b in uab.filter(state = UserAssignmentBinding.ST_READY) ])
+            n = len(students)
+            d = '' if n else 'disabled'
+            rows.append(f"""
+<div class="form-check form-switch">
+  <input class="form-check-input" type="checkbox" id="reassign-{idx}" name="reassign" value="{idx}" {d}/>
+  <label class="form-check-label" for="reassign-{idx}"> <span class="bi bi-recycle"> {n}</span></label>
+</div>
+            """)
+        return format_html("<br>".join( rows ))
+
+    course = tables.Column(orderable = False, empty_values = ())
+    group = tables.Column(orderable = False, empty_values = ())
+    handout = tables.Column(orderable = False, empty_values = ())
+    collect = tables.Column(orderable = False, empty_values = ())
+    correct = tables.Column(orderable = False, empty_values = ())
+    reassign = tables.Column(orderable = False, empty_values = ())
+
+    class Meta:
+        model = Assignment
+        fields = ('course', 'group', 'handout', 'collect', 'correct', 'reassign')
+        attrs = { 
+                 "class": "table table-bordered", 
+                 "thead": { "class": "thead-dark table-sm" }, 
+                 "td": { "style": "padding:.5ex" }, 
+                 "th": { "style": "padding:.5ex", "class": "table-secondary" } 
+                }
+        empty_text = _("Empty table")
 
 
 class TableUser(tables.Table):
