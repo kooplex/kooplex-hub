@@ -392,7 +392,7 @@ class TableAssignmentMass(tables.Table):
 class TableAssignmentMassAll(tables.Table):
     def render_group(self, record):
         rows = []
-        for k, v in  record.course.groups.items():
+        for k, v in  self.lut[record.course]:
             gn = 'Ungrouped' if k is None else k.name
             n = len(v)
             rows.append(f"<div>{gn} ({n} students)</div>")
@@ -401,7 +401,7 @@ class TableAssignmentMassAll(tables.Table):
     def render_handout(self, record):
         rows = []
         uab = UserAssignmentBinding.objects.filter(assignment__id = record.id)
-        for k, v in  record.course.groups.items():
+        for k, v in  self.lut[record.course]:
             idx = f'{record.id}-n' if k is None else f'{record.id}-{k.id}'
             students = set(v).difference([ b.user for b in uab.filter(state__in = [
                 UserAssignmentBinding.ST_WORKINPROGRESS,
@@ -423,7 +423,7 @@ class TableAssignmentMassAll(tables.Table):
     def render_collect(self, record):
         rows = []
         uab = UserAssignmentBinding.objects.filter(assignment__id = record.id)
-        for k, v in  record.course.groups.items():
+        for k, v in  self.lut[record.course]:
             idx = f'{record.id}-n' if k is None else f'{record.id}-{k.id}'
             students = set(v).intersection([ b.user for b in uab.filter(state = UserAssignmentBinding.ST_WORKINPROGRESS) ])
             n = len(students)
@@ -439,7 +439,7 @@ class TableAssignmentMassAll(tables.Table):
     def render_correct(self, record):
         rows = []
         uab = UserAssignmentBinding.objects.filter(assignment__id = record.id)
-        for k, v in  record.course.groups.items():
+        for k, v in  self.lut[record.course]:
             idx = f'{record.id}-n' if k is None else f'{record.id}-{k.id}'
             students = set(v).intersection([ b.user for b in uab.filter(state__in = [
                 UserAssignmentBinding.ST_SUBMITTED, 
@@ -458,7 +458,7 @@ class TableAssignmentMassAll(tables.Table):
     def render_correcting(self, record):
         rows = []
         uab = UserAssignmentBinding.objects.filter(assignment__id = record.id)
-        for k, v in  record.course.groups.items():
+        for k, v in  self.lut[record.course]:
             students = set(v).intersection([ b.user for b in uab.filter(state = UserAssignmentBinding.ST_CORRECTED) ])
             n = len(students)
             rows.append(f"<div>{n}</div>")
@@ -467,7 +467,7 @@ class TableAssignmentMassAll(tables.Table):
     def render_reassign(self, record):
         rows = []
         uab = UserAssignmentBinding.objects.filter(assignment__id = record.id)
-        for k, v in  record.course.groups.items():
+        for k, v in  self.lut[record.course]:
             idx = f'{record.id}-n' if k is None else f'{record.id}-{k.id}'
             students = set(v).intersection([ b.user for b in uab.filter(state = UserAssignmentBinding.ST_READY) ])
             n = len(students)
@@ -498,6 +498,13 @@ class TableAssignmentMassAll(tables.Table):
                  "th": { "style": "padding:.5ex", "class": "table-secondary" } 
                 }
         empty_text = _("Empty table")
+
+    def __init__(self, qs):
+        super().__init__(qs)
+        courses = set([ a.course for a in qs ])
+        self.lut = { c: list(c.groups.items()) for c in courses }
+
+
 
 
 class TableUser(tables.Table):
