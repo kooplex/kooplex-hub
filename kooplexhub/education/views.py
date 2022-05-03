@@ -288,28 +288,16 @@ def handle_mass(request):
     groups = dict(map(lambda x: (None if x[0] is None else x[0].id, x[1]), assignment.course.groups.items()))
     ex = lambda x: None if x == 'n' else int(x)
     request.COOKIES['assignment_id'] = assignment_id
-    #handout = _handout(assignment, groups[ex(request.POST.getlist('handout'))])
-    handout = []
-    for x in request.POST.getlist('handout'):
-        handout.extend(_handout(assignment, groups[ex(x)]))
+    handout = _handout(assignment, { x: groups[x] for x in map(ex, request.POST.getlist('handout')) })
     if len(handout):
         messages.info(request, 'received: ' + ', '.join(list(map(lambda s: str(s), handout))))
-    #collect = _collect(assignment, groups[ex(request.POST.getlist('collect'))])
-    collect = []
-    for x in request.POST.getlist('collect'):
-        collect.extend(_collect(assignment, groups[ex(x)]))
+    collect = _collect(assignment, { x: groups[x] for x in map(ex, request.POST.getlist('collect')) })
     if len(collect):
         messages.info(request, 'collected: ' + ', '.join(list(map(lambda s: str(s), collect))))
-    #correct = _correct(assignment, groups[ex(request.POST.getlist('correct'))])
-    correct = []
-    for x in request.POST.getlist('correct'):
-        correct.extend(_correct(assignment, groups[ex(x)]))
+    correct = _correct(assignment, { x: groups[x] for x in map(ex, request.POST.getlist('correct')) })
     if len(correct):
         messages.info(request, 'corrected: ' + ', '.join(list(map(lambda s: str(s), correct))))
-    #reassign = _reassign(assignment, groups[ex(request.POST.getlist('reassign'))])
-    reassign = []
-    for x in request.POST.getlist('reassign'):
-        reassign.extend(_reassign(assignment, groups[ex(x)]))
+    reassign = _reassign(assignment, { x: groups[x] for x in map(ex, request.POST.getlist('reassign')) })
     if len(reassign):
         messages.info(request, 'reassigned: ' + ', '.join(list(map(lambda s: str(s), correct))))
     return redirect('education:assignment_teacher')
