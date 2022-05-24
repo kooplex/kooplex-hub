@@ -15,11 +15,11 @@ from django_tables2 import RequestConfig
 from kooplexhub.lib import now
 
 from container.models import Image, Container
-from .models import UserCourseBinding, UserAssignmentBinding, Assignment, CourseContainerBinding, CourseGroup, UserCourseGroupBinding
+from .models import UserCourseBinding, UserAssignmentBinding, Assignment, CourseContainerBinding, CourseGroup, UserCourseGroupBinding, Course
 from .forms import FormCourse
 from .forms import FormGroup
 from .forms import FormAssignment
-from .forms import TableAssignment, TableAssignmentConf, TableAssignmentHandle, TableUser, TableAssignmentMass, TableAssignmentSummary, TableGroup, TableAssignmentMassAll
+from .forms import TableAssignment, TableAssignmentConf, TableAssignmentHandle, TableUser, TableAssignmentMass, TableAssignmentSummary, TableGroup, TableAssignmentMassAll, TableAssignmentStudentSummary, TableCourseStudentSummary
 
 logger = logging.getLogger(__name__)
 
@@ -213,6 +213,10 @@ def assignment_teacher(request):
     assignments = Assignment.objects.filter(course__in = courses)
     table_assignment_config = TableAssignmentConf(assignments)
     table_assignment_summary = TableAssignmentSummary(assignments)
+    #table_assignment_student_summary = TableAssignmentStudentSummary(Course.objects.filter(usercoursebinding__user=user)[0])
+    table_course_student_summary = TableAssignmentStudentSummary(courses[0])
+    ts = [ TableCourseStudentSummary(c) for c in courses]
+    #table_assignment_student_summary = TableAssignmentSummary(assignments)
 
     okay = lambda f: f.okay
     assignments = set()
@@ -221,6 +225,8 @@ def assignment_teacher(request):
     context_dict.update({
         'd_course_assignments': course_assignments,
         't_assignment_summary': table_assignment_summary,
+        't_course_student_summary': table_course_student_summary,
+        'ts': ts,
         't_assignment_config': table_assignment_config,
         'f_assignment': list(filter(okay, [ FormAssignment(user = user, course = c, auto_id = f'id_newassignment_{c.cleanname}_%s') for c in courses ])),
         't_mass_all': TableAssignmentMassAll( assignments ),

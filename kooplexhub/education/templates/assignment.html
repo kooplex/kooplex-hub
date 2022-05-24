@@ -59,7 +59,7 @@
     <button class="nav-link {% if active_tab == "tab-handle" %}active{% endif %}" id="tab-handle" data-bs-toggle="tab" data-bs-target="#Assignment" type="button" role="tab" aria-controls="Assignment" aria-selected="{% if active_tab == "tab-handle" %}true{% else %}false{% endif %}">Handle Assignments</button>
   </li>
   <li class="nav-item" role="presentation">
-    <button class="nav-link {% if active_tab == "tab-summary" %}active{% endif %}" id="tab-summary" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab" aria-controls="summary" aria-selected="{% if active_tab == "tab-summary" %}true{% else %}false{% endif %}">Assignment Summary</button>
+    <button class="nav-link {% if active_tab == "tab-summary" %}active{% endif %}" id="tab-summary" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab" aria-controls="summary" aria-selected="{% if active_tab == "tab-summary" %}true{% else %}false{% endif %}">Summary of courses</button>
   </li>
 </ul>
 
@@ -105,7 +105,7 @@
   {# Configure #}
   <div class="tab-pane fade {% if active_tab == "tab-conf" %}show active{% endif %}" id="confAssignment" role="tabpanel" aria-labelledby="tab-conf">
     <div class="mt-3">
-      <h4 style="margin-bottom: 0px;">Delete or refresh assignments</h4>
+      <h4 style="margin-bottom: 0px;">Configure or delete assignments</h4>
       {% if t_assignment_config.data|length > 0 %}
       {%endif %}
       <form id='assignment-form-configure' class="mt-3" action="{% url 'education:configureassignment' %}" method="post">
@@ -198,9 +198,12 @@
 
   {# Summary #}
   <div class="tab-pane fade {% if active_tab == "tab-summary" %}show active{% endif %}" id="summary" role="tabpanel" aria-labelledby="tab-summary">
-    <h4 class="mt-3">Summary</h4>
+    <h4 class="mt-3">Summary of courses</h4>
     {% if t_assignment_summary %}
-      {% render_table t_assignment_summary %}
+      {#% render_table t_assignment_summary %#}
+      {% for t in  ts %}
+      {{ t }}
+      {% endfor %}
     {% else %}
       missing table assignment summary
     {% endif %}

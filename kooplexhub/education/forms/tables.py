@@ -192,6 +192,35 @@ class TableAssignmentSummary(tables.Table):
                  "th": { "style": "padding:.5ex", "class": "table-secondary" } 
                 }
 
+class TableAssignmentStudentSummary(tables.Table):
+
+    def __init__(self, course):
+        import pandas
+        from django_pandas.io import read_frame
+
+        bindings = UserAssignmentBinding.objects.filter(assignment__course=course)
+        dfm = read_frame(bindings)
+        table = dfm.pivot(index="user", columns="assignment", values="score")
+        points = dfm.groupby(by="user").agg("sum")[["id"]].rename(columns={"id":"Total points"})
+        result = pandas.merge(left=table, right=points, left_on="user", right_on="user", how="inner")
+        super().__init__(result)
+#        super().__init__(course)
+        
+def TableCourseStudentSummary(course):
+
+        import pandas
+        from django_pandas.io import read_frame
+
+        bindings = UserAssignmentBinding.objects.filter(assignment__course=course)
+        if not bindings:
+            return format_html("<br>")
+        dfm = read_frame(bindings)
+        table = dfm.pivot(index="user", columns="assignment", values="score")
+        table.columns = [tc.split("Assignment ")[1].split(" (")[0] for tc in table.columns]
+        points = dfm.fillna(0).groupby(by="user").agg("sum")[["score"]].rename(columns={"score":"Total points"})
+        result = pandas.merge(left=table, right=points, left_on="user", right_on="user", how="inner")
+        return format_html(result.to_html())
+
 
 class TableAssignmentHandle(tables.Table):
 
@@ -305,6 +334,19 @@ class TableAssignmentHandle(tables.Table):
                  "th": { "style": "padding:.5ex; background-color: #D3D3D3", "class": "table-secondary" } 
                 }
         empty_text = _("This table is still empty")
+
+
+    class Meta:
+        model = UserAssignmentBinding
+        fields = ('id', 'course', 'assignment', 'user', 'expires_at', 'submit_count', 'correction_count', 'score', 'feedback_text')
+        attrs = { 
+                 "class": "table table-bordered", 
+                 "thead": { "class": "thead-dark table-sm" }, 
+                 "td": { "style": "padding:.5ex;  background-color: white" }, 
+                 "th": { "style": "padding:.5ex; background-color: #D3D3D3", "class": "table-secondary" } 
+                }
+        empty_text = _("This table is still empty")
+
 
 
 class TableAssignmentMass(tables.Table):
@@ -490,7 +532,7 @@ class TableAssignmentMassAll(tables.Table):
 
     class Meta:
         model = Assignment
-        fields = ('course', 'group', 'handout', 'collect', 'correct', 'correcting', 'reassign')
+        fields = ('course', 'name', 'group', 'handout', 'collect', 'correct', 'correcting', 'reassign')
         attrs = { 
                  "class": "table table-bordered", 
                  "thead": { "class": "thead-dark table-sm" }, 
