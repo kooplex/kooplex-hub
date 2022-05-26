@@ -219,7 +219,8 @@ def TableCourseStudentSummary(course):
         table.columns = [tc.split("Assignment ")[1].split(" (")[0] for tc in table.columns]
         points = dfm.fillna(0).groupby(by="user").agg("sum")[["score"]].rename(columns={"score":"Total points"})
         result = pandas.merge(left=table, right=points, left_on="user", right_on="user", how="inner")
-        return format_html(result.to_html())
+        header = f"<div style=\"text-align: center;\"><h5>{course.name}</h5></div>"
+        return format_html(header + result.to_html(classes="table table-bordered table-striped text-center", justify="center", na_rep="-", border=None))
 
 
 class TableAssignmentHandle(tables.Table):

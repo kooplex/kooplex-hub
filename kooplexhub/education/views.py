@@ -214,7 +214,7 @@ def assignment_teacher(request):
     table_assignment_config = TableAssignmentConf(assignments)
     table_assignment_summary = TableAssignmentSummary(assignments)
     #table_assignment_student_summary = TableAssignmentStudentSummary(Course.objects.filter(usercoursebinding__user=user)[0])
-    table_course_student_summary = TableAssignmentStudentSummary(courses[0])
+#    table_course_student_summary = TableAssignmentStudentSummary(courses[0])
     ts = [ TableCourseStudentSummary(c) for c in courses]
     #table_assignment_student_summary = TableAssignmentSummary(assignments)
 
@@ -225,7 +225,7 @@ def assignment_teacher(request):
     context_dict.update({
         'd_course_assignments': course_assignments,
         't_assignment_summary': table_assignment_summary,
-        't_course_student_summary': table_course_student_summary,
+#        't_course_student_summary': table_course_student_summary,
         'ts': ts,
         't_assignment_config': table_assignment_config,
         'f_assignment': list(filter(okay, [ FormAssignment(user = user, course = c, auto_id = f'id_newassignment_{c.cleanname}_%s') for c in courses ])),
