@@ -30,6 +30,11 @@ class NewProjectView(LoginRequiredMixin, generic.FormView):
         initial['userid'] = user.id
         return initial
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['submenu'] = 'new'
+        return context
+
     def form_valid(self, form):
         logger.info(form.cleaned_data)
         projectname = form.cleaned_data['name'].strip()
@@ -91,6 +96,11 @@ def delete_or_leave(request, project_id):
 class UserProjectBindingListView(LoginRequiredMixin, generic.ListView):
     template_name = 'project_list.html'
     context_object_name = 'userprojectbindinglist'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['submenu'] = 'list'
+        return context
 
     def get_queryset(self):
         user = self.request.user
@@ -167,7 +177,7 @@ def show_hide(request):
 
     table = TableShowhideProject(userprojectbindings)
     RequestConfig(request).configure(table)
-    return render(request, 'project_showhide.html', context = { 't_project': table })
+    return render(request, 'project_showhide.html', context = { 't_project': table, 'submenu': 'showhide' })
 
 
 @login_required
@@ -210,7 +220,7 @@ def join(request):
         profile.save()
     table = TableJoinProject(joinable_bindings)
     RequestConfig(request).configure(table)
-    return render(request, 'project_join.html', context = { 't_joinable': table })
+    return render(request, 'project_join.html', context = { 't_joinable': table, 'submenu': 'join' })
 
 
 

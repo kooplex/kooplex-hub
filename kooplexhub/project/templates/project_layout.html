@@ -6,16 +6,16 @@
 {% block submenu %}
 <ul class="navbar-nav flex-row flex-md-row">
   <li class="ms-3 nav-item">
-    <a class="nav-link {% if subment == 'new' %}active{% endif %}" href="{% url 'project:new' %}"><i class="bi bi-bag-plus"></i><span class="d-none d-sm-inline">&nbsp;New</span></a>
+    <a class="nav-link {% if submenu == 'new' %}active{% endif %}" href="{% url 'project:new' %}"><i class="bi bi-bag-plus"></i><span class="d-none d-sm-inline">&nbsp;New</span></a>
   </li>
   <li class="nav-item">
-    <a class="nav-link {% if subment == 'join' %}active{% endif %}" href="{% url 'project:join' %}"><i class="bi bi-bag-heart"></i><span class="d-none d-sm-inline">&nbsp;Join</span></a>
+    <a class="nav-link {% if submenu == 'join' %}active{% endif %}" href="{% url 'project:join' %}"><i class="bi bi-bag-heart"></i><span class="d-none d-sm-inline">&nbsp;Join</span></a>
   </li>
   <li class="nav-item">
-    <a class="nav-link {% if subment == 'list' %}active{% endif %}" href="{% url 'project:list' %}"><i class="bi bi-bag-dash"></i><span class="d-none d-sm-inline">&nbsp;List</span></a>
+    <a class="nav-link {% if submenu == 'list' %}active{% endif %}" href="{% url 'project:list' %}"><i class="bi bi-bag-dash"></i><span class="d-none d-sm-inline">&nbsp;List</span></a>
   </li>
   <li class="nav-item">
-    <a class="nav-link {% if subment == 'new' %}active{% endif %}" href="{% url 'project:showhide' %}"><i class="bi bi-eye-slash"></i>{% number_square user.profile.number_of_hidden_projects %}<span class="d-none d-sm-inline">&nbsp;Show/hide</span></a>
+    <a class="nav-link {% if submenu == 'showhide' %}active{% endif %}" href="{% url 'project:showhide' %}"><i class="bi bi-eye-slash"></i>{% number_square user.profile.number_of_hidden_projects %}<span class="d-none d-sm-inline">&nbsp;Show/hide</span></a>
   </li>
 </ul>
 {% endblock %}
