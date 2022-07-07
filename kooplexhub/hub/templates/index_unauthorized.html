@@ -1,30 +1,27 @@
 {% extends "layout.html" %}
 
 {% block menu_and_content %}
-<nav class="navbar navbar-dark bg-dark">
-  <div class="container-fluid">
-    <div class="navbar order-0">
-      <ul class="navbar-nav mr-auto">
+<div class="container-fluid d-flex flex-column">
+  <nav class="navbar navbar-dark bg-dark">
+    <div class="container-fluid d-flex flex-row justify-content-between">
+      <ul class="navbar-nav ms-3">
         <li class="nav-item">
-          <a class="nav-link" href="#">Report</a>
+	  <a class="nav-link" href="{% url 'report:list' %}"><i class="bi bi-projector"></i>&nbsp;Report</a>
+        </li>
+      </ul>
+      <img src="/static/logo_mono.png" width="120" height="30" alt="Kooplex Hub">
+      <ul class="navbar-nav me-3">
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'social:begin' 'kooplex' %}">Login&nbsp;<span class="oi oi-account-login"/></a>
         </li>
       </ul>
     </div>
-    <div class="mx-auto order-1">
-    <img src="/static/logo_mono.png" width="120" height="30" class="d-inline-block align-top" alt="Kooplex Hub">
-    </div>
-    <div class="navbar order-2">
-        <ul class="navbar-nav ml-auto">
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'social:begin' 'kooplex' %}">Login&nbsp;<span class="oi oi-account-login"/></a>
-            </li>
-        </ul>
-    </div>
-  </div>
-</nav>
+  </nav>
+</div>
 
+<main class="ps-0 ps-md-0 flex-grow-1">
 <div class="container">
-<div class="card shadow p-3 mb-2 mt-3 bg-light rounded"> 
+<div class="card shadow p-2 mb-3 mt-5 bg-light rounded"> 
   <h6 class="card-title">Powered by</h6>
   <div class="card-body" style="flex-direction: row; flex-wrap: wrap; justify-content: space-between">
     <img src="/static/dockerlogo.png" style="width: 50px; height: 30px; padding-right: 10px; margin-top: 10px" alt="docker">
@@ -55,10 +52,7 @@
 </div>
 {% endif %}
 </div>
+</main>
 {% endblock %}
 
 
-
-{% block footer %}
-documentation, about
-{% endblock %}
