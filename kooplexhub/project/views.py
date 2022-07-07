@@ -7,6 +7,7 @@ from django.views import generic
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
 from django.contrib.auth.models import User
+#from django.urls import reverse
 
 from django_tables2 import RequestConfig
 
@@ -16,49 +17,44 @@ from container.models import Container
 
 logger = logging.getLogger(__name__)
 
-@login_required
-def new(request):
-    logger.debug("user %s" % request.user)
-    user_id = request.POST.get('user_id')
-    try:
-        assert user_id is not None and int(user_id) == request.user.id, f'user id mismatch {request.user}: {request.user_id} =/= {user_id}'
-        form = FormProject(request.POST, user = request.user)
-        if form.is_valid():
-            logger.info(form.cleaned_data)
-            projectname = form.cleaned_data['name'].strip()
-            subpath = form.cleaned_data['subpath'].strip()
-            assert len(Project.objects.filter(subpath = subpath)) == 0, f'Project folder {subpath} is not unique'
-            assert len(UserProjectBinding.objects.filter(user = request.user, project__name = projectname)) == 0, f'Project name {projectname} is not unique'
-            assert len(form.cleaned_data['environments']) > 0 or form.cleaned_data['image'], "either select an image or select some environments"
-            
-            if subpath:
-                project = Project.objects.create(name = projectname, subpath = subpath, description = form.cleaned_data['description'], scope = form.cleaned_data['scope'])
-            else:
-                project = Project.objects.create(name = projectname, description = form.cleaned_data['description'], scope = form.cleaned_data['scope'])
-            UserProjectBinding.objects.create(user = request.user, project = project, role = UserProjectBinding.RL_CREATOR)
-            messages.info(request, f'New {project}')
-            if len(form.cleaned_data['environments']) > 0:
-                for svc in form.cleaned_data['environments']:
-                    ProjectContainerBinding.objects.create(project = project, container = svc)
-                    if svc.mark_restart(f'project {project.name} added'):
-                        messages.warning(request, f'Project {project.name} is added to running svc {svc.name}, which requires a restart to apply changes')
-                    else:
-                        messages.info(request, f'Project {project.name} is added to svc {svc.name}')
-            else:
-                image = form.cleaned_data['image']
-                svc = Container.objects.create(name = f"{request.user.username}-{project.subpath}", user = request.user, image = image)
-                ProjectContainerBinding.objects.create(project = project, container = svc)
-                messages.info(request, f'New service {svc.name} is created with image {svc.image.name}')
+
+class NewProjectView(LoginRequiredMixin, generic.FormView):
+    template_name = 'project_new.html'
+    form_class = FormProject
+    success_url = '/hub/project/list/' #FIXME: django.urls.reverse or shortcuts.reverse does not work reverse('project:list')
+
+    def get_initial(self):
+        initial = super().get_initial()
+        user = self.request.user
+        initial['environments'] = Container.objects.filter(user = user)
+        initial['userid'] = user.id
+        return initial
+
+    def form_valid(self, form):
+        logger.info(form.cleaned_data)
+        projectname = form.cleaned_data['name'].strip()
+        subpath = form.cleaned_data['subpath'].strip()
+        user = self.request.user
+        if subpath:
+            project = Project.objects.create(name = projectname, subpath = subpath, description = form.cleaned_data['description'], scope = form.cleaned_data['scope'])
         else:
-            messages.error(request, form.errors)
-        return redirect('project:list')
-    except AssertionError as e:
-        messages.error(request, f'Creation of project is refused: {e}')
-        return redirect('project:list')
-    except Exception as e:
-        logger.error(f'New project not created -- {e}')
-        messages.error(request, 'Creation of a new project is refused.')
-        return redirect('indexpage')
+            project = Project.objects.create(name = projectname, description = form.cleaned_data['description'], scope = form.cleaned_data['scope'])
+        UserProjectBinding.objects.create(user = user, project = project, role = UserProjectBinding.RL_CREATOR)
+        messages.info(self.request, f'New {project}')
+        #FIXME:
+        if len(form.cleaned_data['environments']) > 0:
+            for svc in form.cleaned_data['environments']:
+                ProjectContainerBinding.objects.create(project = project, container = svc)
+                if svc.mark_restart(f'project {project.name} added'):
+                    messages.warning(self.request, f'Project {project.name} is added to running svc {svc.name}, which requires a restart to apply changes')
+                else:
+                    messages.info(self.request, f'Project {project.name} is added to svc {svc.name}')
+        else:
+            image = form.cleaned_data['image']
+            svc = Container.objects.create(name = f"{user.username}-{project.subpath}", user = user, image = image)
+            ProjectContainerBinding.objects.create(project = project, container = svc)
+            messages.info(self.request, f'New service {svc.name} is created with image {svc.image.name}')
+        return super().form_valid(form)
 
 
 @login_required
@@ -89,14 +85,6 @@ def delete_or_leave(request, project_id):
     else:
         upb.delete()
         messages.info(request, 'You left project %s' % (project))
-    return redirect('project:list')
-
-
-@login_required
-def layout_flip(request):
-    profile = request.user.profile
-    profile.layout_project_list ^= True
-    profile.save()
     return redirect('project:list')
 
 
@@ -277,7 +265,7 @@ def configure(request, project_id):
                 svc = ProjectContainerBinding.objects.get(id = sid, container__user = user).container
                 svc_copy = Container.objects.create(user = collaborator, image = svc.image, name = f'{b.user.username}-{project.subpath}')
                 ProjectContainerBinding.objects.create(container = svc_copy, project = project)
-                #TODO: handle volumes
+                #TODO: handle volumes and attachments
         # role change
         changed = []
         collaborator_ids_to_admin = admin_ids_after.difference(admin_ids_before).intersection(collaborator_ids_after).difference(collaborator_ids_to_add)

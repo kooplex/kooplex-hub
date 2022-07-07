@@ -53,16 +53,21 @@ class TableShowhideProject(tables.Table):
 
 
             return format_html(template)
+
+    def render_project(self, record):
+        return format_html(f"""
+{record.project.name}
+<input type="hidden" name="search" value="{record.project.name}">
+        """)
             
-            
-    id = ProjectSelectionColumn(verbose_name = 'Visibility', orderable = False)
+    id = ProjectSelectionColumn(verbose_name = 'Show/hide project', orderable = False)
     project = tables.Column (orderable = False)
 
 
     class Meta:
         model = UserProjectBinding
         fields = ('id', 'project')
-        sequence = ('id', 'project')
+        sequence = ('project', 'id')
         attrs = { 
                  "class": "table table-bordered", 
                  "thead": { "class": "thead-dark table-sm" }, 

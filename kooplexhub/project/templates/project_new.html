@@ -1,42 +1,15 @@
-<div class="modal" tabindex="-1" role="dialog">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Modal title</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <p>Modal body text goes here.</p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary">Save changes</button>
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-      </div>
-    </div>
-  </div>
-</div>
+{% extends 'project_layout.html' %}
 
-<div class="modal fade shadow" id="project-new" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="titleNewProject" aria-hidden="true">
-  <div class="modal-dialog modal-lg bg-light p-1 mb-5 rounded">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="titleNewProject">Describe your new project</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <form id="project_new" class="form-horizontal was-validated" action="{% url 'project:new' %}" method="post">
-       {% csrf_token %}
-        <div class="modal-body">
-          <table>
-            {{ f_project_meta.as_table }}
-          </table>
-          <input type="hidden" name="user_id" value="{{ user.id }}">
-        </div>
-        <div class="modal-footer">
-          {% include 'apply_cancel.html' with modal=True apply='Create' %}
-        </div>
-      </form>
-    </div>
-  </div>
+{% block realcontent %}
+<div class="container mt-2">
+  <form id="project_new" class="form-horizontal was-validated" action="{% url 'project:new' %}" method="post">
+    <h5>Describe your new project</h5>
+    {% csrf_token %}
+    <table>
+      {{ form.as_table }}
+    </table>
+    <input type="hidden" name="user_id" value="{{ user.id }}">
+    {% include 'apply_cancel.html' with modal=True apply='Create' %}
+  </form>
 </div>
+{% endblock %}

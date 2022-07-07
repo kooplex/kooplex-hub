@@ -1,0 +1,64 @@
+{% extends "layout.html" %}
+
+{% block menu_and_content %}
+<nav class="navbar navbar-dark bg-dark">
+  <div class="container-fluid">
+    <div class="navbar order-0">
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="#">Report</a>
+        </li>
+      </ul>
+    </div>
+    <div class="mx-auto order-1">
+    <img src="/static/logo_mono.png" width="120" height="30" class="d-inline-block align-top" alt="Kooplex Hub">
+    </div>
+    <div class="navbar order-2">
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'social:begin' 'kooplex' %}">Login&nbsp;<span class="oi oi-account-login"/></a>
+            </li>
+        </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+<div class="card shadow p-3 mb-2 mt-3 bg-light rounded"> 
+  <h6 class="card-title">Powered by</h6>
+  <div class="card-body" style="flex-direction: row; flex-wrap: wrap; justify-content: space-between">
+    <img src="/static/dockerlogo.png" style="width: 50px; height: 30px; padding-right: 10px; margin-top: 10px" alt="docker">
+    <img src="/static/kuberneteslogo.png" style="width: 50px; height: 30px; padding-right: 10px; margin-top: 10px" alt="k8s">
+    <img src="/static/django.png" style="width: 50px; height: 30px; padding-right: 10px; margin-top: 10px" alt="django">
+    <img src="/static/Nginx-Logo.png" style="width: 50px; height: 30px; padding-right: 10px; margin-top: 10px" alt="nginx">
+    <img src="/static/jupyter.png" style="width: 50px; height: 30px; padding-right: 10px ; margin-top: 10px" alt="jupyter">
+    <img src="/static/rstudio.png" style="width: 50px; height: 30px; padding-right: 10px; margin-top: 10px" alt="rstudio">
+    <img src="/static/gitea.png"  style="width: 50px; height: 30px; padding-right: 10px; margin-top: 10px" alt="gitea">
+    <img src="/static/seafile.png"  style="width: 50px; height: 30px; padding-right: 10px; margin-top: 10px" alt="seafile">
+    <img src="/static/slurm.png" style="width: 50px; height: 30px; padding-right: 10px; margin-top: 10px" alt="slurm">
+    <img src="/static/singularity.png" style="width: 50px; height: 30px; padding-right: 10px; margin-top: 10px" alt="singularity">
+  </div>
+</div>
+</div>
+
+<div class="container">
+{% if notes %}
+<div class="card shadow p-3 mb-5 bg-light rounded"> 
+   <div class="card-body">
+      <h5 class="card-title">Note{% if notes|length > 1 %}s{% endif %}</h5>
+      <div class="alert alert-info show" role="alert">
+{% for note in notes %}
+        <p>{{ note.message }}<br>{{ note.created_at }}</p>
+{% endfor %}
+      </div>
+   </div>
+</div>
+{% endif %}
+</div>
+{% endblock %}
+
+
+
+{% block footer %}
+documentation, about
+{% endblock %}

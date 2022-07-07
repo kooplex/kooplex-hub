@@ -1,0 +1,52 @@
+{% extends "layout.html" %}
+
+{% load static %}
+{% load project_buttons %}
+
+{% block submenu %}
+<ul class="navbar-nav flex-row flex-md-row">
+  <li class="ms-3 nav-item">
+    <a class="nav-link {% if subment == 'new' %}active{% endif %}" href="{% url 'project:new' %}"><i class="bi bi-bag-plus"></i><span class="d-none d-sm-inline">&nbsp;New</span></a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if subment == 'join' %}active{% endif %}" href="{% url 'project:join' %}"><i class="bi bi-bag-heart"></i><span class="d-none d-sm-inline">&nbsp;Join</span></a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if subment == 'list' %}active{% endif %}" href="{% url 'project:list' %}"><i class="bi bi-bag-dash"></i><span class="d-none d-sm-inline">&nbsp;List</span></a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if subment == 'new' %}active{% endif %}" href="{% url 'project:showhide' %}"><i class="bi bi-eye-slash"></i>{% number_square user.profile.number_of_hidden_projects %}<span class="d-none d-sm-inline">&nbsp;Show/hide</span></a>
+  </li>
+</ul>
+{% endblock %}
+
+{% block bodycontent %}
+<div class="container">
+{% block realcontent %}
+  <div class="card shadow p-3 mb-2 mt-3 bg-light rounded"> 
+    <h6 class="card-title">Nothing interesting</h6>
+    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum</p>
+  </div>
+{% endblock %}
+</div>
+
+{% block messages %}
+{# fixme layout of notes #}
+<div class="container">
+{% if notes %}
+<div class="card shadow p-3 mb-5 bg-light rounded"> 
+   <div class="card-body">
+      <h5 class="card-title">Note{% if notes|length > 1 %}s{% endif %}</h5>
+      <div class="alert alert-info show" role="alert">
+{% for note in notes %}
+        <p>{{ note.message }}<br>{{ note.created_at }}</p>
+{% endfor %}
+      </div>
+   </div>
+</div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% endblock %}
+

@@ -19,7 +19,9 @@ from django.urls import path, include
 urlpatterns = [
     path('hub/container_environment/', include('container.urls', namespace = 'container')),
     path('hub/project/', include('project.urls', namespace = 'project')),
+    path('hub/report/', include('report.urls', namespace = 'report')),
     path('hub/education/', include('education.urls', namespace = 'education')),
+    path('hub/volume/', include('volume.urls', namespace = 'volume')),
     path('hub/', include('hub.urls')),
     path('admin/', admin.site.urls),
 ]

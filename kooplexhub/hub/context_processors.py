@@ -19,6 +19,7 @@ def installed_apps(request):
       'app_report_installed': 'report' in settings.INSTALLED_APPS,       
       'app_project_installed': 'project' in settings.INSTALLED_APPS,       
       'app_education_installed': 'education' in settings.INSTALLED_APPS,       
+      'app_volume_installed': 'volume' in settings.INSTALLED_APPS,       
       'app_plugin_installed': 'plugin' in settings.INSTALLED_APPS,       
     }
 

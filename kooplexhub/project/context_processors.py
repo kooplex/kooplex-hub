@@ -1,9 +1,4 @@
-from .forms import FormProject
 from .models import UserProjectBinding
-
-
-def form_project(request):
-    return { 'f_project_meta': FormProject(user = request.user, auto_id = 'id_newproject_%s') } if request.user.is_authenticated and hasattr(request.user, 'profile') and request.user.profile.can_createproject else {}
 
 
 def warnings(request):

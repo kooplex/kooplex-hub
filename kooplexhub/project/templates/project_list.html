@@ -1,125 +1,50 @@
-{% extends "layout.html" %}
+{% extends "project_layout.html" %}
 
 {% load static %}
 
 {% block chardinhelp %}
-<link type="text/css" href="{% static 'chardinjs/chardinjs.css' %}" rel="stylesheet">
-<script src="{% static 'chardinjs/chardinjs.js' %}" type="text/javascript"></script>
-<script>
-   (function() {
-     $(function() {
-       $('body').chardinJs({
-         'attribute': 'data-intro',
          url: "{% static 'chardinjs/menueducation_env.json' %}"
-       });
-   
-       // or trigger via an anchor tag
-       $('a[data-toggle="chardinjs"]').on('click', function (e) {
-         e.preventDefault();
-         $("div.envcard:first").find(".collapse").addClass('show');
-         return ($('body').data('chardinJs')).toggle();
-       });
-   
-         return $('body').on('chardinJs:stop', function () {
-         //$("div.envcard:first").find(".collapse").removeClass('show');
-
-       });
-
-     });
-   }).call(this);
-</script>
-
-<script>
-  function myFunction() {
-      var input, filter, ul, li, a, i, txtValue;
-      input = document.getElementById("myInput");
-      filter = input.value.toUpperCase();
-      ul = document.getElementById("projectListPane");
-      li = ul.getElementsByTagName("div");
-      for (i = 0; i < li.length; i++) {
-  a = li[i]; 
-  atag = li[i].getAttribute("class");   
-  if (atag.indexOf("search") > -1) {
-    //console.log(a);
-    txtValue = a.id;
-                      if (txtValue.toUpperCase().indexOf(filter) > -1) {
-                          li[i].style.display = "";
-                      } else {
-                          li[i].style.display = "none";
-                      }
-  }
-      }
-  }
-</script>
-{% endblock %}
-
-{% block submenu %}
-  {% include 'project_submenu.html' with title="Projects" submenu="list" %}
 {% endblock %}
 
 
-{% block main_content_right %}
-
-<input class="form-control me-2 mb-3 mt-3" type="text" id="myInput" onkeyup="myFunction()" placeholder="Search project" title="Type in a name" autofocus data-intro="#search_project">
-
-
-{% if user.profile.layout_project_list %}
-<div id="projectListPane" data-intro="#project_list" style="cursor: pointer;">
-  {% for upb in userprojectbindinglist %}
-  {% include 'project_partial_list.html' with next_page='project:list' project=upb.project projectcontainerbindings=upb.projectcontainerbindings is_admin=upb.is_admin %}
-  {% endfor %}
-</div>
-{% else %}
-<div id="projectListPane" data-intro="#project_list" style="cursor: pointer;">
-<div class="row row-cols-1 row-cols-md-3 g-4">
-  {% for upb in userprojectbindinglist %}
-  {% include 'project_partial_card.html' with next_page='project:list' project=upb.project projectcontainerbindings=upb.projectcontainerbindings is_admin=upb.is_admin %}
-  {% endfor %}
-</div>
-</div>
-{% endif %}
-
+{% block realcontent %}
 {% if userprojectbindinglist|length %}
+  <input class="form-control me-2 mb-3 mt-3" type="text" id="search_project" placeholder="Search project" title="Type in a name" data-intro="#search_project">
+  <div id="projectListPane" data-intro="#project_list">
+    {% for upb in userprojectbindinglist %}
+    {% include 'project_partial_list.html' with next_page='project:list' project=upb.project projectcontainerbindings=upb.projectcontainerbindings is_admin=upb.is_admin %}
+    {% endfor %}
+  </div>
 {% else %}
-<p>Your search expression is too strict to match a project or else you have not created any projects yet.</p>
+  <p>You have not created any projects yet. 
+    <a href="{% url 'project:new' %}"><i class="bi bi-bag-plus"></i><span>&nbsp;Create one now...</span></a>
+  </p>
 {% endif %}
+{% endblock %}
 
-	<script>
-function onlyUnique(value, index, self) {
-  return self.indexOf(value) === index;
-}
-
-$("#projectListPane div div div").on("click", function () {
-    console.log( this )
-    var tgl = $( this ).attr("data-bs-toggle")
-    console.log( tgl )
-    if (tgl === 'collapse') {
-      var collapsed = $( this ).hasClass("collapsed")
-      var hid_shw = $( "#shown" )
-      console.log( "memo: " )
-      console.log( hid_shw )
-      var shw = JSON.parse( hid_shw.val() )
-      var tgl_id = $( this ).attr("data-bs-target").split('-')[1]
-      console.log( tgl_id )
-      console.log( "before: " + shw )
-      if (collapsed) {
-	  const index = shw.indexOf(tgl_id);
-          if (index > -1) {
-              shw.splice(index, 1);
-          }
-      } else {
-          shw.push( tgl_id )
+{% block scripts %}
+<script>  
+$("#search_project").keyup(function() {
+  var pattern = $( this ).val().toUpperCase();
+  console.log( "search: " + pattern );
+  $("div[id^='project-name-'").each(function() {
+    var projectid = $( this ).attr('id').split('-')[2];
+    var hide_it = true;
+    var card = $("#card-" + projectid);
+    if (pattern.length > 0) {
+      var name = $( this ).html().toUpperCase();
+      if ( name.indexOf(pattern) > -1 ) {
+        hide_it = false;
       }
-      shw = shw.filter(onlyUnique);
-      console.log( "after: " + shw )
-      hid_shw.val( JSON.stringify(shw) )
+    } else {
+      hide_it = false;
     }
-})
-	</script>
+    if (hide_it) {
+      $( card ).hide();
+    } else {
+      $( card ).show();
+    }
+  });
+});
+</script>
 {% endblock %}
-
-{% block main_content_left %}
-  {#% include 'project/hint_list.html' %#}
-{% endblock %}
-
-

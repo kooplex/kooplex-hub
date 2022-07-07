@@ -18,23 +18,20 @@ def scope(project):
 
 
 @register.simple_tag
-def button_collaborator(project, user):
-    upbs = x=project.userprojectbindings
+def icon_collaborator(project, user):
+    upbs = project.userprojectbindings
+    return format_html(f"""<i class="oi oi-people"></i>: {len(upbs)-1}""") if len(upbs) > 1 else ""
+
+
+@register.simple_tag
+def list_collaborator(project, user):
+    upbs = project.userprojectbindings
     if len(upbs) > 1:
-        items = ""
+        items = []
         for upb in upbs:
             if upb.user != user:
-                items += f"""
-<li><a class="dropdown-item" href="#">{upb.user.username} ({upb.user.first_name} {upb.user.last_name})</a></li>
-                """
-        return format_html(f"""
-<div class="dropdown" data-bs-toggle="tooltip" data-bs-placement="top" title="Collaborators of project {project.name}">
-  <button class="btn btn-outline-secondary dropdown-toggle btn-sm" type="button" id="dc-collabs-{project.id}" data-bs-toggle="dropdown" aria-expanded="false">
-    <i class="oi oi-people"></i>: {len(upbs)-1}
-  </button>
-  <ul class="dropdown-menu" aria-labelledby="dc-collabs-{project.id}">{items}</ul>
-</div>
-        """)
+                items.append(f"""{upb.user.first_name} {upb.user.last_name} ({upb.user.username})""")
+        return format_html(", ".join(items))
     else:
         return ""
 
