@@ -1,12 +1,6 @@
 
-from .forms import FormContainer
 from .forms import FormAttachment
 from .models import Container
-
-#from hub.forms import FormImage
-
-def form_container(request):
-    return { 'f_environment_meta': FormContainer(auto_id = 'id_service_%s') } if request.user.is_authenticated else {}
 
 
 def warnings(request):

@@ -7,6 +7,7 @@ from education.models import UserCourseBinding
 from education.models import CourseContainerBinding
 from ..models import Attachment
 from ..models import AttachmentContainerBinding
+from volume.models import Volume, VolumeContainerBinding
 
 class TableContainerProject(tables.Table):
     class Meta:
@@ -135,3 +136,38 @@ class TableContainerAttachment(tables.Table):
         return format_html(template)
 
 
+class TableContainerVolume(tables.Table):
+    class Meta:
+        model = Volume
+        fields = ('id', 'name', 'description')
+        sequence = ('id', 'name', 'description')
+        attrs = {
+                 "class": "table table-striped table-bordered",
+                 "thead": { "class": "thead-dark table-sm" },
+                 "td": { "style": "padding:.5ex" },
+                 "th": { "style": "padding:.5ex", "class": "table-secondary" }
+                }
+
+    def __init__(self, container, uservolumebindings):
+        self.bound_volumes = [ b.volume for b in VolumeContainerBinding.objects.filter(container = container) ]
+        super(TableContainerVolume, self).__init__(uservolumebindings)
+        #self.columns['id'].verbose_name = 'Mount'
+
+    def render_id(self, record):
+        volume = record
+        if volume in self.bound_volumes:
+            template = f"""
+<div class="form-check form-switch">
+  <input type="hidden" name="volume_ids_before" value="{volume.id}">
+  <input class="form-check-input" type="checkbox" id="cb_vsid-{volume.id}" name="volume_ids_after" value="{volume.id}" checked />
+  <label class="form-check-label" for="cb_vsid-{volume.id}"> Mounted</label>
+</div>
+            """
+        else:
+            template = f"""
+<div class="form-check form-switch">
+  <input class="form-check-input" type="checkbox" id="cb_v-{volume.id}" name="volume_ids_after" value="{volume.id}" />
+  <label class="form-check-label" for="cb_v-{volume.id}"> Mount</label>
+</div>
+            """
+        return format_html(template)

@@ -5,7 +5,6 @@ from . import views
 app_name = 'project'
 
 urlpatterns = [
-    #path('new/', views.new, name = 'new'),
     path('new/', views.NewProjectView.as_view(), name = 'new'),
     re_path('delete/(?P<project_id>\d+)/?$', views.delete_or_leave, name = 'delete'),
     path('list/', views.UserProjectBindingListView.as_view(), name = 'list'),

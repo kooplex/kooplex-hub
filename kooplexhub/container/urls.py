@@ -5,7 +5,7 @@ from . import views
 app_name = 'container'
 
 urlpatterns = [
-    path('new/', views.new, name = 'new'),
+    path('new/', views.NewContainerView.as_view(), name = 'new'),
     re_path('^delete/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)/?', views.destroy, name = 'destroy'),
     path('list/', views.ContainerListView.as_view(), name = 'list'),
     path('layoutflip/', views.layout_flip, name = 'layout_flip'),

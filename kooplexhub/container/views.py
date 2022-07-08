@@ -12,10 +12,11 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django_tables2 import RequestConfig
 
 from .forms import FormContainer, FormAttachment
-from .forms import TableContainerProject, TableContainerCourse, TableContainerAttachment
+from .forms import TableContainerProject, TableContainerCourse, TableContainerAttachment, TableContainerVolume
 from .models import Image, Container, Attachment, AttachmentContainerBinding
 from project.models import Project, UserProjectBinding, ProjectContainerBinding
 from education.models import Course, UserCourseBinding, CourseContainerBinding
+from volume.models import Volume, VolumeContainerBinding
 
 from kooplexhub.lib import custom_redirect
 
@@ -23,30 +24,27 @@ from kooplexhub import settings
 
 logger = logging.getLogger(__name__)
 
-@login_required
-def new(request):
-    logger.debug("user %s" % request.user)
-    user = request.user
-    user_id = request.POST.get('user_id')
-    try:
-        assert user_id is not None and int(user_id) == user.id, "user id mismatch: %s tries to save %s %s" % (request.user, request.user.id, request.POST.get('user_id'))
-        form = FormContainer(request.POST)
-        if form.is_valid():
-            logger.info(form.cleaned_data)
-            env, created = Container.objects.get_or_create(
-                    user = user, 
-                    name = form.cleaned_data['name'], 
-                    friendly_name = form.cleaned_data['friendly_name'], 
-                    image = form.cleaned_data['image']
-            )
-            assert created, f"Service environment with name {form.cleaned_data['name']} is not unique"
-            messages.info(request, f'Your new service environment {form.cleaned_data["friendly_name"]} is created')
-        else:
-            messages.error(request, form.errors)
-    except Exception as e:
-        logger.error("New container not created -- %s" % e)
-        messages.error(request, 'Error: %s' % e)
-    return redirect('container:list')
+class NewContainerView(LoginRequiredMixin, generic.FormView):
+    template_name = 'container_new.html'
+    form_class = FormContainer
+    success_url = '/hub/container_environment/list/' #FIXME: django.urls.reverse or shortcuts.reverse does not work reverse('project:list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['menu_container'] = True
+        context['submenu'] = 'new'
+        return context
+
+    def form_valid(self, form):
+        logger.info(form.cleaned_data)
+        user = self.request.user
+        Container.objects.create(
+            user = user, 
+            name = form.cleaned_data['name'], 
+            friendly_name = form.cleaned_data['friendly_name'], 
+            image = form.cleaned_data['image']
+        )
+        return super().form_valid(form)
 
 
 @login_required
@@ -75,17 +73,23 @@ class ContainerListView(LoginRequiredMixin, generic.ListView):
     context_object_name = 'containers'
     model = Container
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['menu_container'] = True
+        context['submenu'] = 'list'
+        return context
+
     def get_queryset(self):
         user = self.request.user
-        profile = user.profile
-        pattern = self.request.GET.get('container', profile.search_container_list)
-        if pattern:
-            containers = Container.objects.filter(user = user, name__icontains = pattern).order_by('name')
-        else:
-            containers = Container.objects.filter(user = user).order_by('name')
-        if len(containers) and pattern != profile.search_container_list:
-            profile.search_container_list = pattern
-            profile.save()
+#        profile = user.profile
+#        pattern = self.request.GET.get('container', profile.search_container_list)
+#        if pattern:
+#            containers = Container.objects.filter(user = user, name__icontains = pattern).order_by('name')
+#        else:
+        containers = Container.objects.filter(user = user).order_by('name')
+#        if len(containers) and pattern != profile.search_container_list:
+#            profile.search_container_list = pattern
+#            profile.save()
         return containers
 
 
@@ -246,6 +250,35 @@ def configure(request, container_id):
                     logger.error('not authorized to remove course_id %s from container %s -- %s' % (course_id, svc, e))
                     oops += 1
 
+        # handle volume binding changes
+        if 'volume' in settings.INSTALLED_APPS:
+            volume_ids_before = set(request.POST.getlist('volume_ids_before'))
+            volume_ids_after = set(request.POST.getlist('volume_ids_after'))
+            for volume_id in volume_ids_after.difference(volume_ids_before):
+                try:
+                    # FIXME this should be used: volume = Volume.get_uservolume(volume_id = volume_id, user = user)
+                    volume = Volume.objects.get(id = volume_id)
+                    VolumeContainerBinding.objects.create(container = svc, volume = volume)
+                    msg = f'volume {volume.name} added'
+                    if not svc.mark_restart(msg):
+                        msgs.append(msg)
+                    logger.debug('added volume %s to container %s' % (volume, svc))
+                except Exception as e:
+                    logger.error('not authorized to add volume_id %s to container %s -- %s' % (volume_id, svc, e))
+                    oops += 1
+            for volume_id in volume_ids_before.difference(volume_ids_after):
+                try:
+                    # FIXME this should be used: volume = Volume.get_uservolume(volume_id = volume_id, user = user)
+                    volume = Volume.objects.get(id = volume_id)
+                    VolumeContainerBinding.objects.get(container = svc, volume = volume).delete()
+                    msg = f'volume {volume.name} added'
+                    if not svc.mark_restart(msg):
+                        msgs.append(msg)
+                    logger.debug('removed volume %s from container %s' % (volume, svc))
+                except Exception as e:
+                    logger.error('not authorized to remove volume_id %s from container %s -- %s' % (volume_id, svc, e))
+                    oops += 1
+
         if 'plugin' in settings.INSTALLED_APPS:
             # handle synchron caches
             for id_create in request.POST.getlist('fsl_ids'):
@@ -344,6 +377,9 @@ def configure(request, container_id):
         table_attachment = TableContainerAttachment(svc, attachments)
         RequestConfig(request).configure(table_attachment)
 
+        volumes = Volume.objects.all()
+        table_volume = TableContainerVolume(svc, volumes)
+
         context_dict = {
             'images': Image.objects.filter(present = True, imagetype = Image.TP_PROJECT),
             'container': svc,
@@ -351,6 +387,8 @@ def configure(request, container_id):
             't_attachments': table_attachment,
             't_projects': table_project,
             't_courses': table_course,
+            't_volumes': table_volume,
+            'menu_container': True,
         }
 
         if 'plugin' is settings.INSTALLED_APPS:

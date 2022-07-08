@@ -8,8 +8,13 @@
     <table>
       {{ form.as_table }}
     </table>
-    <input type="hidden" name="user_id" value="{{ user.id }}">
-    {% include 'apply_cancel.html' with modal=True apply='Create' %}
+    {% include 'apply_cancel.html' with apply='Create' hide_cancel=True %}
   </form>
 </div>
+
+{% block message %}
+  {% include "alert.html" %}
+{% endblock %}
+
+
 {% endblock %}

@@ -1,3 +1,3 @@
 from .container import FormContainer
 from .attachment import FormAttachment
-from .tables import TableContainerProject, TableContainerCourse, TableContainerAttachment
+from .tables import TableContainerProject, TableContainerCourse, TableContainerAttachment, TableContainerVolume

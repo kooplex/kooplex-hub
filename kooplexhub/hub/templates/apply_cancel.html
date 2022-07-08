@@ -1,8 +1,8 @@
-<div class="float-end">
+<div class="container-fluid d-flex flex-row justify-content-end">
   {% if not hide_apply %}
-    <button type="submit" class="btn btn-primary" name="button" value="apply">{% if apply %}{{ apply }}{% else %}Apply{% endif %}</button>
+  <div><button type="submit" class="btn btn-primary" name="button" value="apply">{% if apply %}{{ apply }}{% else %}Apply{% endif %}</button></div>
   {% endif %}
   {% if not hide_cancel %}
-    <button type="submit" class="btn btn-secondary" name="button" {% if modal %}data-bs-dismiss="modal"{% else %}value="cancel"{% endif %}>{% if cancel %}{{ cancel }}{% else %}Cancel{% endif %}</button>
+  <div class="ms-2"><button type="submit" class="btn btn-secondary" name="button" value="cancel">{% if cancel %}{{ cancel }}{% else %}Cancel{% endif %}</button></div>
   {% endif %}
 </div>

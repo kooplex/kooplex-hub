@@ -5,6 +5,15 @@ from ..models import Image
 
 from kooplexhub.lib import my_alphanumeric_validator
 
+class ImageSelectWidget(forms.Select):
+    template_name = 'image.html'
+    option_template_name = 'image_option.html'
+
+    def all_images(self):
+        return Image.objects.all()
+
+    
+    
 
 class FormContainer(forms.Form):
     friendly_name = forms.CharField(
@@ -18,7 +27,13 @@ class FormContainer(forms.Form):
                     my_alphanumeric_validator('Enter a valid container name containing only letters and numbers.'),
                 ],
             )
-    image = forms.ModelChoiceField(queryset = Image.objects.filter(imagetype = Image.TP_PROJECT, present=True), help_text = _('Please select an image to the new container environment.'), required = True, empty_label = 'Select image...')
+    image = forms.ModelChoiceField(queryset = Image.objects.filter(imagetype = Image.TP_PROJECT, present=True), help_text = _('Please select an image to the new container environment.'), required = True, empty_label = 'Select image...', widget = ImageSelectWidget)
+
+    def render_image(self, selected_choices, option_value, option_label):
+        descriptions = [i.description for i in self.fields['image']]
+        return u'<option value="%s"> %s %s</option>' % (
+            option_value, option_value, descriptions)
+
 
     def __init__(self, *args, **kwargs):
         super(FormContainer, self).__init__(*args, **kwargs)
@@ -33,5 +48,4 @@ class FormContainer(forms.Form):
                     'data-placement': 'bottom',
                 }
                 self.fields[field].widget.attrs.update(extra)
-
 

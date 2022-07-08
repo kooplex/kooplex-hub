@@ -32,6 +32,7 @@ class NewProjectView(LoginRequiredMixin, generic.FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['menu_project'] = True
         context['submenu'] = 'new'
         return context
 
@@ -100,6 +101,7 @@ class UserProjectBindingListView(LoginRequiredMixin, generic.ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['submenu'] = 'list'
+        context['menu_project'] = True
         return context
 
     def get_queryset(self):
@@ -177,7 +179,7 @@ def show_hide(request):
 
     table = TableShowhideProject(userprojectbindings)
     RequestConfig(request).configure(table)
-    return render(request, 'project_showhide.html', context = { 't_project': table, 'submenu': 'showhide' })
+    return render(request, 'project_showhide.html', context = { 't_project': table, 'menu_project': True, 'submenu': 'showhide' })
 
 
 @login_required
@@ -220,7 +222,7 @@ def join(request):
         profile.save()
     table = TableJoinProject(joinable_bindings)
     RequestConfig(request).configure(table)
-    return render(request, 'project_join.html', context = { 't_joinable': table, 'submenu': 'join' })
+    return render(request, 'project_join.html', context = { 't_joinable': table, 'menu_project': True, 'submenu': 'join' })
 
 
 
@@ -361,6 +363,7 @@ def configure(request, project_id):
         RequestConfig(request).configure(table_container)
 
         context_dict = {
+            'menu_project': True,
             'project': project,
             'active': active_tab,
             't_collaborators': table_collaborator,

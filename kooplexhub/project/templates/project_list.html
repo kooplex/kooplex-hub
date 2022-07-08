@@ -22,12 +22,16 @@
 {% endif %}
 {% endblock %}
 
+{% block message %}
+  {% include "alert.html" %}
+{% endblock %}
+
 {% block scripts %}
 <script>  
 $("#search_project").keyup(function() {
   var pattern = $( this ).val().toUpperCase();
   console.log( "search: " + pattern );
-  $("div[id^='project-name-'").each(function() {
+  $("span[id^='project-name-'").each(function() {
     var projectid = $( this ).attr('id').split('-')[2];
     var hide_it = true;
     var card = $("#card-" + projectid);
