@@ -3,6 +3,7 @@
 {% load static %}
 
 {% block chardinhelp %}
+{# fixme: name #}
          url: "{% static 'chardinjs/menueducation_env.json' %}"
 {% endblock %}
 
@@ -15,7 +16,7 @@
   <input class="form-control mb-3" type="text" id="search_project" placeholder="Search project" title="Type in a name" autofocus>
   <div id="projectListPane">
     {% render_table t_project %}
-    {% include 'apply_cancel.html' %}
+    {% include 'apply_cancel.html' with hide_cancel=True %}
   </div>
 </form>
   {% else %}

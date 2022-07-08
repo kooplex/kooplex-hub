@@ -3,6 +3,7 @@
 {% load static %}
 
 {% block chardinhelp %}
+{# fixme filename #}
          url: "{% static 'chardinjs/menueducation_env.json' %}"
 {% endblock %}
 
@@ -20,10 +21,6 @@
     <a href="{% url 'project:new' %}"><i class="bi bi-bag-plus"></i><span>&nbsp;Create one now...</span></a>
   </p>
 {% endif %}
-{% endblock %}
-
-{% block message %}
-  {% include "alert.html" %}
 {% endblock %}
 
 {% block scripts %}

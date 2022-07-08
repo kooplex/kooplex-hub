@@ -6,9 +6,9 @@
   <h5>Set details of your new environment</h5>
   {% csrf_token %}
   <table>
-    {{ f_environment_meta.as_table }}
+    {{ form.as_table }}
   </table>
-  {% include 'apply_cancel.html' with modal=True apply='Create' %}
+  {% include 'apply_cancel.html' with hide_cancel=True apply='Create' %}
   </form>
 </div>
 {% endblock %}
