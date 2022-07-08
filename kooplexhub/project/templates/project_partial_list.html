@@ -7,7 +7,7 @@
     <div class="container-fluid">
       <div class="d-flex flex-row justify-content-between">
         <div class="d-flex flex-row justify-content-start">
-          <div>{% dropdown_start_open_stop bindings=projectcontainerbindings ancestor=project ancestor_type='project' next_page='project:list' %}</div>
+          <div data-intro="#button_operation">{% dropdown_start_open_stop bindings=projectcontainerbindings ancestor=project ancestor_type='project' next_page='project:list' %}</div>
 	  <div class="ms-5" style="cursor: pointer;" 
                data-bs-toggle="collapse" data-bs-target="#collapse-{{ project.id }}" aria-expanded="false" aria-controls="collapse-{{ project.id }}">
             <span id="project-name-{{ project.id }}" class="badge rounded-pill bg-secondary p-2 ps-3 pe-3">{{ project.name }}</span>
@@ -33,7 +33,7 @@
         {% include 'reports_button.html' %}
       </p>
     </div>
-    <div class="card card-footer">
+    <div class="card card-footer" data-intro="#button_footer">
       <div class="container-fluid">
         <div class="d-flex flex-row justify-content-between">
           <div class="d-flex flex-row justify-content-start">

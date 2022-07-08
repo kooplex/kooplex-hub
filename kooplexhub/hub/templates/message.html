@@ -7,13 +7,23 @@
 }
 
   }
-
   </style>
 
+  <script>
+    $(function() {
+  var alert = $('div.alert[auto-close]');
+  alert.each(function() {
+    var that = $(this);
+    var time_period = that.attr('auto-close');
+    setTimeout(function() {
+      that.alert('close');
+    }, time_period);
+  });
+});
+  </script>
+
 {% if messages or unbound_containers or restart_containers or unbound_projects or due_assignments or unbound_courses or empty_course_groups or ungrouped_course_students %}
- <div class="card shadow mt-3 mb-2 bg-light rounded message" data-intro="#messages"> 
-  <div class="card-body">
-    <h5 class="card-title">Messages</h5>
+ <div data-intro="#messages"> 
     {% if due_assignments %}
       <div class="alert alert-warning alert-dismissible fade show" role="warning">
 	      <strong data-bs-toggle="tooltip" title="Your have assignment{% if due_assignments|length > 1 %}s{% endif %} due: {{ due_assignments|join:", " }}.">Due assignment{% if due_assignments|length > 1 %}s{% endif %}</strong> {{ due_assignments|join:", " }}.
@@ -77,13 +87,12 @@
           <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
       {% endif %}
-      {% if message.level == 40 %}
+      {% if message.level == 40 %}   
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
 	  <strong>Error:</strong> {{ message }}
           <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
       {% endif %}
     {% endfor %}
-  </div>
 </div>
 {% endif %}
