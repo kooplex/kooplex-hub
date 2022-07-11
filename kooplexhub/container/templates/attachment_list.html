@@ -1,89 +1,43 @@
-{% extends "layout.html" %}
+{% extends "storage_layout.html" %}
 
 {% load static %}
 {% block chardinhelp %}
-<link type="text/css" href="{% static 'chardinjs/chardinjs.css' %}" rel="stylesheet">
-<script src="{% static 'chardinjs/chardinjs.js' %}" type="text/javascript"></script>
-<script>
-   (function() {
-     $(function() {
-       $('body').chardinJs({
-         'attribute': 'data-intro',
          url: "{% static 'chardinjs/helpattachment_env.json' %}"
-       });
-   
-       // or trigger via an anchor tag
-       $('a[data-toggle="chardinjs"]').on('click', function (e) {
-         e.preventDefault();
-         $("div.envcard:first").find(".collapse").addClass('show');
-         return ($('body').data('chardinJs')).toggle();
-       });
-   
-         return $('body').on('chardinJs:stop', function () {
-         //$("div.envcard:first").find(".collapse").removeClass('show');
-
-       });
-
-     });
-   }).call(this);
-</script>
 {% endblock %}
 
-{% block submenu %}
-  {% include 'container_submenu.html' with title="Environments" submenu="attachments" %}
-{% endblock %}
-
-{% block main_content_right %}
-    <div class="row">
-
-<script>
-  function myFunction() {
-      var input, filter, ul, li, a, i, txtValue;
-      input = document.getElementById("myInput");
-      filter = input.value.toUpperCase();
-      ul = document.getElementById("containerListPane");
-      li = ul.getElementsByTagName("div");
-      for (i = 0; i < li.length; i++) {
-  a = li[i]; 
-  atag = li[i].getAttribute("class");   
-  if (atag.indexOf("search") > -1) {
-    //console.log(a);
-    txtValue = a.id;
-                      if (txtValue.toUpperCase().indexOf(filter) > -1) {
-                          li[i].style.display = "";
-                      } else {
-                          li[i].style.display = "none";
-                      }
-  }
-      }
-  }
-</script>
-
-
-
-<input class="form-control me-2 mb-3 mt-3" style="margin-left: 10px;" type="text" id="myInput" onkeyup="myFunction()" placeholder="Search attachment" title="Type in a name" autofocus data-intro="#search_list">
-
-
-      <div class="col-2" data-intro="#list_attachments">
-      <strong>Attachment name</strong>
-      </div>
-      <div class="col-2">
-        <strong>Folder name </strong>
-      </div>
-      <div class="col-8">
-        <strong>Description </strong>
-      </div>
-    </div>
-
-
-<div id="containerListPane">
+{% block realcontent %}
+  <input class="form-control me-2 mb-3 mt-3" type="text" id="search_attachment" placeholder="Search attachment" title="Type in a name" autofocus data-intro="#search_attachment">
+  <div id="attachmentListPane" data-intro="#attachment_list" >
   {% for attachment in attachments %}
     {% include 'attachment_partial_list.html' %}
   {% endfor %}
-</div>    
-
+  </div>    
 {% endblock %}
 
-{% block main_content_left %}
-  {#% include 'container/hint_list.html' %#}
+{% block scripts %}
+<script>
+$("#search_attachment").keyup(function() {
+  var pattern = $( this ).val().toUpperCase();
+  console.log( "search: " + pattern );
+  $("input[id^='attachment-dump-'").each(function() {
+  console.log( this );
+    var attachmentid = $( this ).attr('id').split('-')[2];
+    var hide_it = true;
+    var card = $("#card-" + attachmentid);
+    if (pattern.length > 0) {
+      var name = $( this ).attr("value").toUpperCase();
+      if ( name.indexOf(pattern) > -1 ) {
+        hide_it = false;
+      }
+    } else {
+      hide_it = false;
+    }
+    if (hide_it) {
+      $( card ).hide();
+    } else {
+      $( card ).show();
+    }
+  });
+});
+</script>
 {% endblock %}

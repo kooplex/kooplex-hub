@@ -1,5 +1,6 @@
-<div class="card bg-light border-danger shadow mb-3 search" id="{{ attachment.name  }}">
+<div class="card bg-light border-danger shadow mb-3 search" id="card-{{ attachment.id  }}">
   <div class="card-header">
+	  <input type="hidden" id="attachment-dump-{{ attachment.id }}" value="{{ attachment.name }} {{ attachment.folder }} {{ attachment.description }}">
     <div class="row">
       <div class="col-2">
 	{{ attachment.name }}

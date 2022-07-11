@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+
+{% load static %}
+{% load project_buttons %}
+
+{% block page_title %}Kooplex Environment{% endblock %}
+
+
+
+{% block submenu %}
+<ul class="navbar-nav flex-row flex-md-row">
+  <li class="ms-3 nav-item">
+    <a data-toggle="tooltip" title="New attachment" data-placement="bottom" class="nav-link {% if submenu == 'new_attachment' %}active{% endif %}" href="{% url 'container:new_attachment' %}"><i class="bi bi-clipboard-plus"></i><span class="d-none d-sm-inline">&nbsp;New attachment</span></a>
+  </li>
+  <li class="ms-3 nav-item">
+    <a data-toggle="tooltip" title="List attachments" data-placement="bottom" class="nav-link {% if submenu == 'list_attachment' %}active{% endif %}" href="{% url 'container:list_attachments' %}"><i class="bi bi-clipboard-minus"></i><span class="d-none d-sm-inline">&nbsp;List attachments</span></a>
+  </li>
+  {% if app_volume_installed %}
+  <li class="ms-3 nav-item">
+    <a data-toggle="tooltip" title="List volumes" data-placement="bottom" class="nav-link {% if submenu == 'list_volume' %}active{% endif %}" href="{% url 'volume:list' %}"><i class="bi bi-clipboard2-pulse"></i><span class="d-none d-sm-inline">&nbsp;List volumes</span></a>
+  </li>
+  {% endif %}
+</ul>
+{% endblock %}
+
+{% block bodycontent %}
+<div class="container mt-4">
+{% block realcontent %}
+  <div class="card shadow p-3 mb-2 mt-3 bg-light rounded"> 
+    <h6 class="card-title">Nothing interesting</h6>
+    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum</p>
+  </div>
+{% endblock %}
+</div>
+{% endblock %}
+

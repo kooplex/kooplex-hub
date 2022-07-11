@@ -111,6 +111,11 @@ class AttachmentListView(LoginRequiredMixin, generic.ListView):
             profile.save()
         return attachments
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['menu_storage'] = True
+        context['submenu'] = 'list_attachment'
+        return context
 
 @login_required
 def new_attachment(request):

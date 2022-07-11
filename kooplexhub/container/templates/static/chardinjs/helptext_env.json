@@ -26,6 +26,10 @@
     "#messages": { 
         "text": "You get info about the state of your environments",
         "position": "right"	
+    },
+    "#environmentbar": {
+        "text": "Search environment",
+        "position": "right"	
     }
 }
 
