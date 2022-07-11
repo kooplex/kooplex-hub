@@ -60,14 +60,6 @@ def destroy(request, container_id, next_page):
     return redirect(next_page)
 
 
-@login_required
-def layout_flip(request):
-    profile = request.user.profile
-    profile.layout_container_list ^= True
-    profile.save()
-    return redirect('container:list')
-
-
 class ContainerListView(LoginRequiredMixin, generic.ListView):
     template_name = 'container_list.html'
     context_object_name = 'containers'
@@ -117,25 +109,23 @@ class AttachmentListView(LoginRequiredMixin, generic.ListView):
         context['submenu'] = 'list_attachment'
         return context
 
-@login_required
-def new_attachment(request):
-    logger.debug("user %s" % request.user)
-    user = request.user
-    user_id = request.POST.get('user_id')
-    try:
-        assert user_id is not None and int(user_id) == user.id, "user id mismatch: %s tries to save %s %s" % (request.user, request.user.id, request.POST.get('user_id'))
-        form = FormAttachment(request.POST)
-        if form.is_valid():
-            logger.info(form.cleaned_data)
-            attachment, created = Attachment.objects.get_or_create(creator_id = user_id, name = form.cleaned_data['name'], folder = form.cleaned_data['folder'], description = form.cleaned_data['description'])
-            assert created, f"Attachment with name {form.cleaned_data['name']} is not unique"
-            messages.info(request, f'New attachment {form.cleaned_data["name"]} is created')
-        else:
-            messages.error(request, form.errors)
-    except Exception as e:
-        logger.error("Attachment not created -- %s" % e)
-        messages.error(request, 'Error: %s' % e)
-    return redirect('container:list_attachments')
+
+class NewAttachmentView(LoginRequiredMixin, generic.FormView):
+    template_name = 'attachment_new.html'
+    form_class = FormAttachment
+    success_url = '/hub/container_environment/attachments/' #FIXME: django.urls.reverse or shortcuts.reverse does not work reverse('project:list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['menu_storage'] = True
+        context['submenu'] = 'new_attachment'
+        return context
+
+    def form_valid(self, form):
+        logger.info(form.cleaned_data)
+        user = self.request.user
+        Attachment.objects.create(creator_id = user.id, name = form.cleaned_data['name'], folder = form.cleaned_data['folder'], description = form.cleaned_data['description'])
+        return super().form_valid(form)
 
 
 @login_required

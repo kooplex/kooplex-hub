@@ -8,7 +8,6 @@ urlpatterns = [
     path('new/', views.NewContainerView.as_view(), name = 'new'),
     re_path('^delete/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)/?', views.destroy, name = 'destroy'),
     path('list/', views.ContainerListView.as_view(), name = 'list'),
-    path('layoutflip/', views.layout_flip, name = 'layout_flip'),
     re_path('^configure/(?P<container_id>\d+)/?', views.configure, name = 'configure'),
 
     re_path('^start/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)/?', views.start, name = 'start'),
@@ -18,5 +17,5 @@ urlpatterns = [
     re_path('^open/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)/(?P<shown>.*)?/?', views.open, name = 'open'),
 
     path('attachments/', views.AttachmentListView.as_view(), name = 'list_attachments'),
-    path('new_attachment/', views.new_attachment, name = 'new_attachment'),
+    path('new_attachment/', views.NewAttachmentView.as_view(), name = 'new_attachment'),
 ]
