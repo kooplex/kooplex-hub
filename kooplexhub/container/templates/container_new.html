@@ -1,5 +1,11 @@
 {% extends 'container_layout.html' %}
 
+{% load static %}
+{% block chardinhelp %}
+         url: "{% static 'chardinjs/help_new_environment.json' %}"
+{% endblock %}
+
+
 {% block realcontent %}
 <div class="container mt-2">
   <form id="service_new" class="form-horizontal was-validated" action="{% url 'container:new' %}" method="post">

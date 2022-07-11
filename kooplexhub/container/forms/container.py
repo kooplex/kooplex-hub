@@ -19,6 +19,7 @@ class FormContainer(forms.Form):
     friendly_name = forms.CharField(
             max_length = 200, required = True,
             help_text = _('A short friendly name makes your life easier to find yout container environments'), 
+            widget = forms.TextInput(attrs = {"data-intro": "#friendlyname"})
             )
     name = forms.CharField(
             max_length = 100, required = True,
@@ -26,8 +27,13 @@ class FormContainer(forms.Form):
             validators = [
                     my_alphanumeric_validator('Enter a valid container name containing only letters and numbers.'),
                 ],
+            widget = forms.TextInput(attrs = {"data-intro": "#name"})
             )
-    image = forms.ModelChoiceField(queryset = Image.objects.filter(imagetype = Image.TP_PROJECT, present=True), help_text = _('Please select an image to the new container environment.'), required = True, empty_label = 'Select image...', widget = ImageSelectWidget)
+    image = forms.ModelChoiceField(
+            queryset = Image.objects.filter(imagetype = Image.TP_PROJECT, present=True), 
+            help_text = _('Please select an image to the new container environment.'), required = True, 
+            empty_label = 'Select image...', widget = ImageSelectWidget
+            )
 
     def render_image(self, selected_choices, option_value, option_label):
         descriptions = [i.description for i in self.fields['image']]

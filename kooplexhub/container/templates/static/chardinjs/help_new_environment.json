@@ -1,0 +1,15 @@
+{
+    "#images": { 
+        "text": "Use dropdown to associate a virtual machine image with your environment",
+        "position": "right"	
+    },
+    "#friendlyname": { 
+        "text": "A name well describing the purpose of the environment",
+        "position": "right"	
+    },
+    "#name": { 
+        "text": "Name used by the machine. Cannot contain s space or dash. You can leave it empty",
+        "position": "left"	
+    }
+}
+

@@ -3,17 +3,17 @@
 {% load static %}
 {% load project_buttons %}
 
+{% block page_title %}Kooplex Environment{% endblock %}
+
+
 
 {% block submenu %}
 <ul class="navbar-nav flex-row flex-md-row">
   <li class="ms-3 nav-item">
-    <a class="nav-link {% if submenu == 'new' %}active{% endif %}" href="{% url 'container:new' %}"><i class="bi bi-basket3"></i><span class="d-none d-sm-inline">&nbsp;New</span></a>
+    <a data-toggle="tooltip" title="New environment" data-placement="bottom" class="nav-link {% if submenu == 'new' %}active{% endif %}" href="{% url 'container:new' %}"><i class="bi bi-basket3"></i><span class="d-none d-sm-inline">&nbsp;New environment</span></a>
   </li>
-  <li class="nav-item">
-    <a class="nav-link {% if submenu == 'list' %}active{% endif %}" href="{% url 'container:list' %}"><i class="bi bi-basket2"></i><span class="d-none d-sm-inline">&nbsp;List</span></a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link {% if submenu == 'showhide' %}active{% endif %}" href="{#% url 'container:attachments' %#}"><i class="bi bi-paperclip"></i><span class="d-none d-sm-inline">&nbsp;Attachments</span></a>
+  <li class="ms-3 nav-item">
+    <a data-toggle="tooltip" title="List environment" data-placement="bottom" class="nav-link {% if submenu == 'list' %}active{% endif %}" href="{% url 'container:list' %}"><i class="bi bi-bag-dash"></i><span class="d-none d-sm-inline">&nbsp;List environment</span></a>
   </li>
 </ul>
 {% endblock %}
