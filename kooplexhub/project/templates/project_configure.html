@@ -36,6 +36,7 @@
     <div class="tab-pane fade {% if active == "collaboration" %}show active{% endif %}" id="collaboration" role="tabpanel" aria-labelledby="tab-collaboration">
       <h5 class="card-title mt-2">Select collaborators of this project</h5>
       {% if t_collaborators %}
+        <input class="form-control me-2 mb-3 mt-3" type="text" id="search_collaborator" placeholder="Search collaborator" title="Type in a name" data-intro="#search_collaborator">
         {% render_table t_collaborators %}
         <hr>
         <h5 class="card-title">Select environments to create for your collaborators</h5>
@@ -63,12 +64,25 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
-  $("#projectConfigTabs li a").on("click", function () {
-    var tab = $( this ).attr("id")
-    console.log( tab )
-  })
+<script>  
+$("#search_collaborator").keyup(function() {
+  var pattern = $( this ).val().toUpperCase();
+  console.log( "search: " + pattern );
+  $("input[id^='search-collaborator-'").each(function() {
+    var hide_it = true;
+    if (pattern.length > 0) {
+      var name = $( this ).attr("value").toUpperCase();
+      if ( name.indexOf(pattern) > -1 ) {
+        hide_it = false;
+      }
+    }
+    var widget = $( this ).parent().parent();
+    if (hide_it) {
+      widget.hide();
+    } else {
+      widget.show();
+    }
+  });
+}).keyup();
 </script>
 {% endblock %}
-
-

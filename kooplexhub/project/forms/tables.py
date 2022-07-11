@@ -200,7 +200,13 @@ class TableCollaborator(tables.Table):
 
     def render_name(self, record):
         user = record.user
-        return format_html(f'<span data-toggle="tooltip" title="Username {user.username}." data-placement="top" style="font-weight: bold;">{user.first_name}</span> {user.last_name}')
+        if user in self.project.collaborators:
+            return format_html(f'<span data-toggle="tooltip" title="Username {user.username}." data-placement="top" style="font-weight: bold;">{user.first_name}</span> {user.last_name}')
+        else:
+            return format_html(f"""
+<span data-toggle="tooltip" title="Username {user.username}." data-placement="top" style="font-weight: bold;">{user.first_name}</span> {user.last_name}
+<input type="hidden" id="search-collaborator-{user.id}" value="{user.username} {user.first_name} {user.last_name} {user.first_name}">
+            """)
 
 
 class TableProjectContainer(tables.Table):

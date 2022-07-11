@@ -346,7 +346,6 @@ def configure(request, project_id):
             profile.search_project_collaborator = pattern
             profile.save()
         table_collaborator = TableCollaborator(project, everybodyelse)
-        RequestConfig(request).configure(table_collaborator)
 
         table_project_container = TableProjectContainer(ProjectContainerBinding.objects.filter(container__user = user, project = project))
         RequestConfig(request).configure(table_project_container)
