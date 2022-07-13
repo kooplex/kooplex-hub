@@ -24,10 +24,28 @@
         <p class="fw-bolder">Image description:</p>
 	{# fixme: seems line is not broken #}
 	<p id="imageDescription"></p>
+	{{ form.descriptions }}
       </div>
     </div>
     {% apply_cancel hide_cancel=True label_apply='Create' %}
   </div>
   </form>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$("select[name='image'").change(function() {
+    $( "select option:selected" ).each(function() {
+        var id = $(this).attr("value");
+        console.log( $( this ).text() + " -> " + id);
+	if (id === undefined) {
+	    $("#imageDescription").text("");
+	} else {
+	    var description = $("#image-description-" + id).attr("value");
+	    $("#imageDescription").text(description);
+	}
+    });
+}).change();
+</script>
 {% endblock %}

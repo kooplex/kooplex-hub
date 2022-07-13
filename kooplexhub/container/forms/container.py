@@ -1,16 +1,17 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
+from django.utils.html import format_html
 
 from ..models import Image
 
 from kooplexhub.lib import my_alphanumeric_validator
 
-class ImageSelectWidget(forms.Select):
-    template_name = 'image.html'
-    option_template_name = 'image_option.html'
-
-    def all_images(self):
-        return Image.objects.all()
+#class ImageSelectWidget(forms.Select):
+#    template_name = 'image.html'
+#    option_template_name = 'image_option.html'
+#
+#    def all_images(self):
+#        return Image.objects.all()
 
     
     
@@ -32,13 +33,18 @@ class FormContainer(forms.Form):
     image = forms.ModelChoiceField(
             queryset = Image.objects.filter(imagetype = Image.TP_PROJECT, present=True), 
             help_text = _('Please select an image to the new container environment.'), required = True, 
-            empty_label = 'Select image...', widget = ImageSelectWidget
+            empty_label = 'Select image...' #, widget = ImageSelectWidget
             )
 
     def render_image(self, selected_choices, option_value, option_label):
         descriptions = [i.description for i in self.fields['image']]
         return u'<option value="%s"> %s %s</option>' % (
             option_value, option_value, descriptions)
+
+
+    def descriptions(self):
+        hidden = lambda i: f"""<input type="hidden" id="image-description-{i.id}" value="{i.description}">"""
+        return format_html("".join(list(map(hidden, self.fields['image'].queryset))))
 
 
     def __init__(self, *args, **kwargs):
