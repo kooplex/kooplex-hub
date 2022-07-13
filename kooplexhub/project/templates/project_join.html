@@ -8,6 +8,8 @@
 {% endblock %}
 
 {% block realcontent %}
+<h4 class="mb-3">Join project</h4>
+
 <div class="card shadow mt-3 p-3 mb-5 bg-light rounded" data-intro="#join_project"> 
 <form id="project-manage" class="form-horizontal" action="{% url 'project:join' %}" method="post">
   {% csrf_token %}

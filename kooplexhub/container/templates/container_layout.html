@@ -9,11 +9,14 @@
 
 {% block submenu %}
 <ul class="navbar-nav flex-row flex-md-row">
-  <li class="ms-3 nav-item">
-    <a data-toggle="tooltip" title="New environment" data-placement="bottom" class="nav-link {% if submenu == 'new' %}active{% endif %}" href="{% url 'container:new' %}"><i class="bi bi-basket3"></i><span class="d-none d-sm-inline">&nbsp;New environment</span></a>
+  <li class="ms-3 nav-item text-center">
+    <a data-toggle="tooltip" title="New environment" data-placement="bottom" class="nav-link {% if submenu == 'new' %}active active border-2 border-bottom{% endif %}" href="{% url 'container:new' %}"><i class="bi bi-basket3"></i><span class="d-none d-sm-block">&nbsp;New environment</span></a>
   </li>
-  <li class="ms-3 nav-item">
-    <a data-toggle="tooltip" title="List environment" data-placement="bottom" class="nav-link {% if submenu == 'list' %}active{% endif %}" href="{% url 'container:list' %}"><i class="bi bi-bag-dash"></i><span class="d-none d-sm-inline">&nbsp;List environment</span></a>
+  <li class="ms-3 nav-item text-center">
+    <a data-toggle="tooltip" title="List environment" data-placement="bottom" class="nav-link {% if submenu == 'list' %}active active border-2 border-bottom{% endif %}" href="{% url 'container:list' %}"><i class="bi bi-bag-dash"></i><span class="d-none d-sm-block">&nbsp;List environment</span></a>
+  </li>
+  <li class="ms-3 nav-item text-center">
+    <a data-toggle="tooltip" title="List report environment" data-placement="bottom" class="nav-link {% if submenu == 'reportclist' %}active active border-2 border-bottom{% endif %}" href="{% url 'container:reportclist' %}"><i class="bi bi-bag-dash"></i><span class="d-none d-sm-block">&nbsp;List report environment</span></a>
   </li>
 </ul>
 {% endblock %}

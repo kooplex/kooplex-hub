@@ -1,6 +1,8 @@
 {% extends 'project_layout.html' %}
 
 {% block realcontent %}
+<h4 class="mb-3">New project</h4>
+
 <div class="container mt-2">
   <form id="project_new" class="form-horizontal was-validated" action="{% url 'project:new' %}" method="post">
     <h5>Describe your new project</h5>

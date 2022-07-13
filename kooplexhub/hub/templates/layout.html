@@ -5,11 +5,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
+
+
     <link rel="stylesheet" type="text/css" href="{% static 'fonts/icons-1.8.3/font/bootstrap-icons.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'fonts/open-iconic-master/font/css/open-iconic-bootstrap.css' %}">
     <link rel="shortcut icon" type="image/png" href="/static/kooplexicon.png"/>
-    <title>Kooplex Hub</title>
+    <title>{% block page_title %}{% endblock %}</title>
 
     <style>
 .navbar-expand-md .navbar-nav .nav-link {
@@ -21,11 +23,39 @@
   padding-left: initial;
   padding-right: initial;
 }
-@media (max-width: 1199.98px) { 
-  .helloname{
-    font-size: 15px;
-  }
+
+  @media all and (min-width: 1265px) {
+   .menuname{ display: none;}
+
+   .container-two {
+display: grid;
+grid-template-columns: repeat(14, 2fr);
 }
+
+.navigation-menu {
+grid-column: span 6;
+}
+
+.main-content {
+grid-column: span 8;
+}
+.pageend{
+  position:absolute;
+}
+.helloname{
+  font-size: 15px;
+  }
+ }
+
+ @media all and (max-width: 1265px) {
+  .helloname{
+  font-size: 15px;
+  }
+  .pageend{
+  margin-top: 10px;
+}
+ }
+
     </style>
 
     {% block head_content %}{% endblock %}
@@ -76,14 +106,14 @@
           <nav class="navbar navbar-expand-lg navbar-dark bg-dark d-flex">
             <div class="container-fluid d-flex flex-column flex-md-row">
 	      {% block submenu %}
-	      <a class="ms-3 navbar-brand d-flex justify-content-start helloname" href="#">Hi, {{ user.first_name }} {{ user.last_name }}. Welcome to Kooplex!</a>
+	      <a class="ms-3 navbar-brand d-flex justify-content-start helloname" data-intro="#envs" href="#">Hi, <u class="ms-1"> {{ user.first_name }} {{ user.last_name }}</u>. Welcome to Kooplex!</a>
 	      {% endblock %}
               <ul class="me-3 navbar-nav d-flex flex-row">
-                <li class="nav-item"><a href="#" class="nav-link" data-toggle="chardinjs"><span class="oi oi-question-mark"/></a></li>
-		<li class="nav-item ms-3 ms-md-1"><a href="#" class="nav-link" data-bs-toggle="offcanvas" data-bs-target="#offcanvasMessages" aria-controls="offcanvasMessages"><span class="bi bi-chat-left-dots"/></a></li>
+                <li class="nav-item"><a href="#" class="nav-link" data-toggle="chardinjs"><span class="oi oi-question-mark" data-toggle="tooltip" title="Help" data-placement="bottom"></a></li>
+		<li class="nav-item ms-3 ms-md-1"><a href="#" class="nav-link" data-bs-toggle="offcanvas" data-bs-target="#offcanvasMessages" aria-controls="offcanvasMessages"><span class="bi bi-chat-left-dots" data-toggle="tooltip" title="Messages" data-placement="bottom"></a></li>
                 <li class="nav-item dropdown ms-3 ms-md-1">
                   <a class="nav-link dropdown-toggle" href="#" id="navbarDarkDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <span class="bi bi-person-fill"></span>
+                    <span class="bi bi-person-fill" data-toggle="tooltip" title="Profile" data-placement="bottom"></span>
                   </a>
                   <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end" aria-labelledby="navbarDarkDropdownMenuLink">
                     <li><p class="dropdown-item">{{ user.first_name }} {{ user.last_name }}</p></li>
@@ -114,6 +144,42 @@
 
         {% endblock %}
 	{% block bodycontent %}{% endblock %}
+	{% block infomessages %}
+	<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+          <div id="infoMessages" class="toast fade show" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+              <strong class="me-auto">Messages</strong>
+              <button id="closeButton" type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+            {% for message in messages %}
+              {% if message.level == 25 %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                  <strong>Success</strong> {{ message }}
+                </div>
+              {% endif %}
+              {% if message.level == 20 %}
+                <div class="alert alert-info alert-dismissible fade show" role="alert">
+                  <strong>Info</strong> {{ message }}
+                </div>
+              {% endif %}
+              {% if message.level == 40 %}   
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                  <strong>Error:</strong> {{ message }}
+                </div>
+              {% endif %}
+            {% endfor %}
+            </div>
+          </div>
+        </div>
+	<script>
+	$(document).ready(function () {
+		var widget = $("#infoMessages");
+		console.log( widget );
+		setTimeout(function () { widget.hide() }, 2500);
+	});
+	</script>
+      {% endblock %}
       {% endblock %}
       </main>
     </div>
@@ -125,8 +191,8 @@
 
 
     {% block scripts %}{% endblock %}
-    <!-- Bootstrap Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    <!-- JavaScript Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2" crossorigin="anonymous"></script>
 
   </body>
 </html>

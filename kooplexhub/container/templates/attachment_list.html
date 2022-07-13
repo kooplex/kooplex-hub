@@ -6,6 +6,7 @@
 {% endblock %}
 
 {% block realcontent %}
+<h4 class="mb-3"> List attachment </h4>
   <input class="form-control me-2 mb-3 mt-3" type="text" id="search_attachment" placeholder="Search attachment" title="Type in a name" autofocus data-intro="#search_attachment">
   <div id="attachmentListPane" data-intro="#attachment_list" >
   {% for attachment in attachments %}

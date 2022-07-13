@@ -9,15 +9,15 @@
 
 {% block submenu %}
 <ul class="navbar-nav flex-row flex-md-row">
-  <li class="ms-3 nav-item">
-    <a data-toggle="tooltip" title="New attachment" data-placement="bottom" class="nav-link {% if submenu == 'new_attachment' %}active{% endif %}" href="{% url 'container:new_attachment' %}"><i class="bi bi-clipboard-plus"></i><span class="d-none d-sm-inline">&nbsp;New attachment</span></a>
+  <li class="ms-3 nav-item text-center">
+    <a data-toggle="tooltip" title="New attachment" data-placement="bottom" class="nav-link {% if submenu == 'new_attachment' %}active active border-2 border-bottom{% endif %}" href="{% url 'container:new_attachment' %}"><i class="bi bi-clipboard-plus"></i><span class="d-none d-sm-block">&nbsp;New attachment</span></a>
   </li>
-  <li class="ms-3 nav-item">
-    <a data-toggle="tooltip" title="List attachments" data-placement="bottom" class="nav-link {% if submenu == 'list_attachment' %}active{% endif %}" href="{% url 'container:list_attachments' %}"><i class="bi bi-clipboard-minus"></i><span class="d-none d-sm-inline">&nbsp;List attachments</span></a>
+  <li class="ms-3 nav-item text-center">
+    <a data-toggle="tooltip" title="List attachments" data-placement="bottom" class="nav-link {% if submenu == 'list_attachment' %}active active border-2 border-bottom{% endif %}" href="{% url 'container:list_attachments' %}"><i class="bi bi-clipboard-minus"></i><span class="d-none d-sm-block">&nbsp;List attachments</span></a>
   </li>
   {% if app_volume_installed %}
-  <li class="ms-3 nav-item">
-    <a data-toggle="tooltip" title="List volumes" data-placement="bottom" class="nav-link {% if submenu == 'list_volume' %}active{% endif %}" href="{% url 'volume:list' %}"><i class="bi bi-clipboard2-pulse"></i><span class="d-none d-sm-inline">&nbsp;List volumes</span></a>
+  <li class="ms-3 nav-item text-center">
+    <a data-toggle="tooltip" title="List volumes" data-placement="bottom" class="nav-link {% if submenu == 'list_volume' %}active active border-2 border-bottom{% endif %}" href="{% url 'volume:list' %}"><i class="bi bi-clipboard2-pulse"></i><span class="d-none d-sm-block">&nbsp;List volumes</span></a>
   </li>
   {% endif %}
 </ul>

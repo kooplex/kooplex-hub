@@ -9,8 +9,6 @@ from django.db.models import Q
 from django.contrib.auth.models import User
 #from django.urls import reverse
 
-from django_tables2 import RequestConfig
-
 from .forms import FormProject, TableShowhideProject, TableJoinProject, TableCollaborator, TableProjectContainer, TableContainer
 from .models import Project, UserProjectBinding, ProjectContainerBinding
 from container.models import Container
@@ -106,15 +104,7 @@ class UserProjectBindingListView(LoginRequiredMixin, generic.ListView):
 
     def get_queryset(self):
         user = self.request.user
-        profile = user.profile
-        pattern = self.request.GET.get('project', profile.search_project_list)
-        if pattern:
-            projectbindings = UserProjectBinding.objects.filter(user = user, project__name__icontains = pattern).order_by('project__name')
-        else:
-            projectbindings = UserProjectBinding.objects.filter(user = user, is_hidden = False).order_by('project__name')
-        if len(projectbindings) and pattern != profile.search_project_list:
-            profile.search_project_list = pattern
-            profile.save()
+        projectbindings = UserProjectBinding.objects.filter(user = user, is_hidden = False).order_by('project__name')
         return projectbindings
 
 
@@ -146,39 +136,30 @@ def hide(request, project_id):
 
 def show_hide(request):
     user = request.user
-    profile = user.profile
-    pattern = request.POST.get('project', profile.search_project_showhide)
-    if pattern:
-        userprojectbindings = UserProjectBinding.objects.filter(user = user, project__name__icontains = pattern)
-    else:
-        userprojectbindings = UserProjectBinding.objects.filter(user = user)
-    if len(userprojectbindings) and pattern != profile.search_project_showhide:
-        profile.search_project_showhide = pattern
-        profile.save()
+    userprojectbindings = UserProjectBinding.objects.filter(user = user)
     if request.POST.get('button', '') == 'apply':
-         hide_bindingids_req = set([ int(i) for i in request.POST.getlist('selection') ])
-         n_hide = 0
-         n_unhide = 0
-         for upb in set(userprojectbindings):#.union(userprojectbindings_course):
-             if upb.is_hidden and not upb.id in hide_bindingids_req:
-                 upb.is_hidden = False
-                 upb.save()
-                 n_unhide += 1
-             elif not upb.is_hidden and upb.id in hide_bindingids_req:
-                 upb.is_hidden = True
-                 upb.save()
-                 n_hide += 1
-         msgs = []
-         if n_hide:
-             msgs.append('%d projects are hidden.' % n_hide)
-         if n_unhide:
-             msgs.append('%d projects are unhidden.' % n_unhide)
-         if len(msgs):
-             messages.info(request, ' '.join(msgs))
-         return redirect('project:list')
+        show_ids = list(map(int, request.POST.getlist('show')))
+        n_hide = 0
+        n_unhide = 0
+        for upb in userprojectbindings:
+            if upb.is_hidden and upb.id in show_ids:
+                upb.is_hidden = False
+                upb.save()
+                n_unhide += 1
+            elif not upb.is_hidden and not upb.id in show_ids:
+                upb.is_hidden = True
+                upb.save()
+                n_hide += 1
+        msgs = []
+        if n_hide:
+            msgs.append('%d projects are hidden.' % n_hide)
+        if n_unhide:
+            msgs.append('%d projects are unhidden.' % n_unhide)
+        if len(msgs):
+            messages.info(request, ' '.join(msgs))
+        return redirect('project:list')
 
-    table = TableShowhideProject(userprojectbindings)
-    RequestConfig(request).configure(table)
+    table = TableShowhideProject(userprojectbindings, user = user)
     return render(request, 'project_showhide.html', context = { 't_project': table, 'menu_project': True, 'submenu': 'showhide' })
 
 
@@ -187,7 +168,6 @@ def join(request):
     logger.debug("user %s" % request.user)
     user = request.user
     profile = user.profile
-    pattern = request.POST.get('project_or_creator', profile.search_project_join)
     if request.POST.get('button', '') == 'apply':
         joined = []
         svcs = []
@@ -215,13 +195,7 @@ def join(request):
     joinable_bindings = UserProjectBinding.objects.filter(project__scope__in = [ Project.SCP_INTERNAL, Project.SCP_PUBLIC ], role = UserProjectBinding.RL_CREATOR).exclude(user = user)
     joined_projects = [ upb.project for upb in UserProjectBinding.objects.filter(user = user, role__in = [ UserProjectBinding.RL_ADMIN, UserProjectBinding.RL_COLLABORATOR ]) ]
     joinable_bindings = joinable_bindings.exclude(Q(project__in = joined_projects))
-    if pattern:
-        joinable_bindings = joinable_bindings.filter(Q(project__name__icontains = pattern) | Q(user__first_name__icontains = pattern) | Q(user__last_name__icontains = pattern) | Q(user__username__icontains = pattern))
-    if len(joinable_bindings) and pattern != profile.search_project_join:
-        profile.search_project_join = pattern
-        profile.save()
     table = TableJoinProject(joinable_bindings)
-    RequestConfig(request).configure(table)
     return render(request, 'project_join.html', context = { 't_joinable': table, 'menu_project': True, 'submenu': 'join' })
 
 
@@ -337,35 +311,19 @@ def configure(request, project_id):
     else:
         active_tab = request.GET.get('active_tab', 'collaboration')
 
-        pattern = request.GET.get('pattern', profile.search_project_collaborator) if active_tab == 'collaboration' else profile.search_project_collaborator
-        if pattern:
-            everybodyelse = user.profile.everybodyelse_like(pattern)
-        else:
-            everybodyelse = user.profile.everybodyelse
-        if len(everybodyelse) and pattern != profile.search_project_collaborator:
-            profile.search_project_collaborator = pattern
-            profile.save()
-        table_collaborator = TableCollaborator(project, everybodyelse)
+        everybodyelse = user.profile.everybodyelse
 
         table_project_container = TableProjectContainer(ProjectContainerBinding.objects.filter(container__user = user, project = project))
-        RequestConfig(request).configure(table_project_container)
 
-        pattern = request.GET.get('pattern', profile.search_project_container) if active_tab == 'service' else profile.search_project_container
-        if pattern:
-            containers = Container.objects.filter(user = user, name__icontains = pattern)
-        else:
-            containers = Container.objects.filter(user = user)
-        if len(containers) and pattern != profile.search_project_container:
-            profile.search_project_container = pattern
-            profile.save()
+        containers = Container.objects.filter(user = user)
         table_container = TableContainer(UserProjectBinding.objects.get(user = user, project = project), containers)
-        RequestConfig(request).configure(table_container)
 
         context_dict = {
             'menu_project': True,
             'project': project,
             'active': active_tab,
-            't_collaborators': table_collaborator,
+            't_users': TableCollaborator(project, user, collaborator_table = False),
+            't_collaborators': TableCollaborator(project, user, collaborator_table = True),
             't_services': table_project_container,
             't_all_services': table_container,
         }

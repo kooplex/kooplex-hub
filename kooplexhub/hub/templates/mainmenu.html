@@ -1,7 +1,8 @@
 {% load static %}
 
 
-<nav class="p-4 pt-3 navbar navbar-dark bg-dark d-flex align-items-start" style="min-height: 100vh;">
+{% with li_a_s="ps-2 pe-1 pt-0 pb-0 mt-2" %}
+<nav class="p-2 pt-3 navbar navbar-dark bg-dark d-flex align-items-start" style="min-height: 100vh;">
   <ul class="navbar-nav flex-column flex-md-column">
     <li class="nav-item">
       <a class="nav-item" href="/hub/">
@@ -11,25 +12,26 @@
       </a>
     </li>
     <li class="mt-4 nav-item" data-toggle="tooltip" title="Environment" data-placement="bottom">
-      <a class="nav-link {% if menu_container %}active{% endif %}" href="{% url 'container:list' %}"><i class="bi bi-boxes"></i><span class="d-none d-sm-inline">&nbsp;Environments</span></a>
+      <a class="{{ li_a_s }} nav-link {% if menu_container %}active border-2 border-start{% endif %}" href="{% url 'container:list' %}"><i class="bi bi-boxes"></i><span class="d-none d-sm-inline">&nbsp;Environments</span></a>
     </li>
     {% if app_project_installed %}
     <li class="nav-item mt-2"  data-toggle="tooltip" title="Projects" data-placement="bottom">
-      <a class="nav-link {% if menu_project %}active{% endif %}" href="{% url 'project:list' %}"><i class="bi bi-person-workspace"></i><span class="d-none d-sm-inline">&nbsp;Projects</span></a>
+      <a class="{{ li_a_s }} nav-link {% if menu_project %}active border-2 border-start{% endif %}" href="{% url 'project:list' %}"><i class="bi bi-person-workspace"></i><span class="d-none d-sm-inline">&nbsp;Projects</span></a>
     </li>
     {% endif %}
     {% if app_report_installed %}
     <li class="nav-item mt-2"  data-toggle="tooltip" title="Reports" data-placement="bottom">
-      <a class="nav-link {% if menu_report %}active{% endif %}" href="{% url 'report:list' %}"><i class="bi bi-projector"></i><span class="d-none d-sm-inline">&nbsp;Reports</span></a>
+      <a class="{{ li_a_s }} nav-link {% if menu_report %}active border-2 border-start{% endif %}" href="{% url 'report:list' %}"><i class="bi bi-projector"></i><span class="d-none d-sm-inline">&nbsp;Reports</span></a>
     </li>
     {% endif %}
     {% if app_education_installed %}
     <li class="nav-item mt-2" data-toggle="tooltip" title="Education" data-placement="bottom">
-      <a class="nav-link {% if menu_teaching %}active{% endif %}" href="{% url 'education:student' %}"><i class="bi bi-textarea-t"></i><span class="d-none d-sm-inline">&nbsp;Education</span></a>
+      <a class="{{ li_a_s }} nav-link {% if menu_teaching %}active border-2 border-start{% endif %}" href="{% url 'education:student' %}"><i class="bi bi-textarea-t"></i><span class="d-none d-sm-inline">&nbsp;Education</span></a>
     </li>
     {% endif %}
     <li class="nav-item mt-2"  data-toggle="tooltip" title="List and manage attachments and volumes" data-placement="bottom">
-      <a class="nav-link {% if menu_storage %}active{% endif %}" href="{% url 'container:list_attachments' %}"><i class="bi bi-folder2-open"></i><span class="d-none d-sm-inline">&nbsp;Storage</span></a>
+      <a class="{{ li_a_s }} nav-link {% if menu_storage %}active border-2 border-start{% endif %}" href="{% url 'container:list_attachments' %}"><i class="bi bi-folder2-open"></i><span class="d-none d-sm-inline">&nbsp;Storage</span></a>
     </li>
   </ul>
 </nav>
+{% endwith %}

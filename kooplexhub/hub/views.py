@@ -11,4 +11,3 @@ class IndexView(AccessMixin, generic.TemplateView):
             self.template_name = 'index.html'
         super().setup(request, *args, **kwargs)
 
-

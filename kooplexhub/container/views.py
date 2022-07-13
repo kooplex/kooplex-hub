@@ -9,8 +9,6 @@ from django.shortcuts import redirect
 from django.views import generic
 from django.contrib.auth.mixins import LoginRequiredMixin
 
-from django_tables2 import RequestConfig
-
 from .forms import FormContainer, FormAttachment
 from .forms import TableContainerProject, TableContainerCourse, TableContainerAttachment, TableContainerVolume
 from .models import Image, Container, Attachment, AttachmentContainerBinding
@@ -38,12 +36,14 @@ class NewContainerView(LoginRequiredMixin, generic.FormView):
     def form_valid(self, form):
         logger.info(form.cleaned_data)
         user = self.request.user
+        friendly_name = form.cleaned_data['friendly_name']
         Container.objects.create(
             user = user, 
             name = form.cleaned_data['name'], 
-            friendly_name = form.cleaned_data['friendly_name'], 
+            friendly_name = friendly_name, 
             image = form.cleaned_data['image']
         )
+        messages.info(self.request, f'Container {friendly_name} is created')
         return super().form_valid(form)
 
 
@@ -73,17 +73,24 @@ class ContainerListView(LoginRequiredMixin, generic.ListView):
 
     def get_queryset(self):
         user = self.request.user
-#        profile = user.profile
-#        pattern = self.request.GET.get('container', profile.search_container_list)
-#        if pattern:
-#            containers = Container.objects.filter(user = user, name__icontains = pattern).order_by('name')
-#        else:
-        containers = Container.objects.filter(user = user).order_by('name')
-#        if len(containers) and pattern != profile.search_container_list:
-#            profile.search_container_list = pattern
-#            profile.save()
+        containers = Container.objects.filter(user = user, image__imagetype = Image.TP_PROJECT).order_by('name')
         return containers
 
+class ReportContainerListView(LoginRequiredMixin, generic.ListView):
+    template_name = 'container_list_report.html'
+    context_object_name = 'containers'
+    model = Container
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['menu_container'] = True
+        context['submenu'] = 'reportclist'
+        return context
+
+    def get_queryset(self):
+        user = self.request.user
+        containers = Container.objects.filter(user = user, image__imagetype = Image.TP_REPORT).order_by('name')
+        return containers
 
 class AttachmentListView(LoginRequiredMixin, generic.ListView):
     template_name = 'attachment_list.html'
@@ -93,14 +100,7 @@ class AttachmentListView(LoginRequiredMixin, generic.ListView):
     def get_queryset(self):
         user = self.request.user
         profile = user.profile
-        pattern = self.request.GET.get('attachment', profile.search_attachment_list)
-        if pattern:
-            attachments = Attachment.objects.filter(name__icontains = pattern).order_by('name')
-        else:
-            attachments = Attachment.objects.all().order_by('name')
-        if len(attachments) and pattern != profile.search_attachment_list:
-            profile.search_attachment_list = pattern
-            profile.save()
+        attachments = Attachment.objects.all().order_by('name')
         return attachments
 
     def get_context_data(self, **kwargs):
@@ -338,39 +338,14 @@ def configure(request, container_id):
     else:
         active_tab = request.GET.get('active_tab', 'projects')
 
-        pattern = request.GET.get('pattern', profile.search_container_projects) if active_tab == 'projects' else profile.search_container_projects
-        if pattern:
-            upbs = UserProjectBinding.objects.filter(user = user, project__name__icontains = pattern)
-        else:
-            upbs = UserProjectBinding.objects.filter(user = user)
-        if len(upbs) and pattern != profile.search_container_projects:
-            profile.search_container_projects = pattern
-            profile.save()
+        upbs = UserProjectBinding.objects.filter(user = user)
         table_project = TableContainerProject(svc, upbs)
-        RequestConfig(request).configure(table_project)
 
-        #pattern = request.GET.get('pattern', profile.search_container_courses) if active_tab == 'courses' else profile.search_container_courses
-        #if pattern:
-        #    ucbs = UserCourseBinding.objects.filter(user = user, course__name__icontains = pattern)
-        #else:
-        #    ucbs = UserCourseBinding.objects.filter(user = user)
         ucbs = UserCourseBinding.objects.filter(user = user)
-        #if len(ucbs) and pattern != profile.search_container_courses:
-        #    profile.search_container_projects = pattern
-        #    profile.save()
         table_course = TableContainerCourse(svc, ucbs)
-        #RequestConfig(request).configure(table_course)
 
-        pattern = request.GET.get('pattern', profile.search_container_attachments) if active_tab == 'attachments' else profile.search_container_attachments
-        if pattern:
-            attachments = Attachment.objects.filter(name__icontains = pattern)
-        else:
-            attachments = Attachment.objects.all()
-        if len(attachments) and pattern != profile.search_container_attachments:
-            profile.search_container_attachments = pattern
-            profile.save()
+        attachments = Attachment.objects.all()
         table_attachment = TableContainerAttachment(svc, attachments)
-        RequestConfig(request).configure(table_attachment)
 
         volumes = Volume.objects.all()
         table_volume = TableContainerVolume(svc, volumes)
@@ -388,38 +363,6 @@ def configure(request, container_id):
 
         if 'plugin' is settings.INSTALLED_APPS:
             pass
-#FIXME:        table = table_fslibrary(svc)
-#FIXME:        if search and request.POST.get('active_tab') == 'filesync':
-#FIXME:            pattern = request.POST.get('pattern', user.search.service_library)
-#FIXME:            fsls = FSLibrary.objects.filter(token__user = user, library_name__icontains = pattern).exclude(sync_folder__exact = '')
-#FIXME:            if len(fsls) and pattern != user.search.service_library:
-#FIXME:                user.search.service_library = pattern
-#FIXME:                user.search.save()
-#FIXME:        elif user.search.service_library:
-#FIXME:            fsls = FSLibrary.objects.filter(token__user = user, library_name__icontains = user.search.service_library).exclude(sync_folder__exact = '')
-#FIXME:        else:
-#FIXME:            fsls = FSLibrary.objects.filter(token__user = user).exclude(sync_folder__exact = '')
-#FIXME:        table_synclibs = table(fsls)
-#FIXME:        RequestConfig(request).configure(table_synclibs)
-#FIXME:
-#FIXME:        table = table_vcproject(svc)
-#FIXME:        if search and request.POST.get('active_tab') == 'versioncontrol':
-#FIXME:            pattern = request.POST.get('pattern', user.search.service_repository)
-#FIXME:            vcps = VCProject.objects.filter(token__user = user, project_name__icontains = pattern).exclude(clone_folder__exact = '').exclude(clone_folder = None)
-#FIXME:            if len(vcps) and pattern != user.search.service_repository:
-#FIXME:                user.search.service_repository = pattern
-#FIXME:                user.search.save()
-#FIXME:        elif user.search.service_repository:
-#FIXME:            vcps = VCProject.objects.filter(token__user = user, project_name__icontains = user.search.service_repository).exclude(clone_folder__exact = '').exclude(clone_folder = None)
-#FIXME:        else:
-#FIXME:            vcps = VCProject.objects.filter(token__user = user).exclude(clone_folder__exact = '').exclude(clone_folder = None)
-#FIXME:        table_repos = table(vcps)
-#FIXME:        RequestConfig(request).configure(table_repos)
-#FIXME:
-                #FIXME context_dict.update({
-                #FIXME:            't_synclibs': table_synclibs,
-                #FIXME:            't_repositories': table_repos, })
- 
 
         return render(request, 'container_configure.html', context = context_dict)
 
@@ -471,7 +414,8 @@ def refresh(request, container_id):
     except Exception as e:
         logger.error(f'Cannot refresh service environment information {svc} -- {e}')
         messages.error(request, f'Cannot refresh service environment information {svc}')
-    redirection = redirect('container:list')
+    next_page = request.COOKIES.get('next_page', 'container:list').replace('%3A', ':')
+    redirection = redirect(next_page)
     shown = _get_cookie(request)
     shown.add( svc.id )
     redirection.set_cookie('show_container', json.dumps( list(shown) ))

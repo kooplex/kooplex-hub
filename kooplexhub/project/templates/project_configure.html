@@ -34,19 +34,7 @@
       </select>
     </div>
     <div class="tab-pane fade {% if active == "collaboration" %}show active{% endif %}" id="collaboration" role="tabpanel" aria-labelledby="tab-collaboration">
-      <h5 class="card-title mt-2">Select collaborators of this project</h5>
-      {% if t_collaborators %}
-        <input class="form-control me-2 mb-3 mt-3" type="text" id="search_collaborator" placeholder="Search collaborator" title="Type in a name" data-intro="#search_collaborator">
-        {% render_table t_collaborators %}
-        <hr>
-        <h5 class="card-title">Select environments to create for your collaborators</h5>
-        <span>Your collaborators are free to change this environment later.</span>
-        <div class='mt-2'>
-        {% render_table t_services %}
-        </div>
-      {% else %}
-        You cannot manage collaboration of this project.
-      {% endif %}
+      {% include 'project_collaboration.html' %}
     </div>
     <div class="tab-pane fade {% if active == "service" %}show active{% endif %}" id="service" role="tabpanel" aria-labelledby="tab-service">
       <h5 class="card-title mt-2">Manage project environment bindings</h5>

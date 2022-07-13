@@ -17,39 +17,6 @@ class Profile(models.Model):
     can_runjob = models.BooleanField(default = False)
     has_scratch = models.BooleanField(default = False)
 
-    search_project_list = models.CharField(max_length = 30, blank = True, null = True, default = "")
-    search_project_join = models.CharField(max_length = 30, blank = True, null = True, default = "")
-    search_project_showhide = models.CharField(max_length = 30, blank = True, null = True, default = "")
-    search_project_collaborator = models.CharField(max_length = 30, blank = True, null = True, default = "")
-    search_project_container = models.CharField(max_length = 30, blank = True, null = True, default = "")
-
-    search_education_student = models.CharField(max_length = 30, blank = True, null = True, default = "")
-    search_education_teacher = models.CharField(max_length = 30, blank = True, null = True, default = "")
-    search_education_assignment_config = models.CharField(max_length = 30, blank = True, null = True, default = "")
-    search_education_assignment_mass = models.CharField(max_length = 30, blank = True, null = True, default = "")
-    search_education_assignment_individual = models.CharField(max_length = 30, blank = True, null = True, default = "")
-
-    search_container_list = models.CharField(max_length = 30, blank = True, null = True, default = "")
-    search_container_projects = models.CharField(max_length = 30, blank = True, null = True, default = "")
-    search_container_library = models.CharField(max_length = 30, blank = True, null = True, default = "")
-    search_container_repository = models.CharField(max_length = 30, blank = True, null = True, default = "")
-    search_container_attachments = models.CharField(max_length = 30, blank = True, null = True, default = "")
-
-    search_attachment_list = models.CharField(max_length = 30, blank = True, null = True, default = "")
-
-    search_report_list = models.CharField(max_length = 30, blank = True, null = True, default = "")
-
-    search_external_library = models.CharField(max_length = 30, blank = True, null = True, default = "")
-    search_external_repository = models.CharField(max_length = 30, blank = True, null = True, default = "")
-
-    layout_project_list = models.BooleanField(default = True)
-    layout_container_list = models.BooleanField(default = True)
-    layout_report_list = models.BooleanField(default = True)
-
-#deprecate    paginate_project_list = models.IntegerField(default = 16)
-#    paginate_container_list = models.IntegerField(default = 16)
-#    paginate_report_list = models.IntegerField(default = 16)
-
     @property
     def userid(self):
         if hasattr(self.user, 'is_superuser') and (self.user.is_superuser == True):

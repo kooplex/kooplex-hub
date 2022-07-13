@@ -3,18 +3,19 @@
 {% load static %}
 
 {% block chardinhelp %}
-{# fixme: name #}
          url: "{% static 'chardinjs/menueducation_env.json' %}"
 {% endblock %}
 
 {% block realcontent %}
+<h4 style="margin-top: 10px">Show/hide project</h4>
 
 <form id="project-manage" class="form-horizontal" action="{% url 'project:showhide' %}" method="post">
   {% csrf_token %}
-  <h5 data-intro="#project_list" style="margin-top: 10px">Use the switch to hide or show some of your projects</h5>
+  <h5 data-intro="#project_switch" class="mt-2">Show or hide your projects</h5>
   {% if t_project.data|length > 0 %}
+  <p>Use the toggle button with the project name to hide or show some of your projects.</p>
   <input class="form-control mb-3" type="text" id="search_project" placeholder="Search project" title="Type in a name" autofocus>
-  <div id="projectListPane">
+  <div id="projectListPane" >
     {% render_table t_project %}
     {% include 'apply_cancel.html' with hide_cancel=True %}
   </div>
@@ -26,6 +27,15 @@
 
 {% block scripts %}
 <script>  
+$("input[name='show'").change(function() {
+  var icon;
+  if ( $( this ).is(":checked") ) {
+    icon = "bi-eye";
+  } else {
+    icon = "bi-eye-slash";
+  }
+  $( this ).parent().children("label").children("i").attr("class", "bi " + icon);
+});
 $("#search_project").keyup(function() {
   var pattern = $( this ).val().toUpperCase();
   console.log( "search: " + pattern );
@@ -35,7 +45,7 @@ $("#search_project").keyup(function() {
     }
     var hide_it = true;
     if (pattern.length > 0) {
-      $( this ).find("input").each(function() {
+      $( this ).find("input[name=search").each(function() {
         var name = $( this ).attr('value').toUpperCase();
         if ( name.indexOf(pattern) > -1 ) {
           hide_it = false;

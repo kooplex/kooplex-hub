@@ -67,7 +67,15 @@ def button_project_delete(project):
 
 
 @register.simple_tag
-def number_square(x):
-    return format_html(f"""<span class="badge bg-secondary" data-bs-toggle="tooltip" title="The number of hidden projects">{x}</span>""") if x else ""
-
+def number_square(icon, x):
+    #return format_html(f"""<span class="badge bg-secondary" >{x}</span>""") if x else ""
+    return format_html(f"""
+<i class="{icon} position-relative" data-bs-toggle="tooltip" title="The number of hidden projects">
+  <span class="position-absolute top-0 start-100 translate-middle badge bg-secondary small">
+    {x}
+  </span>
+</i>
+    """) if x else format_html(f"""
+<i class="{icon}"></i>
+    """)
 

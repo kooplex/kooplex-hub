@@ -9,6 +9,7 @@
 {% block realcontent %}
 <div class="container mt-2">
   <form id="service_new" class="form-horizontal was-validated" action="{% url 'container:new' %}" method="post">
+    <h4 class="mb-3">New environment</h4>
   <h5>Set details of your new environment</h5>
   {% csrf_token %}
   <table>
