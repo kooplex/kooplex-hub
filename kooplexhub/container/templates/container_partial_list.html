@@ -65,11 +65,11 @@
 	    <div class="ms-2">{% button_restart container next_page="container:list" %}</div>
 	    <div class="ms-2">{% button_stop container next_page="container:list" %}</div>
             <div class="ms-2">{% button_refreshlog container next_page="container:list" %}</div>
+	    <div class="ms-2">{% button_configure container %}</div>
           </div>
           <div class="d-flex flex-row justify-content-end">
           {% if not container.report %}
-	    <div>{% button_configure container %}</div>
-            <div class="ms-2">{% button_delete_container container next_page="container:list" %}</div>
+            <div>{% button_delete_container container next_page="container:list" %}</div>
           {% endif %}
           </div>
         </div>

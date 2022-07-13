@@ -21,15 +21,18 @@ class TableShowhideProject(tables.Table):
         """)
 
     def render_project(self, record):
-        return format_html(f"""
-<input type="hidden" name="search" value="{record.project.name}">{record.project.name}
-        """)
+        return record.project.name
 
     def render_collaborators(self, record):
         collaborators = record.project.collaborators
         collaborators.remove(self.user)
         ru = lambda u: f"{u.first_name} {u.last_name}"
-        return ", ".join([ ru(u) for u in collaborators ]) if len(collaborators) else ""
+        collablist = list(map(ru, collaborators))
+        collab_search = " ".join(collablist)
+        collab_list = ", ".join(collablist)
+        return format_html(f"""
+<input type="hidden" name="search" value="{record.project.name} {collab_search}">{collab_list}
+        """)
 
 
     class Meta:

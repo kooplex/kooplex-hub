@@ -1,24 +1,23 @@
 {% extends "project_layout.html" %}
 {% load render_table from django_tables2 %}
 {% load static %}
+{% load extras %}
 
 {% block chardinhelp %}
          url: "{% static 'chardinjs/menueducation_env.json' %}"
 {% endblock %}
 
 {% block realcontent %}
-<h4 style="margin-top: 10px">Show/hide project</h4>
-
 <form id="project-manage" class="form-horizontal" action="{% url 'project:showhide' %}" method="post">
   {% csrf_token %}
-  <h5 data-intro="#project_switch" class="mt-2">Show or hide your projects</h5>
   {% if t_project.data|length > 0 %}
-  <p>Use the toggle button with the project name to hide or show some of your projects.</p>
+  <p>Use the toggle button to select some of your projects to hide or show and click button to finalyze your choice</p>
   <input class="form-control mb-3" type="text" id="search_project" placeholder="Search project" title="Type in a name" autofocus>
-  <div id="projectListPane" >
+  {% apply_cancel label_apply='Apply' %}
+  <div id="projectListPane" class="mt-3">
     {% render_table t_project %}
-    {% include 'apply_cancel.html' with hide_cancel=True %}
   </div>
+  {% apply_cancel label_apply='Apply' %}
 </form>
   {% else %}
     <p>You do not have any projects to hide or show.</p>

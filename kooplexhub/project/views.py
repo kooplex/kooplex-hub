@@ -44,7 +44,7 @@ class NewProjectView(LoginRequiredMixin, generic.FormView):
         else:
             project = Project.objects.create(name = projectname, description = form.cleaned_data['description'], scope = form.cleaned_data['scope'])
         UserProjectBinding.objects.create(user = user, project = project, role = UserProjectBinding.RL_CREATOR)
-        messages.info(self.request, f'New {project}')
+        messages.info(self.request, f'New project created {project}')
         #FIXME:
         if len(form.cleaned_data['environments']) > 0:
             for svc in form.cleaned_data['environments']:
