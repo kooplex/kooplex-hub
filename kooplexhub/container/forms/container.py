@@ -39,7 +39,12 @@ class FormContainer(forms.Form):
 
 
     def __init__(self, *args, **kwargs):
+        container = kwargs.pop('container', None)
+        if container:
+            args = ({'friendly_name': container.friendly_name, 'image': container.image, 'name': 'dummy' }, )
         super(FormContainer, self).__init__(*args, **kwargs)
+        if container:
+            self.fields['name'].widget = forms.HiddenInput()
         for field in self.fields:
             help_text = self.fields[field].help_text
             self.fields[field].help_text = None

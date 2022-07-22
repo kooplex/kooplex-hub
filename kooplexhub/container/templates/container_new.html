@@ -12,8 +12,8 @@
 <div class="container mt-2">
   <form id="service_new" class="form-horizontal was-validated" action="{% url 'container:new' %}" method="post">
   {% csrf_token %}
-  {% title "Set the details of your new environment" %}
   <div class="card bg-light border-secondary shadow p-3">
+    {% title "Set the details of your new environment" %}
     <div class="container-fluid d-flex flex-row">
       <div class="d-flex">
         <table>

@@ -12,39 +12,31 @@ from volume.models import Volume, VolumeContainerBinding
 class TableContainerProject(tables.Table):
     class Meta:
         model = UserProjectBinding
-        fields = ('id', 'project', 'collaborator')
+        fields = ('project', 'collaborator')
+        sequence = ('button', 'project', 'collaborator')
         attrs = {
-                 "class": "table table-striped table-bordered",
+                 "class": "table table-striped table-bordered mt-3",
                  "thead": { "class": "thead-dark table-sm" },
-                 "td": { "style": "padding:.5ex" },
-                 "th": { "style": "padding:.5ex", "class": "table-secondary" }
+                 "td": { "class": "p-1" },
+                 "th": { "class": "table-secondary p-1" }
                 }
-    id = tables.Column(verbose_name = 'Do', orderable = False)
+    button = tables.Column(verbose_name = 'Attach', orderable = False, empty_values = ())
+    project = tables.Column(orderable = False)
     collaborator = tables.Column(verbose_name = 'Collaborators', empty_values = (), orderable = False)
 
-    def __init__(self, container, userprojectbindings):
+    def __init__(self, container, user):
+        upbs = UserProjectBinding.objects.filter(user = user)
         self.bound_projects = [ b.project for b in ProjectContainerBinding.objects.filter(container = container) ]
-        super(TableContainerProject, self).__init__(userprojectbindings)
-        #self.columns['id'].verbose_name = 'Select'
+        super(TableContainerProject, self).__init__(upbs)
 
-    def render_id(self, record):
+    def render_button(self, record):
         p = record.project
-        if p in self.bound_projects:
-            template = f"""
-<div class="form-check form-switch">
-  <input type="hidden" name="project_ids_before" value="{p.id}">
-  <input class="form-check-input" type="checkbox" id="cb_pid-{p.id}" name="project_ids_after" value="{p.id}" checked />
-  <label class="form-check-label" for="cb_pid-{p.id}"> Keep added</label>
-</div>
-            """
-        else:
-            template = f"""
-<div class="form-check form-switch">
-  <input class="form-check-input" type="checkbox" id="cb_pid-{p.id}" name="project_ids_after" value="{p.id}" />
-  <label class="form-check-label" for="cb_pid-{p.id}"> Add</label>
-</div>
-            """
-        return format_html(template)
+        state = "checked" if p in self.bound_projects else ""
+        icon = "bi-patch-plus" if p in self.bound_projects else "bi-patch-minus"
+        return format_html(f"""
+<input type="checkbox" class="btn-check" name="attach-project" value="{p.id}" id="btn-pr-{p.id}" autocomplete="off" {state}>
+<label class="btn btn-outline-secondary" for="btn-pr-{p.id}"><i class="bi {icon}"></i></label>
+        """)
 
     def render_collaborator(self, record):
         return format_html(', '.join(map(lambda c: c.username, record.project.collaborators)))
@@ -53,121 +45,100 @@ class TableContainerProject(tables.Table):
 class TableContainerCourse(tables.Table):
     class Meta:
         model = UserCourseBinding
-        fields = ('id', 'course', 'description', 'teachers')
+        fields = ('course',)
+        sequence = ('button', 'course', 'description', 'teachers')
         attrs = {
-                 "class": "table table-striped table-bordered",
+                 "class": "table table-striped table-bordered mt-3",
                  "thead": { "class": "thead-dark table-sm" },
-                 "td": { "style": "padding:.5ex" },
-                 "th": { "style": "padding:.5ex", "class": "table-secondary" }
+                 "td": { "class": "p-1" },
+                 "th": { "class": "table-secondary p-1" }
                 }
-    id = tables.Column(verbose_name = 'Do', orderable = False)
+    button = tables.Column(verbose_name = 'Do', orderable = False, empty_values = ())
     description = tables.Column(empty_values = (), orderable = False)
+    course = tables.Column(orderable = False)
     teachers = tables.Column(empty_values = (), orderable = False)
 
-    def __init__(self, container, usercoursebindings):
+    def __init__(self, container, user):
+        ucbs = UserCourseBinding.objects.filter(user = user)
         self.bound_courses = [ b.course for b in CourseContainerBinding.objects.filter(container = container) ]
-        super(TableContainerCourse, self).__init__(usercoursebindings)
-        #self.columns['id'].verbose_name = 'Select'
+        super(TableContainerCourse, self).__init__(ucbs)
 
-    def render_id(self, record):
+    def render_button(self, record):
         c = record.course
-        if c in self.bound_courses:
-            template = f"""
-<div class="form-check form-switch">
-  <input type="hidden" name="course_ids_before" value="{c.id}">
-  <input class="form-check-input" type="checkbox" id="cb_cid-{c.id}" name="course_ids_after" value="{c.id}" checked />
-  <label class="form-check-label" for="cb_cid-{c.id}"> Keep added</label>
-</div>
-            """
-        else:
-            template = f"""
-<div class="form-check form-switch">
-  <input class="form-check-input" type="checkbox" id="cb_cid-{c.id}" name="course_ids_after" value="{c.id}" />
-  <label class="form-check-label" for="cb_cid-{c.id}"> Add</label>
-</div>
-            """
-        return format_html(template)
+        state = "checked" if c in self.bound_courses else ""
+        icon = "bi-patch-plus" if c in self.bound_courses else "bi-patch-minus"
+        return format_html(f"""
+<input type="checkbox" class="btn-check" name="attach-course" value="{c.id}" id="btn-crs-{c.id}" autocomplete="off" {state}>
+<label class="btn btn-outline-secondary" for="btn-crs-{c.id}"><i class="bi {icon}"></i></label>
+        """)
 
     def render_description(self, record):
-        return format_html(record.course.description)
+        return record.course.description
 
     def render_teachers(self, record):
         return record.course.teachers
 
     def render_course(self, record):
         return format_html(f"""
-<span data-toggle="tooltip" title="The folder associated with course {record.course.name} is {record.course.folder}" data-placement="bottom">{record.course.name}</span>
+<span data-toggle="tooltip" title="folder: {record.course.folder}" data-placement="bottom">{record.course.name}</span>
         """)
 
 
 class TableContainerAttachment(tables.Table):
     class Meta:
-        model = Attachment
-        fields = ('id', 'name', 'folder', 'description')
-        sequence = ('id', 'name', 'folder', 'description')
         attrs = {
-                 "class": "table table-striped table-bordered",
+                 "class": "table table-striped table-bordered mt-3",
                  "thead": { "class": "thead-dark table-sm" },
-                 "td": { "style": "padding:.5ex" },
-                 "th": { "style": "padding:.5ex", "class": "table-secondary" }
+                 "td": { "class": "p-1" },
+                 "th": { "class": "table-secondary p-1" }
                 }
+    button = tables.Column(verbose_name = 'Mount', orderable = False, empty_values = ())
+    name = tables.Column(verbose_name = 'Attachment', empty_values = (), orderable = False)
+    description = tables.Column(verbose_name = 'Description', empty_values = (), orderable = False)
 
-    def __init__(self, container, attachments):
+    def __init__(self, container):
         self.bound_attachments = dict([ (b.attachment, b.id) for b in AttachmentContainerBinding.objects.filter(container = container) ])
-        super(TableContainerAttachment, self).__init__(attachments)
-        #self.columns['id'].verbose_name = 'Mount'
+        super(TableContainerAttachment, self).__init__(Attachment.objects.all())
 
-    def render_id(self, record):
-        if record in self.bound_attachments.keys():
-            template = f"""
-<div class="form-check form-switch">
-  <input type="hidden" name="asb_ids_before" value="{self.bound_attachments[record]}">
-  <input class="form-check-input" type="checkbox" id="cb_asbid-{record.id}" name="asb_ids_after" value="{self.bound_attachments[record]}" checked />
-  <label class="form-check-label" for="cb_asbid-{record.id}"> Mounted</label>
-</div>
-            """
-        else:
-            template = f"""
-<div class="form-check form-switch">
-  <input class="form-check-input" type="checkbox" id="cb_a-{record.id}" name="a_ids" value="{record.id}" />
-  <label class="form-check-label" for="cb_a-{record.id}"> Mount</label>
-</div>
-            """
-        return format_html(template)
+    def render_name(self, record):
+        return format_html(f"""
+<span data-toggle="tooltip" title="folder: {record.folder}" data-placement="bottom">{record.name}</span>
+        """)
+
+    def render_button(self, record):
+        state = "checked" if record in self.bound_attachments.keys() else ""
+        icon = "oi-envelope-open" if record in self.bound_attachments.keys() else "oi-envelope-closed"
+        return format_html(f"""
+<input type="checkbox" class="btn-check" name="attach" value="{record.id}" id="btn-{record.id}" autocomplete="off" {state}>
+<label class="btn btn-outline-secondary" for="btn-{record.id}"><i class="oi {icon}"></i></label>
+        """)
 
 
 class TableContainerVolume(tables.Table):
     class Meta:
         model = Volume
-        fields = ('id', 'name', 'description')
-        sequence = ('id', 'name', 'description')
+        fields = ('name', 'description')
+        sequence = ('button', 'name', 'description')
         attrs = {
-                 "class": "table table-striped table-bordered",
+                 "class": "table table-striped table-bordered mt-3",
                  "thead": { "class": "thead-dark table-sm" },
-                 "td": { "style": "padding:.5ex" },
-                 "th": { "style": "padding:.5ex", "class": "table-secondary" }
+                 "td": { "class": "p-1" },
+                 "th": { "class": "table-secondary p-1" }
                 }
+    button = tables.Column(verbose_name = 'Mount', orderable = False, empty_values = ())
+    name = tables.Column(verbose_name = 'Volume', orderable = False)
+    description = tables.Column(verbose_name = 'Description', orderable = False)
 
-    def __init__(self, container, uservolumebindings):
+    def __init__(self, container, user):
         self.bound_volumes = [ b.volume for b in VolumeContainerBinding.objects.filter(container = container) ]
-        super(TableContainerVolume, self).__init__(uservolumebindings)
-        #self.columns['id'].verbose_name = 'Mount'
+        super(TableContainerVolume, self).__init__(Volume.objects.all()) #FIXME: filter volumes user can attach
 
-    def render_id(self, record):
+    def render_button(self, record):
+        state = "checked" if record in self.bound_volumes else ""
+        icon = "bi-file-earmark-check" if record in self.bound_volumes else "bi-file-earmark"
         volume = record
-        if volume in self.bound_volumes:
-            template = f"""
-<div class="form-check form-switch">
-  <input type="hidden" name="volume_ids_before" value="{volume.id}">
-  <input class="form-check-input" type="checkbox" id="cb_vsid-{volume.id}" name="volume_ids_after" value="{volume.id}" checked />
-  <label class="form-check-label" for="cb_vsid-{volume.id}"> Mounted</label>
-</div>
-            """
-        else:
-            template = f"""
-<div class="form-check form-switch">
-  <input class="form-check-input" type="checkbox" id="cb_v-{volume.id}" name="volume_ids_after" value="{volume.id}" />
-  <label class="form-check-label" for="cb_v-{volume.id}"> Mount</label>
-</div>
-            """
-        return format_html(template)
+        return format_html(f"""
+<input type="checkbox" class="btn-check" name="volume" value="{record.id}" id="btn-volume-{record.id}" autocomplete="off" {state}>
+<label class="btn btn-outline-secondary" for="btn-volume-{record.id}"><i class="oi {icon}"></i></label>
+        """)
+

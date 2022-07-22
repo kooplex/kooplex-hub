@@ -1,39 +1,49 @@
 {% extends "container_layout.html" %}
+{% block head_content %}
+<style>
+.mytab{
+  color: rgb(196, 196, 196);
+}
+.mytab:hover{
+  color: rgb(196, 196, 196);
+  font-weight: bolder;
+}
+.mytab.active {
+  font-weight: bolder;
+}
+</style>
+{% endblock %}
 
 {% load render_table from django_tables2 %}
 
 {% block realcontent %}
 <div class="card shadow p-3 mb-5 bg-light rounded">
 <h5>You are configuring {{ container.friendly_name }} environment</h5>
-<form id="container-manage" class="form-horizontal" action="{% url 'container:configure' container.id %}" method="post">
+<form id="container-manage" class="form-horizontal" action="{% url 'container:configure_save' %}" method="post">
 {% csrf_token %}
+  <input type="hidden" name="container_id" value="{{ container.id }}">
   <ul class="nav nav-tabs" id="serviceConfigTabs" role="tablist">
     <li class="nav-item" role="presentation">
-      <a class="nav-link {% if active == "image" %}active{% endif %}" id="tab-image" data-bs-toggle="tab" href="#image" role="tab" aria-controls="image" aria-selected="{% if active == "image" %}true{% else %}false{% endif %}">Image</a>
-    </li>
-    <li class="nav-item" role="presentation">
-      <a class="nav-link {% if active == "attachments" %}active{% endif %}" id="tab-attachments" data-bs-toggle="tab" href="#attachments" role="tab" aria-controls="attachments" aria-selected="{% if active == "attachments" %}true{% else %}false{% endif %}">Attachments</a>
+      <a class="nav-link mytab {% if active == "image" %}active{% endif %}" id="tab-image" data-bs-toggle="tab" href="#image" role="tab" aria-controls="image" aria-selected="{% if active == "image" %}true{% else %}false{% endif %}">Name/Image</a>
     </li>
 {% if app_project_installed %}
     <li class="nav-item" role="presentation">
-      <a class="nav-link {% if active == "projects" %}active{% endif %}" id="tab-projects" data-bs-toggle="tab" href="#projects" role="tab" aria-controls="projects" aria-selected="{% if active == "projects" %}true{% else %}false{% endif %}">Projects</a>
+      <a class="nav-link mytab {% if active == "projects" %}active{% endif %}" id="tab-projects" data-bs-toggle="tab" href="#projects" role="tab" aria-controls="projects" aria-selected="{% if active == "projects" %}true{% else %}false{% endif %}">Projects</a>
     </li>
 {% endif %}
 {% if app_education_installed %}
     <li class="nav-item" role="presentation">
-      <a class="nav-link {% if active == "courses" %}active{% endif %}" id="tab-courses" data-bs-toggle="tab" href="#courses" role="tab" aria-controls="courses" aria-selected="{% if active == "courses" %}true{% else %}false{% endif %}">Courses</a>
+      <a class="nav-link mytab {% if active == "courses" %}active{% endif %}" id="tab-courses" data-bs-toggle="tab" href="#courses" role="tab" aria-controls="courses" aria-selected="{% if active == "courses" %}true{% else %}false{% endif %}">Courses</a>
     </li>
 {% endif %}
+    <li class="nav-item" role="presentation">
+      <a class="nav-link mytab {% if active == "attachments" %}active{% endif %}" id="tab-attachments" data-bs-toggle="tab" href="#attachments" role="tab" aria-controls="attachments" aria-selected="{% if active == "attachments" %}true{% else %}false{% endif %}">Attachments</a>
+    </li>
 {% if app_volume_installed %}
     <li class="nav-item" role="presentation">
-	    <a class="nav-link {% if active == "volumes" %}active{% endif %}" id="tab-volumes" data-bs-toggle="tab" href="#volumes" role="tab" aria-controls="volumes" aria-selected="{% if active == "volumes" %}true{% else %}false{% endif %}">Volume</a>
+      <a class="nav-link mytab {% if active == "volumes" %}active{% endif %}" id="tab-volumes" data-bs-toggle="tab" href="#volumes" role="tab" aria-controls="volumes" aria-selected="{% if active == "volumes" %}true{% else %}false{% endif %}">Volume</a>
     </li>
 {% endif %}
-	    {% comment %}
-    <li class="nav-item" role="presentation">
-      <a class="nav-link {% if active == "volumes" %}active{% endif %}" id="tab-volumes" data-bs-toggle="tab" href="#volumes" role="tab" aria-controls="volumes" aria-selected="{% if active == "volumes" %}true{% else %}false{% endif %}">Volumes</a>
-    </li>
-	    {% endcomment %}
 {% if app_plugin_installed %}
     <li class="nav-item" role="presentation">
       <a class="nav-link {% if active == "filesync" %}active{% endif %}" id="tab-filesync" data-bs-toggle="tab" href="#filesync" role="tab" aria-controls="filesync" aria-selected="{% if active == "filesync" %}true{% else %}false{% endif %}">Synchronized files</a>
@@ -46,43 +56,41 @@
 
   <div class="tab-content" id="serviceConfigTabContent">
     <div class="tab-pane fade {% if active == "image" %}show active{% endif %}" id="image" role="tabpanel" aria-labelledby="tab-image">
-      <input type="hidden" name="active_tab" value="image">
-      <h5 class="card-title">Modify friendly name</h5>
-      <input type="text" name="friendly_name" value="{{ container.friendly_name }}">
-      <h5 class="card-title">Image selection</h5>
-      <select class="form-control" name="container_image_id">
-        {% for image in images %}
-            <option value="{{ image.id }}" {% if container.image == image %} selected {% endif %}>{{ image }}</option>
-        {% endfor %}
-      </select>
+      <div class="container-fluid d-flex flex-row">
+        <div class="d-flex mt-3">
+          <table>
+  {{ form.as_table }}
+          </table>
+        </div>
+        <div class="d-flex ms-3 mt-3">
+          <div>
+            <p class="fw-bolder">Image description:</p>
+            <p id="imageDescription"></p>
+          </div>
+	{{ form.descriptions }}
+        </div>
+      </div>
     </div>
 
     <div class="tab-pane fade {% if active == "attachments" %}show active{% endif %}" id="attachments" role="tabpanel" aria-labelledby="tab-attachments">
-      <input type="hidden" name="active_tab" value="attachments">
-      <h5 class="card-title">Select attachments to associate with the container environment</h5>
       {% render_table t_attachments %}
     </div>
 
 {% if app_project_installed %}
     <div class="tab-pane fade {% if active == "projects" %}show active{% endif %}" id="projects" role="tabpanel" aria-labelledby="tab-projects">
-      <input type="hidden" name="active_tab" value="projects">
-      <h5 class="card-title">Select projects to associate with the container environment</h5>
+      {# fixme: add project search bar #}
       {% render_table t_projects %}
     </div>
 {% endif %}
     
 {% if app_education_installed %}
     <div class="tab-pane fade {% if active == "courses" %}show active{% endif %}" id="courses" role="tabpanel" aria-labelledby="tab-coursess">
-      <input type="hidden" name="active_tab" value="coursess">
-      <h5 class="card-title">Select Courses to associate with the container environment</h5>
       {% render_table t_courses %}
     </div>
 {% endif %}
 
 {% if app_volume_installed %}
     <div class="tab-pane fade {% if active == "volumes" %}show active{% endif %}" id="volumes" role="tabpanel" aria-labelledby="tab-volumes">
-      <input type="hidden" name="active_tab" value="volumes">
-      <h5 class="card-title">Select volumes to associate with the container environment</h5>
       {% render_table t_volumes %}
     </div>
 {% endif %}
@@ -94,13 +102,11 @@
 
 {% if app_plugin_installed %}
     <div class="tab-pane fade {% if active == "filesync" %}show active{% endif %}" id="filesync" role="tabpanel" aria-labelledby="tab-filesync">
-      <input type="hidden" name="active_tab" value="filesync">
       <h5 class="card-title">Select synchronized libraries to associate with the service environment</h5>
       {% render_table t_synclibs %}
     </div>
 
     <div class="tab-pane fade {% if active == "versioncontrol" %}show active{% endif %}" id="versioncontrol" role="tabpanel" aria-labelledby="tab-vc">
-      <input type="hidden" name="active_tab" value="versioncontrol">
       <h5 class="card-title">Select version control repositores to associate with the service environment</h5>
       {% render_table t_repositories %}
     </div>
@@ -112,79 +118,63 @@
 </div>
 
 <script>
-  $("#serviceConfigTabs li a").on("click", function () {
-    var tab = $( this ).attr("id")
-    console.log( tab )
-
-    if (tab == "tab-projects") {
-      $("#active_tab").attr("value",  "projects")
-      $("#search_field").attr("placeholder",  "Search project")
-      $("#search_field").attr("value", $("#s_projects").attr("value") )
-      $("#search_field").attr("disabled", false)
-    } else if (tab == "tab-courses") {
-      $("#active_tab").attr("value",  "courses")
-      $("#search_field").attr("placeholder",  "Search")
-      $("#search_field").attr("value", "" )
-      $("#search_field").attr("disabled", true)
-    } else if (tab == "tab-image") {
-      $("#active_tab").attr("value",  "image")
-      $("#search_field").attr("placeholder",  "Search")
-      $("#search_field").attr("value", "" )
-      $("#search_field").attr("disabled", true)
-    } else if (tab == "tab-attachments") {
-      $("#active_tab").attr("value",  "attachments")
-      $("#search_field").attr("placeholder",  "Search attachments")
-      $("#search_field").attr("value", $("#s_attachments").attr("value") )
-      $("#search_field").attr("disabled", false)
-    } else if (tab == "tab-filesync") {
-      $("#active_tab").attr("value",  "filesync")
-      $("#search_field").attr("placeholder",  "Search library")
-      $("#search_field").attr("value", $("#s_library").attr("value") )
-      $("#search_field").attr("disabled", false)
-    } else if (tab == "tab-volumes") {
-      $("#active_tab").attr("value",  "volumes")
-	    //fixme
-    } else if (tab == "tab-versioncontrol") {
-      $("#active_tab").attr("value",  "versioncontrol")
-      $("#search_field").attr("placeholder",  "Search repository")
-      $("#search_field").attr("value", $("#s_repository").attr("value") )
-      $("#search_field").attr("disabled", false)
-    }
-    console.log( $("#active_tab").attr("value") )
-  })
+$("#serviceConfigTabs li a").on("click", function () {
+  var tab = $( this ).attr("id").split('-')[1]
+  console.log( tab )
+  $.cookie("configure_env_tab", tab, { 'path': '/', 'secure': true });
+});
+$("select[name='image'").change(function() {
+    $( "select option:selected" ).each(function() {
+        var id = $(this).attr("value");
+        console.log( $( this ).text() + " -> " + id);
+	if (id === undefined) {
+	    $("#imageDescription").text("");
+	} else {
+	    var description = $("#image-description-" + id).attr("value");
+	    $("#imageDescription").text(description);
+	}
+    });
+}).change();
+$("input[name='attach'").change(function() {
+  var icon;
+	console.log( this ) ;
+  if ( $( this ).is(":checked") ) {
+    icon = "oi-envelope-open";
+  } else {
+    icon = "oi-envelope-closed";
+  }
+  $( this ).parent().children("label").children("i").attr("class", "oi " + icon);
+});
+$("input[name='attach-project'").change(function() {
+  var icon;
+	console.log( this ) ;
+  if ( $( this ).is(":checked") ) {
+    icon = "bi-patch-plus";
+  } else {
+    icon = "bi-patch-minus";
+  }
+  $( this ).parent().children("label").children("i").attr("class", "bi " + icon);
+});
+$("input[name='attach-course'").change(function() {
+  var icon;
+	console.log( this ) ;
+  if ( $( this ).is(":checked") ) {
+    icon = "bi-patch-plus";
+  } else {
+    icon = "bi-patch-minus";
+  }
+  $( this ).parent().children("label").children("i").attr("class", "bi " + icon);
+});
+$("input[name='volume'").change(function() {
+  var icon;
+	console.log( this ) ;
+  if ( $( this ).is(":checked") ) {
+    icon = "bi-file-earmark-check";
+  } else {
+    icon = "bi-file-earmark";
+  }
+  $( this ).parent().children("label").children("i").attr("class", "bi " + icon);
+});
 </script>
 {% endblock %}
-
-{% block main_content_left %}
-  {#% include 'container/hint_config.html' %#}
-{% endblock %}
-
-{% block navsearch %}
-<form class="d-flex" action="{% url 'container:configure' container.id %}" method="get">
-  {#% csrf_token %#}
-  <input type="hidden" name="active_tab" id="active_tab" value="{{ active }}">
-  <input type="hidden" id="s_projects" value="{{ user.profile.search_container_projects }}">
-  <input type="hidden" id="s_attachments" value="{{ user.profile.search_container_attachments }}">
-  <input type="hidden" id="s_library" value="{{ user.profile.search_container_library }}">
-  <input type="hidden" id="s_repository" value="{{ user.profile.search_container_repository }}">
-  <input class="form-control me-2" type="search" id="search_field" name="pattern"
-    {% if active == "projects" %}
-      value="{{ user.profile.search_container_projects }}" placeholder="Search project"
-    {% elif active == "courses" %}
-   {# value="{{ user.profile.search_container_courses }}" placeholder="Search courses" #}
-      value="" placeholder="Search"
-    {% elif active == "attachments" %}
-      value="{{ user.profile.search_container_attachments }}" placeholder="Search attachments"
-    {% elif active == "filesync" %}
-      value="{{ user.profile.search_container_filesync }}" placeholder="Search library"
-    {% elif active == "versioncontrol" %}
-      value="{{ user.profile.search_container_repository }}" placeholder="Search repository"
-    {% else %}
-      value="" placeholder="Search"
-    {% endif %}
-      aria-label="Search">
-  <button class="btn btn-outline-secondary" type="submit" name="button" value="search">Search</button>
-</form>
-{% endblock %}
-
 

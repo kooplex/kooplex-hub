@@ -18,7 +18,7 @@
 {% block scripts %}
 <script>
 $( document ).ready(function() {
-  $.cookie("next_page", "container:clist", { 'path': '/', 'secure': true });
+  $.cookie("next_page", "container:list", { 'path': '/', 'secure': true });
 });
 $("#search_container").keyup(function() {
   var pattern = $( this ).val().toUpperCase();

@@ -135,12 +135,8 @@ def configure(request, container_id):
     profile = user.profile
     logger.debug("user %s method %s" % (user, request.method))
 
-    if request.POST.get('button', '') == 'cancel':
-        return redirect('container:list')
     try:
         svc = Container.objects.get(id = container_id, user = user)
-        svc.collapsed = False
-        svc.save()
     except Container.DoesNotExist:
         messages.error(request, 'Service environment does not exist')
         return redirect('container:list')
@@ -152,219 +148,91 @@ def configure(request, container_id):
         messages.error(request, f'Service {svc.name} is starting up, you cannot configure it right now.')
         return redirect('container:list')
 
-    oops = 0
-    if request.POST.get('button', '') == 'apply':
-        msgs = []
+    context_dict = {
+        'menu_container': True,
+        'active': request.COOKIES.get('configure_env_tab', 'projects'),
+        'container': svc,
+        'form': FormContainer(container = svc),
+        't_attachments': TableContainerAttachment(svc),
+        't_projects': TableContainerProject(svc, user),
+    }
+    if 'volume' in settings.INSTALLED_APPS:
+        context_dict['t_volumes'] = TableContainerVolume(svc, user)
+    if 'education' in settings.INSTALLED_APPS:
+        context_dict['t_courses'] = TableContainerCourse(svc, user)
 
-        # handle name change
-        friendly_name_before = svc.friendly_name
-        friendly_name_after = request.POST.get('friendly_name')
-        if friendly_name_before != friendly_name_after:
-            svc.friendly_name = friendly_name_after
-            svc.save()
+    return render(request, 'container_configure.html', context = context_dict)
 
-        # handle image change
-        image_before = svc.image
-        image_after = Image.objects.get(id = request.POST.get('container_image_id'))
-        if image_before != image_after:
-            svc.image = image_after
-            svc.save()
-            msg = f'image changed from {image_before} to {image_after}'
-            if not svc.mark_restart(msg):
-                msgs.append(msg)
 
-        # handle attachment changes
-        for id_create in request.POST.getlist('a_ids'):
-            attachment = Attachment.objects.get(id = id_create)
-            AttachmentContainerBinding.objects.create(container = svc, attachment = attachment)
-            msg = f'associated attachment {attachment.name}'
-            if not svc.mark_restart(msg):
-                msgs.append(msg)
-        for id_remove in set(request.POST.getlist('asb_ids_before')).difference(set(request.POST.getlist('asb_ids_after'))):
-            try:
-                asb = AttachmentContainerBinding.objects.get(id = id_remove, container = svc)
-                msg = f'removed attachment {asb.attachment.name}'
-                if not svc.mark_restart(msg):
-                    msgs.append(msg)
-                asb.delete()
-            except AttachmentContainerBinding.DoesNotExist:
-                logger.error("Is %s hacking" % user)
-                oops += 1
+def _helper(request, svc, post_id, binding_model, model_get_authorized, binding_attribute):
+    # handle attachment changes
+    ids_after = set([ int(i) for i in request.POST.getlist(post_id) ])
+    before = { getattr(b, binding_attribute).id: b for b in binding_model.objects.filter(container = svc) }
+    #   binding
+    info = []
+    a = []
+    for a_id in ids_after.difference(before.keys()):
+        m = model_get_authorized(a_id)
+        binding_model.objects.create(**{ 'container': svc, binding_attribute: m })
+        a.append(m.name)
+    if len(a):
+        msg = 'associated {}s {}'.format(binding_attribute, ', '.join(a))
+        info.append(msg)
+        svc.mark_restart(msg)
+    #   unbinding
+    a = []
+    for a_id in set(before.keys()).difference(ids_after):
+        b = before[a_id]
+        a.append(getattr(b, binding_attribute).name)
+        b.delete()
+    if len(a):
+        msg = 'removed {}s {}'.format(binding_attribute, ', '.join(a))
+        info.append(msg)
+        svc.mark_restart(msg)
+    return info
 
-        # handle project binding changes
-        if 'project' in settings.INSTALLED_APPS:
-            project_ids_before = set(request.POST.getlist('project_ids_before'))
-            project_ids_after = set(request.POST.getlist('project_ids_after'))
-            for project_id in project_ids_after.difference(project_ids_before):
-                try:
-                    project = Project.get_userproject(project_id = project_id, user = user)
-                    ProjectContainerBinding.objects.create(container = svc, project = project)
-                    msg = f'project {project.name} added'
-                    if not svc.mark_restart(msg):
-                        msgs.append(msg)
-                    logger.debug('added project %s to container %s' % (project, svc))
-                except Exception as e:
-                    logger.error('not authorized to add project_id %s to container %s -- %s' % (project_id, svc, e))
-                    oops += 1
-            for project_id in project_ids_before.difference(project_ids_after):
-                try:
-                    project = Project.get_userproject(project_id = project_id, user = user)
-                    ProjectContainerBinding.objects.get(container = svc, project = project).delete()
-                    msg = f'project {project.name} removed'
-                    if not svc.mark_restart(msg):
-                        msgs.append(msg)
-                    logger.debug('removed project %s from container %s' % (project, svc))
-                except Exception as e:
-                    logger.error('not authorized to remove project_id %s from container %s -- %s' % (project_id, svc, e))
-                    oops += 1
-
-        # handle course binding changes
-        if 'education' in settings.INSTALLED_APPS:
-            course_ids_before = set(request.POST.getlist('course_ids_before'))
-            course_ids_after = set(request.POST.getlist('course_ids_after'))
-            for course_id in course_ids_after.difference(course_ids_before):
-                try:
-                    course = Course.get_usercourse(course_id = course_id, user = user)
-                    CourseContainerBinding.objects.create(container = svc, course = course)
-                    msg = f'course {course.name} added'
-                    if not svc.mark_restart(msg):
-                        msgs.append(msg)
-                    logger.debug('added course %s to container %s' % (course, svc))
-                except Exception as e:
-                    logger.error('not authorized to add course_id %s to container %s -- %s' % (course_id, svc, e))
-                    oops += 1
-            for course_id in course_ids_before.difference(course_ids_after):
-                try:
-                    course = Course.get_usercourse(course_id = course_id, user = user)
-                    CourseContainerBinding.objects.get(container = svc, course = course).delete()
-                    msg = f'course {course.name} removed'
-                    if not svc.mark_restart(msg):
-                        msgs.append(msg)
-                    logger.debug('removed course %s from container %s' % (course, svc))
-                except Exception as e:
-                    logger.error('not authorized to remove course_id %s from container %s -- %s' % (course_id, svc, e))
-                    oops += 1
-
-        # handle volume binding changes
-        if 'volume' in settings.INSTALLED_APPS:
-            volume_ids_before = set(request.POST.getlist('volume_ids_before'))
-            volume_ids_after = set(request.POST.getlist('volume_ids_after'))
-            for volume_id in volume_ids_after.difference(volume_ids_before):
-                try:
-                    # FIXME this should be used: volume = Volume.get_uservolume(volume_id = volume_id, user = user)
-                    volume = Volume.objects.get(id = volume_id)
-                    VolumeContainerBinding.objects.create(container = svc, volume = volume)
-                    msg = f'volume {volume.name} added'
-                    if not svc.mark_restart(msg):
-                        msgs.append(msg)
-                    logger.debug('added volume %s to container %s' % (volume, svc))
-                except Exception as e:
-                    logger.error('not authorized to add volume_id %s to container %s -- %s' % (volume_id, svc, e))
-                    oops += 1
-            for volume_id in volume_ids_before.difference(volume_ids_after):
-                try:
-                    # FIXME this should be used: volume = Volume.get_uservolume(volume_id = volume_id, user = user)
-                    volume = Volume.objects.get(id = volume_id)
-                    VolumeContainerBinding.objects.get(container = svc, volume = volume).delete()
-                    msg = f'volume {volume.name} added'
-                    if not svc.mark_restart(msg):
-                        msgs.append(msg)
-                    logger.debug('removed volume %s from container %s' % (volume, svc))
-                except Exception as e:
-                    logger.error('not authorized to remove volume_id %s from container %s -- %s' % (volume_id, svc, e))
-                    oops += 1
-
-        if 'plugin' in settings.INSTALLED_APPS:
-            # handle synchron caches
-            for id_create in request.POST.getlist('fsl_ids'):
-                fsl = FSLibrary.objects.get(id = id_create)
-                if fsl.token.user != user:
-                    logger.error("Unauthorized request fsl: %s, user: %s" % (fsl, user))
-                    oops += 1
-                    continue
-                FSLibraryServiceBinding.objects.create(container = svc, fslibrary = fsl)
-                msg = f'synchron library {fsl.library_name} attached'
-                if not svc.mark_restart(msg):
-                    msgs.append(msg)
-            for id_remove in set(request.POST.getlist('fslpb_ids_before')).difference(set(request.POST.getlist('fslpb_ids_after'))):
-                try:
-                    fslsb = FSLibraryServiceBinding.objects.get(id = id_remove, container = svc)
-                    if fslsb.fslibrary.token.user != user:
-                        logger.error("Unauthorized request fsl: %s, user: %s" % (fslsb.fslibrary, user))
-                        oops += 1
-                        continue
-                    msg = f'synchron library {fslsb.fslibrary.library_name} removed'
-                    if not svc.mark_restart(msg):
-                        msgs.append(msg)
-                    fslsb.delete()
-                except FSLibraryServiceBinding.DoesNotExist:
-                    logger.error("Is %s hacking" % user)
-                    oops += 1
-
-            # handle repository caches
-            for id_create in request.POST.getlist('vcp_ids'):
-                vcp = VCProject.objects.get(id = id_create)
-                if vcp.token.user != user:
-                    logger.error("Unauthorized request vcp: %s, user: %s" % (vcp, user))
-                    oops += 1
-                    continue
-                VCProjectContainerBinding.objects.create(container = svc, vcproject = vcp)
-                msg = f'version control project {vcp.project_name} attached'
-                if not svc.mark_restart(msg):
-                    msgs.append(msg)
-            for id_remove in set(request.POST.getlist('vcpsb_ids_before')).difference(set(request.POST.getlist('vcpsb_ids_after'))):
-                try:
-                    vcpsb = VCProjectContainerBinding.objects.get(id = id_remove, container = svc)
-                    if vcpsb.vcproject.token.user != user:
-                        logger.error("Unauthorized request vcp: %s, user: %s" % (vcpsb.vcproject, user))
-                        oops += 1
-                        continue
-                    msg = f'version control project {vcpsb.vcproject.project_name} removed'
-                    if not svc.mark_restart(msg):
-                        msgs.append(msg)
-                    vcpsb.delete()
-                except VCProjectContainerBinding.DoesNotExist:
-                    logger.error("Is %s hacking" % user)
-                    oops += 1
-
-        if svc.restart_reasons:
-            messages.warning(request, f'Configuration of {svc.name} is done, but needs a restart because {svc.restart_reasons}.')
-        if msgs:
-            messages.info(request, 'Configuration of {} is done. Summary: {}.'.format(svc.name, ', '.join(msgs)))
-        if oops:
-            messages.warning(request, 'Some problems (%d) occured during handling yout request.' % (oops))
-
+@login_required
+def configure_save(request):
+    if request.POST.get('button', '') == 'cancel':
         return redirect('container:list')
-    else:
-        active_tab = request.GET.get('active_tab', 'projects')
+    user = request.user
+    try:
+        container_id = request.POST['container_id']
+        svc = Container.objects.get(id = container_id, user = user)
+    except Container.DoesNotExist:
+        messages.error(request, 'Service environment does not exist')
+        return redirect('container:list')
 
-        upbs = UserProjectBinding.objects.filter(user = user)
-        table_project = TableContainerProject(svc, upbs)
+    info = []
 
-        ucbs = UserCourseBinding.objects.filter(user = user)
-        table_course = TableContainerCourse(svc, ucbs)
+    # handle name change
+    friendly_name_before = svc.friendly_name
+    friendly_name_after = request.POST.get('friendly_name')
+    if friendly_name_before != friendly_name_after:
+        svc.friendly_name = friendly_name_after
+        svc.save()
+        info.append(f'name changed to {friendly_name_after}')
 
-        attachments = Attachment.objects.all()
-        table_attachment = TableContainerAttachment(svc, attachments)
+    # handle image change
+    image_before = svc.image
+    image_after = Image.objects.get(id = request.POST.get('image'))
+    if image_before != image_after:
+        svc.image = image_after
+        svc.save()
+        msg = f'image changed from {image_before} to {image_after}'
+        info.append(msg)
+        svc.mark_restart(msg)
 
-        volumes = Volume.objects.all()
-        table_volume = TableContainerVolume(svc, volumes)
+    info.extend( _helper(request, svc, 'attach', AttachmentContainerBinding, lambda x: Attachment.objects.get(id = x), 'attachment') )
+    info.extend( _helper(request, svc, 'attach-project', ProjectContainerBinding, lambda x: Project.get_userproject(project_id = x, user = user), 'project') )
+    info.extend( _helper(request, svc, 'attach-course', CourseContainerBinding, lambda x: Course.get_usercourse(course_id = x, user = user), 'course') )
+    info.extend( _helper(request, svc, 'volume', VolumeContainerBinding, lambda x: Volume.objects.get(id = x), 'volume') ) # FIXME: authorize only those volumes user has right to
 
-        context_dict = {
-            'images': Image.objects.filter(present = True, imagetype = Image.TP_PROJECT),
-            'container': svc,
-            'active': active_tab,
-            't_attachments': table_attachment,
-            't_projects': table_project,
-            't_courses': table_course,
-            't_volumes': table_volume,
-            'menu_container': True,
-        }
+    if len(info):
+        info = ', '.join(info)
+        messages.info(request, f'Service {svc.name} is configureded: {info}.')
 
-        if 'plugin' is settings.INSTALLED_APPS:
-            pass
-
-        return render(request, 'container_configure.html', context = context_dict)
+    return redirect('container:list')
 
 
 @login_required
