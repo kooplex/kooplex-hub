@@ -26,6 +26,7 @@ class NewProjectView(LoginRequiredMixin, generic.FormView):
         initial = super().get_initial()
         user = self.request.user
         initial['environments'] = Container.objects.filter(user = user)
+        initial['projectid'] = None
         initial['userid'] = user.id
         return initial
 
@@ -55,7 +56,7 @@ class NewProjectView(LoginRequiredMixin, generic.FormView):
                     messages.info(self.request, f'Project {project.name} is added to environment {container.name}')
         else:
             image = form.cleaned_data['image']
-            container = Container.objects.create(name = f"{user.username}-{project.subpath}", user = user, image = image)
+            container = Container.objects.create(name = f"{user.username}-{project.subpath}", friendly_name = project.subpath, user = user, image = image)
             ProjectContainerBinding.objects.create(project = project, container = container)
             messages.info(self.request, f'New service {container.name} is created with image {container.image.name}')
         return super().form_valid(form)

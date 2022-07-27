@@ -11,7 +11,7 @@ from kooplexhub.lib import my_slug_validator, my_end_validator
 
 class FormProject(forms.Form):
     userid = forms.IntegerField()
-    projectid = forms.IntegerField()
+    projectid = forms.IntegerField(required = False)
     name = forms.CharField(
             label = _("Project name"),
             help_text = _('Name your project. No worries later you can rename your project.'), 
@@ -34,7 +34,7 @@ class FormProject(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        projectid = cleaned_data['projectid']
+        projectid = cleaned_data.get('projectid', None)
         userid = cleaned_data['userid']
         projectname = cleaned_data['name'].strip()
         subpath = cleaned_data['subpath'].strip()
@@ -85,6 +85,8 @@ class FormProjectWithContainer(FormProject):
     def clean(self):
         cleaned_data = super().clean()
         if len(cleaned_data['environments']) > 0 and cleaned_data['image']:
+            raise forms.ValidationError(_("either select an image or select some environments"), code = 'contradictory request')
+        if len(cleaned_data['environments']) == 0 and not cleaned_data['image']:
             raise forms.ValidationError(_("either select an image or select some environments"), code = 'contradictory request')
         return cleaned_data
 

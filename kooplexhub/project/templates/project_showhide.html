@@ -17,7 +17,11 @@
     {% render_table t_project %}
   </div>
   {% else %}
-    <p>You do not have any projects to hide or show.</p>
+  <div class="alert alert-warning" role="warning">
+    <p>You do not have any projects to hide or show.
+      <a href="{% url 'project:new' %}"><i class="bi bi-bag-plus"></i><span>&nbsp;Create one now...</span></a>. 
+    </p>
+  </div>
   {% endif %}
 </form>
 {% endblock %}

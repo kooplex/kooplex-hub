@@ -7,12 +7,18 @@
 {% endblock %}
 
 {% block realcontent %}
-  <input class="form-control me-2 mb-3 mt-3" type="text" id="search_container" placeholder="Search environments" title="Type in a name" autofocus data-intro="#search_environment">
-  <div id="containerListPane" data-intro="#container_list" >
-  {% for container in containers %}
-     {% include 'container_partial_list.html' %}
-  {% endfor %}
-  </div>
+  {% if containers %}
+    <input class="form-control me-2 mb-3 mt-3" type="text" id="search_container" placeholder="Search environments" title="Type in a name" autofocus data-intro="#search_environment">
+    <div id="containerListPane" data-intro="#container_list" >
+    {% for container in containers %}
+       {% include 'container_partial_list.html' %}
+    {% endfor %}
+    </div>
+  {% else %}
+    <div class="alert alert-warning" role="warning">
+      <p>You need to <a href="{% url 'container:new' %}"><i class="bi bi-boxes"></i><span>&nbsp;create</span></a> environments in order to use the hub.</p>
+    </div>
+  {% endif %}
 {% endblock %}
 
 {% block scripts %}

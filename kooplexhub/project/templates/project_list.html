@@ -16,9 +16,11 @@
     {% endfor %}
   </div>
 {% else %}
-  <p>You have not created any projects yet. 
-    <a href="{% url 'project:new' %}"><i class="bi bi-bag-plus"></i><span>&nbsp;Create one now...</span></a>
-  </p>
+  <div class="alert alert-warning" role="warning">
+    <p>You have not visible projects yet. 
+      <a href="{% url 'project:new' %}"><i class="bi bi-bag-plus"></i><span>&nbsp;Create one now...</span></a>. 
+    </p>
+  </div>
 {% endif %}
 {% endblock %}
 
