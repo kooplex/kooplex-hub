@@ -49,8 +49,6 @@ class Container(models.Model):
     last_message_at = models.DateTimeField(default = None, null = True, blank = True)
     log = models.TextField(max_length = 10512, null = True)
 
-    collapsed = models.BooleanField(default = True)
-
     class Meta:
         unique_together = [['user', 'name', 'suffix']]
 
@@ -167,7 +165,6 @@ class Container(models.Model):
 
     def stop(self):
         self.restart_reasons = None
-        self.collapsed = True
         self.save()
         return stop_environment(self)
 
@@ -177,7 +174,6 @@ class Container(models.Model):
         return restart_environment(self)
 
     def check_state(self):
-        self.collapsed = False
         return check_environment(self)
 
     def mark_restart(self, reason):

@@ -19,6 +19,17 @@
 <script>
 $( document ).ready(function() {
   $.cookie("next_page", "container:list", { 'path': '/', 'secure': true });
+  var uf = $.cookie("unfold_container");
+  if ( uf === undefined ) {
+    $.cookie("unfold_container", JSON.stringify([]), { 'path': '/', 'secure': true });
+    console.log('undefined');
+  } else {
+    $.each(JSON.parse(uf), function(index, value) {
+      console.log( value );
+      $("#collapse-" + value).collapse();
+    });
+
+  }
 });
 $("#search_container").keyup(function() {
   var pattern = $( this ).val().toUpperCase();
@@ -42,6 +53,32 @@ $("#search_container").keyup(function() {
       $( card ).show();
     }
   });
+});
+$("div[data-bs-target^='#collapse-").mouseover(function() {
+  $(this).css("font-weight", "bold");
+  $(this).css("cursor", "pointer");
+});
+$("div[data-bs-target^='#collapse-").mouseout(function() {
+  $(this).css("font-weight", "normal");
+});
+$("div[data-bs-target^='#collapse-").click(function() {
+  var tgt = $(this).attr("data-bs-target");
+  var oid = tgt.split('-')[1];
+  console.log( tgt + "->" + oid );
+  setTimeout(function() {
+    var uf = JSON.parse( $.cookie("unfold_container") );
+    if ( $(tgt).hasClass('show') ) {
+      console.log('shown');
+      uf.push(oid);
+    } else {
+      console.log('collapsed');
+      uf.pop(oid);
+    }
+    var clean = uf.filter(function(element, index, self){
+      return index === self.indexOf(element);
+    });
+    $.cookie("unfold_container", JSON.stringify(clean), { 'path': '/', 'secure': true });
+  }, 1000);
 });
 </script>
 {% endblock %}
