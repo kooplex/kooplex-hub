@@ -7,8 +7,8 @@
 <div class="container mt-2">
   <form id="project_new" class="form-horizontal was-validated" action="{% url 'project:new' %}" method="post">
     {% csrf_token %}
-    {% title "Describe your new project" %}
   <div class="card bg-light border-secondary shadow p-3">
+    {% title "Describe your new project" %}
     <div class="container-fluid d-flex flex-row">
       <div class="d-flex">
         <table>
@@ -16,13 +16,42 @@
         </table>
       </div>
       <div class="d-flex ms-3">
-        <p class="fw-bolder">Image description:</p>
-	{# fixme: seems line is not broken #}
-	<p id="imageDescription"></p>
+        <div>
+          <p class="fw-bolder">Image description:</p>
+	  <p id="imageDescription"></p>
+	</div>
       </div>
+      {{ form.descriptions }}
     </div>
-    {% apply_cancel hide_cancel=True label_apply='Create' %}
+    {% apply_cancel hide_cancel=True label_apply='Create' icon_apply='bi bi-person-workspace' %}
   </div>
   </form>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function unselect_envs() {
+  console.log('unselect envs');
+  $( "#id_environments option" ).each(function() {
+    $(this).prop('selected', false);
+  });
+}
+$("select[name='image'").change(function() {
+    $( "#id_image option:selected" ).each(function() {
+        var id = $(this).attr("value");
+        console.log( $( this ).text() + " -> " + id);
+	if (id === "") {
+	    $("#imageDescription").text("");
+	} else {
+	    var description = $("#image-description-" + id).attr("value");
+	    $("#imageDescription").text(description);
+            unselect_envs();
+	}
+    });
+}).change();
+$( document ).ready(function() {
+  unselect_envs();
+});
+</script>
 {% endblock %}

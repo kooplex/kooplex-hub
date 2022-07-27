@@ -47,6 +47,7 @@ class Container(models.Model):
     restart_reasons = models.CharField(max_length = 512, null = True, blank = True)
     last_message = models.CharField(max_length = 512, null = True)
     last_message_at = models.DateTimeField(default = None, null = True, blank = True)
+    log = models.TextField(max_length = 10512, null = True)
 
     collapsed = models.BooleanField(default = True)
 
@@ -117,7 +118,7 @@ class Container(models.Model):
         return [ binding.course for binding in CourseContainerBinding.objects.filter(container = self) ]
 
     @property
-    def reports(self):
+    def reports_bb(self):
         "relevant only for project containers"
         ##This is elegant but is buggy in current django version! update() also sucks
         ##reports = Report.objects.none()
@@ -134,9 +135,10 @@ class Container(models.Model):
         return []
 
     @property
-    def report(self):
+    def reports(self):
         "relevant only for report containers"
-        return None #FIXME: ReportContainerBinding.objects.get(container = self).report
+        from report.models import ReportContainerBinding
+        return [ binding.report for binding in ReportContainerBinding.objects.filter(container = self) ]
 
     @property
     def synced_libraries(self):
@@ -157,7 +159,7 @@ class Container(models.Model):
 
     @property
     def volumes(self):
-        from ..models import VolumeContainerBinding
+        from volume.models import VolumeContainerBinding
         return [ binding.volume for binding in VolumeContainerBinding.objects.filter(container = self) ]
 
     def start(self):

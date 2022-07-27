@@ -10,7 +10,7 @@ from kooplexhub.lib import my_alphanumeric_validator
 class FormContainer(forms.Form):
     friendly_name = forms.CharField(
             max_length = 200, required = True,
-            help_text = _('A short friendly name makes your life easier to find yout container environments'), 
+            help_text = _('A short friendly name makes your life easier to find your container environment.'), 
             widget = forms.TextInput(attrs = {"data-intro": "#friendlyname"})
             )
     name = forms.CharField(
@@ -22,16 +22,10 @@ class FormContainer(forms.Form):
             widget = forms.TextInput(attrs = {"data-intro": "#name"})
             )
     image = forms.ModelChoiceField(
-            queryset = Image.objects.filter(imagetype = Image.TP_PROJECT, present=True), 
-            help_text = _('Please select an image to the new container environment.'), required = True, 
-            empty_label = 'Select image...'
+            queryset = Image.objects.filter(imagetype = Image.TP_PROJECT, present = True), 
+            help_text = _('Please select to associate an image to your new container environment. During selection a short description of each image is shown to help you decide.'), required = True, 
+            empty_label = 'Select image...',
             )
-
-    def render_image(self, selected_choices, option_value, option_label):
-        descriptions = [i.description for i in self.fields['image']]
-        return u'<option value="%s"> %s %s</option>' % (
-            option_value, option_value, descriptions)
-
 
     def descriptions(self):
         hidden = lambda i: f"""<input type="hidden" id="image-description-{i.id}" value="{i.description}">"""

@@ -10,7 +10,7 @@ urlpatterns = [
     path('list/', views.ContainerListView.as_view(), name = 'list'),
     path('reportclist/', views.ReportContainerListView.as_view(), name = 'reportclist'),
     re_path('^configure/(?P<container_id>\d+)/?', views.configure, name = 'configure'),
-    re_path('^configure_save/', views.configure_save, name = 'configure_save'),
+    path('configure_save/', views.configure_save, name = 'configure_save'),
 
     re_path('^start/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)/?', views.start, name = 'start'),
     re_path('^stop/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)/?', views.stop, name = 'stop'),

@@ -1,6 +1,5 @@
 {% load render_table from django_tables2 %}
 
-<h5 class="card-title mt-2">Select collaborators of this project</h5>
 <div class="container-fluid d-flex flex-row justify-content-between align-items-baseline">
   <div>
     <input class="form-control me-2 mb-3 mt-3" type="text" id="search_collaborator" placeholder="Search collaborator" title="Type in a name" data-intro="#search_collaborator">
@@ -11,23 +10,55 @@
   </div>
 </div>
 <hr>
-<h5 class="card-title">Select environments to create for your collaborators</h5>
-<span>Your collaborators are free to change this environment later.</span>
-<div class='mt-2'>
+<h6 class="card-title" data-bs-toggle="tooltip" data-placement="bottom" title="Your collaborators are free to change this environment later.">Select environments to create for your collaborators</h6>
+<div class='mt-3'>
 {% render_table t_services %}
 </div>
 
 <script>
+$(document).ready(function() {
+  $("#users").find("th").text("Users");
+});
 $("span[id^='userid-'").click(function() {
   var tr = $( this ).parent().parent();
   var t = tr.parent().parent().attr("id");
   console.log( t );
   var other_table;
   if (t === "users") {
-     other_table = $("#collaborators");
+    other_table = $("#collaborators");
+    $( this ).parent().find("input[type='hidden'][name").each(function() {
+      var before = $(this).attr("name");
+      $( this ).attr("name", before.substring(1));
+    });
   } else {
-     other_table = $("#users");
+    other_table = $("#users");
+    $( this ).parent().find("input[type='hidden'][name").each(function() {
+      var before = $(this).attr("name");
+      $( this ).attr("name", "_" + before);
+    });
   }
   other_table.children("tbody").append(tr);
 });
+$("#search_collaborator").keyup(function() {
+  var pattern = $( this ).val().toUpperCase();
+  console.log( "search: " + pattern );
+  $("input[id^='search-collaborator-'").each(function() {
+    var widget = $( this ).parent().parent();
+    if (widget.parent().parent().attr("id") == "collaborators") {
+      return;
+    }
+    var hide_it = true;
+    if (pattern.length > 0) {
+      var name = $( this ).attr("value").toUpperCase();
+      if ( name.indexOf(pattern) > -1 ) {
+        hide_it = false;
+      }
+    }
+    if (hide_it) {
+      widget.hide();
+    } else {
+      widget.show();
+    }
+  });
+}).keyup();
 </script>

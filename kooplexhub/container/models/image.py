@@ -26,10 +26,6 @@ class Image(models.Model):
     def __str__(self):
         return self.name
 
-#    @property
-#    def imagename(self):
-#        return KOOPLEX.get('docker', {}).get('pattern_imagename', 'image-%(imagename)s') % { 'imagename': self.name }
-
     @property
     def require_home(self):
         return self.imagetype == self.TP_PROJECT

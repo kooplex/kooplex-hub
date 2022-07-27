@@ -10,9 +10,9 @@ class Project(models.Model):
     SCP_INTERNAL = 'internal'
     SCP_PRIVATE = 'private'
     SCP_LOOKUP = {
-        SCP_PRIVATE: 'Creator can invite collaborators to this project.',
-        SCP_INTERNAL: 'Users in specific groups can list and may join this project.',
-        SCP_PUBLIC: 'Authenticated users can list and may join this project.',
+        SCP_PRIVATE: 'Only the creator can invite collaborators to this project.',
+        SCP_INTERNAL: 'Only users in specific groups can list and may join this project.',
+        SCP_PUBLIC: 'Any authenticated user can list and may join this project.',
     }
 
     name = models.TextField(max_length = 200, null = False)
@@ -88,11 +88,16 @@ class Project(models.Model):
         from .report import Report
         return Report.objects.filter(project = self)
 
-
+#FIXME:
     @staticmethod
     def get_userproject(project_id, user):
         from .userprojectbinding import UserProjectBinding
         return UserProjectBinding.objects.get(user = user, project_id = project_id).project
+
+    @staticmethod
+    def get_userprojects(user):
+        from .userprojectbinding import UserProjectBinding
+        return [ upb.project for upb in UserProjectBinding.objects.filter(user = user) ]
 
     def set_roles(self, roles):
         from .userprojectbinding import UserProjectBinding
@@ -136,5 +141,4 @@ class Project(models.Model):
                 if len(users):
                     msg.append("User(s) set as administrator(s) of the collaboration: %s" % ','.join(users))
         return msg
-
 

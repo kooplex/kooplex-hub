@@ -9,12 +9,24 @@ register = template.Library()
 @register.simple_tag(name = 'title')
 def title(*argv):
     t = " ".join(argv)
-    return format_html(f"""<h6 class="mb-4">{t}</h6>""")
+    return format_html(f"""<h5 class="mb-4">{t}</h5>""")
+
+
+@register.simple_tag(name = 'title_with_button')
+def title_with_button(*argv, button_label = "Save all changes", button_icon = "bi bi-save", button_color = "btn-warning"):
+    t = " ".join(argv)
+    return format_html(f"""
+<div class="container-fluid d-flex flex-column flex-md-row justify-content-between">
+  <div><h5 class="mb-4">{t}</h5></div>
+  <div><button type="submit" class="btn {button_color}" name="button" value="apply"><i class="{button_icon}"></i>&nbsp;{button_label}</button></div>
+</div>""")
+    return format_html(f"""<h5 class="mb-4">{t}</h5>""")
 
 
 @register.simple_tag(name = 'apply_cancel')
-def apply_cancel(hide_apply = False, label_apply = 'Submit', hide_cancel = True, label_cancel = 'Cancel'):
-    submit = "" if hide_apply else f"""<div><button type="submit" class="btn btn-primary" name="button" value="apply">{label_apply}</button></div>"""
+def apply_cancel(hide_apply = False, label_apply = 'Submit', icon_apply = None, hide_cancel = True, label_cancel = 'Cancel'):
+    ai = f'<i class="{icon_apply}"></i>&nbsp;' if icon_apply else ""
+    submit = "" if hide_apply else f"""<div><button type="submit" class="btn btn-warning" name="button" value="apply">{ai}{label_apply}</button></div>"""
     cancel = "" if hide_cancel else f"""<div><button type="submit" class="btn btn-secondary" name="button" value="cancel">{label_cancel}</button></div>"""
     return format_html(f"""
 <div class="container-fluid d-flex flex-row justify-content-end mt-3">

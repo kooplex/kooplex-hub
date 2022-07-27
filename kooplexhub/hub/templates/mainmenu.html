@@ -11,25 +11,29 @@
       </a>
     </li>
     <li class="mt-4 nav-item" data-toggle="tooltip" title="Environment" data-placement="bottom">
-      <a class="{{ li_a_s }} nav-link {% if menu_container %}active border-2 border-start{% endif %}" href="{% url 'container:list' %}"><i class="bi bi-boxes"></i><span class="d-none d-sm-inline">&nbsp;Environments</span></a>
+      <a class="{{ li_a_s }} nav-link {% if menu_container %}active border-2 border-start{% endif %}" href="{% url 'container:list' %}"><i class="bi bi-boxes"></i><span class="d-none d-sm-inline">&nbsp;Environment</span></a>
     </li>
     {% if app_project_installed %}
     <li class="nav-item mt-2"  data-toggle="tooltip" title="Projects" data-placement="bottom">
-      <a class="{{ li_a_s }} nav-link {% if menu_project %}active border-2 border-start{% endif %}" href="{% url 'project:list' %}"><i class="bi bi-person-workspace"></i><span class="d-none d-sm-inline">&nbsp;Projects</span></a>
+      <a class="{{ li_a_s }} nav-link {% if menu_project %}active border-2 border-start{% endif %}" href="{% url 'project:list' %}"><i class="bi bi-person-workspace"></i><span class="d-none d-sm-inline">&nbsp;Project</span></a>
     </li>
     {% endif %}
     {% if app_report_installed %}
     <li class="nav-item mt-2"  data-toggle="tooltip" title="Reports" data-placement="bottom">
-      <a class="{{ li_a_s }} nav-link {% if menu_report %}active border-2 border-start{% endif %}" href="{% url 'report:list' %}"><i class="bi bi-projector"></i><span class="d-none d-sm-inline">&nbsp;Reports</span></a>
+      <a class="{{ li_a_s }} nav-link {% if menu_report %}active border-2 border-start{% endif %}" href="{% url 'report:list' %}"><i class="bi bi-projector"></i><span class="d-none d-sm-inline">&nbsp;Report</span></a>
     </li>
     {% endif %}
     {% if app_education_installed %}
     <li class="nav-item mt-2" data-toggle="tooltip" title="Education" data-placement="bottom">
-      <a class="{{ li_a_s }} nav-link {% if menu_teaching %}active border-2 border-start{% endif %}" href="{% url 'education:student' %}"><i class="bi bi-textarea-t"></i><span class="d-none d-sm-inline">&nbsp;Education</span></a>
+      <a class="{{ li_a_s }} nav-link {% if menu_education %}active border-2 border-start{% endif %}" href="{% url 'education:student' %}"><i class="bi bi-textarea-t"></i><span class="d-none d-sm-inline">&nbsp;Education</span></a>
     </li>
     {% endif %}
     <li class="nav-item mt-2"  data-toggle="tooltip" title="List and manage attachments and volumes" data-placement="bottom">
       <a class="{{ li_a_s }} nav-link {% if menu_storage %}active border-2 border-start{% endif %}" href="{% url 'container:list_attachments' %}"><i class="bi bi-folder2-open"></i><span class="d-none d-sm-inline">&nbsp;Storage</span></a>
+    </li>
+    <!--# FIXME: we need a monitoring app also -->
+    <li class="nav-item mt-2"  data-toggle="tooltip" title="Resource monitoring" data-placement="bottom">
+      <a class="{{ li_a_s }} nav-link {% if menu_monitoring %}active border-2 border-start{% endif %}" href="{% url 'monitoring' %}"><i class="bi bi-folder2-open"></i><span class="d-none d-sm-inline">&nbsp;Monitoring</span></a>
     </li>
   </ul>
 </nav>

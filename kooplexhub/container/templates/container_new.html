@@ -28,7 +28,7 @@
 	{{ form.descriptions }}
       </div>
     </div>
-    {% apply_cancel hide_cancel=True label_apply='Create' %}
+    {% apply_cancel hide_cancel=True label_apply='Create' icon_apply='bi bi-boxes' %}
   </div>
   </form>
 </div>
@@ -40,7 +40,7 @@ $("select[name='image'").change(function() {
     $( "select option:selected" ).each(function() {
         var id = $(this).attr("value");
         console.log( $( this ).text() + " -> " + id);
-	if (id === undefined) {
+	if (id === "") {
 	    $("#imageDescription").text("");
 	} else {
 	    var description = $("#image-description-" + id).attr("value");

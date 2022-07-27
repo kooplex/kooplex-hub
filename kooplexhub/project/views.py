@@ -9,7 +9,8 @@ from django.db.models import Q
 from django.contrib.auth.models import User
 #from django.urls import reverse
 
-from .forms import FormProject, TableShowhideProject, TableJoinProject, TableCollaborator, TableProjectContainer, TableContainer
+from .forms import FormProject, FormProjectWithContainer
+from .forms import TableShowhideProject, TableJoinProject, TableCollaborator, TableContainer
 from .models import Project, UserProjectBinding, ProjectContainerBinding
 from container.models import Container
 
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 class NewProjectView(LoginRequiredMixin, generic.FormView):
     template_name = 'project_new.html'
-    form_class = FormProject
+    form_class = FormProjectWithContainer
     success_url = '/hub/project/list/' #FIXME: django.urls.reverse or shortcuts.reverse does not work reverse('project:list')
 
     def get_initial(self):
@@ -45,19 +46,18 @@ class NewProjectView(LoginRequiredMixin, generic.FormView):
             project = Project.objects.create(name = projectname, description = form.cleaned_data['description'], scope = form.cleaned_data['scope'])
         UserProjectBinding.objects.create(user = user, project = project, role = UserProjectBinding.RL_CREATOR)
         messages.info(self.request, f'New project created {project}')
-        #FIXME:
         if len(form.cleaned_data['environments']) > 0:
-            for svc in form.cleaned_data['environments']:
-                ProjectContainerBinding.objects.create(project = project, container = svc)
-                if svc.mark_restart(f'project {project.name} added'):
-                    messages.warning(self.request, f'Project {project.name} is added to running svc {svc.name}, which requires a restart to apply changes')
+            for container in form.cleaned_data['environments']:
+                ProjectContainerBinding.objects.create(project = project, container = container)
+                if container.mark_restart(f'project {project.name} added'):
+                    messages.warning(self.request, f'Project {project.name} is added to running environment {container.name}, which requires a restart to apply changes')
                 else:
-                    messages.info(self.request, f'Project {project.name} is added to svc {svc.name}')
+                    messages.info(self.request, f'Project {project.name} is added to environment {container.name}')
         else:
             image = form.cleaned_data['image']
-            svc = Container.objects.create(name = f"{user.username}-{project.subpath}", user = user, image = image)
-            ProjectContainerBinding.objects.create(project = project, container = svc)
-            messages.info(self.request, f'New service {svc.name} is created with image {svc.image.name}')
+            container = Container.objects.create(name = f"{user.username}-{project.subpath}", user = user, image = image)
+            ProjectContainerBinding.objects.create(project = project, container = container)
+            messages.info(self.request, f'New service {container.name} is created with image {container.image.name}')
         return super().form_valid(form)
 
 
@@ -170,7 +170,7 @@ def join(request):
     profile = user.profile
     if request.POST.get('button', '') == 'apply':
         joined = []
-        svcs = []
+        containers = []
         for project_id in request.POST.getlist('project_ids'):
             try:
                 project = Project.objects.get(id = project_id, scope__in = [ Project.SCP_INTERNAL, Project.SCP_PUBLIC ])
@@ -179,17 +179,17 @@ def join(request):
                 logger.info("%s joined project %s as a member" % (user, project))
                 for image_id in request.POST.getlist(f'image_ids_{project_id}'):
                     i = Image.objects.get(id = image_id)
-                    svc = Container.objects.create(user = user, image = i, name = f'{user.username}-{project.subpath}')
-                    psb = ProjectContainerBinding.objects.create(project = project, container = svc)
-                    logger.info(f'created service {svc} and binding {psb}')
-                    svcs.append(svc)
+                    container = Container.objects.create(user = user, image = i, name = f'{user.username}-{project.subpath}')
+                    psb = ProjectContainerBinding.objects.create(project = project, container = container)
+                    logger.info(f'created service {container} and binding {psb}')
+                    containers.append(container)
             except Exception as e:
                 logger.warning("%s cannot join project id %s -- %s" % (user, project_id, e))
                 messages.error(request, 'You cannot join project')
         if len(joined):
             messages.info(request, 'Joined projects: {}'.format(', '.join([ p.name for p in joined ])))
-        if len(svcs):
-            messages.info(request, 'Created services: {}'.format(', '.join([ s.name for s in svcs ])))
+        if len(containers):
+            messages.info(request, 'Created services: {}'.format(', '.join([ s.name for s in containers ])))
         return redirect('project:list')
 
     joinable_bindings = UserProjectBinding.objects.filter(project__scope__in = [ Project.SCP_INTERNAL, Project.SCP_PUBLIC ], role = UserProjectBinding.RL_CREATOR).exclude(user = user)
@@ -199,15 +199,12 @@ def join(request):
     return render(request, 'project_join.html', context = { 't_joinable': table, 'menu_project': True, 'submenu': 'join' })
 
 
-
 @login_required
 def configure(request, project_id):
     user = request.user
     profile = user.profile
     logger.debug("method: %s, project id: %s, user: %s" % (request.method, project_id, user))
 
-    if request.POST.get('button', '') == 'cancel':
-        return redirect('project:list')
     try:
         project = Project.get_userproject(project_id = project_id, user = request.user)
     except Project.DoesNotExist as e:
@@ -215,118 +212,83 @@ def configure(request, project_id):
         messages.error(request, 'Project does not exist')
         return redirect('project:list')
 
-    if request.POST.get('button', '') == 'apply':
+    context_dict = {
+        'menu_project': True,
+        'active': request.COOKIES.get('configure_project_tab', 'collaboration'),
+        'form': FormProject(user = user, project = project),
+        'project': project,
+        't_users': TableCollaborator(project, user, collaborator_table = False),
+        't_collaborators': TableCollaborator(project, user, collaborator_table = True),
+        't_services': TableContainer(user = user, project = project, axis = 'project'),
+        't_all_services': TableContainer(user = user, project = project, axis = 'user')
+    }
 
-        # meta
-        project.scope = request.POST['project_scope']
-        project.description = request.POST.get('description')
+    return render(request, 'project_configure.html', context = context_dict)
+
+
+@login_required
+def configure_save(request):
+    if request.POST.get('button', '') == 'cancel':
+        return redirect('project:list')
+    user = request.user
+    project_id = request.POST.get('projectid')
+    try:
+        project = Project.get_userproject(project_id = project_id, user = user)
+    except Project.DoesNotExist as e:
+        logger.error(f'abuse by {user} project id: {project_id} -- {e}')
+        messages.error(request, 'Project does not exist')
+        return redirect('project:list')
+    # meta
+    form = FormProject(request.POST)
+    if form.is_valid():
+        project.name = form.cleaned_data['name']
+        project.scope = form.cleaned_data['scope']
+        project.description = form.cleaned_data['description']
         project.save()
 
-        # collaboration
-        assert project.is_admin(user), "You don't have the necessary rights"
-        collaborator_ids_before = set(request.POST.getlist('collaborator_ids_before'))
-        collaborator_ids_after = set(request.POST.getlist('collaborator_ids_after'))
-        admin_ids_before = set(request.POST.getlist('admin_ids_before'))
-        admin_ids_after = set(request.POST.getlist('admin_ids_after'))
-        # removal
-        removed = []
-        collaborator_ids_to_remove = collaborator_ids_before.difference(collaborator_ids_after)
-        for i in collaborator_ids_to_remove:
-            b = UserProjectBinding.objects.get(user__id = i, project = project)
-            removed.append(b.user.username)
-            b.delete()
-        # addition
-        added = []
-        service_ids = request.POST.getlist('service_ids')
-        collaborator_ids_to_add = collaborator_ids_after.difference(collaborator_ids_before)
-        for i in collaborator_ids_to_add:
-            collaborator = User.objects.get(id = i)
-            if i in admin_ids_after:
-                b = UserProjectBinding.objects.create(user = collaborator, project = project, role = UserProjectBinding.RL_ADMIN)
-            else:
-                b = UserProjectBinding.objects.create(user = collaborator, project = project, role = UserProjectBinding.RL_COLLABORATOR)
-            added.append(b.user.username)
-            # copy service information
-            for sid in service_ids:
-                svc = ProjectContainerBinding.objects.get(id = sid, container__user = user).container
-                svc_copy = Container.objects.create(user = collaborator, image = svc.image, name = f'{b.user.username}-{project.subpath}')
-                ProjectContainerBinding.objects.create(container = svc_copy, project = project)
-                #TODO: handle volumes and attachments
-        # role change
-        changed = []
-        collaborator_ids_to_admin = admin_ids_after.difference(admin_ids_before).intersection(collaborator_ids_after).difference(collaborator_ids_to_add)
-        collaborator_ids_to_revokeadmin = admin_ids_before.difference(admin_ids_after).intersection(collaborator_ids_after).difference(collaborator_ids_to_add)
-        for i in collaborator_ids_to_admin:
-            b = UserProjectBinding.objects.filter(user__id = i, project = project).exclude(role = UserProjectBinding.RL_CREATOR)
-            assert len(b) == 1
-            b = b[0]
-            b.role = UserProjectBinding.RL_ADMIN
-            changed.append(b.user.username)
-            b.save()
-        for i in collaborator_ids_to_revokeadmin:
-            b = UserProjectBinding.objects.filter(user__id = i, project = project).exclude(role = UserProjectBinding.RL_CREATOR)
-            assert len(b) == 1
-            b = b[0]
-            b.role = UserProjectBinding.RL_COLLABORATOR
-            changed.append(b.user.username)
-            b.save()
-        if added:
-            messages.info(request, 'Added {} as colaborators'.format(', '.join(added)))
-        if removed:
-            messages.info(request, 'Removed {} from colaboration'.format(', '.join(removed)))
-        if changed:
-            messages.info(request, 'Changed collaboration roles of {}'.format(', '.join(changed)))
-
-        # service
-        psb_ids_before = set(request.POST.getlist('psb_ids_before'))
-        psb_ids_after = set(request.POST.getlist('psb_ids_after'))
-        # removal
-        removed = []
-        restart = []
-        psb_ids_to_remove = psb_ids_before.difference(psb_ids_after)
-        for i in psb_ids_to_remove:
-            b = ProjectContainerBinding.objects.get(id = i, project = project, container__user = user)
-            svc = b.container
-            removed.append(svc.name)
-            if svc.mark_restart(f'project {project.name} removed'):
-                restart.append(svc.name)
-            b.delete()
-        # addition
-        added = []
-        svc_ids = request.POST.getlist('svc_ids')
-        for i in svc_ids:
-            svc = Container.objects.get(id = i, user = user)
-            ProjectContainerBinding.objects.create(container = svc, project = project)
-            added.append(svc.name)
-            if svc.mark_restart(f'project {project.name} added'):
-                restart.append(svc.name)
-        if added:
-            messages.info(request, 'Added service environments {0} to project {1}'.format(', '.join(added), project.name))
-        if removed:
-            messages.info(request, 'Removed service environments {0} from project {1}'.format(', '.join(removed), project.name))
-        if restart:
-            messages.warning(request, 'Restart service environments {} because they became inconsistent'.format(', '.join(restart)))
-
+    # collaboration
+    if not project.is_admin(user):
+        logger.error(f'abuse by {user} modify project {project} collaboration')
+        messages.error(request, "You don't have the necessary rights")
         return redirect('project:list')
-    else:
-        active_tab = request.GET.get('active_tab', 'collaboration')
+    added = []
+    for uid in request.POST.getlist('user_id'):
+        collaborator = User.objects.get(id = uid)
+        UserProjectBinding.objects.create(user = collaborator, project = project, role = UserProjectBinding.RL_COLLABORATOR) #FIXME: roles
+        added.append(f"{collaborator.first_name} {collaborator.last_name}")
+    if added:
+        messages.info(request, 'Added {} as colaborators to project {}.'.format(', '.join(added), project.name))
+    removed = []
+    for bid in request.POST.getlist('_userprojectbinding_id'):
+        b = UserProjectBinding.objects.get(id = bid, project = project)
+        b.delete()
+        collaborator = b.user
+        removed.append(f"{collaborator.first_name} {collaborator.last_name}")
+    if removed:
+        messages.info(request, 'Removed {} from project {} collaborations.'.format(', '.join(removed), project.name))
 
-        everybodyelse = user.profile.everybodyelse
+    # service
+    cids_before = { b.container.id: b for b in ProjectContainerBinding.objects.filter(project = project, container__user = user) }
+    cids_after = request.POST.getlist('attach')
+    detached = []
+    cids_to_remove = set(cids_before.keys()).difference(cids_after)
+    for i in cids_to_remove:
+         b = cids_before[i]
+         container = b.container
+         detached.append(container.name)
+         container.mark_restart(f'project {project.name} removed')
+         b.delete()
+    if detached:
+        messages.info(request, 'Project {} removed from containers {}.'.format(project.name, ', '.join(detached)))
+    attached = []
+    cids_to_add = set(cids_after).difference(cids_before.keys())
+    for i in cids_to_add:
+        container = Container.objects.get(id = i, user = user)
+        b = ProjectContainerBinding.objects.create(container = container, project = project)
+        attached.append(container.name)
+        container.mark_restart(f'project {project.name} added')
+    if attached:
+        messages.info(request, 'Project {} added to containers {}.'.format(project.name, ', '.join(attached)))
 
-        table_project_container = TableProjectContainer(ProjectContainerBinding.objects.filter(container__user = user, project = project))
-
-        containers = Container.objects.filter(user = user)
-        table_container = TableContainer(UserProjectBinding.objects.get(user = user, project = project), containers)
-
-        context_dict = {
-            'menu_project': True,
-            'project': project,
-            'active': active_tab,
-            't_users': TableCollaborator(project, user, collaborator_table = False),
-            't_collaborators': TableCollaborator(project, user, collaborator_table = True),
-            't_services': table_project_container,
-            't_all_services': table_container,
-        }
-        return render(request, 'project_configure.html', context = context_dict)
-
+    return redirect('project:list')
 

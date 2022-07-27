@@ -138,6 +138,7 @@ def configure(request, container_id):
     try:
         svc = Container.objects.get(id = container_id, user = user)
     except Container.DoesNotExist:
+        logger.error('abuse by %s container id: %s -- %s' % (user, container_id, e))
         messages.error(request, 'Service environment does not exist')
         return redirect('container:list')
 

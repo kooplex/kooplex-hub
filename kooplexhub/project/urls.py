@@ -13,4 +13,5 @@ urlpatterns = [
     re_path('show/(?P<project_id>\d+)/?$', views.show, name = 'show'),
     path('showhide/', views.show_hide, name = 'showhide'),
     re_path('configure/(?P<project_id>\d+)/?$', views.configure, name = 'configure'),
+    path('configure_save/', views.configure_save, name = 'configure_save'),
 ]

@@ -9,9 +9,13 @@ register = template.Library()
 def container_image(container):
     i = container.image.name.split('/')[-1]
     if container.state == container.ST_NEED_RESTART:
-        return format_html(f"""<span class="badge rounded-pill bg-danger"><i class="ri-image-2-line"></i>&nbsp; {i}</span>""")
+        return format_html(f"""
+<span class="badge rounded-pill bg-danger" data-bs-toggle="tooltip" data-placement="bottom" title="Environment {container.friendly_name} needs restart"><i class="ri-image-2-line"></i>&nbsp; {i}</span>
+        """)
     elif container.state == container.ST_RUNNING:
-        return format_html(f"""<span class="badge rounded-pill bg-success"><i class="ri-image-2-line"></i>&nbsp; {i}</span>""")
+        return format_html(f"""
+<span class="badge rounded-pill bg-success" data-bs-toggle="tooltip" data-placement="bottom" title="Environment {container.friendly_name} is running fine"><i class="ri-image-2-line"></i>&nbsp; {i}</span>
+        """)
     else:
         return format_html(f"""<span class="badge rounded-pill bg-secondary"><i class="ri-image-2-line"></i>&nbsp; {i}</span>""")
 
@@ -190,7 +194,7 @@ def dropdown_start_open_stop(bindings, ancestor, ancestor_type, next_page):
         return format_html(f"""
 <div class="dropdown" data-bs-toggle="tooltip" data-bs-placement="top" title="Service environments associated with {ancestor_type} {ancestor.name}">
   <a class="btn btn-outline-secondary dropdown-toggle btn-sm" type="button" id="dc-svcs-{ancestor.id}" data-bs-toggle="dropdown" aria-expanded="false">
-    <i class="oi oi-terminal"></i>: {len(bindings)}
+    <i class="oi oi-terminal"></i>&nbsp;{len(bindings)}
   </a>
   <ul class="dropdown-menu" aria-labelledby="dc-svcs-{ancestor.id}">
     {items}
