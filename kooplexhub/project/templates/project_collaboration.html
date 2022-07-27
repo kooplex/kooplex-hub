@@ -20,6 +20,9 @@ $(document).ready(function() {
   $("#users").find("th").text("Users");
 });
 $("span[id^='userid-'").click(function() {
+  var userid = $( this ).attr("id").split("-")[1];
+  var cba = $("#d-" + userid);
+  var cba_before = $("#admin-" + userid).attr("name");
   var tr = $( this ).parent().parent();
   var t = tr.parent().parent().attr("id");
   console.log( t );
@@ -30,12 +33,16 @@ $("span[id^='userid-'").click(function() {
       var before = $(this).attr("name");
       $( this ).attr("name", before.substring(1));
     });
+    cba.removeClass("d-none");
+    cba.attr("name", cba_before.substring(1));
   } else {
     other_table = $("#users");
     $( this ).parent().find("input[type='hidden'][name").each(function() {
       var before = $(this).attr("name");
       $( this ).attr("name", "_" + before);
     });
+    cba.addClass("d-none");
+    cba.attr("name", "_" + cba_before);
   }
   other_table.children("tbody").append(tr);
 });

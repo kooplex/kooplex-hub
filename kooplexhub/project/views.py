@@ -253,24 +253,46 @@ def configure_save(request):
         messages.error(request, "You don't have the necessary rights")
         return redirect('project:list')
     added = []
-    for uid in request.POST.getlist('user_id'):
+    admins = set(map(int, request.POST.getlist('admin_id')))
+    for uid in map(int, request.POST.getlist('user_id')):
         collaborator = User.objects.get(id = uid)
-        UserProjectBinding.objects.create(user = collaborator, project = project, role = UserProjectBinding.RL_COLLABORATOR) #FIXME: roles
+        UserProjectBinding.objects.create(
+            user = collaborator, project = project, 
+            role = UserProjectBinding.RL_ADMIN if uid in admins else UserProjectBinding.RL_COLLABORATOR)
         added.append(f"{collaborator.first_name} {collaborator.last_name}")
     if added:
         messages.info(request, 'Added {} as colaborators to project {}.'.format(', '.join(added), project.name))
     removed = []
-    for bid in request.POST.getlist('_userprojectbinding_id'):
+    for bid in map(int, request.POST.getlist('_userprojectbinding_id')):
         b = UserProjectBinding.objects.get(id = bid, project = project)
         b.delete()
         collaborator = b.user
         removed.append(f"{collaborator.first_name} {collaborator.last_name}")
     if removed:
         messages.info(request, 'Removed {} from project {} collaborations.'.format(', '.join(removed), project.name))
+    granted = []
+    revoked = []
+    collabs_before = { b.id: b for b in UserProjectBinding.objects.filter(project = project).exclude(user = user) }
+    collabs_after = set(map(int, request.POST.getlist('userprojectbinding_id')))
+    for bid in collabs_after.intersection(collabs_before.keys()):
+        b = collabs_before[bid]
+        collaborator = b.user
+        if b.role == b.RL_ADMIN and not b.user.id in admins:
+            b.role = b.RL_COLLABORATOR
+            b.save()
+            revoked.append(f"{collaborator.first_name} {collaborator.last_name}")
+        elif b.role == b.RL_COLLABORATOR and b.user.id in admins:
+            b.role = b.RL_ADMIN
+            b.save()
+            granted.append(f"{collaborator.first_name} {collaborator.last_name}")
+    if granted:
+        messages.info(request, 'Granted admin rights to {} in project {}.'.format(', '.join(granted), project.name))
+    if revoked:
+        messages.info(request, 'Revoked admin rights from {} in project {}.'.format(', '.join(revoked), project.name))
 
     # service
     cids_before = { b.container.id: b for b in ProjectContainerBinding.objects.filter(project = project, container__user = user) }
-    cids_after = request.POST.getlist('attach')
+    cids_after = set(map(int, request.POST.getlist('attach')))
     detached = []
     cids_to_remove = set(cids_before.keys()).difference(cids_after)
     for i in cids_to_remove:
@@ -282,7 +304,7 @@ def configure_save(request):
     if detached:
         messages.info(request, 'Project {} removed from containers {}.'.format(project.name, ', '.join(detached)))
     attached = []
-    cids_to_add = set(cids_after).difference(cids_before.keys())
+    cids_to_add = cids_after.difference(cids_before.keys())
     for i in cids_to_add:
         container = Container.objects.get(id = i, user = user)
         b = ProjectContainerBinding.objects.create(container = container, project = project)

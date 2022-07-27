@@ -127,7 +127,14 @@ class TableCollaborator(tables.Table):
         """ if record.id else f"""
 <input type="hidden" name="{prefix}user_id" value="{record.user.id}">
         """
+        dhidden = "" if self.is_collaborator_table else 'class="d-none"'
+        chk = "checked" if self.is_collaborator_table and record.role == record.RL_ADMIN else ""
         return format_html(f"""
+<span id="d-{user.id}" {dhidden}><input id="admin-{user.id}" 
+  type="checkbox" data-toggle="toggle" name="{prefix}admin_id" 
+  data-on="<span class='oi oi-lock-unlocked'></span>" 
+  data-off="<span class='oi oi-lock-locked'></span>" 
+  data-onstyle="danger" data-offstyle="success" {chk} value="{user.id}"></span>
 <span id="userid-{user.id}" data-toggle="tooltip" title="Username {user.username}." data-placement="top"><b>{user.first_name}</b> {user.last_name}</span>
 <input type="hidden" id="search-collaborator-{user.id}" value="{user.username} {user.first_name} {user.last_name} {user.first_name}">
 {hidden}
