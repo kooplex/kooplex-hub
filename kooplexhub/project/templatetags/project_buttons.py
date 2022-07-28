@@ -2,6 +2,8 @@ from django import template
 from django.utils.html import format_html
 from django.urls import reverse
 
+from hub.templatetags.extras import render_user
+
 register = template.Library()
 
 
@@ -27,11 +29,7 @@ def icon_collaborator(project, user):
 def list_collaborator(project, user):
     upbs = project.userprojectbindings
     if len(upbs) > 1:
-        items = []
-        for upb in upbs:
-            if upb.user != user:
-                items.append(f"""{upb.user.first_name} {upb.user.last_name} ({upb.user.username})""")
-        return format_html(", ".join(items))
+        return format_html(", ".join([ render_user(upb.user) for upb in upbs if upb.user != user ]))
     else:
         return ""
 

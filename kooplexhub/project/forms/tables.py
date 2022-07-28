@@ -7,11 +7,24 @@ from ..models import ProjectContainerBinding
 from container.models import Container
 from hub.models import Profile
 
+from container.templatetags.container_buttons import container_image
+from hub.templatetags.extras import render_user as ru
+
 
 class TableShowhideProject(tables.Table):
     button = tables.Column (verbose_name = 'Visible', orderable = False, empty_values = ())
     project = tables.Column (orderable = False)
     collaborators = tables.Column (orderable = False, empty_values = ())
+
+    class Meta:
+        model = UserProjectBinding
+        fields = ('project', )
+        sequence = ('button', 'project', 'collaborators')
+        attrs = {
+                 "class": "table table-bordered",
+                 "thead": { "class": "thead-dark table-sm" },
+                 "th": { "class": "table-secondary" },
+                }
 
     def render_button(self, record):
         state = "" if record.is_hidden else "checked"
@@ -36,65 +49,59 @@ class TableShowhideProject(tables.Table):
         """)
 
 
-    class Meta:
-        model = UserProjectBinding
-        fields = ('project', )
-        sequence = ('button', 'project', 'collaborators')
-        attrs = { 
-                 "class": "table table-bordered", 
-                 "thead": { "class": "thead-dark table-sm" }, 
-                 "th": { "class": "table-secondary" },
-                }
-
     def __init__(self, *argv, **kwargs):
         self.user = kwargs.pop('user') if 'user' in kwargs else None
         super().__init__(*argv, **kwargs)
 
 
 class TableJoinProject(tables.Table):
-    class SelectColumn(tables.Column):
-        def render(self, record):
-            p = record.project
-            template = f"""
-<div class="form-check">
-  <input class="form-check-input" type="checkbox" id="cb_pid-{p.id}" name="project_ids" value="{p.id}" />
-  <label class="form-check-label" for="cb_pid-{p.id}"> Join</label>
-</div>
-            """
-            return format_html(template)
-    id = SelectColumn(verbose_name = 'Select', orderable = False)
-    class UserColumn(tables.Column):
-        def render(self, record):
-            return format_html(record.user.profile.name_and_username)
-    user = UserColumn(verbose_name = 'Creator name (username)', order_by = ('user__first_name', 'user__last_name'))
-    class ImageColumn(tables.Column):
-        def render(self, record):
-            p = record.project
-            images = set([ psb.container.image for psb in ProjectContainerBinding.objects.filter(project = p, container__user = p.creator) ])
-            template = [ f"""
-<div class="form-check">
-  <input class="form-check-input" type="checkbox" id="cb_img_pid-{p.id}" name="image_ids" value="{i.id}" />
-  <label class="form-check-label" for="cb_img_pid-{p.id}"> {i.name}</label>
-</div>
-            """ for i in images ]
-            return format_html('<br>'.join(template))
-    images = ImageColumn(verbose_name = 'Create environment', orderable = False, empty_values = ())
-  
+    button = tables.Column (verbose_name = 'Join', orderable = False, empty_values = ())
+    images = tables.Column (verbose_name = 'Image', orderable = False, empty_values = ())
+    project = tables.Column (orderable = False)
+    user = tables.Column(verbose_name = "Project owner", order_by = ('user__first_name', 'user__last_name'), orderable = False)
+    collaborators = tables.Column(verbose_name = "Collaborators", orderable = False, empty_values = ())
+
     class Meta:
         model = UserProjectBinding
-        fields = ('id', 'project', 'user', 'images')
-        sequence = ('id', 'project', 'user', 'images')
+        fields = ('project', 'user', )
+        sequence = ('button', 'project', 'user', 'collaborators', 'images')
         attrs = {
                      "class": "table table-striped table-bordered",
                      "thead": { "class": "thead-dark table-sm" },
                      "td": { "style": "padding:.5ex" },
                      "th": { "style": "padding:.5ex", "class": "table-secondary" }
                     }
-  
-  
+
+    def render_button(self, record):
+        return format_html(f"""
+<input type="checkbox" class="btn-check" name="join_project_ids" value="{record.project.id}" id="btn-{record.id}" autocomplete="off">
+<label class="btn btn-outline-secondary" for="btn-{record.id}"><i class="bi bi-people"></i></label>
+        """)
+
+    def render_images(self, record):
+        p = record.project
+        lut = { psb.container.id: container_image(psb.container) for psb in ProjectContainerBinding.objects.filter(project = p, container__user = p.creator) }
+        template = [ f"""
+<div class="form-check m-0">
+  <input class="form-check-input" type="checkbox" id="container_template-{i}" name="container_template_ids-{p.id}" value="{i}">
+  <label class="form-check-label" for="container_template-{i}">&nbsp;{c}</label>
+</div>
+        """ for i, c in lut.items() ]
+        return format_html('<br>'.join(template))
+
+    def render_project(self, record):
+        return record.project.name
+
+    def render_user(self, record):
+        return ru(record.user)
+
+    def render_collaborators(self, record):
+        cols = UserProjectBinding.objects.filter(project = record.project).exclude(user = record.user)
+        return format_html(', '.join([ ru(c.user) for c in cols ])) if cols else '--'
+
+
 class TableCollaborator(tables.Table):
     user = tables.Column(verbose_name = "Collaborators", order_by = ('user__first_name', 'user__last_name'), orderable = False)
-    #role = tables.Column(verbose_name = 'Admin role', empty_values = (), orderable = False)
 
     class Meta:
         model = UserProjectBinding
@@ -105,6 +112,28 @@ class TableCollaborator(tables.Table):
                  "td": { "class": "p-1" },
                  "th": { "class": "table-secondary p-1" }
                 }
+
+    def render_user(self, record):
+        user = record.user
+        prefix = "" if self.is_collaborator_table else "_"
+        hidden = f"""
+<input type="hidden" name="{prefix}userprojectbinding_id" value="{record.id}">
+        """ if record.id else f"""
+<input type="hidden" name="{prefix}user_id" value="{record.user.id}">
+        """
+        dhidden = "" if self.is_collaborator_table else 'class="d-none"'
+        chk = "checked" if self.is_collaborator_table and record.role == record.RL_ADMIN else ""
+        return format_html(f"""
+<span id="d-{user.id}" {dhidden}><input id="admin-{user.id}"
+  type="checkbox" data-toggle="toggle" name="{prefix}admin_id"
+  data-on="<span class='oi oi-lock-unlocked'></span>"
+  data-off="<span class='oi oi-lock-locked'></span>"
+  data-onstyle="danger" data-offstyle="success" {chk} value="{user.id}"></span>
+{ru(user)}
+<input type="hidden" id="search-collaborator-{user.id}" value="{user.username} {user.first_name} {user.last_name} {user.first_name}">
+{hidden}
+        """)
+
 
     def __init__(self, project, user, collaborator_table):
         collaborators = UserProjectBinding.objects.filter(project = project)
@@ -118,29 +147,6 @@ class TableCollaborator(tables.Table):
         super(TableCollaborator, self).__init__(bindings)
 
 
-    def render_user(self, record):
-        #FIXME: role
-        user = record.user
-        prefix = "" if self.is_collaborator_table else "_"
-        hidden = f"""
-<input type="hidden" name="{prefix}userprojectbinding_id" value="{record.id}">
-        """ if record.id else f"""
-<input type="hidden" name="{prefix}user_id" value="{record.user.id}">
-        """
-        dhidden = "" if self.is_collaborator_table else 'class="d-none"'
-        chk = "checked" if self.is_collaborator_table and record.role == record.RL_ADMIN else ""
-        return format_html(f"""
-<span id="d-{user.id}" {dhidden}><input id="admin-{user.id}" 
-  type="checkbox" data-toggle="toggle" name="{prefix}admin_id" 
-  data-on="<span class='oi oi-lock-unlocked'></span>" 
-  data-off="<span class='oi oi-lock-locked'></span>" 
-  data-onstyle="danger" data-offstyle="success" {chk} value="{user.id}"></span>
-<span id="userid-{user.id}" data-toggle="tooltip" title="Username {user.username}." data-placement="top"><b>{user.first_name}</b> {user.last_name}</span>
-<input type="hidden" id="search-collaborator-{user.id}" value="{user.username} {user.first_name} {user.last_name} {user.first_name}">
-{hidden}
-        """)
-
-
 class TableContainer(tables.Table):
     image = tables.Column(orderable = False)
     name = tables.Column(verbose_name = 'Environment', orderable = False)
@@ -150,11 +156,11 @@ class TableContainer(tables.Table):
         model = Container
         fields = ('name', 'image')
         sequence = ('button', 'name', 'image')
-        attrs = { 
-                 "class": "table table-striped table-bordered", 
-                 "thead": { "class": "thead-dark table-sm" }, 
-                 "td": { "class": "p-1" }, 
-                 "th": { "class": "table-secondary p-1" } 
+        attrs = {
+                 "class": "table table-striped table-bordered",
+                 "thead": { "class": "thead-dark table-sm" },
+                 "td": { "class": "p-1" },
+                 "th": { "class": "table-secondary p-1" }
                 }
 
     def render_b_user(self, record):
@@ -181,9 +187,7 @@ class TableContainer(tables.Table):
 <span data-toggle="tooltip" title="Container name: {record.name}." data-placement="bottom">{record.friendly_name}</span>
         """)
 
-
     def render_image(self, record):
-        from container.templatetags.container_buttons import container_image
         return container_image(record)
 
 
@@ -197,3 +201,4 @@ class TableContainer(tables.Table):
             containers = [ b.container for b in ProjectContainerBinding.objects.filter(project = project, container__user = user) ]
             self.render_button = self.render_b_project
         super().__init__(containers)
+

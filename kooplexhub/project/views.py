@@ -169,35 +169,34 @@ def join(request):
     logger.debug("user %s" % request.user)
     user = request.user
     profile = user.profile
-    if request.POST.get('button', '') == 'apply':
-        joined = []
-        containers = []
-        for project_id in request.POST.getlist('project_ids'):
-            try:
-                project = Project.objects.get(id = project_id, scope__in = [ Project.SCP_INTERNAL, Project.SCP_PUBLIC ])
-                UserProjectBinding.objects.create(user = user, project = project, role = UserProjectBinding.RL_COLLABORATOR)
-                joined.append(project)
-                logger.info("%s joined project %s as a member" % (user, project))
-                for image_id in request.POST.getlist(f'image_ids_{project_id}'):
-                    i = Image.objects.get(id = image_id)
-                    container = Container.objects.create(user = user, image = i, name = f'{user.username}-{project.subpath}')
-                    psb = ProjectContainerBinding.objects.create(project = project, container = container)
-                    logger.info(f'created service {container} and binding {psb}')
-                    containers.append(container)
-            except Exception as e:
-                logger.warning("%s cannot join project id %s -- %s" % (user, project_id, e))
-                messages.error(request, 'You cannot join project')
-        if len(joined):
-            messages.info(request, 'Joined projects: {}'.format(', '.join([ p.name for p in joined ])))
-        if len(containers):
-            messages.info(request, 'Created services: {}'.format(', '.join([ s.name for s in containers ])))
-        return redirect('project:list')
-
-    joinable_bindings = UserProjectBinding.objects.filter(project__scope__in = [ Project.SCP_INTERNAL, Project.SCP_PUBLIC ], role = UserProjectBinding.RL_CREATOR).exclude(user = user)
-    joined_projects = [ upb.project for upb in UserProjectBinding.objects.filter(user = user, role__in = [ UserProjectBinding.RL_ADMIN, UserProjectBinding.RL_COLLABORATOR ]) ]
-    joinable_bindings = joinable_bindings.exclude(Q(project__in = joined_projects))
-    table = TableJoinProject(joinable_bindings)
-    return render(request, 'project_join.html', context = { 't_joinable': table, 'menu_project': True, 'submenu': 'join' })
+    if request.method == 'GET':
+        joinable_bindings = UserProjectBinding.objects.filter(project__scope__in = [ Project.SCP_INTERNAL, Project.SCP_PUBLIC ], role = UserProjectBinding.RL_CREATOR).exclude(user = user)
+        joined_projects = [ upb.project for upb in UserProjectBinding.objects.filter(user = user, role__in = [ UserProjectBinding.RL_ADMIN, UserProjectBinding.RL_COLLABORATOR ]) ]
+        joinable_bindings = joinable_bindings.exclude(Q(project__in = joined_projects))
+        table = TableJoinProject(joinable_bindings)
+        return render(request, 'project_join.html', context = { 't_joinable': table, 'menu_project': True, 'submenu': 'join' })
+    joined = []
+    containers = []
+    for project_id in request.POST.getlist('join_project_ids'):
+        try:
+            project = Project.objects.get(id = project_id, scope__in = [ Project.SCP_INTERNAL, Project.SCP_PUBLIC ])
+            UserProjectBinding.objects.create(user = user, project = project, role = UserProjectBinding.RL_COLLABORATOR)
+            joined.append(project)
+            logger.info("%s joined project %s as a member" % (user, project))
+            for c_id in request.POST.getlist(f'container_template_ids-{project_id}'):
+                ct = Container.objects.get(id = c_id)
+                container = Container.objects.create(user = user, image = ct.image, name = f'{user.username}-{project.subpath}') #TODO: later maybe copy mounts
+                psb = ProjectContainerBinding.objects.create(project = project, container = container)
+                logger.info(f'created service {container} and binding {psb}')
+                containers.append(container)
+        except Exception as e:
+            logger.warning("%s cannot join project id %s -- %s" % (user, project_id, e))
+            messages.error(request, 'You cannot join project')
+    if len(joined):
+        messages.info(request, 'Joined projects: {}'.format(', '.join([ p.name for p in joined ])))
+    if len(containers):
+        messages.info(request, 'Created services: {}'.format(', '.join([ s.name for s in containers ])))
+    return redirect('project:list')
 
 
 @login_required

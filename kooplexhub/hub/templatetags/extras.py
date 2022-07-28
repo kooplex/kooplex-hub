@@ -20,7 +20,13 @@ def title_with_button(*argv, button_label = "Save all changes", button_icon = "b
   <div><h5 class="mb-4">{t}</h5></div>
   <div><button type="submit" class="btn {button_color}" name="button" value="apply"><i class="{button_icon}"></i>&nbsp;{button_label}</button></div>
 </div>""")
-    return format_html(f"""<h5 class="mb-4">{t}</h5>""")
+
+
+@register.simple_tag(name= 'render_user')
+def render_user(user):
+    return format_html(f"""
+<span data-toggle="tooltip" title="Username {user.username}." data-placement="top"><b>{user.first_name}</b> {user.last_name}</span>
+    """)
 
 
 @register.simple_tag(name = 'apply_cancel')
