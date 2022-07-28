@@ -22,7 +22,7 @@
 <div class="card shadow p-3 mt-3 mb-3 bg-light rounded">
   <form id="project-manage" class="form-horizontal was-validated" action="{% url 'project:configure_save' %}" method="post">
   {% csrf_token %}
-  {% title_with_button "You are now configurint <em>" project.name "</em> project" %}
+  {% title_with_button "You are now configuring <em>" project.name "</em> project" %}
   <input type="hidden" name="project_id" value="{{ project.id }}">
   <ul class="nav nav-tabs" id="projectConfigTabs" role="tablist">
     <li class="nav-item" role="presentation">

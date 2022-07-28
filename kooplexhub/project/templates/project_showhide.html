@@ -11,7 +11,7 @@
 <form id="project-manage" class="form-horizontal" action="{% url 'project:showhide' %}" method="post">
   {% csrf_token %}
   {% if t_project.data|length > 0 %}
-  {% title_with_button "Use the toggle button to select some of your projects to hide or show and click button to finalyze your choice." %}
+  {% title_with_button "Use the toggle button to select some of your projects to hide or show and click the button to finalize your choice." %}
   <input class="form-control mb-3 mt-3" type="text" id="search_project" placeholder="Search project or collaborator" title="Type in a name" autofocus>
   <div id="projectListPane" class="mt-3">
     {% render_table t_project %}

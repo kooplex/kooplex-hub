@@ -6,7 +6,9 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.shortcuts import redirect
+from django.utils.html import format_html
 from django.views import generic
+from django.urls import reverse
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .forms import FormContainer, FormAttachment
@@ -66,9 +68,12 @@ class ContainerListView(LoginRequiredMixin, generic.ListView):
     model = Container
 
     def get_context_data(self, **kwargs):
+        l = reverse('container:new')
         context = super().get_context_data(**kwargs)
         context['menu_container'] = True
         context['submenu'] = 'list'
+        context['partial'] = 'container_partial_list.html'
+        context['empty'] = """You need to <a href="{l}"><i class="bi bi-boxes"></i><span>&nbsp;create</span></a> environments in order to use the hub."""
         return context
 
     def get_queryset(self):
@@ -77,14 +82,17 @@ class ContainerListView(LoginRequiredMixin, generic.ListView):
         return containers
 
 class ReportContainerListView(LoginRequiredMixin, generic.ListView):
-    template_name = 'container_list_report.html'
+    template_name = 'container_list.html'
     context_object_name = 'containers'
     model = Container
 
     def get_context_data(self, **kwargs):
+        l = reverse('report:new')
         context = super().get_context_data(**kwargs)
         context['menu_container'] = True
         context['submenu'] = 'reportclist'
+        context['partial'] = 'container_partial_list_report.html'
+        context['empty'] = format_html(f"""You need to <a href="{l}"><i class="bi bi-projector"></i><span>&nbsp;create</span></a> a container backed report to see here anything useful.""")
         return context
 
     def get_queryset(self):

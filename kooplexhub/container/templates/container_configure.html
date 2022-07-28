@@ -21,7 +21,7 @@
 <div class="card shadow p-3 mb-5 bg-light rounded">
 <form id="container-manage" class="form-horizontal" action="{% url 'container:configure_save' %}" method="post">
 {% csrf_token %}
-  {% title_with_button "You are now configurint <em>" container.friendly_name "</em> environment" %}
+  {% title_with_button "You are now configuring <em>" container.friendly_name "</em> environment" %}
   <input type="hidden" name="container_id" value="{{ container.id }}">
   <ul class="nav nav-tabs" id="serviceConfigTabs" role="tablist">
     <li class="nav-item" role="presentation">
