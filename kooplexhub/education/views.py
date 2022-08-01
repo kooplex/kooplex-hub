@@ -6,14 +6,15 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views import generic
+from django.utils.html import format_html
+from django.urls import reverse
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.db import IntegrityError
 
-from django_tables2 import RequestConfig
-
 from kooplexhub.lib import now
 
+from hub.templatetags.extras import render_user
 from container.models import Image, Container
 from .models import UserCourseBinding, UserAssignmentBinding, Assignment, CourseContainerBinding, CourseGroup, UserCourseGroupBinding, Course
 from .forms import FormCourse
@@ -24,27 +25,43 @@ from .forms import TableAssignment, TableAssignmentConf, TableAssignmentHandle, 
 logger = logging.getLogger(__name__)
 
 class TeacherCourseBindingListView(LoginRequiredMixin, generic.ListView):
-    template_name = 'teacher_course_list.html'
-    context_object_name = 'teachercoursebindinglist'
+    template_name = 'course_list.html'
+    context_object_name = 'coursebindinglist'
 
     def get_queryset(self):
         user = self.request.user
         profile = user.profile
         return UserCourseBinding.objects.filter(user = user, is_teacher = True)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['menu_education'] = True
+        context['submenu'] = 'teacher'
+        context['empty_title'] = "You have not been added to any courses yet as a teacher"
+        context['empty_body'] = format_html("""If this is unexpected, please ask system administrator to take care of it. <a href="mailto:kooplex@elte.hu"><i class="bi bi-envelope"></i><span>&nbsp;Send e-mail...</span></a>""")
+        return context
+
 
 class StudentCourseBindingListView(LoginRequiredMixin, generic.ListView):
-    template_name = 'student_course_list.html'
-    context_object_name = 'studentcoursebindinglist'
+    template_name = 'course_list.html'
+    context_object_name = 'coursebindinglist'
 
     def get_queryset(self):
         user = self.request.user
         profile = user.profile
         return UserCourseBinding.objects.filter(user = user, is_teacher = False)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['menu_education'] = True
+        context['submenu'] = 'student'
+        context['empty_title'] = "You have not been added to any courses yet"
+        context['empty_body'] = "If this is unexpected, please ask your professor to administer."
+        return context
+
 
 @login_required
-def configure(request, usercoursebinding_id, next_page = 'education:teacher'):
+def configure(request, usercoursebinding_id):
     user = request.user
     profile = user.profile
     logger.debug(f"method: {request.method}, user: {user.username}")
@@ -53,108 +70,22 @@ def configure(request, usercoursebinding_id, next_page = 'education:teacher'):
     except UserCourseBinding.DoesNotExist:
         logger.error(f'abuse {user} tries to access usercoursebinding id {usercoursebinding_id}')
         messages.error(request, 'Course does not exist')
-        return redirect(next_page)
-    if request.POST.get('button') == 'apply':
-        active_tab = request.POST.get('active_tab')
-        logger.debug(f'tab: {active_tab}')
-
-        if active_tab == 'conf':
-            form_course = FormCourse(request.POST)
-            if form_course.is_valid():
-                course.name = form.cleaned_data['name']
-                course.description = form.cleaned_data['description']
-                course.image = form.cleaned_data['image']
-                try:
-                    course.save()
-                except IntegrityError as e:
-                    messages.error(request, str(e))
-                else:
-                    messages.error(request, form_course.errors)
-        elif active_tab == 'group':
-            form_group = FormGroup(request.POST)
-            if form_group.is_valid():
-                try:
-                    form_group.save()
-                    messages.info(request, f'Group {form_group.cleaned_data["name"]} for course {form_group.cleaned_data["course"].name} is created')
-                except IntegrityError as e:
-                    messages.error(request, str(e))
-                else:
-                    messages.error(request, form_group.errors)
-
-            gids = [ x.split('-')[-1] for x in filter(lambda x: x.startswith("name-before-"), request.POST.keys()) ]
-            delete_ids = request.POST.getlist('selection_group_removal', [])
-            d = []
-            for gid in delete_ids:
-                try:
-                    g = CourseGroup.objects.get(id = gid, course = course)
-                    g.delete()
-                    logger.info(f'- deleted g {g.name} from course {course.name} by {user.username}')
-                    d.append(f'{g.name}')
-                    if gid in gids:
-                        gids.remove(gid)
-                except Exception as e:
-                    logger.error(e)
-            if len(d):
-                g = ', '.join(d)
-                messages.info(request, f'Deleted group(s) {g}.')
-
-            gu = []
-            for g in gids:
-                before_name = request.POST[f'name-before-{g}']
-                after_name = request.POST[f'name-{g}']
-                before_description = request.POST[f'description-before-{g}']
-                after_description = request.POST[f'description-{g}']
-                if (before_name == after_name) and (before_description == after_description):
-                    continue
-                grp = CourseGroup.objects.get(id = g, course = course)
-                grp.name = after_name
-                grp.description = after_description
-                grp.save()
-                gu.append(grp.name)
-            if len(gu):
-                gu = ', '.join(gu)
-                messages.info(request, f'Updates group(s) {gu}.')
-
-
-        return redirect(next_page)
-    else:
-
-        table_student = TableUser(course, teacher_selector = False, pattern = profile.search_education_student)
-        if table_student.empty:
-            profile.search_education_student = ''
-            profile.save()
-            table_student = TableUser(course, teacher_selector = False, pattern = '')
-
-        table_teacher = TableUser(course, teacher_selector = True, pattern = profile.search_education_teacher)
-        if table_teacher.empty:
-            profile.search_education_teacher = ''
-            profile.save()
-            table_teacher = TableUser(course, teacher_selector = True, pattern = '')
-
-        table_group = TableGroup(CourseGroup.objects.filter(course = course))
-        form_course = FormCourse({ 'name': course.name, 'description': course.description, 'image': course.image })
-        form_group = FormGroup(course = course)
-
-        #student_group_map = { 
-        #        'ungrouped': UserCourseBinding.objects.filter(course = course, is_teacher = False).exclude(usercoursegroupbinding__id__gt = 0),
-        #        'groups': dict([ (g, UserCourseBinding.objects.filter(course = course, is_teacher = False, usercoursegroupbinding__group = g)) 
-        #                for g in CourseGroup.objects.filter(course = course)
-        #            ])
-        #        }
-
-        context_dict = {
-            'courseform': form_course,
-            'groupform': form_group,
-            't_student': table_student,
-            't_teacher': table_teacher,
-            't_group': table_group,
-            'usercoursebinding_id': usercoursebinding_id,
+        return redirect('indexpage')
+    context_dict = {
+            'menu_education': True,
             'course': course,
-            'submenu': 'meta',
-            'next_page': next_page,
+            'usercoursebinding_id': usercoursebinding_id,
+            'courseform': FormCourse({ 'name': course.name, 'description': course.description, 'image': course.image }),
+            'groupform': FormGroup(),
+            't_students_add': TableUser(course, user, teacher_selector = False, bind_table = False),
+            't_students': TableUser(course, user, teacher_selector = False, bind_table = True),
+            't_teachers_add': TableUser(course, user, teacher_selector = True, bind_table = False),
+            't_teachers': TableUser(course, user, teacher_selector = True, bind_table = True),
+            't_group': TableGroup(CourseGroup.objects.filter(course = course)),
+            'active': request.COOKIES.get('configure_course_tab', 'student'),
             'student_group_map': course.groups,
-        }
-        return render(request, 'course_configure.html', context = context_dict)
+            }
+    return render(request, 'course_configure.html', context = context_dict)
 
 
 @login_required
@@ -167,17 +98,17 @@ def assignment_teacher(request):
     profile = user.profile
     logger.debug("user %s, method: %s" % (user, request.method))
     context_dict = {
-        'menu_teaching': 'active',
-        'submenu': 'assignment_teacher',
-    }
+            'menu_education': True,
+            'submenu': 'assignment_teacher',
+            }
     courses = [ ucb.course for ucb in UserCourseBinding.objects.filter(user = user, is_teacher = True) ]
     if len(courses) == 0:
         messages.warning(request, f'You are not bound to any course as a teacher.')
-        return redirect('index')
+        return render(request, 'education_layout.html', context = context_dict)
 
     active_tab = request.COOKIES.get('active_tab', 'tab-handle')
     request.COOKIES['active_tab'] = 'tab-conf' if active_tab == 'tab-new' else active_tab
-    assignment_id_cookie = request.COOKIES.get('assignment_id', None)
+    assignment_id_cookie = request.COOKIES.get('handle_assignment_last', None)
 
     mapping = [ (c.id, Assignment.objects.filter(course = c)) for c in courses ]
     keep = lambda c: len(c[1])
@@ -215,7 +146,7 @@ def assignment_teacher(request):
     table_assignment_summary = TableAssignmentSummary(assignments)
     #table_assignment_student_summary = TableAssignmentStudentSummary(Course.objects.filter(usercoursebinding__user=user)[0])
 #    table_course_student_summary = TableAssignmentStudentSummary(courses[0])
-    ts = [ TableCourseStudentSummary(c) for c in courses]
+    ts = dict(filter(lambda i: i[1] is not None, { c.id: TableCourseStudentSummary(c) for c in courses }.items()))
     #table_assignment_student_summary = TableAssignmentSummary(assignments)
 
     okay = lambda f: f.okay
@@ -225,12 +156,12 @@ def assignment_teacher(request):
     context_dict.update({
         'd_course_assignments': course_assignments,
         't_assignment_summary': table_assignment_summary,
-#        't_course_student_summary': table_course_student_summary,
+        #        't_course_student_summary': table_course_student_summary,
         'ts': ts,
         't_assignment_config': table_assignment_config,
         'f_assignment': list(filter(okay, [ FormAssignment(user = user, course = c, auto_id = f'id_newassignment_{c.cleanname}_%s') for c in courses ])),
         't_mass_all': TableAssignmentMassAll( assignments ),
-    })
+        })
     return render(request, 'assignment.html', context = context_dict)
 
 
@@ -359,11 +290,13 @@ def assignment_student(request, usercoursebinding_id = None):
     user = request.user
     profile = user.profile
     logger.debug("user %s, method: %s" % (user, request.method))
+    l = reverse('education:student')
     context_dict = {
-        'menu_teaching': 'active',
-        'submenu': 'assignment_student',
-        'next_page': 'education:assignment_student', #FIXME: get rid of it
-    }
+            'menu_education': True,
+            'submenu': 'assignment_student',
+            'empty_title': "You have not received an assignment yet",
+            'empty_body': format_html(f"""<a href="{l}"><i class="bi bi-journal-bookmark-fill"></i><span class="d-none d-sm-inline">&nbsp;list your courses</span></a>"""),
+            }
     if usercoursebinding_id:
         context_dict['usercoursebinding_id'] = usercoursebinding_id
         try:
@@ -377,10 +310,9 @@ def assignment_student(request, usercoursebinding_id = None):
         courses = [ ucb.course for ucb in UserCourseBinding.objects.filter(user = user, is_teacher = False) ]
 
     table_submit = TableAssignment(UserAssignmentBinding.objects.filter(user = request.user, assignment__course__in = courses))
-    RequestConfig(request).configure(table_submit)
     context_dict.update({
         't_submit': table_submit,
-    })
+        })
     return render(request, 'assignment_student.html', context = context_dict)
 
 
@@ -402,18 +334,18 @@ def newassignment(request):
         f = FormAssignment(request.POST, course = course, user = user)
         assert f.is_valid(), f.errors
         a = Assignment.objects.create(
-            name = f.cleaned_data['name'],
-            course = course,
-            creator = user,
-            description = f.cleaned_data['description'],
-            folder = f.cleaned_data['folder'],#recheck existence
-            valid_from = f.cleaned_data['valid_from'],
-            expires_at = f.cleaned_data['expires_at'],
-            can_studentsubmit = f.cleaned_data['can_studentsubmit'],
-            remove_collected = f.cleaned_data['remove_collected'],
-            max_number_of_files = f.cleaned_data['max_number_of_files'],
-            max_size = f.cleaned_data['max_size'],
-        )
+                name = f.cleaned_data['name'],
+                course = course,
+                creator = user,
+                description = f.cleaned_data['description'],
+                folder = f.cleaned_data['folder'],#recheck existence
+                valid_from = f.cleaned_data['valid_from'],
+                expires_at = f.cleaned_data['expires_at'],
+                can_studentsubmit = f.cleaned_data['can_studentsubmit'],
+                remove_collected = f.cleaned_data['remove_collected'],
+                max_number_of_files = f.cleaned_data['max_number_of_files'],
+                max_size = f.cleaned_data['max_size'],
+                )
         logger.info(f'+ new assignment {a.name} ({a.folder}) in course {course.name} by {user.username}')
         messages.info(request, f'Assignment {a.name} created.')
     except Exception as e:
@@ -628,76 +560,6 @@ def handleassignment(request):
     return redirect('education:assignment_teacher')
 
 
-
-@login_required
-def _adduser(request, usercoursebinding_id, is_teacher):
-    """
-    @summary: the teacher of a course may add or remove students/teachers to the given course
-              this function handles request
-    """
-    user = request.user
-    button = request.POST.get('button')
-    logger.debug(f"user {user}, method: {request.method}")
-    add_user_ids = request.POST.getlist('add_uid', [])
-    remove_usercoursebinding_ids = set(request.POST.getlist('bound_bid', [])).difference(request.POST.getlist('keep_bid', []))
-    if button not in [ 'reset', 'apply' ]:
-        return redirect('education:configure', usercoursebinding_id = usercoursebinding_id)
-    try:
-        course = UserCourseBinding.objects.get(id = usercoursebinding_id, user = user, is_teacher = True).course
-    except UserCourseBinding.DoesNotExist:
-        logger.error(f'misused by {user}')
-        messages.error(request, f'Not authorized to use this functionality')
-        return redirect('indexpage')
-
-    if button == 'reset':
-        ucb = UserCourseBinding.objects.filter(course = course, is_teacher = False)
-        if len(ucb):
-            hrn = lambda x: f"{x.user.first_name} {x.user.last_name} ({x.user.username})"
-            users = ", ".join(list(map(hrn, ucb)))
-            logger.info(f'- removing {len(ucb)} students from course {course.name}: {users}')
-            messages.info(request, f'From course {course.name} removing students: {users}')
-            ucb.delete()
-        return redirect('education:configure', usercoursebinding_id = usercoursebinding_id)
-
-    added = []
-    oops = []
-    f = 'teacher' if is_teacher else 'student'
-    for u in User.objects.filter(id__in = add_user_ids):
-        try:
-            UserCourseBinding.objects.create(user = u, course = course, is_teacher = is_teacher)
-            added.append(u)
-            logger.info(f'+ user {u.username} bound to course {course.name} by {user.username} as {f}')
-        except Exception as e:
-            logger.error(e)
-            oops.append(u)
-
-    ucb = UserCourseBinding.objects.filter(id__in = remove_usercoursebinding_ids, course = course, is_teacher = is_teacher)
-    removed = [ b.user for b in ucb ]
-    ucb.delete()
-
-    if len(added):
-        a = ', '.join(list(map(lambda x: str(x), added)))
-        messages.info(request, f'Bound {a} ({f}) to course {course.name}.')
-    if len(removed):
-        r = ', '.join(list(map(lambda x: str(x), removed)))
-        messages.info(request, f'Removed {r} ({f}) from course {course.name}.')
-        logger.info(f'- users {r} ({f}) removed from course {course.name}.')
-    if len(oops):
-        o = ', '.join(list(map(lambda x: str(x), oops)))
-        messages.error(request, f'Problem adding {o} ({f}) to course {course.name}.')
-    return redirect('education:configure', usercoursebinding_id = usercoursebinding_id)
-
-
-@login_required
-def addstudent(request, usercoursebinding_id):
-    return _adduser(request, usercoursebinding_id, is_teacher = False)
-
-
-@login_required
-def addteacher(request, usercoursebinding_id):
-    return _adduser(request, usercoursebinding_id, is_teacher = True)
-
-
 @login_required
 def addcontainer(request, usercoursebinding_id):
     """
@@ -709,44 +571,133 @@ def addcontainer(request, usercoursebinding_id):
     try:
         course = UserCourseBinding.objects.get(id = usercoursebinding_id, user = user).course
         container, _ = Container.objects.get_or_create(
-            name = course.cleanname, 
-            friendly_name = course.name,
-            user = user,
-            suffix = 'edu',
-            image = course.image
-        )
+                name = course.cleanname, 
+                friendly_name = course.name,
+                user = user,
+                suffix = 'edu',
+                image = course.image
+                )
         CourseContainerBinding.objects.create(course = course, container = container)
     except:
         raise
     return redirect('container:list')
 
 
+def _groupstudents(ucb, mappings):
+    msgs = []
+    add = {}
+    for gid, v in mappings.items():
+        if gid == 'n':
+            continue
+        group = CourseGroup.objects.get(id = gid, course = ucb.course)
+        ids_before = set([ b.usercoursebinding.user.id for b in UserCourseGroupBinding.objects.filter(group = group) ])
+        ids_after = set(v)
+        remove = []
+        ucgb = UserCourseGroupBinding.objects.filter(
+            usercoursebinding__user__id__in = set(ids_before).difference(ids_after), 
+            group = group, usercoursebinding__course = ucb.course, 
+            usercoursebinding__is_teacher = False
+        )
+        if ucgb:
+            msgs.append('{} removed from group {}'.format(', '.join([ render_user(b.usercoursebinding.user) for b in ucgb ]), group.name))
+            ucgb.delete()
+        add[group] = []
+        for uid in set(ids_after).difference(ids_before):
+            u = User.objects.get(id = uid)
+            b = UserCourseBinding.objects.get(user = u, course = ucb.course, is_teacher = False)
+            add[group].append((b, render_user(u)))
+    for g, bs in add.items():
+        added = []
+        for b, u in bs:
+            UserCourseGroupBinding.objects.create(usercoursebinding = b, group = g)
+            added.append(u)
+        if added:
+            msgs.append('{} added to group {}'.format(', '.join(added), g.name))
+    return msgs
+
+
+def _manageusers(ucb, ids_after, is_teacher):
+    ids_before = { b.user.id: b for b in UserCourseBinding.objects.filter(course = ucb.course, is_teacher = is_teacher) }
+    ids_after = set(map(int, ids_after))
+    f = 'teachers' if is_teacher else 'students'
+    msgs = []
+    added = []
+    for i in ids_after.difference(ids_before.keys()):
+        u = User.objects.get(id = i)
+        try:
+            UserCourseBinding.objects.create(user = u, course = ucb.course, is_teacher = is_teacher)
+            added.append(render_user(u))
+        except Exception as e:
+            logger.error(e)
+    if len(added):
+        added = ', '.join(added)
+        msgs.append(f'Added {f} to course {ucb.course.name}: {added}')
+        logger.info(f'+ user {ucb.user.username} added {added} as {f} to course {ucb.course.name}')
+    bindings = UserCourseBinding.objects.filter(course = ucb.course, is_teacher = is_teacher, user__id__in = set(ids_before.keys()).difference(ids_after))
+    if bindings:
+        removed = ', '.join([ render_user(b.user) for b in bindings ])
+        bindings.delete()
+        msgs.append(f'Removed {f} from course {ucb.course.name}: {removed}')
+        logger.info(f'- user {ucb.user.username} removed {removed} {f} from course {ucb.course.name}')
+    return msgs
+
+
 @login_required
-def groupstudent(request, usercoursebinding_id):
+def configure_save(request, usercoursebinding_id):
     user = request.user
-    logger.debug("user %s, method: %s" % (user, request.method))
+    profile = user.profile
+    logger.debug(f"method: {request.method}, user: {user.username}")
     try:
-        course = UserCourseBinding.objects.get(id = usercoursebinding_id, user = user, is_teacher = True).course
-        for k in filter(lambda x: x.startswith('grp-'), request.POST.keys()):
-            gid = k.split('-')[1]
-            if gid == 'n': continue
-            group = CourseGroup.objects.get(id = gid, course = course)
-            ids_before = json.loads(request.POST[f'before_grp-{gid}'])
-            ids_after = json.loads(request.POST[k])
-            for uid in set(ids_before).difference(ids_after):
-                ucgb = UserCourseGroupBinding.objects.get(usercoursebinding__user__id = uid, group = group, usercoursebinding__course = course, usercoursebinding__is_teacher = False)
-                ucgb.delete()
-                #FIXME: message
-        for k in filter(lambda x: x.startswith('grp-'), request.POST.keys()):
-            gid = k.split('-')[1]
-            if gid == 'n': continue
-            group = CourseGroup.objects.get(id = gid, course = course)
-            ids_before = json.loads(request.POST[f'before_grp-{gid}'])
-            ids_after = json.loads(request.POST[k])
-            for uid in set(ids_after).difference(ids_before):
-                ucb = UserCourseBinding.objects.get(user__id = uid, course = course, is_teacher = False)
-                UserCourseGroupBinding.objects.create(usercoursebinding = ucb, group = group)
-                #FIXME: message
-    except:
-        raise
-    return redirect('education:teacher')
+        binding = UserCourseBinding.objects.get(id = usercoursebinding_id, user = request.user, is_teacher = True)
+        course = binding.course
+    except UserCourseBinding.DoesNotExist:
+        logger.error(f'abuse {user} tries to access usercoursebinding id {usercoursebinding_id}')
+        messages.error(request, 'Course does not exist')
+        return redirect('indexpage')
+
+    # handle meta
+    info = []
+    form_course = FormCourse(request.POST)
+    if form_course.is_valid():
+        course.name = form_course.cleaned_data['name']
+        course.description = form_course.cleaned_data['description']
+        course.image = form_course.cleaned_data['image']
+        course.save()
+        info.append(f"Configured {course.name}") #TODO: save only changed, and report changes
+
+    # handle teachers, students
+    info.extend( _manageusers(binding, request.POST.getlist('teacher-ids'), is_teacher = True) )
+    info.extend( _manageusers(binding, request.POST.getlist('student-ids'), is_teacher = False) )
+
+    # handle groups
+    bindings = CourseGroup.objects.filter(course = course, id__in = request.POST.getlist('selection_group_removal'))
+    if bindings:
+        info.append('Removed groups {}'.format(', '.join([ b.name for b in bindings])))
+        bindings.delete()
+    form_group = FormGroup(request.POST)
+    if form_group.is_valid():
+        g = CourseGroup.objects.create(course = course, name = form_group.cleaned_data['name'], description = form_group.cleaned_data['description'])
+        info.append(f'New group {g.name} is created')
+    m = []
+    for gi in map(lambda x: x.split('-')[-1], filter(lambda x: x.startswith('group-name-before-'), request.POST.keys())):
+        nb = request.POST[f'group-name-before-{gi}']
+        na = request.POST[f'group-name-after-{gi}']
+        db = request.POST[f'group-description-before-{gi}']
+        da = request.POST[f'group-description-after-{gi}']
+        if na and da and ((nb != na) or (db != da)):
+            g = CourseGroup.objects.get(id = gi, course = course)
+            g.name = na
+            g.description = da
+            g.save()
+            m.append(g.name)
+    if m:
+        info.append('Modified groups: {}.'.format(', '.join(m)))
+
+    # handle students in group
+    mapping = { k: json.loads(request.POST[f'grp-{k}']) for k in map(lambda x: x.split('-')[-1], filter(lambda x: x.startswith('grp-'), request.POST.keys())) }
+    info.extend( _groupstudents(binding, mapping) )
+        
+    if info:
+        messages.info(request, ' '.join(info))
+
+    return redirect('education:configure', usercoursebinding_id)

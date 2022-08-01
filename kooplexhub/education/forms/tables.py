@@ -5,9 +5,10 @@ from django.utils.safestring import mark_safe
 from django.utils.html import format_html
 from django.db import models
 import django_tables2 as tables
-
 from django.contrib.auth.models import User
+
 from ..models import UserCourseBinding, UserAssignmentBinding, Assignment, UserCourseCodeBinding, Group, UserCourseGroupBinding
+from hub.templatetags.extras import render_user as ru
 
 try:
     from kooplexhub.settings import KOOPLEX
@@ -67,21 +68,18 @@ class TableAssignmentConf(tables.Table):
     class AssignmentSelectionColumn(tables.Column):
 
         def render(self, record):
-            n = len(UserAssignmentBinding.objects.filter(assignment = record))
-            received = f"Received {n}" if n else ""
             return format_html(f"""
 <div class="form-check form-switch">
   <input class="form-check-input" type="checkbox" id="a-{record.id}" name="selection_delete" value="{record.id}" />
 </div>
 <input type="hidden" name="assignment_ids" value="{record.id}" />
-{received}
             """)
 
 
     def render_course(self, record, column):
-        column.attrs = {"td": { "style": "background-color: #D3D3D3"}}
+        column.attrs = {"td": { "style": "background-color: white"}}
         return format_html(f"""
-{record.course.name}
+<p style="font-weight: bold">{record.course.name}</p>
 <input type="hidden" name="course" value="{record.course.name}" />
         """)
         return 
@@ -91,6 +89,9 @@ class TableAssignmentConf(tables.Table):
         d0 = record.created_at.strftime("%Y-%m-%d %H:%M")
         d1 = record.valid_from.strftime("%Y-%m-%d %H:%M") if record.valid_from else ''
         d2 = record.expires_at.strftime("%Y-%m-%d %H:%M") if record.expires_at else ''
+        n = len(UserAssignmentBinding.objects.filter(assignment = record))
+        received = f" Assignments received: {n}" if n else ""
+
         return format_html(f"""
 <spam>Created at:</spam>
 <div><spam>{d0}</spam></div>
@@ -103,6 +104,7 @@ class TableAssignmentConf(tables.Table):
 </div>
 <input type="hidden" id="valid_from-old-{record.id}" name="valid_from-old-{record.id}" value="{d1}" />
 <input type="hidden" id="expires_at-old-{record.id}" name="expires_at-old-{record.id}" value="{d2}" />
+{received}
         """)
 
     def render_description(self, record):
@@ -112,23 +114,24 @@ class TableAssignmentConf(tables.Table):
         """)
 
     def render_name(self, record, column):
-        column.attrs = {"td": { "style": "background-color: #D3D3D3"}}
+        column.attrs = {"td": { "style": "background-color: white"}}
         return format_html(f"""
-<input class="form-text-input" type="text" id="name-{record.id}" name="name-{record.id}" value="{record.name}" />
+<div><h6>Assignment name:</h6></div>
+<input style="margin-top: -15px" class="form-text-input" type="text" id="name-{record.id}" name="name-{record.id}" value="{record.name}" />
 <input type="hidden" id="name-old-{record.id}" name="name-old-{record.id}" value="{record.name}" />
 <div>
-    <div>
-        <div style="margin-top: 5px">Folder:</div>
-        <div>{record.folder}</div>
+    <div style="margin-top: 10px">
+        <div style="margin-top: 5px"><h6>Folder:</h6></div>
+        <div style="margin-top: -8px">{record.folder}</div>
     </div>
-<div>
-    <div style="margin-top: 5px">Creator:</div>
+<div style="margin-top: 10px">
+    <h6>Creator:</h6>
 </div> 
-<div>{record.creator.first_name} {record.creator.last_name}</div>
+<div style="margin-top: -8px">{record.creator.first_name} {record.creator.last_name}</div>
 </div>
 <div style="margin-top: 10px">
 <h6> Assignment description:</h6>
-<textarea style="margin-top: -10px" class="form-textarea" id="description-{record.id}" name="description-{record.id}">{record.description}</textarea>
+<textarea style="margin-top: -8px" class="form-textarea" id="description-{record.id}" name="description-{record.id}">{record.description}</textarea>
 <input type="hidden" id="description-old-{record.id}" name="description-old-{record.id}" value="{record.description}" />
 </div>
         """)
@@ -151,15 +154,15 @@ class TableAssignmentConf(tables.Table):
 
     id = AssignmentSelectionColumn(verbose_name = 'Delete', orderable = False)
     course = tables.Column(orderable = False, empty_values = ())
-    name = tables.Column(orderable = False)
+    name = tables.Column(verbose_name = 'Assignment info', orderable = False)
     description = tables.Column(orderable = False, visible=False)
-    dates = tables.Column(orderable = False, empty_values = ())
+    dates = tables.Column(verbose_name = 'Assignment dates', orderable = False, empty_values = ())
     quota = tables.Column(orderable = False, empty_values = ())
 
     
     class Meta:
         model = Assignment
-        fields = ('id', 'course', 'name', 'description', 'dates', 'quota')
+        fields = ('course', 'name', 'description', 'dates', 'quota', 'id')
         attrs = { 
                  "class": "table table-bordered", 
                  "thead": { "class": "thead-dark table-sm" }, 
@@ -212,15 +215,15 @@ def TableCourseStudentSummary(course):
         from django_pandas.io import read_frame
 
         bindings = UserAssignmentBinding.objects.filter(assignment__course=course)
-        if not bindings:
-            return format_html("<br>")
+        if bindings.count() == 0:
+            return None
         dfm = read_frame(bindings)
         table = dfm.pivot(index="user", columns="assignment", values="score")
         table.columns = [tc.split("Assignment ")[1].split(" (")[0] for tc in table.columns]
         points = dfm.fillna(0).groupby(by="user").agg("sum")[["score"]].rename(columns={"score":"Total points"})
         result = pandas.merge(left=table, right=points, left_on="user", right_on="user", how="inner")
-        header = f"<div style=\"text-align: center;\"><h5>{course.name}</h5></div>"
-        return format_html(header + result.to_html(classes="table table-bordered table-striped text-center", justify="center", na_rep="-", border=None))
+        header = f"<div style=\"margin-top:10px;\"><h5>{course.name}</h5></div>"
+        return format_html(header + result.to_html(classes="table table-bordered table-striped text-center", index_names=False, justify="center", na_rep="-", border=None))
 
 
 class TableAssignmentHandle(tables.Table):
@@ -323,7 +326,7 @@ class TableAssignmentHandle(tables.Table):
     score = tables.Column(orderable = False, empty_values = ())
     feedback_text = tables.Column(orderable = False, empty_values = ())
     submit_count = tables.Column(orderable = False)
-    correction_count = tables.Column(orderable = False)
+    correction_count = tables.Column(orderable = True)
     
     class Meta:
         model = UserAssignmentBinding
@@ -548,104 +551,140 @@ class TableAssignmentMassAll(tables.Table):
         self.lut = { c: list(c.groups.items()) for c in courses }
 
 
-
-
 class TableUser(tables.Table):
-    def render_id(self, record):
-        f = 'teacher' if self.teacher_selector else 'student'
-        try:
-            ucb = UserCourseBinding.objects.get(course = self.course, user = record, is_teacher = self.teacher_selector)
-            return format_html(f"""
-<div class="form-check col-sm form-switch">
-  <input class="form-check-input" type="checkbox" id="ur-{ucb.id}" name="keep_bid" value="{ucb.id}" checked />
-  <input type="hidden" id="ur-orig-{ucb.id}" name="bound_bid" value="{ucb.id}" />
-  <label class="form-check-label" for="ur-{ucb.id}" id="lbl_ur-{ucb.id}"> Added</label>
-</div>
-            """)
-        except UserCourseBinding.DoesNotExist:
-            return format_html(f"""
-<div class="form-check col-sm form-switch">
-  <input class="form-check-input" type="checkbox" id="u-{f}-{record.id}" name="add_uid" value="{record.id}" />
-  <label class="form-check-label" for="u-{f}-{record.id}" id="lbl_u-{f}-{record.id}"> Skip</label>
-</div>
-
-            """)
-
-    def render_name(self, record):
-        user = record
-        return format_html(f"""
-<span data-toggle="tooltip" title="username: {record.username}\nemail: {record.email}"><i class="bi bi-info-square-fill" ></i>&nbsp;{record.first_name} <b>{record.last_name}</b></span>
-<input type="hidden" name="search_studenttwo" value="{user.first_name} {user.last_name} {user.username}">
-<input type="hidden" name="search_student" value="{user.first_name} {user.last_name} {user.username}">
-        """)
-
-    def render_course(self, record):
-        return format_html(", ".join([ ucb.course.name for ucb in UserCourseBinding.objects.filter(user = record) ]))
-
-    def render_coursecode(self, record):
-        return ", ".join([ ucb.coursecode.courseid for ucb in UserCourseCodeBinding.objects.filter(user = record) ])
-
-    id = tables.Column(verbose_name = 'Operation', orderable = False)
-    name = tables.Column(orderable = False, empty_values = ())
-    course = tables.Column(orderable = False, empty_values = ())
-    #coursecode = tables.Column(orderable = False, empty_values = ())
+    user = tables.Column(verbose_name = "Users", order_by = ('user__first_name', 'user__last_name'), orderable = False)
 
     class Meta:
-        model = User
-        fields = ('id', 'name', 'course')#, 'coursecode')
-        attrs = { 
-                 "class": "table table-striped table-bordered", 
-                 "thead": { "class": "thead-dark table-sm" }, 
-                 "td": { "style": "padding:.5ex" }, 
-                 "th": { "style": "padding:.5ex", "class": "table-secondary" } 
+        model = UserCourseBinding
+        fields = ('user',)
+        attrs = {
+                 "class": "table table-bordered",
+                 "thead": { "class": "thead-dark table-sm" },
+                 "td": { "class": "p-1" },
+                 "th": { "class": "table-secondary p-1" }
                 }
 
-    def __init__(self, course, teacher_selector, pattern, *args, **kwargs):
-        complementary_users = [ ucb.user.username for ucb in UserCourseBinding.objects.filter(course = course, is_teacher = not teacher_selector) ]
-        if pattern:
-            users = User.objects.filter(models.Q(username__icontains = pattern) | models.Q(first_name__icontains = pattern) | models.Q(last_name__icontains = pattern) | models.Q(usercoursecodebinding__coursecode__courseid__icontains = pattern)).exclude(username__in = KOOPLEX.get('blacklist', ['hubadmin', 'admin'])).exclude(username__in = complementary_users).distinct()
+    def render_user(self, record):
+        user = record.user
+        hidden = f"""
+<input type="hidden" name="{self.prefix}-binding_id" value="{record.id}">
+        """ if record.id else f"""
+<input type="hidden" name="{self.prefix}-user_id" value="{record.user.id}">
+        """
+        prefix = '' if record.id else '_'
+        who = "teacher" if self.is_teacher else "student"
+        return format_html(f"""
+{ru(user, who)}
+<input type="hidden" id="search-{who}-{user.id}" value="{user.username} {user.first_name} {user.last_name} {user.first_name}">
+<input type="hidden" name="{prefix}{who}-ids" value="{user.id}">
+        """)
+
+
+    def __init__(self, course, user, teacher_selector, bind_table):
+        UserCourseBinding.objects.get(course = course, user = user, is_teacher = True) # authorization
+        self.is_teacher = teacher_selector
+        self.is_bind_table = bind_table
+        if bind_table:
+            bindings = UserCourseBinding.objects.filter(course = course, is_teacher = self.is_teacher)
         else:
-            users = User.objects.all().exclude(username__in = KOOPLEX.get('blacklist', ['hubadmin', 'admin'])).exclude(username__in = complementary_users)
-        super(TableUser, self).__init__(users)
-        self.course = course
-        self.teacher_selector = teacher_selector
-        self.empty = len(users) == 0
+            profiles = user.profile.everybodyelse.exclude(user__in = [ b.user for b in UserCourseBinding.objects.filter(course = course) ])
+            bindings = [ UserCourseBinding(user = p.user, course = course, is_teacher = self.is_teacher) for p in profiles ]
+        self.prefix = 'teacher' if self.is_teacher else 'student'
+        self.Meta.attrs["id"] = f"bind-{self.prefix}" if bind_table else f"users-{self.prefix}"
+        super(TableUser, self).__init__(bindings)
+
+#class TableUser(tables.Table):
+#    def render_id(self, record):
+#        f = 'teacher' if self.teacher_selector else 'student'
+#        try:
+#            ucb = UserCourseBinding.objects.get(course = self.course, user = record, is_teacher = self.teacher_selector)
+#            return format_html(f"""
+#<div class="form-check col-sm form-switch">
+#  <input class="form-check-input" type="checkbox" id="ur-{ucb.id}" name="keep_bid" value="{ucb.id}" checked />
+#  <input type="hidden" id="ur-orig-{ucb.id}" name="bound_bid" value="{ucb.id}" />
+#  <label class="form-check-label" for="ur-{ucb.id}" id="lbl_ur-{ucb.id}"> Added</label>
+#</div>
+#            """)
+#        except UserCourseBinding.DoesNotExist:
+#            return format_html(f"""
+#<div class="form-check col-sm form-switch">
+#  <input class="form-check-input" type="checkbox" id="u-{f}-{record.id}" name="add_uid" value="{record.id}" />
+#  <label class="form-check-label" for="u-{f}-{record.id}" id="lbl_u-{f}-{record.id}"> Skip</label>
+#</div>
+#
+#            """)
+#
+#    def render_name(self, record):
+#        user = record
+#        return format_html(f"""
+#<span data-toggle="tooltip" title="username: {record.username}\nemail: {record.email}"><i class="bi bi-info-square-fill" ></i>&nbsp;{record.first_name} <b>{record.last_name}</b></span>
+#<input type="hidden" name="search_studenttwo" value="{user.first_name} {user.last_name} {user.username}">
+#<input type="hidden" name="search_student" value="{user.first_name} {user.last_name} {user.username}">
+#        """)
+#
+#    def render_course(self, record):
+#        return format_html(", ".join([ ucb.course.name for ucb in UserCourseBinding.objects.filter(user = record) ]))
+#
+#    def render_coursecode(self, record):
+#        return ", ".join([ ucb.coursecode.courseid for ucb in UserCourseCodeBinding.objects.filter(user = record) ])
+#
+#    id = tables.Column(verbose_name = 'Operation', orderable = False)
+#    name = tables.Column(orderable = False, empty_values = ())
+#    course = tables.Column(orderable = False, empty_values = ())
+#    #coursecode = tables.Column(orderable = False, empty_values = ())
+#
+#    class Meta:
+#        model = User
+#        fields = ('id', 'name', 'course')#, 'coursecode')
+#        attrs = { 
+#                 "class": "table table-striped table-bordered", 
+#                 "thead": { "class": "thead-dark table-sm" }, 
+#                 "td": { "style": "padding:.5ex" }, 
+#                 "th": { "style": "padding:.5ex", "class": "table-secondary" } 
+#                }
+#
+#    def __init__(self, course, teacher_selector, *args, **kwargs):
+#        complementary_users = [ ucb.user.username for ucb in UserCourseBinding.objects.filter(course = course, is_teacher = not teacher_selector) ]
+#        users = User.objects.all().exclude(username__in = KOOPLEX.get('blacklist', ['hubadmin', 'admin'])).exclude(username__in = complementary_users)
+#        super(TableUser, self).__init__(users)
+#        self.course = course
+#        self.teacher_selector = teacher_selector
+#        self.empty = len(users) == 0
 
 
 class TableGroup(tables.Table):
-    def render_id(self, record):
-        return format_html(f"""
-<div class="form-check form-switch">
-  <input class="form-check-input" type="checkbox" id="g-{record.id}" name="selection_group_removal" value="{record.id}" />
-  <label class="form-check-label" for="g-{record.id}" id="lbl_g-{record.id}"> Remove</label>
-</div>
-        """)
-
-    def render_name(self, record):
-        return format_html(f"""
-<input type="hidden" name="name-before-{record.id}" value="{record.name}">
-<input type="text" name="name-{record.id}" value="{record.name}">
-        """)
-
-    def render_description(self, record):
-        return format_html(f"""
-<input type="hidden" name="description-before-{record.id}" value="{record.description}">
-<textarea name="description-{record.id}">{record.description}</textarea>
-        """)
-
-    id = tables.Column(verbose_name = 'Operation', orderable = False)
+    class Meta:
+        model = Group
+        fields = ('course', 'name', 'description',)
+        fields = ('button', 'course', 'name', 'description',)
+        attrs = { 
+                 "class": "table table-striped table-bordered mt-3", 
+                 "thead": { "class": "thead-dark table-sm" }, 
+                 "td": { "class": "p-1" }, 
+                 "th": { "class": "table-secondary p-1" } 
+                }
+    button = tables.Column(verbose_name = 'Delete', orderable = False, empty_values = ())
     course = tables.Column(orderable = False, empty_values = ())
     name = tables.Column(orderable = False, empty_values = ())
     description = tables.Column(orderable = False, empty_values = ())
 
-    class Meta:
-        model = Group
-        fields = ('id', 'course', 'name', 'description')
-        attrs = { 
-                 "class": "table table-striped table-bordered", 
-                 "thead": { "class": "thead-dark table-sm" }, 
-                 "td": { "style": "padding:.5ex" }, 
-                 "th": { "style": "padding:.5ex", "class": "table-secondary" } 
-                }
+    def render_button(self, record):
+        return format_html(f"""
+<input type="checkbox" class="btn-check" name="selection_group_removal" value="{record.id}" id="btn-dg-{record.id}">
+<label class="btn btn-outline-danger" for="btn-dg-{record.id}"><i class="bi bi-trash"></i></label>
+        """)
+
+    def render_name(self, record):
+        return format_html(f"""
+<input type="hidden" name="group-name-before-{record.id}" value="{record.name}">
+<input type="text" name="group-name-after-{record.id}" value="{record.name}">
+        """)
+
+    def render_description(self, record):
+        return format_html(f"""
+<input type="hidden" name="group-description-before-{record.id}" value="{record.description}">
+<textarea name="group-description-after-{record.id}">{record.description}</textarea>
+        """)
+
 
 

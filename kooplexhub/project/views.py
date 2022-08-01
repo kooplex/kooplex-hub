@@ -4,6 +4,8 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views import generic
+from django.utils.html import format_html
+from django.urls import reverse
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
 from django.contrib.auth.models import User
@@ -98,9 +100,13 @@ class UserProjectBindingListView(LoginRequiredMixin, generic.ListView):
     context_object_name = 'userprojectbindinglist'
 
     def get_context_data(self, **kwargs):
+        l1 = reverse('project:new')
+        l2 = reverse('project:showhide')
         context = super().get_context_data(**kwargs)
         context['submenu'] = 'list'
         context['menu_project'] = True
+        context['empty_title'] = "You have no visible projects"
+        context['empty_body'] = format_html(f"""You can <a href="{l1}"><i class="bi bi-bag-plus"></i><span>&nbsp;create a new</span></a> or you can <a href="{l2}"><i class="bi bi-eye"></i><span>&nbsp;manage visibility</span></a>.""")
         return context
 
     def get_queryset(self):
@@ -161,7 +167,15 @@ def show_hide(request):
         return redirect('project:list')
 
     table = TableShowhideProject(userprojectbindings, user = user)
-    return render(request, 'project_showhide.html', context = { 't_project': table, 'menu_project': True, 'submenu': 'showhide' })
+    l = reverse('project:new')
+    context_dict = { 
+        'menu_project': True, 
+        'submenu': 'showhide', 
+        't_project': table, 
+        'empty_title': "You do not have any projects to hide or show",
+        'empty_body': format_html(f"""<a href="{l}"><i class="bi bi-bag-plus"></i><span>&nbsp;Create</span></a> a new project."""),
+    }
+    return render(request, 'project_showhide.html', context = context_dict)
 
 
 @login_required

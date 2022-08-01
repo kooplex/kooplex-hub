@@ -23,9 +23,9 @@ def title_with_button(*argv, button_label = "Save all changes", button_icon = "b
 
 
 @register.simple_tag(name= 'render_user')
-def render_user(user):
+def render_user(user, prefix = "userid"):
     return format_html(f"""
-<span data-toggle="tooltip" title="Username {user.username}." data-placement="top"><b>{user.first_name}</b> {user.last_name}</span>
+<span id="{prefix}-{user.id}" data-toggle="tooltip" title="Username {user.username}." data-placement="top"><b>{user.first_name}</b> {user.last_name}</span>
     """)
 
 

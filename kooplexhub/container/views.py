@@ -239,7 +239,7 @@ def configure_save(request):
 
     if len(info):
         info = ', '.join(info)
-        messages.info(request, f'Service {svc.name} is configureded: {info}.')
+        messages.info(request, f'Service {svc.name} is configured: {info}.')
 
     return redirect('container:list')
 

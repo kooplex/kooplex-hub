@@ -4,34 +4,34 @@ from django.utils.translation import gettext_lazy as _
 from ..models import CourseGroup
 
 
-class MyDescription(forms.Textarea):
-    def __init__(self, *args, **kwargs):
-        super(MyDescription, self).__init__(*args, **kwargs)
-        self.attrs['rows'] = 3
-        self.attrs['cols'] = 30
-
-
 class FormGroup(forms.ModelForm):
+    prefix = 'group'
+    name = forms.CharField(label = _('Group name'), required = False)
     description = forms.CharField(
-            max_length = 100, required = True,
+            max_length = 100, required = False, 
             help_text = _('It is always a good idea to have a hint of the group.'), 
-            widget = MyDescription, 
+            widget = forms.Textarea(attrs = {'rows': 3 }),
         )
 
     class Meta:
         model = CourseGroup
-        fields = [ 'name', 'description', 'course' ]
+        fields = [ 'name', 'description' ]
         labels = {
             'name': _('Group name'),
             'description': _('A short description'),
             'course': _('The course to define a new group'),
         }
 
+    def clean(self):
+        cleaned_data = super().clean()
+        if not cleaned_data['name'] :
+            raise forms.ValidationError(_(f'Group name is missing'), code = 'invalid specification')
+        if not cleaned_data['description']:
+            raise forms.ValidationError(_(f'Group description is missing'), code = 'invalid specification')
+        return cleaned_data
+
     def __init__(self, *args, **kwargs):
-        course = kwargs.pop('course', None)
-        super(FormGroup, self).__init__(*args, **kwargs)
-        if course is not None:
-            self.fields["course"].choices = [(course.id, course),]
+        super().__init__(*args, **kwargs)
         for field in self.fields:
             help_text = self.fields[field].help_text
             self.fields[field].help_text = None

@@ -19,79 +19,80 @@
 
 {% block realcontent %}
 <div class="card shadow p-3 mb-5 bg-light rounded">
-  {% title "You are now configuring <em>" course.name "</em> course" %}
-
-<ul class="nav nav-tabs" id="courseConfigTabs" role="tablist">
-  <li class="nav-item" role="presentation">
-    <a class="nav-link mytab {% if active == "conf" %}active{% endif %}" id="tab-conf" data-bs-toggle="tab" href="#configureCourse" role="tab" aria-controls="configureCourse" aria-selected="{% if active == "conf" %}true{% else %}false{% endif %}">Configure</a>
-  </li>
-  <li class="nav-item" role="presentation">
-    <a class="nav-link mytab {% if active == "teacher" %}active{% endif %}" id="tab-teacher" data-bs-toggle="tab" href="#addteachersCourse" role="tab" aria-controls="addteachersCourse" aria-selected="{% if active == "teacher" %}true{% else %}false{% endif %}">Teachers</a>
-  </li>
-  <li class="nav-item" role="presentation">
-    <a class="nav-link mytab {% if active == "student" %}active{% endif %}" id="tab-student" data-bs-toggle="tab" href="#addstudentsCourse" role="tab" aria-controls="addstudentsCourse" aria-selected="{% if active == "student" %}true{% else %}false{% endif %}">Students</a>
-  </li>
-  <li class="nav-item" role="presentation">
-    <a class="nav-link mytab {% if active == "group" %}active{% endif %}" id="tab-group" data-bs-toggle="tab" href="#courseGroup" role="tab" aria-controls="confCourseGropu" aria-selected="{% if active == "group" %}true{% else %}false{% endif %}">Groups</a>
-  </li>
-  <li class="nav-item" role="presentation">
-    <a class="nav-link mytab {% if active == "grpstudent" %}active{% endif %}" id="tab-grpstudent" data-bs-toggle="tab" href="#groupStudent" role="tab" aria-controls="groupStudent" aria-selected="{% if active == "grpstudent" %}true{% else %}false{% endif %}">Group of students</a>
-  </li>
-</ul>
-<div class="tab-content  mt-2" id="courseConfigTabsContent">
-  <div class="tab-pane  mt-2 fade {% if active == "conf" %}show active{% endif %}" id="configureCourse" role="tabpanel" aria-labelledby="tab-conf">
-    <form id="courseSettingsForm" class="form-horizontal  mt-2" action="{% url 'education:configure' usercoursebinding_id %}" method="post">
-      {% csrf_token %}
-      {{ courseform }}
+<form id="course-manage" class="form-horizontal" action="{% url 'education:configure_save' usercoursebinding_id %}" method="post">
+  {% csrf_token %}
+  {% title_with_button "You are now configuring <em>" course.name "</em> course" %}
+  <ul class="nav nav-tabs" id="courseConfigTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <a class="nav-link mytab {% if active == "conf" %}active{% endif %}" id="tab-conf" data-bs-toggle="tab" href="#configureCourse" role="tab" aria-controls="configureCourse" aria-selected="{% if active == "conf" %}true{% else %}false{% endif %}">Configure</a>
+    </li>
+    <li class="nav-item" role="presentation">
+      <a class="nav-link mytab {% if active == "teacher" %}active{% endif %}" id="tab-teacher" data-bs-toggle="tab" href="#addteachersCourse" role="tab" aria-controls="addteachersCourse" aria-selected="{% if active == "teacher" %}true{% else %}false{% endif %}">Teachers</a>
+    </li>
+    <li class="nav-item" role="presentation">
+      <a class="nav-link mytab {% if active == "student" %}active{% endif %}" id="tab-student" data-bs-toggle="tab" href="#addstudentsCourse" role="tab" aria-controls="addstudentsCourse" aria-selected="{% if active == "student" %}true{% else %}false{% endif %}">Students</a>
+    </li>
+    <li class="nav-item" role="presentation">
+      <a class="nav-link mytab {% if active == "group" %}active{% endif %}" id="tab-group" data-bs-toggle="tab" href="#courseGroup" role="tab" aria-controls="confCourseGropu" aria-selected="{% if active == "group" %}true{% else %}false{% endif %}">Groups</a>
+    </li>
+    <li class="nav-item" role="presentation">
+      <a class="nav-link mytab {% if active == "grpstudent" %}active{% endif %}" id="tab-grpstudent" data-bs-toggle="tab" href="#groupStudent" role="tab" aria-controls="groupStudent" aria-selected="{% if active == "grpstudent" %}true{% else %}false{% endif %}">Group of students</a>
+    </li>
+  </ul>
+  <div class="tab-content  mt-2" id="courseConfigTabsContent">
+    <div class="tab-pane  mt-2 fade {% if active == "conf" %}show active{% endif %}" id="configureCourse" role="tabpanel" aria-labelledby="tab-conf">
+      <div class="container-fluid d-flex flex-row">
+        <div class="d-flex mt-3">
+          <table>
+          {{ courseform.as_table }}
+          </table>
+        </div>
+        <div class="d-flex ms-3 mt-3">
+          <div>
+            <p class="fw-bolder">Image description:</p>
+            <p id="imageDescription"></p>
+          </div>
+          {{ courseform.descriptions }}
+        </div>
+      </div>
+      {# fixme: only show if image is changed #}
       <div class="alert alert-warning mt-2 mb-2" role="alert">If you decide to change the image, do not forget to restart the course container to take effect and notify your students to do so as well.</div>
-      {% include 'apply_cancel.html' %}
-    </form>
-  </div>
-  <div class="tab-pane mt-2 fade {% if active == "group" %}show active{% endif %}" id="courseGroup" role="tabpanel" aria-labelledby="tab-group">
-    <form id="groupSettingsAdd" class="form-horizontal" action="{% url 'education:newgroup' usercoursebinding_id %}" method="post">
-      {% csrf_token %}
-      {{ groupform }}
-      <div class="mt-2 mb-2">
-      {% include 'apply_cancel.html' %}
     </div>
-    </form>
-    {% if t_group.data|length > 0 %}
-    <form id="groupSettings" class="form-horizontal" action="{% url 'education:configuregroup' usercoursebinding_id %}" method="post">
-      {% csrf_token %}
-      {% render_table t_group %}
-      {% include 'apply_cancel.html' %}
-    </form>
-    {% endif %}
-  </div>
-  <div class="tab-pane fade {% if active == "teacher" %}show active{% endif %}" id="addteachersCourse" role="tabpanel" aria-labelledby="tab-teacher">
-    <form id="courseAddTeacherForm" class="form-horizontal" action="{% url 'education:addteacher' usercoursebinding_id %}" method="post">
-      <input class="form-control me-2 mb-3 mt-3" type="text" id="search_studenttwo" placeholder="Search student" title="Type in a name" autofocus>
-      {% csrf_token %}
-      {% render_table t_teacher %}
-      {% include 'apply_cancel.html' %}
-    </form>
-  </div>
-  <div class="tab-pane fade {% if active == "student" %}show active{% else %}false{% endif %}" id="addstudentsCourse" role="tabpanel" aria-labelledby="tab-student">
-    <form id="courseAddStudentForm" class="form-horizontal" action="{% url 'education:addstudent' usercoursebinding_id %}" method="post">
-      {% csrf_token %}
-      <h4 class="mt-2 mb-4">Student management</h4>
-      <h6>Shortcut:</h6>
-      Remove all student from courses by clicking once here: <button type="submit" class="btn btn-danger" name="button" value="reset" onclick="return confirm('Are you sure?');">Reset</button> 
-      <h6 class="mt-4">Manage individually by student:</h6>
-      <input class="form-control me-2 mb-3 mt-3" type="text" id="search_student" placeholder="Search student" title="Type in a name" autofocus>
-      {% render_table t_student %}
-      {% include 'apply_cancel.html' %}
-    </form>
-  </div>
-  <div class="tab-pane fade {% if active == "grpstudent" %}show active{% else %}false{% endif %}" id="groupStudent" role="tabpanel" aria-labelledby="tab-grpstudent">
-    <form id="groupSettingsChoose" class="form-horizontal" action="{% url 'education:groupstudent' usercoursebinding_id %}" method="post">
-      {% csrf_token %}
+    <div class="tab-pane mt-2 fade {% if active == "group" %}show active{% endif %}" id="courseGroup" role="tabpanel" aria-labelledby="tab-group">
+      {{ groupform }}
+      {% if t_group.data|length > 0 %}
+        {% render_table t_group %}
+      {% endif %}
+    </div>
+    <div class="tab-pane fade {% if active == "teacher" %}show active{% endif %}" id="addteachersCourse" role="tabpanel" aria-labelledby="tab-teacher">
+      <div class="container-fluid d-flex flex-row justify-content-between align-items-baseline">
+        <div>
+          <input class="form-control me-2 mb-3 mt-3" type="text" id="search_teacher_add" placeholder="Search teacher" title="Type in a name" data-intro="#search_teacher">
+          {% render_table t_teachers_add %}
+        </div>
+        <div>
+          {% render_table t_teachers %}
+        </div>
+      </div>
+    </div>
+    <div class="tab-pane fade {% if active == "student" %}show active{% else %}false{% endif %}" id="addstudentsCourse" role="tabpanel" aria-labelledby="tab-student">
+      <p class="alert alert-danger"><button type="submit" class="btn btn-danger" name="button" value="reset" onclick="return confirm('Are you sure?');">Reset</button> Remove all {{ t_students.data|length }} students from the course.</p>
+      <div class="container-fluid d-flex flex-row justify-content-between align-items-baseline">
+        <div>
+          <input class="form-control me-2 mb-3 mt-3" type="text" id="search_student_add" placeholder="Search student" title="Type in a name" data-intro="#search_student">
+          {% render_table t_students_add %}
+        </div>
+        <div>
+          {% render_table t_students %}
+        </div>
+      </div>
+    </div>
+    <div class="tab-pane fade {% if active == "grpstudent" %}show active{% else %}false{% endif %}" id="groupStudent" role="tabpanel" aria-labelledby="tab-grpstudent">
       {% include 'drag_and_drop.html' %}
-      {% include 'apply_cancel.html' %}
-    </form>
+    </div>
   </div>
-</div>
-</div>
+  </div>
+</form>
 
 <script>
 $("#courseConfigTabs li a").on("click", function () {
@@ -99,6 +100,112 @@ $("#courseConfigTabs li a").on("click", function () {
   console.log( tab )
   $.cookie("configure_course_tab", tab, { 'path': '/', 'secure': true });
 });
+$(document).ready(function() {
+  $("#bind-teacher").find("th").text("Teachers");
+  $("#bind-student").find("th").text("Students");
+});
+$("select[name='image'").change(function() {
+    $( "select option:selected" ).each(function() {
+        var id = $(this).attr("value");
+        console.log( $( this ).text() + " -> " + id);
+	if (id === "") {
+	    $("#imageDescription").text("");
+	} else {
+	    var description = $("#image-description-" + id).attr("value");
+	    $("#imageDescription").text(description);
+	}
+    });
+}).change();
+$("#search_student_add").keyup(function() {
+  var pattern = $( this ).val().toUpperCase();
+  console.log( "search: " + pattern );
+  $("input[id^='search-student-'").each(function() {
+    var widget = $( this ).parent().parent();
+    if (widget.parent().parent().attr("id") == "bind-student") {
+      return;
+    }
+    var hide_it = true;
+    if (pattern.length > 0) {
+      var name = $( this ).attr("value").toUpperCase();
+      if ( name.indexOf(pattern) > -1 ) {
+        hide_it = false;
+      }
+    }
+    if (hide_it) {
+      widget.hide();
+    } else {
+      widget.show();
+    }
+  });
+}).keyup();
+$("#search_teacher_add").keyup(function() {
+  var pattern = $( this ).val().toUpperCase();
+  console.log( "search: " + pattern );
+  $("input[id^='search-teacher-'").each(function() {
+    var widget = $( this ).parent().parent();
+    if (widget.parent().parent().attr("id") == "bind-teacher") {
+      return;
+    }
+    var hide_it = true;
+    if (pattern.length > 0) {
+      var name = $( this ).attr("value").toUpperCase();
+      if ( name.indexOf(pattern) > -1 ) {
+        hide_it = false;
+      }
+    }
+    if (hide_it) {
+      widget.hide();
+    } else {
+      widget.show();
+    }
+  });
+}).keyup();
+$("span[id^='student-'").click(function() {
+  var userid = $( this ).attr("id").split("-")[1];
+  var tr = $( this ).parent().parent();
+  var t = tr.parent().parent().attr("id");
+  console.log( t );
+  var other_table;
+  if (t === "users-student") {
+    other_table = $("#bind-student");
+    $( this ).parent().find("input[type='hidden'][name").each(function() {
+      var before = $(this).attr("name");
+      $( this ).attr("name", before.substring(1));
+    });
+  } else {
+    other_table = $("#users-student");
+    $( this ).parent().find("input[type='hidden'][name").each(function() {
+      var before = $(this).attr("name");
+      $( this ).attr("name", "_" + before);
+    });
+  }
+  other_table.children("tbody").append(tr);
+});
+$("span[id^='teacher-'").click(function() {
+  var userid = $( this ).attr("id").split("-")[1];
+  var tr = $( this ).parent().parent();
+  var t = tr.parent().parent().attr("id");
+  console.log( t );
+  var other_table;
+  if (t === "users-teacher") {
+    other_table = $("#bind-teacher");
+    $( this ).parent().find("input[type='hidden'][name").each(function() {
+      var before = $(this).attr("name");
+      $( this ).attr("name", before.substring(1));
+    });
+  } else {
+    other_table = $("#users-teacher");
+    $( this ).parent().find("input[type='hidden'][name").each(function() {
+      var before = $(this).attr("name");
+      $( this ).attr("name", "_" + before);
+    });
+  }
+  other_table.children("tbody").append(tr);
+});
+</script>
+{% endblock %}
+
+{% comment %}
 $("input[id^='u-'").on("click", function() {
   console.log( this )
   var lbl = $("#lbl_" + $(this).attr("id"))
@@ -109,8 +216,7 @@ $("input[id^='u-'").on("click", function() {
     lbl.text("Skip")
     $(this).css('background-color', "rgb(255, 255, 255)")
   }
-})
-
+});
 $("input[id^='ur-'").on("click", function() {
   console.log( this )
   console.log(  $(this).css('background-color') )
@@ -123,7 +229,6 @@ $("input[id^='ur-'").on("click", function() {
     $(this).css('background-color', "rgb(253, 110, 13)")
   }
 })
-
 $("#search_student").keyup(function() {
   var pattern = $( this ).val().toUpperCase();
   console.log( "search student: " + pattern );
@@ -150,31 +255,4 @@ $("#search_student").keyup(function() {
   });
 });
 
-$("#search_studenttwo").keyup(function() {
-  var pattern = $( this ).val().toUpperCase();
-  console.log( "search student: " + pattern );
-  $( "#courseAddTeacherForm" ).find('tr').each(function() {
-    if ( $( this ).parent().is("thead") ) {
-      return;
-    }
-    var hide_it = true;
-    if (pattern.length > 0) {
-      $( this ).find("input[name='search_studenttwo'").each(function() {
-        var name = $( this ).val().toUpperCase();
-        if ( name.indexOf(pattern) > -1 ) {
-    hide_it = false;
-        }
-      });
-    } else {
-      hide_it = false;
-    }
-    if (hide_it) {
-      $( this ).hide();
-    } else {
-      $( this ).show();
-    }
-  });
-});
-</script>
-{% endblock %}
-
+{% endcomment %}

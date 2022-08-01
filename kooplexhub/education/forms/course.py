@@ -1,42 +1,46 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
+from django.utils.html import format_html
 
 from container.models import Image
 from ..models import Course
 
 from kooplexhub.lib import my_slug_validator, my_end_validator
 
-class MyDescription(forms.Textarea):
-    def __init__(self, *args, **kwargs):
-        super(MyDescription, self).__init__(*args, **kwargs)
-        self.attrs['rows'] = 3
-        self.attrs['cols'] = 30
-
-
 class FormCourse(forms.Form):
+    prefix = 'course'
     name = forms.CharField(
-            label = _("Course name"),
-            help_text = _('A short name of the course, but it has to be unique among course names.'), 
-            max_length = 100, required = True,
-#            validators = [
-#                    my_slug_validator('Enter a valid project name containing only letters, numbers, underscores or hyphens.'),
-#                    my_end_validator('Enter a valid project name ending with a letter or number.'),
-#                ],
-            )
+        label = _("Course name"),
+        help_text = _('A short name of the course, but it has to be unique among course names.'), 
+        max_length = 100, required = True,
+    )
     description = forms.CharField(
-            max_length = 100, required = True,
-            help_text = _('It is always a good idea to have an abstract of your project.'), 
-            widget = MyDescription, 
-            )
-    image = forms.ModelChoiceField(queryset = Image.objects.filter(imagetype = Image.TP_PROJECT), help_text = _('Select an image if you prefer for the course'), required = True, empty_label = 'Select image...')
-    #FIXME: other_teachers_can_delete_my_assignments boolean be added in models too
+        max_length = 100, required = True,
+        help_text = _('It is always a good idea to have a description of your course.'), 
+        widget = forms.Textarea(attrs = {'rows': 3 }),
+    )
+    image = forms.ModelChoiceField(
+        queryset = Image.objects.filter(imagetype = Image.TP_PROJECT, present = True), 
+        help_text = _('Select an image you recommend your students the most to work with during the semester in the given course.'), required = True, empty_label = 'Select image...'
+    )
+
+    class Meta:
+        model = Course
+        fields = [ 'name', 'description', 'image' ]
+
+    def descriptions(self):
+        hidden = lambda i: f"""<input type="hidden" id="image-description-{i.id}" value="{i.description}">"""
+        return format_html("".join(list(map(hidden, self.fields['image'].queryset))))
 
     def __init__(self, *args, **kwargs):
+        if hasattr(self, 'prefix'):
+            d = {}
+            for l in [ 'name', 'description', 'image' ]:
+                if l in args[0]:
+                    v = args[0].pop(l)
+                    d[f'{self.prefix}-{l}'] = v
+            args[0].update(d)
         super(FormCourse, self).__init__(*args, **kwargs)
-        try:
-            self.fields['image'].initial = args[0]['image'].id
-        except:
-            pass
 
         for field in self.fields:
             help_text = self.fields[field].help_text
