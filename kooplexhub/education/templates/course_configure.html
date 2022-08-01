@@ -1,31 +1,45 @@
-{% extends "layout.html" %}
+{% extends "education_layout.html" %}
 {% load render_table from django_tables2 %}
+{% load extras %}
 
-{% block submenu %}
-{% include 'education_submenu.html' with title="Education" submenu="configure" %}
+{% block head_content %}
+<style>
+.mytab{
+  color: rgb(196, 196, 196);
+}
+.mytab:hover{
+  color: rgb(196, 196, 196);
+  font-weight: bolder;
+}
+.mytab.active {
+  font-weight: bolder;
+}
+</style>
 {% endblock %}
 
-{% block main_content_right %}
+{% block realcontent %}
+<div class="card shadow p-3 mb-5 bg-light rounded">
+  {% title "You are now configuring <em>" course.name "</em> course" %}
 
-<ul class="nav nav-tabs mt-3" id="courseConfigTabs" role="tablist">
+<ul class="nav nav-tabs" id="courseConfigTabs" role="tablist">
   <li class="nav-item" role="presentation">
-    <button class="nav-link {% if active_tab == "tab-conf" %}active{% endif %}" id="tab-conf" data-bs-toggle="tab" data-bs-target="#configureCourse" type="button" role="tab" aria-controls="configureCourse" aria-selected="{% if active_tab == "tab-conf" %}true{% else %}false{% endif %}">Configure</button>
+    <a class="nav-link mytab {% if active == "conf" %}active{% endif %}" id="tab-conf" data-bs-toggle="tab" href="#configureCourse" role="tab" aria-controls="configureCourse" aria-selected="{% if active == "conf" %}true{% else %}false{% endif %}">Configure</a>
   </li>
   <li class="nav-item" role="presentation">
-    <button class="nav-link {% if active_tab == "tab-group" %}active{% endif %}" id="tab-group" data-bs-toggle="tab" data-bs-target="#courseGroup" type="button" role="tab" aria-controls="confCourseGropu" aria-selected="{% if active_tab == "tab-group" %}true{% else %}false{% endif %}">Groups</button>
+    <a class="nav-link mytab {% if active == "teacher" %}active{% endif %}" id="tab-teacher" data-bs-toggle="tab" href="#addteachersCourse" role="tab" aria-controls="addteachersCourse" aria-selected="{% if active == "teacher" %}true{% else %}false{% endif %}">Teachers</a>
   </li>
   <li class="nav-item" role="presentation">
-    <button class="nav-link {% if active_tab == "tab-teacher" %}active{% endif %}" id="tab-teacher" data-bs-toggle="tab" data-bs-target="#addteachersCourse" type="button" role="tab" aria-controls="addteachersCourse" aria-selected="{% if active_tab == "tab-teacher" %}true{% else %}false{% endif %}">Teachers</button>
+    <a class="nav-link mytab {% if active == "student" %}active{% endif %}" id="tab-student" data-bs-toggle="tab" href="#addstudentsCourse" role="tab" aria-controls="addstudentsCourse" aria-selected="{% if active == "student" %}true{% else %}false{% endif %}">Students</a>
   </li>
   <li class="nav-item" role="presentation">
-    <button class="nav-link {% if active_tab == "tab-student" %}active{% endif %}" id="tab-student" data-bs-toggle="tab" data-bs-target="#addstudentsCourse" type="button" role="tab" aria-controls="addstudentsCourse" aria-selected="{% if active_tab == "tab-student" %}true{% else %}false{% endif %}">Students</button>
+    <a class="nav-link mytab {% if active == "group" %}active{% endif %}" id="tab-group" data-bs-toggle="tab" href="#courseGroup" role="tab" aria-controls="confCourseGropu" aria-selected="{% if active == "group" %}true{% else %}false{% endif %}">Groups</a>
   </li>
   <li class="nav-item" role="presentation">
-    <button class="nav-link {% if active_tab == "tab-grpstudent" %}active{% endif %}" id="tab-grpstudent" data-bs-toggle="tab" data-bs-target="#groupStudent" type="button" role="tab" aria-controls="groupStudent" aria-selected="{% if active_tab == "tab-grpstudent" %}true{% else %}false{% endif %}">Group of students</button>
+    <a class="nav-link mytab {% if active == "grpstudent" %}active{% endif %}" id="tab-grpstudent" data-bs-toggle="tab" href="#groupStudent" role="tab" aria-controls="groupStudent" aria-selected="{% if active == "grpstudent" %}true{% else %}false{% endif %}">Group of students</a>
   </li>
 </ul>
 <div class="tab-content  mt-2" id="courseConfigTabsContent">
-  <div class="tab-pane  mt-2 fade {% if active_tab == "tab-conf" %}show active{% endif %}" id="configureCourse" role="tabpanel" aria-labelledby="tab-conf">
+  <div class="tab-pane  mt-2 fade {% if active == "conf" %}show active{% endif %}" id="configureCourse" role="tabpanel" aria-labelledby="tab-conf">
     <form id="courseSettingsForm" class="form-horizontal  mt-2" action="{% url 'education:configure' usercoursebinding_id %}" method="post">
       {% csrf_token %}
       {{ courseform }}
@@ -33,25 +47,23 @@
       {% include 'apply_cancel.html' %}
     </form>
   </div>
-  <div class="tab-pane mt-2 fade {% if active_tab == "tab-group" %}show active{% endif %}" id="courseGroup" role="tabpanel" aria-labelledby="tab-group">
+  <div class="tab-pane mt-2 fade {% if active == "group" %}show active{% endif %}" id="courseGroup" role="tabpanel" aria-labelledby="tab-group">
     <form id="groupSettingsAdd" class="form-horizontal" action="{% url 'education:newgroup' usercoursebinding_id %}" method="post">
       {% csrf_token %}
       {{ groupform }}
       <div class="mt-2 mb-2">
       {% include 'apply_cancel.html' %}
     </div>
-      <input type='hidden' name='active_tab' value='group'>
     </form>
     {% if t_group.data|length > 0 %}
     <form id="groupSettings" class="form-horizontal" action="{% url 'education:configuregroup' usercoursebinding_id %}" method="post">
       {% csrf_token %}
       {% render_table t_group %}
       {% include 'apply_cancel.html' %}
-      <input type='hidden' name='active_tab' value='group'>
     </form>
     {% endif %}
   </div>
-  <div class="tab-pane fade {% if active_tab == "tab-teacher" %}show active{% endif %}" id="addteachersCourse" role="tabpanel" aria-labelledby="tab-teacher">
+  <div class="tab-pane fade {% if active == "teacher" %}show active{% endif %}" id="addteachersCourse" role="tabpanel" aria-labelledby="tab-teacher">
     <form id="courseAddTeacherForm" class="form-horizontal" action="{% url 'education:addteacher' usercoursebinding_id %}" method="post">
       <input class="form-control me-2 mb-3 mt-3" type="text" id="search_studenttwo" placeholder="Search student" title="Type in a name" autofocus>
       {% csrf_token %}
@@ -59,7 +71,7 @@
       {% include 'apply_cancel.html' %}
     </form>
   </div>
-  <div class="tab-pane fade {% if active_tab == "tab-student" %}show active{% else %}false{% endif %}" id="addstudentsCourse" role="tabpanel" aria-labelledby="tab-student">
+  <div class="tab-pane fade {% if active == "student" %}show active{% else %}false{% endif %}" id="addstudentsCourse" role="tabpanel" aria-labelledby="tab-student">
     <form id="courseAddStudentForm" class="form-horizontal" action="{% url 'education:addstudent' usercoursebinding_id %}" method="post">
       {% csrf_token %}
       <h4 class="mt-2 mb-4">Student management</h4>
@@ -67,12 +79,11 @@
       Remove all student from courses by clicking once here: <button type="submit" class="btn btn-danger" name="button" value="reset" onclick="return confirm('Are you sure?');">Reset</button> 
       <h6 class="mt-4">Manage individually by student:</h6>
       <input class="form-control me-2 mb-3 mt-3" type="text" id="search_student" placeholder="Search student" title="Type in a name" autofocus>
-      {% include 'apply_cancel.html' %}
       {% render_table t_student %}
       {% include 'apply_cancel.html' %}
     </form>
   </div>
-  <div class="tab-pane fade {% if active_tab == "tab-grpstudent" %}show active{% else %}false{% endif %}" id="groupStudent" role="tabpanel" aria-labelledby="tab-grpstudent">
+  <div class="tab-pane fade {% if active == "grpstudent" %}show active{% else %}false{% endif %}" id="groupStudent" role="tabpanel" aria-labelledby="tab-grpstudent">
     <form id="groupSettingsChoose" class="form-horizontal" action="{% url 'education:groupstudent' usercoursebinding_id %}" method="post">
       {% csrf_token %}
       {% include 'drag_and_drop.html' %}
@@ -80,8 +91,14 @@
     </form>
   </div>
 </div>
+</div>
 
 <script>
+$("#courseConfigTabs li a").on("click", function () {
+  var tab = $( this ).attr("id").split('-')[1]
+  console.log( tab )
+  $.cookie("configure_course_tab", tab, { 'path': '/', 'secure': true });
+});
 $("input[id^='u-'").on("click", function() {
   console.log( this )
   var lbl = $("#lbl_" + $(this).attr("id"))
@@ -105,13 +122,6 @@ $("input[id^='ur-'").on("click", function() {
     lbl.text("Remove")
     $(this).css('background-color', "rgb(253, 110, 13)")
   }
-})
-
-$("#courseConfigTabs>li>button").on("click", function () {
-  var tab = $( this ).attr("id")
-  $.cookie("active_tab", tab, { 'path': '/', 'secure': true })
-  console.log( "tab: " + tab )
-  set_search(tab)
 })
 
 $("#search_student").keyup(function() {
@@ -139,13 +149,6 @@ $("#search_student").keyup(function() {
     }
   });
 });
-
-$("#courseConfigTabs>li>button").on("click", function () {
-  var tab = $( this ).attr("id")
-  $.cookie("active_tab", tab, { 'path': '/', 'secure': true })
-  console.log( "tab: " + tab )
-  set_search(tab)
-})
 
 $("#search_studenttwo").keyup(function() {
   var pattern = $( this ).val().toUpperCase();

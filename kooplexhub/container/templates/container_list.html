@@ -15,9 +15,7 @@
     {% endfor %}
     </div>
   {% else %}
-    <div class="alert alert-warning" role="warning">
-      <p>{{ empty }}</p>
-    </div>
+    {% include 'empty.html' %}
   {% endif %}
 {% endblock %}
 

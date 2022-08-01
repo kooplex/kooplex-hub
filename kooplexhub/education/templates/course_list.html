@@ -1,0 +1,49 @@
+{% extends "education_layout.html" %}
+
+{% load static %}
+
+{% block chardinhelp %}
+         url: "{% static 'chardinjs/listofcourses.json' %}"
+{% endblock %}
+
+{% block realcontent %}
+{% if coursebindinglist|length %}
+  <input class="form-control me-2 mb-3 mt-3" type="text" id="search_course" placeholder="Search course" title="Type in a name" data-intro="#search_course">
+  <div id="containerListPane" data-intro="#course_list">
+    {% for ucb in coursebindinglist %}
+       {% include 'course_partial_list.html' with next_page='education:student' course=ucb.course coursecontainerbindings=ucb.coursecontainerbindings is_teacher=True tooltip="Manage assignments" %}
+    {% endfor %}
+  </div>
+{% else %}
+  {% include 'empty.html' with title=empty_title empty=empty_body %}
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>  
+$("#search_course").keyup(function() {
+  var pattern = $( this ).val().toUpperCase();
+  console.log( "search: " + pattern );
+  $("span[id^='course-name-'").each(function() {
+    var projectid = $( this ).attr('id').split('-')[2];
+    var hide_it = true;
+    var card = $("#card-" + projectid);
+    if (pattern.length > 0) {
+      var name = $( this ).html().toUpperCase();
+      if ( name.indexOf(pattern) > -1 ) {
+        hide_it = false;
+      }
+    } else {
+      hide_it = false;
+    }
+    if (hide_it) {
+      $( card ).hide();
+    } else {
+      $( card ).show();
+    }
+  });
+});
+</script>
+{% endblock %}
+

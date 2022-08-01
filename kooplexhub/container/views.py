@@ -73,7 +73,7 @@ class ContainerListView(LoginRequiredMixin, generic.ListView):
         context['menu_container'] = True
         context['submenu'] = 'list'
         context['partial'] = 'container_partial_list.html'
-        context['empty'] = """You need to <a href="{l}"><i class="bi bi-boxes"></i><span>&nbsp;create</span></a> environments in order to use the hub."""
+        context['empty_body'] = format_html(f"""You need to <a href="{l}"><i class="bi bi-boxes"></i><span>&nbsp;create</span></a> environments in order to use the hub.""")
         return context
 
     def get_queryset(self):
