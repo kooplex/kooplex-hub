@@ -100,14 +100,13 @@ def assignment_teacher(request):
     context_dict = {
             'menu_education': True,
             'submenu': 'assignment_teacher',
+            'active': request.COOKIES.get('assignment_teacher_tab', 'conf'),
             }
     courses = [ ucb.course for ucb in UserCourseBinding.objects.filter(user = user, is_teacher = True) ]
     if len(courses) == 0:
         messages.warning(request, f'You are not bound to any course as a teacher.')
         return render(request, 'education_layout.html', context = context_dict)
 
-    active_tab = request.COOKIES.get('active_tab', 'tab-handle')
-    request.COOKIES['active_tab'] = 'tab-conf' if active_tab == 'tab-new' else active_tab
     assignment_id_cookie = request.COOKIES.get('handle_assignment_last', None)
 
     mapping = [ (c.id, Assignment.objects.filter(course = c)) for c in courses ]

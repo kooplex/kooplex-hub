@@ -63,117 +63,102 @@ class TableAssignment(tables.Table):
                 }
         #FIXME: order
 
+#FIXME: hub/templatetags
+rd = lambda d: d.strftime("%Y-%m-%d %H:%M") if d else ''
+rf = lambda f: f"""<span class="pillow"><i class="bi bi-folder" data-toggle="tooltip" title="Folder"></i>&nbsp;{f}</span>"""
 
 class TableAssignmentConf(tables.Table):
-    class AssignmentSelectionColumn(tables.Column):
-
-        def render(self, record):
-            return format_html(f"""
-<div class="form-check form-switch">
-  <input class="form-check-input" type="checkbox" id="a-{record.id}" name="selection_delete" value="{record.id}" />
-</div>
-<input type="hidden" name="assignment_ids" value="{record.id}" />
-            """)
-
-
-    def render_course(self, record, column):
-        column.attrs = {"td": { "style": "background-color: white"}}
-        return format_html(f"""
-<p style="font-weight: bold">{record.course.name}</p>
-<input type="hidden" name="course" value="{record.course.name}" />
-        """)
-        return 
-
-
-    def render_dates(self, record):
-        d0 = record.created_at.strftime("%Y-%m-%d %H:%M")
-        d1 = record.valid_from.strftime("%Y-%m-%d %H:%M") if record.valid_from else ''
-        d2 = record.expires_at.strftime("%Y-%m-%d %H:%M") if record.expires_at else ''
-        n = len(UserAssignmentBinding.objects.filter(assignment = record))
-        received = f" Assignments received: {n}" if n else ""
-
-        return format_html(f"""
-<spam>Created at:</spam>
-<div><spam>{d0}</spam></div>
-
-<div class="input-append date" style="margin-top: 5px" id="datetimepicker-valid-{record.id}" date-date="{d1}" data-date-format="yyyy-mm-dd hh:ii">
-    Valid from: <input class="datetimepicker span2" size="16" type="text" value="{d1}" name="valid_from-{record.id}">
-</div>
-<div class="input-append date" style="margin-top: 5px" id="datetimepicker-expiry-{record.id}" date-date="{d2}" data-date-format="yyyy-mm-dd hh:ii">
-    Collect at: <input class="datetimepicker span2" size="16" type="text" value="{d2}" name="expires_at-{record.id}">
-</div>
-<input type="hidden" id="valid_from-old-{record.id}" name="valid_from-old-{record.id}" value="{d1}" />
-<input type="hidden" id="expires_at-old-{record.id}" name="expires_at-old-{record.id}" value="{d2}" />
-{received}
-        """)
-
-    def render_description(self, record):
-        return format_html(f"""
-<textarea class="form-textarea" id="description-{record.id}" name="description-{record.id}">{record.description}</textarea>
-<input type="hidden" id="description-old-{record.id}" name="description-old-{record.id}" value="{record.description}" />
-        """)
-
-    def render_name(self, record, column):
-        column.attrs = {"td": { "style": "background-color: white"}}
-        return format_html(f"""
-<div><h6>Assignment name:</h6></div>
-<input style="margin-top: -15px" class="form-text-input" type="text" id="name-{record.id}" name="name-{record.id}" value="{record.name}" />
-<input type="hidden" id="name-old-{record.id}" name="name-old-{record.id}" value="{record.name}" />
-<div>
-    <div style="margin-top: 10px">
-        <div style="margin-top: 5px"><h6>Folder:</h6></div>
-        <div style="margin-top: -8px">{record.folder}</div>
-    </div>
-<div style="margin-top: 10px">
-    <h6>Creator:</h6>
-</div> 
-<div style="margin-top: -8px">{record.creator.first_name} {record.creator.last_name}</div>
-</div>
-<div style="margin-top: 10px">
-<h6> Assignment description:</h6>
-<textarea style="margin-top: -8px" class="form-textarea" id="description-{record.id}" name="description-{record.id}">{record.description}</textarea>
-<input type="hidden" id="description-old-{record.id}" name="description-old-{record.id}" value="{record.description}" />
-</div>
-        """)
-
-    def render_quota(self, record):
-        ms = record.max_size if record.max_size else ''
-        nf = record.max_number_of_files if record.max_number_of_files else ''
-        return format_html(f"""
-        <div>
-<span>Max size (bytes):</span>
-<input class="form-text-input" type="text" id="max_size-{record.id}" name="max_size-{record.id}" value="{ms}" style="width: 30px" />
-<input type="hidden" name="max_size-old-{record.id}" value="{ms}" />
-</div>
-<div style="margin-top: 10px">
-<span>Number of files (unit):</span>
-<input class="form-text-input" type="text" id="max_number_of_files-{record.id}" name="max_number_of_files-{record.id}" value="{nf}" style="width: 30px" />
-<input type="hidden" name="max_number_of_files-old-{record.id}" value="{nf}" />
-</div>
-        """)
-
-    id = AssignmentSelectionColumn(verbose_name = 'Delete', orderable = False)
-    course = tables.Column(orderable = False, empty_values = ())
-    name = tables.Column(verbose_name = 'Assignment info', orderable = False)
-    description = tables.Column(orderable = False, visible=False)
-    dates = tables.Column(verbose_name = 'Assignment dates', orderable = False, empty_values = ())
-    quota = tables.Column(orderable = False, empty_values = ())
-
-    
     class Meta:
         model = Assignment
-        fields = ('course', 'name', 'description', 'dates', 'quota', 'id')
+        fields = () 
+        sequence = ('meta', 'details', 'dates', 'quota', 'extra_info', 'delete')
         attrs = { 
                  "class": "table table-bordered", 
                  "thead": { "class": "thead-dark table-sm" }, 
-                 "td": { "style": "padding:.5ex; background-color: white" }, 
-                 "th": { "style": "padding:.5ex; background-color: #D3D3D3", "class": "table-secondary" },
+                 "th": { "class": "table-secondary p-1" },
                 }
-        #row_attrs = { 
-        #         "class": "search", 
-        #         "id": lambda record: f'{record.course.name}-{record.id}'
-        #        }
         empty_text = _("You have not created any assignments yet")
+
+    meta = tables.Column(orderable = False, empty_values = ())
+    details = tables.Column(orderable = False, empty_values = ())
+    dates = tables.Column(orderable = False, empty_values = ())
+    quota = tables.Column(orderable = False, empty_values = ())
+    extra_info = tables.Column(orderable = False, empty_values = ())
+    delete = tables.Column(orderable = False, empty_values = ())
+
+    def render_meta(self, record):
+        return format_html(f"""
+<label class="form-check-label" for="a-{record.id}" id="lbl_a-{record.id}" data-toggle="tooltip" title="Course"><i class="bi bi-journal-bookmark-fill"></i>&nbsp;</label>
+<span id="a-{record.id}">{record.course.name}</span><br>
+<label class="form-check-label mt-1" for="userid-{record.creator.id}" id="lbl_ac-{record.id}" data-toggle="tooltip" title="Creator of this assignment"><i class="bi bi-incognito"></i>&nbsp;</label>
+{ru(record.creator)}<br>
+<label class="form-check-label mt-1 mb-1" for="cts-{record.id}" id="lbl_ats-{record.id}" data-toggle="tooltip" title="Creation timestamp"><i class="bi bi-clock-history"></i>&nbsp;</label>
+<span id="cts-{record.id}">{rd(record.created_at)}</span><br>
+{rf(record.folder)}
+        """)
+
+    def render_details(self, record):
+        return format_html(f"""
+<label class="form-check-label align-top" for="name-{record.id}" id="lbl_anm-{record.id}" data-toggle="tooltip" title="Assignment's name"><i class="bi bi-card-heading"></i>&nbsp;</label>
+<input class="form-text-input" type="text" id="name-{record.id}" name="name-{record.id}" value="{record.name}" /><br>
+<label class="form-check-label align-top mt-2" for="description-{record.id}" id="lbl_dsc-{record.id}" data-toggle="tooltip" title="Assignment's description"><i class="bi bi-journal-richtext"></i>&nbsp;</label>
+<textarea class="form-textarea mt-2" id="description-{record.id}" name="description-{record.id}">{record.description}</textarea>
+<input type="hidden" id="description-old-{record.id}" name="description-old-{record.id}" value="{record.description}" />
+<input type="hidden" id="name-old-{record.id}" name="name-old-{record.id}" value="{record.name}" />
+        """)
+
+    def render_dates(self, record):
+        d1 = rd(record.valid_from)
+        d2 = rd(record.expires_at)
+        chk = 'checked' if record.remove_collected else ''
+        return format_html(f"""
+<div class="input-append date" id="datetimepicker-valid-{record.id}" date-date="{d1}" data-date-format="yyyy-mm-dd hh:ii">
+  <label class="form-check-label" for="valid_from-{record.id}" id="lbl_frm-{record.id}" data-toggle="tooltip" title="Assignment is handed out at"><i class="bi bi-alarm"></i>&nbsp;</label>
+  <input class="datetimepicker" type="text" value="{d1}" name="valid_from-{record.id}">
+</div>
+<div class="input-append date mt-2" id="datetimepicker-expiry-{record.id}" date-date="{d2}" data-date-format="yyyy-mm-dd hh:ii">
+  <label class="form-check-label" for="valid_from-{record.id}" id="lbl_frm-{record.id}" data-toggle="tooltip" title="Assignment is collected at"><i class="bi bi-bell"></i>&nbsp;</label>
+  <input class="datetimepicker" type="text" value="{d2}" name="expires_at-{record.id}">
+</div>
+<label class="form-check-label mt-2" for="rmcol-{record.id}" id="lbl_eraser-{record.id}" data-toggle="tooltip" title="Remove student's assignment folder upon submittion or collection"><i class="bi bi-eraser"></i>&nbsp;</label>
+<input id="rmcol-{record.id}" data-size="small"
+  type="checkbox" data-toggle="toggle" name="remove_when_ready"
+  data-on="<span class='oi oi-trash'></span>"
+  data-off="<span class='bi bi-check-lg'></span>"
+  data-onstyle="danger" data-offstyle="secondary" value="{record.id}" {chk}>
+<input type="hidden" id="valid_from-old-{record.id}" name="valid_from-old-{record.id}" value="{d1}" />
+<input type="hidden" id="expires_at-old-{record.id}" name="expires_at-old-{record.id}" value="{d2}" />
+        """)
+
+    def render_extra_info(self, record):
+        n = len(UserAssignmentBinding.objects.filter(assignment = record))
+        return format_html( f"""<span class="bi bi-box-arrow-in-down-right" data-toggle="tooltip" title="Assignments received or collected so far"></span>&nbsp;{n}""" if n else "" )
+
+    def render_quota(self, record):
+        ms = record.max_size if record.max_size else ''
+        return format_html(f"""
+<label class="form-check-label align-top" for="max_size-{record.id}" id="lbl_frm-{record.id}" data-toggle="tooltip" title="Maximum size of collection folder in MB"><i class="bi bi-box-seam"></i>&nbsp;</label>
+<input class="form-text-input" type="text" id="max_size-{record.id}" name="max_size-{record.id}" value="{ms}" size="4" />
+<input type="hidden" name="max_size-old-{record.id}" value="{ms}" />
+        """)
+
+    def render_delete(self, record):
+        return format_html(f"""
+<input id="dustbin-{record.id}"
+  type="checkbox" data-toggle="toggle" name="selection_delete"
+  data-on="<span class='oi oi-trash'></span>"
+  data-off="<span class='bi bi-check-lg'></span>"
+  data-onstyle="danger" data-offstyle="secondary" value="{record.id}">
+        """)
+
+
+
+
+
+
+
+
+    
 
 class TableAssignmentSummary(tables.Table):
     def render_course(self, record):

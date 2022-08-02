@@ -21,9 +21,7 @@ class Assignment(models.Model):
     created_at = models.DateTimeField(auto_now_add = True)
     valid_from = models.DateTimeField(null = True, blank = True)
     expires_at = models.DateTimeField(null = True, blank = True)
-    can_studentsubmit = models.BooleanField(default = True)
     remove_collected = models.BooleanField(default = False)
-    max_number_of_files = models.IntegerField(default = 50, null = True)
     max_size = models.IntegerField(default = None, null = True) 
     filename = models.CharField(max_length = 256, null = False, unique = True)
 
