@@ -2,11 +2,14 @@ from django import template
 from django.utils.html import format_html
 from django.urls import reverse
 
+from ..models import Container
+
 register = template.Library()
 
 
 @register.simple_tag
-def container_image(container):
+def container_image(container_or_image):
+    container = container_or_image if isinstance(container_or_image, Container) else Container(image = container_or_image)
     i = container.image.name.split('/')[-1]
     if container.state == container.ST_NEED_RESTART:
         return format_html(f"""

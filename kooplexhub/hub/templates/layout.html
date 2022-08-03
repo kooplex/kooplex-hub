@@ -14,7 +14,7 @@
     <link rel="stylesheet" type="text/css" href="{% static 'fonts/remix-icon/remixicon.css' %}">
 
     <link rel="shortcut icon" type="image/png" href="/static/kooplexicon.png"/>
-    <title>{% block page_title %}{% endblock %}</title>
+    <title>{% block page_title %}Kooplex Hub{% endblock %}</title>
 
     <style>
 .navbar-expand-md .navbar-nav .nav-link {
@@ -61,33 +61,6 @@ grid-column: span 8;
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
 
-<!--  This block is for the chardinjs help functionality-->
-    <link type="text/css" href="{% static 'chardinjs/chardinjs.css' %}" rel="stylesheet">
-    <script src="{% static 'chardinjs/chardinjs.js' %}" type="text/javascript"></script>
-    <script>
-       (function() {
-         $(function() {
-           $('body').chardinJs({
-             'attribute': 'data-intro',
-             {% block chardinhelp %}
-             url: "{% static 'chardinjs/helptext_main.json' %}"
-             {% endblock %}
-           });
-
-           // or trigger via an anchor tag
-           $('a[data-toggle="chardinjs"]').on('click', function (e) {
-             e.preventDefault();
-             return ($('body').data('chardinJs')).toggle();
-           });
-
-             return $('body').on('chardinJs:stop', function () {
-
-           });
-
-         });
-       }).call(this);
-    </script>
- <!-- ending block for shardinjs -->
 </head>
 
 
@@ -103,17 +76,17 @@ grid-column: span 8;
           <nav class="navbar navbar-expand-lg navbar-dark bg-dark d-flex">
             <div class="container-fluid d-flex flex-column flex-md-row">
 	      {% block submenu %}
-	      <a class="ms-3 mt-3 mb-3 navbar-brand d-flex justify-content-start fs-6" data-intro="#envs" href="#">Hi {{ user.first_name }} {{ user.last_name }}. Welcome to Kooplex!</a>
+	      <a class="ms-3 mt-3 mb-3 navbar-brand d-flex justify-content-start fs-6" href="#">Hi, {{ user.first_name }} {{ user.last_name }}. Welcome to Kooplex!</a>
 	      {% endblock %}
               <ul class="me-3 navbar-nav d-flex flex-row">
-                <li class="nav-item"><a href="#" class="nav-link" data-toggle="chardinjs"><span class="oi oi-question-mark" data-toggle="tooltip" title="Help" data-placement="bottom"></a></li>
+                <li class="nav-item"><a href="#" class="nav-link"><span class="oi oi-question-mark" data-toggle="tooltip" title="Help" data-placement="bottom"></a></li>
 		<li class="nav-item ms-3 ms-md-1"><a href="#" class="nav-link" data-bs-toggle="offcanvas" data-bs-target="#offcanvasMessages" aria-controls="offcanvasMessages"><span class="bi bi-chat-left-dots" data-toggle="tooltip" title="Messages" data-placement="bottom"></a></li>
                 <li class="nav-item dropdown ms-3 ms-md-1">
                   <a class="nav-link dropdown-toggle" href="#" id="navbarDarkDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                     <span class="bi bi-person-fill" data-toggle="tooltip" title="Profile" data-placement="bottom"></span>
                   </a>
                   <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end" aria-labelledby="navbarDarkDropdownMenuLink">
-                    <li><p class="dropdown-item">{{ user.first_name }} {{ user.last_name }}</p></li>
+			  <li><a class="dropdown-item" href="{{ url_profile }}">{{ user.first_name }} {{ user.last_name }}</a></li>
                     <hr/>
                     <li><a class="dropdown-item" href="{% url 'logout' %}">Logout&nbsp;<span class="oi oi-account-logout"></span></a></li>
                     <li><a class="dropdown-item" href="#" data-toggle="modal" data-target="#reset-token">Reset token</a></li>
@@ -156,10 +129,7 @@ grid-column: span 8;
     </div>
     {% endblock %}
   
-    {% block footer %}
-
-    {% endblock %}
-
+    {% block footer %}{% endblock %}
 
     {% block scripts %}{% endblock %}
     <!-- JavaScript Bundle with Popper -->

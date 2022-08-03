@@ -2,14 +2,11 @@
 
 {% load static %}
 
-{% block chardinhelp %}
-             url: "{% static 'chardinjs/helptext_env.json' %}"
-{% endblock %}
 
 {% block realcontent %}
   {% if containers %}
-    <input class="form-control me-2 mb-3 mt-3" type="text" id="search_container" placeholder="Search environments" title="Type in a name" autofocus data-intro="#search_environment">
-    <div id="containerListPane" data-intro="#container_list" >
+    <input class="form-control me-2 mb-3 mt-3" type="text" id="search_container" placeholder="Search environments" title="Type in a name" autofocus >
+    <div id="containerListPane" >
     {% for container in containers %}
        {% include partial %}
     {% endfor %}

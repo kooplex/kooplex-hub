@@ -2,14 +2,11 @@
 
 {% load static %}
 
-{% block chardinhelp %}
-         url: "{% static 'chardinjs/listofcourses.json' %}"
-{% endblock %}
 
 {% block realcontent %}
 {% if coursebindinglist|length %}
-  <input class="form-control me-2 mb-3 mt-3" type="text" id="search_course" placeholder="Search course" title="Type in a name" data-intro="#search_course">
-  <div id="containerListPane" data-intro="#course_list">
+  <input class="form-control me-2 mb-3 mt-3" type="text" id="search_course" placeholder="Search course" title="Type in a name" >
+  <div id="containerListPane" >
     {% for ucb in coursebindinglist %}
        {% include 'course_partial_list.html' with next_page='education:student' course=ucb.course coursecontainerbindings=ucb.coursecontainerbindings is_teacher=True tooltip="Manage assignments" %}
     {% endfor %}
@@ -22,6 +19,19 @@
 
 {% block scripts %}
 <script>  
+$(document).ready(function() {
+  var uf = $.cookie("unfold_course");
+  if ( uf === undefined ) {
+    $.cookie("unfold_course", JSON.stringify([]), { 'path': '/', 'secure': true });
+    console.log('undefined');
+  } else {
+    $.each(JSON.parse(uf), function(index, value) {
+      console.log( value );
+      $("#collapse-" + value).collapse();
+    });
+
+  }
+});
 $("#search_course").keyup(function() {
   var pattern = $( this ).val().toUpperCase();
   console.log( "search: " + pattern );
@@ -43,6 +53,32 @@ $("#search_course").keyup(function() {
       $( card ).show();
     }
   });
+});
+$("div[data-bs-target^='#collapse-").mouseover(function() {
+  $(this).css("font-weight", "bold");
+  $(this).css("cursor", "pointer");
+});
+$("div[data-bs-target^='#collapse-").mouseout(function() {
+  $(this).css("font-weight", "normal");
+});
+$("div[data-bs-target^='#collapse-").click(function() {
+  var tgt = $(this).attr("data-bs-target");
+  var oid = tgt.split('-')[1];
+  console.log( tgt + "->" + oid );
+  setTimeout(function() {
+    var uf = JSON.parse( $.cookie("unfold_course") );
+    if ( $(tgt).hasClass('show') ) {
+      console.log('shown');
+      uf.push(oid);
+    } else {
+      console.log('collapsed');
+      uf.pop(oid);
+    }
+    var clean = uf.filter(function(element, index, self){
+      return index === self.indexOf(element);
+    });
+    $.cookie("unfold_course", JSON.stringify(clean), { 'path': '/', 'secure': true });
+  }, 1000);
 });
 </script>
 {% endblock %}

@@ -73,7 +73,7 @@ class Course(models.Model):
         return ', '.join(map(lambda x: x.name, self.assignments))
 
     def dir_assignmentcandidate(self):
-        from hub.lib.filesystem import get_assignment_prepare_subfolders
+        from ..filesystem import get_assignment_prepare_subfolders
         return get_assignment_prepare_subfolders(self)
 
 

@@ -17,10 +17,5 @@ urlpatterns = [
     path('submitform/', views.submitform_submit, name = 'submit'),
     re_path('configure/(?P<usercoursebinding_id>\d+)/?$', views.configure, name = 'configure'),
     re_path('configure_save/(?P<usercoursebinding_id>\d+)/?$', views.configure_save, name = 'configure_save'),
-#    re_path('newgroup/(?P<usercoursebinding_id>\d+)/?$', views.configure, name = 'newgroup'),
-#    re_path('configuregroup/(?P<usercoursebinding_id>\d+)/?$', views.configure, name = 'configuregroup'),
-#    re_path('addstudent/(?P<usercoursebinding_id>\d+)/?$', views.addstudent, name = 'addstudent'),
-#    re_path('groupstudent/(?P<usercoursebinding_id>\d+)/?$', views.groupstudent, name = 'groupstudent'),
-#    re_path('addteacher/(?P<usercoursebinding_id>\d+)/?$', views.addteacher, name = 'addteacher'),
     re_path('addcontainer/(?P<usercoursebinding_id>\d+)/?$', views.addcontainer, name = 'autoaddcontainer'),
 ]

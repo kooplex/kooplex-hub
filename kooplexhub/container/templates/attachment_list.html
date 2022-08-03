@@ -1,13 +1,10 @@
 {% extends "storage_layout.html" %}
 
 {% load static %}
-{% block chardinhelp %}
-         url: "{% static 'chardinjs/helpattachment_env.json' %}"
-{% endblock %}
 
 {% block realcontent %}
-  <input class="form-control me-2 mb-3 mt-3" type="text" id="search_attachment" placeholder="Search attachment" title="Type in a name" autofocus data-intro="#search_attachment">
-  <div id="attachmentListPane" data-intro="#attachment_list" >
+  <input class="form-control me-2 mb-3 mt-3" type="text" id="search_attachment" placeholder="Search attachment" title="Type in a name" autofocus >
+  <div id="attachmentListPane" >
   {% for attachment in attachments %}
     {% include 'attachment_partial_list.html' %}
   {% endfor %}

@@ -102,63 +102,47 @@ def assignment_teacher(request):
             'submenu': 'assignment_teacher',
             'active': request.COOKIES.get('assignment_teacher_tab', 'conf'),
             }
-    courses = [ ucb.course for ucb in UserCourseBinding.objects.filter(user = user, is_teacher = True) ]
-    if len(courses) == 0:
+    courses = UserCourseBinding.objects.filter(user = user, is_teacher = True).values_list('course')
+    if not courses:
         messages.warning(request, f'You are not bound to any course as a teacher.')
         return render(request, 'education_layout.html', context = context_dict)
-
-    assignment_id_cookie = request.COOKIES.get('handle_assignment_last', None)
-
-    mapping = [ (c.id, Assignment.objects.filter(course = c)) for c in courses ]
-    keep = lambda c: len(c[1])
-    course_assignments = dict(filter(keep, mapping))
-    if request.method == 'POST':
-        try:
-            assignment_id = int(request.POST.get('assignment_selected'))
-        except ValueError:
-            assignment_id = assignment_id_cookie
-    else:
-        assignment_id = assignment_id_cookie
-
-    if assignment_id is None:
-        for qs in course_assignments.values():
-            if len(qs):
-                assignment_id = qs.first().id
-                break
-
-    if assignment_id is not None:
-        a = Assignment.objects.get(id = assignment_id)
-        qs_uab = UserAssignmentBinding.objects.filter(assignment__id = assignment_id)
-        students_handled = [ b.user for b in qs_uab ]
-        uab = [ UserAssignmentBinding(user = b.user, assignment = a) for b in a.course.studentbindings if not b.user in students_handled ]
-        uab.extend( qs_uab )
-        context_dict.update({
-            'assignment_id': assignment_id,
-            't_assignments': TableAssignmentHandle( uab ),
-            't_mass': TableAssignmentMass( a ),
-            })
-    else:
-        messages.warning(request, f'You need to select the assignment.')
-
     assignments = Assignment.objects.filter(course__in = courses)
+    uabs = UserAssignmentBinding.objects.filter(assignment__in = assignments)
+    mapping = [ (c, assignments.filter(course = c)) for c in courses ]
+    keep = lambda c: c[1]
+    course_assignments = dict(filter(keep, mapping))
+
+    selected_assignment_id = int(request.POST.get('assignment_selected', assignments[0].id if assignments else -1))
+
+#    if assignment_id is not None:
+#        a = Assignment.objects.get(id = assignment_id)
+#        qs_uab = UserAssignmentBinding.objects.filter(assignment__id = assignment_id)
+#        students_handled = [ b.user for b in qs_uab ]
+#        uab = [ UserAssignmentBinding(user = b.user, assignment = a) for b in a.course.studentbindings if not b.user in students_handled ]
+#        uab.extend( qs_uab )
+#        context_dict.update({
+#            'assignment_id': assignment_id,
+#            't_assignments': TableAssignmentHandle( uab ),
+#            't_mass': TableAssignmentMass( a ),
+#            })
+#    else:
+#        messages.warning(request, f'You need to select the assignment.')
+
     table_assignment_config = TableAssignmentConf(assignments)
     table_assignment_summary = TableAssignmentSummary(assignments)
-    #table_assignment_student_summary = TableAssignmentStudentSummary(Course.objects.filter(usercoursebinding__user=user)[0])
-#    table_course_student_summary = TableAssignmentStudentSummary(courses[0])
-    ts = dict(filter(lambda i: i[1] is not None, { c.id: TableCourseStudentSummary(c) for c in courses }.items()))
-    #table_assignment_student_summary = TableAssignmentSummary(assignments)
+#    ts = dict(filter(lambda i: i[1] is not None, { c.id: TableCourseStudentSummary(c) for c in courses }.items()))
 
-    okay = lambda f: f.okay
-    assignments = set()
-    for la in course_assignments.values():
-        assignments.update(la)
+#    okay = lambda f: f.okay
+#    assignments = set()
+#    for la in course_assignments.values():
+#        assignments.update(la)
     context_dict.update({
         'd_course_assignments': course_assignments,
         't_assignment_summary': table_assignment_summary,
         #        't_course_student_summary': table_course_student_summary,
-        'ts': ts,
+##        'ts': ts,
         't_assignment_config': table_assignment_config,
-        'f_assignment': list(filter(okay, [ FormAssignment(user = user, course = c, auto_id = f'id_newassignment_{c.cleanname}_%s') for c in courses ])),
+##        'f_assignment': list(filter(okay, [ FormAssignment(user = user, course = c, auto_id = f'id_newassignment_{c.cleanname}_%s') for c in courses ])),
         't_mass_all': TableAssignmentMassAll( assignments ),
         })
     return render(request, 'assignment.html', context = context_dict)

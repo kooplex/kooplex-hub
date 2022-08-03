@@ -3,9 +3,6 @@
 {% load render_table from django_tables2 %}
 {% load static %}
 
-{% block chardinhelp %}
-         url: "{% static 'chardinjs/assignmentdue.json' %}"
-{% endblock %}
 
 {% block realcontent %}
 {% if t_submit.rows %}

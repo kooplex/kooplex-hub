@@ -9,6 +9,9 @@ from django.contrib.auth.models import User
 
 from ..models import UserCourseBinding, UserAssignmentBinding, Assignment, UserCourseCodeBinding, Group, UserCourseGroupBinding
 from hub.templatetags.extras import render_user as ru
+from hub.templatetags.extras import render_date as rd
+from hub.templatetags.extras import render_folder as rf
+
 
 try:
     from kooplexhub.settings import KOOPLEX
@@ -63,9 +66,6 @@ class TableAssignment(tables.Table):
                 }
         #FIXME: order
 
-#FIXME: hub/templatetags
-rd = lambda d: d.strftime("%Y-%m-%d %H:%M") if d else ''
-rf = lambda f: f"""<span class="pillow"><i class="bi bi-folder" data-toggle="tooltip" title="Folder"></i>&nbsp;{f}</span>"""
 
 class TableAssignmentConf(tables.Table):
     class Meta:
@@ -112,20 +112,30 @@ class TableAssignmentConf(tables.Table):
         d2 = rd(record.expires_at)
         chk = 'checked' if record.remove_collected else ''
         return format_html(f"""
-<div class="input-append date" id="datetimepicker-valid-{record.id}" date-date="{d1}" data-date-format="yyyy-mm-dd hh:ii">
-  <label class="form-check-label" for="valid_from-{record.id}" id="lbl_frm-{record.id}" data-toggle="tooltip" title="Assignment is handed out at"><i class="bi bi-alarm"></i>&nbsp;</label>
-  <input class="datetimepicker" type="text" value="{d1}" name="valid_from-{record.id}">
+<div class="container">
+  <div class="row">
+    <div class="input-group log-event" id="linkedPickers1-{record.id}" data-td-target-input="nearest" data-td-target-toggle="nearest">
+      <input id="linkedPickers1Input-{record.id}" name="valid_from-{record.id}" type="text" class="form-control" data-td-target="#linkedPickers1-{record.id}">
+      <span class="input-group-text" data-td-target="#linkedPickers1-{record.id}" data-td-toggle="datetimepicker">
+        <span class="bi bi-calendar"></span>
+      </span>
+    </div>
+  </div>
+  <div class="row mt-2">
+    <div class="input-group log-event" id="linkedPickers2-{record.id}" data-td-target-input="nearest" data-td-target-toggle="nearest">
+      <input id="linkedPickers2Input-{record.id}" name="expires_at-{record.id}" type="text" class="form-control" data-td-target="#linkedPickers2-{record.id}">
+      <span class="input-group-text" data-td-target="#linkedPickers2-{record.id}" data-td-toggle="datetimepicker">
+        <span class="bi bi-calendar"></span>
+      </span>
+    </div>
+  </div>
+  <input id="rmcol-{record.id}" data-size="small"
+     type="checkbox" data-toggle="toggle" name="remove_when_ready"
+     data-on="<span class='oi oi-trash'></span>"
+     data-off="<span class='bi bi-check-lg'></span>"
+     data-onstyle="danger" data-offstyle="secondary" value="{record.id}" {chk}>
+   <label class="form-check-label mt-2" for="rmcol-{record.id}" id="lbl_eraser-{record.id}" data-toggle="tooltip" title="Remove student's assignment folder upon submittion or collection"><i class="bi bi-eraser"></i>&nbsp;</label>
 </div>
-<div class="input-append date mt-2" id="datetimepicker-expiry-{record.id}" date-date="{d2}" data-date-format="yyyy-mm-dd hh:ii">
-  <label class="form-check-label" for="valid_from-{record.id}" id="lbl_frm-{record.id}" data-toggle="tooltip" title="Assignment is collected at"><i class="bi bi-bell"></i>&nbsp;</label>
-  <input class="datetimepicker" type="text" value="{d2}" name="expires_at-{record.id}">
-</div>
-<label class="form-check-label mt-2" for="rmcol-{record.id}" id="lbl_eraser-{record.id}" data-toggle="tooltip" title="Remove student's assignment folder upon submittion or collection"><i class="bi bi-eraser"></i>&nbsp;</label>
-<input id="rmcol-{record.id}" data-size="small"
-  type="checkbox" data-toggle="toggle" name="remove_when_ready"
-  data-on="<span class='oi oi-trash'></span>"
-  data-off="<span class='bi bi-check-lg'></span>"
-  data-onstyle="danger" data-offstyle="secondary" value="{record.id}" {chk}>
 <input type="hidden" id="valid_from-old-{record.id}" name="valid_from-old-{record.id}" value="{d1}" />
 <input type="hidden" id="expires_at-old-{record.id}" name="expires_at-old-{record.id}" value="{d2}" />
         """)
@@ -339,6 +349,15 @@ class TableAssignmentHandle(tables.Table):
 
 
 class TableAssignmentMass(tables.Table):
+    #FIXME: used???????????????
+    class Meta:
+        attrs = { 
+                 "class": "table table-bordered mt-3", 
+                 "thead": { "class": "thead-dark table-sm" }, 
+                 "td": { "class": "p-1" }, 
+                 "th": { "class": "table-secondary p-1" } 
+                }
+        empty_text = _("Empty table")
     def render_group(self, record):
         return 'Ungrouped' if record is None else record
     def render_handout(self, record):
@@ -404,14 +423,6 @@ class TableAssignmentMass(tables.Table):
     correct = tables.Column(orderable = False, empty_values = ())
     correcting = tables.Column(orderable = False, empty_values = ())
     reassign = tables.Column(orderable = False, empty_values = ())
-    class Meta:
-        attrs = { 
-                 "class": "table table-bordered", 
-                 "thead": { "class": "thead-dark table-sm" }, 
-                 "td": { "style": "padding:.5ex" }, 
-                 "th": { "style": "padding:.5ex", "class": "table-secondary" } 
-                }
-        empty_text = _("Empty table")
 
     def __init__(self, assignment):
         self.assignment = assignment
@@ -421,6 +432,27 @@ class TableAssignmentMass(tables.Table):
 
 
 class TableAssignmentMassAll(tables.Table):
+    class Meta:
+        model = Assignment
+        fields = ('course', 'name')
+        sequence = ('course', 'name', 'group', 'handout', 'collect', 'correct', 'correcting', 'reassign')
+        attrs = { 
+                 "class": "table table-bordered mt-3", 
+                 "thead": { "class": "thead-dark table-sm" }, 
+                 "td": { "class": "p-1" }, 
+                 "th": { "class": "table-secondary p-1" } 
+                }
+        empty_text = _("Empty table")
+
+    course = tables.Column(orderable = False)
+    name = tables.Column(orderable = False)
+    group = tables.Column(orderable = False, empty_values = ())
+    handout = tables.Column(orderable = False, empty_values = ())
+    collect = tables.Column(orderable = False, empty_values = ())
+    correcting = tables.Column(orderable = False, empty_values = ())
+    correct = tables.Column(orderable = False, empty_values = ())
+    reassign = tables.Column(orderable = False, empty_values = ())
+
     def render_group(self, record):
         rows = []
         for k, v in  self.lut[record.course]:
@@ -431,10 +463,9 @@ class TableAssignmentMassAll(tables.Table):
 
     def render_handout(self, record):
         rows = []
-        uab = UserAssignmentBinding.objects.filter(assignment__id = record.id)
         for k, v in  self.lut[record.course]:
             idx = f'{record.id}-n' if k is None else f'{record.id}-{k.id}'
-            students = set(v).difference([ b.user for b in uab.filter(state__in = [
+            students = set(v).difference([ b.user for b in self.lut_uab[record].filter(state__in = [
                 UserAssignmentBinding.ST_WORKINPROGRESS,
                 UserAssignmentBinding.ST_READY,
                 UserAssignmentBinding.ST_SUBMITTED, 
@@ -453,10 +484,9 @@ class TableAssignmentMassAll(tables.Table):
         
     def render_collect(self, record):
         rows = []
-        uab = UserAssignmentBinding.objects.filter(assignment__id = record.id)
         for k, v in  self.lut[record.course]:
             idx = f'{record.id}-n' if k is None else f'{record.id}-{k.id}'
-            students = set(v).intersection([ b.user for b in uab.filter(state = UserAssignmentBinding.ST_WORKINPROGRESS) ])
+            students = set(v).intersection([ b.user for b in self.lut_uab[record].filter(state = UserAssignmentBinding.ST_WORKINPROGRESS) ])
             n = len(students)
             d = '' if n else 'disabled'
             rows.append(f"""
@@ -469,10 +499,9 @@ class TableAssignmentMassAll(tables.Table):
 
     def render_correct(self, record):
         rows = []
-        uab = UserAssignmentBinding.objects.filter(assignment__id = record.id)
         for k, v in  self.lut[record.course]:
             idx = f'{record.id}-n' if k is None else f'{record.id}-{k.id}'
-            students = set(v).intersection([ b.user for b in uab.filter(state__in = [
+            students = set(v).intersection([ b.user for b in self.lut_uab[record].filter(state__in = [
                 UserAssignmentBinding.ST_SUBMITTED, 
                 UserAssignmentBinding.ST_COLLECTED
                 ]) ])
@@ -488,19 +517,17 @@ class TableAssignmentMassAll(tables.Table):
 
     def render_correcting(self, record):
         rows = []
-        uab = UserAssignmentBinding.objects.filter(assignment__id = record.id)
         for k, v in  self.lut[record.course]:
-            students = set(v).intersection([ b.user for b in uab.filter(state = UserAssignmentBinding.ST_CORRECTED) ])
+            students = set(v).intersection([ b.user for b in self.lut_uab[record].filter(state = UserAssignmentBinding.ST_CORRECTED) ])
             n = len(students)
             rows.append(f"<div>{n}</div>")
         return format_html("<br>".join( rows ))
 
     def render_reassign(self, record):
         rows = []
-        uab = UserAssignmentBinding.objects.filter(assignment__id = record.id)
         for k, v in  self.lut[record.course]:
             idx = f'{record.id}-n' if k is None else f'{record.id}-{k.id}'
-            students = set(v).intersection([ b.user for b in uab.filter(state = UserAssignmentBinding.ST_READY) ])
+            students = set(v).intersection([ b.user for b in self.lut_uab[record].filter(state = UserAssignmentBinding.ST_READY) ])
             n = len(students)
             d = '' if n else 'disabled'
             rows.append(f"""
@@ -511,27 +538,11 @@ class TableAssignmentMassAll(tables.Table):
             """)
         return format_html("<br>".join( rows ))
 
-    course = tables.Column(orderable = False, empty_values = ())
-    group = tables.Column(orderable = False, empty_values = ())
-    handout = tables.Column(orderable = False, empty_values = ())
-    collect = tables.Column(orderable = False, empty_values = ())
-    correcting = tables.Column(orderable = False, empty_values = ())
-    correct = tables.Column(orderable = False, empty_values = ())
-    reassign = tables.Column(orderable = False, empty_values = ())
-
-    class Meta:
-        model = Assignment
-        fields = ('course', 'name', 'group', 'handout', 'collect', 'correct', 'correcting', 'reassign')
-        attrs = { 
-                 "class": "table table-bordered", 
-                 "thead": { "class": "thead-dark table-sm" }, 
-                 "td": { "style": "padding:.5ex" }, 
-                 "th": { "style": "padding:.5ex", "class": "table-secondary" } 
-                }
-        empty_text = _("Empty table")
 
     def __init__(self, qs):
         super().__init__(qs)
+        uab = UserAssignmentBinding.objects.filter(assignment__in = qs)
+        self.lut_uab = { a: uab.filter(assignment = a) for a in qs }
         courses = set([ a.course for a in qs ])
         self.lut = { c: list(c.groups.items()) for c in courses }
 
@@ -577,64 +588,6 @@ class TableUser(tables.Table):
         self.prefix = 'teacher' if self.is_teacher else 'student'
         self.Meta.attrs["id"] = f"bind-{self.prefix}" if bind_table else f"users-{self.prefix}"
         super(TableUser, self).__init__(bindings)
-
-#class TableUser(tables.Table):
-#    def render_id(self, record):
-#        f = 'teacher' if self.teacher_selector else 'student'
-#        try:
-#            ucb = UserCourseBinding.objects.get(course = self.course, user = record, is_teacher = self.teacher_selector)
-#            return format_html(f"""
-#<div class="form-check col-sm form-switch">
-#  <input class="form-check-input" type="checkbox" id="ur-{ucb.id}" name="keep_bid" value="{ucb.id}" checked />
-#  <input type="hidden" id="ur-orig-{ucb.id}" name="bound_bid" value="{ucb.id}" />
-#  <label class="form-check-label" for="ur-{ucb.id}" id="lbl_ur-{ucb.id}"> Added</label>
-#</div>
-#            """)
-#        except UserCourseBinding.DoesNotExist:
-#            return format_html(f"""
-#<div class="form-check col-sm form-switch">
-#  <input class="form-check-input" type="checkbox" id="u-{f}-{record.id}" name="add_uid" value="{record.id}" />
-#  <label class="form-check-label" for="u-{f}-{record.id}" id="lbl_u-{f}-{record.id}"> Skip</label>
-#</div>
-#
-#            """)
-#
-#    def render_name(self, record):
-#        user = record
-#        return format_html(f"""
-#<span data-toggle="tooltip" title="username: {record.username}\nemail: {record.email}"><i class="bi bi-info-square-fill" ></i>&nbsp;{record.first_name} <b>{record.last_name}</b></span>
-#<input type="hidden" name="search_studenttwo" value="{user.first_name} {user.last_name} {user.username}">
-#<input type="hidden" name="search_student" value="{user.first_name} {user.last_name} {user.username}">
-#        """)
-#
-#    def render_course(self, record):
-#        return format_html(", ".join([ ucb.course.name for ucb in UserCourseBinding.objects.filter(user = record) ]))
-#
-#    def render_coursecode(self, record):
-#        return ", ".join([ ucb.coursecode.courseid for ucb in UserCourseCodeBinding.objects.filter(user = record) ])
-#
-#    id = tables.Column(verbose_name = 'Operation', orderable = False)
-#    name = tables.Column(orderable = False, empty_values = ())
-#    course = tables.Column(orderable = False, empty_values = ())
-#    #coursecode = tables.Column(orderable = False, empty_values = ())
-#
-#    class Meta:
-#        model = User
-#        fields = ('id', 'name', 'course')#, 'coursecode')
-#        attrs = { 
-#                 "class": "table table-striped table-bordered", 
-#                 "thead": { "class": "thead-dark table-sm" }, 
-#                 "td": { "style": "padding:.5ex" }, 
-#                 "th": { "style": "padding:.5ex", "class": "table-secondary" } 
-#                }
-#
-#    def __init__(self, course, teacher_selector, *args, **kwargs):
-#        complementary_users = [ ucb.user.username for ucb in UserCourseBinding.objects.filter(course = course, is_teacher = not teacher_selector) ]
-#        users = User.objects.all().exclude(username__in = KOOPLEX.get('blacklist', ['hubadmin', 'admin'])).exclude(username__in = complementary_users)
-#        super(TableUser, self).__init__(users)
-#        self.course = course
-#        self.teacher_selector = teacher_selector
-#        self.empty = len(users) == 0
 
 
 class TableGroup(tables.Table):
