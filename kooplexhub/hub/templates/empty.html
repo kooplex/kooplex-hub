@@ -1,5 +1,9 @@
+{% if not skip_border %}
 <div class="card shadow p-3 mb-2 mt-3 bg-light rounded"> 
+{% endif %}
   <h6 class="card-empty_title alert alert-warning">{% if empty_title %}{{ empty_title }}{% else %}This page has no content{% endif %}</h6>
   <p>{% if empty_body %}{{ empty_body }}{% else %}Please visit some other pages of Kooplex hub, to get known what you can do. If you are totally lost checkout the <a href="https://xwiki.vo.elte.hu/en/kooplex-manual/overview"><i class="bi bi-book"></i><span>&nbsp;documentation</span></a>.{% endif %}</p>
+{% if not skip_border %}
 </div>
+{% endif %}
 

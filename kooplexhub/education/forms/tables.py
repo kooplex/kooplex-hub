@@ -19,22 +19,40 @@ except ImportError:
     KOOPLEX = {}
 
 class TableAssignment(tables.Table):
-    class AssignmentSelectionColumn(tables.Column):
-        def render(self, record):
-            if record.state in [ record.ST_WORKINPROGRESS, record.ST_SUBMITTED ]:
-                return format_html(f"""
+    # FIXME: where is it used???
+    class Meta:
+        model = UserAssignmentBinding
+        fields = ('course', 'assignment', 'score', 'feedback_text')
+        sequence = ('button', 'course', 'assignment', 'info', 'score', 'feedback_text')
+        attrs = { 
+                 "class": "table table-striped table-bordered", 
+                 "thead": { "class": "thead-dark table-sm" }, 
+                 "td": { "class": "p-1" }, 
+                 "th": { "class": "table-secondary p-1" }
+                }
+
+    button = tables.Column(verbose_name = 'Submit', orderable = False)
+    course = tables.Column(orderable = False, empty_values = ())
+    assignment = tables.Column(orderable = False)
+    expires_at = tables.Column(orderable = False)
+    score = tables.Column(orderable = False)
+    feedback_text = tables.Column(orderable = False)
+
+    def render_button(self, record):
+        if record.state in [ record.ST_WORKINPROGRESS, record.ST_SUBMITTED ]:
+            return format_html(f"""
 <div class="form-check form-switch">
   <input class="form-check-input" type="checkbox" id="uab-{record.id}" name="selection" value="{record.id}" />
 </div>
-                """)
-            elif record.state in [ record.ST_COLLECTED, record.ST_CORRECTED, record.ST_QUEUED ]:
-                return format_html(f"""
+            """)
+        elif record.state in [ record.ST_COLLECTED, record.ST_CORRECTED, record.ST_QUEUED ]:
+            return format_html(f"""
 <span class="bi bi-hourglass-bottom" data-toggle="tooltip" title="{record.ST_LOOKUP[record.state]}" />
-                """)
-            else:
-                return format_html(f"""
+            """)
+        else:
+            return format_html(f"""
 <span class="bi bi-hand-thumbs-up" data-toggle="tooltip" title="{record.ST_LOOKUP[record.state]}" />
-                """)
+            """)
 
     def render_course(self, record):
         return record.assignment.course.name
@@ -42,29 +60,13 @@ class TableAssignment(tables.Table):
     def render_assignment(self, record):
         return record.assignment.name
 
-    def render_expires_at(self, record):
-        exp = record.expires_at if record.expires_at else "&mdash;"
+    def render_info(self, record):
+        exp = rd(record.expires_at)
         return format_html(f"""
 <span class="bi bi-arrow-up-right-square-fill" data-toggle="tooltip" title="Submit count">{record.submit_count}</span>
 <span class="bi bi-check-square-fill" data-toggle="tooltip" title="Correction count">{record.correction_count}</span>&nbsp; {exp}
         """)
 
-    id = AssignmentSelectionColumn(verbose_name = 'Submit', orderable = False)
-    course = tables.Column(orderable = False, empty_values = ())
-    assignment = tables.Column(orderable = False)
-    score = tables.Column(orderable = False)
-    feedback_text = tables.Column(orderable = False)
-
-    class Meta:
-        model = UserAssignmentBinding
-        fields = ('id', 'course', 'assignment', 'expires_at', 'score', 'feedback_text')
-        attrs = { 
-                 "class": "table table-striped table-bordered", 
-                 "thead": { "class": "thead-dark table-sm" }, 
-                 "td": { "style": "padding:.5ex" }, 
-                 "th": { "style": "padding:.5ex", "class": "table-secondary" }
-                }
-        #FIXME: order
 
 
 class TableAssignmentConf(tables.Table):
@@ -222,9 +224,34 @@ def TableCourseStudentSummary(course):
 
 
 class TableAssignmentHandle(tables.Table):
+    class Meta:
+        model = UserAssignmentBinding
+        fields = ('user', 'score', 'feedback_text')
+        sequence = ('button', 'user', 'info', 'score', 'feedback_text')
+        attrs = { 
+                 "class": "table table-bordered", 
+                 "thead": { "class": "thead-dark table-sm" }, 
+                 "td": { "style": "padding:.5ex;  background-color: white" }, 
+                 "th": { "style": "padding:.5ex; background-color: #D3D3D3", "class": "table-secondary" } 
+                }
+        empty_text = _("This table is still empty")
 
-    def render_id(self, record):
+    button = tables.Column(verbose_name = 'Operation', orderable = False, empty_values = ())
+    user = tables.Column(orderable = False, empty_values = (), verbose_name = 'Student/ username')
+    info = tables.Column(orderable = False, empty_values = (), verbose_name = 'Info')
+    score = tables.Column(orderable = False, empty_values = ())
+    feedback_text = tables.Column(orderable = False, empty_values = ())
+    
+
+    def render_button(self, record):
         if record.id is None:
+            return format_html(f"""
+<div class="form-check form-switch">
+  <input class="form-check-input" type="checkbox" id="uab-{record.assignment.id}-{record.user.id}" name="selection_handout" value="[{record.assignment.id}, {record.user.id}]" />
+  <label class="form-check-label" for="uab-{record.assignment.id}-{record.user.id}" id="lbl_uab-{record.assignment.id}-{record.user.id}"> <span class="bi bi-box-arrow-up-right" data-toggle="tooltip" title="Hand out"></span></label>
+</div>
+            """)
+        elif record.state == record.ST_QUEUED:
             return format_html(f"""
 <div class="form-check form-switch">
   <input class="form-check-input" type="checkbox" id="uab-{record.assignment.id}-{record.user.id}" name="selection_handout" value="[{record.assignment.id}, {record.user.id}]" />
@@ -259,29 +286,16 @@ class TableAssignmentHandle(tables.Table):
   <label class="form-check-label" for="uab-{record.id}" id="lbl_uab-{record.id}"> <span class="bi bi-recycle" data-toggle="tooltip" title="Reassign"</span></label>
 </div>
             """)
+        else:
+            return NotImplementedError(f"{record} {record.state}")
 
-    def render_course(self, record):
-        try:
-            course = record.assignment.course
-            g = UserCourseGroupBinding.objects.get(usercoursebinding__user = record.user, usercoursebinding__course = course).group
-            label = f"{course.name} ({g.name})"
-        except UserCourseGroupBinding.DoesNotExist:
-            label = record.assignment.course.name
-        return format_html(f"""
-{label}
-<input type="hidden" id="course-{record.id}" value="{course.name}" />
-        """)
-
-    def render_assignment(self, record):
-        return record.assignment.name
-    
-    def render_user(self, record, column):
-        column.attrs = {"td": { "style": "background-color: #D3D3D3"}}
+    def render_user(self, record):
+        #FIXME: separate search column possible?
         user = record.user
         return format_html(f"""
-{user.first_name} {user.last_name} / {user.username}
+{ru(user)}
 <input type="hidden" name="search_student" value="{user.first_name} {user.last_name} {user.username}">
-""")
+        """)
 
     def render_score(self, record):
         s = record.score if record.score else ''
@@ -313,43 +327,14 @@ class TableAssignmentHandle(tables.Table):
         else:
             return t
 
-    id = tables.Column(verbose_name = 'Operation', orderable = False, empty_values = ())
-    course = tables.Column(orderable = False, empty_values = (), visible = False)
-    assignment = tables.Column(orderable = False, empty_values = (), visible = False)
-    user = tables.Column(orderable = False, empty_values = (), verbose_name = 'Student/ username')
-    expires_at = tables.Column(orderable = False, empty_values = (), verbose_name = 'Expiry')
-    score = tables.Column(orderable = False, empty_values = ())
-    feedback_text = tables.Column(orderable = False, empty_values = ())
-    submit_count = tables.Column(orderable = False)
-    correction_count = tables.Column(orderable = True)
-    
-    class Meta:
-        model = UserAssignmentBinding
-        fields = ('id', 'course', 'assignment', 'user', 'expires_at', 'submit_count', 'correction_count', 'score', 'feedback_text')
-        attrs = { 
-                 "class": "table table-bordered", 
-                 "thead": { "class": "thead-dark table-sm" }, 
-                 "td": { "style": "padding:.5ex;  background-color: white" }, 
-                 "th": { "style": "padding:.5ex; background-color: #D3D3D3", "class": "table-secondary" } 
-                }
-        empty_text = _("This table is still empty")
-
-
-    class Meta:
-        model = UserAssignmentBinding
-        fields = ('id', 'course', 'assignment', 'user', 'expires_at', 'submit_count', 'correction_count', 'score', 'feedback_text')
-        attrs = { 
-                 "class": "table table-bordered", 
-                 "thead": { "class": "thead-dark table-sm" }, 
-                 "td": { "style": "padding:.5ex;  background-color: white" }, 
-                 "th": { "style": "padding:.5ex; background-color: #D3D3D3", "class": "table-secondary" } 
-                }
-        empty_text = _("This table is still empty")
+    def render_info(self, record):
+        return format_html(f"""
+{rd(record.expires_at)}<br># sub {record.submit_count}<br># cor {record.correction_count}
+        """)
 
 
 
 class TableAssignmentMass(tables.Table):
-    #FIXME: used???????????????
     class Meta:
         attrs = { 
                  "class": "table table-bordered mt-3", 
@@ -358,65 +343,7 @@ class TableAssignmentMass(tables.Table):
                  "th": { "class": "table-secondary p-1" } 
                 }
         empty_text = _("Empty table")
-    def render_group(self, record):
-        return 'Ungrouped' if record is None else record
-    def render_handout(self, record):
-        idx = 'n' if record is None else record.id
-        students = set(self.groups[record]).difference([ b.user for b in self.uab.filter(state__in = [
-            UserAssignmentBinding.ST_WORKINPROGRESS,
-            UserAssignmentBinding.ST_READY,
-            UserAssignmentBinding.ST_SUBMITTED, 
-            UserAssignmentBinding.ST_COLLECTED,
-            UserAssignmentBinding.ST_CORRECTED
-            ]) ])
-        n = len(students)
-        d = '' if n else 'disabled'
-        return format_html(f"""
-<div class="form-check form-switch">
-  <input class="form-check-input" type="checkbox" id="handout-{idx}" name="handout" value="{idx}" {d}/>
-  <label class="form-check-label" for="handout-{idx}"> <span class="bi bi-box-arrow-up-right"> {n}</span></label>
-</div>
-        """)
-    def render_collect(self, record):
-        idx = 'n' if record is None else record.id
-        students = set(self.groups[record]).intersection([ b.user for b in self.uab.filter(state = UserAssignmentBinding.ST_WORKINPROGRESS) ])
-        n = len(students)
-        d = '' if n else 'disabled'
-        return format_html(f"""
-<div class="form-check form-switch">
-  <input class="form-check-input" type="checkbox" id="collect-{idx}" name="collect" value="{idx}" {d}/>
-  <label class="form-check-label" for="collect-{idx}"> <span class="bi bi-box-arrow-in-down-right"> {n}</span></label>
-</div>
-        """)
-    def render_correct(self, record):
-        idx = 'n' if record is None else record.id
-        students = set(self.groups[record]).intersection([ b.user for b in self.uab.filter(state__in = [
-            UserAssignmentBinding.ST_SUBMITTED, 
-            UserAssignmentBinding.ST_COLLECTED
-            ]) ])
-        n = len(students)
-        d = '' if n else 'disabled'
-        return format_html(f"""
-<div class="form-check form-switch">
-  <input class="form-check-input" type="checkbox" id="correct-{idx}" name="correct" value="{idx}" {d}/>
-  <label class="form-check-label" for="correct-{idx}"> <span class="bi bi-check-square-fill"> {n}</span></label>
-</div>
-        """)
-    def render_correcting(self, record):
-        students = set(self.groups[record]).intersection([ b.user for b in self.uab.filter(state = UserAssignmentBinding.ST_CORRECTED) ])
-        n = len(students)
-        return format_html(f"<div>{n}</div>")
-    def render_reassign(self, record):
-        idx = 'n' if record is None else record.id
-        students = set(self.groups[record]).intersection([ b.user for b in self.uab.filter(state = UserAssignmentBinding.ST_READY) ])
-        n = len(students)
-        d = '' if n else 'disabled'
-        return format_html(f"""
-<div class="form-check form-switch">
-  <input class="form-check-input" type="checkbox" id="reassign-{idx}" name="reassign" value="{idx}" {d}/>
-  <label class="form-check-label" for="reassign-{idx}"> <span class="bi bi-recycle"> {n}</span></label>
-</div>
-        """)
+
     group = tables.Column(orderable = False, empty_values = ())
     handout = tables.Column(orderable = False, empty_values = ())
     collect = tables.Column(orderable = False, empty_values = ())
@@ -424,11 +351,73 @@ class TableAssignmentMass(tables.Table):
     correcting = tables.Column(orderable = False, empty_values = ())
     reassign = tables.Column(orderable = False, empty_values = ())
 
-    def __init__(self, assignment):
-        self.assignment = assignment
-        self.groups = assignment.course.groups
-        self.uab = UserAssignmentBinding.objects.filter(assignment__id = assignment.id)
-        super().__init__(self.groups.keys())
+    def render_group(self, record):
+        return 'Ungrouped' if record['group'] is None else record['group']
+
+    def render_handout(self, record):
+        idx = record['idx']
+        n = record['handout']
+        d = '' if n else 'disabled'
+        return format_html(f"""
+<div class="form-check form-switch">
+  <input class="form-check-input" type="checkbox" id="handout-{idx}" name="handout" value="{idx}" {d}/>
+  <label class="form-check-label" for="handout-{idx}"> <span class="bi bi-box-arrow-up-right"> {n}</span></label>
+</div>
+        """)
+
+    def render_collect(self, record):
+        idx = record['idx']
+        n = record['collect']
+        d = '' if n else 'disabled'
+        return format_html(f"""
+<div class="form-check form-switch">
+  <input class="form-check-input" type="checkbox" id="collect-{idx}" name="collect" value="{idx}" {d}/>
+  <label class="form-check-label" for="collect-{idx}"> <span class="bi bi-box-arrow-in-down-right"> {n}</span></label>
+</div>
+        """)
+
+    def render_correct(self, record):
+        idx = record['idx']
+        n = record['correct']
+        d = '' if n else 'disabled'
+        return format_html(f"""
+<div class="form-check form-switch">
+  <input class="form-check-input" type="checkbox" id="correct-{idx}" name="correct" value="{idx}" {d}/>
+  <label class="form-check-label" for="correct-{idx}"> <span class="bi bi-check-square-fill"> {n}</span></label>
+</div>
+        """)
+
+    def render_correcting(self, record):
+        n = record['correcting']
+        return format_html(f"<div>{n}</div>")
+
+    def render_reassign(self, record):
+        idx = record['idx']
+        n = record['reassign']
+        d = '' if n else 'disabled'
+        return format_html(f"""
+<div class="form-check form-switch">
+  <input class="form-check-input" type="checkbox" id="reassign-{idx}" name="reassign" value="{idx}" {d}/>
+  <label class="form-check-label" for="reassign-{idx}"> <span class="bi bi-recycle"> {n}</span></label>
+</div>
+        """)
+
+    def __init__(self, assignment, uabs, groups):
+        records = []
+        a_students = { s: set() for s in UserAssignmentBinding.ST_LOOKUP.keys() }
+        for b in uabs:
+            a_students[b.state].add(b.user)
+        a_students['visited'] = a_students[UserAssignmentBinding.ST_WORKINPROGRESS].union(a_students[UserAssignmentBinding.ST_SUBMITTED]).union(a_students[UserAssignmentBinding.ST_COLLECTED]).union(a_students[UserAssignmentBinding.ST_CORRECTED]).union(a_students[UserAssignmentBinding.ST_READY])
+        records = [ {
+            'idx': f'{assignment.id}-{group.id}' if group else f'{assignment.id}-n',
+            'group': group,
+            'handout': len(set(students).difference(a_students['visited'])),
+            'collect': len(a_students[UserAssignmentBinding.ST_WORKINPROGRESS].intersection(students)),
+            'correct': len((a_students[UserAssignmentBinding.ST_SUBMITTED].union(a_students[UserAssignmentBinding.ST_COLLECTED])).intersection(students)),
+            'correcting': len(a_students[UserAssignmentBinding.ST_CORRECTED].intersection(students)),
+            'reassign': len(a_students[UserAssignmentBinding.ST_READY].intersection(students)),
+            } for group, students in groups.items() ]
+        super().__init__(records)
 
 
 class TableAssignmentMassAll(tables.Table):
@@ -455,23 +444,23 @@ class TableAssignmentMassAll(tables.Table):
 
     def render_group(self, record):
         rows = []
-        for k, v in  self.lut[record.course]:
-            gn = 'Ungrouped' if k is None else k.name
-            n = len(v)
+        for group, students in self.groups[record.course].items():
+            gn = 'Ungrouped' if group is None else group.name
+            n = len(students)
             rows.append(f"<div>{gn} ({n} students)</div>")
         return format_html("<br>".join( rows ))
 
     def render_handout(self, record):
         rows = []
-        for k, v in  self.lut[record.course]:
-            idx = f'{record.id}-n' if k is None else f'{record.id}-{k.id}'
-            students = set(v).difference([ b.user for b in self.lut_uab[record].filter(state__in = [
+        for group, students in  self.groups[record.course].items():
+            idx = f'{record.id}-n' if group is None else f'{record.id}-{group.id}'
+            students = set(students).difference([ b.user for b in filter(lambda b: b.state in [
                 UserAssignmentBinding.ST_WORKINPROGRESS,
                 UserAssignmentBinding.ST_READY,
                 UserAssignmentBinding.ST_SUBMITTED, 
                 UserAssignmentBinding.ST_COLLECTED,
                 UserAssignmentBinding.ST_CORRECTED
-                ]) ])
+                ], self.lut_uab[record]) ])
             n = len(students)
             d = '' if n else 'disabled'
             rows.append(f"""
@@ -484,9 +473,9 @@ class TableAssignmentMassAll(tables.Table):
         
     def render_collect(self, record):
         rows = []
-        for k, v in  self.lut[record.course]:
-            idx = f'{record.id}-n' if k is None else f'{record.id}-{k.id}'
-            students = set(v).intersection([ b.user for b in self.lut_uab[record].filter(state = UserAssignmentBinding.ST_WORKINPROGRESS) ])
+        for group, students in  self.groups[record.course].items():
+            idx = f'{record.id}-n' if group is None else f'{record.id}-{group.id}'
+            students = set(students).intersection([ b.user for b in filter(lambda b: b.state == UserAssignmentBinding.ST_WORKINPROGRESS, self.lut_uab[record]) ])
             n = len(students)
             d = '' if n else 'disabled'
             rows.append(f"""
@@ -499,12 +488,12 @@ class TableAssignmentMassAll(tables.Table):
 
     def render_correct(self, record):
         rows = []
-        for k, v in  self.lut[record.course]:
-            idx = f'{record.id}-n' if k is None else f'{record.id}-{k.id}'
-            students = set(v).intersection([ b.user for b in self.lut_uab[record].filter(state__in = [
+        for group, students in  self.groups[record.course].items():
+            idx = f'{record.id}-n' if group is None else f'{record.id}-{group.id}'
+            students = set(students).intersection([ b.user for b in filter(lambda b: b.state in [
                 UserAssignmentBinding.ST_SUBMITTED, 
                 UserAssignmentBinding.ST_COLLECTED
-                ]) ])
+                ], self.lut_uab[record]) ])
             n = len(students)
             d = '' if n else 'disabled'
             rows.append(f"""
@@ -517,17 +506,17 @@ class TableAssignmentMassAll(tables.Table):
 
     def render_correcting(self, record):
         rows = []
-        for k, v in  self.lut[record.course]:
-            students = set(v).intersection([ b.user for b in self.lut_uab[record].filter(state = UserAssignmentBinding.ST_CORRECTED) ])
+        for group, students in  self.groups[record.course].items():
+            students = set(students).intersection([ b.user for b in filter(lambda b: b.state == UserAssignmentBinding.ST_CORRECTED, self.lut_uab[record]) ])
             n = len(students)
             rows.append(f"<div>{n}</div>")
         return format_html("<br>".join( rows ))
 
     def render_reassign(self, record):
         rows = []
-        for k, v in  self.lut[record.course]:
-            idx = f'{record.id}-n' if k is None else f'{record.id}-{k.id}'
-            students = set(v).intersection([ b.user for b in self.lut_uab[record].filter(state = UserAssignmentBinding.ST_READY) ])
+        for group, students in  self.groups[record.course].items():
+            idx = f'{record.id}-n' if group is None else f'{record.id}-{group.id}'
+            students = set(students).intersection([ b.user for b in filter(lambda b: b.state == UserAssignmentBinding.ST_READY, self.lut_uab[record]) ])
             n = len(students)
             d = '' if n else 'disabled'
             rows.append(f"""
@@ -539,12 +528,10 @@ class TableAssignmentMassAll(tables.Table):
         return format_html("<br>".join( rows ))
 
 
-    def __init__(self, qs):
+    def __init__(self, qs, lut_uab, groups):
         super().__init__(qs)
-        uab = UserAssignmentBinding.objects.filter(assignment__in = qs)
-        self.lut_uab = { a: uab.filter(assignment = a) for a in qs }
-        courses = set([ a.course for a in qs ])
-        self.lut = { c: list(c.groups.items()) for c in courses }
+        self.lut_uab = lut_uab
+        self.groups = groups
 
 
 class TableUser(tables.Table):

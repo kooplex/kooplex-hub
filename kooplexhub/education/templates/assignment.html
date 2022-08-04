@@ -34,151 +34,52 @@
 {% block realcontent %}
 <ul class="nav nav-tabs  mb-2 mt-3" id="assignmentTeacherTabs" role="tablist">
   <li class="nav-item" role="presentation" data-intro="#newassignmentarea">
-    <a class="nav-link mytab {% if active == "new" %}active{% endif %}" id="tab-new" data-bs-toggle="tab" href="#newAssignment" type="button" role="tab" aria-controls="newAssignment" aria-selected="{% if active_tab == "new" %}true{% else %}false{% endif %}">New Assignment</a>
+    {% if active == "new" %}
+    <a class="nav-link mytab active" id="tab-new" href="#" type="button" role="tab" aria-controls="newAssignment" aria-selected="true">New Assignment</a>
+    {% else %}
+    <a class="nav-link mytab" id="tab-new" href="{% url 'education:assignment_new' %}" type="button" role="tab" aria-controls="newAssignment" aria-selected="false">New Assignment</a>
+    {% endif %}
   </li>
   <li class="nav-item" role="presentation" data-intro="#configureassignmentarea">
-    <a class="nav-link mytab {% if active == "conf" %}active{% endif %}" id="tab-conf" data-bs-toggle="tab" href="#confAssignment" type="button" role="tab" aria-controls="confAssignment" aria-selected="{% if active_tab == "conf" %}true{% else %}false{% endif %}">Configure Assignment</a>
+    {% if active == "conf" %}
+    <a class="nav-link mytab active" id="tab-conf" href="#" type="button" role="tab" aria-controls="confAssignment" aria-selected="true">Configure Assignment</a>
+    {% else %}
+    <a class="nav-link mytab" id="tab-conf" href="{% url 'education:assignment_configure' %}" type="button" role="tab" aria-controls="confAssignment" aria-selected="false">Configure Assignment</a>
+    {% endif %}
   </li>
   <li class="nav-item" role="presentation" data-intro="#massassignmentarea">
-    <a class="nav-link mytab {% if active == "handlemass" %}active{% endif %}" id="tab-handlemass" data-bs-toggle="tab" href="#AssignmentMass" type="button" role="tab" aria-controls="AssignmentMass" aria-selected="{% if active_tab == "handlemass" %}true{% else %}false{% endif %}">Mass Assignments</a>
+    {% if active == "handlemass" %}
+    <a class="nav-link mytab active" id="tab-handlemass" href="#" type="button" role="tab" aria-controls="AssignmentMass" aria-selected="true">Mass Assignments</a>
+    {% else %}
+    <a class="nav-link mytab" id="tab-handlemass" href="{% url 'education:assignment_handle_mass' %}" type="button" role="tab" aria-controls="AssignmentMass" aria-selected="false">Mass Assignments</a>
+    {% endif %}
   </li>
   <li class="nav-item" role="presentation" data-intro="#handleassignmentarea">
-    <a class="nav-link mytab {% if active == "handle" %}active{% endif %}" id="tab-handle" data-bs-toggle="tab" href="#Assignment" type="button" role="tab" aria-controls="Assignment" aria-selected="{% if active_tab == "handle" %}true{% else %}false{% endif %}">Handle Assignments</a>
+    {% if active == "handle" %}
+    <a class="nav-link mytab active" id="tab-handle" href="#" type="button" role="tab" aria-controls="Assignment" aria-selected="true">Handle Assignments</a>
+    {% else %}
+    <a class="nav-link mytab" id="tab-handle" href="{% url 'education:assignment_handle' %}" type="button" role="tab" aria-controls="Assignment" aria-selected="false">Handle Assignments</a>
+    {% endif %}
   </li>
   <li class="nav-item" role="presentation" data-intro="#summaryofcoursesarea">
-    <a class="nav-link mytab {% if active == "summary" %}active{% endif %}" id="tab-summary" data-bs-toggle="tab" href="#summary" type="button" role="tab" aria-controls="summary" aria-selected="{% if active_tab == "summary" %}true{% else %}false{% endif %}">Student points</a>
+    {% if active == "summary" %}
+    <a class="nav-link mytab active" id="tab-summary" href="#" type="button" role="tab" aria-controls="summary" aria-selected="true">Student points</a>
+    {% else %}
+    <a class="nav-link mytab" id="tab-summary" href="{% url 'education:assignment_summary' %}" type="button" role="tab" aria-controls="summary" aria-selected="false">Student points</a>
+    {% endif %}
   </li>
 </ul>
 
 <div class="tab-content {#mb-2 mt-2#}" id="assignmentTeacherTabContent">
-  {# New #}
-  <div class="tab-pane fade {% if active == "new" %}show active{% endif %}" id="newAssignment" role="tabpanel" aria-labelledby="tab-new">
-    <div class="card shadow mt-3 p-3 mb-2 bg-light rounded">
-      {% if f_assignment|length > 0 %}
-      <form id="assignments-form-new" class="form-horizontal" action="{% url 'education:newassignment' %}" method="post">
-        {% csrf_token %}
-	<input type="hidden" name="course_id" id="course_id" value="">
-        <table>
-	  <thead>
-	    <tr>
-	      <th><label class="mt-2" for="course_selected">Selected course: </label></th>
-	      <td>
-                <select id="course_selected" name="course_selected" class="form-select" style="width: 100%">
-	          {% for f in f_assignment %}
-	            {% if f.okay %}
-	            <option value="{{ f.course.id }}">{{ f.course }}</option>
-	            {% endif %}
-                  {% endfor %}
-                </select>
-	      </td>
-	    </tr>
-	  </thead>
-	  {% for f in f_assignment %}
-	    {% if f.okay %}
-	    <tbody style="display: none" id="newAssignmentForm-{{ f.course.id }}">
-                {{ f.as_table }}
-            </tbody>
-	    {% endif %}
-          {% endfor %}
-        </table>
-        {% include 'apply_cancel.html' with hide_cancel=True %}
-      </form>
-      {% else %}
-        {% include 'empty.html' with empty_body='There are no candidate subfolders in <code>assignment_prepare</code> directory. Please create one and place all files into it to be part of a new assignment. Empty folders cannot be selected.' skip_border=True %}
-      {% endif %}
-    </div>
-  </div>
-
-  {# Configure #}
-  <div class="tab-pane fade {% if active == "conf" %}show active{% endif %}" id="confAssignment" role="tabpanel" aria-labelledby="tab-conf">
-    <div class="mt-3">
-      <form id='assignment-form-configure' class="mt-3" action="{% url 'education:configureassignment' %}" method="post">
-        {% csrf_token %}
-        {% if t_assignment_config.data|length > 0 %}
-	  {% apply_cancel with icon_apply="bi bi-save" %}
-        {%endif %}
-        <input class="form-control mb-3 mt-3" type="text" id="search_configure" placeholder="Search course or assignment" title="Type in a name" autofocus>
-        <div>
-          {% render_table t_assignment_config %}
-        </div>
-      </form>
-    </div>
-  </div>
-
-  {# Mass Assignments #}
-  <div class="tab-pane fade {% if active == "handlemass" %}show active{% endif %}" id="AssignmentMass" role="tabpanel" aria-labelledby="tab-handlemass">
-    <div class="mt-3">
-      {% if t_mass_all %}
-        <form id='assignment-form-mass-all' class="row mb-3 mt-3" action="{% url 'education:handle_mass_many' %}" method="post">
-          {% csrf_token %}
-	  {% apply_cancel with icon_apply="bi bi-save" %}
-          {% render_table t_mass_all %}
-        </form>
-      {% else %}
-        {% include 'empty.html' with empty_body='You have not defined any assignments yet.' skip_border=True %}
-      {% endif %}
-    </div>
-  </div>
-
-  {# Handle Assignments #}
-  <div class="tab-pane fade {% if active == "handle" %}show active{% endif %}" id="Assignment" role="tabpanel" aria-labelledby="tab-handle">
-    <div class="mt-3">
-      {% if d_course_assignments|length > 0 %}
-        <form id='assignment-form-handle' style="margin-top: -8px;" class="mt-1 mb-4" action="{% url 'education:assignment_teacher' %}" method="post">
-          {% csrf_token %}
-          <div class="d-flex flex-row mb-2 mt-2">
-            <label class="form-check-label" for="assignment_selected" id="lbl_assignment_selected" data-toggle="tooltip" title="Select assignment you'd like to handle"><i class="bi bi-journal-bookmark-fill"></i>&nbsp;Assignment</label>
-            <select class="form-select" id="assignment_selected" name="assignment_selected" autofocus>
-              {% for c_id, ass in d_course_assignments.items %}
-                {% with ass|first as a0 %}
-                <optgroup label="Course {{ a0.course.name }}"> 
-                {% for a in ass %}
-                  <option class="dropdown-item" value="{{ a.id }}"
-                    {% if c.id == courses %} selected {% endif %}
-                  >{{ a.name }} ({{ a0.course.folder }}/{{ a.folder }})</option>
-                {% endfor %}
-                </optgroup>
-                {% endwith %}
-              {% endfor %}
-            </select>
-          </div>
-        </form>
-      {% else %}
-        {% include 'empty.html' with empty_body='You have not defined any assignments yet.' skip_border=True %}
-      {% endif %}
-      <div id="operationPanel">
-      {% if assignment_id %}
-      <div class="d-flex flex-row mb-2">
-        <h4 style="width: 100%;">Mass operation</h4>
-        {% include 'apply_cancel.html' with hide_cancel=True %}
-      </div>
-        <form id='assignment-form-mass' class="row mb-3 mt-3" action="{% url 'education:handle_mass' %}" method="post">
-          {% csrf_token %}
-          <input type="hidden" name="assignment" value="{{assignment_id}}" id="assignment_id">
-          {% render_table t_mass %}
-    
-        </form>
-        <form  id='assignment-form-individual' class="mb-3 mt-3" action="{% url 'education:handleassigment' %}" method="post">
-          <div class="d-flex flex-row mb-2">
-            <h4 style="width: 100%;">Individual operation</h4>
-              {% include 'save_apply_cancel.html' %}
-              </div>
-              <input class="form-control me-2 mb-3 mt-3" type="text" id="search_student" placeholder="Search student by name or username" title="Type in a name">
-          {% csrf_token %}
-          <input type="hidden" name="assignment" value="{{assignment_id}}" >
-          {% render_table t_assignments %}
-          {% include 'apply_cancel.html' with hide_cancel=True %}
-        </form>
-      {% endif %}
-      </div>
-    </div>
-  </div>
-
-  {# Summary #}
+  {% block assignment_content %}
   <div class="tab-pane fade {% if active == "summary" %}show active{% endif %}" id="summary" role="tabpanel" aria-labelledby="tab-summary">
     {% if d_course_assignments|length > 0 %}
-    <label class="form-check-label" for="summary_course_selected" id="lbl_summary_course_selected" data-toggle="tooltip" title="Select assignment you'd like to investigate"><i class="bi bi-journal-bookmark-fill"></i>&nbsp;Assignment</label>
-    <select class="form-select" id="summary_course_selected" name="summary_course_selected" autofocus>
+    <div class="d-flex flex-row mb-2 mt-2">
+      <div class="p-2 mt-1">
+        <span data-toggle="tooltip" title="Select assignment you'd like to handle"><i class="bi bi-journal-bookmark-fill"></i>&nbsp;Course</span>
+      </div>
+      <div class="p-2 flex-fill">
+        <select class="form-select" id="summary_course_selected" name="summary_course_selected">
               <optgroup label="-- Select course --"></optgroup>
               {% for c_id, ass in d_course_assignments.items %}
                 {% with ass|first as a0 %}
@@ -187,28 +88,54 @@
                 </option>               
                  {% endwith %}
               {% endfor %}
-            </select>
-            {% else %}
-            <div class="alert alert-warning">You need to define assignment(s) for courses before you can check student status.</div>
-          {% endif %}
-          <form id='student-grade' class="mb-3 mt-3">
-            <input type="hidden" name="assignment" value="{{assignment_id}}" >
-      {% for c_id, t in  ts.items %}
+        </select>
+      </div>
+    </div>
+    {% else %}
+        {% include 'empty.html' with empty_body='You have not filled in the scores for your assignments.' skip_border=True %}
+    {% endif %}
+    <form id='student-grade' class="mb-3 mt-3">
+      <input type="hidden" name="assignment" value="{{assignment_id}}" >
+      {% for c_id, t in  t_summary.items %}
       <div id="st-{{c_id}}">
-      {{ t }}
+        {{ t }}
       </div>
       {% endfor %}
     </form>
   </div>
+  {% endblock %}
 </div>
+{% endblock %}
 
-
+{% block scripts %}
 <script>
 $("#assignmentTeacherTabs li a").on("click", function () {
   var tab = $( this ).attr("id").split('-')[1]
   console.log( tab )
   $.cookie("assignment_teacher_tab", tab, { 'path': '/', 'secure': true });
 });
+$("#assignment_selected").change(function() {
+  var sel_id = $( this ).val();
+  console.log( "changed to " + sel_id );
+  $('[id^=operationPanelMass-]').each(function() {
+    var myid = $(this).attr("id").split('-')[1]
+    console.log( "checking " + myid );
+    if ( myid == sel_id ) {
+      $( this ).show();
+    } else {
+      $( this).hide();
+    }
+  });
+  $('[id^=operationPanelIndividual-]').each(function() {
+    var myid = $(this).attr("id").split('-')[1]
+    console.log( "checking " + myid );
+    if ( myid == sel_id ) {
+      $( this ).show();
+    } else {
+      $( this).hide();
+    }
+  });
+}).change();
 $("#summary_course_selected").change(function() {
   var sel_id = $( this ).val();
   console.log( "summary course changed to " + sel_id );
@@ -266,52 +193,7 @@ $("#course_selected").change(function () {
   console.log( "chg: " + old + " -> " + sel );
 }).change();
 
-$("#assignment_selected").change(function() {
-  var sel_id = $( this ).val();
-  console.log( "changed to " + sel_id );
-  $.cookie("handle_assignment_last", sel_id, { 'path': '/', 'secure': true })
-  if ( $( "#assignment_id" ).val() == sel_id ) {
-    $( "#operationPanelRefresh" ).hide();
-    $( "#operationPanel" ).show();
-    console.log( "show assignment handler" );
-  } else {
-    $( "#operationPanelRefresh" ).show();
-    $( "#operationPanel" ).hide();
-    console.log( "refresh assignment handler" );
-  }
-});
 
-$("#search_configure").keyup(function() {
-  var pattern = $( this ).val().toUpperCase();
-  console.log( "search config: " + pattern );
-  $( "#assignment-form-configure" ).find('tr').each(function() {
-    if ( $( this ).parent().is("thead") ) {
-      return;
-    }
-    var hide_it = true;
-    if (pattern.length > 0) {
-      $( this ).find("input[name^='name-old-'").each(function() {
-        var name = $( this ).val().toUpperCase();
-        if ( name.indexOf(pattern) > -1 ) {
-	  hide_it = false;
-        }
-      });
-      $( this ).find("input[name='course'").each(function() {
-        var name = $( this ).val().toUpperCase();
-        if ( name.indexOf(pattern) > -1 ) {
-	  hide_it = false;
-        }
-      });
-    } else {
-      hide_it = false;
-    }
-    if (hide_it) {
-      $( this ).hide();
-    } else {
-      $( this ).show();
-    }
-  });
-});
 
 $("#search_student").keyup(function() {
   var pattern = $( this ).val().toUpperCase();

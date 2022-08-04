@@ -11,12 +11,6 @@ KOOPLEX['kubernetes'].update({})
 KOOPLEX['kubernetes']['userdata'].update({})
 
 
-class MyDescription(forms.Textarea):
-    def __init__(self, *args, **kwargs):
-        super(MyDescription, self).__init__(*args, **kwargs)
-        self.attrs['rows'] = 3
-        self.attrs['cols'] = 30
-
 
 class FormAssignment(forms.ModelForm):
     folder = forms.ChoiceField(
@@ -25,12 +19,7 @@ class FormAssignment(forms.ModelForm):
     description = forms.CharField(
             max_length = 100, required = True,
             help_text = _('It is always a good idea to have an abstract of your assignment.'), 
-            widget = MyDescription, 
-        )
-    can_studentsubmit = forms.BooleanField(
-            label=_('Student can submit earlier'), 
-            required = False, 
-            help_text=_('Student can submit earlier even when you set an expiry date.')
+            widget = forms.Textarea(attrs = {'rows': 3 }), 
         )
     valid_from = forms.DateTimeField(
             input_formats = ["%m/%d/%y %H:%M"], 
@@ -44,10 +33,6 @@ class FormAssignment(forms.ModelForm):
             required = False,
             help_text = _('If unspecified either you or students need to take care of collecting or submitting assignments respectively.'),
         )
-    max_number_of_files = forms.IntegerField(
-            required = False,
-            help_text = _('At most how many files can be handed in with the assignment.'),
-        )
     max_size = forms.IntegerField(
             required = False,
             help_text = _('Total file size quota applied to the assignment.'),
@@ -56,15 +41,13 @@ class FormAssignment(forms.ModelForm):
 
     class Meta:
         model = Assignment
-        fields = [ 'name', 'folder', 'description', 'can_studentsubmit', 'remove_collected', 'valid_from', 'expires_at', 'max_number_of_files', 'max_size' ]
+        fields = [ 'name', 'folder', 'description', 'remove_collected', 'valid_from', 'expires_at', 'max_size' ]
         labels = {
             'name': _('The name of the assignment'),
             'description': _('A short description of the excercises'),
-            'can_studentsubmit': _('Student can submit earlier'),
             'remove_collected': _('Remove folder when collecting'),
         }
         help_texts = {
-            'can_studentsubmit': _('Student can submit earlier even when you set an expiry date.'),
             'remove_collected': _('Remove student\'s folder when submitted'),
         }
 
@@ -87,8 +70,6 @@ class FormAssignment(forms.ModelForm):
                 }
                 self.fields[field].widget.attrs.update(extra)
         self.fields['folder'].widget.attrs["class"] = "form-select"
-        self.fields['can_studentsubmit'].widget.attrs["class"] = "form-check-input"
-        self.fields['can_studentsubmit'].widget.attrs["style"] = ""
         self.fields['remove_collected'].widget.attrs["class"] = "form-check-input"
         self.fields['remove_collected'].widget.attrs["style"] = ""
         self.fields['valid_from'].widget.attrs["class"] = "form-control datetimepicker span2"

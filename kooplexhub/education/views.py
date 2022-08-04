@@ -90,62 +90,95 @@ def configure(request, usercoursebinding_id):
 
 @login_required
 def assignment_teacher(request):
-    """
-    @summary: handle assignment page. 
-    @param usercoursebinding_id: is set if pencil is used, defaults to None if coming from menu.
-    """
+    active = request.COOKIES.get('assignment_teacher_tab', 'conf')
+
+    if active == 'new':
+        return redirect('education:assignment_new')
+    elif active == 'conf':
+        return redirect('education:assignment_configure')
+    elif active == 'handle':
+        return redirect('education:assignment_handle')
+    elif active == 'handlemass':
+        return redirect('education:assignment_handle_mass')
+    elif active == 'summary':
+        return redirect('education:assignment_summary')
+    else:
+        logger.error(f'not implemented tab: {active} by {request.user}')
+        return redirect('indexpage')
+
+@login_required
+def assignment_new(request):
     user = request.user
-    profile = user.profile
-    logger.debug("user %s, method: %s" % (user, request.method))
+    courses = [ b.course for b in UserCourseBinding.objects.filter(user = user, is_teacher = True) ]
     context_dict = {
-            'menu_education': True,
-            'submenu': 'assignment_teacher',
-            'active': request.COOKIES.get('assignment_teacher_tab', 'conf'),
-            }
-    courses = UserCourseBinding.objects.filter(user = user, is_teacher = True).values_list('course')
-    if not courses:
-        messages.warning(request, f'You are not bound to any course as a teacher.')
-        return render(request, 'education_layout.html', context = context_dict)
-    assignments = Assignment.objects.filter(course__in = courses)
-    uabs = UserAssignmentBinding.objects.filter(assignment__in = assignments)
-    mapping = [ (c, assignments.filter(course = c)) for c in courses ]
-    keep = lambda c: c[1]
-    course_assignments = dict(filter(keep, mapping))
+        'menu_education': True,
+        'submenu': 'assignment_teacher',
+        'active': request.COOKIES.get('assignment_teacher_tab', 'new'),
+        'f_assignment': list(filter(lambda f: f.okay, [ FormAssignment(user = user, course = c, auto_id = f'id_newassignment_{c.cleanname}_%s') for c in courses ])),
+    }
+    return render(request, 'assignment_new.html', context = context_dict)
 
-    selected_assignment_id = int(request.POST.get('assignment_selected', assignments[0].id if assignments else -1))
+@login_required
+def assignment_configure(request):
+    user = request.user
+    courses = [ b.course for b in UserCourseBinding.objects.filter(user = user, is_teacher = True) ]
+    assignments = list(Assignment.objects.filter(course__in = courses))
+    context_dict = {
+        'menu_education': True,
+        'submenu': 'assignment_teacher',
+        'active': request.COOKIES.get('assignment_teacher_tab', 'conf'),
+        't_assignment_config': TableAssignmentConf(assignments),
+    }
+    return render(request, 'assignment_configure.html', context = context_dict)
 
-#    if assignment_id is not None:
-#        a = Assignment.objects.get(id = assignment_id)
-#        qs_uab = UserAssignmentBinding.objects.filter(assignment__id = assignment_id)
-#        students_handled = [ b.user for b in qs_uab ]
-#        uab = [ UserAssignmentBinding(user = b.user, assignment = a) for b in a.course.studentbindings if not b.user in students_handled ]
-#        uab.extend( qs_uab )
-#        context_dict.update({
-#            'assignment_id': assignment_id,
-#            't_assignments': TableAssignmentHandle( uab ),
-#            't_mass': TableAssignmentMass( a ),
-#            })
-#    else:
-#        messages.warning(request, f'You need to select the assignment.')
+@login_required
+def assignment_handle(request):
+    user = request.user
+    courses = [ b.course for b in UserCourseBinding.objects.filter(user = user, is_teacher = True) ]
+    assignments = list(Assignment.objects.filter(course__in = courses))
+    uabs = list(UserAssignmentBinding.objects.filter(assignment__in = assignments))
+    lut_uabs = { a: list(filter(lambda b: b.assignment == a, uabs)) for a in assignments }
+    groups = { c: c.groups for c in courses }
+    context_dict = {
+        'menu_education': True,
+        'submenu': 'assignment_teacher',
+        'active': request.COOKIES.get('assignment_teacher_tab', 'handle'),
+        'd_course_assignments': { c:l for c, l in { c: list(filter(lambda a: a.course == c, assignments)) for c in courses }.items() if l },
+        't_mass': { a.id: TableAssignmentMass( a, lut_uabs[a], groups[a.course] ) for a in assignments },
+        't_assignments': { a.id: TableAssignmentHandle( lut_uabs[a] ) for a in assignments },
+    }
+    return render(request, 'assignment_handle.html', context = context_dict)
 
-    table_assignment_config = TableAssignmentConf(assignments)
-    table_assignment_summary = TableAssignmentSummary(assignments)
-#    ts = dict(filter(lambda i: i[1] is not None, { c.id: TableCourseStudentSummary(c) for c in courses }.items()))
+@login_required
+def assignment_handle_mass(request):
+    user = request.user
+    courses = [ b.course for b in UserCourseBinding.objects.filter(user = user, is_teacher = True) ]
+    assignments = list(Assignment.objects.filter(course__in = courses))
+    uabs = list(UserAssignmentBinding.objects.filter(assignment__in = assignments))
+    lut_uabs = { a: list(filter(lambda b: b.assignment == a, uabs)) for a in assignments }
+    groups = { c: c.groups for c in courses }
+    context_dict = {
+        'menu_education': True,
+        'submenu': 'assignment_teacher',
+        'active': request.COOKIES.get('assignment_teacher_tab', 'handlemass'),
+        't_mass_all': TableAssignmentMassAll( assignments, lut_uabs, groups ),
+    }
+    return render(request, 'assignment_handle_mass.html', context = context_dict)
 
-#    okay = lambda f: f.okay
-#    assignments = set()
-#    for la in course_assignments.values():
-#        assignments.update(la)
-    context_dict.update({
-        'd_course_assignments': course_assignments,
-        't_assignment_summary': table_assignment_summary,
-        #        't_course_student_summary': table_course_student_summary,
-##        'ts': ts,
-        't_assignment_config': table_assignment_config,
-##        'f_assignment': list(filter(okay, [ FormAssignment(user = user, course = c, auto_id = f'id_newassignment_{c.cleanname}_%s') for c in courses ])),
-        't_mass_all': TableAssignmentMassAll( assignments ),
-        })
+@login_required
+def assignment_summary(request):
+    user = request.user
+    courses = [ b.course for b in UserCourseBinding.objects.filter(user = user, is_teacher = True) ]
+    assignments = list(Assignment.objects.filter(course__in = courses))
+    context_dict = {
+        'menu_education': True,
+        'submenu': 'assignment_teacher',
+        'active': request.COOKIES.get('assignment_teacher_tab', 'summary'),
+        'd_course_assignments': { c:l for c, l in { c: list(filter(lambda a: a.course == c, assignments)) for c in courses }.items() if l },
+        't_summary': dict(filter(lambda i: i[1] is not None, { c.id: TableCourseStudentSummary(c) for c in courses }.items())),
+    }
     return render(request, 'assignment.html', context = context_dict)
+
 
 
 def _handout(assignment, group_map):
@@ -324,9 +357,7 @@ def newassignment(request):
                 folder = f.cleaned_data['folder'],#recheck existence
                 valid_from = f.cleaned_data['valid_from'],
                 expires_at = f.cleaned_data['expires_at'],
-                can_studentsubmit = f.cleaned_data['can_studentsubmit'],
                 remove_collected = f.cleaned_data['remove_collected'],
-                max_number_of_files = f.cleaned_data['max_number_of_files'],
                 max_size = f.cleaned_data['max_size'],
                 )
         logger.info(f'+ new assignment {a.name} ({a.folder}) in course {course.name} by {user.username}')
@@ -377,12 +408,12 @@ def configureassignment(request):
         try:
             a = Assignment.objects.get(id = aid, course__in = courses)
             changed = []
-            for attr in [ 'name', 'description', 'valid_from', 'expires_at', 'max_size', 'max_number_of_files' ]:
+            for attr in [ 'name', 'description', 'valid_from', 'expires_at', 'max_size' ]:
                 old = request.POST.get(f'{attr}-old-{aid}')
                 new = request.POST.get(f'{attr}-{aid}')
                 if new == "":
                     new = None
-                if attr in [ 'valid_from', 'expires_at', 'max_size', 'max_number_of_files' ]:
+                if attr in [ 'valid_from', 'expires_at', 'max_size' ]:
                     if old == "":
                         old = None
                 if old == new:

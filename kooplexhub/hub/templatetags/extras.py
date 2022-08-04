@@ -87,3 +87,11 @@ def popumessage(messages):
         return format_html("""<div id="infoMessages" class="hide"></div>""")
 
 
+@register.simple_tag(name = 'render_date')
+def render_date(date):
+    return date.strftime("%Y-%m-%d %H:%M") if date else ''
+
+
+@register.simple_tag(name = 'render_folder')
+def render_folder(folder):
+    return format_html(f"""<span class="pillow"><i class="bi bi-folder" data-toggle="tooltip" title="Folder"></i>&nbsp;{folder}</span>""")
