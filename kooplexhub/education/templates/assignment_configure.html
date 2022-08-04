@@ -3,10 +3,22 @@
 {% load render_table from django_tables2 %}
 {% load extras %}
 
+{% block child_head %}
+<!-- datetime picker requirements -->
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.2/dist/umd/popper.min.js"
+      crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/gh/Eonasdan/tempus-dominus@master/dist/js/tempus-dominus.js"
+      crossorigin="anonymous"></script>
+<link href="https://cdn.jsdelivr.net/gh/Eonasdan/tempus-dominus@master/dist/css/tempus-dominus.css"
+      rel="stylesheet" crossorigin="anonymous">
+<!-- bootstrap-toggler requirement -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/css/bootstrap5-toggle.min.css" rel="stylesheet">
+{% endblock %}
+
 {% block assignment_content %}
 <div class="tab-pane fade {% if active == "conf" %}show active{% endif %}" id="confAssignment" role="tabpanel" aria-labelledby="tab-conf">
   <div class="mt-3">
-    <form id='assignment-form-configure' class="mt-3" action="{% url 'education:configureassignment' %}" method="post">
+    <form id='assignment-form-configure' class="mt-3" action="{% url 'education:assignment_configure_save' %}" method="post">
       {% csrf_token %}
       {% if t_assignment_config.data|length > 0 %}
         {% apply_cancel with icon_apply="bi bi-save" %}
@@ -20,7 +32,7 @@
 </div>
 {% endblock %}
 
-{% block scripts %}
+{% block child_scripts %}
 <script>
 $("#search_configure").keyup(function() {
   var pattern = $( this ).val().toUpperCase();
@@ -53,5 +65,69 @@ $("#search_configure").keyup(function() {
     }
   });
 });
+// loop over all linked datetime picker widgets
+document.querySelectorAll('[id^="linkedPickers1-"]').forEach(function(linkedPicker1Element) {
+  const linked1 = new tempusDominus.TempusDominus(linkedPicker1Element, {
+        display: {
+            icons: {
+                time: 'bi bi-clock',
+                date: 'bi bi-calendar',
+                up: 'bi bi-arrow-up',
+                down: 'bi bi-arrow-down',
+                previous: 'bi bi-chevron-left',
+                next: 'bi bi-chevron-right',
+                today: 'bi bi-calendar-check',
+                clear: 'bi bi-trash',
+                close: 'bi bi-x'
+            },
+            buttons: {
+                today: true,
+                clear: true,
+                close: true
+            }
+        }
+    });
+  const id_other = linkedPicker1Element.id.replace('linkedPickers1-', 'linkedPickers2-');
+  const linked2 = new tempusDominus.TempusDominus(document.getElementById(id_other), {
+        useCurrent: false,
+        display: {
+            icons: {
+                time: 'bi bi-clock',
+                date: 'bi bi-calendar',
+                up: 'bi bi-arrow-up',
+                down: 'bi bi-arrow-down',
+                previous: 'bi bi-chevron-left',
+                next: 'bi bi-chevron-right',
+                today: 'bi bi-calendar-check',
+                clear: 'bi bi-trash',
+                close: 'bi bi-x'
+            },
+            buttons: {
+                today: true,
+                clear: true,
+                close: true
+            }
+        }
+    });
+  
+    //using event listeners
+  linkedPicker1Element.addEventListener(tempusDominus.Namespace.events.change, (e) => {
+        linked2.updateOptions({
+            restrictions: {
+                minDate: e.detail.date
+            }
+        });
+  });
+  
+    //using subscribe method
+  const subscription = linked2.subscribe(tempusDominus.Namespace.events.change, (e) => {
+        linked1.updateOptions({
+            restrictions: {
+                maxDate: e.date
+            }
+        });
+  });
+});
 </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/js/bootstrap5-toggle.min.js"></script>
 {% endblock %}

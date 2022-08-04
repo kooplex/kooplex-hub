@@ -33,7 +33,7 @@
     {% else %}
       {% include 'empty.html' with empty_body='You have not defined any assignments yet.' skip_border=True %}
     {% endif %}
-    <form id='assignment-form-mass' class="mb-3 mt-3" action="{% url 'education:handle_mass' %}" method="post">
+    <form id='assignment-form-mass' class="mb-3 mt-3" action="{% url 'education:assignment_mass_handle' %}" method="post">
       {% csrf_token %}
       {% title_with_button "Mass operation" %}
       {% for a_id, t in t_mass.items %}
@@ -42,7 +42,7 @@
         </div>
       {% endfor %}
     </form>
-    <form  id='assignment-form-individual' class="mb-3 mt-3" action="{% url 'education:handleassigment' %}" method="post">
+    <form  id='assignment-form-individual' class="mb-3 mt-3" action="{% url 'education:assignment_individual_handle' %}" method="post">
       {% title_with_button "Individual operation" %}
       <input class="form-control me-2 mb-3 mt-3" type="text" id="search_student" placeholder="Search student by name or username" title="Type in a name">
       {% csrf_token %}

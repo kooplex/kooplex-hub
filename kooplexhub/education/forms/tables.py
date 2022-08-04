@@ -119,7 +119,7 @@ class TableAssignmentConf(tables.Table):
     <div class="input-group log-event" id="linkedPickers1-{record.id}" data-td-target-input="nearest" data-td-target-toggle="nearest">
       <input id="linkedPickers1Input-{record.id}" name="valid_from-{record.id}" type="text" class="form-control" data-td-target="#linkedPickers1-{record.id}">
       <span class="input-group-text" data-td-target="#linkedPickers1-{record.id}" data-td-toggle="datetimepicker">
-        <span class="bi bi-calendar"></span>
+        <span class="bi bi-clock"></span>
       </span>
     </div>
   </div>
@@ -127,7 +127,7 @@ class TableAssignmentConf(tables.Table):
     <div class="input-group log-event" id="linkedPickers2-{record.id}" data-td-target-input="nearest" data-td-target-toggle="nearest">
       <input id="linkedPickers2Input-{record.id}" name="expires_at-{record.id}" type="text" class="form-control" data-td-target="#linkedPickers2-{record.id}">
       <span class="input-group-text" data-td-target="#linkedPickers2-{record.id}" data-td-toggle="datetimepicker">
-        <span class="bi bi-calendar"></span>
+        <span class="bi bi-bell"></span>
       </span>
     </div>
   </div>
@@ -163,14 +163,6 @@ class TableAssignmentConf(tables.Table):
   data-onstyle="danger" data-offstyle="secondary" value="{record.id}">
         """)
 
-
-
-
-
-
-
-
-    
 
 class TableAssignmentSummary(tables.Table):
     def render_course(self, record):

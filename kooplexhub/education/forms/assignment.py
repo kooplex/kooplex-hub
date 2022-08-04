@@ -10,9 +10,18 @@ except ImportError:
 KOOPLEX['kubernetes'].update({})
 KOOPLEX['kubernetes']['userdata'].update({})
 
-
+class dateWidget(forms.DateTimeInput):
+    template_name = 'datetime_pick.html'
 
 class FormAssignment(forms.ModelForm):
+    class Meta:
+        model = Assignment
+        fields = [ 'name', 'folder', 'description', 'remove_collected', 'valid_from', 'expires_at', 'max_size' ]
+        labels = {
+            'name': _('The name of the assignment'),
+            'description': _('A short description of the excercises'),
+        }
+
     folder = forms.ChoiceField(
             help_text = _('A snapshot will be created of all files in the selected folder, and students will receive a copy of this snapshot.'),
         )
@@ -23,33 +32,24 @@ class FormAssignment(forms.ModelForm):
         )
     valid_from = forms.DateTimeField(
             input_formats = ["%m/%d/%y %H:%M"], 
-            widget = forms.DateTimeInput(attrs = { "class": "datetimepicker span2" }), 
+            widget = dateWidget(attrs = { 'icon': 'bi bi-clock' }), 
             required = False, 
-            help_text = _('If unspecified the assignment folder is populated to students right away.'),
         )
     expires_at = forms.DateTimeField(
             input_formats = ["%m/%d/%y %H:%M"], 
-            widget = forms.DateTimeInput(attrs = { "class": "datetimepicker span2" }), 
+            widget = dateWidget(attrs = { 'icon': 'bi bi-bell' }), 
             required = False,
-            help_text = _('If unspecified either you or students need to take care of collecting or submitting assignments respectively.'),
+        )
+    remove_collected = forms.BooleanField(
+            widget = forms.CheckboxInput(attrs = { 'data-size': 'small', 'data-toggle': 'toggle', 
+                'data-on': "<span class='oi oi-trash'></span>", 'data-off': "<span class='bi bi-check-lg'></span>",
+                'data-onstyle': "danger", 'data-offstyle': "secondary" }), 
         )
     max_size = forms.IntegerField(
             required = False,
             help_text = _('Total file size quota applied to the assignment.'),
         )
 
-
-    class Meta:
-        model = Assignment
-        fields = [ 'name', 'folder', 'description', 'remove_collected', 'valid_from', 'expires_at', 'max_size' ]
-        labels = {
-            'name': _('The name of the assignment'),
-            'description': _('A short description of the excercises'),
-            'remove_collected': _('Remove folder when collecting'),
-        }
-        help_texts = {
-            'remove_collected': _('Remove student\'s folder when submitted'),
-        }
 
     def __init__(self, *args, **kwargs):
         course = kwargs.pop('course', None)
@@ -58,6 +58,8 @@ class FormAssignment(forms.ModelForm):
         folders = course.dir_assignmentcandidate()
         self.fields["folder"].choices = map(lambda x: (x, x), folders)
         for field in self.fields:
+            if field in [ 'remove_collected', 'valid_from' ]:
+                continue
             help_text = self.fields[field].help_text
             self.fields[field].help_text = None
             self.fields[field].widget.attrs["class"] = "form-control"
@@ -70,9 +72,7 @@ class FormAssignment(forms.ModelForm):
                 }
                 self.fields[field].widget.attrs.update(extra)
         self.fields['folder'].widget.attrs["class"] = "form-select"
-        self.fields['remove_collected'].widget.attrs["class"] = "form-check-input"
-        self.fields['remove_collected'].widget.attrs["style"] = ""
-        self.fields['valid_from'].widget.attrs["class"] = "form-control datetimepicker span2"
+        #self.fields['valid_from'].widget.attrs["class"] = "form-control datetimepicker span2"
         self.fields['expires_at'].widget.attrs["class"] = "form-control datetimepicker span2"
 
         self.course = course

@@ -7,7 +7,7 @@
 <div class="tab-pane fade {% if active == "handlemass" %}show active{% endif %}" id="AssignmentMass" role="tabpanel" aria-labelledby="tab-handlemass">
   <div class="mt-3">
     {% if t_mass_all %}
-      <form id='assignment-form-mass-all' class="row mb-3 mt-3" action="{% url 'education:handle_mass_many' %}" method="post">
+      <form id='assignment-form-mass-all' class="row mb-3 mt-3" action="{% url 'education:assignment_mass_handle' %}" method="post">
         {% csrf_token %}
         {% apply_cancel with icon_apply="bi bi-save" %}
         {% render_table t_mass_all %}
