@@ -1,3 +1,203 @@
-from django.shortcuts import render
+import logging
 
-# Create your views here.
+from django.shortcuts import render, redirect, get_object_or_404, HttpResponseRedirect
+from django.contrib.auth.decorators import login_required
+from django.views import generic
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib import messages
+from django.db.models import Q
+
+from .models import Report, ReportContainerBinding
+from container.models import Image, Container
+from .forms import FormReport, FormReportConfigure
+from project.models import Project, UserProjectBinding
+
+logger = logging.getLogger(__name__)
+
+try:
+    from kooplexhub.settings import KOOPLEX
+except importerror:
+    KOOPLEX = {}
+
+class NewReportView(LoginRequiredMixin, generic.FormView):
+    template_name = 'new.html'
+    form_class = FormReport
+    success_url = '/hub/report/list/' #FIXME: django.urls.reverse or shortcuts.reverse does not work reverse('project:list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['menu_report'] = True
+        context['submenu'] = 'new'
+        user = request.user
+        #profile = user.profile
+        #logger.debug("user %s, method: %s" % (user, request.method))
+        #context_dict = {
+        #}
+        #projects = [ upb.project for upb in UserProjectBinding.objects.filter(user = user) ]
+        projects = Project.objects.all() 
+        #if len(projects) == 0:
+        #    messages.warning(request, f'You do not have a project yet')
+        #    return redirect('index')
+
+        okay = lambda f: f.okay
+        context.update({
+            'f_project': list(filter(okay, [ FormReport(user = user, project = p, auto_id = f'id_newreport_%s') for p in projects ])),
+        })
+        return context
+
+    def form_valid(self, form):
+        logger.info(form.cleaned_data)
+        user = self.request.user
+        friendly_name = form.cleaned_data['friendly_name']
+        Container.objects.create(
+            user = user, 
+            name = form.cleaned_data['name'], 
+            friendly_name = friendly_name, 
+            image = form.cleaned_data['image']
+        )
+        messages.info(self.request, f'Report {friendly_name} is created')
+        return super().form_valid(form)
+
+## TODO add suitable permission for folders and files according to their scopes
+@login_required
+def new(request):
+    """
+    """
+    user = request.user
+    profile = user.profile
+    logger.debug("user %s, method: %s" % (user, request.method))
+    context_dict = {
+    }
+    projects = [ upb.project for upb in UserProjectBinding.objects.filter(user = user) ]
+    if len(projects) == 0:
+        messages.warning(request, f'You do not have a project yet')
+        return redirect('index')
+
+    okay = lambda f: f.okay
+    context_dict.update({
+        'f_project': list(filter(okay, [ FormReport(user = user, project = p, auto_id = f'id_newreport_%s') for p in projects ])),
+    })
+    return render(request, 'report_new.html', context = context_dict)
+
+@login_required
+def create(request):
+    """Renders new report form."""
+    user = request.user
+    logger.debug("user %s, method: %s" % (user, request.method))
+    if request.method == 'POST' and request.POST['button'] == 'apply':
+        pass
+    else:
+        return redirect('report:list')
+    try:
+        is_static = request.POST.get('is_static') == 'on'
+        kw = { 'is_static': is_static }
+
+        password = request.POST.get('password')
+        if password:
+            kw.update( { 'password': password } )
+        report = Report.objects.create(
+            name = request.POST.get('name'),
+            creator = user,
+            project =  Project.objects.get(id = request.POST.get('project_selected')),
+            description = request.POST.get('description'),
+            scope = request.POST.get('scope'),
+            index = request.POST.get('index'),
+            folder = request.POST.get('folder'),
+            **kw
+        )
+        if not is_static:
+            image = Image.objects.get(id = request.POST.get('image'))
+            kw.update( { 'image': image } )
+
+            # Create a container
+            container, created = Container.objects.get_or_create(
+                    user = user, 
+                    name = request.POST.get('name'),
+                    friendly_name = request.POST.get('name'),
+                    image = image
+            )
+            ReportContainerBinding.objects.create(report=report, container=container)
+        
+        messages.info(request, f"Report {report.name} is created")
+        return redirect('report:list')
+    except Exception as e:
+        logger.error(e)
+        raise
+
+
+class ReportListView(generic.ListView):
+    template_name = 'report_list.html'
+    context_object_name = 'reports'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['submenu'] = 'list'
+        context['menu_report'] = True
+        context['extend'] = "report_layout.html" if self.request.user.is_authenticated else "index_unauthorized.html"
+        return context
+
+    def get_queryset(self):
+        user = self.request.user
+        public = Q(scope = Report.SC_PUBLIC)
+        if not user.is_authenticated:
+            return Report.objects.filter(public)
+        collaborator = Q(project__in = Project.get_userprojects(user))
+        internal = Q(scope = Report.SC_INTERNAL)
+        return Report.objects.filter(public | collaborator | internal)
+
+def open(request, report_id):
+    """open report"""
+    user = request.user
+    try:
+        report = Report.objects.get(id = report_id) #, creator = user)
+        link = report.url
+        #messages.debug(request, f"Report {report.name} is opened at {link}")
+    except Exception as e:
+        logger.error(f"User {user} can not open report id={report_id} url= -- {e}")
+    return HttpResponseRedirect(link)
+
+@login_required
+def delete(request, report_id):
+    """delete report"""
+    user = request.user
+    try:
+        report = Report.objects.get(id = report_id, creator = user)
+        report.delete()
+        messages.info(request, f"Report {report.name} is deleted")
+    except Exception as e:
+        logger.error(f"User {user} can not delete report id={report_id} -- {e}")
+    #try:
+    #    rcb = ReportContainerBinding.objects.get(report=report)
+    #    rcb.delete()
+    #except Exception as e:
+    #    logger.error(f"User {user} can not delete report id={report_id} -- {e}")
+    return redirect('report:list')
+
+
+@login_required
+def configure(request, report_id):
+    """configure report"""
+    user = request.user
+    try:
+        r = Report.objects.get(id = report_id, creator = user)
+        f = FormReportConfigure(instance = r)
+        return render(request, 'configure.html', context = { 'form': f, 'report_id': r.id })
+    except Exception as e:
+        raise
+    return redirect('report:list')
+
+
+@login_required
+def modify(request):
+    """delete report"""
+    user = request.user
+    try:
+        r = Report.objects.get(id = request.POST.get('report_id'), creator = user)
+        f = FormReportConfigure(request.POST, instance = r)
+        if f.is_valid():
+            rmod = f.save(commit = False)
+            rmod.save()
+    except Exception as e:
+        raise
+    return redirect('report:list')
+

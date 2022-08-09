@@ -6,7 +6,7 @@
 {% block realcontent %}
   
 {% if userprojectbindinglist|length %}
-  <input class="form-control me-2 mb-3 mt-3" type="text" id="search_project" placeholder="Search project" title="Type in a name" >
+  <input class="form-control me-2 mb-3 mt-3" type="text" id="search_project" placeholder="Search project" title="Type in a name" autofocus>
   <div id="projectListPane" >
     {% for upb in userprojectbindinglist %}
     {% include 'project_partial_list.html' with next_page='project:list' project=upb.project projectcontainerbindings=upb.projectcontainerbindings is_admin=upb.is_admin %}

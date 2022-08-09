@@ -1,0 +1,42 @@
+{% extends extend %}
+
+{% load static %}
+
+{% block bodycontent %}
+<div class="p-2">
+  <input class="form-control mt-3 mb-3" type="text" id="search_report" placeholder="Search reports" title="Type in a name" autofocus >
+  <div id="reportListPane" class="ms-0 row row-cols-1 row-cols-md-3" >
+    {% for report in reports %}
+       {% include 'partial_list.html' %}
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$("#search_report").keyup(function() {
+  var pattern = $( this ).val().toUpperCase();
+  console.log( "search report: " + pattern );
+  $( document ).find("div[id^='report-id-'").each(function() {
+    console.log(  );
+    var hide_it = true;
+    var rid = $(this).attr("id").split("-")[2];
+    if (pattern.length > 0) {
+      var name = $("#r-" + rid).val().toUpperCase();
+      if ( name.indexOf(pattern) > -1 ) {
+        hide_it = false;
+      }
+    } else {
+      hide_it = false;
+    }
+    if (hide_it) {
+      $( this ).hide();
+    } else {
+      $( this ).show();
+    }
+  });
+});
+</script>
+{% endblock %}
+

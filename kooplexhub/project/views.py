@@ -196,20 +196,23 @@ def join(request):
             project = Project.objects.get(id = project_id, scope__in = [ Project.SCP_INTERNAL, Project.SCP_PUBLIC ])
             UserProjectBinding.objects.create(user = user, project = project, role = UserProjectBinding.RL_COLLABORATOR)
             joined.append(project)
-            logger.info("%s joined project %s as a member" % (user, project))
+            logger.info(f"{user} successfully joins project {project.name}")
+            c = []
             for c_id in request.POST.getlist(f'container_template_ids-{project_id}'):
                 ct = Container.objects.get(id = c_id)
-                container = Container.objects.create(user = user, image = ct.image, name = f'{user.username}-{project.subpath}') #TODO: later maybe copy mounts
+                container = Container.objects.create(user = user, image = ct.image, name = f'{user.username}-{project.subpath}', friendly_name = f"{project.name}")
                 psb = ProjectContainerBinding.objects.create(project = project, container = container)
                 logger.info(f'created service {container} and binding {psb}')
-                containers.append(container)
+                c.append(container.friendly_name)
+            if c:
+                containers.append('{1} for project {0}'.format(project.name, ', '.join(c)))
         except Exception as e:
             logger.warning("%s cannot join project id %s -- %s" % (user, project_id, e))
             messages.error(request, 'You cannot join project')
-    if len(joined):
-        messages.info(request, 'Joined projects: {}'.format(', '.join([ p.name for p in joined ])))
-    if len(containers):
-        messages.info(request, 'Created services: {}'.format(', '.join([ s.name for s in containers ])))
+    if joined:
+        messages.info(request, 'Successfully joined projects: {}'.format(', '.join([ p.name for p in joined ])))
+    if containers:
+        messages.info(request, 'Created services {}'.format('; '.join(containers)))
     return redirect('project:list')
 
 

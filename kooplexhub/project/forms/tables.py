@@ -78,8 +78,11 @@ class TableJoinProject(tables.Table):
 
     def render_button(self, record):
         return format_html(f"""
-<input type="checkbox" class="btn-check" name="join_project_ids" value="{record.project.id}" id="btn-{record.id}" autocomplete="off">
-<label class="btn btn-outline-secondary" for="btn-{record.id}"><i class="bi bi-people"></i></label>
+<input id="btn-{record.id}" data-size="small"
+     type="checkbox" data-toggle="toggle" name="join_project_ids"
+     data-on="<span class=' bi bi-people'></span>"
+     data-off="<span class='bi bi-people'></span>"
+     data-onstyle="success" data-offstyle="secondary" value="{record.project.id}">
         """)
 
     def render_images(self, record):
