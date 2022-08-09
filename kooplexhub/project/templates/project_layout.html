@@ -1,25 +1,31 @@
 {% extends "layout.html" %}
-
-{% block page_title %}Kooplex Projects{% endblock %}
-
-
 {% load static %}
 {% load project_buttons %}
 
+{% block page_title %}Kooplex Projects{% endblock %}
+
+{% block head_content %}
+<style>
+.form-control:focus {
+  border-color: gray;
+  box-shadow: inset 0 1px 1px gray, 0 0 8px gray;
+}
+</style>
+{% endblock %}
 
 {% block submenu %}
 <ul class="navbar-nav flex-row flex-md-row">
   <li class="ms-3 nav-item text-center">
-    <a data-toggle="tooltip" title="New project" data-placement="bottom" class="nav-link {% if submenu == 'new' %}active border-2 border-bottom{% endif %}" href="{% url 'project:new' %}"><i class="bi bi-bag-plus"></i><span class="d-none d-sm-block">&nbsp;New project</span></a>
+    <a data-toggle="tooltip" title="New project" data-placement="bottom" class="nav-link {% if submenu == 'new' %}active border-2 border-bottom{% endif %}" href="{% url 'project:new' %}"><i class="bi bi-bag-plus"></i><span class="d-sm-block d-none">&nbsp;New project</span></a>
   </li>
   <li class="ms-3 nav-item text-center">
-    <a data-toggle="tooltip" title="Join" data-placement="bottom" class="nav-link {% if submenu == 'join' %}active border-2 border-bottom{% endif %}" href="{% url 'project:join' %}"><i class="bi bi-bag-heart"></i><span class="d-none d-sm-block">&nbsp;Join project</span></a>
+    <a data-toggle="tooltip" title="Join" data-placement="bottom" class="nav-link {% if submenu == 'join' %}active border-2 border-bottom{% endif %}" href="{% url 'project:join' %}"><i class="bi bi-bag-heart"></i><span class="d-sm-block d-none">&nbsp;Join project</span></a>
   </li>
   <li class="ms-3 nav-item text-center">
-    <a data-toggle="tooltip" title="Lit project" data-placement="bottom" class="nav-link {% if submenu == 'list' %}active border-2 border-bottom{% endif %}" href="{% url 'project:list' %}"><i class="bi bi-bag-dash"></i><span class="d-none d-sm-block">&nbsp;List project</span></a>
+    <a data-toggle="tooltip" title="Lit project" data-placement="bottom" class="nav-link {% if submenu == 'list' %}active border-2 border-bottom{% endif %}" href="{% url 'project:list' %}"><i class="bi bi-bag-dash"></i><span class="d-sm-block d-none">&nbsp;List project</span></a>
   </li>
   <li class="ms-3 nav-item text-center">
-    <a data-toggle="tooltip" title="Show/hide project" data-placement="bottom" class="nav-link {% if submenu == 'showhide' %}active border-2 border-bottom{% endif %}" href="{% url 'project:showhide' %}">{% number_square "bi bi-eye-slash" user.profile.number_of_hidden_projects %}<span class="d-none d-sm-block">&nbsp;Show/hide project</span></a>
+    <a data-toggle="tooltip" title="Show/hide project" data-placement="bottom" class="nav-link {% if submenu == 'showhide' %}active border-2 border-bottom{% endif %}" href="{% url 'project:showhide' %}">{% number_square "bi bi-eye-slash" user.profile.number_of_hidden_projects %}<span class="d-sm-block d-none">&nbsp;Show/hide project</span></a>
   </li>
 </ul>
 {% endblock %}

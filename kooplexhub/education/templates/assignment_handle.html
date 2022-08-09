@@ -20,7 +20,7 @@
                 <optgroup label="Course {{ a0.course.name }}"> 
                 {% for a in ass %}
                   <option class="dropdown-item" value="{{ a.id }}"
-                    {% if c.id == courses %} selected {% endif %}
+                    {% if a.id == assignment_selected %} selected {% endif %}
                   >{{ a.name }} ({{ a0.course.folder }}/{{ a.folder }})</option>
                 {% endfor %}
                 </optgroup>
@@ -42,16 +42,91 @@
         </div>
       {% endfor %}
     </form>
-    <form  id='assignment-form-individual' class="mb-3 mt-3" action="{% url 'education:assignment_individual_handle' %}" method="post">
-      {% title_with_button "Individual operation" %}
-      <input class="form-control me-2 mb-3 mt-3" type="text" id="search_student" placeholder="Search student by name or username" title="Type in a name">
-      {% csrf_token %}
-      {% for a_id, t in t_assignments.items %}
-        <div id="operationPanelIndividual-{{ a_id }}">
-          {% render_table t %}
-        </div>
-      {% endfor %}
-    </form>
+    {% title_with_button "Individual operation" button_id="submit_details" %}
+    <input class="form-control me-2 mb-3 mt-3" type="text" id="search_student" placeholder="Search student by name or username" title="Type in a name">
+    {% for a_id, t in t_assignments.items %}
+      <form  id='operationPanelIndividual-{{ a_id }}' class="mb-3 mt-3" action="{% url 'education:assignment_individual_handle' %}" method="post">
+        {% csrf_token %}
+        {% render_table t %}
+      </form>
+    {% endfor %}
   </div>
 </div>
+{% endblock %}
+
+{% block child_scripts %}
+<script>
+$("#submit_details").click(function() {
+  var a_id = $("#assignment_selected").val();
+  console.log("submit " + a_id);
+  $("#operationPanelIndividual-" + a_id).submit();
+});
+$("#assignment_selected").change(function() {
+  var sel_id = $( this ).val();
+  console.log( "changed to " + sel_id );
+  $('[id^=operationPanelMass-]').each(function() {
+    var myid = $(this).attr("id").split('-')[1]
+    //console.log( "checking " + myid );
+    if ( myid == sel_id ) {
+      $( this ).show();
+    } else {
+      $( this).hide();
+    }
+  });
+  $('[id^=operationPanelIndividual-]').each(function() {
+    var myid = $(this).attr("id").split('-')[1]
+    //console.log( "checking " + myid );
+    if ( myid == sel_id ) {
+      $( this ).show();
+    } else {
+      $( this).hide();
+    }
+  });
+}).change();
+$("#search_student").keyup(function() {
+  var pattern = $( this ).val().toUpperCase();
+  console.log( "search student: " + pattern );
+  $( "#assignment-form-individual" ).find('tr').each(function() {
+    if ( $( this ).parent().is("thead") ) {
+      return;
+    }
+    var hide_it = true;
+    if (pattern.length > 0) {
+      $( this ).find("input[name='search_student'").each(function() {
+        var name = $( this ).val().toUpperCase();
+        if ( name.indexOf(pattern) > -1 ) {
+	  hide_it = false;
+        }
+      });
+    } else {
+      hide_it = false;
+    }
+    if (hide_it) {
+      $( this ).hide();
+    } else {
+      $( this ).show();
+    }
+  });
+});
+$("input[id^='score-'").on("change", function() {
+  var old = $("#old_" + $(this).attr("id"))
+  console.log( $( this ).val() )
+  if ( $( this ).val() != old.val() ) {
+    var cb = $("#uab-" + $(this).attr("id").split('-')[1])
+    if (cb.attr("name") == "selection_finalize") {
+      cb.prop('checked', true) 
+    }
+  }
+});
+$("textarea[id^='feedback_text-'").on("change", function() {
+  var old = $("#old_" + $(this).attr("id"))
+  console.log( $( this ).val() )
+  if ( $( this ).val() != old.val() ) {
+    var cb = $("#uab-" + $(this).attr("id").split('-')[1])
+    if (cb.attr("name") == "selection_finalize") {
+      cb.prop('checked', true) 
+    }
+  }
+});
+</script>
 {% endblock %}

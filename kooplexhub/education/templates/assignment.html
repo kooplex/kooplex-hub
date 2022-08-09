@@ -8,6 +8,17 @@
 {% block head_content %}
 {% block child_head %}{% endblock %}
 <style>
+  .form-control:focus {
+    border-color: gray;
+    box-shadow: inset 0 1px 1px gray, 0 0 8px gray;
+  }
+
+  .form-select:focus {
+    border-color: gray;
+    box-shadow: inset 0 1px 1px gray, 0 0 8px gray;
+  }
+  </style>
+<style>
   .mytab{
     color: rgb(196, 196, 196);
   }
@@ -24,35 +35,35 @@
 
 {% block realcontent %}
 <ul class="nav nav-tabs  mb-2 mt-3" id="assignmentTeacherTabs" role="tablist">
-  <li class="nav-item" role="presentation" data-intro="#newassignmentarea">
+  <li class="nav-item" role="presentation">
     {% if active == "new" %}
     <a class="nav-link mytab active" id="tab-new" href="#" type="button" role="tab" aria-controls="newAssignment" aria-selected="true">New Assignment</a>
     {% else %}
     <a class="nav-link mytab" id="tab-new" href="{% url 'education:assignment_new' %}" type="button" role="tab" aria-controls="newAssignment" aria-selected="false">New Assignment</a>
     {% endif %}
   </li>
-  <li class="nav-item" role="presentation" data-intro="#configureassignmentarea">
+  <li class="nav-item" role="presentation">
     {% if active == "conf" %}
     <a class="nav-link mytab active" id="tab-conf" href="#" type="button" role="tab" aria-controls="confAssignment" aria-selected="true">Configure Assignment</a>
     {% else %}
     <a class="nav-link mytab" id="tab-conf" href="{% url 'education:assignment_configure' %}" type="button" role="tab" aria-controls="confAssignment" aria-selected="false">Configure Assignment</a>
     {% endif %}
   </li>
-  <li class="nav-item" role="presentation" data-intro="#massassignmentarea">
+  <li class="nav-item" role="presentation">
     {% if active == "handlemass" %}
     <a class="nav-link mytab active" id="tab-handlemass" href="#" type="button" role="tab" aria-controls="AssignmentMass" aria-selected="true">Mass Assignments</a>
     {% else %}
     <a class="nav-link mytab" id="tab-handlemass" href="{% url 'education:assignment_mass' %}" type="button" role="tab" aria-controls="AssignmentMass" aria-selected="false">Mass Assignments</a>
     {% endif %}
   </li>
-  <li class="nav-item" role="presentation" data-intro="#handleassignmentarea">
+  <li class="nav-item" role="presentation">
     {% if active == "handle" %}
     <a class="nav-link mytab active" id="tab-handle" href="#" type="button" role="tab" aria-controls="Assignment" aria-selected="true">Handle Assignments</a>
     {% else %}
     <a class="nav-link mytab" id="tab-handle" href="{% url 'education:assignment_handler' %}" type="button" role="tab" aria-controls="Assignment" aria-selected="false">Handle Assignments</a>
     {% endif %}
   </li>
-  <li class="nav-item" role="presentation" data-intro="#summaryofcoursesarea">
+  <li class="nav-item" role="presentation">
     {% if active == "summary" %}
     <a class="nav-link mytab active" id="tab-summary" href="#" type="button" role="tab" aria-controls="summary" aria-selected="true">Student points</a>
     {% else %}
@@ -105,28 +116,6 @@ $("#assignmentTeacherTabs li a").on("click", function () {
   console.log( tab )
   $.cookie("assignment_teacher_tab", tab, { 'path': '/', 'secure': true });
 });
-$("#assignment_selected").change(function() {
-  var sel_id = $( this ).val();
-  console.log( "changed to " + sel_id );
-  $('[id^=operationPanelMass-]').each(function() {
-    var myid = $(this).attr("id").split('-')[1]
-    console.log( "checking " + myid );
-    if ( myid == sel_id ) {
-      $( this ).show();
-    } else {
-      $( this).hide();
-    }
-  });
-  $('[id^=operationPanelIndividual-]').each(function() {
-    var myid = $(this).attr("id").split('-')[1]
-    console.log( "checking " + myid );
-    if ( myid == sel_id ) {
-      $( this ).show();
-    } else {
-      $( this).hide();
-    }
-  });
-}).change();
 $("#summary_course_selected").change(function() {
   var sel_id = $( this ).val();
   console.log( "summary course changed to " + sel_id );
@@ -140,51 +129,6 @@ $("#summary_course_selected").change(function() {
     }
   });
 }).change();
-$("#search_student").keyup(function() {
-  var pattern = $( this ).val().toUpperCase();
-  console.log( "search student: " + pattern );
-  $( "#assignment-form-individual" ).find('tr').each(function() {
-    if ( $( this ).parent().is("thead") ) {
-      return;
-    }
-    var hide_it = true;
-    if (pattern.length > 0) {
-      $( this ).find("input[name='search_student'").each(function() {
-        var name = $( this ).val().toUpperCase();
-        if ( name.indexOf(pattern) > -1 ) {
-	  hide_it = false;
-        }
-      });
-    } else {
-      hide_it = false;
-    }
-    if (hide_it) {
-      $( this ).hide();
-    } else {
-      $( this ).show();
-    }
-  });
-});
-$("input[id^='score-'").on("change", function() {
-  var old = $("#old_" + $(this).attr("id"))
-  console.log( $( this ).val() )
-  if ( $( this ).val() != old.val() ) {
-    var cb = $("#uab-" + $(this).attr("id").split('-')[1])
-    if (cb.attr("name") == "selection_finalize") {
-      cb.prop('checked', true) 
-    }
-  }
-});
-$("textarea[id^='feedback_text-'").on("change", function() {
-  var old = $("#old_" + $(this).attr("id"))
-  console.log( $( this ).val() )
-  if ( $( this ).val() != old.val() ) {
-    var cb = $("#uab-" + $(this).attr("id").split('-')[1])
-    if (cb.attr("name") == "selection_finalize") {
-      cb.prop('checked', true) 
-    }
-  }
-});
 
 </script>
 

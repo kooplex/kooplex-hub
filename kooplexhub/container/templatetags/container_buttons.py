@@ -194,8 +194,9 @@ def dropdown_start_open_stop(bindings, ancestor, ancestor_type, next_page):
   </div>
 </li>
             """
+        an = getattr(ancestor, ancestor_type).name
         return format_html(f"""
-<div class="dropdown" data-bs-toggle="tooltip" data-bs-placement="top" title="Service environments associated with {ancestor_type} {ancestor.name}">
+<div class="dropdown" data-bs-toggle="tooltip" data-bs-placement="top" title="Service environments associated with {ancestor_type} {an}">
   <a class="btn btn-outline-secondary dropdown-toggle btn-sm" type="button" id="dc-svcs-{ancestor.id}" data-bs-toggle="dropdown" aria-expanded="false">
     <i class="oi oi-terminal"></i>&nbsp;{len(bindings)}
   </a>
@@ -205,8 +206,16 @@ def dropdown_start_open_stop(bindings, ancestor, ancestor_type, next_page):
 </div>
         """)
     else:
+        if ancestor_type == 'project':
+            link = '#'
+        elif ancestor_type == 'course':
+            link = reverse('education:autoaddcontainer', args = [ancestor.id])
+        else:
+            link = '#'
         return format_html(f"""
-        TBA: link2cre
+<a class="btn btn-danger btn-sm" type="button" href="{link}">
+  <i class="bi bi-boxes" data-bs-toggle="tooltip" data-bs-placement="top" title="Create a default environment for your {ancestor_type}"></i>
+</a>
         """)
 
 

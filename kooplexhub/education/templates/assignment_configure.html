@@ -11,6 +11,8 @@
       crossorigin="anonymous"></script>
 <link href="https://cdn.jsdelivr.net/gh/Eonasdan/tempus-dominus@master/dist/css/tempus-dominus.css"
       rel="stylesheet" crossorigin="anonymous">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js" 
+	integrity="sha512-qTXRIMyZIFb8iQcfjXWCO8+M5Tbc38Qi5WzdPOYZHIlZpzBHG3L3by84BBBOiRGiEb7KKtAOAs5qYdUiZiQNNQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <!-- bootstrap-toggler requirement -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/css/bootstrap5-toggle.min.css" rel="stylesheet">
 {% endblock %}
@@ -68,7 +70,14 @@ $("#search_configure").keyup(function() {
 // loop over all linked datetime picker widgets
 document.querySelectorAll('[id^="linkedPickers1-"]').forEach(function(linkedPicker1Element) {
   const linked1 = new tempusDominus.TempusDominus(linkedPicker1Element, {
+		//restrictions: {
+		//minDate: '2022-08-19T12:00:00.000Z',
+		//},
+	   // format: 'YYYY-MM-DD HH:mm',
         display: {
+	    components: {
+                useTwentyfourHour: true,
+            },
             icons: {
                 time: 'bi bi-clock',
                 date: 'bi bi-calendar',
@@ -84,13 +93,23 @@ document.querySelectorAll('[id^="linkedPickers1-"]').forEach(function(linkedPick
                 today: true,
                 clear: true,
                 close: true
-            }
+            },
         }
     });
+  const id_model = linkedPicker1Element.id.replace('linkedPickers1-', "");
+  const old_val = document.getElementById("valid_from-old-" + id_model).value;
+  if (old_val.length) {
+	var DateTimeVal1 = moment(old_val, 'YYYY-MM-DD HH:mm').toDate();
+        linked1.dates.setValue(tempusDominus.DateTime.convert(DateTimeVal1));
+	console.log(linked1.dates);
+  }
   const id_other = linkedPicker1Element.id.replace('linkedPickers1-', 'linkedPickers2-');
   const linked2 = new tempusDominus.TempusDominus(document.getElementById(id_other), {
         useCurrent: false,
         display: {
+	    components: {
+                useTwentyfourHour: true,
+            },
             icons: {
                 time: 'bi bi-clock',
                 date: 'bi bi-calendar',
@@ -109,6 +128,12 @@ document.querySelectorAll('[id^="linkedPickers1-"]').forEach(function(linkedPick
             }
         }
     });
+  const old_val2 = document.getElementById("expires_at-old-" + id_model).value;
+  if (old_val2.length) {
+	  console.log(old_val2);
+	var DateTimeVal2 = moment(old_val2, 'YYYY-MM-DD HH:mm').toDate();
+        linked2.dates.setValue(tempusDominus.DateTime.convert(DateTimeVal2));
+  }
   
     //using event listeners
   linkedPicker1Element.addEventListener(tempusDominus.Namespace.events.change, (e) => {

@@ -31,19 +31,20 @@ class FormAssignment(forms.ModelForm):
             widget = forms.Textarea(attrs = {'rows': 3 }), 
         )
     valid_from = forms.DateTimeField(
-            input_formats = ["%m/%d/%y %H:%M"], 
-            widget = dateWidget(attrs = { 'icon': 'bi bi-clock' }), 
+            input_formats = ["%m/%d/%Y, %H:%M"], 
+            widget = dateWidget(attrs = { 'icon': 'bi bi-clock', 'name': 'valid_from' }), 
             required = False, 
         )
     expires_at = forms.DateTimeField(
-            input_formats = ["%m/%d/%y %H:%M"], 
-            widget = dateWidget(attrs = { 'icon': 'bi bi-bell' }), 
+            input_formats = ["%m/%d/%Y, %H:%M"], 
+            widget = dateWidget(attrs = { 'icon': 'bi bi-bell', 'name': 'expires_at' }), 
             required = False,
         )
     remove_collected = forms.BooleanField(
             widget = forms.CheckboxInput(attrs = { 'data-size': 'small', 'data-toggle': 'toggle', 
                 'data-on': "<span class='oi oi-trash'></span>", 'data-off': "<span class='bi bi-check-lg'></span>",
                 'data-onstyle': "danger", 'data-offstyle': "secondary" }), 
+            required = False,
         )
     max_size = forms.IntegerField(
             required = False,

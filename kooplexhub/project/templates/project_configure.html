@@ -71,15 +71,6 @@ $("#projectConfigTabs li a").on("click", function () {
   console.log( tab )
   $.cookie("configure_project_tab", tab, { 'path': '/', 'secure': true });
 });
-$("input[name='attach'").change(function() {
-  var icon;
-  if ( $( this ).is(":checked") ) {
-    icon = "bi-file-plus";
-  } else {
-    icon = "bi-file-minus";
-  }
-  $( this ).parent().children("label").children("i").attr("class", "bi " + icon);
-});
 </script>
 <script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script>
 {% endblock %}

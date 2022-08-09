@@ -2,6 +2,13 @@
 {% load render_table from django_tables2 %}
 {% load extras %}
 
+{% block child_head %}
+<!-- bootstrap-toggler requirement -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/css/bootstrap5-toggle.min.css" rel="stylesheet">
+{% endblock %}
+
+
+
 {% block head_content %}
 <style>
 .mytab{
@@ -57,18 +64,18 @@
 
   <div class="tab-content" id="serviceConfigTabContent">
     <div class="tab-pane fade {% if active == "image" %}show active{% endif %}" id="image" role="tabpanel" aria-labelledby="tab-image">
-      <div class="container-fluid d-flex flex-row">
-        <div class="d-flex mt-3">
+      <div class="d-flex">
+        <div class="flex-fill w-100 mt-2">
           <table>
-  {{ form.as_table }}
+            {{ form.as_table }}
           </table>
         </div>
-        <div class="d-flex ms-3 w-100 w-md-50">
+        <div class="flex-fill d-flex mt-2 w-100">
           <div ata-toggle="tooltip" title="Please select an option from the image dropdown to check its description."  class="d-flex bg-warning rounded p-2 w-100 mt-2 mt-md-0">
             <p class="fw-bolder">Image description:&nbsp;</p>
             <p id="imageDescription"></p>
           </div>
-	{{ form.descriptions }}
+	  {{ form.descriptions }}
         </div>
       </div>
     </div>
@@ -135,46 +142,9 @@ $("select[name='image'").change(function() {
 	}
     });
 }).change();
-$("input[name='attach'").change(function() {
-  var icon;
-	console.log( this ) ;
-  if ( $( this ).is(":checked") ) {
-    icon = "oi-envelope-open";
-  } else {
-    icon = "oi-envelope-closed";
-  }
-  $( this ).parent().children("label").children("i").attr("class", "oi " + icon);
-});
-$("input[name='attach-project'").change(function() {
-  var icon;
-	console.log( this ) ;
-  if ( $( this ).is(":checked") ) {
-    icon = "bi-patch-plus";
-  } else {
-    icon = "bi-patch-minus";
-  }
-  $( this ).parent().children("label").children("i").attr("class", "bi " + icon);
-});
-$("input[name='attach-course'").change(function() {
-  var icon;
-	console.log( this ) ;
-  if ( $( this ).is(":checked") ) {
-    icon = "bi-patch-plus";
-  } else {
-    icon = "bi-patch-minus";
-  }
-  $( this ).parent().children("label").children("i").attr("class", "bi " + icon);
-});
-$("input[name='volume'").change(function() {
-  var icon;
-	console.log( this ) ;
-  if ( $( this ).is(":checked") ) {
-    icon = "bi-file-earmark-check";
-  } else {
-    icon = "bi-file-earmark";
-  }
-  $( this ).parent().children("label").children("i").attr("class", "bi " + icon);
-});
 </script>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/css/bootstrap5-toggle.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/js/bootstrap5-toggle.min.js"></script>
+
 {% endblock %}
 

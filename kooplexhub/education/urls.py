@@ -19,7 +19,7 @@ urlpatterns = [
     path('assignment_mass_handle__/', views.assignment_mass___, name = 'assignment_mass_handle___'), #FIXME
     path('assignment_summary/', views.assignment_summary, name = 'assignment_summary'),
 
-    re_path('assignment/(?P<usercoursebinding_id>\d+)?/?$', views.assignment_student, name = 'assignment_student'),
+    re_path('assignment/(?P<usercoursebinding_id>\d+)?/?$', views.StudentAssignmentListView.as_view(), name = 'assignment_student'),
     path('submitform/', views.submitform_submit, name = 'submit'),
     re_path('configure/(?P<usercoursebinding_id>\d+)/?$', views.configure, name = 'configure'),
     re_path('configure_save/(?P<usercoursebinding_id>\d+)/?$', views.configure_save, name = 'configure_save'),

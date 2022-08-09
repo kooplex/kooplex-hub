@@ -28,10 +28,14 @@ class TableShowhideProject(tables.Table):
 
     def render_button(self, record):
         state = "" if record.is_hidden else "checked"
-        icon = "bi-eye-slash" if record.is_hidden else "bi-eye"
+        o_hide = "opacity-75" if record.is_hidden else ""
+        o_show = "" if record.is_hidden else "opacity-75"
         return format_html(f"""
-<input type="checkbox" class="btn-check" name="show" value="{record.id}" id="btn-{record.id}" autocomplete="off" {state}>
-<label class="btn btn-outline-secondary" for="btn-{record.id}"><i class="bi {icon}"></i></label>
+<input id="btn-{record.id}" data-size="small"
+     type="checkbox" data-toggle="toggle" name="show"
+     data-on="<span class=' bi bi-eye'></span>"
+     data-off="<span class='bi bi-eye-slash'></span>"
+     data-onstyle="success {o_show}" data-offstyle="secondary {o_hide}" value="{record.id}" {state}>
         """)
 
     def render_project(self, record):

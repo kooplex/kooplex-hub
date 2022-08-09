@@ -1,11 +1,11 @@
 {% load render_table from django_tables2 %}
 
-<div class="container-fluid d-flex flex-row justify-content-between align-items-baseline">
-  <div>
-    <input class="form-control me-2 mb-3 mt-3" type="text" id="search_collaborator" placeholder="Search collaborator" title="Type in a name" data-intro="#search_collaborator">
+<div class="d-flex flex-row align-items-baseline">
+  <div class="flex-fill w-100 me-1">
+    <input class="form-control me-2 mb-3 mt-3" type="text" id="search_collaborator" placeholder="Search collaborator" title="Type in a name">
     {% render_table t_users %}
   </div>
-  <div>
+  <div class="flex-fill w-100 mb-1">
     {% render_table t_collaborators %}
   </div>
 </div>

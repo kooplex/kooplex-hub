@@ -13,12 +13,13 @@ def title(*argv):
 
 
 @register.simple_tag(name = 'title_with_button')
-def title_with_button(*argv, button_label = "Save all changes", button_icon = "bi bi-save", button_color = "btn-warning"):
+def title_with_button(*argv, button_label = "Save all changes", button_icon = "bi bi-save", button_color = "btn-warning", button_id = None):
     t = " ".join(argv)
+    bi = f'id="{button_id}"' if button_id else ''
     return format_html(f"""
 <div class="container-fluid d-flex flex-column flex-md-row justify-content-between">
   <div><h5 class="mb-4">{t}</h5></div>
-  <div><button type="submit" class="btn {button_color}" name="button" value="apply"><i class="{button_icon}"></i>&nbsp;{button_label}</button></div>
+  <div><button {bi} type="submit" class="btn {button_color}" name="button" value="apply"><i class="{button_icon}"></i>&nbsp;{button_label}</button></div>
 </div>""")
 
 
@@ -54,7 +55,7 @@ def join_links(courses, user):
 @register.filter(name = 'popupmessage')
 def popumessage(messages):
     data = {
-        'info': [],
+        'secondary': [],
         'success': [],
         'error': [],
     }
@@ -62,7 +63,7 @@ def popumessage(messages):
         if messages.level == 25:
             data['success'].append(message)
         elif message.level == 20:
-            data['info'].append(message)
+            data['secondary'].append(message)
         elif message.level == 40:
             data['error'].append(message)
     div = ""
@@ -74,7 +75,7 @@ def popumessage(messages):
 <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
   <div id="infoMessages" class="toast fade show" role="alert" aria-live="assertive" aria-atomic="true">
     <div class="toast-header">
-      <strong class="me-auto">Messages</strong>
+      <strong class="me-auto">Message</strong>
       <button id="closeButton" type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
     </div>
     <div class="toast-body">

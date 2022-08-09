@@ -8,7 +8,7 @@
     <div class="container-fluid">
       <div class="d-flex flex-row">
         <div class="d-flex flex-row justify-content-start" style="width:2%">
-          <div data-intro="#button_operation">{% dropdown_start_open_stop bindings=projectcontainerbindings ancestor=project ancestor_type='project' next_page='project:list' %}</div>
+          <div>{% dropdown_start_open_stop bindings=projectcontainerbindings ancestor=upb ancestor_type='project' next_page='project:list' %}</div>
         </div>
 	  <div class="ms-5 d-flex flex-row justify-content-between" 
 	       style="width:97%" 
@@ -35,7 +35,7 @@
         {% include 'reports_button.html' %}
       </p>
     </div>
-    <div class="card card-footer" data-intro="#button_footer">
+    <div class="card card-footer" >
       <div class="container-fluid">
         <div class="d-flex flex-row justify-content-between">
           <div class="d-flex flex-row justify-content-start">

@@ -2,6 +2,14 @@
 
 {% load static %}
 
+{% block head_content %}
+<style>
+.form-control:focus {
+  border-color: gray;
+  box-shadow: inset 0 1px 1px gray, 0 0 8px gray;
+}
+</style>
+{% endblock %}
 
 {% block realcontent %}
   {% if containers %}

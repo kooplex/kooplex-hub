@@ -104,6 +104,9 @@ document.querySelectorAll('[id^="linkedPicker-"][id$="_valid_from"]').forEach(fu
 	console.log(linkedPicker1Element);
   const linked1 = new tempusDominus.TempusDominus(linkedPicker1Element, {
         display: {
+	    components: {
+                useTwentyfourHour: true,
+            },
             icons: {
                 time: 'bi bi-clock',
                 date: 'bi bi-calendar',
@@ -126,6 +129,9 @@ document.querySelectorAll('[id^="linkedPicker-"][id$="_valid_from"]').forEach(fu
   const linked2 = new tempusDominus.TempusDominus(document.getElementById(id_other), {
         useCurrent: false,
         display: {
+	    components: {
+                useTwentyfourHour: true,
+            },
             icons: {
                 time: 'bi bi-clock',
                 date: 'bi bi-calendar',

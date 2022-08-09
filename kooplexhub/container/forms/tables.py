@@ -32,10 +32,14 @@ class TableContainerProject(tables.Table):
     def render_button(self, record):
         p = record.project
         state = "checked" if p in self.bound_projects else ""
-        icon = "bi-patch-plus" if p in self.bound_projects else "bi-patch-minus"
+        o_bound = "opacity-75" if p in self.bound_projects else ""
+        o_notbound = "" if p in self.bound_projects else "opacity-75"
         return format_html(f"""
-<input type="checkbox" class="btn-check" name="attach-project" value="{p.id}" id="btn-pr-{p.id}" autocomplete="off" {state}>
-<label class="btn btn-outline-secondary" for="btn-pr-{p.id}"><i class="bi {icon}"></i></label>
+<input id="btn-pr-{p.id}" data-size="small"
+     type="checkbox" data-toggle="toggle" name="attach-project"
+     data-on="<span class=' bi bi-person-workspace'></span>"
+     data-off="<span class='bi bi-person-video3'></span>"
+     data-onstyle="success {o_bound}" data-offstyle="secondary {o_notbound}" value="{p.id}" {state}>
         """)
 
     def render_collaborator(self, record):
@@ -66,10 +70,14 @@ class TableContainerCourse(tables.Table):
     def render_button(self, record):
         c = record.course
         state = "checked" if c in self.bound_courses else ""
-        icon = "bi-patch-plus" if c in self.bound_courses else "bi-patch-minus"
+        o_bound = "opacity-75" if c in self.bound_courses else ""
+        o_notbound = "" if c in self.bound_courses else "opacity-75"
         return format_html(f"""
-<input type="checkbox" class="btn-check" name="attach-course" value="{c.id}" id="btn-crs-{c.id}" autocomplete="off" {state}>
-<label class="btn btn-outline-secondary" for="btn-crs-{c.id}"><i class="bi {icon}"></i></label>
+<input id="btn-crs-{c.id}" data-size="small"
+     type="checkbox" data-toggle="toggle" name="attach-course"
+     data-on="<span class='bi bi-journal-bookmark-fill'></span>"
+     data-off="<span class='bi bi-journal-bookmark'></span>"
+     data-onstyle="success {o_bound}" data-offstyle="secondary {o_notbound}" value="{c.id}" {state}>
         """)
 
     def render_description(self, record):
@@ -107,10 +115,14 @@ class TableContainerAttachment(tables.Table):
 
     def render_button(self, record):
         state = "checked" if record in self.bound_attachments.keys() else ""
-        icon = "oi-envelope-open" if record in self.bound_attachments.keys() else "oi-envelope-closed"
+        o_bound = "opacity-75" if record in self.bound_attachments.keys() else ""
+        o_notbound = "" if record in self.bound_attachments.keys() else "opacity-75"
         return format_html(f"""
-<input type="checkbox" class="btn-check" name="attach" value="{record.id}" id="btn-{record.id}" autocomplete="off" {state}>
-<label class="btn btn-outline-secondary" for="btn-{record.id}"><i class="oi {icon}"></i></label>
+<input id="btn-{record.id}" data-size="small"
+     type="checkbox" data-toggle="toggle" name="attach"
+     data-on="<span class='ri-attachment-line'></span>"
+     data-off="<span class='ri-attachment-2'></span>"
+     data-onstyle="success {o_bound}" data-offstyle="secondary {o_notbound}" value="{record.id}" {state}>
         """)
 
 
@@ -135,10 +147,14 @@ class TableContainerVolume(tables.Table):
 
     def render_button(self, record):
         state = "checked" if record in self.bound_volumes else ""
-        icon = "bi-file-earmark-check" if record in self.bound_volumes else "bi-file-earmark"
+        o_bound = "opacity-75" if record in self.bound_volumes else ""
+        o_notbound = "" if record in self.bound_volumes else "opacity-75"
         volume = record
         return format_html(f"""
-<input type="checkbox" class="btn-check" name="volume" value="{record.id}" id="btn-volume-{record.id}" autocomplete="off" {state}>
-<label class="btn btn-outline-secondary" for="btn-volume-{record.id}"><i class="oi {icon}"></i></label>
+<input id="btn-volume-{record.id}" data-size="small"
+     type="checkbox" data-toggle="toggle" name="volume"
+     data-on="<span class='ri-database-2-fill'></span>"
+     data-off="<span class='ri-database-2-line'></span>"
+     data-onstyle="success {o_bound}" data-offstyle="secondary {o_notbound}" value="{record.id}" {state}>
         """)
 

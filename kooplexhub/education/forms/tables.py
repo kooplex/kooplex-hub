@@ -19,7 +19,6 @@ except ImportError:
     KOOPLEX = {}
 
 class TableAssignment(tables.Table):
-    # FIXME: where is it used???
     class Meta:
         model = UserAssignmentBinding
         fields = ('course', 'assignment', 'score', 'feedback_text')
@@ -31,12 +30,13 @@ class TableAssignment(tables.Table):
                  "th": { "class": "table-secondary p-1" }
                 }
 
-    button = tables.Column(verbose_name = 'Submit', orderable = False)
+    button = tables.Column(verbose_name = 'Submit', orderable = False, empty_values = ())
     course = tables.Column(orderable = False, empty_values = ())
     assignment = tables.Column(orderable = False)
-    expires_at = tables.Column(orderable = False)
-    score = tables.Column(orderable = False)
-    feedback_text = tables.Column(orderable = False)
+    info = tables.Column(orderable = False, empty_values = ())
+    score = tables.Column(orderable = False, empty_values = ())
+    feedback_text = tables.Column(orderable = False, empty_values = ())
+
 
     def render_button(self, record):
         if record.state in [ record.ST_WORKINPROGRESS, record.ST_SUBMITTED ]:
@@ -45,9 +45,13 @@ class TableAssignment(tables.Table):
   <input class="form-check-input" type="checkbox" id="uab-{record.id}" name="selection" value="{record.id}" />
 </div>
             """)
-        elif record.state in [ record.ST_COLLECTED, record.ST_CORRECTED, record.ST_QUEUED ]:
+        elif record.state in [ record.ST_COLLECTED, record.ST_QUEUED ]:
             return format_html(f"""
 <span class="bi bi-hourglass-bottom" data-toggle="tooltip" title="{record.ST_LOOKUP[record.state]}" />
+            """)
+        elif record.state == record.ST_CORRECTED:
+            return format_html(f"""
+<span class="bi bi-check-circle" data-toggle="tooltip" title="{record.ST_LOOKUP[record.state]}" />
             """)
         else:
             return format_html(f"""
@@ -58,14 +62,20 @@ class TableAssignment(tables.Table):
         return record.assignment.course.name
 
     def render_assignment(self, record):
-        return record.assignment.name
+        return format_html(f"""
+{record.assignment.name}
+<input type="hidden" id="srch-{record.id}" value="{record.assignment.course.name} {record.assignment.name}" />
+        """)
 
     def render_info(self, record):
         exp = rd(record.expires_at)
         return format_html(f"""
-<span class="bi bi-arrow-up-right-square-fill" data-toggle="tooltip" title="Submit count">{record.submit_count}</span>
-<span class="bi bi-check-square-fill" data-toggle="tooltip" title="Correction count">{record.correction_count}</span>&nbsp; {exp}
+<span class="bi bi-arrow-up-right-square-fill" data-toggle="tooltip" title="Submit count">&nbsp;{record.submit_count}</span>
+<span class="bi bi-check-square-fill ms-3" data-toggle="tooltip" title="Correction count">&nbsp;{record.correction_count}</span><br>{exp}
         """)
+
+    def render_score(self, record):
+        return record.score if record.score else ''
 
 
 

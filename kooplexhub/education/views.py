@@ -61,6 +61,26 @@ class StudentCourseBindingListView(LoginRequiredMixin, generic.ListView):
         return context
 
 
+class StudentAssignmentListView(LoginRequiredMixin, generic.TemplateView):
+    template_name = 'assignment_student.html'
+
+    def get_context_data(self, **kwargs):
+        l = reverse('education:student')
+        context = super().get_context_data(**kwargs)
+        context['menu_education'] = True
+        context['submenu'] = 'assignment_student'
+        context['empty_title'] = "You have not received an assignment yet"
+        context['empty_body'] = format_html(f"""<a href="{l}"><i class="bi bi-journal-bookmark-fill"></i><span class="d-none d-sm-inline">&nbsp;list your courses</span></a>""")
+        user = self.request.user
+        profile = user.profile
+        if 'usercoursebinding_id' in self.kwargs:
+            courses = [ UserCourseBinding.objects.get(user = user, is_teacher = False, id = self.kwargs['usercoursebinding_id']).course ]
+        else:
+            courses = [ ucb.course for ucb in UserCourseBinding.objects.filter(user = user, is_teacher = False) ]
+        context['t_assignment'] = TableAssignment(UserAssignmentBinding.objects.filter(user = user, assignment__course__in = courses))
+        return context
+
+
 @login_required
 def configure(request, usercoursebinding_id):
     user = request.user
@@ -135,25 +155,29 @@ def assignment_new_(request):
         logger.error(f'misused by {user}')
         messages.error(request, f'Not authorized to use this functionality')
         return redirect('indexpage')
-    try:
-        f = FormAssignment(request.POST, course = course, user = user)
-        assert f.is_valid(), f.errors
+    f = FormAssignment(request.POST, course = course, user = user)
+    if f.is_valid():
         a = Assignment.objects.create(
-                name = f.cleaned_data['name'],
-                course = course,
-                creator = user,
-                description = f.cleaned_data['description'],
-                folder = f.cleaned_data['folder'],#recheck existence
-                valid_from = f.cleaned_data['valid_from'],
-                expires_at = f.cleaned_data['expires_at'],
-                remove_collected = f.cleaned_data['remove_collected'],
-                max_size = f.cleaned_data['max_size'],
-                )
+            name = f.cleaned_data['name'],
+            course = course,
+            creator = user,
+            description = f.cleaned_data['description'],
+            folder = f.cleaned_data['folder'],
+            valid_from = f.cleaned_data['valid_from'],
+            expires_at = f.cleaned_data['expires_at'],
+            remove_collected = f.cleaned_data['remove_collected'],
+            max_size = f.cleaned_data['max_size'],
+            )
         logger.info(f'+ new assignment {a.name} ({a.folder}) in course {course.name} by {user.username}')
         messages.info(request, f'Assignment {a.name} created.')
-    except Exception as e:
-        logger.error(e)
-        raise
+    else:
+        context_dict = {
+            'menu_education': True,
+            'submenu': 'assignment_teacher',
+            'active': request.COOKIES.get('assignment_teacher_tab', 'new'),
+            'f_assignment': [ f ],
+        }
+        return render(request, 'assignment_new.html', context = context_dict)
     return redirect('education:assignment_teacher')
 
 
@@ -181,7 +205,6 @@ def assignment_configure_(request):
     logger.debug("user %s, method: %s" % (user, request.method))
     courses = [ ucb.course for ucb in UserCourseBinding.objects.filter(user = user, is_teacher = True) ]
     delete_ids = request.POST.getlist('selection_delete', [])
-    other_ids = set(request.POST.getlist('assignment_ids', [])).difference(delete_ids)
     d = []
     oops = []
     for aid in delete_ids:
@@ -207,6 +230,11 @@ def assignment_configure_(request):
     if len(oops):
         a = ', '.join(oops)
         messages.warning(request, f'You are not allowed to delete assignment(s) {a}.')
+    assignment_ids = set()
+    for k in request.POST.keys():
+        if k.startswith('name-old-'):
+            assignment_ids.add(k.split('-')[-1])
+    other_ids = assignment_ids.difference(delete_ids)
     m = []
     for aid in other_ids:
         try:
@@ -372,6 +400,7 @@ def assignment_individual_handle(request):
     if len(oops):
         messages.error(request,' '.join(oops))
     return redirect('education:assignment_teacher')
+
 @require_http_methods(['GET'])
 @login_required
 def assignment_mass(request):
@@ -522,39 +551,6 @@ def _reassign(assignment, group_map):
 
 
 
-@login_required
-def assignment_student(request, usercoursebinding_id = None):
-    """
-    @summary: handle assignment page. 
-    @param usercoursebinding_id: is set if pencil is used, defaults to None if coming from menu.
-    """
-    user = request.user
-    profile = user.profile
-    logger.debug("user %s, method: %s" % (user, request.method))
-    l = reverse('education:student')
-    context_dict = {
-            'menu_education': True,
-            'submenu': 'assignment_student',
-            'empty_title': "You have not received an assignment yet",
-            'empty_body': format_html(f"""<a href="{l}"><i class="bi bi-journal-bookmark-fill"></i><span class="d-none d-sm-inline">&nbsp;list your courses</span></a>"""),
-            }
-    if usercoursebinding_id:
-        context_dict['usercoursebinding_id'] = usercoursebinding_id
-        try:
-            ucb = UserCourseBinding.objects.get(id = usercoursebinding_id, user = user, is_teacher = False)
-        except UserCourseBinding.DoesNotExist:
-            logger.error(f"Missmatch usercoursebindingid {usercoursebinding_id} for user {user}")
-            messages.error(request, 'You are not allowed to use this functionality')
-            return redirect('indexpage')
-        courses = [ ucb.course ]
-    else:
-        courses = [ ucb.course for ucb in UserCourseBinding.objects.filter(user = user, is_teacher = False) ]
-
-    table_submit = TableAssignment(UserAssignmentBinding.objects.filter(user = request.user, assignment__course__in = courses))
-    context_dict.update({
-        't_submit': table_submit,
-        })
-    return render(request, 'assignment_student.html', context = context_dict)
 
 
 
@@ -596,7 +592,7 @@ def addcontainer(request, usercoursebinding_id):
     logger.debug("user %s, method: %s" % (user, request.method))
     try:
         course = UserCourseBinding.objects.get(id = usercoursebinding_id, user = user).course
-        container, _ = Container.objects.get_or_create(
+        container, created = Container.objects.get_or_create(
                 name = course.cleanname, 
                 friendly_name = course.name,
                 user = user,
@@ -604,8 +600,12 @@ def addcontainer(request, usercoursebinding_id):
                 image = course.image
                 )
         CourseContainerBinding.objects.create(course = course, container = container)
-    except:
-        raise
+        if created:
+            messages.info(request, f'We created a new environment {container.friendly_name} for course {course.name}.')
+        else:
+            messages.info(request, f'We associated your course {course.name} with your former environment {container.friendly_name}.')
+    except Exception as e:
+        messages.error(request, f'We failed -- {e}')
     return redirect('container:list')
 
 
