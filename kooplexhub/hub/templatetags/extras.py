@@ -31,9 +31,9 @@ def render_user(user, prefix = "userid"):
 
 
 @register.simple_tag(name = 'apply_cancel')
-def apply_cancel(hide_apply = False, label_apply = 'Submit', icon_apply = None, hide_cancel = True, label_cancel = 'Cancel'):
+def apply_cancel(hide_apply = False, label_apply = 'Submit', icon_apply = None, color_apply="btn-warning", hide_cancel = True, label_cancel = 'Cancel'):
     ai = f'<i class="{icon_apply}"></i>&nbsp;' if icon_apply else ""
-    submit = "" if hide_apply else f"""<div><button type="submit" class="btn btn-warning" name="button" value="apply">{ai}{label_apply}</button></div>"""
+    submit = "" if hide_apply else f"""<div><button type="submit" class="btn {color_apply}" name="button" value="apply">{ai}{label_apply}</button></div>"""
     cancel = "" if hide_cancel else f"""<div><button type="submit" class="btn btn-secondary" name="button" value="cancel">{label_cancel}</button></div>"""
     return format_html(f"""
 <div class="container-fluid d-flex flex-row justify-content-end mt-3">

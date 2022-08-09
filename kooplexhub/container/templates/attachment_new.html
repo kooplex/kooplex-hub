@@ -1,6 +1,6 @@
 {% extends 'storage_layout.html' %}
-
 {% load static %}
+{% load extras %}
 
 {% block realcontent %}
 <div class="container mt-2">
@@ -13,7 +13,7 @@
      {{ form.as_table }}
    </table>
    <div class="mt-2">
-    {% include 'apply_cancel.html' with hide_cancel=True apply='Create' %}
+    {% apply_cancel label_apply="Create" icon_apply="bi bi-check-circle-fill" color_apply="btn-success" %}
    </div>
   </form>
   </div>

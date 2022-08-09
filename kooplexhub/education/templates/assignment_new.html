@@ -45,7 +45,7 @@
           {% endif %}
         {% endfor %}
       </table>
-      {% include 'apply_cancel.html' with hide_cancel=True %}
+      {% apply_cancel label_apply="Create" icon_apply="bi bi-check-circle-fill" color_apply="btn-success" %}
     </form>
     {% else %}
       {% include 'empty.html' with empty_body='There are no candidate subfolders in <code>assignment_prepare</code> directory. Please create one and place all files into it to be part of a new assignment. Empty folders cannot be selected.' skip_border=True %}
