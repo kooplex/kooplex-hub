@@ -11,7 +11,7 @@ from django.views import generic
 from django.urls import reverse
 from django.contrib.auth.mixins import LoginRequiredMixin
 
-from .forms import FormContainer, FormAttachment
+from .forms import FormContainer, FormAttachment, FormAttachmentUpdate
 from .forms import TableContainerProject, TableContainerCourse, TableContainerAttachment, TableContainerVolume
 from .models import Image, Container, Attachment, AttachmentContainerBinding
 from project.models import Project, UserProjectBinding, ProjectContainerBinding
@@ -133,8 +133,22 @@ class NewAttachmentView(LoginRequiredMixin, generic.FormView):
     def form_valid(self, form):
         logger.info(form.cleaned_data)
         user = self.request.user
-        Attachment.objects.create(creator_id = user.id, name = form.cleaned_data['name'], folder = form.cleaned_data['folder'], description = form.cleaned_data['description'])
+        a = Attachment.objects.create(creator_id = user.id, name = form.cleaned_data['name'], folder = form.cleaned_data['folder'], description = form.cleaned_data['description'])
+        messages.info(self.request, f'Attachment {a.name} is created')
         return super().form_valid(form)
+
+
+class ConfigureAttachmentView(LoginRequiredMixin, generic.edit.UpdateView):
+    model = Attachment
+    form_class = FormAttachmentUpdate
+    template_name = 'attachment_configure.html' #FIXME: same as new
+    success_url = '/hub/container_environment/attachments/' #FIXME: django.urls.reverse or shortcuts.reverse does not work reverse('project:list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['menu_storage'] = True
+        context['attachment_id'] = self.kwargs['pk']
+        return context
 
 
 @login_required

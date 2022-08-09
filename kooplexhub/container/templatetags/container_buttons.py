@@ -171,6 +171,17 @@ def button_configure(container):
 
 
 @register.simple_tag
+def button_configure_attachment(attachment, user):
+    if attachment.creator == user:
+        link = reverse('container:configure_attachment', args = [attachment.id])
+        return format_html(f"""
+<a href="{link}" role="button" class="btn btn-secondary btn-sm"><span class="oi oi-wrench" aria-hidden="true" data-toggle="tooltip" title="Update the name or description of this attachment" data-placement="bottom"></span></a>
+        """)
+    else:
+        return ""
+
+
+@register.simple_tag
 def dropdown_start_open_stop(bindings, ancestor, ancestor_type, next_page):
     if len(bindings):
         items = ""

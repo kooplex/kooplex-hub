@@ -8,15 +8,45 @@ from kooplexhub.lib import my_slug_validator, my_end_validator, my_alphanumeric_
 
 
 class FormAttachment(forms.ModelForm):
-
     class Meta:
         model = Attachment
         fields = [ 'name', 'description', 'folder' ]
-        help_texts = {
-            'name': _('Attachment name must be unique.'),
-            'description': _('It is always a nice idea to describe attachments'),
-            'folder': _('A unique folder name, which serves as the mount point.'),
-        }
+
+    name = forms.CharField(
+        label = _("Attachment name"), required = True,            
+        validators = [
+            my_alphanumeric_validator('Enter a valid attachment name containing only letters and numbers.'),
+        ],
+        widget = forms.TextInput(attrs = {
+            'class': 'form-control',
+            'data-toggle': 'tooltip', 
+            'title': _('Attachment name must be unique.'),
+            'data-placement': 'bottom',
+            })
+        )
+    description = forms.CharField(
+        required = True,            
+        widget = forms.Textarea(attrs = {
+            'rows': 6, 'cols': 20,
+            'class': 'form-control',
+            'data-toggle': 'tooltip', 
+            'title': _('It is always a nice idea to describe attachments'),
+            'data-placement': 'bottom',
+            })
+        )
+    folder = forms.CharField(
+        label = _("Folder name"), required = True,            
+        validators = [
+            my_slug_validator('Enter a valid folder name containing only letters, numbers or dash.'),
+            my_end_validator('Enter a valid folder name ending with a letter or number.'),
+            ],
+        widget = forms.TextInput(attrs = {
+            'class': 'form-control',
+            'data-toggle': 'tooltip', 
+            'title': _('A unique folder name, which serves as the mount point.'),
+            'data-placement': 'bottom',
+            })
+        )
 
     def clean(self):
         cleaned_data = super().clean()
@@ -31,37 +61,51 @@ class FormAttachment(forms.ModelForm):
         return cleaned_data
 
 
-    def __init__(self, *args, **kwargs):
-        super(FormAttachment, self).__init__(*args, **kwargs)
-        self.fields['name'] = forms.CharField(
-                label = _("Attachment name"),
-                required = True,            
-                validators = [
-                    my_alphanumeric_validator('Enter a valid attachment name containing only letters and numbers.'),
-                ],
+class FormAttachmentUpdate(forms.ModelForm):
+    class Meta:
+        model = Attachment
+        fields = [ 'id', 'name', 'description', 'folder' ]
 
-            )
-        self.fields['description'].widget.attrs['rows'] = 6
-        self.fields['description'].widget.attrs['cols'] = 20
-        self.fields['folder'] = forms.CharField(
-                label = _("Folder name"),
-                required = True,            
-                validators = [
-                    my_slug_validator('Enter a valid folder name containing only letters, numbers or dash.'),
-                    my_end_validator('Enter a valid folder name ending with a letter or number.'),
-                ],
+    id = forms.IntegerField(widget = forms.HiddenInput())
+    name = forms.CharField(
+        label = _("Attachment name"), required = True,            
+        widget = forms.TextInput(attrs = {
+            'class': 'form-control',
+            'data-toggle': 'tooltip', 
+            'title': _('Attachment name must be unique.'),
+            'data-placement': 'bottom',
+            })
+        )
+    description = forms.CharField(
+        required = True,            
+        widget = forms.Textarea(attrs = {
+            'rows': 6, 'cols': 20,
+            'class': 'form-control',
+            'data-toggle': 'tooltip', 
+            'title': _('It is always a nice idea to describe attachments'),
+            'data-placement': 'bottom',
+            })
+        )
+    folder = forms.CharField(
+        disabled = True,
+        widget = forms.TextInput(attrs = {
+            'class': 'form-control',
+            })
+        )
 
-            )
-        self.fields['folder'].widget.attrs['cols'] = 20
-        for field in self.fields:
-            help_text = self.fields[field].help_text
-            self.fields[field].help_text = None
-            self.fields[field].widget.attrs["class"] = "form-control"
-            if help_text != '':
-                extra = {
-                    'data-toggle': 'tooltip', 
-                    'title': help_text,
-                    'data-placement': 'bottom',
-                }
-                self.fields[field].widget.attrs.update(extra)
+    def clean(self):
+        cleaned_data = super().clean()
+        try:
+            name = cleaned_data['name'].strip()
+        except KeyError:
+            raise forms.ValidationError(_('Name seems to be practically empty'), code = 'name error')
+        try:
+            description = cleaned_data['description'].strip()
+        except KeyError:
+            raise forms.ValidationError(_('Description seems to be practically empty'), code = 'description error')
+        if Attachment.objects.filter(name = name).exclude(id = cleaned_data['id']):
+            raise forms.ValidationError(_(f'Attachment name {name} is not unique'), code = 'attachmentname not unique')
+        cleaned_data['name'] = name
+        cleaned_data['description'] = description
+        return cleaned_data
 

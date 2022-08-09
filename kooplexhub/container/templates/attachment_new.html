@@ -4,18 +4,13 @@
 
 {% block realcontent %}
 <div class="container mt-2">
-  <form id="attachment_new" class="form-horizontal was-validated" action="{% url 'container:new_attachment' %}" method="post">
-    <div class="card bg-light border-secondary shadow p-3">
-    <p>Create a new attachment</p>
-  <form id="attachment_new" class="form-horizontal" action="{% url 'container:new_attachment' %}" method="post">
-   {% csrf_token %}
-   <table>
-     {{ form.as_table }}
-   </table>
-   <div class="mt-2">
+  <form id="attachment_new" class="form-horizontal was-validated card bg-light border-secondary shadow p-3" action="{% url 'container:new_attachment' %}" method="post">
+    {% csrf_token %}
+    {% title "Create a new attachment" %}
+    <table>
+       {{ form.as_table }}
+    </table>
     {% apply_cancel label_apply="Create" icon_apply="bi bi-check-circle-fill" color_apply="btn-success" %}
-   </div>
   </form>
-  </div>
 </div>
 {% endblock %}

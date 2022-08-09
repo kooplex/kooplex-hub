@@ -1,14 +1,16 @@
+{% load extras %}
+{% load container_buttons %}
+
 <div class="card bg-light border-danger shadow mb-3 search" id="card-{{ attachment.id  }}">
   <div class="card-header">
-	  <input type="hidden" id="attachment-dump-{{ attachment.id }}" value="{{ attachment.name }} {{ attachment.folder }} {{ attachment.description }}">
+  <input type="hidden" id="attachment-dump-{{ attachment.id }}" value="{{ attachment.name }} {{ attachment.folder }} {{ attachment.description }}">
     <div class="row">
       <div class="col-2">
-	{{ attachment.name }}
+	<span><i class="bi bi-postcard"></i>&nbsp;{{ attachment.name }}</span><br>
+	{% render_folder attachment.folder %}<br>
+	{% button_configure_attachment attachment user %}
       </div>
-      <div class="col-2">
-        {{ attachment.folder }}
-      </div>
-      <div class="col-8">
+      <div class="col-10">
         {{ attachment.description }} (created by {{ attachment.creator.profile.name }})
       </div>
     </div>

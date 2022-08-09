@@ -19,5 +19,6 @@ urlpatterns = [
     re_path('^open/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)/(?P<shown>.*)?/?', views.open, name = 'open'),
 
     path('attachments/', views.AttachmentListView.as_view(), name = 'list_attachments'),
-    path('new_attachment/', views.NewAttachmentView.as_view(), name = 'new_attachment'),
+    path('attachment_new/', views.NewAttachmentView.as_view(), name = 'new_attachment'),
+    path('attachment_configure/<int:pk>/', views.ConfigureAttachmentView.as_view(), name = 'configure_attachment'), 
 ]
