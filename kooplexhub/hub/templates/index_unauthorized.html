@@ -1,4 +1,16 @@
 {% extends "layout.html" %}
+{% block page_title %}Kooplex {% endblock %}
+
+{% block head_content %}
+<style>
+.logos {
+  width: 60px;
+  height: 40px; 
+  padding-right: 10px; 
+  margin-top: 10px;
+}
+</style>
+{% endblock %}
 
 {% block menu_and_content %}
 <div class="container-fluid d-flex flex-column">
@@ -6,10 +18,11 @@
     <div class="container-fluid d-flex flex-row justify-content-between">
       <ul class="navbar-nav ms-3">
         <li class="nav-item">
-	  <a class="nav-link" href="{% url 'report:list' %}"><i class="bi bi-projector"></i>&nbsp;Report</a>
+          <a class="nav-link {% if menu_report %}active border-2 border-bottom{% endif %}" 
+             href="{% if menu_report %}#{%else %}{% url 'report:list' %}{% endif %}"><i class="bi bi-projector"></i>&nbsp;Report</a>
         </li>
       </ul>
-      <img src="/static/logo_mono.png" width="120" height="30" alt="Kooplex Hub">
+      <a href="{% if menu_report %}{% url 'indexpage' %}{% else %}#{% endif %}"><img src="/static/logo-halfcolored.png" width="120" height="30" alt="Kooplex Hub"></a>
       <ul class="navbar-nav me-3">
         <li class="nav-item">
           <a class="nav-link" href="{% url 'social:begin' 'kooplex' %}">Login&nbsp;<span class="oi oi-account-login"/></a>
@@ -21,21 +34,23 @@
 
 <main class="ps-0 ps-md-0 flex-grow-1">
 <div class="container">
-<div class="card shadow p-2 mb-3 mt-5 bg-light rounded"> 
-  <h6 class="card-title">Powered by</h6>
-  <div class="card-body" style="flex-direction: row; flex-wrap: wrap; justify-content: space-between">
-    <img src="/static/dockerlogo.png" style="width: 50px; height: 30px; padding-right: 10px; margin-top: 10px" alt="docker">
-    <img src="/static/kuberneteslogo.png" style="width: 50px; height: 30px; padding-right: 10px; margin-top: 10px" alt="k8s">
-    <img src="/static/django.png" style="width: 50px; height: 30px; padding-right: 10px; margin-top: 10px" alt="django">
-    <img src="/static/Nginx-Logo.png" style="width: 50px; height: 30px; padding-right: 10px; margin-top: 10px" alt="nginx">
-    <img src="/static/jupyter.png" style="width: 50px; height: 30px; padding-right: 10px ; margin-top: 10px" alt="jupyter">
-    <img src="/static/rstudio.png" style="width: 50px; height: 30px; padding-right: 10px; margin-top: 10px" alt="rstudio">
-    <img src="/static/gitea.png"  style="width: 50px; height: 30px; padding-right: 10px; margin-top: 10px" alt="gitea">
-    <img src="/static/seafile.png"  style="width: 50px; height: 30px; padding-right: 10px; margin-top: 10px" alt="seafile">
-    <img src="/static/slurm.png" style="width: 50px; height: 30px; padding-right: 10px; margin-top: 10px" alt="slurm">
-    <img src="/static/singularity.png" style="width: 50px; height: 30px; padding-right: 10px; margin-top: 10px" alt="singularity">
+{% block bodycontent %}
+  <div class="card shadow p-2 mb-3 mt-5 bg-light rounded"> 
+    <h6 class="card-title">Powered by</h6>
+    <div class="card-body" style="flex-direction: row; flex-wrap: wrap; justify-content: space-between">
+      <img src="/static/dockerlogo.png" class="logos" alt="docker">
+      <img src="/static/kuberneteslogo.png" class="logos" alt="k8s">
+      <img src="/static/django.png" class="logos" alt="django">
+      <img src="/static/Nginx-Logo.png" class="logos" alt="nginx">
+      <img src="/static/jupyter.png" class="logos" alt="jupyter">
+      <img src="/static/rstudio.png" class="logos" alt="rstudio">
+      <img src="/static/gitea.png"  class="logos" alt="gitea">
+      <img src="/static/seafile.png"  class="logos" alt="seafile">
+      <img src="/static/slurm.png" class="logos" alt="slurm">
+      <img src="/static/singularity.png" class="logos" alt="singularity">
+    </div>
   </div>
-</div>
+{% endblock %}
 </div>
 
 <div class="container">
@@ -43,10 +58,10 @@
 <div class="card shadow p-3 mb-5 bg-light rounded"> 
    <div class="card-body">
       <h5 class="card-title">Note{% if notes|length > 1 %}s{% endif %}</h5>
-      <div class="alert alert-info show" role="alert">
-{% for note in notes %}
-        <p>{{ note.message }}<br>{{ note.created_at }}</p>
-{% endfor %}
+      <div class="alert alert-info show" style="background-color: orange;" role="alert">
+        {% for note in notes %}
+                <p style="color: black;">{{ note.message }}<br>{{ note.created_at }}</p>
+        {% endfor %}
       </div>
    </div>
 </div>

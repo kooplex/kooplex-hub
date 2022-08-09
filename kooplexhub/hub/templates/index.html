@@ -1,4 +1,5 @@
 {% extends "layout.html" %}
+{% block page_title %}Kooplex Home{% endblock %}
 
 {% load static %}
 
@@ -14,8 +15,8 @@ margin-top: 10px
 </style>
 {% endblock %}
 
-{% block bodycontent %}
 
+{% block bodycontent %}
 <div class="container">
   <div class="card shadow p-3 mb-2 mt-3 bg-light rounded"> 
     <h6 class="card-title">Powered by</h6>
@@ -37,9 +38,9 @@ margin-top: 10px
 <div class="card shadow p-3 mb-5 bg-light rounded"> 
    <div class="card-body">
       <h5 class="card-title">Note{% if notes|length > 1 %}s{% endif %}</h5>
-      <div class="alert alert-info show" role="alert">
+      <div class="alert alert-info show" style="background-color: orange;" role="alert">
 {% for note in notes %}
-        <p>{{ note.message }}<br>{{ note.created_at }}</p>
+        <p style="color: black;">{{ note.message }}<br>{{ note.created_at }}</p>
 {% endfor %}
       </div>
    </div>
@@ -49,13 +50,3 @@ margin-top: 10px
 
 {% endblock %}
 
-
- {% comment %}
-
-{% load static %}
-
-{% block chardinhelp %}
-             url: "{% static 'chardinjs/helptext_main.json' %}"
-{% endblock %}
-
-    {% endcomment %}
