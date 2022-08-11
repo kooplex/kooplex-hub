@@ -128,7 +128,7 @@ class TableCollaborator(tables.Table):
         """ if record.id else f"""
 <input type="hidden" name="{prefix}user_id" value="{record.user.id}">
         """
-        dhidden = "" if self.is_collaborator_table else 'class="d-none"'
+        dhidden = "me-2" if self.is_collaborator_table else 'class="me-2 d-none"'
         chk = "checked" if self.is_collaborator_table and record.role == record.RL_ADMIN else ""
         o_adm = "opacity-75" if self.is_collaborator_table and record.role == record.RL_ADMIN else ""
         o_nadm = "" if self.is_collaborator_table and record.role == record.RL_ADMIN else "opacity-75"
