@@ -130,12 +130,14 @@ class TableCollaborator(tables.Table):
         """
         dhidden = "" if self.is_collaborator_table else 'class="d-none"'
         chk = "checked" if self.is_collaborator_table and record.role == record.RL_ADMIN else ""
+        o_adm = "opacity-75" if self.is_collaborator_table and record.role == record.RL_ADMIN else ""
+        o_nadm = "" if self.is_collaborator_table and record.role == record.RL_ADMIN else "opacity-75"
         return format_html(f"""
-<span id="d-{user.id}" {dhidden}><input id="admin-{user.id}"
+<span id="d-{user.id}" {dhidden}><input id="admin-{user.id}" data-size="small"
   type="checkbox" data-toggle="toggle" name="{prefix}admin_id"
   data-on="<span class='oi oi-lock-unlocked'></span>"
   data-off="<span class='oi oi-lock-locked'></span>"
-  data-onstyle="danger" data-offstyle="success" {chk} value="{user.id}"></span>
+  data-onstyle="success {o_adm}" data-offstyle="danger {o_nadm}" {chk} value="{user.id}"></span>
 {ru(user)}
 <input type="hidden" id="search-collaborator-{user.id}" value="{user.username} {user.first_name} {user.last_name} {user.first_name}">
 {hidden}
@@ -174,19 +176,28 @@ class TableContainer(tables.Table):
         try:
             psb = ProjectContainerBinding.objects.get(project = self.upb.project, container = record)
             return format_html(f"""
-<input type="checkbox" class="btn-check" name="attach" value="{record.id}" id="btn-{record.id}" autocomplete="off" checked>
-<label class="btn btn-outline-secondary" for="btn-{record.id}"><i class="bi bi-file-plus"></i></label>
+<input id="btn-{record.id}"
+  type="checkbox" data-toggle="toggle" name="attach" data-size="small"
+  data-on="<span class='bi bi-file-plus'></span>"
+  data-off="<span class='bi bi-file-minus'></span>"
+  data-onstyle="success opacity-75" data-offstyle="secondary" value="{record.id}" checked></span>
             """)
         except ProjectContainerBinding.DoesNotExist:
             return format_html(f"""
-<input type="checkbox" class="btn-check" name="attach" value="{record.id}" id="btn-{record.id}" autocomplete="off">
-<label class="btn btn-outline-secondary" for="btn-{record.id}"><i class="bi bi-file-minus"></i></label>
+<input id="btn-{record.id}"
+  type="checkbox" data-toggle="toggle" name="attach" data-size="small"
+  data-on="<span class='bi bi-file-plus'></span>"
+  data-off="<span class='bi bi-file-minus'></span>"
+  data-onstyle="success" data-offstyle="secondary opacity-75" value="{record.id}"></span>
         """)
 
     def render_b_project(self, record):
         return format_html(f"""
-<input type="checkbox" class="btn-check" name="template" value="{record.id}" id="btn-{record.id}" autocomplete="off">
-<label class="btn btn-outline-secondary" for="btn-{record.id}"><i class="bi bi-boxes"></i></label>
+<input id="btn-{record.id}"
+  type="checkbox" data-toggle="toggle" name="template" data-size="small"
+  data-on="<span class='bi bi-boxes'></span>"
+  data-off="<span class='bi bi-boxes'></span>"
+  data-onstyle="success" data-offstyle="secondary opacity-75" value="{record.id}"></span>
         """)
 
     def render_name(self, record):
