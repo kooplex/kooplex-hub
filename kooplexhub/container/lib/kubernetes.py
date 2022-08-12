@@ -68,8 +68,10 @@ def start(container):
             V1Volume(name="initscripts", config_map=V1ConfigMapVolumeSource(name="initscripts", default_mode=0o777, items=[
                 V1KeyToPath(key="nsswitch",path="01-nsswitch"),
                 V1KeyToPath(key="nslcd",path="02-nslcd"),
-                V1KeyToPath(key="usermod",path="03-usermod"),
-                V1KeyToPath(key="jobtools",path="11-jobtools")]))
+                V1KeyToPath(key="usermod",path="03-usermod")
+#                V1KeyToPath(key="jobtools",path="11-jobtools"),
+#                V1KeyToPath(key="jobaliases",path="10-jobaliases")
+]))
     #        V1Volume(name="initscripts", config_map=V1ConfigMapVolumeSource(name="initscripts", default_mode=0o777, items=[V1KeyToPath(key="entrypoint",path="entrypoint.sh")]))
             ])
             
@@ -82,14 +84,14 @@ def start(container):
              V1VolumeMount(name="kubeconf", mount_path="/.secrets/kubeconfig", read_only=True)
              )
         volume_mounts.append(
-             V1VolumeMount(name="jobtools", mount_path="/etc/jobtools", read_only=True)
+             V1VolumeMount(name="jobtools", mount_path="/etc/jobtools", read_only=KOOPLEX['kubernetes'].get('jobtools_ro', False))
              )
 
         volumes.append(
             V1Volume(name="kubeconf", config_map=V1ConfigMapVolumeSource(name=KOOPLEX['kubernetes'].get('kubeconfig_job', 'kubeconfig'), items=[V1KeyToPath(key="kubejobsconfig",path="config")]))
             )
         volumes.append(
-            V1Volume(name=f"jobtools",persistent_volume_claim = V1PersistentVolumeClaimVolumeSource(claim_name="job-tools" , read_only=True))
+            V1Volume(name=f"jobtools",persistent_volume_claim = V1PersistentVolumeClaimVolumeSource(claim_name=KOOPLEX['kubernetes'].get('claim_jobtools', 'job-tools') , read_only=KOOPLEX['kubernetes'].get('jobtools_ro', False)))
                 )
 
     # user's home and garbage
@@ -191,6 +193,22 @@ def start(container):
             "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-project', 'project') }
         })
 
+    # report
+    claim_report = False
+    logger.warning("DDD {container.reports}")
+    for report in container.reports:
+        volume_mounts.extend([{
+             "name": "report",
+             "mountPath": '/srv/report', # KOOPLEX['kubernetes']['userdata'].get('mountPath_report', '/srv/report').format(report = report),
+             "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_report', '{report.subpath}').format(report = report),
+        }
+        ])
+        claim_report = True
+    if claim_report:
+        volumes.append({
+            "name": "report",
+            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-repeort', 'report') }
+        })
 
     # attachment
     claim_attachment = False
@@ -434,8 +452,13 @@ def check(container):
     config.load_kube_config()
     v1 = client.CoreV1Api()
     message = 'no status message to read yet'
+    podlog = "There is no log yet"
     try:
         podstatus = v1.read_namespaced_pod_status(namespace = namespace, name = container.label)
+        try:
+            podlog = v1.read_namespaced_pod_log(namespace = namespace, name = container.label)
+        except:
+            pass
         cds = podstatus.status.conditions
         if cds is not None:
             logger.debug(cds)
@@ -482,6 +505,7 @@ def check(container):
         return -1
     finally:
         container.last_message = message
+        container.log = podlog[-10000:]
         if message.startswith('pods ') and message.endswith(' not found'):
             container.state = container.ST_NOTPRESENT
         container.last_message_at = now()

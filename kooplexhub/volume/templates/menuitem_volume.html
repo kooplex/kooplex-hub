@@ -1,0 +1,12 @@
+{% if user.is_authenticated %}
+<li class="nav-item dropdown {{ active }}">
+  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownContainer" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+    Volume
+  </a>
+  <ul class="dropdown-menu" aria-labelledby="navbarDropdownContainer">
+    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#volume-new">New volume</a></li>
+    <li><a class="dropdown-item" href="{% url 'volume:list' %}">List volumes</a></li>
+  </ul>
+</li>
+{% include "volume_new.html" %}
+{% endif %}

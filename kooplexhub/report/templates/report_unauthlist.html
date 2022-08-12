@@ -1,0 +1,32 @@
+
+<div class="col">
+    <div class="card text-white bg-primary border-info shadow search" id="{{ report.name }}">
+  {% comment %}
+      <img src="..." class="card-img-top" alt="...">
+  {% endcomment %}
+      <div class="card-header bg-primary">
+        <h5 class="card-title">{{ report.name }}
+          <div class="float-end">
+            {#% scope report %#}
+          </div>
+        </h5>
+      </div>
+      <div class="card-body text-dark bg-light">
+        {% if report.creator != user %}
+          <p class="card-text"><strong>Creator:</strong> {{ report.creator.profile.name_and_username }}</p>
+        {% endif %}
+        <p class="card-text"><strong>Description:</strong> {{ report.description }}</p>
+        <p class="card-text">
+         <div class="btn-group" role="group">
+          <p class="card-text"><strong>Info:</strong></p>
+          <div style="display: flex;">
+            <div style="padding-right: 5px">{% include 'reports_button.html' %}</div>
+            <div style="padding-right: 5px">{% button_collaborator report user %}</div>
+            <div style="padding-right: 5px"> {% dropdown_start_open_stop bindings=reportcontainerbindings ancestor=report ancestor_type='report' next_page='report:list' %}</div>
+        </div>
+        </div>
+        </p>
+      </div>
+    </div>
+  </div>
+  

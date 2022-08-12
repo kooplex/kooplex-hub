@@ -1,0 +1,69 @@
+{% extends "volume_layout.html" %}
+{% load render_table from django_tables2 %}
+{% load extras %}
+
+{% block realcontent %}
+<div class="card shadow p-3 mt-3 bg-light rounded">
+<form id="volume-manage" class="form-horizontal" action="{% url 'volume:configure' volume.id %}" method="post">
+{% csrf_token %}
+
+  <ul class="nav nav-tabs" id="volumeConfigTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <a class="nav-link {% if active == "meta" %}active{% endif %}" id="tab-meta" data-bs-toggle="tab" href="#meta" role="tab" aria-controls="meta" aria-selected="{% if active == "meta" %}true{% else %}false{% endif %}">Meta</a>
+    </li>
+    <li class="nav-item" role="presentation">
+      <a class="nav-link {% if active == "share" %}active{% endif %}" id="tab-share" data-bs-toggle="tab" href="#share" role="tab" aria-controls="share" aria-selected="{% if active == "share" %}true{% else %}false{% endif %}">Share</a>
+    </li>
+  </ul>
+  <div class="tab-content" id="volumeConfigTabsContent">
+    <div class="tab-pane fade {% if active == "meta" %}show active{% endif %}" id="meta" role="tabpanel" aria-labelledby="tab-meta">
+      <h5 class="card-title mt-2">Describe your volume</h5>
+      <textarea class="form-control" rows="6" cols="50" id="description" name="description">{{ volume.description }}</textarea>
+      <h5 class="card-title mt-2">Change the scope for this volume</h5>
+      <select class="form-control" id="volume_scopes-{{ volume.id }}" name="volume_scope">
+        {% for k, v in volume.SCP_LOOKUP.items %}
+          <option value="{{ k }}" {% if volume.scope == k %} selected {% endif %}>{{ v }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="tab-pane fade {% if active == "share" %}show active{% endif %}" id="share" role="tabpanel" aria-labelledby="tab-share">
+      <h5 class="card-title mt-2">Share volumes with collaborators</h5>
+      {% if t_share %}
+        {% render_table t_share %}
+      {% endif %}
+        <hr>
+    </div>
+  </div>
+  <div class="mt-1"></div>
+    {% apply_cancel label_apply="Save" icon_apply="bi bi-save" color_apply="btn-success" %}
+</div>
+</form>
+</div>
+
+<script>
+  $("#volumeConfigTabs li a").on("click", function () {
+    var tab = $( this ).attr("id")
+    console.log( tab )
+
+    if (tab == "tab-share") {
+      $("#active_tab").attr("value",  "share")
+      $("#search_field").attr("placeholder",  "Search name or username")
+      $("#search_field").attr("value", $("#s_share").attr("value") )
+      $("#search_field").attr("disabled", false )
+    } else if (tab == "tab-meta") {
+      $("#active_tab").attr("value",  "meta")
+      $("#search_field").attr("placeholder",  "Search")
+      $("#search_field").attr("value", "" )
+      $("#search_field").attr("disabled", true )
+    }
+    console.log( $("#active_tab").attr("value") )
+  })
+</script>
+{% endblock %}
+
+{% block main_content_left %}
+  {#% include 'volume/hint_config.html' %#}
+{% endblock %}
+
+
+

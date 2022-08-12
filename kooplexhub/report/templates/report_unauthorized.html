@@ -1,0 +1,46 @@
+{% extends "report_layout.html" %}
+
+{% load static %}
+
+
+
+    {% block menu_and_content %}
+	      {% block submenu %}
+	      <a class="ms-3 mt-3 mb-3 navbar-brand d-flex justify-content-start fs-6"  href="#">Hi {{ user.first_name }} {{ user.last_name }}. Welcome to Kooplex!</a>
+	      {% endblock %}
+{% block bodycontent %}
+
+
+<div id="reportListPane" class="row row-cols-1 row-cols-md-3 g-4">
+  {% for report in reports %}
+     {% include 'report_unauthlist.html' %}
+  {% endfor %}
+</div>
+
+<script>
+$("#search_report").keyup(function() {
+  var pattern = $( this ).val().toUpperCase();
+  console.log( "search report: " + pattern );
+  $( document ).find("div[id^='report-id-'").each(function() {
+    console.log(  );
+    var hide_it = true;
+    var rid = $(this).attr("id").split("-")[2];
+    if (pattern.length > 0) {
+      var name = $("#r-" + rid).val().toUpperCase();
+      if ( name.indexOf(pattern) > -1 ) {
+        hide_it = false;
+      }
+    } else {
+      hide_it = false;
+    }
+    if (hide_it) {
+      $( this ).hide();
+    } else {
+      $( this ).show();
+    }
+  });
+});
+</script>
+    {% endblock %}
+{% endblock %}
+

@@ -1,0 +1,20 @@
+{% load volume_buttons %}
+
+<div class="card bg-light border-danger shadow mb-3 search" id="{{ volume.name  }}">
+  <div class="card-header">
+    <div class="row">
+      <div class="col-2">
+	{{ volume.name }}
+      </div>
+      <div class="col-8">
+        {{ volume.description }} 
+        <div class="float-end">
+	  {% button_volume_conf volume enabled=is_admin %}
+          {% scope volume %}
+	  {% button_volume_delete volume is_admin %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

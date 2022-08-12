@@ -9,7 +9,7 @@ class Command(BaseCommand):
     help = 'Manage images'
 
     def add_arguments(self, parser):
-        parser.add_argument('--add', help = "Add image", nargs = 1)
+        parser.add_argument('--add_image', help = "Add image", nargs = 1)
         parser.add_argument('--add_proxy', help = "Add Proxy", nargs = 7)
         parser.add_argument('--add_envvar', help = "Add Proxy", nargs = 3)
         parser.add_argument('--remove', help = "Remove image", nargs = 1)
@@ -18,14 +18,17 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         logger.info("call %s %s" % (args, options))
-        add_image = options.get('add')
+        add_image = options.get('add_image')
         add_proxy = options.get('add_proxy')
         add_envvar = options.get('add_envvar')
         remove_image = options.get('remove')
         remove_proxy = options.get('remove_proxy')
         remove_envvar = options.get('remove_envvar')
         if add_image:
-            i, s = Image.objects.get_or_create(name = add_image.pop())
+            #imagetype = add_image.pop() 
+            name = add_image.pop()
+            #i, s = Image.objects.get_or_create(name=name, imagetype=imagetype)
+            i, s = Image.objects.get_or_create(name=name)
             logger.info('Image %s %s' % (i, 'created' if s else 'exists'))
         if remove_image:
             try:

@@ -23,7 +23,7 @@
   </script>
 
 {% if messages or unbound_containers or restart_containers or unbound_projects or due_assignments or unbound_courses or empty_course_groups or ungrouped_course_students %}
- <div data-intro="#messages"> 
+ <div> 
     {% if due_assignments %}
       <div class="alert alert-warning alert-dismissible fade show" role="warning">
 	      <strong data-bs-toggle="tooltip" title="Your have assignment{% if due_assignments|length > 1 %}s{% endif %} due: {{ due_assignments|join:", " }}.">Due assignment{% if due_assignments|length > 1 %}s{% endif %}</strong> {{ due_assignments|join:", " }}.
@@ -76,7 +76,7 @@
         </div>
       {% endif %}
       {% if message.level == 20 %}
-        <div class="alert alert-info alert-dismissible fade show" role="alert">
+        <div class="alert alert-secondary alert-dismissible fade show" role="alert">
 	  <strong>Info</strong> {{ message }}
           <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>

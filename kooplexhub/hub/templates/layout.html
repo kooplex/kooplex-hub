@@ -79,7 +79,7 @@ grid-column: span 8;
 	      <a class="ms-3 mt-3 mb-3 navbar-brand d-flex justify-content-start fs-6 flex-column-reverse" href="#">Hi, {{ user.first_name }} {{ user.last_name }}. Welcome to Kooplex!</a>
 	      {% endblock %}
               <ul class="navbar-nav d-flex flex-row  ms-4">
-                <li class="nav-item"><a href="#" class="nav-link"><span class="oi oi-question-mark" data-toggle="tooltip" title="Help" data-placement="bottom"></a></li>
+                <li class="nav-item">{% block help %}{% endblock %}</li>
 		<li class="nav-item ms-3 ms-md-1"><a href="#" class="nav-link" data-bs-toggle="offcanvas" data-bs-target="#offcanvasMessages" aria-controls="offcanvasMessages"><span class="bi bi-chat-left-dots" data-toggle="tooltip" title="Messages" data-placement="bottom"></a></li>
                 <li class="nav-item dropdown ms-3 ms-md-1">
                   <a class="nav-link dropdown-toggle" href="#" id="navbarDarkDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">

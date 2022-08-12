@@ -1,0 +1,26 @@
+{% extends "layout.html" %}
+{% block page_title %}Kooplex Home{% endblock %}
+
+{% load static %}
+{% block submenu %}
+<ul class="navbar-nav flex-row flex-md-row">
+  <li class="ms-3 nav-item text-center">
+	  <a data-toggle="tooltip" title="Simple node overview" data-placement="bottom" class="nav-link {% if submenu == 'simple' %}active border-2 border-bottom{% endif %}" href=""><i class="bi bi-bag-plus"></i><span class="d-sm-block d-none">&nbsp;Simple view</span></a>
+  </li>
+</ul>
+{% endblock %}
+
+{% block bodycontent %}
+{% block realcontent %}
+  <div id="simple">
+    <div class="row">
+    	<iframe src="https://monitoring.vo.elte.hu/grafana/d/ZhxFwBz4k/node-overview-simple-rows?orgId=1&from=1659610945771&to=1659614545772"	height="600" width="1100" frameborder="0"></iframe>
+    </div>
+  </div>
+  <div id="all">
+    <div class="row">
+    	<iframe src="https://monitoring.vo.elte.hu/grafana/d/aE-v7Bk4z/node-overview?orgId=1&refresh=5m&from=1659611026026&to=1659614626026"	height="600" width="1100" frameborder="0"></iframe>
+    </div>
+  </div>
+{% endblock %}
+{% endblock %}
