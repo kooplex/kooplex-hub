@@ -23,6 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 SESSION_COOKIE_NAME = "kooplexhub_sessionid"
+SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -85,6 +86,7 @@ TEMPLATES = [
             'container/templates', 
             'project/templates', 
             'education/templates', 
+            'volume/templates', 
         ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -97,10 +99,7 @@ TEMPLATES = [
                 'hub.context_processors.user',
                 'hub.context_processors.notes',
                 'hub.context_processors.installed_apps',
-                'container.context_processors.form_container',
                 'container.context_processors.warnings',
-                'container.context_processors.form_attachment',
-                'project.context_processors.form_project',
                 'project.context_processors.warnings',
                 'education.context_processors.assignment_warnings',
                 'education.context_processors.warnings',
@@ -172,6 +171,8 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = (
         f'{BASE_DIR}/hub/templates/static',
+        f'{BASE_DIR}/project/templates/static',
+        f'{BASE_DIR}/container/templates/static',
 )
 
 # Default primary key field type
@@ -248,10 +249,14 @@ KOOPLEX = {
         'url_internal': 'http://{container.label}:{proxy.port}',
         'url_public': 'https://%s/{proxy.path_open}' % DOMAIN,
         'path': 'notebook/{container.name}',
+        # FIXME: here or somewhere else?
+        'url_report_static': os.path.join(FQDN,'report/{report.id}/{report.index}'),
+        'url_report_dynamic': os.path.join(FQDN,'dreport/{report.id}'),
     },
     'kubernetes': {
         'namespace': '',
         'jobsnamespace': '',
+        'kubeconfig_job': 'kubejobsconfig', 
         'imagePullPolicy': 'Always',
         'nslcd': {
             'mountPath_nslcd': '/etc/mnt'
@@ -304,8 +309,10 @@ KOOPLEX = {
             'subPath_course_assignment_correct_all': 'course_assignments/{course.folder}/correctdir',
             # VOLUME
             'mountPath_volume': '/v/volumes/{volume.cleanname}',
-            # KUBE JOBS CONFIG
-            'mountPath_kubejobsconfig': '/etc/kubejobsconfig'
+            # KUBE JOBS
+            'mountPath_kubejobsconfig': '/etc/kubejobsconfig',
+            'claim-jobtools': 'job-tools',
+            'jobtools_ro': False,
         },
         'cache': {
             'claim': 'pvc-cache',
