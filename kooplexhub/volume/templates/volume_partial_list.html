@@ -1,17 +1,21 @@
+{% load extras %}
 {% load volume_buttons %}
 
-<div class="card bg-light border-danger shadow mb-3 search" id="{{ volume.name  }}">
+<div class="card bg-light border-danger shadow mb-3 search" id="card-{{ volume.id  }}">
   <div class="card-header">
+  <input type="hidden" id="volume-dump-{{ volume.id }}" value="{{ volume.name }} {{ volume.folder }} {{ volume.description }}">
     <div class="row">
       <div class="col-2">
-	{{ volume.name }}
+	<span><i class="ri-database-2-line"></i>&nbsp;{{ volume.name }}</span><br>
+	{% render_folder volume.cleanname subpath=volume.subpath %}<br>
+	{% button_configure_volume volume user %}<br>
       </div>
-      <div class="col-8">
+      <div class="col-9">
         {{ volume.description }} 
+      </div>
+      <div class="col-1">
         <div class="float-end">
-	  {% button_volume_conf volume enabled=is_admin %}
           {% scope volume %}
-	  {% button_volume_delete volume is_admin %}
         </div>
       </div>
     </div>

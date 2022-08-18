@@ -39,17 +39,16 @@ def scope(volume):
 #        return ""
 #
 
+
 @register.simple_tag
-def button_volume_conf(volume, enabled):
-    if enabled:
-        link = reverse('volume:configure', args = [ volume.id ])
+def button_configure_volume(volume, user):
+    if volume.is_admin(user):
+        link = reverse('volume:configure', args = [volume.id])
         return format_html(f"""
-<a href="{link}" role="button" class="btn btn-secondary btn-sm"><span class="oi oi-wrench" aria-hidden="true" data-toggle="tooltip" title="Settings of volume {volume.name}. You can modify collaboration and bind environments." data-placement="top" ></span></a>
+<a href="{link}" role="button" class="btn btn-secondary btn-sm"><span class="oi oi-wrench" aria-hidden="true" data-toggle="tooltip" title="Update the name or description of this volume or administer access." data-placement="bottom"></span></a>
         """)
     else:
-        return format_html(f"""
-<a href="#" role="button" class="btn btn-secondary btn-sm disabled"><span class="oi oi-wrench" aria-hidden="true" data-toggle="tooltip" title="You don't have permission to configure volume {volume.name}." data-placement="top" ></span></a>
-        """)
+        return ""
 
 
 @register.simple_tag

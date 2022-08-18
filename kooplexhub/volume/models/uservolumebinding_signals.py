@@ -78,8 +78,8 @@ code = lambda x: json.dumps([ i.id for i in x ])
 #            users_rw = code([instance.user]),
 #            task = FilesystemTask.TSK_REVOKE
 #        )
-#
-#
+
+
 #@receiver(pre_delete, sender = UserVolumeBinding)
 #def garbagedir_volume(sender, instance, **kwargs):
 #    if instance.role == UserVolumeBinding.RL_CREATOR:
@@ -98,12 +98,12 @@ code = lambda x: json.dumps([ i.id for i in x ])
 #            remove_folder = True,
 #            task = FilesystemTask.TSK_REMOVE
 #        )
-#
-#
-#@receiver(pre_delete, sender = UserVolumeBinding)
-#def assert_not_shared(sender, instance, **kwargs):
-#    from ..models import VolumeContainerBinding
-#    for pcb in VolumeContainerBinding.objects.filter(volume = instance.volume, container__user = instance.user):
-#        pcb.container.mark_restart(f"Revoked access to volume {instance.volume.name}")
-#        pcb.delete()
-#
+
+
+@receiver(pre_delete, sender = UserVolumeBinding)
+def assert_not_shared(sender, instance, **kwargs):
+    from ..models import VolumeContainerBinding
+    for pcb in VolumeContainerBinding.objects.filter(volume = instance.volume, container__user = instance.user):
+        pcb.container.mark_restart(f"Revoked access to volume {instance.volume.name}")
+        pcb.delete()
+

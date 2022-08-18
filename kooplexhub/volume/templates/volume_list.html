@@ -3,56 +3,40 @@
 {% load static %}
 
 {% block realcontent %}
+<input class="form-control me-2 mb-3 mt-3" type="text" id="search_volume" placeholder="Search volume" title="Type in a name" autofocus >
 
-
-  <script>
-    function myFunction() {
-        var input, filter, ul, li, a, i, txtValue;
-        input = document.getElementById("myInput");
-        filter = input.value.toUpperCase();
-        ul = document.getElementById("volumeListPane");
-        li = ul.getElementsByTagName("div");
-        for (i = 0; i < li.length; i++) {
-    a = li[i]; 
-    atag = li[i].getAttribute("class");   
-    if (atag.indexOf("search") > -1) {
-      //console.log(a);
-      txtValue = a.id;
-                        if (txtValue.toUpperCase().indexOf(filter) > -1) {
-                            li[i].style.display = "";
-                        } else {
-                            li[i].style.display = "none";
-                        }
-    }
-        }
-    }
-  </script>
-
-  <input class="form-control me-2 mb-3 mt-3" style="margin-left: 10px;" type="text" id="myInput" onkeyup="myFunction()" placeholder="Search volume" title="Type in a name" autofocus >
-  
-  <div id="volumeListPane" >
-      <div class="row">
-        <div class="col-4" ><strong>Volume name</strong></div><div class="col-8"><strong>Description </strong></div>
-      </div>
-      {% for uvb in uservolumebindingslist  %}
-        {% if uvb.is_admin %}
-          {% include 'volume_partial_list.html' with next_page='volume:list' volume=uvb.volume volumecontainerbindings=uvb.volumecontainerbindings is_admin=uvb.is_admin %}
-        {% endif %}
-      {% endfor %}
-  
-    <h4 class="mt-3"> Read-only volumes </h4>
-      <div class="row">
-        <div class="col-4" ><strong>Volume name</strong></div><div class="col-8"><strong>Description </strong></div>
-      </div>
-      {% for uvb in uservolumebindingslist  %}
-        {% if not uvb.is_admin %}
-          {% include 'volume_partial_list.html' with next_page='volume:list' volume=uvb.volume volumecontainerbindings=uvb.volumecontainerbindings is_admin=uvb.is_admin %}
-        {% endif %}
-      {% endfor %}
-  </div>    
-
+<div id="volumeListPane" >
+    {% for uvb in uservolumebindingslist  %}
+      {% include 'volume_partial_list.html' with next_page='volume:list' volume=uvb.volume volumecontainerbindings=uvb.volumecontainerbindings is_admin=uvb.is_admin %}
+    {% endfor %}
+</div>    
 {% endblock %}
 
-{% block main_content_left %}
-  {#% include 'volume/hint_list.html' %#}
+{% block scripts %}
+<script>
+$("#search_volume").keyup(function() {
+  var pattern = $( this ).val().toUpperCase();
+  console.log( "search: " + pattern );
+  $("input[id^='volume-dump-'").each(function() {
+  console.log( this );
+    var volumeid = $( this ).attr('id').split('-')[2];
+    var hide_it = true;
+    var card = $("#card-" + volumeid);
+    if (pattern.length > 0) {
+      var name = $( this ).attr("value").toUpperCase();
+      if ( name.indexOf(pattern) > -1 ) {
+        hide_it = false;
+      }
+    } else {
+      hide_it = false;
+    }
+    if (hide_it) {
+      $( card ).hide();
+    } else {
+      $( card ).show();
+    }
+  });
+});
+</script>
 {% endblock %}
+

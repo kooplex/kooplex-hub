@@ -4,7 +4,7 @@ import os
 from urllib.parse import urlencode
 from social_core.backends.open_id_connect import BaseOAuth2
 
-from kooplexhub.settings import KOOPLEX_OID_AUTHORIZATION_URL, KOOPLEX_OID_ACCESS_TOKEN_URL, FQDN_AUTH
+from kooplexhub.settings import KOOPLEX_OID_AUTHORIZATION_URL, KOOPLEX_OID_ACCESS_TOKEN_URL, FQDN_AUTH, URL_PROFILE
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +25,6 @@ class KooplexOpenID(BaseOAuth2):
                  }
 
     def user_data( self, access_token, *args, **kwargs):
-        url = f'https://{FQDN_AUTH}/oauth-test/profile?' + urlencode({'access_token': access_token})
+        url = f'{URL_PROFILE}?' + urlencode({'access_token': access_token})
         return self.get_json(url)
 

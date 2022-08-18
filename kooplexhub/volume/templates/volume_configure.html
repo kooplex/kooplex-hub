@@ -1,18 +1,35 @@
-{% extends "volume_layout.html" %}
+{% extends "storage_layout.html" %}
 {% load render_table from django_tables2 %}
 {% load extras %}
 
+{% block head_content %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/css/bootstrap5-toggle.min.css" rel="stylesheet">
+<style>
+.mytab{
+  color: rgb(196, 196, 196);
+}
+.mytab:hover{
+  color: rgb(196, 196, 196);
+  font-weight: bolder;
+}
+.mytab.active {
+  font-weight: bolder;
+}
+</style>
+{% endblock %}
+
 {% block realcontent %}
-<div class="card shadow p-3 mt-3 bg-light rounded">
+<div id="volumeConfogTabs" class="card shadow p-3 mt-3 bg-light rounded">
 <form id="volume-manage" class="form-horizontal" action="{% url 'volume:configure' volume.id %}" method="post">
 {% csrf_token %}
 
+  {% title_with_button "You are now configuring <em>" volume.name "</em> volume" %}
   <ul class="nav nav-tabs" id="volumeConfigTabs" role="tablist">
     <li class="nav-item" role="presentation">
-      <a class="nav-link {% if active == "meta" %}active{% endif %}" id="tab-meta" data-bs-toggle="tab" href="#meta" role="tab" aria-controls="meta" aria-selected="{% if active == "meta" %}true{% else %}false{% endif %}">Meta</a>
+      <a class="nav-link mytab {% if active == "meta" %}active{% endif %}" id="tab-meta" data-bs-toggle="tab" href="#meta" role="tab" aria-controls="meta" aria-selected="{% if active == "meta" %}true{% else %}false{% endif %}">Meta</a>
     </li>
     <li class="nav-item" role="presentation">
-      <a class="nav-link {% if active == "share" %}active{% endif %}" id="tab-share" data-bs-toggle="tab" href="#share" role="tab" aria-controls="share" aria-selected="{% if active == "share" %}true{% else %}false{% endif %}">Share</a>
+      <a class="nav-link mytab {% if active == "share" %}active{% endif %}" id="tab-share" data-bs-toggle="tab" href="#share" role="tab" aria-controls="share" aria-selected="{% if active == "share" %}true{% else %}false{% endif %}">Share</a>
     </li>
   </ul>
   <div class="tab-content" id="volumeConfigTabsContent">
@@ -27,43 +44,85 @@
       </select>
     </div>
     <div class="tab-pane fade {% if active == "share" %}show active{% endif %}" id="share" role="tabpanel" aria-labelledby="tab-share">
-      <h5 class="card-title mt-2">Share volumes with collaborators</h5>
-      {% if t_share %}
-        {% render_table t_share %}
-      {% endif %}
-        <hr>
+      <div class="d-flex flex-row align-items-baseline">
+        <div class="flex-fill w-100 me-1">
+          <input class="form-control me-2 mb-3 mt-3" type="text" id="search_collaborator" placeholder="Search collaborator" title="Type in a name">
+          {% render_table t_users %}
+        </div>
+        <div class="flex-fill w-100 mb-1">
+          {% render_table t_collaborators %}
+        </div>
+      </div>
     </div>
   </div>
-  <div class="mt-1"></div>
-    {% apply_cancel label_apply="Save" icon_apply="bi bi-save" color_apply="btn-success" %}
 </div>
 </form>
 </div>
+{% endblock %}
 
-<script>
-  $("#volumeConfigTabs li a").on("click", function () {
-    var tab = $( this ).attr("id")
-    console.log( tab )
-
-    if (tab == "tab-share") {
-      $("#active_tab").attr("value",  "share")
-      $("#search_field").attr("placeholder",  "Search name or username")
-      $("#search_field").attr("value", $("#s_share").attr("value") )
-      $("#search_field").attr("disabled", false )
-    } else if (tab == "tab-meta") {
-      $("#active_tab").attr("value",  "meta")
-      $("#search_field").attr("placeholder",  "Search")
-      $("#search_field").attr("value", "" )
-      $("#search_field").attr("disabled", true )
-    }
-    console.log( $("#active_tab").attr("value") )
-  })
+{% block scripts %}
+<script>  
+$("#volumeConfigTabs li a").on("click", function () {
+  var tab = $( this ).attr("id").split('-')[1]
+  console.log( tab )
+  $.cookie("configure_volume_tab", tab, { 'path': '/', 'secure': true });
+});
 </script>
+<script>
+$(document).ready(function() {
+  $("#users").find("th").text("Users");
+});
+$("span[id^='userid-'").click(function() {
+  var userid = $( this ).attr("id").split("-")[1];
+  var cba = $("#d-" + userid);
+  var cba_before = $("#admin-" + userid).attr("name");
+  var tr = $( this ).parent().parent();
+  var t = tr.parent().parent().attr("id");
+  console.log( t );
+  var other_table;
+  if (t === "users") {
+    other_table = $("#collaborators");
+    $( this ).parent().find("input[type='hidden'][name").each(function() {
+      var before = $(this).attr("name");
+      $( this ).attr("name", before.substring(1));
+    });
+    cba.removeClass("d-none");
+    cba.attr("name", cba_before.substring(1));
+  } else {
+    other_table = $("#users");
+    $( this ).parent().find("input[type='hidden'][name").each(function() {
+      var before = $(this).attr("name");
+      $( this ).attr("name", "_" + before);
+    });
+    cba.addClass("d-none");
+    cba.attr("name", "_" + cba_before);
+  }
+  other_table.children("tbody").append(tr);
+});
+$("#search_collaborator").keyup(function() {
+  var pattern = $( this ).val().toUpperCase();
+  console.log( "search: " + pattern );
+  $("input[id^='search-collaborator-'").each(function() {
+    var widget = $( this ).parent().parent();
+    if (widget.parent().parent().attr("id") == "collaborators") {
+      return;
+    }
+    var hide_it = true;
+    if (pattern.length > 0) {
+      var name = $( this ).attr("value").toUpperCase();
+      if ( name.indexOf(pattern) > -1 ) {
+        hide_it = false;
+      }
+    }
+    if (hide_it) {
+      widget.hide();
+    } else {
+      widget.show();
+    }
+  });
+}).keyup();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/js/bootstrap5-toggle.min.js"></script>
 {% endblock %}
-
-{% block main_content_left %}
-  {#% include 'volume/hint_config.html' %#}
-{% endblock %}
-
 
 
