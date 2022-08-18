@@ -3,13 +3,16 @@
 {% load static %}
 
 {% block realcontent %}
+{% if uservolumebindingslist %}
 <input class="form-control me-2 mb-3 mt-3" type="text" id="search_volume" placeholder="Search volume" title="Type in a name" autofocus >
-
 <div id="volumeListPane" >
     {% for uvb in uservolumebindingslist  %}
       {% include 'volume_partial_list.html' with next_page='volume:list' volume=uvb.volume volumecontainerbindings=uvb.volumecontainerbindings is_admin=uvb.is_admin %}
     {% endfor %}
 </div>    
+{% else %}
+  {% include 'empty.html' %}
+{% endif %}
 {% endblock %}
 
 {% block scripts %}

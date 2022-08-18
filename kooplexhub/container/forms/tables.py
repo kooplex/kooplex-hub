@@ -7,7 +7,7 @@ from education.models import UserCourseBinding
 from education.models import CourseContainerBinding
 from ..models import Attachment
 from ..models import AttachmentContainerBinding
-from volume.models import Volume, VolumeContainerBinding
+from volume.models import Volume, VolumeContainerBinding, UserVolumeBinding
 
 class TableContainerProject(tables.Table):
     class Meta:
@@ -143,7 +143,8 @@ class TableContainerVolume(tables.Table):
 
     def __init__(self, container, user):
         self.bound_volumes = [ b.volume for b in VolumeContainerBinding.objects.filter(container = container) ]
-        super(TableContainerVolume, self).__init__(Volume.objects.all()) #FIXME: filter volumes user can attach
+        volumes = [ b.volume for b in UserVolumeBinding.objects.filter(user = user) ]
+        super(TableContainerVolume, self).__init__(volumes)
 
     def render_button(self, record):
         state = "checked" if record in self.bound_volumes else ""

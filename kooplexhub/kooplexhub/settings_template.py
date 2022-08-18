@@ -35,8 +35,15 @@ ALLOWED_HOSTS = [
     DOMAIN,
         ]
 
+FQDN=""
+FQDN_AUTH=""
+URL_MANUAL="https://xwiki.vo.elte.hu/en/kooplex-manual"
+manual_mapping = {
+    'volume': 'folderstructure#volume',
+}
 
-URL_PROFILE= ''
+
+URL_PROFILE = f'https://{FQDN_AUTH}/oauth-test/profile'
 LOGIN_URL = ''
 LOGOUT_URL = ''
 SOCIAL_AUTH_KOOPLEX_KEY = ''

@@ -6,6 +6,9 @@ from django.contrib import messages
 from django.views import generic
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
+from django.utils.html import format_html
+
+from hub.templatetags.extras import manual_link
 
 from .models import Volume, UserVolumeBinding
 from .forms import TableVolumeShare
@@ -18,9 +21,12 @@ class VolumeListView(LoginRequiredMixin, generic.ListView):
     model = Volume
 
     def get_context_data(self, **kwargs):
+        l = manual_link(item = "volume")
         context = super().get_context_data(**kwargs)
         context['menu_storage'] = True
         context['submenu'] = 'list_volume'
+        context['empty_title'] = 'No volumes available'
+        context['empty_body'] = format_html(f'You do no have access to the volumes yet. Ask volume owners or volume administrators for collaboration. {l}')
         return context
 
     def get_queryset(self):

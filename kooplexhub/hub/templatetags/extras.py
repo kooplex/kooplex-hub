@@ -4,7 +4,17 @@ from django.urls import reverse
 
 from education.models import UserCourseBinding
 
+from kooplexhub.settings import URL_MANUAL, manual_mapping
+
 register = template.Library()
+
+
+@register.simple_tag(name = 'manual_link')
+def manual_link(item = None, label = "documentation", target = "_blank"):
+    path = manual_mapping[item] if item in manual_mapping else "overview"
+    return format_html(f"""
+    <a href="{URL_MANUAL}/{path}" target="{target}"><i class="bi bi-book"></i><span>&nbsp;{label}</span></a>
+    """)
 
 @register.simple_tag(name = 'title')
 def title(*argv):

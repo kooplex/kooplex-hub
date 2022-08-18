@@ -113,9 +113,12 @@ class AttachmentListView(LoginRequiredMixin, generic.ListView):
         return attachments
 
     def get_context_data(self, **kwargs):
+        l = reverse('container:new_attachment')
         context = super().get_context_data(**kwargs)
         context['menu_storage'] = True
         context['submenu'] = 'list_attachment'
+        context['empty_title'] = 'No attachments available'
+        context['empty_body'] = format_html(f'There are no attachments created yet. You can <a href="{l}"><i class="ri-attachment-2"></i>&nbsp;create one...</a>')
         return context
 
 
