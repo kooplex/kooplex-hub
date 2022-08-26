@@ -203,9 +203,16 @@ LOGGING = {
         },
     },
     'handlers': {
+        #'console': {
+        #    'level': 'DEBUG',
+        #    'class': 'logging.StreamHandler',
+        #    'formatter': 'simple'
+        #},
         'dfile': {
             'level': 'DEBUG',
-            'class': 'logging.FileHandler',
+            #'class': 'logging.FileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'maxBytes': 1024 * 1024,  # 1 mb
             'filename': '/var/log/hub/hub.log',
             'formatter': 'verbose',
         },
@@ -216,7 +223,13 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': True,
         },
-   }
+        'celery': {
+            #'handlers': ['celery', 'console'],
+            'handlers': ['dfile'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    }
 }
 
 KOOPLEX = {

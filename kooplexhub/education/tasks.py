@@ -1,5 +1,5 @@
 from celery import shared_task
-import logging
+#import logging
 
 from django.contrib.auth.models import User
 
@@ -12,7 +12,10 @@ from hub.lib import mkdir, archivedir, extracttarbal
 from hub.lib import grantaccess_user
 from hub.lib import grantaccess_group
 
-logger = logging.getLogger(__name__)
+from celery.utils.log import get_task_logger
+logger = get_task_logger(__name__)
+
+#logger = logging.getLogger(__name__)
 
 
 @shared_task()
@@ -33,3 +36,6 @@ def assignment_collect(assignment_id):
     bindings.update(state = UserAssignmentBinding.ST_COLLECTED)
 
 
+@shared_task()
+def task_periodic(vmi):
+    pass

@@ -15,7 +15,7 @@ class FormCourse(forms.Form):
         max_length = 100, required = True,
     )
     description = forms.CharField(
-        max_length = 100, required = True,
+        required = True,
         help_text = _('It is always a good idea to have a description of your course.'), 
         widget = forms.Textarea(attrs = {'rows': 3 }),
     )
