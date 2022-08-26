@@ -4,7 +4,6 @@ import datetime
 from django.db.models.signals import pre_save, post_save, pre_delete, post_delete
 from django.dispatch import receiver
 
-from hub.models import Group
 from education.models import Assignment, UserAssignmentBinding
 from education.filesystem import *
 
@@ -50,79 +49,6 @@ def snapshot_assignment(sender, instance, created, **kwargs):
                 })
             )
         instance.save()
-
-
-@receiver(pre_save, sender = UserAssignmentBinding)
-def copy_userassignment(sender, instance, **kwargs):
-    now = datetime.datetime.now()
-    if instance.id is None:
-        group = Group.objects.get(name = instance.assignment.course.cleanname, grouptype = Group.TP_COURSE)
-        schedule_now = ClockedSchedule.objects.create(clocked_time = now)
-        instance.task_handout = PeriodicTask.objects.create(
-            name = f"handout_{instance.assignment.folder}_{instance.user.username}-{now}",
-            task = "kooplexhub.tasks.extract_tar",
-            clocked = schedule_now,
-            one_off = True,
-            kwargs = json.dumps({
-                'folder': assignment_workdir(instance),
-                'tarbal': instance.assignment.filename,
-                'users_rw': [ instance.user.id ],
-                'users_ro': [ teacherbinding.user.id for teacherbinding in instance.assignment.course.teacherbindings ],
-                'recursive': True,
-            })
-        )
-    elif instance.state in [ UserAssignmentBinding.ST_SUBMITTED, UserAssignmentBinding.ST_COLLECTED ]:
-        if instance.task_collect:
-            instance.task_collect.clocked.clocked_time = now
-            instance.task_collect.clocked.save()
-        else:
-            schedule_now = ClockedSchedule.objects.create(clocked_time = now)
-            instance.task_collect = PeriodicTask.objects.create(
-                name = f"snapshot_{instance.id}",
-                task = "kooplexhub.tasks.create_tar",
-                clocked = schedule_now,
-                one_off = True,
-        #FIXME: QUOTA CHECK HANDLE IT
-                kwargs = json.dumps({
-                    'folder': assignment_workdir(instance),
-                    'tarbal': assignment_collection(instance),
-                })
-            )
-    elif instance.state == UserAssignmentBinding.ST_CORRECTED:
-        if instance.task_correct:
-            instance.task_correct.clocked.clocked_time = now
-            instance.task_correct.clocked.save()
-        else:
-            schedule_now = ClockedSchedule.objects.create(clocked_time = now)
-            instance.task_correct = PeriodicTask.objects.create(
-                name = f"extract_{instance.id}",
-                task = "kooplexhub.tasks.extract_tar",
-                clocked = schedule_now,
-                one_off = True,
-                kwargs = json.dumps({
-                    'folder': assignment_correct_dir(instance),
-                    'tarbal': assignment_collection(instance),
-                    'users_rw': [ b.user.id for b in instance.assignment.course.teacherbindings ],
-                })
-            )
-    elif instance.state == UserAssignmentBinding.ST_READY:
-        if instance.task_finalize:
-            instance.task_finalize.clocked.clocked_time = now
-            instance.task_finalize.clocked.save()
-        else:
-            schedule_now = ClockedSchedule.objects.create(clocked_time = now)
-            instance.task_finalize = PeriodicTask.objects.create(
-                name = f"finalize_{instance.id}",
-                task = "kooplexhub.tasks.create_tar",
-                clocked = schedule_now,
-                one_off = True,
-        #FIXME: feedback csak student kérésére lesz kicsomagolva
-                kwargs = json.dumps({
-                    'binding_id': instance.id,
-                    'folder': assignment_correct_dir(instance), 
-                    'tarbal': assignment_feedback(instance),
-                })
-            )
 
 
 @receiver(pre_delete, sender = UserAssignmentBinding)

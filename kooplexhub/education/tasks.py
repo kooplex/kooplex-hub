@@ -1,5 +1,5 @@
 from celery import shared_task
-#import logging
+from celery.utils.log import get_task_logger
 
 from django.contrib.auth.models import User
 
@@ -12,10 +12,7 @@ from hub.lib import mkdir, archivedir, extracttarbal
 from hub.lib import grantaccess_user
 from hub.lib import grantaccess_group
 
-from celery.utils.log import get_task_logger
 logger = get_task_logger(__name__)
-
-#logger = logging.getLogger(__name__)
 
 
 @shared_task()
@@ -26,15 +23,20 @@ def assignment_handout(assignment_id):
         b, created = UserAssignmentBinding.objects.get_or_create(assignment = a, user = sb.user)
         if not created:
             logger.warning(f"student {sb.user} has already received assignment {a.name} in course {a.course.name}")
+        b.handout()
 
 
 @shared_task()
 def assignment_collect(assignment_id):
     a = Assignment.objects.get(id = assignment_id)
     logger.info(f"collecting assignment {a.name} of course {a.course}")
-    bindings = UserAssignmentBinding.objects.filter(assignment = a, state = UserAssignmentBinding.ST_WORKINPROGRESS)
-    bindings.update(state = UserAssignmentBinding.ST_COLLECTED)
+    for b in UserAssignmentBinding.objects.filter(assignment = a, state = UserAssignmentBinding.ST_WORKINPROGRESS):
+        b.collect(False)
 
+
+def callback(uab_id, new_state):
+    cnt = UserAssignmentBinding.objects.filter(id = uab_id).update(state = new_state)
+    logger.info(f"callback {uab_id} -> {new_state} {cnt}")
 
 @shared_task()
 def task_periodic(vmi):

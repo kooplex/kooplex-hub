@@ -327,7 +327,7 @@ def assignment_individual_handle(request):
         try:
             a = Assignment.objects.get(id = aid, course__in = courses)
             u = UserCourseBinding.objects.get(user__id = uid, course = a.course, is_teacher = False).user
-            UserAssignmentBinding.objects.create(user = u, assignment = a, state = UserAssignmentBinding.ST_WORKINPROGRESS)
+            UserAssignmentBinding.objects.create(user = u, assignment = a).handout()
             n_handout += 1
         except Exception as e:
             logger.error(e)
@@ -340,7 +340,7 @@ def assignment_individual_handle(request):
     n_collect_error = 0
     for uab_id in request.POST.getlist('selection_collect', []):
         try:
-            uab = UserAssignmentBinding.objects.get(id = uab_id, assignment__course__in = courses, state = UserAssignmentBinding.ST_WORKINPROGRESS)
+            uab = UserAssignmentBinding.objects.get(id = uab_id, assignment__course__in = courses).handout()
             uab.state = UserAssignmentBinding.ST_COLLECTED
             uab.submitted_at = now()
             uab.save()
@@ -357,8 +357,7 @@ def assignment_individual_handle(request):
     for uab_id in request.POST.getlist('selection_correct', []):
         try:
             uab = UserAssignmentBinding.objects.get(id = uab_id, assignment__course__in = courses, state__in = [ UserAssignmentBinding.ST_COLLECTED, UserAssignmentBinding.ST_SUBMITTED ])
-            uab.state = UserAssignmentBinding.ST_CORRECTED
-            uab.save()
+            uab.extrac2correct()
             n_corrected += 1
         except Exception as e:
             logger.error(e)
@@ -372,13 +371,7 @@ def assignment_individual_handle(request):
     for uab_id in request.POST.getlist('selection_finalize', []):
         try:
             uab = UserAssignmentBinding.objects.get(id = uab_id, assignment__course__in = courses, state = UserAssignmentBinding.ST_CORRECTED)
-            uab.state = UserAssignmentBinding.ST_READY
-            uab.corrected_at = now()
-            uab.correction_count += 1
-            uab.corrector = user
-            uab.feedback_text = request.POST.get(f'feedback_text-{uab_id}')
-            uab.score = request.POST.get(f'score-{uab_id}')
-            uab.save()
+            uab.finalize(user, message = request.POST.get(f'feedback_text-{uab_id}'), score = request.POST.get(f'score-{uab_id}'))
             n_feedback += 1
         except Exception as e:
             logger.error(e)
@@ -412,8 +405,7 @@ def assignment_individual_handle(request):
     for uab_id in request.POST.getlist('selection_reassign', []):
         try:
             uab = UserAssignmentBinding.objects.get(id = uab_id, assignment__course__in = courses, state = UserAssignmentBinding.ST_READY)
-            uab.state = UserAssignmentBinding.ST_WORKINPROGRESS
-            uab.save()
+            uab.reassign()
             n_reassign += 1
         except Exception as e:
             logger.error(e)
@@ -535,9 +527,7 @@ def _handout(assignment, group_map):
                 b = uab.get(user = s)
                 if b.state != UserAssignmentBinding.ST_QUEUED:
                     continue
-                b.state = UserAssignmentBinding.ST_WORKINPROGRESS
-                b.received_at = now()
-                b.save()
+                b.handout()
             except UserAssignmentBinding.DoesNotExist:
                 UserAssignmentBinding.objects.create(user = s, assignment = assignment, state = UserAssignmentBinding.ST_WORKINPROGRESS)
             handout.append(s)
@@ -548,9 +538,7 @@ def _collect(assignment, group_map):
     collect = []
     for g, students in group_map.items():
         for b in uab.filter(state = UserAssignmentBinding.ST_WORKINPROGRESS, user__in = students):
-            b.state = UserAssignmentBinding.ST_COLLECTED
-            b.submitted_at = now()
-            b.save()
+            b.collect(False)
             collect.append(b.user)
     return collect
 
@@ -559,8 +547,7 @@ def _correct(assignment, group_map):
     correct = []
     for g, students in group_map.items():
         for b in uab.filter(state__in = [ UserAssignmentBinding.ST_COLLECTED, UserAssignmentBinding.ST_SUBMITTED ], user__in = students):
-            b.state = UserAssignmentBinding.ST_CORRECTED
-            b.save()
+            b.extract2correct()
             correct.append(b.user)
     return correct
 
@@ -569,8 +556,7 @@ def _reassign(assignment, group_map):
     reassign = []
     for g, students in group_map.items():
         for b in uab.filter(state = UserAssignmentBinding.ST_READY, user__in = students):
-            b.state = UserAssignmentBinding.ST_WORKINPROGRESS
-            b.save()
+            b.ressign()
             reassign.append(b.user)
     return reassign
 
