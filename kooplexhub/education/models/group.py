@@ -11,7 +11,7 @@ from container.models import Image
 logger = logging.getLogger(__name__)
 
 
-from ..models import Course, UserCourseBinding
+from education.models import Course, UserCourseBinding
 
 class CourseGroup(models.Model):
     name = models.CharField(max_length = 64, null = False, unique = True)

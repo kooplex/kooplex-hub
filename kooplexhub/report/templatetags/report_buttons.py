@@ -59,4 +59,26 @@ def button_report_delete(report, user):
     """)
 
 
+@register.simple_tag(name = 'r_help')
+def r_help(modalid="", text="", imgsrc=""):
+        return format_html(f"""
+<div class="modal fade" id="exampleModalToggle{modalid}" aria-hidden="true" aria-labelledby="exampleModalToggleLabel" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalToggleLabel">Help report</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+        <p>{text}</p>
+          <img class="print" src="/static/paintreport_menu.png" alt="print home">
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-warning" data-bs-target="#exampleModalToggle2" data-bs-toggle="modal" data-bs-dismiss="modal">Next</button>
+        </div>
+      </div>
+    </div>
+  </div>
+        """)
+
 

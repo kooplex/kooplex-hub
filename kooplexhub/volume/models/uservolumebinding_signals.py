@@ -6,7 +6,8 @@ from django.db.models.signals import pre_save, post_save, pre_delete, post_delet
 from django.dispatch import receiver
 
 from kooplexhub.lib.libbase import standardize_str
-from hub.models import FilesystemTask, Group, UserGroupBinding
+#FIXMEfrom hub.models import FilesystemTask, Group, UserGroupBinding
+from hub.models import Group, UserGroupBinding
 from ..models import UserVolumeBinding
 from .. import filesystem as fs
 

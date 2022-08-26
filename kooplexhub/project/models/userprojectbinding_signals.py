@@ -5,8 +5,9 @@ from django.db import transaction
 from django.db.models.signals import pre_save, post_save, pre_delete, post_delete
 from django.dispatch import receiver
 
+from django_celery_beat.models import ClockedSchedule, PeriodicTask
 from kooplexhub.lib.libbase import standardize_str
-from hub.models import FilesystemTask, Group, UserGroupBinding
+from hub.models import Group, UserGroupBinding
 from ..models import UserProjectBinding
 from .. import filesystem as fs
 
@@ -42,24 +43,24 @@ def mkdir_project(sender, instance, **kwargs):
             if group_created:
                 creator = UserProjectBinding.objects.get(project = instance.project, role = UserProjectBinding.RL_CREATOR).user
                 UserGroupBinding.objects.create(user = creator, group = group)
-                acl = { 'groups_rw': code([group]) }
+                acl = { 'groups_rw': [group.id] }
             else:
                 acl = None
             UserGroupBinding.objects.create(user = instance.user, group = group)
         else:
-            acl = { 'users_rw': code([instance.user]) }
+            acl = { 'users_rw': [instance.user.id] }
         if acl:
-            FilesystemTask.objects.create(
-                folder = fs.path_project(p),
-                create_folder = is_creator,
-                task = FilesystemTask.TSK_GRANT,
-                **acl
-            )
-            FilesystemTask.objects.create(
-                folder = fs.path_report_prepare(p),
-                create_folder = is_creator,
-                task = FilesystemTask.TSK_GRANT,
-                **acl
+            schedule_now = ClockedSchedule.objects.create(clocked_time = datetime.datetime.now())
+            PeriodicTask.objects.create(
+                name = f"grant_access_{p.subpath}_{instance.user.username}",
+                task = "project.tasks.manage_folder",
+                clocked = schedule_now,
+                one_off = True,
+                kwargs = json.dumps({
+                    'create_folder': is_creator,
+                    'folders': [ fs.path_project(p), fs.path_report_prepare(p) ],
+                    'acl': acl,
+                })
             )
        
 
@@ -68,15 +69,16 @@ def revokeaccess_project(sender, instance, **kwargs):
     if instance.role != UserProjectBinding.RL_CREATOR:
         group = Group.objects.get(name = instance.groupname, grouptype = Group.TP_PROJECT)
         UserGroupBinding.objects.get(user = instance.user, group = group).delete()
-        FilesystemTask.objects.create(
-            folder = fs.path_project(instance.project),
-            users_rw = code([instance.user]),
-            task = FilesystemTask.TSK_REVOKE
-        )
-        FilesystemTask.objects.create(
-            folder = fs.path_report_prepare(instance.project),
-            users_rw = code([instance.user]),
-            task = FilesystemTask.TSK_REVOKE
+        schedule_now = ClockedSchedule.objects.create(clocked_time = datetime.datetime.now())
+        PeriodicTask.objects.create(
+            name = f"revoke_access_{instance.id}",
+            task = "project.tasks.revoke_access",
+            clocked = schedule_now,
+            one_off = True,
+            kwargs = json.dumps({
+                'folders': [ fs.path_project(instance.project), fs.path_report_prepare(instance.project) ],
+                'user_id': instance.user.id,
+            })
         )
 
 
@@ -87,16 +89,17 @@ def garbagedir_project(sender, instance, **kwargs):
             Group.objects.get(name = instance.groupname, grouptype = Group.TP_PROJECT).delete()
         except Group.DoesNotExist:
             pass
-        FilesystemTask.objects.create(
-            folder = fs.path_project(instance.project),
-            tarbal = fs.garbage_project(instance.project),
-            remove_folder = True,
-            task = FilesystemTask.TSK_TAR
-        )
-        FilesystemTask.objects.create(
-            folder = fs.path_report_prepare(instance.project),
-            remove_folder = True,
-            task = FilesystemTask.TSK_REMOVE
+        schedule_now = ClockedSchedule.objects.create(clocked_time = datetime.datetime.now())
+        PeriodicTask.objects.create(
+            name = f"garbage_{instance.id}",
+            task = "project.tasks.garbage",
+            clocked = schedule_now,
+            one_off = True,
+            kwargs = json.dumps({
+                'project_folder': fs.path_project(instance.project), 
+                'project_tarbal': fs.garbage_project(instance.project),
+                'report_prepare_folder': fs.path_report_prepare(instance.project),
+            })
         )
 
 

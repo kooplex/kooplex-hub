@@ -1,15 +1,14 @@
 import logging
 import pwgen
 import json
+import datetime
 
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.db.models.signals import post_save, pre_delete, post_delete
+from django_celery_beat.models import ClockedSchedule, PeriodicTask
 
-from kooplexhub.settings import KOOPLEX
-
-from ..lib import filename, dirname
-from ..models import Profile, FilesystemTask
+from ..models import Profile
 
 logger = logging.getLogger(__name__)
 
@@ -25,52 +24,29 @@ def user_creation(sender, instance, created, **kwargs):
         logger.info("New user %s" % instance)
         token = pwgen.pwgen(64)
         Profile.objects.create(user = instance, token = token)
-    FilesystemTask.objects.create(
-        folder = dirname.userhome(instance),
-        users_rw = code([instance]),
-        create_folder = True,
-        task = FilesystemTask.TSK_GRANT
-    )
-    FilesystemTask.objects.create(
-        folder = dirname.usergarbage(instance),
-        users_rw = code([instance]),
-        create_folder = True,
-        task = FilesystemTask.TSK_GRANT
-    )
-    if KOOPLEX.get('mountpoint_hub', {}).get('scratch') is not None:
-        FilesystemTask.objects.create(
-            folder = dirname.userscratch(instance),
-            users_rw = code([instance]),
-            create_folder = True,
-            task = FilesystemTask.TSK_GRANT
+        schedule_now = ClockedSchedule.objects.create(clocked_time = datetime.datetime.now())
+        PeriodicTask.objects.create(
+            name = f"create_home_{instance.username}",
+            task = "hub.tasks.create_home",
+            clocked = schedule_now,
+            one_off = True,
+            kwargs = json.dumps({
+                'user_id': instance.id,
+            })
         )
-
+    
 
 @receiver(pre_delete, sender = User)
 def garbage_user_home(sender, instance, **kwargs):
-    if KOOPLEX.get('mountpoint_hub', {}).get('scratch') is not None:
-        FilesystemTask.objects.create(
-            folder = dirname.userscratch(instance),
-            remove_folder = True,
-            task = FilesystemTask.TSK_REMOVE
-        )
-    FilesystemTask.objects.create(
-        folder = dirname.usergarbage(instance),
-        remove_folder = True,
-        task = FilesystemTask.TSK_REMOVE
+    schedule_now = ClockedSchedule.objects.create(clocked_time = datetime.datetime.now())
+    PeriodicTask.objects.create(
+        name = f"garbage_home_{instance.username}",
+        task = "hub.tasks.garbage_home",
+        clocked = schedule_now,
+        one_off = True,
+        kwargs = json.dumps({
+            'user_id': instance.id,
+        })
     )
-    if KOOPLEX.get('archive_home'):
-        FilesystemTask.objects.create(
-            folder = dirname.userhome(instance),
-            tarbal = filename.userhome_garbage(instance),
-            remove_folder = True,
-            task = FilesystemTask.TSK_TAR
-        )
-    else:
-        FilesystemTask.objects.create(
-            folder = dirname.userhome(instance),
-            remove_folder = True,
-            task = FilesystemTask.TSK_REMOVE
-        )
 
 

@@ -3,7 +3,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.html import format_html
 
 from container.models import Image
-from ..models import Course
+from education.models import Course
 
 from kooplexhub.lib import my_slug_validator, my_end_validator
 

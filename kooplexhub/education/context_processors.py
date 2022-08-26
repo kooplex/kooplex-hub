@@ -1,5 +1,5 @@
 from kooplexhub import settings
-from .models import UserAssignmentBinding, UserCourseBinding
+from education.models import UserAssignmentBinding, UserCourseBinding
 
 def assignment_warnings(request):
     user = request.user

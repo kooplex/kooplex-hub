@@ -24,3 +24,17 @@ class MonitoringDashboardView(AccessMixin, generic.TemplateView):
     template_name = 'monitoring_dashboard.html'
     context_object_name = 'monitoring'
 
+#TEST TASK
+
+from django.shortcuts import redirect
+import logging
+import time
+from kooplexhub.tasks import task_do_something
+logger = logging.getLogger(__name__)
+
+def task(request, duma):
+    logger.info("DEFINE TASK")
+    a = task_do_something.delay(duma)
+    logger.info(a)
+    return redirect('indexpage')
+

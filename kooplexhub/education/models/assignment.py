@@ -5,9 +5,10 @@ import logging
 from django.db import models
 from django.contrib.auth.models import User
 from django.template.defaulttags import register
+from django_celery_beat.models import ClockedSchedule, PeriodicTask
 
 from hub.lib import dirname
-from ..models import Course, UserCourseBinding
+from . import Course, UserCourseBinding
 
 logger = logging.getLogger(__name__)
 
@@ -19,10 +20,11 @@ class Assignment(models.Model):
     description = models.TextField(max_length = 500)
     folder = models.CharField(max_length = 32, null = False)
     created_at = models.DateTimeField(auto_now_add = True)
-    valid_from = models.DateTimeField(null = True, blank = True)
-    expires_at = models.DateTimeField(null = True, blank = True)
+    task_snapshot = models.ForeignKey(PeriodicTask, null = True, blank = True, on_delete = models.SET_NULL, related_name = 'snapshot')
+    task_handout = models.ForeignKey(PeriodicTask, null = True, blank = True, on_delete = models.SET_NULL, related_name = 'handout')
+    task_collect = models.ForeignKey(PeriodicTask, null = True, blank = True, on_delete = models.SET_NULL, related_name = 'collect')
     remove_collected = models.BooleanField(default = False)
-    max_size = models.IntegerField(default = None, null = True) 
+    max_size = models.IntegerField(default = None, null = True, blank = True) 
     filename = models.CharField(max_length = 256, null = False, unique = True)
 
     class Meta:
@@ -58,8 +60,6 @@ class UserAssignmentBinding(models.Model):
     user = models.ForeignKey(User, null = False, on_delete = models.CASCADE)
     assignment = models.ForeignKey(Assignment, null = False, on_delete = models.CASCADE)
     received_at = models.DateTimeField(null = True, default = None, blank = True)
-    valid_from = models.DateTimeField(null = True, default = None, blank = True)
-    expires_at = models.DateTimeField(null = True, default = None, blank = True)
     state = models.CharField(max_length = 16, choices = ST_LOOKUP.items(), default = ST_QUEUED)
     submitted_at = models.DateTimeField(null = True, default = None, blank = True)
     corrector = models.ForeignKey(User, null = True, related_name = 'corrector', on_delete = models.CASCADE, blank = True)
@@ -68,6 +68,10 @@ class UserAssignmentBinding(models.Model):
     feedback_text = models.TextField(null = True, default = None, blank = True)
     submit_count = models.IntegerField(default = 0, null = False)
     correction_count = models.IntegerField(default = 0, null = False)
+    task_handout = models.ForeignKey(PeriodicTask, null = True, blank = True, on_delete = models.SET_NULL, related_name = 'u_handout')
+    task_collect = models.ForeignKey(PeriodicTask, null = True, blank = True, on_delete = models.SET_NULL, related_name = 'u_collect')
+    task_correct = models.ForeignKey(PeriodicTask, null = True, blank = True, on_delete = models.SET_NULL, related_name = 'u_extract2correct')
+    task_finalize = models.ForeignKey(PeriodicTask, null = True, blank = True, on_delete = models.SET_NULL, related_name = 'u_finalize')
 
     class Meta:
         unique_together = [['user', 'assignment']]
@@ -80,36 +84,4 @@ class UserAssignmentBinding(models.Model):
     @register.filter
     def state_long(self):
         return ST_LOOKUP[self.state] 
-
-#FIXME:    @staticmethod
-#FIXME:    def iter_valid():
-#FIXME:        timenow = now()
-#FIXME:        for binding in UserAssignmentBinding.objects.filter(state = UserAssignmentBinding.ST_QUEUED):
-#FIXME:            if timenow > binding.valid_from:
-#FIXME:                yield binding
-#FIXME:
-#FIXME:    def do_activate(self):
-#FIXME:        #FIXME: we may double check state and skip some bindings
-#FIXME:        self.state = UserAssignmentBinding.ST_WORKINPROGRESS
-#FIXME:        self.received_at = now()
-#FIXME:        self.save()
-#FIXME:        logger.info(self)
-#FIXME:
-#FIXME:    @staticmethod
-#FIXME:    def iter_expired():
-#FIXME:        timenow = now()
-#FIXME:        for binding in UserAssignmentBinding.objects.filter(state = UserAssignmentBinding.ST_WORKINPROGRESS):
-#FIXME:            if binding.expires_at is None:
-#FIXME:                continue
-#FIXME:            if timenow > binding.expires_at:
-#FIXME:                yield binding
-#FIXME:
-#FIXME:    def do_collect(self):
-#FIXME:        #FIXME: we may double check state and skip some bindings
-#FIXME:        self.state = UserAssignmentBinding.ST_COLLECTED
-#FIXME:        self.submitted_at = now()
-#FIXME:        self.save()
-#FIXME:        logger.info(self)
-#FIXME:
-
 

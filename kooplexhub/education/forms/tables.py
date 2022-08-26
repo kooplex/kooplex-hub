@@ -7,7 +7,7 @@ from django.db import models
 import django_tables2 as tables
 from django.contrib.auth.models import User
 
-from ..models import UserCourseBinding, UserAssignmentBinding, Assignment, UserCourseCodeBinding, Group, UserCourseGroupBinding
+from education.models import UserCourseBinding, UserAssignmentBinding, Assignment, UserCourseCodeBinding, CourseGroup, UserCourseGroupBinding
 from hub.templatetags.extras import render_user as ru
 from hub.templatetags.extras import render_date as rd
 from hub.templatetags.extras import render_folder as rf
@@ -68,7 +68,8 @@ class TableAssignment(tables.Table):
         """)
 
     def render_info(self, record):
-        exp = rd(record.expires_at)
+        rd = lambda t: t.clocked if t else "Manual"
+        exp = rd(record.assignment.task_collect)
         return format_html(f"""
 <span class="bi bi-arrow-up-right-square-fill" data-toggle="tooltip" title="Submit count">&nbsp;{record.submit_count}</span>
 <span class="bi bi-check-square-fill ms-3" data-toggle="tooltip" title="Correction count">&nbsp;{record.correction_count}</span><br>{exp}
@@ -120,14 +121,18 @@ class TableAssignmentConf(tables.Table):
         """)
 
     def render_dates(self, record):
-        d1 = rd(record.valid_from)
-        d2 = rd(record.expires_at)
+        rd = lambda t: t.clocked if t else ""
+        d1 = rd(record.task_handout)
+        d2 = rd(record.task_collect)
+        rd = lambda t: "disabled" if t and t.last_run_at else ""
+        st1 = rd(record.task_handout)
+        st2 = rd(record.task_collect)
         chk = 'checked' if record.remove_collected else ''
         return format_html(f"""
 <div class="container">
   <div class="row">
     <div class="input-group log-event" id="linkedPickers1-{record.id}" data-td-target-input="nearest" data-td-target-toggle="nearest">
-      <input id="linkedPickers1Input-{record.id}" name="valid_from-{record.id}" type="text" class="form-control" data-td-target="#linkedPickers1-{record.id}">
+      <input id="linkedPickers1Input-{record.id}" name="valid_from-{record.id}" type="text" class="form-control" data-td-target="#linkedPickers1-{record.id}" {st1}>
       <span class="input-group-text" data-td-target="#linkedPickers1-{record.id}" data-td-toggle="datetimepicker">
         <span class="bi bi-clock"></span>
       </span>
@@ -135,7 +140,7 @@ class TableAssignmentConf(tables.Table):
   </div>
   <div class="row mt-2">
     <div class="input-group log-event" id="linkedPickers2-{record.id}" data-td-target-input="nearest" data-td-target-toggle="nearest">
-      <input id="linkedPickers2Input-{record.id}" name="expires_at-{record.id}" type="text" class="form-control" data-td-target="#linkedPickers2-{record.id}">
+      <input id="linkedPickers2Input-{record.id}" name="expires_at-{record.id}" type="text" class="form-control" data-td-target="#linkedPickers2-{record.id}" {st2}>
       <span class="input-group-text" data-td-target="#linkedPickers2-{record.id}" data-td-toggle="datetimepicker">
         <span class="bi bi-bell"></span>
       </span>
@@ -330,8 +335,10 @@ class TableAssignmentHandle(tables.Table):
             return t
 
     def render_info(self, record):
+        rd = lambda t: t.clocked if t else "Manual"
+        exp = rd(record.assignment.task_collect)
         return format_html(f"""
-{rd(record.expires_at)}<br># sub {record.submit_count}<br># cor {record.correction_count}
+{exp}<br># sub {record.submit_count}<br># cor {record.correction_count}
         """)
 
 
@@ -581,7 +588,7 @@ class TableUser(tables.Table):
 
 class TableGroup(tables.Table):
     class Meta:
-        model = Group
+        model = CourseGroup
         fields = ('course', 'name', 'description',)
         fields = ('button', 'course', 'name', 'description',)
         attrs = { 

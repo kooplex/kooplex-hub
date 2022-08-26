@@ -1,7 +1,7 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
-from ..models import Assignment
+from education.models import Assignment
 
 try:
     from kooplexhub.settings import KOOPLEX
@@ -16,7 +16,8 @@ class dateWidget(forms.DateTimeInput):
 class FormAssignment(forms.ModelForm):
     class Meta:
         model = Assignment
-        fields = [ 'name', 'folder', 'description', 'remove_collected', 'valid_from', 'expires_at', 'max_size' ]
+        fields = [ 'name', 'folder', 'description', 'remove_collected', 'max_size' ]
+        sequence = [ 'name', 'folder', 'description', 'remove_collected', 'valid_from_widget', 'expires_at_widget', 'max_size' ]
         labels = {
             'name': _('The name of the assignment'),
             'description': _('A short description of the excercises'),
@@ -30,14 +31,16 @@ class FormAssignment(forms.ModelForm):
             help_text = _('It is always a good idea to have an abstract of your assignment.'), 
             widget = forms.Textarea(attrs = {'rows': 3 }), 
         )
-    valid_from = forms.DateTimeField(
+    valid_from_widget = forms.DateTimeField(
+            label = 'Valid from',
             input_formats = ["%m/%d/%Y, %H:%M"], 
-            widget = dateWidget(attrs = { 'icon': 'bi bi-clock', 'name': 'valid_from' }), 
+            widget = dateWidget(attrs = { 'icon': 'bi bi-clock', 'name': 'valid_from_widget' }), 
             required = False, 
         )
-    expires_at = forms.DateTimeField(
+    expires_at_widget = forms.DateTimeField(
+            label = 'Expires at',
             input_formats = ["%m/%d/%Y, %H:%M"], 
-            widget = dateWidget(attrs = { 'icon': 'bi bi-bell', 'name': 'expires_at' }), 
+            widget = dateWidget(attrs = { 'icon': 'bi bi-bell', 'name': 'expires_at_widget' }), 
             required = False,
         )
     remove_collected = forms.BooleanField(
@@ -50,6 +53,15 @@ class FormAssignment(forms.ModelForm):
             required = False,
             help_text = _('Total file size quota applied to the assignment.'),
         )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        timestamp1 = cleaned_data.pop('valid_from_widget')
+        timestamp2 = cleaned_data.pop('expires_at_widget')
+        #FIXME: check relation, check if time is past: ValidationError
+        cleaned_data['ts_handout'] = timestamp1
+        cleaned_data['ts_collect'] = timestamp2
+        return cleaned_data
 
 
     def __init__(self, *args, **kwargs):
@@ -73,8 +85,6 @@ class FormAssignment(forms.ModelForm):
                 }
                 self.fields[field].widget.attrs.update(extra)
         self.fields['folder'].widget.attrs["class"] = "form-select"
-        #self.fields['valid_from'].widget.attrs["class"] = "form-control datetimepicker span2"
-        self.fields['expires_at'].widget.attrs["class"] = "form-control datetimepicker span2"
 
         self.course = course
         self.okay = len(folders) > 0

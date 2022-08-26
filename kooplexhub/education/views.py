@@ -1,6 +1,7 @@
 import logging
 import re
 import json
+import datetime
 
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
@@ -13,15 +14,17 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.db import IntegrityError
 
+from django_celery_beat.models import ClockedSchedule, PeriodicTask
+
 from kooplexhub.lib import now
 
 from hub.templatetags.extras import render_user
 from container.models import Image, Container
-from .models import UserCourseBinding, UserAssignmentBinding, Assignment, CourseContainerBinding, CourseGroup, UserCourseGroupBinding, Course
-from .forms import FormCourse
-from .forms import FormGroup
-from .forms import FormAssignment
-from .forms import TableAssignment, TableAssignmentConf, TableAssignmentHandle, TableUser, TableAssignmentMass, TableAssignmentSummary, TableGroup, TableAssignmentMassAll, TableAssignmentStudentSummary, TableCourseStudentSummary
+from education.models import UserCourseBinding, UserAssignmentBinding, Assignment, CourseContainerBinding, CourseGroup, UserCourseGroupBinding, Course
+from education.forms import FormCourse
+from education.forms import FormGroup
+from education.forms import FormAssignment
+from education.forms import TableAssignment, TableAssignmentConf, TableAssignmentHandle, TableUser, TableAssignmentMass, TableAssignmentSummary, TableGroup, TableAssignmentMassAll, TableAssignmentStudentSummary, TableCourseStudentSummary
 
 logger = logging.getLogger(__name__)
 
@@ -157,17 +160,18 @@ def assignment_new_(request):
         return redirect('indexpage')
     f = FormAssignment(request.POST, course = course, user = user)
     if f.is_valid():
-        a = Assignment.objects.create(
+        a = Assignment(
             name = f.cleaned_data['name'],
             course = course,
             creator = user,
             description = f.cleaned_data['description'],
             folder = f.cleaned_data['folder'],
-            valid_from = f.cleaned_data['valid_from'],
-            expires_at = f.cleaned_data['expires_at'],
             remove_collected = f.cleaned_data['remove_collected'],
             max_size = f.cleaned_data['max_size'],
             )
+        a.ts_handout = f.cleaned_data["ts_handout"]
+        a.ts_collect = f.cleaned_data["ts_collect"]
+        a.save()
         logger.info(f'+ new assignment {a.name} ({a.folder}) in course {course.name} by {user.username}')
         messages.info(request, f'Assignment {a.name} created.')
     else:
@@ -194,6 +198,13 @@ def assignment_configure(request):
         't_assignment_config': TableAssignmentConf(assignments),
     }
     return render(request, 'assignment_configure.html', context = context_dict)
+
+
+def _extract_timestamp(d):
+    df, hm = d.split(', ')
+    M, D, Y = df.split('/')
+    h, m = hm.split(':')
+    return {'year': int(Y), 'month': int(M), 'day': int(D), 'hour': int(h), 'minute': int(m)}
 
 @require_http_methods(['POST'])
 @login_required
@@ -236,30 +247,45 @@ def assignment_configure_(request):
             assignment_ids.add(k.split('-')[-1])
     other_ids = assignment_ids.difference(delete_ids)
     m = []
+    tb = {'valid_from': 'task_handout', 'expires_at': 'task_collect'}
     for aid in other_ids:
-        try:
-            a = Assignment.objects.get(id = aid, course__in = courses)
-            changed = []
-            for attr in [ 'name', 'description', 'valid_from', 'expires_at', 'max_size' ]:
-                old = request.POST.get(f'{attr}-old-{aid}')
-                new = request.POST.get(f'{attr}-{aid}')
-                if new == "":
-                    new = None
-                if attr in [ 'valid_from', 'expires_at', 'max_size' ]:
-                    if old == "":
-                        old = None
-                if old == new:
-                    continue
-                setattr(a, attr, new)
-                changed.append(f'new {attr} {new}')
-            if len(changed):
-                a.save()
-                logger.info(f'. modified assignment {a.name} ({a.folder}) from course {a.course.name} by {user.username}')
-                cl = ', '.join(changed)
-                m.append(f'{a.name}: {cl}')
-        except Exception as e:
-            logger.error(e)
-            raise
+        a = Assignment.objects.get(id = aid, course__in = courses)
+        changed = []
+        for attr in [ 'valid_from', 'expires_at' ]:
+            old = request.POST.get(f'{attr}-old-{aid}')
+            new = request.POST.get(f'{attr}-{aid}')
+            if old != new:
+                changed.append(f"{attr} from {old} to {new}")
+                task = getattr(a, tb[attr])
+                if old and not new:
+                    task.clocked.delete()
+                    setattr(a, tb[attr], None)
+                elif not old and new:
+                    schedule = ClockedSchedule.objects.create(clocked_time = datetime.datetime(**_extract_timestamp(new)))
+                    setattr(a, tb[attr], PeriodicTask.objects.create(
+                        name = f"{tb[attr]}_{a.id}",
+                        task = "education.tasks.assignment_handout",
+                        clocked = schedule,
+                        one_off = True,
+                        kwargs = json.dumps({
+                            'assignment_id': a.id,
+                        })
+                    ))
+                else:
+                    task.clocked.clocked_time = datetime.datetime(**_extract_timestamp(new))
+                    task.clocked.save()
+
+        for attr in [ 'name', 'description', 'max_size' ]:
+            old = request.POST.get(f'{attr}-old-{aid}')
+            new = request.POST.get(f'{attr}-{aid}')
+            if old != new:
+                changed.append(f"{attr} from {old} to {new}")
+                setattr(a, attr, new if new else None)
+        if len(changed):
+            a.save()
+            logger.info(f'. modified assignment {a.name} ({a.folder}) from course {a.course.name} by {user.username}')
+            cl = ', '.join(changed)
+            m.append(f'{a.name}: {cl}')
     if len(m):
         cl = '; '.join(m)
         messages.info(request, f'Configured assignment(s) {cl}.')

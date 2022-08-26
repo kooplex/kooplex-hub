@@ -1,11 +1,11 @@
 from django.contrib import admin
 
-from .models import Course, CourseCode
-from .models import UserCourseBinding, UserCourseCodeBinding
-from .models import CourseContainerBinding
-from .models import Assignment, UserAssignmentBinding
-from .models import CourseGroup, UserCourseGroupBinding
-from .models import UserCourseGroupBinding
+from education.models import Course, CourseCode
+from education.models import UserCourseBinding, UserCourseCodeBinding
+from education.models import CourseContainerBinding
+from education.models import Assignment, UserAssignmentBinding
+from education.models import CourseGroup, UserCourseGroupBinding
+from education.models import UserCourseGroupBinding
 
 
 @admin.register(Course)
@@ -55,6 +55,10 @@ class CourseContainerBindingAdmin(admin.ModelAdmin):
 
 @admin.register(Assignment)
 class AssignmentAdmin(admin.ModelAdmin):
+    def valid_from(self, instance):
+        return instance.task_handout.clocked if instance.task_handout else "-"
+    def expires_at(self, instance):
+        return instance.task_collect.clocked if instance.task_collect else "-"
     list_display = ('id', 'course', 'name', 'folder', 'creator', 'description', 'created_at', 'filename', 'valid_from', 'expires_at', 'remove_collected', 'max_size')
     search_fields = ('name', 'creator__first_name', 'creator__last_name', 'course__name')
 

@@ -2,8 +2,14 @@
 {% block page_title %}Kooplex Report{% endblock %}
 
 {% load static %}
+
 {% load project_buttons %}
 
+
+{% block help %} 
+{% include 'reporthelp.html' %}
+
+  {% endblock %}
 
 {% block submenu %}
 <ul class="navbar-nav flex-row flex-md-row">

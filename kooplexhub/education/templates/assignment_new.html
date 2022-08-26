@@ -100,7 +100,7 @@ $("#course_selected").change(function () {
   console.log( "chg: " + old + " -> " + sel );
 }).change();
 // loop over all linked datetime picker widgets
-document.querySelectorAll('[id^="linkedPicker-"][id$="_valid_from"]').forEach(function(linkedPicker1Element) {
+document.querySelectorAll('[id^="linkedPicker-"][id$="_valid_from_widget"]').forEach(function(linkedPicker1Element) {
 	console.log(linkedPicker1Element);
   const linked1 = new tempusDominus.TempusDominus(linkedPicker1Element, {
         display: {

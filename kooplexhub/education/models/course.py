@@ -13,6 +13,9 @@ logger = logging.getLogger(__name__)
 
 
 class Course(models.Model):
+    class Meta:
+       app_label = 'education'
+
     name = models.CharField(max_length = 64, null = False, unique = True)
     cleanname = models.CharField(max_length = 64, null = False, unique = True, validators = [my_alphanumeric_validator('Enter a valid container name containing only letters and numbers.')])
     folder = models.CharField(max_length = 64, null = False, unique = True)
@@ -25,7 +28,7 @@ class Course(models.Model):
 
     @property
     def groups(self):
-        from ..models import CourseGroup
+        from education.models import CourseGroup
         students = set([ b.user for b in self.studentbindings ])
         groups = dict([ (g, g.students()) for g in CourseGroup.objects.filter(course = self) ])
         for g in groups.values():
@@ -65,7 +68,7 @@ class Course(models.Model):
 
     @property
     def assignments(self):
-        from .assignment import Assignment
+        from . import Assignment
         return Assignment.objects.filter(course = self) #FIXME: is_active
 
     @register.filter
@@ -73,7 +76,7 @@ class Course(models.Model):
         return ', '.join(map(lambda x: x.name, self.assignments))
 
     def dir_assignmentcandidate(self):
-        from ..filesystem import get_assignment_prepare_subfolders
+        from education.filesystem import get_assignment_prepare_subfolders
         return get_assignment_prepare_subfolders(self)
 
 
@@ -96,15 +99,15 @@ class UserCourseBinding(models.Model):
         else:
             return "student {} in course {}".format(self.user, self.course)
 
-    @property
-    def assignments(self):
-        return []
-        from .assignment import Assignment
-        for a in Assignment.objects.filter(course = self.course):
-            yield a
+    #@property
+    #def assignments(self):
+    #    return []
+    #    from education.models import Assignment
+    #    for a in Assignment.objects.filter(course = self.course):
+    #        yield a
 
     def coursecontainerbindings(self):
-        from ..models import CourseContainerBinding
+        from . import CourseContainerBinding
         return CourseContainerBinding.objects.filter(course = self.course, container__user = self.user)
 
 
