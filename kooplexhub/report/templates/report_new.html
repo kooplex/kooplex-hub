@@ -8,6 +8,7 @@
 {% block realcontent %}
 
 <div class="container mt-2">
+  {% if f_project|length > 0 %}
   <form id="report-new" class="form-horizontal was-validated" action="{% url 'report:create' %}" method="post">
     {% csrf_token %}
   <div class="card bg-light border-secondary shadow p-3">
@@ -47,6 +48,10 @@
     {% apply_cancel hide_cancel=True label_apply='Create' icon_apply='bi bi-person-workspace' %}
   </div>
   </form>
+ {% else %}
+     {% include 'empty.html' with  skip_border=True %}
+ {% endif %}
+
 </div>
 
 

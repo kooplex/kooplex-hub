@@ -6,6 +6,7 @@ from django.views import generic
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.db.models import Q
+from django.utils.html import format_html
 
 from .models import Report, ReportContainerBinding
 from container.models import Image, Container
@@ -20,7 +21,7 @@ except importerror:
     KOOPLEX = {}
 
 class NewReportView(LoginRequiredMixin, generic.FormView):
-    template_name = 'new.html'
+    template_name = 'report_new.html'
     form_class = FormReport
     success_url = '/hub/report/list/' #FIXME: django.urls.reverse or shortcuts.reverse does not work reverse('project:list')
 
@@ -28,6 +29,8 @@ class NewReportView(LoginRequiredMixin, generic.FormView):
         context = super().get_context_data(**kwargs)
         context['menu_report'] = True
         context['submenu'] = 'new'
+        context['empty_title'] = "You have no new non-empty folder in the <b>/v/report_prepare</b> directory"
+        context['empty_body'] = format_html(f"""<a href=""><i class="bi bi-journal-bookmark-fill"></i><span class="d-none d-sm-inline">&nbsp;Check the manual for further instructions</span></a>""")
         user = request.user
         #profile = user.profile
         #logger.debug("user %s, method: %s" % (user, request.method))
@@ -77,6 +80,8 @@ def new(request):
     context_dict.update({
         'f_project': list(filter(okay, [ FormReport(user = user, project = p, auto_id = f'id_newreport_%s') for p in projects ])),
     })
+    context_dict['empty_title'] = "You have no new non-empty folder in the /v/report_prepare/ directory"
+    context_dict['empty_body'] = format_html(f"""<a href=""><i class="bi bi-journal-bookmark-fill"></i><span class="d-none d-sm-inline">&nbsp;Check the manual for further instructions</span></a>""")
     return render(request, 'report_new.html', context = context_dict)
 
 @login_required

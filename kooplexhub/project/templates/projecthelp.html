@@ -1,0 +1,113 @@
+{# fixme #}
+<style>
+.myoverlaybase {
+position: relative;
+}
+.myoverlay {
+position: absolute;
+top: 0;
+left: 0;
+}
+.carousel-indicators {
+        bottom: -4.2375rem;
+    }
+</style>
+
+
+<div class="modal fade modal-lg row" id="exampleModalToggle" aria-hidden="true" aria-labelledby="exampleModalToggleLabel" tabindex="-1">
+  <div  class="col-3">
+    <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
+      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+      <span class="visually-hidden">Previous</span>
+    </button>
+  </div> 
+   <div class="modal-dialog modal-dialog-centered col-8">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalToggleLabel">Help Project</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body row">
+<div id="carouselExampleIndicators"id="carouselExampleIndicators" data-ride="carousel" class="carousel slide" data-interval="0">
+  <div class="carousel-indicators">
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="1" aria-label="Slide 2"></button>
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="2" aria-label="Slide 3"></button>
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="3" aria-label="Slide 4"></button>
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="4" aria-label="Slide 5"></button>
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="5" aria-label="Slide 6"></button>
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="6" aria-label="Slide 7"></button>
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="7" aria-label="Slide 8"></button>
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="8" aria-label="Slide 9"></button>
+  </div>
+  <div class="carousel-inner">
+  <div>
+    <div class="carousel-item active">
+        <div class="container-fluid">
+            <p>New project: Give a name, describe your project, add a folder name, select image or an environment, and define its scope.</p>
+            <img class="w-100" src="/static/printproject_new.png" alt="print home">
+        </div> 
+    </div>
+    <div class="carousel-item">
+        <div class="container-fluid">
+            <p>List project:  Use the search bar on the top of the page to filter them.</p> 
+            <img class="w-100" src="/static/printproject_hlist.png" alt="print home">
+        </div>
+    </div>
+    <div class="carousel-item">
+        <div class="container-fluid">
+            <p>In the small dropdown menu with the buttons you can access all environments to which the project is bound to, stop or restart them. </p> 
+            <img class="w-100" src="/static/printproject_hoption.png" alt="print home">
+        </div>
+              </div>
+    <div class="carousel-item">
+        <div class="container-fluid">
+            <p>At the bottom of the dropdown panel you can hide, configure or delete the Project. </p> 
+            <img class="w-100" src="/static/printproject_hdropdown.png" alt="print home">
+        </div>
+              </div>
+    <div class="carousel-item">
+        <div class="container-fluid">
+            <p>Configure Project - Meta: update project name, change its visibility among Kooplex users or update the description. </p>
+            <img class="w-100" src="/static/printproject_hmeta.png" alt="print home">
+        </div>
+    </div>
+    <div class="carousel-item">
+        <div class="container-fluid">
+            <p>Configure Project - Collaboration: Start typing the name or username of the collaborators you'd like to add to the project. Optionally give them administrator role. Also you can choose a default environment for the collaborators.  </p>
+            <img class="w-100" src="/static/printproject_collaboration.png" alt="print home">
+        </div> 
+    </div>
+    <div class="carousel-item">
+        <div class="container-fluid">
+            <p>Configure Project - Environment: Attach this project to your environments. </p>
+            <img class="w-100" src="/static/printproject_hcontainer.png" alt="print home">
+        </div> 
+    </div>
+    <div class="carousel-item">
+        <div class="container-fluid">
+            <p>Join project: In this page, you can join public projects. Use the switch to select the project you want to join and click on the Collaborate button. Toggle the image button if you would like to use the same environment for the chosen project. </p>
+            <img class="w-100" src="/static/printproject_hjoin.png" alt="print home">
+        </div> 
+    </div>
+    <div class="carousel-item">
+        <div class="container-fluid">
+            <p>Show/hide project: You have the option to hide or reveal the projects on the List Projects page. Use the toggle button to select the projects andd click the "Save al changes" button to finalize your choice.</p>
+            <img class="w-100" src="/static/printproject_hhideorshow.png" alt="print home">
+        </div> 
+    </div>
+  </div>
+</div>
+</div>
+        </div>
+      </div>
+    </div>
+    <div  class="col-3">
+      <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Next</span>
+      </button>
+    </div>
+  </div>
+
+  <a class="btn btn-dark"  data-toggle="tooltip" title="Help" data-placement="bottom" data-bs-toggle="modal" href="#exampleModalToggle" role="button"><span class="oi oi-question-mark"></a>  

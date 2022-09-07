@@ -49,7 +49,8 @@ manual_mapping = {
 }
 
 
-URL_PROFILE = f'https://{FQDN_AUTH}/oauth-test/profile'
+URL_PROFILE = f'https://{FQDN_AUTH}/oauth/profile'
+URL_ACCOUNTS_PROFILE = f'https://{FQDN_AUTH}/oauth/accounts/profile'
 LOGIN_URL = ''
 LOGOUT_URL = ''
 SOCIAL_AUTH_KOOPLEX_KEY = ''

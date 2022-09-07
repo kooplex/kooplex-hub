@@ -1,0 +1,417 @@
+{# fixme #}
+<style>
+.myoverlaybase {
+position: relative;
+}
+.myoverlay {
+position: absolute;
+top: 0;
+left: 0;
+}
+.carousel-indicators {
+        bottom: -4.2375rem;
+    }
+</style>
+
+
+<div class="modal fade modal-lg row" id="exampleModalToggle" aria-hidden="true" aria-labelledby="exampleModalToggleLabel" tabindex="-1">
+  <div  class="col-3">
+    <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
+      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+      <span class="visually-hidden">Previous</span>
+    </button>
+  </div> 
+   <div class="modal-dialog modal-dialog-centered col-8">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalToggleLabel">Help Education</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body row">
+<div id="carouselExampleIndicators" id="carouselExampleIndicators" data-ride="carousel" class="carousel slide" data-interval="0">
+  <div class="carousel-indicators">
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="1" aria-label="Slide 2"></button>
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="2" aria-label="Slide 3"></button>
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="3" aria-label="Slide 4"></button>
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="4" aria-label="Slide 5"></button>
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="5" aria-label="Slide 6"></button>
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="6" aria-label="Slide 7"></button>    
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="7" aria-label="Slide 8"></button>
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="8" aria-label="Slide 9"></button>
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="9" aria-label="Slide 10"></button>
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="10" aria-label="Slide 11"></button>
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="11" aria-label="Slide 12"></button>
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="12" aria-label="Slide 13"></button>
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="13" aria-label="Slide 14"></button>
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="14" aria-label="Slide 15"></button>
+  </div>
+  <div class="carousel-inner">
+  <div>
+    <div class="carousel-item active">
+      <p>Student course: List all of your attended courses. Use the search bar on the top of the page to filter.</p>    
+      <img class="w-100" src="/static/painteducation_hstudentcourselist.png" alt="print home">
+    </div>
+    <div class="carousel-item">
+      <p>Student assignments: List of all the assignments of your attended courses. Use this page to submit assignments or check your scores and the given feedbacks.</p>
+      <img class="w-100" src="/static/printeducation_studentassignment.png" alt="print home">
+    </div>
+    <div class="carousel-item">
+      <p>Course management:  List of all the courses where you are a teacher. Use the search bar on the top of the page to filter.</p>
+      <img class="w-100" src="/static/painteducation_hcourselist.png" alt="print home">
+              </div>
+    <div class="carousel-item">
+      <p>In the small dropdown menu with the buttons you can access all environments to which the course is bound to, stop or restart them.
+       </p>
+      <img class="w-100" src="/static/painteducation_hoption.png" alt="print home">
+              </div>
+    <div class="carousel-item">
+      <p>On the bottom part of the dropdown panel use the configure button to update course details! </p>
+      <img class="w-100" src="/static/painteducation_hdropdown.png" alt="print home">
+              </div>
+    <div class="carousel-item">
+      <p>Course configuration: Update the name, description or the default image of the course </p>
+      <img class="w-100" src="/static/painteducation_configure.png" alt="print home">
+    </div>
+    <div class="carousel-item">
+      <p>Course configuration - Teacher: Start typing the name or the username who you'd like to add as a teacher to the course. Click on their name and Save the changes </p>
+      <img class="w-100" src="/static/painteducation_teacher.png" alt="print home">
+    </div>
+    <div class="carousel-item">
+      <p>Course configuration - Student: Start typing the name or the username who you'd like to add as a student to the course. Click on their name and Save the changes </p>
+      <img class="w-100" src="/static/painteducation_student.png" alt="print home">
+    </div>
+    <div class="carousel-item">
+      <p> Course configuration - Groups: Organize students into groups. You can hand out different assignment to each group. </p>
+      <img class="w-100" src="/static/painteducation_groups.png" alt="print home">
+    </div>
+    <div class="carousel-item">
+      <p>Course configuration - Group students: Once a group is created it can be populated with students.</p>
+      <img class="w-100" src="/static/painteducation_groupofstudents.png" alt="print home">
+    </div>
+    <div class="carousel-item">
+      <p>Assignment management - New: Create new assignment. </p>
+      <img class="w-100" src="/static/painteducation_newassignment.png" alt="print home">
+    </div>
+    <div class="carousel-item">
+      <p>Assignment management - Configure:  Update name, description, handout and collection time of the task and the size limit for each submission. Optionally the folder can be automatically deleted after submission (Erase button).  </p>
+      <img class="w-100" src="/static/painteducation_configassignment.png" alt="print home">
+    </div>
+    <div class="carousel-item">
+      <p>Assignment management - Mass assignment: Manage handout, collection and correction of an assignment, or reassign it.  </p>
+      <img class="w-100" src="/static/painteducation_massassignment.png" alt="print home">
+    </div>
+    <div class="carousel-item">
+      <p>Assignment management - Handle assignment: Select a course in the dropdown menu and handout, collect or correct (give score and feedback) for an assignment, or reassign it individually. Use filter by typing in the search bar on the top of this table.  </p>
+      <img class="w-100" src="/static/painteducation_handleassignment.png" alt="print home">
+    </div>
+    <div class="carousel-item">
+      <p>Assignment management - Student points: Results of the students for a given course.</p>
+      <img class="w-100" src="/static/painteducation_studentpoints.png" alt="print home">
+    </div>
+  </div>
+</div>
+</div>
+        </div>
+      </div>
+    </div>
+    <div  class="col-3">
+      <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Next</span>
+      </button>
+    </div>
+  </div>
+
+
+
+
+
+
+
+
+<div class="modal fade" id="exampleModalToggle" aria-hidden="true" aria-labelledby="exampleModalToggleLabel" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalToggleLabel">Help environment</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+         <p>Welcome to Education. In this section, we have four navigation options. Click on next to get to know them!</p> 
+          <img class="print" src="/static/painteducation_menu.png" alt="print home">
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-warning" data-bs-target="#exampleModalToggle2" data-bs-toggle="modal" data-bs-dismiss="modal">Next</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="exampleModalToggle2" aria-hidden="true" aria-labelledby="exampleModalToggleLabel2" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalToggleLabel2">Help environment</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+         <p>Student course: This section shows the student the list of all our courses. Use the search bar on the top of the page to filter them.</p>    
+          <img class="print" src="/static/painteducation_courselist.png" alt="print home">
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-target="#exampleModalToggle" data-bs-toggle="modal" data-bs-dismiss="modal">Previous</button>
+          <button class="btn btn-warning" data-bs-target="#exampleModalToggle3" data-bs-toggle="modal" data-bs-dismiss="modal">Next</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="exampleModalToggle3" aria-hidden="true" aria-labelledby="exampleModalToggleLabel3" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalToggleLabel">Help environment</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+         <p>Student assignments: This section shows the assigned courses to the students with the respective assignments. They can follow their submissions, scores and feedback.</p>
+          <img class="print" src="/static/printproject_option.png" alt="print home">
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-target="#exampleModalToggle2" data-bs-toggle="modal" data-bs-dismiss="modal">Previous</button>
+          <button class="btn btn-warning" data-bs-target="#exampleModalToggle4" data-bs-toggle="modal" data-bs-dismiss="modal">Next</button>      </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="exampleModalToggle4" aria-hidden="true" aria-labelledby="exampleModalToggleLabel4" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalToggleLabel">Help environment</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>Course management:  This section shows the teacher the list of all our courses. Use the search bar on the top of the page for a research filter.</p>
+          <img class="print" src="/static/painteducation_teachercourselist.png" alt="print home">
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-target="#exampleModalToggle3" data-bs-toggle="modal" data-bs-dismiss="modal">Previous</button>
+          <button class="btn btn-warning" data-bs-target="#exampleModalToggle5" data-bs-toggle="modal" data-bs-dismiss="modal">Next</button>      </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="exampleModalToggle5" aria-hidden="true" aria-labelledby="exampleModalToggleLabel5" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalToggleLabel">Help environment</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>On the top of the card, right next to the course name,  the professor can find a button. By expanding it, he can access/ stop/ check/ restart course content. </p>
+          <img class="print" src="/static/painteducation_option.png" alt="print home">
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-target="#exampleModalToggle4" data-bs-toggle="modal" data-bs-dismiss="modal">Previous</button>
+          <button class="btn btn-warning" data-bs-target="#exampleModalToggle6" data-bs-toggle="modal" data-bs-dismiss="modal">Next</button>      </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="exampleModalToggle6" aria-hidden="true" aria-labelledby="exampleModalToggleLabel6" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalToggleLabel">Help environment</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>On the bottom part of the dropdown, the lecturer can configure the course. </p>
+          <img class="print" src="/static/painteducation_dropdown.png" alt="print home">
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-target="#exampleModalToggle5" data-bs-toggle="modal" data-bs-dismiss="modal">Previous</button>
+          <button class="btn btn-warning" data-bs-target="#exampleModalToggle7" data-bs-toggle="modal" data-bs-dismiss="modal">Next</button>      </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="exampleModalToggle7" aria-hidden="true" aria-labelledby="exampleModalToggleLabel7" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalToggleLabel">Help environment</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>Course configuration - configure </p>
+          <img class="print" src="/static/painteducation_configure.png" alt="print home">
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-target="#exampleModalToggle6" data-bs-toggle="modal" data-bs-dismiss="modal">Previous</button>
+          <button class="btn btn-warning" data-bs-target="#exampleModalToggle8" data-bs-toggle="modal" data-bs-dismiss="modal">Next</button>  
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="exampleModalToggle8" aria-hidden="true" aria-labelledby="exampleModalToggleLabel8" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalToggleLabel">Help environment</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>cc - teacher </p>
+          <img class="print" src="/static/painteducation_teacher.png" alt="print home">
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-target="#exampleModalToggle7" data-bs-toggle="modal" data-bs-dismiss="modal">Previous</button>
+          <button class="btn btn-warning" data-bs-target="#exampleModalToggle9" data-bs-toggle="modal" data-bs-dismiss="modal">Next</button>  
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="exampleModalToggle9" aria-hidden="true" aria-labelledby="exampleModalToggleLabel9" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalToggleLabel">Help environment</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>cc -students </p>
+          <img class="print" src="/static/painteducation_student.png" alt="print home">
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-target="#exampleModalToggle8" data-bs-toggle="modal" data-bs-dismiss="modal">Previous</button>
+          <button class="btn btn-warning" data-bs-target="#exampleModalToggle10" data-bs-toggle="modal" data-bs-dismiss="modal">Next</button>  
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="exampleModalToggle10" aria-hidden="true" aria-labelledby="exampleModalToggleLabel10" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalToggleLabel">Help environment</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>cc - groups </p>
+          <img class="print" src="/static/painteducation_groups.png" alt="print home">
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-target="#exampleModalToggle9" data-bs-toggle="modal" data-bs-dismiss="modal">Previous</button>
+          <button class="btn btn-warning" data-bs-target="#exampleModalToggle11" data-bs-toggle="modal" data-bs-dismiss="modal">Next</button>  
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="exampleModalToggle11" aria-hidden="true" aria-labelledby="exampleModalToggleLabel11" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalToggleLabel">Help environment</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>cc - group of student
+          </p>
+          <img class="print" src="/static/painteducation_groupofstudents.png" alt="print home">
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-target="#exampleModalToggle10" data-bs-toggle="modal" data-bs-dismiss="modal">Previous</button>
+          <button class="btn btn-warning" data-bs-target="#exampleModalToggle12" data-bs-toggle="modal" data-bs-dismiss="modal">Next</button>  
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="exampleModalToggle12" aria-hidden="true" aria-labelledby="exampleModalToggleLabel12" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalToggleLabel">Help environment</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>Assignment management - New assignment: Create new assignment. </p>
+          <img class="print" src="/static/printproject_new.png" alt="print home">
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-target="#exampleModalToggle11" data-bs-toggle="modal" data-bs-dismiss="modal">Previous</button>
+          <button class="btn btn-warning" data-bs-target="#exampleModalToggle13" data-bs-toggle="modal" data-bs-dismiss="modal">Next</button>  
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="exampleModalToggle13" aria-hidden="true" aria-labelledby="exampleModalToggleLabel13" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalToggleLabel">Help environment</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>Assignment management - configure assignment: The professor can configure assignment in this area. They can change the name and the description of it, as well as the validity of the task and the size/number of files. The assignment can also be deleted.  </p>
+          <img class="print" src="/static/printproject_new.png" alt="print home">
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-target="#exampleModalToggle12" data-bs-toggle="modal" data-bs-dismiss="modal">Previous</button>
+          <button class="btn btn-warning" data-bs-target="#exampleModalToggle14" data-bs-toggle="modal" data-bs-dismiss="modal">Next</button>  
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="exampleModalToggle14" aria-hidden="true" aria-labelledby="exampleModalToggleLabel14" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalToggleLabel">Help environment</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>Assignment management - Mass assignment: In this course list, the professor can operate for the whole grupo in a course. In the table, they can hand out/ collect/ correct and reassign tasks. The lecturer can also check how many assignments are being corrected.  </p>
+          <img class="print" src="/static/printproject_new.png" alt="print home">
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-target="#exampleModalToggle13" data-bs-toggle="modal" data-bs-dismiss="modal">Previous</button>
+          <button class="btn btn-warning" data-bs-target="#exampleModalToggle15" data-bs-toggle="modal" data-bs-dismiss="modal">Next</button>  
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="exampleModalToggle15" aria-hidden="true" aria-labelledby="exampleModalToggleLabel15" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalToggleLabel">Help environment</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>Assignment management  Handle assignment: In this section, the professor can operate for a certain assignment by selecting one of the options in the dropdown.  In individual operation, the lecturer can also operate, grade and feedback students each by each and filter them in the search bar on the top.  </p>
+          <img class="print" src="/static/printproject_new.png" alt="print home">
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-target="#exampleModalToggle14" data-bs-toggle="modal" data-bs-dismiss="modal">Previous</button>
+          <button class="btn btn-warning" data-bs-target="#exampleModalToggle16" data-bs-toggle="modal" data-bs-dismiss="modal">Next</button>  
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="exampleModalToggle16" aria-hidden="true" aria-labelledby="exampleModalToggleLabel16" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalToggleLabel">Help environment</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>Assignment management - Student points: The professor here can have a clear vision of all grades assigned for each student in a certain assignment. By filtering the course, the table matches information of all students and grades from all assignments related to that subject.</p>
+          <img class="print" src="/static/printproject_hideorshow.png" alt="print home">
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-target="#exampleModalToggle15" data-bs-toggle="modal" data-bs-dismiss="modal">Previous</button>
+          <button class="btn btn-success" data-bs-dismiss="modal" data-bs-dismiss="close">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <a class="btn btn-dark"  data-toggle="tooltip" title="Help" data-placement="bottom" data-bs-toggle="modal" href="#exampleModalToggle" role="button"><span class="oi oi-question-mark"></a>  

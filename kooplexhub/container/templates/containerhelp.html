@@ -1,0 +1,121 @@
+{# fixme #}
+<style>
+.myoverlaybase {
+position: relative;
+}
+.myoverlay {
+position: absolute;
+top: 0;
+left: 0;
+}
+.carousel-indicators {
+        bottom: -4.2375rem;
+    }
+</style>
+
+
+<div class="modal fade modal-lg row" id="exampleModalToggle" aria-hidden="true" aria-labelledby="exampleModalToggleLabel" tabindex="-1">
+  <div  class="col-3">
+    <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
+      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+      <span class="visually-hidden">Previous</span>
+    </button>
+  </div> 
+   <div class="modal-dialog modal-dialog-centered col-8">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalToggleLabel">Help: Environments</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body row">
+<div id="carouselExampleIndicators"id="carouselExampleIndicators" data-ride="carousel" class="carousel slide" data-interval="0">
+  <div class="carousel-indicators">
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="1" aria-label="Slide 2"></button>
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="2" aria-label="Slide 3"></button>
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="3" aria-label="Slide 4"></button>
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="4" aria-label="Slide 5"></button>
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="5" aria-label="Slide 6"></button>
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="6" aria-label="Slide 7"></button>
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="7" aria-label="Slide 8"></button>
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="8" aria-label="Slide 9"></button>
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="9" aria-label="Slide 10"></button>
+  </div>
+  <div class="carousel-inner">
+  <div>
+    <div class="carousel-item active">
+        <div class="container-fluid">
+            <p>New environment: Add a human readable friendly name and choose an image for the environment. Use the dropdown in the bottom to see image descriptions!</p>
+            <img class="w-100" src="/static/printenv_hnew.png" alt="print home">
+        </div> 
+    </div>
+    <div class="carousel-item">
+        <div class="container-fluid">
+            <p>List environment: This section shows us the list of all our containers. Use the search bar on the top to fil ter the list.</p> 
+            <img class="w-100" src="/static/printenv_hlist.png" alt="print home">
+        </div>
+    </div>
+    <div class="carousel-item">
+        <div class="container-fluid">
+            <p>Click on the green down pointing arrow to open the dropdown panel for an environment. Small icons show the attached or mounted projects and attachments/volumes, below that 
+                warnings and container status messages.  </p> 
+            <img class="w-100" src="/static/printenv_hoption.png" alt="print home">
+        </div>
+              </div>
+    <div class="carousel-item">
+        <div class="container-fluid">
+            <p>The buttons on the bottom are the following: Launch or access an environment, restatrt, stop the environment, refresh status message and configure environment. Bottom right button is for deleting the environment.</p> 
+            <img class="w-100" src="/static/printenv_hdropdown.png" alt="print home">
+        </div>
+              </div>
+    <div class="carousel-item">
+        <div class="container-fluid">
+            <p>Configure environment - Name/Image: update the friendly name or the image of the container.</p>
+            <img class="w-100" src="/static/printenv_hmeta.png" alt="print home">
+        </div>
+    </div>
+    <div class="carousel-item">
+        <div class="container-fluid">
+		<p>Configure environment - Projects: add projects to an environment. They will appear under the folder <code>/v/projects/</code></p>
+            <img class="w-100" src="/static/printenv_hproject.png" alt="print home">
+        </div> 
+    </div>
+    <div class="carousel-item">
+        <div class="container-fluid">
+            <p>Configure environment - Courses: add courses and manage course material in an environment, access student working directories and submitted notebooks. They will appear under the folder <code>/v/course/</code></p>
+            <img class="w-100" src="/static/printenv_course.png" alt="print home">
+        </div> 
+    </div>
+    <div class="carousel-item">
+        <div class="container-fluid">
+            <p>Configure environment - Attachments: mount any attachments into an environment. They will appear under the folder <code>/v/attachments/</code></p>
+            <img class="w-100" src="/static/printenv_hattachment.png" alt="print home">
+        </div> 
+    </div>
+    <div class="carousel-item">
+        <div class="container-fluid">
+            <p>Configure environment - Volumes: mount any volume into an environment. They will appear under the folder <code>/v/volumes/</code></p>
+            <img class="w-100" src="/static/printenv_hvolume.png" alt="print home">
+        </div> 
+    </div>
+    <div class="carousel-item">
+        <div class="container-fluid">
+            <p>List report environment: Lists containers that run the necessary processes for reports. Use the search bar on the top of to filter the page.</p>
+            <img class="w-100" src="/static/printenv_hreport.png" alt="print home">
+        </div> 
+    </div>
+  </div>
+</div>
+</div>
+        </div>
+      </div>
+    </div>
+    <div  class="col-3">
+      <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Next</span>
+      </button>
+    </div>
+  </div>
+
+  <a class="btn btn-dark"  data-toggle="tooltip" title="Help" data-placement="bottom" data-bs-toggle="modal" href="#exampleModalToggle" role="button"><span class="oi oi-question-mark"></a>  

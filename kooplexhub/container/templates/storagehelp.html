@@ -1,0 +1,64 @@
+{# fixme #}
+<style>
+.myoverlaybase {
+position: relative;
+}
+.myoverlay {
+position: absolute;
+top: 0;
+left: 0;
+}
+.carousel-indicators {
+        bottom: -4.2375rem;
+    }
+</style>
+
+<div class="modal fade modal-lg row" id="exampleModalToggle" aria-hidden="true" aria-labelledby="exampleModalToggleLabel" tabindex="-1">
+  <div  class="col-3">
+    <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
+      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+      <span class="visually-hidden">Previous</span>
+    </button>
+  </div> 
+   <div class="modal-dialog modal-dialog-centered col-8">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalToggleLabel">Help Storage</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body row">
+<div id="carouselExampleIndicators" id="carouselExampleIndicators" data-ride="carousel" class="carousel slide" data-interval="0">
+  <div class="carousel-indicators">
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="1" aria-label="Slide 2"></button>
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="2" aria-label="Slide 3"></button>
+  </div>
+  <div class="carousel-inner">
+  <div>
+    <div class="carousel-item active">
+	    <p>New attachment: Give it a name and add a description! It will appear under the <code>/v/attachments/&lt;foldername&gt;</code>, therefore it is restricted to alphanumerical characters only. </p>    
+      <img class="w-100" src="/static/paintstorage_hnew.png" alt="print home">
+    </div>
+    <div class="carousel-item">
+      <p>List attachment: List of all the existing attachments with their foldername and their description. Use the search bar on the top of the page to filter it. </p>
+      <img class="w-100" src="/static/printstorage_hattachmentlist.png" alt="print home">
+              </div>
+    <div class="carousel-item">
+      <p>List volumes: List of all the volumes you have access to. Use the search bar on the top of the page to filter it.
+      </p>
+    <img class="w-100" src="/static/printstorage_hvolumelist.png" alt="print home">
+              </div>
+  </div>
+</div>
+</div>
+        </div>
+      </div>
+    </div>
+    <div  class="col-3">
+      <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Next</span>
+      </button>
+    </div>
+  </div>
+  <a class="btn btn-dark"  data-toggle="tooltip" title="Help" data-placement="bottom" data-bs-toggle="modal" href="#exampleModalToggle" role="button"><span class="oi oi-question-mark"></a>  
