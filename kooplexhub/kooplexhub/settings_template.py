@@ -184,6 +184,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = '/kooplexhub/static'
 STATICFILES_DIRS = (
         f'{BASE_DIR}/hub/templates/static',
         f'{BASE_DIR}/project/templates/static',
@@ -230,11 +231,12 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
-    }
+   }
 }
 
 KOOPLEX = {
     'fs_backend': 'nfs4',
+    'uid_lookup': 'ldap',
     'mountpoint_hub': {
         'home': '/mnt/home',
         'garbage': '/mnt/garbage',
@@ -278,8 +280,7 @@ KOOPLEX = {
         'url_public': 'https://%s/{proxy.path_open}' % DOMAIN,
         'path': 'notebook/{container.name}',
         # FIXME: here or somewhere else?
-        'url_report_static': os.path.join(FQDN,'report/{report.id}/{report.index}'),
-        'url_report_dynamic': os.path.join(FQDN,'dreport/{report.id}'),
+        'url_report': os.path.join(FQDN,'{url_tag}/{report.id}/{report.index}'),
     },
     'kubernetes': {
         'namespace': '',
@@ -326,15 +327,15 @@ KOOPLEX = {
             'mountPath_course_workdir': '/v/courses/{course.folder}',
             'subPath_course_workdir': 'course_workdir/{course.folder}/{user.username}',
             'mountPath_course_public': '/v/courses/{course.folder}.public',
-            'subPath_course_public': 'courses/{course.folder}/public',
+            'subPath_course_public': 'course/{course.folder}/public',
             'mountPath_course_assignment_prepare': '/v/courses/{course.folder}.assignment_prepare',
-            'subPath_course_assignment_prepare': 'courses/{course.folder}/assignment_prepare',
+            'subPath_course_assignment_prepare': 'course/{course.folder}/assignment_prepare',
             'mountPath_course_assignment': '/v/courses/{course.folder}.assignments',
-            'subPath_course_assignment': 'course_assignments/{course.folder}/workdir/{user.username}',
-            'subPath_course_assignment_all': 'course_assignments/{course.folder}/workdir',
+            'subPath_course_assignment': 'course_assignment/{course.folder}/workdir/{user.username}',
+            'subPath_course_assignment_all': 'course_assignment/{course.folder}/workdir',
             'mountPath_course_assignment_correct': '/v/courses/{course.folder}.correct',
-            'subPath_course_assignment_correct': 'course_assignments/{course.folder}/correctdir/{user.username}',
-            'subPath_course_assignment_correct_all': 'course_assignments/{course.folder}/correctdir',
+            'subPath_course_assignment_correct': 'course_assignment/{course.folder}/correctdir/{user.username}',
+            'subPath_course_assignment_correct_all': 'course_assignment/{course.folder}/correctdir',
             # VOLUME
             'mountPath_volume': '/v/volumes/{volume.cleanname}',
             # KUBE JOBS
