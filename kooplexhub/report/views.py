@@ -8,7 +8,7 @@ from django.contrib import messages
 from django.db.models import Q
 from django.utils.html import format_html
 
-from .models import Report, ReportContainerBinding
+from .models import Report, ReportContainerBinding, ReportType
 from container.models import Image, Container
 from .forms import FormReport, FormReportConfigure
 from project.models import Project, UserProjectBinding
@@ -86,6 +86,7 @@ def new(request):
 
 @login_required
 def create(request):
+    import re
     """Renders new report form."""
     user = request.user
     logger.debug("user %s, method: %s" % (user, request.method))
@@ -94,9 +95,7 @@ def create(request):
     else:
         return redirect('report:list')
     try:
-        is_static = request.POST.get('is_static') == 'on'
-        kw = { 'is_static': is_static }
-
+        kw = dict()
         password = request.POST.get('password')
         if password:
             kw.update( { 'password': password } )
@@ -106,18 +105,21 @@ def create(request):
             project =  Project.objects.get(id = request.POST.get('project_selected')),
             description = request.POST.get('description'),
             scope = request.POST.get('scope'),
+            reporttype = ReportType.objects.get(id = request.POST.get('reporttype')),
             index = request.POST.get('index'),
             folder = request.POST.get('folder'),
             **kw
         )
-        if not is_static:
+        if not report.reporttype.is_static:
             image = Image.objects.get(id = request.POST.get('image'))
             kw.update( { 'image': image } )
+            report.image = image
+            report.save()
 
             # Create a container
             container, created = Container.objects.get_or_create(
                     user = user, 
-                    name = request.POST.get('name'),
+                    name = re.sub(r'\W+', '', request.POST.get('name')),
                     friendly_name = request.POST.get('name'),
                     image = image
             )
@@ -156,7 +158,7 @@ def open(request, report_id):
     try:
         report = Report.objects.get(id = report_id) #, creator = user)
         link = report.url
-        #messages.debug(request, f"Report {report.name} is opened at {link}")
+        logger.debug(f"User {user} opens report {report.id} at link: {link}")
     except Exception as e:
         logger.error(f"User {user} can not open report id={report_id} url= -- {e}")
     return HttpResponseRedirect(link)
@@ -165,17 +167,18 @@ def open(request, report_id):
 def delete(request, report_id):
     """delete report"""
     user = request.user
+    report = Report.objects.get(id = report_id, creator = user)
     try:
-        report = Report.objects.get(id = report_id, creator = user)
+        rcb = ReportContainerBinding.objects.get(report=report)
+        rcb.container.stop()
+        rcb.delete()
+    except Exception as e:
+        logger.error(f"User {user} can not delete report id={report_id} -- {e}")
+    try:
         report.delete()
         messages.info(request, f"Report {report.name} is deleted")
     except Exception as e:
         logger.error(f"User {user} can not delete report id={report_id} -- {e}")
-    #try:
-    #    rcb = ReportContainerBinding.objects.get(report=report)
-    #    rcb.delete()
-    #except Exception as e:
-    #    logger.error(f"User {user} can not delete report id={report_id} -- {e}")
     return redirect('report:list')
 
 

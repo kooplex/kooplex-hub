@@ -16,6 +16,14 @@ except importerror:
 
 logger = logging.getLogger(__name__)
 
+class ReportType(models.Model):
+
+    name = models.CharField(max_length = 40, null = False)
+    url_tag = models.CharField(max_length = 40, null = False) # For ingress to forward it to the right place
+    is_static = models.BooleanField(default = True)
+
+    def __str__(self):
+        return self.name
 
 class Report(models.Model):
     SC_PRIVATE = 'private'
@@ -28,13 +36,14 @@ class Report(models.Model):
     }
 
     name = models.CharField(max_length = 200, null = False)
-    is_static = models.BooleanField(default = True)
+    reporttype = models.ForeignKey(ReportType, default=1, on_delete = models.CASCADE)
+#    is_static = models.BooleanField(default = True)
     description = models.TextField(max_length = 500, null = True, default = None)
     creator = models.ForeignKey(User, null = False, on_delete = models.CASCADE)
     created_at = models.DateTimeField(default = timezone.now)
     project = models.ForeignKey(Project, default=None, on_delete = models.CASCADE)
     folder = models.CharField(max_length = 200, null = False)
-    index = models.CharField(max_length = 128, null = False)
+    index = models.CharField(max_length = 128, default=None, null = True)
     #thumbnail = models.CharField(max_length = 200, null = False) blob?
 
     scope = models.CharField(max_length = 16, choices = SCOPE_LOOKUP.items(), default = SC_PRIVATE)
@@ -45,9 +54,9 @@ class Report(models.Model):
     
     # password = models.CharField(max_length = 64, null = True, default = '', blank=True)
 
-    @property
-    def root(self):
-        return "static" if self.is_static else "dynamic"
+#    @property
+#    def root(self):
+#        return "static" if self.is_static else "dynamic"
 
     class Meta:
         unique_together = [['project', 'folder']]
@@ -55,10 +64,20 @@ class Report(models.Model):
 
     @property
     def url(self):
-        if self.is_static:
-            return KOOPLEX['proxy'].get('url_report_static', 'http://localhost/{report.id}').format(report = self)
+        url_tag = self.reporttype.url_tag
+        if self.reporttype.is_static:
+            return KOOPLEX['proxy'].get('url_report', 'http://localhost/{report.id}').format(report = self, url_tag = url_tag)
         else:
             from . import ReportContainerBinding
             rcb = ReportContainerBinding.objects.get(report=self)
             return Proxy.objects.get(image = self.image).path.format(container=rcb.container) #url_public(self)
-            #return KOOPLEX['proxy'].get('url_report_dynamic', 'http://localhost/{report.id}').format(report = self)
+        #return KOOPLEX['proxy'].get('url_report', 'http://localhost/{report.id}').format(report = self, url_tag = url_tag)
+            
+        # if self.is_static:
+        #     return KOOPLEX['proxy'].get('url_report_static', 'http://localhost/{report.id}').format(report = self)
+        # else:
+        #     from . import ReportContainerBinding
+        #     rcb = ReportContainerBinding.objects.get(report=self)
+        #     return Proxy.objects.get(image = self.image).path.format(container=rcb.container) #url_public(self)
+        #     #return KOOPLEX['proxy'].get('url_report_dynamic', 'http://localhost/{report.id}').format(report = self)
+
