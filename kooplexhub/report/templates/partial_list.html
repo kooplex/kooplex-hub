@@ -8,30 +8,35 @@
       {% button_report_open report %}
     </div>
     <div>
-      <h4 class="ms-2">{{ report.name }}</h4>
+      <h4 class="ms-2 flex" style="display: initial; margin-right: 50px">{{ report.name }}</h4>
+    {% if report.image %}
+      <span class="card-text"><strong>Image:</strong>&nbsp;{% container_image report.image %}</span>
+    {% else %}
+      <span class="card-text"><strong>Static html report</strong></span>
+    {% endif %}
+  <strong style="margin-left: 20px">Scope:</strong>&nbsp;{% r_scope report %}
     </div>
   </div>
   <div class="card card-body p-1 mt-2 mb-2">
   {% if user.is_authenticated %}
+  <div class="row">
+  <div class="col md-2">
     <p class="card-text"><strong>Project:</strong>&nbsp;{{ report.project }}</p>
-    <p class="card-text"><strong>Scope:</strong>&nbsp;{% r_scope report %}</p>
-    {% if report.image %}
-      <p class="card-text"><strong>Image:</strong>&nbsp;{% container_image report.image %}</p>
-    {% else %}
-      <p class="card-text"><strong>Static html report</strong></p>
-    {% endif %}
-  {% endif %}
+  </div>
+  <div class="col ">
   {% if report.creator == user %}
     <p class="card-text"><strong>Source folder:</strong> {{ report.project.subpath }}/{{ report.folder }}</p>
   {% else %}
     <p class="card-text"><strong>Creator:</strong> {{ report.creator.profile.name_and_username }}</p>
   {% endif %}
+  </div>
+  </div>
+    <p class="card-text"></p>
+  {% endif %}
     <p class="card-text"><strong>Description:</strong> {{ report.description }}</p>
-    <p class="card-text">
       <div class="btn-group" role="group">
         {% include 'reports_button.html' %} {# fixme: be it a template tag #}
       </div>
-    </p>
   </div>
   <div class="card card-footer d-flex flex-row justify-content-between mb-2">
     <div class="">

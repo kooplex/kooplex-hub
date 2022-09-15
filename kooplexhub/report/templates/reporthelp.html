@@ -1,0 +1,89 @@
+{# fixme #}
+<style>
+.myoverlaybase {
+position: relative;
+}
+.myoverlay {
+position: absolute;
+top: 0;
+left: 0;
+}
+.carousel-indicators {
+        bottom: -4.2375rem;
+    }
+</style>
+
+<div class="modal fade modal-lg row" id="exampleModalToggle" aria-hidden="true" aria-labelledby="exampleModalToggleLabel" tabindex="-1">
+  <div  class="col-3">
+    <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
+      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+      <span class="visually-hidden">Previous</span>
+    </button>
+  </div> 
+   <div class="modal-dialog modal-dialog-centered col-8">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalToggleLabel">Help: Reports</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body row">
+<div id="carouselExampleIndicators" id="carouselExampleIndicators" data-ride="carousel" class="carousel slide" data-interval="0">
+  <div class="carousel-indicators">
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="1" aria-label="Slide 2"></button>
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="2" aria-label="Slide 3"></button>
+    <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="3" aria-label="Slide 4"></button>
+  </div>
+  <div class="carousel-inner">
+  <div>
+    <div class="carousel-item active">
+      <p>Welcome to Report. In this section, we have two navigation options. Let's explore them over!</p> 
+      <div class="container-fluid">
+        <img class="w-100" src="/static/report_home.png" alt="print home">
+      </div>
+    </div>
+    <div class="carousel-item">
+      <p>List of reports: In this page, the reports are disposed of by card format. To search for a specific report, use the search bar on the top of the page.</p>    
+      <div class="container-fluid">
+        <img class="w-100" src="/static/printreport_hlist.png" alt="print home">
+      </div>
+    </div>
+    <div class="carousel-item">
+      <p>On the top of the card, right next to the name, you can click the green button to open report. On the bottom, we can press the tool button to configure the report and the trash bin button to delete it. </p>
+      <div class="container-fluid">
+        <img class="w-100" src="/static/printreport_hdropdown.png" alt="print home">
+      </div>
+              </div>
+    <div class="carousel-item">
+      <p>New report: Create a new report.
+        Project: associate the report to a project
+        The name of the report: Name the report
+        Folder: Associate the report to an existent folder
+        Description: write some description to your report.
+        Static:  check if the report is static or not.
+        Scope: Select the report status (choose between public, internal or private)
+        Image: Associate the report to an image
+        Index: name some index
+        </p>
+        <div class="container-fluid">
+          <img class="w-100" src="/static/printreport_hnew.png" alt="print home">
+        </div>
+              </div>
+  </div>
+</div>
+</div>
+        </div>
+      </div>
+    </div>
+    <div  class="col-3">
+      <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Next</span>
+      </button>
+    </div>
+  </div>
+
+
+  <a class="btn btn-dark"  data-toggle="tooltip" title="Help" data-placement="bottom" data-bs-toggle="modal" href="#exampleModalToggle" role="button"><span class="oi oi-question-mark"></a>  
+
+

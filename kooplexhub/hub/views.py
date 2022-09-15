@@ -8,7 +8,7 @@ class IndexView(AccessMixin, generic.TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['url_profile'] = settings.URL_PROFILE
+        context['url_profile'] = settings.URL_ACCOUNTS_PROFILE
         return context
 
     def setup(self, request, *args, **kwargs):

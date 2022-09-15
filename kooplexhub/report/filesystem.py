@@ -5,12 +5,13 @@ from kooplexhub.settings import KOOPLEX
 
 from hub.lib import dirname
 from hub.lib.filesystem import _copy_dir, _rmdir   #, _grantgroupaccess
+from kooplexhub.lib import bash
 from project.filesystem import path_report_prepare
 
 mp_report = dirname.MP.get('report', '/mnt/report')
 
 def subpath(report):
-    return dirname.MP.get('subPath_report', '{report.root}/{report.id}').format(report = report)
+    return dirname.MP.get('subPath_report', '{report.id}').format(report = report)
 
 def dir_reportcandidate(project):
     from .models import Report
@@ -34,8 +35,9 @@ def publish(report):
     dir_target = os.path.join(mp_report, subpath(report))
     _copy_dir(dir_source, dir_target, remove = False)
     nginx_id=101
-    acl = 'rXtcy' if readonly else 'rwaDxtcy'
+    acl = 'rXtcy' 
     bash(f'nfs4_setfacl -R -a A::{nginx_id}:{acl} {dir_target}')
+    bash(f'nfs4_setfacl -R -a A::EVERYONE@:{acl} {dir_target}')
     #_grantgroupaccess(1000, dir_target)
 
 def remove(report):

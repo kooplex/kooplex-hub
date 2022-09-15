@@ -9,3 +9,4 @@ kooplexhub/*/migrations/
 *.sw?
 .idea/*
 settings.py
+node_modules
