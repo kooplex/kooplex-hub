@@ -529,7 +529,7 @@ def _handout(assignment, group_map):
                     continue
                 b.handout()
             except UserAssignmentBinding.DoesNotExist:
-                UserAssignmentBinding.objects.create(user = s, assignment = assignment, state = UserAssignmentBinding.ST_WORKINPROGRESS)
+                UserAssignmentBinding.objects.create(user = s, assignment = assignment, state = UserAssignmentBinding.ST_WORKINPROGRESS).handout()
             handout.append(s)
     return handout
 
@@ -708,7 +708,8 @@ def configure_save(request, usercoursebinding_id):
     info.extend( _manageusers(binding, request.POST.getlist('student-ids'), is_teacher = False) )
 
     # handle groups
-    bindings = CourseGroup.objects.filter(course = course, id__in = request.POST.getlist('selection_group_removal'))
+    delete_ids = request.POST.getlist('selection_group_removal')
+    bindings = CourseGroup.objects.filter(course = course, id__in = delete_ids)
     if bindings:
         info.append('Removed groups {}'.format(', '.join([ b.name for b in bindings])))
         bindings.delete()
@@ -732,7 +733,7 @@ def configure_save(request, usercoursebinding_id):
         info.append('Modified groups: {}.'.format(', '.join(m)))
 
     # handle students in group
-    mapping = { k: json.loads(request.POST[f'grp-{k}']) for k in map(lambda x: x.split('-')[-1], filter(lambda x: x.startswith('grp-'), request.POST.keys())) }
+    mapping = { k: json.loads(request.POST[f'grp-{k}']) for k in map(lambda x: x.split('-')[-1], filter(lambda x: x.startswith('grp-') and not x.split("-")[-1] in delete_ids, request.POST.keys())) }
     info.extend( _groupstudents(binding, mapping) )
         
     if info:
