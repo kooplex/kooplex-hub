@@ -280,7 +280,7 @@ KOOPLEX = {
         'url_public': 'https://%s/{proxy.path_open}' % DOMAIN,
         'path': 'notebook/{container.name}',
         # FIXME: here or somewhere else?
-        'url_report': os.path.join(FQDN,'{url_tag}/{report.id}/{report.index}'),
+        'url_report': os.path.join(FQDN,'{url_tag}/{report.id}/{report.indexfile}'),
     },
     'kubernetes': {
         'namespace': '',

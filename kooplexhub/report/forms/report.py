@@ -24,13 +24,13 @@ class FormReport(forms.ModelForm):
             widget = MyDescription, 
         )
 
-    index = forms.CharField(
+    indexfile = forms.CharField(
             max_length = 100, required = False,
         )
 
     class Meta:
         model = Report
-        fields = [ 'name', 'folder', 'description', 'scope', 'reporttype','image', 'index' ]
+        fields = [ 'name', 'folder', 'description', 'scope', 'reporttype','image', 'indexfile' ]
         labels = {
             'name': _('The name of the report'),
             'description': _('A short description of the report'),
@@ -72,13 +72,13 @@ class FormReportConfigure(forms.ModelForm):
             widget = MyDescription, 
         )
 
-    index = forms.CharField(
+    indexfile = forms.CharField(
             max_length = 100, required = False,
         )
 
     class Meta:
         model = Report
-        fields = [ 'name', 'description', 'scope', 'reporttype', 'image', 'index', 'creator', 'folder', 'project' ]
+        fields = [ 'name', 'description', 'scope', 'reporttype', 'image', 'indexfile', 'creator', 'folder', 'project' ]
         labels = {
             'name': _('The name of the report'),
             'description': _('A short description of the report'),

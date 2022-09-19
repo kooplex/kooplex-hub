@@ -7,7 +7,7 @@ from .models import Report, ReportType, ReportContainerBinding
 class ReportAdmin(admin.ModelAdmin):
     def report_creator(self, instance):
         return instance.creator
-    list_display = ('id', 'report_creator', 'name', 'project', 'folder', 'scope', 'index', 'image')
+    list_display = ('id', 'report_creator', 'name', 'project', 'folder', 'scope', 'indexfile', 'image')
 
 @admin.register(ReportContainerBinding)
 class ReportContainerBindingAdmin(admin.ModelAdmin):

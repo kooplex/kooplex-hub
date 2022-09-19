@@ -43,7 +43,7 @@ class Report(models.Model):
     created_at = models.DateTimeField(default = timezone.now)
     project = models.ForeignKey(Project, default=None, on_delete = models.CASCADE)
     folder = models.CharField(max_length = 200, null = False)
-    index = models.CharField(max_length = 128, default=None, null = True)
+    indexfile = models.CharField(max_length = 128, blank=True, null = True)
     #thumbnail = models.CharField(max_length = 200, null = False) blob?
 
     scope = models.CharField(max_length = 16, choices = SCOPE_LOOKUP.items(), default = SC_PRIVATE)
