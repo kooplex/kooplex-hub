@@ -30,7 +30,7 @@ class FormReport(forms.ModelForm):
 
     image = forms.ModelChoiceField(
             queryset = Image.objects.filter(imagetype = Image.TP_REPORT, present = True), 
-            help_text = _('Please select an image for your report. During selection a short description of each image is shown to help you decide.'), required = True, 
+            help_text = _('Please select an image for your report. During selection a short description of each image is shown to help you decide.'), required = False, 
             empty_label = 'Select image...',
             )
 
@@ -84,7 +84,7 @@ class FormReportConfigure(forms.ModelForm):
 
     image = forms.ModelChoiceField(
             queryset = Image.objects.filter(imagetype = Image.TP_REPORT, present = True), 
-            help_text = _('Please select an image for your report. During selection a short description of each image is shown to help you decide.'), required = True, 
+            help_text = _('Please select an image for your report. During selection a short description of each image is shown to help you decide.'), required = False, 
             empty_label = 'Select image...',
             )
 
