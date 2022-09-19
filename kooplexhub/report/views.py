@@ -107,7 +107,7 @@ def create(request):
             description = request.POST.get('description'),
             scope = request.POST.get('scope'),
             reporttype = ReportType.objects.get(id = request.POST.get('reporttype')),
-            index = request.POST.get('index'),
+            indexfile = request.POST.get('indexfile'),
             folder = request.POST.get('folder'),
             **kw
         )
