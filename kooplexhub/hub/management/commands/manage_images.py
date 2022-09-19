@@ -12,6 +12,7 @@ class Command(BaseCommand):
         parser.add_argument('--add_image', help = "Add image", nargs = 1)
         parser.add_argument('--add_proxy', help = "Add Proxy", nargs = 7)
         parser.add_argument('--add_envvar', help = "Add Proxy", nargs = 3)
+#        parser.add_argument('--add_type', help = "Add Type", nargs = 3)
         parser.add_argument('--remove', help = "Remove image", nargs = 1)
         parser.add_argument('--remove_proxy', help = "Remove Proxy", nargs = 1)
         parser.add_argument('--remove_envvar', help = "Remove Proxy", nargs = 1)

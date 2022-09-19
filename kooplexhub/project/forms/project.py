@@ -92,4 +92,4 @@ class FormProjectWithContainer(FormProject):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['environments'].queryset = kwargs['initial']['environments']
+        self.fields['environments'].choices = kwargs['initial']['environments']

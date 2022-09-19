@@ -23,6 +23,7 @@ except importerror:
 class NewReportView(LoginRequiredMixin, generic.FormView):
     template_name = 'report_new.html'
     form_class = FormReport
+    context_object_name = 'reports'
     success_url = '/hub/report/list/' #FIXME: django.urls.reverse or shortcuts.reverse does not work reverse('project:list')
 
     def get_context_data(self, **kwargs):

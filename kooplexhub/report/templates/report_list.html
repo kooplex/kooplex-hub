@@ -1,16 +1,28 @@
-{% extends extend %}
+{% extends "report_layout.html" %}
 
 {% load static %}
 
-{% block bodycontent %}
-<div class="p-2">
+{% block head_content %}
+<style>
+.form-control:focus {
+  border-color: gray;
+  box-shadow: inset 0 1px 1px gray, 0 0 8px gray;
+}
+</style>
+{% endblock %}
+ 
+{% block realcontent %}
+  {% if reports %}
   <input class="form-control mt-3 mb-3" type="text" id="search_report" placeholder="Search reports" title="Type in a name" autofocus >
   <div id="reportListPane" class="ms-0 row row-cols-1 row-cols-md-3" >
     {% for report in reports %}
        {% include 'partial_list.html' %}
     {% endfor %}
   </div>
-</div>
+  {% else %}
+    {% include 'empty.html' %}
+  {% endif %}
+
 {% endblock %}
 
 {% block scripts %}

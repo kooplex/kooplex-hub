@@ -1,9 +1,18 @@
-{% extends 'report_layout.html' %}
+{% extends "report_layout.html" %}
 
 {% load static %}
 {% load extras %}
 
 
+{% block head_content %}
+{% block child_head %}{% endblock %}
+<style>
+.form-control:focus {
+  border-color: gray;
+  box-shadow: inset 0 1px 1px gray, 0 0 8px gray;
+}
+</style>
+{% endblock %}
 
 {% block realcontent %}
 
@@ -62,36 +71,24 @@
 {% block scripts %}
 <script>
 $("#project_selected").change(function () {
-  var old = $( "#project_id" ).val();
-  var sel;
-  $( "#project_selected>option:selected" ).each(function() {
     sel = $( this ).val();
-    $( "#project_id" ).val( sel );
-  });
-  if (old) {
-    $( "#newReportForm-" + old ).hide();
-    $( "#newReportForm-" + old ).find('input').each(function() {
+  console.log( sel + " - Show "  );
+  $('[id^=newReportForm-]').each(function() {
+    var myid = $(this).attr("id").split('-')[1]
+    console.log( "checking " + myid );
+  if (sel != myid) {
+    $( "#newReportForm-" + myid ).hide();
+    $( "#newReportForm-" + myid ).find('input').each(function() {
       $( this ).prop( "disabled", true );
     });
-    $( "#newReportForm-" + old ).find('textarea').each(function() {
+    $( "#newReportForm-" + myid ).find('textarea').each(function() {
       $( this ).prop( "disabled", true );
     });
-    $( "#newReportForm-" + old ).find('select').each(function() {
+    $( "#newReportForm-" + myid ).find('select').each(function() {
       $( this ).prop( "disabled", true );
-    });
-  } else {
-    $('[id^=newReportForm-]').each(function() {
-      $( this ).find('input').each(function() {
-        $( this ).prop( "disabled", true );
-      });
-      $( this ).find('textarea').each(function() {
-        $( this ).prop( "disabled", true );
-      });
-      $( this ).find('select').each(function() {
-        $( this ).prop( "disabled", true );
-      });
     });
   }
+	  else {
   $( "#newReportForm-" + sel ).show();
   $( "#newReportForm-" + sel ).find('input').each(function() {
     $( this ).prop( "disabled", false );
@@ -102,7 +99,54 @@ $("#project_selected").change(function () {
   $( "#newReportForm-" + sel ).find('select').each(function() {
     $( this ).prop( "disabled", false );
   });
-  console.log( "chg: " + old + " -> " + sel );
+	  }
+  });
 }).change();
+//$("#project_selected").change(function () {
+//  var old = $( "#project_id" ).val();
+//  var sel;
+//  $( "#project_selected>option:selected" ).each(function() {
+//    sel = $( this ).val();
+//    $( "#project_id" ).val( sel );
+//  });
+//    console.log( sel + "Hide " + old );
+//  if (sel != old) {
+//    console.log( "Hide " + $("#newReportForm-" + old ) );
+//    $( "#newReportForm-" + old ).hide();
+//    $( "#newReportForm-" + old ).find('input').each(function() {
+//      $( this ).prop( "disabled", true );
+//    });
+//    $( "#newReportForm-" + old ).find('textarea').each(function() {
+//      $( this ).prop( "disabled", true );
+//    });
+//    $( "#newReportForm-" + old ).find('select').each(function() {
+//      $( this ).prop( "disabled", true );
+//    });
+//  }
+////	else {
+////    $('[id^=newReportForm-]').each(function() {
+////      $( this ).find('input').each(function() {
+////        $( this ).prop( "disabled", true );
+////      });
+////      $( this ).find('textarea').each(function() {
+////        $( this ).prop( "disabled", true );
+////      });
+////      $( this ).find('select').each(function() {
+////        $( this ).prop( "disabled", true );
+////      });
+////    });
+////  }
+//  $( "#newReportForm-" + sel ).show();
+//  $( "#newReportForm-" + sel ).find('input').each(function() {
+//    $( this ).prop( "disabled", false );
+//  });
+//  $( "#newReportForm-" + sel ).find('textarea').each(function() {
+//    $( this ).prop( "disabled", false );
+//  });
+//  $( "#newReportForm-" + sel ).find('select').each(function() {
+//    $( this ).prop( "disabled", false );
+//  });
+//  console.log( "chg: " + old + " -> " + sel );
+//}).change();
 </script>
 {% endblock %}

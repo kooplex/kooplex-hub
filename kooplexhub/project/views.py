@@ -27,7 +27,7 @@ class NewProjectView(LoginRequiredMixin, generic.FormView):
     def get_initial(self):
         initial = super().get_initial()
         user = self.request.user
-        initial['environments'] = Container.objects.filter(user = user)
+        initial['environments'] = [ (c.id, c.friendly_name) for c in Container.objects.filter(user = user) ]
         initial['projectid'] = None
         initial['userid'] = user.id
         return initial
