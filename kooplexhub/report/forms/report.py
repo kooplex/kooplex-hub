@@ -28,6 +28,12 @@ class FormReport(forms.ModelForm):
             max_length = 100, required = False,
         )
 
+    image = forms.ModelChoiceField(
+            queryset = Image.objects.filter(imagetype = Image.TP_REPORT, present = True), 
+            help_text = _('Please select an image for your report. During selection a short description of each image is shown to help you decide.'), required = True, 
+            empty_label = 'Select image...',
+            )
+
     class Meta:
         model = Report
         fields = [ 'name', 'folder', 'description', 'scope', 'reporttype','image', 'indexfile' ]
@@ -75,6 +81,12 @@ class FormReportConfigure(forms.ModelForm):
     indexfile = forms.CharField(
             max_length = 100, required = False,
         )
+
+    image = forms.ModelChoiceField(
+            queryset = Image.objects.filter(imagetype = Image.TP_REPORT, present = True), 
+            help_text = _('Please select an image for your report. During selection a short description of each image is shown to help you decide.'), required = True, 
+            empty_label = 'Select image...',
+            )
 
     class Meta:
         model = Report
