@@ -25,9 +25,9 @@ def manage_folder(create_folder, folders, acl):
         for gid in acl.pop('groups_rw', []):
             with transaction.atomic():
                 go = Group.objects.select_for_update().get(id = gid)
-            grantaccess_group(go, folder, readonly = False, recursive = True)
+            grantaccess_group(go, f, readonly = False, recursive = True)
         for uid in acl.pop('users_rw', []):
-            grantaccess_user(User.objects.get(id = uid), folder, readonly = False, recursive = True)
+            grantaccess_user(User.objects.get(id = uid), f, readonly = False, recursive = True)
 
 
 @shared_task()
