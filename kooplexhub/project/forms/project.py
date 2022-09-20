@@ -70,7 +70,7 @@ class FormProject(forms.Form):
 
 class FormProjectWithContainer(FormProject):
     environments = forms.ModelMultipleChoiceField(
-        queryset = None, required = False,
+        queryset = Container.objects.all(), required = False,
         help_text = _('Select an environment in which the new project is available. If none is selected we create a new default for you.'), 
     )
     image = forms.ModelChoiceField(

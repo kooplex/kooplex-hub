@@ -14,7 +14,8 @@ from django.contrib.auth.models import User
 from .forms import FormProject, FormProjectWithContainer
 from .forms import TableShowhideProject, TableJoinProject, TableCollaborator, TableContainer
 from .models import Project, UserProjectBinding, ProjectContainerBinding
-from container.models import Container
+from container.models import Container, AttachmentContainerBinding
+from volume.models import Volume, VolumeContainerBinding
 
 logger = logging.getLogger(__name__)
 
@@ -245,6 +246,8 @@ def configure(request, project_id):
 
 @login_required
 def configure_save(request):
+#    from copy import deepcopy
+
     if request.POST.get('button', '') == 'cancel':
         return redirect('project:list')
     user = request.user
@@ -268,6 +271,15 @@ def configure_save(request):
         logger.error(f'abuse by {user} modify project {project} collaboration')
         messages.error(request, "You don't have the necessary rights")
         return redirect('project:list')
+    # Is there an env to transfer for new collaborators?
+#    logger.debug(f'{request.POST}')
+#    env_ids = request.POST.getlist('template')
+#    if env_ids:
+#        env_id = env_ids[0]
+#        # Get additional info about the env
+#        container = Container.objects.get(id=env_id)
+#        atcbs = AttachmentContainerBinding.objects.filter(container__id=env_id)
+#        volcbs = VolumeContainerBinding.objects.filter(container__id=env_id)
     added = []
     admins = set(map(int, request.POST.getlist('admin_id')))
     for uid in map(int, request.POST.getlist('user_id')):
@@ -275,6 +287,18 @@ def configure_save(request):
         UserProjectBinding.objects.create(
             user = collaborator, project = project, 
             role = UserProjectBinding.RL_ADMIN if uid in admins else UserProjectBinding.RL_COLLABORATOR)
+#        # Add environment too if needed
+#        if env_ids:
+#            newcontainer = deepcopy(container)
+#            newcontainer.user = user
+#            newcontainer.state = Container.ST_NOTPRESENT
+#            for a in atcbs:
+#                AttachmentContainerBinding.objects.create(container=newcontainer, attachment=a.attachment)
+#            for va in volcbs:
+#                VolumeContainerBinding.objects.create(container=newcontainer, volume=v.volume)
+#            newcontainer.save()
+
+
         added.append(f"{collaborator.first_name} {collaborator.last_name}")
     if added:
         messages.info(request, 'Added {} as colaborators to project {}.'.format(', '.join(added), project.name))
