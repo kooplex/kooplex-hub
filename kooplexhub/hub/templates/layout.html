@@ -69,7 +69,9 @@ grid-column: span 8;
     <noscript>You need to enable JavaScript to browse kooplex.</noscript>
     {% block menu_and_content %}
     <div class="container-fluid d-flex flex-row flex-md-row">
-      {% include 'mainmenu.html' %} 
+      {% block menu %}
+          {% include 'mainmenu.html' %} 
+      {% endblock %}
       <main class="ps-0 ps-md-0 flex-grow-1">
       {% block content %}
         {% block header %}
@@ -79,6 +81,7 @@ grid-column: span 8;
 	      {% block submenu %}
 	      <p class="ms-3 mt-3 mb-3 navbar-brand d-flex justify-content-start fs-6">Hi,&nbsp;<span style="font-weight: bold;"> {{ user.first_name }} {{ user.last_name }}</span>. Welcome to Kooplex!</p>
 	      {% endblock %}
+	      {% block toprightmenu %}
               <ul class="navbar-nav d-flex flex-row  ms-4">
                 <li class="nav-item">{% block help %}{% endblock %}</li>
 		<li class="nav-item ms-3 ms-md-1"><a href="#" class="nav-link" data-bs-toggle="offcanvas" data-bs-target="#offcanvasMessages" aria-controls="offcanvasMessages"><span class="bi bi-chat-left-dots" data-toggle="tooltip" title="Messages" data-placement="bottom"></a></li>
@@ -97,6 +100,7 @@ grid-column: span 8;
                   </ul>
                 </li>
               </ul>
+	      {% endblock %}
             </div>
           </nav>
         </div>
