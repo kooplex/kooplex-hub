@@ -68,7 +68,8 @@ def start(container):
             V1Volume(name="initscripts", config_map=V1ConfigMapVolumeSource(name="initscripts", default_mode=0o777, items=[
                 V1KeyToPath(key="nsswitch",path="01-nsswitch"),
                 V1KeyToPath(key="nslcd",path="02-nslcd"),
-                V1KeyToPath(key="usermod",path="03-usermod")
+                V1KeyToPath(key="usermod",path="03-usermod"),
+                V1KeyToPath(key="munge",path="04-munge"),
 #                V1KeyToPath(key="jobtools",path="11-jobtools"),
 #                V1KeyToPath(key="jobaliases",path="10-jobaliases")
 ]))
@@ -76,24 +77,31 @@ def start(container):
             ])
             
 
-    # jobs kubeconf
-    if container.user.profile.can_runjob and container.image.access_kubeapi:
-        env_variables.append({ "name": "KUBECONFIG", "value": "/.secrets/kubeconfig/config" })
-        env_variables.append({ "name": "NS_JOBS", "value": KOOPLEX['kubernetes'].get('jobsnamespace', 'kube-jobs') })
-        volume_mounts.append(
-             V1VolumeMount(name="kubeconf", mount_path="/.secrets/kubeconfig", read_only=True)
-             )
-        volume_mounts.append(
-             V1VolumeMount(name="jobtools", mount_path="/etc/jobtools", read_only=KOOPLEX['kubernetes'].get('jobtools_ro', False))
-             )
+    # jobs kubeconf and slurm
+    if container.user.profile.can_runjob:
+        if container.image.access_kubeapi:
+            env_variables.append({ "name": "KUBECONFIG", "value": "/.secrets/kubeconfig/config" })
+            env_variables.append({ "name": "NS_JOBS", "value": KOOPLEX['kubernetes'].get('jobsnamespace', 'kube-jobs') })
+            volume_mounts.append(
+                 V1VolumeMount(name="kubeconf", mount_path="/.secrets/kubeconfig", read_only=True)
+                 )
+            volume_mounts.append(
+                 V1VolumeMount(name="jobtools", mount_path="/etc/jobtools", read_only=KOOPLEX['kubernetes'].get('jobtools_ro', False))
+                 )
 
-        volumes.append(
-            V1Volume(name="kubeconf", config_map=V1ConfigMapVolumeSource(name=KOOPLEX['kubernetes'].get('kubeconfig_job', 'kubeconfig'), items=[V1KeyToPath(key="kubejobsconfig",path="config")]))
-            )
-        volumes.append(
-            V1Volume(name=f"jobtools",persistent_volume_claim = V1PersistentVolumeClaimVolumeSource(claim_name=KOOPLEX['kubernetes'].get('claim_jobtools', 'job-tools') , read_only=KOOPLEX['kubernetes'].get('jobtools_ro', False)))
+            volumes.append(
+                V1Volume(name="kubeconf", config_map=V1ConfigMapVolumeSource(name=KOOPLEX['kubernetes'].get('kubeconfig_job', 'kubeconfig'), items=[V1KeyToPath(key="kubejobsconfig",path="config")]))
                 )
+            volumes.append(
+                V1Volume(name=f"jobtools",persistent_volume_claim = V1PersistentVolumeClaimVolumeSource(claim_name=KOOPLEX['kubernetes'].get('claim_jobtools', 'job-tools') , read_only=KOOPLEX['kubernetes'].get('jobtools_ro', False)))
+                    )
 
+        # SLURM
+
+        volume_mounts.append(V1VolumeMount(name="munge", mount_path="/etc/munge_tmp", read_only=True))
+        volumes.append(V1Volume(name="munge", config_map=V1ConfigMapVolumeSource(name='munge', default_mode=400, items=[V1KeyToPath(key="munge",path="munge.key")])))
+        volume_mounts.append(V1VolumeMount(name="slurmconf", mount_path="/etc/slurm-llnl", read_only=True))
+        volumes.append(V1Volume(name="slurmconf", config_map=V1ConfigMapVolumeSource(name='slurmconf', items=[V1KeyToPath(key="slurmconf",path="slurm.conf")])))
     # user's home and garbage
     claim_userdata = False
     if container.image.require_home:
