@@ -9,7 +9,8 @@ class Command(BaseCommand):
     help = 'Manage images'
 
     def add_arguments(self, parser):
-        parser.add_argument('--add_image', help = "Add image", nargs = 1)
+        parser.add_argument('--add_image', help = "Add image", nargs = 2)
+        parser.add_argument('--add_imagedescription', help = "Add description to the image", nargs = 3)
         parser.add_argument('--add_proxy', help = "Add Proxy", nargs = 7)
         parser.add_argument('--add_envvar', help = "Add Proxy", nargs = 3)
 #        parser.add_argument('--add_type', help = "Add Type", nargs = 3)
@@ -20,17 +21,29 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         logger.info("call %s %s" % (args, options))
         add_image = options.get('add_image')
+        add_imagedescription = options.get('add_imagedescription')
         add_proxy = options.get('add_proxy')
         add_envvar = options.get('add_envvar')
         remove_image = options.get('remove')
         remove_proxy = options.get('remove_proxy')
         remove_envvar = options.get('remove_envvar')
         if add_image:
-            #imagetype = add_image.pop() 
+            imagetype = add_image.pop() 
+            #imagetype=Image.TP_LOOKUP.get(imagetype)
             name = add_image.pop()
-            #i, s = Image.objects.get_or_create(name=name, imagetype=imagetype)
             i, s = Image.objects.get_or_create(name=name)
+            #i.imagetype=imagetype
+            #i.save()
             logger.info('Image %s %s' % (i, 'created' if s else 'exists'))
+        if add_imagedescription:
+            dockerfile = add_imagedescription.pop() 
+            description = add_imagedescription.pop()
+            name = add_imagedescription.pop()
+            i, s = Image.objects.get_or_create(name=name)
+            i.description=description
+            i.dockerfile=dockerfile
+            i.save()
+            logger.info(f"Image {i} {'created' if s else 'exists'}, {i.description}")
         if remove_image:
             try:
                 i = Image.objects.get(name = remove_image.pop())
