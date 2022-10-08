@@ -27,6 +27,13 @@ class FormContainer(forms.Form):
             empty_label = 'Select image...',
             )
 
+    node = forms.CharField(
+            max_length = 200, required = False,
+            label = 'Node', #FIXME: when model refactored, ie friendly_name becomes name, it can be removed
+            help_text = _('Choose a node where to launch the environment. '), 
+            widget = forms.TextInput(attrs = {"data-intro": "#node"}) #FIXME: is it still used? was not it chardin
+            )
+
     def descriptions(self):
         hidden = lambda i: f"""<input type="hidden" id="image-description-{i.id}" value="{i.description}">"""
         return format_html("".join(list(map(hidden, self.fields['image'].queryset))))
@@ -35,7 +42,8 @@ class FormContainer(forms.Form):
     def __init__(self, *args, **kwargs):
         container = kwargs.pop('container', None)
         if container:
-            args = ({'friendly_name': container.friendly_name, 'image': container.image, 'name': 'dummy' }, )
+#            args = ({'friendly_name': container.friendly_name, 'image': container.image, 'name': 'dummy' }, )
+            args = ({'friendly_name': container.friendly_name, 'image': container.image, 'node': container.node }, )
         super(FormContainer, self).__init__(*args, **kwargs)
         if container:
             self.fields['name'].widget = forms.HiddenInput()
