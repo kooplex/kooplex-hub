@@ -329,7 +329,7 @@ def start(container):
                     "resources": KOOPLEX['kubernetes'].get('resources', '{}'),
                 }],
                 "volumes": volumes,
-                "nodeSelector": KOOPLEX['kubernetes'].get('nodeSelector_k8s'), 
+                "nodeSelector": container.target_node, 
             }
         }
 

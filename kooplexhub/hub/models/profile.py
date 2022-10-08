@@ -1,7 +1,6 @@
 import os
 import logging
 import unidecode
-from pwd import getpwnam
 
 from django.db import models
 from django.contrib.auth.models import User
@@ -15,13 +14,8 @@ class Profile(models.Model):
     can_createimage = models.BooleanField(default = False)
     can_createattachment = models.BooleanField(default = False)
     can_runjob = models.BooleanField(default = False)
+    can_choosenode = models.BooleanField(default = False)
     has_scratch = models.BooleanField(default = False)
-
-    @property
-    def userid(self):
-        if hasattr(self.user, 'is_superuser') and (self.user.is_superuser == True):
-            return None
-        return getpwnam(self.username).pw_uid
 
     @property
     def name(self):

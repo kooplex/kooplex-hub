@@ -1,6 +1,7 @@
 import logging
 import json
 import requests
+import re
 
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
@@ -39,9 +40,11 @@ class NewContainerView(LoginRequiredMixin, generic.FormView):
         logger.info(form.cleaned_data)
         user = self.request.user
         friendly_name = form.cleaned_data['friendly_name']
+        name = re.sub('[^a-z]', '', friendly_name.lower())
         Container.objects.create(
             user = user, 
-            name = form.cleaned_data['name'], 
+            #name = form.cleaned_data['name'], 
+            name = name, 
             friendly_name = friendly_name, 
             image = form.cleaned_data['image']
         )
@@ -247,6 +250,17 @@ def configure_save(request):
         svc.image = image_after
         svc.save()
         msg = f'image changed from {image_before} to {image_after}'
+        info.append(msg)
+        svc.mark_restart(msg)
+
+    # handle node change
+    node_before = svc.node
+    #node_after = Node.objects.get(id = request.POST.get('node'))
+    node_after = request.POST.get('node')
+    if node_before != node_after:
+        svc.node = node_after
+        svc.save()
+        msg = f'Designated node name changed from {node_before} to {node_after}'
         info.append(msg)
         svc.mark_restart(msg)
 
