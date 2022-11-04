@@ -5,6 +5,7 @@
 
 
 {% block head_content %}
+        <link rel="stylesheet" href="/static/css/tagsinput.css" />
 {% block child_head %}{% endblock %}
 <style>
 .form-control:focus {
@@ -16,11 +17,18 @@
 
 {% block realcontent %}
 
-<div class="container mt-2">
+<script src="/static/js/tagsinput.js"></script>
+    <script>
+    $("#post-form").submit(function(e){
+        e.preventDefault();
+});</script>
+
+<div class="card shadow mt-3 p-3 mb-2 bg-light rounded">
   {% if f_project|length > 0 %}
-  <form id="report-new" class="form-horizontal was-validated" action="{% url 'report:create' %}" method="post">
+
+  <form id="report-new" class="form-horizontal was-validated dropzone mt-3" action="{% url 'report:create' %}" method="post" enctype="multipart/form-data">
     {% csrf_token %}
-  <div class="card bg-light border-secondary shadow p-3">
+  <div>
     {% title "Set the details of your new report" %}
     <div class="container-fluid d-flex flex-column flex-md-row">
       <div class="d-flex w-100 w-md-75">
@@ -53,6 +61,9 @@
 	</div>
       </div>
       {{ form.descriptions }}
+    </div>
+    <div class="d-flex mt-2">
+      <h6 style="font-weight: bold;">Report image:</h6> <input class="ms-5" type="file" name="file" />
     </div>
     {% apply_cancel hide_cancel=True label_apply='Create' icon_apply='bi bi-person-workspace' %}
   </div>
