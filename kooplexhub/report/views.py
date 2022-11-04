@@ -1,14 +1,16 @@
 import logging
+import base64
 
 from django.shortcuts import render, redirect, get_object_or_404, HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
 from django.views import generic
+from django.views.decorators.http import require_http_methods
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.db.models import Q
 from django.utils.html import format_html
 
-from .models import Report, ReportContainerBinding, ReportType
+from .models import Report, ReportContainerBinding, ReportType, ReportTag
 from container.models import Image, Container
 from .forms import FormReport, FormReportConfigure
 from project.models import Project, UserProjectBinding
@@ -85,21 +87,22 @@ def new(request):
     context_dict['empty_body'] = format_html(f"""<a href=""><i class="bi bi-journal-bookmark-fill"></i><span class="d-none d-sm-inline">&nbsp;Check the manual for further instructions</span></a>""")
     return render(request, 'report_new.html', context = context_dict)
 
+@require_http_methods(['POST'])
 @login_required
 def create(request):
     import re
     """Renders new report form."""
     user = request.user
     logger.debug("user %s, method: %s" % (user, request.method))
-    if request.method == 'POST' and request.POST['button'] == 'apply':
-        pass
-    else:
-        return redirect('report:list')
     try:
         kw = dict()
         password = request.POST.get('password')
         if password:
             kw.update( { 'password': password } )
+        try:
+            thumbnail = b''.join([ c for c in request.FILES['file'].chunks() ])
+        except:
+            raise
         report = Report.objects.create(
             name = request.POST.get('name'),
             creator = user,
@@ -109,9 +112,12 @@ def create(request):
             reporttype = ReportType.objects.get(id = request.POST.get('reporttype')),
             indexfile = request.POST.get('indexfile'),
             folder = request.POST.get('folder'),
+            thumbnail = thumbnail,
+#            folder = request.POST.get('folder'),
             **kw
         )
         if not report.reporttype.is_static:
+            logger.debug("Create an env for the report: %s" % (report.name))
             image = Image.objects.get(id = request.POST.get('image'))
             kw.update( { 'image': image } )
             report.image = image
@@ -142,6 +148,7 @@ class ReportListView(generic.ListView):
         context['submenu'] = 'list'
         context['menu_report'] = True
         context['extend'] = "report_layout.html" if self.request.user.is_authenticated else "index_unauthorized.html"
+        context['common_tags'] : Report.tags.most_common()
         return context
 
     def get_queryset(self):
@@ -149,9 +156,10 @@ class ReportListView(generic.ListView):
         public = Q(scope = Report.SC_PUBLIC)
         if not user.is_authenticated:
             return Report.objects.filter(public)
-        collaborator = Q(project__in = Project.get_userprojects(user))
+        collaborator = Q(project__in = Project.get_userprojects(user), scope = Report.SC_COLLABORATION)
+        creator = Q(creator = user, scope = Report.SC_PRIVATE)
         internal = Q(scope = Report.SC_INTERNAL)
-        return Report.objects.filter(public | collaborator | internal)
+        return Report.objects.filter(public | collaborator | internal | creator)
 
 def open(request, report_id):
     """open report"""
@@ -190,7 +198,7 @@ def configure(request, report_id):
     try:
         r = Report.objects.get(id = report_id, creator = user)
         f = FormReportConfigure(instance = r)
-        return render(request, 'configure.html', context = { 'form': f, 'report_id': r.id })
+        return render(request, 'configure.html', context = { 'form': f, 'report_id': r.id, 'thumbnail': base64.b64encode(r.thumbnail).decode() })
     except Exception as e:
         raise
     return redirect('report:list')
@@ -205,6 +213,10 @@ def modify(request):
         f = FormReportConfigure(request.POST, instance = r)
         if f.is_valid():
             rmod = f.save(commit = False)
+            thumbnail_file = request.FILES.get('file', None)
+            if thumbnail_file:
+                thumbnail = b''.join([ c for c in thumbnail_file.chunks() ]) #FIXME: do some conversion so that we don't need to worry about resolution and representation
+                rmod.thumbnail = thumbnail
             rmod.save()
     except Exception as e:
         raise

@@ -203,7 +203,6 @@ def start(container):
 
     # report
     claim_report = False
-    logger.warning("DDD {container.reports}")
     for report in container.reports:
         volume_mounts.extend([{
              "name": "report",
@@ -390,7 +389,6 @@ def _check_starting(container_id, event, left = 10):
 
 
 def stop(container):
-    logger.debug(f"KKKK {container}")
     event = Event()
     container.state = container.ST_STOPPING
     config.load_kube_config()
@@ -399,7 +397,6 @@ def stop(container):
         removeroute(container)
     except Exception as e:
         logger.error(f"Cannot remove proxy route of container {container} -- {e}")
-    logger.debug(f"KKKK {container}")
     try:
         msg = v1.delete_namespaced_pod(namespace = namespace, name = container.label)
         logger.debug(msg)

@@ -264,6 +264,26 @@ def configure_save(request):
         info.append(msg)
         svc.mark_restart(msg)
 
+    # handle cpurequest change
+    cpurequest_before = svc.cpurequest
+    cpurequest_after = request.POST.get('cpurequest')
+    if cpurequest_before != cpurequest_after:
+        svc.cpurequest = cpurequest_after
+        svc.save()
+        msg = f'Designated node name changed from {cpurequest_before} to {cpurequest_after}'
+        info.append(msg)
+        svc.mark_restart(msg)
+
+    # handle memoryrequest change
+    memoryrequest_before = svc.memoryrequest
+    memoryrequest_after = request.POST.get('memoryrequest')
+    if memoryrequest_before != memoryrequest_after:
+        svc.memoryrequest = memoryrequest_after
+        svc.save()
+        msg = f'Designated node name changed from {memoryrequest_before} to {memoryrequest_after}'
+        info.append(msg)
+        svc.mark_restart(msg)
+
     info.extend( _helper(request, svc, 'attach', AttachmentContainerBinding, lambda x: Attachment.objects.get(id = x), 'attachment') )
     info.extend( _helper(request, svc, 'attach-project', ProjectContainerBinding, lambda x: Project.get_userproject(project_id = x, user = user), 'project') )
     info.extend( _helper(request, svc, 'attach-course', CourseContainerBinding, lambda x: Course.get_usercourse(course_id = x, user = user), 'course') )

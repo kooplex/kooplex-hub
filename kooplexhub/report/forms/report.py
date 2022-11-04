@@ -19,9 +19,16 @@ class FormReport(forms.ModelForm):
             help_text = _('The content of the folder serves for the report.'),
         )
     description = forms.CharField(
-            max_length = 100, required = True,
+            max_length = 300, required = True,
             help_text = _('It is always a good idea to have an abstract of your report.'), 
             widget = MyDescription, 
+        )
+    name = forms.CharField(
+            max_length = 25, required = True,
+        )
+
+    tags = forms.CharField(
+            max_length = 25, required = True,
         )
 
     indexfile = forms.CharField(
@@ -36,9 +43,11 @@ class FormReport(forms.ModelForm):
 
     class Meta:
         model = Report
-        fields = [ 'name', 'folder', 'description', 'scope', 'reporttype','image', 'indexfile' ]
+        fields = [ 'name', 'folder', 'description', 'scope', 'reporttype','image', 'tags', 'indexfile' ]
         labels = {
-            'name': _('The name of the report'),
+            'name': _('Title'),
+            'reporttype': _('Type'),
+            'indexfile': _('Report file'),
             'description': _('A short description of the report'),
         }
         help_texts = {
@@ -51,6 +60,7 @@ class FormReport(forms.ModelForm):
         super(FormReport, self).__init__(*args, **kwargs)
         folders = dir_reportcandidate(project)
         self.fields["folder"].choices = map(lambda x: (x, x), folders)
+        self.fields["tags"].widget.attrs.update({"data-role" : "tagsinput"})
         #images = Image.objects.filter(imagetype=Image.TP_REPORT)
         #self.fields["image"].choices = map(lambda x: (x, x), images)
         for field in self.fields:
@@ -73,7 +83,7 @@ class FormReport(forms.ModelForm):
 
 class FormReportConfigure(forms.ModelForm):
     description = forms.CharField(
-            max_length = 100, required = True,
+            max_length = 300, required = True,
             help_text = _('It is always a good idea to have an abstract of your report.'), 
             widget = MyDescription, 
         )
@@ -88,16 +98,32 @@ class FormReportConfigure(forms.ModelForm):
             empty_label = 'Select image...',
             )
 
+#    project = forms.ModelChoiceField( 
+#            empty_label = 'Select project...',
+#            )
+#
+#    reporttype = forms.ModelChoiceField( 
+#            empty_label = 'Select report type...',
+#            )
+
     class Meta:
         model = Report
-        fields = [ 'name', 'description', 'scope', 'reporttype', 'image', 'indexfile', 'creator', 'folder', 'project' ]
+        fields = [ 'name', 'description', 'scope', 'reporttype', 'image', 'creator', 'folder', 'project', 'tags', 'indexfile' ]
         labels = {
-            'name': _('The name of the report'),
+            'name': _('Title'),
+            'reporttype': _('Type'),
+            'indexfile': _('Report file'),
             'description': _('A short description of the report'),
         }
         help_texts = {
             'scope': _('Decide who can see the report'),
         }
+        initial = {
+            'name': 'Name your report (Max: 25 characteres)',
+            'description': 'Describe your report (Max: 50 characteres)',
+            'tags': 'Separate your tags by commas',
+        }
+
 
     def __init__(self, *args, **kwargs):
         super(FormReportConfigure, self).__init__(*args, **kwargs)

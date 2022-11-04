@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 
 from container.models import Image, Proxy
 from project.models import Project
-
+#from taggit.managers import TaggableManager
 
 try:
     from kooplexhub.settings import KOOPLEX
@@ -15,6 +15,14 @@ except importerror:
     KOOPLEX = {}
 
 logger = logging.getLogger(__name__)
+
+class ReportTag(models.Model):
+
+    name = models.CharField(max_length = 40, null = False)
+
+    def __str__(self):
+        return self.name
+
 
 class ReportType(models.Model):
 
@@ -27,11 +35,13 @@ class ReportType(models.Model):
 
 class Report(models.Model):
     SC_PRIVATE = 'private'
+    SC_COLLABORATION = 'collaboration'
     SC_INTERNAL = 'internal'
     SC_PUBLIC = 'public'
     SCOPE_LOOKUP = {
         SC_PRIVATE: 'private - Only the creator can view the report.',
-        SC_INTERNAL: 'internal - The creator and collaborators can view the report.',
+        SC_COLLABORATION: 'collaboration - The creator and collaborators can view the report.',
+        SC_INTERNAL: 'authenticated - An authenticated kooplex user can view the report.',
         SC_PUBLIC: 'public - Anyone can view the report.',
     }
 
@@ -44,11 +54,13 @@ class Report(models.Model):
     project = models.ForeignKey(Project, default=None, on_delete = models.CASCADE)
     folder = models.CharField(max_length = 200, null = False)
     indexfile = models.CharField(max_length = 128, blank=True, null = True)
-    #thumbnail = models.CharField(max_length = 200, null = False) blob?
+    thumbnail = models.BinaryField(null=True, blank=True)
 
     scope = models.CharField(max_length = 16, choices = SCOPE_LOOKUP.items(), default = SC_PRIVATE)
 
     image = models.ForeignKey(Image, null = True, blank=True, on_delete = models.CASCADE) # what else than CASCADE?
+    #tags = TaggableManager()
+
     # To be able to sort (e.g. useful for courses)
     # tags = # useful if we wanna search according to keywords
     

@@ -4,6 +4,7 @@ from django.urls import reverse
 
 register = template.Library()
 
+# {% load thumbnail %}
 
 @register.simple_tag(name = 'r_scope')
 def r_scope(report):
@@ -11,9 +12,13 @@ def r_scope(report):
         return format_html(f"""
 <i class="oi oi-key" aria-hidden="true" data-bs-toggle="tooltip" title="Private report" data-placement="top"></i>
         """)
+    elif report.scope == report.SC_COLLABORATION:
+        return format_html(f"""
+<i class="bi bi-people-fill" aria-hidden="true" data-bs-toggle="tooltip" title="Collaboration report" data-placement="top"></i>
+        """)
     elif report.scope == report.SC_INTERNAL:
         return format_html(f"""
-<i class="bi bi-people" aria-hidden="true" data-bs-toggle="tooltip" title="Internal report" data-placement="top"></i>
+<i class="bi bi-people" aria-hidden="true" data-bs-toggle="tooltip" title="Internal report, public to authenticated users" data-placement="top"></i>
         """)
     elif report.scope == report.SC_PUBLIC:
         return format_html(f"""
@@ -27,8 +32,38 @@ def r_scope(report):
 def button_report_open(report):
     link = reverse('report:open', args = [report.id])
     return format_html(f"""
-<a href="{link}" target="_blank" role="button" class="btn btn-success btn-sm" data-toggle="tooltip" title="Access report {report.name}"><span class="oi oi-external-link" aria-hidden="true"></span></a>
+<a href="{link}"  target="_blank" ><span class="openlink"></span></a>
     """)
+
+@register.simple_tag
+def button_report_modal_open(report):
+    link = reverse('report:open', args = [report.id])
+    return format_html(f"""
+<a href="{link}" target="_blank"> <button type="button" class="btn btn-success" data-bs-dismiss="modal">Open report</button></a>
+    """)
+
+@register.simple_tag
+def button_side_modal_open(report):
+    link = reverse('report:open', args = [report.id])
+    return format_html(f"""
+<a href="{link}" target="_blank role="button" class="btn btn-success btn-sm"><span class="bi bi-folder2-open" aria-hidden="true" data-toggle="tooltip" title="Click to open report" data-placement="top" ></span></a>
+    """)
+
+
+
+# FIXME
+@register.simple_tag
+def image_report_open(report):
+    link = reverse('report:open', args = [report.id])
+    if report.thumbnail:
+        return format_html(f"""""")
+#        return format_html(f"""
+#<img href="{link}" src="data:image/png;base64,{{report.thumbnail|decode}}" style="max-width: 100%; margin-left: auto; margin-right: auto; max-height: 80%; aspect-ratio: inherit; width: auto; height: auto;  display: block;" alt="thumbnail">
+#    """)    
+    else: # It should put the thumbnail of the category there
+        return format_html(f"""
+<img href="{link}" src="" style="max-width: 100%; margin-left: auto; margin-right: auto; max-height: 80%; aspect-ratio: inherit; width: auto; height: auto;  display: block;" alt="thumbnail">
+    """)    
 
 
 @register.simple_tag
@@ -40,7 +75,7 @@ def button_report_conf(report, user):
         """)
     else:
         return format_html(f"""
-<a href="#" role="button" class="btn btn-secondary btn-sm disabled"><span class="oi oi-wrench" aria-hidden="true" data-toggle="tooltip" title="You don't have permission to configure report {report.name}." data-placement="top" ></span></a>
+<div></div>
         """)
 
 
@@ -55,7 +90,7 @@ def button_report_delete(report, user):
     """)
     else:
         return format_html(f"""
-<a href="#" role="button" class="btn btn-secondary btn-sm disabled"><span class="oi oi-trash" aria-hidden="true" data-toggle="tooltip" title="You don't have permission to delete report {report.name}." data-placement="top"></span></a>
+<div></div>
     """)
 
 
