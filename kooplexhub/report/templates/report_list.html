@@ -2,7 +2,9 @@
 
 {% load static %}
 
+
 {% block head_content %}
+        <link rel="stylesheet" href="/static/css/tagsinput.css" />
 <style>
 .form-control:focus {
   border-color: gray;
@@ -10,20 +12,62 @@
 }
 </style>
 {% endblock %}
- 
 {% block realcontent %}
-  {% if reports %}
-  <input class="form-control mt-3 mb-3" type="text" id="search_report" placeholder="Search reports" title="Type in a name" autofocus >
-  <div id="reportListPane" class="ms-0 row row-cols-1 row-cols-md-3" >
+<div class="container d-flex flex-row" style="overflow-x:hidden;">
+
+  <div style="width: 45%; margin-left: auto; margin-right: auto">
+<div class="card bg-light border-secondary shadow mb-3">
+  <div data-bs-toggle="collapse" data-bs-target="#collapse-reportfilter" data-toggle="tooltip" >
+        <p class="ms-2 mt-1" style="font-size: 20px;">Report filter</p>
+  </div><!-- card header -->
+  <div id="collapse-reportfilter"> 
+    <div class="card card-body bg-white m-1">
+      
+<script src="/static/js/tagsinput.js"></script>
+<script>
+$("#post-form").submit(function(e){
+    e.preventDefault();
+});</script>
+{% if reports %}
+<input class="form-control mt-1 mb-1" type="text" id="search_report" placeholder="Search by report title" title="Type in a name" autofocus >
+<input class="form-control mt-1 mb-1" type="text" id="search_creator" placeholder="Search by report creator" title="Type in a name" autofocus >
+    </div>
+  </div>
+</div>
+
+<div class="card bg-light ms-2">
+  <p class="ms-2 mt-1" style="font-size: 20px;">Report disply</p>
+  <div class="w-50 mb-2 ms-2 bg-primary text-white rounded text-center" style="cursor: pointer;">Your reports </div>
+  <div class="w-50 mb-2 ms-2 bg-primary text-white rounded text-center" style="cursor: pointer;">All reports</div>
+</div>
+</div>
+
+<div style="width: 45%; margin-left: auto; margin-right: auto">
+<div class="card bg-light ms-2">
+  <p class="ms-2 mt-1" style="font-size: 20px;">Main tags</p>
+  <div class="card card-body bg-white m-1">
+    <input class="form-control mt-1 mb-1" type="text" id="search_tag" placeholder="Search by report tags" title="Type in a name" autofocus >
+  </div>
+  <div class="w-50 mb-2 ms-2 bg-primary text-white rounded text-center" style="cursor: pointer;">.bg-primary</div>
+</div>
+</div>
+  </div>
+  <div class="container">
+<div id="reportListPane" class="row" >
+
     {% for report in reports %}
        {% include 'partial_list.html' %}
     {% endfor %}
   </div>
+</div>
   {% else %}
     {% include 'empty.html' %}
   {% endif %}
 
 {% endblock %}
+
+
+
 
 {% block scripts %}
 <script>
@@ -49,6 +93,31 @@ $("#search_report").keyup(function() {
     }
   });
 });
+
+$("#search_creator").keyup(function() {
+  var pattern = $( this ).val().toUpperCase();
+  console.log( "search report: " + pattern );
+  $( document ).find("div[id^='report-id-'").each(function() {
+    console.log(  );
+    var hide_it = true;
+    var rid = $(this).attr("id").split("-")[2];
+    if (pattern.length > 0) {
+      var name = $("#r-" + rid).val().toUpperCase();
+      if ( name.indexOf(pattern) > -1 ) {
+        hide_it = false;
+      }
+    } else {
+      hide_it = false;
+    }
+    if (hide_it) {
+      $( this ).hide();
+    } else {
+      $( this ).show();
+    }
+  });
+});
+
+
 </script>
 {% endblock %}
 

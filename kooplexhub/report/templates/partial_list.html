@@ -1,49 +1,159 @@
 {% load report_buttons %}
+{% load thumbnail %}
 {% load container_buttons %}
 
-<div class="card bg-light border-secondary shadow m-1" id="report-id-{{ report.id }}">
-  <input type="hidden" id="r-{{report.id}}" value="{{ report.name }}">
-  <div class="card-header bg-body d-flex flex-row">
-    <div>
-      {% button_report_open report %}
-    </div>
-    <div>
-      <h4 class="ms-2 flex" style="display: initial; margin-right: 50px">{{ report.name }}</h4>
-    {% if report.image %}
-      <span class="card-text"><strong>Image:</strong>&nbsp;{% container_image report.image %}</span>
-    {% else %}
-      <span class="card-text"><strong>Static html report</strong></span>
-    {% endif %}
-  <strong style="margin-left: 20px">Scope:</strong>&nbsp;{% r_scope report %}
-    </div>
-  </div>
-  <div class="card card-body p-1 mt-2 mb-2">
-  {% if user.is_authenticated %}
-  <div class="row">
-  <div class="col md-2">
-    <p class="card-text"><strong>Project:</strong>&nbsp;{{ report.project }}</p>
-  </div>
-  <div class="col ">
-  {% if report.creator == user %}
-    <p class="card-text"><strong>Source folder:</strong> {{ report.project.subpath }}/{{ report.folder }}</p>
-  {% else %}
-    <p class="card-text"><strong>Creator:</strong> {{ report.creator.profile.name_and_username }}</p>
-  {% endif %}
-  </div>
-  </div>
-    <p class="card-text"></p>
-  {% endif %}
-    <p class="card-text"><strong>Description:</strong> {{ report.description }}</p>
-      <div class="btn-group" role="group">
-        {% include 'reports_button.html' %} {# fixme: be it a template tag #}
+<style>
+ .highlight{
+transition: all 0.1s ease;
+cursor: pointer;
+}
+
+.highlight:hover {
+box-shadow: 5px 6px 6px 2px #e9ecef;
+transform: scale(1.02);
+}
+
+.openlink {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+@media all and (min-width: 720.01px) {
+    .resize{ width: 600px; height: 240px; margin-left: auto; margin-right: auto; }
+  }
+
+@media all and (max-width: 720px) {
+    .resize{ width: 440px; height: 240px; margin-left: auto; margin-right: auto;  }
+    .nodescription{ display: none;  }
+  }
+
+  .showme {
+    visibility: hidden;
+  opacity: 0;
+  transition: visibility 2s, opacity 0.5s linear;
+}
+
+.showhim:hover .showme {
+  visibility: visible;
+  opacity: 1;
+}
+
+.greenbackground:hover {
+  background-color: rgba(144, 215, 144, 0.776);
+}
+
+
+</style>
+
+
+
+
+<div class="col-sm showhim mt-2"  id="report-id-{{ report.id }}">
+<div class="border-0 mt-2 resize d-flex flex-row" id="report-id-{{ report.id }}" >
+
+  <div class="card d-flex flex-row greenbackground ms-1" style="width: 99%; height: 240px; border:none">
+  <div class="card bg-light highlight appeargreen border-secondary shadow ms-2 mt-1" id="report-id-{{ report.id }}" style="width: 97%; height: 230px" data-toggle="tooltip" title="Click to open report" data-placement="top">
+   
+    <div class="card card-footer bg-white mt-1 mb-1 ms-1" style="height: 45px; width: 96%">
+      <p style="font-size: 20px;">{{ report.name }}</p>
+
+     </div>
+   
+    <input type="hidden" id="r-{{report.id}}" value="{{ report.name }}-{{ report.creator.profile.name }}">
+
+    <div class=" d-flex flex-row">
+      <div class="mb-1" style="width: 250px; height: 150px; background-color: rgba(var(--bs-light-rgb),var(--bs-bg-opacity))!important;" >
+        {% if report.thumbnail|length %}
+        {% image_report_open report %}
+        <img src="data:image/png;base64,{{report.thumbnail|decode}}" class="mt-2 mb-1" style="margin-top: -20px; max-width: 90%; margin-left: auto; margin-right: auto; max-height: 100%; aspect-ratio: inherit; width: auto; height: auto;  display: block;" alt="thumbnail"> {# fixme: size, todo resize before db insertion #}
+        {% else %}
+        <img class="mt-2 mt-1" style="margin-top: -20px; max-width: 90%; margin-left: auto; margin-right: auto; max-height: 100%; aspect-ratio: inherit; width: auto; height: auto;  display: block;"src="/static/noimageavailable.png" alt="Card image cap">
+         {# placeholder image <img src="" max-width="200px">  #}
+        {% endif %}
+        </div>
+      <div class="mt-2 mb-1">
+      {% if user.is_authenticated %}
+      <div class="row">
+      <div class="col ">
+        <div>
+          {% if report.image %}
+            <span class="card-text"><strong>Image:</strong>&nbsp;{% container_image report.image %}</span>
+          {% else %}
+            <span class="card-text"><strong>Static html report</strong></span>
+          {% endif %}
       </div>
-  </div>
-  <div class="card card-footer d-flex flex-row justify-content-between mb-2">
-    <div class="">
-      {% button_report_conf report user %}
+          {% if report.creator == user %}
+          <p class="card-text"><strong>Source folder:</strong> {{ report.project.subpath }}/{{ report.folder }}</p>
+        {% else %}
+          <p class="card-text" ><strong>Creator:</strong> {{ report.creator.profile.name}}</p>
+        {% endif %}
+        <p class="card-text" ><strong>Tags:</strong> {{ report.tags}}</p>
+        <strong class="nodescription">Description:</strong><span class="card-text nodescription" style="text-overflow: ellipsis; max-width: 300px;">&nbsp;{{ report.description }}<span>&nbsp;</span></span>
+      </div>
+      </div>
+      {% endif %}
+          <div class="btn-group" role="group">
+            {% include 'reports_button.html' %} {# fixme: be it a template tag #}
+          </div>
+      </div>
     </div>
-    <div class="">
-      {% button_report_delete report user %}
+    {% button_report_open report %}
+  </div>
+</div>
+<div class="mt-1 ms-2">
+  <div class="mt-2 showme">
+    {% button_side_modal_open report %}
+  </div>
+  <div>
+    <button data-bs-toggle="modal"  data-bs-target="#reportInfoModal-{{ report.id }}" role="button" class="btn btn-light border-secondary btn-sm mt-2 showme" ><span class="bi bi-clipboard-plus-fill" aria-hidden="true" data-toggle="tooltip" title="Click for more info" data-placement="top" ></span></button>
+  <div class="showme mt-2">
+    {% button_report_conf report user %}
+  </div>
+  <div class="mt-2 showme">
+    {% button_report_delete report user %}
+  </div>
+
+    <div class="d-flex flex-row" >
+      <div class="modal fade" id="reportInfoModal-{{ report.id }}" tabindex="-1" aria-labelledby="reportInfoModal-{{ report.id }}" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalLabel">{{ report.name }}</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              {% if report.thumbnail|length %}
+              {% image_report_open report %}
+              <img src="data:image/png;base64,{{report.thumbnail|decode}}" class="mt-2 mb-1" style="margin-top: -20px; width: 200px; margin-left: auto; margin-right: auto; height: 200px; aspect-ratio: inherit; display: block;" alt="thumbnail"> {# fixme: size, todo resize before db insertion #}
+              {% else %}
+              <img class="mt-2 mb-1" style="margin-top: -20px; width: 200px; margin-left: auto; margin-right: auto; height: 200px; aspect-ratio: inherit;  display: block;"src="/static/noimageavailable.png" alt="Card image cap">
+               {# placeholder image <img src="" max-width="200px">  #}
+              {% endif %}
+              {% if report.image %}
+              <span class="card-text mt-2 mb-2"><strong>Image:</strong>&nbsp;{% container_image report.image %}</span>
+            {% else %}
+              <span class="card-text mt-2 mb-2"><strong>Static html report</strong></span>
+            {% endif %}
+              <p class="card-text mt-1"><strong>Project:</strong>&nbsp;{{ report.project }}</p>
+              <p class="card-text"><strong>Description:</strong>&nbsp;{{ report.description }}</p>
+                {% if report.creator == user %}
+            <p class="card-text"><strong>Source folder:</strong> {{ report.project.subpath }}/{{ report.folder }}</p>
+          {% else %}
+            <p class="card-text"><strong>Creator:</strong> {{ report.creator.profile.name}}</p>
+          {% endif %}
+            </div>
+            <div class="modal-footer">
+              {% button_report_modal_open report %}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
+</div>
+</div>
 </div>
