@@ -63,8 +63,8 @@ class Container(models.Model):
     last_message_at = models.DateTimeField(default = None, null = True, blank = True)
     log = models.TextField(max_length = 10512, null = True)
     node = models.TextField(max_length = 64, null = True, blank = True)
-    cpurequest = models.IntegerField(null = True, blank = True)
-    memoryrequest = models.IntegerField(null = True, blank = True)
+    cpurequest = models.IntegerField(null = True, blank = True, default=1)
+    memoryrequest = models.CharField(max_length=8, null = True, blank = True, default="4G")
 
     class Meta:
         unique_together = [['user', 'name', 'suffix']]
