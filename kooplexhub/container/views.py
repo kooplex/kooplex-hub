@@ -266,7 +266,7 @@ def configure_save(request):
 
     # handle cpurequest change
     cpurequest_before = svc.cpurequest
-    cpurequest_after = request.POST.get('cpurequest')
+    cpurequest_after = float(request.POST.get('cpurequest'))
     if cpurequest_before != cpurequest_after:
         svc.cpurequest = cpurequest_after
         svc.save()
@@ -276,7 +276,7 @@ def configure_save(request):
 
     # handle memoryrequest change
     memoryrequest_before = svc.memoryrequest
-    memoryrequest_after = request.POST.get('memoryrequest')
+    memoryrequest_after = float(request.POST.get('memoryrequest'))
     if memoryrequest_before != memoryrequest_after:
         svc.memoryrequest = memoryrequest_after
         svc.save()
