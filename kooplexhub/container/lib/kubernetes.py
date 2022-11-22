@@ -11,6 +11,7 @@ from .proxy import addroute, removeroute
 
 try:
     from kooplexhub.settings import KOOPLEX
+    from kooplexhub.settings import SERVERNAME
 except ImportError:
     KOOPLEX = {}
 
@@ -32,6 +33,7 @@ def start(container):
     env_variables = [
         { "name": "LANG", "value": "en_US.UTF-8" },
         { "name": "SSH_AUTH_SOCK", "value": f"/tmp/{container.user.username}" }, #FIXME: move to db
+        { "name": "SERVERNAME", "value": SERVERNAME},
     ]
     env_variables.extend(container.env_variables)
 
@@ -64,17 +66,19 @@ def start(container):
 
     volume_mounts.append(V1VolumeMount(name="initscripts", mount_path="/.init_scripts"))
             
-    volumes.extend([
-            V1Volume(name="initscripts", config_map=V1ConfigMapVolumeSource(name="initscripts", default_mode=0o777, items=[
-                V1KeyToPath(key="nsswitch",path="01-nsswitch"),
-                V1KeyToPath(key="nslcd",path="02-nslcd"),
-                V1KeyToPath(key="usermod",path="03-usermod"),
-                V1KeyToPath(key="munge",path="04-munge"),
-#                V1KeyToPath(key="jobtools",path="11-jobtools"),
-#                V1KeyToPath(key="jobaliases",path="10-jobaliases")
-]))
-    #        V1Volume(name="initscripts", config_map=V1ConfigMapVolumeSource(name="initscripts", default_mode=0o777, items=[V1KeyToPath(key="entrypoint",path="entrypoint.sh")]))
-            ])
+    initscripts = [
+            V1KeyToPath(key="nsswitch",path="01-nsswitch"),
+            V1KeyToPath(key="nslcd",path="02-nslcd"),
+            V1KeyToPath(key="usermod",path="03-usermod"),
+            V1KeyToPath(key="munge",path="04-munge"),
+            ]
+
+    if container.user.profile.can_teleport:
+        initscripts.append(V1KeyToPath(key="teleport",path="05-teleport"))
+
+    volumes.append(
+            V1Volume(name="initscripts", config_map=V1ConfigMapVolumeSource(name="initscripts", default_mode=0o777, items=initscripts ))
+            )
             
 
     # jobs kubeconf and slurm
@@ -308,6 +312,14 @@ def start(container):
 #        })
 #
 
+    resources = KOOPLEX['kubernetes'].get('resources', {})
+    resources["requests"]["cpu"] = f"{1000*max(container.cpurequest, resources['requests']['cpu'])}m"
+    resources["limits"]["cpu"] = f"{1000*max(container.cpurequest, resources['limits']['cpu'])}m"
+    resources["requests"]["memory"] = f"{max(container.memoryrequest, resources['requests']['memory'])}Gi"
+    resources["limits"]["memory"] = f"{max(container.memoryrequest, resources['limits']['memory'])}Gi"
+
+#    logger.warning(f"{resources}")
+
     pod_definition = {
             "apiVersion": "v1",
             "kind": "Pod",
@@ -325,7 +337,7 @@ def start(container):
                     "ports": pod_ports,
                     "imagePullPolicy": KOOPLEX['kubernetes'].get('imagePullPolicy', 'IfNotPresent'),
                     "env": env_variables,
-                    "resources": KOOPLEX['kubernetes'].get('resources', '{}'),
+                    "resources": resources,
                 }],
                 "volumes": volumes,
                 "nodeSelector": container.target_node, 

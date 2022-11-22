@@ -2,6 +2,7 @@ import os
 import logging
 import unidecode
 
+
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -9,12 +10,14 @@ logger = logging.getLogger(__name__)
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete = models.CASCADE)
+#    userid = models.IntegerField(default = None, blank = True)
     token = models.CharField(max_length = 64, null = True)
     can_createproject = models.BooleanField(default = True)
     can_createimage = models.BooleanField(default = False)
     can_createattachment = models.BooleanField(default = False)
     can_runjob = models.BooleanField(default = False)
     can_choosenode = models.BooleanField(default = False)
+    can_teleport = models.BooleanField(default = False)
     has_scratch = models.BooleanField(default = False)
 
     @property
