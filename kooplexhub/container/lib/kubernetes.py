@@ -101,7 +101,7 @@ def start(container):
                     )
 
         # SLURM
-
+        #if "munge" in initscripts.data.keys():   
         volume_mounts.append(V1VolumeMount(name="munge", mount_path="/etc/munge_tmp", read_only=True))
         volumes.append(V1Volume(name="munge", config_map=V1ConfigMapVolumeSource(name='munge', default_mode=400, items=[V1KeyToPath(key="munge",path="munge.key")])))
         volume_mounts.append(V1VolumeMount(name="slurmconf", mount_path="/etc/slurm-llnl", read_only=True))
@@ -218,7 +218,7 @@ def start(container):
     if claim_report:
         volumes.append({
             "name": "report",
-            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-repeort', 'report') }
+            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-report', 'report') }
         })
 
     # attachment
@@ -312,11 +312,12 @@ def start(container):
 #        })
 #
 
-    resources = KOOPLEX['kubernetes'].get('resources', {})
-    resources["requests"]["cpu"] = f"{1000*max(container.cpurequest, resources['requests']['cpu'])}m"
-    resources["limits"]["cpu"] = f"{1000*max(container.cpurequest, resources['limits']['cpu'])}m"
-    resources["requests"]["memory"] = f"{max(container.memoryrequest, resources['requests']['memory'])}Gi"
-    resources["limits"]["memory"] = f"{max(container.memoryrequest, resources['limits']['memory'])}Gi"
+    resources = KOOPLEX['kubernetes'].get('resources', {}).copy()
+    pod_resources = {"requests":{}, "limits": {}}
+    pod_resources["requests"]["cpu"] = f"{1000*max(container.cpurequest, resources['requests']['cpu'])}m"
+    pod_resources["limits"]["cpu"] = f"{1000*max(container.cpurequest, resources['limits']['cpu'])}m"
+    pod_resources["requests"]["memory"] = f"{max(container.memoryrequest, resources['requests']['memory'])}Gi"
+    pod_resources["limits"]["memory"] = f"{max(container.memoryrequest, resources['limits']['memory'])}Gi"
 
 #    logger.warning(f"{resources}")
 
@@ -517,12 +518,13 @@ def check(container):
     except client.rest.ApiException as e:
         e_extract = json.loads(e.body)
         message = e_extract['message']
+        
         if container.state in [ container.ST_RUNNING, container.ST_NEED_RESTART ]:
             container.state = container.ST_ERROR
         return -1
     finally:
-        container.last_message = message
         container.log = podlog[-10000:]
+        container.last_message = message
         if message.startswith('pods ') and message.endswith(' not found'):
             container.state = container.ST_NOTPRESENT
         container.last_message_at = now()
