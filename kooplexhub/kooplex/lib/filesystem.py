@@ -346,7 +346,26 @@ def cp_assignmentsnapshot(userassignmentbinding):
         archivefile = Filename.assignmentsnapshot(assignment)
         dir_target = Dirname.assignmentworkdir(userassignmentbinding)
         with tarfile.open(archivefile, mode = 'r') as archive:
-            archive.extractall(path = dir_target)
+            def is_within_directory(directory, target):
+                
+                abs_directory = os.path.abspath(directory)
+                abs_target = os.path.abspath(target)
+            
+                prefix = os.path.commonprefix([abs_directory, abs_target])
+                
+                return prefix == abs_directory
+            
+            def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
+            
+                for member in tar.getmembers():
+                    member_path = os.path.join(path, member.name)
+                    if not is_within_directory(path, member_path):
+                        raise Exception("Attempted Path Traversal in Tar File")
+            
+                tar.extractall(path, members, numeric_owner=numeric_owner) 
+                
+            
+            safe_extract(archive, path=dir_target)
         _revokeaccess(userassignmentbinding.user, dir_target)
         for binding in UserCourseBinding.objects.filter(course = assignment.coursecode.course, is_teacher = True):
             _grantaccess(binding.user, dir_target, acl = 'rX')
@@ -363,7 +382,26 @@ def cp_userassignment2correct(userassignmentbinding):
         archivefile = Filename.assignmentcollection(userassignmentbinding)
         dir_target = Dirname.assignmentcorrectdir(userassignmentbinding)
         with tarfile.open(archivefile, mode='r') as archive:
-            archive.extractall(path = dir_target)
+            def is_within_directory(directory, target):
+                
+                abs_directory = os.path.abspath(directory)
+                abs_target = os.path.abspath(target)
+            
+                prefix = os.path.commonprefix([abs_directory, abs_target])
+                
+                return prefix == abs_directory
+            
+            def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
+            
+                for member in tar.getmembers():
+                    member_path = os.path.join(path, member.name)
+                    if not is_within_directory(path, member_path):
+                        raise Exception("Attempted Path Traversal in Tar File")
+            
+                tar.extractall(path, members, numeric_owner=numeric_owner) 
+                
+            
+            safe_extract(archive, path=dir_target)
         _grantaccess(userassignmentbinding.corrector, dir_target, acl = 'rwX')
         _grantaccess(userassignmentbinding.user, dir_target, acl = 'rX')
     except Exception as e:
