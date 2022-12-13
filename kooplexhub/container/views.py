@@ -171,12 +171,12 @@ def configure(request, container_id):
         messages.error(request, 'Service environment does not exist')
         return redirect('container:list')
 
-    if svc.state == svc.ST_STOPPING:
-        messages.error(request, f'Service {svc.name} is still stopping, you cannot configure it right now.')
-        return redirect('container:list')
-    elif svc.state == svc.ST_STARTING:
-        messages.error(request, f'Service {svc.name} is starting up, you cannot configure it right now.')
-        return redirect('container:list')
+    # if svc.state == svc.ST_STOPPING:
+    #     messages.error(request, f'Service {svc.name} is still stopping, you cannot configure it right now.')
+    #     return redirect('container:list')
+    # elif svc.state == svc.ST_STARTING:
+    #     messages.error(request, f'Service {svc.name} is starting up, you cannot configure it right now.')
+    #     return redirect('container:list')
 
     context_dict = {
         'menu_container': True,
@@ -223,6 +223,8 @@ def _helper(request, svc, post_id, binding_model, model_get_authorized, binding_
 
 @login_required
 def configure_save(request):
+    from kooplexhub.settings import KOOPLEX
+
     if request.POST.get('button', '') == 'cancel':
         return redirect('container:list')
     user = request.user
@@ -266,21 +268,34 @@ def configure_save(request):
 
     # handle cpurequest change
     cpurequest_before = svc.cpurequest
-    cpurequest_after = float(request.POST.get('cpurequest'))
+    default_cpu = KOOPLEX.get('kubernetes').get('resources').get('requests').get('cpu')
+    cpurequest_after = float(request.POST.get('cpurequest') if request.POST.get('cpurequest')  else default_cpu)
     if cpurequest_before != cpurequest_after:
         svc.cpurequest = cpurequest_after
         svc.save()
-        msg = f'Designated node name changed from {cpurequest_before} to {cpurequest_after}'
+        msg = f'Number of requested CPUs has been changed from {cpurequest_before} to {cpurequest_after}'
+        info.append(msg)
+        svc.mark_restart(msg)
+
+    # handle gpurequest change
+    gpurequest_before = svc.gpurequest
+    default_gpu = KOOPLEX.get('kubernetes').get('resources').get('requests').get('nvidia.com/gpu')
+    gpurequest_after = float(request.POST.get('gpurequest') if request.POST.get('gpurequest')  else default_gpu)
+    if gpurequest_before != gpurequest_after:
+        svc.gpurequest = gpurequest_after
+        svc.save()
+        msg = f'Number of requested GPUs has been changed from {gpurequest_before} to {gpurequest_after}'
         info.append(msg)
         svc.mark_restart(msg)
 
     # handle memoryrequest change
     memoryrequest_before = svc.memoryrequest
-    memoryrequest_after = float(request.POST.get('memoryrequest'))
+    default_memory = KOOPLEX.get('kubernetes').get('resources').get('requests').get('memory')
+    memoryrequest_after = float(request.POST.get('memoryrequest') if request.POST.get('memoryrequest')  else default_memory)
     if memoryrequest_before != memoryrequest_after:
         svc.memoryrequest = memoryrequest_after
         svc.save()
-        msg = f'Designated node name changed from {memoryrequest_before} to {memoryrequest_after}'
+        msg = f'The requested amount of memory has been changed from {memoryrequest_before} to {memoryrequest_after}'
         info.append(msg)
         svc.mark_restart(msg)
 

@@ -90,15 +90,15 @@ def button_start(container, next_page):
 
 @register.simple_tag
 def button_stop(container, next_page):
-    if container.state in [ container.ST_RUNNING, container.ST_NEED_RESTART ]:
+    #if container.state in [ container.ST_RUNNING, container.ST_NEED_RESTART ]:
         link = reverse('container:stop', args = [container.id, next_page])
         return format_html(f"""
 <a href="{link}" role="button" class="btn btn-danger btn-sm" data-toggle="tooltip" title="Stop environment {container.name}"><span class="oi oi-x" aria-hidden="true"></span></a>
         """)
-    else:
-        return format_html(f"""
-<a href="#" role="button" class="btn btn-danger btn-sm disabled"><span class="oi oi-x" aria-hidden="true"></span></a>
-        """)
+#    else:
+#        return format_html(f"""
+#<a href="#" role="button" class="btn btn-danger btn-sm disabled"><span class="oi oi-x" aria-hidden="true"></span></a>
+#        """)
 
 
 @register.simple_tag
@@ -159,11 +159,11 @@ def button_start_open(container, next_page):
 
 @register.simple_tag
 def button_configure(container):
-    if container.state == container.ST_STARTING:
-        return format_html(f"""
-<a href="#" role="button" class="btn btn-secondary btn-sm"><span class="oi oi-wrench disabled" aria-hidden="true" data-toggle="tooltip" title="Your service is still starting up, cannot configure right now" data-placement="bottom"></span></a>
-        """)
-    else:
+#    if container.state == container.ST_STARTING:
+#        return format_html(f"""
+#<a href="#" role="button" class="btn btn-secondary btn-sm"><span class="oi oi-wrench disabled" aria-hidden="true" data-toggle="tooltip" title="Your service is still starting up, cannot configure right now" data-placement="bottom"></span></a>
+#        """)
+#    else:
         link = reverse('container:configure', args = [container.id])
         return format_html(f"""
 <a href="{link}" role="button" class="btn btn-secondary btn-sm"><span class="oi oi-wrench" aria-hidden="true" data-toggle="tooltip" title="Add/remove project to the service" data-placement="bottom"></span></a>

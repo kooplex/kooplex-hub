@@ -64,6 +64,7 @@ class Container(models.Model):
     log = models.TextField(max_length = 10512, null = True)
     node = models.TextField(max_length = 64, null = True, blank = True)
     cpurequest = models.DecimalField(null = True, blank = True, decimal_places=1, max_digits=3, default="0.1")
+    gpurequest = models.IntegerField(null = True, blank = True, default="0")
     memoryrequest = models.DecimalField( null = True, blank = True, decimal_places=1, max_digits=3, default="0.4")
 
     class Meta:

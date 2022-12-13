@@ -12,6 +12,7 @@ from .proxy import addroute, removeroute
 try:
     from kooplexhub.settings import KOOPLEX
     from kooplexhub.settings import SERVERNAME
+#    from kooplexhub.settings import REDIS_PASSWORD
 except ImportError:
     KOOPLEX = {}
 
@@ -75,6 +76,7 @@ def start(container):
 
     if container.user.profile.can_teleport:
         initscripts.append(V1KeyToPath(key="teleport",path="05-teleport"))
+#        env_variables.append({ "name": "REDIS_PASSWORD", "value": REDIS_PASSWORD })
 
     volumes.append(
             V1Volume(name="initscripts", config_map=V1ConfigMapVolumeSource(name="initscripts", default_mode=0o777, items=initscripts ))
@@ -314,6 +316,10 @@ def start(container):
 
     resources = KOOPLEX['kubernetes'].get('resources', {}).copy()
     pod_resources = {"requests":{}, "limits": {}}
+    pod_resources["requests"]["nvidia.com/gpu"] = f"{max(container.gpurequest, resources['requests']['nvidia.com/gpu'])}"
+    #pod_resources["requests"]["gpu"] = f"{container.gpurequest}"
+    pod_resources["limits"]["nvidia.com/gpu"] = f"{max(container.gpurequest, resources['limits']['nvidia.com/gpu'])}"
+    #pod_resources["limits"]["gpu"] = f"{container.gpurequest}"
     pod_resources["requests"]["cpu"] = f"{1000*max(container.cpurequest, resources['requests']['cpu'])}m"
     pod_resources["limits"]["cpu"] = f"{1000*max(container.cpurequest, resources['limits']['cpu'])}m"
     pod_resources["requests"]["memory"] = f"{max(container.memoryrequest, resources['requests']['memory'])}Gi"
@@ -338,7 +344,7 @@ def start(container):
                     "ports": pod_ports,
                     "imagePullPolicy": KOOPLEX['kubernetes'].get('imagePullPolicy', 'IfNotPresent'),
                     "env": env_variables,
-                    "resources": resources,
+                    "resources": pod_resources,
                 }],
                 "volumes": volumes,
                 "nodeSelector": container.target_node, 

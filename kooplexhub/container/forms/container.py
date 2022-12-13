@@ -37,10 +37,17 @@ class FormContainer(forms.Form):
     
     cpurequest = forms.DecimalField(
             required = False,
-            label = 'CPU', #FIXME: when model refactored, ie friendly_name becomes name, it can be removed
+            label = 'CPU [#]', #FIXME: when model refactored, ie friendly_name becomes name, it can be removed
             help_text = _('Requested number of cpus for your container.'), 
             widget = forms.NumberInput(attrs = {"data-intro": "#cpu"}), #FIXME: is it still used? was not it chardin
             min_value=0.1, max_value=64)
+
+    gpurequest = forms.IntegerField(
+            required = False,
+            label = 'GPU [#]', #FIXME: when model refactored, ie friendly_name becomes name, it can be removed
+            help_text = _('Requested number of gpus for your container.'), 
+            widget = forms.NumberInput(attrs = {"data-intro": "#gpu"}), #FIXME: is it still used? was not it chardin
+            min_value=0, max_value=3)
 
     memoryrequest = forms.DecimalField(
             required = False,
@@ -59,7 +66,7 @@ class FormContainer(forms.Form):
         if container:
 #            args = ({'friendly_name': container.friendly_name, 'image': container.image, 'name': 'dummy' }, )
 #            args = ({'friendly_name': container.friendly_name, 'image': container.image, 'node': container.node}, )
-            args = ({'friendly_name': container.friendly_name, 'image': container.image, 'node': container.node, 'cpurequest': container.cpurequest, 'memoryrequest': container.memoryrequest }, )
+            args = ({'friendly_name': container.friendly_name, 'image': container.image, 'node': container.node, 'cpurequest': container.cpurequest, 'gpurequest': container.gpurequest,'memoryrequest': container.memoryrequest }, )
         super(FormContainer, self).__init__(*args, **kwargs)
 #        if container:
 #            self.fields['name'].widget = forms.HiddenInput()
