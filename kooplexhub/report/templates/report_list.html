@@ -12,19 +12,22 @@
 {# the search bar #}
 {% if reports %}
 <div class="card border border-light border-3 mx-5 mb-3 rounded-3">
-  <div class="card-header bg-secondary h3"><span class="bi bi-search me-3"></span>Report filter</div>
-  <div class="card-body text-dark">
+  <div class="input-group">
+    <div class="input-group-prepend">
+      <div class="input-group-text"><span class="bi bi-search"></span></div>
+    </div>
     <input class="form-control" type="text" id="search_report" placeholder="Search by report title, creator or tag" title="Type in a name" autofocus >
     {# toggler to narrow selection according to creator #}
-    <div class="row mt-3 ms-2">
-      <input id="search_user_creator" data-size="normal"
+    <div class="input-group-prepend m-2 ms-3">
+      <input id="search_user_creator" data-size="mini" data-width="100"
+             class="ms-2"
              type="checkbox" data-toggle="toggle" name="search_creator"
              data-on="Your reports"
              data-off="All reports"
              data-onstyle="success" data-offstyle="secondary">
-      {# FIXME: a list of most popular tags #}
     </div>
   </div>
+  {# FIXME: a list of most popular tags #}
 </div>
 {% endif %}
 
