@@ -15,20 +15,13 @@
 {# the search bar #}
 {% if containers %}
 <div class="card border border-light border-3 mx-5 mb-3 rounded-3">
-  <div class="card-header bg-secondary h3"><span class="bi bi-search me-3"></span>Environment filter</div>
-  <div class="card-body text-dark">
-    <input class="form-control" type="text" id="search_container" placeholder="Search by report name" autofocus >
-    {# FIXME: toggler to narrow selection according to whether a report container #}
-    {% comment %}
-    <div class="row mt-3 ms-2">
-      <input id="search_report_container" data-size="normal"
-             type="checkbox" data-toggle="toggle" name="search_reportcontainer"
-             data-on="Your environments"
-             data-off="Report environments"
-             data-onstyle="success" data-offstyle="secondary">
+    <div class="input-group">
+      <div class="input-group-prepend">
+        <div class="input-group-text"><span class="bi bi-search"></span></div>
+      </div>
+      <input class="form-control" type="text" id="search_container" placeholder="Search by container name" autofocus >
     </div>
-    {% endcomment %}
-  </div>
+    {# FIXME: toggler to narrow selection according to whether a report container #}
 </div>
 {% endif %}
 
