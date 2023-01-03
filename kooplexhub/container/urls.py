@@ -15,8 +15,7 @@ urlpatterns = [
     re_path('^start/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)/?', views.start, name = 'start'),
     re_path('^stop/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)/?', views.stop, name = 'stop'),
     re_path('^restart/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)/?', views.restart, name = 'restart'),
-    re_path('^info/(?P<container_id>\d+)/?', views.refresh, name = 'refreshlogs'),
-    re_path('^open/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)/(?P<shown>.*)?/?', views.open, name = 'open'),
+    re_path('^open/(?P<container_id>\d+)/?', views.open, name = 'open'),
 
     path('attachments/', views.AttachmentListView.as_view(), name = 'list_attachments'),
     path('attachment_new/', views.NewAttachmentView.as_view(), name = 'new_attachment'),

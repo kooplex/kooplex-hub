@@ -12,82 +12,277 @@
 {% endblock %}
 
 {% block realcontent %}
-  {% if containers %}
-    <input class="form-control me-2 mb-3 mt-3" type="text" id="search_container" placeholder="Search environments" title="Type in a name" autofocus >
-    <div id="containerListPane" >
-    {% for container in containers %}
-       {% include partial %}
-    {% endfor %}
+{# the search bar #}
+{% if containers %}
+<div class="card border border-light border-3 mx-5 mb-3 rounded-3">
+  <div class="card-header bg-secondary h3"><span class="bi bi-search me-3"></span>Environment filter</div>
+  <div class="card-body text-dark">
+    <input class="form-control" type="text" id="search_container" placeholder="Search by report name" autofocus >
+    {# FIXME: toggler to narrow selection according to whether a report container #}
+    {% comment %}
+    <div class="row mt-3 ms-2">
+      <input id="search_report_container" data-size="normal"
+             type="checkbox" data-toggle="toggle" name="search_reportcontainer"
+             data-on="Your environments"
+             data-off="Report environments"
+             data-onstyle="success" data-offstyle="secondary">
     </div>
+    {% endcomment %}
+  </div>
+</div>
+{% endif %}
+
+{# render the container cards #}
+<div id="containerListPane" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 w-100 mx-auto justify-content-center">
+  {% if containers %}
+    {% for container in containers %}
+      <div class="col" id="container-id-{{ container.id }}">
+        {% include partial %} {# FIXME: partial as a variable breaks code symmetry with report #}
+      </div>
+    {% endfor %}
   {% else %}
     {% include 'empty.html' %}
   {% endif %}
+</div>
+
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+  <div id="feedbackMessages" class="toast fade show" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header">
+      <strong class="me-auto">Message</strong>
+      <button id="closeButton" type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body" id="feedbackContent">
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-$( document ).ready(function() {
-  $.cookie("next_page", "container:list", { 'path': '/', 'secure': true });
-  var uf = $.cookie("unfold_container");
-  if ( uf === undefined ) {
-    $.cookie("unfold_container", JSON.stringify([]), { 'path': '/', 'secure': true });
-    console.log('undefined');
-  } else {
-    $.each(JSON.parse(uf), function(index, value) {
-      console.log( value );
-      $("#collapse-" + value).collapse();
-    });
+{# open a container #}
+function open_container(containerid) {
+  var url = $( "#url-containeropen-" + containerid).val();
+  console.log( "opening: " + url );
+  var win = window.open(url, '_blank');
+  if (win) {
+    win.focus();
+  }
+}
 
+{# open websocket #}
+function so() {
+  console.log('open socket...');
+  const containerSocket = new WebSocket(
+    'wss://k8plex-test.vo.elte.hu/hub/ws/container_environment/{{ user.id }}/' //FIXME: server name hardcoded
+  );
+  containerSocket.onclose = function(e) {
+    console.error('Socket closed unexpectedly');
+  };
+  //console.log(containerSocket);
+  containerSocket.onmessage = function(e) {
+    const data = JSON.parse(e.data);
+    console.log('SOCK raw');
+    console.log(data);
+    var command = data['command'];
+    var msg = data['message'];
+    var containerid = data['container-id'];
+    //console.log('SOCK: --> ' + command + ": " + msg);
+    if (command == 'container-log') {
+      var widget_msg = $("#container-summary-" + containerid);
+      var widget_log = $("#container-log-" + containerid);
+      widget_msg.text(msg);
+      widget_log.text(data['podlog']);
+      console.log(containerid + " -> " + msg);
+      setTimeout(function() {
+        spinner_state('log', containerid, true);
+      }, 5000); // after the model is updated we waith for some time before we reenable refresh log button
+    }
+    if (data['state'] == 'np') { //FIXME: Container.ST_NOTPRESENT
+      buttons_np(containerid);
+    } if (data['state'] == 'run') { //FIXME: Container.ST_RUNNING
+      buttons_op(containerid);
+    }
+    if (command == 'feedback') {
+      feedback(data['message']);
+    }
+  };
+  return containerSocket;
+};
+
+containerSocket = so();
+
+{# on load feedback messages panel is empty, hide it #}
+$(document).ready(function () {
+  var widget = $("#feedbackMessages");
+  widget.hide();
+});
+
+{# display some feedback messages #}
+function feedback(msg) {
+  var widget = $("#feedbackMessages");
+  widget.show();
+  $("#feedbackContent").append("<p>" + msg + "</p>");
+  setTimeout(function () { widget.hide() }, 10000);
+	// TODO: too many paragraphs, clear oldest
+}
+
+{# enable or diasble spinner button #}
+function spinner_state(btn, containerid, enabled) {
+  var widget = $("#container-" + btn + "-" + containerid);
+  var spinner = $("#spinner-" + btn + "-" + containerid);
+  if (enabled) {
+    spinner.addClass("d-none");
+    widget.removeClass("d-none");
+    widget.parent().attr("disabled", false);
+  } else {
+    spinner.removeClass("d-none");
+    widget.addClass("d-none");
+    widget.parent().attr("disabled", true);
+  }
+}
+
+{# disable control buttons, and show spinner for selected button #}
+function spin_button(containerid, btn) {
+  $("#container-start-" + containerid).parent().attr("disabled", true);
+  $("#container-restart-" + containerid).parent().attr("disabled", true);
+  $("#container-stop-" + containerid).parent().attr("disabled", true);
+  spinner_state(btn, containerid, false);
+}
+
+{# enable buttons and show start button face #}
+function buttons_np(containerid) {
+  spinner_state('start', containerid, true);
+  spinner_state('restart', containerid, true);
+  spinner_state('stop', containerid, true);
+  $("#container-open-" + containerid).addClass('d-none');
+}
+
+{# enable buttons and show open button face #}
+function buttons_op(containerid) {
+  spinner_state('start', containerid, true);
+  spinner_state('restart', containerid, true);
+  spinner_state('stop', containerid, true);
+  $("#container-start-" + containerid).addClass('d-none');
+  $("#container-open-" + containerid).removeClass('d-none');
+}
+
+{# refresh logs #}
+$("div[id^=containerInfoModal-]").on('shown.bs.modal', function() {
+  if (containerSocket.readyState != 1) {
+    console.log("Socket not open: " + containerSocket.readyState);
+    containerSocket = so();
+  }
+  var containerid = $( this ).attr('id').split('-', 2)[1];
+  spinner_state('log', containerid, false);
+  console.log( "log for container: " + containerid );
+  containerSocket.send(JSON.stringify({
+    'command': 'container-log',
+    'container-id': containerid,
+  }));
+});
+
+{# start/restart/stop/open a container, or refresh log clicked in the modal #}
+$("button[name^=container-]").click(function() {
+  var containerid = $( this ).val();
+  var command = $( this ).attr("name");
+  if (command == "container-start" && ! $("#container-open-" + containerid).hasClass('d-none')) {
+    open_container(containerid);
+    return;
+  }
+  if (containerSocket.readyState != 1) {
+    console.log("Socket not open: " + containerSocket.readyState);
+    containerSocket = so();
+  }
+  console.log( command + ": " + containerid );
+  var btn = command.split('-', 2)[1];
+  spin_button(containerid, btn);
+  containerSocket.send(JSON.stringify({
+    'command': command,
+    'container-id': containerid,
+  }));
+});
+
+{# on mouse over the card show the buttonbars #}
+$("div[id^=container-id-]").mouseenter(function() {
+  var containerid = $( this ).attr("id").split("-", 3)[2];
+  // console.log( "card enter: " + containerid );
+  bar = $( "#buttonbar-" + containerid );
+  bar.removeClass("d-none");
+});
+
+{# hide buttons on mouse leaving the card #}
+$("div[id^=container-id-]").mouseleave(function() {
+  var containerid = $( this ).attr("id").split("-", 3)[2];
+  // console.log( "card leave: " + containerid );
+  bar = $( "#buttonbar-" + containerid );
+  bar.addClass("d-none");
+});
+
+{# check if the card belongs to a running container #}
+function is_running(w) {
+  var containerid = $(w).attr('id').split('-', 3)[2];
+  return ! $("#container-open-" + containerid).hasClass('d-none');
+}
+
+{# when mouse enters the clickable part of the card change the cursor to pointer #}
+$("div[id^=click-]").mouseenter(function() {
+  if (is_running(this)) {
+    $( this ).css("cursor", "pointer");
   }
 });
+
+{# clickng the card header/body opens the environment #}
+$("div[id^=click-]").click(function() {
+  if (is_running(this)) {
+    open_container( $( this ).attr("id").split("-", 3)[2] );
+  }
+});
+
+{# set visibility states for all cards #}
+function set_visibility() {
+  $("div[id^=container-id-]").each(function() {
+    var cid = $( this ).attr("id").split("-", 3)[2];
+    var show_card = B($( "#container-shown-" + cid ).val());
+    if (show_card) {
+      $( this ).show();
+    } else {
+      $( this ).hide();
+    }
+  });
+};
+
+{# my boolean converter #}
+function B(x) {
+  if (typeof x === 'boolean') {
+    return x;
+  }
+  if (typeof x === 'string') {
+    return Boolean(x == 'true') || Boolean(x == 'True');
+  }
+  console.log("fallback to unhandled type");
+  return Boolean(x);
+};
+
+{# search and filter container cards to show #}
 $("#search_container").keyup(function() {
   var pattern = $( this ).val().toUpperCase();
   console.log( "search: " + pattern );
-  $("span[id^='container-name-'").each(function() {
-  console.log( this );
-    var containerid = $( this ).attr('id').split('-')[2];
-    var hide_it = true;
-    var card = $("#card-" + containerid);
+  $("input[id^=container-search-]").each(function() {
+    var containerid = $( this ).attr('id').split('-', 3)[2];
+    var cs = $( this ).val();
+    var statewidget = $("#container-shown-" + containerid);
     if (pattern.length > 0) {
-      var name = $( this ).html().toUpperCase();
-      if ( name.indexOf(pattern) > -1 ) {
-        hide_it = false;
+      if ( cs.indexOf(pattern) > -1 ) {
+        statewidget.val(true);
+      } else {
+        statewidget.val(false);
       }
     } else {
-      hide_it = false;
-    }
-    if (hide_it) {
-      $( card ).hide();
-    } else {
-      $( card ).show();
+      statewidget.val(true);
     }
   });
+  set_visibility();
 });
-$("div[data-bs-target^='#collapse-").mouseover(function() {
-  $(this).css("font-weight", "bold");
-  $(this).css("cursor", "pointer");
-});
-$("div[data-bs-target^='#collapse-").mouseout(function() {
-  $(this).css("font-weight", "normal");
-});
-$("div[data-bs-target^='#collapse-").click(function() {
-  var tgt = $(this).attr("data-bs-target");
-  var oid = tgt.split('-')[1];
-  console.log( tgt + "->" + oid );
-  setTimeout(function() {
-    var uf = JSON.parse( $.cookie("unfold_container") );
-    if ( $(tgt).hasClass('show') ) {
-      console.log('shown');
-      uf.push(oid);
-    } else {
-      console.log('collapsed');
-      uf.pop(oid);
-    }
-    var clean = uf.filter(function(element, index, self){
-      return index === self.indexOf(element);
-    });
-    $.cookie("unfold_container", JSON.stringify(clean), { 'path': '/', 'secure': true });
-  }, 1000);
-});
+
 </script>
 {% endblock %}

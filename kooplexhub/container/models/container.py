@@ -15,7 +15,7 @@ from .proxy import Proxy
 
 from kooplexhub.lib import  now
 from kooplexhub.lib import my_alphanumeric_validator
-from ..lib import start_environment, stop_environment, restart_environment, check_environment
+from ..lib import start_environment, stop_environment, restart_environment, check_environment, fetch_containerlog
 
 try:
     from kooplexhub.settings import KOOPLEX
@@ -58,14 +58,15 @@ class Container(models.Model):
     launched_at = models.DateTimeField(null = True, blank = True)
 
     state = models.CharField(max_length = 16, choices = ST_LOOKUP.items(), default = ST_NOTPRESENT)
+    # state_lastcheck_at = models.DateTimeField(default = None, null = True, blank = True)   #FIXME: to be introduced
     restart_reasons = models.CharField(max_length = 512, null = True, blank = True)
-    last_message = models.CharField(max_length = 512, null = True)
-    last_message_at = models.DateTimeField(default = None, null = True, blank = True)
-    log = models.TextField(max_length = 10512, null = True)
+    last_message = models.CharField(max_length = 512, null = True)                       #FIXME: deprecated
+    last_message_at = models.DateTimeField(default = None, null = True, blank = True)    #FIXME: deprecated
+    log = models.TextField(max_length = 10512, null = True)                              #FIXME: deprecated
     node = models.TextField(max_length = 64, null = True, blank = True)
-    cpurequest = models.DecimalField(null = True, blank = True, decimal_places=1, max_digits=3, default="0.1")
+    cpurequest = models.DecimalField(null = True, blank = True, decimal_places=1, max_digits=4, default="0.1")
     gpurequest = models.IntegerField(null = True, blank = True, default="0")
-    memoryrequest = models.DecimalField( null = True, blank = True, decimal_places=1, max_digits=3, default="0.4")
+    memoryrequest = models.DecimalField( null = True, blank = True, decimal_places=1, max_digits=5, default="0.4")
 
     class Meta:
         unique_together = [['user', 'name', 'suffix']]
@@ -97,6 +98,10 @@ class Container(models.Model):
     def url_public(self):
         return self.default_proxy.url_public(self)
 
+    @property
+    def search(self):
+        return f"{self.name.upper()} {self.friendly_name.upper()}"
+
     def wait_until_ready(self):
         from kooplexhub.lib import keeptrying
         for _ in range(5):
@@ -116,7 +121,7 @@ class Container(models.Model):
     def uptime(self):
         timenow = now()
         delta = timenow - self.launched_at
-        return delta if self.is_running else -1
+        return delta if self.is_running else -1 #FIXME: ez nem mukodhet nincs ilyen attributum
 
     @property
     def proxies(self):
@@ -195,8 +200,11 @@ class Container(models.Model):
         self.save()
         return restart_environment(self)
 
-    def check_state(self):
-        return check_environment(self)
+    def check_state(self, retrieve_log = False):
+        state = check_environment(self)
+        if retrieve_log:
+            state['podlog'] = fetch_containerlog(self)
+        return state
 
     def mark_restart(self, reason):
         if self.state not in [ self.ST_RUNNING, self.ST_NEED_RESTART ]:

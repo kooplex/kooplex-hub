@@ -346,26 +346,7 @@ def _get_cookie(request):
         return set()
 
 
-@login_required
-def refresh(request, container_id):
-    user = request.user
-
-    try:
-        svc = Container.objects.get(user = user, id = container_id)
-        svc.check_state()
-    except Container.DoesNotExist:
-        messages.error(request, 'Environment does not exist')
-    except Exception as e:
-        logger.error(f'Cannot refresh service environment information {svc} -- {e}')
-        messages.error(request, f'Cannot refresh service environment information {svc}')
-    next_page = request.COOKIES.get('next_page', 'container:list').replace('%3A', ':')
-    redirection = redirect(next_page)
-    shown = _get_cookie(request)
-    shown.add( svc.id )
-    redirection.set_cookie('show_container', json.dumps( list(shown) ))
-    return redirection
-
-
+#FIXME: websocket takes over
 @login_required
 def stop(request, container_id, next_page):
     """Stops a container"""
@@ -409,11 +390,9 @@ def restart(request, container_id, next_page):
 
 
 @login_required
-def open(request, container_id, next_page, shown = "[]"):
+def open(request, container_id):
     """Opens a container"""
     user = request.user
-    #if shown != "[]":
-    #    raise Exception(shown)
     
     try:
         container = Container.objects.get(id = container_id, user = user)

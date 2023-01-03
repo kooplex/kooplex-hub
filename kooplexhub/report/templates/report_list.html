@@ -4,120 +4,138 @@
 
 
 {% block head_content %}
-        <link rel="stylesheet" href="/static/css/tagsinput.css" />
-<style>
-.form-control:focus {
-  border-color: gray;
-  box-shadow: inset 0 1px 1px gray, 0 0 8px gray;
-}
-</style>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/css/bootstrap5-toggle.min.css" rel="stylesheet">
 {% endblock %}
-{% block realcontent %}
-<div class="container d-flex flex-row" style="overflow-x:hidden;">
 
-  <div style="width: 45%; margin-left: auto; margin-right: auto">
-<div class="card bg-light border-secondary shadow mb-3">
-  <div data-bs-toggle="collapse" data-bs-target="#collapse-reportfilter" data-toggle="tooltip" >
-        <p class="ms-2 mt-1" style="font-size: 20px;">Report filter</p>
-  </div><!-- card header -->
-  <div id="collapse-reportfilter"> 
-    <div class="card card-body bg-white m-1">
-      
-<script src="/static/js/tagsinput.js"></script>
-<script>
-$("#post-form").submit(function(e){
-    e.preventDefault();
-});</script>
+
+{% block realcontent %}
+{# the search bar #}
 {% if reports %}
-<input class="form-control mt-1 mb-1" type="text" id="search_report" placeholder="Search by report title" title="Type in a name" autofocus >
-<input class="form-control mt-1 mb-1" type="text" id="search_creator" placeholder="Search by report creator" title="Type in a name" autofocus >
+<div class="card border border-light border-3 mx-5 mb-3 rounded-3">
+  <div class="card-header bg-secondary h3"><span class="bi bi-search me-3"></span>Report filter</div>
+  <div class="card-body text-dark">
+    <input class="form-control" type="text" id="search_report" placeholder="Search by report title, creator or tag" title="Type in a name" autofocus >
+    {# toggler to narrow selection according to creator #}
+    <div class="row mt-3 ms-2">
+      <input id="search_user_creator" data-size="normal"
+             type="checkbox" data-toggle="toggle" name="search_creator"
+             data-on="Your reports"
+             data-off="All reports"
+             data-onstyle="success" data-offstyle="secondary">
+      {# FIXME: a list of most popular tags #}
     </div>
   </div>
 </div>
+{% endif %}
 
-<div class="card bg-light ms-2">
-  <p class="ms-2 mt-1" style="font-size: 20px;">Report disply</p>
-  <div class="w-50 mb-2 ms-2 bg-primary text-white rounded text-center" style="cursor: pointer;">Your reports </div>
-  <div class="w-50 mb-2 ms-2 bg-primary text-white rounded text-center" style="cursor: pointer;">All reports</div>
-</div>
-</div>
-
-<div style="width: 45%; margin-left: auto; margin-right: auto">
-<div class="card bg-light ms-2">
-  <p class="ms-2 mt-1" style="font-size: 20px;">Main tags</p>
-  <div class="card card-body bg-white m-1">
-    <input class="form-control mt-1 mb-1" type="text" id="search_tag" placeholder="Search by report tags" title="Type in a name" autofocus >
-  </div>
-  <div class="w-50 mb-2 ms-2 bg-primary text-white rounded text-center" style="cursor: pointer;">.bg-primary</div>
-</div>
-</div>
-  </div>
-  <div class="container">
-<div id="reportListPane" class="row" >
-
+{# render the report cards #}
+<div id="reportListPane" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 w-100 mx-auto justify-content-center">
+  {% if reports %}
     {% for report in reports %}
-       {% include 'partial_list.html' %}
+      <div class="col" id="report-id-{{ report.id }}">
+        {% include 'partial_list.html' %}
+      </div>
     {% endfor %}
-  </div>
-</div>
   {% else %}
     {% include 'empty.html' %}
   {% endif %}
-
+</div>
 {% endblock %}
-
-
 
 
 {% block scripts %}
 <script>
+{# show buttons on mouse enter the transparent card #}
+$("div[id^=report-id-]").mouseenter(function() {
+  var reportid = $( this ).attr("id").split("-", 3)[2];
+  // console.log( "card enter: " + reportid );
+  bar = $( "#buttonbar-" + reportid );
+  bar.removeClass("d-none");
+});
+
+{# hide buttons on mouse leaving the transparent card #}
+$("div[id^=report-id-]").mouseleave(function() {
+  var reportid = $( this ).attr("id").split("-", 3)[2];
+  // console.log( "card leave: " + reportid );
+  bar = $( "#buttonbar-" + reportid );
+  bar.addClass("d-none");
+});
+
+{# clickng the visible card opens the report #}
+$("div[id^=click-report-]").click(function() {
+  var reportid = $( this ).attr("id").split("-", 3)[2];
+  var url = $( "#url-reportopen-" + reportid).val();
+  console.log( "card clicked: " + url );
+  var win = window.open(url, '_blank');
+  if (win) {
+    win.focus();
+  }
+});
+
+{# when mouse enters the visible card change the cursor to pointer #}
+$("div[id^=click-report-]").mouseenter(function() {
+  $( this ).css("cursor", "pointer");
+});
+
+{# set visibility states for all cards #}
+function set_visibility() {
+  var narrow_creator = B($( "#search_user_creator" )[0].checked);
+  console.log( "set visibility, creator only " + narrow_creator);
+  $("div[id^=report-id-]").each(function() {
+    var rid = $( this ).attr("id").split("-", 3)[2];
+    var filter_search = B($( "#report-shown-" + rid ).val());
+    var is_creator = B($( "#report-iscreator-" + rid).val());
+    var show_card = filter_search && ((! narrow_creator) || is_creator);
+    // console.log( "rid " + rid + ": " +  filter_search + " & (! " +  narrow_creator + "| " + is_creator + ") ---> " + show_card);
+    if (show_card) {
+      $( this ).show();
+    } else {
+      $( this ).hide();
+    }
+  });
+};
+
+{# my boolean converter #}
+function B(x) {
+  if (typeof x === 'boolean') {
+    return x;
+  }
+  if (typeof x === 'string') {
+    return Boolean(x == 'true') || Boolean(x == 'True');
+  }
+  console.log("fallback to unhandled type");
+  return Boolean(x);
+};
+
+{# narrow selection whether user is the creator of the report #}
+$("#search_user_creator").change(function() {
+  set_visibility();
+}).change();                    // invoked just in case the page was reloaded for some reasons and to hide the necessary cards 
+
+{# search report by userinput #}
+// FIXME: when typing very fast we may sleep a while
 $("#search_report").keyup(function() {
   var pattern = $( this ).val().toUpperCase();
   console.log( "search report: " + pattern );
-  $( document ).find("div[id^='report-id-'").each(function() {
-    console.log(  );
-    var hide_it = true;
-    var rid = $(this).attr("id").split("-")[2];
+  $("input[id^=report-search-]").each(function() {
+    var rid = $( this ).attr("id").split("-", 3)[2];
+    var str = $( this ).val().toUpperCase(); // FIXME: we could have done it in advance to speed things up (marked also in the template)
+    var state_store = $( "#report-shown-" + rid );
     if (pattern.length > 0) {
-      var name = $("#r-" + rid).val().toUpperCase();
-      if ( name.indexOf(pattern) > -1 ) {
-        hide_it = false;
+      if ( str.indexOf(pattern) > -1 ) {
+        state_store.val(true);  // pattern found
+      } else {
+        state_store.val(false); // pattern not found
       }
     } else {
-      hide_it = false;
-    }
-    if (hide_it) {
-      $( this ).hide();
-    } else {
-      $( this ).show();
+      state_store.val(true);    // there are no patterns
     }
   });
+  set_visibility();
 });
-
-$("#search_creator").keyup(function() {
-  var pattern = $( this ).val().toUpperCase();
-  console.log( "search report: " + pattern );
-  $( document ).find("div[id^='report-id-'").each(function() {
-    console.log(  );
-    var hide_it = true;
-    var rid = $(this).attr("id").split("-")[2];
-    if (pattern.length > 0) {
-      var name = $("#r-" + rid).val().toUpperCase();
-      if ( name.indexOf(pattern) > -1 ) {
-        hide_it = false;
-      }
-    } else {
-      hide_it = false;
-    }
-    if (hide_it) {
-      $( this ).hide();
-    } else {
-      $( this ).show();
-    }
-  });
-});
-
 
 </script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/js/bootstrap5-toggle.min.js"></script>
 {% endblock %}
 

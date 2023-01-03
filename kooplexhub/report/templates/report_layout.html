@@ -6,6 +6,20 @@
 {% block page_title %}Kooplex Report{% endblock %}
 
 
+<script>
+  var hidden = false;
+  function action() {
+      hidden = !hidden;
+      if(hidden) {
+          document.getElementById('togglee').style.visibility = 'hidden';
+      } else {
+          document.getElementById('togglee').style.visibility = 'visible';
+      }
+  }
+</script>
+
+
+
 {% block help %} 
           {% include 'reporthelp.html' %}
 {% endblock %}
@@ -26,6 +40,12 @@
 
 {% block bodycontent %}
 <div class="m-2" style="height: calc(100vh - 105px); overflow-y: scroll; overflow-x:hidden;">
+  <div class="container" style="display:none;" id="myAlert">
+    <div class="alert alert-warning alert-dismissable" id="myAlert2">
+      <input type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></input>
+      Dear Kooplex users! We are interested in your opinion about Kooplex in order to improve our platform. Our team would appreciate if you could have five minutes to answer this quick and anonymous questionnaire by <a href="https://forms.gle/cJ52qSQNN8kUKXpL9" target="_blank" class="alert-link" id="toggler" value="Toggler" onClick="action();">clicking here</a>. Thank you!
+    </div>
+    </div>
   {% block realcontent %}
   <div class="card shadow p-3 mb-2 mt-3 bg-light rounded"> 
     <h6 class="card-title">Nothing interesting</h6>

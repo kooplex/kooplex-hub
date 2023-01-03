@@ -1,78 +1,70 @@
 {% load container_buttons %}
+{% load static %}
 {% load check_show %}
 
-
-<div class="card bg-light border-secondary shadow mb-3" id="card-{{ container.id }}">
-  <div class="card-header">
-    <div class="container-fluid">
-      <div class="d-flex flex-row">
-        <div class="d-flex flex-row justify-content-start" style="width:2%">
-          <div>{% button_start_open_restart  container next_page='container:list' %}</div>
-        </div>
-	  <div class="ms-5 d-flex flex-row justify-content-between" style="width:97%"
-               data-bs-toggle="collapse" data-bs-target="#collapse-{{ container.id }}" aria-expanded="false" aria-controls="collapse-{{ container.id }}">
-           <div class="d-flex flex-row justify-content-start" ><span id="container-name-{{ container.id }}"><i class="bi bi-arrow-down-square-fill pe-2" style="color: green;"></i>{{ container.friendly_name }}</span></div> 
-            <div class="d-flex flex-row justify-content-end">
-              <div>{% container_image container %}</div>
-        </div>
-	  </div>
-	</div>
-    </div>
-  </div><!-- card header -->
-  <div class="collapse" id="collapse-{{ container.id }}">
-    <div class="card card-body">
-      <p class="card-text"><strong>Information:</strong>
+{# the environment cards, buttonbar is shown on mouse over #}
+<div
+  class="bg-image card shadow-1-strong border border-3 mb-3 border-warning"
+  style="background-image: url('{% static 'container.jpeg' %}'); max-width: 560px; height: 300px"
+>
+{{ container.running }}
+  <input type="hidden" id="container-shown-{{ container.id }}" value="true">
+  <input type="hidden" id="container-search-{{ container.id }}" value="{{ container.search }}">
+  <div class="card-header bg-secondary bg-opacity-75 border-bottom border-warning border-1 border-opacity-50" id="click-containerhead-{{ container.id }}">
+    <h5 class="card-title fw-bold" >{{ container.friendly_name }}</h5> {# FIXME: onclick change cursor, and open if running #}
+  </div>
+    <div class="card-body text-dark fw-bold" id="click-containerbody-{{ container.id }}">
+      <p class="card-text"><strong class="me-2">Info:</strong>
+          {% container_image container %}
+	  {% ifempty container %}
 	  {% projects projects=container.projects %}
 	  {% courses courses=container.courses %}
+	  {% volumes volumes=container.volumes %}
 	  {% attachments attachments=container.attachments %}
-	  
-	  {% if container.report %}
-	  <span class="badge rounded-pill bg-secondary" aria-hidden="true" data-bs-toggle="tooltip" 
-		title="Report service environment for {{ container.report.name }}"
-                data-placement="top"><i class="oi oi-graph"></i> {{container.report.name}}</span>
-          {% elif container.projects|length == 0 and container.courses|length == 0 %}
-	  <span class="badge rounded-pill bg-warning"><i class="oi oi-warning"></i>
-            Not bound to any projects, courses or report.
-          </span>
-          {% endif %}
-          {% if container.synced_libraries|length > 0 %}
-            <span class="badge rounded-pill bg-dark" aria-hidden="true" data-bs-toggle="tooltip" title="Synchron folders:
-{% for l in container.synced_libraries %}
-{{ l.library_name }} from server {{ l.token.syncserver.url }}
-{% endfor %}" data-placement="top"><i class="ri-refresh-fill"></i> {{container.synced_libraries|length}}</span>
-          {% endif %}
-          {% if container.repos|length > 0 %}
-            <span class="badge rounded-pill bg-dark" aria-hidden="true" data-bs-toggle="tooltip" title="Version control repositories:
-{% for r in container.repos %}
-{{ r.project_name }} from server {{ r.token.repository.url }}
-{% endfor %}" data-placement="top"><i class="ri-git-repository-line"></i> {{container.repos|length}}</span>
-          {% endif %}
-          {% if container.volumes|length > 0 %}
-            <span class="badge rounded-pill bg-dark" aria-hidden="true" data-bs-toggle="tooltip" title="Volumes:
-{% for v in container.volumes %}
-{{ v }} ({{ v.description }})
-{% endfor %}" data-placement="top"><i class="ri-database-2-line"></i> {{container.volumes|length}}</span>
-          {% endif %}
+	  {% report container.report %} {# FIXME: handle report and other images in the same list #}
+	  {% synchfolders container %}  {# FIXME: check implementation when seafile integrated #}
+	  {% repos container %}         {# FIXME: check implementation when gitea integrated #}
       </p>
+    <p class="card-text">
       {% container_restart_reason container %}
-      {% container_last_message container %}
-    </div>
-    <div class="card card-footer">
-      <div class="container-fluid">
-        <div class="d-flex flex-row justify-content-between">
-          <div class="d-flex flex-row justify-content-start">
-	    <div>{% button_start_open container next_page="container:list" %}</div>
-	    <div class="ms-2">{% button_restart container next_page="container:list" %}</div>
-	    <div class="ms-2">{% button_stop container next_page="container:list" %}</div>
-            <div class="ms-2">{% button_refreshlog container next_page="container:list" %}</div>
-	    <div class="ms-2">{% button_configure container %}</div>
-          </div>
-          <div class="d-flex flex-row justify-content-end">
-          {% if not container.report %}
-            <div>{% button_delete_container container next_page="container:list" %}</div>
-          {% endif %}
-          </div>
+      {# FIXME: render part of it, if there is room % container_last_message container % #}
+    </p>
+  </div>
+  <div class="card-footer bg-secondary bg-opacity-75 border-bottom border-warning border-1 border-opacity-50i d-none" id="buttonbar-{{ container.id }}">
+    <div class="container-fluid">
+      <div class="d-flex flex-row justify-content-between">
+        <div class="d-flex flex-row justify-content-start">
+          <div>{% button_start_open container %}</div>
+          <div class="ms-2">{% button_restart container %}</div>
+          <div class="ms-2">{% button_stop container %}</div>
+          <div class="ms-2">{% button_refreshlog container modal_prefix="containerInfoModal-" %}</div>
+          <div class="ms-2">{% button_configure container %}</div>
         </div>
+        <div class="d-flex flex-row justify-content-end">
+          <div>{% button_delete_container container next_page="container:list" %}</div> {# FIXME: no need for the next_page here #}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# a modal to visit container logs #}
+<div class="modal fade" id="containerInfoModal-{{ container.id }}" tabindex="-1" aria-labelledby="containerInfoModal-{{ container.id }}" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ container.friendly_name }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="card-text" id="container-summary-{{ container.id }}">Retrieving information...</p>
+        <p class="card-text bg-secondary overflow-scroll" style="max-height: 500px;" id="container-log-{{ container.id }}">Be patient...</p>
+	</p>
+      </div>
+      <div class="modal-footer">
+	{# refresh button #}
+	{# FIXME: add a progressbar to show how much time is left #}
+        {% button_refreshlog container %}
       </div>
     </div>
   </div>
