@@ -74,29 +74,27 @@ function so() {
   //console.log(containerSocket);
   containerSocket.onmessage = function(e) {
     const data = JSON.parse(e.data);
-    console.log('SOCK raw');
-    console.log(data);
+    //console.log(data);
     var command = data['command'];
     var msg = data['message'];
     var containerid = data['container-id'];
     //console.log('SOCK: --> ' + command + ": " + msg);
     if (command == 'container-log') {
       var widget_msg = $("#container-summary-" + containerid);
-      var widget_log = $("#container-log-" + containerid);
+      var widget_log = $("#container-logmessage-" + containerid);
       widget_msg.text(msg);
       widget_log.text(data['podlog']);
       console.log(containerid + " -> " + msg);
       setTimeout(function() {
         spinner_state('log', containerid, true);
-      }, 5000); // after the model is updated we waith for some time before we reenable refresh log button
+      }, 2500); // after the model is updated we waith for some time before we reenable refresh log button
+    } else if (command == 'feedback') {
+      feedback(data['message']);
     }
     if (data['state'] == 'np') { //FIXME: Container.ST_NOTPRESENT
       buttons_np(containerid);
     } if (data['state'] == 'run') { //FIXME: Container.ST_RUNNING
       buttons_op(containerid);
-    }
-    if (command == 'feedback') {
-      feedback(data['message']);
     }
   };
   return containerSocket;

@@ -4,14 +4,14 @@
 
 {# the environment cards, buttonbar is shown on mouse over #}
 <div
-  class="bg-image card shadow-1-strong border border-3 mb-3 border-warning"
-  style="background-image: url('{% static 'container.jpeg' %}'); max-width: 560px; height: 300px"
+  class="bg-image card shadow-1-strong border border-2 mb-3 border-warning"
+  style="background-image: url('{% static 'dockercontainerbg.jpg' %}'); max-width: 560px; height: 300px; background-color: #2a69a833; background-blend-mode: color-burn; background-size: cover;"
 >
 {{ container.running }}
   <input type="hidden" id="container-shown-{{ container.id }}" value="true">
   <input type="hidden" id="container-search-{{ container.id }}" value="{{ container.search }}">
   <div class="card-header bg-secondary bg-opacity-75 border-bottom border-warning border-1 border-opacity-50" id="click-containerhead-{{ container.id }}">
-    <h5 class="card-title fw-bold" >{{ container.friendly_name }}</h5> {# FIXME: onclick change cursor, and open if running #}
+    <h5 class="card-title fw-bold" >{{ container.friendly_name }}</h5>
   </div>
     <div class="card-body text-dark fw-bold" id="click-containerbody-{{ container.id }}">
       <p class="card-text"><strong class="me-2">Info:</strong>
@@ -30,7 +30,7 @@
       {# FIXME: render part of it, if there is room % container_last_message container % #}
     </p>
   </div>
-  <div class="card-footer bg-secondary bg-opacity-75 border-bottom border-warning border-1 border-opacity-50i d-none" id="buttonbar-{{ container.id }}">
+  <div class="card-footer bg-secondary bg-opacity-35 border-bottom border-warning border-1 border-opacity-50i d-none" id="buttonbar-{{ container.id }}">
     <div class="container-fluid">
       <div class="d-flex flex-row justify-content-between">
         <div class="d-flex flex-row justify-content-start">
@@ -58,12 +58,11 @@
       </div>
       <div class="modal-body">
         <p class="card-text" id="container-summary-{{ container.id }}">Retrieving information...</p>
-        <p class="card-text bg-secondary overflow-scroll" style="max-height: 500px;" id="container-log-{{ container.id }}">Be patient...</p>
+        <p class="card-text bg-secondary overflow-scroll" style="max-height: 500px;" id="container-logmessage-{{ container.id }}">Be patient...</p>
 	</p>
       </div>
       <div class="modal-footer">
 	{# refresh button #}
-	{# FIXME: add a progressbar to show how much time is left #}
         {% button_refreshlog container %}
       </div>
     </div>

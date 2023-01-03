@@ -11,7 +11,7 @@ def ifempty(container):
     if container.projects or container.courses or hasattr(container, "report"):
         return ""
     return format_html("""
-<span class="badge rounded-pill bg-warning text-dark" data-bs-toggle="tooltip" 
+<span class="badge rounded-pill bg-warning " data-bs-toggle="tooltip" 
       title="This environment is not bound to any projects, courses or reports yet"
       data-placement="bottom"><i class="oi oi-warning"></i>empty</span>
     """)
@@ -33,7 +33,7 @@ def container_image(container_or_image):
       title="Environment {container.friendly_name} is running fine"><i class="ri-image-2-line"></i>&nbsp; {i}</span>
         """)
     else:
-        return format_html(f"""<span class="badge rounded-pill bg-secondary text-dark"><i class="ri-image-2-line"></i>&nbsp; {i}</span>""")
+        return format_html(f"""<span class="badge rounded-pill bg-secondary "><i class="ri-image-2-line"></i>&nbsp; {i}</span>""")
 
 
 @register.simple_tag
@@ -135,7 +135,7 @@ def button_start_open(container):
     link = reverse('container:open', args = [container.id])
     return format_html(f"""
 <button name="container-start" value="{container.id}" role="button" 
-        class="btn btn-success btn-sm text-dark" 
+        class="btn btn-success btn-sm " 
         data-toggle="tooltip" title="Start environment {container.name}"
 >
   <span id="container-start-{container.id}" class="bi bi-lightning {o}" aria-hidden="true"></span>
@@ -150,7 +150,7 @@ def button_start_open(container):
 def button_stop(container):
     return format_html(f"""
 <button name="container-stop" value="{container.id}" role="button" 
-        class="btn btn-danger btn-sm text-dark" 
+        class="btn btn-danger btn-sm " 
         data-toggle="tooltip" title="Stop environment {container.name}"
 >
   <span id="container-stop-{container.id}" class="bi bi-x-lg" aria-hidden="true"></span>
@@ -186,8 +186,9 @@ def button_refreshlog(container, modal_prefix = None):
     return format_html(f"""
 <button name="container-log" value="{container.id}" role="button" class="btn btn-warning btn-sm mb-1" 
         data-toggle="tooltip" title="Click to retrieve latest container logs" data-placement="bottom" disabled>
+        <span id="container-log-{container.id}" class="bi bi-patch-question d-none" aria-hidden="true"></span>
         <span id="spinner-log-{container.id}" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-        <span id="container-log-{container.id}" class="bi bi-patch-question d-none" aria-hidden="true"></span></button>
+</button>
     """)
 
 
