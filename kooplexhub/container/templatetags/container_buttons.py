@@ -117,10 +117,10 @@ def container_restart_reason(container):
 
 
 @register.simple_tag
-def button_delete_container(container, next_page):
+def button_delete_container(container):
     if hasattr(container, "report"):
         return ""
-    link = reverse('container:destroy', args = [container.id, next_page])
+    link = reverse('container:destroy', args = [container.id])
     msg = f"Are you sure you want to drop your container {container}?"
     return format_html(f"""
 <div class="float-end">

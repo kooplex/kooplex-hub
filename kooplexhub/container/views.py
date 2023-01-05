@@ -53,7 +53,7 @@ class NewContainerView(LoginRequiredMixin, generic.FormView):
 
 
 @login_required
-def destroy(request, container_id, next_page):
+def destroy(request, container_id):
     """Deletes a container instance"""
     user = request.user
     try:
@@ -63,7 +63,7 @@ def destroy(request, container_id, next_page):
         messages.info(request, f'Your environment {container.friendly_name} is deleted.')
     except Container.DoesNotExist:
         messages.error(request, 'Container environment does not exist')
-    return redirect(next_page)
+    return redirect('container:list')
 
 
 class ContainerListView(LoginRequiredMixin, generic.ListView):
@@ -270,7 +270,7 @@ def configure_save(request):
     cpurequest_before = svc.cpurequest
     default_cpu = KOOPLEX.get('kubernetes').get('resources').get('requests').get('cpu')
     cpurequest_after = float(request.POST.get('cpurequest') if request.POST.get('cpurequest')  else default_cpu)
-    if cpurequest_before != cpurequest_after:
+    if float(cpurequest_before) != float(cpurequest_after):
         svc.cpurequest = cpurequest_after
         svc.save()
         msg = f'Number of requested CPUs has been changed from {cpurequest_before} to {cpurequest_after}'
@@ -280,8 +280,8 @@ def configure_save(request):
     # handle gpurequest change
     gpurequest_before = svc.gpurequest
     default_gpu = KOOPLEX.get('kubernetes').get('resources').get('requests').get('nvidia.com/gpu')
-    gpurequest_after = float(request.POST.get('gpurequest') if request.POST.get('gpurequest')  else default_gpu)
-    if gpurequest_before != gpurequest_after:
+    gpurequest_after = int(request.POST.get('gpurequest') if request.POST.get('gpurequest')  else default_gpu)
+    if int(gpurequest_before) != int(gpurequest_after):
         svc.gpurequest = gpurequest_after
         svc.save()
         msg = f'Number of requested GPUs has been changed from {gpurequest_before} to {gpurequest_after}'
@@ -292,7 +292,7 @@ def configure_save(request):
     memoryrequest_before = svc.memoryrequest
     default_memory = KOOPLEX.get('kubernetes').get('resources').get('requests').get('memory')
     memoryrequest_after = float(request.POST.get('memoryrequest') if request.POST.get('memoryrequest')  else default_memory)
-    if memoryrequest_before != memoryrequest_after:
+    if float(memoryrequest_before) != float(memoryrequest_after):
         svc.memoryrequest = memoryrequest_after
         svc.save()
         msg = f'The requested amount of memory has been changed from {memoryrequest_before} to {memoryrequest_after}'
@@ -311,84 +311,84 @@ def configure_save(request):
     return redirect('container:list')
 
 
-@login_required
-def start(request, container_id, next_page):
-    """Starts the container."""
-    user = request.user
-
-    try:
-        svc = Container.objects.get(user = user, id = container_id)
-        if svc.state == Container.ST_NOTPRESENT:
-            if svc.start().wait(timeout = 10):
-                messages.info(request, f'Service {svc.name} is started.')
-            else:
-                messages.warning(request, f'Service {svc.name} did not start within 10 seconds, reload the page later to check if it is already ready.')
-        elif svc.state == Container.ST_STOPPING:
-            messages.warning(request, f'Wait a second service {svc.name} is still stopping.')
-        elif svc.state == Container.ST_STARTING:
-            messages.warning(request, f'Wait a second service {svc.name} is starting.')
-        else:
-            messages.warning(request, f'Not starting service {svc.name}, which is already running.')
-    except Container.DoesNotExist:
-        messages.error(request, 'Service environment does not exist')
-    except Exception as e:
-        logger.error(f'Cannot start the environment {svc} -- {e}')
-        messages.error(request, f'Cannot start service environment {e}')
-    return redirect(next_page)
-
-
-def _get_cookie(request):
-    try:
-        cv = request.COOKIES.get('show_container', '[]')
-        return set( json.loads( cv.replace('%5B', '[').replace('%2C', ',').replace('%5D', ']') ) )
-    except Exception:
-        logger.error('stupid cookie value: {cv}')
-        return set()
-
-
-#FIXME: websocket takes over
-@login_required
-def stop(request, container_id, next_page):
-    """Stops a container"""
-    user = request.user
-    try:
-        svc = Container.objects.get(user = user, id = container_id)
-        if svc.stop().wait(timeout = 10):
-            messages.info(request, f'Service {svc.name} is stopped.')
-        else:
-            messages.warning(request, f'Service {svc.name} did not stop within 10 seconds, reload the page later to recheck its state.')
-    except Container.DoesNotExist:
-        messages.error(request, 'Environment does not exist')
-    except Exception as e:
-        logger.error(f'Cannot stop the environment {svc} -- {e}')
-        messages.error(request, f'Cannot stop environment {e}')
-    redirection = redirect(next_page)
-    shown = _get_cookie(request)
-    if svc.id in shown:
-        shown.remove( svc.id )
-    redirection.set_cookie('show_container', json.dumps( list(shown) ))
-    return redirection
-
-
-@login_required
-def restart(request, container_id, next_page):
-    """Restart a container"""
-    user = request.user
-    try:
-        svc = Container.objects.get(user = user, id = container_id)
-        ev = svc.restart()
-        if ev.wait(timeout = 10):
-            messages.info(request, f'Service {svc.name} is restarted.')
-        else:
-            messages.warning(request, f'Service {svc.name} was stopped and it did not start within 10 seconds, reload the page later to recheck its state.')
-    except Container.DoesNotExist:
-        messages.error(request, 'Environment does not exist')
-    except Exception as e:
-        logger.error(f'Cannot restart the environment {svc} -- {e}')
-        messages.error(request, f'Cannot restart environment: {e}')
-    return redirect(next_page)
-
-
+#DEPRECATED @login_required
+#DEPRECATED def start(request, container_id, next_page):
+#DEPRECATED     """Starts the container."""
+#DEPRECATED     user = request.user
+#DEPRECATED 
+#DEPRECATED     try:
+#DEPRECATED         svc = Container.objects.get(user = user, id = container_id)
+#DEPRECATED         if svc.state == Container.ST_NOTPRESENT:
+#DEPRECATED             if svc.start().wait(timeout = 10):
+#DEPRECATED                 messages.info(request, f'Service {svc.name} is started.')
+#DEPRECATED             else:
+#DEPRECATED                 messages.warning(request, f'Service {svc.name} did not start within 10 seconds, reload the page later to check if it is already ready.')
+#DEPRECATED         elif svc.state == Container.ST_STOPPING:
+#DEPRECATED             messages.warning(request, f'Wait a second service {svc.name} is still stopping.')
+#DEPRECATED         elif svc.state == Container.ST_STARTING:
+#DEPRECATED             messages.warning(request, f'Wait a second service {svc.name} is starting.')
+#DEPRECATED         else:
+#DEPRECATED             messages.warning(request, f'Not starting service {svc.name}, which is already running.')
+#DEPRECATED     except Container.DoesNotExist:
+#DEPRECATED         messages.error(request, 'Service environment does not exist')
+#DEPRECATED     except Exception as e:
+#DEPRECATED         logger.error(f'Cannot start the environment {svc} -- {e}')
+#DEPRECATED         messages.error(request, f'Cannot start service environment {e}')
+#DEPRECATED     return redirect(next_page)
+#DEPRECATED 
+#DEPRECATED 
+#DEPRECATED def _get_cookie(request):
+#DEPRECATED     try:
+#DEPRECATED         cv = request.COOKIES.get('show_container', '[]')
+#DEPRECATED         return set( json.loads( cv.replace('%5B', '[').replace('%2C', ',').replace('%5D', ']') ) )
+#DEPRECATED     except Exception:
+#DEPRECATED         logger.error('stupid cookie value: {cv}')
+#DEPRECATED         return set()
+#DEPRECATED 
+#DEPRECATED 
+#DEPRECATED #FIXME: websocket takes over
+#DEPRECATED @login_required
+#DEPRECATED def stop(request, container_id, next_page):
+#DEPRECATED     """Stops a container"""
+#DEPRECATED     user = request.user
+#DEPRECATED     try:
+#DEPRECATED         svc = Container.objects.get(user = user, id = container_id)
+#DEPRECATED         if svc.stop().wait(timeout = 10):
+#DEPRECATED             messages.info(request, f'Service {svc.name} is stopped.')
+#DEPRECATED         else:
+#DEPRECATED             messages.warning(request, f'Service {svc.name} did not stop within 10 seconds, reload the page later to recheck its state.')
+#DEPRECATED     except Container.DoesNotExist:
+#DEPRECATED         messages.error(request, 'Environment does not exist')
+#DEPRECATED     except Exception as e:
+#DEPRECATED         logger.error(f'Cannot stop the environment {svc} -- {e}')
+#DEPRECATED         messages.error(request, f'Cannot stop environment {e}')
+#DEPRECATED     redirection = redirect(next_page)
+#DEPRECATED     shown = _get_cookie(request)
+#DEPRECATED     if svc.id in shown:
+#DEPRECATED         shown.remove( svc.id )
+#DEPRECATED     redirection.set_cookie('show_container', json.dumps( list(shown) ))
+#DEPRECATED     return redirection
+#DEPRECATED 
+#DEPRECATED 
+#DEPRECATED @login_required
+#DEPRECATED def restart(request, container_id, next_page):
+#DEPRECATED     """Restart a container"""
+#DEPRECATED     user = request.user
+#DEPRECATED     try:
+#DEPRECATED         svc = Container.objects.get(user = user, id = container_id)
+#DEPRECATED         ev = svc.restart()
+#DEPRECATED         if ev.wait(timeout = 10):
+#DEPRECATED             messages.info(request, f'Service {svc.name} is restarted.')
+#DEPRECATED         else:
+#DEPRECATED             messages.warning(request, f'Service {svc.name} was stopped and it did not start within 10 seconds, reload the page later to recheck its state.')
+#DEPRECATED     except Container.DoesNotExist:
+#DEPRECATED         messages.error(request, 'Environment does not exist')
+#DEPRECATED     except Exception as e:
+#DEPRECATED         logger.error(f'Cannot restart the environment {svc} -- {e}')
+#DEPRECATED         messages.error(request, f'Cannot restart environment: {e}')
+#DEPRECATED     return redirect(next_page)
+#DEPRECATED 
+#DEPRECATED 
 @login_required
 def open(request, container_id):
     """Opens a container"""
@@ -413,5 +413,5 @@ def open(request, container_id):
     except Exception as e:
         logger.error(f'cannot redirect to url {container.url_public} -- {e}')
         messages.error(request, f'Cannot redirect to url {container.url_public}')
-    return redirect(next_page)
+    return redirect('container:list')
 

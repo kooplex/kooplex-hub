@@ -41,6 +41,8 @@ ALLOWED_HOSTS = [
     DOMAIN,
         ]
 
+SERVERNAME=""
+FQDN="https://"+SERVERNAME
 FQDN=""
 FQDN_AUTH=""
 URL_MANUAL="https://xwiki.vo.elte.hu/en/kooplex-manual"
@@ -283,30 +285,36 @@ KOOPLEX = {
         'url_report': os.path.join(FQDN,'{url_tag}/{report.id}/{report.indexfile}'),
     },
     'kubernetes': {
-        'namespace': '',
-        'jobsnamespace': '',
+        'namespace': 'k8plex-test',
+        'jobsnamespace': 'k8plex-test-jobs',
+        'nslcd': { 'mountPath_nslcd': '/etc/mnt' },
         'kubeconfig_job': 'kubejobsconfig', 
         'imagePullPolicy': 'Always',
-        'nslcd': {
-            'mountPath_nslcd': '/etc/mnt'
-        },
-        'nodeSelector_k8s': { "kubernetes.io/hostname": "" },
-#        'nodeSelector_k8s': { "nodetype": "worker" },
         'resources': {
-            "requests": { "cpu": "150m", "memory": "150Mi" },
-            "limits": { "cpu": "500m", "memory": "7Gi" },
+            "requests": {
+              "cpu": 0.2,
+              "nvidia.com/gpu": 0,
+              "memory": 0.4
+            },
+            "limits": {
+              "cpu": 5,
+              "nvidia.com/gpu": 0,
+              "memory": 28
+            },
         },
+        'nodeSelector_k8s': { "kubernetes.io/hostname": "kubelet1-onco2" },
+        #'nodeSelector_k8s': { "kubernetes.io/hostname": "veo1" },
         'userdata': {
-            'claim': 'pvc-userdata',
-            # USERDATA
-            'claim-home': 'pvc-home',
-            'claim-garbage': 'pvc-garbage',
+            'claim': 'userdata',
+            #USER
+            'claim-home': 'home',
+            'claim-garbage': 'garbage',
             'subPath_home': '{user.username}',
             'mountPath_home': '/v/{user.username}',
             'subPath_garbage': '{user.username}',
             'mountPath_garbage': '/v/garbage',
-            'claim-scratch': 'pvc-scratch',
-            'mountPath_scratch': '/v/scratch/',
+            'claim-scratch': 'scratch',
+            'mountPath_scratch': '/v/scratch',
             'subPath_scratch': '{user.username}',
             #PROJECT
             'claim-project': 'project',
@@ -315,15 +323,15 @@ KOOPLEX = {
             'subPath_report_prepare': 'report_prepare/{project.subpath}',
             'mountPath_report_prepare': '/v/report_prepare/{project.subpath}',
             #REPORT
-            'claim-report': 'pvc-report',
-            'subPath_report': 'reports',
-            'mountPath_report': '/v/reports/{report.uniquename}',
+            'claim-report': 'report',
+            'subPath_report': '{report.id}',
+            'mountPath_report': '/v/reports/{report.project.subpath}-{report.folder}',
             #ATTACHMENT
             'claim-attachment': 'attachments',
             'subPath_attachment': '{attachment.folder}',
             'mountPath_attachment': '/v/attachments/{attachment.folder}',
             # EDU
-            'claim-edu': 'pvc-edu',
+            'claim-edu': 'edu',
             'mountPath_course_workdir': '/v/courses/{course.folder}',
             'subPath_course_workdir': 'course_workdir/{course.folder}/{user.username}',
             'mountPath_course_public': '/v/courses/{course.folder}.public',

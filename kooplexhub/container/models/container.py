@@ -58,11 +58,8 @@ class Container(models.Model):
     launched_at = models.DateTimeField(null = True, blank = True)
 
     state = models.CharField(max_length = 16, choices = ST_LOOKUP.items(), default = ST_NOTPRESENT)
-    # state_lastcheck_at = models.DateTimeField(default = None, null = True, blank = True)   #FIXME: to be introduced
-    restart_reasons = models.CharField(max_length = 512, null = True, blank = True)
-    last_message = models.CharField(max_length = 512, null = True)                       #FIXME: deprecated
-    last_message_at = models.DateTimeField(default = None, null = True, blank = True)    #FIXME: deprecated
-    log = models.TextField(max_length = 10512, null = True)                              #FIXME: deprecated
+    restart_reasons = models.CharField(max_length = 100, null = True, blank = True)
+    state_lastcheck_at = models.DateTimeField(default = None, null = True, blank = True)
     node = models.TextField(max_length = 64, null = True, blank = True)
     cpurequest = models.DecimalField(null = True, blank = True, decimal_places=1, max_digits=4, default="0.1")
     gpurequest = models.IntegerField(null = True, blank = True, default="0")
