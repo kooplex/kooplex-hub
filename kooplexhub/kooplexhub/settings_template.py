@@ -67,6 +67,8 @@ LOGOUT_REDIRECT_URL = 'indexpage'
 # Application definition
 
 INSTALLED_APPS = [
+        #python -m pip install -U channels["daphne"]
+    'daphne', #web socket framework
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -80,8 +82,13 @@ INSTALLED_APPS = [
     'hub',
     'container',
     'project',
+    'report',
     'education',
+    'volume',
+    'taggit',
 ]
+
+ASGI_APPLICATION = "kooplexhub.asgi.application"   #websocket
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
