@@ -217,17 +217,14 @@ def dropdown_start_open(bindings, ancestor, ancestor_type):
         items = ""
         for b in bindings:
             but_start_open = button_start_open(b.container)
-            but_stop = button_stop(b.container)
+            link = reverse('container:list')
             items += f"""
-  <span class="dropdown-item">
-    <div class="btn-group" role="group" aria-label="control buttons">
-      <span>
-        {but_start_open}
-        {but_stop}
-        {b.container.name}
-      </span>
+<span class="dropdown-item">
+  <div class="btn-group" role="group" aria-label="control buttons">
+    {but_start_open}
+    <a href="{link}" role="button" class="btn btn-secondary btn-sm"><span class="bi bi-boxes" aria-hidden="true"></span>{b.container.name}</a>
   </div>
-    </span>
+</span>
             """
         an = getattr(ancestor, ancestor_type).name
         return format_html(f"""
@@ -242,7 +239,7 @@ def dropdown_start_open(bindings, ancestor, ancestor_type):
         """)
     else:
         if ancestor_type == 'project':
-            link = '#'
+            link = reverse('project:autoaddcontainer', args = [ancestor.id])
         elif ancestor_type == 'course':
             link = reverse('education:autoaddcontainer', args = [ancestor.id])
         else:

@@ -28,33 +28,29 @@ class FormContainer(forms.Form):
             empty_label = 'Select image...',
             )
 
-    node = forms.CharField(
-            max_length = 200, required = False,
-            label = 'Node', #FIXME: when model refactored, ie friendly_name becomes name, it can be removed
-            help_text = _('Choose a node where to launch the environment. '), 
-            widget = forms.TextInput(attrs = {"data-intro": "#node"}) #FIXME: is it still used? was not it chardin
+    node = forms.ChoiceField(
+            required = False,
+            label = 'Node',
+            help_text = _('Choose a node where to launch the environment.'), 
             )
     
     cpurequest = forms.DecimalField(
             required = False,
-            label = 'CPU [#]', #FIXME: when model refactored, ie friendly_name becomes name, it can be removed
+            label = 'CPU [#]',
             help_text = _('Requested number of cpus for your container.'), 
-            widget = forms.NumberInput(attrs = {"data-intro": "#cpu"}), #FIXME: is it still used? was not it chardin
-            min_value=0.1, max_value=64)
+            min_value=0.1, max_value=1)
 
     gpurequest = forms.IntegerField(
             required = False,
-            label = 'GPU [#]', #FIXME: when model refactored, ie friendly_name becomes name, it can be removed
+            label = 'GPU [#]',
             help_text = _('Requested number of gpus for your container.'), 
-            widget = forms.NumberInput(attrs = {"data-intro": "#gpu"}), #FIXME: is it still used? was not it chardin
-            min_value=0, max_value=3)
+            min_value=0, max_value=0)
 
     memoryrequest = forms.DecimalField(
             required = False,
-            label = 'Memory [GB]', #FIXME: when model refactored, ie friendly_name becomes name, it can be removed
+            label = 'Memory [GB]',
             help_text = _('Requested memory for your container.'), 
-            widget = forms.NumberInput(attrs = {"data-intro": "#memory"}), #FIXME: is it still used? was not it chardin
-            min_value=0.1, max_value=256)
+            min_value=0.1, max_value=1)
 
     def descriptions(self):
         hidden = lambda i: f"""<input type="hidden" id="image-description-{i.id}" value="{i.description}">"""
@@ -63,13 +59,17 @@ class FormContainer(forms.Form):
 
     def __init__(self, *args, **kwargs):
         container = kwargs.pop('container', None)
+        nodes = kwargs.pop('nodes', None)
         if container:
-#            args = ({'friendly_name': container.friendly_name, 'image': container.image, 'name': 'dummy' }, )
-#            args = ({'friendly_name': container.friendly_name, 'image': container.image, 'node': container.node}, )
+#FIXME: can this piece of code be cleaner
             args = ({'friendly_name': container.friendly_name, 'image': container.image, 'node': container.node, 'cpurequest': container.cpurequest, 'gpurequest': container.gpurequest,'memoryrequest': container.memoryrequest }, )
         super(FormContainer, self).__init__(*args, **kwargs)
-#        if container:
-#            self.fields['name'].widget = forms.HiddenInput()
+        if nodes:
+            self.fields['node'].choices = [('', '')] + [ (x, x) for x in nodes ]
+            if container:
+                self.fields['node'].value = container.node
+        else:
+            self.fields['node'].widget = forms.HiddenInput()
         for field in self.fields:
             help_text = self.fields[field].help_text
             self.fields[field].help_text = None

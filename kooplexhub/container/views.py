@@ -22,6 +22,7 @@ from volume.models import Volume, VolumeContainerBinding
 from kooplexhub.lib import custom_redirect
 
 from kooplexhub import settings
+from .lib import Cluster
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +36,13 @@ class NewContainerView(LoginRequiredMixin, generic.FormView):
         context['menu_container'] = True
         context['submenu'] = 'new'
         return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        api = Cluster()
+        api.nodes_status()
+        kwargs['nodes'] = list(api.node_df['node'].values)
+        return kwargs
 
     def form_valid(self, form):
         logger.info(form.cleaned_data)

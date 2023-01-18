@@ -14,9 +14,9 @@ from channels.auth import AuthMiddlewareStack
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.security.websocket import AllowedHostsOriginValidator
 from django.core.asgi import get_asgi_application
-from django.urls import re_path
+from django.urls import re_path, path
 
-from container.consumers import ContainerConsumer
+from container.consumers import ContainerConsumer, MonitorConsumer
 from project.consumers import ProjectConsumer
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'kooplexhub.settings')
@@ -30,6 +30,7 @@ application = ProtocolTypeRouter({
         AuthMiddlewareStack(
             URLRouter([
                 re_path(r"hub/ws/container_environment/(?P<userid>\d+)/$", ContainerConsumer.as_asgi()),
+                path("hub/ws/node_monitor/", MonitorConsumer.as_asgi()),
                 re_path(r"hub/ws/project/(?P<userid>\d+)/$", ProjectConsumer.as_asgi()),
             ])
         )

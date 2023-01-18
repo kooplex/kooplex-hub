@@ -7,6 +7,7 @@ from channels.generic.websocket import WebsocketConsumer
 from container.models import Container
 
 from container.lib.kubernetes import CE_POOL
+from .lib import Cluster
 
 logger = logging.getLogger(__name__)
 
@@ -90,6 +91,30 @@ class ContainerConsumer(WebsocketConsumer):
             container = self.get_container(cid)
             resp.update({ 'state':  container.state })
             logger.debug(f"{c} {container} --> {resp}")
+            self.send(text_data = json.dumps(resp))
+
+
+class MonitorConsumer(WebsocketConsumer):
+    def connect(self):
+        self.accept()
+
+    def disconnect(self, close_code):
+        pass
+
+    def receive(self, text_data):
+        parsed = json.loads(text_data)
+        logger.debug(parsed)
+        command = parsed.get('command')
+        resp = {
+            'command': command,
+        }
+        if command == 'monitor-node':
+            node = parsed.get('node')
+            resp['node'] = node
+            api = Cluster(node)
+            api.resources_summary()
+            resp.update( api.get_data() )
+            logger.debug(f"fetch {node} -> {resp}")
             self.send(text_data = json.dumps(resp))
 
 
