@@ -12,7 +12,7 @@ from django.contrib.auth.models import User
 #from django.urls import reverse
 
 from .forms import FormProject, FormProjectWithContainer
-from .forms import TableShowhideProject, TableJoinProject, TableCollaborator, TableContainer
+from .forms import TableJoinProject, TableCollaborator, TableContainer
 from .models import Project, UserProjectBinding, ProjectContainerBinding
 from container.models import Container, AttachmentContainerBinding
 from volume.models import Volume, VolumeContainerBinding
@@ -101,82 +101,19 @@ class UserProjectBindingListView(LoginRequiredMixin, generic.ListView):
     context_object_name = 'userprojectbindinglist'
 
     def get_context_data(self, **kwargs):
-        l1 = reverse('project:new')
-        l2 = reverse('project:showhide')
+        l = reverse('project:new')
         context = super().get_context_data(**kwargs)
         context['submenu'] = 'list'
         context['menu_project'] = True
-        context['empty_title'] = "You have no visible projects"
-        context['empty_body'] = format_html(f"""You can <a href="{l1}"><i class="bi bi-bag-plus"></i><span>&nbsp;create a new</span></a> or you can <a href="{l2}"><i class="bi bi-eye"></i><span>&nbsp;manage visibility</span></a>.""")
+        context['empty_title'] = "You have no projects"
+        context['empty_body'] = format_html(f"""You can create a <a href="{l}"><i class="bi bi-bag-plus"></i><span>&nbsp;new project</span></a>.""")
+        context['n_hidden'] = len(context['object_list'].filter(is_hidden = True))
         return context
 
     def get_queryset(self):
         user = self.request.user
-        projectbindings = UserProjectBinding.objects.filter(user = user, is_hidden = False).order_by('project__name')
+        projectbindings = UserProjectBinding.objects.filter(user = user).order_by('project__name')
         return projectbindings
-
-
-@login_required
-def show(request, project_id):
-    """Unhide project from the list."""
-    logger.debug("project id %s, user %s" % (project_id, request.user))
-    try:
-        b = UserProjectBinding.objects.get(project__id = project_id, user = request.user, is_hidden = True)
-        b.is_hidden = False
-        b.save()
-    except UserProjectBinding.DoesNotExist:
-        messages.error(request, 'You cannot unhide the requested project.')
-    return redirect('project:list')
-
-
-@login_required
-def hide(request, project_id):
-    """Hide project from the list."""
-    logger.debug("project id %s, user %s" % (project_id, request.user))
-    try:
-        b = UserProjectBinding.objects.get(project__id = project_id, user = request.user, is_hidden = False)
-        b.is_hidden = True
-        b.save()
-    except UserProjectBinding.DoesNotExist:
-        messages.error(request, 'You cannot hide the requested project.')
-    return redirect('project:list')
-
-
-def show_hide(request):
-    user = request.user
-    userprojectbindings = UserProjectBinding.objects.filter(user = user)
-    if request.POST.get('button', '') == 'apply':
-        show_ids = list(map(int, request.POST.getlist('show')))
-        n_hide = 0
-        n_unhide = 0
-        for upb in userprojectbindings:
-            if upb.is_hidden and upb.id in show_ids:
-                upb.is_hidden = False
-                upb.save()
-                n_unhide += 1
-            elif not upb.is_hidden and not upb.id in show_ids:
-                upb.is_hidden = True
-                upb.save()
-                n_hide += 1
-        msgs = []
-        if n_hide:
-            msgs.append('%d projects are hidden.' % n_hide)
-        if n_unhide:
-            msgs.append('%d projects are unhidden.' % n_unhide)
-        if len(msgs):
-            messages.info(request, ' '.join(msgs))
-        return redirect('project:list')
-
-    table = TableShowhideProject(userprojectbindings, user = user)
-    l = reverse('project:new')
-    context_dict = { 
-        'menu_project': True, 
-        'submenu': 'showhide', 
-        't_project': table, 
-        'empty_title': "You do not have any projects to hide or show",
-        'empty_body': format_html(f"""<a href="{l}"><i class="bi bi-bag-plus"></i><span>&nbsp;Create</span></a> a new project."""),
-    }
-    return render(request, 'project_showhide.html', context = context_dict)
 
 
 @login_required

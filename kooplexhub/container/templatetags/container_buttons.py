@@ -109,7 +109,7 @@ def repos(container):
 def container_restart_reason(container):
     return format_html(f"""
 <p class="card-text">
-  <div class="alert alert-warning" role="alert">
+  <div class="alert alert-warning" style="height: 120px" role="alert">
     <strong>Needs restart:</strong> {container.restart_reasons}
   </div>
 </p>
@@ -212,39 +212,33 @@ def button_configure_attachment(attachment, user):
 
 
 @register.simple_tag
-def dropdown_start_open_stop(bindings, ancestor, ancestor_type, next_page):
+def dropdown_start_open(bindings, ancestor, ancestor_type):
     if len(bindings):
         items = ""
         for b in bindings:
             but_start_open = button_start_open(b.container)
             but_stop = button_stop(b.container)
-            but_refr = button_refreshlog(b.container)
-            but_restart = button_restart(b.container)
             items += f"""
-<li>
   <span class="dropdown-item">
     <div class="btn-group" role="group" aria-label="control buttons">
       <span>
         {but_start_open}
         {but_stop}
-        {but_refr}
-        {but_restart}
         {b.container.name}
       </span>
-    </span>
   </div>
-</li>
+    </span>
             """
         an = getattr(ancestor, ancestor_type).name
         return format_html(f"""
-<div class="dropdown" data-bs-toggle="tooltip" data-bs-placement="top" title="Service environments associated with {ancestor_type} {an}">
+<span class="dropdown" data-bs-toggle="tooltip" data-bs-placement="top" title="Service environments associated with {ancestor_type} {an}">
   <a class="btn btn-outline-secondary dropdown-toggle btn-sm" type="button" id="dc-svcs-{ancestor.id}" data-bs-toggle="dropdown" aria-expanded="false">
     <i class="oi oi-terminal"></i>&nbsp;{len(bindings)}
   </a>
   <ul class="dropdown-menu" aria-labelledby="dc-svcs-{ancestor.id}">
     {items}
   </ul>
-</div>
+</span>
         """)
     else:
         if ancestor_type == 'project':

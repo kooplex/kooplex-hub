@@ -1,84 +1,161 @@
 {% extends "project_layout.html" %}
 
-{% load static %}
-
+{% block head_content %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/css/bootstrap5-toggle.min.css" rel="stylesheet">
+<style>
+.form-control:focus {
+  border-color: gray;
+  box-shadow: inset 0 1px 1px gray, 0 0 8px gray;
+}
+</style>
+{% endblock %}
 
 {% block realcontent %}
-  
+{# the search bar #}
+{% if userprojectbindinglist %}
+<div class="card border border-light border-3 mx-5 mb-3 rounded-3">
+  <div class="input-group">
+    <div class="input-group-prepend">
+      <div class="input-group-text"><span class="bi bi-search"></span></div>
+    </div>
+    <input class="form-control" type="text" id="search_project" placeholder="Search project" title="Type in a name" autofocus >
+    {# toggler to narrow selection according to hidden #}
+    <div class="m-2 ms-3">
+      <input id="search_project_hidden" data-size="mini" data-width="50"
+             type="checkbox" data-toggle="toggle" name="search_hidden"
+             data-on="<span class='bi bi-eye'></span>"
+	     data-off="<span class='bi bi-eye-slash' id='hidden-counter'> {{n_hidden}}</span>"
+             data-onstyle="success" data-offstyle="secondary">
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{# render the project cards #}
 {% if userprojectbindinglist|length %}
-  <input class="form-control me-2 mb-3 mt-3" type="text" id="search_project" placeholder="Search project" title="Type in a name" autofocus>
-  <div id="projectListPane" >
+  <div class="row row-cols-1 row-cols-md-2">
     {% for upb in userprojectbindinglist %}
-    {% include 'project_partial_list.html' with next_page='project:list' project=upb.project projectcontainerbindings=upb.projectcontainerbindings is_admin=upb.is_admin %}
+      <div class="col" id="project-id-{{ upb.project.id }}">
+        {% include 'project_partial_list.html' with project=upb.project projectcontainerbindings=upb.projectcontainerbindings is_admin=upb.is_admin hidden=upb.is_hidden upb_id=upb.id %}
+      </div>
     {% endfor %}
   </div>
 {% else %}
   {% include 'empty.html' %}
 {% endif %}
+
 {% endblock %}
 
 {% block scripts %}
-<script>  
-$(document).ready(function() {
-  var uf = $.cookie("unfold_project");
-  if ( uf === undefined ) {
-    $.cookie("unfold_project", JSON.stringify([]), { 'path': '/', 'secure': true });
-    console.log('undefined');
-  } else {
-    $.each(JSON.parse(uf), function(index, value) {
-      console.log( value );
-      $("#collapse-" + value).collapse();
-    });
+<script>
+{# FIXME: onclick name open info #}
 
-  }
-});
-$("#search_project").keyup(function() {
-  var pattern = $( this ).val().toUpperCase();
-  console.log( "search: " + pattern );
-  $("span[id^='project-name-'").each(function() {
-    var projectid = $( this ).attr('id').split('-')[2];
-    var hide_it = true;
-    var card = $("#card-" + projectid);
-    if (pattern.length > 0) {
-      var name = $( this ).html().toUpperCase();
-      if ( name.indexOf(pattern) > -1 ) {
-        hide_it = false;
-      }
-    } else {
-      hide_it = false;
+{# open websocket #}
+function so() {
+  console.log('open socket...');
+  const projectSocket = new WebSocket(
+    'wss://k8plex-test.vo.elte.hu/hub/ws/project/{{ user.id }}/' //FIXME: server name hardcoded
+  );
+  projectSocket.onclose = function(e) {
+    console.error('Socket closed unexpectedly');
+  };
+  console.log(projectSocket);
+  projectSocket.onmessage = function(e) {
+    const data = JSON.parse(e.data);
+    console.log(data);
+    if (data['command'] == 'showhide') {
+        var pid = data['project-id'];
+        var hidden = data['hidden'];
+        $("#project-hidden-" + pid).val(hidden);
+        widget = $("#project-showhide-" + pid).children()[0]; // the only child is the span
+        $(widget).removeClass('bi-eye');
+        $(widget).removeClass('bi-eye-slash');
+        if (hidden) {
+          $(widget).addClass('bi-eye');
+	} else {
+          $(widget).addClass('bi-eye-slash');
+	}
+        $("#hidden-counter").text(' ' + data['hidden-count']);
+        set_visibility();
     }
-    if (hide_it) {
-      $( card ).hide();
+    //feedback(data['message']);
+  };
+  return projectSocket;
+};
+
+projectSocket = so();
+
+
+{# set visibility states for all cards #}
+function set_visibility() {
+  var disable_hide = B($( "#search_project_hidden" )[0].checked);
+  var pattern = $( "#search_project" ).val().length > 0;
+  // console.log( "set visibility", disable_hide, pattern);
+  $("div[id^=project-id-]").each(function() {
+    var pid = $( this ).attr("id").split("-", 3)[2];
+    var match = B($( "#project-match-" + pid ).val());
+    var hidden = B($( "#project-hidden-" + pid ).val());
+    var show_card = (match && pattern) || ((! pattern) && ((! hidden) || disable_hide));
+    if (show_card) {
+      $( this ).show();
     } else {
-      $( card ).show();
+      $( this ).hide();
     }
   });
-});
-$("div[data-bs-target^='#collapse-").mouseover(function() {
-  $(this).css("font-weight", "bold");
-  $(this).css("cursor", "pointer");
-});
-$("div[data-bs-target^='#collapse-").mouseout(function() {
-  $(this).css("font-weight", "normal");
-});
-$("div[data-bs-target^='#collapse-").click(function() {
-  var tgt = $(this).attr("data-bs-target");
-  var oid = tgt.split('-')[1];
-  console.log( tgt + "->" + oid );
-  setTimeout(function() {
-    var uf = JSON.parse( $.cookie("unfold_project") );
-    if ( $(tgt).hasClass('show') ) {
-      console.log('shown');
-      uf.push(oid);
+};
+
+{# my boolean converter #}
+function B(x) {
+  if (typeof x === 'boolean') {
+    return x;
+  }
+  if (typeof x === 'string') {
+    return Boolean(x == 'true') || Boolean(x == 'True');
+  }
+  console.log("fallback to unhandled type");
+  return Boolean(x);
+};
+
+{# whether to suppress is_hidden state of user project binding #}
+$("#search_project_hidden").change(function() {
+  set_visibility();
+}).change();                    // invoked just in case the page was reloaded for some reasons and to hide the necessary cards 
+
+{# search project by userinput #}
+//FIXME: when typing very fast we may sleep a while
+$("#search_project").keyup(function() {
+  var pattern = $( this ).val().toUpperCase();
+  // console.log( "search project: " + pattern );
+  $("input[id^=project-search-]").each(function() {
+    var pid = $( this ).attr("id").split("-", 3)[2];
+    var str = $( this ).val();
+    var match = $( "#project-match-" + pid );
+    if (pattern.length > 0) {
+      match.val( str.indexOf(pattern) > -1 ); // whether pattern is found
     } else {
-      console.log('collapsed');
-      uf.pop(oid);
+      match.val(true);                        // there are no patterns
     }
-    var clean = uf.filter(function(element, index, self){
-      return index === self.indexOf(element);
-    });
-    $.cookie("unfold_project", JSON.stringify(clean), { 'path': '/', 'secure': true });
-  }, 1000);
+  });
+  set_visibility();
+});
+
+
+{# show/hide button clicked #}
+$("a[id^=project-showhide-]").click(function() {
+  console.log( this );
+  var pid = $( this ).attr("id").split("-", 3)[2];
+  var cur_state = B($("#project-hidden-" + pid).val());
+  if (projectSocket.readyState != 1) {
+    console.log("Socket not open: " + projectSocket.readyState);
+    projectSocket = so();
+  }
+  projectSocket.send(JSON.stringify({
+    'command': 'showhide',
+    'project-id': pid,
+    'hidden': cur_state,
+  }));
 });
 </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/js/bootstrap5-toggle.min.js"></script>
 {% endblock %}
+

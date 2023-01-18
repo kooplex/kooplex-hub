@@ -3,52 +3,49 @@
 {% load check_show %}
 
 
-<div class="card bg-light border-secondary shadow mb-3" id="card-{{ project.id }}">
+<div class="card bg-light rounded rounded-pill mb-3" id="card-{{ project.id }}">
+  <input type="hidden" id="project-hidden-{{ project.id }}" value="{{ hidden }}">
+  <input type="hidden" id="project-search-{{ project.id }}" value="{{ project.search }}">
+  <input type="hidden" id="project-match-{{ project.id }}" value="true">
   <div class="card-header">
-    <div class="container-fluid">
-      <div class="d-flex flex-row">
-        <div class="d-flex flex-row justify-content-start" style="width:2%">
-          <div>{% dropdown_start_open_stop bindings=projectcontainerbindings ancestor=upb ancestor_type='project' next_page='project:list' %}</div>
-        </div>
-	  <div class="ms-5 d-flex flex-row justify-content-between" 
-	       style="width:97%" 
-               data-bs-toggle="collapse" data-bs-target="#collapse-{{ project.id }}" aria-expanded="false" aria-controls="collapse-{{ project.id }}">
-           <div class="d-flex flex-row justify-content-start" ><span id="project-name-{{ project.id }}"><i class="bi bi-arrow-down-square-fill pe-2" style="color: green;"></i>{{ project.name }}</span></div> 
-            <div class="d-flex flex-row justify-content-end">
-              <div>{% icon_collaborator project user %}</div>
-              <div class="ms-3">{% scope project %}</div>
-          </div>
-	  </div>
-	</div>
-    </div>
-  </div><!-- card header -->
-  <div class="collapse" id="collapse-{{ project.id }}">
-    <div class="card card-body">
-      {% if project.creator != user %}
-        <p class="card-text"><strong>Creator:</strong> {{ project.creator.profile.name_and_username }}</p>
-      {% endif %}
-      <p class="card-text"><strong>Description:</strong> {{ project.description }}</p>
-      <p class="card-text"><strong>Collaborators:</strong> {% list_collaborator project user %}</p>
-      <p class="card-text"><strong>Folder:</strong> {{ project.subpath }}</p>
-      <p class="card-text">
-      {# fixme hoe report button is rendered #}
-        {% include 'reports_button.html' %}
-      </p>
-    </div>
-    <div class="card card-footer" >
-      <div class="container-fluid">
-        <div class="d-flex flex-row justify-content-between">
-          <div class="d-flex flex-row justify-content-start">
-	    <div>{% button_project_conf project enabled=is_admin %}</div>
-          </div>
-          <div class="d-flex flex-row justify-content-end">
-	    <div>{% button_project_hide project %}</div>
-	    <div class="ms-2">{% button_project_delete project %}</div>
-          </div>
-        </div>
+    <div class="row">
+      <div class="col-4"> {# FIXME: fine tune column width based on spect ratio/device size #}
+        {% dropdown_start_open bindings=projectcontainerbindings ancestor=upb ancestor_type='project' %}{# FIXME: why not just the containers are handed over? #}
+	{% button_project_hide project hidden %}
+	{% button_project_conf project enabled=is_admin %}
+        <button data-bs-toggle="modal"  data-bs-target="#projectInfoModal-{{ project.id }}" role="button" class="btn btn-warning btn-sm mb-1" ><span class="bi bi-info-square" aria-hidden="true" data-toggle="tooltip" title="Click for more info" data-placement="top" ></span></button>
+	{% scope project %}
+        {% icon_collaborator project user %}
+      </div>
+      <div class="col-8">
+        <div class="card-title fw-bold h5 pt-1">{{ project.name }}</div>
       </div>
     </div>
   </div>
 </div>
 
+<div class="modal fade" id="projectInfoModal-{{ project.id }}" tabindex="-1" aria-labelledby="projectInfoModal-{{ project.id }}" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ project.name }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        {% if project.creator != user %}
+          <p class="card-text"><strong>Creator:</strong> {{ project.creator.profile.name_and_username }}</p>
+        {% endif %}
+        <p class="card-text"><strong>Description:</strong> {{ project.description }}</p>
+        <p class="card-text"><strong>Collaborators:</strong> {% list_collaborator project user %}</p>
+        <p class="card-text"><strong>Folder:</strong> {{ project.subpath }}</p>
+      </div>
+      <div class="modal-footer">
+	{% dropdown_start_open bindings=projectcontainerbindings ancestor=upb ancestor_type='project' %} {# FIXME: why not just the containers are handed over? #}
+	{% button_project_conf project enabled=is_admin %}
+        {% include 'reports_button.html' %}
+	{% button_project_delete project %}
+      </div>
+    </div>
+  </div>
+</div>
 

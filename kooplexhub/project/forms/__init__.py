@@ -1,2 +1,2 @@
 from .project import FormProject, FormProjectWithContainer
-from .tables import TableShowhideProject, TableJoinProject, TableCollaborator, TableContainer
+from .tables import TableJoinProject, TableCollaborator, TableContainer

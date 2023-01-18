@@ -11,18 +11,23 @@ register = template.Library()
 def scope(project):
     if project.scope == project.SCP_PRIVATE:
         return format_html(f"""
-<i class="oi oi-key h6" aria-hidden="true" data-bs-toggle="tooltip" title="Private project" data-placement="top"></i>
+<i class="oi oi-key ms-1" aria-hidden="true" data-bs-toggle="tooltip" title="Private project" data-placement="top"></i>
         """)
     else:
         return format_html(f"""
-<i class="oi oi-cloud h6" aria-hidden="true" data-bs-toggle="tooltip" title="Public project" data-placement="top"></i>
+<i class="oi oi-cloud ms-1" aria-hidden="true" data-bs-toggle="tooltip" title="Public project" data-placement="top"></i>
         """)
 
 
 @register.simple_tag
 def icon_collaborator(project, user):
     upbs = project.userprojectbindings
-    return format_html(f"""<i class="oi oi-people"></i>: {len(upbs)-1}""") if len(upbs) > 1 else ""
+    c = "Collaborators: " + ", ".join([ f"{upb.user.first_name} {upb.user.last_name}" for upb in upbs if upb.user != user ])
+    return format_html(f"""
+<span aria-hidden="true" data-toggle="tooltip" title="{c}" data-placement="bottom">
+  <i class="oi oi-people ms-1"></i>: {len(upbs)-1}
+</span>
+    """) if len(upbs) > 1 else ""
 
 
 @register.simple_tag
@@ -49,10 +54,15 @@ def button_project_conf(project, enabled):
 
 
 @register.simple_tag
-def button_project_hide(project):
-    link = reverse('project:hide', args = [ project.id ])
+def button_project_hide(project, hidden):
+    if hidden:
+        tooltip = f'You can unhide {project.name} to show in your your list.'
+        icon = 'bi bi-eye'
+    else:
+        tooltip = f'You can hide {project.name} from your list.'
+        icon = 'bi bi-eye-slash'
     return format_html(f"""
-<a href="{link}" role="button" class="btn btn-secondary btn-sm"><span class="oi oi-eye" aria-hidden="true" data-toggle="tooltip" title="You can hide {project.name} from your list." data-placement="top"></span></a>
+<a href="#" id="project-showhide-{project.id}" role="button" class="btn btn-secondary btn-sm"><span class="{icon}" aria-hidden="true" data-toggle="{tooltip}" title="" data-placement="top"></span></a>
     """)
 
 

@@ -36,6 +36,9 @@ class Project(models.Model):
         return self.description[:17] + "..." if self.description_is_long else self.description
     #####
 
+    @property
+    def search(self):
+        return f"{self.name.upper()} {self.description.upper()} {self.subpath.upper()}"
 
     @property
     def creator(self):

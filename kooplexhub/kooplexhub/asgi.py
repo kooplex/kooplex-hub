@@ -14,8 +14,10 @@ from channels.auth import AuthMiddlewareStack
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.security.websocket import AllowedHostsOriginValidator
 from django.core.asgi import get_asgi_application
+from django.urls import re_path
 
-import container.routing
+from container.consumers import ContainerConsumer
+from project.consumers import ProjectConsumer
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'kooplexhub.settings')
 
@@ -25,6 +27,11 @@ app = get_asgi_application()
 application = ProtocolTypeRouter({
     "http": app,
     "websocket": AllowedHostsOriginValidator(
-            AuthMiddlewareStack(URLRouter(container.routing.websocket_urlpatterns))
-        ),
+        AuthMiddlewareStack(
+            URLRouter([
+                re_path(r"hub/ws/container_environment/(?P<userid>\d+)/$", ContainerConsumer.as_asgi()),
+                re_path(r"hub/ws/project/(?P<userid>\d+)/$", ProjectConsumer.as_asgi()),
+            ])
+        )
+    ),
 })

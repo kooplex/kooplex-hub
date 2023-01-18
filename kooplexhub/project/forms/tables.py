@@ -11,53 +11,6 @@ from container.templatetags.container_buttons import container_image
 from hub.templatetags.extras import render_user as ru
 
 
-class TableShowhideProject(tables.Table):
-    button = tables.Column (verbose_name = 'Visible', orderable = False, empty_values = ())
-    project = tables.Column (orderable = False)
-    collaborators = tables.Column (orderable = False, empty_values = ())
-
-    class Meta:
-        model = UserProjectBinding
-        fields = ('project', )
-        sequence = ('button', 'project', 'collaborators')
-        attrs = {
-                 "class": "table table-bordered",
-                 "thead": { "class": "thead-dark table-sm" },
-                 "th": { "class": "table-secondary" },
-                }
-
-    def render_button(self, record):
-        state = "" if record.is_hidden else "checked"
-        o_hide = "opacity-75" if record.is_hidden else ""
-        o_show = "" if record.is_hidden else "opacity-75"
-        return format_html(f"""
-<input id="btn-{record.id}" data-size="small"
-     type="checkbox" data-toggle="toggle" name="show"
-     data-on="<span class=' bi bi-eye'></span>"
-     data-off="<span class='bi bi-eye-slash'></span>"
-     data-onstyle="success {o_show}" data-offstyle="secondary {o_hide}" value="{record.id}" {state}>
-        """)
-
-    def render_project(self, record):
-        return record.project.name
-
-    def render_collaborators(self, record):
-        collaborators = record.project.collaborators
-        collaborators.remove(self.user)
-        ru = lambda u: f"{u.first_name} {u.last_name}"
-        collablist = list(map(ru, collaborators))
-        collab_search = " ".join(collablist)
-        collab_list = ", ".join(collablist)
-        return format_html(f"""
-<input type="hidden" name="search" value="{record.project.name} {collab_search}">{collab_list}
-        """)
-
-
-    def __init__(self, *argv, **kwargs):
-        self.user = kwargs.pop('user') if 'user' in kwargs else None
-        super().__init__(*argv, **kwargs)
-
-
 class TableJoinProject(tables.Table):
     button = tables.Column (verbose_name = 'Join', orderable = False, empty_values = ())
     images = tables.Column (verbose_name = 'Image', orderable = False, empty_values = ())
@@ -72,7 +25,7 @@ class TableJoinProject(tables.Table):
         attrs = {
                      "class": "table table-striped table-bordered",
                      "thead": { "class": "thead-dark table-sm" },
-                     "td": { "style": "padding:.5ex" },
+                     "td": { "style": "padding:.5ex", "class": "text-light" },
                      "th": { "style": "padding:.5ex", "class": "table-secondary" }
                     }
 
@@ -116,7 +69,7 @@ class TableCollaborator(tables.Table):
         attrs = {
                  "class": "table table-bordered",
                  "thead": { "class": "thead-dark table-sm" },
-                 "td": { "class": "p-1" },
+                 "td": { "class": "p-1 text-light" },
                  "th": { "class": "table-secondary p-1" }
                 }
 
@@ -168,7 +121,7 @@ class TableContainer(tables.Table):
         attrs = {
                  "class": "table table-striped table-bordered",
                  "thead": { "class": "thead-dark table-sm" },
-                 "td": { "class": "p-1" },
+                 "td": { "class": "p-1 text-light" },
                  "th": { "class": "table-secondary p-1" }
                 }
 
