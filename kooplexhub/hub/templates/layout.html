@@ -1,7 +1,7 @@
 {% load static %}
 {% load extras %}
 <!doctype html>
-<html lang="en" style="height:100%">
+<html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,95 +9,62 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
 
     {# most used icons #}
-    {#<link rel="stylesheet" type="text/css" href="{% static 'fonts/icons-1.8.3/font/bootstrap-icons.css' %}">#}
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css">
     <link rel="stylesheet" type="text/css" href="{% static 'fonts/open-iconic-master/font/css/open-iconic-bootstrap.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'fonts/remix-icon/remixicon.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'common.css' %}">
 
     <link rel="shortcut icon" type="image/png" href="/static/kooplexicon.png"/>
     <title>{% block page_title %}Kooplex Hub{% endblock %}</title>
-
-    <style>
-.navbar-expand-md .navbar-nav .nav-link {
-  padding-right: 1ex;
-}
-.container-fluid {
-  margin-left: initial;
-  margin-right: initial;
-  padding-left: initial;
-  padding-right: initial;
-}
-
-  @media all and (min-width: 1265px) {
-   .menuname{ display: none;}
-
-   .container-two {
-display: grid;
-grid-template-columns: repeat(14, 2fr);
-}
-
-.navigation-menu {
-grid-column: span 6;
-}
-
-.main-content {
-grid-column: span 8;
-}
-.pageend{
-  position:absolute;
-}
- }
-
- @media all and (max-width: 1265px) {
-  .pageend{
-  margin-top: 10px;
-}
- }
-
-    </style>
 
     {% block head_content %}{% endblock %}
     <!-- JQuery motor -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+  </head>
 
-</head>
 
-
-  <body style="height: 100%;">
+  <body class="bg-dark bg-gradient">
     <noscript>You need to enable JavaScript to browse kooplex.</noscript>
     {% block menu_and_content %}
     <div class="container-fluid d-flex flex-row flex-md-row">
       {% block menu %}
-          {% include 'mainmenu.html' %} 
+        {% if user.is_authenticated %}
+          {% include 'mainmenu.html' %}
+        {% endif %}
       {% endblock %}
-      <main class="ps-0 ps-md-0 flex-grow-1">
+      <main class="w-100">
       {% block content %}
         {% block header %}
-        <div class="container-fluid">
+        <div class="container-fluid bg-dark" style="max-height: 105px;">
           <nav class="navbar navbar-expand-lg navbar-dark bg-dark d-flex">
             <div class="container-fluid d-flex flex-column flex-md-row flex-column-reverse">
 	      {% block submenu %}
-	      <p class="ms-3 mt-3 mb-3 navbar-brand d-flex justify-content-start fs-6">Hi,&nbsp;<span style="font-weight: bold;"> {{ user.first_name }} {{ user.last_name }}</span>. Welcome to Kooplex!</p>
+                {% if user.is_authenticated %}
+	          <p class="ms-4 mt-3 d-none d-md-block navbar-brand d-flex justify-content-start fs-6">
+		    Hi,&nbsp;<span style="font-weight: bold;"> {{ user.first_name }} {{ user.last_name }}</span>. Welcome to Kooplex!
+		  </p>
+		{% else %}
+	          <p class="ms-4 mt-3 d-none d-md-block navbar-brand d-flex justify-content-start fs-6">
+		    Welcome to Kooplex!
+		  </p>
+                {% endif %}
 	      {% endblock %}
 	      {% block toprightmenu %}
-              <ul class="navbar-nav d-flex flex-row  ms-4">
+              <ul class="navbar-nav d-flex flex-row ms-2">
                 <li class="nav-item">{% block help %}{% endblock %}</li>
-		<li class="nav-item ms-3 ms-md-1"><a href="#" class="nav-link" data-bs-toggle="offcanvas" data-bs-target="#offcanvasMessages" aria-controls="offcanvasMessages"><span class="bi bi-chat-left-dots" data-toggle="tooltip" title="Messages" data-placement="bottom"></a></li>
-                <li class="nav-item dropdown ms-3 ms-md-1">
-                  <a class="nav-link dropdown-toggle" href="#" id="navbarDarkDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <span class="bi bi-person-fill" data-toggle="tooltip" title="Profile" data-placement="bottom"></span>
+		<li class="nav-item ms-3 ms-md-1">
+		  <a href="#" class="nav-link" 
+                    data-bs-toggle="offcanvas" data-bs-target="#offcanvasMessages" aria-controls="offcanvasMessages"
+		    ><span class="bi bi-chat-left-dots" data-toggle="tooltip" title="Messages" data-placement="bottom"></span>
+		  </a>
+		</li>
+                <li class="nav-item ms-3 ms-md-1">
+                  <a class="nav-link" href="#" href="#" class="nav-link" 
+                     data-bs-toggle="offcanvas" data-bs-target="#offcanvasProfile" role="button" aria-expanded="false"
+		     ><span class="bi bi-person-fill" data-toggle="tooltip" title="Profile" data-placement="bottom"></span>
                   </a>
-                  <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end" aria-labelledby="navbarDarkDropdownMenuLink">
-			  <li><a class="dropdown-item" href="{{ url_profile }}">{{ user.first_name }} {{ user.last_name }}</a></li>
-                    <hr/>
-                    <li><a class="dropdown-item" href="{% url 'logout' %}">Logout&nbsp;<span class="oi oi-account-logout"></span></a></li>
-                    <!--li><a class="dropdown-item" href="#" data-toggle="modal" data-target="#reset-token">Reset token</a></li-->
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="https://xwiki.vo.elte.hu/en/kooplex-manual/overview" target="_blank">Documentation</a></li>
-                    <li><a class="dropdown-item" target="_blank" href="https://kooplex.github.io/#portfolioModal3" data-toggle="modal" data-target="#about-contacts">About/Contact us</a></li>
-                  </ul>
                 </li>
               </ul>
 	      {% endblock %}
@@ -105,30 +72,62 @@ grid-column: span 8;
           </nav>
         </div>
 
-        <div class="offcanvas offcanvas-end" data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1" id="offcanvasMessages" aria-labelledby="offcanvasMessagesLabel">
+	{# messages #}
+        <div class="offcanvas offcanvas-end bg-dark mt-5" data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1" id="offcanvasMessages" aria-labelledby="offcanvasMessagesLabel">
           <div class="offcanvas-header">
-            <h5 class="offcanvas-title" id="offcanvasMessagesLabel">Messages</h5>
-            <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            <h5 class="offcanvas-title text-white" id="offcanvasMessagesLabel">Messages</h5>
+            <button type="button" class="btn-close btn-close-white"  data-bs-dismiss="offcanvas" aria-label="Close"></button>
           </div>
           <div class="offcanvas-body">
 	    {% block messages %}
               {% include "alert.html" %}
 	    {% endblock %}
+	    {# TODO: save popup messages here for some time #}
+          </div>
+        </div>
+
+
+	{# user profile button #}
+        <div class="offcanvas offcanvas-end bg-dark mt-5 round" style="width: 270px" 
+             data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1" id="offcanvasProfile" aria-labelledby="offcanvasMessagesLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title text-white" id="offcanvasMessagesLabel">Main menu</h5>
+            <button type="button" class="btn-close btn-close-white"  data-bs-dismiss="offcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <ul>
+              <li><a class="text-white text-decoration-none" href="{{ url_profile }}">{{ user.first_name }} {{ user.last_name }}</a></li>
+              <hr class="text-white"/>
+              <li><a class="text-white text-decoration-none" href="{% url 'logout' %}">Logout&nbsp;<span class="oi oi-account-logout"></span></a></li>
+              <!--li><a class="dropdown-item" href="#" data-toggle="modal" data-target="#reset-token">Reset token</a></li-->
+              <hr  class="text-white"/>
+              <li><a class="text-white text-decoration-none" href="https://xwiki.vo.elte.hu/en/kooplex-manual/overview" target="_blank">Documentation</a></li>
+              <hr  class="text-white"/>
+              <li><a class="text-white text-decoration-none" target="_blank" href="https://kooplex.github.io/#portfolioModal3" data-toggle="modal" data-target="#about-contacts">About/Contact us</a></li>
+            </ul>
           </div>
         </div>
 
         {% endblock %}
-	{% block bodycontent %}{% endblock %}
-	{% block infomessages %}
-	{{ messages|popupmessage }}
-	<script>
-	$(document).ready(function () {
-		var widget = $("#infoMessages");
-		console.log( widget );
-		setTimeout(function () { widget.hide() }, 7000);
-	});
-	</script>
-      {% endblock %}
+
+	{# the main content is rendered here #}
+        <div class="m-2" style="height: calc(100vh - 105px); overflow-y: scroll;">
+	{% block bodycontent %}
+        {% endblock %}
+        </div>
+
+	{# dynamic popup window for messages #}
+        <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+          <div id="feedbackMessages" class="toast fade show" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+              <strong class="me-auto">Message</strong>
+              <button id="closeButton" type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="feedbackContent">
+            </div>
+          </div>
+        </div>
+
       {% endblock %}
       </main>
     </div>
@@ -138,7 +137,10 @@ grid-column: span 8;
 
     {% block scripts %}{% endblock %}
     <!-- JavaScript Bundle with Popper -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js" 
+	    integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2" crossorigin="anonymous"></script>
+    <script src="{% static 'common.js' %}"></script>
+
 
   </body>
 </html>

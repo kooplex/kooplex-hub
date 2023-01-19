@@ -24,21 +24,3 @@
 </ul>
 {% endblock %}
 
-{% block bodycontent %}
-<div class="m-2" style="height: calc(100vh - 105px); overflow-y: scroll; overflow-x:hidden;">
-  <div class="container" style="display:none;" id="myAlert">
-    <div class="alert alert-warning alert-dismissable" id="myAlert2">
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-      Dear Kooplex users! We are interested in your opinion about Kooplex in order to improve our platform. Our team would appreciate if you could have five minutes to answer this quick and anonymous questionnaire by <a href="https://forms.gle/cJ52qSQNN8kUKXpL9" target="_blank" class="alert-link" id="toggler" value="Toggler" onClick="action();">clicking here</a>. Thank you!
-    </div>
-    </div>
-<div  class="m-2" style="height: calc(100vh - 105px); overflow-y: scroll; overflow-x:hidden;">
-    {% block realcontent %}
-  <div class="card shadow p-3 mb-2 mt-3 bg-light rounded"> 
-    <h6 class="card-title">Nothing interesting</h6>
-    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum</p>
-  </div>
-{% endblock %}
-</div>
-{% endblock %}
-

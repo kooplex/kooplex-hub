@@ -4,8 +4,8 @@
 {% load extras %}
 
 
-{% block realcontent %}
-<div class="container" style="overflow-x:hidden;">
+{% block bodycontent %}
+<div class="container">
   <form id="service_new" class="form-horizontal was-validated" action="{% url 'container:new' %}" method="post">
   {% csrf_token %}
   <div class="card bg-light border-secondary shadow p-3">

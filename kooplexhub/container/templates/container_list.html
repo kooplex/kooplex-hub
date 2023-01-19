@@ -2,16 +2,8 @@
 
 {% load static %}
 
-{% block head_content %}
-<style>
-.form-control:focus {
-  border-color: gray;
-  box-shadow: inset 0 1px 1px gray, 0 0 8px gray;
-}
-</style>
-{% endblock %}
 
-{% block realcontent %}
+{% block bodycontent %}
 {# the search bar #}
 {% if containers %}
 <div class="card border border-light border-3 mx-5 mb-3 rounded-3">
@@ -38,16 +30,6 @@
   {% endif %}
 </div>
 
-<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
-  <div id="feedbackMessages" class="toast fade show" role="alert" aria-live="assertive" aria-atomic="true">
-    <div class="toast-header">
-      <strong class="me-auto">Message</strong>
-      <button id="closeButton" type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-    </div>
-    <div class="toast-body" id="feedbackContent">
-    </div>
-  </div>
-</div>
 {% endblock %}
 
 {% block scripts %}
@@ -101,21 +83,6 @@ function so() {
 };
 
 containerSocket = so();
-
-{# on load feedback messages panel is empty, hide it #}
-$(document).ready(function () {
-  var widget = $("#feedbackMessages");
-  widget.hide();
-});
-
-{# display some feedback messages #}
-function feedback(msg) {
-  var widget = $("#feedbackMessages");
-  widget.show();
-  $("#feedbackContent").append("<p>" + msg + "</p>");
-  setTimeout(function () { widget.hide() }, 10000);
-	// TODO: too many paragraphs, clear oldest
-}
 
 {# enable or diasble spinner button #}
 function spinner_state(btn, containerid, enabled) {

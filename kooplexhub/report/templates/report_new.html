@@ -1,3 +1,4 @@
+{# FIXME: refactor me #}
 {% extends "report_layout.html" %}
 
 {% load static %}
@@ -5,23 +6,27 @@
 
 
 {% block head_content %}
-        <link rel="stylesheet" href="/static/css/tagsinput.css" />
-{% block child_head %}{% endblock %}
-<style>
-.form-control:focus {
-  border-color: gray;
-  box-shadow: inset 0 1px 1px gray, 0 0 8px gray;
-}
-</style>
+  <link rel="stylesheet" href="/static/css/tagsinput.css" />
 {% endblock %}
 
-{% block realcontent %}
+{% block bodycontent %}
 
+
+
+{% comment %}
 <script src="/static/js/tagsinput.js"></script>
     <script>
     $("#post-form").submit(function(e){
         e.preventDefault();
 });</script>
+{% endcomment %}
+
+
+    {# https://codepen.io/lekoalabe/pen/ExWYEqx #}
+<script type="module">
+    import Tags from "https://cdn.jsdelivr.net/gh/lekoala/bootstrap5-tags@master/tags.js";
+    Tags.init("select.mytag", {'baseClass': 'mytag'});
+</script>
 
 <div class="card shadow mt-3 p-3 mb-2 bg-light rounded">
   {% if f_project|length > 0 %}
@@ -30,6 +35,7 @@
     {% csrf_token %}
   <div>
     {% title "Set the details of your new report" %}
+
     <div class="container-fluid d-flex flex-column flex-md-row">
       <div class="d-flex w-100 w-md-75">
         <table>

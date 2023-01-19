@@ -1,39 +1,41 @@
 {% load static %}
 
-
-{% with li_a_s="ps-2 pe-1 pt-0 pb-0 mt-2" %}
-<nav class="p-2 pt-3 navbar navbar-dark bg-dark d-flex align-items-start" style="min-height: 100vh;">
-  <ul class="navbar-nav flex-column flex-md-column">
-    <li class="nav-item mt-2 ms-1">
+{% with li_a_s="p-0 ps-2 mt-2" %}
+<nav class="p-2 navbar navbar-dark bg-dark d-flex align-items-start justify-content"{# style="height: calc(100vh);"#}>
+  <ul class="navbar-nav flex-column flex-xl-column">
+    <li class="nav-item mt-1 ms-1">
       <a class="nav-item" href="/hub/">
-        <img src="/static/logo-halfcolored.png" width="120" height="30" alt="Kooplex Hub" class="d-none d-sm-block" data-toggle="tooltip" title="Access home page through Kooplex logo" data-placement="bottom">
-        <img src="/static/logo-onlycogwheels.png" width="30" height="auto" alt="Kooplex Hub" class="d-block d-sm-none" data-toggle="tooltip" title="Access home page through Kooplex logo" data-placement="bottom">
+        <img src="/static/logo-halfcolored.png" width="120" height="30" alt="Kooplex Hub" class="mt-3 d-none d-xl-block" data-toggle="tooltip" title="Access home page through Kooplex logo" data-placement="bottom">
+        <img src="/static/logo-onlycogwheels.png" width="25" height="auto" alt="Kooplex Hub" class="mt-4 d-block d-xl-none" data-toggle="tooltip" title="Access home page through Kooplex logo" data-placement="bottom">
       </a>
     </li>
     <li class="mt-4 nav-item" data-toggle="tooltip" title="Environment" data-placement="bottom">
-      <a class="{{ li_a_s }} nav-link {% if menu_container %}active border-2 border-start{% endif %}" href="{% url 'container:list' %}"><i class="bi bi-boxes"></i><span class="d-none d-sm-inline">&nbsp;Environment</span></a>
+      <a class="{{ li_a_s }} nav-link {% if menu_container %}active border-1 border-start{% endif %}" href="{% url 'container:list' %}"><i class="bi bi-boxes"></i><span class="d-none d-xl-inline">&nbsp;Environment</span></a>
     </li>
     {% if app_project_installed %}
     <li class="nav-item mt-2"  data-toggle="tooltip" title="Projects" data-placement="bottom">
-      <a class="{{ li_a_s }} nav-link {% if menu_project %}active border-2 border-start{% endif %}" href="{% url 'project:list' %}"><i class="bi bi-person-workspace"></i><span class="d-none d-sm-inline">&nbsp;Project</span></a>
+      <a class="{{ li_a_s }} nav-link {% if menu_project %}active border-1 border-start{% endif %}" href="{% url 'project:list' %}"><i class="bi bi-person-workspace"></i><span class="d-none d-xl-inline">&nbsp;Project</span></a>
     </li>
     {% endif %}
     {% if app_report_installed %}
     <li class="nav-item mt-2"  data-toggle="tooltip" title="Reports" data-placement="bottom">
-      <a class="{{ li_a_s }} nav-link {% if menu_report %}active border-2 border-start{% endif %}" href="{% url 'report:list' %}"><i class="bi bi-projector"></i><span class="d-none d-sm-inline">&nbsp;Report</span></a>
+      <a class="{{ li_a_s }} nav-link {% if menu_report %}active border-1 border-start{% endif %}" href="{% url 'report:list' %}"><i class="bi bi-projector"></i><span class="d-none d-xl-inline">&nbsp;Report</span></a>
     </li>
     {% endif %}
     {% if app_education_installed %}
     <li class="nav-item mt-2" data-toggle="tooltip" title="Education" data-placement="bottom">
-      <a class="{{ li_a_s }} nav-link {% if menu_education %}active border-2 border-start{% endif %}" href="{% url 'education:student' %}"><i class="bi bi-textarea-t"></i><span class="d-none d-sm-inline">&nbsp;Education</span></a>
+      <a class="{{ li_a_s }} nav-link {% if menu_education %}active border-1 border-start{% endif %}" href="{% url 'education:student' %}"><i class="bi bi-textarea-t"></i><span class="d-none d-xl-inline">&nbsp;Education</span></a>
     </li>
     {% endif %}
     <li class="nav-item mt-2"  data-toggle="tooltip" title="List and manage attachments and volumes" data-placement="bottom">
-      <a class="{{ li_a_s }} nav-link {% if menu_storage %}active border-2 border-start{% endif %}" href="{% url 'container:list_attachments' %}"><i class="bi bi-folder2-open"></i><span class="d-none d-sm-inline">&nbsp;Storage</span></a>
+      <a class="{{ li_a_s }} nav-link {% if menu_storage %}active border-1 border-start{% endif %}" href="{% url 'container:list_attachments' %}"><i class="bi bi-folder2-open"></i><span class="d-none d-xl-inline">&nbsp;Storage</span></a>
     </li>
-    <!--# FIXME: we need a monitoring app also -->
+    <!--#FIXME: we need a monitoring app also -->
     <li class="nav-item mt-2"  data-toggle="tooltip" title="Resource monitoring" data-placement="bottom">
-      <a class="{{ li_a_s }} nav-link {% if menu_monitoring %}active border-2 border-start{% endif %}" href="{% url 'monitoring' %}"><i class="bi bi-folder2-open"></i><span class="d-none d-sm-inline">&nbsp;Monitoring</span></a>
+      <a class="{{ li_a_s }} nav-link {% if menu_monitoring %}active border-1 border-start{% endif %}" href="{% url 'monitoring' %}"><i class="bi bi-activity"></i><span class="d-none d-xl-inline">&nbsp;Monitoring</span></a>
+    </li>
+    <li class="nav-item mt-2"  data-toggle="tooltip" title="Answer our Kooplex survey and help us improve our system" data-placement="bottom">
+      <button class="btn btn-outline-light pe-2 {{ li_a_s }} nav-link {% if menu_monitoring %}active border-2 border-start{% endif %} blink" value="showAlert" id="togglee"><i class="bi bi-card-heading"></i><span class="d-none d-xl-inline">&nbsp;Our survey</span></button>
     </li>
   </ul>
 </nav>
