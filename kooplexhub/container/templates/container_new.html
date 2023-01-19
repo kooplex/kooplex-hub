@@ -12,6 +12,9 @@
     {% title "Set the details of your new environment" %}
     <div class="d-flex flex-column flex-md-row">
       <div class="flex-fill w-100 w-md-75">
+        <div class="progress d-none" id="busybar" role="progressbar" aria-label="Animated striped example" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
+          <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" style="width: 100%"></div>
+        </div>
         <table>
           {{ form.as_table }}
         </table>
@@ -28,6 +31,7 @@
   </div>
   </form>
 </div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -67,6 +71,14 @@ function so() {
       console.log(data);
       $("input[name='cpurequest']").attr("max", data["avail_cpu"]);
       $("input[name='memoryrequest']").attr("max", data["avail_memory"]);
+      $("#thresholdhigh-cpurequest").text(data["total_cpu"]);
+      $("#thresholdhigh-memoryrequest").text(data["total_memory"]);
+      selected = $( "select[name='node'] option:selected" )[0];
+      sel_node = $(selected).val();
+      if (sel_node == data['node']) {
+	  $("#busybar").addClass("d-none");
+	  $("input[name$='request'").each(function() { $(this).attr('disabled', false ) });
+      }
     }
   };
   return containerSocket;
@@ -87,6 +99,8 @@ $("select[name='node']").change(function() {
             'command': 'monitor-node',
             'node': node,
           }));
+	  $("#busybar").removeClass("d-none");
+	  $("input[name$='request'").each(function() { $(this).attr('disabled', true ) });
 	}
     });
 }).change();

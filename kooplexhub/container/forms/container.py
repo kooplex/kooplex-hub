@@ -6,6 +6,8 @@ from ..models import Image
 
 from kooplexhub.lib import my_alphanumeric_validator
 
+class myNumberInput(forms.NumberInput):
+    template_name = 'widget_decimal.html'
 
 class FormContainer(forms.Form):
     friendly_name = forms.CharField(
@@ -38,19 +40,20 @@ class FormContainer(forms.Form):
             required = False,
             label = 'CPU [#]',
             help_text = _('Requested number of cpus for your container.'), 
-            min_value=0.1, max_value=1, widget=forms.NumberInput(attrs={'step': 0.1}))
+            #min_value=0.1, max_value=1, widget=forms.NumberInput(attrs={'step': 0.1}))
+            min_value=0.1, max_value=1, widget=myNumberInput(attrs={'step': 0.1}))
 
     gpurequest = forms.IntegerField(
             required = False,
             label = 'GPU [#]',
             help_text = _('Requested number of gpus for your container.'), 
-            min_value=0, max_value=0)
+            min_value=0, max_value=0, widget=myNumberInput())
 
     memoryrequest = forms.DecimalField(
             required = False,
             label = 'Memory [GB]',
             help_text = _('Requested memory for your container.'), 
-            min_value=0.1, max_value=1, widget=forms.NumberInput(attrs={'step': 0.1}))
+            min_value=0.1, max_value=1, widget=myNumberInput(attrs={'step': 0.1}))
 
     def descriptions(self):
         hidden = lambda i: f"""<input type="hidden" id="image-description-{i.id}" value="{i.description}">"""

@@ -1,0 +1,5 @@
+<div class="input-group">
+  <span class="input-group-text" style="min-width: 6em;"><span id="thresholdlow-{{ widget.name }}">{{ widget.attrs.min }}</span>&nbsp;&leq;</span>
+  <input type="{{ widget.type }}" name="{{ widget.name }}"{% if widget.value != None %} value="{{ widget.value|stringformat:'s' }}"{% endif %}{% include "django/forms/widgets/attrs.html" %}>
+  <span class="input-group-text" style="min-width: 6em;">&leq;&nbsp;<span id="thresholdhigh-{{ widget.name }}">{{ widget.attrs.max }}</span></span>
+</div>
