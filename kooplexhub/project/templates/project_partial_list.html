@@ -10,14 +10,13 @@
   <div class="card-header">
     <div class="row">
       <div class="col-4"> {# FIXME: fine tune column width based on spect ratio/device size #}
-        {% dropdown_start_open bindings=projectcontainerbindings ancestor=upb ancestor_type='project' %}{# FIXME: why not just the containers are handed over? #}
+        {% dropdown_start_open bindings=projectcontainerbindings ancestor=upb ancestor_type='project' %}
 	{% button_project_hide project hidden %}
 	{% button_project_conf project enabled=is_admin %}
         <button data-bs-toggle="modal"  data-bs-target="#projectInfoModal-{{ project.id }}" role="button" class="btn btn-warning btn-sm mb-1" ><span class="bi bi-info-square" aria-hidden="true" data-toggle="tooltip" title="Click for more info" data-placement="top" ></span></button>
-	{% scope project %}
         {% icon_collaborator project user %}
       </div>
-      <div class="col-8">
+      <div class="col-8" id="project-name-{{ project.id }}">
         <div class="card-title fw-bold h5 pt-1">{{ project.name }}</div>
       </div>
     </div>
@@ -28,7 +27,8 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">{{ project.name }}</h5>
+	{% scope project %}
+        <h5 class="modal-title ms-2">{{ project.name }}</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
@@ -40,7 +40,7 @@
         <p class="card-text"><strong>Folder:</strong> {{ project.subpath }}</p>
       </div>
       <div class="modal-footer">
-	{% dropdown_start_open bindings=projectcontainerbindings ancestor=upb ancestor_type='project' %} {# FIXME: why not just the containers are handed over? #}
+	{% dropdown_start_open bindings=projectcontainerbindings ancestor=upb ancestor_type='project' %}
 	{% button_project_conf project enabled=is_admin %}
         {% include 'reports_button.html' %}
 	{% button_project_delete project %}
