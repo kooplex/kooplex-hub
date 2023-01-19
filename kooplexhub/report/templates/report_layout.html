@@ -1,57 +1,21 @@
 {% extends "layout.html" %}
 
-{% load static %}
-{% load project_buttons %}
-
 {% block page_title %}Kooplex Report{% endblock %}
 
-
-<script>
-  var hidden = false;
-  function action() {
-      hidden = !hidden;
-      if(hidden) {
-          document.getElementById('togglee').style.visibility = 'hidden';
-      } else {
-          document.getElementById('togglee').style.visibility = 'visible';
-      }
-  }
-</script>
-
-
-
 {% block help %} 
-          {% include 'reporthelp.html' %}
+  {% include 'reporthelp.html' %}
 {% endblock %}
 
-{% block submenu %}
+{% if user.is_authenticated %}
+  {% block submenu %}
 <ul class="navbar-nav flex-row flex-md-row">
-	{% if user.is_authenticated %}
   <li class="ms-3 nav-item text-center">
     <a data-toggle="tooltip" title="New report" data-placement="bottom" class="nav-link {% if submenu == 'new' %}active active border-2 border-bottom{% endif %}" href="{% url 'report:new' %}"><i class="bi bi-bag-plus"></i><span class="d-none d-md-block">&nbsp;New</span></a>
-        </li>
-        {% endif %}
-        <li class="ms-3 nav-item text-center">
-          <a data-toggle="tooltip" title="List report" data-placement="bottom" class="nav-link {% if submenu == 'list' %}active active border-2 border-bottom{% endif %}" href="{% url 'report:list' %}"><i class="bi bi-bag-dash"></i><span class="d-none d-md-block">&nbsp;List report</span></a>
-        </li>
+  </li>
+  <li class="ms-3 nav-item text-center">
+    <a data-toggle="tooltip" title="List report" data-placement="bottom" class="nav-link {% if submenu == 'list' %}active active border-2 border-bottom{% endif %}" href="{% url 'report:list' %}"><i class="bi bi-bag-dash"></i><span class="d-none d-md-block">&nbsp;List report</span></a>
+  </li>
 </ul>
-{% endblock %}
-
-
-{% block bodycontent %}
-<div class="m-2" style="height: calc(100vh - 105px); overflow-y: scroll; overflow-x:hidden;">
-  <div class="container" style="display:none;" id="myAlert">
-    <div class="alert alert-warning alert-dismissable" id="myAlert2">
-      <input type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></input>
-      Dear Kooplex users! We are interested in your opinion about Kooplex in order to improve our platform. Our team would appreciate if you could have five minutes to answer this quick and anonymous questionnaire by <a href="https://forms.gle/cJ52qSQNN8kUKXpL9" target="_blank" class="alert-link" id="toggler" value="Toggler" onClick="action();">clicking here</a>. Thank you!
-    </div>
-    </div>
-  {% block realcontent %}
-  <div class="card shadow p-3 mb-2 mt-3 bg-light rounded"> 
-    <h6 class="card-title">Nothing interesting</h6>
-    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum</p>
-  </div>
-{% endblock %}
-</div>
-{% endblock %}
+  {% endblock %}
+{% endif %}
 

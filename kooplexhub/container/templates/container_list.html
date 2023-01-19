@@ -242,18 +242,6 @@ function set_visibility() {
   });
 };
 
-{# my boolean converter #}
-function B(x) {
-  if (typeof x === 'boolean') {
-    return x;
-  }
-  if (typeof x === 'string') {
-    return Boolean(x == 'true') || Boolean(x == 'True');
-  }
-  console.log("fallback to unhandled type");
-  return Boolean(x);
-};
-
 {# search and filter container cards to show #}
 $("#search_container").keyup(function() {
   var pattern = $( this ).val().toUpperCase();

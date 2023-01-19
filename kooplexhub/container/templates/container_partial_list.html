@@ -5,7 +5,7 @@
 {# the environment cards, buttonbar is shown on mouse over #}
 <div
   class="bg-image card shadow-1-strong border border-2 mb-3 border-warning"
-  style="background-image: url('{% static 'dockercontainerbg.jpg' %}'); max-width: 560px; height: 300px; background-color: #2a69a833; background-blend-mode: color-burn; background-size: cover;"
+  style="background-image: url('{% static 'dockercontainerbg.jpg' %}'); max-width: 560px; height: 300px; background-color: #2a69a833; background-blend-mode: darken; background-size: cover;"
 >
 {{ container.running }}
   <input type="hidden" id="container-shown-{{ container.id }}" value="true">
