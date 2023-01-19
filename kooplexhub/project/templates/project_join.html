@@ -6,7 +6,9 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/css/bootstrap5-toggle.min.css" rel="stylesheet">
 {% endblock %}
 
-{% block realcontent %}
+
+{% block bodycontent %}
+<div class="m-2" style="height: calc(100vh - 105px); overflow-y: scroll; overflow-x:hidden;">
 <div class="card shadow mt-3 p-3 mb-5 bg-light rounded" > 
 <form id="project-manage" class="form-horizontal" action="{% url 'project:join' %}" method="post">
   {% csrf_token %}
@@ -19,6 +21,7 @@
    {% include 'empty.html' with empty_body="There are no projects to join." skip_border=True %}
   {% endif %}
 </form>
+</div>
 </div>
 {% endblock %}
 

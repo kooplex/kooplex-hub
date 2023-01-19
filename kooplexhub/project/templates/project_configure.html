@@ -4,21 +4,10 @@
 
 {% block head_content %}
 <link href="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/css/bootstrap5-toggle.min.css" rel="stylesheet">
-<style>
-.mytab{
-  color: rgb(196, 196, 196);
-}
-.mytab:hover{
-  color: rgb(196, 196, 196);
-  font-weight: bolder;
-}
-.mytab.active {
-  font-weight: bolder;
-}
-</style>
 {% endblock %}
 
-{% block realcontent %}
+{% block bodycontent %}
+<div class="container" style="overflow-x:hidden;">
 <div class="card shadow p-3 mt-3 mb-3 bg-light rounded">
   <form id="project-manage" class="form-horizontal was-validated" action="{% url 'project:configure_save' %}" method="post">
   {% csrf_token %}
@@ -62,6 +51,7 @@
   </div>
   </form>
 </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -73,4 +63,5 @@ $("#projectConfigTabs li a").on("click", function () {
 });
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/js/bootstrap5-toggle.min.js"></script>
+</div>
 {% endblock %}

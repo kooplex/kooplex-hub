@@ -2,31 +2,22 @@
 
 {% block head_content %}
 <link href="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/css/bootstrap5-toggle.min.css" rel="stylesheet">
-<style>
-.form-control:focus {
-  border-color: gray;
-  box-shadow: inset 0 1px 1px gray, 0 0 8px gray;
-}
-</style>
 {% endblock %}
 
-{% block realcontent %}
+{% block bodycontent %}
 {# the search bar #}
 {% if userprojectbindinglist %}
 <div class="card border border-light border-3 mx-5 mb-3 rounded-3">
   <div class="input-group">
-    <div class="input-group-prepend">
-      <div class="input-group-text"><span class="bi bi-search"></span></div>
-    </div>
+    <span class="input-group-text"><span class="bi bi-search"></span></span>
     <input class="form-control" type="text" id="search_project" placeholder="Search project" title="Type in a name" autofocus >
-    {# toggler to narrow selection according to hidden #}
-    <div class="m-2 ms-3">
+    <span class="input-group-text">
       <input id="search_project_hidden" data-size="mini" data-width="50"
              type="checkbox" data-toggle="toggle" name="search_hidden"
              data-on="<span class='bi bi-eye'></span>"
 	     data-off="<span class='bi bi-eye-slash' id='hidden-counter'> {{n_hidden}}</span>"
              data-onstyle="success" data-offstyle="secondary">
-    </div>
+    </span>
   </div>
 </div>
 {% endif %}

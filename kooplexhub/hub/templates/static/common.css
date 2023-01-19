@@ -1,0 +1,16 @@
+.form-control:focus {
+  border-color: gray;
+  box-shadow: inset 0 1px 1px gray, 0 0 8px gray;
+}
+
+.mytab{
+  color: rgb(196, 196, 196);
+}
+.mytab:hover{
+  color: rgb(196, 196, 196);
+  font-weight: bolder;
+}
+.mytab.active {
+  font-weight: bolder;
+}
+
