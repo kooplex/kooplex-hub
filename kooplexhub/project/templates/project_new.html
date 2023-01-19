@@ -4,7 +4,7 @@
 
 {% block realcontent %}
 
-<div class="container mt-2">
+<div class="container" style="overflow-x:hidden;">
   <form id="project_new" class="form-horizontal was-validated" action="{% url 'project:new' %}" method="post">
     {% csrf_token %}
   <div class="card bg-light border-secondary shadow p-3">

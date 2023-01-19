@@ -38,7 +38,7 @@ class FormContainer(forms.Form):
             required = False,
             label = 'CPU [#]',
             help_text = _('Requested number of cpus for your container.'), 
-            min_value=0.1, max_value=1)
+            min_value=0.1, max_value=1, widget=forms.NumberInput(attrs={'step': 0.1}))
 
     gpurequest = forms.IntegerField(
             required = False,
@@ -50,7 +50,7 @@ class FormContainer(forms.Form):
             required = False,
             label = 'Memory [GB]',
             help_text = _('Requested memory for your container.'), 
-            min_value=0.1, max_value=1)
+            min_value=0.1, max_value=1, widget=forms.NumberInput(attrs={'step': 0.1}))
 
     def descriptions(self):
         hidden = lambda i: f"""<input type="hidden" id="image-description-{i.id}" value="{i.description}">"""
