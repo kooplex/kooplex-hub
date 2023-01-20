@@ -3,12 +3,16 @@
 
 {% block realcontent %}
 {% if attachments %}
+<div class="container" style="overflow-x:hidden;">
+
   <input class="form-control me-2 mb-3 mt-3" type="text" id="search_attachment" placeholder="Search attachment" title="Type in a name" autofocus >
   <div id="attachmentListPane" >
   {% for attachment in attachments %}
     {% include 'attachment_partial_list.html' %}
   {% endfor %}
   </div>    
+</div>
+
 {% else %}
   {% include 'empty.html' %}
 {% endif %}

@@ -17,7 +17,7 @@ class TableContainerProject(tables.Table):
         attrs = {
                  "class": "table table-striped table-bordered mt-3",
                  "thead": { "class": "thead-dark table-sm" },
-                 "td": { "class": "p-1" },
+                 "td": { "class": "p-1 text-light" },
                  "th": { "class": "table-secondary p-1" }
                 }
     button = tables.Column(verbose_name = 'Attach', orderable = False, empty_values = ())
@@ -54,7 +54,7 @@ class TableContainerCourse(tables.Table):
         attrs = {
                  "class": "table table-striped table-bordered mt-3",
                  "thead": { "class": "thead-dark table-sm" },
-                 "td": { "class": "p-1" },
+                 "td": { "class": "p-1 text-light" },
                  "th": { "class": "table-secondary p-1" }
                 }
     button = tables.Column(verbose_name = 'Do', orderable = False, empty_values = ())
@@ -97,7 +97,7 @@ class TableContainerAttachment(tables.Table):
         attrs = {
                  "class": "table table-striped table-bordered mt-3",
                  "thead": { "class": "thead-dark table-sm" },
-                 "td": { "class": "p-1" },
+                 "td": { "class": "p-1 text-light" },
                  "th": { "class": "table-secondary p-1" }
                 }
     button = tables.Column(verbose_name = 'Mount', orderable = False, empty_values = ())
@@ -134,7 +134,7 @@ class TableContainerVolume(tables.Table):
         attrs = {
                  "class": "table table-striped table-bordered mt-3",
                  "thead": { "class": "thead-dark table-sm" },
-                 "td": { "class": "p-1" },
+                 "td": { "class": "p-1 text-light" },
                  "th": { "class": "table-secondary p-1" }
                 }
     button = tables.Column(verbose_name = 'Mount', orderable = False, empty_values = ())

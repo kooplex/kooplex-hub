@@ -68,7 +68,7 @@ def _mkdir(path, other_rx = False):
     if not existed:
         assert not os.path.exists(path), f"{path} is present in the filesystem, but not a directory"
         dir_util.mkpath(path)
-        assert os.path.isdir(path), f"{path} directory not created"
+#        assert os.path.isdir(path), f"{path} directory not created"
         rx = 'rx' if other_rx else ''
         if acl_backend == 'nfs4':
             acl = f"""
@@ -102,13 +102,13 @@ def _rmdir(path):
     logger.info(f"- removed dir: {path}")
 
 
-def _grantaccess(user, folder, readonly = False, recursive = False):
+def _grantaccess(user, folder, readonly = False, recursive = False, follow = False):
     R = '-R' if recursive else ''
     uid = user.profile.userid
     if acl_backend == 'nfs4':
         acl = 'rXtcy' if readonly else 'rwaDxtcy'
-        bash(f'nfs4_setfacl {R} -a A::{uid}:{acl} {folder}')
-        #bash(f'nfs4_setfacl {R} -a A:fdi:{uid}:{acl} {folder}')
+        flags = 'fdi' if follow else ''
+        bash(f'nfs4_setfacl {R} -a A:{flags}:{uid}:{acl} {folder}')
     elif acl_backend == 'posix':
         acl = 'rX' if readonly else 'rwx'
         bash(f'setfacl {R} -m u:{uid}:{acl} {folder}')
@@ -128,16 +128,13 @@ def _revokeaccess(user, folder):
     logger.info(f"- access revoked on dir {folder} from user {user}")
 
 
-def _grantgroupaccess(group, folder, readonly = False, recursive = False):
+def _grantgroupaccess(group, folder, readonly = False, recursive = False, follow = False):
     R = '-R' if recursive else ''
     gid = group.groupid
     if acl_backend == 'nfs4':
         acl = 'rXtcy' if readonly else 'rwaDxtcy'
-        #FIXME: disgusting coding
-        bash(f'nfs4_setfacl {R} -a A:fdig:{gid}:rXtcy {folder}') #FIXME: be more universal!!!
-        bash(f'nfs4_setfacl -R -a A:g:{gid}:rXtcy {folder}') #FIXME: be more universal!!!
-        bash(f'nfs4_setfacl {R} -a A:g:{gid}:{acl} {folder}')
-        #bash(f'nfs4_setfacl {R} -a A:fdig:{gid}:{acl} {folder}')
+        flags = 'fdig' if follow else 'g'
+        bash(f'nfs4_setfacl {R} -a A:{flags}:{gid}:{acl} {folder}')
     else:
         NotImplementedError(f'_grantaccess acl_backend {acl_backend}')
     logger.info(f"+ access granted on dir {folder} to group {group.groupid}")
@@ -145,7 +142,7 @@ def _grantgroupaccess(group, folder, readonly = False, recursive = False):
 
 def _revokegroupaccess(group, folder):
     if acl_backend == 'nfs4':
-        #bash(f'nfs4_setfacl -R -x A:fdig:{group_id}:$(nfs4_getfacl {folder} | grep :fdig:{group_id}: | sed s,.*:,,) {folder}')
+        bash(f'nfs4_setfacl -R -x A:fdig:{group_id}:$(nfs4_getfacl {folder} | grep :fdig:{group_id}: | sed s,.*:,,) {folder}')
         bash(f'nfs4_setfacl -R -x A:g:{group.groupid}:$(nfs4_getfacl {folder} | grep :g:{group.groupid}: | sed s,.*:,,) {folder}')
     else:
         NotImplementedError(f'_grantaccess acl_backend {acl_backend}')

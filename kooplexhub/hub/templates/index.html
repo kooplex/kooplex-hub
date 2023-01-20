@@ -18,11 +18,38 @@ padding-right: 10px;
 margin-top: 10px
 }
 </style>
+
+<script>
+  var hidden = false;
+  function action() {
+      hidden = !hidden;
+      if(hidden) {
+          document.getElementById('togglee').style.visibility = 'hidden';
+      } else {
+          document.getElementById('togglee').style.visibility = 'visible';
+      }
+  }
+</script>
+
 {% endblock %}
 
 
 {% block bodycontent %}
-<div class="container">
+<div class="container mt-1" style="display:none;" id="myAlert">
+  <div class="alert alert-warning alert-dismissable" id="myAlert2">
+    <input type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></input>
+    Dear Kooplex users! We are interested in your opinion about Kooplex in order to improve our platform. Our team would appreciate if you could have five minutes to answer this quick and anonymous questionnaire by <a href="https://forms.gle/cJ52qSQNN8kUKXpL9" target="_blank" class="alert-link" id="toggler" value="Toggler" onClick="action();">clicking here</a>. Thank you!
+  </div>
+  </div>
+
+<script>
+    setTimeout(function() {
+        bootstrap.Alert.getOrCreateInstance(document.querySelector(".alert")).close();
+    }, 3000)
+  </script>
+
+<div class="m-2" style="height: calc(100vh - 105px); overflow-y: scroll; overflow-x:hidden;">
+  <div class="container">
   <div class="card shadow p-3 mb-2 mt-3 bg-light rounded"> 
     <h6 class="card-title">Powered by</h6>
     <div class="card-body" style="flex-direction: row; flex-wrap: wrap; justify-content: space-between">
@@ -35,8 +62,17 @@ margin-top: 10px
       <img class="ico" src="/static/gitea.png"  alt="gitea">
       <img class="ico" src="/static/seafile.png" alt="seafile">
     </div>
+    <img src="/static/Kooplex-frontpage.png">
   </div>
 </div>
+
+{% comment %}
+<div class="alert alert-warning alert-dismissible fade show mt-3" id="success-alert" role="alert">
+  <strong>Questionary!</strong> Dear Kooplex users, We are interested in your opinion about Kooplex in order to improve our platform. Our team would appreciate if you could have five minutes to answer this quick and anonymous questionnaire. Click <a href="https://forms.gle/cJ52qSQNN8kUKXpL" class="alert-link">here</a> to have access to it. Thank you in advance!
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endcomment %}
+
 
 <div class="container">
 {% if notes %}
@@ -52,6 +88,6 @@ margin-top: 10px
 </div>
 {% endif %}
 </div>
-
+</div>
 {% endblock %}
 

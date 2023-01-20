@@ -40,7 +40,7 @@ class NewContainerView(LoginRequiredMixin, generic.FormView):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         api = Cluster()
-        api.nodes_status()
+        api.query_nodes_status()
         kwargs['nodes'] = list(api.node_df['node'].values)
         return kwargs
 

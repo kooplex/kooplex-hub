@@ -87,6 +87,36 @@ def keeptrying(method, times, **kw):
             time.sleep(dt)
             dt *= 2
 
+def keeptryinglist(method, times, kws):
+    from requests.exceptions import SSLError
+    """
+    @summary: run an arbitrary method with keyword arguments. In case an exception is raised during the call, 
+    keep trying some more times with exponentially increasing waiting time between consecutive calls.
+    @param method: the method to call
+    @type method: callable
+    @param times: the number of trials
+    @type times: int
+    @param kw: keyword arguments to pass to the method
+    @returns the return value of method
+    @raises the last exception if calling th method fails times many times
+    """
+    for kw in kws:
+        dt = .1
+        while times > 0:
+            logging.debug("executing %s" % method)
+            times -= 1
+            try:
+                return method(**kw)
+            except SSLError:
+                kw.update({'verify': False})
+                return method(**kw)
+            except Exception as e:
+                logging.warning("exception (%s) while executing %s [backoff and try %d more]" % (method, e, times))
+                if times == 0:
+                    logging.error("gave up execution of %s" % method)
+                    raise
+                time.sleep(dt)
+                dt *= 2
 
 def bash(command):
     """

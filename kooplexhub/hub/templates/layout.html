@@ -40,18 +40,19 @@
         <div class="container-fluid bg-dark" style="max-height: 105px;">
           <nav class="navbar navbar-expand-lg navbar-dark bg-dark d-flex">
             <div class="container-fluid d-flex flex-column flex-md-row flex-column-reverse">
-	      {% block submenu %}
-                {% if user.is_authenticated %}
+              {% if user.is_authenticated %}
+	        {% block submenu %}
 	          <p class="ms-4 mt-3 d-none d-md-block navbar-brand d-flex justify-content-start fs-6">
 		    Hi,&nbsp;<span style="font-weight: bold;"> {{ user.first_name }} {{ user.last_name }}</span>. Welcome to Kooplex!
 		  </p>
-		{% else %}
+	        {% endblock %}
+              {% else %}
 	          <p class="ms-4 mt-3 d-none d-md-block navbar-brand d-flex justify-content-start fs-6">
 		    Welcome to Kooplex!
 		  </p>
                 {% endif %}
-	      {% endblock %}
 	      {% block toprightmenu %}
+	        {% if user.is_authenticated %}
               <ul class="navbar-nav d-flex flex-row ms-2">
                 <li class="nav-item">{% block help %}{% endblock %}</li>
 		<li class="nav-item ms-3 ms-md-1">
@@ -67,6 +68,7 @@
                   </a>
                 </li>
               </ul>
+	        {% endif %}
 	      {% endblock %}
             </div>
           </nav>

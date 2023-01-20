@@ -7,6 +7,7 @@ import requests
 import logging
 
 from kooplexhub.lib import keeptrying
+from kooplexhub.lib import keeptryinglist
 
 try:
     from kooplexhub.settings import KOOPLEX
@@ -39,13 +40,27 @@ def droproutes():
 
 def addroute(container):
     proxyconf = KOOPLEX.get('proxy', {})
-    kw = {
-        'url': os.path.join(KOOPLEX['proxy'].get('url_api', 'http://localhost:8001/api'), 'routes', container.proxy_route), 
-        'headers': {'Authorization': 'token %s' % KOOPLEX['proxy'].get('auth_token', '') },
-        'data': json.dumps({ 'target': container.url_internal }),
-    }
-    logging.debug(f'+ proxy {kw["url"]} ---> {container.url_internal}')
-    return keeptrying(requests.post, 50, **kw)
+#    kw = {
+#        'url': os.path.join(KOOPLEX['proxy'].get('url_api', 'http://localhost:8001/api'), 'routes', container.proxy_route), 
+#        'headers': {'Authorization': 'token %s' % KOOPLEX['proxy'].get('auth_token', '') },
+#        'data': json.dumps({ 'target': container.url_internal }),
+#    }
+#    logging.debug(f'+ proxy {kw["url"]} ---> {container.url_internal}')
+#    logging.debug(f'ADDROUTE')
+#    return keeptrying(requests.post, 50, **kw)
+    kws=[]
+    for proxy in container.proxies:
+        logging.debug(f'ADDROUTE {proxy.proxy_route(container)}')
+        logging.debug(f'ADDROUTE {proxy.url_internal(container)}')
+        kw = {
+            'url': os.path.join(KOOPLEX['proxy'].get('url_api', 'http://localhost:8001/api'), 'routes', proxy.proxy_route(container)), 
+            'headers': {'Authorization': 'token %s' % KOOPLEX['proxy'].get('auth_token', '') },
+            'data': json.dumps({ 'target': proxy.url_internal(container) }),
+        }
+        logging.debug(f'ADDROUTE {proxy.url_internal(container)}')
+        kws.append(kw)
+        logging.debug(f'+ proxy {kw["url"]} ---> {proxy.url_internal(container)}')
+    return keeptryinglist(requests.post, 50, kws)
 
 def removeroute(container):
     proxyconf = KOOPLEX.get('proxy', {})
