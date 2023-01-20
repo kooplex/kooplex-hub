@@ -53,8 +53,7 @@ $("select[name='image']").change(function() {
 }).change();
 
 {# handle websocket callback #}
-function ws_callback(e) {
-  const data = JSON.parse(e.data);
+function ws_callback(data) {
   //console.log(data);
   var command = data['command'];
   var msg = data['message'];
@@ -68,7 +67,7 @@ function ws_callback(e) {
     $("#thresholdhigh-memoryrequest").text(data["total_memory"]);
     selected = $( "select[name='node'] option:selected" )[0];
     sel_node = $(selected).val();
-    if (sel_node == data['node']) {
+    if (sel_node == data['node'] || (sel_node == '')) {
         $("#busybar").addClass("d-none");
         $("input[name$='request'").each(function() { $(this).attr('disabled', false ) });
     }

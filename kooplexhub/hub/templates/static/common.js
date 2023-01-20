@@ -36,6 +36,12 @@ function open_ws(url, callback, onclose) {
       onclose(e);
     }
   };
-  socket.onmessage = callback;
+  socket.onmessage = function(e) {
+    const data = JSON.parse(e.data);
+    if (data['feedback']) {
+      feedback(data['feedback']);
+    }
+    callback(data);
+  }
   return socket;
 };

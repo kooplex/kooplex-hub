@@ -43,9 +43,8 @@ containerSocket = open_ws('{{ wss_container }}', ws_callback_container);
 projectSocket = open_ws('{{ wss_project }}', ws_callback_project);
 
 {# handle websocket callback #}
-function ws_callback_project(e) {
-  const data = JSON.parse(e.data);
-  console.log(data);
+function ws_callback_project(data) {
+  //console.log(data);
   if (data['command'] == 'showhide') {
       var pid = data['project-id'];
       var hidden = data['hidden'];
@@ -65,8 +64,7 @@ function ws_callback_project(e) {
 };
 
 {# handle websocket callback #}
-function ws_callback_container(e) {
-  const data = JSON.parse(e.data);
+function ws_callback_container(data) {
   //console.log(data);
   var command = data['command'];
   var msg = data['message'];

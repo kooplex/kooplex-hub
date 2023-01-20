@@ -47,8 +47,7 @@ function open_container(containerid) {
 }
 
 {# handle websocket callback #}
-function ws_callback(e) {
-  const data = JSON.parse(e.data);
+function ws_callback(data) {
   //console.log(data);
   var command = data['command'];
   var msg = data['message'];
@@ -63,9 +62,7 @@ function ws_callback(e) {
     setTimeout(function() {
       spinner_state('log', containerid, true);
     }, 2500); // after the model is updated we waith for some time before we reenable refresh log button
-  } else if (command == 'feedback') {
-    feedback(data['message']);
-  }
+  } 
   if (data['state'] == 'np') { //FIXME: Container.ST_NOTPRESENT
     buttons_np(containerid);
   } if (data['state'] == 'run') { //FIXME: Container.ST_RUNNING
