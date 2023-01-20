@@ -35,6 +35,7 @@ class NewContainerView(LoginRequiredMixin, generic.FormView):
         context = super().get_context_data(**kwargs)
         context['menu_container'] = True
         context['submenu'] = 'new'
+        context['wss_container'] = f'wss://k8plex-test.vo.elte.hu/hub/ws/node_monitor/'  #FIXME: HARDCODED URLS
         return context
 
     def get_form_kwargs(self):
@@ -85,6 +86,7 @@ class ContainerListView(LoginRequiredMixin, generic.ListView):
         context['menu_container'] = True
         context['submenu'] = 'list'
         context['partial'] = 'container_partial_list.html'
+        context['wss_container'] = f'wss://k8plex-test.vo.elte.hu/hub/ws/container_environment/{self.request.user.id}/'  #FIXME: HARDCODED URLS
         context['empty_body'] = format_html(f"""You need to <a href="{l}"><i class="bi bi-boxes"></i><span>&nbsp;create</span></a> environments in order to use the hub.""")
         return context
 

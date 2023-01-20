@@ -186,7 +186,7 @@ $("div[id^=click-]").click(function() {
 function set_visibility() {
   $("div[id^=container-id-]").each(function() {
     var cid = $( this ).attr("id").split("-", 3)[2];
-    var show_card = B($( "#container-shown-" + cid ).val());
+    var show_card = B($( "#container-match-" + cid ).val());
     if (show_card) {
       $( this ).show();
     } else {
@@ -194,27 +194,6 @@ function set_visibility() {
     }
   });
 };
-
-{# search and filter container cards to show #}
-$("#search_container").keyup(function() {
-  var pattern = $( this ).val().toUpperCase();
-  console.log( "search: " + pattern );
-  $("input[id^=container-search-]").each(function() {
-    var containerid = $( this ).attr('id').split('-', 3)[2];
-    var cs = $( this ).val();
-    var statewidget = $("#container-shown-" + containerid);
-    if (pattern.length > 0) {
-      if ( cs.indexOf(pattern) > -1 ) {
-        statewidget.val(true);
-      } else {
-        statewidget.val(false);
-      }
-    } else {
-      statewidget.val(true);
-    }
-  });
-  set_visibility();
-});
 
 </script>
 {% endblock %}

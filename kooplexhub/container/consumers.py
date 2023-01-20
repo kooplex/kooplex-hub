@@ -48,7 +48,7 @@ class ContainerConsumer(WebsocketConsumer):
                 for e in completed:
                     cid = self.lut_ev.pop(e)
                     container = self.get_container(cid)
-                    self.send(text_data=json.dumps({"command": "feedback", "message": f"Container {container.friendly_name} finalized its state.", "container-id": cid, "state": container.state}))
+                    self.send(text_data=json.dumps({"feedback": f"Container {container.friendly_name} finalized its state.", "container-id": cid, "state": container.state}))
                     logger.debug(f"Container {container.friendly_name} finalized its state -> {container.state}")
                 if not self.lut_ev:
                     self.running.clear()
@@ -116,6 +116,7 @@ class MonitorConsumer(WebsocketConsumer):
             api.query_pods_status(field=["spec.nodeName=",node], reset=True)
             api.resources_summary()
             resp.update( api.get_data() )
+            resp["feedback"] = f"Node resource information for {node} is updated"
             logger.debug(f"fetch {node} -> {resp}")
             self.send(text_data = json.dumps(resp))
 

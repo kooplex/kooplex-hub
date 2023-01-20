@@ -106,6 +106,8 @@ class UserProjectBindingListView(LoginRequiredMixin, generic.ListView):
         context['submenu'] = 'list'
         context['menu_project'] = True
         context['empty_title'] = "You have no projects"
+        context['wss_container'] = f'wss://k8plex-test.vo.elte.hu/hub/ws/container_environment/{self.request.user.id}/'  #FIXME: HARDCODED URLS
+        context['wss_project'] = f'wss://k8plex-test.vo.elte.hu/hub/ws/project/{self.request.user.id}/'  #FIXME: HARDCODED URLS
         context['empty_body'] = format_html(f"""You can create a <a href="{l}"><i class="bi bi-bag-plus"></i><span>&nbsp;new project</span></a>.""")
         context['n_hidden'] = len(context['object_list'].filter(is_hidden = True))
         return context

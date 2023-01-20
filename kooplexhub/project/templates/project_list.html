@@ -103,24 +103,6 @@ $("#search_project_hidden").change(function() {
   set_visibility();
 }).change();                    // invoked just in case the page was reloaded for some reasons and to hide the necessary cards 
 
-{# search project by userinput #}
-//FIXME: when typing very fast we may sleep a while
-$("#search_project").keyup(function() {
-  var pattern = $( this ).val().toUpperCase();
-  // console.log( "search project: " + pattern );
-  $("input[id^=project-search-]").each(function() {
-    var pid = $( this ).attr("id").split("-", 3)[2];
-    var str = $( this ).val();
-    var match = $( "#project-match-" + pid );
-    if (pattern.length > 0) {
-      match.val( str.indexOf(pattern) > -1 ); // whether pattern is found
-    } else {
-      match.val(true);                        // there are no patterns
-    }
-  });
-  set_visibility();
-});
-
 
 {# show/hide button clicked #}
 $("a[id^=project-showhide-]").click(function() {
