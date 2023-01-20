@@ -111,7 +111,9 @@ class MonitorConsumer(WebsocketConsumer):
         if command == 'monitor-node':
             node = parsed.get('node')
             resp['node'] = node
-            api = Cluster(node)
+            api = Cluster()
+            api.query_nodes_status(node_list=[node], reset=True)
+            api.query_pods_status(field=["spec.nodeName=",node], reset=True)
             api.resources_summary()
             resp.update( api.get_data() )
             logger.debug(f"fetch {node} -> {resp}")

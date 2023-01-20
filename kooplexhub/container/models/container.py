@@ -58,7 +58,7 @@ class Container(models.Model):
     launched_at = models.DateTimeField(null = True, blank = True)
 
     state = models.CharField(max_length = 16, choices = ST_LOOKUP.items(), default = ST_NOTPRESENT)
-    restart_reasons = models.CharField(max_length = 100, null = True, blank = True)
+    restart_reasons = models.CharField(max_length = 500, null = True, blank = True)
     state_lastcheck_at = models.DateTimeField(default = None, null = True, blank = True)
     node = models.TextField(max_length = 64, null = True, blank = True)
     cpurequest = models.DecimalField(null = True, blank = True, decimal_places=1, max_digits=4, default="0.1")
@@ -211,6 +211,8 @@ class Container(models.Model):
         else:
             self.restart_reasons = reason
         self.state = self.ST_NEED_RESTART
+        # FIXME
+        self.restart_reasons = self.restart_reasons[:500]
         self.save()
         return True
 

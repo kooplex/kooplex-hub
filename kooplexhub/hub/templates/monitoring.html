@@ -5,12 +5,34 @@
 {% block submenu %}
 <ul class="navbar-nav flex-row flex-md-row">
   <li class="ms-3 nav-item text-center">
-	  <a data-toggle="tooltip" title="Simple node overview" data-placement="bottom" class="nav-link {% if submenu == 'simple' %}active border-2 border-bottom{% endif %}" href=""><i class="bi bi-bag-plus"></i><span class="d-sm-block d-none">&nbsp;Simple view</span></a>
+	  <a data-toggle="tooltip" title="Simple node overview" data-placement="bottom" class="nav-link {% if submenu == 'simple' %}active border-2 border-bottom{% endif %}" href=""><i class="bi bi-bag-plus"></i><span class="d-md-block d-none">&nbsp;Simple view</span></a>
   </li>
 </ul>
 {% endblock %}
 
+
+<script>
+  var hidden = false;
+  function action() {
+      hidden = !hidden;
+      if(hidden) {
+          document.getElementById('togglee').style.visibility = 'hidden';
+      } else {
+          document.getElementById('togglee').style.visibility = 'visible';
+      }
+  }
+</script>
+
+
 {% block bodycontent %}
+<div class="m-2" style="height: calc(100vh - 105px); overflow-y: scroll; overflow-x:hidden;">
+  <div class="container" style="display:none;" id="myAlert">
+    <div class="alert alert-warning alert-dismissable" id="myAlert2">
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      Dear Kooplex users! We are interested in your opinion about Kooplex in order to improve our platform. Our team would appreciate if you could have five minutes to answer this quick and anonymous questionnaire by <a href="https://forms.gle/cJ52qSQNN8kUKXpL9" target="_blank" class="alert-link" id="toggler" value="Toggler" onClick="action();">clicking here</a>. Thank you!
+    </div>
+    </div>
+<div class="container-fluid ms-1" style="overflow-x:hidden;">
 {% block realcontent %}
   <div id="simple">
     <div class="row">
@@ -23,4 +45,5 @@
     </div>
   </div>
 {% endblock %}
+</div>
 {% endblock %}

@@ -65,8 +65,8 @@ def check(container):
         if container.state == container.ST_STARTING and status.get('state') == container.ST_RUNNING:
             container.state = container.ST_RUNNING
             addroute(container)
-        else:
-            removeroute(container)
+#        else:
+#            removeroute(container)
 
     except client.rest.ApiException as e:
         e_extract = json.loads(e.body)
@@ -79,7 +79,7 @@ def check(container):
         status['message'] += message
     finally:
         logger.debug(f"podstatus: {status}")
-        container.last_message_at = now()
+        container.state_lastcheck_at = now()
         container.save()
     return status
 
@@ -397,7 +397,8 @@ def start(container):
             "metadata": {
                 "name": container.label,
                 "namespace": namespace,
-                "labels": { "lbl": f"lbl-{container.label}", }
+                "labels": { "lbl": f"lbl-{container.label}",
+                    "user": container.user.username}
             },
             "spec": {
                 "containers": [{
