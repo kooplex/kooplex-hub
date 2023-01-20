@@ -36,6 +36,8 @@
 
 {% block scripts %}
 <script>
+containerSocket = open_ws('{{ wss_container }}', ws_callback);
+
 {# when image selection changes, display the details in info panel #}
 $("select[name='image']").change(function() {
     $( "select[name='image'] option:selected" ).each(function() {
@@ -50,41 +52,28 @@ $("select[name='image']").change(function() {
     });
 }).change();
 
-{# open websocket #}
-function so() {
-  console.log('open socket...');
-  const containerSocket = new WebSocket(
-    'wss://k8plex-test.vo.elte.hu/hub/ws/node_monitor/' //FIXME: server name hardcoded
-  );
-  containerSocket.onclose = function(e) {
-    console.error('Socket closed unexpectedly');
-  };
-  //console.log(containerSocket);
-  containerSocket.onmessage = function(e) {
-    const data = JSON.parse(e.data);
-    //console.log(data);
-    var command = data['command'];
-    var msg = data['message'];
-    var containerid = data['container-id'];
-    //console.log('SOCK: --> ' + command + ": " + msg);
-    if (command == 'monitor-node') {
-      console.log(data);
-      $("input[name='cpurequest']").attr("max", data["avail_cpu"]);
-      $("input[name='memoryrequest']").attr("max", data["avail_memory"]);
-      $("#thresholdhigh-cpurequest").text(data["total_cpu"]);
-      $("#thresholdhigh-memoryrequest").text(data["total_memory"]);
-      selected = $( "select[name='node'] option:selected" )[0];
-      sel_node = $(selected).val();
-      if (sel_node == data['node']) {
-	  $("#busybar").addClass("d-none");
-	  $("input[name$='request'").each(function() { $(this).attr('disabled', false ) });
-      }
+{# handle websocket callback #}
+function ws_callback(e) {
+  const data = JSON.parse(e.data);
+  //console.log(data);
+  var command = data['command'];
+  var msg = data['message'];
+  var containerid = data['container-id'];
+  //console.log('SOCK: --> ' + command + ": " + msg);
+  if (command == 'monitor-node') {
+    console.log(data);
+    $("input[name='cpurequest']").attr("max", data["avail_cpu"]);
+    $("input[name='memoryrequest']").attr("max", data["avail_memory"]);
+    $("#thresholdhigh-cpurequest").text(data["total_cpu"]);
+    $("#thresholdhigh-memoryrequest").text(data["total_memory"]);
+    selected = $( "select[name='node'] option:selected" )[0];
+    sel_node = $(selected).val();
+    if (sel_node == data['node']) {
+        $("#busybar").addClass("d-none");
+        $("input[name$='request'").each(function() { $(this).attr('disabled', false ) });
     }
-  };
-  return containerSocket;
+  }
 };
-
-containerSocket = so();
 
 {# when node selection changes, retrieve node details #}
 $("select[name='node']").change(function() {
@@ -92,7 +81,7 @@ $("select[name='node']").change(function() {
         var node = $(this).attr("value");
         if (containerSocket.readyState != 1) {
           console.log("Socket not open: " + containerSocket.readyState);
-          containerSocket = so();
+          containerSocket = open_ws('{{ wss_container }}', ws_callback);
         }
 	if (node != "") {
           containerSocket.send(JSON.stringify({

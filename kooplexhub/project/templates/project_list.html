@@ -39,41 +39,48 @@
 
 {% block scripts %}
 <script>
-{# open websocket #}
-function so() {
-  console.log('open socket...');
-  const projectSocket = new WebSocket(
-    'wss://k8plex-test.vo.elte.hu/hub/ws/project/{{ user.id }}/' //FIXME: server name hardcoded
-  );
-  projectSocket.onclose = function(e) {
-    console.error('Socket closed unexpectedly');
-  };
-  console.log(projectSocket);
-  projectSocket.onmessage = function(e) {
-    const data = JSON.parse(e.data);
-    console.log(data);
-    if (data['command'] == 'showhide') {
-        var pid = data['project-id'];
-        var hidden = data['hidden'];
-        $("#project-hidden-" + pid).val(hidden);
-        widget = $("#project-showhide-" + pid).children()[0]; // the only child is the span
-        $(widget).removeClass('bi-eye');
-        $(widget).removeClass('bi-eye-slash');
-        if (hidden) {
-          $(widget).addClass('bi-eye');
-	} else {
-          $(widget).addClass('bi-eye-slash');
-	}
-        $("#hidden-counter").text(' ' + data['hidden-count']);
-        set_visibility();
-    }
-    //feedback(data['message']);
-  };
-  return projectSocket;
+containerSocket = open_ws('{{ wss_container }}', ws_callback_container);
+projectSocket = open_ws('{{ wss_project }}', ws_callback_project);
+
+{# handle websocket callback #}
+function ws_callback_project(e) {
+  const data = JSON.parse(e.data);
+  console.log(data);
+  if (data['command'] == 'showhide') {
+      var pid = data['project-id'];
+      var hidden = data['hidden'];
+      $("#project-hidden-" + pid).val(hidden);
+      widget = $("#project-showhide-" + pid).children()[0]; // the only child is the span
+      $(widget).removeClass('bi-eye');
+      $(widget).removeClass('bi-eye-slash');
+      if (hidden) {
+        $(widget).addClass('bi-eye');
+      } else {
+        $(widget).addClass('bi-eye-slash');
+      }
+      $("#hidden-counter").text(' ' + data['hidden-count']);
+      set_visibility();
+  }
+  //feedback(data['message']);
 };
 
-projectSocket = so();
-
+{# handle websocket callback #}
+function ws_callback_container(e) {
+  const data = JSON.parse(e.data);
+  //console.log(data);
+  var command = data['command'];
+  var msg = data['message'];
+  var containerid = data['container-id'];
+  console.log('SOCK: --> ' + command + ": " + msg);
+  if (command == 'feedback') {
+    feedback(data['message']);
+  }
+  if (data['state'] == 'np') { //FIXME: Container.ST_NOTPRESENT
+    start_button(containerid);
+  } if (data['state'] == 'run') { //FIXME: Container.ST_RUNNING
+    open_button(containerid);
+  }
+};
 
 {# set visibility states for all cards #}
 function set_visibility() {
@@ -124,7 +131,7 @@ $("a[id^=project-showhide-]").click(function() {
   var cur_state = B($("#project-hidden-" + pid).val());
   if (projectSocket.readyState != 1) {
     console.log("Socket not open: " + projectSocket.readyState);
-    projectSocket = so();
+    projectSocket = open_ws('{{ wss_project }}', ws_callback_project);
   }
   projectSocket.send(JSON.stringify({
     'command': 'showhide',
@@ -155,36 +162,6 @@ function open_container(containerid) {
   }
 }
 
-{# open websocket #}
-function so2() {
-  console.log('open socket...');
-  const containerSocket = new WebSocket(
-    'wss://k8plex-test.vo.elte.hu/hub/ws/container_environment/{{ user.id }}/' //FIXME: server name hardcoded
-  );
-  containerSocket.onclose = function(e) {
-    console.error('Socket closed unexpectedly');
-  };
-  //console.log(containerSocket);
-  containerSocket.onmessage = function(e) {
-    const data = JSON.parse(e.data);
-    //console.log(data);
-    var command = data['command'];
-    var msg = data['message'];
-    var containerid = data['container-id'];
-    console.log('SOCK: --> ' + command + ": " + msg);
-    //if (command == 'feedback') {
-    //  feedback(data['message']);
-    //}
-    if (data['state'] == 'np') { //FIXME: Container.ST_NOTPRESENT
-      start_button(containerid);
-    } if (data['state'] == 'run') { //FIXME: Container.ST_RUNNING
-      open_button(containerid);
-    }
-  };
-  return containerSocket;
-};
-
-containerSocket = so2();
 
 //{# on load feedback messages panel is empty, hide it #}
 //$(document).ready(function () {
@@ -232,7 +209,7 @@ $("button[name=container-start]").click(function() {
   }
   if (containerSocket.readyState != 1) {
     console.log("Socket not open: " + containerSocket.readyState);
-    containerSocket = so2();
+    containerSocket = open_ws('{{ wss_container }}', ws_callback_container);
   }
   console.log( "start: " + containerid );
   spin_button(containerid);

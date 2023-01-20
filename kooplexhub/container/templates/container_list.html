@@ -34,6 +34,8 @@
 
 {% block scripts %}
 <script>
+containerSocket = open_ws('{{ wss_container }}', ws_callback);
+
 {# open a container #}
 function open_container(containerid) {
   var url = $( "#url-containeropen-" + containerid).val();
@@ -44,45 +46,32 @@ function open_container(containerid) {
   }
 }
 
-{# open websocket #}
-function so() {
-  console.log('open socket...');
-  const containerSocket = new WebSocket(
-    'wss://k8plex-test.vo.elte.hu/hub/ws/container_environment/{{ user.id }}/' //FIXME: server name hardcoded
-  );
-  containerSocket.onclose = function(e) {
-    console.error('Socket closed unexpectedly');
-  };
-  //console.log(containerSocket);
-  containerSocket.onmessage = function(e) {
-    const data = JSON.parse(e.data);
-    //console.log(data);
-    var command = data['command'];
-    var msg = data['message'];
-    var containerid = data['container-id'];
-    //console.log('SOCK: --> ' + command + ": " + msg);
-    if (command == 'container-log') {
-      var widget_msg = $("#container-summary-" + containerid);
-      var widget_log = $("#container-logmessage-" + containerid);
-      widget_msg.text(msg);
-      widget_log.text(data['podlog']);
-      console.log(containerid + " -> " + msg);
-      setTimeout(function() {
-        spinner_state('log', containerid, true);
-      }, 2500); // after the model is updated we waith for some time before we reenable refresh log button
-    } else if (command == 'feedback') {
-      feedback(data['message']);
-    }
-    if (data['state'] == 'np') { //FIXME: Container.ST_NOTPRESENT
-      buttons_np(containerid);
-    } if (data['state'] == 'run') { //FIXME: Container.ST_RUNNING
-      buttons_op(containerid);
-    }
-  };
-  return containerSocket;
+{# handle websocket callback #}
+function ws_callback(e) {
+  const data = JSON.parse(e.data);
+  //console.log(data);
+  var command = data['command'];
+  var msg = data['message'];
+  var containerid = data['container-id'];
+  //console.log('SOCK: --> ' + command + ": " + msg);
+  if (command == 'container-log') {
+    var widget_msg = $("#container-summary-" + containerid);
+    var widget_log = $("#container-logmessage-" + containerid);
+    widget_msg.text(msg);
+    widget_log.text(data['podlog']);
+    console.log(containerid + " -> " + msg);
+    setTimeout(function() {
+      spinner_state('log', containerid, true);
+    }, 2500); // after the model is updated we waith for some time before we reenable refresh log button
+  } else if (command == 'feedback') {
+    feedback(data['message']);
+  }
+  if (data['state'] == 'np') { //FIXME: Container.ST_NOTPRESENT
+    buttons_np(containerid);
+  } if (data['state'] == 'run') { //FIXME: Container.ST_RUNNING
+    buttons_op(containerid);
+  }
 };
-
-containerSocket = so();
 
 {# enable or diasble spinner button #}
 function spinner_state(btn, containerid, enabled) {
@@ -128,7 +117,7 @@ function buttons_op(containerid) {
 $("div[id^=containerInfoModal-]").on('shown.bs.modal', function() {
   if (containerSocket.readyState != 1) {
     console.log("Socket not open: " + containerSocket.readyState);
-    containerSocket = so();
+    containerSocket = open_ws('{{ wss_container }}', ws_callback);
   }
   var containerid = $( this ).attr('id').split('-', 2)[1];
   spinner_state('log', containerid, false);
@@ -149,7 +138,7 @@ $("button[name^=container-]").click(function() {
   }
   if (containerSocket.readyState != 1) {
     console.log("Socket not open: " + containerSocket.readyState);
-    containerSocket = so();
+    containerSocket = open_ws('{{ wss_container }}', ws_callback);
   }
   console.log( command + ": " + containerid );
   var btn = command.split('-', 2)[1];

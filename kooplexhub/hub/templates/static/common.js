@@ -25,3 +25,17 @@ function feedback(msg) {
 	// TODO: too many paragraphs, clear oldest
 }
 
+
+// open a websocket
+function open_ws(url, callback, onclose) {
+  console.log('open socket:', url);
+  const socket = new WebSocket(url);
+  socket.onclose = function(e) {
+    console.error('Socket closed unexpectedly');
+    if (onclose) {
+      onclose(e);
+    }
+  };
+  socket.onmessage = callback;
+  return socket;
+};
