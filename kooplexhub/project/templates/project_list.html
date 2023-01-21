@@ -12,7 +12,7 @@
     <span class="input-group-text"><span class="bi bi-search"></span></span>
     <input class="form-control" type="text" id="search_project" placeholder="Search project" title="Type in a name" autofocus >
     <span class="input-group-text">
-      <input id="search_project_hidden" data-size="mini" data-width="50"
+      <input id="toggler-project_hidden" data-size="mini" data-width="50"
              type="checkbox" data-toggle="toggle" name="search_hidden"
              data-on="<span class='bi bi-eye'></span>"
 	     data-off="<span class='bi bi-eye-slash' id='hidden-counter'> {{n_hidden}}</span>"
@@ -26,7 +26,7 @@
 {% if userprojectbindinglist|length %}
   <div class="row row-cols-1 row-cols-md-2">
     {% for upb in userprojectbindinglist %}
-      <div class="col" id="project-id-{{ upb.project.id }}">
+      <div class="col" id="hideable-project-{{ upb.project.id }}">
         {% include 'project_partial_list.html' with project=upb.project projectcontainerbindings=upb.projectcontainerbindings is_admin=upb.is_admin hidden=upb.is_hidden upb_id=upb.id %}
       </div>
     {% endfor %}
@@ -58,9 +58,9 @@ function ws_callback_project(data) {
         $(widget).addClass('bi-eye-slash');
       }
       $("#hidden-counter").text(' ' + data['hidden-count']);
-      set_visibility();
+      $("#search_project").keyup();
+      set_visibility("project");
   }
-  //feedback(data['message']);
 };
 
 {# handle websocket callback #}
@@ -81,26 +81,17 @@ function ws_callback_container(data) {
 };
 
 {# set visibility states for all cards #}
-function set_visibility() {
-  var disable_hide = B($( "#search_project_hidden" )[0].checked);
-  var pattern = $( "#search_project" ).val().length > 0;
-  // console.log( "set visibility", disable_hide, pattern);
-  $("div[id^=project-id-]").each(function() {
-    var pid = $( this ).attr("id").split("-", 3)[2];
-    var match = B($( "#project-match-" + pid ).val());
-    var hidden = B($( "#project-hidden-" + pid ).val());
-    var show_card = (match && pattern) || ((! pattern) && ((! hidden) || disable_hide));
-    if (show_card) {
-      $( this ).show();
-    } else {
-      $( this ).hide();
-    }
-  });
-};
+function is_visible_callback(obj, obj_id, pattern_is_empty, match) {
+  disable_hide = B($( "#toggler-project_hidden" )[0].checked);
+  hidden_project = B($( "#project-hidden-" + obj_id ).val());
+  return (match && ! pattern_is_empty) || (pattern_is_empty && ((! hidden_project) || disable_hide));
+}
+
 
 {# whether to suppress is_hidden state of user project binding #}
-$("#search_project_hidden").change(function() {
-  set_visibility();
+$("#toggler-project_hidden").change(function() {
+  $("#search_project").keyup();
+  set_visibility("project");
 }).change();                    // invoked just in case the page was reloaded for some reasons and to hide the necessary cards 
 
 

@@ -2,13 +2,35 @@
 {% load thumbnail %}
 {% load container_buttons %}
 
+<style>
+  @media all and (max-width: 728.01px) {
+    .imagesize{
+width: 200px;
+height: 200px;
+}
+
+  }
+
+  .goflex{
+  display: flex;
+}
+
+.border-2 .border-warning{
+ display:none;
+}
+
+.bg-transparent:hover .border-2 .border-warning {
+ opacity: 1;
+}
+
+</style>
 
 {# FIXME: resize card #}
 <div class="card mb-3 mx-1 border-0 bg-transparent" style="max-width: 560px;">
   {# hidden fields are helpers to shide/show cards accordign to filtering criteria #}
-  <input type="hidden" id="report-shown-{{ report.id }}" value="true">
-  <input type="hidden" id="report-search-{{report.id}}" 
-	 value="{{ report.name }}-{{ report.creator.profile.name }} {% for tag in report.tags.all %} {{ tag.name }} {% endfor %}"/> {# FIXME: toUpper #}
+  <input type="hidden" id="report-search-{{report.id}}" value="{{ report.search }}"/>
+  <input type="hidden" id="report-match-{{ report.id }}" value="true">
+  <input type="hidden" id="report-isshown-{{ report.id }}" value="true">
   {% if user == report.creator %}
     <input type="hidden" id="report-iscreator-{{ report.id }}" value="true">
   {% else %}
@@ -17,18 +39,18 @@
   <div class="row g-0">
     <div class="col-md-11" id="click-report-{{ report.id }}">
       <input type="hidden" id="url-reportopen-{{ report.id }}" value="{% url 'report:open' report.id %}">
-      <div class="card-body p-0">
-        <div class="card text-dark bg-secondary m-0">
+      <div class="card-body p-0 border-0">
+        <div class="card text-dark bg-secondary m-0 border-2 everything border-warning">
           <div class="card-header text-light fw-bold">{{ report.name }}</div>
           <div class="card-footer bg-light">
 
             <div class="card w-100 border-0" style="height: 200px">
-              <div class="row g-0">
+              <div class="goflex">
                 <div class="col-md-5">
                   {% if report.thumbnail|length %}
-                    <img src="data:image/png;base64,{{report.thumbnail|decode}}" class="img-fluid rounded" alt="thumbnail"> {# FIXME: truncate if too large an image #}
+                    <img src="data:image/png;base64,{{report.thumbnail|decode}}" class="img-fluid imagesize rounded" alt="thumbnail"> {# FIXME: truncate if too large an image #}
 		  {% else %}
-                    <img src="/static/noimageavailable.png" class="img-fluid rounded" alt="no thumbnail">
+                    <img src="/static/noimageavailable.png" class="img-fluid rounded imagesize" alt="no thumbnail">
 		  {% endif %}
                 </div>
                 <div class="col-md-7">
@@ -40,7 +62,7 @@
                         <span class="card-text">Static html report</span>
                       {% endif %}
                     </h5>
-		    <p class="card-text">{{ report.description|truncatechars:80 }}</p>
+		    <p class="card-text">{{ report.description|truncatechars:45 }}</p>
 		    <p class="card-text"><small class="text-muted"><strong>Creator:</strong> {{ report.creator.profile.name }}</small></p>
                   </div>
                 </div>
@@ -56,7 +78,7 @@
       {% button_side_modal_open report class_extra="mb-1" %}
       <button data-bs-toggle="modal"  data-bs-target="#reportInfoModal-{{ report.id }}" role="button" class="btn btn-warning btn-sm mb-1" ><span class="bi bi-info-square" aria-hidden="true" data-toggle="tooltip" title="Click for more info" data-placement="top" ></span></button>
       {% button_report_conf report user class_extra="mb-1" %}
-      {% button_report_delete report user class_extra="mt-3" %}
+      {% button_report_delete report user %}
     </div>
   </div>
 </div>

@@ -14,7 +14,7 @@
     <input class="form-control" type="text" id="search_report" placeholder="Search by report title, creator or tag" title="Type in a name" autofocus >
     <span class="input-group-text">
       {# toggler to narrow selection according to creator #}
-      <input id="search_user_creator" data-size="mini" data-width="100"
+      <input id="toggler-user_creator" data-size="mini" data-width="100"
              type="checkbox" data-toggle="toggle" name="search_creator"
              data-on="Your reports"
              data-off="All reports"
@@ -29,7 +29,7 @@
 <div id="reportListPane" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 w-100 mx-auto justify-content-center">
   {% if reports %}
     {% for report in reports %}
-      <div class="col" id="report-id-{{ report.id }}">
+      <div class="col" id="hideable-report-{{ report.id }}">
         {% include 'partial_list.html' %}
       </div>
     {% endfor %}
@@ -75,49 +75,17 @@ $("div[id^=click-report-]").mouseenter(function() {
 });
 
 {# set visibility states for all cards #}
-function set_visibility() {
-  var narrow_creator = B($( "#search_user_creator" )[0].checked);
-  console.log( "set visibility, creator only " + narrow_creator);
-  $("div[id^=report-id-]").each(function() {
-    var rid = $( this ).attr("id").split("-", 3)[2];
-    var filter_search = B($( "#report-shown-" + rid ).val());
-    var is_creator = B($( "#report-iscreator-" + rid).val());
-    var show_card = filter_search && ((! narrow_creator) || is_creator);
-    // console.log( "rid " + rid + ": " +  filter_search + " & (! " +  narrow_creator + "| " + is_creator + ") ---> " + show_card);
-    if (show_card) {
-      $( this ).show();
-    } else {
-      $( this ).hide();
-    }
-  });
+function is_visible_callback(obj, obj_id, pattern_is_empty, match) {
+  narrow_creator = B($( "#toggler-user_creator" )[0].checked);
+  is_creator = B($( "#report-iscreator-" + obj_id).val());
+  return match && ((! narrow_creator) || is_creator);
 };
 
 {# narrow selection whether user is the creator of the report #}
-$("#search_user_creator").change(function() {
-  set_visibility();
+$("#toggler-user_creator").change(function() {
+  $("#search_report").keyup();
+  set_visibility("report");
 }).change();                    // invoked just in case the page was reloaded for some reasons and to hide the necessary cards 
-
-{# search report by userinput #}
-// FIXME: when typing very fast we may sleep a while
-$("#search_report").keyup(function() {
-  var pattern = $( this ).val().toUpperCase();
-  console.log( "search report: " + pattern );
-  $("input[id^=report-search-]").each(function() {
-    var rid = $( this ).attr("id").split("-", 3)[2];
-    var str = $( this ).val().toUpperCase(); // FIXME: we could have done it in advance to speed things up (marked also in the template)
-    var state_store = $( "#report-shown-" + rid );
-    if (pattern.length > 0) {
-      if ( str.indexOf(pattern) > -1 ) {
-        state_store.val(true);  // pattern found
-      } else {
-        state_store.val(false); // pattern not found
-      }
-    } else {
-      state_store.val(true);    // there are no patterns
-    }
-  });
-  set_visibility();
-});
 
 </script>
 

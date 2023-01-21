@@ -21,7 +21,7 @@
 <div id="containerListPane" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 w-100 mx-auto justify-content-center">
   {% if containers %}
     {% for container in containers %}
-      <div class="col" id="container-id-{{ container.id }}">
+      <div class="col" id="hideable-container-{{ container.id }}">
         {% include partial %} {# FIXME: partial as a variable breaks code symmetry with report #}
       </div>
     {% endfor %}
@@ -181,19 +181,6 @@ $("div[id^=click-]").click(function() {
     open_container( $( this ).attr("id").split("-", 3)[2] );
   }
 });
-
-{# set visibility states for all cards #}
-function set_visibility() {
-  $("div[id^=container-id-]").each(function() {
-    var cid = $( this ).attr("id").split("-", 3)[2];
-    var show_card = B($( "#container-match-" + cid ).val());
-    if (show_card) {
-      $( this ).show();
-    } else {
-      $( this ).hide();
-    }
-  });
-};
 
 </script>
 {% endblock %}

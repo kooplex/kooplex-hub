@@ -57,11 +57,30 @@ $("input[id^=search_]").keyup(function() {
     var obj_id = $( this ).attr("id").split("-", 3)[2];
     var str = $( this ).val();
     var match = $( "#" + obj + "-match-" + obj_id );
+    is_found = true;
     if (pattern.length > 0) {
-      match.val( str.indexOf(pattern) > -1 ); // whether pattern is found
+      is_found = str.indexOf(pattern) > -1;
+    }
+    match.val( is_found );
+    if (typeof is_visible_callback === "function") {
+      show_object = is_visible_callback(obj, obj_id, pattern.length == 0, is_found);
     } else {
-      match.val(true);                        // there are no patterns
+      show_object = is_found;
+    }
+    $("#" + obj + "-isshown-" + obj_id).val(show_object);
+  });
+  set_visibility(obj);
+});
+
+// set visibility states for objects: cards, table rows
+function set_visibility(obj) {
+  $("div[id^=hideable-" + obj + "-]").each(function() {
+    obj_id = $( this ).attr("id").split("-", 3)[2];
+    show_object = B($("#" + obj + "-isshown-" + obj_id).val());
+    if (show_object) {
+      $( this ).show();
+    } else {
+      $( this ).hide();
     }
   });
-  set_visibility();
-});
+};
