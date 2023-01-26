@@ -74,7 +74,9 @@ $("input[id^=search_]").keyup(function() {
 
 // set visibility states for objects: cards, table rows
 function set_visibility(obj) {
+  found = false;
   $("div[id^=hideable-" + obj + "-]").each(function() {
+    found = true;
     obj_id = $( this ).attr("id").split("-", 3)[2];
     show_object = B($("#" + obj + "-isshown-" + obj_id).val());
     if (show_object) {
@@ -83,4 +85,18 @@ function set_visibility(obj) {
       $( this ).hide();
     }
   });
+  // fall back to manipulate a table rows, tr expected 2 levels up
+  if (! found) {
+    $("input[id^=" + obj + "-isshown-]").each(function() {
+      w = $(this).parent().parent();
+      show = B($(this).val());
+      if ( show ) {
+        //w.show();
+        w.removeClass('d-none');
+      } else {
+        //w.hide();
+        w.addClass('d-none');
+      }
+    });
+  }
 };

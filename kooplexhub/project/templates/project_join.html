@@ -14,6 +14,10 @@
   {% csrf_token %}
   {% if t_joinable.data|length > 0 %}
   {% title_with_button "Use the switch to select those projects you want to join" button_icon="bi bi-people" button_label="Collaborate" button_color="btn-success"%}
+  <div class="input-group">
+    <span class="input-group-text"><span class="bi bi-search"></span></span>
+    <input class="form-control" type="text" id="search_project" placeholder="Search project" title="Type in a name" autofocus >
+  </div>
   <div class="card-body">
       {% render_table t_joinable %}
   </div>

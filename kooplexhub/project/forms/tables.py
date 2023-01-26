@@ -25,7 +25,7 @@ class TableJoinProject(tables.Table):
         attrs = {
                      "class": "table table-striped table-bordered",
                      "thead": { "class": "thead-dark table-sm" },
-                     "td": { "style": "padding:.5ex", "class": "text-light" },
+                     "td": { "style": "padding:.5ex", "class": "text-dark" },
                      "th": { "style": "padding:.5ex", "class": "table-secondary" }
                     }
 
@@ -36,6 +36,9 @@ class TableJoinProject(tables.Table):
      data-on="<span class=' bi bi-people'></span>"
      data-off="<span class='bi bi-people'></span>"
      data-onstyle="success" data-offstyle="secondary" value="{record.project.id}">
+<input type="hidden" id="project-search-{record.project.id}" value="{record.project.search}">
+<input type="hidden" id="project-match-{record.project.id}" value=true>
+<input type="hidden" id="project-isshown-{record.project.id}" value=true>
         """)
 
     def render_images(self, record):
