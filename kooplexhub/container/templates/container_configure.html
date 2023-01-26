@@ -8,23 +8,7 @@
 {% endblock %}
 
 
-
-{% block head_content %}
-<style>
-.mytab{
-  color: rgb(196, 196, 196);
-}
-.mytab:hover{
-  color: rgb(196, 196, 196);
-  font-weight: bolder;
-}
-.mytab.active {
-  font-weight: bolder;
-}
-</style>
-{% endblock %}
-
-{% block realcontent %}
+{% block bodycontent %}
 <div class="m-2" style="height: calc(100vh - 105px); overflow-y: scroll; overflow-x:hidden;">
 <div class="card shadow p-3 mb-5 bg-light rounded">
 <form id="container-manage" class="form-horizontal" action="{% url 'container:configure_save' %}" method="post">

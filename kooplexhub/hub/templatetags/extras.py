@@ -29,7 +29,7 @@ def title_with_button(*argv, button_label = "Save all changes", button_icon = "b
     bi = f'id="{button_id}"' if button_id else ''
     return format_html(f"""
 <div class="container-fluid d-flex flex-column flex-md-row justify-content-between">
-  <div><h5 class="mb-4">{t}</h5></div>
+  <div><h5 class="mb-4 text-light">{t}</h5></div>
   <div><button {bi} type="submit" class="btn {button_color}" name="button" value="apply"><i class="{button_icon}"></i>&nbsp;{button_label}</button></div>
 </div>""")
 

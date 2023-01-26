@@ -36,7 +36,7 @@ function unselect_envs() {
     $(this).prop('selected', false);
   });
 }
-$("select[name='image'").change(function() {
+$("select[name='image']").change(function() {
     $( "#id_image option:selected" ).each(function() {
         var id = $(this).attr("value");
         console.log( $( this ).text() + " -> " + id);
