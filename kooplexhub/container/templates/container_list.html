@@ -147,7 +147,7 @@ $("button[name^=container-]").click(function() {
 });
 
 {# on mouse over the card show the buttonbars #}
-$("div[id^=container-id-]").mouseenter(function() {
+$("div[id^=hideable-container-]").mouseenter(function() {
   var containerid = $( this ).attr("id").split("-", 3)[2];
   // console.log( "card enter: " + containerid );
   bar = $( "#buttonbar-" + containerid );
@@ -155,7 +155,7 @@ $("div[id^=container-id-]").mouseenter(function() {
 });
 
 {# hide buttons on mouse leaving the card #}
-$("div[id^=container-id-]").mouseleave(function() {
+$("div[id^=hideable-container-]").mouseleave(function() {
   var containerid = $( this ).attr("id").split("-", 3)[2];
   // console.log( "card leave: " + containerid );
   bar = $( "#buttonbar-" + containerid );

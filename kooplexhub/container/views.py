@@ -54,8 +54,9 @@ class NewContainerView(LoginRequiredMixin, generic.FormView):
             user = user, 
             #name = form.cleaned_data['name'], 
             name = name, 
-            friendly_name = friendly_name, 
-            image = form.cleaned_data['image']
+            **form.cleaned_data
+            #friendly_name = friendly_name, 
+            #image = form.cleaned_data['image']
         )
         messages.info(self.request, f'Container {friendly_name} is created')
         return super().form_valid(form)
@@ -187,12 +188,14 @@ def configure(request, container_id):
     # elif svc.state == svc.ST_STARTING:
     #     messages.error(request, f'Service {svc.name} is starting up, you cannot configure it right now.')
     #     return redirect('container:list')
+    api = Cluster()
+    api.query_nodes_status()
 
     context_dict = {
         'menu_container': True,
         'active': request.COOKIES.get('configure_env_tab', 'projects'),
         'container': svc,
-        'form': FormContainer(container = svc),
+        'form': FormContainer(container = svc, nodes = list(api.node_df['node'].values)),
         't_attachments': TableContainerAttachment(svc),
         't_projects': TableContainerProject(svc, user),
     }

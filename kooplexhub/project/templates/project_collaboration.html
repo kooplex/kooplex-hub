@@ -1,8 +1,15 @@
+{# FIXME: REFACTOR ME!!! #}
+
+
+
 {% load render_table from django_tables2 %}
 
 <div class="d-flex flex-row align-items-baseline">
   <div class="flex-fill w-100 me-1">
-    <input class="form-control me-2 mb-3 mt-3" type="text" id="search_collaborator" placeholder="Search collaborator" title="Type in a name">
+	  {#<div class="input-group m-3">#}
+		  {#<span class="input-group-text"><span class="bi bi-search"></span></span>#}
+      <input class="form-control" type="text" id="search_collaborator" placeholder="Search collaborator" title="Type in a name">
+      {#</div>#}
     {% render_table t_users %}
   </div>
   <div class="flex-fill w-100 mb-1">

@@ -63,13 +63,19 @@ function ws_callback(data) {
     console.log(data);
     $("input[name='cpurequest']").attr("max", data["avail_cpu"]);
     $("input[name='memoryrequest']").attr("max", data["avail_memory"]);
+    $("input[name='gpurequest']").attr("max", data["avail_gpu"]);
     $("#thresholdhigh-cpurequest").text(data["total_cpu"]);
     $("#thresholdhigh-memoryrequest").text(data["total_memory"]);
+    $("#thresholdhigh-gpurequest").text(data["total_gpu"]);
     selected = $( "select[name='node'] option:selected" )[0];
     sel_node = $(selected).val();
     if (sel_node == data['node'] || (sel_node == '')) {
         $("#busybar").addClass("d-none");
-        $("input[name$='request'").each(function() { $(this).attr('disabled', false ) });
+        $("input[name$='request'").each(function() { 
+          if ($(this).attr("max") > 0) {
+	    $(this).attr('disabled', false ) 
+	  }
+	});
     }
   }
 };

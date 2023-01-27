@@ -25,8 +25,8 @@ class TableJoinProject(tables.Table):
         attrs = {
                      "class": "table table-striped table-bordered",
                      "thead": { "class": "thead-dark table-sm" },
-                     "td": { "style": "padding:.5ex", "class": "text-dark" },
-                     "th": { "style": "padding:.5ex", "class": "table-secondary" }
+                     "td": { "class": "p-1 text-dark" },
+                     "th": { "class": "p-1 table-secondary" }
                     }
 
     def render_button(self, record):
@@ -72,7 +72,7 @@ class TableCollaborator(tables.Table):
         attrs = {
                  "class": "table table-bordered",
                  "thead": { "class": "thead-dark table-sm" },
-                 "td": { "class": "p-1 text-light" },
+                 "td": { "class": "p-1 text-dark" },
                  "th": { "class": "table-secondary p-1" }
                 }
 
@@ -111,6 +111,9 @@ class TableCollaborator(tables.Table):
         self.Meta.attrs["id"] = "collaborators" if collaborator_table else "users"
         super(TableCollaborator, self).__init__(bindings)
 
+#    def before_render(self, request):
+#        pass
+
 
 class TableContainer(tables.Table):
     image = tables.Column(orderable = False)
@@ -124,9 +127,16 @@ class TableContainer(tables.Table):
         attrs = {
                  "class": "table table-striped table-bordered",
                  "thead": { "class": "thead-dark table-sm" },
-                 "td": { "class": "p-1 text-light" },
+                 "td": { "class": "p-1 text-dark" },
                  "th": { "class": "table-secondary p-1" }
                 }
+
+    def _hidden(self, record):
+        return f"""
+<input type="hidden" id="container-search-{record.id}" value="{record.search}">
+<input type="hidden" id="container-match-{record.id}" value=true>
+<input type="hidden" id="container-isshown-{record.id}" value=true>
+        """
 
     def render_b_user(self, record):
         try:
@@ -137,6 +147,7 @@ class TableContainer(tables.Table):
   data-on="<span class='bi bi-file-plus'></span>"
   data-off="<span class='bi bi-file-minus'></span>"
   data-onstyle="success opacity-75" data-offstyle="secondary" value="{record.id}" checked></span>
+{self._hidden(record)}
             """)
         except ProjectContainerBinding.DoesNotExist:
             return format_html(f"""
@@ -145,6 +156,7 @@ class TableContainer(tables.Table):
   data-on="<span class='bi bi-file-plus'></span>"
   data-off="<span class='bi bi-file-minus'></span>"
   data-onstyle="success" data-offstyle="secondary opacity-75" value="{record.id}"></span>
+{self._hidden(record)}
         """)
 
     def render_b_project(self, record):
@@ -154,6 +166,7 @@ class TableContainer(tables.Table):
   data-on="<span class='bi bi-boxes'></span>"
   data-off="<span class='bi bi-boxes'></span>"
   data-onstyle="success" data-offstyle="secondary opacity-75" value="{record.id}"></span>
+{self._hidden(record)}
         """)
 
     def render_name(self, record):

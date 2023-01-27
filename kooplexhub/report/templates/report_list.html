@@ -43,7 +43,7 @@
 {% block scripts %}
 <script>
 {# show buttons on mouse enter the transparent card #}
-$("div[id^=report-id-]").mouseenter(function() {
+$("div[id^=hideable-report-]").mouseenter(function() {
   var reportid = $( this ).attr("id").split("-", 3)[2];
   // console.log( "card enter: " + reportid );
   bar = $( "#buttonbar-" + reportid );
@@ -51,7 +51,7 @@ $("div[id^=report-id-]").mouseenter(function() {
 });
 
 {# hide buttons on mouse leaving the transparent card #}
-$("div[id^=report-id-]").mouseleave(function() {
+$("div[id^=hideable-report-]").mouseleave(function() {
   var reportid = $( this ).attr("id").split("-", 3)[2];
   // console.log( "card leave: " + reportid );
   bar = $( "#buttonbar-" + reportid );

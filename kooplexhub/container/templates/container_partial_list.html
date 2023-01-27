@@ -13,12 +13,17 @@
   <input type="hidden" id="container-match-{{ container.id }}" value="true">
   <input type="hidden" id="container-isshown-{{ container.id }}" value="true">
   <div class="card-header bg-secondary bg-opacity-75 border-bottom border-warning border-1 border-opacity-50" id="click-containerhead-{{ container.id }}">
-    <h5 class="card-title fw-bold" >{{ container.friendly_name }}</h5>
+    <h5 class="card-title fw-bold" >{{ container.friendly_name|truncatechars:45 }}</h5>
   </div>
     <div class="card-body text-dark fw-bold" id="click-containerbody-{{ container.id }}">
-      <p class="card-text"><strong class="me-2">Info:</strong>
+      <p class="card-text">
           {% container_image container %}
 	  {% ifempty container %}
+      </p>
+      <p class="card-text">
+          {% container_resources container %}
+      </p>
+      <p class="card-text">
 	  {% projects projects=container.projects %}
 	  {% courses courses=container.courses %}
 	  {% volumes volumes=container.volumes %}
@@ -39,10 +44,9 @@
           <div class="ms-2">{% button_restart container %}</div>
           <div class="ms-2">{% button_stop container %}</div>
           <div class="ms-2">{% button_refreshlog container modal_prefix="containerInfoModal-" %}</div>
-          <div class="ms-2">{% button_configure container %}</div>
         </div>
         <div class="d-flex flex-row justify-content-end">
-          <div>{% button_delete_container container %}</div>
+          <div>{% button_configure container %}</div>
         </div>
       </div>
     </div>

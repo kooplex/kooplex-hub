@@ -41,7 +41,11 @@
     </div>
     <div class="tab-pane fade {% if active == "service" %}show active{% endif %}" id="service" role="tabpanel" aria-labelledby="tab-service">
       {% if t_all_services %}
-      <div class='mt-3'>
+      <div class="input-group m-3">
+        <span class="input-group-text"><span class="bi bi-search"></span></span>
+        <input class="form-control" type="text" id="search_container" placeholder="Search environment" title="Type in a name" >
+      </div>
+      <div>
         {% render_table t_all_services %}
       </div>
       {% else %}
