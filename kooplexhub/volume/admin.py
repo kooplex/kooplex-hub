@@ -4,8 +4,8 @@ from .models import *
 
 @admin.register(Volume)
 class VolumeAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'claim', 'subPath', 'is_present', 'description')
-    search_fields = ('name', 'claim', 'description')
+    list_display = ('id', 'folder', 'claim', 'subPath', 'is_present', 'description')
+    search_fields = ('folder', 'claim', 'description')
 
 @admin.register(VolumeContainerBinding)
 class VolumeContainerBindingAdmin(admin.ModelAdmin):

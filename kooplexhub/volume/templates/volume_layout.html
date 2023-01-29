@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+
+{% load static %}
+{% load project_buttons %}
+
+{% block page_title %}Kooplex Storage{% endblock %}
+
+
+{% block help %} 
+  {% include 'storagehelp.html' %}
+{% endblock %}
+
+
+{% block submenu %}
+<ul class="navbar-nav flex-row flex-md-row">
+  <li class="ms-3 nav-item text-center">
+    <a data-toggle="tooltip" title="New attachment" data-placement="bottom" class="nav-link {% if submenu == 'new_attachment' %}active active border-2 border-bottom{% endif %}" href="{% url 'volume:new_attachment' %}"><i class="bi bi-clipboard-plus"></i><span class="d-none d-md-block">&nbsp;New attachment</span></a>
+  </li>
+  <li class="ms-3 nav-item text-center">
+    <a data-toggle="tooltip" title="List volumes" data-placement="bottom" class="nav-link {% if submenu == 'list_volume' %}active active border-2 border-bottom{% endif %}" href="{% url 'volume:list' %}"><i class="bi bi-clipboard2-pulse"></i><span class="d-none d-md-block">&nbsp;List volumes</span></a>
+  </li>
+</ul>
+{% endblock %}
+

@@ -19,7 +19,8 @@
 {% endblock %}
 
 {% block realcontent %}
-<div id="volumeConfogTabs" class="card shadow p-3 mt-3 bg-light rounded">
+<div class="container" style="overflow-x:hidden;">
+  <div id="volumeConfogTabs" class="card shadow p-3 mt-3 bg-light rounded">
 <form id="volume-manage" class="form-horizontal" action="{% url 'volume:configure' volume.id %}" method="post">
 {% csrf_token %}
 
@@ -57,6 +58,7 @@
   </div>
 </div>
 </form>
+</div>
 </div>
 {% endblock %}
 

@@ -1,15 +1,27 @@
-{% extends "storage_layout.html" %}
+{% extends "volume_layout.html" %}
 
 {% load static %}
 
-{% block realcontent %}
-{% if uservolumebindingslist %}
-<input class="form-control me-2 mb-3 mt-3" type="text" id="search_volume" placeholder="Search volume" title="Type in a name" autofocus >
-<div id="volumeListPane" >
-    {% for uvb in uservolumebindingslist  %}
-      {% include 'volume_partial_list.html' with next_page='volume:list' volume=uvb.volume volumecontainerbindings=uvb.volumecontainerbindings is_admin=uvb.is_admin %}
+{% block bodycontent %}
+{# the search bar #}
+{% if volumes %}
+<div class="card border border-light border-3 mx-5 mb-3 rounded-3">
+  <div class="input-group">
+    <span class="input-group-text"><span class="bi bi-search"></span></span>
+    <input class="form-control" type="text" id="search_volume" placeholder="Search volume" title="Type in a folder" autofocus >
+  </div>
+</div>
+{% endif %}
+
+{# render the volume cards #}
+{% if volumes|length %}
+  <div class="row row-cols-4">
+    {% for volume in volumes %}
+      <div class="col" id="hideable-volume-{{ volume.id }}">
+        {% include 'volume_partial_list.html' %}
+      </div>
     {% endfor %}
-</div>    
+  </div>
 {% else %}
   {% include 'empty.html' %}
 {% endif %}
@@ -17,29 +29,11 @@
 
 {% block scripts %}
 <script>
-$("#search_volume").keyup(function() {
-  var pattern = $( this ).val().toUpperCase();
-  console.log( "search: " + pattern );
-  $("input[id^='volume-dump-'").each(function() {
-  console.log( this );
-    var volumeid = $( this ).attr('id').split('-')[2];
-    var hide_it = true;
-    var card = $("#card-" + volumeid);
-    if (pattern.length > 0) {
-      var name = $( this ).attr("value").toUpperCase();
-      if ( name.indexOf(pattern) > -1 ) {
-        hide_it = false;
-      }
-    } else {
-      hide_it = false;
-    }
-    if (hide_it) {
-      $( card ).hide();
-    } else {
-      $( card ).show();
-    }
-  });
+{# on click show modal #}
+$("div[id^=hideable-volume-]").click(function() {
+  // console.log( this );
+  var obj_id = $( this ).attr("id").split("-", 3)[2];
+  $("#volumeInfoModal-" + obj_id).modal('show');
 });
 </script>
 {% endblock %}
-

@@ -1,22 +1,44 @@
 {% load extras %}
+{% load container_buttons %}
 {% load volume_buttons %}
 
-<div class="card bg-light border-danger shadow mb-3 search" id="card-{{ volume.id  }}">
+{% comment %}
+	{% render_folder attachment.folder %}<br>
+	{% button_configure_attachment attachment user %}
+        {{ attachment.description }} (created by {{ attachment.creator.profile.name }})
+{% endcomment %}
+
+
+
+<div class="card bg-light rounded mb-3" id="card-{{ volume.id }}" style="height: 200px;">
+  <input type="hidden" id="volume-search-{{ volume.id }}" value="{{ volume.search }}">
+  <input type="hidden" id="volume-match-{{ volume.id }}" value=true>
+  <input type="hidden" id="volume-isshown-{{ volume.id }}" value=true>
   <div class="card-header">
-  <input type="hidden" id="volume-dump-{{ volume.id }}" value="{{ volume.name }} {{ volume.folder }} {{ volume.description }}">
-    <div class="row">
-      <div class="col-2">
-	<span><i class="ri-database-2-line"></i>&nbsp;{{ volume.name }}</span><br>
-	{% render_folder volume.cleanname subpath=volume.subpath %}<br>
-	{% button_configure_volume volume user %}<br>
+    {% render_folder volume.folder %}
+    <div class="float-end">
+      {% scope volume %}
+    </div>
+  </div>
+  <div class="card-body">
+    {{ volume.description|truncatechars:200 }} 
+	{#% button_configure_volume volume user %#}
+  </div>
+</div>
+
+<div class="modal fade" id="volumeInfoModal-{{ volume.id }}" tabindex="-1" aria-labelledby="volumeInfoModal-{{ volume.id }}" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        {% render_folder volume.folder %}
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="col-9">
+      <div class="modal-body">
         {{ volume.description }} 
+        {% admin_or_creator volume %} 
       </div>
-      <div class="col-1">
-        <div class="float-end">
-          {% scope volume %}
-        </div>
+      <div class="modal-footer">
+	{% button_configure_volume volume user %}
       </div>
     </div>
   </div>

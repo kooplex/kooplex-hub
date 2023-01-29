@@ -84,6 +84,23 @@ def check(container):
     return status
 
 
+def storage_resources(volumes):
+    mounts = []
+    claims = set()
+    for volume in volumes:
+        mountPath = KOOPLEX['kubernetes']['userdata'].get('mountPath_attachment', '/attachment/{volume.folder}') \
+                if volume.scope == volume.SCP_ATTACHMENT else \
+                KOOPLEX['kubernetes']['userdata'].get('mountPath_volume', '/volume/{volume.folder}')
+        mounts.append({
+            "name": volume.claim,
+            "mountPath": mountPath.format(volume = volume),
+            "subPath": volume.subPath,
+            })
+        claims.add(volume.claim)
+    claimdict = lambda c: { "name": c, "persistentVolumeClaim": { "claimName": c } }
+    return { 'mounts': mounts, 'claims': list(map(claimdict, claims)) }
+
+
 def start(container):
     #event = Event()
     event = CE_POOL.get_or_create(container.id)
@@ -287,33 +304,10 @@ def start(container):
             "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-report', 'report') }
         })
 
-    # attachment
-    claim_attachment = False
-    for attachment in container.attachments:
-        volume_mounts.extend([{
-             "name": "attachment",
-             "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_attachment', '/attachment/{attachment.folder}').format(attachment = attachment),
-             "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_attachment', '{attachment.folder}').format(attachment = attachment, user = container.user),
-        }
-        ])
-        claim_attachment = True
-    if claim_attachment:
-        volumes.append({
-            "name": "attachment",
-            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-attachment', 'attachment') }
-        })
-
-
-    claims = set()
-    for volume in container.volumes:
-        volume_mounts.append({
-            "name": volume.claim,
-            "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_volume', '/volume/{volume.cleanname}').format(volume = volume),
-            "subPath": volume.subPath
-        })
-        claims.add(volume.claim)
-    claimdict = lambda c: { "name": c, "persistentVolumeClaim": { "claimName": c } }
-    volumes.extend(map(claimdict, claims))
+    # volumes
+    storage = storage_resources(container.volumes)
+    volume_mounts.extend(storage['mounts'])
+    volumes.extend(storage['claims'])
 
 
 

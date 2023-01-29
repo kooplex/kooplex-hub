@@ -37,9 +37,37 @@ def container_image(container_or_image):
 
 
 @register.simple_tag
+def container_resources(container):
+    cn = container.friendly_name
+    gpu = f"""
+<span class="badge rounded-pill bg-warning text-dark p-2" 
+      data-bs-toggle="tooltip" data-placement="bottom" 
+      title="The number of GPU devices requested for environment {cn}"><i class="bi bi-gpu-card"></i>&nbsp;{container.gpurequest}</span>
+    """ if container.gpurequest else ""
+    node = f"""
+<span class="badge rounded-pill bg-warning text-dark p-2" 
+      data-bs-toggle="tooltip" data-placement="bottom" 
+      title="Your environment {cn} is assigned to compute node {container.node}"><i class="bi bi-gpu-card"></i>&nbsp;{container.node}</span>
+    """ if container.node else ""
+    return format_html(f"""
+{node}
+<span class="badge rounded-pill bg-warning text-dark p-2" 
+      data-bs-toggle="tooltip" data-placement="bottom" 
+      title="The CPU clock cycles requested for environment {cn}"><i class="bi bi-cpu"></i>&nbsp;{container.cpurequest}</span>
+{gpu}
+<span class="badge rounded-pill bg-warning text-dark p-2" 
+      data-bs-toggle="tooltip" data-placement="bottom" 
+      title="The requested memory for environment {cn}"><i class="bi bi-memory"></i>&nbsp;{container.memoryrequest}&nbsp;GB</span>
+<span class="badge rounded-pill bg-warning text-dark p-2" 
+      data-bs-toggle="tooltip" data-placement="bottom" 
+      title="The maximum allowed idle time for environment {cn}"><i class="bi bi-clock-history"></i>&nbsp;{container.idletime}&nbsp;h</span>
+    """)
+
+
+@register.simple_tag
 def volumes(*args, **kwargs):
     v = kwargs.get('volumes', [])
-    V = "\n".join(map(lambda x: f"{x.name}: {x.description}", v))
+    V = "\n".join(map(lambda x: f"{x.folder}: {x.description}", v))
     return format_html(f"""
 <span class="badge rounded-pill bg-dark" aria-hidden="true" data-bs-toggle="tooltip" title="Volumes:\n{V}" data-placement="top"><i class="ri-database-2-line"></i> {len(v)}</span>
     """) if len(v) else ""
@@ -48,7 +76,7 @@ def volumes(*args, **kwargs):
 @register.simple_tag
 def attachments(*args, **kwargs):
     a = kwargs.get('attachments', [])
-    A = "\n".join(map(lambda x: f"{x.name} {x.description}", a))
+    A = "\n".join(map(lambda x: f"{x.folder} {x.description}", a))
     return format_html(f"""
 <span class="badge rounded-pill bg-dark" aria-hidden="true" data-bs-toggle="tooltip" title="Attachments:\n{A}" data-placement="top"><i class="ri-attachment-2"></i> {len(a)}</span>
     """) if len(a) else ""
@@ -108,11 +136,7 @@ def repos(container):
 @register.simple_tag
 def container_restart_reason(container):
     return format_html(f"""
-<p class="card-text">
-  <div class="alert alert-warning" style="height: 120px" role="alert">
-    <strong>Needs restart:</strong> {container.restart_reasons}
-  </div>
-</p>
+<span class="bg-warning p-2"><span class="bi bi-exclamation-triangle">&nbsp;<strong aria-hidden="true" data-toggle="tooltip" title="{container.restart_reasons}">Needs restart</strong></span></span>
     """) if container.restart_reasons else ""
 
 

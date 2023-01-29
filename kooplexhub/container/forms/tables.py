@@ -5,21 +5,17 @@ from project.models import UserProjectBinding
 from project.models import ProjectContainerBinding
 from education.models import UserCourseBinding
 from education.models import CourseContainerBinding
-from ..models import Attachment
-from ..models import AttachmentContainerBinding
 from volume.models import Volume, VolumeContainerBinding, UserVolumeBinding
+
+from kooplexhub.common import table_attributes
 
 class TableContainerProject(tables.Table):
     class Meta:
         model = UserProjectBinding
         fields = ('project', 'collaborator')
         sequence = ('button', 'project', 'collaborator')
-        attrs = {
-                 "class": "table table-striped table-bordered mt-3",
-                 "thead": { "class": "thead-dark table-sm" },
-                 "td": { "class": "p-1 text-light" },
-                 "th": { "class": "table-secondary p-1" }
-                }
+        attrs = table_attributes
+
     button = tables.Column(verbose_name = 'Attach', orderable = False, empty_values = ())
     project = tables.Column(orderable = False)
     collaborator = tables.Column(verbose_name = 'Collaborators', empty_values = (), orderable = False)
@@ -51,12 +47,8 @@ class TableContainerCourse(tables.Table):
         model = UserCourseBinding
         fields = ('course',)
         sequence = ('button', 'course', 'description', 'teachers')
-        attrs = {
-                 "class": "table table-striped table-bordered mt-3",
-                 "thead": { "class": "thead-dark table-sm" },
-                 "td": { "class": "p-1 text-light" },
-                 "th": { "class": "table-secondary p-1" }
-                }
+        attrs = table_attributes
+
     button = tables.Column(verbose_name = 'Do', orderable = False, empty_values = ())
     description = tables.Column(empty_values = (), orderable = False)
     course = tables.Column(orderable = False)
@@ -92,54 +84,17 @@ class TableContainerCourse(tables.Table):
         """)
 
 
-class TableContainerAttachment(tables.Table):
-    class Meta:
-        attrs = {
-                 "class": "table table-striped table-bordered mt-3",
-                 "thead": { "class": "thead-dark table-sm" },
-                 "td": { "class": "p-1 text-light" },
-                 "th": { "class": "table-secondary p-1" }
-                }
-    button = tables.Column(verbose_name = 'Mount', orderable = False, empty_values = ())
-    name = tables.Column(verbose_name = 'Attachment', empty_values = (), orderable = False)
-    description = tables.Column(verbose_name = 'Description', empty_values = (), orderable = False)
-
-    def __init__(self, container):
-        self.bound_attachments = dict([ (b.attachment, b.id) for b in AttachmentContainerBinding.objects.filter(container = container) ])
-        super(TableContainerAttachment, self).__init__(Attachment.objects.all())
-
-    def render_name(self, record):
-        return format_html(f"""
-<span data-toggle="tooltip" title="folder: {record.folder}" data-placement="bottom">{record.name}</span>
-        """)
-
-    def render_button(self, record):
-        state = "checked" if record in self.bound_attachments.keys() else ""
-        o_bound = "opacity-75" if record in self.bound_attachments.keys() else ""
-        o_notbound = "" if record in self.bound_attachments.keys() else "opacity-75"
-        return format_html(f"""
-<input id="btn-{record.id}" data-size="small"
-     type="checkbox" data-toggle="toggle" name="attach"
-     data-on="<span class='ri-attachment-line'></span>"
-     data-off="<span class='ri-attachment-2'></span>"
-     data-onstyle="success {o_bound}" data-offstyle="secondary {o_notbound}" value="{record.id}" {state}>
-        """)
-
-
-class TableContainerVolume(tables.Table):
+#class TableContainerVolume(tables.Table):
     class Meta:
         model = Volume
-        fields = ('name', 'description')
-        sequence = ('button', 'name', 'description')
-        attrs = {
-                 "class": "table table-striped table-bordered mt-3",
-                 "thead": { "class": "thead-dark table-sm" },
-                 "td": { "class": "p-1 text-light" },
-                 "th": { "class": "table-secondary p-1" }
-                }
+        fields = ('scope', 'folder', 'description')
+        sequence = ('button', 'scope', 'folder', 'description')
+        attrs = table_attributes
+
     button = tables.Column(verbose_name = 'Mount', orderable = False, empty_values = ())
-    name = tables.Column(verbose_name = 'Volume', orderable = False)
-    description = tables.Column(verbose_name = 'Description', orderable = False)
+    scope = tables.Column(orderable = False)
+    folder = tables.Column(orderable = False)
+    description = tables.Column(orderable = False)
 
     def __init__(self, container, user):
         self.bound_volumes = [ b.volume for b in VolumeContainerBinding.objects.filter(container = container) ]
@@ -151,11 +106,22 @@ class TableContainerVolume(tables.Table):
         o_bound = "opacity-75" if record in self.bound_volumes else ""
         o_notbound = "" if record in self.bound_volumes else "opacity-75"
         volume = record
+        if volume.scope == volume.SCP_ATTACHMENT:
+            icon_on = "ri-attachment-line"
+            icon_off = "ri-attachment-2"
+        else:
+            icon_on = "ri-database-2-fill"
+            icon_off = "ri-database-2-line"
         return format_html(f"""
 <input id="btn-volume-{record.id}" data-size="small"
      type="checkbox" data-toggle="toggle" name="volume"
-     data-on="<span class='ri-database-2-fill'></span>"
-     data-off="<span class='ri-database-2-line'></span>"
+     data-on="<span class='{icon_on}'></span>"
+     data-off="<span class='{icon_off}'></span>"
      data-onstyle="success {o_bound}" data-offstyle="secondary {o_notbound}" value="{record.id}" {state}>
         """)
+
+    def render_scope(self, record):
+        from volume.templatetags.volume_buttons import scope
+        return scope(record)
+
 

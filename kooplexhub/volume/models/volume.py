@@ -12,35 +12,32 @@ class Volume(models.Model):
     SCP_PUBLIC = 'public'
     SCP_INTERNAL = 'internal'
     SCP_PRIVATE = 'private'
+    SCP_ATTACHMENT = 'attachment'
     SCP_LOOKUP = {
         SCP_PRIVATE: 'Owner can invite collaborators to use this volume.',
         SCP_INTERNAL: 'Users in specific groups can list and may mount this volume.',
         SCP_PUBLIC: 'Authenticated users can list and may mount this volume.',
+        SCP_ATTACHMENT: 'Users can create, list and may mount attachments.',
     }
 
-    name = models.CharField(max_length = 64, unique = True)
-    cleanname = models.CharField(max_length = 64, unique = True, validators = [ my_alphanumeric_validator('Enter a clean volume name containing only letters and numbers.') ])
+    folder = models.CharField(max_length = 64, unique = True, validators = [ my_alphanumeric_validator('Enter a clean volume name containing only letters and numbers.') ])
     description = models.TextField(null = True)
     claim = models.CharField(max_length = 64)
     subPath = models.CharField(max_length = 64, default = "", blank = True)
     scope = models.CharField(max_length = 16, choices = SCP_LOOKUP.items(), default = SCP_PRIVATE)
-    #readonly_gid = models.IntegerField() # even better foreignkey(group)
-    #readwrite_gid = models.IntegerField()
     is_present = models.BooleanField(default = True)
 
     def __str__(self):
-        return "Volume {} {}".format(self.name, self.subPath)
-
-    @staticmethod
-    def list_volumes(user):
-        raise NotImplementedError("""
-#TODO        return Volume.objects.filter(readonly_gid__in = user.gids).extend(readwrite_gid__in = user.gids).unique()
-        """)
+        return "Volume /{} ({}:{})".format(self.folder, self.claim, self.subPath)
 
     @property
-    def admins(self):
-        from .uservolumebinding import UserVolumeBinding
-        return [ b.user for b in UserVolumeBinding.objects.filter(volume = self, role__in = [ UserVolumeBinding.RL_OWNER, UserVolumeBinding.RL_ADMIN ]) ]
+    def search(self):
+        return f"{self.folder} {self.description}".upper()
+
+#    @property
+#    def admins(self):
+#        from .uservolumebinding import UserVolumeBinding
+#        return [ b.user for b in UserVolumeBinding.objects.filter(volume = self, role__in = [ UserVolumeBinding.RL_OWNER, UserVolumeBinding.RL_ADMIN ]) ]
 
     def is_admin(self, user):
         from .uservolumebinding import UserVolumeBinding
@@ -49,25 +46,35 @@ class Volume(models.Model):
         except UserVolumeBinding.DoesNotExist:
             return False
 
-    def is_collaborator(self, user):
+    def authorize(self, user):
         from .uservolumebinding import UserVolumeBinding
-        try:
-            return UserVolumeBinding.objects.get(volume = self, user = user).role == UserVolumeBinding.RL_COLLABORATOR
-        except UserVolumeBinding.DoesNotExist:
-            return False
+        if self.scope in [ self.SCP_ATTACHMENT, self.SCP_PUBLIC ]:
+            return self
+        else:
+            #FIXME: how to authorize internal volume?
+            UserVolumeBinding.objects.get(user = user, volume = self)
+            return self
 
-    @property
-    def collaborators(self):
-        from .uservolumebinding import UserVolumeBinding
-        return [ b.user for b in UserVolumeBinding.objects.filter(volume = self) ]
 
-#FIXME:
-    @staticmethod
-    def get_uservolume(volume_id, user):
-        from .uservolumebinding import UserVolumeBinding
-        return UserVolumeBinding.objects.get(user = user, volume_id = volume_id).volume
-
-    @staticmethod
-    def get_uservolumes(user):
-        from .uservolumebinding import UserVolumeBinding
-        return [ upb.volume for upb in UserVolumeBinding.objects.filter(user = user) ]
+#    def is_collaborator(self, user):
+#        from .uservolumebinding import UserVolumeBinding
+#        try:
+#            return UserVolumeBinding.objects.get(volume = self, user = user).role == UserVolumeBinding.RL_COLLABORATOR
+#        except UserVolumeBinding.DoesNotExist:
+#            return False
+#
+#    @property
+#    def collaborators(self):
+#        from .uservolumebinding import UserVolumeBinding
+#        return [ b.user for b in UserVolumeBinding.objects.filter(volume = self) ]
+#
+##FIXME:
+#    @staticmethod
+#    def get_uservolume(volume_id, user):
+#        from .uservolumebinding import UserVolumeBinding
+#        return UserVolumeBinding.objects.get(user = user, volume_id = volume_id).volume
+#
+#    @staticmethod
+#    def get_uservolumes(user):
+#        from .uservolumebinding import UserVolumeBinding
+#        return [ upb.volume for upb in UserVolumeBinding.objects.filter(user = user) ]

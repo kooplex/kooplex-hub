@@ -20,18 +20,13 @@ class UserVolumeBinding(models.Model):
 
     user = models.ForeignKey(User, on_delete = models.CASCADE, null = False)
     volume = models.ForeignKey(Volume, on_delete = models.CASCADE, null = False)
-#    is_hidden = models.BooleanField(default = False)
     role = models.CharField(max_length = 16, choices = RL_LOOKUP.items(), null = False)
 
     class Meta:
         unique_together = [['user', 'volume']]
 
     def __str__(self):
-       return "%s-%s" % (self.volume.name, self.user.username)
-
-    @property
-    def uniquename(self):#FIXME: deprecate
-        return "%s-%s" % (self.volume.uniquename, self.user.username)
+        return "Binding: {} -- {}".format(self.volume, self.user)
 
 #    @property
 #    def groupname(self):

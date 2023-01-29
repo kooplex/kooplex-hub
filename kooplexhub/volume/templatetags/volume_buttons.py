@@ -2,6 +2,8 @@ from django import template
 from django.utils.html import format_html
 from django.urls import reverse
 
+from ..models import UserVolumeBinding
+
 register = template.Library()
 
 
@@ -9,13 +11,29 @@ register = template.Library()
 def scope(volume):
     if volume.scope == volume.SCP_PRIVATE:
         return format_html(f"""
-<i class="oi oi-key h6" aria-hidden="true" data-bs-toggle="tooltip" title="Private volume" data-placement="top"></i>
+<i class="oi oi-key h5" aria-hidden="true" data-bs-toggle="tooltip" title="Private volume" data-placement="top"></i>
+        """)
+    elif volume.scope == volume.SCP_INTERNAL:
+        return format_html(f"""
+<i class="oi oi-lock-unlocked h5" aria-hidden="true" data-bs-toggle="tooltip" title="Internal shared volume" data-placement="top"></i>
+        """)
+    elif volume.scope == volume.SCP_ATTACHMENT:
+        return format_html(f"""
+<i class="oi oi-paperclip h5" aria-hidden="true" data-bs-toggle="tooltip" title="Attachment" data-placement="top"></i>
         """)
     else:
         return format_html(f"""
-<i class="oi oi-cloud h6" aria-hidden="true" data-bs-toggle="tooltip" title="Public volume" data-placement="top"></i>
+<i class="oi oi-cloud h5" aria-hidden="true" data-bs-toggle="tooltip" title="Public volume" data-placement="top"></i>
         """)
 
+@register.simple_tag
+def admin_or_creator(volume, p_class = 'card-text'):
+    if volume.scope == volume.SCP_ATTACHMENT:
+        creator = UserVolumeBinding.objects.get(volume = volume, role = UserVolumeBinding.RL_OWNER).user
+        return format_html(f'<p class="{p_class}"><strong>Creator:</strong> {creator}</p>')
+    else:
+        admins = ', '.join([ str(b.user) for b in UserVolumeBinding.objects.filter(volume = volume, role__in = [ UserVolumeBinding.RL_OWNER, UserVolumeBinding.RL_ADMIN ]) ])
+        return format_html(f'<p class="{p_class}"><strong>Administrators:</strong> {admins}</p>')
 
 #@register.simple_tag
 #def button_collaborator(volume, user):

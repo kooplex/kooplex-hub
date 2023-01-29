@@ -10,6 +10,7 @@ from hub.models import Profile
 from container.templatetags.container_buttons import container_image
 from hub.templatetags.extras import render_user as ru
 
+from kooplexhub.common import table_attributes
 
 class TableJoinProject(tables.Table):
     button = tables.Column (verbose_name = 'Join', orderable = False, empty_values = ())
@@ -22,12 +23,7 @@ class TableJoinProject(tables.Table):
         model = UserProjectBinding
         fields = ('project', 'user', )
         sequence = ('button', 'project', 'user', 'collaborators', 'images')
-        attrs = {
-                     "class": "table table-striped table-bordered",
-                     "thead": { "class": "thead-dark table-sm" },
-                     "td": { "class": "p-1 text-dark" },
-                     "th": { "class": "p-1 table-secondary" }
-                    }
+        attrs = table_attributes
 
     def render_button(self, record):
         return format_html(f"""
@@ -69,12 +65,7 @@ class TableCollaborator(tables.Table):
     class Meta:
         model = UserProjectBinding
         fields = ('user',)
-        attrs = {
-                 "class": "table table-bordered",
-                 "thead": { "class": "thead-dark table-sm" },
-                 "td": { "class": "p-1 text-dark" },
-                 "th": { "class": "table-secondary p-1" }
-                }
+        attrs = table_attributes
 
     def render_user(self, record):
         user = record.user
@@ -124,12 +115,7 @@ class TableContainer(tables.Table):
         model = Container
         fields = ('name', 'image')
         sequence = ('button', 'name', 'image')
-        attrs = {
-                 "class": "table table-striped table-bordered",
-                 "thead": { "class": "thead-dark table-sm" },
-                 "td": { "class": "p-1 text-dark" },
-                 "th": { "class": "table-secondary p-1" }
-                }
+        attrs = table_attributes
 
     def _hidden(self, record):
         return f"""

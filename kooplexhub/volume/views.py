@@ -1,6 +1,6 @@
 import logging
 
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views import generic
@@ -12,12 +12,13 @@ from hub.templatetags.extras import manual_link
 
 from .models import Volume, UserVolumeBinding
 from .forms import TableVolumeShare
+from .forms import FormAttachment, FormAttachmentUpdate
 
 logger = logging.getLogger(__name__)
 
 class VolumeListView(LoginRequiredMixin, generic.ListView):
     template_name = 'volume_list.html'
-    context_object_name = 'uservolumebindingslist'
+    context_object_name = 'volumes'
     model = Volume
 
     def get_context_data(self, **kwargs):
@@ -31,43 +32,74 @@ class VolumeListView(LoginRequiredMixin, generic.ListView):
 
     def get_queryset(self):
         user = self.request.user
-        volumebindings = UserVolumeBinding.objects.filter(user = user).order_by('volume__name')
-        logger.debug(f'UVB {volumebindings}')
-        return volumebindings
+        volumes = [ b.volume for b in UserVolumeBinding.objects.filter(user = user) ]
+        volumes.extend( Volume.objects.filter(scope = Volume.SCP_ATTACHMENT) )
+        return volumes
 
-def new(request):
-    return NotImplementedError
 
-@login_required
-def delete_or_leave(request, volume_id):
-    """Delete or leave a volume."""
-    user = request.user
-    logger.debug("method: %s, volume id: %s, user: %s" % (request.method, volume_id, user))
-    try:
-        volume = Volume.get_uservolume(volume_id = volume_id, user = user)
-        uvb = UserVolumeBinding.objects.get(user = user, volume = volume)
-    except Volume.DoesNotExist:
-        messages.error(request, 'Volume does not exist')
-        return redirect('volume:list')
-    if uvb.role == uvb.RL_OWNER:
-        collab = []
-        for uvb_i in UserVolumeBinding.objects.filter(volume = volume):
-            if uvb != uvb_i:
-                collab.append(uvb_i.user)
-                uvb_i.delete()
-        try:
-            uvb.delete()
-            volume.delete()
-            if len(collab):
-                messages.info(request, 'Users removed from collaboration: {}'.format(', '.join([  f'{u.first_name} {u.last_name} ({u.username})' for u in collab ])))
-            messages.info(request, 'Volume %s is deleted' % (volume))
-        except Exception as e:
-            messages.error(request, f'Cannot delete volume {volume.name}. Ask the administrator to solve this error {e}')
-    else:
-        uvb.delete()
-        messages.info(request, 'You left volume %s' % (volume))
-    return redirect('volume:list')
+class NewAttachmentView(LoginRequiredMixin, generic.FormView):
+    template_name = 'attachment_new.html'
+    form_class = FormAttachment
+    success_url = '/hub/volume/list' #FIXME: reverse('volume:list')
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['menu_storage'] = True
+        context['submenu'] = 'new_attachment'
+        return context
+
+    def form_valid(self, form):
+        logger.info(form.cleaned_data)
+        user = self.request.user
+        v = Volume.objects.create(**form.cleaned_data)
+        UserVolumeBinding.objects.create(volume = v, user = user, role = UserVolumeBinding.RL_OWNER) 
+        messages.info(self.request, f'Attachment {v.folder} is created')
+        return super().form_valid(form)
+
+
+class ConfigureAttachmentView(LoginRequiredMixin, generic.edit.UpdateView):
+    model = Volume
+    form_class = FormAttachmentUpdate
+    template_name = 'attachment_configure.html'
+    success_url = '/hub/volume/list' #FIXME: 
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['menu_storage'] = True
+        context['volume_id'] = self.kwargs['pk']
+        return context
+
+
+##REFACTORME:  @login_required
+##REFACTORME:  def delete_or_leave(request, volume_id):
+##REFACTORME:      """Delete or leave a volume."""
+##REFACTORME:      user = request.user
+##REFACTORME:      logger.debug("method: %s, volume id: %s, user: %s" % (request.method, volume_id, user))
+##REFACTORME:      try:
+##REFACTORME:          volume = Volume.get_uservolume(volume_id = volume_id, user = user)
+##REFACTORME:          uvb = UserVolumeBinding.objects.get(user = user, volume = volume)
+##REFACTORME:      except Volume.DoesNotExist:
+##REFACTORME:          messages.error(request, 'Volume does not exist')
+##REFACTORME:          return redirect('volume:list')
+##REFACTORME:      if uvb.role == uvb.RL_OWNER:
+##REFACTORME:          collab = []
+##REFACTORME:          for uvb_i in UserVolumeBinding.objects.filter(volume = volume):
+##REFACTORME:              if uvb != uvb_i:
+##REFACTORME:                  collab.append(uvb_i.user)
+##REFACTORME:                  uvb_i.delete()
+##REFACTORME:          try:
+##REFACTORME:              uvb.delete()
+##REFACTORME:              volume.delete()
+##REFACTORME:              if len(collab):
+##REFACTORME:                  messages.info(request, 'Users removed from collaboration: {}'.format(', '.join([  f'{u.first_name} {u.last_name} ({u.username})' for u in collab ])))
+##REFACTORME:              messages.info(request, 'Volume %s is deleted' % (volume))
+##REFACTORME:          except Exception as e:
+##REFACTORME:              messages.error(request, f'Cannot delete volume {volume.name}. Ask the administrator to solve this error {e}')
+##REFACTORME:      else:
+##REFACTORME:          uvb.delete()
+##REFACTORME:          messages.info(request, 'You left volume %s' % (volume))
+##REFACTORME:      return redirect('volume:list')
+##REFACTORME:  
 @login_required
 def configure(request, volume_id):
     user = request.user

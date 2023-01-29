@@ -30,12 +30,9 @@
       <a class="nav-link mytab {% if active == "courses" %}active{% endif %}" id="tab-courses" data-bs-toggle="tab" href="#courses" role="tab" aria-controls="courses" aria-selected="{% if active == "courses" %}true{% else %}false{% endif %}">Courses</a>
     </li>
 {% endif %}
-    <li class="nav-item" role="presentation">
-      <a class="nav-link mytab {% if active == "attachments" %}active{% endif %}" id="tab-attachments" data-bs-toggle="tab" href="#attachments" role="tab" aria-controls="attachments" aria-selected="{% if active == "attachments" %}true{% else %}false{% endif %}">Attachments</a>
-    </li>
 {% if app_volume_installed %}
     <li class="nav-item" role="presentation">
-      <a class="nav-link mytab {% if active == "volumes" %}active{% endif %}" id="tab-volumes" data-bs-toggle="tab" href="#volumes" role="tab" aria-controls="volumes" aria-selected="{% if active == "volumes" %}true{% else %}false{% endif %}">Volume</a>
+      <a class="nav-link mytab {% if active == "volumes" %}active{% endif %}" id="tab-volumes" data-bs-toggle="tab" href="#volumes" role="tab" aria-controls="volumes" aria-selected="{% if active == "volumes" %}true{% else %}false{% endif %}">Storage</a>
     </li>
 {% endif %}
 {% if app_plugin_installed %}
@@ -69,10 +66,6 @@
       </div>
     </div>
 
-    <div class="tab-pane fade {% if active == "attachments" %}show active{% endif %}" id="attachments" role="tabpanel" aria-labelledby="tab-attachments">
-      {% render_table t_attachments %}
-    </div>
-
 {% if app_project_installed %}
     <div class="tab-pane fade {% if active == "projects" %}show active{% endif %}" id="projects" role="tabpanel" aria-labelledby="tab-projects">
       {# fixme: add project search bar #}
@@ -91,11 +84,6 @@
       {% render_table t_volumes %}
     </div>
 {% endif %}
-	    {% comment %}
-    <div class="tab-pane fade {% if active == "volumes" %}show active{% endif %}" id="volumes" role="tabpanel" aria-labelledby="tab-volumes">
-	    ...
-    </div>
-	    {% endcomment %}
 
 {% if app_plugin_installed %}
     <div class="tab-pane fade {% if active == "filesync" %}show active{% endif %}" id="filesync" role="tabpanel" aria-labelledby="tab-filesync">

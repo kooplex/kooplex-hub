@@ -11,13 +11,8 @@ urlpatterns = [
     path('reportclist/', views.ReportContainerListView.as_view(), name = 'reportclist'), #FIXME: ez mi?
     re_path('^configure/(?P<container_id>\d+)/?', views.configure, name = 'configure'),
     path('configure_save/', views.configure_save, name = 'configure_save'),
-
 #DEPRECATED     re_path('^start/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)/?', views.start, name = 'start'),
 #DEPRECATED     re_path('^stop/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)/?', views.stop, name = 'stop'),
 #DEPRECATED     re_path('^restart/(?P<container_id>\d+)/(?P<next_page>\w+:?\w*)/?', views.restart, name = 'restart'),
     re_path('^open/(?P<container_id>\d+)/?', views.open, name = 'open'),
-
-    path('attachments/', views.AttachmentListView.as_view(), name = 'list_attachments'),
-    path('attachment_new/', views.NewAttachmentView.as_view(), name = 'new_attachment'),
-    path('attachment_configure/<int:pk>/', views.ConfigureAttachmentView.as_view(), name = 'configure_attachment'), 
 ]

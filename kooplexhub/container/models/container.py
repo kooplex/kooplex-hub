@@ -9,7 +9,7 @@ from django.utils import timezone
 from django.contrib.auth.models import User
 
 #from .report import Report
-from .image import Image
+from .image import Image, ResourceType
 from .envvar import EnvVarMapping
 from .proxy import Proxy
 
@@ -176,10 +176,6 @@ class Container(models.Model):
 #FIXME:        from .versioncontrol import VCProjectContainerBinding
 #FIXME:        return [ binding.vcproject for binding in VCProjectContainerBinding.objects.filter(service = self) ]
 
-    @property
-    def attachments(self):
-        from .attachment import AttachmentContainerBinding
-        return [ binding.attachment for binding in AttachmentContainerBinding.objects.filter(container = self) ]
 
     @property
     def volumes(self):

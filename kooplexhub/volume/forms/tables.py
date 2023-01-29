@@ -14,7 +14,7 @@ class TableVolumeShare(tables.Table):
         attrs = {
                  "class": "table table-bordered",
                  "thead": { "class": "thead-dark table-sm" },
-                 "td": { "class": "p-1" },
+                 "td": { "class": "p-1 text-light" },
                  "th": { "class": "table-secondary p-1" }
                 }
 

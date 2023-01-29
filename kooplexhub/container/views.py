@@ -12,8 +12,8 @@ from django.views import generic
 from django.urls import reverse
 from django.contrib.auth.mixins import LoginRequiredMixin
 
-from .forms import FormContainer, FormAttachment, FormAttachmentUpdate
-from .forms import TableContainerProject, TableContainerCourse, TableContainerAttachment, TableContainerVolume
+from .forms import FormContainer
+from .forms import TableContainerProject, TableContainerCourse, TableContainerVolume
 from .models import Image, Container, Attachment, AttachmentContainerBinding
 from project.models import Project, UserProjectBinding, ProjectContainerBinding
 from education.models import Course, UserCourseBinding, CourseContainerBinding
@@ -115,58 +115,6 @@ class ReportContainerListView(LoginRequiredMixin, generic.ListView):
         containers = Container.objects.filter(user = user, image__imagetype = Image.TP_REPORT).order_by('name')
         return containers
 
-class AttachmentListView(LoginRequiredMixin, generic.ListView):
-    template_name = 'attachment_list.html'
-    context_object_name = 'attachments'
-    model = Attachment
-
-    def get_queryset(self):
-        user = self.request.user
-        profile = user.profile
-        attachments = Attachment.objects.all().order_by('name')
-        return attachments
-
-    def get_context_data(self, **kwargs):
-        l = reverse('container:new_attachment')
-        context = super().get_context_data(**kwargs)
-        context['menu_storage'] = True
-        context['submenu'] = 'list_attachment'
-        context['empty_title'] = 'No attachments available'
-        context['empty_body'] = format_html(f'There are no attachments created yet. You can <a href="{l}"><i class="ri-attachment-2"></i>&nbsp;create one...</a>')
-        return context
-
-
-class NewAttachmentView(LoginRequiredMixin, generic.FormView):
-    template_name = 'attachment_new.html'
-    form_class = FormAttachment
-    success_url = '/hub/container_environment/attachments/' #FIXME: django.urls.reverse or shortcuts.reverse does not work reverse('project:list')
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['menu_storage'] = True
-        context['submenu'] = 'new_attachment'
-        return context
-
-    def form_valid(self, form):
-        logger.info(form.cleaned_data)
-        user = self.request.user
-        a = Attachment.objects.create(creator_id = user.id, name = form.cleaned_data['name'], folder = form.cleaned_data['folder'], description = form.cleaned_data['description'])
-        messages.info(self.request, f'Attachment {a.name} is created')
-        return super().form_valid(form)
-
-
-class ConfigureAttachmentView(LoginRequiredMixin, generic.edit.UpdateView):
-    model = Attachment
-    form_class = FormAttachmentUpdate
-    template_name = 'attachment_configure.html' #FIXME: same as new
-    success_url = '/hub/container_environment/attachments/' #FIXME: django.urls.reverse or shortcuts.reverse does not work reverse('project:list')
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['menu_storage'] = True
-        context['attachment_id'] = self.kwargs['pk']
-        return context
-
 
 @login_required
 def configure(request, container_id):
@@ -196,7 +144,6 @@ def configure(request, container_id):
         'active': request.COOKIES.get('configure_env_tab', 'projects'),
         'container': svc,
         'form': FormContainer(container = svc, nodes = list(api.node_df['node'].values)),
-        't_attachments': TableContainerAttachment(svc),
         't_projects': TableContainerProject(svc, user),
     }
     if 'volume' in settings.INSTALLED_APPS:
@@ -208,7 +155,7 @@ def configure(request, container_id):
 
 
 def _helper(request, svc, post_id, binding_model, model_get_authorized, binding_attribute):
-    # handle attachment changes
+    # handle changes
     ids_after = set([ int(i) for i in request.POST.getlist(post_id) ])
     before = { getattr(b, binding_attribute).id: b for b in binding_model.objects.filter(container = svc) }
     #   binding
@@ -217,19 +164,19 @@ def _helper(request, svc, post_id, binding_model, model_get_authorized, binding_
     for a_id in ids_after.difference(before.keys()):
         m = model_get_authorized(a_id)
         binding_model.objects.create(**{ 'container': svc, binding_attribute: m })
-        a.append(m.name)
+        a.append(m)
     if len(a):
-        msg = 'associated {}s {}'.format(binding_attribute, ', '.join(a))
+        msg = 'associated {}s {}'.format(binding_attribute, ', '.join(map(str, a)))
         info.append(msg)
         svc.mark_restart(msg)
     #   unbinding
     a = []
     for a_id in set(before.keys()).difference(ids_after):
         b = before[a_id]
-        a.append(getattr(b, binding_attribute).name)
+        a.append(getattr(b, binding_attribute))
         b.delete()
     if len(a):
-        msg = 'removed {}s {}'.format(binding_attribute, ', '.join(a))
+        msg = 'removed {}s {}'.format(binding_attribute, ', '.join(map(str, a)))
         info.append(msg)
         svc.mark_restart(msg)
     return info
@@ -312,10 +259,9 @@ def configure_save(request):
         info.append(msg)
         svc.mark_restart(msg)
 
-    info.extend( _helper(request, svc, 'attach', AttachmentContainerBinding, lambda x: Attachment.objects.get(id = x), 'attachment') )
     info.extend( _helper(request, svc, 'attach-project', ProjectContainerBinding, lambda x: Project.get_userproject(project_id = x, user = user), 'project') )
     info.extend( _helper(request, svc, 'attach-course', CourseContainerBinding, lambda x: Course.get_usercourse(course_id = x, user = user), 'course') )
-    info.extend( _helper(request, svc, 'volume', VolumeContainerBinding, lambda x: Volume.objects.get(id = x), 'volume') ) # FIXME: authorize only those volumes user has right to
+    info.extend( _helper(request, svc, 'volume', VolumeContainerBinding, lambda x: Volume.objects.get(id = x).authorize(user), 'volume') )
 
     if len(info):
         info = ', '.join(info)
