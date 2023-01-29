@@ -28,7 +28,7 @@
     </li>
     {% endif %}
     <li class="nav-item mt-2"  data-toggle="tooltip" title="List and manage attachments and volumes" data-placement="bottom">
-      <a class="{{ li_a_s }} nav-link {% if menu_storage %}active border-1 border-start{% endif %}" href="{% url 'container:list_attachments' %}"><i class="bi bi-folder2-open"></i><span class="d-none d-xl-inline">&nbsp;Storage</span></a>
+      <a class="{{ li_a_s }} nav-link {% if menu_storage %}active border-1 border-start{% endif %}" href="{% url 'volume:list' %}"><i class="bi bi-folder2-open"></i><span class="d-none d-xl-inline">&nbsp;Storage</span></a>
     </li>
     <!--#FIXME: we need a monitoring app also -->
     <li class="nav-item mt-2"  data-toggle="tooltip" title="Resource monitoring" data-placement="bottom">

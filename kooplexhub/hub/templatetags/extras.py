@@ -105,8 +105,5 @@ def render_date(date):
 
 
 @register.simple_tag(name = 'render_folder')
-def render_folder(folder, subpath = None):
-    import os
-    if subpath:
-        folder = os.path.join(folder, subpath)
+def render_folder(folder):
     return format_html(f"""<span class="pillow"><i class="bi bi-folder" data-toggle="tooltip" title="Folder"></i>&nbsp;{folder}</span>""")
