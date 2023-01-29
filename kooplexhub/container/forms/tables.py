@@ -84,7 +84,7 @@ class TableContainerCourse(tables.Table):
         """)
 
 
-#class TableContainerVolume(tables.Table):
+class TableContainerVolume(tables.Table):
     class Meta:
         model = Volume
         fields = ('scope', 'folder', 'description')
