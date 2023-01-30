@@ -14,7 +14,7 @@ from django.contrib.auth.models import User
 from .forms import FormProject, FormProjectWithContainer
 from .forms import TableJoinProject, TableCollaborator, TableContainer
 from .models import Project, UserProjectBinding, ProjectContainerBinding
-from container.models import Container, AttachmentContainerBinding
+from container.models import Container
 from volume.models import Volume, VolumeContainerBinding
 
 logger = logging.getLogger(__name__)

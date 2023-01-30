@@ -1,2 +1,2 @@
-from .attachment import FormAttachment, FormAttachmentUpdate
+from .attachment import FormAttachment, FormVolumeUpdate
 from .tables import TableVolumeShare

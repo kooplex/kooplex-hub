@@ -4,18 +4,27 @@ import time
 from kooplexhub.settings import KOOPLEX
 
 from hub.lib import dirname
+from hub.lib.filesystem import _mkdir, _grantaccess
 
-mp_volume = KOOPLEX.get('mountpoint_hub', {}).get('volume', '/mnt/volume')
+
+mp_attachment = KOOPLEX.get('mountpoint_hub', {}).get('attachment', '/mnt/attachments')
 mp_report_prepare = KOOPLEX.get('mountpoint_hub', {}).get('report_prepare', '/mnt/report_prepare')
 
-def path_volume(volume):
-    return os.path.join(mp_volume, volume.subpath)
+def folder_attachment(volume):
+    assert volume.scope == volume.SCP_ATTACHMENT, "Only attachments are automatically created"
+    return os.path.join( mp_attachment, volume.subPath )
 
 #TODO: only if report app is loaded
 def path_report_prepare(volume):
     return os.path.join(mp_report_prepare, volume.subpath)
 
-def garbage_volume(volume):
-    return os.path.join(dirname.mp_garbage, volume.creator.username, "volume-%s.%f.tar.gz" % (volume.subpath, time.time()))
 
 
+def grantaccess_volume(volume):
+    _grantaccess( volume.owner, folder )
+    #FIXME: everybody read only
+
+def garbage_attachment(volume):
+    if volume.scope == volume.SCP_ATTACHMENT:
+        pass
+    #FIXME: NotImplemented

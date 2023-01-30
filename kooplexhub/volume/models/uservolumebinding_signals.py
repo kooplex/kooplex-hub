@@ -8,12 +8,43 @@ from django.dispatch import receiver
 from kooplexhub.lib.libbase import standardize_str
 #FIXMEfrom hub.models import FilesystemTask, Group, UserGroupBinding
 from hub.models import Group, UserGroupBinding
-from ..models import UserVolumeBinding
+from ..models import UserVolumeBinding, Volume
 from .. import filesystem as fs
+from hub.lib.filesystem import _mkdir, _grantaccess
 
 logger = logging.getLogger(__name__)
 
-code = lambda x: json.dumps([ i.id for i in x ])
+#code = lambda x: json.dumps([ i.id for i in x ])
+
+@receiver(pre_save, sender = Volume)
+def mkdir_attachment(sender, instance, **kwargs):
+    if instance.id is None and instance.scope == instance.SCP_ATTACHMENT:
+        _mkdir( fs.folder_attachment(instance) )
+
+
+@receiver(pre_save, sender = UserVolumeBinding)
+def grantaccess_volume(sender, instance, **kwargs):
+    if instance.id is None:
+        if instance.role in [ instance.RL_OWNER, instance.RL_ADMIN ]:
+            if instance.volume == instance.volume.SCP_ATTACHMENT:
+                _grantaccess(instance.user, fs.folder_attachment(instance.volume), recursive = True)
+            else:
+                pass
+            #FIXME: volume access
+        #FIXME: _grantgroupaccess(instance.user fs.folder_attachment(instance.volume))
+        else:
+            if instance.volume == instance.volume.SCP_ATTACHMENT:
+                _grantaccess(instance.user, fs.folder_attachment(instance.volume), readonly = True, recursive = True)
+            else:
+                pass
+            #FIXME: volume access
+ 
+
+@receiver(pre_delete, sender = Volume)
+def garbage_attachment(sender, instance, **kwargs):
+    from ..filesystem import garbage_attachment
+    if instance.scope == Volume.SCP_ATTACHMENT:
+        fs.garbage_attachment(instance)
 
 
 #@receiver(pre_save, sender = UserVolumeBinding)

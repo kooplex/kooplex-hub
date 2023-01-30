@@ -34,6 +34,15 @@ class Volume(models.Model):
     def search(self):
         return f"{self.folder} {self.description}".upper()
 
+    @property
+    def owner(self):
+        from .uservolumebinding import UserVolumeBinding
+        try:
+            return UserVolumeBinding.objects.get(volume = self, role = UserVolumeBinding.RL_OWNER).user
+        except:
+            logger.error(f"Volume {self} has no owner")
+            return "MISSING"
+
 #    @property
 #    def admins(self):
 #        from .uservolumebinding import UserVolumeBinding
@@ -52,8 +61,11 @@ class Volume(models.Model):
             return self
         else:
             #FIXME: how to authorize internal volume?
-            UserVolumeBinding.objects.get(user = user, volume = self)
-            return self
+            try:
+                UserVolumeBinding.objects.get(user = user, volume = self)
+                return self
+            except:
+                pass
 
 
 #    def is_collaborator(self, user):

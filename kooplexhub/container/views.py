@@ -14,7 +14,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .forms import FormContainer
 from .forms import TableContainerProject, TableContainerCourse, TableContainerVolume
-from .models import Image, Container, Attachment, AttachmentContainerBinding
+from .models import Image, Container
 from project.models import Project, UserProjectBinding, ProjectContainerBinding
 from education.models import Course, UserCourseBinding, CourseContainerBinding
 from volume.models import Volume, VolumeContainerBinding

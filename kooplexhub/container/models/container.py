@@ -111,6 +111,12 @@ class Container(models.Model):
                 return resp
             logger.warning('Proxy target missing: %s' % self.url_public)
 
+    def env_variable(self, var_name):
+        try:
+            return EnvVarMapping.objects.get(image = self.image, name = var_name).valuemap
+        except:
+            return ""
+
     @property
     def env_variables(self):
         for envmap in EnvVarMapping.objects.filter(image = self.image):

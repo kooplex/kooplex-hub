@@ -5,18 +5,15 @@ from hub.templatetags.extras import render_user as ru
 from ..models import UserVolumeBinding
 from hub.models import Profile
 
+from kooplexhub.common import table_attributes
+
 class TableVolumeShare(tables.Table):
     user = tables.Column(verbose_name = "Collaborators", order_by = ('user__first_name', 'user__last_name'), orderable = False)
 
     class Meta:
         model = UserVolumeBinding
         fields = ('user',)
-        attrs = {
-                 "class": "table table-bordered",
-                 "thead": { "class": "thead-dark table-sm" },
-                 "td": { "class": "p-1 text-light" },
-                 "th": { "class": "table-secondary p-1" }
-                }
+        attrs = table_attributes
 
     def render_user(self, record):
         user = record.user

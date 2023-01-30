@@ -4,3 +4,12 @@ table_attributes = {
     "td": { "class": "p-1 text-dark" },
     "th": { "class": "p-1 table-secondary" }
 }
+
+
+def tooltip_attrs(attrs):
+    attrs.update({
+        'class': 'form-control',
+        'data-toggle': 'tooltip', 
+        'data-placement': 'bottom',
+    })
+    return attrs

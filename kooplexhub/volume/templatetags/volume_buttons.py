@@ -29,8 +29,7 @@ def scope(volume):
 @register.simple_tag
 def admin_or_creator(volume, p_class = 'card-text'):
     if volume.scope == volume.SCP_ATTACHMENT:
-        creator = UserVolumeBinding.objects.get(volume = volume, role = UserVolumeBinding.RL_OWNER).user
-        return format_html(f'<p class="{p_class}"><strong>Creator:</strong> {creator}</p>')
+        return format_html(f'<p class="{p_class}"><strong>Creator:</strong> {volume.owner}</p>')
     else:
         admins = ', '.join([ str(b.user) for b in UserVolumeBinding.objects.filter(volume = volume, role__in = [ UserVolumeBinding.RL_OWNER, UserVolumeBinding.RL_ADMIN ]) ])
         return format_html(f'<p class="{p_class}"><strong>Administrators:</strong> {admins}</p>')

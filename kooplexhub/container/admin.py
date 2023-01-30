@@ -1,10 +1,17 @@
 from django.contrib import admin
+#from django import forms
 
 from .models import *
+
 
 @admin.register(Image)
 class ImageAdmin(admin.ModelAdmin):
     list_display = ('id', 'present', 'name', 'imagetype', 'description', 'require_home', 'mount_project', 'mount_report', 'access_kubeapi')
+
+@admin.register(ResourceType)
+class ResourceTypeAdmin(admin.ModelAdmin):
+    list_display = ('id', 'description') #, 'thumbnail')
+
 
 @admin.register(Container)
 class ContainerAdmin(admin.ModelAdmin):
@@ -18,21 +25,5 @@ class ProxyAdmin(admin.ModelAdmin):
 @admin.register(EnvVarMapping)
 class EnvVarMappingAdmin(admin.ModelAdmin):
     list_display = ('id', 'image', 'name', 'valuemap')
-
-@admin.register(Attachment)
-class AttachmentAdmin(admin.ModelAdmin):
-    list_display = ('id', 'creator', 'name', 'folder', 'description')
-
-@admin.register(AttachmentContainerBinding)
-class AttachmentContainerBindingAdmin(admin.ModelAdmin):
-    def attachment_creator(self, instance):
-        return instance.attachment.creator.username
-    def attachment_name(self, instance):
-        return instance.attachment.name
-    list_display = ('id', 'attachment_name', 'attachment_creator', 'container')
-
-@admin.register(AttachmentImageBinding)
-class AttachmentImageBindingAdmin(admin.ModelAdmin):
-    list_display = ('id', 'attachment', 'image')
 
 

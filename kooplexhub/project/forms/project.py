@@ -7,16 +7,7 @@ from container.models import Container, Image
 from ..models import Project, UserProjectBinding
 
 from kooplexhub.lib import my_slug_validator, my_end_validator
-
-
-#TODO: put somewhere common
-def tooltip_attrs(attrs):
-    attrs.update({
-        'class': 'form-control',
-        'data-toggle': 'tooltip', 
-        'data-placement': 'bottom',
-    })
-    return attrs
+from kooplexhub.common import tooltip_attrs
 
 
 class FolderTextWidget(forms.TextInput):
