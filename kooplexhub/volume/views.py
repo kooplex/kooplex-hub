@@ -83,15 +83,25 @@ class ConfigureVolumeView(LoginRequiredMixin, generic.edit.UpdateView):
     def form_valid(self, form):
         logger.info(form.cleaned_data)
         shared = json.loads(form.cleaned_data['shared'])
-        admins = shared['admin_users']
+        admins = set(map(int, shared['admin_users']))
+        # remove dropped bindings
         bindings_rm = UserVolumeBinding.objects.filter(volume__id = form.cleaned_data['id']).exclude(user = self.request.user).exclude(id__in = shared['bindings'])
         bindings_rm.delete()
-        #FIXME: revoke admin rights
+        logger.info(f"unshared: {bindings_rm}")
+        # maintain roles for bindings kept
+        for b in UserVolumeBinding.objects.filter(volume__id = form.cleaned_data['id'], id__in = shared['bindings']):
+            role = UserVolumeBinding.RL_ADMIN if b.user.id in admins else UserVolumeBinding.RL_COLLABORATOR
+            if b.role != role:
+                b.role = role
+                b.save()
+                logger.info(f"role changed {b} -> {role}")
+        # create new bindings
         volume = Volume.objects.get(id = form.cleaned_data['id'])
-        for uid in shared['bind_users']:
+        for uid in map(int, shared['bind_users']):
             role = UserVolumeBinding.RL_ADMIN if uid in admins else UserVolumeBinding.RL_COLLABORATOR
             user = User.objects.get(id = uid)
-            UserVolumeBinding.objects.create(volume = volume, user = user, role = role)
+            b = UserVolumeBinding.objects.create(volume = volume, user = user, role = role)
+            logger.info(f"shared: {b}")
         return super().form_valid(form)
 
 

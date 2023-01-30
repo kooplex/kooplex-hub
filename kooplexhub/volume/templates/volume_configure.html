@@ -35,7 +35,7 @@
     <div class="tab-pane fade {% if active == "share" %}show active{% endif %}" id="share" role="tabpanel" aria-labelledby="tab-share">
       <div class="d-flex flex-row align-items-baseline">
         <div class="flex-fill w-100 me-1">
-          <input class="form-control me-2 mb-3 mt-3" type="text" id="search_collaborator" placeholder="Search collaborator" title="Type in a name">
+          <input class="form-control me-2 mb-3 mt-3" type="text" id="search_Ucollaborator" placeholder="Search collaborator" title="Type in a name">
           {% if form.t_users %}
             {% render_table form.t_users %}
           {% endif %}
@@ -56,13 +56,16 @@
 
 {% block scripts %}
 <script>  
+{# check if widget belongs to collaborator table #}
+function tc(obj) {
+  return $(obj).parent().parent().parent().parent().attr('id') === 'collaborators';
+}
+
 {# catch submit event, in order to fill properly the share volume information #}
 $("#volume-manage").submit(function (e) {
-  bindings = $.map($("input[name=uservolumebinding_id]"), function (k, v) { return $(k).val(); });
-  bind_users = $.map($("input[name=user_id]"), function (k, v) { return $(k).val(); });
-  console.log( $("input[id^=admin-]") );
-  admin_users = $.map($("input[id^=admin-]"), function (k, v) { if ($(k).attr('checked')) { return $(k).attr("id").split("-",2)[1] }; }); //FIXME
-  console.log( bindings, bind_users, admin_users );
+  bindings = $.map($("input[name=uservolumebinding_id]"), function (k, v) { if (tc(k)) { return $(k).val(); } });
+  bind_users = $.map($("input[name=user_id]"), function (k, v) { if (tc(k)) { return $(k).val(); } });
+  admin_users = $.map($("input[id^=admin-]"), function (k, v) { if (tc($(k).parent().parent())) { if ($(k).prop('checked')) { return $(k).val() } }; }); 
   $("#id_shared").val(JSON.stringify( {
     'bindings': bindings,
     'bind_users': bind_users,
@@ -75,60 +78,40 @@ $("#volumeConfigTabs li a").on("click", function () {
   console.log( tab )
   $.cookie("configure_volume_tab", tab, { 'path': '/;SameSite=Strict', 'secure': true });
 });
-</script>
-<script>
+
 $(document).ready(function() {
   $("#users").find("th").text("Users");
 });
+
+{# handle clicking on table rows #}
 $("span[id^='userid-'").click(function() {
-  var userid = $( this ).attr("id").split("-")[1];
-  var cba = $("#d-" + userid);
-  var cba_before = $("#admin-" + userid).attr("name");
-  var tr = $( this ).parent().parent();
-  var t = tr.parent().parent().attr("id");
-  console.log( t );
-  var other_table;
-  if (t === "users") {
+  userid = $( this ).attr("id").split("-", 2)[1];
+  w_admin = $("#admintoggler-" + userid);
+  tr = $( this ).parent().parent();
+  table_id = tr.parent().parent().attr("id");
+  console.log( table_id );
+  if (table_id === "users") {
     other_table = $("#collaborators");
-    $( this ).parent().find("input[type='hidden'][name").each(function() {
-      var before = $(this).attr("name");
-      $( this ).attr("name", before.substring(1));
-    });
-    cba.removeClass("d-none");
-    cba.attr("name", cba_before.substring(1));
+    w_admin.removeClass("d-none");
   } else {
     other_table = $("#users");
-    $( this ).parent().find("input[type='hidden'][name").each(function() {
-      var before = $(this).attr("name");
-      $( this ).attr("name", "_" + before);
-    });
-    cba.addClass("d-none");
-    cba.attr("name", "_" + cba_before);
+    w_admin.addClass("d-none");
   }
   other_table.children("tbody").append(tr);
 });
-$("#search_collaborator").keyup(function() {
-  var pattern = $( this ).val().toUpperCase();
-  console.log( "search: " + pattern );
-  $("input[id^='search-collaborator-'").each(function() {
-    var widget = $( this ).parent().parent();
-    if (widget.parent().parent().attr("id") == "collaborators") {
-      return;
-    }
-    var hide_it = true;
-    if (pattern.length > 0) {
-      var name = $( this ).attr("value").toUpperCase();
-      if ( name.indexOf(pattern) > -1 ) {
-        hide_it = false;
-      }
-    }
-    if (hide_it) {
-      widget.hide();
-    } else {
-      widget.show();
-    }
-  });
-}).keyup();
+
+{# hide all table rows except for those matching #}
+function is_visible_callback(obj, obj_id, is_empty, is_found) {
+  if (obj != 'Ucollaborator') {
+    return true; 
+  }
+  if (is_empty) {
+    return false;
+  }
+  return is_found;
+}
+{# trigger set_visibility #}
+$("#search_Ucollaborator").keyup();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/js/bootstrap5-toggle.min.js"></script>
 {% endblock %}
