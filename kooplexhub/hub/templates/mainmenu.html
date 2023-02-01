@@ -34,6 +34,12 @@
     <li class="nav-item mt-2"  data-toggle="tooltip" title="Resource monitoring" data-placement="bottom">
       <a class="{{ li_a_s }} nav-link {% if menu_monitoring %}active border-1 border-start{% endif %}" href="{% url 'monitoring' %}"><i class="bi bi-activity"></i><span class="d-none d-xl-inline">&nbsp;Monitoring</span></a>
     </li>
+    <li class="nav-item mt-2"  data-toggle="tooltip" title="Gitea Version Control System" data-placement="bottom">
+      <a class="{{ li_a_s }} nav-link {% if menu_gitea %}active border-1 border-start{% endif %}" target="_blank" href="https://gitea.vo.elte.hu"><img src="https://gitea.vo.elte.hu/assets/img/logo.svg" width="20"/><span class="d-none d-xl-inline">&nbsp;Gitea</span></a>
+    </li>
+    <li class="nav-item mt-2"  data-toggle="tooltip" title="Seafile Cloud Filesharing" data-placement="bottom">
+      <a class="{{ li_a_s }} nav-link {% if menu_seafile %}active border-1 border-start{% endif %}" target="_blank" href="https://seafile.vo.elte.hu"><img src="https://manual.seafile.com/media/seafile-transparent-1024.png" width="20"/><span class="d-none d-xl-inline">&nbsp;Seafile</span></a>
+    </li>
     <li class="nav-item mt-2"  data-toggle="tooltip" title="Answer our Kooplex survey and help us improve our system" data-placement="bottom">
       <button class="btn btn-outline-light pe-2 {{ li_a_s }} nav-link {% if menu_monitoring %}active border-2 border-start{% endif %} blink" value="showAlert" id="togglee"><i class="bi bi-card-heading"></i><span class="d-none d-xl-inline">&nbsp;Our survey</span></button>
     </li>

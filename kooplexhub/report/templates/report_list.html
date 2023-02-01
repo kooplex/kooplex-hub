@@ -5,8 +5,8 @@
 {% endblock %}
 
 
-{% block bodycontent %}
 {# the search bar #}
+{% block search %}
 {% if reports %}
 <div class="card border border-light border-3 mx-5 mb-3 rounded-3">
   <div class="input-group">
@@ -24,8 +24,11 @@
 </div>
   {# FIXME: a list of most popular tags #}
 {% endif %}
+{% endblock %}
+
 
 {# render the report cards #}
+{% block bodycontent %}
 <div id="reportListPane" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 w-100 mx-auto justify-content-center">
   {% if reports %}
     {% for report in reports %}

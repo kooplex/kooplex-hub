@@ -3,8 +3,8 @@
 {% load static %}
 
 
-{% block bodycontent %}
 {# the search bar #}
+{% block search %}
 {% if containers %}
 <div class="card border border-light border-3 mx-5 mb-3 rounded-3">
   <div class="input-group">
@@ -16,8 +16,11 @@
   {# FIXME: toggler to narrow selection according to whether a report container #}
 </div>
 {% endif %}
+{% endblock %}
+
 
 {# render the container cards #}
+{% block bodycontent %}
 <div id="containerListPane" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 w-100 mx-auto justify-content-center">
   {% if containers %}
     {% for container in containers %}
@@ -29,8 +32,8 @@
     {% include 'empty.html' %}
   {% endif %}
 </div>
-
 {% endblock %}
+
 
 {% block scripts %}
 <script>

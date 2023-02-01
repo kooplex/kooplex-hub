@@ -1,3 +1,11 @@
+// when window is resized, we recalculate main block's height, so cntent can scroll under the search bar is present
+$( window ).resize(function () {
+  h_full = $( window ).height();
+  h_top = $("#topbar").outerHeight(true);
+  h_search = $("#searchblock").outerHeight(true);
+  $("#bodyblock").height(h_full - h_top - h_search);
+}).resize();
+
 // my boolean converter
 function B(x) {
   if (typeof x === 'boolean') {
