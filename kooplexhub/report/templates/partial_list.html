@@ -3,24 +3,23 @@
 {% load container_buttons %}
 
 <style>
-  @media all and (max-width: 728.01px) {
-    .imagesize{
-width: 200px;
-height: 200px;
+@media all and (max-width: 728.01px) {
+  .imagesize{
+    width: 200px;
+    height: 200px;
+  }
 }
 
-  }
-
-  .goflex{
+.goflex{
   display: flex;
 }
 
 .border-2 .border-warning{
- display:none;
+  display:none;
 }
 
 .bg-transparent:hover .border-2 .border-warning {
- opacity: 1;
+  opacity: 1;
 }
 
 </style>
@@ -55,13 +54,6 @@ height: 200px;
                 </div>
                 <div class="col-md-7">
                   <div class="card-body">
-                    <h5 class="card-title">
-                      {% if report.image %}
-                        <span class="card-text">{% container_image report.image %}</span>
-                      {% else %}
-                        <span class="card-text">Static html report</span>
-                      {% endif %}
-                    </h5>
 		    <p class="card-text">{{ report.description|truncatechars:45 }}</p>
 		    <p class="card-text"><small class="text-muted"><strong>Creator:</strong> {{ report.creator.profile.name }}</small></p>
                   </div>

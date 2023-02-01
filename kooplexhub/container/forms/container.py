@@ -5,15 +5,8 @@ from django.utils.html import format_html
 from ..models import Image
 
 from kooplexhub.lib import my_alphanumeric_validator
+from kooplexhub.common import tooltip_attrs
 
-#TODO: put somewhere common
-def tooltip_attrs(attrs):
-    attrs.update({
-        'class': 'form-control',
-        'data-toggle': 'tooltip', 
-        'data-placement': 'bottom',
-    })
-    return attrs
 
 class myNumberInput(forms.NumberInput):
     template_name = 'widget_decimal.html'

@@ -14,7 +14,7 @@
         {% dropdown_start_open bindings=projectcontainerbindings ancestor=upb ancestor_type='project' %}
 	{% button_project_hide project hidden %}
 	{% button_project_conf project enabled=is_admin %}
-        <button data-bs-toggle="modal"  data-bs-target="#projectInfoModal-{{ project.id }}" role="button" class="btn btn-warning btn-sm mb-1" ><span class="bi bi-info-square" aria-hidden="true" data-toggle="tooltip" title="Click for more info" data-placement="top" ></span></button>
+        <span data-bs-toggle="modal"  data-bs-target="#projectInfoModal-{{ project.id }}" role="button" class="btn btn-warning btn-sm" ><span class="bi bi-info-square" aria-hidden="true" data-toggle="tooltip" title="Click for more info" data-placement="top" ></span></span>
         {% icon_collaborator project user %}
       </div>
       <div class="col-8" id="project-name-{{ project.id }}">

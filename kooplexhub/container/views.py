@@ -145,6 +145,7 @@ def configure(request, container_id):
         'container': svc,
         'form': FormContainer(container = svc, nodes = list(api.node_df['node'].values)),
         't_projects': TableContainerProject(svc, user),
+        'wss_container': f'wss://k8plex-test.vo.elte.hu/hub/ws/node_monitor/'  #FIXME: HARDCODED URLS
     }
     if 'volume' in settings.INSTALLED_APPS:
         context_dict['t_volumes'] = TableContainerVolume(svc, user)

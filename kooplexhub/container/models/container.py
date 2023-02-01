@@ -99,7 +99,7 @@ class Container(models.Model):
 
     @property
     def search(self):
-        return f"{self.name.upper()} {self.friendly_name.upper()}".upper()
+        return f"{self.name} {self.friendly_name}".upper()
 
     def wait_until_ready(self):
         from kooplexhub.lib import keeptrying
