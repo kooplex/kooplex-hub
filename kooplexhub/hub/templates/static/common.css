@@ -70,4 +70,6 @@ body {
     opacity: 0;
   }
 }
-
+.blink:hover {
+  color: rgb(64, 64, 64);
+}

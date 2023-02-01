@@ -43,6 +43,16 @@
 
 {% block scripts %}
 <script>
+{# before redirecting to container page save info to narrow search #}
+$("a[name=shortcut]").on("click", function(event) {
+  //event.preventDefault();
+  href = $( this ).attr("href");
+  container_id = $( this ).attr("value");
+  expire = new Date();
+  expire.setTime(expire.getTime() + 1000); // 1 second
+  $.cookie("search_container_id", container_id, { 'path': '/;SameSite=Strict', 'secure': true, 'expires': expire });
+});
+
 containerSocket = open_ws('{{ wss_container }}', ws_callback_container);
 projectSocket = open_ws('{{ wss_project }}', ws_callback_project);
 

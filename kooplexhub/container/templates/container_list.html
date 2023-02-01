@@ -11,7 +11,7 @@
     <div class="input-group-prepend">
       <div class="input-group-text"><span class="bi bi-search"></span></div>
     </div>
-    <input class="form-control" type="text" id="search_container" placeholder="Search by container name" autofocus >
+    <input class="form-control" type="text" id="search_container" placeholder="Search by container name" autofocus value="{{ search_container }}">
   </div>
   {# FIXME: toggler to narrow selection according to whether a report container #}
 </div>
@@ -38,6 +38,9 @@
 {% block scripts %}
 <script>
 containerSocket = open_ws('{{ wss_container }}', ws_callback);
+
+{# make sure search string we got gets applied #}
+$("#search_container").keyup();
 
 {# open a container #}
 function open_container(containerid) {

@@ -82,8 +82,12 @@ class ContainerListView(LoginRequiredMixin, generic.ListView):
     model = Container
 
     def get_context_data(self, **kwargs):
-        l = reverse('container:new')
         context = super().get_context_data(**kwargs)
+        container_id = self.request.COOKIES.get('search_container_id', None)
+        if container_id:
+            c = Container.objects.get(id = container_id)
+            context["search_container"] = c.search
+        l = reverse('container:new')
         context['menu_container'] = True
         context['submenu'] = 'list'
         context['partial'] = 'container_partial_list.html'

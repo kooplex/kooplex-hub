@@ -2,8 +2,9 @@
 $( window ).resize(function () {
   h_full = $( window ).height();
   h_top = $("#topbar").outerHeight(true);
+  h_description = $("#descriptionblock").outerHeight(true);
   h_search = $("#searchblock").outerHeight(true);
-  $("#bodyblock").height(h_full - h_top - h_search);
+  $("#bodyblock").height(h_full - h_top - h_description - h_search);
 }).resize();
 
 // my boolean converter

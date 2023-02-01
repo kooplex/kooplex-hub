@@ -246,7 +246,7 @@ def dropdown_start_open(bindings, ancestor, ancestor_type):
 <span class="dropdown-item">
   <div class="btn-group" role="group" aria-label="control buttons">
     {but_start_open}
-    <a href="{link}" role="button" class="btn btn-secondary btn-sm"><span class="bi bi-boxes" aria-hidden="true"></span>{b.container.name}</a>
+    <a href="{link}" role="button" class="btn btn-secondary btn-sm" name="shortcut" value="{b.container.id}"><span class="bi bi-boxes" aria-hidden="true"></span>{b.container.name}</a>
   </div>
 </span>
             """

@@ -112,14 +112,17 @@
 
         {% endblock %}
 
-	{# the main content is rendered here #}
-        <div class="m-2" id="searchblock">
-	{% block search %}
-        {% endblock %}
+	{# a place for an optional page description area #}
+        <div class="m-2 d-none d-xl-block" id="descriptionblock">
+	{% block pagedescription %}{% endblock %}
         </div>
+	{# a place for an optional search bar #}
+        <div class="m-2" id="searchblock">
+	{% block search %}{% endblock %}
+        </div>
+	{# the main content is rendered here #}
         <div class="m-2" style="overflow-y: scroll;" id="bodyblock">
-	{% block bodycontent %}
-        {% endblock %}
+	{% block bodycontent %}{% endblock %}
         </div>
 
 	{# dynamic popup window for messages #}

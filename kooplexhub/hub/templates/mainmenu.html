@@ -1,7 +1,7 @@
 {% load static %}
 
 {% with li_a_s="p-0 ps-2 mt-2" %}
-<nav class="p-2 navbar navbar-dark bg-dark d-flex align-items-start justify-content"{# style="height: calc(100vh);"#}>
+<nav class="p-2 navbar navbar-dark bg-dark d-flex align-items-start justify-content">
   <ul class="navbar-nav flex-column flex-xl-column">
     <li class="nav-item mt-1 ms-1">
       <a class="nav-item" href="/hub/">
@@ -40,8 +40,8 @@
     <li class="nav-item mt-2"  data-toggle="tooltip" title="Seafile Cloud Filesharing" data-placement="bottom">
       <a class="{{ li_a_s }} nav-link {% if menu_seafile %}active border-1 border-start{% endif %}" target="_blank" href="https://seafile.vo.elte.hu"><img src="https://manual.seafile.com/media/seafile-transparent-1024.png" width="20"/><span class="d-none d-xl-inline">&nbsp;Seafile</span></a>
     </li>
-    <li class="nav-item mt-2"  data-toggle="tooltip" title="Answer our Kooplex survey and help us improve our system" data-placement="bottom">
-      <button class="btn btn-outline-light pe-2 {{ li_a_s }} nav-link {% if menu_monitoring %}active border-2 border-start{% endif %} blink" value="showAlert" id="togglee"><i class="bi bi-card-heading"></i><span class="d-none d-xl-inline">&nbsp;Our survey</span></button>
+    <li class="nav-item mt-2"  data-toggle="tooltip" title="Dear Kooplex users! We are interested in your opinion about Kooplex in order to improve our platform. Our team would appreciate if you could have five minutes to answer this quick and anonymous questionnaire" data-placement="bottom">
+      <a class="btn btn-outline-light pe-2 {{ li_a_s }} nav-link blink" href="https://forms.gle/cJ52qSQNN8kUKXpL9" target="_blank"><i class="bi bi-card-heading"></i><span class="d-none d-xl-inline">&nbsp;Our survey</span></a>
     </li>
   </ul>
 </nav>
