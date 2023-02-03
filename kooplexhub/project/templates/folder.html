@@ -5,7 +5,7 @@ $("#{{widget.attrs.id}}").keyup(function() {
   $("#{{widget.attrs.id}}-typed").attr('typed', true);
 });
 $("#" + "{{widget.attrs.id}}".replace('subpath', 'name')).keyup(function() {
-  if (! $("#{{widget.attrs.id}}-typed").attr('typed')) {
+  if (! $("#{{widget.attrs.id}}-typed").attr('typed') && $("#{{widget.attrs.id}}").attr("disabled") !== "disabled") {
     $("#{{widget.attrs.id}}").val($(this).val().toLowerCase().replace(eval("/[^a-z0-9]/g"), '_'));
   }
 });

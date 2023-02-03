@@ -3,6 +3,8 @@ import logging
 from django.db import models
 from django.contrib.auth.models import User
 
+from container.models import Image
+
 logger = logging.getLogger(__name__)
 
 class Project(models.Model):
@@ -19,6 +21,7 @@ class Project(models.Model):
     description = models.TextField(null = True)
     scope = models.CharField(max_length = 16, choices = SCP_LOOKUP.items(), default = SCP_PRIVATE)
     subpath = models.CharField(max_length = 200, null = True, unique = True)
+    preferred_image = models.ForeignKey(Image, on_delete = models.CASCADE, default = None, null = True)
 
 
     def __str__(self):
@@ -26,15 +29,6 @@ class Project(models.Model):
 
     def __lt__(self, p):
         return self.name < p.name
-
-    #FIXME: template function exists to it
-    @property
-    def description_is_long(self):
-        return len(self.description) >= 20
-    @property
-    def short_description(self):
-        return self.description[:17] + "..." if self.description_is_long else self.description
-    #####
 
     @property
     def search(self):

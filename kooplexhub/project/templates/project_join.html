@@ -8,27 +8,36 @@
 
 
 {% block bodycontent %}
-<div class="m-2" style="height: calc(100vh - 105px); overflow-y: scroll; overflow-x:hidden;">
 <div class="card shadow mt-3 p-3 mb-5 bg-light rounded" > 
-<form id="project-manage" class="form-horizontal" action="{% url 'project:join' %}" method="post">
+<form id="project-join" class="form-horizontal" action="{% url 'project:join' %}" method="post">
   {% csrf_token %}
-  {% if t_joinable.data|length > 0 %}
+  {% if form.t_joinable.data|length > 0 %}
   {% title_with_button "Use the switch to select those projects you want to join" button_icon="bi bi-people" button_label="Collaborate" button_color="btn-success"%}
   <div class="input-group">
     <span class="input-group-text"><span class="bi bi-search"></span></span>
     <input class="form-control" type="text" id="search_project" placeholder="Search project" title="Type in a name" autofocus >
   </div>
+  {{ form.as_p }}
   <div class="card-body">
-      {% render_table t_joinable %}
+      {% render_table form.t_joinable %}
   </div>
   {% else %}
    {% include 'empty.html' with empty_body="There are no projects to join." skip_border=True %}
   {% endif %}
 </form>
 </div>
-</div>
 {% endblock %}
 
 {% block scripts %}
+<script>
+{# catch submit event, in order to fill properly the share volume information #}
+$("#project-join").submit(function (e) {
+  project_ids = $.map($("input[name=join_project_ids]"), function (k, v) { if ($(k).prop('checked')) { return $(k).val(); } });
+  $("#id_join").val(JSON.stringify( {
+    'user_id': {{ user.id }},
+    'join_project_ids': project_ids
+  }));
+});
+</script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/js/bootstrap5-toggle.min.js"></script>
 {% endblock %}
