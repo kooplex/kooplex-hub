@@ -28,16 +28,27 @@ KOOPLEX = settings.KOOPLEX
 
 logger = logging.getLogger(__name__)
 
-class NewContainerView(LoginRequiredMixin, generic.FormView):
-    template_name = 'container_new.html'
+class ContainerView(LoginRequiredMixin, generic.FormView):
+    model = Container
+    template_name = 'container_configure.html'
     form_class = FormContainer
     success_url = '/hub/container_environment/list/' #FIXME: django.urls.reverse or shortcuts.reverse does not work reverse('project:list')
 
+    def get_initial(self):
+        initial = super().get_initial()
+        user = self.request.user
+        initial['user'] = user
+        return initial
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        container_id = self.kwargs.get('pk')
         context['menu_container'] = True
-        context['submenu'] = 'new'
+        context['submenu'] = 'configure' if container_id else 'new' 
+        context['active'] = self.request.COOKIES.get('configure_env_tab', 'projects') if container_id else 'meta'
+        context['url_post'] = reverse('container:configure', args = (container_id, )) if container_id else reverse('container:new')
         context['wss_container'] = KOOPLEX.get('hub', {}).get('wss_monitor', 'wss://localhost/hub/ws/node_monitor/')
+        context['container_id'] = container_id
         return context
 
     def get_form_kwargs(self):
@@ -50,18 +61,75 @@ class NewContainerView(LoginRequiredMixin, generic.FormView):
     def form_valid(self, form):
         logger.info(form.cleaned_data)
         user = self.request.user
-        friendly_name = form.cleaned_data['friendly_name']
-        name = re.sub('[^a-z]', '', friendly_name.lower())
-        Container.objects.create(
-            user = user, 
-            #name = form.cleaned_data['name'], 
-            name = name, 
-            **form.cleaned_data
-            #friendly_name = friendly_name, 
-            #image = form.cleaned_data['image']
-        )
-        messages.info(self.request, f'Container {friendly_name} is created')
+        container_config = form.cleaned_data.pop('container_config')
+        assert user.id == container_config['user_id']
+        container_id = container_config['container_id']
+        msgs = []
+        if container_id:
+            container = Container.objects.get(id = container_id)
+            att_r = []
+            for att in [ 'image', 'idletime', 'cpurequest', 'gpurequest', 'memoryrequest' ]:
+                if getattr(container, att) != form.cleaned_data[att]:
+                    att_r.append(att)
+            if att_r:
+                msgs.append("Attribute(s) changed: {}".format(', '.join(att_r)))
+                container.mark_restart(msgs[-1])
+        else:
+            container = Container.objects.create(**form.cleaned_data)
+            msgs.append(f'Container {container} created.')
+        # handle projects
+        project_add = []
+        for project in container_config['bind_projects']:
+            _, created = ProjectContainerBinding.objects.get_or_create(project = project, container = container)
+            if created:
+                project_add.append(str(project))
+        if project_add:
+            msgs.append('Project(s) associated with container: {}.'.format(', '.join(project_add)))
+            container.mark_restart(msgs[-1])
+        remove = ProjectContainerBinding.objects.filter(container = container).exclude(project__in = container_config['bind_projects'])
+        remove.delete()
+        if remove:
+            msgs.append('Project(s) disconnected from container: {}.'.format(', '.join([ str(b.project) for b in remove ])))
+            container.mark_restart(msgs[-1])
+        # handle courses
+        course_add = []
+        for course in container_config['bind_courses']:
+            _, created = CourseContainerBinding.objects.get_or_create(course = course, container = container)
+            if created:
+                course_add.append(str(course))
+        if course_add:
+            msgs.append('Course(s) associated with container: {}.'.format(', '.join(course_add)))
+            container.mark_restart(msgs[-1])
+        remove = CourseContainerBinding.objects.filter(container = container).exclude(course__in = container_config['bind_courses'])
+        remove.delete()
+        if remove:
+            msgs.append('Course(s) disconnected from container: {}.'.format(', '.join([ str(b.course) for b in remove ])))
+            container.mark_restart(msgs[-1])
+        # handle volumes
+        volume_add = []
+        for volume in container_config['bind_volumes']:
+            _, created = VolumeContainerBinding.objects.get_or_create(volume = volume, container = container)
+            if created:
+                volume_add.append(str(volume))
+        if volume_add:
+            msgs.append('Volume(s)/attachment(s) associated with container: {}.'.format(', '.join(volume_add)))
+            container.mark_restart(msgs[-1])
+        remove = VolumeContainerBinding.objects.filter(container = container).exclude(volume__in = container_config['bind_volumes'])
+        remove.delete()
+        if remove:
+            msgs.append('Volume(s)/attachment(s) disconnected from container: {}.'.format(', '.join([ str(b.volume) for b in remove ])))
+            container.mark_restart(msgs[-1])
+        if msgs:
+            messages.info(self.request, ' '.join(msgs))
         return super().form_valid(form)
+
+
+class NewContainerView(ContainerView, generic.FormView):
+    pass
+
+
+class ConfigureContainerView(ContainerView, generic.edit.UpdateView):
+    pass
 
 
 @login_required
@@ -102,264 +170,30 @@ class ContainerListView(LoginRequiredMixin, generic.ListView):
         containers = Container.objects.filter(user = user, image__imagetype = Image.TP_PROJECT).order_by('name')
         return containers
 
-class ReportContainerListView(LoginRequiredMixin, generic.ListView):
-    template_name = 'container_list.html'
-    context_object_name = 'containers'
-    model = Container
-
-    def get_context_data(self, **kwargs):
-        l = reverse('report:new')
-        context = super().get_context_data(**kwargs)
-        context['menu_container'] = True
-        context['submenu'] = 'reportclist'
-        context['partial'] = 'container_partial_list_report.html'
-        context['empty'] = format_html(f"""You need to <a href="{l}"><i class="bi bi-projector"></i><span>&nbsp;create</span></a> a container backed report to see here anything useful.""")
-        return context
-
-    def get_queryset(self):
-        user = self.request.user
-        containers = Container.objects.filter(user = user, image__imagetype = Image.TP_REPORT).order_by('name')
-        return containers
-
-
-@login_required
-def configure(request, container_id):
-    """Manage your projects"""
-    user = request.user
-    profile = user.profile
-    logger.debug("user %s method %s" % (user, request.method))
-
-    try:
-        svc = Container.objects.get(id = container_id, user = user)
-    except Container.DoesNotExist:
-        logger.error('abuse by %s container id: %s -- %s' % (user, container_id, e))
-        messages.error(request, 'Service environment does not exist')
-        return redirect('container:list')
-
-    # if svc.state == svc.ST_STOPPING:
-    #     messages.error(request, f'Service {svc.name} is still stopping, you cannot configure it right now.')
-    #     return redirect('container:list')
-    # elif svc.state == svc.ST_STARTING:
-    #     messages.error(request, f'Service {svc.name} is starting up, you cannot configure it right now.')
-    #     return redirect('container:list')
-    api = Cluster()
-    api.query_nodes_status()
-
-    context_dict = {
-        'menu_container': True,
-        'active': request.COOKIES.get('configure_env_tab', 'projects'),
-        'container': svc,
-        'form': FormContainer(container = svc, nodes = list(api.node_df['node'].values)),
-        't_projects': TableContainerProject(svc, user),
-        'wss_container': KOOPLEX.get('hub', {}).get('wss_monitor', 'wss://localhost/hub/ws/node_monitor/'),
-    }
-    if 'volume' in settings.INSTALLED_APPS:
-        context_dict['t_volumes'] = TableContainerVolume(svc, user)
-    if 'education' in settings.INSTALLED_APPS:
-        context_dict['t_courses'] = TableContainerCourse(svc, user)
-
-    return render(request, 'container_configure.html', context = context_dict)
+#DEPRECATED   class ReportContainerListView(LoginRequiredMixin, generic.ListView):
+#DEPRECATED       template_name = 'container_list.html'
+#DEPRECATED       context_object_name = 'containers'
+#DEPRECATED       model = Container
+#DEPRECATED   
+#DEPRECATED       def get_context_data(self, **kwargs):
+#DEPRECATED           l = reverse('report:new')
+#DEPRECATED           context = super().get_context_data(**kwargs)
+#DEPRECATED           context['menu_container'] = True
+#DEPRECATED           context['submenu'] = 'reportclist'
+#DEPRECATED           context['partial'] = 'container_partial_list_report.html'
+#DEPRECATED           context['empty'] = format_html(f"""You need to <a href="{l}"><i class="bi bi-projector"></i><span>&nbsp;create</span></a> a container backed report to see here anything useful.""")
+#DEPRECATED           return context
+#DEPRECATED   
+#DEPRECATED       def get_queryset(self):
+#DEPRECATED           user = self.request.user
+#DEPRECATED           containers = Container.objects.filter(user = user, image__imagetype = Image.TP_REPORT).order_by('name')
+#DEPRECATED           return containers
 
 
-def _helper(request, svc, post_id, binding_model, model_get_authorized, binding_attribute):
-    # handle changes
-    ids_after = set([ int(i) for i in request.POST.getlist(post_id) ])
-    before = { getattr(b, binding_attribute).id: b for b in binding_model.objects.filter(container = svc) }
-    #   binding
-    info = []
-    a = []
-    for a_id in ids_after.difference(before.keys()):
-        m = model_get_authorized(a_id)
-        binding_model.objects.create(**{ 'container': svc, binding_attribute: m })
-        a.append(m)
-    if len(a):
-        msg = 'associated {}s {}'.format(binding_attribute, ', '.join(map(str, a)))
-        info.append(msg)
-        svc.mark_restart(msg)
-    #   unbinding
-    a = []
-    for a_id in set(before.keys()).difference(ids_after):
-        b = before[a_id]
-        a.append(getattr(b, binding_attribute))
-        b.delete()
-    if len(a):
-        msg = 'removed {}s {}'.format(binding_attribute, ', '.join(map(str, a)))
-        info.append(msg)
-        svc.mark_restart(msg)
-    return info
-
-@login_required
-def configure_save(request):
-    from kooplexhub.settings import KOOPLEX
-
-    if request.POST.get('button', '') == 'cancel':
-        return redirect('container:list')
-    user = request.user
-    try:
-        container_id = request.POST['container_id']
-        svc = Container.objects.get(id = container_id, user = user)
-    except Container.DoesNotExist:
-        messages.error(request, 'Service environment does not exist')
-        return redirect('container:list')
-
-    info = []
-
-    # handle name change
-    friendly_name_before = svc.friendly_name
-    friendly_name_after = request.POST.get('friendly_name')
-    if friendly_name_before != friendly_name_after:
-        svc.friendly_name = friendly_name_after
-        svc.save()
-        info.append(f'name changed to {friendly_name_after}')
-
-    # handle image change
-    image_before = svc.image
-    image_after = Image.objects.get(id = request.POST.get('image'))
-    if image_before != image_after:
-        svc.image = image_after
-        svc.save()
-        msg = f'image changed from {image_before} to {image_after}'
-        info.append(msg)
-        svc.mark_restart(msg)
-
-    # handle node change
-    node_before = svc.node
-    #node_after = Node.objects.get(id = request.POST.get('node'))
-    node_after = request.POST.get('node')
-    if node_before != node_after:
-        svc.node = node_after
-        svc.save()
-        msg = f'Designated node name changed from {node_before} to {node_after}'
-        info.append(msg)
-        svc.mark_restart(msg)
-
-    # handle cpurequest change
-    cpurequest_before = svc.cpurequest
-    default_cpu = KOOPLEX.get('kubernetes').get('resources').get('requests').get('cpu')
-    cpurequest_after = float(request.POST.get('cpurequest') if request.POST.get('cpurequest')  else default_cpu)
-    if float(cpurequest_before) != float(cpurequest_after):
-        svc.cpurequest = cpurequest_after
-        svc.save()
-        msg = f'Number of requested CPUs has been changed from {cpurequest_before} to {cpurequest_after}'
-        info.append(msg)
-        svc.mark_restart(msg)
-
-    # handle gpurequest change
-    gpurequest_before = svc.gpurequest
-    default_gpu = KOOPLEX.get('kubernetes').get('resources').get('requests').get('nvidia.com/gpu')
-    gpurequest_after = int(request.POST.get('gpurequest') if request.POST.get('gpurequest')  else default_gpu)
-    if int(gpurequest_before) != int(gpurequest_after):
-        svc.gpurequest = gpurequest_after
-        svc.save()
-        msg = f'Number of requested GPUs has been changed from {gpurequest_before} to {gpurequest_after}'
-        info.append(msg)
-        svc.mark_restart(msg)
-
-    # handle memoryrequest change
-    memoryrequest_before = svc.memoryrequest
-    default_memory = KOOPLEX.get('kubernetes').get('resources').get('requests').get('memory')
-    memoryrequest_after = float(request.POST.get('memoryrequest') if request.POST.get('memoryrequest')  else default_memory)
-    if float(memoryrequest_before) != float(memoryrequest_after):
-        svc.memoryrequest = memoryrequest_after
-        svc.save()
-        msg = f'The requested amount of memory has been changed from {memoryrequest_before} to {memoryrequest_after}'
-        info.append(msg)
-        svc.mark_restart(msg)
-
-    info.extend( _helper(request, svc, 'attach-project', ProjectContainerBinding, lambda x: Project.get_userproject(project_id = x, user = user), 'project') )
-    info.extend( _helper(request, svc, 'attach-course', CourseContainerBinding, lambda x: Course.get_usercourse(course_id = x, user = user), 'course') )
-    info.extend( _helper(request, svc, 'volume', VolumeContainerBinding, lambda x: Volume.objects.get(id = x).authorize(user), 'volume') )
-
-    if len(info):
-        info = ', '.join(info)
-        messages.info(request, f'Service {svc.name} is configured: {info}.')
-
-    return redirect('container:list')
-
-
-#DEPRECATED @login_required
-#DEPRECATED def start(request, container_id, next_page):
-#DEPRECATED     """Starts the container."""
-#DEPRECATED     user = request.user
-#DEPRECATED 
-#DEPRECATED     try:
-#DEPRECATED         svc = Container.objects.get(user = user, id = container_id)
-#DEPRECATED         if svc.state == Container.ST_NOTPRESENT:
-#DEPRECATED             if svc.start().wait(timeout = 10):
-#DEPRECATED                 messages.info(request, f'Service {svc.name} is started.')
-#DEPRECATED             else:
-#DEPRECATED                 messages.warning(request, f'Service {svc.name} did not start within 10 seconds, reload the page later to check if it is already ready.')
-#DEPRECATED         elif svc.state == Container.ST_STOPPING:
-#DEPRECATED             messages.warning(request, f'Wait a second service {svc.name} is still stopping.')
-#DEPRECATED         elif svc.state == Container.ST_STARTING:
-#DEPRECATED             messages.warning(request, f'Wait a second service {svc.name} is starting.')
-#DEPRECATED         else:
-#DEPRECATED             messages.warning(request, f'Not starting service {svc.name}, which is already running.')
-#DEPRECATED     except Container.DoesNotExist:
-#DEPRECATED         messages.error(request, 'Service environment does not exist')
-#DEPRECATED     except Exception as e:
-#DEPRECATED         logger.error(f'Cannot start the environment {svc} -- {e}')
-#DEPRECATED         messages.error(request, f'Cannot start service environment {e}')
-#DEPRECATED     return redirect(next_page)
-#DEPRECATED 
-#DEPRECATED 
-#DEPRECATED def _get_cookie(request):
-#DEPRECATED     try:
-#DEPRECATED         cv = request.COOKIES.get('show_container', '[]')
-#DEPRECATED         return set( json.loads( cv.replace('%5B', '[').replace('%2C', ',').replace('%5D', ']') ) )
-#DEPRECATED     except Exception:
-#DEPRECATED         logger.error('stupid cookie value: {cv}')
-#DEPRECATED         return set()
-#DEPRECATED 
-#DEPRECATED 
-#DEPRECATED #FIXME: websocket takes over
-#DEPRECATED @login_required
-#DEPRECATED def stop(request, container_id, next_page):
-#DEPRECATED     """Stops a container"""
-#DEPRECATED     user = request.user
-#DEPRECATED     try:
-#DEPRECATED         svc = Container.objects.get(user = user, id = container_id)
-#DEPRECATED         if svc.stop().wait(timeout = 10):
-#DEPRECATED             messages.info(request, f'Service {svc.name} is stopped.')
-#DEPRECATED         else:
-#DEPRECATED             messages.warning(request, f'Service {svc.name} did not stop within 10 seconds, reload the page later to recheck its state.')
-#DEPRECATED     except Container.DoesNotExist:
-#DEPRECATED         messages.error(request, 'Environment does not exist')
-#DEPRECATED     except Exception as e:
-#DEPRECATED         logger.error(f'Cannot stop the environment {svc} -- {e}')
-#DEPRECATED         messages.error(request, f'Cannot stop environment {e}')
-#DEPRECATED     redirection = redirect(next_page)
-#DEPRECATED     shown = _get_cookie(request)
-#DEPRECATED     if svc.id in shown:
-#DEPRECATED         shown.remove( svc.id )
-#DEPRECATED     redirection.set_cookie('show_container', json.dumps( list(shown) ))
-#DEPRECATED     return redirection
-#DEPRECATED 
-#DEPRECATED 
-#DEPRECATED @login_required
-#DEPRECATED def restart(request, container_id, next_page):
-#DEPRECATED     """Restart a container"""
-#DEPRECATED     user = request.user
-#DEPRECATED     try:
-#DEPRECATED         svc = Container.objects.get(user = user, id = container_id)
-#DEPRECATED         ev = svc.restart()
-#DEPRECATED         if ev.wait(timeout = 10):
-#DEPRECATED             messages.info(request, f'Service {svc.name} is restarted.')
-#DEPRECATED         else:
-#DEPRECATED             messages.warning(request, f'Service {svc.name} was stopped and it did not start within 10 seconds, reload the page later to recheck its state.')
-#DEPRECATED     except Container.DoesNotExist:
-#DEPRECATED         messages.error(request, 'Environment does not exist')
-#DEPRECATED     except Exception as e:
-#DEPRECATED         logger.error(f'Cannot restart the environment {svc} -- {e}')
-#DEPRECATED         messages.error(request, f'Cannot restart environment: {e}')
-#DEPRECATED     return redirect(next_page)
-#DEPRECATED 
-#DEPRECATED 
 @login_required
 def open(request, container_id):
     """Opens a container"""
     user = request.user
-    
     try:
         container = Container.objects.get(id = container_id, user = user)
         if container.state in [ Container.ST_RUNNING, Container.ST_NEED_RESTART ]:

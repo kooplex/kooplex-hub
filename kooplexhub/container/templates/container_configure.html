@@ -10,104 +10,124 @@
 
 
 {% block bodycontent %}
-<div class="card shadow p-3 mb-5 bg-light rounded">
-<form id="container-manage" class="form-horizontal" action="{% url 'container:configure_save' %}" method="post">
-{% csrf_token %}
-  {% title_with_button "You are now configuring <em>" container.friendly_name "</em> environment" %}
-  <input type="hidden" name="container_id" value="{{ container.id }}">
-  <ul class="nav nav-tabs" id="serviceConfigTabs" role="tablist">
-    <li class="nav-item" role="presentation">
-      <a class="nav-link mytab {% if active == "image" %}active{% endif %}" id="tab-image" data-bs-toggle="tab" href="#image" role="tab" aria-controls="image" aria-selected="{% if active == "image" %}true{% else %}false{% endif %}">Name/Image</a>
-    </li>
-{% if app_project_installed %}
-    <li class="nav-item" role="presentation">
-      <a class="nav-link mytab {% if active == "projects" %}active{% endif %}" id="tab-projects" data-bs-toggle="tab" href="#projects" role="tab" aria-controls="projects" aria-selected="{% if active == "projects" %}true{% else %}false{% endif %}">Projects</a>
-    </li>
-{% endif %}
-{% if app_education_installed %}
-    <li class="nav-item" role="presentation">
-      <a class="nav-link mytab {% if active == "courses" %}active{% endif %}" id="tab-courses" data-bs-toggle="tab" href="#courses" role="tab" aria-controls="courses" aria-selected="{% if active == "courses" %}true{% else %}false{% endif %}">Courses</a>
-    </li>
-{% endif %}
-{% if app_volume_installed %}
-    <li class="nav-item" role="presentation">
-      <a class="nav-link mytab {% if active == "volumes" %}active{% endif %}" id="tab-volumes" data-bs-toggle="tab" href="#volumes" role="tab" aria-controls="volumes" aria-selected="{% if active == "volumes" %}true{% else %}false{% endif %}">Storage</a>
-    </li>
-{% endif %}
-{% if app_plugin_installed %}
-    <li class="nav-item" role="presentation">
-      <a class="nav-link {% if active == "filesync" %}active{% endif %}" id="tab-filesync" data-bs-toggle="tab" href="#filesync" role="tab" aria-controls="filesync" aria-selected="{% if active == "filesync" %}true{% else %}false{% endif %}">Synchronized files</a>
-    </li>
-    <li class="nav-item" role="presentation">
-      <a class="nav-link {% if active == "versioncontrol" %}active{% endif %}" id="tab-versioncontrol" data-bs-toggle="tab" href="#versioncontrol" role="tab" aria-controls="versioncontrol" aria-selected="{% if active == "versioncontrol" %}true{% else %}false{% endif %}">Version control</a>
-    </li>
-{% endif %}
-    <li class="nav-item {% if active == "delete" %}active{% endif %}" role="presentation" aria-selected="{% if active == "delete" %}true{% else %}false{% endif %}">
-      <a class="nav-link mytab text-danger" id="tab-delete" data-bs-toggle="tab" href="#delete" role="tab" aria-controls="delete" aria-selected="false">Delete</a>
-    </li>
-  </ul>
-
-  <div class="tab-content" id="serviceConfigTabContent">
-    <div class="tab-pane fade {% if active == "image" %}show active{% endif %}" id="image" role="tabpanel" aria-labelledby="tab-image">
-      <div class="d-flex">
-        <div class="flex-fill w-100 mt-2">
-          <table>
-            {{ form.as_table }}
-          </table>
-        </div>
-        <div class="flex-fill d-flex mt-2 w-100">
-          <div ata-toggle="tooltip" title="Please select an option from the image dropdown to check its description."  class="d-flex bg-warning rounded p-2 w-100 mt-2 mt-md-0">
-            <p class="fw-bolder">Image description:&nbsp;</p>
-            <p id="imageDescription"></p>
+<div class="container card shadow p-3 mt-3 mb-3 bg-light rounded">
+  <form id="container-manage" class="form-horizontal was-validated" action="{{ url_post }}" method="post">
+  {% csrf_token %}
+    {% title_with_button "You are now configuring <em>" container.friendly_name "</em> environment" %}
+    <ul class="nav nav-tabs" id="serviceConfigTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <a class="nav-link mytab {% if active == "meta" %}active{% endif %}" id="tab-image" data-bs-toggle="tab" href="#image" role="tab" aria-controls="image" aria-selected="{% if active == "image" %}true{% else %}false{% endif %}">Name/Image</a>
+      </li>
+  {% if app_project_installed %}
+      <li class="nav-item" role="presentation">
+        <a class="nav-link mytab {% if active == "projects" %}active{% endif %}" id="tab-projects" data-bs-toggle="tab" href="#projects" role="tab" aria-controls="projects" aria-selected="{% if active == "projects" %}true{% else %}false{% endif %}">Projects</a>
+      </li>
+  {% endif %}
+  {% if app_education_installed %}
+      <li class="nav-item" role="presentation">
+        <a class="nav-link mytab {% if active == "courses" %}active{% endif %}" id="tab-courses" data-bs-toggle="tab" href="#courses" role="tab" aria-controls="courses" aria-selected="{% if active == "courses" %}true{% else %}false{% endif %}">Courses</a>
+      </li>
+  {% endif %}
+  {% if app_volume_installed %}
+      <li class="nav-item" role="presentation">
+        <a class="nav-link mytab {% if active == "volumes" %}active{% endif %}" id="tab-volumes" data-bs-toggle="tab" href="#volumes" role="tab" aria-controls="volumes" aria-selected="{% if active == "volumes" %}true{% else %}false{% endif %}">Storage</a>
+      </li>
+  {% endif %}
+  {% if app_plugin_installed %}
+      <li class="nav-item" role="presentation">
+        <a class="nav-link {% if active == "filesync" %}active{% endif %}" id="tab-filesync" data-bs-toggle="tab" href="#filesync" role="tab" aria-controls="filesync" aria-selected="{% if active == "filesync" %}true{% else %}false{% endif %}">Synchronized files</a>
+      </li>
+      <li class="nav-item" role="presentation">
+        <a class="nav-link {% if active == "versioncontrol" %}active{% endif %}" id="tab-versioncontrol" data-bs-toggle="tab" href="#versioncontrol" role="tab" aria-controls="versioncontrol" aria-selected="{% if active == "versioncontrol" %}true{% else %}false{% endif %}">Version control</a>
+      </li>
+  {% endif %}
+  {% if container.id %}
+      <li class="nav-item {% if active == "delete" %}active{% endif %}" role="presentation" aria-selected="{% if active == "delete" %}true{% else %}false{% endif %}">
+        <a class="nav-link mytab text-danger" id="tab-delete" data-bs-toggle="tab" href="#delete" role="tab" aria-controls="delete" aria-selected="false">Delete</a>
+      </li>
+  {% endif %}
+    </ul>
+  
+    <div class="tab-content" id="serviceConfigTabContent">
+      <div class="tab-pane fade {% if active == "meta" %}show active{% endif %}" id="image" role="tabpanel" aria-labelledby="tab-image">
+        <div class="container-fluid">
+          <div class="row row-cols-1 row-cols-md-2">
+  	  <div class="col">
+              <table>
+                {{ form.as_table }}
+              </table>
+            </div>
+  	  <div class="col"> {# hide if small #}
+              <div data-toggle="tooltip" title="Please select an option from the image dropdown to check its description." class="d-flex bg-warning rounded p-2 w-100 mt-2 mt-md-0">
+                <p class="fw-bolder">Image description:&nbsp;</p>
+                <p id="imageDescription"></p>
+                <img id="imageThumbnail" alt="TODO">
+                {{ form.descriptions }}
+              </div>
+            </div>
           </div>
-	  {{ form.descriptions }}
         </div>
       </div>
+  
+  {% if app_project_installed %}
+      <div class="tab-pane fade {% if active == "projects" %}show active{% endif %}" id="projects" role="tabpanel" aria-labelledby="tab-projects">
+        {# fixme: add project search bar #}
+        {% render_table form.t_projects %}
+      </div>
+  {% endif %}
+      
+  {% if app_education_installed %}
+      <div class="tab-pane fade {% if active == "courses" %}show active{% endif %}" id="courses" role="tabpanel" aria-labelledby="tab-coursess">
+        {% render_table form.t_courses %}
+      </div>
+  {% endif %}
+  
+  {% if app_volume_installed %}
+      <div class="tab-pane fade {% if active == "volumes" %}show active{% endif %}" id="volumes" role="tabpanel" aria-labelledby="tab-volumes">
+        {% render_table form.t_volumes %}
+      </div>
+  {% endif %}
+  
+  {% if app_plugin_installed %}
+      <div class="tab-pane fade {% if active == "filesync" %}show active{% endif %}" id="filesync" role="tabpanel" aria-labelledby="tab-filesync">
+        <h5 class="card-title">Select synchronized libraries to associate with the service environment</h5>
+        {% render_table t_synclibs %}
+      </div>
+  
+      <div class="tab-pane fade {% if active == "versioncontrol" %}show active{% endif %}" id="versioncontrol" role="tabpanel" aria-labelledby="tab-vc">
+        <h5 class="card-title">Select version control repositores to associate with the service environment</h5>
+        {% render_table t_repositories %}
+      </div>
+  {% endif %}
+  {% if container.id %}
+      <div class="tab-pane fade {% if active == "delete" %}show active{% endif %}" id="delete" role="tabpanel" aria-labelledby="tab-delete">
+        <p>Delete your container by clicking the dustbin...</p>
+        {% button_delete_container container %}
+      </div>
+  {% endif %}
     </div>
-
-{% if app_project_installed %}
-    <div class="tab-pane fade {% if active == "projects" %}show active{% endif %}" id="projects" role="tabpanel" aria-labelledby="tab-projects">
-      {# fixme: add project search bar #}
-      {% render_table t_projects %}
-    </div>
-{% endif %}
-    
-{% if app_education_installed %}
-    <div class="tab-pane fade {% if active == "courses" %}show active{% endif %}" id="courses" role="tabpanel" aria-labelledby="tab-coursess">
-      {% render_table t_courses %}
-    </div>
-{% endif %}
-
-{% if app_volume_installed %}
-    <div class="tab-pane fade {% if active == "volumes" %}show active{% endif %}" id="volumes" role="tabpanel" aria-labelledby="tab-volumes">
-      {% render_table t_volumes %}
-    </div>
-{% endif %}
-
-{% if app_plugin_installed %}
-    <div class="tab-pane fade {% if active == "filesync" %}show active{% endif %}" id="filesync" role="tabpanel" aria-labelledby="tab-filesync">
-      <h5 class="card-title">Select synchronized libraries to associate with the service environment</h5>
-      {% render_table t_synclibs %}
-    </div>
-
-    <div class="tab-pane fade {% if active == "versioncontrol" %}show active{% endif %}" id="versioncontrol" role="tabpanel" aria-labelledby="tab-vc">
-      <h5 class="card-title">Select version control repositores to associate with the service environment</h5>
-      {% render_table t_repositories %}
-    </div>
-{% endif %}
-    <div class="tab-pane fade {% if active == "delete" %}show active{% endif %}" id="delete" role="tabpanel" aria-labelledby="tab-delete">
-      <p>Delete your container by clicking the dustbin...</p>
-      {% button_delete_container container %}
-    </div>
-  </div>
-
-</form>
+  
+  </form>
 </div>
 {% endblock %}
 
 
 {% block scripts %}
 <script>
+{# catch submit event, in order to fill properly the share volume information #}
+$("#container-manage").submit(function (e) {
+  bind_project_ids = $.map($("input[id^=projecttoggler-]"), function (k, v) { if ($(k).prop('checked')) { return $(k).val() } }); 
+  bind_course_ids = $.map($("input[id^=coursetoggler-]"), function (k, v) { if ($(k).prop('checked')) { return $(k).val() } }); 
+  bind_volume_ids = $.map($("input[id^=volumetoggler-]"), function (k, v) { if ($(k).prop('checked')) { return $(k).val() } }); 
+  $("#id_container_config").val(JSON.stringify( {
+    'user_id': {{ user.id }},
+    'container_id': "{{ container.id }}",
+    'bind_project_ids': bind_project_ids,
+    'bind_course_ids': bind_course_ids,
+    'bind_volume_ids': bind_volume_ids
+  }));
+});
+
 containerSocket = open_ws('{{ wss_container }}', ws_callback);
 
 {# when image selection changes, display the details in info panel #}

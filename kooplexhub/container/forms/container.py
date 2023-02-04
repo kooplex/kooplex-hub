@@ -1,8 +1,13 @@
+import json
 from django import forms
 from django.utils.translation import gettext_lazy as _
 from django.utils.html import format_html
 
-from ..models import Image
+from django.contrib.auth.models import User
+from ..models import Container, Image
+from project.models import Project
+from volume.models import Volume
+from education.models import Course
 
 from kooplexhub.lib import my_alphanumeric_validator
 from kooplexhub.common import tooltip_attrs
@@ -11,7 +16,13 @@ from kooplexhub.common import tooltip_attrs
 class myNumberInput(forms.NumberInput):
     template_name = 'widget_decimal.html'
 
-class FormContainer(forms.Form):
+class FormContainer(forms.ModelForm):
+    class Meta:
+        model = Container
+        fields = [ 'user', 'friendly_name', 'image', 'node', 'idletime', 'cpurequest', 'gpurequest', 'memoryrequest' ]
+
+    container_config = forms.CharField(widget = forms.HiddenInput(), required = False)
+    user = forms.CharField(widget = forms.HiddenInput(), required = True)
     friendly_name = forms.CharField(
         max_length = 200, required = True,
         label = 'Name', #FIXME: when model refactored, ie friendly_name becomes name, it can be removed
@@ -70,20 +81,57 @@ class FormContainer(forms.Form):
     )
 
     def descriptions(self):
-        hidden = lambda i: f"""<input type="hidden" id="image-description-{i.id}" value="{i.description}">"""
+        hidden = lambda i: f"""
+<input type="hidden" id="image-description-{i.id}" value="{i.description}">
+<input type="hidden" id="image-thumbnail-{i.id}" value="data:image/png; base64, {i.resourcetype_pic.get_image}">
+        """
         return format_html("".join(list(map(hidden, self.fields['image'].queryset))))
 
 
     def __init__(self, *args, **kwargs):
-        container = kwargs.pop('container', None)
+        from ..forms import TableContainerProject, TableContainerCourse, TableContainerVolume
+        user = kwargs['initial'].get('user')
         nodes = kwargs.pop('nodes', None)
-        if container:
-            args = ({ a: getattr(container, a) for a in [ 'friendly_name', 'image', 'node', 'cpurequest', 'gpurequest','memoryrequest' ] }, )
-        super(FormContainer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
+        container = kwargs.get('instance', Container())
+        self.t_projects = TableContainerProject(container, user)
+        self.t_courses = TableContainerCourse(container, user)
+        self.t_volumes = TableContainerVolume(container, user)
+        if container.id:
+            pass
         if nodes:
             self.fields['node'].choices = [('', '')] + [ (x, x) for x in nodes ]
             if container:
                 self.fields['node'].value = container.node
         else:
             self.fields['node'].widget = forms.HiddenInput()
+
+    def clean(self):
+        cleaned_data = super().clean()
+        extra = json.loads(cleaned_data['container_config'])
+        containerid = extra.get('container_id')
+        userid = extra.get('user_id')
+        user = User.objects.get(id = userid)
+        containername = cleaned_data.get('friendly_name') #FIXME
+        ve = []
+        if not containername:
+            ve.append( forms.ValidationError(_(f'Container name cannot be empty'), code = 'invalid name') )
+        if containerid:
+            pass
+        else:
+            if Container.objects.filter(friendly_name = containername, user__id = userid):
+                ve.append( forms.ValidationError(_(f'Container name {containername} is not unique'), code = 'invalid name') )
+        if ve:
+            raise forms.ValidationError(ve)
+        cleaned_data['user'] = user
+        # authorization
+        A = lambda x: list(filter(lambda i: i.is_user_authorized(user), x))
+        cleaned_data['container_config'] = {
+            'user_id': extra['user_id'],
+            'container_id': extra['container_id'],
+            'bind_projects': A(Project.objects.filter(id__in = extra['bind_project_ids'])),
+            'bind_courses': A(Course.objects.filter(id__in = extra['bind_course_ids'])),
+            'bind_volumes': A(Volume.objects.filter(id__in = extra['bind_volume_ids'])),
+        }
+        return cleaned_data
 

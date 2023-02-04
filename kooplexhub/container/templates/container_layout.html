@@ -1,8 +1,5 @@
 {% extends "layout.html" %}
 
-{% load static %}
-{% load project_buttons %}
-
 {% block page_title %}Kooplex Environment{% endblock %}
 
 {% block help %} 
@@ -17,9 +14,6 @@
   </li>
   <li class="ms-3 nav-item text-center">
     <a data-toggle="tooltip" title="List environment" data-placement="bottom" class="nav-link {% if submenu == 'list' %}active active border-2 border-bottom{% endif %}" href="{% url 'container:list' %}"><i class="bi bi-bag-dash"></i><span class="d-none d-md-block">&nbsp;List environment</span></a>
-  </li>
-  <li class="ms-3 nav-item text-center">
-    <a data-toggle="tooltip" title="List report environment" data-placement="bottom" class="nav-link {% if submenu == 'reportclist' %}active active border-2 border-bottom{% endif %}" href="{% url 'container:reportclist' %}"><i class="bi bi-bag-dash"></i><span class="d-none d-md-block">&nbsp;List report environment</span></a>
   </li>
 </ul>
 {% endblock %}

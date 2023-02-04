@@ -33,7 +33,6 @@ class ProjectView(LoginRequiredMixin):
     def get_initial(self):
         initial = super().get_initial()
         user = self.request.user
-#        initial['projectid'] = None
         initial['user'] = user
         return initial
 
