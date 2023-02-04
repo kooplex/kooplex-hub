@@ -16,6 +16,9 @@ from .models import Project, UserProjectBinding, ProjectContainerBinding
 from container.models import Container
 from volume.models import Volume, VolumeContainerBinding
 
+from kooplexhub.settings import KOOPLEX
+
+
 logger = logging.getLogger(__name__)
 
 #URL_PROJECT_LIST = redirect('project:list')
@@ -138,8 +141,8 @@ class UserProjectBindingListView(LoginRequiredMixin, generic.ListView):
         context['submenu'] = 'list'
         context['menu_project'] = True
         context['empty_title'] = "You have no projects"
-        context['wss_container'] = f'wss://k8plex-test.vo.elte.hu/hub/ws/container_environment/{self.request.user.id}/'  #FIXME: HARDCODED URLS
-        context['wss_project'] = f'wss://k8plex-test.vo.elte.hu/hub/ws/project/{self.request.user.id}/'  #FIXME: HARDCODED URLS
+        context['wss_container'] = KOOPLEX.get('hub', {}).get('wss_container', 'wss://localhost/hub/ws/container_environment/{userid}/').format(userid = self.request.user.id)
+        context['wss_project'] = KOOPLEX.get('hub', {}).get('wss_project', 'wss://localhost/hub/ws/project/{userid}/').format(userid = self.request.user.id)
         context['empty_body'] = format_html(f"""You can create a <a href="{l}"><i class="bi bi-bag-plus"></i><span>&nbsp;new project</span></a>.""")
         context['n_hidden'] = len(context['object_list'].filter(is_hidden = True))
         return context
@@ -166,5 +169,3 @@ class JoinProjectView(LoginRequiredMixin, generic.FormView):
         context['submenu'] = 'join'
         return context
 
-
-#  #                        messages.error(request, 'Project does not exist')

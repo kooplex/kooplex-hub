@@ -85,8 +85,8 @@
 {% block scripts %}
 <script> 
 {# check if widget belongs to collaborator table #}
-function tc(obj) {
-  return $(obj).parent().parent().parent().parent().parent().parent().attr('id') === 'collaborators';
+function tc(obj, levels = 5) {
+  return $(obj).parents().eq(levels).attr('id') === 'collaborators';
 }
 
 {# when image selection changes, render appropriate image descriptions #}
@@ -143,6 +143,9 @@ $("span[id^='userid-'").click(function() {
 {# hide all table rows except for those matching #}
 function is_visible_callback(obj, obj_id, is_empty, is_found) {
   if (obj == 'collaborator') {
+    if (tc($("input[id$=collaborator-isshown-" + obj_id), 3)) {
+      return true;
+    }
     if (is_empty) {
       return false;
     }

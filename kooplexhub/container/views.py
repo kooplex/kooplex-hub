@@ -24,6 +24,8 @@ from kooplexhub.lib import custom_redirect
 from kooplexhub import settings
 from .lib import Cluster
 
+KOOPLEX = settings.KOOPLEX
+
 logger = logging.getLogger(__name__)
 
 class NewContainerView(LoginRequiredMixin, generic.FormView):
@@ -35,7 +37,7 @@ class NewContainerView(LoginRequiredMixin, generic.FormView):
         context = super().get_context_data(**kwargs)
         context['menu_container'] = True
         context['submenu'] = 'new'
-        context['wss_container'] = f'wss://k8plex-test.vo.elte.hu/hub/ws/node_monitor/'  #FIXME: HARDCODED URLS
+        context['wss_container'] = KOOPLEX.get('hub', {}).get('wss_monitor', 'wss://localhost/hub/ws/node_monitor/')
         return context
 
     def get_form_kwargs(self):
@@ -91,7 +93,7 @@ class ContainerListView(LoginRequiredMixin, generic.ListView):
         context['menu_container'] = True
         context['submenu'] = 'list'
         context['partial'] = 'container_partial_list.html'
-        context['wss_container'] = f'wss://k8plex-test.vo.elte.hu/hub/ws/container_environment/{self.request.user.id}/'  #FIXME: HARDCODED URLS
+        context['wss_container'] = KOOPLEX.get('hub', {}).get('wss_container', 'wss://localhost/hub/ws/container_environment/{userid}/').format(userid = self.request.user.id)
         context['empty_body'] = format_html(f"""You need to <a href="{l}"><i class="bi bi-boxes"></i><span>&nbsp;create</span></a> environments in order to use the hub.""")
         return context
 
@@ -149,7 +151,7 @@ def configure(request, container_id):
         'container': svc,
         'form': FormContainer(container = svc, nodes = list(api.node_df['node'].values)),
         't_projects': TableContainerProject(svc, user),
-        'wss_container': f'wss://k8plex-test.vo.elte.hu/hub/ws/node_monitor/'  #FIXME: HARDCODED URLS
+        'wss_container': KOOPLEX.get('hub', {}).get('wss_monitor', 'wss://localhost/hub/ws/node_monitor/'),
     }
     if 'volume' in settings.INSTALLED_APPS:
         context_dict['t_volumes'] = TableContainerVolume(svc, user)

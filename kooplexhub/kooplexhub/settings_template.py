@@ -264,6 +264,9 @@ KOOPLEX = {
     'hub': {
         'adminemail': '',
         'smtpserver': '',
+        'wss_project': 'wss://localhost/ws/project/{userid}/',
+        'wss_container': 'wss://localhost/ws/container_environment/{userid}/',
+        'wss_monitor': 'wss://localhost/ws/node_monitor/',
     },
     'ldap': {
         'host': '',
