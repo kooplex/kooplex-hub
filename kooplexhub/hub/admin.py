@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from .models import Profile, Note
 from .models import Group, UserGroupBinding
+from .models import Thumbnail
 
 
 @admin.register(Profile)
@@ -27,4 +28,9 @@ class UserGroupBindingAdmin(admin.ModelAdmin):
         return "{} {}".format(instance.user.first_name, instance.user.last_name)
     list_display = ('id', 'name', 'user', 'group')
     search_fields = ('group__name', 'user__username', 'user__last_name')
+
+
+@admin.register(Thumbnail)
+class ThumbnailAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'to_html')
 

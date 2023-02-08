@@ -56,7 +56,7 @@ class FormContainer(forms.ModelForm):
 
     cpurequest = forms.DecimalField(
         label = 'CPU [#]', required = False,
-        min_value=0.1, max_value=1, 
+        min_value=0.1, #max_value=1, 
         widget = myNumberInput(attrs = tooltip_attrs({
             'title': _('Requested number of cpus for your container.'), 
             'step': 0.1,
@@ -65,7 +65,7 @@ class FormContainer(forms.ModelForm):
 
     gpurequest = forms.IntegerField(
         label = 'GPU [#]', required = False,
-        min_value=0, max_value=1,
+        min_value=0, #max_value=1,
         widget = myNumberInput(attrs = tooltip_attrs({
             'title': _('Requested number of gpus for your container.'), 
         }))
@@ -73,7 +73,7 @@ class FormContainer(forms.ModelForm):
 
     memoryrequest = forms.DecimalField(
         label = 'Memory [GB]', required = False,
-        min_value=0.1, max_value=1, 
+        min_value=0.1, #max_value=1, 
         widget = myNumberInput(attrs = tooltip_attrs({
             'title': _('Requested memory for your container.'), 
             'step': 0.1
@@ -83,7 +83,7 @@ class FormContainer(forms.ModelForm):
     def descriptions(self):
         hidden = lambda i: f"""
 <input type="hidden" id="image-description-{i.id}" value="{i.description}">
-<input type="hidden" id="image-thumbnail-{i.id}" value="data:image/png; base64, {i.resourcetype_pic.get_image}">
+<input type="hidden" id="image-thumbnail-{i.id}" value="data:image/png;base64,{i.thumbnail.imagecode.decode()}">
         """
         return format_html("".join(list(map(hidden, self.fields['image'].queryset))))
 

@@ -9,7 +9,7 @@ from django.utils import timezone
 from django.contrib.auth.models import User
 
 #from .report import Report
-from .image import Image, ResourceType
+from .image import Image
 from .envvar import EnvVarMapping
 from .proxy import Proxy
 

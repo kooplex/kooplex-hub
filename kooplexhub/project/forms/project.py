@@ -2,6 +2,7 @@ import json
 from django import forms
 from django.utils.translation import gettext_lazy as _
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.db.models import Q
 from django.contrib.auth.models import User
 
@@ -56,7 +57,10 @@ class FormProject(forms.ModelForm):
         widget = forms.Select(attrs = tooltip_attrs({ 'title': _('Select an image if you prefer an environment to be created.') })),
     )
     def descriptions(self):
-        hidden = lambda i: f"""<input type="hidden" id="image-description-{i.id}" value="{i.description}">"""
+        hidden = lambda i: f"""
+<input type="hidden" id="image-description-{i.id}" value="{i.description}">
+<input type="hidden" id="image-thumbnail-{i.id}" value="data:image/png;base64,{i.thumbnail.imagecode.decode()}">
+        """
         return format_html("".join(list(map(hidden, self.fields['preferred_image'].queryset))))
 
 

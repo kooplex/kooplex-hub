@@ -18,7 +18,7 @@
     <div class="card-body text-dark fw-bold" id="click-containerbody-{{ container.id }}">
       <p class="card-text">
           {% container_image container %}
-	  {% ifempty container %}
+          <img src="data:image/png;base64,{{ container.image.resourcetype_pic.get_image }}" height="50" style="display: flex;float: inline-end;">
       </p>
       <p class="card-text">
           {% container_resources container %}
@@ -31,6 +31,7 @@
 	  {% report container.report %} {# FIXME: handle report and other images in the same list #}
 	  {% synchfolders container %}  {# FIXME: check implementation when seafile integrated #}
 	  {% repos container %}         {# FIXME: check implementation when gitea integrated #}
+	  {% ifempty container %}
       </p>
     <p class="card-text">
       {% container_restart_reason container %}

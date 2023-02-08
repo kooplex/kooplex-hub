@@ -1,10 +1,12 @@
 import logging
 
 from django.db import models
-
 # from kooplex.settings import KOOPLEX
 
+from hub.models import Thumbnail
+
 logger = logging.getLogger(__name__)
+
 
 class Image(models.Model):
     TP_PROJECT = 'projectimage'
@@ -22,6 +24,7 @@ class Image(models.Model):
     dockerfile = models.TextField(max_length = 4096)
     command = models.CharField(max_length = 250, default = "/entrypoint.sh")
     access_kubeapi = models.BooleanField(default = False)
+    thumbnail = models.ForeignKey(Thumbnail, on_delete = models.CASCADE, default = None, null = True)
 
     def __str__(self):
         return self.name

@@ -79,6 +79,7 @@ $("#volumeConfigTabs li a").on("click", function () {
   $.cookie("configure_volume_tab", tab, { 'path': '/;SameSite=Strict', 'secure': true });
 });
 
+{# rewrite table header #}
 $(document).ready(function() {
   $("#users").find("th").text("Users");
 });

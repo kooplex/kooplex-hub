@@ -262,9 +262,10 @@ def dropdown_start_open(bindings, ancestor, ancestor_type):
 </span>
         """)
     else:
-        if ancestor_type == 'project':
-            link = reverse('project:autoaddcontainer', args = [ancestor.id])
-        elif ancestor_type == 'course':
+        #if ancestor_type == 'project':
+        #    link = reverse('project:autoaddcontainer', args = [ancestor.id])
+        #elif ancestor_type == 'course':
+        if ancestor_type == 'course':
             link = reverse('education:autoaddcontainer', args = [ancestor.id])
         else:
             link = '#'

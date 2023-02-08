@@ -8,11 +8,6 @@ from .models import *
 class ImageAdmin(admin.ModelAdmin):
     list_display = ('id', 'present', 'name', 'imagetype', 'description', 'require_home', 'mount_project', 'mount_report', 'access_kubeapi')
 
-@admin.register(ResourceType)
-class ResourceTypeAdmin(admin.ModelAdmin):
-    list_display = ('id', 'description') #, 'thumbnail')
-
-
 @admin.register(Container)
 class ContainerAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'user', 'suffix', 'label', 'friendly_name', 'image', 'state', 'launched_at', 'restart_reasons')

@@ -67,6 +67,15 @@ class Volume(models.Model):
             except:
                 pass
 
+    def is_user_authorized(self, user):
+        from .uservolumebinding import UserVolumeBinding
+        try:
+            UserVolumeBinding.objects.get(user = user, volume = self)
+            return True
+        except UserVolumeBinding.DoesNotExist:
+            return False
+
+
 
 #    def is_collaborator(self, user):
 #        from .uservolumebinding import UserVolumeBinding
