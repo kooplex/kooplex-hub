@@ -52,16 +52,16 @@
       <div class="tab-pane fade {% if active == "meta" %}show active{% endif %}" id="image" role="tabpanel" aria-labelledby="tab-image">
         <div class="container-fluid">
           <div class="row row-cols-1 row-cols-md-2">
-  	  <div class="col">
+            <div class="col">
               <table>
                 {{ form.as_table }}
               </table>
             </div>
-  	  <div class="col"> {# hide if small #}
+            <div class="col"> {# hide if small #}
               <div data-toggle="tooltip" title="Please select an option from the image dropdown to check its description." class="d-flex bg-warning rounded p-2 w-100 mt-2 mt-md-0">
                 <p class="fw-bolder">Image description:&nbsp;</p>
                 <p id="imageDescription"></p>
-                <img id="imageThumbnail" alt="TODO">
+                <img id="imageThumbnail" alt="tn">
                 {{ form.descriptions }}
               </div>
             </div>

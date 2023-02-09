@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete = models.CASCADE)
-#    userid = models.IntegerField(default = None, blank = True)
+    userid = models.IntegerField(default = None, blank = True)
     token = models.CharField(max_length = 64, null = True)
     can_createproject = models.BooleanField(default = True)
     can_createimage = models.BooleanField(default = False)
@@ -19,6 +19,10 @@ class Profile(models.Model):
     can_choosenode = models.BooleanField(default = False)
     can_teleport = models.BooleanField(default = False)
     has_scratch = models.BooleanField(default = False)
+
+    @property
+    def search(self):
+        return f"{self.user.username} {self.user.first_name} {self.user.last_name} {self.user.first_name}".upper()
 
     @property
     def name(self):
