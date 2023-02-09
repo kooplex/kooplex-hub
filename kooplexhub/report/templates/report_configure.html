@@ -1,0 +1,88 @@
+{# FIXME: refactor me #}
+{% extends "report_layout.html" %}
+
+{% load static %}
+{% load extras %}
+
+
+{% block head_content %}
+  <link rel="stylesheet" href="/static/css/tagsinput.css" />
+{% endblock %}
+
+{% block bodycontent %}
+{% comment %}
+{#% if form|length > 0 %#}
+{% else %}
+  {% include 'empty.html' with skip_border=True %}
+{% endif %}
+{% endcomment %}
+<div class="container card shadow p-3 mt-3 mb-3 bg-light rounded">
+  <form id="report-new" class="form-horizontal was-validated dropzone mt-3" action="{{ url_post }}" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% title_with_button "You are now configuring <em>" report.name "</em> report" %}
+    <ul class="nav nav-tabs" id="reportConfigTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <a class="nav-link mytab {% if active == "meta" %}active{% endif %}" 
+           id="tab-meta" data-bs-toggle="tab" href="#meta" role="tab" aria-controls="meta" 
+           aria-selected="{% if active == "meta" %}true{% else %}false{% endif %}">Meta</a>
+      </li>
+  {% if report.id %}
+      <li class="nav-item {% if active == "delete" %}active{% endif %}" role="presentation" aria-selected="{% if active == "delete" %}true{% else %}false{% endif %}">
+        <a class="nav-link mytab text-danger" id="tab-delete" data-bs-toggle="tab" href="#delete" role="tab" aria-controls="delete" aria-selected="false">Delete</a>
+      </li>
+  {% endif %}
+    </ul>
+    <div class="tab-content mt-3" id="reportConfigTabsContent">
+      <div class="tab-pane fade {% if active == "meta" %}show active{% endif %}" id="meta" role="tabpanel" aria-labelledby="tab-meta">
+        <div class="container-fluid">
+          <div class="row row-cols-1 row-cols-md-2">
+            <div class="col">
+              <table>
+                {{ form.as_table }}
+              </table>
+            </div>
+            <div class="col"> {# hide if small #}
+              <div data-toggle="tooltip" title="Please select an option from the image dropdown to check its description." class="d-flex bg-warning rounded p-2 w-100 mt-2 mt-md-0">
+                <p class="fw-bolder">Image description:&nbsp;</p>
+                <p id="imageDescription"></p>
+		<img id="imageThumbnail" class="float-right border" alt="tn">
+                {{ form.descriptions }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+  {% if report.id %}
+      <div class="tab-pane fade {% if active == "delete" %}show active{% endif %}" id="delete" role="tabpanel" aria-labelledby="tab-delete">
+        <p>Delete your report by clicking the dustbin...</p>
+        {#% button_project_delete project %#}
+      </div>
+  {% endif %}
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+    import Tags from "https://cdn.jsdelivr.net/gh/lekoala/bootstrap5-tags@master/tags.js";
+    Tags.init("select.mytag", {'baseClass': 'mytag'});
+</script>
+<script>
+{# when image selection changes, render appropriate image descriptions #}
+$("select[name='image']").change(function() {
+  $( "#id_image option:selected" ).each(function() {
+    id = $(this).attr("value");
+    if (id === "") {
+      $("#imageDescription").text("");
+      $("#imageThumbnail").attr("src", "");
+    } else {
+      description = $("#image-description-" + id).attr("value");
+      $("#imageDescription").text(description);
+      tn = $("#image-thumbnail-" + id).attr("value");
+      $("#imageThumbnail").attr("src", tn);
+    }
+  });
+}).change();
+</script>
+{% endblock %}

@@ -5,9 +5,11 @@ from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User
 
-from container.models import Image, Proxy
+from container.models import Image, Proxy 
 from project.models import Project
 from taggit.managers import TaggableManager
+
+from hub.models import Thumbnail
 
 try:
     from kooplexhub.settings import KOOPLEX
@@ -30,6 +32,7 @@ class ReportType(models.Model):
     url_tag = models.CharField(max_length = 40, null = False) # For ingress to forward it to the right place
     is_static = models.BooleanField(default = True)
     description = models.TextField(max_length = 1000, null = True, default = None)
+    #resourcetype_pic = models.ForeignKey(ResourceType, on_delete = models.CASCADE)
 
     def __str__(self):
         return self.name
@@ -55,12 +58,13 @@ class Report(models.Model):
     project = models.ForeignKey(Project, default=None, on_delete = models.CASCADE)
     folder = models.CharField(max_length = 200, null = False)
     indexfile = models.CharField(max_length = 128, blank=True, null = True)
-    thumbnail = models.BinaryField(null=True, blank=True)
+    thumbnail = models.ForeignKey(Thumbnail, on_delete = models.CASCADE, default = None, null = True)
+
 
     scope = models.CharField(max_length = 16, choices = SCOPE_LOOKUP.items(), default = SC_PRIVATE)
 
     image = models.ForeignKey(Image, null = True, blank=True, on_delete = models.CASCADE) # what else than CASCADE?
-    tags = TaggableManager()
+    tags = TaggableManager(blank = True)
 
     # To be able to sort (e.g. useful for courses)
     # tags = # useful if we wanna search according to keywords

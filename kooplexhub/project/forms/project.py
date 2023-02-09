@@ -59,7 +59,7 @@ class FormProject(forms.ModelForm):
     def descriptions(self):
         hidden = lambda i: f"""
 <input type="hidden" id="image-description-{i.id}" value="{i.description}">
-<input type="hidden" id="image-thumbnail-{i.id}" value="data:image/png;base64,{i.thumbnail.imagecode.decode()}">
+<input type="hidden" id="image-thumbnail-{i.id}" value="{i.thumbnail.img_src}">
         """
         return format_html("".join(list(map(hidden, self.fields['preferred_image'].queryset))))
 

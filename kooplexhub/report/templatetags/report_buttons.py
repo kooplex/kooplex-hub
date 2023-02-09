@@ -29,24 +29,36 @@ def r_scope(report):
 
 
 @register.simple_tag
-def button_report_open(report):
-    link = reverse('report:open', args = [report.id])
+def button_side_modal_open(report, class_extra = ""):
+    link = reverse('report:open', args = [ report.id ])
     return format_html(f"""
-<a href="{link}"  target="_blank" ><span class="openlink"></span></a>
+<a href="{link}" target="_blank" role="button" class="btn btn-success btn-sm {class_extra}"><span class="bi bi-folder2-open" aria-hidden="true" data-toggle="tooltip" title="Click to open report {report.name}" data-placement="top" ></span></a>
     """)
 
-@register.simple_tag
-def button_report_modal_open(report):
-    link = reverse('report:open', args = [report.id])
-    return format_html(f"""
-<a href="{link}" target="_blank"> <button type="button" class="btn btn-success" data-bs-dismiss="modal">Open report</button></a>
-    """)
 
 @register.simple_tag
-def button_side_modal_open(report):
-    link = reverse('report:open', args = [report.id])
-    return format_html(f"""
-<a href="{link}" target="_blank role="button" class="btn btn-success btn-sm"><span class="bi bi-folder2-open" aria-hidden="true" data-toggle="tooltip" title="Click to open report" data-placement="top" ></span></a>
+def button_report_conf(report, user, class_extra = ""):
+    if report.creator == user:
+        link = reverse('report:configure', args = [ report.id ])
+        return format_html(f"""
+<a href="{link}" role="button" class="btn btn-secondary btn-sm {class_extra}"><span class="bi bi-wrench" aria-hidden="true" data-toggle="tooltip" title="Settings of report {report.name}." data-placement="top" ></span></a>
+        """)
+    else:
+        return format_html(f"""
+<div></div>
+        """)
+
+
+@register.simple_tag
+def button_report_delete(report, user, class_extra = ""):
+    if report.creator == user:
+        link = reverse('report:delete', args = [ report.id ])
+        return format_html(f"""
+<a href="{link}" role="button" class="btn btn-danger btn-sm {class_extra}" onclick="return confirm('Are you sure?');"><span class="oi oi-trash" aria-hidden="true" data-toggle="tooltip" title="Delete report {report.name}." data-placement="top"></span></a>
+    """)
+    else:
+        return format_html(f"""
+<div></div>
     """)
 
 
@@ -64,35 +76,23 @@ def image_report_open(report):
         return format_html(f"""
 <img href="{link}" src="" style="max-width: 100%; margin-left: auto; margin-right: auto; max-height: 80%; aspect-ratio: inherit; width: auto; height: auto;  display: block;" alt="thumbnail">
     """)    
-
-
 @register.simple_tag
-def button_report_conf(report, user):
-    if report.creator == user:
-        link = reverse('report:configure', args = [ report.id ])
-        return format_html(f"""
-<a href="{link}" role="button" class="btn btn-secondary btn-sm"><span class="oi oi-wrench" aria-hidden="true" data-toggle="tooltip" title="Settings of report {report.name}." data-placement="top" ></span></a>
-        """)
-    else:
-        return format_html(f"""
-<div></div>
-        """)
-
-
-
-
-@register.simple_tag
-def button_report_delete(report, user):
-    if report.creator == user:
-        link = reverse('report:delete', args = [ report.id ])
-        return format_html(f"""
-<a href="{link}" role="button" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?');"><span class="oi oi-trash" aria-hidden="true" data-toggle="tooltip" title="Delete report {report.name}." data-placement="top"></span></a>
-    """)
-    else:
-        return format_html(f"""
-<div></div>
+def button_report_modal_open(report):
+    link = reverse('report:open', args = [report.id])
+    return format_html(f"""
+<a href="{link}" target="_blank"> <button type="button" class="btn btn-success" data-bs-dismiss="modal">Open report</button></a>
     """)
 
+
+
+
+#FIXME: is it used keep either this or button_side_modal_open
+@register.simple_tag
+def button_report_open(report):
+    link = reverse('report:open', args = [report.id])
+    return format_html(f"""
+<a href="{link}"  target="_blank" ><span class="openlink"></span></a>
+    """)
 
 @register.simple_tag(name = 'r_help')
 def r_help(modalid="", text="", imgsrc=""):

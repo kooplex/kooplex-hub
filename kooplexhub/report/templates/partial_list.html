@@ -1,5 +1,4 @@
 {% load report_buttons %}
-{% load thumbnail %}
 {% load container_buttons %}
 
 <style>
@@ -46,8 +45,8 @@
             <div class="card w-100 border-0" style="height: 200px">
               <div class="goflex">
                 <div class="col-md-5">
-                  {% if report.thumbnail|length %}
-                    <img src="data:image/png;base64,{{report.thumbnail|decode}}" class="img-fluid imagesize rounded" alt="thumbnail"> {# FIXME: truncate if too large an image #}
+                  {% if report.thumbnail %}
+                    <img src="{{report.thumbnail.img_src}}" class="img-fluid imagesize rounded" alt="{{report.thumbnail.name}}"> {# FIXME: truncate if too large an image #}
 		  {% else %}
                     <img src="/static/noimageavailable.png" class="img-fluid rounded imagesize" alt="no thumbnail">
 		  {% endif %}
@@ -84,9 +83,9 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        {% if report.thumbnail|length %}
+        {% if report.thumbnail %}
         {% image_report_open report %}
-	<img src="data:image/png;base64,{{report.thumbnail|decode}}" class="img-fluid mt-2 mb-1">
+	<img src="{{report.thumbnail.img_src}}" alt="{{report.thumbnail.name}}" class="img-fluid mt-2 mb-1">
         {% else %}
 	<img class="mt-2 mb-1" src="/static/noimageavailable.png" alt="no thumbnail">
         {% endif %}

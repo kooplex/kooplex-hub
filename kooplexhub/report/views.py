@@ -9,10 +9,11 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.db.models import Q
 from django.utils.html import format_html
+from django.urls import reverse
 
 from .models import Report, ReportContainerBinding, ReportType, ReportTag
 from container.models import Image, Container
-from .forms import FormReport, FormReportConfigure
+from .forms import FormReport
 from project.models import Project, UserProjectBinding
 
 logger = logging.getLogger(__name__)
@@ -22,122 +23,72 @@ try:
 except importerror:
     KOOPLEX = {}
 
-class NewReportView(LoginRequiredMixin, generic.FormView):
-    template_name = 'report_new.html'
+class ReportView(LoginRequiredMixin):
+    model = Report
+    template_name = 'report_configure.html'
     form_class = FormReport
-    context_object_name = 'reports'
+    #context_object_name = 'reports'
     success_url = '/hub/report/list/' #FIXME: django.urls.reverse or shortcuts.reverse does not work reverse('project:list')
+
+    def get_initial(self):
+        initial = super().get_initial()
+        user = self.request.user
+        initial['user'] = user
+        return initial
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        report_id = self.kwargs.get('pk')
         context['menu_report'] = True
-        context['submenu'] = 'new'
-        context['empty_title'] = "You have no new non-empty folder in the <b>/v/report_prepare</b> directory"
+        context['submenu'] = 'configure' if report_id else 'new'
+        context['active'] = self.request.COOKIES.get('configure_report_tab', 'meta') if report_id else 'meta'
+        context['empty_title'] = format_html("You have no new non-empty folder in the <b>/v/report_prepare</b> directory")
         context['empty_body'] = format_html(f"""<a href=""><i class="bi bi-journal-bookmark-fill"></i><span class="d-none d-sm-inline">&nbsp;Check the manual for further instructions</span></a>""")
-        user = request.user
-        #profile = user.profile
-        #logger.debug("user %s, method: %s" % (user, request.method))
-        #context_dict = {
-        #}
-        #projects = [ upb.project for upb in UserProjectBinding.objects.filter(user = user) ]
-        projects = Project.objects.all() 
-        #if len(projects) == 0:
-        #    messages.warning(request, f'You do not have a project yet')
-        #    return redirect('index')
-
-        okay = lambda f: f.okay
-        context.update({
-            'f_project': list(filter(okay, [ FormReport(user = user, project = p, auto_id = f'id_newreport_%s') for p in projects ])),
-        })
+        context['url_post'] = reverse('report:configure', args = (report_id, )) if report_id else reverse('report:new')
+        context['report_id'] = report_id
         return context
 
     def form_valid(self, form):
         logger.info(form.cleaned_data)
-        user = self.request.user
-        friendly_name = form.cleaned_data['friendly_name']
-        Container.objects.create(
-            user = user, 
-            name = form.cleaned_data['name'], 
-            friendly_name = friendly_name, 
-            image = form.cleaned_data['image']
-        )
-        messages.info(self.request, f'Report {friendly_name} is created')
+        report_id = form.cleaned_data.pop('report_id')
+        if report_id:
+            report = Report.objects.get(id = report_id)
+            changed = []
+            #FIXME: handle tags
+            #FIXME: thumbnail not updated BUT why
+            for attribute in [ 'name', 'description', 'scope', 'reporttype', 'image', 'indexfile', 'thumbnail' ]:
+                value = form.cleaned_data.get(attribute)
+                if value and (getattr(report, attribute) != value):
+                    setattr(report, attribute, value)
+                    changed.append(attribute)
+            if changed:
+                report.save()
+                messages.info(self.request, f'Report{form.cleaned_data["name"]} is updated')
+        else:
+            report = Report.objects.create(**form.cleaned_data)
+            messages.info(self.request, f'Report {form.cleaned_data["name"]} is created')
+            if not report.reporttype.is_static:
+                logger.debug("Create an env for the report: %s" % (report.name))
+                # Create a container
+                container, created = Container.objects.get_or_create(
+                        user = report.creator, 
+                        name = re.sub(r'\W+', '', report.name),
+                        friendly_name = report.name,
+                        image = report.image
+                )
+                ReportContainerBinding.objects.create(report=report, container=container)
         return super().form_valid(form)
 
-## TODO add suitable permission for folders and files according to their scopes
-@login_required
-def new(request):
-    """
-    """
-    user = request.user
-    profile = user.profile
-    logger.debug("user %s, method: %s" % (user, request.method))
-    context_dict = {
-    }
-    projects = [ upb.project for upb in UserProjectBinding.objects.filter(user = user) ]
-    if len(projects) == 0:
-        messages.warning(request, f'You do not have a project yet')
-        return redirect('index')
 
-    okay = lambda f: f.okay
-    context_dict.update({
-        'f_project': list(filter(okay, [ FormReport(user = user, project = p, auto_id = f'id_newreport_%s') for p in projects ])),
-    })
-    context_dict['empty_title'] = "You have no new non-empty folder in the /v/report_prepare/ directory"
-    context_dict['empty_body'] = format_html(f"""<a href=""><i class="bi bi-journal-bookmark-fill"></i><span class="d-none d-sm-inline">&nbsp;Check the manual for further instructions</span></a>""")
-    return render(request, 'report_new.html', context = context_dict)
+class NewReportView(ReportView, generic.FormView):
+    pass
 
-@require_http_methods(['POST'])
-@login_required
-def create(request):
-    import re
-    """Renders new report form."""
-    user = request.user
-    logger.debug("user %s, method: %s" % (user, request.method))
-    try:
-        kw = dict()
-        password = request.POST.get('password')
-        if password:
-            kw.update( { 'password': password } )
-        try:
-            thumbnail = b''.join([ c for c in request.FILES['file'].chunks() ])
-        except:
-            raise
-        report = Report.objects.create(
-            name = request.POST.get('name'),
-            creator = user,
-            project =  Project.objects.get(id = request.POST.get('project_selected')),
-            description = request.POST.get('description'),
-            scope = request.POST.get('scope'),
-            reporttype = ReportType.objects.get(id = request.POST.get('reporttype')),
-            indexfile = request.POST.get('indexfile'),
-            folder = request.POST.get('folder'),
-            thumbnail = thumbnail,
-#            folder = request.POST.get('folder'),
-            **kw
-        )
-        if not report.reporttype.is_static:
-            logger.debug("Create an env for the report: %s" % (report.name))
-            image = Image.objects.get(id = request.POST.get('image'))
-            kw.update( { 'image': image } )
-            report.image = image
-            report.save()
 
-            # Create a container
-            container, created = Container.objects.get_or_create(
-                    user = user, 
-                    name = re.sub(r'\W+', '', request.POST.get('name')),
-                    friendly_name = request.POST.get('name'),
-                    image = image
-            )
-            ReportContainerBinding.objects.create(report=report, container=container)
+class ConfigureReportView(ReportView, generic.edit.UpdateView):
+    pass
+
+
         
-        messages.info(request, f"Report {report.name} is created")
-        return redirect('report:list')
-    except Exception as e:
-        logger.error(e)
-        raise
-
 
 class ReportListView(generic.ListView):
     template_name = 'report_list.html'
@@ -160,6 +111,7 @@ class ReportListView(generic.ListView):
         creator = Q(creator = user, scope = Report.SC_PRIVATE)
         internal = Q(scope = Report.SC_INTERNAL)
         return Report.objects.filter(public | collaborator | internal | creator)
+
 
 def open(request, report_id):
     """open report"""
@@ -190,35 +142,4 @@ def delete(request, report_id):
         logger.error(f"User {user} can not delete report id={report_id} -- {e}")
     return redirect('report:list')
 
-
-@login_required
-def configure(request, report_id):
-    """configure report"""
-    user = request.user
-    try:
-        r = Report.objects.get(id = report_id, creator = user)
-        f = FormReportConfigure(instance = r)
-        return render(request, 'configure.html', context = { 'form': f, 'report_id': r.id, 'thumbnail': base64.b64encode(r.thumbnail).decode() })
-    except Exception as e:
-        raise
-    return redirect('report:list')
-
-
-@login_required
-def modify(request):
-    """delete report"""
-    user = request.user
-    try:
-        r = Report.objects.get(id = request.POST.get('report_id'), creator = user)
-        f = FormReportConfigure(request.POST, instance = r)
-        if f.is_valid():
-            rmod = f.save(commit = False)
-            thumbnail_file = request.FILES.get('file', None)
-            if thumbnail_file:
-                thumbnail = b''.join([ c for c in thumbnail_file.chunks() ]) #FIXME: do some conversion so that we don't need to worry about resolution and representation
-                rmod.thumbnail = thumbnail
-            rmod.save()
-    except Exception as e:
-        raise
-    return redirect('report:list')
 
