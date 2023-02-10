@@ -34,23 +34,7 @@
     </ul>
     <div class="tab-content mt-3" id="reportConfigTabsContent">
       <div class="tab-pane fade {% if active == "meta" %}show active{% endif %}" id="meta" role="tabpanel" aria-labelledby="tab-meta">
-        <div class="container-fluid">
-          <div class="row row-cols-1 row-cols-md-2">
-            <div class="col">
-              <table>
-                {{ form.as_table }}
-              </table>
-            </div>
-            <div class="col"> {# hide if small #}
-              <div data-toggle="tooltip" title="Please select an option from the image dropdown to check its description." class="d-flex bg-warning rounded p-2 w-100 mt-2 mt-md-0">
-                <p class="fw-bolder">Image description:&nbsp;</p>
-                <p id="imageDescription"></p>
-		<img id="imageThumbnail" class="float-right border" alt="tn">
-                {{ form.descriptions }}
-              </div>
-            </div>
-          </div>
-        </div>
+        {% include 'widget_form_image.html' %}
       </div>
   {% if report.id %}
       <div class="tab-pane fade {% if active == "delete" %}show active{% endif %}" id="delete" role="tabpanel" aria-labelledby="tab-delete">
@@ -67,22 +51,5 @@
 <script type="module">
     import Tags from "https://cdn.jsdelivr.net/gh/lekoala/bootstrap5-tags@master/tags.js";
     Tags.init("select.mytag", {'baseClass': 'mytag'});
-</script>
-<script>
-{# when image selection changes, render appropriate image descriptions #}
-$("select[name='image']").change(function() {
-  $( "#id_image option:selected" ).each(function() {
-    id = $(this).attr("value");
-    if (id === "") {
-      $("#imageDescription").text("");
-      $("#imageThumbnail").attr("src", "");
-    } else {
-      description = $("#image-description-" + id).attr("value");
-      $("#imageDescription").text(description);
-      tn = $("#image-thumbnail-" + id).attr("value");
-      $("#imageThumbnail").attr("src", tn);
-    }
-  });
-}).change();
 </script>
 {% endblock %}

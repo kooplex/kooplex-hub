@@ -27,23 +27,7 @@
   </ul>
   <div class="tab-content mt-3" id="courseConfigTabsContent">
     <div class="tab-pane fade {% if active == "meta" %}show active{% endif %}" id="configureCourse" role="tabpanel" aria-labelledby="tab-meta">
-      <div class="container-fluid">
-        <div class="row row-cols-1 row-cols-md-2">
-          <div class="col">
-            <table>
-              {{ form.as_table }}
-            </table>
-          </div>
-          <div class="col"> {# hide if small #}
-            <div data-toggle="tooltip" title="Please select an option from the image dropdown to check its description." class="bg-warning rounded p-2 w-100 mt-2 mt-md-0">
-              <p class="fw-bolder">Image description:&nbsp;</p>
-              <p id="imageDescription"></p>
-              <div class="clearfix"><img id="imageThumbnail" class="float-end" alt=""></div>
-              {{ form.descriptions }}
-            </div>
-          </div>
-        </div>
-      </div>
+      {% include 'widget_form_image.html' %}
       {# fixme: only show if image is changed #}
       <div class="alert alert-warning mt-2 mb-2" role="alert">If you decide to change the image, do not forget to restart the course container to take effect and notify your students to do so as well.</div>
     </div>
@@ -80,7 +64,6 @@
       {% include 'drag_and_drop.html' %}
     </div>
   </div>
-  </div>
 </form>
 
 <script>
@@ -93,34 +76,8 @@ $(document).ready(function() {
   $("#bind-teacher").find("th").text("Teachers");
   $("#bind-student").find("th").text("Students");
 });
-{# when image selection changes, render appropriate image descriptions #}
-$("select[name='image']").change(function() {
-  $( "#id_image option:selected" ).each(function() {
-    id = $(this).attr("value");
-    if (id === "") {
-      $("#imageDescription").text("");
-      $("#imageThumbnail").attr("src", "");
-    } else {
-      description = $("#image-description-" + id).attr("value");
-      $("#imageDescription").text(description);
-      tn = $("#image-thumbnail-" + id).attr("value");
-      $("#imageThumbnail").attr("src", tn);
-    }
-  });
-}).change();
 
-$("select[name='image'").change(function() {
-    $( "select option:selected" ).each(function() {
-        var id = $(this).attr("value");
-        console.log( $( this ).text() + " -> " + id);
-	if (id === "") {
-	    $("#imageDescription").text("");
-	} else {
-	    var description = $("#image-description-" + id).attr("value");
-	    $("#imageDescription").text(description);
-	}
-    });
-}).change();
+{# FIXME: these search could use common.js? #}
 $("#search_student_add").keyup(function() {
   var pattern = $( this ).val().toUpperCase();
   console.log( "search: " + pattern );
