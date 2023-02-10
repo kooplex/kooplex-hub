@@ -44,10 +44,10 @@
               </table>
             </div>
   	  <div class="col"> {# hide if small #}
-              <div data-toggle="tooltip" title="Please select an option from the image dropdown to check its description." class="d-flex bg-warning rounded p-2 w-100 mt-2 mt-md-0">
+              <div data-toggle="tooltip" title="Please select an option from the image dropdown to check its description." class="bg-warning rounded p-2 w-100 mt-2 mt-md-0">
                 <p class="fw-bolder">Image description:&nbsp;</p>
                 <p id="imageDescription"></p>
-		<img id="imageThumbnail" class="float-right border" alt="tn">
+		<div class="clearfix"><img id="imageThumbnail" class="float-end" alt=""></div>
                 {{ form.descriptions }}
               </div>
             </div>

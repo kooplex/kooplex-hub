@@ -39,23 +39,13 @@ class Container(models.Model):
         ST_ERROR: 'Error occured.',
         ST_STOPPING: 'Stopping...',
     }
-    #TODO:
-    # on the long run:
-    #       let friendly name take over the name as a model attribute, 
-    #            the name needs to be unique
-    #       generate and store the label pre_save
-    #       no need to have suffix, and friendly_name any longer
-    # needs a careful migration! 
-    # thus
-    # for now in the form the name will be hidden and generated pre_save
-    #                     and the friendly name attribute will carry the name label
 
-    name = models.CharField(max_length = 200, null = False, validators = [my_alphanumeric_validator('Enter a valid container name containing only letters and numbers.')])
-    friendly_name = models.CharField(max_length = 200, null = False)
+    name = models.CharField(max_length = 200, null = False)
+    label = models.CharField(max_length = 200, null = False, unique = True)
     user = models.ForeignKey(User, on_delete = models.CASCADE, null = False)
-    suffix = models.CharField(max_length = 200, null = True, default = None, blank = True)
     image = models.ForeignKey(Image, on_delete = models.CASCADE, null = False)
     launched_at = models.DateTimeField(null = True, blank = True)
+    start_teleport = models.BooleanField(default = False)
 
     state = models.CharField(max_length = 16, choices = ST_LOOKUP.items(), default = ST_NOTPRESENT)
     restart_reasons = models.CharField(max_length = 500, null = True, blank = True)
@@ -68,18 +58,13 @@ class Container(models.Model):
     idletime = models.IntegerField( null = True, blank = True, default=1)
 
     class Meta:
-        unique_together = [['user', 'name', 'suffix']]
+        unique_together = [['user', 'name']]
 
     def __lt__(self, c):
         return self.launched_at < c.launched_at
 
     def __str__(self):
         return self.label
-
-
-    @property
-    def label(self):
-        return f"{self.user.username}-{self.name}-{self.suffix}".lower() if self.suffix else f"{self.user.username}-{self.name}".lower()
 
     @property
     def default_proxy(self):
@@ -99,7 +84,7 @@ class Container(models.Model):
 
     @property
     def search(self):
-        return f"{self.name} {self.friendly_name}".upper()
+        return self.name.upper()
 
     def wait_until_ready(self):
         from kooplexhub.lib import keeptrying

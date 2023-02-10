@@ -24,13 +24,13 @@ def container_image(container_or_image):
         return format_html(f"""
 <span class="badge rounded-pill bg-danger text-light" 
       data-bs-toggle="tooltip" data-placement="bottom" 
-      title="Environment {container.friendly_name} needs restart"><i class="ri-image-2-line"></i>&nbsp; {i}</span>
+      title="Environment {container.name} needs restart"><i class="ri-image-2-line"></i>&nbsp; {i}</span>
         """)
     elif container.state == container.ST_RUNNING:
         return format_html(f"""
 <span class="badge rounded-pill bg-success" 
       data-bs-toggle="tooltip" data-placement="bottom" 
-      title="Environment {container.friendly_name} is running fine"><i class="ri-image-2-line"></i>&nbsp; {i}</span>
+      title="Environment {container.name} is running fine"><i class="ri-image-2-line"></i>&nbsp; {i}</span>
         """)
     else:
         return format_html(f"""<span class="badge rounded-pill bg-secondary "><i class="ri-image-2-line"></i>&nbsp; {i}</span>""")
@@ -38,7 +38,7 @@ def container_image(container_or_image):
 
 @register.simple_tag
 def container_resources(container):
-    cn = container.friendly_name
+    cn = container.name
     gpu = f"""
 <span class="badge rounded-pill bg-warning text-dark p-2" 
       data-bs-toggle="tooltip" data-placement="bottom" 

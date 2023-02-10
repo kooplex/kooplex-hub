@@ -135,7 +135,7 @@ $("div[id^=project-name-]").click(function() {
   $("#projectInfoModal-" + pid).modal('show');
 });
 
-{# when project name is clicked open info #}
+{# when project name is hovered change cursor face #}
 $("div[id^=project-name-]").mouseenter(function() {
   $( this ).css("cursor", "pointer");
 });
@@ -149,22 +149,6 @@ function open_container(containerid) {
     win.focus();
   }
 }
-
-
-//{# on load feedback messages panel is empty, hide it #}
-//$(document).ready(function () {
-//  var widget = $("#feedbackMessages");
-//  widget.hide();
-//});
-//
-//{# display some feedback messages #}
-//function feedback(msg) {
-//  var widget = $("#feedbackMessages");
-//  widget.show();
-//  $("#feedbackContent").append("<p>" + msg + "</p>");
-//  setTimeout(function () { widget.hide() }, 10000);
-//	// TODO: too many paragraphs, clear oldest
-//}
 
 {# disable start, and show spinner #}
 function spin_button(containerid) {

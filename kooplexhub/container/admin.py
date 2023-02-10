@@ -10,7 +10,7 @@ class ImageAdmin(admin.ModelAdmin):
 
 @admin.register(Container)
 class ContainerAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'user', 'suffix', 'label', 'friendly_name', 'image', 'state', 'launched_at', 'restart_reasons')
+    list_display = ('id', 'name', 'user', 'label', 'image', 'state', 'launched_at', 'restart_reasons')
     search_labels = ('name', 'user__username')
 
 @admin.register(Proxy)

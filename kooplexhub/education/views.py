@@ -24,43 +24,28 @@ from education.models import UserCourseBinding, UserAssignmentBinding, Assignmen
 from education.forms import FormCourse
 from education.forms import FormGroup
 from education.forms import FormAssignment
-from education.forms import TableAssignment, TableAssignmentConf, TableAssignmentHandle, TableUser, TableAssignmentMass, TableAssignmentSummary, TableGroup, TableAssignmentMassAll, TableAssignmentStudentSummary, TableCourseStudentSummary
+from education.forms import TableAssignment, TableAssignmentConf, TableAssignmentHandle, TableAssignmentMass, TableAssignmentSummary, TableGroup, TableAssignmentMassAll, TableAssignmentStudentSummary, TableCourseStudentSummary
+
+from kooplexhub.settings import KOOPLEX
 
 logger = logging.getLogger(__name__)
 
-class TeacherCourseBindingListView(LoginRequiredMixin, generic.ListView):
+class CourseBindingListView(LoginRequiredMixin, generic.ListView):
     template_name = 'course_list.html'
     context_object_name = 'coursebindinglist'
 
     def get_queryset(self):
         user = self.request.user
         profile = user.profile
-        return UserCourseBinding.objects.filter(user = user, is_teacher = True)
+        return UserCourseBinding.objects.filter(user = user)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['menu_education'] = True
-        context['submenu'] = 'teacher'
+        context['submenu'] = 'courses'
         context['empty_title'] = "You have not been added to any courses yet as a teacher"
         context['empty_body'] = format_html("""If this is unexpected, please ask system administrator to take care of it. <a href="mailto:kooplex@elte.hu"><i class="bi bi-envelope"></i><span>&nbsp;Send e-mail...</span></a>""")
-        return context
-
-
-class StudentCourseBindingListView(LoginRequiredMixin, generic.ListView):
-    template_name = 'course_list.html'
-    context_object_name = 'coursebindinglist'
-
-    def get_queryset(self):
-        user = self.request.user
-        profile = user.profile
-        return UserCourseBinding.objects.filter(user = user, is_teacher = False)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['menu_education'] = True
-        context['submenu'] = 'student'
-        context['empty_title'] = "You have not been added to any courses yet"
-        context['empty_body'] = "If this is unexpected, please ask your professor to administer."
+        context['wss_container'] = KOOPLEX.get('hub', {}).get('wss_container', 'wss://localhost/hub/ws/container_environment/{userid}/').format(userid = self.request.user.id)
         return context
 
 
@@ -68,7 +53,7 @@ class StudentAssignmentListView(LoginRequiredMixin, generic.TemplateView):
     template_name = 'assignment_student.html'
 
     def get_context_data(self, **kwargs):
-        l = reverse('education:student')
+        l = reverse('education:courses')
         context = super().get_context_data(**kwargs)
         context['menu_education'] = True
         context['submenu'] = 'assignment_student'
@@ -83,6 +68,36 @@ class StudentAssignmentListView(LoginRequiredMixin, generic.TemplateView):
         context['t_assignment'] = TableAssignment(UserAssignmentBinding.objects.filter(user = user, assignment__course__in = courses))
         return context
 
+
+class ConfigureCourseView(LoginRequiredMixin, generic.edit.UpdateView):
+    model = Course
+    template_name = 'course_configure.html'
+    form_class = FormCourse
+    success_url = '/hub/course/list/' #FIXME: django.urls.reverse or shortcuts.reverse does not work reverse('education:courses')
+
+    def get_initial(self):
+        initial = super().get_initial()
+        user = self.request.user
+        initial['user'] = user
+        return initial
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        course_id = self.kwargs.get('pk')
+        context['menu_education'] = True
+        context['submenu'] = 'configure' if course_id else 'new' 
+        context['active'] = self.request.COOKIES.get('configure_course_tab', 'meta') if course_id else 'meta'
+        context['url_post'] = reverse('education:configure', args = (course_id, )) #TODO: if course_id else reverse('education:new')
+        context['course_id'] = course_id
+        return context
+
+    def form_valid(self, form):
+        logger.info(form.cleaned_data)
+        raise Exception(str(form.cleaned_data))
+        projectname = form.cleaned_data['name']
+        if msgs:
+            messages.info(self.request, ' '.join(msgs))
+        return super().form_valid(form)
 
 @login_required
 def configure(request, usercoursebinding_id):
@@ -99,12 +114,7 @@ def configure(request, usercoursebinding_id):
             'menu_education': True,
             'course': course,
             'usercoursebinding_id': usercoursebinding_id,
-            'courseform': FormCourse({ 'name': course.name, 'description': course.description, 'image': course.image }),
             'groupform': FormGroup(),
-            't_students_add': TableUser(course, user, teacher_selector = False, bind_table = False),
-            't_students': TableUser(course, user, teacher_selector = False, bind_table = True),
-            't_teachers_add': TableUser(course, user, teacher_selector = True, bind_table = False),
-            't_teachers': TableUser(course, user, teacher_selector = True, bind_table = True),
             't_group': TableGroup(CourseGroup.objects.filter(course = course)),
             'active': request.COOKIES.get('configure_course_tab', 'student'),
             'student_group_map': course.groups,
@@ -357,7 +367,7 @@ def assignment_individual_handle(request):
     for uab_id in request.POST.getlist('selection_correct', []):
         try:
             uab = UserAssignmentBinding.objects.get(id = uab_id, assignment__course__in = courses, state__in = [ UserAssignmentBinding.ST_COLLECTED, UserAssignmentBinding.ST_SUBMITTED ])
-            uab.extrac2correct()
+            uab.extract2correct()
             n_corrected += 1
         except Exception as e:
             logger.error(e)
@@ -577,11 +587,7 @@ def submitform_submit(request):
     if request.POST.get('button') == 'apply':
         for uab_id in request.POST.getlist('selection', []):
             try:
-                uab = UserAssignmentBinding.objects.get(id = uab_id, user = user, state__in = [ UserAssignmentBinding.ST_WORKINPROGRESS, UserAssignmentBinding.ST_SUBMITTED ])
-                uab.submit_count += 1
-                uab.state = UserAssignmentBinding.ST_SUBMITTED
-                uab.submitted_at = now()
-                uab.save()
+                UserAssignmentBinding.objects.get(id = uab_id, user = user, state = UserAssignmentBinding.ST_WORKINPROGRESS).collect(submit = True)
                 #FIXME: message
             except Exception as e:
                 logger.error(e)

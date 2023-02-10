@@ -4,42 +4,21 @@
 
 {% block page_title %}Kooplex Education{% endblock %}
 
-{% block head_content %}
-<style>
-.form-control:focus {
-  border-color: gray;
-  box-shadow: inset 0 1px 1px gray, 0 0 8px gray;
-}
-</style>
-{% endblock %}
-
 {% block help %} 
 {% include 'educationhelp.html' %}
-
-  {% endblock %}
-
+{% endblock %}
 
 {% block submenu %}
 <ul class="navbar-nav flex-row flex-md-row">
   <li class="ms-3 nav-item text-center">
-    <a data-toggle="tooltip" title="Teaching" data-placement="bottom" {% if submenu == 'teacher' %} class="nav-link active active border-2 border-bottom" href="#" {% else %} class="nav-link" href="{% url 'education:teacher' %}" {% endif %}><i class="bi bi-card-heading" style="margin-left: auto; margin-right: auto;"></i><span class="d-none d-sm-block">&nbsp;Course management</span></a>
+    <a data-toggle="tooltip" title="Courses" data-placement="bottom" {% if submenu == 'courses' %} class="nav-link active active border-2 border-bottom" href="#" {% else %} class="nav-link" href="{% url 'education:courses' %}" {% endif %}><i class="bi bi-card-heading" style="margin-left: auto; margin-right: auto;"></i><span class="d-none d-md-block">&nbsp;Courses</span></a>
   </li>
   <li class="ms-3 nav-item text-center">
-    <a data-toggle="tooltip" title="Assignment manager" data-placement="bottom" {% if submenu == 'assignment_teacher' %} class="nav-link active active border-2 border-bottom" href="#" {% else %} class="nav-link" href="{% url 'education:assignment_teacher' %}" {% endif %}><i class="bi bi-folder-check"></i><span class="d-none d-sm-block">&nbsp;Assignment management</span></a>
+    <a data-toggle="tooltip" title="Assignment due" data-placement="bottom" {% if submenu == 'assignment_student' %} class="nav-link active active border-2 border-bottom" href="#" {% else %} class="nav-link" href="{% url 'education:assignment_student' %}" {% endif %}><i class="bi bi-calendar-check"></i><span class="d-none d-md-block">&nbsp;Assignments</span></a>
   </li>
   <li class="ms-3 nav-item text-center">
-    <a data-toggle="tooltip" title="Courses" data-placement="bottom" {% if submenu == 'student' %} class="nav-link active active border-2 border-bottom" href="#" {% else %} class="nav-link" href="{% url 'education:student' %}" {% endif %}><i class="bi bi-journal-bookmark-fill"></i><span class="d-none d-sm-block">&nbsp;Student courses</span></a>
-  </li>
-  <li class="ms-3 nav-item text-center">
-    <a data-toggle="tooltip" title="Assignment due" data-placement="bottom" {% if submenu == 'assignment_student' %} class="nav-link active active border-2 border-bottom" href="#" {% else %} class="nav-link" href="{% url 'education:assignment_student' %}" {% endif %}><i class="bi bi-calendar-check"></i><span class="d-none d-sm-block">&nbsp;Student assignments</span></a>
+    <a data-toggle="tooltip" title="Assignment manager" data-placement="bottom" {% if submenu == 'assignment_teacher' %} class="nav-link active active border-2 border-bottom" href="#" {% else %} class="nav-link" href="{% url 'education:assignment_teacher' %}" {% endif %}><i class="bi bi-folder-check"></i><span class="d-none d-md-block">&nbsp;Assignment management</span></a>
   </li>
 </ul>
 {% endblock %}
 
-{% block bodycontent %}
-<div class="container mt-4">
-{% block realcontent %}
-  {% include 'empty.html' %}
-{% endblock %}
-</div>
-{% endblock %}

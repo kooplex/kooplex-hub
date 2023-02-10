@@ -140,7 +140,7 @@ def destroy(request, container_id):
         container = Container.objects.get(id = container_id, user = user)
         container.stop()
         container.delete()
-        messages.info(request, f'Your environment {container.friendly_name} is deleted.')
+        messages.info(request, f'Your environment {container.name} is deleted.')
     except Container.DoesNotExist:
         messages.error(request, 'Container environment does not exist')
     return redirect('container:list')

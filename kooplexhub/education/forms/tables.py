@@ -12,6 +12,7 @@ from hub.templatetags.extras import render_user as ru
 from hub.templatetags.extras import render_date as rd
 from hub.templatetags.extras import render_folder as rf
 
+from kooplexhub.common import table_attributes
 
 try:
     from kooplexhub.settings import KOOPLEX
@@ -26,7 +27,7 @@ class TableAssignment(tables.Table):
         attrs = { 
                  "class": "table table-striped table-bordered", 
                  "thead": { "class": "thead-dark table-sm" }, 
-                 "td": { "class": "p-1" }, 
+                 "td": { "class": "p-1 text-light" }, 
                  "th": { "class": "table-secondary p-1" }
                 }
 
@@ -89,6 +90,8 @@ class TableAssignmentConf(tables.Table):
                  "class": "table table-bordered", 
                  "thead": { "class": "thead-dark table-sm" }, 
                  "th": { "class": "table-secondary p-1" },
+                 "td": { "class": "p-1 text-light" }, #tbody.td.th not applied 
+                 "tbody": { "class": "text-light" }, 
                 }
         empty_text = _("You have not created any assignments yet")
 
@@ -195,7 +198,7 @@ class TableAssignmentSummary(tables.Table):
         attrs = { 
                  "class": "table table-bordered", 
                  "thead": { "class": "thead-dark table-sm" }, 
-                 "td": { "style": "padding:.5ex" }, 
+                 "td": { "style": "padding:.5ex", "class": "text-light"  }, 
                  "th": { "style": "padding:.5ex", "class": "table-secondary" } 
                 }
 
@@ -238,7 +241,7 @@ class TableAssignmentHandle(tables.Table):
         attrs = { 
                  "class": "table table-bordered", 
                  "thead": { "class": "thead-dark table-sm" }, 
-                 "td": { "style": "padding:.5ex;  background-color: white" }, 
+                 "td": { "style": "padding:.5ex;  background-color: white", "class": "text-light" }, 
                  "th": { "style": "padding:.5ex; background-color: #D3D3D3", "class": "table-secondary" } 
                 }
         empty_text = _("This table is still empty")
@@ -348,7 +351,7 @@ class TableAssignmentMass(tables.Table):
         attrs = { 
                  "class": "table table-bordered mt-3", 
                  "thead": { "class": "thead-dark table-sm" }, 
-                 "td": { "class": "p-1" }, 
+                 "td": { "class": "p-1 text-light" }, 
                  "th": { "class": "table-secondary p-1" } 
                 }
         empty_text = _("Empty table")
@@ -416,7 +419,7 @@ class TableAssignmentMass(tables.Table):
         a_students = { s: set() for s in UserAssignmentBinding.ST_LOOKUP.keys() }
         for b in uabs:
             a_students[b.state].add(b.user)
-        a_students['visited'] = a_students[UserAssignmentBinding.ST_WORKINPROGRESS].union(a_students[UserAssignmentBinding.ST_SUBMITTED]).union(a_students[UserAssignmentBinding.ST_COLLECTED]).union(a_students[UserAssignmentBinding.ST_CORRECTED]).union(a_students[UserAssignmentBinding.ST_READY])
+        a_students['visited'] = a_students[UserAssignmentBinding.ST_WORKINPROGRESS].union(a_students[UserAssignmentBinding.ST_SUBMITTED]).union(a_students[UserAssignmentBinding.ST_COLLECTED]).union(a_students[UserAssignmentBinding.ST_CORRECTED]).union(a_students[UserAssignmentBinding.ST_READY]).union(a_students[UserAssignmentBinding.ST_TRANSITIONAL])
         records = [ {
             'idx': f'{assignment.id}-{group.id}' if group else f'{assignment.id}-n',
             'group': group,
@@ -437,7 +440,7 @@ class TableAssignmentMassAll(tables.Table):
         attrs = { 
                  "class": "table table-bordered mt-3", 
                  "thead": { "class": "thead-dark table-sm" }, 
-                 "td": { "class": "p-1" }, 
+                 "td": { "class": "p-1 text-light" }, 
                  "th": { "class": "table-secondary p-1" } 
                 }
         empty_text = _("Empty table")
@@ -549,12 +552,7 @@ class TableUser(tables.Table):
     class Meta:
         model = UserCourseBinding
         fields = ('user',)
-        attrs = {
-                 "class": "table table-bordered",
-                 "thead": { "class": "thead-dark table-sm" },
-                 "td": { "class": "p-1" },
-                 "th": { "class": "table-secondary p-1" }
-                }
+        attrs = table_attributes
 
     def render_user(self, record):
         user = record.user
@@ -594,7 +592,7 @@ class TableGroup(tables.Table):
         attrs = { 
                  "class": "table table-striped table-bordered mt-3", 
                  "thead": { "class": "thead-dark table-sm" }, 
-                 "td": { "class": "p-1" }, 
+                 "td": { "class": "p-1 text-light" }, 
                  "th": { "class": "table-secondary p-1" } 
                 }
     button = tables.Column(verbose_name = 'Delete', orderable = False, empty_values = ())

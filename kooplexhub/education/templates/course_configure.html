@@ -2,29 +2,15 @@
 {% load render_table from django_tables2 %}
 {% load extras %}
 
-{% block head_content %}
-<style>
-.mytab{
-  color: rgb(196, 196, 196);
-}
-.mytab:hover{
-  color: rgb(196, 196, 196);
-  font-weight: bolder;
-}
-.mytab.active {
-  font-weight: bolder;
-}
-</style>
-{% endblock %}
 
-{% block realcontent %}
+{% block bodycontent %}
 <div class="card shadow p-3 mb-5 bg-light rounded">
-<form id="course-manage" class="form-horizontal" action="{% url 'education:configure_save' usercoursebinding_id %}" method="post">
+  <form id="course-manage" class="form-horizontal was-validated" action="{{ url_post }}" method="post">
   {% csrf_token %}
   {% title_with_button "You are now configuring <em>" course.name "</em> course" %}
   <ul class="nav nav-tabs" id="courseConfigTabs" role="tablist">
     <li class="nav-item" role="presentation">
-      <a class="nav-link mytab {% if active == "conf" %}active{% endif %}" id="tab-conf" data-bs-toggle="tab" href="#configureCourse" role="tab" aria-controls="configureCourse" aria-selected="{% if active == "conf" %}true{% else %}false{% endif %}">Configure</a>
+      <a class="nav-link mytab {% if active == "meta" %}active{% endif %}" id="tab-meta" data-bs-toggle="tab" href="#configureCourse" role="tab" aria-controls="configureCourse" aria-selected="{% if active == "meta" %}true{% else %}false{% endif %}">Configure</a>
     </li>
     <li class="nav-item" role="presentation">
       <a class="nav-link mytab {% if active == "teacher" %}active{% endif %}" id="tab-teacher" data-bs-toggle="tab" href="#addteachersCourse" role="tab" aria-controls="addteachersCourse" aria-selected="{% if active == "teacher" %}true{% else %}false{% endif %}">Teachers</a>
@@ -39,20 +25,23 @@
       <a class="nav-link mytab {% if active == "grpstudent" %}active{% endif %}" id="tab-grpstudent" data-bs-toggle="tab" href="#groupStudent" role="tab" aria-controls="groupStudent" aria-selected="{% if active == "grpstudent" %}true{% else %}false{% endif %}">Group of students</a>
     </li>
   </ul>
-  <div class="tab-content  mt-2" id="courseConfigTabsContent">
-    <div class="tab-pane  mt-2 fade {% if active == "conf" %}show active{% endif %}" id="configureCourse" role="tabpanel" aria-labelledby="tab-conf">
-      <div class="container-fluid d-flex flex-row">
-        <div class="d-flex mt-3">
-          <table>
-          {{ courseform.as_table }}
-          </table>
-        </div>
-        <div class="d-flex ms-3 w-100 w-md-50">
-          <div ata-toggle="tooltip" title="Please select an option from the image dropdown to check its description."  class="d-flex bg-warning rounded p-2 w-100 mt-2 mt-md-0">
-            <p class="fw-bolder">Image description:&nbsp;</p>
-            <p id="imageDescription"></p>
+  <div class="tab-content mt-3" id="courseConfigTabsContent">
+    <div class="tab-pane fade {% if active == "meta" %}show active{% endif %}" id="configureCourse" role="tabpanel" aria-labelledby="tab-meta">
+      <div class="container-fluid">
+        <div class="row row-cols-1 row-cols-md-2">
+          <div class="col">
+            <table>
+              {{ form.as_table }}
+            </table>
           </div>
-          {{ courseform.descriptions }}
+          <div class="col"> {# hide if small #}
+            <div data-toggle="tooltip" title="Please select an option from the image dropdown to check its description." class="bg-warning rounded p-2 w-100 mt-2 mt-md-0">
+              <p class="fw-bolder">Image description:&nbsp;</p>
+              <p id="imageDescription"></p>
+              <div class="clearfix"><img id="imageThumbnail" class="float-end" alt=""></div>
+              {{ form.descriptions }}
+            </div>
+          </div>
         </div>
       </div>
       {# fixme: only show if image is changed #}
@@ -68,10 +57,10 @@
       <div class="d-flex align-items-baseline">
         <div class="flex-fill w-100 me-1">
           <input class="form-control me-2 mb-3 mt-3" type="text" id="search_teacher_add" placeholder="Search teacher" title="Type in a name">
-          {% render_table t_teachers_add %}
+          {% render_table form.t_teachers_add %}
         </div>
         <div class="flex-fill w-100 mb-1">
-          {% render_table t_teachers %}
+          {% render_table form.t_teachers %}
         </div>
       </div>
     </div>
@@ -80,10 +69,10 @@
       <div class="d-flex align-items-baseline">
         <div class="flex-fill w-100 me-1">
           <input class="form-control me-2 mb-3 mt-3" type="text" id="search_student_add" placeholder="Search student" title="Type in a name">
-          {% render_table t_students_add %}
+          {% render_table form.t_students_add %}
         </div>
         <div class="flex-fill w-100 mb-1">
-          {% render_table t_students %}
+          {% render_table form.t_students %}
         </div>
       </div>
     </div>
@@ -96,14 +85,30 @@
 
 <script>
 $("#courseConfigTabs li a").on("click", function () {
-  var tab = $( this ).attr("id").split('-')[1]
+  tab = $( this ).attr("id").split('-', 2)[1]
   console.log( tab )
-  $.cookie("configure_course_tab", tab, { 'path': '/', 'secure': true });
+  $.cookie("configure_course_tab", tab, { 'path': '/;SameSite=Strict', 'secure': true });
 });
 $(document).ready(function() {
   $("#bind-teacher").find("th").text("Teachers");
   $("#bind-student").find("th").text("Students");
 });
+{# when image selection changes, render appropriate image descriptions #}
+$("select[name='image']").change(function() {
+  $( "#id_image option:selected" ).each(function() {
+    id = $(this).attr("value");
+    if (id === "") {
+      $("#imageDescription").text("");
+      $("#imageThumbnail").attr("src", "");
+    } else {
+      description = $("#image-description-" + id).attr("value");
+      $("#imageDescription").text(description);
+      tn = $("#image-thumbnail-" + id).attr("value");
+      $("#imageThumbnail").attr("src", tn);
+    }
+  });
+}).change();
+
 $("select[name='image'").change(function() {
     $( "select option:selected" ).each(function() {
         var id = $(this).attr("value");

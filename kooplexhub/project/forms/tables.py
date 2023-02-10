@@ -118,7 +118,7 @@ class TableContainer(tables.Table):
 
     def render_name(self, record):
         return format_html(f"""
-<span data-toggle="tooltip" title="Container name: {record.name}." data-placement="bottom">{record.friendly_name}</span>
+<span data-toggle="tooltip" title="Container name: {record.name}." data-placement="bottom">{record.name}</span>
         """)
 
     def render_image(self, record):

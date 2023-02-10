@@ -13,7 +13,7 @@
   <input type="hidden" id="container-match-{{ container.id }}" value="true">
   <input type="hidden" id="container-isshown-{{ container.id }}" value="true">
   <div class="card-header bg-secondary bg-opacity-75 border-bottom border-warning border-1 border-opacity-50" id="click-containerhead-{{ container.id }}">
-    <h5 class="card-title fw-bold" >{{ container.friendly_name|truncatechars:45 }}</h5>
+    <h5 class="card-title fw-bold" >{{ container.name|truncatechars:45 }}</h5>
   </div>
     <div class="card-body text-dark fw-bold" id="click-containerbody-{{ container.id }}">
       <p class="card-text">
@@ -59,7 +59,7 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">{{ container.friendly_name }}</h5>
+        <h5 class="modal-title">{{ container.name }}</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">

@@ -10,6 +10,7 @@
 
     {# most used icons #}
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css">
+    <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
     <link rel="stylesheet" type="text/css" href="{% static 'fonts/open-iconic-master/font/css/open-iconic-bootstrap.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'fonts/remix-icon/remixicon.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'common.css' %}">
@@ -113,7 +114,7 @@
         {% endblock %}
 
 	{# a place for an optional page description area #}
-        <div class="m-2 d-none d-xl-block" id="descriptionblock">
+        <div class="m-2 d-none d-xl-block" id="descriptionblock" style="color: silver; text-align: center;">
 	{% block pagedescription %}{% endblock %}
         </div>
 	{# a place for an optional search bar #}

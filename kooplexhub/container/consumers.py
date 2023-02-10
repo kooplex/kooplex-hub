@@ -48,8 +48,8 @@ class ContainerConsumer(WebsocketConsumer):
                 for e in completed:
                     cid = self.lut_ev.pop(e)
                     container = self.get_container(cid)
-                    self.send(text_data=json.dumps({"feedback": f"Container {container.friendly_name} finalized its state.", "container-id": cid, "state": container.state}))
-                    logger.debug(f"Container {container.friendly_name} finalized its state -> {container.state}")
+                    self.send(text_data=json.dumps({"feedback": f"Container {container.name} finalized its state.", "container-id": cid, "state": container.state}))
+                    logger.debug(f"Container {container.name} {container.label} finalized its state -> {container.state}")
                 if not self.lut_ev:
                     self.running.clear()
         logger.info(f"- ws thread for {self.userid}")
@@ -65,7 +65,7 @@ class ContainerConsumer(WebsocketConsumer):
                 self.t.start()
         logger.info('new event to inspect')
         #container = self.get_container(container_id)
-        #self.send(text_data=json.dumps({"command": "feedback", "message": f"Waiting for {container.friendly_name} to finalize its state."}))
+        #self.send(text_data=json.dumps({"command": "feedback", "message": f"Waiting for {container.name} to finalize its state."}))
 
     def receive(self, text_data):
         parsed = json.loads(text_data)

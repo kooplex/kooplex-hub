@@ -1,83 +1,126 @@
 {% extends "education_layout.html" %}
-
 {% load static %}
 
-{% block realcontent %}
-{% if coursebindinglist|length %}
-  <input class="form-control me-2 mb-3 mt-3" type="text" id="search_course" placeholder="Search course" title="Type in a name" >
-  <div id="containerListPane" >
+{% block pagedescription %}
+{# one liner . <a href="https://xwiki.vo.elte.hu/en/kooplex-manual/educaion"><span class="ms-2 bi bi-book"></span></a>#}
+{% endblock %}
+
+{# the search bar #}
+{% block search %}
+{% if coursebindinglist %}
+<div class="card border border-light border-3 mx-5 mb-3 rounded-3">
+  <div class="input-group">
+    <span class="input-group-text"><span class="bi bi-search"></span></span>
+    <input class="form-control" type="text" id="search_course" placeholder="Search course" title="Type in a name" autofocus >
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+
+{# render the course cards #}
+{% block bodycontent %}
+{% if coursebindinglist %}
+  <div class="row row-cols-1 row-cols-md-4">
     {% for ucb in coursebindinglist %}
-       {% include 'course_partial_list.html' with next_page='education:student' course=ucb.course coursecontainerbindings=ucb.coursecontainerbindings is_teacher=True tooltip="Manage assignments" %}
+      <div class="col" id="hideable-course-{{ ucb.course.id }}">
+        {% include 'course_partial_list.html' with course=ucb.course %}
+      </div>
     {% endfor %}
   </div>
 {% else %}
   {% include 'empty.html' with title=empty_title empty=empty_body %}
 {% endif %}
-
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>  
-$(document).ready(function() {
-  var uf = $.cookie("unfold_course");
-  if ( uf === undefined ) {
-    $.cookie("unfold_course", JSON.stringify([]), { 'path': '/', 'secure': true });
-    console.log('undefined');
-  } else {
-    $.each(JSON.parse(uf), function(index, value) {
-      console.log( value );
-      $("#collapse-" + value).collapse();
-    });
+{# when course name is clicked open info #}
+$("div[id^=course-name-]").click(function() {
+  //console.log( this );
+  var cid = $( this ).attr("id").split("-", 3)[2];
+  $("#courseInfoModal-" + cid).modal('show');
+});
 
+{# when hovering course name is change pointer type #}
+$("div[id^=course-name-]").mouseenter(function() {
+  $( this ).css("cursor", "pointer");
+});
+
+
+{# FIXME: code repetition see project #}
+containerSocket = open_ws('{{ wss_container }}', ws_callback_container);
+
+{# handle websocket callback #}
+function ws_callback_container(data) {
+  //console.log(data);
+  var command = data['command'];
+  var msg = data['message'];
+  var containerid = data['container-id'];
+  console.log('SOCK: --> ' + command + ": " + msg);
+  if (command == 'feedback') {
+    feedback(data['message']);
   }
-});
-$("#search_course").keyup(function() {
-  var pattern = $( this ).val().toUpperCase();
-  console.log( "search: " + pattern );
-  $("span[id^='course-name-'").each(function() {
-    var projectid = $( this ).attr('id').split('-')[2];
-    var hide_it = true;
-    var card = $("#card-" + projectid);
-    if (pattern.length > 0) {
-      var name = $( this ).html().toUpperCase();
-      if ( name.indexOf(pattern) > -1 ) {
-        hide_it = false;
-      }
-    } else {
-      hide_it = false;
-    }
-    if (hide_it) {
-      $( card ).hide();
-    } else {
-      $( card ).show();
-    }
-  });
-});
-$("div[data-bs-target^='#collapse-").mouseover(function() {
-  $(this).css("font-weight", "bold");
-  $(this).css("cursor", "pointer");
-});
-$("div[data-bs-target^='#collapse-").mouseout(function() {
-  $(this).css("font-weight", "normal");
-});
-$("div[data-bs-target^='#collapse-").click(function() {
-  var tgt = $(this).attr("data-bs-target");
-  var oid = tgt.split('-')[1];
-  console.log( tgt + "->" + oid );
-  setTimeout(function() {
-    var uf = JSON.parse( $.cookie("unfold_course") );
-    if ( $(tgt).hasClass('show') ) {
-      console.log('shown');
-      uf.push(oid);
-    } else {
-      console.log('collapsed');
-      uf.pop(oid);
-    }
-    var clean = uf.filter(function(element, index, self){
-      return index === self.indexOf(element);
-    });
-    $.cookie("unfold_course", JSON.stringify(clean), { 'path': '/', 'secure': true });
-  }, 1000);
+  if (data['state'] == 'np') { //FIXME: Container.ST_NOTPRESENT
+    start_button(containerid);
+  } if (data['state'] == 'run') { //FIXME: Container.ST_RUNNING
+    open_button(containerid);
+  }
+};
+
+{# open a container #} //FIXME: repetition
+function open_container(containerid) {
+  var url = $( "#url-containeropen-" + containerid).val();
+  console.log( "opening: " + url );
+  var win = window.open(url, '_blank');
+  if (win) {
+    win.focus();
+  }
+}
+
+{# disable start, and show spinner #}
+function spin_button(containerid) {
+  $("#container-start-" + containerid).parent().attr("disabled", true);
+  $("#container-start-" + containerid).addClass("d-none");
+  $("#spinner-start-" + containerid).removeClass("d-none");
+}
+
+{# enable button and show open button face #}
+function open_button(containerid) {
+  $("#container-start-" + containerid).parent().attr("disabled", false);
+  $("#spinner-start-" + containerid).addClass("d-none");
+  $("#container-open-" + containerid).removeClass("d-none");
+}
+
+{# enable button and show start button face #}
+function start_button(containerid) {
+  $("#container-start-" + containerid).parent().attr("disabled", false);
+  $("#spinner-start-" + containerid).addClass("d-none");
+  $("#container-start-" + containerid).removeClass("d-none");
+}
+
+
+{# start/open a container #}
+$("button[name=container-start]").click(function() {
+  var containerid = $( this ).val();
+  if (! $("#container-open-" + containerid).hasClass('d-none')) {
+    open_container(containerid);
+    return;
+  }
+  if (containerSocket.readyState != 1) {
+    console.log("Socket not open: " + containerSocket.readyState);
+    containerSocket = open_ws('{{ wss_container }}', ws_callback_container);
+  }
+  console.log( "start: " + containerid );
+  spin_button(containerid);
+  containerSocket.send(JSON.stringify({
+    'command': 'container-start',
+    'container-id': containerid,
+  }));
+//  dd_id = $($(this).parents()[2]).attr("aria-labelled-by");
+//	console.log(dd_id);
+//  $(".dropdowm-toggle").each(function () { i = $( this ).attr('id'); if (i == dd_id) { $(this).dropdown('toggle') } } ) 
 });
 </script>
 {% endblock %}

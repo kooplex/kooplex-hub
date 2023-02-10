@@ -3,46 +3,61 @@
 {% load check_show %}
 {% load extras %}
 
+<div 
+  class="card bg-light rounded mb-3" id="card-{{ course.id }}"
+  style="height: 300px;"
+>
+  <input type="hidden" id="course-search-{{ course.id }}" value="{{ course.search }}">
+  <input type="hidden" id="course-match-{{ course.id }}" value=true>
+  <input type="hidden" id="course-isshown-{{ course.id }}" value=true>
+  <div class="card-header" id="course-name-{{ course.id }}">
+      {{ course.name }}
+  </div>
+  <div class="card-body" {% if ucb.is_teacher %}style="background: #5bb3a7"{% endif %}>
+    <p class="card-text p-2" style="background: #d0d0d0"
+       data-toggle="tooltip" title="You are a {% if ucb.is_teacher %}teacher{% else %}student{% endif %} of this course."
+    >{{ course.description|truncatechars:100 }}</p>
+    <p class="card-text"><span class="iconify" data-icon="game-icons:teacher" data-toggle="tooltip" title="Teachers"></span>&nbsp;{{ course.teachers }}</p>
+    {% if course.assignments|length %}
+    <p class="card-text"><span class="bi bi-vector-pen" data-toggle="tooltip" title="Assignments"></span>&nbsp;{{ course|csv_assignments }}</p>
+    {% endif %}
+  </div>
+  <div class="card-footer">
+  {% dropdown_start_open bindings=ucb.coursecontainerbindings ancestor=ucb ancestor_type='course' %}
+  {% if ucb.is_teacher %}
+    <a href="{% url 'education:configure' course.id %}" role="button" class="btn btn-secondary btn-sm" data-toggle="tooltip" title="Settings of course {{ course.name }}. You can change the image, modify description." data-placement="top"><span class="oi oi-wrench" aria-hidden="true"></span></a>
+  {% else %}
+    <a href="{% url 'education:assignment_student' ucb.id %}" role="button" class="btn btn-secondary btn-sm" data-toggle="tooltip" title="{{ tooltip }}" data-placement="top"><span class="oi oi-pencil" aria-hidden="true"></span></a>
+  {% endif %}
+  </div>
+</div>
 
-
-<div class="card bg-light border-secondary shadow mb-3" id="card-{{ course.id }}">
-  <div class="card-header">
-    <div class="container-fluid">
-      <div class="d-flex flex-row">
-        <div class="d-flex flex-row justify-content-start" style="width:2%">
-         <div>{% dropdown_start_open_stop bindings=coursecontainerbindings ancestor=ucb ancestor_type='course' next_page=next_page %}</div>
-        </div>
-	  <div class="ms-5 d-flex flex-row justify-content-between"
-	       style="width:97%" 
-               data-bs-toggle="collapse" data-bs-target="#collapse-{{ course.id }}" aria-expanded="false" aria-controls="collapse-{{ course.id }}">
-           <div class="d-flex flex-row justify-content-start" ><span id="course-name-{{ course.id }}"><i class="bi bi-arrow-down-square-fill pe-2" style="color: green;"></i>{{ course.name }}</span></div> 
-            <div class="d-flex flex-row justify-content-end">
-              <div>{% container_image course.image %}</div>
-        </div>
-	  </div>
-	</div>
-    </div>
-  </div><!-- card header -->
-  <div class="collapse" id="collapse-{{ course.id }}">
-    <div class="card card-body">
-      <p class="card-text"><strong>Description:</strong> {{ course.description }}</p>
-      <p class="card-text"><strong>Teachers:</strong> {{ course.teachers }}</p>
-      <p class="card-text"><strong>Groups:</strong> {{ course|csv_groups }}</p>
-      <p class="card-text"><strong>Course codes:</strong> {{ course|csv_coursecodes }}</p>
-      <p class="card-text"><strong>Assignments:</strong> {{ course|csv_assignments }} </p>
-      </p>
-    </div>
-    <div class="card card-footer">
-      <div class="row">
-	<div class="float-start">
+<div class="modal fade" id="courseInfoModal-{{ course.id }}" tabindex="-1" aria-labelledby="courseInfoModal-{{ course.id }}" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title ms-2">{{ course.name }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="card-text"><strong>Suggested image:</strong> {% container_image course.image %}</p>
+        <p class="card-text"><strong>Description:</strong> {{ course.description }}</p>
+        <p class="card-text"><strong>Groups:</strong> {{ course|csv_groups }}</p>
+        {#<p class="card-text"><strong>Course codes:</strong> {{ course|csv_coursecodes }}</p>#}
+        <p class="card-text"><strong>Folder:</strong> {{ course.subpath }}</p>
+        <p class="card-text"><strong>Assignments:</strong> {{ course|csv_assignments }}</p>
+      </div>
+      <div class="modal-footer">
+        {% dropdown_start_open bindings=ucb.coursecontainerbindings ancestor=ucb ancestor_type='course' %}
         {% if ucb.is_teacher %}
-          <a href="{% url 'education:configure' ucb.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="Settings of course {{ course.name }}. You can change the image, modify description." data-placement="top"><span class="oi oi-wrench" aria-hidden="true"></span></a>
-	{% else %}
-          <a href="{% url 'education:assignment_student' ucb.id %}" role="button" class="btn btn-secondary" data-toggle="tooltip" title="{{ tooltip }}" data-placement="top"><span class="oi oi-pencil" aria-hidden="true"></span></a>
+          <a href="{% url 'education:configure' ucb.id %}" role="button" class="btn btn-secondary btn-sm" data-toggle="tooltip" title="Settings of course {{ course.name }}. You can change the image, modify description." data-placement="top"><span class="oi oi-wrench" aria-hidden="true"></span></a>
+        {% else %}
+          <a href="{% url 'education:assignment_student' ucb.id %}" role="button" class="btn btn-secondary btn-sm" data-toggle="tooltip" title="{{ tooltip }}" data-placement="top"><span class="oi oi-pencil" aria-hidden="true"></span></a>
         {% endif %}
-        </div>
       </div>
     </div>
   </div>
 </div>
+
+
 
