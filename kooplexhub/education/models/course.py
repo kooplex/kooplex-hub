@@ -17,7 +17,6 @@ class Course(models.Model):
        app_label = 'education'
 
     name = models.CharField(max_length = 64, null = False, unique = True)
-    cleanname = models.CharField(max_length = 64, null = False, unique = True, validators = [my_alphanumeric_validator('Enter a valid container name containing only letters and numbers.')])
     folder = models.CharField(max_length = 64, null = False, unique = True)
     description = models.TextField(max_length = 512, blank = True)
     image = models.ForeignKey(Image, null = True, on_delete = models.CASCADE)

@@ -20,11 +20,10 @@ from kooplexhub.lib import now
 
 from hub.templatetags.extras import render_user
 from container.models import Image, Container
-from education.models import UserCourseBinding, UserAssignmentBinding, Assignment, CourseContainerBinding, CourseGroup, UserCourseGroupBinding, Course
+from education.models import UserCourseBinding, UserAssignmentBinding, Assignment, CourseContainerBinding, Course
 from education.forms import FormCourse
-from education.forms import FormGroup
 from education.forms import FormAssignment
-from education.forms import TableAssignment, TableAssignmentConf, TableAssignmentHandle, TableAssignmentMass, TableAssignmentSummary, TableGroup, TableAssignmentMassAll, TableAssignmentStudentSummary, TableCourseStudentSummary
+from education.forms import TableAssignment, TableAssignmentConf, TableAssignmentHandle, TableAssignmentMass, TableAssignmentSummary, TableAssignmentMassAll, TableAssignmentStudentSummary, TableCourseStudentSummary
 
 from kooplexhub.settings import KOOPLEX
 
@@ -604,27 +603,28 @@ def submitform_submit(request):
 @login_required
 def addcontainer(request, usercoursebinding_id):
     """
-    @summary: handle assignment page. 
-    @param usercoursebinding_id: is set if pencil is used, defaults to None if coming from menu.
+    @summary: automagically create an environment
+    @param usercoursebinding_id
     """
+    from kooplexhub.lib.libbase import standardize_str
     user = request.user
     logger.debug("user %s, method: %s" % (user, request.method))
     try:
         course = UserCourseBinding.objects.get(id = usercoursebinding_id, user = user).course
         container, created = Container.objects.get_or_create(
-                name = course.cleanname, 
-                friendly_name = course.name,
+                name = f'generated for {course.name}', 
+                label = f'edu-{user.username}-{standardize_str(course.name)}',
                 user = user,
-                suffix = 'edu',
                 image = course.image
                 )
         CourseContainerBinding.objects.create(course = course, container = container)
         if created:
-            messages.info(request, f'We created a new environment {container.friendly_name} for course {course.name}.')
+            messages.info(request, f'We created a new environment {container.name} for course {course.name}.')
         else:
-            messages.info(request, f'We associated your course {course.name} with your former environment {container.friendly_name}.')
+            messages.info(request, f'We associated your course {course.name} with your former environment {container.name}.')
     except Exception as e:
         messages.error(request, f'We failed -- {e}')
+        raise
     return redirect('container:list')
 
 
