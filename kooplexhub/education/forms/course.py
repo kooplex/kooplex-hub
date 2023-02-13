@@ -5,7 +5,7 @@ from django.utils.html import format_html
 
 from django.contrib.auth.models import User
 from container.models import Image
-from education.models import Course, CourseGroup, UserCourseBinding
+from education.models import Course, CourseGroup, UserCourseBinding, UserCourseGroupBinding
 
 from kooplexhub.common import tooltip_attrs
 from kooplexhub.lib import my_slug_validator, my_end_validator
@@ -59,7 +59,6 @@ class FormCourse(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         extra = json.loads(cleaned_data.pop('course_config'))
-        #raise Exception(str(extra))
         courseid = extra.get('course_id')
         userid = extra.get('user_id')
         user = User.objects.get(id = userid)
@@ -78,16 +77,19 @@ class FormCourse(forms.ModelForm):
         teachers_before = { b.user.id for b in UserCourseBinding.objects.filter(course = course, is_teacher = True) }
         students = set(map(lambda i: int(i), extra.pop('students', [])))
         students_before = { b.user.id for b in UserCourseBinding.objects.filter(course = course, is_teacher = False) }
+        skip_grouping = False
         if teachers.intersection(students):
             ve.append( forms.ValidationError(_(f'A user cannot be a teacher or a student at the same time'), code = 'duplicate') )
         if students_before.difference(students):
             cleaned_data['delete_students'] = UserCourseBinding.objects.filter(course = course, user__id__in = students_before.difference(students))
+            skip_grouping = True
         if teachers_before.difference(teachers):
             cleaned_data['delete_teachers'] = UserCourseBinding.objects.filter(course = course, user__id__in = teachers_before.difference(teachers))
         new_users = []
         for uid in students.difference(students_before):
             u = User.objects.get(id = uid)
             new_users.append(UserCourseBinding(user = u, course = course, is_teacher = False))
+            skip_grouping = True
         for uid in teachers.difference(teachers_before):
             u = User.objects.get(id = uid)
             new_users.append(UserCourseBinding(user = u, course = course, is_teacher = True))
@@ -105,7 +107,7 @@ class FormCourse(forms.ModelForm):
         update_groups = []
         for gid, name, description in extra.pop('group'):
             if name and description:
-                group = CourseGroup.objects.get(course__id = courseid, id = gid)
+                group = CourseGroup.objects.get(course = course, id = gid)
                 group.name = name
                 group.description = description
                 update_groups.append(group)
@@ -113,8 +115,29 @@ class FormCourse(forms.ModelForm):
                 ve.append( forms.ValidationError(_(f'Group name and/or description cannot be empty'), code = 'invalid name') )
         if update_groups:
             cleaned_data['groups'] = update_groups
+        # manage grouping
+        group_bindings_add = []
+        group_bindings_del = []
+        if not skip_grouping:
+            for gid, students in extra.pop('grouping'):
+                if gid == 'n':
+                    continue
+                group = CourseGroup.objects.get(id = gid, course = course)
+                students_old = { b.usercoursebinding.user.id for b in UserCourseGroupBinding.objects.filter(group = group) }
+                group_bindings_del.extend( UserCourseGroupBinding.objects.filter(
+                    usercoursebinding__user__id__in = set(students_old).difference(students),
+                    group = group, usercoursebinding__course = course,
+                    usercoursebinding__is_teacher = False
+                ))
+                for uid in set(students).difference(students_old):
+                    u = User.objects.get(id = uid)
+                    b = UserCourseBinding.objects.get(user = u, course = course, is_teacher = False)
+                    group_bindings_add.append(UserCourseGroupBinding(group = group, usercoursebinding = b))
+        if group_bindings_del:
+            cleaned_data['group_bindings_del'] = group_bindings_del
+        if group_bindings_add:
+            cleaned_data['group_bindings_add'] = group_bindings_add
         if ve:
-            raise Exception(str(ve))
             raise forms.ValidationError(ve)
         return cleaned_data
 

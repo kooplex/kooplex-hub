@@ -93,7 +93,6 @@ class ConfigureCourseView(LoginRequiredMixin, generic.edit.UpdateView):
 
     def form_valid(self, form):
         logger.info(form.cleaned_data)
-        #raise Exception(str(form.cleaned_data))
         msgs = []
         for group in form.cleaned_data.pop('new_groups', []):
             group.save()
@@ -112,6 +111,11 @@ class ConfigureCourseView(LoginRequiredMixin, generic.edit.UpdateView):
         for b in form.cleaned_data.pop('new_bindings', []):
             b.save()
             msgs.append("New {} {} added to course".format("teacher" if b.is_teacher else "student", b.user))
+        for b in form.cleaned_data.pop('group_bindings_del', []):
+            b.delete()
+        for b in form.cleaned_data.pop('group_bindings_add', []):
+            b.save()
+            msgs.append("{b.usercoursebinding.user} is put in group {b.group.name}")
         if msgs:
             logger.info(' '.join(msgs))
             messages.info(self.request, ' '.join(msgs))
@@ -624,122 +628,3 @@ def addcontainer(request, usercoursebinding_id):
     return redirect('container:list')
 
 
-def _groupstudents(ucb, mappings):
-    msgs = []
-    add = {}
-    for gid, v in mappings.items():
-        if gid == 'n':
-            continue
-        group = CourseGroup.objects.get(id = gid, course = ucb.course)
-        ids_before = set([ b.usercoursebinding.user.id for b in UserCourseGroupBinding.objects.filter(group = group) ])
-        ids_after = set(v)
-        remove = []
-        ucgb = UserCourseGroupBinding.objects.filter(
-            usercoursebinding__user__id__in = set(ids_before).difference(ids_after), 
-            group = group, usercoursebinding__course = ucb.course, 
-            usercoursebinding__is_teacher = False
-        )
-        if ucgb:
-            msgs.append('{} removed from group {}'.format(', '.join([ render_user(b.usercoursebinding.user) for b in ucgb ]), group.name))
-            ucgb.delete()
-        add[group] = []
-        for uid in set(ids_after).difference(ids_before):
-            u = User.objects.get(id = uid)
-            b = UserCourseBinding.objects.get(user = u, course = ucb.course, is_teacher = False)
-            add[group].append((b, render_user(u)))
-    for g, bs in add.items():
-        added = []
-        for b, u in bs:
-            UserCourseGroupBinding.objects.create(usercoursebinding = b, group = g)
-            added.append(u)
-        if added:
-            msgs.append('{} added to group {}'.format(', '.join(added), g.name))
-    return msgs
-
-
-def _manageusers(ucb, ids_after, is_teacher):
-    ids_before = { b.user.id: b for b in UserCourseBinding.objects.filter(course = ucb.course, is_teacher = is_teacher) }
-    ids_after = set(map(int, ids_after))
-    f = 'teachers' if is_teacher else 'students'
-    msgs = []
-    added = []
-    for i in ids_after.difference(ids_before.keys()):
-        u = User.objects.get(id = i)
-        try:
-            UserCourseBinding.objects.create(user = u, course = ucb.course, is_teacher = is_teacher)
-            added.append(render_user(u))
-        except Exception as e:
-            logger.error(e)
-    if len(added):
-        added = ', '.join(added)
-        msgs.append(f'Added {f} to course {ucb.course.name}: {added}')
-        logger.info(f'+ user {ucb.user.username} added {added} as {f} to course {ucb.course.name}')
-    bindings = UserCourseBinding.objects.filter(course = ucb.course, is_teacher = is_teacher, user__id__in = set(ids_before.keys()).difference(ids_after))
-    if bindings:
-        removed = ', '.join([ render_user(b.user) for b in bindings ])
-        bindings.delete()
-        msgs.append(f'Removed {f} from course {ucb.course.name}: {removed}')
-        logger.info(f'- user {ucb.user.username} removed {removed} {f} from course {ucb.course.name}')
-    return msgs
-
-
-@login_required
-def configure_save(request, usercoursebinding_id):
-    user = request.user
-    profile = user.profile
-    logger.debug(f"method: {request.method}, user: {user.username}")
-    try:
-        binding = UserCourseBinding.objects.get(id = usercoursebinding_id, user = request.user, is_teacher = True)
-        course = binding.course
-    except UserCourseBinding.DoesNotExist:
-        logger.error(f'abuse {user} tries to access usercoursebinding id {usercoursebinding_id}')
-        messages.error(request, 'Course does not exist')
-        return redirect('indexpage')
-
-    # handle meta
-    info = []
-    form_course = FormCourse(request.POST)
-    if form_course.is_valid():
-        course.name = form_course.cleaned_data['name']
-        course.description = form_course.cleaned_data['description']
-        course.image = form_course.cleaned_data['image']
-        course.save()
-        info.append(f"Configured {course.name}") #TODO: save only changed, and report changes
-
-    # handle teachers, students
-    info.extend( _manageusers(binding, request.POST.getlist('teacher-ids'), is_teacher = True) )
-    info.extend( _manageusers(binding, request.POST.getlist('student-ids'), is_teacher = False) )
-
-    # handle groups
-    delete_ids = request.POST.getlist('selection_group_removal')
-    bindings = CourseGroup.objects.filter(course = course, id__in = delete_ids)
-    if bindings:
-        info.append('Removed groups {}'.format(', '.join([ b.name for b in bindings])))
-        bindings.delete()
-    form_group = FormGroup(request.POST)
-    if form_group.is_valid():
-        g = CourseGroup.objects.create(course = course, name = form_group.cleaned_data['name'], description = form_group.cleaned_data['description'])
-        info.append(f'New group {g.name} is created')
-    m = []
-    for gi in map(lambda x: x.split('-')[-1], filter(lambda x: x.startswith('group-name-before-'), request.POST.keys())):
-        nb = request.POST[f'group-name-before-{gi}']
-        na = request.POST[f'group-name-after-{gi}']
-        db = request.POST[f'group-description-before-{gi}']
-        da = request.POST[f'group-description-after-{gi}']
-        if na and da and ((nb != na) or (db != da)):
-            g = CourseGroup.objects.get(id = gi, course = course)
-            g.name = na
-            g.description = da
-            g.save()
-            m.append(g.name)
-    if m:
-        info.append('Modified groups: {}.'.format(', '.join(m)))
-
-    # handle students in group
-    mapping = { k: json.loads(request.POST[f'grp-{k}']) for k in map(lambda x: x.split('-')[-1], filter(lambda x: x.startswith('grp-') and not x.split("-")[-1] in delete_ids, request.POST.keys())) }
-    info.extend( _groupstudents(binding, mapping) )
-        
-    if info:
-        messages.info(request, ' '.join(info))
-
-    return redirect('education:configure', usercoursebinding_id)

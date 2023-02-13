@@ -107,13 +107,15 @@ $("#course-manage").submit(function (e) {
         }
     }
   })
+
   $("#id_course_config").val(JSON.stringify( {
     'user_id': {{ user.id }},
     'course_id': "{{ course.id }}",
     'new_group': new_grp,
     'group': old_grp,
     'teachers': $.map($("input[id^=teacher-isshown-]"), function (k, v) { if (tw(k, "bind-teacher")) { return $(k).attr('id').split('-')[2]; } }),
-    'students': $.map($("input[id^=student-isshown-]"), function (k, v) { if (tw(k, "bind-student")) { return $(k).attr('id').split('-')[2]; } })
+    'students': $.map($("input[id^=student-isshown-]"), function (k, v) { if (tw(k, "bind-student")) { return $(k).attr('id').split('-')[2]; } }),
+    'grouping': $.map($("input[id^=grp-]"), function (k, v) { return Array([$(k).attr("id").split("-")[1], JSON.parse($(k).val())]) })
   }));
 });
 

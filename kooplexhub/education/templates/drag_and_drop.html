@@ -58,28 +58,28 @@ $('.dropzone').droppable({
   accept: ".drag",
   over: function (e, ui) {
 	  console.log ("over")
-	  var i = $( this ).attr( "id" ).split( "-" )[1]
-	  var u = parseInt( $( ui ).attr( "draggable" ).attr( "id" ) )
-	  console.log ("uid: " + u )
-	  console.log ("grp id: " + i )
-	  var h = $( this ).find( "#grp-" + i )
-          console.log( h )
-	  var ha = JSON.parse( h.val() )
+	  i = $( this ).attr( "id" ).split( "-" )[1]
+	  u = parseInt( $( ui ).attr( "draggable" ).attr( "id" ) )
+	  //console.log ("uid: " + u )
+	  //console.log ("grp id: " + i )
+	  h = $( this ).find( "#grp-" + i )
+          //console.log( h )
+	  ha = JSON.parse( h.val() )
 	  console.log ("before: " + ha)
 	  ha.push( u )
           ha = ha.filter(onlyUnique);
 	  console.log ("after: " + ha )
 	  h.val( JSON.stringify(ha) )
-	  var s = $( this ).find ( "span" )
+	  s = $( this ).find ( "span" )
           s.text( ha.length )
 	  //$(this).append("<p/>")
   },
   out: function (e, ui) {
 	  console.log ("out")
-	  var i = $( this ).attr( "id" ).split( "-" )[1]
-	  var u = parseInt( $( ui ).attr( "draggable" ).attr( "id" ) )
-	  var h = $( this ).find( "#grp-" + i )
-	  var ha = JSON.parse( h.val() )
+	  i = $( this ).attr( "id" ).split( "-" )[1]
+	  u = parseInt( $( ui ).attr( "draggable" ).attr( "id" ) )
+	  h = $( this ).find( "#grp-" + i )
+	  ha = JSON.parse( h.val() )
 	  console.log ("before: " + ha)
 	  const index = ha.indexOf(u);
           if (index > -1) {
@@ -87,7 +87,7 @@ $('.dropzone').droppable({
           }
 	  console.log ("after: " + ha)
 	  h.val( JSON.stringify(ha) )
-	  var s = $( this ).find ( "span" )
+	  s = $( this ).find ( "span" )
           s.text( ha.length )
   }
 }).sortable({
