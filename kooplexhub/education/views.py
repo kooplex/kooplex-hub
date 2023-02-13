@@ -73,7 +73,7 @@ class ConfigureCourseView(LoginRequiredMixin, generic.edit.UpdateView):
     model = Course
     template_name = 'course_configure.html'
     form_class = FormCourse
-    success_url = '/hub/course/list/' #FIXME: django.urls.reverse or shortcuts.reverse does not work reverse('education:courses')
+    success_url = '/hub/education/course/' #FIXME: django.urls.reverse or shortcuts.reverse does not work reverse('education:courses')
 
     def get_initial(self):
         initial = super().get_initial()
@@ -93,33 +93,30 @@ class ConfigureCourseView(LoginRequiredMixin, generic.edit.UpdateView):
 
     def form_valid(self, form):
         logger.info(form.cleaned_data)
-        raise Exception(str(form.cleaned_data))
-        projectname = form.cleaned_data['name']
+        #raise Exception(str(form.cleaned_data))
+        msgs = []
+        for group in form.cleaned_data.pop('new_groups', []):
+            group.save()
+            msgs.append(f"New group {group.name} is created.")
+        for group in form.cleaned_data.pop('groups', []):
+            group.save()
+            msgs.append(f"Updated group {group.name}.")
+        del_students = form.cleaned_data.pop('delete_students', None)
+        if del_students:
+            del_students.delete()
+            msgs.append(f"Deleted {len(del_students)} students.")
+        del_teachers = form.cleaned_data.pop('delete_teachers', None)
+        if del_teachers:
+            del_teachers.delete()
+            msgs.append(f"Deleted {len(del_teachers)} teachers.")
+        for b in form.cleaned_data.pop('new_bindings', []):
+            b.save()
+            msgs.append("New {} {} added to course".format("teacher" if b.is_teacher else "student", b.user))
         if msgs:
+            logger.info(' '.join(msgs))
             messages.info(self.request, ' '.join(msgs))
         return super().form_valid(form)
 
-@login_required
-def configure(request, usercoursebinding_id):
-    user = request.user
-    profile = user.profile
-    logger.debug(f"method: {request.method}, user: {user.username}")
-    try:
-        course = UserCourseBinding.objects.get(id = usercoursebinding_id, user = request.user, is_teacher = True).course
-    except UserCourseBinding.DoesNotExist:
-        logger.error(f'abuse {user} tries to access usercoursebinding id {usercoursebinding_id}')
-        messages.error(request, 'Course does not exist')
-        return redirect('indexpage')
-    context_dict = {
-            'menu_education': True,
-            'course': course,
-            'usercoursebinding_id': usercoursebinding_id,
-            'groupform': FormGroup(),
-            't_group': TableGroup(CourseGroup.objects.filter(course = course)),
-            'active': request.COOKIES.get('configure_course_tab', 'student'),
-            'student_group_map': course.groups,
-            }
-    return render(request, 'course_configure.html', context = context_dict)
 
 
 @require_http_methods(['GET'])

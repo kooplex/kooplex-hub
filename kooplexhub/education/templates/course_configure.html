@@ -2,6 +2,9 @@
 {% load render_table from django_tables2 %}
 {% load extras %}
 
+{% block head_content %}
+{% endblock %}
+
 
 {% block bodycontent %}
 <div class="card shadow p-3 mb-5 bg-light rounded">
@@ -31,16 +34,10 @@
       {# fixme: only show if image is changed #}
       <div class="alert alert-warning mt-2 mb-2" role="alert">If you decide to change the image, do not forget to restart the course container to take effect and notify your students to do so as well.</div>
     </div>
-    <div class="tab-pane mt-2 fade {% if active == "group" %}show active{% endif %}" id="courseGroup" role="tabpanel" aria-labelledby="tab-group">
-      {{ groupform }}
-      {% if t_group.data|length > 0 %}
-        {% render_table t_group %}
-      {% endif %}
-    </div>
     <div class="tab-pane fade {% if active == "teacher" %}show active{% endif %}" id="addteachersCourse" role="tabpanel" aria-labelledby="tab-teacher">
       <div class="d-flex align-items-baseline">
         <div class="flex-fill w-100 me-1">
-          <input class="form-control me-2 mb-3 mt-3" type="text" id="search_teacher_add" placeholder="Search teacher" title="Type in a name">
+          <input class="form-control me-2 mb-3 mt-3" type="text" id="search_teacher" placeholder="Search teacher" title="Type in a name">
           {% render_table form.t_teachers_add %}
         </div>
         <div class="flex-fill w-100 mb-1">
@@ -49,16 +46,19 @@
       </div>
     </div>
     <div class="tab-pane fade {% if active == "student" %}show active{% else %}false{% endif %}" id="addstudentsCourse" role="tabpanel" aria-labelledby="tab-student">
-      <p class="alert alert-danger"><button type="submit" class="btn btn-danger" name="button" value="reset" onclick="return confirm('Are you sure?');">Reset</button> Remove all {{ t_students.data|length }} students from the course.</p>
+      <p class="alert alert-danger" id="reset_p"><button type="button" class="btn btn-danger" id="reset_button" name="button" value="reset">Reset</button> Remove all {{ form.t_students.data|length }} students from the course.</p>
       <div class="d-flex align-items-baseline">
         <div class="flex-fill w-100 me-1">
-          <input class="form-control me-2 mb-3 mt-3" type="text" id="search_student_add" placeholder="Search student" title="Type in a name">
+          <input class="form-control me-2 mb-3 mt-3" type="text" id="search_student" placeholder="Search student" title="Type in a name">
           {% render_table form.t_students_add %}
         </div>
         <div class="flex-fill w-100 mb-1">
           {% render_table form.t_students %}
         </div>
       </div>
+    </div>
+    <div class="tab-pane mt-2 fade {% if active == "group" %}show active{% endif %}" id="courseGroup" role="tabpanel" aria-labelledby="tab-group">
+      {% render_table form.t_group %}
     </div>
     <div class="tab-pane fade {% if active == "grpstudent" %}show active{% else %}false{% endif %}" id="groupStudent" role="tabpanel" aria-labelledby="tab-grpstudent">
       {% include 'drag_and_drop.html' %}
@@ -67,98 +67,128 @@
 </form>
 
 <script>
+{# save in a cookie the active tab #}
 $("#courseConfigTabs li a").on("click", function () {
-  tab = $( this ).attr("id").split('-', 2)[1]
-  console.log( tab )
+  tab = $( this ).attr("id").split('-', 2)[1];
+  console.log( tab );
   $.cookie("configure_course_tab", tab, { 'path': '/;SameSite=Strict', 'secure': true });
 });
+
+{# rewrite table headers and trigger set_visibility #}
 $(document).ready(function() {
   $("#bind-teacher").find("th").text("Teachers");
   $("#bind-student").find("th").text("Students");
+  $("#search_student").keyup();
+  $("#search_teacher").keyup();
 });
 
-{# FIXME: these search could use common.js? #}
-$("#search_student_add").keyup(function() {
-  var pattern = $( this ).val().toUpperCase();
-  console.log( "search: " + pattern );
-  $("input[id^='search-student-'").each(function() {
-    var widget = $( this ).parent().parent();
-    if (widget.parent().parent().attr("id") == "bind-student") {
-      return;
-    }
-    var hide_it = true;
-    if (pattern.length > 0) {
-      var name = $( this ).attr("value").toUpperCase();
-      if ( name.indexOf(pattern) > -1 ) {
-        hide_it = false;
+{# save the rest of the from details befire submission #}
+$("#course-manage").submit(function (e) {
+  // process groups
+  new_grp = Array();
+  old_grp = Array();
+  $("[name^=group-name][type!=hidden]").each(function() {
+    my_id = $(this).attr('id');
+    id_description = my_id.replace('name', 'description');
+    name = $(this).val();
+    description = $("#" + id_description).val();
+    t = my_id.split('-')[2];
+    if (t === "new") {
+      if ((name.length > 0) && (description.length > 0)) {
+        new_grp.push([name, description]);
       }
-    }
-    if (hide_it) {
-      widget.hide();
     } else {
-      widget.show();
+	old_id = my_id.replace('after', 'before');
+	old_description_id = id_description.replace('after', 'before');
+	old_name = $("#" + old_id).val();
+	old_description = $("#" + old_description_id).val();
+        if ((old_name != name) || (old_description != description)) {
+          old_grp.push([my_id.split('-')[3], name, description]);
+        }
     }
-  });
-}).keyup();
-$("#search_teacher_add").keyup(function() {
-  var pattern = $( this ).val().toUpperCase();
-  console.log( "search: " + pattern );
-  $("input[id^='search-teacher-'").each(function() {
-    var widget = $( this ).parent().parent();
-    if (widget.parent().parent().attr("id") == "bind-teacher") {
-      return;
+  })
+  $("#id_course_config").val(JSON.stringify( {
+    'user_id': {{ user.id }},
+    'course_id': "{{ course.id }}",
+    'new_group': new_grp,
+    'group': old_grp,
+    'teachers': $.map($("input[id^=teacher-isshown-]"), function (k, v) { if (tw(k, "bind-teacher")) { return $(k).attr('id').split('-')[2]; } }),
+    'students': $.map($("input[id^=student-isshown-]"), function (k, v) { if (tw(k, "bind-student")) { return $(k).attr('id').split('-')[2]; } })
+  }));
+});
+
+{# check if widget belongs to student/teacher table #}
+function tw(obj, what, levels = 3) {
+  return $(obj).parents().eq(levels).attr('id') === what;
+}
+
+{# hide all table rows except for those matching #}
+function is_visible_callback(obj, obj_id, is_empty, is_found) {
+  if ((obj == "student") || (obj == "teacher")) {
+    if (tw($("input[id$=" + obj + "-isshown-" + obj_id), obj)) {
+      return true;
     }
-    var hide_it = true;
-    if (pattern.length > 0) {
-      var name = $( this ).attr("value").toUpperCase();
-      if ( name.indexOf(pattern) > -1 ) {
-        hide_it = false;
+    if (is_empty) {
+      return false;
+    }
+    return is_found;
+  }
+  return true;
+}
+
+
+{# handle reset button #}
+$("#reset_button").click(function() {
+  if (confirm('Are you sure?')) {
+    $("span[id^='student-'").each(function() {
+      if (tw(this, "bind-student")) {
+        $(this).click();
+        $("#reset_p").addClass("d-none");
       }
-    }
-    if (hide_it) {
-      widget.hide();
-    } else {
-      widget.show();
-    }
-  });
-}).keyup();
+    });
+    console.log("click");
+  }
+});
+
+{# handle clicking on table rows #}
 $("span[id^='student-'").click(function() {
-  var userid = $( this ).attr("id").split("-")[1];
-  var tr = $( this ).parent().parent();
-  var t = tr.parent().parent().attr("id");
+  userid = $( this ).attr("id").split("-")[1];
+  tr = $( this ).parent().parent();
+  t = tr.parent().parent().attr("id");
   console.log( t );
   var other_table;
   if (t === "users-student") {
     other_table = $("#bind-student");
     $( this ).parent().find("input[type='hidden'][name").each(function() {
-      var before = $(this).attr("name");
+      before = $(this).attr("name");
       $( this ).attr("name", before.substring(1));
     });
   } else {
     other_table = $("#users-student");
     $( this ).parent().find("input[type='hidden'][name").each(function() {
-      var before = $(this).attr("name");
+      before = $(this).attr("name");
       $( this ).attr("name", "_" + before);
     });
   }
   other_table.children("tbody").append(tr);
+  $("#tab-grpstudent").attr("disabled", true);
 });
 $("span[id^='teacher-'").click(function() {
-  var userid = $( this ).attr("id").split("-")[1];
-  var tr = $( this ).parent().parent();
-  var t = tr.parent().parent().attr("id");
+  userid = $( this ).attr("id").split("-")[1];
+  tr = $( this ).parent().parent();
+  t = tr.parent().parent().attr("id");
   console.log( t );
   var other_table;
   if (t === "users-teacher") {
     other_table = $("#bind-teacher");
     $( this ).parent().find("input[type='hidden'][name").each(function() {
-      var before = $(this).attr("name");
+      before = $(this).attr("name");
       $( this ).attr("name", before.substring(1));
     });
   } else {
     other_table = $("#users-teacher");
     $( this ).parent().find("input[type='hidden'][name").each(function() {
-      var before = $(this).attr("name");
+      before = $(this).attr("name");
       $( this ).attr("name", "_" + before);
     });
   }
@@ -167,54 +197,3 @@ $("span[id^='teacher-'").click(function() {
 </script>
 {% endblock %}
 
-{% comment %}
-$("input[id^='u-'").on("click", function() {
-  console.log( this )
-  var lbl = $("#lbl_" + $(this).attr("id"))
-  if( $( this ).is(':checked') ) {
-    lbl.text("Add")
-    $(this).css('background-color', "rgb(13, 253, 110)")
-  } else {
-    lbl.text("Skip")
-    $(this).css('background-color', "rgb(255, 255, 255)")
-  }
-});
-$("input[id^='ur-'").on("click", function() {
-  console.log( this )
-  console.log(  $(this).css('background-color') )
-  var lbl = $("#lbl_" + $(this).attr("id"))
-  if( $( this ).is(':checked') ) {
-    lbl.text("Added")
-    $(this).css('background-color', "rgb(13, 110, 253)")
-  } else {
-    lbl.text("Remove")
-    $(this).css('background-color', "rgb(253, 110, 13)")
-  }
-})
-$("#search_student").keyup(function() {
-  var pattern = $( this ).val().toUpperCase();
-  console.log( "search student: " + pattern );
-  $( "#courseAddStudentForm" ).find('tr').each(function() {
-    if ( $( this ).parent().is("thead") ) {
-      return;
-    }
-    var hide_it = true;
-    if (pattern.length > 0) {
-      $( this ).find("input[name='search_student'").each(function() {
-        var name = $( this ).val().toUpperCase();
-        if ( name.indexOf(pattern) > -1 ) {
-	  hide_it = false;
-        }
-      });
-    } else {
-      hide_it = false;
-    }
-    if (hide_it) {
-      $( this ).hide();
-    } else {
-      $( this ).show();
-    }
-  });
-});
-
-{% endcomment %}

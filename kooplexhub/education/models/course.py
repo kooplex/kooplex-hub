@@ -27,6 +27,10 @@ class Course(models.Model):
         return f'{self.name} ({self.folder})'
 
     @property
+    def search(self):
+        return f"{self.name} {self.folder} {self.description} {self.teachers()}".upper()
+
+    @property
     def groups(self):
         from education.models import CourseGroup
         students = set([ b.user for b in self.studentbindings ])
@@ -83,6 +87,14 @@ class Course(models.Model):
     @staticmethod
     def get_usercourse(course_id, user):
         return UserCourseBinding.objects.get(user = user, course_id = course_id).course
+
+    def is_user_authorized(self, user):
+        try:
+            UserCourseBinding.objects.get(user = user, course = self)
+            return True
+        except UserCourseBinding.DoesNotExist:
+            return False
+
 
 
 class UserCourseBinding(models.Model):

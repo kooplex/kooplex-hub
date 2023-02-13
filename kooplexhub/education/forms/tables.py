@@ -556,17 +556,13 @@ class TableUser(tables.Table):
 
     def render_user(self, record):
         user = record.user
-        hidden = f"""
-<input type="hidden" name="{self.prefix}-binding_id" value="{record.id}">
-        """ if record.id else f"""
-<input type="hidden" name="{self.prefix}-user_id" value="{record.user.id}">
-        """
-        prefix = '' if record.id else '_'
+        prefix = 'B' if record.id else ''
         who = "teacher" if self.is_teacher else "student"
         return format_html(f"""
 {ru(user, who)}
-<input type="hidden" id="search-{who}-{user.id}" value="{user.username} {user.first_name} {user.last_name} {user.first_name}">
-<input type="hidden" name="{prefix}{who}-ids" value="{user.id}">
+<input type="hidden" id="{prefix}{who}-search-{user.id}" value="{user.profile.search}">
+<input type="hidden" id="{prefix}{who}-match-{user.id}" value=true>
+<input type="hidden" id="{who}-isshown-{user.id}" value=true>
         """)
 
 
@@ -587,36 +583,44 @@ class TableUser(tables.Table):
 class TableGroup(tables.Table):
     class Meta:
         model = CourseGroup
-        fields = ('course', 'name', 'description',)
-        fields = ('button', 'course', 'name', 'description',)
-        attrs = { 
-                 "class": "table table-striped table-bordered mt-3", 
-                 "thead": { "class": "thead-dark table-sm" }, 
-                 "td": { "class": "p-1 text-light" }, 
-                 "th": { "class": "table-secondary p-1" } 
-                }
-    button = tables.Column(verbose_name = 'Delete', orderable = False, empty_values = ())
-    course = tables.Column(orderable = False, empty_values = ())
+        fields = ('name', 'description',)
+        fields = ('button', 'name', 'description',)
+        attrs = table_attributes
+
+    button = tables.Column(verbose_name = '', orderable = False, empty_values = ())
     name = tables.Column(orderable = False, empty_values = ())
     description = tables.Column(orderable = False, empty_values = ())
 
     def render_button(self, record):
-        return format_html(f"""
+        if record.id:
+            return format_html(f"""
 <input type="checkbox" class="btn-check" name="selection_group_removal" value="{record.id}" id="btn-dg-{record.id}">
 <label class="btn btn-outline-danger" for="btn-dg-{record.id}"><i class="bi bi-trash"></i></label>
-        """)
+            """)
+        else:
+            return format_html("""<button type="button" class="btn btn-success"><i class="bi bi-plus"></i></button>""")
 
     def render_name(self, record):
-        return format_html(f"""
-<input type="hidden" name="group-name-before-{record.id}" value="{record.name}">
-<input type="text" name="group-name-after-{record.id}" value="{record.name}">
-        """)
+        if record.id:
+            return format_html(f"""
+<input type="hidden" name="group-name" id="group-name-before-{record.id}" value="{record.name}">
+<input type="text" name="group-name" id="group-name-after-{record.id}" value="{record.name}">
+            """)
+        else:
+            return format_html(f"""
+<input type="text" name="group-name" id="group-name-new-1" value="" placeholder="name a new group">
+            """)
 
     def render_description(self, record):
-        return format_html(f"""
-<input type="hidden" name="group-description-before-{record.id}" value="{record.description}">
-<textarea name="group-description-after-{record.id}">{record.description}</textarea>
-        """)
+        if record.id:
+            return format_html(f"""
+<input type="hidden" name="group-description" id="group-description-before-{record.id}" value="{record.description}">
+<textarea name="group-description" id="group-description-after-{record.id}">{record.description}</textarea>
+            """)
+        else:
+            return format_html(f"""
+<textarea name="group-description" id="group-description-new-1" placeholder="describe a new group"></textarea>
+            """)
 
 
 

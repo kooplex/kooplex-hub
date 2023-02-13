@@ -32,13 +32,9 @@ def dropgroup(grpmap):
     n = len( ids )
     hidden = json.dumps(ids)
     return format_html(f"""
-<div class="col">
 <div id="dropzone-{gid}" class="dropzone">
   <h6 data-bs-toggle="tooltip" title="{gdesc}">{gname}</h6><p>student counter: <span id="cnt-{gid}">{n}</span></p>
   {student_buttons}
-  <input type="hidden" id="grp-{gid}" name="grp-{gid}" value='{hidden}'>
-  <input type="hidden" id="before_grp-{gid}" name="before_grp-{gid}" value='{hidden}'>
-</div>
 </div>
     """)
 

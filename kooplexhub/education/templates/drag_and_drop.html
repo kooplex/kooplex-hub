@@ -1,21 +1,6 @@
 {% load drag %}
 
-<div class="container-fluid">
-  <div class="row">
-    {% for a in student_group_map.items %}
-      {{ a|dropgroup }}
-    {% endfor %}
-  </div>
-</div>
-
-
 <style>
-.col {
-  padding: 5px;
-  margin: 5px;
-  border-radius: 10px;
-}
-
 .drag {
   border: solid 1px;
   background: #efefef;
@@ -40,7 +25,7 @@
   margin-bottom: 10px;
   background-color: rgb(255, 255, 255);
   padding: 5px 10px;
-  border-radisu: 3px;
+  border-radius: 3px;
   border: 1px solid rgb(204, 204, 204);
   position: relative;
 }
@@ -51,6 +36,12 @@
   right: 4px;
 }
 </style>
+
+<div class="container-fluid">
+  {% for a in course.groups.items %}
+    {{ a|dropgroup }}
+  {% endfor %}
+</div>
 
 
 <script>
