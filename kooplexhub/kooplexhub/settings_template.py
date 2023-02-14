@@ -43,7 +43,6 @@ ALLOWED_HOSTS = [
 
 SERVERNAME=""
 FQDN="https://"+SERVERNAME
-FQDN=""
 FQDN_AUTH=""
 URL_MANUAL="https://xwiki.vo.elte.hu/en/kooplex-manual"
 manual_mapping = {
@@ -198,6 +197,7 @@ STATICFILES_DIRS = (
         f'{BASE_DIR}/hub/templates/static',
         f'{BASE_DIR}/project/templates/static',
         f'{BASE_DIR}/container/templates/static',
+        f'{BASE_DIR}/thumbnails',
 )
 
 # Default primary key field type
@@ -311,6 +311,12 @@ KOOPLEX = {
               "nvidia.com/gpu": 0,
               "memory": 28
             },
+            "maxrequests": {
+              "cpu": 4,
+              "nvidia.com/gpu": 0,
+              "memory": 28,
+              "idletime": 48,
+            },
         },
         'nodeSelector_k8s': { "kubernetes.io/hostname": "kubelet1-onco2" },
         #'nodeSelector_k8s': { "kubernetes.io/hostname": "veo1" },
@@ -338,8 +344,9 @@ KOOPLEX = {
             'mountPath_report': '/v/reports/{report.project.subpath}-{report.folder}',
             #ATTACHMENT
             'claim-attachment': 'attachments',
-            'subPath_attachment': '{attachment.folder}',
-            'mountPath_attachment': '/v/attachments/{attachment.folder}',
+            'mountPath_attachment': '/v/attachments/{volume.folder}',
+            # VOLUME
+            'mountPath_volume': '/v/volumes/{volume.folder}',
             # EDU
             'claim-edu': 'edu',
             'mountPath_course_workdir': '/v/courses/{course.folder}',
@@ -354,8 +361,6 @@ KOOPLEX = {
             'mountPath_course_assignment_correct': '/v/courses/{course.folder}.correct',
             'subPath_course_assignment_correct': 'course_assignment/{course.folder}/correctdir/{user.username}',
             'subPath_course_assignment_correct_all': 'course_assignment/{course.folder}/correctdir',
-            # VOLUME
-            'mountPath_volume': '/v/volumes/{volume.cleanname}',
             # KUBE JOBS
             'mountPath_kubejobsconfig': '/etc/kubejobsconfig',
             'claim-jobtools': 'job-tools',
