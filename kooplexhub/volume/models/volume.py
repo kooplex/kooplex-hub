@@ -20,12 +20,15 @@ class Volume(models.Model):
         SCP_ATTACHMENT: 'Users can create, list and may mount attachments.',
     }
 
-    folder = models.CharField(max_length = 64, unique = True, validators = [ my_alphanumeric_validator('Enter a clean volume name containing only letters and numbers.') ])
+    folder = models.CharField(max_length = 64, validators = [ my_alphanumeric_validator('Enter a clean volume name containing only letters and numbers.') ])
     description = models.TextField(null = True)
     claim = models.CharField(max_length = 64)
     subPath = models.CharField(max_length = 64, default = "", blank = True)
     scope = models.CharField(max_length = 16, choices = SCP_LOOKUP.items(), default = SCP_PRIVATE)
     is_present = models.BooleanField(default = True)
+
+    class Meta:
+        unique_together = [['claim', 'folder']]
 
     def __str__(self):
         return "Volume /{} ({}:{})".format(self.folder, self.claim, self.subPath)
