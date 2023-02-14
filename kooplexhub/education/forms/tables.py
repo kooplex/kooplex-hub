@@ -86,13 +86,14 @@ class TableAssignmentConf(tables.Table):
         model = Assignment
         fields = () 
         sequence = ('meta', 'details', 'dates', 'quota', 'extra_info', 'delete')
-        attrs = { 
-                 "class": "table table-bordered", 
-                 "thead": { "class": "thead-dark table-sm" }, 
-                 "th": { "class": "table-secondary p-1" },
-                 "td": { "class": "p-1 text-light" }, #tbody.td.th not applied 
-                 "tbody": { "class": "text-light" }, 
-                }
+        attr = table_attributes#FIXME: add border, combine styling
+        #attrs = { 
+        #         "class": "table table-bordered", 
+        #         "thead": { "class": "thead-dark table-sm" }, 
+        #         "th": { "class": "table-secondary p-1" },
+        #         "td": { "class": "p-1 text-light" }, #tbody.td.th not applied 
+        #         "tbody": { "class": "text-light" }, 
+        #        }
         empty_text = _("You have not created any assignments yet")
 
     meta = tables.Column(orderable = False, empty_values = ())
@@ -111,6 +112,9 @@ class TableAssignmentConf(tables.Table):
 <label class="form-check-label mt-1 mb-1" for="cts-{record.id}" id="lbl_ats-{record.id}" data-toggle="tooltip" title="Creation timestamp"><i class="bi bi-clock-history"></i>&nbsp;</label>
 <span id="cts-{record.id}">{rd(record.created_at)}</span><br>
 {rf(record.folder)}
+<input type="hidden" id="assignment-search-{record.id}" value="{record.search}">
+<input type="hidden" id="assignment-match-{record.id}" value=true>
+<input type="hidden" id="assignment-isshown-{record.id}" value=true>
         """)
 
     def render_details(self, record):

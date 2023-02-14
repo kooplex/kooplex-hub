@@ -40,6 +40,10 @@ class Assignment(models.Model):
         return f"Assignment {self.name} (course {self.course.name}@{self.creator.username})"
 
     @property
+    def search(self):
+        return f"{self.name} {self.description} {self.folder} {self.course.name}".upper()
+
+    @property
     def safename(self):
         return standardize_str(f'{self.course.name}-{self.folder}')
 

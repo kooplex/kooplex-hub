@@ -17,7 +17,7 @@
 
 {% block assignment_content %}
 <div class="tab-pane fade {% if active == "new" %}show active{% endif %}" id="newAssignment" role="tabpanel" aria-labelledby="tab-new">
-  <div class="card shadow mt-3 p-3 mb-2 bg-light rounded">
+  <div class="card shadow bg-light rounded">
     {% if form.okay %}
     <form id="assignments-form-new" class="form-horizontal was-validated" action="{% url 'education:assignment_new' %}" method="post">
       {% csrf_token %}

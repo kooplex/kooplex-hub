@@ -159,3 +159,48 @@ class FormAssignment(forms.ModelForm):
         else:
             self.okay = False
 
+
+class FormAssignmentConfigure(forms.Form):
+    change_log = forms.CharField(widget = forms.HiddenInput(), required = True)
+    def __init__(self, *args, **kwargs):
+        from . import TableAssignmentConf
+        user = kwargs['initial'].get('user')
+        assignments = kwargs['initial'].get('assignments')
+        super().__init__(*args, **kwargs)
+        if assignments:
+            self.okay = True
+            self.t_assignments = TableAssignmentConf(assignments)
+        else:
+            self.okay = False
+
+    def clean(self):
+        cleaned_data = super().clean()
+        #raise Exception(str(cleaned_data))
+        details = json.loads(cleaned_data.pop("change_log"))
+        userid = details["user_id"]
+        delete_ids = list(map(lambda i: int(i), details["delete_ids"]))
+        delete_assignments = list(Assignment.objects.filter(id__in = delete_ids))
+        # authorize
+        for assignment in delete_assignments:
+            UserCourseBinding.objects.get(user__id = userid, course = assignment.course, is_teacher = True)
+        cleaned_data["delete_assignments"] = delete_assignments
+        update = []
+        for r in details["changes"]:
+            assignment_id = r["assignment_id"]
+            if assignment_id in delete_ids:
+                continue
+            assignment = Assignment.objects.get(id = assignment_id)
+            # authorize
+            UserCourseBinding.objects.get(user__id = userid, course = assignment.course, is_teacher = True)
+            changed = False
+            for c in r["changes"]:
+                attr = c["attribute"]
+                if hasattr(assignment, attr):
+                    setattr(assignment, attr, c["value"])
+                    changed = True
+            if changed:
+                update.append(assignment)
+        if update:
+            cleaned_data["assignments"] = update
+        return cleaned_data
+

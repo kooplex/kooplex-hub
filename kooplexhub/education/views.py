@@ -22,7 +22,7 @@ from hub.templatetags.extras import render_user
 from container.models import Image, Container
 from education.models import UserCourseBinding, UserAssignmentBinding, Assignment, CourseContainerBinding, Course
 from education.forms import FormCourse
-from education.forms import FormAssignment
+from education.forms import FormAssignment, FormAssignmentConfigure
 from education.forms import TableAssignment, TableAssignmentConf, TableAssignmentHandle, TableAssignmentMass, TableAssignmentSummary, TableAssignmentMassAll, TableAssignmentStudentSummary, TableCourseStudentSummary
 
 from kooplexhub.settings import KOOPLEX
@@ -163,6 +163,41 @@ class NewAssignmentView(LoginRequiredMixin, generic.FormView):
         return super().form_valid(form)
 
 
+class ConfigureAssignmentView(LoginRequiredMixin, generic.FormView):
+    template_name = 'assignment_configure.html'
+    form_class = FormAssignmentConfigure
+    success_url = '/hub/education/course/'
+
+    def get_initial(self):
+        initial = super().get_initial()
+        user = self.request.user
+        initial['user'] = user
+        courses = [ b.course for b in UserCourseBinding.objects.filter(user = user, is_teacher = True) ]
+        initial['assignments'] = Assignment.objects.filter(course__in = courses)
+        return initial
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['menu_education'] = True
+        context['submenu'] = 'assignment_teacher'
+        context['active'] = self.request.COOKIES.get('assignment_teacher_tab', 'conf')
+        return context
+
+    def form_valid(self, form):
+        logger.info(form.cleaned_data)
+        msgs = []
+        for a in form.cleaned_data["delete_assignments"]:
+            a.delete()
+            msgs.append(f"Assignment {a.name} is deleted from course {a.course.name}.")
+        for a in form.cleaned_data["assignments"]:
+            a.save()
+            msgs.append(f"Assignment {a.name} in course {a.course.name} is updated.")
+        if msgs:
+            messages.info(self.request, ' '.join(msgs))
+        return super().form_valid(form)
+
+
+
 @require_http_methods(['GET'])
 @login_required
 def assignment_teacher(request):
@@ -181,19 +216,6 @@ def assignment_teacher(request):
         logger.error(f'not implemented tab: {active} by {request.user}')
         return redirect('indexpage')
 
-@require_http_methods(['GET'])
-@login_required
-def assignment_configure(request):
-    user = request.user
-    courses = [ b.course for b in UserCourseBinding.objects.filter(user = user, is_teacher = True) ]
-    assignments = list(Assignment.objects.filter(course__in = courses))
-    context_dict = {
-        'menu_education': True,
-        'submenu': 'assignment_teacher',
-        'active': request.COOKIES.get('assignment_teacher_tab', 'conf'),
-        't_assignment_config': TableAssignmentConf(assignments),
-    }
-    return render(request, 'assignment_configure.html', context = context_dict)
 
 
 def _extract_timestamp(d):
