@@ -44,7 +44,7 @@
         <p class="card-text"><strong>Description:</strong> {{ course.description }}</p>
         <p class="card-text"><strong>Groups:</strong> {{ course|csv_groups }}</p>
         {#<p class="card-text"><strong>Course codes:</strong> {{ course|csv_coursecodes }}</p>#}
-        <p class="card-text"><strong>Folder:</strong> {{ course.subpath }}</p>
+        <p class="card-text"><strong>Folder:</strong> {{ course.folder }}</p>
         <p class="card-text"><strong>Assignments:</strong> {{ course|csv_assignments }}</p>
       </div>
       <div class="modal-footer">

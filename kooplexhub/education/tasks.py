@@ -16,8 +16,8 @@ logger = get_task_logger(__name__)
 
 
 @shared_task()
-def assignment_handout(assignment_id):
-    a = Assignment.objects.get(id = assignment_id)
+def assignment_handout(course_id, assignment_folder):
+    a = Assignment.objects.get(course__id = course_id, folder = assignment_folder)
     logger.info(f"handing out assignment {a.name} of course {a.course}")
     for sb in a.course.studentbindings:
         b, created = UserAssignmentBinding.objects.get_or_create(assignment = a, user = sb.user)
@@ -27,8 +27,8 @@ def assignment_handout(assignment_id):
 
 
 @shared_task()
-def assignment_collect(assignment_id):
-    a = Assignment.objects.get(id = assignment_id)
+def assignment_collect(course_id, assignment_folder):
+    a = Assignment.objects.get(course__id = course_id, folder = assignment_folder)
     logger.info(f"collecting assignment {a.name} of course {a.course}")
     for b in UserAssignmentBinding.objects.filter(assignment = a, state = UserAssignmentBinding.ST_WORKINPROGRESS):
         b.collect(False)

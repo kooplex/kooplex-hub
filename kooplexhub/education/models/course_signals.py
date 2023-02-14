@@ -29,7 +29,11 @@ def create_course(sender, instance, **kwargs):
         one_off = True,
         kwargs = json.dumps({
             'folders': folders,
-            'grant_groupaccess': { group.id: [ (course_public(instance), True, True) ] },
+            'grant_groupaccess': { group.id: [ 
+                (course_public(instance), { 'recursive': True, 'readonly': True }),
+                (course_assignment_root(instance), { 'recursive': False, 'readonly': True, 'follow': False }), 
+                (course_assignment_root(instance), { 'recursive': False, 'readonly': True, 'follow': True }), 
+                ] },
         })
     )
 
@@ -63,16 +67,11 @@ def add_usercourse(sender, instance, **kwargs):
     now = datetime.datetime.now()
     folder_wd = course_workdir(instance)
     folders = [ folder_wd ]
-    folder_tups = [ (folder_wd, False, True) ]
+    user_acl = [ (folder_wd, { 'recursive': False, 'readonly': False }) ]
+    group_acl = []
     if instance.is_teacher:
-        folder_tups.extend([ (f(instance.course), False, True) for f in [ course_public, course_assignment_prepare_root, assignment_correct_root ] ])
-        folder_tups.extend([ (assignment_workdir_root(b), True, True) for b in instance.course.studentbindings ])
-    else:
-        folder_awd = assignment_workdir_root(instance)
-        folders.append(folder_awd)
-        folder_tups.append( (folder_awd, True, True) )
-    acl = { instance.user.id: folder_tups }
-    acl.update({ b.user.id: [(folder_wd, True, True)] for b in instance.course.teacherbindings })
+        user_acl.extend([ (f(instance.course), { 'readonly': False, 'recursive': True }) for f in [ course_public, course_assignment_prepare_root ] ])
+        user_acl.extend([ (assignment_correct_root(instance.course), { 'readonly': False, 'recursive': False, 'follow': True }) ])  #TODO: existing subfolders not handled
     schedule_now = ClockedSchedule.objects.create(clocked_time = now)
     PeriodicTask.objects.create(
         name = f"course_folders_{instance.course.cleanname}-{instance.user}-{now}",
@@ -81,7 +80,8 @@ def add_usercourse(sender, instance, **kwargs):
         one_off = True,
         kwargs = json.dumps({
             'folders': folders,
-            'grant_useraccess': acl,
+            'grant_useraccess': { instance.user.id: user_acl },
+            'grant_groupaccess': { group.id: group_acl },
         })
     )
 

@@ -18,37 +18,16 @@
 {% block assignment_content %}
 <div class="tab-pane fade {% if active == "new" %}show active{% endif %}" id="newAssignment" role="tabpanel" aria-labelledby="tab-new">
   <div class="card shadow mt-3 p-3 mb-2 bg-light rounded">
-    {% if f_assignment|length > 0 %}
-    <form id="assignments-form-new" class="form-horizontal" action="{% url 'education:assignment_new_save' %}" method="post">
+    {% if form.okay %}
+    <form id="assignments-form-new" class="form-horizontal was-validated" action="{% url 'education:assignment_new' %}" method="post">
       {% csrf_token %}
-      <input type="hidden" name="course_id" id="course_id" value="">
       <table>
-        <thead>
-          <tr>
-            <th><label class="mt-2" for="course_selected">Selected course: </label></th>
-            <td>
-              <select id="course_selected" name="course_selected" class="form-select" style="width: 100%">
-                {% for f in f_assignment %}
-                  {% if f.okay %}
-                  <option value="{{ f.course.id }}">{{ f.course }}</option>
-                  {% endif %}
-                {% endfor %}
-              </select>
-            </td>
-          </tr>
-        </thead>
-        {% for f in f_assignment %}
-          {% if f.okay %}
-          <tbody style="display: none" id="newAssignmentForm-{{ f.course.id }}">
-              {{ f.as_table }}
-          </tbody>
-          {% endif %}
-        {% endfor %}
+        {{ form.as_table }}
       </table>
       {% apply_cancel label_apply="Create" icon_apply="bi bi-check-circle-fill" color_apply="btn-success" %}
     </form>
     {% else %}
-      {% include 'empty.html' with empty_body='There are no candidate subfolders in <code>assignment_prepare</code> directory. Please create one and place all files into it to be part of a new assignment. Empty folders cannot be selected.' skip_border=True %}
+      {% include 'empty.html' with empty_body='<p class="text-dark">There are no candidate subfolders in <code>assignment_prepare</code> directory. Please create one and place all files into it to be part of a new assignment. Empty folders cannot be selected.</p>' skip_border=True %}
     {% endif %}
   </div>
 </div>
@@ -56,50 +35,7 @@
 
 {% block child_scripts %}
 <script>
-$("#course_selected").change(function () {
-  var old = $( "#course_id" ).val();
-  var sel;
-  $( "#course_selected>option:selected" ).each(function() {
-    sel = $( this ).val();
-    $( "#course_id" ).val( sel );
-  });
-  if (old) {
-    $( "#newAssignmentForm-" + old ).hide();
-    $( "#newAssignmentForm-" + old ).find('input').each(function() {
-      $( this ).prop( "disabled", true );
-    });
-    $( "#newAssignmentForm-" + old ).find('textarea').each(function() {
-      $( this ).prop( "disabled", true );
-    });
-    $( "#newAssignmentForm-" + old ).find('select').each(function() {
-      $( this ).prop( "disabled", true );
-    });
-  } else {
-    $('[id^=newAssignmentForm-]').each(function() {
-      $( this ).find('input').each(function() {
-        $( this ).prop( "disabled", true );
-      });
-      $( this ).find('textarea').each(function() {
-        $( this ).prop( "disabled", true );
-      });
-      $( this ).find('select').each(function() {
-        $( this ).prop( "disabled", true );
-      });
-    });
-  }
-  $( "#newAssignmentForm-" + sel ).show();
-  $( "#newAssignmentForm-" + sel ).find('input').each(function() {
-    $( this ).prop( "disabled", false );
-  });
-  $( "#newAssignmentForm-" + sel ).find('textarea').each(function() {
-    $( this ).prop( "disabled", false );
-  });
-  $( "#newAssignmentForm-" + sel ).find('select').each(function() {
-    $( this ).prop( "disabled", false );
-  });
-  console.log( "chg: " + old + " -> " + sel );
-}).change();
-// loop over all linked datetime picker widgets
+{# loop over all linked datetime picker widgets #}
 document.querySelectorAll('[id^="linkedPicker-"][id$="_valid_from_widget"]').forEach(function(linkedPicker1Element) {
 	console.log(linkedPicker1Element);
   const linked1 = new tempusDominus.TempusDominus(linkedPicker1Element, {

@@ -99,8 +99,11 @@ class FormContainer(forms.ModelForm):
    
     # FIXME: render a toggle switch
     #start_teleport = forms.BooleanField(
-    #    widget = 
-    #)
+    #        widget = forms.CheckboxInput(attrs = { 'data-size': 'small', 'data-toggle': 'toggle', 
+    #            'data-on': "<span class='oi oi-trash'></span>", 'data-off': "<span class='bi bi-check-lg'></span>",
+    #            'data-onstyle': "danger", 'data-offstyle': "secondary" }), 
+    #        required = False,
+    #    )
 
     def descriptions(self):
         import base64

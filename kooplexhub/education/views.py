@@ -121,6 +121,47 @@ class ConfigureCourseView(LoginRequiredMixin, generic.edit.UpdateView):
         return super().form_valid(form)
 
 
+class NewAssignmentView(LoginRequiredMixin, generic.FormView):
+    model = Assignment
+    template_name = 'assignment_new.html'
+    form_class = FormAssignment
+    success_url = '/hub/education/course/'
+
+    def get_initial(self):
+        initial = super().get_initial()
+        user = self.request.user
+        initial['user'] = user
+        return initial
+
+    def get_context_data(self, **kwargs):
+        l = reverse('education:courses')
+        context = super().get_context_data(**kwargs)
+        context['menu_education'] = True
+        context['submenu'] = 'assignment_teacher'
+        context['active'] = self.request.COOKIES.get('assignment_teacher_tab', 'new')
+        user = self.request.user
+        profile = user.profile
+        if 'usercoursebinding_id' in self.kwargs:
+            courses = [ UserCourseBinding.objects.get(user = user, is_teacher = False, id = self.kwargs['usercoursebinding_id']).course ]
+        else:
+            courses = [ ucb.course for ucb in UserCourseBinding.objects.filter(user = user, is_teacher = False) ]
+        context['t_assignment'] = TableAssignment(UserAssignmentBinding.objects.filter(user = user, assignment__course__in = courses))
+        return context
+
+    def form_valid(self, form):
+        logger.info(form.cleaned_data)
+        #authorize
+        UserCourseBinding.objects.get(user = self.request.user, course = form.cleaned_data["course"], is_teacher = True)
+        msg = f'Assignment {form.cleaned_data["name"]} created in course {form.cleaned_data["course"].name} by {self.request.user}'
+        for task in ['task_snapshot', 'task_handout', 'task_collect']:
+            if task in form.cleaned_data:
+                form.cleaned_data[task].clocked.save()
+                form.cleaned_data[task].save()
+        Assignment.objects.create(**form.cleaned_data)
+        logger.info(msg)
+        messages.info(self.request, msg)
+        return super().form_valid(form)
+
 
 @require_http_methods(['GET'])
 @login_required
@@ -139,61 +180,6 @@ def assignment_teacher(request):
     else:
         logger.error(f'not implemented tab: {active} by {request.user}')
         return redirect('indexpage')
-
-@require_http_methods(['GET'])
-@login_required
-def assignment_new(request):
-    user = request.user
-    courses = [ b.course for b in UserCourseBinding.objects.filter(user = user, is_teacher = True) ]
-    context_dict = {
-        'menu_education': True,
-        'submenu': 'assignment_teacher',
-        'active': request.COOKIES.get('assignment_teacher_tab', 'new'),
-        'f_assignment': list(filter(lambda f: f.okay, [ FormAssignment(user = user, course = c, auto_id = f'id_newassignment_{c.cleanname}_%s') for c in courses ])),
-    }
-    return render(request, 'assignment_new.html', context = context_dict)
-
-@require_http_methods(['POST'])
-@login_required
-def assignment_new_(request):
-    """
-    @summary: handle creation of a new assignment
-    """
-    user = request.user
-    logger.debug("user %s, method: %s" % (user, request.method))
-    try:
-        course_id = request.POST.get('course_selected')
-        course = UserCourseBinding.objects.get(user = user, course__id = course_id, is_teacher = True).course
-    except UserCourseBinding.DoesNotExist:
-        logger.error(f'misused by {user}')
-        messages.error(request, f'Not authorized to use this functionality')
-        return redirect('indexpage')
-    f = FormAssignment(request.POST, course = course, user = user)
-    if f.is_valid():
-        a = Assignment(
-            name = f.cleaned_data['name'],
-            course = course,
-            creator = user,
-            description = f.cleaned_data['description'],
-            folder = f.cleaned_data['folder'],
-            remove_collected = f.cleaned_data['remove_collected'],
-            max_size = f.cleaned_data['max_size'],
-            )
-        a.ts_handout = f.cleaned_data["ts_handout"]
-        a.ts_collect = f.cleaned_data["ts_collect"]
-        a.save()
-        logger.info(f'+ new assignment {a.name} ({a.folder}) in course {course.name} by {user.username}')
-        messages.info(request, f'Assignment {a.name} created.')
-    else:
-        context_dict = {
-            'menu_education': True,
-            'submenu': 'assignment_teacher',
-            'active': request.COOKIES.get('assignment_teacher_tab', 'new'),
-            'f_assignment': [ f ],
-        }
-        return render(request, 'assignment_new.html', context = context_dict)
-    return redirect('education:assignment_teacher')
-
 
 @require_http_methods(['GET'])
 @login_required

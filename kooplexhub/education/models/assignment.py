@@ -9,6 +9,8 @@ from django.contrib.auth.models import User
 from django.template.defaulttags import register
 from django_celery_beat.models import ClockedSchedule, PeriodicTask
 
+from kooplexhub.lib.libbase import standardize_str
+
 from hub.lib import dirname
 from hub.models import Group
 from . import Course, UserCourseBinding
@@ -39,11 +41,8 @@ class Assignment(models.Model):
 
     @property
     def safename(self):
-        return re.sub(r'[\.\ ]', '', self.name)
+        return standardize_str(f'{self.course.name}-{self.folder}')
 
-    @property
-    def snapshot(self):
-        return os.path.join(dirname.course_assignment_snapshot(self.course), 'assignment-snapshot-%s.%d.tar.gz' % (self.safename, self.created_at.timestamp()))
 
 class UserAssignmentBinding(models.Model):
     ST_QUEUED = 'qed'
@@ -91,10 +90,9 @@ class UserAssignmentBinding(models.Model):
     def state_long(self):
         return ST_LOOKUP[self.state] 
 
-#FIXME: ALWAYS CHECK STATE!!!!
     def handout(self):
-        if self.id is None:
-            self.save()
+        if self.task_handout:
+            return
         now = datetime.datetime.now()
         group = Group.objects.get(name = self.assignment.course.cleanname, grouptype = Group.TP_COURSE)
         schedule_now = ClockedSchedule.objects.create(clocked_time = now)
@@ -185,6 +183,10 @@ class UserAssignmentBinding(models.Model):
         assert self.state == UserAssignmentBinding.ST_CORRECTED, "State mismatch"
         now = datetime.datetime.now()
         self.corrected_at = now
+        self.correction_count += 1
+        self.corrector = user
+        self.feedback_text = message
+        self.score = score
         if self.task_finalize:
             self.task_finalize.clocked.clocked_time = now
             self.task_finalize.clocked.save()
@@ -209,10 +211,6 @@ class UserAssignmentBinding(models.Model):
                     }
                 })
             )
-        self.correction_count += 1
-        self.corrector = user
-        self.feedback_text = message
-        self.score = score
         self.state = self.ST_TRANSITIONAL
         self.save()
 
