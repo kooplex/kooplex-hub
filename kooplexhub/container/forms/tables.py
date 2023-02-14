@@ -99,7 +99,8 @@ class TableContainerVolume(tables.Table):
     def __init__(self, container, user):
         self.bound_volumes = [ b.volume for b in VolumeContainerBinding.objects.filter(container = container) ]
         volumes = [ b.volume for b in UserVolumeBinding.objects.filter(user = user) ]
-        super(TableContainerVolume, self).__init__(volumes)
+        volumes.extend(Volume.objects.filter(scope = Volume.SCP_ATTACHMENT))
+        super(TableContainerVolume, self).__init__(set(volumes))
 
     def render_button(self, record):
         state = "checked" if record in self.bound_volumes else ""
