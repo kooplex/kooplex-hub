@@ -33,7 +33,7 @@
 {% endblock %}
 
 {% block bodycontent %}
-  <ul class="nav nav-tabs mt-3 mb-0 container" id="assignmentTeacherTabs" role="tablist">
+<ul class="nav nav-tabs mt-3 mb-0 container" id="assignmentTeacherTabs" role="tablist">
   <li class="nav-item" role="presentation">
     {% if active == "new" %}
     <a class="nav-link mytab active" id="tab-new" href="#" type="button" role="tab" aria-controls="newAssignment" aria-selected="true">New Assignment</a>
@@ -71,7 +71,7 @@
   </li>
 </ul>
 
-<div class="tab-content bg-light container" id="assignmentTeacherTabContent">
+<div class="tab-content bg-light container rounded-bottom" id="assignmentTeacherTabContent">
   {% block assignment_content %}
   <div class="tab-pane fade {% if active == "summary" %}show active{% endif %}" id="summary" role="tabpanel" aria-labelledby="tab-summary">
     {% if d_course_assignments|length > 0 %}

@@ -86,14 +86,7 @@ class TableAssignmentConf(tables.Table):
         model = Assignment
         fields = () 
         sequence = ('meta', 'details', 'dates', 'quota', 'extra_info', 'delete')
-        attr = table_attributes#FIXME: add border, combine styling
-        #attrs = { 
-        #         "class": "table table-bordered", 
-        #         "thead": { "class": "thead-dark table-sm" }, 
-        #         "th": { "class": "table-secondary p-1" },
-        #         "td": { "class": "p-1 text-light" }, #tbody.td.th not applied 
-        #         "tbody": { "class": "text-light" }, 
-        #        }
+        attrs = table_attributes
         empty_text = _("You have not created any assignments yet")
 
     meta = tables.Column(orderable = False, empty_values = ())
@@ -153,15 +146,18 @@ class TableAssignmentConf(tables.Table):
       </span>
     </div>
   </div>
-  <input id="rmcol-{record.id}" data-size="small"
-     type="checkbox" data-toggle="toggle" name="remove_when_ready"
-     data-on="<span class='oi oi-trash'></span>"
-     data-off="<span class='bi bi-check-lg'></span>"
-     data-onstyle="danger" data-offstyle="secondary" value="{record.id}" {chk}>
-   <label class="form-check-label mt-2" for="rmcol-{record.id}" id="lbl_eraser-{record.id}" data-toggle="tooltip" title="Remove student's assignment folder upon submittion or collection"><i class="bi bi-eraser"></i>&nbsp;</label>
+  <div class="input-group my-2">
+    <span class="input-group-text"><span class="bi bi-eraser" data-toggle="tooltip" title="Remove student's assignment folder upon submittion or collection"></span></span>
+    <input id="remove_collected-{record.id}" 
+       type="checkbox" data-toggle="toggle" name="remove_when_ready"
+       data-on="<span class='oi oi-trash'></span>"
+       data-off="<span class='bi bi-check-lg'></span>"
+       data-onstyle="danger" data-offstyle="secondary" value="{record.remove_collected}" {chk}>
+  </div>
 </div>
 <input type="hidden" id="valid_from-old-{record.id}" name="valid_from-old-{record.id}" value="{d1}" />
 <input type="hidden" id="expires_at-old-{record.id}" name="expires_at-old-{record.id}" value="{d2}" />
+<input type="hidden" id="remove_collected-old-{record.id}" value="{record.remove_collected}" />
         """)
 
     def render_extra_info(self, record):
@@ -173,7 +169,7 @@ class TableAssignmentConf(tables.Table):
         return format_html(f"""
 <label class="form-check-label align-top" for="max_size-{record.id}" id="lbl_frm-{record.id}" data-toggle="tooltip" title="Maximum size of collection folder in MB"><i class="bi bi-box-seam"></i>&nbsp;</label>
 <input class="form-text-input" type="text" id="max_size-{record.id}" name="max_size-{record.id}" value="{ms}" size="4" />
-<input type="hidden" name="max_size-old-{record.id}" value="{ms}" />
+<input type="hidden" id="max_size-old-{record.id}" value="{ms}" />
         """)
 
     def render_delete(self, record):

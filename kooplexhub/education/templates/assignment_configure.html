@@ -18,13 +18,16 @@
 {% endblock %}
 
 {% block assignment_content %}
-<div class="tab-pane fade {% if active == "conf" %}show active{% endif %}" id="confAssignment" role="tabpanel" aria-labelledby="tab-conf">
+<div class="tab-pane fade {% if active == "conf" %}show active{% endif %} py-3" id="confAssignment" role="tabpanel" aria-labelledby="tab-conf">
   {% if form.okay %}
+    <div class="input-group my-3">
+      <span class="input-group-text"><span class="bi bi-search"></span></span>
+      <input class="form-control" type="text" id="search_assignment" placeholder="Search course or assignment" title="Type in a name">
+    </div>
     <form id='assignment-form-configure' class="was-validated" action="{% url 'education:assignment_configure' %}" method="post">
       {% csrf_token %}
         {% apply_cancel with icon_apply="bi bi-save" %}
-      <input class="form-control mb-3 mt-3" type="text" id="search_assignment" placeholder="Search course or assignment" title="Type in a name">
-      <table>{{ form.as_table }}</table>
+      <table class="mt-3">{{ form.as_table }}</table>
       <div>
         {% render_table form.t_assignments %}
       </div>
@@ -37,9 +40,16 @@
 
 {% block child_scripts %}
 <script>
-function my_filter(obj, obj_id) {
+function my_filter(obj, obj_id, convert) {
   obj_val = $("#" + obj + "-" + obj_id).val();
   old_val = $("#" + obj + "-old-" + obj_id).val();
+  if (convert === "bool") {
+    obj_val = B(obj_val);
+    old_val = B(old_val);
+    if (obj_val != old_val) {
+      return { "attribute": obj, "value": obj_val };
+    }
+  }
   if ((obj_val !== undefined) && (obj_val.length > 0) && (obj_val != old_val)) {
     return { "attribute": obj, "value": obj_val };
   }
@@ -49,10 +59,11 @@ $("#assignment-form-configure").submit(function (e) {
   changes = Array();
   $("input[name^=name-old-]").each(function() {
     aid = $( this ).attr('id').split('-', 3)[2];
-    attrs = ["name", "description", "max_size"]; //FIXME: handle dates
+    attrs = ["name", "description", "max_size", "remove_collected"]; //FIXME: handle dates
+    attr_tp = ["str", "str", "str", "bool"]; //FIXME: handle dates
     a_chg = Array();
     for (k in attrs) {
-      v = my_filter(attrs[k], aid);
+      v = my_filter(attrs[k], aid, attr_tp[k]);
       if (v !== undefined) {
         a_chg.push(v)
       }
@@ -67,6 +78,11 @@ $("#assignment-form-configure").submit(function (e) {
     'changes': changes
   }));
 });
+{# keep toggler values up to date #}
+$("input[id^=remove_collected-]").change(function () {
+  $( this ).val( $( this ).prop("checked") );
+	console.log( this );
+}).change();
 // loop over all linked datetime picker widgets
 document.querySelectorAll('[id^="linkedPickers1-"]').forEach(function(linkedPicker1Element) {
   const linked1 = new tempusDominus.TempusDominus(linkedPicker1Element, {

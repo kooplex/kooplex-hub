@@ -16,9 +16,8 @@
 {% endblock %}
 
 {% block assignment_content %}
-<div class="tab-pane fade {% if active == "new" %}show active{% endif %}" id="newAssignment" role="tabpanel" aria-labelledby="tab-new">
-  <div class="card shadow bg-light rounded">
-    {% if form.okay %}
+<div class="tab-pane fade {% if active == "new" %}show active{% endif %} py-3" id="newAssignment" role="tabpanel" aria-labelledby="tab-new">
+  {% if form.okay %}
     <form id="assignments-form-new" class="form-horizontal was-validated" action="{% url 'education:assignment_new' %}" method="post">
       {% csrf_token %}
       <table>
@@ -26,10 +25,9 @@
       </table>
       {% apply_cancel label_apply="Create" icon_apply="bi bi-check-circle-fill" color_apply="btn-success" %}
     </form>
-    {% else %}
-      {% include 'empty.html' with empty_body='<p class="text-dark">There are no candidate subfolders in <code>assignment_prepare</code> directory. Please create one and place all files into it to be part of a new assignment. Empty folders cannot be selected.</p>' skip_border=True %}
-    {% endif %}
-  </div>
+  {% else %}
+    {% include 'empty.html' with empty_body='<p class="text-dark">There are no candidate subfolders in <code>assignment_prepare</code> directory. Please create one and place all files into it to be part of a new assignment. Empty folders cannot be selected.</p>' skip_border=True %}
+  {% endif %}
 </div>
 {% endblock %}
 

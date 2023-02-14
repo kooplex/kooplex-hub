@@ -186,13 +186,14 @@ class ConfigureAssignmentView(LoginRequiredMixin, generic.FormView):
     def form_valid(self, form):
         logger.info(form.cleaned_data)
         msgs = []
-        for a in form.cleaned_data["delete_assignments"]:
+        for a in form.cleaned_data.get("delete_assignments", []):
             a.delete()
             msgs.append(f"Assignment {a.name} is deleted from course {a.course.name}.")
-        for a in form.cleaned_data["assignments"]:
+        for a in form.cleaned_data.get("assignments", []):
             a.save()
             msgs.append(f"Assignment {a.name} in course {a.course.name} is updated.")
         if msgs:
+            logger.info(' '.join(msgs))
             messages.info(self.request, ' '.join(msgs))
         return super().form_valid(form)
 
