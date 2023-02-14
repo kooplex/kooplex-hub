@@ -197,7 +197,6 @@ STATICFILES_DIRS = (
         f'{BASE_DIR}/hub/templates/static',
         f'{BASE_DIR}/project/templates/static',
         f'{BASE_DIR}/container/templates/static',
-        f'{BASE_DIR}/thumbnails',
 )
 
 # Default primary key field type
