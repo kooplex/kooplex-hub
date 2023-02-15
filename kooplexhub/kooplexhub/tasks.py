@@ -1,4 +1,5 @@
 from celery import shared_task
+
 import importlib
 import time
 
@@ -25,7 +26,7 @@ def handle_callback(callback):
         else:
             m = "."
             f = getattr(locals(), fn_l[-1])
-        logger.info(f"callback handle: {m} {f}")
+        logger.info(f"Callback handle: {m} {f}")
         f(*args, **kwargs)
     except Exception as e:
         logger.error(f"callback handle: {callback} -- {e}")
@@ -39,12 +40,12 @@ def create_folders(folders = [], grant_useraccess = {}, grant_groupaccess = {}, 
         mkdir(folder)
     for user_id, folder_tups in grant_useraccess.items():
         user = User.objects.get(id = user_id)
-        for folder, readonly, recursive in folder_tups:
-            grantaccess_user(user, folder, readonly, recursive)
-    for group_id, folder_tups in grant_useraccess.items():
+        for folder, opts in folder_tups:
+            grantaccess_user(user, folder, **opts)
+    for group_id, folder_tups in grant_groupaccess.items():
         group = Group.objects.get(id = group_id)
-        for folder, readonly, recursive in folder_tups:
-            grantaccess_group(user, folder, readonly, recursive)
+        for folder, opts in folder_tups:
+            grantaccess_group(group, folder, **opts)
     if callback:
         handle_callback(callback)
 

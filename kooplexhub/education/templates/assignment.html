@@ -1,36 +1,6 @@
 {% extends "education_layout.html" %}
 
 {% load render_table from django_tables2 %}
-{% load static %}
-{% load extras %}
-
-
-{% block head_content %}
-{% block child_head %}{% endblock %}
-<style>
-  .form-control:focus {
-    border-color: gray;
-    box-shadow: inset 0 1px 1px gray, 0 0 8px gray;
-  }
-
-  .form-select:focus {
-    border-color: gray;
-    box-shadow: inset 0 1px 1px gray, 0 0 8px gray;
-  }
-  </style>
-<style>
-  .mytab{
-    color: rgb(196, 196, 196);
-  }
-  .mytab:hover{
-    color: rgb(196, 196, 196);
-    font-weight: bolder;
-  }
-  .mytab.active {
-    font-weight: bolder;
-  }
-</style>
-{% endblock %}
 
 {% block bodycontent %}
 <ul class="nav nav-tabs mt-3 mb-0 container" id="assignmentTeacherTabs" role="tablist">
@@ -49,12 +19,13 @@
     {% endif %}
   </li>
   <li class="nav-item" role="presentation">
-    {% if active == "handlemass" %}
-    <a class="nav-link mytab active" id="tab-handlemass" href="#" type="button" role="tab" aria-controls="AssignmentMass" aria-selected="true">Mass Assignments</a>
+    {% if active == "handle" %}
+    <a class="nav-link mytab active" id="tab-handle" href="#" type="button" role="tab" aria-controls="handleAssignment" aria-selected="true">Assignments</a>
     {% else %}
-    <a class="nav-link mytab" id="tab-handlemass" href="{% url 'education:assignment_mass' %}" type="button" role="tab" aria-controls="AssignmentMass" aria-selected="false">Mass Assignments</a>
+    <a class="nav-link mytab" id="tab-handle" href="{% url 'education:assignment_handle' %}" type="button" role="tab" aria-controls="handleAssignment" aria-selected="false">Assignments</a>
     {% endif %}
   </li>
+  {% comment %}
   <li class="nav-item" role="presentation">
     {% if active == "handle" %}
     <a class="nav-link mytab active" id="tab-handle" href="#" type="button" role="tab" aria-controls="Assignment" aria-selected="true">Handle Assignments</a>
@@ -62,6 +33,7 @@
     <a class="nav-link mytab" id="tab-handle" href="{% url 'education:assignment_handler' %}" type="button" role="tab" aria-controls="Assignment" aria-selected="false">Handle Assignments</a>
     {% endif %}
   </li>
+  {% endcomment %}
   <li class="nav-item" role="presentation">
     {% if active == "summary" %}
     <a class="nav-link mytab active" id="tab-summary" href="#" type="button" role="tab" aria-controls="summary" aria-selected="true">Student points</a>
@@ -113,7 +85,7 @@
 $("#assignmentTeacherTabs li a").on("click", function () {
   var tab = $( this ).attr("id").split('-')[1]
   console.log( tab )
-  $.cookie("assignment_teacher_tab", tab, { 'path': '/', 'secure': true });
+  $.cookie("assignment_teacher_tab", tab, { 'path': '/;SameSite=Strict', 'secure': true });
 });
 $("#summary_course_selected").change(function() {
   var sel_id = $( this ).val();

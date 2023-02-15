@@ -121,7 +121,7 @@ class TableAssignmentConf(tables.Table):
         """)
 
     def render_dates(self, record):
-        rd = lambda t: t.clocked if t else ""
+        rd = lambda t: t.clocked.schedule.clocked_time.strftime("%m/%d/%Y, %H:%M") if t else ""
         d1 = rd(record.task_handout)
         d2 = rd(record.task_collect)
         rd = lambda t: "disabled" if t and t.last_run_at else ""
@@ -132,7 +132,7 @@ class TableAssignmentConf(tables.Table):
 <div class="container">
   <div class="row">
     <div class="input-group log-event" id="linkedPickers1-{record.id}" data-td-target-input="nearest" data-td-target-toggle="nearest">
-      <input id="linkedPickers1Input-{record.id}" name="valid_from-{record.id}" type="text" class="form-control" data-td-target="#linkedPickers1-{record.id}" {st1}>
+      <input id="valid_from-{record.id}" name="valid_from-{record.id}" type="text" class="form-control" data-td-target="#linkedPickers1-{record.id}" {st1}>
       <span class="input-group-text" data-td-target="#linkedPickers1-{record.id}" data-td-toggle="datetimepicker">
         <span class="bi bi-clock"></span>
       </span>
@@ -140,7 +140,7 @@ class TableAssignmentConf(tables.Table):
   </div>
   <div class="row mt-2">
     <div class="input-group log-event" id="linkedPickers2-{record.id}" data-td-target-input="nearest" data-td-target-toggle="nearest">
-      <input id="linkedPickers2Input-{record.id}" name="expires_at-{record.id}" type="text" class="form-control" data-td-target="#linkedPickers2-{record.id}" {st2}>
+      <input id="expires_at-{record.id}" name="expires_at-{record.id}" type="text" class="form-control" data-td-target="#linkedPickers2-{record.id}" {st2}>
       <span class="input-group-text" data-td-target="#linkedPickers2-{record.id}" data-td-toggle="datetimepicker">
         <span class="bi bi-bell"></span>
       </span>
@@ -155,8 +155,8 @@ class TableAssignmentConf(tables.Table):
        data-onstyle="danger" data-offstyle="secondary" value="{record.remove_collected}" {chk}>
   </div>
 </div>
-<input type="hidden" id="valid_from-old-{record.id}" name="valid_from-old-{record.id}" value="{d1}" />
-<input type="hidden" id="expires_at-old-{record.id}" name="expires_at-old-{record.id}" value="{d2}" />
+<input type="hidden" id="valid_from-old-{record.id}" value="{d1}" />
+<input type="hidden" id="expires_at-old-{record.id}" value="{d2}" />
 <input type="hidden" id="remove_collected-old-{record.id}" value="{record.remove_collected}" />
         """)
 
@@ -348,12 +348,7 @@ class TableAssignmentHandle(tables.Table):
 
 class TableAssignmentMass(tables.Table):
     class Meta:
-        attrs = { 
-                 "class": "table table-bordered mt-3", 
-                 "thead": { "class": "thead-dark table-sm" }, 
-                 "td": { "class": "p-1 text-light" }, 
-                 "th": { "class": "table-secondary p-1" } 
-                }
+        attrs = table_attributes
         empty_text = _("Empty table")
 
     group = tables.Column(orderable = False, empty_values = ())
@@ -437,12 +432,7 @@ class TableAssignmentMassAll(tables.Table):
         model = Assignment
         fields = ('course', 'name')
         sequence = ('course', 'name', 'group', 'handout', 'collect', 'correct', 'correcting', 'reassign')
-        attrs = { 
-                 "class": "table table-bordered mt-3", 
-                 "thead": { "class": "thead-dark table-sm" }, 
-                 "td": { "class": "p-1 text-light" }, 
-                 "th": { "class": "table-secondary p-1" } 
-                }
+        attrs = table_attributes
         empty_text = _("Empty table")
 
     course = tables.Column(orderable = False)

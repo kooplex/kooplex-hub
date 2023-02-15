@@ -9,13 +9,13 @@ urlpatterns = [
     path('configure/<int:pk>/', views.ConfigureCourseView.as_view(), name = 'configure'),
     path('assignment_new/', views.NewAssignmentView.as_view(), name = 'assignment_new'),
     path('assignment_configure/', views.ConfigureAssignmentView.as_view(), name = 'assignment_configure'),
+    path('assignment_handler/', views.HandleAssignmentView.as_view(), name = 'assignment_handle'),
 
     path('assignment_teachers_view/', views.assignment_teacher, name = 'assignment_teacher'), # just a dispatcher
-    path('assignment_handler/', views.assignment_handler, name = 'assignment_handler'),
-    path('assignment_individual_handle/', views.assignment_individual_handle, name = 'assignment_individual_handle'),
-    path('assignment_mass/', views.assignment_mass, name = 'assignment_mass'),
-    path('assignment_mass_handle/', views.assignment_mass_, name = 'assignment_mass_handle'),
-    path('assignment_mass_handle__/', views.assignment_mass___, name = 'assignment_mass_handle___'), #FIXME
+    #path('assignment_individual_handle/', views.assignment_individual_handle, name = 'assignment_individual_handle'),
+    #path('assignment_mass/', views.assignment_mass, name = 'assignment_mass'),
+    #path('assignment_mass_handle/', views.assignment_mass_, name = 'assignment_mass_handle'),
+    #path('assignment_mass_handle__/', views.assignment_mass___, name = 'assignment_mass_handle___'), #FIXME
     path('assignment_summary/', views.assignment_summary, name = 'assignment_summary'),
 
     re_path('assignment/(?P<usercoursebinding_id>\d+)?/?$', views.StudentAssignmentListView.as_view(), name = 'assignment_student'),

@@ -22,12 +22,31 @@ from hub.templatetags.extras import render_user
 from container.models import Image, Container
 from education.models import UserCourseBinding, UserAssignmentBinding, Assignment, CourseContainerBinding, Course
 from education.forms import FormCourse
-from education.forms import FormAssignment, FormAssignmentConfigure
+from education.forms import FormAssignment, FormAssignmentConfigure, FormAssignmentHandle
 from education.forms import TableAssignment, TableAssignmentConf, TableAssignmentHandle, TableAssignmentMass, TableAssignmentSummary, TableAssignmentMassAll, TableAssignmentStudentSummary, TableCourseStudentSummary
 
 from kooplexhub.settings import KOOPLEX
 
 logger = logging.getLogger(__name__)
+
+@require_http_methods(['GET'])
+@login_required
+def assignment_teacher(request):
+    active = request.COOKIES.get('assignment_teacher_tab', 'conf')
+    if active == 'new':
+        return redirect('education:assignment_new')
+    elif active == 'conf':
+        return redirect('education:assignment_configure')
+    elif active == 'handle':
+        return redirect('education:assignment_handler')
+    elif active == 'handlemass':
+        return redirect('education:assignment_mass')
+    elif active == 'summary':
+        return redirect('education:assignment_summary')
+    else:
+        logger.error(f'not implemented tab: {active} by {request.user}')
+        return redirect('indexpage')
+
 
 class CourseBindingListView(LoginRequiredMixin, generic.ListView):
     template_name = 'course_list.html'
@@ -155,7 +174,6 @@ class NewAssignmentView(LoginRequiredMixin, generic.FormView):
         msg = f'Assignment {form.cleaned_data["name"]} created in course {form.cleaned_data["course"].name} by {self.request.user}'
         for task in ['task_snapshot', 'task_handout', 'task_collect']:
             if task in form.cleaned_data:
-                form.cleaned_data[task].clocked.save()
                 form.cleaned_data[task].save()
         Assignment.objects.create(**form.cleaned_data)
         logger.info(msg)
@@ -166,7 +184,7 @@ class NewAssignmentView(LoginRequiredMixin, generic.FormView):
 class ConfigureAssignmentView(LoginRequiredMixin, generic.FormView):
     template_name = 'assignment_configure.html'
     form_class = FormAssignmentConfigure
-    success_url = '/hub/education/course/'
+    success_url = '/hub/education/assignment_handler/'
 
     def get_initial(self):
         initial = super().get_initial()
@@ -186,36 +204,64 @@ class ConfigureAssignmentView(LoginRequiredMixin, generic.FormView):
     def form_valid(self, form):
         logger.info(form.cleaned_data)
         msgs = []
+        for ts in form.cleaned_data.get("timestamps", []):
+            ts.save()
+        for tsk in form.cleaned_data.get("tasks", []):
+            tsk.save()
         for a in form.cleaned_data.get("delete_assignments", []):
             a.delete()
             msgs.append(f"Assignment {a.name} is deleted from course {a.course.name}.")
         for a in form.cleaned_data.get("assignments", []):
             a.save()
             msgs.append(f"Assignment {a.name} in course {a.course.name} is updated.")
+        for ts in form.cleaned_data.get("delete_timestamps", []):
+            ts.delete()
         if msgs:
             logger.info(' '.join(msgs))
             messages.info(self.request, ' '.join(msgs))
         return super().form_valid(form)
 
 
+class HandleAssignmentView(LoginRequiredMixin, generic.FormView):
+    template_name = 'assignment_handle.html'
+    form_class = FormAssignmentHandle
+    success_url = '/hub/education/assignment_handler/'
 
-@require_http_methods(['GET'])
-@login_required
-def assignment_teacher(request):
-    active = request.COOKIES.get('assignment_teacher_tab', 'conf')
-    if active == 'new':
-        return redirect('education:assignment_new')
-    elif active == 'conf':
-        return redirect('education:assignment_configure')
-    elif active == 'handle':
-        return redirect('education:assignment_handler')
-    elif active == 'handlemass':
-        return redirect('education:assignment_mass')
-    elif active == 'summary':
-        return redirect('education:assignment_summary')
-    else:
-        logger.error(f'not implemented tab: {active} by {request.user}')
-        return redirect('indexpage')
+    def get_initial(self):
+        initial = super().get_initial()
+        user = self.request.user
+        initial['user'] = user
+        return initial
+
+    def get_context_data(self, **kwargs):
+        user = self.request.user
+        context = super().get_context_data(**kwargs)
+        context['menu_education'] = True
+        context['submenu'] = 'assignment_teacher'
+        context['active'] = self.request.COOKIES.get('assignment_teacher_tab', 'handle')
+        courses = [ b.course for b in UserCourseBinding.objects.filter(user = user, is_teacher = True) ]
+        assignments = list(Assignment.objects.filter(course__in = courses))
+        uabs = list(UserAssignmentBinding.objects.filter(assignment__in = assignments))
+        lut_uabs = { a: list(filter(lambda b: b.assignment == a, uabs)) for a in assignments }
+        groups = { c: c.groups for c in courses }
+        context['t_mass_all'] = TableAssignmentMassAll( assignments, lut_uabs, groups )
+        return context
+
+    def form_valid(self, form):
+        logger.info(form.cleaned_data)
+        raise Exception(str(form.cleaned_data))
+#        msgs = []
+#        for a in form.cleaned_data.get("delete_assignments", []):
+#            a.delete()
+#            msgs.append(f"Assignment {a.name} is deleted from course {a.course.name}.")
+#        for a in form.cleaned_data.get("assignments", []):
+#            a.save()
+#            msgs.append(f"Assignment {a.name} in course {a.course.name} is updated.")
+#        if msgs:
+#            logger.info(' '.join(msgs))
+#            messages.info(self.request, ' '.join(msgs))
+#        return super().form_valid(form)
+
 
 
 
@@ -438,22 +484,6 @@ def assignment_individual_handle(request):
         messages.error(request,' '.join(oops))
     return redirect('education:assignment_teacher')
 
-@require_http_methods(['GET'])
-@login_required
-def assignment_mass(request):
-    user = request.user
-    courses = [ b.course for b in UserCourseBinding.objects.filter(user = user, is_teacher = True) ]
-    assignments = list(Assignment.objects.filter(course__in = courses))
-    uabs = list(UserAssignmentBinding.objects.filter(assignment__in = assignments))
-    lut_uabs = { a: list(filter(lambda b: b.assignment == a, uabs)) for a in assignments }
-    groups = { c: c.groups for c in courses }
-    context_dict = {
-        'menu_education': True,
-        'submenu': 'assignment_teacher',
-        'active': request.COOKIES.get('assignment_teacher_tab', 'handlemass'),
-        't_mass_all': TableAssignmentMassAll( assignments, lut_uabs, groups ),
-    }
-    return render(request, 'assignment_handle_mass.html', context = context_dict)
 
 @require_http_methods(['POST'])
 @login_required
