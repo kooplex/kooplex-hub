@@ -29,7 +29,7 @@
     {% endfor %}
   </div>
 {% else %}
-  {% include 'empty.html' with title=empty_title empty=empty_body %}
+  {% include 'empty.html' with empty_title="You are not associated with any courses yet" empty_body="If this is unexpected, please ask system administrators to take care of it. <a href='mailto:kooplex@elte.hu'><i class='bi bi-envelope'></i><span>&nbsp;Send e-mail...</span></a>" %}
 {% endif %}
 </div>
 {% endblock %}

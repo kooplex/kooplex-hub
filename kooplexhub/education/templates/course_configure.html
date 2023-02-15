@@ -7,7 +7,7 @@
 
 
 {% block bodycontent %}
-<div class="card shadow p-3 mb-5 bg-light rounded">
+<div class="card shadow p-3 mb-5 bg-light rounded container">
   <form id="course-manage" class="form-horizontal was-validated" action="{{ url_post }}" method="post">
   {% csrf_token %}
   {% title_with_button "You are now configuring <em>" course.name "</em> course" %}

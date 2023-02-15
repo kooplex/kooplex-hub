@@ -50,10 +50,10 @@ class TableAssignment(tables.Table):
             return format_html(f"""
 <span class="bi bi-hourglass-bottom" data-toggle="tooltip" title="{record.ST_LOOKUP[record.state]}" />
             """)
-        elif record.state == record.ST_CORRECTED:
-            return format_html(f"""
-<span class="bi bi-check-circle" data-toggle="tooltip" title="{record.ST_LOOKUP[record.state]}" />
-            """)
+#FIXME        elif record.state == record.ST_CORRECTED:
+#FIXME            return format_html(f"""
+#FIXME<span class="bi bi-check-circle" data-toggle="tooltip" title="{record.ST_LOOKUP[record.state]}" />
+#FIXME            """)
         else:
             return format_html(f"""
 <span class="bi bi-hand-thumbs-up" data-toggle="tooltip" title="{record.ST_LOOKUP[record.state]}" />
@@ -282,13 +282,13 @@ class TableAssignmentHandle(tables.Table):
   <label class="form-check-label" for="uab-{record.id}" id="lbl_uab-{record.id}"> <span class="bi bi-check-square-fill" data-toggle="tooltip" title="Correct"></span></label>
 </div>
             """)
-        elif record.state == record.ST_CORRECTED:
-            return format_html(f"""
-<div class="form-check form-switch">
-  <input class="form-check-input" type="checkbox" id="uab-{record.id}" name="selection_finalize" value="{record.id}" />
-  <label class="form-check-label" for="uab-{record.id}" id="lbl_uab-{record.id}"> <span class="bi bi-check-square" data-toggle="tooltip" title="Finalize"></span></label>
-</div>
-            """)
+#FIXME        elif record.state == record.ST_CORRECTED:
+#FIXME            return format_html(f"""
+#FIXME<div class="form-check form-switch">
+#FIXME  <input class="form-check-input" type="checkbox" id="uab-{record.id}" name="selection_finalize" value="{record.id}" />
+#FIXME  <label class="form-check-label" for="uab-{record.id}" id="lbl_uab-{record.id}"> <span class="bi bi-check-square" data-toggle="tooltip" title="Finalize"></span></label>
+#FIXME</div>
+#FIXME            """)
         elif record.state == record.ST_READY:
             return format_html(f"""
 <div class="form-check form-switch">
@@ -309,11 +309,12 @@ class TableAssignmentHandle(tables.Table):
 
     def render_score(self, record):
         s = record.score if record.score else ''
-        if record.state == record.ST_CORRECTED:
-            return format_html(f"""
-<input class="form-text-input" type="text" id="score-{record.id}" name="score-{record.id}" value="{s}" />
-            """)
-        elif record.state == record.ST_READY:
+#FIXME        if record.state == record.ST_CORRECTED:
+#FIXME            return format_html(f"""
+#FIXME<input class="form-text-input" type="text" id="score-{record.id}" name="score-{record.id}" value="{s}" />
+#FIXME            """)
+#FIXME        elif record.state == record.ST_READY:
+        if record.state == record.ST_READY:
             return format_html(f"""
 <input class="form-text-input" type="text" id="score-{record.id}" name="score-{record.id}" value="{s}" />
 <input type="hidden" name="old_score-{record.id}" value="{s}" />
@@ -324,12 +325,13 @@ class TableAssignmentHandle(tables.Table):
 
     def render_feedback_text(self, record):
         t = record.feedback_text if record.feedback_text else ''
-        if record.state == record.ST_CORRECTED:
-            return format_html(f"""
-<textarea class="form-textarea" id="feedback_text-{record.id}" name="feedback_text-{record.id}">{t}</textarea>
-<input type="hidden" name="old_feedback_text-{record.id}" value="{t}" />
-            """)
-        elif record.state == record.ST_READY:
+#FIXME        if record.state == record.ST_CORRECTED:
+#FIXME            return format_html(f"""
+#FIXME<textarea class="form-textarea" id="feedback_text-{record.id}" name="feedback_text-{record.id}">{t}</textarea>
+#FIXME<input type="hidden" name="old_feedback_text-{record.id}" value="{t}" />
+#FIXME            """)
+#FIXME        elif record.state == record.ST_READY:
+        if record.state == record.ST_READY:
             return format_html(f"""
 <textarea class="form-textarea" id="feedback_text-{record.id}" name="feedback_text-{record.id}">{t}</textarea>
 <input type="hidden" name="feedback_text-old-{record.id}" value="{t}" />
@@ -348,101 +350,28 @@ class TableAssignmentHandle(tables.Table):
 
 class TableAssignmentMass(tables.Table):
     class Meta:
-        attrs = table_attributes
-        empty_text = _("Empty table")
-
-    group = tables.Column(orderable = False, empty_values = ())
-    handout = tables.Column(orderable = False, empty_values = ())
-    collect = tables.Column(orderable = False, empty_values = ())
-    correct = tables.Column(orderable = False, empty_values = ())
-    correcting = tables.Column(orderable = False, empty_values = ())
-    reassign = tables.Column(orderable = False, empty_values = ())
-
-    def render_group(self, record):
-        return 'Ungrouped' if record['group'] is None else record['group']
-
-    def render_handout(self, record):
-        idx = record['idx']
-        n = record['handout']
-        d = '' if n else 'disabled'
-        return format_html(f"""
-<div class="form-check form-switch">
-  <input class="form-check-input" type="checkbox" id="handout-{idx}" name="handout" value="{idx}" {d}/>
-  <label class="form-check-label" for="handout-{idx}"> <span class="bi bi-box-arrow-up-right"> {n}</span></label>
-</div>
-        """)
-
-    def render_collect(self, record):
-        idx = record['idx']
-        n = record['collect']
-        d = '' if n else 'disabled'
-        return format_html(f"""
-<div class="form-check form-switch">
-  <input class="form-check-input" type="checkbox" id="collect-{idx}" name="collect" value="{idx}" {d}/>
-  <label class="form-check-label" for="collect-{idx}"> <span class="bi bi-box-arrow-in-down-right"> {n}</span></label>
-</div>
-        """)
-
-    def render_correct(self, record):
-        idx = record['idx']
-        n = record['correct']
-        d = '' if n else 'disabled'
-        return format_html(f"""
-<div class="form-check form-switch">
-  <input class="form-check-input" type="checkbox" id="correct-{idx}" name="correct" value="{idx}" {d}/>
-  <label class="form-check-label" for="correct-{idx}"> <span class="bi bi-check-square-fill"> {n}</span></label>
-</div>
-        """)
-
-    def render_correcting(self, record):
-        n = record['correcting']
-        return format_html(f"<div>{n}</div>")
-
-    def render_reassign(self, record):
-        idx = record['idx']
-        n = record['reassign']
-        d = '' if n else 'disabled'
-        return format_html(f"""
-<div class="form-check form-switch">
-  <input class="form-check-input" type="checkbox" id="reassign-{idx}" name="reassign" value="{idx}" {d}/>
-  <label class="form-check-label" for="reassign-{idx}"> <span class="bi bi-recycle"> {n}</span></label>
-</div>
-        """)
-
-    def __init__(self, assignment, uabs, groups):
-        records = []
-        a_students = { s: set() for s in UserAssignmentBinding.ST_LOOKUP.keys() }
-        for b in uabs:
-            a_students[b.state].add(b.user)
-        a_students['visited'] = a_students[UserAssignmentBinding.ST_WORKINPROGRESS].union(a_students[UserAssignmentBinding.ST_SUBMITTED]).union(a_students[UserAssignmentBinding.ST_COLLECTED]).union(a_students[UserAssignmentBinding.ST_CORRECTED]).union(a_students[UserAssignmentBinding.ST_READY]).union(a_students[UserAssignmentBinding.ST_TRANSITIONAL])
-        records = [ {
-            'idx': f'{assignment.id}-{group.id}' if group else f'{assignment.id}-n',
-            'group': group,
-            'handout': len(set(students).difference(a_students['visited'])),
-            'collect': len(a_students[UserAssignmentBinding.ST_WORKINPROGRESS].intersection(students)),
-            'correct': len((a_students[UserAssignmentBinding.ST_SUBMITTED].union(a_students[UserAssignmentBinding.ST_COLLECTED])).intersection(students)),
-            'correcting': len(a_students[UserAssignmentBinding.ST_CORRECTED].intersection(students)),
-            'reassign': len(a_students[UserAssignmentBinding.ST_READY].intersection(students)),
-            } for group, students in groups.items() ]
-        super().__init__(records)
-
-
-class TableAssignmentMassAll(tables.Table):
-    class Meta:
         model = Assignment
         fields = ('course', 'name')
-        sequence = ('course', 'name', 'group', 'handout', 'collect', 'correct', 'correcting', 'reassign')
+        sequence = ('course', 'name', 'group', 'handout', 'collect', 'correcting', 'reassign')
         attrs = table_attributes
         empty_text = _("Empty table")
 
     course = tables.Column(orderable = False)
-    name = tables.Column(orderable = False)
+    name = tables.Column(verbose_name = 'Assignment', orderable = False)
     group = tables.Column(orderable = False, empty_values = ())
     handout = tables.Column(orderable = False, empty_values = ())
     collect = tables.Column(orderable = False, empty_values = ())
     correcting = tables.Column(orderable = False, empty_values = ())
     correct = tables.Column(orderable = False, empty_values = ())
     reassign = tables.Column(orderable = False, empty_values = ())
+
+    def render_course(self, record):
+        return format_html(f"""
+{record.course.name}<br>{rf(record.folder)}
+<input type="hidden" id="assignment-search-{record.id}" value="{record.search}">
+<input type="hidden" id="assignment-match-{record.id}" value=true>
+<input type="hidden" id="assignment-isshown-{record.id}" value=true>
+        """)
 
     def render_group(self, record):
         rows = []
@@ -461,7 +390,7 @@ class TableAssignmentMassAll(tables.Table):
                 UserAssignmentBinding.ST_READY,
                 UserAssignmentBinding.ST_SUBMITTED, 
                 UserAssignmentBinding.ST_COLLECTED,
-                UserAssignmentBinding.ST_CORRECTED
+#                UserAssignmentBinding.ST_CORRECTED
                 ], self.lut_uab[record]) ])
             n = len(students)
             d = '' if n else 'disabled'
@@ -488,28 +417,11 @@ class TableAssignmentMassAll(tables.Table):
             """)
         return format_html("<br>".join( rows ))
 
-    def render_correct(self, record):
-        rows = []
-        for group, students in  self.groups[record.course].items():
-            idx = f'{record.id}-n' if group is None else f'{record.id}-{group.id}'
-            students = set(students).intersection([ b.user for b in filter(lambda b: b.state in [
-                UserAssignmentBinding.ST_SUBMITTED, 
-                UserAssignmentBinding.ST_COLLECTED
-                ], self.lut_uab[record]) ])
-            n = len(students)
-            d = '' if n else 'disabled'
-            rows.append(f"""
-<div class="form-check form-switch">
-  <input class="form-check-input" type="checkbox" id="correct-{idx}" name="correct" value="{idx}" {d}/>
-  <label class="form-check-label" for="correct-{idx}"> <span class="bi bi-check-square-fill"> {n}</span></label>
-</div>
-            """)
-        return format_html("<br>".join( rows ))
-
     def render_correcting(self, record):
         rows = []
         for group, students in  self.groups[record.course].items():
-            students = set(students).intersection([ b.user for b in filter(lambda b: b.state == UserAssignmentBinding.ST_CORRECTED, self.lut_uab[record]) ])
+            #FIXME  students = set(students).intersection([ b.user for b in filter(lambda b: b.state == UserAssignmentBinding.ST_CORRECTED, self.lut_uab[record]) ])
+            students = set() ###students).intersection([ b.user for b in filter(lambda b: b.state == UserAssignmentBinding.ST_CORRECTED, self.lut_uab[record]) ])
             n = len(students)
             rows.append(f"<div>{n}</div>")
         return format_html("<br>".join( rows ))

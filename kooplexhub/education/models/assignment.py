@@ -2,17 +2,17 @@ import os
 import re
 import logging
 import json
-import datetime
 
 from django.db import models
 from django.contrib.auth.models import User
 from django.template.defaulttags import register
 from django_celery_beat.models import ClockedSchedule, PeriodicTask
+from django.utils import timezone
 
 from kooplexhub.lib.libbase import standardize_str
 
 from hub.lib import dirname
-from hub.models import Group
+from hub.models import Group, Task
 from . import Course, UserCourseBinding
 from education.filesystem import *
 
@@ -44,26 +44,62 @@ class Assignment(models.Model):
         return f"{self.name} {self.description} {self.folder} {self.course.name}".upper()
 
     @property
-    def safename(self):
+    def _safename(self):
         return standardize_str(f'{self.course.name}-{self.folder}')
+
+    @property
+    def _task_snapshot(self):
+        self.filename = os.path.join(course_assignment_snapshot(self.course), f'assignment-snapshot-{self._safename}.{time.time()}.tar.gz')
+        return Task(
+            name = f"Create assignment snapshot: {self.name}/{self.course.name}",
+            task = "kooplexhub.tasks.create_tar",
+            kwargs = {
+                'folder': assignment_source(self),
+                'tarbal': self.filename,
+            }
+        )
+
+    def _task_handout(self, when):
+        return Task(
+            when = when,
+            name = f"Handout: {self.name}/{self.course.name}",
+            task = "education.tasks.assignment_handout",
+            kwargs = {
+                'course_id': self.course.id,
+                'assignment_folder': self.folder,
+            }
+        )
+
+    def _task_collect(self, when):
+        return Task(
+            when = when,
+            name = f"Collect: {self.name}/{self.course.name}",
+            task = "education.tasks.assignment_collect",
+            kwargs = {
+                'course_id': self.course.id,
+                'assignment_folder': self.folder,
+            }
+        )
+
+    #FIXME: ide kell bevezetni a taskok létrehozását, a form könnyebb lesz
 
 
 class UserAssignmentBinding(models.Model):
     ST_QUEUED = 'qed'
+    ST_EXTRACTING = 'ext'
     ST_WORKINPROGRESS = 'wip'
+    ST_COMPRESSING = 'snap'
     ST_SUBMITTED = 'sub'
     ST_COLLECTED = 'col'
-    ST_CORRECTED = 'cor'
     ST_READY = 'rdy'
-    ST_TRANSITIONAL = 'tsk'
     ST_LOOKUP = {
         ST_QUEUED: 'Waiting for handout',
+        ST_EXTRACTING: 'Extracting tar in workdir',
         ST_WORKINPROGRESS: 'Working on assignment',
+        ST_COMPRESSING: 'Snapshot workdir, and extract in correct folder',
         ST_SUBMITTED: 'Submitted, waiting for corrections',
         ST_COLLECTED: 'Collected, waiting for corrections',
-        ST_CORRECTED: 'Assignment is being corrected',
         ST_READY: 'Assignment is corrected',
-        ST_TRANSITIONAL: 'An asynchronous task is scheduled now',
     }
 
     user = models.ForeignKey(User, null = False, on_delete = models.CASCADE)
@@ -97,15 +133,12 @@ class UserAssignmentBinding(models.Model):
     def handout(self):
         if self.task_handout:
             return
-        now = datetime.datetime.now()
-        group = Group.objects.get(name = self.assignment.course.cleanname, grouptype = Group.TP_COURSE)
-        schedule_now = ClockedSchedule.objects.create(clocked_time = now)
-        self.task_handout = PeriodicTask.objects.create(
-            name = f"handout_{self.assignment.folder}_{self.user.username}-{now}",
+        assert self.state == UserAssignmentBinding.ST_QUEUED, "State mismatch"
+        group = self.assignment.course.os_group
+        self.task_handout = Task(
+            name = f"handout {self.assignment.name}/{self.assignment.course.name} to {self.user.username}",
             task = "kooplexhub.tasks.extract_tar",
-            clocked = schedule_now,
-            one_off = True,
-            kwargs = json.dumps({
+            kwargs = {
                 'folder': assignment_workdir(self),
                 'tarbal': self.assignment.filename,
                 'users_rw': [ self.user.id ],
@@ -118,72 +151,36 @@ class UserAssignmentBinding(models.Model):
                         'new_state': UserAssignmentBinding.ST_WORKINPROGRESS,
                     }
                 }
-            })
+            }
         )
-        self.state = self.ST_TRANSITIONAL
+        self.state = self.ST_EXTRACTING
+        self.task_handout.save()
         self.save()
 
     def collect(self, submit = True):
         assert self.state == UserAssignmentBinding.ST_WORKINPROGRESS, "State mismatch"
-        now = datetime.datetime.now()
+        now = timezone.now()
         self.submitted_at = now
         self.submit_count += 1
         if self.task_collect:
             self.task_collect.clocked.clocked_time = now
             self.task_collect.clocked.save()
         else:
-            schedule_now = ClockedSchedule.objects.create(clocked_time = now)
-            self.task_collect = PeriodicTask.objects.create(
-                name = f"snapshot_{self.id}",
-                task = "kooplexhub.tasks.create_tar",
-                clocked = schedule_now,
-                one_off = True,
-        #FIXME: QUOTA CHECK HANDLE IT
-                kwargs = json.dumps({
-                    'folder': assignment_workdir(self),
-                    'tarbal': assignment_collection(self),
-                    'callback': {
-                        'function': "education.tasks.callback",
-                        'kwargs': {
-                            'uab_id': self.id,
-                            'new_state': UserAssignmentBinding.ST_SUBMITTED if submit else UserAssignmentBinding.ST_COLLECTED,
-                        }
-                    }
-                })
+            self.task_collect = Task(
+                name = f"Collect assignment {self.assignment.name}/{self.assignment.course.name} from {self.user.username}",
+                task = "education.tasks.submission",
+                kwargs = {
+                    'userassignmentbinding_id': self.id,
+                    'new_state': UserAssignmentBinding.ST_SUBMITTED if submit else UserAssignmentBinding.ST_COLLECTED,
+                }
             )
-        self.state = self.ST_TRANSITIONAL
+            self.task_collect.save()
+        self.state = self.ST_COMPRESSING
         self.save()
 
-    def extract2correct(self):
-        assert self.state in [ UserAssignmentBinding.ST_SUBMITTED, UserAssignmentBinding.ST_COLLECTED ], "State mismatch"
-        now = datetime.datetime.now()
-        if self.task_correct:
-            self.task_correct.clocked.clocked_time = now
-            self.task_correct.clocked.save()
-        else:
-            schedule_now = ClockedSchedule.objects.create(clocked_time = now)
-            self.task_correct = PeriodicTask.objects.create(
-                name = f"extract_{self.id}",
-                task = "kooplexhub.tasks.extract_tar",
-                clocked = schedule_now,
-                one_off = True,
-                kwargs = json.dumps({
-                    'folder': assignment_correct_dir(self),
-                    'tarbal': assignment_collection(self),
-                    'users_rw': [ b.user.id for b in self.assignment.course.teacherbindings ],
-                    'callback': {
-                        'function': "education.tasks.callback",
-                        'kwargs': {
-                            'uab_id': self.id,
-                            'new_state': UserAssignmentBinding.ST_CORRECTED,
-                        }
-                    }
-                })
-            )
-        self.state = self.ST_TRANSITIONAL
-        self.save()
 
     def finalize(self, user, score, message):
+        #FIXME
         assert self.state == UserAssignmentBinding.ST_CORRECTED, "State mismatch"
         now = datetime.datetime.now()
         self.corrected_at = now

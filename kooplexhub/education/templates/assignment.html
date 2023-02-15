@@ -25,15 +25,6 @@
     <a class="nav-link mytab" id="tab-handle" href="{% url 'education:assignment_handle' %}" type="button" role="tab" aria-controls="handleAssignment" aria-selected="false">Assignments</a>
     {% endif %}
   </li>
-  {% comment %}
-  <li class="nav-item" role="presentation">
-    {% if active == "handle" %}
-    <a class="nav-link mytab active" id="tab-handle" href="#" type="button" role="tab" aria-controls="Assignment" aria-selected="true">Handle Assignments</a>
-    {% else %}
-    <a class="nav-link mytab" id="tab-handle" href="{% url 'education:assignment_handler' %}" type="button" role="tab" aria-controls="Assignment" aria-selected="false">Handle Assignments</a>
-    {% endif %}
-  </li>
-  {% endcomment %}
   <li class="nav-item" role="presentation">
     {% if active == "summary" %}
     <a class="nav-link mytab active" id="tab-summary" href="#" type="button" role="tab" aria-controls="summary" aria-selected="true">Student points</a>

@@ -50,7 +50,7 @@
       <div class="modal-footer">
         {% dropdown_start_open bindings=ucb.coursecontainerbindings ancestor=ucb ancestor_type='course' %}
         {% if ucb.is_teacher %}
-          <a href="{% url 'education:configure' ucb.id %}" role="button" class="btn btn-secondary btn-sm" data-toggle="tooltip" title="Settings of course {{ course.name }}. You can change the image, modify description." data-placement="top"><span class="oi oi-wrench" aria-hidden="true"></span></a>
+          <a href="{% url 'education:configure' course.id %}" role="button" class="btn btn-secondary btn-sm" data-toggle="tooltip" title="Settings of course {{ course.name }}. You can change the image, modify description." data-placement="top"><span class="oi oi-wrench" aria-hidden="true"></span></a>
         {% else %}
           <a href="{% url 'education:assignment_student' ucb.id %}" role="button" class="btn btn-secondary btn-sm" data-toggle="tooltip" title="{{ tooltip }}" data-placement="top"><span class="oi oi-pencil" aria-hidden="true"></span></a>
         {% endif %}

@@ -23,11 +23,12 @@ from container.models import Image, Container
 from education.models import UserCourseBinding, UserAssignmentBinding, Assignment, CourseContainerBinding, Course
 from education.forms import FormCourse
 from education.forms import FormAssignment, FormAssignmentConfigure, FormAssignmentHandle
-from education.forms import TableAssignment, TableAssignmentConf, TableAssignmentHandle, TableAssignmentMass, TableAssignmentSummary, TableAssignmentMassAll, TableAssignmentStudentSummary, TableCourseStudentSummary
+from education.forms import TableAssignment, TableCourseStudentSummary #FIXME: these items shan't show up here
 
 from kooplexhub.settings import KOOPLEX
 
 logger = logging.getLogger(__name__)
+
 
 @require_http_methods(['GET'])
 @login_required
@@ -38,14 +39,41 @@ def assignment_teacher(request):
     elif active == 'conf':
         return redirect('education:assignment_configure')
     elif active == 'handle':
-        return redirect('education:assignment_handler')
-    elif active == 'handlemass':
-        return redirect('education:assignment_mass')
+        return redirect('education:assignment_handle')
     elif active == 'summary':
         return redirect('education:assignment_summary')
     else:
         logger.error(f'not implemented tab: {active} by {request.user}')
         return redirect('indexpage')
+
+
+@require_http_methods(['GET'])
+@login_required
+def addcontainer(request, usercoursebinding_id):
+    """
+    @summary: automagically create an environment
+    @param usercoursebinding_id
+    """
+    from kooplexhub.lib.libbase import standardize_str
+    user = request.user
+    logger.debug("user %s, method: %s" % (user, request.method))
+    try:
+        course = UserCourseBinding.objects.get(id = usercoursebinding_id, user = user).course
+        container, created = Container.objects.get_or_create(
+            name = f'generated for {course.name}', 
+            label = f'edu-{user.username}-{standardize_str(course.name)}',
+            user = user,
+            image = course.image
+        )
+        CourseContainerBinding.objects.create(course = course, container = container)
+        if created:
+            messages.info(request, f'We created a new environment {container.name} for course {course.name}.')
+        else:
+            messages.info(request, f'We associated your course {course.name} with your former environment {container.name}.')
+    except Exception as e:
+        messages.error(request, f'We failed -- {e}')
+        raise
+    return redirect('container:list')
 
 
 class CourseBindingListView(LoginRequiredMixin, generic.ListView):
@@ -61,8 +89,6 @@ class CourseBindingListView(LoginRequiredMixin, generic.ListView):
         context = super().get_context_data(**kwargs)
         context['menu_education'] = True
         context['submenu'] = 'courses'
-        context['empty_title'] = "You have not been added to any courses yet as a teacher"
-        context['empty_body'] = format_html("""If this is unexpected, please ask system administrator to take care of it. <a href="mailto:kooplex@elte.hu"><i class="bi bi-envelope"></i><span>&nbsp;Send e-mail...</span></a>""")
         context['wss_container'] = KOOPLEX.get('hub', {}).get('wss_container', 'wss://localhost/hub/ws/container_environment/{userid}/').format(userid = self.request.user.id)
         return context
 
@@ -158,13 +184,6 @@ class NewAssignmentView(LoginRequiredMixin, generic.FormView):
         context['menu_education'] = True
         context['submenu'] = 'assignment_teacher'
         context['active'] = self.request.COOKIES.get('assignment_teacher_tab', 'new')
-        user = self.request.user
-        profile = user.profile
-        if 'usercoursebinding_id' in self.kwargs:
-            courses = [ UserCourseBinding.objects.get(user = user, is_teacher = False, id = self.kwargs['usercoursebinding_id']).course ]
-        else:
-            courses = [ ucb.course for ucb in UserCourseBinding.objects.filter(user = user, is_teacher = False) ]
-        context['t_assignment'] = TableAssignment(UserAssignmentBinding.objects.filter(user = user, assignment__course__in = courses))
         return context
 
     def form_valid(self, form):
@@ -208,14 +227,14 @@ class ConfigureAssignmentView(LoginRequiredMixin, generic.FormView):
             ts.save()
         for tsk in form.cleaned_data.get("tasks", []):
             tsk.save()
+        for ts in form.cleaned_data.get("delete_timestamps", []):
+            ts.delete()
         for a in form.cleaned_data.get("delete_assignments", []):
             a.delete()
             msgs.append(f"Assignment {a.name} is deleted from course {a.course.name}.")
         for a in form.cleaned_data.get("assignments", []):
             a.save()
             msgs.append(f"Assignment {a.name} in course {a.course.name} is updated.")
-        for ts in form.cleaned_data.get("delete_timestamps", []):
-            ts.delete()
         if msgs:
             logger.info(' '.join(msgs))
             messages.info(self.request, ' '.join(msgs))
@@ -239,12 +258,6 @@ class HandleAssignmentView(LoginRequiredMixin, generic.FormView):
         context['menu_education'] = True
         context['submenu'] = 'assignment_teacher'
         context['active'] = self.request.COOKIES.get('assignment_teacher_tab', 'handle')
-        courses = [ b.course for b in UserCourseBinding.objects.filter(user = user, is_teacher = True) ]
-        assignments = list(Assignment.objects.filter(course__in = courses))
-        uabs = list(UserAssignmentBinding.objects.filter(assignment__in = assignments))
-        lut_uabs = { a: list(filter(lambda b: b.assignment == a, uabs)) for a in assignments }
-        groups = { c: c.groups for c in courses }
-        context['t_mass_all'] = TableAssignmentMassAll( assignments, lut_uabs, groups )
         return context
 
     def form_valid(self, form):
@@ -260,120 +273,11 @@ class HandleAssignmentView(LoginRequiredMixin, generic.FormView):
 #        if msgs:
 #            logger.info(' '.join(msgs))
 #            messages.info(self.request, ' '.join(msgs))
-#        return super().form_valid(form)
+        return super().form_valid(form)
 
 
 
 
-def _extract_timestamp(d):
-    df, hm = d.split(', ')
-    M, D, Y = df.split('/')
-    h, m = hm.split(':')
-    return {'year': int(Y), 'month': int(M), 'day': int(D), 'hour': int(h), 'minute': int(m)}
-
-@require_http_methods(['POST'])
-@login_required
-def assignment_configure_(request):
-    """
-    @summary: handle creation of a new assignment
-    """
-    user = request.user
-    logger.debug("user %s, method: %s" % (user, request.method))
-    courses = [ ucb.course for ucb in UserCourseBinding.objects.filter(user = user, is_teacher = True) ]
-    delete_ids = request.POST.getlist('selection_delete', [])
-    d = []
-    oops = []
-    for aid in delete_ids:
-        try:
-            a = Assignment.objects.get(id = aid, course__in = courses)
-            assert (a.creator == user) or (a.course.teacher_can_delete_foreign_assignment), f"{user} is not the creator of assignment {a.name} in course {a.course.name} and delete foreign is not set"
-            ##################################################
-            # do not archive user's handout assignment folders
-            a.remove_collected = True
-            a.save()
-            ##################################################
-            a.delete()
-            logger.info(f'- deleted assignment {a.name} ({a.folder}) from course {a.course.name} by {user.username}')
-            d.append(f'{a.name} by {a.creator}')
-        except AssertionError:
-            oops.append(a.name)
-            raise
-        except Exception as e:
-            logger.error(e)
-    if len(d):
-        a = ', '.join(d)
-        messages.info(request, f'Deleted assignment(s) {a}.')
-    if len(oops):
-        a = ', '.join(oops)
-        messages.warning(request, f'You are not allowed to delete assignment(s) {a}.')
-    assignment_ids = set()
-    for k in request.POST.keys():
-        if k.startswith('name-old-'):
-            assignment_ids.add(k.split('-')[-1])
-    other_ids = assignment_ids.difference(delete_ids)
-    m = []
-    tb = {'valid_from': 'task_handout', 'expires_at': 'task_collect'}
-    for aid in other_ids:
-        a = Assignment.objects.get(id = aid, course__in = courses)
-        changed = []
-        for attr in [ 'valid_from', 'expires_at' ]:
-            old = request.POST.get(f'{attr}-old-{aid}')
-            new = request.POST.get(f'{attr}-{aid}')
-            if old != new:
-                changed.append(f"{attr} from {old} to {new}")
-                task = getattr(a, tb[attr])
-                if old and not new:
-                    task.clocked.delete()
-                    setattr(a, tb[attr], None)
-                elif not old and new:
-                    schedule = ClockedSchedule.objects.create(clocked_time = datetime.datetime(**_extract_timestamp(new)))
-                    setattr(a, tb[attr], PeriodicTask.objects.create(
-                        name = f"{tb[attr]}_{a.id}",
-                        task = "education.tasks.assignment_handout",
-                        clocked = schedule,
-                        one_off = True,
-                        kwargs = json.dumps({
-                            'assignment_id': a.id,
-                        })
-                    ))
-                else:
-                    task.clocked.clocked_time = datetime.datetime(**_extract_timestamp(new))
-                    task.clocked.save()
-
-        for attr in [ 'name', 'description', 'max_size' ]:
-            old = request.POST.get(f'{attr}-old-{aid}')
-            new = request.POST.get(f'{attr}-{aid}')
-            if old != new:
-                changed.append(f"{attr} from {old} to {new}")
-                setattr(a, attr, new if new else None)
-        if len(changed):
-            a.save()
-            logger.info(f'. modified assignment {a.name} ({a.folder}) from course {a.course.name} by {user.username}')
-            cl = ', '.join(changed)
-            m.append(f'{a.name}: {cl}')
-    if len(m):
-        cl = '; '.join(m)
-        messages.info(request, f'Configured assignment(s) {cl}.')
-    return redirect('education:assignment_teacher')
-
-@require_http_methods(['GET'])
-@login_required
-def assignment_handler(request):
-    user = request.user
-    courses = [ b.course for b in UserCourseBinding.objects.filter(user = user, is_teacher = True) ]
-    assignments = list(Assignment.objects.filter(course__in = courses))
-    uabs = list(UserAssignmentBinding.objects.filter(assignment__in = assignments))
-    lut_uabs = { a: list(filter(lambda b: b.assignment == a, uabs)) for a in assignments }
-    groups = { c: c.groups for c in courses }
-    context_dict = {
-        'menu_education': True,
-        'submenu': 'assignment_teacher',
-        'active': request.COOKIES.get('assignment_teacher_tab', 'handle'),
-        'd_course_assignments': { c:l for c, l in { c: list(filter(lambda a: a.course == c, assignments)) for c in courses }.items() if l },
-        't_mass': { a.id: TableAssignmentMass( a, lut_uabs[a], groups[a.course] ) for a in assignments },
-        't_assignments': { a.id: TableAssignmentHandle( lut_uabs[a] ) for a in assignments },
-    }
-    return render(request, 'assignment_handle.html', context = context_dict)
 
 @require_http_methods(['POST'])
 @login_required
@@ -639,31 +543,5 @@ def submitform_submit(request):
 
 
 
-@login_required
-def addcontainer(request, usercoursebinding_id):
-    """
-    @summary: automagically create an environment
-    @param usercoursebinding_id
-    """
-    from kooplexhub.lib.libbase import standardize_str
-    user = request.user
-    logger.debug("user %s, method: %s" % (user, request.method))
-    try:
-        course = UserCourseBinding.objects.get(id = usercoursebinding_id, user = user).course
-        container, created = Container.objects.get_or_create(
-                name = f'generated for {course.name}', 
-                label = f'edu-{user.username}-{standardize_str(course.name)}',
-                user = user,
-                image = course.image
-                )
-        CourseContainerBinding.objects.create(course = course, container = container)
-        if created:
-            messages.info(request, f'We created a new environment {container.name} for course {course.name}.')
-        else:
-            messages.info(request, f'We associated your course {course.name} with your former environment {container.name}.')
-    except Exception as e:
-        messages.error(request, f'We failed -- {e}')
-        raise
-    return redirect('container:list')
 
 

@@ -7,6 +7,7 @@ from django.template.defaulttags import register
 
 from kooplexhub.lib import my_alphanumeric_validator
 from container.models import Image
+from hub.models import Group
 
 
 logger = logging.getLogger(__name__)
@@ -21,6 +22,8 @@ class Course(models.Model):
     description = models.TextField(max_length = 512, blank = True)
     image = models.ForeignKey(Image, null = True, on_delete = models.CASCADE)
     teacher_can_delete_foreign_assignment = models.BooleanField(default = False)
+    os_group = models.ForeignKey(Group, null = True, on_delete = models.CASCADE, default = None)
+
 
     def __str__(self):
         return f'{self.name} ({self.folder})'

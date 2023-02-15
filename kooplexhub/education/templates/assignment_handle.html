@@ -6,48 +6,30 @@
 {% block assignment_content %}
 <div class="tab-pane fade {% if active == "handle" %}show active{% endif %} py-3" id="handleAssignment" role="tabpanel" aria-labelledby="tab-handle">
   {% if form.okay %}
+    <div class="input-group my-3">
+      <span class="input-group-text"><span class="bi bi-search"></span></span>
+      <input class="form-control" type="text" id="search_assignment" placeholder="Search course or assignment" title="Type in a name">
+    </div>
     <form id='assignment-form-handle' class="" action="{% url 'education:assignment_handle' %}" method="post">
       {% csrf_token %}
       {% apply_cancel with icon_apply="bi bi-save" %}
       <table class="mt-3">{{ form.as_table }}</table>
-      {% render_table t_mass_all %}
+      {% render_table form.t_mass %}
     </form>
-  {% else %}
-    {% include 'empty.html' with empty_body='You have not defined any assignments yet.' skip_border=True %}
-  {% endif %}
-</div>
-{% endblock %}
 
-{% block child_scripts %}
-<script>
-{# catch submit event, in order to see what is changed #}
-$("#assignment-form-handle").submit(function (e) {
-	console.log("keccs")
-  $("#id_change_log").val(JSON.stringify( {
-    'user_id': {{ user.id }}
-  }));
-});
-</script>
-{% endblock %}
-{% comment %}
-{% extends "assignment.html" %}
+    {% comment %}
 
-{% load render_table from django_tables2 %}
-{% load extras %}
 
-{% block assignment_content %}
-<div class="tab-pane fade {% if active == "handle" %}show active{% endif %}" id="Assignment" role="tabpanel" aria-labelledby="tab-handle">
-  <div class="mt-3">
-    {% if d_course_assignments|length > 0 %}
-      <form id='assignment-form-handle' style="margin-top: -8px;" class="mt-1 mb-4" action="{% url 'education:assignment_teacher' %}" method="post">
-        {% csrf_token %}
-        <div class="d-flex flex-row mb-2 mt-2">
-          <div class="p-2 mt-1">
-            <span data-toggle="tooltip" title="Select assignment you'd like to handle"><i class="bi bi-pencil"></i>&nbsp;Assignment</span>
-          </div>
-          <div class="p-2 flex-fill">
+      <hr>
+    {% for a_id, t in form.t_assignments.items %}
+        {% render_table t %}
+      {% endfor %}
+
+      <hr>
+      
             <select class="form-select" id="assignment_selected" name="assignment_selected">
-              {% for c_id, ass in d_course_assignments.items %}
+		    <option class="dropdown-item" value="">Select an assignment</option>
+              {% for c_id, ass in form.d_course_assignments.items %}
                 {% with ass|first as a0 %}
                 <optgroup label="Course {{ a0.course.name }}"> 
                 {% for a in ass %}
@@ -59,107 +41,24 @@ $("#assignment-form-handle").submit(function (e) {
                 {% endwith %}
               {% endfor %}
             </select>
-          </div>
-        </div>
-      </form>
-    {% else %}
-      {% include 'empty.html' with empty_body='<p class="text-light">You have not defined any assignments yet.</p>' skip_border=True %}
-    {% endif %}
-    <form id='assignment-form-mass' class="mb-3 mt-3" action="{% url 'education:assignment_mass_handle' %}" method="post">
-      {% csrf_token %}
-      {% title_with_button "Mass operation" %}
-      {% for a_id, t in t_mass.items %}
-        <div id="operationPanelMass-{{ a_id }}">
-          {% render_table t %}
-        </div>
-      {% endfor %}
-    </form>
-    {% title_with_button "Individual operation" button_id="submit_details" %}
-    <input class="form-control me-2 mb-3 mt-3" type="text" id="search_student" placeholder="Search student by name or username" title="Type in a name">
-    {% for a_id, t in t_assignments.items %}
-      <form  id='operationPanelIndividual-{{ a_id }}' class="mb-3 mt-3" action="{% url 'education:assignment_individual_handle' %}" method="post">
-        {% csrf_token %}
-        {% render_table t %}
-      </form>
-    {% endfor %}
-  </div>
+    {% endcomment %}
+
+  {% else %}
+    {% include 'empty.html' with empty_body='You have not defined any assignments yet.' skip_border=True %}
+  {% endif %}
 </div>
 {% endblock %}
 
 {% block child_scripts %}
 <script>
-$("#submit_details").click(function() {
-  var a_id = $("#assignment_selected").val();
-  console.log("submit " + a_id);
-  $("#operationPanelIndividual-" + a_id).submit();
-});
-$("#assignment_selected").change(function() {
-  var sel_id = $( this ).val();
-  console.log( "changed to " + sel_id );
-  $('[id^=operationPanelMass-]').each(function() {
-    var myid = $(this).attr("id").split('-')[1]
-    //console.log( "checking " + myid );
-    if ( myid == sel_id ) {
-      $( this ).show();
-    } else {
-      $( this).hide();
-    }
-  });
-  $('[id^=operationPanelIndividual-]').each(function() {
-    var myid = $(this).attr("id").split('-')[1]
-    //console.log( "checking " + myid );
-    if ( myid == sel_id ) {
-      $( this ).show();
-    } else {
-      $( this).hide();
-    }
-  });
-}).change();
-$("#search_student").keyup(function() {
-  var pattern = $( this ).val().toUpperCase();
-  console.log( "search student: " + pattern );
-  $( "#assignment-form-individual" ).find('tr').each(function() {
-    if ( $( this ).parent().is("thead") ) {
-      return;
-    }
-    var hide_it = true;
-    if (pattern.length > 0) {
-      $( this ).find("input[name='search_student'").each(function() {
-        var name = $( this ).val().toUpperCase();
-        if ( name.indexOf(pattern) > -1 ) {
-	  hide_it = false;
-        }
-      });
-    } else {
-      hide_it = false;
-    }
-    if (hide_it) {
-      $( this ).hide();
-    } else {
-      $( this ).show();
-    }
-  });
-});
-$("input[id^='score-'").on("change", function() {
-  var old = $("#old_" + $(this).attr("id"))
-  console.log( $( this ).val() )
-  if ( $( this ).val() != old.val() ) {
-    var cb = $("#uab-" + $(this).attr("id").split('-')[1])
-    if (cb.attr("name") == "selection_finalize") {
-      cb.prop('checked', true) 
-    }
-  }
-});
-$("textarea[id^='feedback_text-'").on("change", function() {
-  var old = $("#old_" + $(this).attr("id"))
-  console.log( $( this ).val() )
-  if ( $( this ).val() != old.val() ) {
-    var cb = $("#uab-" + $(this).attr("id").split('-')[1])
-    if (cb.attr("name") == "selection_finalize") {
-      cb.prop('checked', true) 
-    }
-  }
+{# catch submit event, in order to see what is changed #}
+$("#assignment-form-handle").submit(function (e) {
+  $("#id_change_log").val(JSON.stringify( {
+    'user_id': {{ user.id }}
+  }));
+	alert($("#id_change_log").val());
 });
 </script>
 {% endblock %}
-{% endcomment %}
+
+

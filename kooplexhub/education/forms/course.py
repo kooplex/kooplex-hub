@@ -18,12 +18,11 @@ class FormCourse(forms.ModelForm):
 
     course_config = forms.CharField(widget = forms.HiddenInput(), required = False)
     name = forms.CharField(
-        label = _("Course name"),
-        max_length = 100, required = True,
+        label = _("Course name"), required = True,
         widget = forms.TextInput(attrs = tooltip_attrs({ 'title': _('A short name of the course, but it has to be unique among course names.') })),
     )
     description = forms.CharField(
-        max_length = 100, required = True,
+        required = True,
         widget = forms.Textarea(attrs = tooltip_attrs({
             'rows': 3, 
             'title': _('It is always a good idea to have a description of your course.'), 

@@ -17,13 +17,16 @@ logger = logging.getLogger(__name__)
 
 @receiver(pre_save, sender = Course)
 def create_course(sender, instance, **kwargs):
+    if instance.id:
+        return
+    #FIXME:
     with transaction.atomic():
-        group, _ = Group.objects.select_for_update().get_or_create(name = instance.cleanname, grouptype = Group.TP_COURSE) 
+        group, _ = Group.objects.select_for_update().get_or_create(name = instance.folder, grouptype = Group.TP_COURSE) 
     now = datetime.datetime.now()
     schedule_now = ClockedSchedule.objects.create(clocked_time = now)
     folders = [ f(instance) for f in [ course_public, course_assignment_prepare_root, course_assignment_snapshot, course_workdir_root, course_assignment_root, assignment_correct_root ] ]
     PeriodicTask.objects.create(
-        name = f"create_course_{instance.cleanname}_{now}",
+        name = f"create_course_{instance.folder}_{now}",
         task = "kooplexhub.tasks.create_folders",
         clocked = schedule_now,
         one_off = True,
@@ -41,14 +44,14 @@ def create_course(sender, instance, **kwargs):
 @receiver(pre_delete, sender = Course)
 def delete_course(sender, instance, **kwargs):
     try:
-        Group.objects.get(name = instance.cleanname, grouptype = Group.TP_COURSE).delete()
+        Group.objects.get(name = instance.folder, grouptype = Group.TP_COURSE).delete()
     except Group.DoesNotExist:
         pass
     now = datetime.datetime.now()
     schedule_now = ClockedSchedule.objects.create(clocked_time = now)
     folders = [ f(instance) for f in [ course_workdir_root, course_assignment_root, assignment_correct_root, course_root ] ]
     PeriodicTask.objects.create(
-        name = f"delete_course_{instance.cleanname}_{now}",
+        name = f"delete_course_{instance.folder}_{now}",
         task = "kooplexhub.tasks.delete_folders",
         clocked = schedule_now,
         one_off = True,
@@ -62,7 +65,7 @@ def delete_course(sender, instance, **kwargs):
 def add_usercourse(sender, instance, **kwargs):
     course = instance.course
     user = instance.user
-    group = Group.objects.get(name = course.cleanname, grouptype = Group.TP_COURSE)
+    group = course.os_group
     UserGroupBinding.objects.get_or_create(user = user, group = group)
     now = datetime.datetime.now()
     folder_wd = course_workdir(instance)
@@ -74,7 +77,7 @@ def add_usercourse(sender, instance, **kwargs):
         user_acl.extend([ (assignment_correct_root(instance.course), { 'readonly': False, 'recursive': False, 'follow': True }) ])  #TODO: existing subfolders not handled
     schedule_now = ClockedSchedule.objects.create(clocked_time = now)
     PeriodicTask.objects.create(
-        name = f"course_folders_{instance.course.cleanname}-{instance.user}-{now}",
+        name = f"course_folders_{instance.course.folder}-{instance.user}-{now}",
         task = "kooplexhub.tasks.create_folders",
         clocked = schedule_now,
         one_off = True,
@@ -91,7 +94,7 @@ def delete_usercourse(sender, instance, **kwargs):
     course = instance.course
     user = instance.user
     try:
-        group = Group.objects.get(name = course.cleanname, grouptype = Group.TP_COURSE)
+        group = course.os_group
         UserGroupBinding.objects.get(user = user, group = group).delete()
     except UserGroupBinding.DoesNotExist:
         pass

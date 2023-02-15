@@ -26,7 +26,7 @@
     </div>
     <form id='assignment-form-configure' class="was-validated" action="{% url 'education:assignment_configure' %}" method="post">
       {% csrf_token %}
-        {% apply_cancel with icon_apply="bi bi-save" %}
+      {% apply_cancel with icon_apply="bi bi-save" %}
       <table class="mt-3">{{ form.as_table }}</table>
       {% render_table form.t_assignments %}
     </form>

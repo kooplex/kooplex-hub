@@ -9,7 +9,7 @@ from django.contrib.auth.models import User
 
 from kooplexhub.common import tooltip_attrs
 
-from education.models import Assignment, UserCourseBinding, Course
+from education.models import Assignment, UserCourseBinding, Course, UserAssignmentBinding
 from hub.models import Task
 from education.filesystem import *
 
@@ -101,36 +101,13 @@ class FormAssignment(forms.ModelForm):
         timestamp1 = cleaned_data.pop('valid_from_widget')
         timestamp2 = cleaned_data.pop('expires_at_widget')
         assignment_dummy = Assignment(**cleaned_data)
-        filename = os.path.join(course_assignment_snapshot(course), f'assignment-snapshot-{assignment_dummy.safename}.{time.time()}.tar.gz')
-        cleaned_data['filename'] = filename
-        cleaned_data['task_snapshot'] = Task(
-            name = f"create_assignment_{key}",
-            task = "kooplexhub.tasks.create_tar",
-            kwargs = {
-                'folder': assignment_source(assignment_dummy),
-                'tarbal': filename,
-            }
-        )
+        # Note, here order matters
+        cleaned_data['task_snapshot'] = assignment_dummy._task_snapshot
+        cleaned_data['filename'] = assignment_dummy.filename
         if timestamp1:
-            cleaned_data['task_handout'] = Task(
-                when = timestamp1,
-                name = f"handout_{key}",
-                task = "education.tasks.assignment_handout",
-                kwargs = {
-                    'course_id': course.id,
-                    'assignment_folder': folder,
-                }
-            )
+            cleaned_data['task_handout'] = assignment_dummy._task_handout(timestamp1)
         if timestamp2:
-            cleaned_data['task_collect'] = Task(
-                when = timestamp2,
-                name = f"collect_{key}",
-                task = "education.tasks.assignment_collect",
-                kwargs = {
-                    'course_id': course.id,
-                    'assignment_folder': folder,
-                }
-            )
+            cleaned_data['task_collect'] = assignment_dummy._task_collect(timestamp2)
         #FIXME: if insane timespan raise an error, < 5 minutes, configurable?
         if timestamp1 and timestamp2 and timestamp1 >= timestamp2:
             ve.append( forms.ValidationError(_(f'Timestamp relation is wrong'), code = 'invalid timestamps') )
@@ -178,7 +155,6 @@ class FormAssignmentConfigure(forms.Form):
         cleaned_data = super().clean()
         ve = []
         details = json.loads(cleaned_data.pop("change_log"))
-        #raise Exception(str(details))
         userid = details["user_id"]
         delete_ids = details["delete_ids"]
         delete_assignments = list(Assignment.objects.filter(id__in = delete_ids))
@@ -187,8 +163,8 @@ class FormAssignmentConfigure(forms.Form):
         for assignment in delete_assignments:
             UserCourseBinding.objects.get(user__id = userid, course = assignment.course, is_teacher = True)
             for attr in ["task_snapshot", "task_handout", "task_collect"]:
-                if hasattr(assignment, attr):
-                    tsk = getattr(assignment, attr)
+                tsk = getattr(assignment, attr)
+                if tsk:
                     del_timestamps.append(tsk.clocked)
         cleaned_data["delete_assignments"] = delete_assignments
         assignments = []
@@ -229,17 +205,8 @@ class FormAssignmentConfigure(forms.Form):
                         assignment.task_handout.clocked.clocked_time = valid_from
                         timestamps.append(assignment.task_handout.clocked)
                     else:
-                        key = f'{assignment.course.name}-{assignment.name}'
-                        task = Task(
-                            when = valid_from,
-                            name = f"handout_{key}",
-                            task = "education.tasks.assignment_handout",
-                            kwargs = {
-                                'course_id': assignment.course.id,
-                                'assignment_folder': assignment.folder,
-                            }
-                        )
-                        assignment.task_collect = task
+                        task = assignment._task_handout(valid_from)
+                        assignment.task_handout = task
                         tasks.append(task)
                         changed = True
                 except:
@@ -256,16 +223,7 @@ class FormAssignmentConfigure(forms.Form):
                         assignment.task_collect.clocked.clocked_time = expires_at
                         timestamps.append(assignment.task_collect.clocked)
                     else:
-                        key = f'{assignment.course.name}-{assignment.name}'
-                        task = Task(
-                            when = expires_at,
-                            name = f"collect_{key}",
-                            task = "education.tasks.assignment_collect",
-                            kwargs = {
-                                'course_id': assignment.course.id,
-                                'assignment_folder': assignment.folder,
-                            }
-                        )
+                        task = assignment._task_collect(expires_at)
                         assignment.task_collect = task
                         tasks.append(task)
                         changed = True
@@ -289,10 +247,27 @@ class FormAssignmentConfigure(forms.Form):
 class FormAssignmentHandle(forms.Form):
     change_log = forms.CharField(widget = forms.HiddenInput(), required = True)
     def __init__(self, *args, **kwargs):
+        from . import TableAssignmentMass, TableAssignmentHandle
+        user = kwargs['initial'].get('user')
         super().__init__()
+        courses = [ b.course for b in UserCourseBinding.objects.filter(user = user, is_teacher = True) ]
+        assignments = list(Assignment.objects.filter(course__in = courses))
+        if not assignments:
+            self.okay = False
+            return
         self.okay = True
+        uabs = list(UserAssignmentBinding.objects.filter(assignment__in = assignments))
+        lut_uabs = { a: list(filter(lambda b: b.assignment == a, uabs)) for a in assignments }
+        groups = { c: c.groups for c in courses }
+        self.t_mass = TableAssignmentMass( assignments, lut_uabs, groups )
+
+
+        #self.d_course_assignments = { c:l for c, l in { c: list(filter(lambda a: a.course == c, assignments)) for c in courses }.items() if l }
+
+        #self.t_assignments = { a.id: TableAssignmentHandle( lut_uabs[a] ) for a in assignments }
+
 
     def clean(self):
         cleaned_data = super().clean()
         raise Exception(str(cleaned_data))
-        return cleaned_data
+    #    return cleaned_data
