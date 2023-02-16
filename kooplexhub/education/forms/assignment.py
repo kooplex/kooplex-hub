@@ -246,10 +246,65 @@ class FormAssignmentConfigure(forms.Form):
 
 class FormAssignmentHandle(forms.Form):
     change_log = forms.CharField(widget = forms.HiddenInput(), required = True)
+
+    @staticmethod
+    def _auth(course, userid):
+        UserCourseBinding.objects.get(course = course, user__id = userid, is_teacher = True)
+
+    @staticmethod
+    def _helper_many(userid, seq, create = False):
+        A = lambda aid: Assignment.objects.get(id = aid)
+        S = lambda c, gid: c.groups[None if gid == 'n' else int(gid)]
+        many = []
+        for code in seq:
+            assignment_id, group_id = code.split('-', 1)
+            assignment = A(assignment_id)
+            FormAssignmentHandle._auth(assignment.course, userid)
+            for student in S(assignment.course, group_id):
+                created = False
+                try:
+                    x = UserAssignmentBinding.objects.get(user = student, assignment = assignment)
+                except UserAssignmentBinding.DoesNotExist:
+                    if create:
+                        x = UserAssignmentBinding(user = student, assignment = assignment)
+                        created = True
+                    else:
+                        raise
+                many.append((created, x))
+        return many
+
+    def clean(self):
+        cleaned_data = super().clean()
+        details = json.loads(cleaned_data.pop("change_log"))
+        userid = details['user_id']
+        cleaned_data['handout'] = self._helper_many(userid, details['handoutmany_ids'], create = True)
+        cleaned_data['collect'] = self._helper_many(userid, details['collectmany_ids'])
+        cleaned_data['reassign'] = self._helper_many(userid, details['reassignmany_ids'])
+
+        # authorize
+        A = lambda uab: self._auth(uab.assignment.course, userid)
+        cleaned_data['handout'].extend([ (False, uab) for uab in filter(A, UserAssignmentBinding.objects.filter(id__in = details['handout_ids'])) ])
+        cleaned_data['collect'].extend(filter(A, UserAssignmentBinding.objects.filter(id__in = details['collect_ids'])))
+        cleaned_data['reassign'].extend(filter(A, UserAssignmentBinding.objects.filter(id__in = details['reassign_ids'])))
+        cleaned_data['finalize'] = list(filter(A, UserAssignmentBinding.objects.filter(id__in = details['finalize_ids'])))
+
+        A = lambda aid: Assignment.objects.get(id = aid)
+        for code in details['create_handout_ids']:
+            assignment_id, student_id = code.split('-', 1)
+            assignment = A(assignment_id)
+            self._auth(assignment.course, userid)
+            UserCourseBinding.objects.get(course = course, user__id = student_id, is_teacher = False)
+            cleaned_data['handout'].append((True, UserAssignmentBinding(user = User.objects.get(id = student_id), assignment = assignment)))
+
+       # details['meta']
+
+   ##     raise Exception(str(cleaned_data))
+        return cleaned_data
+
     def __init__(self, *args, **kwargs):
         from . import TableAssignmentMass, TableAssignmentHandle
         user = kwargs['initial'].get('user')
-        super().__init__()
+        super().__init__(*args, **kwargs)
         courses = [ b.course for b in UserCourseBinding.objects.filter(user = user, is_teacher = True) ]
         assignments = list(Assignment.objects.filter(course__in = courses))
         if not assignments:
@@ -260,17 +315,6 @@ class FormAssignmentHandle(forms.Form):
         lut_uabs = { a: list(filter(lambda b: b.assignment == a, uabs)) for a in assignments }
         groups = { c: c.groups for c in courses }
         self.t_mass = TableAssignmentMass( assignments, lut_uabs, groups )
-
-
-        #self.d_course_assignments = { c:l for c, l in { c: list(filter(lambda a: a.course == c, assignments)) for c in courses }.items() if l }
-
-        #self.t_assignments = { a.id: TableAssignmentHandle( lut_uabs[a] ) for a in assignments }
-
-
-    def clean(self):
-        cleaned_data = super().clean()
-        raise Exception(str(cleaned_data))
-    #    return cleaned_data
 
 
 class FormAssignmentList(forms.Form):

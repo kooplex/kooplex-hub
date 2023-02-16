@@ -15,34 +15,17 @@
       {% apply_cancel with icon_apply="bi bi-save" %}
       <table class="mt-3">{{ form.as_table }}</table>
       {% render_table form.t_mass %}
+      <hr>
+      <div class="input-group my-3 d-none" id="tablesearcher">
+        <span class="input-group-text"><span class="bi bi-search"></span></span>
+        <input class="form-control" type="text" id="search_student" placeholder="Search student" title="Type in a name">
+      </div>
+      <div id="table_details">
+        <div class="card shadow m-3 p-2 bg-warning rounded"> 
+          <p class="m-0 p-0">Use the radio buttons to retrieve a detailed table, in which each student or each student from a group can be handled. You may send feedback messages and scores for an assignment to inform them.</p>
+        </div>
+      </div>
     </form>
-
-    {% comment %}
-
-
-      <hr>
-    {% for a_id, t in form.t_assignments.items %}
-        {% render_table t %}
-      {% endfor %}
-
-      <hr>
-      
-            <select class="form-select" id="assignment_selected" name="assignment_selected">
-		    <option class="dropdown-item" value="">Select an assignment</option>
-              {% for c_id, ass in form.d_course_assignments.items %}
-                {% with ass|first as a0 %}
-                <optgroup label="Course {{ a0.course.name }}"> 
-                {% for a in ass %}
-                  <option class="dropdown-item" value="{{ a.id }}"
-                    {% if a.id == assignment_selected %} selected {% endif %}
-                  >{{ a.name }} ({{ a0.course.folder }}/{{ a.folder }})</option>
-                {% endfor %}
-                </optgroup>
-                {% endwith %}
-              {% endfor %}
-            </select>
-    {% endcomment %}
-
   {% else %}
     {% include 'empty.html' with empty_body='You have not defined any assignments yet.' skip_border=True %}
   {% endif %}
@@ -53,11 +36,62 @@
 <script>
 {# catch submit event, in order to see what is changed #}
 $("#assignment-form-handle").submit(function (e) {
+  meta = Array()
+  $("textarea[name=feedback_text]").each(function() {
+    obj_id = $( this ).attr('id').split('-')[1]
+    t_new = $( this ).text()
+    t_old = $("#feedback_text-old-" + obj_id).val()
+    s_new = $("#score-" + obj_id).val()
+    s_old = $("#score-old-" + obj_id).val()
+    if ((t_new != t_old) || (s_new != s_old)) {
+      meta.push({ 'userassignmentbinding_id': obj_id, 'score': s_new, 'feedback': t_new })
+    }
+  });
   $("#id_change_log").val(JSON.stringify( {
-    'user_id': {{ user.id }}
+    'user_id': {{ user.id }},
+// mass assignment table
+    'handoutmany_ids': $.map($("input[type=checkbox][name=handout]"), function (k, v) { if ($(k).prop("checked")) { return $(k).val() } }),
+    'collectmany_ids': $.map($("input[type=checkbox][name=collect]"), function (k, v) { if ($(k).prop("checked")) { return $(k).val() } }),
+    'reassignmany_ids': $.map($("input[type=checkbox][name=reassign]"), function (k, v) { if ($(k).prop("checked")) { return $(k).val() } }),
+// individual student table
+    'create_handout_ids': $.map($("input[type=checkbox][name=selection_createhandout]"), function (k, v) { if ($(k).prop("checked")) { return $(k).val() } }),
+    'handout_ids': $.map($("input[type=checkbox][name=selection_handout]"), function (k, v) { if ($(k).prop("checked")) { return $(k).val() } }),
+    'collect_ids': $.map($("input[type=checkbox][name=selection_collect]"), function (k, v) { if ($(k).prop("checked")) { return $(k).val() } }),
+    'finalize_ids': $.map($("input[type=checkbox][name=selection_finalize]"), function (k, v) { if ($(k).prop("checked")) { return $(k).val() } }),
+    'reassign_ids': $.map($("input[type=checkbox][name=selection_reassigne]"), function (k, v) { if ($(k).prop("checked")) { return $(k).val() } }),
+    'meta': meta
   }));
-	alert($("#id_change_log").val());
 });
+
+{# FIXME: code repetition see project #}
+assignmentSocket = open_ws('{{ wss_assignment }}', ws_callback_assignment);
+
+{# handle websocket callback #}
+function ws_callback_assignment(data) {
+  $("#table_details").html(data);
+  $("#tablesearcher").removeClass("d-none");
+  feedback("Table refreshed");
+  $("input[type=checkbox][name^=selection_]").change(function() {
+    $("input[type=radio][name=assignment_tbl]").each(function () {
+      $( this ).attr('disabled', true);
+    });
+  });
+};
+
+{# catch radiobutton changed event #}
+$("input[type=radio][name=assignment_tbl]").change(function() {
+  v = $(this).val().split('-');
+  if (assignmentSocket.readyState != 1) {
+    console.log("Socket not open: " + assignmentSocket.readyState);
+    assignmentSocket = open_ws('{{ wss_assignment }}', ws_callback_assignment);
+  }
+  assignmentSocket.send(JSON.stringify({
+    'user_id': {{ user.id }},
+    'assignment_id': v[0],
+    'group_id': v[1]
+  }));
+});
+
 </script>
 {% endblock %}
 

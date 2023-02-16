@@ -23,7 +23,7 @@ from container.models import Image, Container
 from education.models import UserCourseBinding, UserAssignmentBinding, Assignment, CourseContainerBinding, Course
 from education.forms import FormCourse
 from education.forms import FormAssignment, FormAssignmentList, FormAssignmentConfigure, FormAssignmentHandle
-from education.forms import TableAssignment, TableCourseStudentSummary #FIXME: these items shan't show up here
+from education.forms import TableCourseStudentSummary #FIXME: these items shan't show up here
 
 from kooplexhub.settings import KOOPLEX
 
@@ -264,12 +264,23 @@ class HandleAssignmentView(LoginRequiredMixin, generic.FormView):
         context['menu_education'] = True
         context['submenu'] = 'assignment_teacher'
         context['active'] = self.request.COOKIES.get('assignment_teacher_tab', 'handle')
+        context['wss_assignment'] = KOOPLEX.get('hub', {}).get('wss_assignment', 'wss://localhost/hub/ws/education/{userid}/').format(userid = self.request.user.id)
         return context
 
-#FIXME
+#FIXME: messages
     def form_valid(self, form):
         logger.info(form.cleaned_data)
-        raise Exception(str(form.cleaned_data))
+        for create, uab in form.cleaned_data['handout']:
+            if create:
+                uab.save()
+            uab.handout()
+        for uab in form.cleaned_data['collect']:
+            uab.collect()
+        for uab in form.cleaned_data['reassign']:
+            uab.reassign()
+        #for uab in form.cleaned_data['finalize']:
+        #    uab.reassign()
+
 #        msgs = []
 #        for a in form.cleaned_data.get("delete_assignments", []):
 #            a.delete()
@@ -281,6 +292,8 @@ class HandleAssignmentView(LoginRequiredMixin, generic.FormView):
 #            logger.info(' '.join(msgs))
 #            messages.info(self.request, ' '.join(msgs))
         return super().form_valid(form)
+
+
 
 
 
