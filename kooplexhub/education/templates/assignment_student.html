@@ -5,38 +5,104 @@
 {% load extras %}
 
 
-{% block realcontent %}
-{% if t_assignment.data|length %}
-  <form id="assignments-submitform" class="form-horizontal" action="{% url 'education:submit' %}" method="post">
+{% block bodycontent %}
+{% if form.okay %}
+  <form id="assignment-form-submit" class="form-horizontal mt-3 container" action="{% url 'education:assignment_student' %}" method="post">
     {% csrf_token %}
     {% title_with_button "Select assignments to submit" button_label="Hand in" button_icon="bi bi-box-arrow-up-right" button_color="btn-success" %}
-    <input class="form-control me-2 mb-3 mt-3" type="text" id="search_assignment" placeholder="Search course or assignment" title="Type in a name" >
-    {% render_table t_assignment %}
+    <div class="input-group my-3">
+      <span class="input-group-text"><span class="bi bi-search"></span></span>
+      <input class="form-control" type="text" id="search_assignment" placeholder="Search course or assignment" title="Type in a name" >
+    </div>
+    <table>{{ form.as_table }}</table>
+    {% render_table form.t_assignment %}
   </form>
 {% else %}
-  {% include 'empty.html' with title=empty_title empty=empty_body %}
+    {% include 'empty.html' with empty_title="You have not received an assignment yet" %}
 {% endif %}
 {% endblock %}
 
 {% block scripts %}
 <script>
-$("#search_assignment").keyup(function() {
-  var pattern = $( this ).val().toUpperCase();
-  console.log( "search: " + pattern );
-  $("input[id^='srch-']").each(function() {
-    hide_it = false;
-    if (pattern.length > 0) {
-        var s = $( this ).val().toUpperCase();
-        if ( ! (s.indexOf(pattern) > -1) ) {
-	  hide_it = true;
-        }
-        if (hide_it) {
-          $( this ).parent().parent().hide();
-        } else {
-          $( this ).parent().parent().show();
-        }
-    }
-  });
+{# catch submit event, in order to see what is changed #}
+$("#assignment-form-submit").submit(function (e) {
+  $("#id_submit").val(JSON.stringify( {
+    'user_id': {{ user.id }},
+    'submit_ids': $.map($("input[name=userassignmentbinding_ids]"), function (k, v) { if ($(k).prop("checked")) { return $(k).val() } })
+  }));
+});
+{# FIXME: code repetition see project #}
+containerSocket = open_ws('{{ wss_container }}', ws_callback_container);
+
+{# handle websocket callback #}
+function ws_callback_container(data) {
+  //console.log(data);
+  var command = data['command'];
+  var msg = data['message'];
+  var containerid = data['container-id'];
+  console.log('SOCK: --> ' + command + ": " + msg);
+  if (command == 'feedback') {
+    feedback(data['message']);
+  }
+  if (data['state'] == 'np') { //FIXME: Container.ST_NOTPRESENT
+    start_button(containerid);
+  } if (data['state'] == 'run') { //FIXME: Container.ST_RUNNING
+    open_button(containerid);
+  }
+};
+
+{# open a container #} //FIXME: repetition
+function open_container(containerid) {
+  var url = $( "#url-containeropen-" + containerid).val();
+  console.log( "opening: " + url );
+  var win = window.open(url, '_blank');
+  if (win) {
+    win.focus();
+  }
+}
+
+{# disable start, and show spinner #}
+function spin_button(containerid) {
+  $("#container-start-" + containerid).parent().attr("disabled", true);
+  $("#container-start-" + containerid).addClass("d-none");
+  $("#spinner-start-" + containerid).removeClass("d-none");
+}
+
+{# enable button and show open button face #}
+function open_button(containerid) {
+  $("#container-start-" + containerid).parent().attr("disabled", false);
+  $("#spinner-start-" + containerid).addClass("d-none");
+  $("#container-open-" + containerid).removeClass("d-none");
+}
+
+{# enable button and show start button face #}
+function start_button(containerid) {
+  $("#container-start-" + containerid).parent().attr("disabled", false);
+  $("#spinner-start-" + containerid).addClass("d-none");
+  $("#container-start-" + containerid).removeClass("d-none");
+}
+
+
+{# start/open a container #}
+$("button[name=container-start]").click(function() {
+  var containerid = $( this ).val();
+  if (! $("#container-open-" + containerid).hasClass('d-none')) {
+    open_container(containerid);
+    return;
+  }
+  if (containerSocket.readyState != 1) {
+    console.log("Socket not open: " + containerSocket.readyState);
+    containerSocket = open_ws('{{ wss_container }}', ws_callback_container);
+  }
+  console.log( "start: " + containerid );
+  spin_button(containerid);
+  containerSocket.send(JSON.stringify({
+    'command': 'container-start',
+    'container-id': containerid,
+  }));
+//  dd_id = $($(this).parents()[2]).attr("aria-labelled-by");
+//	console.log(dd_id);
+//  $(".dropdowm-toggle").each(function () { i = $( this ).attr('id'); if (i == dd_id) { $(this).dropdown('toggle') } } ) 
 });
 </script>
 {% endblock %}

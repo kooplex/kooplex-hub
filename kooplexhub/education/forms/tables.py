@@ -19,19 +19,17 @@ try:
 except ImportError:
     KOOPLEX = {}
 
+ta_light = table_attributes.copy()
+ta_light.update({ "td": { "class": "p-1 text-light" } })
+
 class TableAssignment(tables.Table):
     class Meta:
         model = UserAssignmentBinding
         fields = ('course', 'assignment', 'score', 'feedback_text')
         sequence = ('button', 'course', 'assignment', 'info', 'score', 'feedback_text')
-        attrs = { 
-                 "class": "table table-striped table-bordered", 
-                 "thead": { "class": "thead-dark table-sm" }, 
-                 "td": { "class": "p-1 text-light" }, 
-                 "th": { "class": "table-secondary p-1" }
-                }
+        attrs = ta_light
 
-    button = tables.Column(verbose_name = 'Submit', orderable = False, empty_values = ())
+    button = tables.Column(verbose_name = 'Select/Jump', orderable = False, empty_values = ())
     course = tables.Column(orderable = False, empty_values = ())
     assignment = tables.Column(orderable = False)
     info = tables.Column(orderable = False, empty_values = ())
@@ -39,25 +37,34 @@ class TableAssignment(tables.Table):
     feedback_text = tables.Column(orderable = False, empty_values = ())
 
 
-    def render_button(self, record):
-        if record.state in [ record.ST_WORKINPROGRESS, record.ST_SUBMITTED ]:
+    def _render_button(self, record):
+        if record.state == record.ST_WORKINPROGRESS:
             return format_html(f"""
 <div class="form-check form-switch">
-  <input class="form-check-input" type="checkbox" id="uab-{record.id}" name="selection" value="{record.id}" />
+  <input class="form-check-input" type="checkbox" name="userassignmentbinding_ids" name="selection" value="{record.id}" />
 </div>
             """)
-        elif record.state in [ record.ST_COLLECTED, record.ST_QUEUED ]:
-            return format_html(f"""
-<span class="bi bi-hourglass-bottom" data-toggle="tooltip" title="{record.ST_LOOKUP[record.state]}" />
-            """)
-#FIXME        elif record.state == record.ST_CORRECTED:
-#FIXME            return format_html(f"""
-#FIXME<span class="bi bi-check-circle" data-toggle="tooltip" title="{record.ST_LOOKUP[record.state]}" />
-#FIXME            """)
-        else:
+        elif record.state in [ record.ST_SUBMITTED, record.ST_COLLECTED ]:
             return format_html(f"""
 <span class="bi bi-hand-thumbs-up" data-toggle="tooltip" title="{record.ST_LOOKUP[record.state]}" />
             """)
+        elif record.state == record.ST_READY:
+            return format_html(f"""
+<span class="bi bi-check-circle" data-toggle="tooltip" title="{record.ST_LOOKUP[record.state]}" />
+            """)
+        else:
+            return format_html(f"""
+<span class="bi bi-hourglass-bottom" data-toggle="tooltip" title="{record.ST_LOOKUP[record.state]}" />
+            """)
+
+    def render_button(self, record):
+        from container.templatetags.container_buttons import dropdown_start_open
+        from ..models import UserCourseBinding
+        binding = UserCourseBinding.objects.get(user = record.user, course = record.assignment.course)
+        so = dropdown_start_open(binding.coursecontainerbindings(), binding, 'course')
+        return format_html(f"""
+{self._render_button(record)}&nbsp;/&nbsp;{so}
+        """)
 
     def render_course(self, record):
         return record.assignment.course.name
@@ -65,15 +72,16 @@ class TableAssignment(tables.Table):
     def render_assignment(self, record):
         return format_html(f"""
 {record.assignment.name}
-<input type="hidden" id="srch-{record.id}" value="{record.assignment.course.name} {record.assignment.name}" />
+<input type="hidden" id="assignment-search-{record.id}" value="{record.assignment.search}">
+<input type="hidden" id="assignment-match-{record.id}" value=true>
+<input type="hidden" id="assignment-isshown-{record.id}" value=true>
         """)
 
     def render_info(self, record):
         rd = lambda t: t.clocked if t else "Manual"
-        exp = rd(record.assignment.task_collect)
         return format_html(f"""
 <span class="bi bi-arrow-up-right-square-fill" data-toggle="tooltip" title="Submit count">&nbsp;{record.submit_count}</span>
-<span class="bi bi-check-square-fill ms-3" data-toggle="tooltip" title="Correction count">&nbsp;{record.correction_count}</span><br>{exp}
+<span class="bi bi-check-square-fill ms-3" data-toggle="tooltip" title="Correction count">&nbsp;{record.correction_count}</span>
         """)
 
     def render_score(self, record):

@@ -271,3 +271,28 @@ class FormAssignmentHandle(forms.Form):
         cleaned_data = super().clean()
         raise Exception(str(cleaned_data))
     #    return cleaned_data
+
+
+class FormAssignmentList(forms.Form):
+    submit = forms.CharField(widget = forms.HiddenInput(), required = True)
+    def clean(self):
+        cleaned_data = super().clean()
+        details = json.loads(cleaned_data.pop("submit"))
+        userid = details['user_id']
+        submit_ids = details['submit_ids']
+        cleaned_data['submit'] = UserAssignmentBinding.objects.filter(user__id = userid, id__in = submit_ids, state = UserAssignmentBinding.ST_WORKINPROGRESS)
+        return cleaned_data
+
+
+    def __init__(self, *args, **kwargs):
+        from . import TableAssignment
+        user = kwargs['initial'].get('user')
+        super().__init__(*args, **kwargs)
+        courses = [ ucb.course for ucb in UserCourseBinding.objects.filter(user = user, is_teacher = False) ]
+        bindings = UserAssignmentBinding.objects.filter(user = user, assignment__course__in = courses)
+        if bindings:
+            self.okay = True
+            self.t_assignment = TableAssignment(bindings)
+        else:
+            self.okay = False
+

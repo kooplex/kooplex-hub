@@ -115,8 +115,7 @@ class UserAssignmentBinding(models.Model):
     correction_count = models.IntegerField(default = 0, null = False)
     task_handout = models.ForeignKey(PeriodicTask, null = True, blank = True, on_delete = models.SET_NULL, related_name = 'u_handout')
     task_collect = models.ForeignKey(PeriodicTask, null = True, blank = True, on_delete = models.SET_NULL, related_name = 'u_collect')
-    task_correct = models.ForeignKey(PeriodicTask, null = True, blank = True, on_delete = models.SET_NULL, related_name = 'u_extract2correct')
-    task_finalize = models.ForeignKey(PeriodicTask, null = True, blank = True, on_delete = models.SET_NULL, related_name = 'u_finalize')
+    #task_finalize = models.ForeignKey(PeriodicTask, null = True, blank = True, on_delete = models.SET_NULL, related_name = 'u_finalize')
 
     class Meta:
         unique_together = [['user', 'assignment']]
@@ -180,41 +179,17 @@ class UserAssignmentBinding(models.Model):
 
 
     def finalize(self, user, score, message):
-        #FIXME
         assert self.state == UserAssignmentBinding.ST_CORRECTED, "State mismatch"
-        now = datetime.datetime.now()
+        now = timezone.now()
         self.corrected_at = now
         self.correction_count += 1
         self.corrector = user
         self.feedback_text = message
         self.score = score
-        if self.task_finalize:
-            self.task_finalize.clocked.clocked_time = now
-            self.task_finalize.clocked.save()
-        else:
-            schedule_now = ClockedSchedule.objects.create(clocked_time = now)
-            self.task_finalize = PeriodicTask.objects.create(
-                name = f"finalize_{self.id}",
-                task = "kooplexhub.tasks.create_tar",
-                clocked = schedule_now,
-                one_off = True,
-        #FIXME: feedback csak student kérésére lesz kicsomagolva
-                kwargs = json.dumps({
-                    'binding_id': self.id,
-                    'folder': assignment_correct_dir(self), 
-                    'tarbal': assignment_feedback(self),
-                    'callback': {
-                        'function': "education.tasks.callback",
-                        'kwargs': {
-                            'uab_id': self.id,
-                            'new_state': UserAssignmentBinding.ST_READY,
-                        }
-                    }
-                })
-            )
-        self.state = self.ST_TRANSITIONAL
+        self.state = self.ST_READY
         self.save()
 
     def reassign(self):
+        #FIXME: Ha le van törölve, mert ZH típusu, akkor ennek nincs értelme
         self.state = UserAssignmentBinding.ST_WORKINPROGRESS
         self.save()

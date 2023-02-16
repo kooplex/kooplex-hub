@@ -22,7 +22,7 @@ from hub.templatetags.extras import render_user
 from container.models import Image, Container
 from education.models import UserCourseBinding, UserAssignmentBinding, Assignment, CourseContainerBinding, Course
 from education.forms import FormCourse
-from education.forms import FormAssignment, FormAssignmentConfigure, FormAssignmentHandle
+from education.forms import FormAssignment, FormAssignmentList, FormAssignmentConfigure, FormAssignmentHandle
 from education.forms import TableAssignment, TableCourseStudentSummary #FIXME: these items shan't show up here
 
 from kooplexhub.settings import KOOPLEX
@@ -93,24 +93,30 @@ class CourseBindingListView(LoginRequiredMixin, generic.ListView):
         return context
 
 
-class StudentAssignmentListView(LoginRequiredMixin, generic.TemplateView):
+class StudentAssignmentListView(LoginRequiredMixin, generic.FormView):
     template_name = 'assignment_student.html'
+    form_class = FormAssignmentList
+    success_url = '/hub/education/assignment/'
+
+    def get_initial(self):
+        initial = super().get_initial()
+        user = self.request.user
+        initial['user'] = user
+        return initial
 
     def get_context_data(self, **kwargs):
-        l = reverse('education:courses')
         context = super().get_context_data(**kwargs)
         context['menu_education'] = True
         context['submenu'] = 'assignment_student'
-        context['empty_title'] = "You have not received an assignment yet"
-        context['empty_body'] = format_html(f"""<a href="{l}"><i class="bi bi-journal-bookmark-fill"></i><span class="d-none d-sm-inline">&nbsp;list your courses</span></a>""")
-        user = self.request.user
-        profile = user.profile
-        if 'usercoursebinding_id' in self.kwargs:
-            courses = [ UserCourseBinding.objects.get(user = user, is_teacher = False, id = self.kwargs['usercoursebinding_id']).course ]
-        else:
-            courses = [ ucb.course for ucb in UserCourseBinding.objects.filter(user = user, is_teacher = False) ]
-        context['t_assignment'] = TableAssignment(UserAssignmentBinding.objects.filter(user = user, assignment__course__in = courses))
+        context['wss_container'] = KOOPLEX.get('hub', {}).get('wss_container', 'wss://localhost/hub/ws/container_environment/{userid}/').format(userid = self.request.user.id)
         return context
+
+    def form_valid(self, form):
+        logger.info(form.cleaned_data)
+        for uab in form.cleaned_data['submit']:
+            uab.collect(submit = True)
+            #FIXME: feedback messages
+        return super().form_valid(form)
 
 
 class ConfigureCourseView(LoginRequiredMixin, generic.edit.UpdateView):
@@ -260,6 +266,7 @@ class HandleAssignmentView(LoginRequiredMixin, generic.FormView):
         context['active'] = self.request.COOKIES.get('assignment_teacher_tab', 'handle')
         return context
 
+#FIXME
     def form_valid(self, form):
         logger.info(form.cleaned_data)
         raise Exception(str(form.cleaned_data))
@@ -279,182 +286,7 @@ class HandleAssignmentView(LoginRequiredMixin, generic.FormView):
 
 
 
-@require_http_methods(['POST'])
-@login_required
-def assignment_individual_handle(request):
-    """ TBA """
-    user = request.user
-    logger.debug(f"HANDLE user {user}, method: {request.method}")
-    courses = [ ucb.course for ucb in UserCourseBinding.objects.filter(user = user, is_teacher = True) ]
-    oops = []
-    msgs = []
-    # handout
-    n_handout = 0
-    n_handout_error = 0
-    extr = [ json.loads(x) for x in request.POST.getlist('selection_handout', []) ]
-    for aid, uid in extr:
-        try:
-            a = Assignment.objects.get(id = aid, course__in = courses)
-            u = UserCourseBinding.objects.get(user__id = uid, course = a.course, is_teacher = False).user
-            UserAssignmentBinding.objects.create(user = u, assignment = a).handout()
-            n_handout += 1
-        except Exception as e:
-            logger.error(e)
-            n_handout_error += 1
-            oops.append(str(e))
-    if n_handout:
-        msgs.append(f'Handed {n_handout} assignments out.')
-    # collect
-    n_collected = 0
-    n_collect_error = 0
-    for uab_id in request.POST.getlist('selection_collect', []):
-        try:
-            uab = UserAssignmentBinding.objects.get(id = uab_id, assignment__course__in = courses).handout()
-            uab.state = UserAssignmentBinding.ST_COLLECTED
-            uab.submitted_at = now()
-            uab.save()
-            n_collected += 1
-        except Exception as e:
-            logger.error(e)
-            n_collect_error += 1
-            oops.append(str(e))
-    if n_collected:
-        msgs.append(f'Collected {n_collected} assignments.')
-    # correct
-    n_corrected = 0
-    n_correct_error = 0
-    for uab_id in request.POST.getlist('selection_correct', []):
-        try:
-            uab = UserAssignmentBinding.objects.get(id = uab_id, assignment__course__in = courses, state__in = [ UserAssignmentBinding.ST_COLLECTED, UserAssignmentBinding.ST_SUBMITTED ])
-            uab.extract2correct()
-            n_corrected += 1
-        except Exception as e:
-            logger.error(e)
-            n_correct_error += 1
-            oops.append(str(e))
-    if n_collected:
-        msgs.append(f'Marked {n_corrected} assignments for correction.')
-    # feedback
-    n_feedback = 0
-    n_feedback_error = 0
-    for uab_id in request.POST.getlist('selection_finalize', []):
-        try:
-            uab = UserAssignmentBinding.objects.get(id = uab_id, assignment__course__in = courses, state = UserAssignmentBinding.ST_CORRECTED)
-            uab.finalize(user, message = request.POST.get(f'feedback_text-{uab_id}'), score = request.POST.get(f'score-{uab_id}'))
-            n_feedback += 1
-        except Exception as e:
-            logger.error(e)
-            n_feedback_error += 1
-            oops.append(str(e))
-    if n_feedback:
-        msgs.append(f'Ready with {n_feedback} assignments.')
-    # updated score or feedback_text
-    n_updated = 0
-    n_update_error = 0
-    for uab_id in request.POST.getlist('ready_ids', []):
-        score = request.POST.get(f'score-{uab_id}')
-        feedback_text = request.POST.get(f'feedback_text-{uab_id}')
-        if (request.POST.get(f'score-old-{uab_id}') == score) and (request.POST.get(f'feedback_text-old-{uab_id}') == feedback_text):
-            continue
-        try:
-            uab = UserAssignmentBinding.objects.get(id = uab_id, assignment__course__in = courses, state = UserAssignmentBinding.ST_READY)
-            uab.score = score
-            uab.feedback_text = feedback_text
-            uab.save()
-            n_updated += 1
-        except Exception as e:
-            logger.error(e)
-            n_update_error += 1
-            oops.append(str(e))
-    if n_updated:
-        msgs.append(f'{n_updated} assignment scores and or feedback messages were edited and saved.')
-    # reassign
-    n_reassign = 0
-    n_reassign_error = 0
-    for uab_id in request.POST.getlist('selection_reassign', []):
-        try:
-            uab = UserAssignmentBinding.objects.get(id = uab_id, assignment__course__in = courses, state = UserAssignmentBinding.ST_READY)
-            uab.reassign()
-            n_reassign += 1
-        except Exception as e:
-            logger.error(e)
-            n_reassign_error += 1
-            oops.append(str(e))
-    if n_reassign:
-        msgs.append(f'{n_reassign} assignments were reassigned.')
-    if len(msgs):
-        messages.info(request,' '.join(msgs))
-    if len(oops):
-        messages.error(request,' '.join(oops))
-    return redirect('education:assignment_teacher')
-
-
-@require_http_methods(['POST'])
-@login_required
-def assignment_mass_(request):
-    user = request.user
-    profile = user.profile
-    logger.debug("user %s, method: %s" % (user, request.method))
-    ex = lambda x: None if x == 'n' else int(x)
-    handout = []
-    for idx in request.POST.getlist('handout'):
-        a, g = idx.split('-')
-        assignment = Assignment.objects.get(id = a)
-        groups = dict(map(lambda x: (None if x[0] is None else x[0].id, x[1]), assignment.course.groups.items()))
-        handout.extend(_handout(assignment, { ex(g): groups[ex(g)] }))
-    if len(handout):
-        messages.info(request, 'received: ' + ', '.join(list(map(lambda s: str(s), handout))))
-    collect = []
-    for idx in request.POST.getlist('collect'):
-        a, g = idx.split('-')
-        assignment = Assignment.objects.get(id = a)
-        groups = dict(map(lambda x: (None if x[0] is None else x[0].id, x[1]), assignment.course.groups.items()))
-        collect.extend(_collect(assignment, { ex(g): groups[ex(g)] }))
-    if len(collect):
-        messages.info(request, 'collected: ' + ', '.join(list(map(lambda s: str(s), collect))))
-    correct = []
-    for idx in request.POST.getlist('correct'):
-        a, g = idx.split('-')
-        assignment = Assignment.objects.get(id = a)
-        groups = dict(map(lambda x: (None if x[0] is None else x[0].id, x[1]), assignment.course.groups.items()))
-        correct.extend(_correct(assignment, { ex(g): groups[ex(g)] }))
-    if len(correct):
-        messages.info(request, 'corrected: ' + ', '.join(list(map(lambda s: str(s), correct))))
-    reassign = []
-    for idx in request.POST.getlist('reassign'):
-        a, g = idx.split('-')
-        assignment = Assignment.objects.get(id = a)
-        groups = dict(map(lambda x: (None if x[0] is None else x[0].id, x[1]), assignment.course.groups.items()))
-        reassign.extend(_reassign(assignment, { ex(g): groups[ex(g)] }))
-    if len(reassign):
-        messages.info(request, 'reassigned: ' + ', '.join(list(map(lambda s: str(s), correct))))
-    return redirect('education:assignment_teacher')
-
-@login_required
-def assignment_mass___(request):
-    user = request.user
-    profile = user.profile
-    logger.debug("user %s, method: %s" % (user, request.method))
-    assignment_id = request.POST.get('assignment')
-    assignment = Assignment.objects.get(id = assignment_id)
-    UserCourseBinding.objects.get(user = user, course = assignment.course, is_teacher = True)
-    groups = dict(map(lambda x: (None if x[0] is None else x[0].id, x[1]), assignment.course.groups.items()))
-    ex = lambda x: None if x == 'n' else int(x)
-    request.COOKIES['assignment_id'] = assignment_id
-    handout = _handout(assignment, { x: groups[x] for x in map(ex, request.POST.getlist('handout')) })
-    if len(handout):
-        messages.info(request, 'received: ' + ', '.join(list(map(lambda s: str(s), handout))))
-    collect = _collect(assignment, { x: groups[x] for x in map(ex, request.POST.getlist('collect')) })
-    if len(collect):
-        messages.info(request, 'collected: ' + ', '.join(list(map(lambda s: str(s), collect))))
-    correct = _correct(assignment, { x: groups[x] for x in map(ex, request.POST.getlist('correct')) })
-    if len(correct):
-        messages.info(request, 'corrected: ' + ', '.join(list(map(lambda s: str(s), correct))))
-    reassign = _reassign(assignment, { x: groups[x] for x in map(ex, request.POST.getlist('reassign')) })
-    if len(reassign):
-        messages.info(request, 'reassigned: ' + ', '.join(list(map(lambda s: str(s), correct))))
-    return redirect('education:assignment_teacher')
-
+#FIXME: refactor me
 @require_http_methods(['GET'])
 @login_required
 def assignment_summary(request):
@@ -469,79 +301,5 @@ def assignment_summary(request):
         't_summary': dict(filter(lambda i: i[1] is not None, { c.id: TableCourseStudentSummary(c) for c in courses }.items())),
     }
     return render(request, 'assignment.html', context = context_dict)
-
-
-def _handout(assignment, group_map):
-    uab = UserAssignmentBinding.objects.filter(assignment = assignment)
-    handout = []
-    for g, students in group_map.items():
-        for s in students:
-            try:
-                b = uab.get(user = s)
-                if b.state != UserAssignmentBinding.ST_QUEUED:
-                    continue
-                b.handout()
-            except UserAssignmentBinding.DoesNotExist:
-                UserAssignmentBinding.objects.create(user = s, assignment = assignment, state = UserAssignmentBinding.ST_WORKINPROGRESS).handout()
-            handout.append(s)
-    return handout
-
-def _collect(assignment, group_map):
-    uab = UserAssignmentBinding.objects.filter(assignment = assignment)
-    collect = []
-    for g, students in group_map.items():
-        for b in uab.filter(state = UserAssignmentBinding.ST_WORKINPROGRESS, user__in = students):
-            b.collect(False)
-            collect.append(b.user)
-    return collect
-
-def _correct(assignment, group_map):
-    uab = UserAssignmentBinding.objects.filter(assignment = assignment)
-    correct = []
-    for g, students in group_map.items():
-        for b in uab.filter(state__in = [ UserAssignmentBinding.ST_COLLECTED, UserAssignmentBinding.ST_SUBMITTED ], user__in = students):
-            b.extract2correct()
-            correct.append(b.user)
-    return correct
-
-def _reassign(assignment, group_map):
-    uab = UserAssignmentBinding.objects.filter(assignment = assignment)
-    reassign = []
-    for g, students in group_map.items():
-        for b in uab.filter(state = UserAssignmentBinding.ST_READY, user__in = students):
-            b.ressign()
-            reassign.append(b.user)
-    return reassign
-
-
-
-
-
-
-
-
-
-
-@login_required
-def submitform_submit(request):
-    """TBA"""
-    user = request.user
-    logger.debug(f"user {user}, method: {request.method}")
-    if request.POST.get('button') == 'apply':
-        for uab_id in request.POST.getlist('selection', []):
-            try:
-                UserAssignmentBinding.objects.get(id = uab_id, user = user, state = UserAssignmentBinding.ST_WORKINPROGRESS).collect(submit = True)
-                #FIXME: message
-            except Exception as e:
-                logger.error(e)
-                #FIXME: message
-                raise
-        return redirect('education:assignment_student')
-    else:
-        return redirect('education:student')
-
-
-
-
 
 

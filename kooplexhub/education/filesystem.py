@@ -58,7 +58,7 @@ def assignment_correct_dir(userassignmentbinding):
 
 def assignment_garbage(userassignmentbinding):
     a = userassignmentbinding.assignment
-    return os.path.join(dirname.mp_garbage, userassignmentbinding.user.username, "assignment_%s-%s.%f.tar.gz" % (a.course.folder, a.safename, time.time()))
+    return os.path.join(dirname.mp_garbage, userassignmentbinding.user.username, "assignment_%s-%s.%f.tar.gz" % (a.course.folder, a._safename, time.time()))
 
 
 def course_workdir_garbage(usercoursebinding):
@@ -67,12 +67,12 @@ def course_workdir_garbage(usercoursebinding):
 
 def assignment_collection(userassignmentbinding):
     assignment = userassignmentbinding.assignment
-    return os.path.join(course_assignment_snapshot(assignment.course), 'collection-%s-%s.%d.tar.gz' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp()))
+    return os.path.join(course_assignment_snapshot(assignment.course), 'collection-%s-%s.%d.tar.gz' % (assignment._safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp()))
 
 
 def assignment_feedback(userassignmentbinding):
     assignment = userassignmentbinding.assignment
-    return os.path.join(course_assignment_snapshot(assignment.course), 'feedback-%s-%s-%s.%d.tar.gz' % (assignment.safename, userassignmentbinding.user.username, userassignmentbinding.corrector.username, userassignmentbinding.corrected_at.timestamp()))
+    return os.path.join(course_assignment_snapshot(assignment.course), 'feedback-%s-%s-%s.%d.tar.gz' % (assignment._safename, userassignmentbinding.user.username, userassignmentbinding.corrector.username, userassignmentbinding.corrected_at.timestamp()))
 
 
 #      @staticmethod

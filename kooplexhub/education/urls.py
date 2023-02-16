@@ -10,11 +10,8 @@ urlpatterns = [
     path('assignment_new/', views.NewAssignmentView.as_view(), name = 'assignment_new'),
     path('assignment_configure/', views.ConfigureAssignmentView.as_view(), name = 'assignment_configure'),
     path('assignment_handler/', views.HandleAssignmentView.as_view(), name = 'assignment_handle'),
-
     path('assignment_teachers_view/', views.assignment_teacher, name = 'assignment_teacher'), # just a dispatcher
-    path('assignment_summary/', views.assignment_summary, name = 'assignment_summary'),
-
-    re_path('assignment/(?P<usercoursebinding_id>\d+)?/?$', views.StudentAssignmentListView.as_view(), name = 'assignment_student'),
-    path('submitform/', views.submitform_submit, name = 'submit'),
+    path('assignment/', views.StudentAssignmentListView.as_view(), name = 'assignment_student'),
     re_path('addcontainer/(?P<usercoursebinding_id>\d+)/?$', views.addcontainer, name = 'autoaddcontainer'),
+    path('assignment_summary/', views.assignment_summary, name = 'assignment_summary'),
 ]

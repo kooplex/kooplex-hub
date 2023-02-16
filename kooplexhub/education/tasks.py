@@ -46,8 +46,8 @@ def assignment_collect(course_id, assignment_folder):
 
 @shared_task()
 def submission(userassignmentbinding_id, new_state):
-    logger.debug(f"Submission {uab}")
     uab = UserAssignmentBinding.objects.get(id = userassignmentbinding_id)
+    logger.debug(f"Submission {uab}")
     folder = assignment_workdir(uab)
     tarbal = assignment_collection(uab)
     correct_folder = assignment_correct_dir(uab)
