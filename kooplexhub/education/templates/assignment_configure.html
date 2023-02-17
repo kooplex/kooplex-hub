@@ -57,8 +57,8 @@ $("#assignment-form-configure").submit(function (e) {
   changes = Array();
   $("input[name^=name-old-]").each(function() {
     aid = $( this ).attr('id').split('-', 3)[2];
-    attrs = ["name", "description", "max_size", "remove_collected", "valid_from", "expires_at"]; //FIXME: handle dates
-    attr_tp = ["str", "str", "str", "bool", "timestamp", "timestamp"]; //FIXME: handle dates
+    attrs = ["name", "description", "max_size", "remove_collected", "valid_from", "expires_at"];
+    attr_tp = ["str", "str", "str", "bool", "timestamp", "timestamp"];
     a_chg = Array();
     for (k in attrs) {
       v = my_filter(attrs[k], aid, attr_tp[k]);

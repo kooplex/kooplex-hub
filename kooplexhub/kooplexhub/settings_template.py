@@ -263,9 +263,11 @@ KOOPLEX = {
     'hub': {
         'adminemail': '',
         'smtpserver': '',
-        'wss_project': 'wss://localhost/ws/project/{userid}/',
-        'wss_container': 'wss://localhost/ws/container_environment/{userid}/',
-        'wss_monitor': 'wss://localhost/ws/node_monitor/',
+        'wss_project': 'wss://localhost/hub/ws/project/{userid}/',
+        'wss_container': 'wss://localhost/hub/ws/container_environment/{userid}/',
+        'wss_monitor': 'wss://localhost/hub/ws/node_monitor/',
+        'wss_assignment': 'wss://localhost/hub/ws/education/{userid}/',
+        'wss_assignment_summary': 'wss://localhost/hub/ws/assignment_summary/{userid}/',
     },
     'ldap': {
         'host': '',

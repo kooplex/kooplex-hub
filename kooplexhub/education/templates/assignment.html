@@ -36,36 +36,27 @@
 
 <div class="tab-content bg-light container rounded-bottom" id="assignmentTeacherTabContent">
   {% block assignment_content %}
-  <div class="tab-pane fade {% if active == "summary" %}show active{% endif %}" id="summary" role="tabpanel" aria-labelledby="tab-summary">
+  <div class="tab-pane fade {% if active == "summary" %}show active{% endif %} py-3" id="summary" role="tabpanel" aria-labelledby="tab-summary">
     {% if d_course_assignments|length > 0 %}
-    <div class="d-flex flex-row mb-2 mt-2">
-      <div class="p-2 mt-1">
-        <span data-toggle="tooltip" title="Select assignment you'd like to handle"><i class="bi bi-journal-bookmark-fill"></i>&nbsp;Course</span>
-      </div>
-      <div class="p-2 flex-fill">
-        <select class="form-select" id="summary_course_selected" name="summary_course_selected">
-              <optgroup label="-- Select course --"></optgroup>
-              {% for c_id, ass in d_course_assignments.items %}
-                {% with ass|first as a0 %}
-                <option value="{{ a0.course.id }}"> 
-                {{ a0.course.name }}
-                </option>               
-                 {% endwith %}
-              {% endfor %}
-        </select>
+    <div class="input-group my-3">
+      <span class="input-group-text"><span class="bi bi-journal-bookmark-fill"></span></span>
+      <select class="form-select" id="select_summary_course">
+        <option label="Select a course..."></option>
+        {% for c_id, ass in d_course_assignments.items %}
+          {% with ass|first as a0 %}
+            <option value="{{ a0.course.id }}"> {{ a0.course.name }}</option>               
+          {% endwith %}
+        {% endfor %}
+      </select>
+    </div>
+    <div id="table_details">
+      <div class="card shadow m-3 p-2 bg-warning rounded"> 
+        <p class="m-0 p-0">Use the dropdown to select a course and then a summary table is retrieved for your selection.</p>
       </div>
     </div>
     {% else %}
-        {% include 'empty.html' with empty_body='<p class="text-light">You have not filled in the scores for your assignments.</p>' skip_border=True %}
+      {% include 'empty.html' with empty_body="<p class=''>You have not filled in the scores for your assignments.</p>" skip_border=True %}
     {% endif %}
-    <form id='student-grade' class="mb-3 mt-3">
-      <input type="hidden" name="assignment" value="{{assignment_id}}" >
-      {% for c_id, t in  t_summary.items %}
-      <div id="st-{{c_id}}">
-        {{ t }}
-      </div>
-      {% endfor %}
-    </form>
   </div>
   {% endblock %}
 </div>
@@ -93,6 +84,30 @@ $("#summary_course_selected").change(function() {
 }).change();
 
 </script>
+{% block child_scripts %}
+<script>
+{# if dropdown changes use wss to retrieve the summary table #}
+$("#select_summary_course").change(function () {
+  course_id = $(this).val();
+  if (assignmentSocket.readyState != 1) {
+    console.log("Socket not open: " + assignmentSocket.readyState);
+    assignmentSocket = open_ws('{{ wss_assignment }}', ws_callback_assignment);
+  }
+  assignmentSocket.send(JSON.stringify({
+    'user_id': {{ user.id }},
+    'course_id': course_id
+  }));
+});
 
-{% block child_scripts %}{% endblock %}
+{# FIXME: code repetition see project #}
+assignmentSocket = open_ws('{{ wss_assignment }}', ws_callback_assignment);
+
+{# handle websocket callback #}
+function ws_callback_assignment(data) {
+  $("#table_details").html(data);
+  //$("#tablesearcher").removeClass("d-none");
+  feedback("Table refreshed");
+};
+</script>
+{% endblock %}
 {% endblock %}

@@ -23,7 +23,6 @@ from container.models import Image, Container
 from education.models import UserCourseBinding, UserAssignmentBinding, Assignment, CourseContainerBinding, Course
 from education.forms import FormCourse
 from education.forms import FormAssignment, FormAssignmentList, FormAssignmentConfigure, FormAssignmentHandle
-from education.forms import TableCourseStudentSummary #FIXME: these items shan't show up here
 
 from kooplexhub.settings import KOOPLEX
 
@@ -283,20 +282,18 @@ class HandleAssignmentView(LoginRequiredMixin, generic.FormView):
         return super().form_valid(form)
 
 
-#FIXME: refactor me
-@require_http_methods(['GET'])
-@login_required
-def assignment_summary(request):
-    user = request.user
-    courses = [ b.course for b in UserCourseBinding.objects.filter(user = user, is_teacher = True) ]
-    assignments = list(Assignment.objects.filter(course__in = courses))
-    context_dict = {
-        'menu_education': True,
-        'submenu': 'assignment_teacher',
-        'active': request.COOKIES.get('assignment_teacher_tab', 'summary'),
-        'd_course_assignments': { c:l for c, l in { c: list(filter(lambda a: a.course == c, assignments)) for c in courses }.items() if l },
-        't_summary': dict(filter(lambda i: i[1] is not None, { c.id: TableCourseStudentSummary(c) for c in courses }.items())),
-    }
-    return render(request, 'assignment.html', context = context_dict)
+class AssignmentSummaryView(LoginRequiredMixin, generic.TemplateView):
+    template_name = 'assignment.html'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        courses = [ b.course for b in UserCourseBinding.objects.filter(user = user, is_teacher = True) ]
+        assignments = Assignment.objects.filter(course__in = courses)
+        context['menu_education'] = True
+        context['submenu'] = 'assignment_teacher'
+        context['active'] = self.request.COOKIES.get('assignment_teacher_tab', 'summary')
+        context['wss_assignment'] = KOOPLEX.get('hub', {}).get('wss_assignment_summary', 'wss://localhost/hub/ws/assignment_summary/{userid}/').format(userid = self.request.user.id)
+        context['d_course_assignments'] = { c: assignments.filter(course = c) for c in courses if assignments.filter(course = c) }
+        return context
 

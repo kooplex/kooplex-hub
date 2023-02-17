@@ -190,57 +190,6 @@ class TableAssignmentConf(tables.Table):
         """)
 
 
-class TableAssignmentSummary(tables.Table):
-    def render_course(self, record):
-        return record.course.name
-
-    def render_received(self, record):
-        return len(UserAssignmentBinding.objects.filter(assignment = record))
-
-#    id = AssignmentSelectionColumn(verbose_name = 'Delete', orderable = False)
-    course = tables.Column(orderable = False, empty_values = ())
-    received = tables.Column(orderable = False, empty_values = ())
-    class Meta:
-        model = Assignment
-        fields = ('course', 'creator', 'folder', 'name', 'description', 'created_at', 'valid_from', 'expires_at', 'received')
-        attrs = { 
-                 "class": "table table-bordered", 
-                 "thead": { "class": "thead-dark table-sm" }, 
-                 "td": { "style": "padding:.5ex", "class": "text-light"  }, 
-                 "th": { "style": "padding:.5ex", "class": "table-secondary" } 
-                }
-
-class TableAssignmentStudentSummary(tables.Table):
-
-    def __init__(self, course):
-        import pandas
-        from django_pandas.io import read_frame
-
-        bindings = UserAssignmentBinding.objects.filter(assignment__course=course)
-        dfm = read_frame(bindings)
-        table = dfm.pivot(index="user", columns="assignment", values="score")
-        points = dfm.groupby(by="user").agg("sum")[["id"]].rename(columns={"id":"Total points"})
-        result = pandas.merge(left=table, right=points, left_on="user", right_on="user", how="inner")
-        super().__init__(result)
-#        super().__init__(course)
-        
-def TableCourseStudentSummary(course):
-
-        import pandas
-        from django_pandas.io import read_frame
-
-        bindings = UserAssignmentBinding.objects.filter(assignment__course=course)
-        if bindings.count() == 0:
-            return None
-        dfm = read_frame(bindings)
-        table = dfm.pivot(index="user", columns="assignment", values="score")
-        table.columns = [tc.split("Assignment ")[1].split(" (")[0] for tc in table.columns]
-        points = dfm.fillna(0).groupby(by="user").agg("sum")[["score"]].rename(columns={"score":"Total points"})
-        result = pandas.merge(left=table, right=points, left_on="user", right_on="user", how="inner")
-        header = f"<div style=\"margin-top:10px;\"><h5>{course.name}</h5></div>"
-        return format_html(header + result.to_html(classes="table table-bordered table-striped text-center", index_names=False, justify="center", na_rep="-", border=None))
-
-
 class TableAssignmentHandle(tables.Table):
     class Meta:
         model = UserAssignmentBinding
