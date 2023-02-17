@@ -61,6 +61,9 @@ $("#assignment-form-handle").submit(function (e) {
     'reassign_ids': $.map($("input[type=checkbox][name=selection_reassigne]"), function (k, v) { if ($(k).prop("checked")) { return $(k).val() } }),
     'meta': meta
   }));
+  // debug
+  // alert ($("#id_change_log").val());
+  // return false;
 });
 
 

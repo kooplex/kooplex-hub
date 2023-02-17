@@ -337,7 +337,6 @@ Collection due: {exp}<br>
 
 
 class TableAssignmentMass(tables.Table):
-    #FIXME: needs refactoring!
     class Meta:
         model = Assignment
         fields = ('course', 'name')
@@ -351,7 +350,6 @@ class TableAssignmentMass(tables.Table):
     handout = tables.Column(orderable = False, empty_values = ())
     collect = tables.Column(orderable = False, empty_values = ())
     correcting = tables.Column(orderable = False, empty_values = ())
-    correct = tables.Column(orderable = False, empty_values = ())
     reassign = tables.Column(orderable = False, empty_values = ())
     transition = tables.Column(orderable = False, empty_values = ())
 
@@ -371,94 +369,62 @@ class TableAssignmentMass(tables.Table):
 
     def render_group(self, record):
         rows = []
-        for group, students in self.groups[record.course].items():
-            gn = 'Ungrouped' if group is None else group.name
-            gid = 'n' if group is None else group.id
-            n = len(students)
+        for gid, gn in self.groups[record.course.id]:
+            gid = 'n' if gid == -1 else gid
+            n = 'FIXME' #len(students)
             radio= f"""<input type="radio" name="assignment_tbl" value="{record.id}-{gid}">"""
             rows.append(f"<div>{radio}&nbsp;{gn} ({n} students)</div>")
         return format_html("<br>".join( rows ))
 
     def render_transition(self, record):
-        return "TBA"
+        rows = []
+        for gid, gn in self.groups[record.course.id]:
+            n1 = self.get_count(record.id, gid, 'ext')
+            n2 = self.get_count(record.id, gid, 'snap')
+            rows.append(f"<div data-toggle='tooltip' title='{n1} assignments are being handed out and {n2} are being tarballed'>{n1 + n2}</div>")
+        return format_html("<br>".join( rows ))
+
+    def _render_factory(self, record, state, task, icon):
+        rows = []
+        for gid, gn in self.groups.get(record.course.id, [-1, 'Ungrouped']):
+            idx = f'{record.id}-n' if gid is -1 else f'{record.id}-{gid}'
+            n = self.get_count(record.id, gid, state)
+            d = '' if n else 'disabled'
+            rows.append(f"""
+<div class="form-check form-switch">
+  <input class="form-check-input" type="checkbox" id="{task}-{idx}" name="{task}" value="{idx}" {d}/>
+  <label class="form-check-label" for="{task}-{idx}"> <span class="{icon}"> {n}</span></label>
+</div>
+            """)
+        return format_html("<br>".join( rows ))
 
     def render_handout(self, record):
-        rows = []
-        for group, students in  self.groups[record.course].items():
-            idx = f'{record.id}-n' if group is None else f'{record.id}-{group.id}'
-            students = set(students).difference([ b.user for b in filter(lambda b: b.state in [
-                UserAssignmentBinding.ST_WORKINPROGRESS,
-                UserAssignmentBinding.ST_READY,
-                UserAssignmentBinding.ST_SUBMITTED, 
-                UserAssignmentBinding.ST_COLLECTED,
-#                UserAssignmentBinding.ST_CORRECTED
-                ], self.lut_uab[record]) ])
-            n = len(students)
-            d = '' if n else 'disabled'
-            rows.append(f"""
-<div class="form-check form-switch">
-  <input class="form-check-input" type="checkbox" id="handout-{idx}" name="handout" value="{idx}" {d}/>
-  <label class="form-check-label" for="handout-{idx}"> <span class="bi bi-box-arrow-up-right"> {n}</span></label>
-</div>
-            """)
-        return format_html("<br>".join( rows ))
+        return self._render_factory(record, 'qed', 'handout', 'bi bi-box-arrow-up-right')
         
     def render_collect(self, record):
-        rows = []
-        for group, students in  self.groups[record.course].items():
-            idx = f'{record.id}-n' if group is None else f'{record.id}-{group.id}'
-            students = set(students).intersection([ b.user for b in filter(lambda b: b.state == UserAssignmentBinding.ST_WORKINPROGRESS, self.lut_uab[record]) ])
-            n = len(students)
-            d = '' if n else 'disabled'
-            rows.append(f"""
-<div class="form-check form-switch">
-  <input class="form-check-input" type="checkbox" id="collect-{idx}" name="collect" value="{idx}" {d}/>
-  <label class="form-check-label" for="collect-{idx}"> <span class="bi bi-box-arrow-in-down-right"> {n}</span></label>
-</div>
-            """)
-        return format_html("<br>".join( rows ))
+        return self._render_factory(record, 'wip', 'collect', 'bi bi-box-arrow-in-down-right')
 
     def render_correcting(self, record):
         rows = []
-        for group, students in  self.groups[record.course].items():
-            #FIXME  students = set(students).intersection([ b.user for b in filter(lambda b: b.state == UserAssignmentBinding.ST_CORRECTED, self.lut_uab[record]) ])
-            students = set() ###students).intersection([ b.user for b in filter(lambda b: b.state == UserAssignmentBinding.ST_CORRECTED, self.lut_uab[record]) ])
-            n = len(students)
-            rows.append(f"<div>{n}</div>")
+        for gid, gn in self.groups[record.course.id]:
+            n1 = self.get_count(record.id, gid, 'sub')
+            n2 = self.get_count(record.id, gid, 'col')
+            rows.append(f"<div data-toggle='tooltip' title='{n1} assignments are submitted and {n2} are collected'>{n1 + n2}</div>")
         return format_html("<br>".join( rows ))
 
     def render_reassign(self, record):
-        rows = []
-        for group, students in  self.groups[record.course].items():
-            idx = f'{record.id}-n' if group is None else f'{record.id}-{group.id}'
-            students = set(students).intersection([ b.user for b in filter(lambda b: b.state == UserAssignmentBinding.ST_READY, self.lut_uab[record]) ])
-            n = len(students)
-            d = '' if n else 'disabled'
-            rows.append(f"""
-<div class="form-check form-switch">
-  <input class="form-check-input" type="checkbox" id="reassign-{idx}" name="reassign" value="{idx}" {d}/>
-  <label class="form-check-label" for="reassign-{idx}"> <span class="bi bi-recycle"> {n}</span></label>
-</div>
-            """)
-        return format_html("<br>".join( rows ))
+        return self._render_factory(record, 'rdy', 'reassign', 'bi bi-recycle')
 
 
-    def __init__(self, qs, lut_uab, groups):
-    #def __init__(self, uabs, ucgbs):
-        #####import pandas
-        #####ex1 = lambda uab: (uab.assignment.course.id, uab.assignment.course, uab.user.id, uab.assignment.id, uab.state)
-        #####ex2 = lambda ucgb: (ucgb.usercoursebinding.course.id, ucgb.group.name, ucgb.usercoursebinding.user.id)
-        #####df1 = pandas.DataFrame(map(ex1, uabs), columns = ['course_id', 'course', 'student_id', 'aid', 'state'])
-        #####df2 = pandas.DataFrame(map(ex2, ucgbs), columns = ['course_id', 'group', 'student_id'])
-        #####df = pandas.merge(left = df1, right = df2, left_on = ['course_id', 'student_id'], right_on = ['course_id', 'student_id'], how = 'left').fillna('none')
-        #####qs = df.groupby(by = ['course_id', 'aid', 'state']).agg('count')
-        #####raise Exception(str((df1.shape, df2.shape, df.shape, qs.head())))
-        ######sequence = ('course', 'name', 'group', 'transition', 'handout', 'collect', 'correcting', 'reassign')
-
-        #####raise Exception(str((qs, lut_uab, groups)))
-        super().__init__(qs)
-        self.lut_uab = lut_uab
-        self.groups = groups
+    def __init__(self, assignments, groups, count):
+        super().__init__(assignments)
+        self.groups = {}
+        for g in groups:
+            if g.course.id not in self.groups:
+                self.groups[g.course.id] = [(-1, 'Ungrouped')]
+            self.groups[g.course.id].append((g.id, g.name))
+        self._count = count
+        self.get_count = lambda assignment_id, group_id, state: self._count.get((assignment_id, group_id, state), 0)
 
 
 class TableUser(tables.Table):

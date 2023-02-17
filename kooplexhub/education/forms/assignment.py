@@ -6,10 +6,12 @@ from django import forms
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from django.contrib.auth.models import User
+import pandas
+from django_pandas.io import read_frame
 
 from kooplexhub.common import tooltip_attrs
 
-from education.models import Assignment, UserCourseBinding, Course, UserAssignmentBinding, UserCourseGroupBinding
+from education.models import Assignment, UserCourseBinding, Course, UserAssignmentBinding, UserCourseGroupBinding, CourseGroup
 from hub.models import Task
 from education.filesystem import *
 
@@ -249,12 +251,12 @@ class FormAssignmentHandle(forms.Form):
 
     @staticmethod
     def _auth(course, userid):
-        UserCourseBinding.objects.filter(course = course, user__id = userid, is_teacher = True)
+        return len(UserCourseBinding.objects.filter(course = course, user__id = userid, is_teacher = True)) == 1
 
     @staticmethod
-    def _helper_many(userid, seq, create = False):
+    def _helper_handout(userid, seq):
         A = lambda aid: Assignment.objects.get(id = aid)
-        S = lambda c, gid: { 'n' if g is None else g.id: s for g, s in c.groups.items() }[None if gid == 'n' else int(gid)]
+        S = lambda c, gid: { 'n' if g is None else str(g.id): s for g, s in c.groups.items() }[gid]
         many = []
         for code in seq:
             assignment_id, group_id = code.split('-', 1)
@@ -265,15 +267,23 @@ class FormAssignmentHandle(forms.Form):
                 try:
                     x = UserAssignmentBinding.objects.get(user = student, assignment = assignment)
                 except UserAssignmentBinding.DoesNotExist:
-                    if create:
-                        x = UserAssignmentBinding(user = student, assignment = assignment)
-                        created = True
-                    else:
-                        raise
-                if create:
-                    many.append((created, x))
-                else:
-                    many.append(x)
+                    x = UserAssignmentBinding(user = student, assignment = assignment)
+                    created = True
+                many.append((created, x))
+        return many
+
+    @staticmethod
+    def _helper_many(userid, seq, state):
+        A = lambda aid: Assignment.objects.get(id = aid)
+        S = lambda c, gid: { 'n' if g is None else str(g.id): s for g, s in c.groups.items() }[gid]
+        many = []
+        for code in seq:
+            assignment_id, group_id = code.split('-', 1)
+            assignment = A(assignment_id)
+            FormAssignmentHandle._auth(assignment.course, userid)
+            for student in S(assignment.course, group_id):
+                x = UserAssignmentBinding.objects.get(user = student, assignment = assignment, state = state)
+                many.append(x)
         return many
 
     def clean(self):
@@ -281,16 +291,20 @@ class FormAssignmentHandle(forms.Form):
         #raise Exception(str(cleaned_data))
         details = json.loads(cleaned_data.pop("change_log"))
         userid = details['user_id']
-        cleaned_data['handout'] = self._helper_many(userid, details['handoutmany_ids'], create = True)
-        cleaned_data['collect'] = self._helper_many(userid, details['collectmany_ids'])
-        cleaned_data['reassign'] = self._helper_many(userid, details['reassignmany_ids'])
+        cleaned_data['handout'] = self._helper_handout(userid, details['handoutmany_ids'])
+        cleaned_data['collect'] = self._helper_many(userid, details['collectmany_ids'], UserAssignmentBinding.ST_WORKINPROGRESS)
+        cleaned_data['reassign'] = self._helper_many(userid, details['reassignmany_ids'], UserAssignmentBinding.ST_READY)
 
         # authorize
         A = lambda uab: self._auth(uab.assignment.course, userid)
         cleaned_data['handout'].extend([ (False, uab) for uab in filter(A, UserAssignmentBinding.objects.filter(id__in = details['handout_ids'])) ])
-        cleaned_data['collect'].extend(filter(A, UserAssignmentBinding.objects.filter(id__in = details['collect_ids'])))
-        cleaned_data['reassign'].extend(filter(A, UserAssignmentBinding.objects.filter(id__in = details['reassign_ids'])))
-        cleaned_data['finalize'] = list(filter(A, UserAssignmentBinding.objects.filter(id__in = details['finalize_ids'])))
+        cleaned_data['collect'].extend(filter(A, UserAssignmentBinding.objects.filter(id__in = details['collect_ids'], state = UserAssignmentBinding.ST_WORKINPROGRESS)))
+        cleaned_data['reassign'].extend(filter(A, UserAssignmentBinding.objects.filter(id__in = details['reassign_ids'], state = UserAssignmentBinding.ST_READY)))
+        fin_map = {}
+        for uab in filter(A, UserAssignmentBinding.objects.filter(id__in = details['finalize_ids'], state__in = [UserAssignmentBinding.ST_SUBMITTED, UserAssignmentBinding.ST_COLLECTED])):
+            uab.state = UserAssignmentBinding.ST_READY
+            fin_map[uab.id] = uab
+        cleaned_data['finalize'] = list(fin_map.values())
 
         A = lambda aid: Assignment.objects.get(id = aid)
         for code in details['create_handout_ids']:
@@ -302,36 +316,34 @@ class FormAssignmentHandle(forms.Form):
 
         #FIXME: validation error on typerror
         rep = lambda d: (int(d['userassignmentbinding_id']), (float(d['score']), d['feedback']))
-        fin_map = { uab.id: uab for uab in cleaned_data['finalize'] }
         for k, (score, feedback) in map(rep, details['meta']):
-            uab = fin_map.get(k, None)
-            if uab:
-                uab.score = score
-                uab.feedback_text = feedback
-            else:
-                raise Exception(str((k, fin_map)))
+            uab = fin_map[k]
+            uab.score = score
+            uab.feedback_text = feedback
 
         return cleaned_data
 
     def __init__(self, *args, **kwargs):
-        # itt le lehetne egy csomó dolgot menteni, hogy authorizálni ne kelljen 2szer az adatbázishoz nyúlni
         from . import TableAssignmentMass
+#FIXME: save some here to hel authorize later
         user = kwargs['initial'].get('user')
         super().__init__(*args, **kwargs)
         courses = [ b.course for b in UserCourseBinding.objects.filter(user = user, is_teacher = True) ]
-        assignments = list(Assignment.objects.filter(course__in = courses))
-        if not assignments:
+        assignments = Assignment.objects.filter(course__in = courses)
+        df_assignment = read_frame(assignments, verbose = False)[['id', 'course']].rename(columns = {'id': 'assignment_id'})
+        df_uabs = read_frame(UserAssignmentBinding.objects.filter(assignment__course__in = courses), verbose = False)[['user', 'assignment', 'state']]
+        DF = pandas.merge(left = df_uabs, right = df_assignment, left_on = 'assignment', right_on = 'assignment_id', how = 'inner')
+        df_ucbs = read_frame(UserCourseBinding.objects.filter(course__in = courses, is_teacher = False), verbose = False)[['id', 'user', 'course']].rename(columns = {'id': 'ucb_id'})
+        DF = pandas.merge(left = DF, right = df_ucbs, left_on = ['user', 'course'], right_on = ['user', 'course'], how = 'left')
+        df_ucgbs = read_frame(UserCourseGroupBinding.objects.filter(usercoursebinding__course__in = courses), verbose = False)[['usercoursebinding', 'group']]
+        DF = pandas.merge(left = DF, right = df_ucgbs, left_on = 'ucb_id', right_on = 'usercoursebinding', how = 'left')[['assignment_id', 'group', 'state', 'user']].fillna(-1)
+        count = DF.astype({'group': int}).groupby(by = ['assignment_id', 'group', 'state']).agg('count')['user'].to_dict()
+        groups = CourseGroup.objects.filter(course__in = courses)
+        if count:
+            self.okay = True
+            self.t_mass = TableAssignmentMass( assignments, groups, count )
+        else:
             self.okay = False
-            return
-        self.okay = True
-        uabs = list(UserAssignmentBinding.objects.filter(assignment__in = assignments))
-        lut_uabs = { a: list(filter(lambda b: b.assignment == a, uabs)) for a in assignments }
-        groups = { c: c.groups for c in courses }
-        self.t_mass = TableAssignmentMass( assignments, lut_uabs, groups )
-        #####uabs = UserAssignmentBinding.objects.filter(assignment__course__in = courses)
-        #####ucgbs = UserCourseGroupBinding.objects.filter(usercoursebinding__course__in = courses)
-        #####self.okay = True if uabs else False
-        #####self.t_mass = TableAssignmentMass( uabs, ucgbs )
 
 
 class FormAssignmentList(forms.Form):
