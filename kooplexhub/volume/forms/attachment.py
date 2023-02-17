@@ -21,7 +21,7 @@ class FormAttachment(forms.ModelForm):
         widget = forms.Textarea(attrs = tooltip_attrs({ 
             'title': _('It is always a nice idea to describe attachments'),
         }))
-    ),
+    )
  
     folder = forms.CharField(
         label = _("Folder name"), required = True,            
