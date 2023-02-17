@@ -97,13 +97,12 @@ class FormContainer(forms.ModelForm):
         }))
     )
    
-    # FIXME: render a toggle switch
-    #start_teleport = forms.BooleanField(
-    #        widget = forms.CheckboxInput(attrs = { 'data-size': 'small', 'data-toggle': 'toggle', 
-    #            'data-on': "<span class='oi oi-trash'></span>", 'data-off': "<span class='bi bi-check-lg'></span>",
-    #            'data-onstyle': "danger", 'data-offstyle': "secondary" }), 
-    #        required = False,
-    #    )
+    start_teleport = forms.BooleanField(
+        widget = forms.CheckboxInput(attrs = { 'data-size': 'small', 'data-toggle': 'toggle', 
+           'data-on': "<span class='bi bi-door-open'>&nbsp;ssh</span>", 'data-off': "<span class='bi bi-sign-stop'></span>",
+           'data-onstyle': "success", 'data-offstyle': "secondary" }), 
+        required = False,
+    )
 
     def descriptions(self):
         import base64
@@ -133,6 +132,8 @@ class FormContainer(forms.ModelForm):
             self.fields['node'].widget = forms.HiddenInput()
         if self.fields['gpurequest'].widget.attrs['max'] == 0:
             self.fields['gpurequest'].disabled = True
+        if not user.profile.can_teleport:
+            self.fields['start_teleport'].disabled = True
 
     def clean(self):
         cleaned_data = super().clean()
