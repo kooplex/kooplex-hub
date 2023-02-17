@@ -18,6 +18,7 @@ from django.urls import re_path, path
 
 from container.consumers import ContainerConsumer, MonitorConsumer
 from project.consumers import ProjectConsumer
+from education.consumers import AssignmentConsumer
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'kooplexhub.settings')
 
@@ -32,6 +33,7 @@ application = ProtocolTypeRouter({
                 re_path(r"hub/ws/container_environment/(?P<userid>\d+)/$", ContainerConsumer.as_asgi()),
                 path("hub/ws/node_monitor/", MonitorConsumer.as_asgi()),
                 re_path(r"hub/ws/project/(?P<userid>\d+)/$", ProjectConsumer.as_asgi()),
+                re_path(r"hub/ws/education/(?P<userid>\d+)/$", AssignmentConsumer.as_asgi()),
             ])
         )
     ),
