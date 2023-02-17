@@ -19,7 +19,6 @@ class FormAttachment(forms.ModelForm):
     description = forms.CharField(
         required = True,            
         widget = forms.Textarea(attrs = tooltip_attrs({ 
-            'rows': 6, 'cols': 20,
             'title': _('It is always a nice idea to describe attachments'),
         }))
     ),
