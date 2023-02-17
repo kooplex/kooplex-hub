@@ -9,7 +9,7 @@ from django.contrib.auth.models import User
 
 from kooplexhub.common import tooltip_attrs
 
-from education.models import Assignment, UserCourseBinding, Course, UserAssignmentBinding
+from education.models import Assignment, UserCourseBinding, Course, UserAssignmentBinding, UserCourseGroupBinding
 from hub.models import Task
 from education.filesystem import *
 
@@ -249,12 +249,12 @@ class FormAssignmentHandle(forms.Form):
 
     @staticmethod
     def _auth(course, userid):
-        UserCourseBinding.objects.get(course = course, user__id = userid, is_teacher = True)
+        UserCourseBinding.objects.filter(course = course, user__id = userid, is_teacher = True)
 
     @staticmethod
     def _helper_many(userid, seq, create = False):
         A = lambda aid: Assignment.objects.get(id = aid)
-        S = lambda c, gid: c.groups[None if gid == 'n' else int(gid)]
+        S = lambda c, gid: { 'n' if g is None else g.id: s for g, s in c.groups.items() }[None if gid == 'n' else int(gid)]
         many = []
         for code in seq:
             assignment_id, group_id = code.split('-', 1)
@@ -270,11 +270,15 @@ class FormAssignmentHandle(forms.Form):
                         created = True
                     else:
                         raise
-                many.append((created, x))
+                if create:
+                    many.append((created, x))
+                else:
+                    many.append(x)
         return many
 
     def clean(self):
         cleaned_data = super().clean()
+        #raise Exception(str(cleaned_data))
         details = json.loads(cleaned_data.pop("change_log"))
         userid = details['user_id']
         cleaned_data['handout'] = self._helper_many(userid, details['handoutmany_ids'], create = True)
@@ -296,13 +300,22 @@ class FormAssignmentHandle(forms.Form):
             UserCourseBinding.objects.get(course = course, user__id = student_id, is_teacher = False)
             cleaned_data['handout'].append((True, UserAssignmentBinding(user = User.objects.get(id = student_id), assignment = assignment)))
 
-       # details['meta']
+        #FIXME: validation error on typerror
+        rep = lambda d: (int(d['userassignmentbinding_id']), (float(d['score']), d['feedback']))
+        fin_map = { uab.id: uab for uab in cleaned_data['finalize'] }
+        for k, (score, feedback) in map(rep, details['meta']):
+            uab = fin_map.get(k, None)
+            if uab:
+                uab.score = score
+                uab.feedback_text = feedback
+            else:
+                raise Exception(str((k, fin_map)))
 
-   ##     raise Exception(str(cleaned_data))
         return cleaned_data
 
     def __init__(self, *args, **kwargs):
-        from . import TableAssignmentMass, TableAssignmentHandle
+        # itt le lehetne egy csomó dolgot menteni, hogy authorizálni ne kelljen 2szer az adatbázishoz nyúlni
+        from . import TableAssignmentMass
         user = kwargs['initial'].get('user')
         super().__init__(*args, **kwargs)
         courses = [ b.course for b in UserCourseBinding.objects.filter(user = user, is_teacher = True) ]
@@ -315,6 +328,10 @@ class FormAssignmentHandle(forms.Form):
         lut_uabs = { a: list(filter(lambda b: b.assignment == a, uabs)) for a in assignments }
         groups = { c: c.groups for c in courses }
         self.t_mass = TableAssignmentMass( assignments, lut_uabs, groups )
+        #####uabs = UserAssignmentBinding.objects.filter(assignment__course__in = courses)
+        #####ucgbs = UserCourseGroupBinding.objects.filter(usercoursebinding__course__in = courses)
+        #####self.okay = True if uabs else False
+        #####self.t_mass = TableAssignmentMass( uabs, ucgbs )
 
 
 class FormAssignmentList(forms.Form):

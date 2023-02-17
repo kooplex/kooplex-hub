@@ -278,25 +278,9 @@ class HandleAssignmentView(LoginRequiredMixin, generic.FormView):
             uab.collect()
         for uab in form.cleaned_data['reassign']:
             uab.reassign()
-        #for uab in form.cleaned_data['finalize']:
-        #    uab.reassign()
-
-#        msgs = []
-#        for a in form.cleaned_data.get("delete_assignments", []):
-#            a.delete()
-#            msgs.append(f"Assignment {a.name} is deleted from course {a.course.name}.")
-#        for a in form.cleaned_data.get("assignments", []):
-#            a.save()
-#            msgs.append(f"Assignment {a.name} in course {a.course.name} is updated.")
-#        if msgs:
-#            logger.info(' '.join(msgs))
-#            messages.info(self.request, ' '.join(msgs))
+        for uab in form.cleaned_data['finalize']:
+            uab.save()
         return super().form_valid(form)
-
-
-
-
-
 
 
 #FIXME: refactor me

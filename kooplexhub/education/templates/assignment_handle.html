@@ -39,7 +39,7 @@ $("#assignment-form-handle").submit(function (e) {
   meta = Array()
   $("textarea[name=feedback_text]").each(function() {
     obj_id = $( this ).attr('id').split('-')[1]
-    t_new = $( this ).text()
+    t_new = $( this ).val()
     t_old = $("#feedback_text-old-" + obj_id).val()
     s_new = $("#score-" + obj_id).val()
     s_old = $("#score-old-" + obj_id).val()
@@ -63,6 +63,7 @@ $("#assignment-form-handle").submit(function (e) {
   }));
 });
 
+
 {# FIXME: code repetition see project #}
 assignmentSocket = open_ws('{{ wss_assignment }}', ws_callback_assignment);
 
@@ -71,10 +72,20 @@ function ws_callback_assignment(data) {
   $("#table_details").html(data);
   $("#tablesearcher").removeClass("d-none");
   feedback("Table refreshed");
+  {# disable radio buttons #}
   $("input[type=checkbox][name^=selection_]").change(function() {
     $("input[type=radio][name=assignment_tbl]").each(function () {
       $( this ).attr('disabled', true);
     });
+  });
+  {# mark corrected if attributes change #}
+  $("input[name=score]").keyup(function() {
+    obj_id = $( this ).attr('id').split('-')[1]
+    $("#uab-" + obj_id).prop('checked', true)
+  });
+  $("textarea[name=feedback_text]").keyup(function() {
+    obj_id = $( this ).attr('id').split('-')[1]
+    $("#uab-" + obj_id).prop('checked', true)
   });
 };
 

@@ -341,7 +341,7 @@ class TableAssignmentMass(tables.Table):
     class Meta:
         model = Assignment
         fields = ('course', 'name')
-        sequence = ('course', 'name', 'group', 'handout', 'collect', 'correcting', 'reassign')
+        sequence = ('course', 'name', 'group', 'transition', 'handout', 'collect', 'correcting', 'reassign')
         attrs = table_attributes
         empty_text = _("Empty table")
 
@@ -353,6 +353,7 @@ class TableAssignmentMass(tables.Table):
     correcting = tables.Column(orderable = False, empty_values = ())
     correct = tables.Column(orderable = False, empty_values = ())
     reassign = tables.Column(orderable = False, empty_values = ())
+    transition = tables.Column(orderable = False, empty_values = ())
 
     def render_course(self, record):
         return format_html(f"""
@@ -377,6 +378,9 @@ class TableAssignmentMass(tables.Table):
             radio= f"""<input type="radio" name="assignment_tbl" value="{record.id}-{gid}">"""
             rows.append(f"<div>{radio}&nbsp;{gn} ({n} students)</div>")
         return format_html("<br>".join( rows ))
+
+    def render_transition(self, record):
+        return "TBA"
 
     def render_handout(self, record):
         rows = []
@@ -440,6 +444,18 @@ class TableAssignmentMass(tables.Table):
 
 
     def __init__(self, qs, lut_uab, groups):
+    #def __init__(self, uabs, ucgbs):
+        #####import pandas
+        #####ex1 = lambda uab: (uab.assignment.course.id, uab.assignment.course, uab.user.id, uab.assignment.id, uab.state)
+        #####ex2 = lambda ucgb: (ucgb.usercoursebinding.course.id, ucgb.group.name, ucgb.usercoursebinding.user.id)
+        #####df1 = pandas.DataFrame(map(ex1, uabs), columns = ['course_id', 'course', 'student_id', 'aid', 'state'])
+        #####df2 = pandas.DataFrame(map(ex2, ucgbs), columns = ['course_id', 'group', 'student_id'])
+        #####df = pandas.merge(left = df1, right = df2, left_on = ['course_id', 'student_id'], right_on = ['course_id', 'student_id'], how = 'left').fillna('none')
+        #####qs = df.groupby(by = ['course_id', 'aid', 'state']).agg('count')
+        #####raise Exception(str((df1.shape, df2.shape, df.shape, qs.head())))
+        ######sequence = ('course', 'name', 'group', 'transition', 'handout', 'collect', 'correcting', 'reassign')
+
+        #####raise Exception(str((qs, lut_uab, groups)))
         super().__init__(qs)
         self.lut_uab = lut_uab
         self.groups = groups
