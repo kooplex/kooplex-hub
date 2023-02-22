@@ -372,6 +372,9 @@ class TableAssignmentMass(tables.Table):
             if g.course.id not in self.groups:
                 self.groups[g.course.id] = [(-1, 'Ungrouped')]
             self.groups[g.course.id].append((g.id, g.name))
+        for a in assignments:
+            if a.course.id not in self.groups:
+                self.groups[a.course.id] = [(-1, 'Ungrouped')]
         self._count = count
         self.get_count = lambda assignment_id, group_id, state: self._count.get((assignment_id, group_id, state), 0)
 

@@ -21,7 +21,7 @@
 {# render the course cards #}
 {% block bodycontent %}
 {% if coursebindinglist %}
-  <div class="row row-cols-1 row-cols-md-4">
+  <div class="row row-cols-1 row-cols-md-2">
     {% for ucb in coursebindinglist %}
       <div class="col" id="hideable-course-{{ ucb.course.id }}">
         {% include 'course_partial_list.html' with course=ucb.course %}
