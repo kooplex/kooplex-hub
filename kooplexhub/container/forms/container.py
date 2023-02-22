@@ -27,8 +27,8 @@ def _range(attribute):
     }
     lookup, min_default, max_default = mapping[attribute]
     return {
-       'min_value': resources_min.get(lookup, min_default),
-       'max_value': resources_max.get(lookup, max_default),
+       'min_value': round(Decimal(resources_min.get(lookup, min_default)), 1),
+       'max_value': round(Decimal(resources_max.get(lookup, max_default)), 1),
     }
 
 class myNumberInput(forms.NumberInput):
@@ -73,7 +73,8 @@ class FormContainer(forms.ModelForm):
 
     cpurequest = forms.DecimalField(
         label = 'CPU [#]', required = False,
-        **_range("cpurequest"),
+        **_range("cpurequest"), decimal_places = 1, initial = _range("cpurequest")['min_value'],
+        validators = [],
         widget = myNumberInput(attrs = tooltip_attrs({
             'title': _('Requested number of cpus for your container.'), 
             'step': 0.1,
@@ -128,10 +129,11 @@ class FormContainer(forms.ModelForm):
             self.fields['node'].choices = [('', '')] + [ (x, x) for x in nodes ]
             if container:
                 self.fields['node'].value = container.node
+            if self.fields['gpurequest'].widget.attrs['max'] == 0:
+                self.fields['gpurequest'].disabled = True
         else:
-            self.fields['node'].widget = forms.HiddenInput()
-        if self.fields['gpurequest'].widget.attrs['max'] == 0:
-            self.fields['gpurequest'].disabled = True
+            for att in ['node', 'cpurequest', 'memoryrequest', 'gpurequest' ]:
+                self.fields[att].widget = forms.HiddenInput()
         if not user.profile.can_teleport:
             self.fields['start_teleport'].disabled = True
 
@@ -150,7 +152,7 @@ class FormContainer(forms.ModelForm):
         else:
             if Container.objects.filter(name = containername, user = user):
                 ve.append( forms.ValidationError(_(f'Container name {containername} is not unique'), code = 'invalid name') )
-            cleanname = standardize_str(name)
+            cleanname = standardize_str(containername)
             cleaned_data["label"] = f'{user.username}-{cleanname}'
         if not user.profile.can_choosenode:
             cleaned_data.pop('node', None)
@@ -158,7 +160,6 @@ class FormContainer(forms.ModelForm):
             r = _range(attr)
             value = cleaned_data.get(attr)
             if value:
-                value = float(value)
                 if value < r['min_value']:
                     ve.append( forms.ValidationError(_(f"Resource request {attr} is too small: {value} should not be less than {r['min_value']}"), code = 'invalid resource request') )
                 if value > r['max_value']:
