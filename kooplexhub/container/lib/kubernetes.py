@@ -440,7 +440,7 @@ def start(container):
             raise
     container.state = container.ST_STARTING
     container.save()
-    Timer(.2, _check_starting, args = (container.id, event)).start()
+    Timer(.2, _check_starting, args = (container.id, event, 300)).start()
     return event
 
 
@@ -546,13 +546,11 @@ def _parse_podstatus(podstatus):
     logger.debug(sts)
     logger.debug(cds)
 
-#    https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/
-#    PodScheduled: the Pod has been scheduled to a node.
-#    PodHasNetwork: (alpha feature; must be enabled explicitly) the Pod sandbox has been successfully created and networking configured.
-#    ContainersReady: all containers in the Pod are ready.
-#    Initialized: all init containers have completed successfully.
-#    Ready: the Pod is able to serve requests and should be added to the load balancing pools of all matching Services.
-
+    if podstatus.status.phase == 'Pending':
+        return {
+            'state': Container.state,
+            'message': 'Pending, image pull?...'
+        }
 
     if cds is not None:
         if cds[0].reason in [ 'Unschedulable', 'BadRequest' ]:
