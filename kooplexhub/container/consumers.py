@@ -17,7 +17,7 @@ class ContainerConsumer(WebsocketConsumer):
         if not self.scope['user'].is_authenticated:
             return
         self.accept()
-        self.userid = self.scope["url_route"]["kwargs"].get('userid')
+        self.userid = int(self.scope["url_route"]["kwargs"].get('userid'))
         assert self.scope['user'].id == self.userid, "not authorized"
         self.lock = threading.Lock()
         self.lut_ev = {}
