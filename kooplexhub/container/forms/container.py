@@ -124,7 +124,7 @@ class FormContainer(forms.ModelForm):
         self.t_volumes = TableContainerVolume(container, user)
         if container.id:
             pass
-        if nodes:
+        if nodes and user.profile.can_choosenode:
             self.fields['node'].choices = [('', '')] + [ (x, x) for x in nodes ]
             if container:
                 self.fields['node'].value = container.node
@@ -152,6 +152,8 @@ class FormContainer(forms.ModelForm):
                 ve.append( forms.ValidationError(_(f'Container name {containername} is not unique'), code = 'invalid name') )
             cleanname = standardize_str(name)
             cleaned_data["label"] = f'{user.username}-{cleanname}'
+        if not user.profile.can_choosenode:
+            cleaned_data.pop('node', None)
         for attr in [ 'idletime', 'cpurequest', 'memoryrequest', 'gpurequest' ]:
             r = _range(attr)
             value = cleaned_data.get(attr)
