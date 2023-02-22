@@ -30,7 +30,10 @@ def assignment_tasks_cleanup(sender, instance, **kwargs):
     for a in [ 'task_snapshot', 'task_handout', 'task_collect' ]:
         task = getattr(instance, a)
         if task:
-            task.clocked.delete()
+            if task.clocked:
+                task.clocked.delete()
+            else:
+                task.delete()
 
 
 @receiver(pre_delete, sender = UserAssignmentBinding)
@@ -38,4 +41,7 @@ def userassignment_tasks_cleanup(sender, instance, **kwargs):
     for a in [ 'task_handout', 'task_collect' ]: #, 'task_finalize' ]:
         task = getattr(instance, a)
         if task:
-            task.clocked.delete()
+            if task.clocked:
+                task.clocked.delete()
+            else:
+                task.delete()
