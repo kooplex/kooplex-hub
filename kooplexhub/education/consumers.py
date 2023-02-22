@@ -17,8 +17,11 @@ logger = logging.getLogger(__name__)
 
 class AssignmentConsumer(WebsocketConsumer):
     def connect(self):
+        if not self.scope['user'].is_authenticated:
+            return
         self.accept()
         self.userid = self.scope["url_route"]["kwargs"].get('userid')
+        assert self.scope['user'].id == self.userid, "not authorized"
 
     def disconnect(self, close_code):
         pass

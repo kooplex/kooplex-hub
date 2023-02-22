@@ -14,8 +14,11 @@ logger = logging.getLogger(__name__)
 
 class ContainerConsumer(WebsocketConsumer):
     def connect(self):
+        if not self.scope['user'].is_authenticated:
+            return
         self.accept()
         self.userid = self.scope["url_route"]["kwargs"].get('userid')
+        assert self.scope['user'].id == self.userid, "not authorized"
         self.lock = threading.Lock()
         self.lut_ev = {}
         self.running = threading.Event()
@@ -96,7 +99,8 @@ class ContainerConsumer(WebsocketConsumer):
 
 class MonitorConsumer(WebsocketConsumer):
     def connect(self):
-        self.accept()
+        if self.scope['user'].is_authenticated:
+            self.accept()
 
     def disconnect(self, close_code):
         pass

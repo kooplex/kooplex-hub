@@ -108,7 +108,7 @@ $("#project-manage").submit(function (e) {
 {# remember which tab was active #}
 $("#projectConfigTabs li a").on("click", function () {
   tab = $( this ).attr("id").split('-', 2)[1]
-  console.log( tab )
+  // console.log( tab )
   $.cookie("configure_project_tab", tab, { 'path': '/;SameSite=Strict', 'secure': true });
 });
 
