@@ -1,5 +1,3 @@
-import json
-import datetime
 
 from django.db.models.signals import pre_save, post_save, pre_delete, post_delete
 from django.dispatch import receiver
@@ -7,8 +5,7 @@ from django.dispatch import receiver
 from education.models import Assignment, UserAssignmentBinding
 from education.filesystem import *
 
-from django_celery_beat.models import ClockedSchedule, PeriodicTask
-
+from hub.models import Task
 
 @receiver(pre_delete, sender = UserAssignmentBinding)
 def delete_userassignment(sender, instance, **kwargs):
@@ -20,13 +17,11 @@ def delete_userassignment(sender, instance, **kwargs):
         'archives': { assignment_garbage(instance): userassignment_dir(instance) },
 
     }
-    schedule_now = ClockedSchedule.objects.create(clocked_time = datetime.datetime.now())
-    PeriodicTask.objects.get_or_create(
-        name = f"garbage_userassignment_{instance.id}",
+    Task(
+        create = True,
+        name = f"garbage assignment {instance.user.username} {instance.assignment.name} {instance.id}",
         task = "kooplexhub.tasks.delete_folders",
-        clocked = schedule_now,
-        one_off = True,
-        kwargs = json.dumps(kwargs)
+        kwargs = kwargs
     )
 
 
