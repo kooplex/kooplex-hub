@@ -11,15 +11,14 @@ class Command(BaseCommand):
     help = "Create course groups for those courses, where it is missing"
 
     def add_arguments(self, parser):
-        parser.add_argument('--course', help = "Course's clean name", nargs = 1)
+        parser.add_argument('--course', help = "Course's name", nargs = 1)
         parser.add_argument('--neptun', help = "Filename of the list of neptun codes", nargs = 1)
 
     def handle(self, *args, **options):
-        logger.info("call %s %s" % (args, options))
         try:
-            c = Course.objects.get(cleanname = options.get('course')[0])
+            c = Course.objects.get(name = options.get('course')[0])
         except Course.DoesNotExist:
-            print ("EE: course not found. Known course clean names are:\n{}".format(", ".join(map(lambda c: c.cleanname, Course.objects.all()))))
+            print ("EE: course not found. Known courses are:\n{}".format(", ".join(map(lambda c: c.name, Course.objects.all()))))
             return
         N = 0
         for fn in options.get('neptun'):
