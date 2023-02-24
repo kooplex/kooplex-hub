@@ -18,15 +18,14 @@ from celery.utils.log import get_task_logger
 logger = get_task_logger(__name__)
 
 @shared_task()
-def manage_folder(create_folder, folders, acl):
+def grant_access(folders, acl):
+    #FIXME: lehetne ACL: [{'folder': '...', 'groups_rw': [...], 'groups_ro': [...]}, ...]
     for f in folders:
-        if create_folder:
-            mkdir(f)
-        for gid in acl.pop('groups_rw', []):
+        for gid in acl.get('groups_rw', []):
             with transaction.atomic():
                 go = Group.objects.select_for_update().get(id = gid)
             grantaccess_group(go, f, readonly = False, recursive = True)
-        for uid in acl.pop('users_rw', []):
+        for uid in acl.get('users_rw', []):
             grantaccess_user(User.objects.get(id = uid), f, readonly = False, recursive = True)
 
 
@@ -36,9 +35,5 @@ def revoke_access(user_id, folders):
         revokeaccess_user(User.objects.get(id = user_id), f)
 
 
-@shared_task()
-def garbage(project_folder, project_tarbal, report_prepare_folder):
-    rmdir(report_prepare_folder)
-    archivedir(project_folder, project_tarbal, remove = True)
 
 

@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 # Register your models here.
-from .models import Report, ReportType, ReportContainerBinding
+from .models import Report, ReportType, ReportContainerBinding, ReportTag
 
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
@@ -17,4 +17,9 @@ class ReportContainerBindingAdmin(admin.ModelAdmin):
 
 @admin.register(ReportType)
 class ReportTypengAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'url_tag')
+    list_display = ('id', 'name')
+
+@admin.register(ReportTag)
+class ReportTagAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name')
+

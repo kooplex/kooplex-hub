@@ -18,3 +18,6 @@ def path_report_prepare(project):
 def garbage_project(project):
     return os.path.join(dirname.mp_garbage, project.creator.username, "project-%s.%f.tar.gz" % (project.subpath, time.time()))
   
+def garbage_report_prepare(project):
+    return os.path.join(dirname.mp_garbage, project.creator.username, "projectreport-%s.%f.tar.gz" % (project.subpath, time.time()))
+  

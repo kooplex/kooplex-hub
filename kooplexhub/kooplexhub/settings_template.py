@@ -290,10 +290,13 @@ KOOPLEX = {
         'url_api': 'http://proxy:8001/api',
         'auth_token': '',
         'url_internal': 'http://{container.label}:{proxy.port}',
-        'url_public': 'https://%s/{proxy.path_open}' % DOMAIN,
-        'path': 'notebook/{container.name}',
-        # FIXME: here or somewhere else?
-        'url_report': os.path.join(FQDN,'{url_tag}/{report.id}/{report.indexfile}'),
+        'notebook_path': 'notebook/{container.label}',
+        'url_notebook': os.path.join(FQDN,'notebook/{container.label}'),
+        'report_path': 'notebook/report/{container.label}',
+        'report_path_open': '/notebook/report/{container.label}/',
+        'static_report_path': '/report/{report.id}/{report.indexfile}',
+        'static_report_path_open': '/report/{report.id}/{report.indexfile}',
+        'check_container': 'http://proxy:8001/api/routes/notebook/{container.label}',
     },
     'kubernetes': {
         'namespace': 'k8plex-test',
@@ -373,5 +376,22 @@ KOOPLEX = {
             'mountPath_reportprepare': '/v/report_prepare',
         },
     },
+    # Inside docker containers
+    'environmental_variables': {
+            'LANG' : 'en_US.UTF-8',
+            'SSH_AUTH_SOCK': '/tmp/{container.user.username}', #FIXME: move to db
+            'SERVERNAME': SERVERNAME,
+            'NB_USER' : '{container.user.username}',
+            'NB_TOKEN' : '{container.user.profile.token}',            
+            'REPORT_USER' : '{container.user.username}',
+            'REPORT_FOLDER' : '/srv/report',
+            'REPORT_FILE' : 'main.py',
+            # FIXME could be cleaner
+            # These needs to be the same as in proxy
+            'NB_URL' : 'notebook/{container.label}', # same es KOOPLEX['proxy']['url_notebook']
+            'NB_PORT' : '8000', # same es proxy.port
+            'REPORT_URL' : 'notebook/report/{container.label}/', # same es KOOPLEX['proxy']['report_path']
+            'REPORT_PORT' : '9000', # same es proxy.port
+            },
 }
 

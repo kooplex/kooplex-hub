@@ -38,7 +38,7 @@ def droproutes():
         resp_latest = keeptrying(requests.delete, 5, **kw)
 #    return resp_latest
 
-def addroute(container):
+def addroute(container, var_url, var_port):
     proxyconf = KOOPLEX.get('proxy', {})
 #    kw = {
 #        'url': os.path.join(KOOPLEX['proxy'].get('url_api', 'http://localhost:8001/api'), 'routes', container.proxy_route), 
@@ -48,27 +48,23 @@ def addroute(container):
 #    logging.debug(f'+ proxy {kw["url"]} ---> {container.url_internal}')
 #    logging.debug(f'ADDROUTE')
 #    return keeptrying(requests.post, 50, **kw)
-    kws=[]
-    for proxy in container.proxies:
-        logging.debug(f'ADDROUTE {proxy.proxy_route(container)}')
-        logging.debug(f'ADDROUTE {proxy.url_internal(container)}')
-        kw = {
-            'url': os.path.join(KOOPLEX['proxy'].get('url_api', 'http://localhost:8001/api'), 'routes', proxy.proxy_route(container)), 
-            'headers': {'Authorization': 'token %s' % KOOPLEX['proxy'].get('auth_token', '') },
-            'data': json.dumps({ 'target': proxy.url_internal(container) }),
-        }
-        logging.debug(f'ADDROUTE {proxy.url_internal(container)}')
-        kws.append(kw)
-        logging.debug(f'+ proxy {kw["url"]} ---> {proxy.url_internal(container)}')
-    return keeptryinglist(requests.post, 50, kws)
+#    kws=[]
+    kw = {
+        'url': os.path.join(KOOPLEX['proxy'].get('url_api', 'http://localhost:8001/api'), 'routes', KOOPLEX['environmental_variables'][var_url].format(container=container)), 
+        'headers': {'Authorization': 'token %s' % KOOPLEX['proxy'].get('auth_token', '') },
+        'data': json.dumps({ 'target': 'http://{container.label}:{port}'.format(container=container, port=KOOPLEX['environmental_variables'][var_port])}),
+    }
+    logging.debug(f'+ proxy {kw["url"]} ---> {kw["data"]}')
+    return keeptrying(requests.post, 50, **kw)
 
-def removeroute(container):
+def removeroute(container, var_url):
     proxyconf = KOOPLEX.get('proxy', {})
     kw = {
-        'url': os.path.join(KOOPLEX['proxy'].get('url_api', 'http://localhost:8001/api'), 'routes', container.proxy_route), 
+        #'url': os.path.join(KOOPLEX['proxy'].get('url_api', 'http://localhost:8001/api'), 'routes', container.proxy_route), 
+        'url': os.path.join(KOOPLEX['proxy'].get('url_api', 'http://localhost:8001/api'), 'routes', KOOPLEX['environmental_variables'][var_url].format(container=container)), 
         'headers': {'Authorization': 'token %s' % KOOPLEX['proxy'].get('auth_token', '') },
     }
-    logging.debug(f'- proxy {kw["url"]} -/-> {container.url_internal}')
+    logging.debug(f'+ proxy {kw["url"]} ')
     return keeptrying(requests.delete, 5, **kw)
 
 #def _removeroute_report(report):

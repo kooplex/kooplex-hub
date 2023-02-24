@@ -15,7 +15,7 @@ class ContainerAdmin(admin.ModelAdmin):
 
 @admin.register(Proxy)
 class ProxyAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'image', 'default', 'token_as_argument', 'path', 'path_open', 'port')
+    list_display = ('id', 'name', 'image', 'default', 'token_as_argument', 'port')
 
 @admin.register(EnvVarMapping)
 class EnvVarMappingAdmin(admin.ModelAdmin):

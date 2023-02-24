@@ -17,16 +17,22 @@ def subpath(report):
 
 def dir_reportcandidate(project):
     from .models import Report
+    list_of_extensions = ["py", "ipynb", "R", "html"]
     dir_reportprepare = path_report_prepare(project)
     offset = len(dir_reportprepare) + 1
     dir_used = [ r.folder for r in Report.objects.filter(project = project) ]
     abs_path = lambda x: os.path.join(dir_reportprepare, x)
-    leaves = []
-    for root, _, files in os.walk(dir_reportprepare):
-        #FIXME: filter files
-        r = root[offset:]
-        leaves.extend(list(map(lambda x: os.path.join(r, x), files)))
-    return leaves
+   # leaves = []
+   # for root, _, files in os.walk(dir_reportprepare):
+   #     #FIXME: filter files
+   #     r = root[offset:]
+   #     leaves.extend(list(map(lambda x: os.path.join(r, x), files)))
+   # return leaves
+    files = []
+    for rdir in os.listdir(dir_reportprepare):
+        for rfile in filter(lambda c: c.split(".")[-1] in list_of_extensions, os.listdir(os.path.join(dir_reportprepare,rdir))):
+            files.append( os.path.join(rdir,rfile))
+    return files
 
 
 def publish(report):

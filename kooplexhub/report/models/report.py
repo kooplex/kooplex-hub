@@ -29,7 +29,7 @@ class ReportTag(models.Model):
 class ReportType(models.Model):
 
     name = models.CharField(max_length = 40, null = False)
-    url_tag = models.CharField(max_length = 40, null = False) # For ingress to forward it to the right place
+    #url_tag = models.CharField(max_length = 40, null = False) # For ingress to forward it to the right place
     is_static = models.BooleanField(default = True)
     description = models.TextField(max_length = 1000, null = True, default = None)
     #resourcetype_pic = models.ForeignKey(ResourceType, on_delete = models.CASCADE)
@@ -86,13 +86,15 @@ class Report(models.Model):
 
     @property
     def url(self):
-        url_tag = self.reporttype.url_tag
         if self.reporttype.is_static:
-            return KOOPLEX['proxy'].get('url_report', 'http://localhost/{report.id}').format(report = self, url_tag = url_tag)
+            return KOOPLEX['proxy'].get('static_report_path_open', 'http://localhost/report/{report.id}/').format(report = self)
         else:
             from . import ReportContainerBinding
             rcb = ReportContainerBinding.objects.get(report=self)
-            return Proxy.objects.get(image = self.image).path_open.format(container=rcb.container) #url_public(self)
+            #return Proxy.objects.get(image = self.image).path_open.format(container=rcb.container) #url_public(self)
+            #return KOOPLEX['environmental_variables']['REPORT_URL'].format(container=rcb.container) 
+            return os.path.join(KOOPLEX['proxy'].get('report_path_open', 'http://localhost/{proxy.report_path_open}').format(container = rcb.container, report = self))
+
         #return KOOPLEX['proxy'].get('url_report', 'http://localhost/{report.id}').format(report = self, url_tag = url_tag)
             
         # if self.is_static:
