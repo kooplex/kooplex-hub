@@ -38,6 +38,7 @@ def create_course(sender, instance, **kwargs):
     f_prepare = course_assignment_prepare_root(instance)
     _mkdir(f_prepare)
     grantaccess_group(group_teachers, f_prepare, readonly = False)
+    grantaccess_group(group_teachers, f_prepare, readonly = False, follow = True)
 
     _mkdir(course_assignment_snapshot(instance))
 

@@ -160,7 +160,8 @@ $("div[id^=hideable-container-]").mouseenter(function() {
   var containerid = $( this ).attr("id").split("-", 3)[2];
   // console.log( "card enter: " + containerid );
   bar = $( "#buttonbar-" + containerid );
-  bar.removeClass("d-none");
+  bar.removeClass("opacity-25");
+  bar.addClass("opacity-100");
 });
 
 {# hide buttons on mouse leaving the card #}
@@ -168,13 +169,16 @@ $("div[id^=hideable-container-]").mouseleave(function() {
   var containerid = $( this ).attr("id").split("-", 3)[2];
   // console.log( "card leave: " + containerid );
   bar = $( "#buttonbar-" + containerid );
-  bar.addClass("d-none");
+  bar.removeClass("opacity-100");
+  bar.addClass("opacity-25");
+  
 });
 
 {# check if the card belongs to a running container #}
 function is_running(w) {
   var containerid = $(w).attr('id').split('-', 3)[2];
   return ! $("#container-open-" + containerid).hasClass('d-none');
+  //return ! $("#container-open-" + containerid).hasClass('d-opacity20');
 }
 
 {# when mouse enters the clickable part of the card change the cursor to pointer #}
