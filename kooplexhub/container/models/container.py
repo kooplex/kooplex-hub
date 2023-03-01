@@ -79,8 +79,8 @@ class Container(models.Model):
         return self.default_proxy.url_internal(self)
 
     @property
-    def url_public(self):
-        return self.default_proxy.url_public(self)
+    def url_notebook(self):
+        return self.default_proxy.url_notebook(self)
 
     @property
     def search(self):
@@ -89,12 +89,12 @@ class Container(models.Model):
     def wait_until_ready(self):
         from kooplexhub.lib import keeptrying
         for _ in range(5):
-            resp = keeptrying(method = requests.get, times = 5, url = self.url_public, timeout = .05, allow_redirects = False)
-            logger.info('Get %s -> [%d]' % (self.url_public, resp.status_code))
+            resp = keeptrying(method = requests.get, times = 5, url = self.url_notebook, timeout = .05, allow_redirects = False)
+            logger.info('Get %s -> [%d]' % (self.url_notebook, resp.status_code))
             time.sleep(.1)
             if resp.status_code != 503:
                 return resp
-            logger.warning('Proxy target missing: %s' % self.url_public)
+            logger.warning('Proxy target missing: %s' % self.url_notebook)
 
     def env_variable(self, var_name):
         try:
@@ -102,10 +102,10 @@ class Container(models.Model):
         except:
             return ""
 
-    @property
-    def env_variables(self):
-        for envmap in EnvVarMapping.objects.filter(image = self.image):
-            yield { "name": envmap.name, "value": envmap.valuemap.format(container = self) }
+#    @property
+#    def env_variables(self):
+#        for envmap in EnvVarMapping.objects.filter(image = self.image):
+#            yield { "name": envmap.name, "value": envmap.valuemap.format(container = self) }
 
     @property
     def uptime(self):

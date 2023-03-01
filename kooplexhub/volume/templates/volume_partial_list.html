@@ -14,7 +14,11 @@
   <input type="hidden" id="volume-search-{{ volume.id }}" value="{{ volume.search }}">
   <input type="hidden" id="volume-match-{{ volume.id }}" value=true>
   <input type="hidden" id="volume-isshown-{{ volume.id }}" value=true>
-  <div class="card-header">
+  {% if volume.scope == volume.SCP_ATTACHMENT %}
+    <div class="card-header bg-info">
+  {% else %}
+    <div class="card-header bg-warning">
+  {% endif %}
     {% render_folder volume.folder %}
     <div class="float-end">
       {% scope volume %}

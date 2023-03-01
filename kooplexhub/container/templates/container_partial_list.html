@@ -12,7 +12,13 @@
   <input type="hidden" id="container-search-{{ container.id }}" value="{{ container.search }}">
   <input type="hidden" id="container-match-{{ container.id }}" value="true">
   <input type="hidden" id="container-isshown-{{ container.id }}" value="true">
+  {% if container.image.imagetype == container.image.TP_PROJECT %}
   <div class="card-header bg-secondary bg-opacity-75 border-bottom border-warning border-1 border-opacity-50" id="click-containerhead-{{ container.id }}">
+  {% elif container.image.imagetype == container.image.TP_REPORT %}
+  <div class="card-header bg-success bg-opacity-75 border-bottom border-warning border-1 border-opacity-50" id="click-containerhead-{{ container.id }}">
+  {% elif container.image.imagetype == container.image.TP_API %}
+  <div class="card-header bg-danger bg-opacity-75 border-bottom border-warning border-1 border-opacity-50" id="click-containerhead-{{ container.id }}"></div>
+  {% endif %}
     <h5 class="card-title fw-bold" >{{ container.name|truncatechars:45 }}</h5>
   </div>
     <div class="card-body text-dark fw-bold" id="click-containerbody-{{ container.id }}">

@@ -10,6 +10,7 @@ from django.contrib import messages
 from django.db.models import Q
 from django.utils.html import format_html
 from django.urls import reverse
+import re
 
 from .models import Report, ReportContainerBinding, ReportType, ReportTag
 from container.models import Image, Container
@@ -70,10 +71,13 @@ class ReportView(LoginRequiredMixin):
             if not report.reporttype.is_static:
                 logger.debug("Create an env for the report: %s" % (report.name))
                 # Create a container
+                user = report.creator
+                name = re.sub(r'\W+', '', report.name)
                 container, created = Container.objects.get_or_create(
-                        user = report.creator, 
-                        name = re.sub(r'\W+', '', report.name),
-                        friendly_name = report.name,
+                        user = user, 
+                        name = name,
+                        #friendly_name = report.name,
+                        label = f"{user.username}-{name}",
                         image = report.image
                 )
                 ReportContainerBinding.objects.create(report=report, container=container)

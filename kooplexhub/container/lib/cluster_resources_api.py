@@ -62,6 +62,9 @@ class Cluster():
             
         for node in nodes.items:
             node_name = node.metadata.name
+            # FIXME hardcoded filtering
+            if "controlplane" in node_name:
+                continue
             nac = node.status.allocatable
             agpu = int(nac.get('nvidia.com/gpu',0))
             self.node_df.loc[len(self.node_df)] = [node_name, UnitConverter(nac['cpu']), UnitConverter(nac['memory']), agpu]

@@ -80,14 +80,14 @@ class FormReport(forms.ModelForm):
         if report.id:
             for folder in dir_reportcandidate(report.project):
                 if folder.startswith(report.folder):
-                    qs.append((f'{report.project.id}-{folder}', f'{report.project.name}: {folder}'))
+                    qs.append((f'{report.project.id}-{folder}', f'{report.project.name} - {folder.split("/")[0]}: {folder.split("/")[1]}'))
             #FIXME: select the former indexfile
             #FIXME: frissítésnél ne legyen required True
             self.fields['thumbnail'].required = False
         else:
             for upb in UserProjectBinding.objects.filter(user = user):
                 for folder in dir_reportcandidate(upb.project):
-                    qs.append((f'{upb.project.id}-{folder}', f'{upb.project.name}: {folder}'))
+                    qs.append((f'{upb.project.id}-{folder}', f'{upb.project.name} - {folder.split("/")[0]}: {folder.split("/")[1]}'))
         self.fields["user_id"].widget.attrs['value'] = user.id
         self.fields["report_id"].widget.attrs['value'] = report.id
         self.fields["indexfile"].choices = qs

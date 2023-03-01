@@ -64,7 +64,11 @@ def check(container):
 
         if container.state == container.ST_STARTING and status.get('state') == container.ST_RUNNING:
             container.state = container.ST_RUNNING
-            addroute(container)
+            # FIXME could be cleaner
+            #for proxy in container.proxies:
+            #    addroute(container, KOOPLEX['proxy']['routes'][proxy.name], proxy.port)
+            addroute(container, 'NB_URL', 'NB_PORT')
+            addroute(container, 'REPORT_URL', 'REPORT_PORT')
 #        else:
 #            removeroute(container)
 
@@ -112,12 +116,14 @@ def start(container):
     config.load_kube_config()
     v1 = client.CoreV1Api()
 
-    env_variables = [
-        { "name": "LANG", "value": "en_US.UTF-8" },
-        { "name": "SSH_AUTH_SOCK", "value": f"/tmp/{container.user.username}" }, #FIXME: move to db
-        { "name": "SERVERNAME", "value": SERVERNAME},
-    ]
-    env_variables.extend(container.env_variables)
+# from settings.py
+#    env_variables = [
+#        { "name": "LANG", "value": "en_US.UTF-8" },
+#        { "name": "SSH_AUTH_SOCK", "value": f"/tmp/{container.user.username}" }, #FIXME: move to db
+#        { "name": "SERVERNAME", "value": SERVERNAME},
+#    ]
+    env_variables = [ {'name': k, "value": v.format(container = container)} for k,v in KOOPLEX['environmental_variables'].items()]
+    #env_variables.extend(container.env_variables)
 
     pod_ports = []
     svc_ports = []
@@ -153,6 +159,7 @@ def start(container):
             V1KeyToPath(key="nslcd",path="02-nslcd"),
             V1KeyToPath(key="usermod",path="03-usermod"),
             V1KeyToPath(key="munge",path="04-munge"),
+            V1KeyToPath(key="ssh",path="05-ssh"),
             ]
 
     if container.user.profile.can_teleport:
@@ -478,7 +485,8 @@ def stop(container):
     config.load_kube_config()
     v1 = client.CoreV1Api()
     try:
-        removeroute(container)
+        removeroute(container, 'NB_URL')
+        removeroute(container, 'REPORT_URL')
     except Exception as e:
         logger.error(f"Cannot remove proxy route of container {container} -- {e}")
     try:

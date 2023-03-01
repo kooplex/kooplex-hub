@@ -6,15 +6,13 @@ from django.db import transaction
 from django.db.models.signals import pre_save, post_save, pre_delete, post_delete
 from django.dispatch import receiver
 
-from django_celery_beat.models import ClockedSchedule, PeriodicTask
 from kooplexhub.lib.libbase import standardize_str
 from hub.models import Group, UserGroupBinding
+from hub.models import Task
 from ..models import UserProjectBinding
 from .. import filesystem as fs
 
 logger = logging.getLogger(__name__)
-
-code = lambda x: json.dumps([ i.id for i in x ])
 
 
 @receiver(pre_save, sender = UserProjectBinding)
@@ -28,17 +26,16 @@ def assert_single_creator(sender, instance, **kwargs):
         assert instance.role == UserProjectBinding.RL_CREATOR, "The first user project binding must be the creator %s" % instance
 
 
-
 @receiver(pre_save, sender = UserProjectBinding)
-def mkdir_project(sender, instance, **kwargs):
+def grantaccess_project(sender, instance, **kwargs):
     p = instance.project
     if instance.id is None:
-        cleanname = standardize_str(p.name)
-        if p.subpath is None:
-            p.subpath = f'{cleanname}-{instance.user.username}'
-            p.save()
         is_creator = instance.role == UserProjectBinding.RL_CREATOR
-        if not is_creator:
+        if is_creator:
+            acl = { 'users_rw': [instance.user.id] }
+            creator_username = instance.user.username
+        else:
+            creator_username = p.creator.username
             with transaction.atomic():
                 group, group_created = Group.objects.select_for_update().get_or_create(name = instance.groupname, grouptype = Group.TP_PROJECT)
             if group_created:
@@ -48,20 +45,15 @@ def mkdir_project(sender, instance, **kwargs):
             else:
                 acl = None
             UserGroupBinding.objects.create(user = instance.user, group = group)
-        else:
-            acl = { 'users_rw': [instance.user.id] }
         if acl:
-            schedule_now = ClockedSchedule.objects.create(clocked_time = datetime.datetime.now())
-            PeriodicTask.objects.create(
-                name = f"grant_access_{p.subpath}_{instance.user.username}",
-                task = "project.tasks.manage_folder",
-                clocked = schedule_now,
-                one_off = True,
-                kwargs = json.dumps({
-                    'create_folder': is_creator,
+            Task(
+                create = True,
+                name = f"Grant access {p.name}({creator_username}) to {instance.user.username}",
+                task = "project.tasks.grant_access",
+                kwargs = {
                     'folders': [ fs.path_project(p), fs.path_report_prepare(p) ],
                     'acl': acl,
-                })
+                }
             )
        
 
@@ -70,37 +62,14 @@ def revokeaccess_project(sender, instance, **kwargs):
     if instance.role != UserProjectBinding.RL_CREATOR:
         group = Group.objects.get(name = instance.groupname, grouptype = Group.TP_PROJECT)
         UserGroupBinding.objects.get(user = instance.user, group = group).delete()
-        schedule_now = ClockedSchedule.objects.create(clocked_time = datetime.datetime.now())
-        PeriodicTask.objects.create(
-            name = f"revoke_access_{instance.id}",
+        Task(
+            create = True,
+            name = f"Revoke access {instance.project.name}({instance.project.creator.username}) from {instance.user.username}",
             task = "project.tasks.revoke_access",
-            clocked = schedule_now,
-            one_off = True,
-            kwargs = json.dumps({
+            kwargs = {
                 'folders': [ fs.path_project(instance.project), fs.path_report_prepare(instance.project) ],
                 'user_id': instance.user.id,
-            })
-        )
-
-
-@receiver(pre_delete, sender = UserProjectBinding)
-def garbagedir_project(sender, instance, **kwargs):
-    if instance.role == UserProjectBinding.RL_CREATOR:
-        try:
-            Group.objects.get(name = instance.groupname, grouptype = Group.TP_PROJECT).delete()
-        except Group.DoesNotExist:
-            pass
-        schedule_now = ClockedSchedule.objects.create(clocked_time = datetime.datetime.now())
-        PeriodicTask.objects.create(
-            name = f"garbage_{instance.id}",
-            task = "project.tasks.garbage",
-            clocked = schedule_now,
-            one_off = True,
-            kwargs = json.dumps({
-                'project_folder': fs.path_project(instance.project), 
-                'project_tarbal': fs.garbage_project(instance.project),
-                'report_prepare_folder': fs.path_report_prepare(instance.project),
-            })
+            }
         )
 
 
@@ -111,3 +80,26 @@ def assert_not_shared(sender, instance, **kwargs):
         pcb.container.mark_restart(f"Revoked access to project {instance.project.name}")
         pcb.delete()
 
+
+@receiver(pre_delete, sender = UserProjectBinding)
+def garbagedir_project(sender, instance, **kwargs):
+    if instance.role != UserProjectBinding.RL_CREATOR:
+        return
+    Task(
+        create = True,
+        name = f"Garbage project {instance.id}",
+        task = "kooplexhub.tasks.create_tar",
+        kwargs = {
+            'folder': fs.path_project(instance.project), 
+            'tarbal': fs.garbage_project(instance.project),
+        }
+    )
+    Task(
+        create = True,
+        name = f"Garbage report prepare {instance.id}",
+        task = "kooplexhub.tasks.create_tar",
+        kwargs = {
+            'folder': fs.path_report_prepare(instance.project),
+            'tarbal': fs.garbage_report_prepare(instance.project),
+        }
+    )
