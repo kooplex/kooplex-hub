@@ -133,7 +133,7 @@ class UserAssignmentBinding(models.Model):
         if self.task_handout:
             return
         assert self.state == UserAssignmentBinding.ST_QUEUED, "State mismatch"
-        group = self.assignment.course.os_group
+        #group = self.assignment.course.os_group
         self.task_handout = Task(
             name = f"handout {self.assignment.name}/{self.assignment.course.name} to {self.user.username}",
             task = "kooplexhub.tasks.extract_tar",
@@ -141,7 +141,8 @@ class UserAssignmentBinding(models.Model):
                 'folder': assignment_workdir(self),
                 'tarbal': self.assignment.filename,
                 'users_rw': [ self.user.id ],
-                'users_ro': [ teacherbinding.user.id for teacherbinding in self.assignment.course.teacherbindings ],
+                #'users_ro': [ teacherbinding.user.id for teacherbinding in self.assignment.course.teacherbindings ],
+                'group_ro' : self.assignment.course.group_teachers.groupid,
                 'recursive': True,
                 'callback': {
                     'function': "education.tasks.callback",

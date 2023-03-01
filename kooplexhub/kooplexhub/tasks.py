@@ -76,10 +76,11 @@ def create_tar(folder, tarbal, remove_folder = False, callback = {}):
 
 
 @shared_task()
-def extract_tar(tarbal, folder, recursive = False, users_rw = [], users_ro = [], callback = {}):
+#def extract_tar(tarbal, folder, recursive = False, users_rw = [], users_ro = [], callback = {}):
+def extract_tar(tarbal, folder, recursive = False, users_rw = [], group_ro = None, callback = {}):
     extracttarbal(tarbal, folder)
-    for u in users_ro:
-        grantaccess_user(User.objects.get(id = u), folder, readonly = True, recursive = recursive)
+    if group_ro:
+        grantaccess_group(group_ro, folder, readonly = True, recursive = recursive)
     for u in users_rw:
         grantaccess_user(User.objects.get(id = u), folder, recursive = recursive)
     if callback:

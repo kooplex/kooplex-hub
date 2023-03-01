@@ -62,7 +62,8 @@ def userassignment_dir(userassignmentbinding):
     return os.path.join(assignment_workdir_root(ucb), userassignmentbinding.assignment.folder)
 
 def assignment_workdir(userassignmentbinding):
-    return os.path.join(userassignment_dir(userassignmentbinding), 'assignment')
+    #return os.path.join(userassignment_dir(userassignmentbinding), 'assignment')
+    return userassignment_dir(userassignmentbinding)
 
 def assignment_feedback_dir(userassignmentbinding):
     return os.path.join(userassignment_dir(userassignmentbinding), 'feedback')

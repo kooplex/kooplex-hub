@@ -50,11 +50,17 @@ def submission(userassignmentbinding_id, new_state):
     logger.debug(f"Submission {uab}")
     folder = assignment_workdir(uab)
     tarbal = assignment_collection(uab)
+    # UJ
+    group_teachers = Group.objects.get(name = f't-{uab.assignment.course.folder}').groupid 
+    ##
     correct_folder = assignment_correct_dir(uab)
     archivedir(folder, tarbal, remove = uab.assignment.remove_collected)
     extracttarbal(tarbal, correct_folder)
-    for ucb in uab.assignment.course.teacherbindings:
-        grantaccess_user(ucb.user, correct_folder, readonly = False, recursive = True, follow = False)
+    # for ucb in uab.assignment.course.teacherbindings:
+    #     grantaccess_user(ucb.user, correct_folder, readonly = False, recursive = True, follow = False)
+    ## UJ
+    grantaccess_group(group_teachers, correct_folder, readonly = False)
+    ##
     uab.state = new_state
     uab.save()
     logger.info(f"Submission finished {uab}")

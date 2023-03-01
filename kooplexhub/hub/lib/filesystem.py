@@ -130,26 +130,37 @@ def _revokeaccess(user, folder):
 
 def _grantgroupaccess(group, folder, readonly = False, recursive = False, follow = False):
     R = '-R' if recursive else ''
-    gid = group.groupid
+    if isinstance(group, int):
+        gid = group
+    else:
+        gid = group.groupid
     if acl_backend == 'nfs4':
         acl = 'rXtcy' if readonly else 'rwaDxtcy'
         flags = 'fdig' if follow else 'g'
         bash(f'nfs4_setfacl {R} -a A:{flags}:{gid}:{acl} {folder}')
     else:
         NotImplementedError(f'_grantaccess acl_backend {acl_backend}')
-    logger.info(f"+ access granted on dir {folder} to group {group.groupid}")
-
+    logger.info(f"+ access granted on dir {folder} to group {gid}")
 
 def _revokegroupaccess(group, folder):
     if acl_backend == 'nfs4':
+        # FIXME csak group.id nem lesz jo, vagy eleve azt adjuk at
         bash(f'nfs4_setfacl -R -x A:fdig:{group_id}:$(nfs4_getfacl {folder} | grep :fdig:{group_id}: | sed s,.*:,,) {folder}')
         bash(f'nfs4_setfacl -R -x A:g:{group.groupid}:$(nfs4_getfacl {folder} | grep :g:{group.groupid}: | sed s,.*:,,) {folder}')
     else:
         NotImplementedError(f'_grantaccess acl_backend {acl_backend}')
-    logger.info(f"- access revoked on dir {folder} from group {group.groupid}")
+    #logger.info(f"- access revoked on dir {folder} from group {group.groupid}")
+    logger.info(f"- access revoked on dir {folder} from group {groupid}")
 
 
-def _archivedir(folder, target, remove = True):
+def _makeroot(ti):
+    ti.uid = 0
+    ti.gid = 0
+    ti.uname = 'root'
+    ti.gname = 'root'
+    return ti
+
+def _archivedir(folder, target, remove = True, fakeroot = True):
     if not os.path.exists(folder):
         logger.warning("Folder %s is missing" % folder)
         return
@@ -157,7 +168,10 @@ def _archivedir(folder, target, remove = True):
         assert len(os.listdir(folder)) > 0, "Folder %s is empty" % folder
         dir_util.mkpath(os.path.dirname(target))
         with tarfile.open(target, mode='w:gz') as archive:
-            archive.add(folder, arcname = '.', recursive = True)
+            if fakeroot:
+                archive.add(folder, arcname = '.', recursive = True, filter = _makeroot)
+            else:
+                archive.add(folder, arcname = '.', recursive = True)
             logger.debug("tar %s -> %s" % (folder, target))
     except Exception as e:
         logger.error(f"Cannot create archive {target} -- {e}")

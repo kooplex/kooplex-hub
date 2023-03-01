@@ -72,7 +72,7 @@ def keeptrying(method, times, **kw):
     """
     dt = .1
     while times > 0:
-        logging.debug("executing %s" % method)
+        logging.debug("executing %s %s" % (method, kw['url']))
         times -= 1
         try:
             return method(**kw)
@@ -103,10 +103,12 @@ def keeptryinglist(method, times, kws):
     for kw in kws:
         dt = .1
         while times > 0:
-            logging.debug("executing %s" % method)
+            logging.debug("executing %s %s" % (method, kw['url']))
             times -= 1
             try:
-                return method(**kw)
+                resp = method(**kw)
+                if resp:
+                    continue
             except SSLError:
                 kw.update({'verify': False})
                 return method(**kw)
@@ -117,6 +119,7 @@ def keeptryinglist(method, times, kws):
                     raise
                 time.sleep(dt)
                 dt *= 2
+    return method(**kw)
 
 def bash(command):
     """

@@ -52,7 +52,7 @@ $("#assignment-form-handle").submit(function (e) {
 // mass assignment table
     'handoutmany_ids': $.map($("input[type=checkbox][name=handout]"), function (k, v) { if ($(k).prop("checked")) { return $(k).val() } }),
     'collectmany_ids': $.map($("input[type=checkbox][name=collect]"), function (k, v) { if ($(k).prop("checked")) { return $(k).val() } }),
-    'reassignmany_ids': $.map($("input[type=checkbox][name=reassign]"), function (k, v) { if ($(k).prop("checked")) { return $(k).val() } }),
+    'reassignmany_ids': $.map($("input[type=checkbox][name=selection_reassign]"), function (k, v) { if ($(k).prop("checked")) { return $(k).val() } }),
 // individual student table
     'create_handout_ids': $.map($("input[type=checkbox][name=selection_createhandout]"), function (k, v) { if ($(k).prop("checked")) { return $(k).val() } }),
     'handout_ids': $.map($("input[type=checkbox][name=selection_handout]"), function (k, v) { if ($(k).prop("checked")) { return $(k).val() } }),
@@ -84,11 +84,17 @@ function ws_callback_assignment(data) {
   {# mark corrected if attributes change #}
   $("input[name=score]").keyup(function() {
     obj_id = $( this ).attr('id').split('-')[1]
-    $("#uab-" + obj_id).prop('checked', true)
+    w = $("#uab-" + obj_id)
+    if ($(w).attr('name')=="selection_finalize") {
+      $(w).prop('checked', true)
+    }
   });
   $("textarea[name=feedback_text]").keyup(function() {
     obj_id = $( this ).attr('id').split('-')[1]
-    $("#uab-" + obj_id).prop('checked', true)
+    w = $("#uab-" + obj_id)
+    if ($(w).attr('name')=="selection_finalize") {
+      $(w).prop('checked', true)
+    }
   });
 };
 

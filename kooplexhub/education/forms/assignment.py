@@ -301,7 +301,7 @@ class FormAssignmentHandle(forms.Form):
         cleaned_data['collect'].extend(filter(A, UserAssignmentBinding.objects.filter(id__in = details['collect_ids'], state = UserAssignmentBinding.ST_WORKINPROGRESS)))
         cleaned_data['reassign'].extend(filter(A, UserAssignmentBinding.objects.filter(id__in = details['reassign_ids'], state = UserAssignmentBinding.ST_READY)))
         fin_map = {}
-        for uab in filter(A, UserAssignmentBinding.objects.filter(id__in = details['finalize_ids'], state__in = [UserAssignmentBinding.ST_SUBMITTED, UserAssignmentBinding.ST_COLLECTED])):
+        for uab in filter(A, UserAssignmentBinding.objects.filter(id__in = details['finalize_ids'], state__in = [UserAssignmentBinding.ST_SUBMITTED, UserAssignmentBinding.ST_COLLECTED, UserAssignmentBinding.ST_READY])):
             uab.state = UserAssignmentBinding.ST_READY
             fin_map[uab.id] = uab
         cleaned_data['finalize'] = list(fin_map.values())
@@ -311,13 +311,17 @@ class FormAssignmentHandle(forms.Form):
             assignment_id, student_id = code.split('-', 1)
             assignment = A(assignment_id)
             self._auth(assignment.course, userid)
-            UserCourseBinding.objects.get(course = course, user__id = student_id, is_teacher = False)
+            UserCourseBinding.objects.get(course = assignment.course, user__id = student_id, is_teacher = False)
             cleaned_data['handout'].append((True, UserAssignmentBinding(user = User.objects.get(id = student_id), assignment = assignment)))
 
         #FIXME: validation error on typerror
         rep = lambda d: (int(d['userassignmentbinding_id']), (float(d['score']), d['feedback']))
         for k, (score, feedback) in map(rep, details['meta']):
-            uab = fin_map[k]
+            uab = fin_map.get(k, None)
+            if uab is None:
+                uab = UserAssignmentBinding.objects.get(id=k)
+                self._auth(uab.assignment.course, userid)
+                cleaned_data['finalize'].append(uab)
             uab.score = score
             uab.feedback_text = feedback
 

@@ -22,7 +22,8 @@ class Course(models.Model):
     description = models.TextField(max_length = 512, blank = True)
     image = models.ForeignKey(Image, null = True, on_delete = models.CASCADE)
     teacher_can_delete_foreign_assignment = models.BooleanField(default = False)
-    os_group = models.ForeignKey(Group, null = True, on_delete = models.CASCADE, default = None)
+    group_students = models.ForeignKey(Group, null = True, on_delete = models.CASCADE, default = None, related_name = 'students')
+    group_teachers = models.ForeignKey(Group, null = True, on_delete = models.CASCADE, default = None, related_name = 'teachers')
 
 
     def __str__(self):
