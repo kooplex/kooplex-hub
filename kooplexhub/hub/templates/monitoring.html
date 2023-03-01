@@ -1,5 +1,9 @@
 {% extends "layout.html" %}
-{% block page_title %}Kooplex Home{% endblock %}
+{% block page_title %}Monitoring{% endblock %}
+
+{% block pagedescription %}
+	 Some stats from kubernetes metrics and the resource usage of your environments (<a href="https://xwiki.vo.elte.hu/en/kooplex-manual/monitoring">see manual</a>).
+{% endblock %}
 
 {% load static %}
 {% block submenu %}
@@ -35,14 +39,16 @@
 <div class="container-fluid ms-1" style="overflow-x:hidden;">
 {% block realcontent %}
   <div id="simple">
-    <div class="row">
+  </div>
+  <div id="simple">
+    <!--div class="row">
     	<iframe src="https://monitoring.vo.elte.hu/grafana/d/ZhxFwBz4k/node-overview-simple-rows?orgId=1&from=1659610945771&to=1659614545772"	height="600" width="1100" frameborder="0"></iframe>
     </div>
   </div>
   <div id="all">
     <div class="row">
     	<iframe src="https://monitoring.vo.elte.hu/grafana/d/aE-v7Bk4z/node-overview?orgId=1&refresh=5m&from=1659611026026&to=1659614626026"	height="600" width="1100" frameborder="0"></iframe>
-    </div>
+    </div-->
   </div>
 {% endblock %}
 </div>
