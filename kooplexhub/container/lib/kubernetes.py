@@ -3,6 +3,7 @@ import os
 import json
 from kubernetes import client, config
 from kubernetes.client import *
+client.rest.logger.setLevel(logging.WARNING)
 from urllib.parse import urlparse
 from threading import Timer, Event, Lock
 

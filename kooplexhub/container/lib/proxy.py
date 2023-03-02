@@ -40,6 +40,8 @@ def droproutes():
 
 def addroute(container, var_url, var_port):
     proxyconf = KOOPLEX.get('proxy', {})
+    port = KOOPLEX['environmental_variables'][var_port]
+    namespace = KOOPLEX['kubernetes']['namespace']
 #    kw = {
 #        'url': os.path.join(KOOPLEX['proxy'].get('url_api', 'http://localhost:8001/api'), 'routes', container.proxy_route), 
 #        'headers': {'Authorization': 'token %s' % KOOPLEX['proxy'].get('auth_token', '') },
@@ -52,7 +54,8 @@ def addroute(container, var_url, var_port):
     kw = {
         'url': os.path.join(KOOPLEX['proxy'].get('url_api', 'http://localhost:8001/api'), 'routes', KOOPLEX['environmental_variables'][var_url].format(container=container)), 
         'headers': {'Authorization': 'token %s' % KOOPLEX['proxy'].get('auth_token', '') },
-        'data': json.dumps({ 'target': container.url_internal }),
+        #'data': json.dumps({ 'target': container.url_internal }),
+        'data': json.dumps({ 'target': 'http://{container.label}.{kubernetes_namespace}:{port}'.format(container=container, kubernetes_namespace=namespace, port=port )}),    
     }
     logging.debug(f'+ proxy {kw["url"]} ---> {kw["data"]}')
     return keeptrying(requests.post, 50, **kw)
