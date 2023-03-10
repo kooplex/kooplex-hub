@@ -21,15 +21,24 @@ class Command(BaseCommand):
             try:
                 c = Course.objects.get(name = name)
                 correct_dir = assignment_correct_root(c) 
+                print ("Examining", correct_dir)
                 fs_dirs = [] 
+                check_empty = set()
                 for d_a in os.listdir(correct_dir):
-                    for d_u in os.listdir(os.path.join(correct_dir, d_a)):
+                    r = os.path.join(correct_dir, d_a)
+                    check_empty.add(r)
+                    for d_u in os.listdir(r):
                         fs_dirs.append( os.path.join(correct_dir, d_a, d_u) )
                 fs_keep = [ assignment_correct_dir(b) for b in UserAssignmentBinding.objects.filter(assignment__course = c) ]
                 for d in set(fs_dirs).difference(fs_keep):
                     print (f"Deleting folder {d}")
                     if not options['dry']:
                         _rmdir(d)
+                for d in check_empty:
+                    if not os.listdir(d):
+                        print (f"Deleting empty folder {d}")
+                        if not options['dry']:
+                            _rmdir(d)
             except:
                 raise
 

@@ -10,4 +10,5 @@ urlpatterns = [
     path('configure/<int:pk>/', views.ConfigureProjectView.as_view(), name = 'configure'),
     path('join/', views.JoinProjectView.as_view(), name = 'join'),
     re_path('delete/(?P<project_id>\d+)/?$', views.delete_or_leave, name = 'delete'),
+    re_path('addcontainer/(?P<userprojectbinding_id>\d+)/?$', views.addcontainer, name = 'autoaddcontainer'),
 ]

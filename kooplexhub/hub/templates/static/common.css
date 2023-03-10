@@ -78,3 +78,18 @@ body {
 .blink:hover {
   color: rgb(64, 64, 64);
 }
+
+
+.myoverlaybase {
+  position: relative;
+}
+
+.myoverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.carousel-indicators {
+  bottom: -4.2375rem;
+}

@@ -192,16 +192,15 @@ class Container(models.Model):
             state['podlog'] = fetch_containerlog(self)
         return state
 
-    def mark_restart(self, reason):
+    def mark_restart(self, reason, save = True):
         if self.state not in [ self.ST_RUNNING, self.ST_NEED_RESTART ]:
             return False
         if self.restart_reasons:
-            self.restart_reasons += ', ' + reason
+            self.restart_reasons += '; ' + reason
         else:
             self.restart_reasons = reason
         self.state = self.ST_NEED_RESTART
-        # FIXME
-        self.restart_reasons = self.restart_reasons[:500]
-        self.save()
+        if save:
+            self.save()
         return True
 

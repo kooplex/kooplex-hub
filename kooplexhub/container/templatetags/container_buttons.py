@@ -154,26 +154,38 @@ def button_delete_container(container):
 
 
 @register.simple_tag
-def button_start_open(container):
+def button_start_open(container, id_suffix = ''):
     o, s = ('d-none', '') if container.state in [ container.ST_RUNNING, container.ST_NEED_RESTART ] else ('', 'd-none')
     link = reverse('container:open', args = [container.id])
     return format_html(f"""
-<button name="container-start" value="{container.id}" role="button" 
+<button name="container-start" value="{container.id}"
         class="btn btn-success btn-sm " 
         data-toggle="tooltip" title="Start environment {container.name}"
 >
-  <span id="container-start-{container.id}" class="bi bi-lightning {o}" aria-hidden="true"></span>
-  <span id="container-open-{container.id}" class="oi oi-external-link {s}" aria-hidden="true"></span>
-  <span id="spinner-start-{container.id}" class="spinner-grow spinner-grow-sm d-none" role="status" aria-hidden="true"></span>
-  <input type="hidden" id="url-containeropen-{container.id}" value="{link}">
+  <span id="container-start-{container.id}{id_suffix}" class="bi bi-lightning {o}" aria-hidden="true"></span>
+  <span id="container-open-{container.id}{id_suffix}" class="oi oi-external-link {s}" aria-hidden="true"></span>
+  <span id="spinner-start-{container.id}{id_suffix}" class="spinner-grow spinner-grow-sm d-none" role="status" aria-hidden="true"></span>
+  <input type="hidden" id="url-containeropen-{container.id}{id_suffix}" value="{link}">
 </button>
     """)
 
+#@register.simple_tag
+#def button_report_start(container):
+#    link = reverse('container:report_open', args = [container.id])
+#    return format_html(f"""
+#<button name="container-report-open" value="{container.id}"
+#        class="btn btn-success btn-sm " 
+#        data-toggle="tooltip" title="Open report url {container.name}"
+#>
+#  <span id="container-report-open-{container.id}" class="oi oi-external-link {s}" aria-hidden="true"></span>
+#  <input type="hidden" id="url-containerreportopen-{container.id}" value="{link}">
+#</button>
+#    """)
 
 @register.simple_tag
 def button_stop(container):
     return format_html(f"""
-<button name="container-stop" value="{container.id}" role="button" 
+<button name="container-stop" value="{container.id}"
         class="btn btn-danger btn-sm " 
         data-toggle="tooltip" title="Stop environment {container.name}"
 >
@@ -186,7 +198,7 @@ def button_stop(container):
 @register.simple_tag
 def button_restart(container):
     return format_html(f"""
-<button name="container-restart" value="{container.id}" role="button" 
+<button name="container-restart" value="{container.id}"
         class="btn btn-warning btn-sm" 
         data-toggle="tooltip" title="Restart inconsistent environment {container.name}"
 >
@@ -202,13 +214,13 @@ def button_restart(container):
 def button_refreshlog(container, modal_prefix = None):
     if modal_prefix:
         return format_html(f"""
-<button role="button" class="btn btn-warning btn-sm mb-1" 
+<button class="btn btn-warning btn-sm mb-1" 
         data-bs-toggle="modal" data-bs-target="#{modal_prefix}{container.id}"
         ><span class="bi bi-patch-question" aria-hidden="true" 
                data-toggle="tooltip" title="Click to retrieve latest container logs" data-placement="bottom"></span></button>
         """)
     return format_html(f"""
-<button name="container-log" value="{container.id}" role="button" class="btn btn-warning btn-sm mb-1" 
+<button name="container-log" value="{container.id}" class="btn btn-warning btn-sm mb-1" 
         data-toggle="tooltip" title="Click to retrieve latest container logs" data-placement="bottom" disabled>
         <span id="container-log-{container.id}" class="bi bi-patch-question d-none" aria-hidden="true"></span>
         <span id="spinner-log-{container.id}" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
@@ -235,42 +247,44 @@ def button_configure_attachment(attachment, user):
         return ""
 
 
+#FIXME
+#<a href="{link}" role="button" class="btn btn-secondary btn-sm" value="{b.container.id}"><span class="bi bi-boxes" aria-hidden="true"></span>{b.container.name}</a>
+# Attribute value not allowed on element a
 @register.simple_tag
-def dropdown_start_open(bindings, ancestor, ancestor_type):
+def dropdown_start_open(bindings, ancestor, ancestor_type, id_suffix = ''):
     if len(bindings):
         items = ""
         for b in bindings:
-            but_start_open = button_start_open(b.container)
+            but_start_open = button_start_open(b.container, id_suffix)
             link = reverse('container:list')
             items += f"""
-<span class="dropdown-item">
+<div class="dropdown-item" style="display: inline-block">
   <div class="btn-group" role="group" aria-label="control buttons">
     {but_start_open}
-    <a href="{link}" role="button" class="btn btn-secondary btn-sm" name="shortcut" value="{b.container.id}"><span class="bi bi-boxes" aria-hidden="true"></span>{b.container.name}</a>
+    <a href="{link}" role="button" class="btn btn-secondary btn-sm" value="{b.container.id}"><span class="bi bi-boxes" aria-hidden="true"></span>{b.container.name}</a>
   </div>
-</span>
+</div>
             """
         an = getattr(ancestor, ancestor_type).name
         return format_html(f"""
-<span class="dropdown" data-bs-toggle="tooltip" data-bs-placement="top" title="Service environments associated with {ancestor_type} {an}">
-  <a class="btn btn-outline-secondary dropdown-toggle btn-sm" type="button" id="dc-svcs-{ancestor.id}" data-bs-toggle="dropdown" aria-expanded="false">
+<div class="dropdown" style="display: inline-block" data-bs-toggle="tooltip" data-bs-placement="top" title="Service environments associated with {ancestor_type} {an}">
+  <button class="btn btn-outline-secondary dropdown-toggle btn-sm" id="dc-svcs-{ancestor.id}" data-bs-toggle="dropdown" aria-expanded="false">
     <i class="oi oi-terminal"></i>&nbsp;{len(bindings)}
-  </a>
-  <ul class="dropdown-menu" aria-labelledby="dc-svcs-{ancestor.id}">
+  </button>
+  <div class="dropdown-menu" aria-labelledby="dc-svcs-{ancestor.id}">
     {items}
-  </ul>
-</span>
+  </div>
+</div>
         """)
     else:
-        #if ancestor_type == 'project':
-        #    link = reverse('project:autoaddcontainer', args = [ancestor.id])
-        #elif ancestor_type == 'course':
-        if ancestor_type == 'course':
+        if ancestor_type == 'project':
+            link = reverse('project:autoaddcontainer', args = [ancestor.id])
+        elif ancestor_type == 'course':
             link = reverse('education:autoaddcontainer', args = [ancestor.id])
         else:
             link = '#'
         return format_html(f"""
-<a class="btn btn-danger btn-sm" type="button" href="{link}">
+<a class="btn btn-danger btn-sm" role="button" href="{link}">
   <i class="bi bi-boxes" data-bs-toggle="tooltip" data-bs-placement="top" title="Create a default environment for your {ancestor_type}"></i>
 </a>
         """)

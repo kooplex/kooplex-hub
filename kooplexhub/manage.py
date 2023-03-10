@@ -12,6 +12,13 @@ import sys
 #def tick():
 #    print ("Tick : {}".format(time.ctime()))
 
+def initialize_debugger():
+    import debugpy
+
+    debugpy.listen(("0.0.0.0", 3000))
+    debugpy.wait_for_client()
+    print('Attached!')
+
 def main():
     """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'kooplexhub.settings')
@@ -27,6 +34,7 @@ def main():
 
 
 if __name__ == '__main__':
+#    initialize_debugger()
 #    try:
 #        t.start(block = False)
 #    except Exception as e:

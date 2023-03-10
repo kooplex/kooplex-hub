@@ -1,4 +1,4 @@
-import os
+from pwd import getpwnam
 import logging
 import unidecode
 
@@ -10,7 +10,6 @@ logger = logging.getLogger(__name__)
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete = models.CASCADE)
-    userid = models.IntegerField(default = None, blank = True)
     token = models.CharField(max_length = 64, null = True)
     can_createproject = models.BooleanField(default = True)
     can_createimage = models.BooleanField(default = False)
@@ -19,6 +18,12 @@ class Profile(models.Model):
     can_choosenode = models.BooleanField(default = False)
     can_teleport = models.BooleanField(default = False)
     has_scratch = models.BooleanField(default = False)
+
+    @property
+    def userid(self):
+        if hasattr(self.user, 'is_superuser') and (self.user.is_superuser == True):
+            return None
+        return getpwnam(self.username).pw_uid
 
     @property
     def search(self):

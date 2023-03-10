@@ -30,4 +30,14 @@ def remove_container(sender, instance, **kwargs):
         logger.warning(f'! check pod/container {instance.label}, during removal exception raised: -- {e}')
 
 
-
+@receiver(pre_save, sender = Container)
+def container_needs_restart(sender, instance, **kwargs):
+    if not instance.id:
+        return
+    old = Container.objects.get(id = instance.id)
+    chg = []
+    for a in [ 'node', 'cpurequest', 'gpurequest', 'memoryrequest', 'idletime', 'image', 'start_teleport' ]:
+        if getattr(old, a) != getattr(instance, a):
+            chg.append(a)
+    if chg:
+        instance.mark_restart("Attributes {} changed".format(", ".join(chg)), save = False)

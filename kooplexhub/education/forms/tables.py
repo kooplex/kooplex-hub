@@ -272,7 +272,7 @@ class TableAssignmentHandle(tables.Table):
 <input type="hidden" id="feedback_text-old-{record.id}" value="{t}" />
             """)
         else:
-            return record.feedback_text if record.feedback_text else format_html('—')
+            return record.feedback_text if record.feedback_text else format_html('--')
 
     def render_info(self, record):
         rd = lambda t: t.clocked if t else "—"

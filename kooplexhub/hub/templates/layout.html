@@ -15,7 +15,7 @@
     <link rel="stylesheet" type="text/css" href="{% static 'fonts/remix-icon/remixicon.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'common.css' %}">
 
-    <link rel="shortcut icon" type="image/png" href="/static/kooplexicon.png"/>
+    <link rel="shortcut icon" type="image/png" href="/static/kooplexicon.png">
     <title>{% block page_title %}Kooplex Hub{% endblock %}</title>
 
     {% block head_content %}{% endblock %}
@@ -63,7 +63,7 @@
 		  </a>
 		</li>
                 <li class="nav-item ms-3 ms-md-1">
-                  <a class="nav-link" href="#" href="#" class="nav-link" 
+                  <a href="#" class="nav-link"
                      data-bs-toggle="offcanvas" data-bs-target="#offcanvasProfile" role="button" aria-expanded="false"
 		     ><span class="bi bi-person-fill" data-toggle="tooltip" title="Profile" data-placement="bottom"></span>
                   </a>
@@ -92,20 +92,20 @@
 
 	{# user profile button #}
         <div class="offcanvas offcanvas-end bg-dark mt-5 round" style="width: 270px" 
-             data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1" id="offcanvasProfile" aria-labelledby="offcanvasMessagesLabel">
+             data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1" id="offcanvasProfile" aria-labelledby="offcanvasMessagesLabel2">
           <div class="offcanvas-header">
-            <h5 class="offcanvas-title text-white" id="offcanvasMessagesLabel">Main menu</h5>
+            <h5 class="offcanvas-title text-white" id="offcanvasMessagesLabel2">Main menu</h5>
             <button type="button" class="btn-close btn-close-white"  data-bs-dismiss="offcanvas" aria-label="Close"></button>
           </div>
           <div class="offcanvas-body">
             <ul>
               <li><a class="text-white text-decoration-none" href="{{ url_profile }}">{{ user.first_name }} {{ user.last_name }}</a></li>
-              <hr class="text-white"/>
+	      <li class="divider">&nbsp;</li>
               <li><a class="text-white text-decoration-none" href="{% url 'logout' %}">Logout&nbsp;<span class="oi oi-account-logout"></span></a></li>
+	      <li class="divider">&nbsp;</li>
               <!--li><a class="dropdown-item" href="#" data-toggle="modal" data-target="#reset-token">Reset token</a></li-->
-              <hr  class="text-white"/>
               <li><a class="text-white text-decoration-none" href="https://xwiki.vo.elte.hu/en/kooplex-manual/overview" target="_blank">Documentation</a></li>
-              <hr  class="text-white"/>
+	      <li class="divider">&nbsp;</li>
               <li><a class="text-white text-decoration-none" target="_blank" href="https://kooplex.github.io/#portfolioModal3" data-toggle="modal" data-target="#about-contacts">About/Contact us</a></li>
             </ul>
           </div>

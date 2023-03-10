@@ -154,8 +154,9 @@ class FormContainer(forms.ModelForm):
                 ve.append( forms.ValidationError(_(f'Container name {containername} is not unique'), code = 'invalid name') )
             cleanname = standardize_str(containername)
             cleaned_data["label"] = f'{user.username}-{cleanname}'
-        if not user.profile.can_choosenode:
-            cleaned_data.pop('node', None)
+        node = cleaned_data.pop('node', None)
+        if user.profile.can_choosenode:
+            cleaned_data['node'] = node if node else None
         for attr in [ 'idletime', 'cpurequest', 'memoryrequest', 'gpurequest' ]:
             r = _range(attr)
             value = cleaned_data.get(attr)

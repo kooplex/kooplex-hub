@@ -215,27 +215,27 @@ def open(request, container_id):
         messages.error(request, f'Cannot redirect to url {container.url_notebook}')
     return redirect('container:list')
 
-@login_required
-def report_open(request, container_id):
-    """Opens the report_url for a container"""
-    user = request.user
-    try:
-        container = Container.objects.get(id = container_id, user = user)
-        if container.state in [ Container.ST_RUNNING, Container.ST_NEED_RESTART ]:
-            logger.debug(f'wait_until_ready {container.url_notebook}')
-            container.wait_until_ready()
-            logger.debug(f'try to redirect to url {container.url_notebook}')
-            if container.default_proxy.token_as_argument:
-                return custom_redirect(container.url_notebook, token = container.user.profile.token)
-            else:
-                return custom_redirect(container.url_notebook)
-        else:
-            messages.error(request, f'Cannot open {container.name} of state {container.state}')
-    except Container.DoesNotExist:
-        messages.error(request, 'Environment is missing')
-    except requests.TooManyRedirects:
-        messages.error(request, f'Cannot redirect to url {container.url_notebook}')
-    except Exception as e:
-        logger.error(f'cannot redirect to url {container.url_notebook} -- {e}')
-        messages.error(request, f'Cannot redirect to url {container.url_notebook}')
-    return redirect('container:list')
+#@login_required
+#def report_open(request, container_id):
+#    """Opens the report_url for a container"""
+#    user = request.user
+#    try:
+#        container = Container.objects.get(id = container_id, user = user)
+#        if container.state in [ Container.ST_RUNNING, Container.ST_NEED_RESTART ]:
+#            logger.debug(f'wait_until_ready {container.url_notebook}')
+#            container.wait_until_ready()
+#            logger.debug(f'try to redirect to url {container.url_notebook}')
+#            if container.default_proxy.token_as_argument:
+#                return custom_redirect(container.url_notebook, token = container.user.profile.token)
+#            else:
+#                return custom_redirect(container.url_notebook)
+#        else:
+#            messages.error(request, f'Cannot open {container.name} of state {container.state}')
+#    except Container.DoesNotExist:
+#        messages.error(request, 'Environment is missing')
+#    except requests.TooManyRedirects:
+#        messages.error(request, f'Cannot redirect to url {container.url_notebook}')
+#    except Exception as e:
+#        logger.error(f'cannot redirect to url {container.url_notebook} -- {e}')
+#        messages.error(request, f'Cannot redirect to url {container.url_notebook}')
+#    return redirect('container:list')

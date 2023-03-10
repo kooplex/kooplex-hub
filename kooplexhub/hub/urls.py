@@ -11,6 +11,8 @@ urlpatterns = [
     path('logout/', ca_views.LogoutView.as_view(), name = 'logout'),
     path('', views.IndexView.as_view(), name = 'indexpage'),
     path('monitoring/', views.MonitoringView.as_view(), name = 'monitoring'),
+#    path('gitea/', "gitea.vo.elte.hu", name = 'gitea'),
+#    path('seafile/', "seafile.vo.elte.hu", name = 'seafile'),
 
     #JUST FOR THE TEST TASK
 #    re_path('cel/(?P<duma>\w+)/?$', views.task, name = 'testtask'),

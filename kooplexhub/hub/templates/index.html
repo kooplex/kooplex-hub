@@ -12,66 +12,35 @@
 <link rel="stylesheet" type="text/css" href="{% static 'fonts/open-iconic-master/font/css/open-iconic-bootstrap.css' %}">
 <style>
 .ico {
-width: 50px; 
+#width: 50px; 
 height: 30px; 
 padding-right: 10px; 
 margin-top: 10px
 }
 </style>
 
-<script>
-  var hidden = false;
-  function action() {
-      hidden = !hidden;
-      if(hidden) {
-          document.getElementById('togglee').style.visibility = 'hidden';
-      } else {
-          document.getElementById('togglee').style.visibility = 'visible';
-      }
-  }
-</script>
-
 {% endblock %}
 
 
 {% block bodycontent %}
-<div class="container mt-1" style="display:none;" id="myAlert">
-  <div class="alert alert-warning alert-dismissable" id="myAlert2">
-    <input type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></input>
-    Dear Kooplex users! We are interested in your opinion about Kooplex in order to improve our platform. Our team would appreciate if you could have five minutes to answer this quick and anonymous questionnaire by <a href="https://forms.gle/cJ52qSQNN8kUKXpL9" target="_blank" class="alert-link" id="toggler" value="Toggler" onClick="action();">clicking here</a>. Thank you!
-  </div>
-  </div>
-
-<script>
-    setTimeout(function() {
-        bootstrap.Alert.getOrCreateInstance(document.querySelector(".alert")).close();
-    }, 3000)
-  </script>
-
 <div class="m-2" style="height: calc(100vh - 105px); overflow-y: scroll; overflow-x:hidden;">
   <div class="container">
   <div class="card shadow p-3 mb-2 mt-3 bg-light rounded"> 
     <h6 class="card-title">Powered by</h6>
     <div class="card-body" style="flex-direction: row; flex-wrap: wrap; justify-content: space-between">
-      <img class="ico" src="/static/dockerlogo.png" alt="docker">
-      <img class="ico" src="/static/kuberneteslogo.png" alt="k8s">
-      <img class="ico" src="/static/django.png" alt="django">
-      <img class="ico" src="/static/Nginx-Logo.png" alt="nginx">
-      <img class="ico" src="/static/jupyter.png"  alt="jupyter">
-      <img class="ico" src="/static/rstudio.png" alt="rstudio">
-      <img class="ico" src="/static/gitea.png"  alt="gitea">
-      <img class="ico" src="/static/seafile.png" alt="seafile">
+      <img class="ico" src="/static/t_dockerlogo.png" alt="docker">
+      <img class="ico" src="/static/t_kuberneteslogo.png" alt="k8s">
+      <img class="ico" src="/static/t_django.png" alt="django">
+      <img class="ico" src="/static/t_Nginx-Logo.png" alt="nginx">
+      <img class="ico" src="/static/t_jupyter.png"  alt="jupyter">
+      <img class="ico" src="/static/t_rstudio.png" alt="rstudio">
+      <img class="ico" src="/static/t_gitea.png"  alt="gitea">
+      {% comment %} FIXME transparent {% endcomment %}      <img class="ico" src="/static/t_seafile.png" alt="seafile">
     </div>
     <img src="/static/Kooplex-frontpage.png">
   </div>
 </div>
 
-{% comment %}
-<div class="alert alert-warning alert-dismissible fade show mt-3" id="success-alert" role="alert">
-  <strong>Questionary!</strong> Dear Kooplex users, We are interested in your opinion about Kooplex in order to improve our platform. Our team would appreciate if you could have five minutes to answer this quick and anonymous questionnaire. Click <a href="https://forms.gle/cJ52qSQNN8kUKXpL" class="alert-link">here</a> to have access to it. Thank you in advance!
-  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
-{% endcomment %}
 
 
 <div class="container">

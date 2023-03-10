@@ -10,4 +10,5 @@ urlpatterns = [
     path('configure/<int:pk>/', views.ConfigureContainerView.as_view(), name = 'configure'),
     re_path('^delete/(?P<container_id>\d+)/?', views.destroy, name = 'destroy'),
     re_path('^open/(?P<container_id>\d+)/?', views.open, name = 'open'),
+#    re_path('^report_open/(?P<container_id>\d+)/?', views.report_open, name = 'report_open'),
 ]

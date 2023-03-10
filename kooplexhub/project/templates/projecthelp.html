@@ -1,17 +1,6 @@
-{# fixme #}
-<style>
-.myoverlaybase {
-position: relative;
-}
-.myoverlay {
-position: absolute;
-top: 0;
-left: 0;
-}
-.carousel-indicators {
-        bottom: -4.2375rem;
-    }
-</style>
+{# FIXME: REFACTOR ME!!! #}
+
+
 
 
 <div class="modal fade modal-lg row" id="exampleModalToggle" aria-hidden="true" aria-labelledby="exampleModalToggleLabel" tabindex="-1">
@@ -28,7 +17,7 @@ left: 0;
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body row">
-<div id="carouselExampleIndicators"id="carouselExampleIndicators" data-ride="carousel" class="carousel slide" data-interval="0">
+<div id="carouselExampleIndicators" data-ride="carousel" class="carousel slide" data-interval="0">
   <div class="carousel-indicators">
     <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
     <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="1" aria-label="Slide 2"></button>
@@ -50,7 +39,7 @@ left: 0;
     </div>
     <div class="carousel-item">
         <div class="container-fluid">
-            <p>List project: Use the search bar on the top of the page to filter them.<br><a class="btn btn-danger btn-sm" type="button" href="#"><i class="bi bi-boxes"></i></a> indicates that this project is not associated to any environment yet.</p> 
+            <p>List project: Use the search bar on the top of the page to filter them.<br><button class="btn btn-danger btn-sm"><i class="bi bi-boxes"></i></button> indicates that this project is not associated to any environment yet.</p> 
             <img class="w-100" src="/static/printproject_ilist.png" alt="project help">
         </div>
     </div>
@@ -110,4 +99,4 @@ left: 0;
     </div>
   </div>
 
-  <a class="btn btn-dark"  data-toggle="tooltip" title="Help" data-placement="bottom" data-bs-toggle="modal" href="#exampleModalToggle" role="button"><span class="oi oi-question-mark"></a>  
+  <a class="btn btn-dark"  data-toggle="tooltip" title="Help" data-placement="bottom" data-bs-toggle="modal" href="#exampleModalToggle" role="button"><span class="oi oi-question-mark"></span></a>  

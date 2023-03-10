@@ -2,6 +2,7 @@ import logging
 
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_http_methods
 from django.contrib import messages
 from django.views import generic
 from django.utils.html import format_html
@@ -22,6 +23,35 @@ from kooplexhub.settings import KOOPLEX
 logger = logging.getLogger(__name__)
 
 #URL_PROJECT_LIST = redirect('project:list')
+
+@require_http_methods(['GET'])
+@login_required
+def addcontainer(request, userprojectbinding_id):
+    """
+    @summary: automagically create an environment
+    @param usercoursebinding_id
+    """
+    from kooplexhub.lib.libbase import standardize_str
+    user = request.user
+    logger.debug("user %s, method: %s" % (user, request.method))
+    try:
+        project = UserProjectBinding.objects.get(id = userprojectbinding_id, user = user).project
+        container, created = Container.objects.get_or_create(
+            name = f'generated for {project.name}', 
+            label = f'project-{user.username}-{standardize_str(project.name)}',
+            user = user,
+            image = project.preferred_image
+        )
+        ProjectContainerBinding.objects.create(project = project, container = container)
+        if created:
+            messages.info(request, f'We created a new environment {container.name} for project {project.name}.')
+        else:
+            messages.info(request, f'We associated your project {project.name} with your former environment {container.name}.')
+    except Exception as e:
+        messages.error(request, f'We failed -- {e}')
+        raise
+    return redirect('container:list')
+
 
 
 class ProjectView(LoginRequiredMixin):

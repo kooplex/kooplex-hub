@@ -41,7 +41,7 @@
         <p class="card-text"><strong>Folder:</strong> {{ project.subpath }}</p>
       </div>
       <div class="modal-footer">
-	{% dropdown_start_open bindings=projectcontainerbindings ancestor=upb ancestor_type='project' %}
+	{% dropdown_start_open bindings=projectcontainerbindings ancestor=upb ancestor_type='project' id_suffix='-modal' %}
 	{% button_project_conf project enabled=is_admin %}
         {% include 'reports_button.html' %}
 	{% button_project_delete project %}

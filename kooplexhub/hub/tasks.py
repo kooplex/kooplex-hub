@@ -14,17 +14,6 @@ from hub.lib import mkdir, archivedir, rmdir
 from celery.utils.log import get_task_logger
 logger = get_task_logger(__name__)
 
-@shared_task()
-def create_home(user_id):
-    user = User.objects.get(id = user_id)
-    userdirs = [ dirname.userhome, dirname.usergarbage ]
-    if KOOPLEX.get('mountpoint_hub', {}).get('scratch') is not None:
-        userdirs.append(dirname.userscratch)
-    for userdir in userdirs:
-        folder = userdir(user)
-        mkdir(folder)
-        grantaccess_user(user, folder, readonly = False, recursive = True)
-
 
 @shared_task()
 def garbage_home(user_id):
