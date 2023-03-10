@@ -16,6 +16,8 @@ from kooplexhub.settings import KOOPLEX
 
 from kooplexhub.lib.libbase import standardize_str
 
+from container.lib import Cluster
+
 def _range(attribute):
     resources_min = KOOPLEX.get('kubernetes', {}).get('resources', {}).get('requests', {})
     resources_max = KOOPLEX.get('kubernetes', {}).get('resources', {}).get('maxrequests', {})
@@ -30,6 +32,28 @@ def _range(attribute):
        'min_value': round(Decimal(resources_min.get(lookup, min_default)), 1),
        'max_value': round(Decimal(resources_max.get(lookup, max_default)), 1),
     }
+
+
+def upperbound(node):
+    api = Cluster()
+    api.query_nodes_status(node_list=[node], reset=True)
+    api.query_pods_status(field=["spec.nodeName=",node], reset=True)
+    api.resources_summary()
+    from_node = api.get_data()
+    mapping = {
+        'cpurequest': 'avail_cpu',
+        'memoryrequest': 'avail_memory',
+        'gpurequest': 'avail_gpu',
+    }
+    def my_range(attribute):
+        from_settings = _range(attribute)
+        if attribute in mapping:
+            node_att = round(Decimal(from_node[mapping[attribute]][0]), 1)
+            if node_att > from_settings['max_value']:
+                from_settings['max_value'] = node_add
+        return from_settings
+    return my_range
+
 
 class myNumberInput(forms.NumberInput):
     template_name = 'widget_decimal.html'
@@ -157,8 +181,9 @@ class FormContainer(forms.ModelForm):
         node = cleaned_data.pop('node', None)
         if user.profile.can_choosenode:
             cleaned_data['node'] = node if node else None
+        my_range = upperbound(cleaned_data['node'])
         for attr in [ 'idletime', 'cpurequest', 'memoryrequest', 'gpurequest' ]:
-            r = _range(attr)
+            r = my_range(attr)
             value = cleaned_data.get(attr)
             if value:
                 if value < r['min_value']:
