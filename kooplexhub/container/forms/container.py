@@ -48,9 +48,7 @@ def upperbound(node):
     def my_range(attribute):
         from_settings = _range(attribute)
         if attribute in mapping:
-            node_att = round(Decimal(from_node[mapping[attribute]][0]), 1)
-            if node_att > from_settings['max_value']:
-                from_settings['max_value'] = node_att
+            from_settings['max_value'] = round(Decimal(from_node[mapping[attribute]][0]), 1)
         return from_settings
     return my_range
 
