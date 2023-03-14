@@ -13,7 +13,7 @@ from .proxy import addroute, removeroute
 try:
     from kooplexhub.settings import KOOPLEX
     from kooplexhub.settings import SERVERNAME
-#    from kooplexhub.settings import REDIS_PASSWORD
+    from kooplexhub.settings import REDIS_PASSWORD
 except ImportError:
     KOOPLEX = {}
 
@@ -165,7 +165,7 @@ def start(container):
 
     if container.user.profile.can_teleport:
         initscripts.append(V1KeyToPath(key="teleport",path="05-teleport"))
-#        env_variables.append({ "name": "REDIS_PASSWORD", "value": REDIS_PASSWORD })
+        env_variables.append({ "name": "REDIS_PASSWORD", "value": REDIS_PASSWORD })
 
     volumes.append(
             V1Volume(name="initscripts", config_map=V1ConfigMapVolumeSource(name="initscripts", default_mode=0o777, items=initscripts ))
