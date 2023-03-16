@@ -52,7 +52,7 @@ def upperbound(node, container):
     if container.node == node and container.state in [ Container.ST_RUNNING, Container.ST_NEED_RESTART ]:
         #FIXME: what if ST_STARTING, ST_STOPPING?
         for k, v in mapping.items():
-            from_node[v] += getattr(container, k)
+            from_node[v] = [val + float(getattr(container, k)) for val in from_node[v]]
     def my_range(attribute):
         from_settings = _range(attribute)
         if attribute in mapping:
