@@ -115,12 +115,23 @@ class MonitorConsumer(WebsocketConsumer):
         if command == 'monitor-node':
             node = parsed.get('node')
             resp['node'] = node
-            api = Cluster()
-            api.query_nodes_status(node_list=[node], reset=True)
-            api.query_pods_status(field=["spec.nodeName=",node], reset=True)
-            api.resources_summary()
-            resp.update( api.get_data() )
-            resp["feedback"] = f"Node resource information for {node} is updated"
+            if node:
+                api = Cluster()
+                api.query_nodes_status(node_list=[node], reset=True)
+                api.query_pods_status(field=["spec.nodeName=",node], reset=True)
+                api.resources_summary()
+                resp.update( api.get_data() )
+                resp["feedback"] = f"Node resource information for {node} is updated"
+            else:
+                node = "default"
+                from kooplexhub.settings import KOOPLEX
+                kubernetes = KOOPLEX.get('kubernetes',{}).get('resources',{}).get('maxrequests',{})
+                resp.update({
+                 "feedback" : f"Node resource information for defaults is updated",
+                 "avail_cpu": kubernetes.get('cpu',1),
+                 "avail_memory": kubernetes.get('memory',2),
+                 "avail_gpu": kubernetes.get('nvidia.com/gpu',0),
+                    })
             logger.debug(f"fetch {node} -> {resp}")
             self.send(text_data = json.dumps(resp))
 

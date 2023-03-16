@@ -122,16 +122,26 @@ function ws_callback(data) {
   containerid = data['container-id'];
   //console.log('SOCK: --> ' + command + ": " + msg);
   if (command == 'monitor-node') {
-    console.log(data);
-    $("input[name='cpurequest']").attr("max", data["avail_cpu"]);
-    $("input[name='memoryrequest']").attr("max", data["avail_memory"]);
-    $("input[name='gpurequest']").attr("max", data["avail_gpu"]);
-    $("#thresholdhigh-cpurequest").text(data["avail_cpu"]);
-    $("#thresholdhigh-memoryrequest").text(data["avail_memory"]);
-    $("#thresholdhigh-gpurequest").text(data["avail_gpu"]);
     selected = $( "select[name='node'] option:selected" )[0];
     sel_node = $(selected).val();
-    if (sel_node == data['node'] || (sel_node == '')) {
+    node_old = $("#id_node_old").val();
+    console.log(data);
+	  if (data['node'] == node_old && sel_node != "" && "{{ container.state }}" == "run") {
+		  cpu = parseFloat($("#id_cpurequest_old").val()) + parseFloat(data["avail_cpu"]);
+		  gpu = parseInt($("#id_gpurequest_old").val()) + parseInt(data["avail_gpu"]);
+		  memory = parseFloat($("#id_memoryrequest_old").val()) + parseFloat(data["avail_memory"]);
+	  } else {
+		  cpu = data["avail_cpu"];
+		  gpu = data["avail_gpu"];
+		  memory = data["avail_memory"];
+	  }
+    $("input[name='cpurequest']").attr("max", cpu);
+    $("input[name='memoryrequest']").attr("max", memory);
+    $("input[name='gpurequest']").attr("max", gpu);
+    $("#thresholdhigh-cpurequest").text(cpu);
+    $("#thresholdhigh-memoryrequest").text(memory);
+    $("#thresholdhigh-gpurequest").text(gpu);
+    if (sel_node == data['node']) {
       $("#busybar").addClass("d-none");
       $("input[name$='request'").each(function() { 
         if ($(this).attr("max") > 0) {
@@ -150,14 +160,12 @@ $("select[name='node']").change(function() {
       console.log("Socket not open: " + containerSocket.readyState);
       containerSocket = open_ws('{{ wss_container }}', ws_callback);
     }
-    if (node != "") {
-      containerSocket.send(JSON.stringify({
-        'command': 'monitor-node',
-        'node': node,
-      }));
-      $("#busybar").removeClass("d-none");
-      $("input[name$='request'").each(function() { $(this).attr('disabled', true ) });
-    }
+    containerSocket.send(JSON.stringify({
+      'command': 'monitor-node',
+      'node': node,
+    }));
+    $("#busybar").removeClass("d-none");
+    $("input[name$='request'").each(function() { $(this).attr('disabled', true ) });
   });
 }).change();
 

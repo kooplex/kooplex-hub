@@ -3,6 +3,8 @@ from django import forms
 from django.utils.translation import gettext_lazy as _
 from django.utils.html import format_html
 from decimal import Decimal
+from itertools import chain
+
 
 from django.contrib.auth.models import User
 from ..models import Container, Image
@@ -34,7 +36,9 @@ def _range(attribute):
     }
 
 
-def upperbound(node):
+def upperbound(node, container):
+    if not node:
+        return _range
     api = Cluster()
     api.query_nodes_status(node_list=[node], reset=True)
     api.query_pods_status(field=["spec.nodeName=",node], reset=True)
@@ -45,6 +49,10 @@ def upperbound(node):
         'memoryrequest': 'avail_memory',
         'gpurequest': 'avail_gpu',
     }
+    if container.node == node and container.state in [ Container.ST_RUNNING, Container.ST_NEED_RESTART ]:
+        #FIXME: what if ST_STARTING, ST_STOPPING?
+        for k, v in mapping.items():
+            from_node[v] += getattr(container, k)
     def my_range(attribute):
         from_settings = _range(attribute)
         if attribute in mapping:
@@ -84,6 +92,8 @@ class FormContainer(forms.ModelForm):
             'title': _('Choose a node where to launch the environment.'), 
         }))
     )
+
+    node_old = forms.CharField(required = False)
     
     idletime = forms.IntegerField(
         label = 'Uptime [h]', required = False,
@@ -95,7 +105,10 @@ class FormContainer(forms.ModelForm):
 
     cpurequest = forms.DecimalField(
         label = 'CPU [#]', required = False,
-        **_range("cpurequest"), decimal_places = 1, initial = _range("cpurequest")['min_value'],
+        #**_range("cpurequest"), 
+        min_value = _range("cpurequest")['min_value'],
+        decimal_places = 1, 
+        #initial = _range("cpurequest")['min_value'],
         validators = [],
         widget = myNumberInput(attrs = tooltip_attrs({
             'title': _('Requested number of cpus for your container.'), 
@@ -103,22 +116,30 @@ class FormContainer(forms.ModelForm):
         }))
     )
 
+    cpurequest_old = forms.CharField(required = False)
+
     gpurequest = forms.IntegerField(
         label = 'GPU [#]', required = False,
-        **_range("gpurequest"),
+        #**_range("gpurequest"),
+        min_value = _range("gpurequest")['min_value'],
         widget = myNumberInput(attrs = tooltip_attrs({
             'title': _('Requested number of gpus for your container.'), 
         }))
     )
 
+    gpurequest_old = forms.CharField(required = False)
+
     memoryrequest = forms.DecimalField(
         label = 'Memory [GB]', required = False,
-        **_range("memoryrequest"),
+        #**_range("memoryrequest"),
+        min_value = _range("memoryrequest")['min_value'],
         widget = myNumberInput(attrs = tooltip_attrs({
             'title': _('Requested memory for your container.'), 
             'step': 0.1
         }))
     )
+
+    memoryrequest_old = forms.CharField(required = False)
    
     start_teleport = forms.BooleanField(
         widget = forms.CheckboxInput(attrs = { 'data-size': 'small', 'data-toggle': 'toggle', 
@@ -147,10 +168,16 @@ class FormContainer(forms.ModelForm):
         self.t_volumes = TableContainerVolume(container, user)
         if container.id:
             pass
+        my_range = upperbound(container.node, container)
         if nodes and user.profile.can_choosenode:
             self.fields['node'].choices = [('', '')] + [ (x, x) for x in nodes ]
             if container:
                 self.fields['node'].value = container.node
+            for att in ['node', 'cpurequest', 'memoryrequest', 'gpurequest' ]:
+                if att != 'node':
+                    self.fields[att].widget.attrs['max'] = my_range(att)['max_value']
+                self.fields[f"{att}_old"].widget = forms.HiddenInput()
+                self.fields[f"{att}_old"].initial = getattr(container, att)
             if self.fields['gpurequest'].widget.attrs['max'] == 0:
                 self.fields['gpurequest'].disabled = True
         else:
@@ -162,6 +189,8 @@ class FormContainer(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         extra = json.loads(cleaned_data['container_config'])
+        for att in ['node', 'cpurequest', 'memoryrequest', 'gpurequest' ]:
+            cleaned_data.pop(f'{att}_old')
         containerid = extra.get('container_id')
         userid = extra.get('user_id')
         user = User.objects.get(id = userid)
@@ -170,16 +199,17 @@ class FormContainer(forms.ModelForm):
         if not containername:
             ve.append( forms.ValidationError(_(f'Container name cannot be empty'), code = 'invalid name') )
         if containerid:
-            pass
+            container = Container.objects.get(id = containerid)
         else:
             if Container.objects.filter(name = containername, user = user):
                 ve.append( forms.ValidationError(_(f'Container name {containername} is not unique'), code = 'invalid name') )
             cleanname = standardize_str(containername)
             cleaned_data["label"] = f'{user.username}-{cleanname}'
+            container = Container()
         node = cleaned_data.pop('node', None)
         if user.profile.can_choosenode:
             cleaned_data['node'] = node if node else None
-        my_range = upperbound(cleaned_data['node'])
+        my_range = upperbound(cleaned_data['node'], container)
         for attr in [ 'idletime', 'cpurequest', 'memoryrequest', 'gpurequest' ]:
             r = my_range(attr)
             value = cleaned_data.get(attr)
@@ -200,7 +230,8 @@ class FormContainer(forms.ModelForm):
             'container_id': extra['container_id'],
             'bind_projects': A(Project.objects.filter(id__in = extra['bind_project_ids'])),
             'bind_courses': A(Course.objects.filter(id__in = extra['bind_course_ids'])),
-            'bind_volumes': A(Volume.objects.filter(id__in = extra['bind_volume_ids'])),
+            'bind_volumes': list(chain(A(Volume.objects.filter(id__in = extra['bind_volume_ids'])),Volume.objects.filter(id__in = extra['bind_volume_ids'], scope=Volume.SCP_ATTACHMENT) )),
+            #'bind_volumes': Volume.objects.filter(id__in = extra['bind_volume_ids']),
         }
         return cleaned_data
 

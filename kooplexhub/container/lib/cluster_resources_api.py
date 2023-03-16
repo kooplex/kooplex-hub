@@ -2,6 +2,8 @@ from kubernetes import config
 from kubernetes.client import CoreV1Api, CustomObjectsApi
 import pandas as pd
 
+from kooplexhub.settings import KOOPLEX
+
 def UnitConverter(item, tounit=''):
     units = {
         'm':10**-3,
@@ -54,7 +56,7 @@ class Cluster():
         if label:
             ls = f"{label[0]} in  ({','.join(label[1])})"
             nodes = self.v1.list_node(label_selector=ls)
-        elif node_list:
+        elif node_list and node_list[0]:
             ls = f"kubernetes.io/hostname in  ({','.join(node_list)})"
             nodes = self.v1.list_node(label_selector=ls)
         else:
@@ -68,6 +70,10 @@ class Cluster():
             nac = node.status.allocatable
             agpu = int(nac.get('nvidia.com/gpu',0))
             self.node_df.loc[len(self.node_df)] = [node_name, UnitConverter(nac['cpu']), UnitConverter(nac['memory']), agpu]
+
+        # Add the default node settings when node == None
+        #FIXME: ez igy nem lesz jó, a listában kijön a None node... kubernetes_resources = KOOPLEX['kubernetes'].get('resources').get('maxrequests')
+        #FIXME: ez igy nem lesz jó, a listában kijön a None node... self.node_df.loc[len(self.node_df)] = ['None',kubernetes_resources['cpu'], kubernetes_resources['memory'], kubernetes_resources['nvidia.com/gpu']]
         
     def query_pods_status(self, field=[], label=[] , reset=True):
         '''
