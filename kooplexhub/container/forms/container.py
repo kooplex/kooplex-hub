@@ -183,7 +183,7 @@ class FormContainer(forms.ModelForm):
         else:
             for att in ['node', 'cpurequest', 'memoryrequest', 'gpurequest' ]:
                 self.fields[att].widget = forms.HiddenInput()
-                self.fields[att].initial = None
+#                self.fields[att].initial = 0
                 self.fields[f"{att}_old"].widget = forms.HiddenInput()
         if not user.profile.can_teleport:
             self.fields['start_teleport'].disabled = True
@@ -211,19 +211,19 @@ class FormContainer(forms.ModelForm):
         node = cleaned_data.pop('node', None)
         if user.profile.can_choosenode:
             cleaned_data['node'] = node if node else None
-            my_range = upperbound(cleaned_data['node'], container)
-            for attr in [ 'idletime', 'cpurequest', 'memoryrequest', 'gpurequest' ]:
-                r = my_range(attr)
-                value = cleaned_data.get(attr)
-                if value:
-                    if value < r['min_value']:
-                        ve.append( forms.ValidationError(_(f"Resource request {attr} is too small: {value} should not be less than {r['min_value']}"), code = 'invalid resource request') )
-                    if value > r['max_value']:
-                        ve.append( forms.ValidationError(_(f"Resource request {attr} is too large: {value} should not exceed {r['min_value']}"), code = 'invalid resource request') )
-                else:
-                    cleaned_data[attr] = r['min_value']
         else:
             cleaned_data['node'] = None
+        my_range = upperbound(cleaned_data['node'], container)
+        for attr in [ 'idletime', 'cpurequest', 'memoryrequest', 'gpurequest' ]:
+            r = my_range(attr)
+            value = cleaned_data.get(attr)
+            if value:
+                if value < r['min_value']:
+                    ve.append( forms.ValidationError(_(f"Resource request {attr} is too small: {value} should not be less than {r['min_value']}"), code = 'invalid resource request') )
+                if value > r['max_value']:
+                    ve.append( forms.ValidationError(_(f"Resource request {attr} is too large: {value} should not exceed {r['min_value']}"), code = 'invalid resource request') )
+            else:
+                cleaned_data[attr] = r['min_value']
         cleaned_data['user'] = user
         if ve:
             raise forms.ValidationError(ve)
