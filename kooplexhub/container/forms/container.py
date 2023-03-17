@@ -183,6 +183,7 @@ class FormContainer(forms.ModelForm):
         else:
             for att in ['node', 'cpurequest', 'memoryrequest', 'gpurequest' ]:
                 self.fields[att].widget = forms.HiddenInput()
+                self.fields[f"{att}_old"].widget = forms.HiddenInput()
         if not user.profile.can_teleport:
             self.fields['start_teleport'].disabled = True
 
