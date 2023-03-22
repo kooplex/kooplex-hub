@@ -45,7 +45,7 @@ class ContainerView(LoginRequiredMixin, generic.FormView):
         container_id = self.kwargs.get('pk')
         context['menu_container'] = True
         context['submenu'] = 'configure' if container_id else 'new' 
-        context['active'] = self.request.COOKIES.get('configure_env_tab', 'projects') if container_id else 'meta'
+        context['active'] = self.request.COOKIES.get('configure_env_tab', 'meta') if container_id else 'meta'
         context['url_post'] = reverse('container:configure', args = (container_id, )) if container_id else reverse('container:new')
         context['wss_container'] = KOOPLEX.get('hub', {}).get('wss_monitor', 'wss://localhost/hub/ws/node_monitor/')
         context['container_id'] = container_id

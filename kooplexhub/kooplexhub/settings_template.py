@@ -23,6 +23,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 CELERY_BROKER_URL = "redis://localhost:6379"
 CELERY_RESULT_BACKEND = "redis://localhost:6379"
 
+# teleport redis
+REDIS_PASSWORD=""
+
+KUBERNETES_SERVICE_NAMESPACE=""
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
@@ -299,8 +304,8 @@ KOOPLEX = {
         'check_container': 'http://proxy:8001/api/routes/notebook/{container.label}',
     },
     'kubernetes': {
-        'namespace': 'k8plex-test',
-        'jobsnamespace': 'k8plex-test-jobs',
+        'namespace': '',
+        'jobsnamespace': '',
         'nslcd': { 'mountPath_nslcd': '/etc/mnt' },
         'kubeconfig_job': 'kubejobsconfig', 
         'imagePullPolicy': 'Always',

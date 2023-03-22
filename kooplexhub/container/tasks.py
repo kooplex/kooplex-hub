@@ -19,7 +19,8 @@ def kill_idle():
             last_activity = resp.json()['last_activity']
             ts = datetime.strptime(last_activity, '%Y-%m-%dT%H:%M:%S.%fZ')
             elasped_time = timezone.now() - timezone.make_aware(ts)
-            if elasped_time.seconds / 3600 > c.idletime:
+            # FIXME added +1 because proxy's timezone is different
+            if elasped_time.seconds / 3600 + 1 > c.idletime:
                 logger.info(f'Container {c.name} of {c.user.username} is idle for {elasped_time.seconds} seconds, stopping it.')
                 c.stop()
         except Exception as e:
