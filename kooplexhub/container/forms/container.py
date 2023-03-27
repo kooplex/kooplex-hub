@@ -52,7 +52,7 @@ def upperbound(node, container):
     if container.node == node and container.state in [ Container.ST_RUNNING, Container.ST_NEED_RESTART ]:
         #FIXME: what if ST_STARTING, ST_STOPPING?
         for k, v in mapping.items():
-            from_node[v] += getattr(container, k)
+            from_node[v] = [val + float(getattr(container, k)) for val in from_node[v]]
     def my_range(attribute):
         from_settings = _range(attribute)
         if attribute in mapping:
@@ -183,6 +183,8 @@ class FormContainer(forms.ModelForm):
         else:
             for att in ['node', 'cpurequest', 'memoryrequest', 'gpurequest' ]:
                 self.fields[att].widget = forms.HiddenInput()
+#                self.fields[att].initial = 0
+                self.fields[f"{att}_old"].widget = forms.HiddenInput()
         if not user.profile.can_teleport:
             self.fields['start_teleport'].disabled = True
 
@@ -209,6 +211,8 @@ class FormContainer(forms.ModelForm):
         node = cleaned_data.pop('node', None)
         if user.profile.can_choosenode:
             cleaned_data['node'] = node if node else None
+        else:
+            cleaned_data['node'] = None
         my_range = upperbound(cleaned_data['node'], container)
         for attr in [ 'idletime', 'cpurequest', 'memoryrequest', 'gpurequest' ]:
             r = my_range(attr)
