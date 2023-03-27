@@ -328,16 +328,25 @@ class FormAssignmentHandle(forms.Form):
         return cleaned_data
 
     def __init__(self, *args, **kwargs):
+        def A(x):
+            r = 'qed'
+            for i in x:
+                if i != 'dummy':
+                    r = i
+            return r
         from . import TableAssignmentMass
-#FIXME: save some here to hel authorize later
+#FIXME: save some here to help authorize later
         user = kwargs['initial'].get('user')
         super().__init__(*args, **kwargs)
         courses = [ b.course for b in UserCourseBinding.objects.filter(user = user, is_teacher = True) ]
         assignments = Assignment.objects.filter(course__in = courses)
         df_assignment = read_frame(assignments, verbose = False)[['id', 'course']].rename(columns = {'id': 'assignment_id'})
-        df_uabs = read_frame(UserAssignmentBinding.objects.filter(assignment__course__in = courses), verbose = False)[['user', 'assignment', 'state']]
-        DF = pandas.merge(left = df_uabs, right = df_assignment, left_on = 'assignment', right_on = 'assignment_id', how = 'inner')
         df_ucbs = read_frame(UserCourseBinding.objects.filter(course__in = courses, is_teacher = False), verbose = False)[['id', 'user', 'course']].rename(columns = {'id': 'ucb_id'})
+        DF_ = pandas.merge(left=df_assignment, right=df_ucbs, left_on='course', right_on='course')[['user', 'assignment_id']].rename(columns={'assignment_id':'assignment'})
+        DF_['state'] = 'dummy'
+        df_uabs = read_frame(UserAssignmentBinding.objects.filter(assignment__course__in = courses), verbose = False)[['user', 'assignment', 'state']]
+        DF_ = pandas.concat([DF_, df_uabs]).groupby(by = ['user', 'assignment']).agg(A).reset_index()
+        DF = pandas.merge(left = DF_, right = df_assignment, left_on = 'assignment', right_on = 'assignment_id', how = 'inner')
         DF = pandas.merge(left = DF, right = df_ucbs, left_on = ['user', 'course'], right_on = ['user', 'course'], how = 'left')
         df_ucgbs = read_frame(UserCourseGroupBinding.objects.filter(usercoursebinding__course__in = courses), verbose = False)[['usercoursebinding', 'group']]
         DF = pandas.merge(left = DF, right = df_ucgbs, left_on = 'ucb_id', right_on = 'usercoursebinding', how = 'left')[['assignment_id', 'group', 'state', 'user']].fillna(-1)
