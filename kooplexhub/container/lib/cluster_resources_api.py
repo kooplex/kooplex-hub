@@ -6,10 +6,10 @@ from kooplexhub.settings import KOOPLEX
 
 def UnitConverter(item, tounit=''):
     units = {
-        'm':10**-3,
-        'K':10**3,
-        'M':10**6,
-        'G':10**9}
+        'm':2**-10,
+        'K':2**10,
+        'M':2**20,
+        'G':2**30}            
     if tounit:
         return item/units[tounit]
     
@@ -149,7 +149,8 @@ def get_node_current_usage(node_name):
         get_node_current_usage('onco1')
     '''
     from numpy import around
-    config.load_kube_config('./config')
+    #config.load_kube_config('./config')
+    config.load_kube_config()
     api = CustomObjectsApi()
     nodeinfo = api.list_cluster_custom_object('metrics.k8s.io', 'v1beta1', 'nodes/'+node_name)
     usage = nodeinfo['usage']
@@ -167,7 +168,8 @@ def get_all_node_current_usage():
     gpu = []
 
     from numpy import around
-    config.load_kube_config('./config')
+    #config.load_kube_config('./config')
+    config.load_kube_config()
     api = CustomObjectsApi()
     # filter controlplane
     ls = "node-role.kubernetes.io/control-plane notin ()"
@@ -187,7 +189,7 @@ def get_all_node_current_usage():
          'used_gpu': gpu}
     return data
 
-def get_pod_usage(user='', namespace='', ):
+def get_pod_usage(user='', namespace='', container_name=""):
     '''
     Example:
         get_pod_usage(user='visi')
@@ -201,32 +203,43 @@ def get_pod_usage(user='', namespace='', ):
     from numpy import around
     from kubernetes.client import CustomObjectsApi
     from kubernetes import config
-    config.load_kube_config('./config')
+    #config.load_kube_config('./config')
+    config.load_kube_config()
     cust=CustomObjectsApi()
     
     fs = ( "metadata.namespace=" + namespace)
     ls = f"user in ({user})"
+    cls = f"lbl in (lbl-{container_name})"
     if user and namespace:
         pods = cust.list_cluster_custom_object('metrics.k8s.io', 'v1beta1', 'pods', field_selector=fs, label_selector=ls)
     if namespace:
         pods = cust.list_cluster_custom_object('metrics.k8s.io', 'v1beta1', 'pods', field_selector=fs)
     if user:
         pods = cust.list_cluster_custom_object('metrics.k8s.io', 'v1beta1', 'pods', label_selector=ls)
-
+    if container_name:
+        pods = cust.list_cluster_custom_object('metrics.k8s.io', 'v1beta1', 'pods', label_selector=cls)
     
     pod_names = []
+    namespaces = []
     cpu = []
     memory = []
     gpu = []
-    for p in pods['items']:
-        for c in p['containers']:
-            pod_names.append(p['metadata']['name'])
-            usage = c['usage']
-            cpu.append(UnitConverter(usage['cpu']))
-            memory.append(UnitConverter(UnitConverter(usage['memory']), tounit='G'))
-            gpu.append(usage.get('nvidia.com/gpu',0))
+    for pod in pods['items']:
+#        for c in p['containers']:
+#            pod_names.append(p['metadata']['name'])
+#            usage = c['usage']
+#            cpu.append(UnitConverter(usage['cpu']))
+#            memory.append(UnitConverter(UnitConverter(usage['memory']), tounit='G'))
+#            gpu.append(usage.get('nvidia.com/gpu',0))
+        pod_names.append(pod['metadata']['name'])
+        namespaces.append(pod['metadata']['namespace'])
+        usage = pod['containers'][-1]['usage']
+        cpu.append(UnitConverter(usage['cpu']))
+        memory.append(UnitConverter(UnitConverter(usage['memory']), tounit='G'))
+        gpu.append(usage.get('nvidia.com/gpu',0))
 
-    data={'node_name': pod_names,
+    data={'pod_names': pod_names,
+            'namespaces': namespaces,
               'used_cpu': around(cpu),
               'used_memory': around(memory, decimals=1),
              'used_gpu': gpu}

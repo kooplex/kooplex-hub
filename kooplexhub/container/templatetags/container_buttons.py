@@ -3,6 +3,8 @@ from django.utils.html import format_html
 from django.urls import reverse
 
 from ..models import Container
+from container.lib.cluster_resources_api import *
+import pandas
 
 register = template.Library()
 
@@ -39,10 +41,24 @@ def container_image(container_or_image):
 @register.simple_tag
 def container_resources(container):
     cn = container.name
+    # query actual resource usage of container
+    label = container.label
+    usage = pandas.DataFrame(get_pod_usage(container_name=label))
+    if usage.shape[0]>1:
+        raise 
+    elif usage.shape[0]==1:
+        used_cpu = usage["used_cpu"][0]
+        used_memory = usage["used_memory"][0]
+        used_gpu = usage["used_gpu"][0]
+    else:
+        used_cpu = "-"
+        used_memory = "-"
+        used_gpu = "-"
+
     gpu = f"""
 <span class="badge rounded-pill bg-warning text-dark p-2" 
       data-bs-toggle="tooltip" data-placement="bottom" 
-      title="The number of GPU devices requested for environment {cn}"><i class="bi bi-gpu-card"></i>&nbsp;{container.gpurequest}</span>
+      title="The number of GPU devices requested for environment {cn}"><i class="bi bi-gpu-card"></i>&nbsp;{used_gpu}/{container.gpurequest}</span>
     """ if container.gpurequest else ""
     node = f"""
 <span class="badge rounded-pill bg-warning text-dark p-2" 
@@ -53,11 +69,11 @@ def container_resources(container):
 {node}
 <span class="badge rounded-pill bg-warning text-dark p-2" 
       data-bs-toggle="tooltip" data-placement="bottom" 
-      title="The CPU clock cycles requested for environment {cn}"><i class="bi bi-cpu"></i>&nbsp;{container.cpurequest}</span>
+      title="The CPU clock cycles requested for environment {cn}"><i class="bi bi-cpu"></i>&nbsp;{used_cpu}/{container.cpurequest}</span>
 {gpu}
 <span class="badge rounded-pill bg-warning text-dark p-2" 
       data-bs-toggle="tooltip" data-placement="bottom" 
-      title="The requested memory for environment {cn}"><i class="bi bi-memory"></i>&nbsp;{container.memoryrequest}&nbsp;GB</span>
+      title="The requested memory for environment {cn}"><i class="bi bi-memory"></i>&nbsp;{used_memory}/{container.memoryrequest}&nbsp;GB</span>
 <span class="badge rounded-pill bg-warning text-dark p-2" 
       data-bs-toggle="tooltip" data-placement="bottom" 
       title="The maximum allowed idle time for environment {cn}"><i class="bi bi-clock-history"></i>&nbsp;{container.idletime}&nbsp;h</span>

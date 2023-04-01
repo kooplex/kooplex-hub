@@ -18,12 +18,13 @@ padding-right: 10px;
 margin-top: 10px
 }
 </style>
-
 {% endblock %}
 
 
 {% block bodycontent %}
-<div class="m-2" style="height: calc(100vh - 105px); overflow-y: scroll; overflow-x:hidden;">
+    {{ plot_user|safe }}
+    {{ plot_server|safe }}
+<!--div class="m-2" style="height: calc(100vh - 105px); overflow-y: scroll; overflow-x:hidden;">
   <div class="container">
   <div class="card shadow p-3 mb-2 mt-3 bg-light rounded"> 
     <h6 class="card-title">Powered by</h6>
@@ -39,7 +40,7 @@ margin-top: 10px
     </div>
     <img src="/static/Kooplex-frontpage.png">
   </div>
-</div>
+</div-->
 
 
 

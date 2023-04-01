@@ -9,7 +9,7 @@ from kooplexhub.lib import my_slug_validator, my_end_validator, my_alphanumeric_
 from kooplexhub.common import tooltip_attrs
 
 
-claim_attachment = KOOPLEX.get('userdata', {}).get('claim-attachment', 'attachment')
+claim_attachment = KOOPLEX.get('userdata', {}).get('claim-attachment', 'attachments')
 
 class FormAttachment(forms.ModelForm):
     class Meta:
