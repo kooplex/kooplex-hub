@@ -100,7 +100,7 @@ class Cluster():
         
         if not label and not field:
             pods =  self.v1.list_pod_for_all_namespaces()
-            return
+            #return
         
         for pod in pods.items:
             for container in pod.spec.containers:

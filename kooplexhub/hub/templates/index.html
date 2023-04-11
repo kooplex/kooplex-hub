@@ -22,8 +22,15 @@ margin-top: 10px
 
 
 {% block bodycontent %}
-    {{ plot_user|safe }}
+<div class="row">
+  <div class="col-7">
     {{ plot_server|safe }}
+
+</div>
+  <div class="col-5">
+    {{ plot_user|safe }}
+</div>
+</div>
 <!--div class="m-2" style="height: calc(100vh - 105px); overflow-y: scroll; overflow-x:hidden;">
   <div class="container">
   <div class="card shadow p-3 mb-2 mt-3 bg-light rounded"> 
