@@ -24,6 +24,7 @@
     <div class="card-body text-dark fw-bold" id="click-containerbody-{{ container.id }}">
       <p class="card-text">
           {% container_image container %}
+          {% container_state container %}
 	  <img src="{{ container.image.thumbnail.img_src }}" alt="{{ container.image.thumbnail.name }}" height="50" style="display: flex;float: inline-end;">
       </p>
       <p class="card-text">

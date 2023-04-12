@@ -46,16 +46,17 @@ class Container(models.Model):
     image = models.ForeignKey(Image, on_delete = models.CASCADE, null = False)
     launched_at = models.DateTimeField(null = True, blank = True)
     start_teleport = models.BooleanField(default = False)
+    start_ssh = models.BooleanField(default = False)
 
     state = models.CharField(max_length = 16, choices = ST_LOOKUP.items(), default = ST_NOTPRESENT)
     restart_reasons = models.CharField(max_length = 500, null = True, blank = True)
     state_lastcheck_at = models.DateTimeField(default = None, null = True, blank = True)
 
     node = models.TextField(max_length = 64, null = True, blank = True)
-    cpurequest = models.DecimalField(null = True, blank = True, decimal_places=1, max_digits=4, default=0.1)
+    cpurequest = models.DecimalField(null = True, blank = True, decimal_places=1, max_digits=4, default=0.2)
     gpurequest = models.IntegerField(null = True, blank = True, default=0)
     memoryrequest = models.DecimalField( null = True, blank = True, decimal_places=1, max_digits=5, default=0.4)
-    idletime = models.IntegerField( null = True, blank = True, default=1)
+    idletime = models.IntegerField( null = True, blank = True, default=28)
 
     class Meta:
         unique_together = [['user', 'name']]
@@ -107,11 +108,11 @@ class Container(models.Model):
 #        for envmap in EnvVarMapping.objects.filter(image = self.image):
 #            yield { "name": envmap.name, "value": envmap.valuemap.format(container = self) }
 
-    @property
-    def uptime(self):
-        timenow = now()
-        delta = timenow - self.launched_at
-        return delta if self.is_running else -1 #FIXME: ez nem mukodhet nincs ilyen attributum
+#    @property
+#    def uptime(self):
+#        timenow = now()
+#        delta = timenow - self.launched_at
+#        return delta if self.is_running else -1 #FIXME: ez nem mukodhet nincs ilyen attributum
 
     @property
     def proxies(self):

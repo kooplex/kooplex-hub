@@ -82,18 +82,10 @@ function ws_callback_project(data) {
 
 {# handle websocket callback #}
 function ws_callback_container(data) {
-  //console.log(data);
-  var command = data['command'];
-  var msg = data['message'];
-  var containerid = data['container-id'];
-  console.log('SOCK: --> ' + command + ": " + msg);
-  if (command == 'feedback') {
-    feedback(data['message']);
-  }
-  if (data['state'] == 'np') { //FIXME: Container.ST_NOTPRESENT
-    start_button(containerid);
-  } if (data['state'] == 'run') { //FIXME: Container.ST_RUNNING
-    open_button(containerid);
+  console.log(data);
+  containerid = data['container-id'];
+  if ('w_startopen' in data) {
+    $("#container-startopen-" + containerid).replaceWith(data['w_startopen'])
   }
 };
 
@@ -150,46 +142,24 @@ function open_container(containerid) {
   }
 }
 
-{# disable start, and show spinner #}
-function spin_button(containerid) {
-  $("#container-start-" + containerid).parent().attr("disabled", true);
-  $("#container-start-" + containerid).addClass("d-none");
-  $("#spinner-start-" + containerid).removeClass("d-none");
-}
-
-{# enable button and show open button face #}
-function open_button(containerid) {
-  $("#container-start-" + containerid).parent().attr("disabled", false);
-  $("#spinner-start-" + containerid).addClass("d-none");
-  $("#container-open-" + containerid).removeClass("d-none");
-}
-
-{# enable button and show start button face #}
-function start_button(containerid) {
-  $("#container-start-" + containerid).parent().attr("disabled", false);
-  $("#spinner-start-" + containerid).addClass("d-none");
-  $("#container-start-" + containerid).removeClass("d-none");
-}
-
-
 {# start/open a container #}
-$("button[name=container-start]").click(function() {
-  var containerid = $( this ).val();
-  if (! $("#container-open-" + containerid).hasClass('d-none')) {
+function handle_click(w) { // FIXME: code repetition
+  containerid = $(w).attr('id').split('-')[2];
+  command = $(w).children("input[name=target]").val();
+  if (command == "open") {
     open_container(containerid);
     return;
   }
   if (containerSocket.readyState != 1) {
     console.log("Socket not open: " + containerSocket.readyState);
-    containerSocket = open_ws('{{ wss_container }}', ws_callback_container);
+    containerSocket = open_ws('{{ wss_container }}', ws_callback);
   }
-  console.log( "start: " + containerid );
-  spin_button(containerid);
+  console.log( command + ": " + containerid );
   containerSocket.send(JSON.stringify({
-    'command': 'container-start',
+    'command': command,
     'container-id': containerid,
   }));
-});
+}
 
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/js/bootstrap5-toggle.min.js"></script>

@@ -57,11 +57,21 @@ def check(container):
     config.load_kube_config()
     v1 = client.CoreV1Api()
     status = { 
-        'message': '',
+        'message': 'No extra information returned',
+        'phase': 'Missing',
+        'state': container.state,
     }
     try:
         podstatus = v1.read_namespaced_pod_status(namespace = namespace, name = container.label)
-        status.update( _parse_podstatus(podstatus) )
+        status.update( _parse_podstatus(podstatus) ) #FIXME: deprecate
+        podstatus.status.container_statuses
+        waiting = lambda cs: cs.state.waiting
+        msg = lambda cs: cs.state.waiting.message
+        msg_waiting = '; '.join(map(msg, filter(waiting, podstatus.status.container_statuses))) if podstatus.status.container_statuses else ''
+        msg = lambda c: c.message
+        msg_cond = '; '.join(map(msg, filter(msg, podstatus.status.conditions))) if podstatus.status.conditions else ''
+        status['message'] = f'{msg_waiting}; {msg_cond}' if len(msg_waiting) * len(msg_cond) else f'{msg_waiting}{msg_cond}'
+        status['phase'] = podstatus.status.phase
 
         if container.state == container.ST_STARTING and status.get('state') == container.ST_RUNNING:
             container.state = container.ST_RUNNING
@@ -93,7 +103,7 @@ def storage_resources(volumes):
     mounts = []
     claims = set()
     for volume in volumes:
-        mountPath = KOOPLEX['kubernetes']['userdata'].get('mountPath_attachment', '/attachment/{volume.folder}') \
+        mountPath = KOOPLEX['kubernetes']['userdata'].get('mountPath_attachment', '/attachments/{volume.folder}') \
                 if volume.scope == volume.SCP_ATTACHMENT else \
                 KOOPLEX['kubernetes']['userdata'].get('mountPath_volume', '/volume/{volume.folder}')
         mounts.append({
@@ -140,6 +150,7 @@ def start(container):
             "name": proxy.name, 
         })
 
+
     # LDAP nslcd.conf
             #V1VolumeMount(name="nslcd", mount_path='/etc/mnt'),
     volume_mounts = [{
@@ -164,8 +175,24 @@ def start(container):
             ]
 
     if container.user.profile.can_teleport:
-        initscripts.append(V1KeyToPath(key="teleport",path="05-teleport"))
+        initscripts.append(V1KeyToPath(key="teleport",path="06-teleport"))
         env_variables.append({ "name": "REDIS_PASSWORD", "value": REDIS_PASSWORD })
+
+
+    if container.start_ssh:
+        initscripts.append(V1KeyToPath(key="sshstart",path="07-sshstart"))
+        sshport = 2222
+        pod_ports.append({
+            "containerPort": 22,
+            "name": "ssh", 
+        })
+        svc_ports.append({
+            "port": sshport,
+            "targetPort": 22,
+            "protocol": "TCP",
+            "name": "ssh", 
+        })
+
 
     volumes.append(
             V1Volume(name="initscripts", config_map=V1ConfigMapVolumeSource(name="initscripts", default_mode=0o777, items=initscripts ))
@@ -429,6 +456,7 @@ def start(container):
                     "lbl": f"lbl-{container.label}",
                     },
                 "ports": svc_ports,
+                "type": "LoadBalancer",
             }
         }
 
@@ -557,8 +585,8 @@ def _parse_podstatus(podstatus):
 
     if podstatus.status.phase == 'Pending':
         return {
-            'state': Container.state,
-            'message': 'Pending, image pull?...'
+       #     'state': Container.state,
+       #     'message': 'Pending, image pull?...'
         }
 
     if cds is not None:

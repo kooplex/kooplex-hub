@@ -23,19 +23,38 @@ def container_image(container_or_image):
     container = container_or_image if isinstance(container_or_image, Container) else Container(image = container_or_image)
     i = container.image.name.split('/')[-1]
     if container.state == container.ST_NEED_RESTART:
-        return format_html(f"""
-<span class="badge rounded-pill bg-danger text-light" 
-      data-bs-toggle="tooltip" data-placement="bottom" 
-      title="Environment {container.name} needs restart"><i class="ri-image-2-line"></i>&nbsp; {i}</span>
-        """)
+        bg = 'bg-danger'
+        tooltip = f'Environment {container.name} needs restart'
     elif container.state == container.ST_RUNNING:
-        return format_html(f"""
-<span class="badge rounded-pill bg-success" 
-      data-bs-toggle="tooltip" data-placement="bottom" 
-      title="Environment {container.name} is running fine"><i class="ri-image-2-line"></i>&nbsp; {i}</span>
-        """)
+        bg = 'bg-success'
+        tooltip = f'Environment {container.name} is running fine'
+    elif container.state in [ container.ST_STOPPING, container.ST_STARTING ]:
+        bg = 'bg-warning'
+        tooltip = f'Environment {container.name} is changing phase...'
     else:
-        return format_html(f"""<span class="badge rounded-pill bg-secondary "><i class="ri-image-2-line"></i>&nbsp; {i}</span>""")
+        bg = 'bg-secondary'
+        tooltip = ''
+    w_id = f'id="container-image-{container.id}"' if container.id else ''
+    return format_html(f"""
+<span {w_id} class="badge rounded-pill {bg} p-2" 
+      data-bs-toggle="tooltip" data-placement="bottom" 
+      title="{tooltip} "><i class="ri-image-2-line"></i>&nbsp; {i}</span>
+    """)
+
+
+@register.simple_tag
+def container_state(container):
+    state = container.check_state()
+    msg = state.get('message', 'No extra information returned').replace('{', '(').replace('}', ')')
+    state_ = container.get_state_display()
+    phase = state.get('phase', 'Missing')
+    return format_html(f"""
+<span class="badge rounded-pill p-2 bg-dark text-light" id="containerstate-{container.id}"
+      data-bs-toggle="tooltip" data-placement="bottom" 
+      title="Kubernetes message: {msg}">
+  {phase}&nbsp;/&nbsp;{state_}
+</span>
+    """)
 
 
 @register.simple_tag
@@ -171,17 +190,33 @@ def button_delete_container(container):
 
 @register.simple_tag
 def button_start_open(container, id_suffix = ''):
-    o, s = ('d-none', '') if container.state in [ container.ST_RUNNING, container.ST_NEED_RESTART ] else ('', 'd-none')
-    link = reverse('container:open', args = [container.id])
+    if container.state in [ container.ST_RUNNING, container.ST_NEED_RESTART ]:
+        tooltip = f'Jump to environment {container.name}'
+        icon_class = 'oi oi-external-link'
+        extra = ''
+        link = reverse('container:open', args = [container.id])
+        hidden = f"""
+<input type="hidden" id="url-containeropen-{container.id}{id_suffix}" value="{link}">
+<input type="hidden" name="target" value="open">
+        """
+    elif container.state == container.ST_NOTPRESENT:
+        tooltip = f'Start environment {container.name}'
+        icon_class = 'bi bi-lightning'
+        extra = ''
+        hidden = '<input type="hidden" name="target" value="start">'
+    else:
+        tooltip = f'unhandled {container.name} {container.state}'
+        icon_class = 'spinner-grow spinner-grow-sm'
+        extra = 'role="status"'
+        hidden = ''
     return format_html(f"""
-<button name="container-start" value="{container.id}"
+<button id="container-startopen-{container.id}{id_suffix}"
         class="btn btn-success btn-sm " 
-        data-toggle="tooltip" title="Start environment {container.name}"
+        data-toggle="tooltip" title="{tooltip}"
+        onclick="handle_click(this)"
 >
-  <span id="container-start-{container.id}{id_suffix}" class="bi bi-lightning {o}" aria-hidden="true"></span>
-  <span id="container-open-{container.id}{id_suffix}" class="oi oi-external-link {s}" aria-hidden="true"></span>
-  <span id="spinner-start-{container.id}{id_suffix}" class="spinner-grow spinner-grow-sm d-none" role="status" aria-hidden="true"></span>
-  <input type="hidden" id="url-containeropen-{container.id}{id_suffix}" value="{link}">
+  <span class="{icon_class}" aria-hidden="true" {extra}></span>
+  {hidden}
 </button>
     """)
 
@@ -200,26 +235,63 @@ def button_start_open(container, id_suffix = ''):
 
 @register.simple_tag
 def button_stop(container):
+    if container.state in [ container.ST_RUNNING, container.ST_NEED_RESTART ]:
+        tooltip = f'Stop environment {container.name}'
+        icon_class = 'bi bi-x-lg'
+        extra = ''
+        butt_extra = ''
+    elif container.state == container.ST_NOTPRESENT:
+        tooltip = f''
+        icon_class = 'bi bi-x-lg'
+        extra = ''
+        butt_extra = 'disabled'
+    else:
+        kubestate = container.check_state()
+        phase = kubestate.get('phase', None)
+        butt_extra = ''
+        if phase == 'Pending':
+            tooltip = f'Environment {container.name} is in a pending state...'
+            icon_class = 'bi bi-x-lg'
+            extra = ''
+        else:
+            tooltip = f'Unhandles situation {container.name} state: {container.state} phase: {phase}'
+            icon_class = 'spinner-grow spinner-grow-sm'
+            extra = 'role="status"'
     return format_html(f"""
-<button name="container-stop" value="{container.id}"
+<button id="container-stop-{container.id}"
         class="btn btn-danger btn-sm " 
-        data-toggle="tooltip" title="Stop environment {container.name}"
+        data-toggle="tooltip" title="{tooltip}"
+        onclick="handle_click(this)" {butt_extra}
 >
-  <span id="container-stop-{container.id}" class="bi bi-x-lg" aria-hidden="true"></span>
-  <span id="spinner-stop-{container.id}" class="spinner-grow spinner-grow-sm d-none" role="status" aria-hidden="true"></span>
+  <span class="{icon_class}" aria-hidden="true" {extra}></span>
+  <input type="hidden" name="target" value="stop">
 </button>
     """)
 
 
 @register.simple_tag
 def button_restart(container):
+    if container.state in [ container.ST_RUNNING, container.ST_NEED_RESTART ]:
+        icon_class = 'bi bi-bootstrap-reboot'
+        butt_extra = ''
+        extra = ''
+    elif container.state == container.ST_NOTPRESENT:
+        icon_class = 'bi bi-bootstrap-reboot'
+        extra = ''
+        butt_extra = 'disabled'
+    else:
+        icon_class = 'spinner-grow spinner-grow-sm'
+        extra = 'role="status"'
+        butt_extra = ''
+
     return format_html(f"""
-<button name="container-restart" value="{container.id}"
+<button id="container-restart-{container.id}"
         class="btn btn-warning btn-sm" 
         data-toggle="tooltip" title="Restart inconsistent environment {container.name}"
+        onclick="handle_click(this)" {butt_extra}
 >
-  <span id="container-restart-{container.id}" class="bi bi-bootstrap-reboot" aria-hidden="true"></span>
-  <span id="spinner-restart-{container.id}" class="spinner-grow spinner-grow-sm d-none" role="status" aria-hidden="true"></span>
+  <span class="{icon_class}" aria-hidden="true" {extra}></span>
+  <input type="hidden" name="target" value="restart">
 </button>
     """)
 

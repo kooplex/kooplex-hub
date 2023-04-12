@@ -57,67 +57,40 @@ function open_container(containerid) {
 
 {# handle websocket callback #}
 function ws_callback(data) {
-  //console.log(data);
-  var command = data['command'];
-  var msg = data['message'];
-  var containerid = data['container-id'];
+  console.log(data);
+  containerid = data['container-id'];
+  if ('w_state' in data) {
+    $("#containerstate-" + containerid).replaceWith(data['w_state'])
+  }
+  if ('w_startopen' in data) {
+    $("#container-startopen-" + containerid).replaceWith(data['w_startopen'])
+  }
+  if ('w_stop' in data) {
+    $("#container-stop-" + containerid).replaceWith(data['w_stop'])
+  }
+  if ('w_restart' in data) {
+    $("#container-restart-" + containerid).replaceWith(data['w_restart'])
+  }
+  if ('w_image' in data) {
+    $("#container-image-" + containerid).replaceWith(data['w_image'])
+  }
   //console.log('SOCK: --> ' + command + ": " + msg);
-  if (command == 'container-log') {
-    var widget_msg = $("#container-summary-" + containerid);
-    var widget_log = $("#container-logmessage-" + containerid);
-    widget_msg.text(msg);
-    widget_log.text(data['podlog']);
-    console.log(containerid + " -> " + msg);
-    setTimeout(function() {
-      spinner_state('log', containerid, true);
-    }, 2500); // after the model is updated we waith for some time before we reenable refresh log button
-  } 
-  if (data['state'] == 'np') { //FIXME: Container.ST_NOTPRESENT
-    buttons_np(containerid);
-  } if (data['state'] == 'run') { //FIXME: Container.ST_RUNNING
-    buttons_op(containerid);
+  if ('command' in data) {
+    var command = data['command'];
+    var msg = data['message'];
+    if (command == 'container-log') {
+      var widget_msg = $("#container-summary-" + containerid);
+      var widget_log = $("#container-logmessage-" + containerid);
+      widget_msg.text(msg);
+      widget_log.text(data['podlog']);
+      console.log(containerid + " -> " + msg);
+      setTimeout(function() {
+        spinner_state('log', containerid, true); // FIXME
+      }, 2500); // after the model is updated we wait for some time before we reenable refresh log button
+    } 
   }
 };
 
-{# enable or diasble spinner button #}
-function spinner_state(btn, containerid, enabled) {
-  var widget = $("#container-" + btn + "-" + containerid);
-  var spinner = $("#spinner-" + btn + "-" + containerid);
-  if (enabled) {
-    spinner.addClass("d-none");
-    widget.removeClass("d-none");
-    widget.parent().attr("disabled", false);
-  } else {
-    spinner.removeClass("d-none");
-    widget.addClass("d-none");
-    widget.parent().attr("disabled", true);
-  }
-}
-
-{# disable control buttons, and show spinner for selected button #}
-function spin_button(containerid, btn) {
-  $("#container-start-" + containerid).parent().attr("disabled", true);
-  $("#container-restart-" + containerid).parent().attr("disabled", true);
-  $("#container-stop-" + containerid).parent().attr("disabled", true);
-  spinner_state(btn, containerid, false);
-}
-
-{# enable buttons and show start button face #}
-function buttons_np(containerid) {
-  spinner_state('start', containerid, true);
-  spinner_state('restart', containerid, true);
-  spinner_state('stop', containerid, true);
-  $("#container-open-" + containerid).addClass('d-none');
-}
-
-{# enable buttons and show open button face #}
-function buttons_op(containerid) {
-  spinner_state('start', containerid, true);
-  spinner_state('restart', containerid, true);
-  spinner_state('stop', containerid, true);
-  $("#container-start-" + containerid).addClass('d-none');
-  $("#container-open-" + containerid).removeClass('d-none');
-}
 
 {# refresh logs #}
 $("div[id^=containerInfoModal-]").on('shown.bs.modal', function() {
@@ -135,10 +108,10 @@ $("div[id^=containerInfoModal-]").on('shown.bs.modal', function() {
 });
 
 {# start/restart/stop/open a container, or refresh log clicked in the modal #}
-$("button[name^=container-]").click(function() {
-  var containerid = $( this ).val();
-  var command = $( this ).attr("name");
-  if (command == "container-start" && ! $("#container-open-" + containerid).hasClass('d-none')) {
+function handle_click(w) {
+  containerid = $(w).attr('id').split('-')[2];
+  command = $(w).children("input[name=target]").val();
+  if (command == "open") {
     open_container(containerid);
     return;
   }
@@ -147,13 +120,11 @@ $("button[name^=container-]").click(function() {
     containerSocket = open_ws('{{ wss_container }}', ws_callback);
   }
   console.log( command + ": " + containerid );
-  var btn = command.split('-', 2)[1];
-  spin_button(containerid, btn);
   containerSocket.send(JSON.stringify({
     'command': command,
     'container-id': containerid,
   }));
-});
+}
 
 {# on mouse over the card show the buttonbars #}
 $("div[id^=hideable-container-]").mouseenter(function() {

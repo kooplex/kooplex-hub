@@ -24,9 +24,9 @@ class ContainerConsumer(WebsocketConsumer):
         self.running = threading.Event()
         self.killed = threading.Event()
         self.t = None
-        for c in Container.objects.filter(user__id = self.userid, state__in = [ Container.ST_STARTING, Container.ST_STOPPING ]):
+        for c in Container.objects.filter(user__id = self.userid):
             try:
-                self.inspect(c.id, CE_POOL.get(c.id))
+                self.inspect(c.id, CE_POOL.get(c.id, None))
             except:
                 pass
 
@@ -51,15 +51,34 @@ class ContainerConsumer(WebsocketConsumer):
                 for e in completed:
                     cid = self.lut_ev.pop(e)
                     container = self.get_container(cid)
-                    self.send(text_data=json.dumps({"feedback": f"Container {container.name} finalized its state.", "container-id": cid, "state": container.state}))
+                    self.send(text_data=json.dumps({
+                        "feedback": f"Container {container.name} finalized its state.", 
+                    }))
                     logger.debug(f"Container {container.name} {container.label} finalized its state -> {container.state}")
+                    self.inspect(cid, None)
                 if not self.lut_ev:
                     self.running.clear()
         logger.info(f"- ws thread for {self.userid}")
 
     def inspect(self, container_id, event):
+        from container.templatetags.container_buttons import container_state, button_start_open, button_stop, button_restart, container_image
+        container = self.get_container(container_id)
+        resp = { 
+            'container-id': container_id,
+            'state':  container.state,
+            'w_state': container_state(container),
+            'w_startopen': button_start_open(container), #FIXME: modal
+            'w_stop': button_stop(container),
+            'w_restart': button_restart(container),
+            'w_image': container_image(container),
+        }
+        logger.debug(f"{container} --> {resp}")
+        self.send(text_data = json.dumps(resp))
+        if event is None:
+            return
         if event.is_set():
             return
+
         with self.lock:
             self.lut_ev[event] = container_id
             if not self.running.is_set():
@@ -67,8 +86,7 @@ class ContainerConsumer(WebsocketConsumer):
                 self.running.set()
                 self.t.start()
         logger.info('new event to inspect')
-        #container = self.get_container(container_id)
-        #self.send(text_data=json.dumps({"command": "feedback", "message": f"Waiting for {container.name} to finalize its state."}))
+        self.send(text_data=json.dumps({"feedback": f"Waiting for {container.name} to finalize its state."}))
 
     def receive(self, text_data):
         parsed = json.loads(text_data)
@@ -77,24 +95,16 @@ class ContainerConsumer(WebsocketConsumer):
         cid = int(parsed.get('container-id'))
         container = self.get_container(cid)
         resp = {
-            'command': command,
             'container-id': cid,
         }
         if command == 'container-log':
             resp.update( container.check_state(retrieve_log = True) )
             logger.debug(f"fetch {container} -> {resp}")
             self.send(text_data = json.dumps(resp))
-        elif command in [ 'container-start', 'container-stop', 'container-restart' ]:
-            c = command.split('-')[-1]
-            logger.debug(f"{c}...")
-            f = getattr(container, c)
+        elif command in [ 'start', 'stop', 'restart' ]:
+            f = getattr(container, command)
             ev = f()
-            logger.critical(f"{ev}, {ev.is_set()} {CE_POOL.e}") #FIXME: remove this line
             self.inspect(cid, ev)
-            container = self.get_container(cid)
-            resp.update({ 'state':  container.state })
-            logger.debug(f"{c} {container} --> {resp}")
-            self.send(text_data = json.dumps(resp))
 
 
 class MonitorConsumer(WebsocketConsumer):
