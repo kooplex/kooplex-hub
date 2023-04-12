@@ -64,8 +64,7 @@ def check(container):
     try:
         podstatus = v1.read_namespaced_pod_status(namespace = namespace, name = container.label)
         status.update( _parse_podstatus(podstatus) ) #FIXME: deprecate
-        podstatus.status.container_statuses
-        waiting = lambda cs: cs.state.waiting
+        waiting = lambda cs: cs.state.waiting and hasattr(cs.state.waiting, 'message') and cs.state.waiting.message
         msg = lambda cs: cs.state.waiting.message
         msg_waiting = '; '.join(map(msg, filter(waiting, podstatus.status.container_statuses))) if podstatus.status.container_statuses else ''
         msg = lambda c: c.message
