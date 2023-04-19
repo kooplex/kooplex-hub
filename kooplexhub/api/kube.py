@@ -31,6 +31,9 @@ def _job_pods(namespace, user, label):
                 continue
             break
 
+def _parse_api_exception(e):
+    oops = json.loads(e.body)
+    return { "Error": oops['code'], "message": oops['message'] }
 
 def submit_job(cnf):
     username = cnf.get('username')
@@ -108,17 +111,14 @@ def submit_job(cnf):
     if mnt_a:
         volumes.append(V1Volume(name="attachments",persistent_volume_claim = V1PersistentVolumeClaimVolumeSource(claim_name= "attachments", read_only=ro)))
 
-    mnt_v = False
     for vs, ro in zip([cnf.get('volumes_rw'), cnf.get('volumes_ro')], [False, True]):
         for v in vs:
-            mnt_v = True
             volume_mounts.append({
                 "name": f"v-{v}",
                 "name": f"v-{v}",
                 "mountPath": f'/v/volumes/{v}',
             })
-    if mnt_v:
-        volumes.append(V1Volume(name=f"v-{v}",persistent_volume_claim = V1PersistentVolumeClaimVolumeSource(claim_name= v, read_only=ro)))
+            volumes.append(V1Volume(name=f"v-{v}",persistent_volume_claim = V1PersistentVolumeClaimVolumeSource(claim_name= v, read_only=ro)))
         
     resources = V1ResourceRequirements(
         limits = {
@@ -165,25 +165,25 @@ def submit_job(cnf):
 
     try:
         api_resp = api_batch.create_namespaced_job(namespace = cnf.get('namespace'), body = data)
-        return { "Created": api_resp.metadata.creation_timestamp, "status": api_resp.status.to_dict() }
+        return { 
+            'created': api_resp.metadata.creation_timestamp, 
+            'job_description': cnf,
+        }
     except rest.ApiException as e:
-        logger.warning(e)
-        oops = json.loads(e.body)
-        logger.debug(data)
-        return { "Error": oops['code'], "message": oops['message'] }
+        return _parse_api_exception(e)
 
 
 def delete_job(namespace, user, label):
-    job_description = api_batch.read_namespaced_job(namespace = namespace, name = label)
     try:
+        job_description = api_batch.read_namespaced_job(namespace = namespace, name = label)
         for e in job_description.spec.template.spec.containers[0].env:
             if e.name == 'USER' and e.value == user:
                 api_resp = api_batch.delete_namespaced_job(namespace = namespace, name = label, propagation_policy = 'Foreground')
                 return {'response': 'ok'}
-        return {'ERROR': 'not found' }
-    except Exception as e:
-        logger.error(f'{e} -- {api_resp}')
-        return {}
+        return {'Error': 1, 'message': 'This job does not belong to you' }
+    except rest.ApiException as e:
+        return _parse_api_exception(e)
+
 
 def get_jobs(namespace, user):
     jobs = []
@@ -202,34 +202,29 @@ def get_jobs(namespace, user):
 
 
 def info_job(namespace, user, label):
-    container_attrs2show = [ 'command', 'image', 'name', 'resources' ]
     try:
+        job_description = api_batch.read_namespaced_job(namespace = namespace, name = label)
         pods = api_core.list_namespaced_pod(namespace = namespace)
         match = lambda x: x.metadata.labels['job-name'] == label
         pcm = set.union( *[ set([ c.message for c in p.status.conditions ]) for p in filter(match, pods.items) ] )
         not_none = lambda x:x
-
-        job_description = api_batch.read_namespaced_job(namespace = namespace, name = label)
-        status = job_description.status
         
         return { 
             'name': job_description.metadata.name, 
-            'containers': [ { k:v for k,v in c.to_dict().items() if k in container_attrs2show } for c in job_description.spec.template.spec.containers ],
-            'status': status.to_dict(),
+            'status': job_description.status.to_dict(),
             'pod_condition_messages': list(filter(not_none, pcm)),
         }
     except rest.ApiException as e:
-        logger.warning(e)
-        oops = json.loads(e.body)
-        return { "Error": oops['code'], "message": oops['message'] }
+        return _parse_api_exception(e)
 
 def log_job(namespace, user, label):
     logs = []
     for pod in _job_pods(namespace, user, label):
         try:
             logs.append(api_core.read_namespaced_pod_log(namespace = namespace, name = pod.metadata.name))
-        except Exception as e:
-            logs.append(f'ERROR retrieving log -- {e}')
+        except rest.ApiException as e:
+            oops = json.loads(e.body)
+            logs.append(oops["message"])
     return logs
 
 

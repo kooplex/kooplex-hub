@@ -14,13 +14,10 @@ from project.models import UserProjectBinding
 from volume.models import UserVolumeBinding, Volume
 from container.lib import Cluster
 
-from kubernetes import client, config
-from kubernetes.client import *
+from api.kube import submit_job, delete_job, info_job, get_jobs, log_job
 
 logger = logging.getLogger(__name__)
 
-#FIXME:
-from api.kube import submit_job, delete_job, info_job, get_jobs, log_job
 
 @require_http_methods(["GET"])
 def version(request):
@@ -77,8 +74,9 @@ def submit(request, job_name):
     name = req.get('name')
     if (name != job_name) or (request.user.username != request.COOKIES.get('api_user', None)):
         return JsonResponse({
-            'job_description': req,
-            'api_response': { "Error": 1, "message": "Inconsistent parameters" },
+            'Error': 1, 
+            'message': 'Inconsistent parameters',
+            'description': req,
         })
 
     home_rw = req.get('home_rw', None)
@@ -119,15 +117,8 @@ def submit(request, job_name):
         attachments_rw = list(auth_attachment(req.get("volumes_rw", [])).difference(auth_attachment(req.get("volumes_ro", [])))),
     ))
 
-    try:
-        api_resp = submit_job(req_parsed)
-    except Exception as e:
-        api_resp = str(e)
-    return JsonResponse({
-        'job_description': req,
-        'job_description_parsed': req_parsed,
-        'api_response': api_resp,
-    })
+    api_resp = submit_job(req_parsed)
+    return JsonResponse(api_resp)
 
 
 @login_required
@@ -137,13 +128,13 @@ def info(request, job_name):
     label = job_name
     user = request.user
     api_resp = info_job(namespace, user.username, label)
-    return JsonResponse({ 'api_response': api_resp })
+    return JsonResponse(api_resp)
 
 @login_required
 def log(request, job_name):
     namespace = 'k8plex-test-jobs' #FIXME: req.get("namespace"),
     api_resp = log_job(namespace, request.user.username, job_name)
-    return JsonResponse({ 'api_response': api_resp })
+    return JsonResponse({ 'container_logs': api_resp })
 
 @csrf_exempt
 @login_required
@@ -152,10 +143,7 @@ def delete(request, job_name):
     namespace = 'k8plex-test-jobs' #FIXME: req.get("namespace"),
     label = job_name
     user = request.user
-    try:
-        api_resp = delete_job(namespace, user.username, label)
-    except Exception as e:
-        api_resp = str(e)
-    return JsonResponse({ 'api_response': api_resp })
+    api_resp = delete_job(namespace, user.username, label)
+    return JsonResponse(api_resp)
 
 
