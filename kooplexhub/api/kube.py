@@ -5,6 +5,7 @@ from kubernetes import config
 from kubernetes.client import *
 import logging
 import json
+import base64
 
 logger = logging.getLogger(__name__)
 
@@ -231,3 +232,11 @@ def log_job(namespace, user, label):
             logs.append(f'ERROR retrieving log -- {e}')
     return logs
 
+
+def save_token(namespace, user, token):
+    config.load_kube_config(kube.get('kubeconfig', '/root/.kube/config'))
+    api_core = CoreV1Api()
+    token_store = KOOPLEX.get('kubernetes', {}).get('job_tokens', 'job-tokens')
+    secrets = api_core.read_namespaced_secret(namespace=namespace, name=token_store)
+    secrets.data[user] = base64.b64encode(token.encode()).decode()
+    api_core.replace_namespaced_secret(namespace=namespace, name=token_store, body=secrets)

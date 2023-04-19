@@ -5,6 +5,7 @@ from .thumbnail import Thumbnail
 from .token import Token
 
 from .user_signals import *
+from .profile_signals import *
 from .group_signals import *
 
 # Task os a wrapper

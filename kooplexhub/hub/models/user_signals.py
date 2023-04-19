@@ -5,7 +5,6 @@ import json
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.db.models.signals import post_save, pre_delete, post_delete
-from django_celery_beat.models import ClockedSchedule, PeriodicTask
 
 from hub.models import * #Profile, Task
 from hub.lib import filename, dirname
