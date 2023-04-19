@@ -93,8 +93,8 @@ def submit_job(cnf):
                 "mountPath": f'/v/projects/{p}',
                 "subPath": f'projects/{p}',
             })
-        if mnt_p:
-            volumes.append(V1Volume(name="project",persistent_volume_claim = V1PersistentVolumeClaimVolumeSource(claim_name= "project", read_only=ro)))
+    if mnt_p:
+        volumes.append(V1Volume(name="project",persistent_volume_claim = V1PersistentVolumeClaimVolumeSource(claim_name= "project", read_only=ro)))
 
     mnt_a = False
     for As, ro in zip([cnf.get('attachments_rw'), cnf.get('attachments_ro')], [False, True]):
@@ -105,8 +105,8 @@ def submit_job(cnf):
                 "mountPath": f'/v/attachments/{a}',
                 "subPath": f'{a}',
             })
-        if mnt_a:
-            volumes.append(V1Volume(name="attachments",persistent_volume_claim = V1PersistentVolumeClaimVolumeSource(claim_name= "attachments", read_only=ro)))
+    if mnt_a:
+        volumes.append(V1Volume(name="attachments",persistent_volume_claim = V1PersistentVolumeClaimVolumeSource(claim_name= "attachments", read_only=ro)))
 
     mnt_v = False
     for vs, ro in zip([cnf.get('volumes_rw'), cnf.get('volumes_ro')], [False, True]):
@@ -117,8 +117,8 @@ def submit_job(cnf):
                 "name": f"v-{v}",
                 "mountPath": f'/v/volumes/{v}',
             })
-        if mnt_v:
-            volumes.append(V1Volume(name=f"v-{v}",persistent_volume_claim = V1PersistentVolumeClaimVolumeSource(claim_name= v, read_only=ro)))
+    if mnt_v:
+        volumes.append(V1Volume(name=f"v-{v}",persistent_volume_claim = V1PersistentVolumeClaimVolumeSource(claim_name= v, read_only=ro)))
         
     resources = V1ResourceRequirements(
         limits = {
