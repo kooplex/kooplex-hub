@@ -20,7 +20,7 @@ from kubernetes.client import *
 logger = logging.getLogger(__name__)
 
 #FIXME:
-from api.kube import submit_job
+from api.kube import submit_job, delete_job, info_job, get_jobs, log_job
 
 @require_http_methods(["GET"])
 def version(request):
@@ -60,7 +60,14 @@ def nodes(request):
     api.query_nodes_status(reset=True)#FIXME
     api.query_pods_status(reset=True)
     api.resources_summary()
-    return JsonResponse({ 'cluster_status': api.get_data() })
+    return JsonResponse( api.get_data_transpose() )
+
+@login_required
+@require_http_methods(["GET"])
+def jobs(request):
+    return JsonResponse({ 
+        'jobs': get_jobs('k8plex-test-jobs', request.user.username), #FIXME: ns
+    })
 
 @csrf_exempt
 @login_required
@@ -112,8 +119,10 @@ def submit(request, job_name):
         attachments_rw = list(auth_attachment(req.get("volumes_rw", [])).difference(auth_attachment(req.get("volumes_ro", [])))),
     ))
 
-    api_resp = submit_job(req_parsed)
-
+    try:
+        api_resp = submit_job(req_parsed)
+    except Exception as e:
+        api_resp = str(e)
     return JsonResponse({
         'job_description': req,
         'job_description_parsed': req_parsed,
@@ -122,14 +131,31 @@ def submit(request, job_name):
 
 
 @login_required
+@require_http_methods(["GET"])
 def info(request, job_name):
-    pass
+    namespace = 'k8plex-test-jobs' #FIXME: req.get("namespace"),
+    label = job_name
+    user = request.user
+    api_resp = info_job(namespace, user.username, label)
+    return JsonResponse({ 'api_response': api_resp })
 
 @login_required
 def log(request, job_name):
-    pass
+    namespace = 'k8plex-test-jobs' #FIXME: req.get("namespace"),
+    api_resp = log_job(namespace, request.user.username, job_name)
+    return JsonResponse({ 'api_response': api_resp })
 
+@csrf_exempt
 @login_required
+@require_http_methods(["DELETE"])
 def delete(request, job_name):
-    pass
+    namespace = 'k8plex-test-jobs' #FIXME: req.get("namespace"),
+    label = job_name
+    user = request.user
+    try:
+        api_resp = delete_job(namespace, user.username, label)
+    except Exception as e:
+        api_resp = str(e)
+    return JsonResponse({ 'api_response': api_resp })
+
 

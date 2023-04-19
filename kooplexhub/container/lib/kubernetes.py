@@ -156,21 +156,29 @@ def start(container):
         "name": "nslcd",
         "mountPath": KOOPLEX['kubernetes']['nslcd'].get('mountPath_nslcd', '/etc/mnt'),
         "readOnly": True
-    }]
+    },
+        V1VolumeMount(name="tokens", mount_path="/.s", read_only=True)
+    ]#FIXME: use class objects instead
 #            V1Volume(name="nslcd", config_map=V1ConfigMapVolumeSource(name="nslcd", default_mode=420, items=[V1KeyToPath(key="nslcd", path='nslcd.conf')])),
     volumes = [{
         "name": "nslcd",
         "configMap": { "name": "nslcd", "items": [{"key": "nslcd", "path": "nslcd.conf" }]}
-    }]
+    },
+        V1Volume(name="tokens", secret=V1SecretVolumeSource(secret_name=f"job-tokens", default_mode=0o444, items=[V1KeyToPath(key=container.user.username, path='job_token')])),#items, change ownership, 0o400: https://stackoverflow.com/questions/49945437/changing-default-file-owner-and-group-owner-of-kubernetes-secrets-files-mounted
+    ]  #FIXME: use class objects instead
 
-    volume_mounts.append(V1VolumeMount(name="initscripts", mount_path="/.init_scripts"))
+    volume_mounts.append(V1VolumeMount(name="jobtool", mount_path="/etc/jobtool"))
+    volumes.append(V1Volume(name="jobtool", config_map=V1ConfigMapVolumeSource(name="job-py", default_mode=0o777, items=[V1KeyToPath(key="job",path="job")] ))
+            )
             
+    volume_mounts.append(V1VolumeMount(name="initscripts", mount_path="/.init_scripts"))
     initscripts = [
             V1KeyToPath(key="nsswitch",path="01-nsswitch"),
             V1KeyToPath(key="nslcd",path="02-nslcd"),
             V1KeyToPath(key="usermod",path="03-usermod"),
             V1KeyToPath(key="munge",path="04-munge"),
             V1KeyToPath(key="ssh",path="05-ssh"),
+            V1KeyToPath(key="jobtools",path="06-jobtool-path"),
             ]
 
     if container.user.profile.can_teleport:
@@ -455,7 +463,7 @@ def start(container):
                     "lbl": f"lbl-{container.label}",
                     },
                 "ports": svc_ports,
-                "type": "LoadBalancer",
+#                "type": "LoadBalancer",
             }
         }
 

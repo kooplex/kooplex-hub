@@ -5,7 +5,7 @@ import pandas as pd
 from kooplexhub.settings import KOOPLEX
 
 def UnitConverter(item, tounit=''):
-    units = {
+    units = { #FIXME: sztem K: 10**3 és Ki 2**10...
         'm':2**-10,
         'K':2**10,
         'M':2**20,
@@ -141,6 +141,27 @@ class Cluster():
                 'total_memory': list(total_memory),
                 'avail_gpu': [ int(ag) for ag in avail_gpu],
                 'total_gpu':[ int(tg) for tg in total_gpu], }
+
+    def get_data_transpose(self): #FIXME: sztem ez kellene a fenti helyett ???
+        from numpy import around
+        d = self.summed_df
+        node_name = list(d.index.values)
+        avail_cpu = around(d['avail_cpu'].to_numpy(), decimals=1) 
+        total_cpu = d['total_cpu'].to_numpy()
+        avail_memory = around(UnitConverter(d['avail_memory'].to_numpy(), tounit='G'), decimals=1) 
+        total_memory = around(UnitConverter(d['total_memory'].to_numpy(), tounit='G'), decimals=1)
+        avail_gpu = around(d['avail_gpu'].to_numpy(), decimals=1) 
+        total_gpu = d['total_gpu'].to_numpy()
+        return { 'resources': [ { 
+            'node_name': nn, 
+            'avail_cpu': acpu,
+            'total_cpu': tcpu,
+            'avail_memory': amem,
+            'total_memory': tmem,
+            'avail_gpu': int(ag),
+            'total_gpu': int(tg), 
+            } for nn, acpu, tcpu, amem, tmem, ag, tg in zip(node_name, avail_cpu, total_cpu, avail_memory, total_memory, avail_gpu, total_gpu) ]
+        }
         
 def get_node_current_usage(node_name):
     '''

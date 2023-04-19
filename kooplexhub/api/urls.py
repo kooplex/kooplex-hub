@@ -10,6 +10,7 @@ urlpatterns = [
     path('projects/', views.projects, name = 'projects'),
     path('volumes/', views.volumes, name = 'volumes'),
     path('nodes/', views.nodes, name = 'nodes'),
+    path('jobs/', views.jobs, name = 'jobs'),
     re_path('submit/(?P<job_name>\w+)/', views.submit, name = 'submit'),
     re_path('info/(?P<job_name>\w+)/', views.info, name = 'info'),
     re_path('log/(?P<job_name>\w+)/', views.log, name = 'log'),
