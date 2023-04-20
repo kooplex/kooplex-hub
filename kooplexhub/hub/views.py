@@ -41,7 +41,7 @@ class IndexView(AccessMixin, generic.TemplateView):
 #                 )
         # Bar chart
         fig = px.bar(usage, height = wh, y='pod_names', x=['used_cpu'],
-             color_discrete_map={'used_cpu':'lightgreen'},
+             color_discrete_map={'used_cpu':'green'},
             labels=[], orientation='h', range_x=(0,max_cpu))
         fig.update_layout(
             dict(
@@ -75,7 +75,7 @@ class IndexView(AccessMixin, generic.TemplateView):
                 
         # Bar chart
         fig = px.bar(usage, height = wh, y='pod_names', x=['used_memory'],
-             color_discrete_map={'used_memory':'lightblue'},
+             color_discrete_map={'used_memory':'blue'},
             labels=[], orientation='h', range_x=(0,max_memory))
         fig.update_layout( margin={'l':0, 'r':0, 't': 30, 'b':0},
                 paper_bgcolor='rgba(150,150,150, .1)',
