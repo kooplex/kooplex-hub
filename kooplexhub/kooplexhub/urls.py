@@ -22,6 +22,7 @@ urlpatterns = [
     path('hub/report/', include('report.urls', namespace = 'report')),
     path('hub/education/', include('education.urls', namespace = 'education')),
     path('hub/volume/', include('volume.urls', namespace = 'volume')),
+    path('hub/api/', include('api.urls')),
     path('hub/', include('hub.urls')),
     path('admin/', admin.site.urls),
 ]
