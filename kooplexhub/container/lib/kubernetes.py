@@ -208,23 +208,6 @@ def start(container):
 
     # jobs kubeconf and slurm
     if container.user.profile.can_runjob:
-        if container.image.access_kubeapi:
-            env_variables.append({ "name": "KUBECONFIG", "value": "/.secrets/kubeconfig/config" })
-            env_variables.append({ "name": "NS_JOBS", "value": KOOPLEX['kubernetes'].get('jobsnamespace', 'kube-jobs') })
-            volume_mounts.append(
-                 V1VolumeMount(name="kubeconf", mount_path="/.secrets/kubeconfig", read_only=True)
-                 )
-            volume_mounts.append(
-                 V1VolumeMount(name="jobtools", mount_path="/etc/jobtools", read_only=KOOPLEX['kubernetes'].get('jobtools_ro', False))
-                 )
-
-            volumes.append(
-                V1Volume(name="kubeconf", config_map=V1ConfigMapVolumeSource(name=KOOPLEX['kubernetes'].get('kubeconfig_job', 'kubeconfig'), items=[V1KeyToPath(key="kubejobsconfig",path="config")]))
-                )
-            volumes.append(
-                V1Volume(name=f"jobtools",persistent_volume_claim = V1PersistentVolumeClaimVolumeSource(claim_name=KOOPLEX['kubernetes'].get('claim_jobtools', 'job-tools') , read_only=KOOPLEX['kubernetes'].get('jobtools_ro', False)))
-                    )
-
         # SLURM
         #if "munge" in initscripts.data.keys():   
         volume_mounts.append(V1VolumeMount(name="munge", mount_path="/etc/munge_tmp", read_only=True))
