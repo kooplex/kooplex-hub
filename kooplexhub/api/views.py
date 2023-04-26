@@ -18,6 +18,8 @@ from api.kube import submit_job, delete_job, info_job, get_jobs, log_job
 
 logger = logging.getLogger(__name__)
 
+from kooplexhub.settings import KOOPLEX
+NS_JOBS = KOOPLEX.get('kubernetes', {}).get('jobsnamespace', 'jobs')
 
 @require_http_methods(["GET"])
 def version(request):
@@ -63,7 +65,7 @@ def nodes(request):
 @require_http_methods(["GET"])
 def jobs(request):
     return JsonResponse({ 
-        'jobs': get_jobs('k8plex-test-jobs', request.user.username), #FIXME: ns
+        'jobs': get_jobs(NS_JOBS, request.user.username),
     })
 
 @csrf_exempt
@@ -84,7 +86,7 @@ def submit(request, job_name):
         home_rw = bool(home_rw)
 
     req_parsed = dict(
-        namespace = req.get("namespace"),
+        namespace = NS_JOBS,
         name = name, 
         image = req.get('image'),
         username = request.user.username, 
@@ -124,26 +126,19 @@ def submit(request, job_name):
 @login_required
 @require_http_methods(["GET"])
 def info(request, job_name):
-    namespace = 'k8plex-test-jobs' #FIXME: req.get("namespace"),
-    label = job_name
-    user = request.user
-    api_resp = info_job(namespace, user.username, label)
+    api_resp = info_job(NS_JOBS, request.user.username, job_name)
     return JsonResponse(api_resp)
 
 @login_required
 def log(request, job_name):
-    namespace = 'k8plex-test-jobs' #FIXME: req.get("namespace"),
-    api_resp = log_job(namespace, request.user.username, job_name)
+    api_resp = log_job(NS_JOBS, request.user.username, job_name)
     return JsonResponse({ 'container_logs': api_resp })
 
 @csrf_exempt
 @login_required
 @require_http_methods(["DELETE"])
 def delete(request, job_name):
-    namespace = 'k8plex-test-jobs' #FIXME: req.get("namespace"),
-    label = job_name
-    user = request.user
-    api_resp = delete_job(namespace, user.username, label)
+    api_resp = delete_job(NS_JOBS, request.user.username, job_name)
     return JsonResponse(api_resp)
 
 
