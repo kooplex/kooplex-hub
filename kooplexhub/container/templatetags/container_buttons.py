@@ -3,17 +3,25 @@ from django.utils.html import format_html
 from django.urls import reverse
 
 from ..models import Container
+from volume.models import Volume
 from container.lib.cluster_resources_api import *
 import pandas
 
+from django.template.defaultfilters import truncatechars
+
 register = template.Library()
+
+@register.simple_tag
+def container_name(container):
+    cn = truncatechars(container.name, 45)
+    return format_html(f"""<h5 id="container-name-{container.id}" style="display: inline" class="card-title fw-bold">{cn}</h5>""")
 
 @register.simple_tag
 def ifempty(container):
     if container.projects or container.courses or hasattr(container, "report"):
         return ""
-    return format_html("""
-<span class="badge rounded-pill bg-warning " data-bs-toggle="tooltip" 
+    return format_html(f"""
+<span id="container-empty-{container.id} class="badge rounded-pill bg-warning " data-bs-toggle="tooltip" 
       title="This environment is not bound to any projects, courses or reports yet"
       data-placement="bottom"><i class="oi oi-warning"></i>empty</span>
     """)
@@ -48,8 +56,9 @@ def container_state(container):
     msg = state.get('message', 'No extra information returned').replace('{', '(').replace('}', ')')
     state_ = container.get_state_display()
     phase = state.get('phase', 'Missing')
+    #FIXME: rename id: containerstate- container-state-
     return format_html(f"""
-<span class="badge rounded-pill p-2 bg-dark text-light" id="containerstate-{container.id}"
+<span id="containerstate-{container.id}" class="badge rounded-pill p-2 bg-dark text-light"
       data-bs-toggle="tooltip" data-placement="bottom" 
       title="Kubernetes message: {msg}">
   {phase}&nbsp;/&nbsp;{state_}
@@ -82,57 +91,45 @@ def container_resources(container):
     node = f"""
 <span class="badge rounded-pill bg-warning text-dark p-2" 
       data-bs-toggle="tooltip" data-placement="bottom" 
-      title="Your environment {cn} is assigned to compute node {container.node}"><i class="bi bi-gpu-card"></i>&nbsp;{container.node}</span>
+      title="Your environment {cn} is assigned to compute node {container.node}"><i class="bi bi-pc"></i>&nbsp;{container.node}</span>
     """ if container.node else ""
     return format_html(f"""
-{node}
-<span class="badge rounded-pill bg-warning text-dark p-2" 
-      data-bs-toggle="tooltip" data-placement="bottom" 
-      title="The CPU clock cycles requested for environment {cn}"><i class="bi bi-cpu"></i>&nbsp;{used_cpu}/{container.cpurequest}</span>
-{gpu}
-<span class="badge rounded-pill bg-warning text-dark p-2" 
-      data-bs-toggle="tooltip" data-placement="bottom" 
-      title="The requested memory for environment {cn}"><i class="bi bi-memory"></i>&nbsp;{used_memory}/{container.memoryrequest}&nbsp;GB</span>
-<span class="badge rounded-pill bg-warning text-dark p-2" 
-      data-bs-toggle="tooltip" data-placement="bottom" 
-      title="The maximum allowed idle time for environment {cn}"><i class="bi bi-clock-history"></i>&nbsp;{container.idletime}&nbsp;h</span>
+<div id="container-resources-{container.id}" style="display: inline">
+  {node}
+  <span class="badge rounded-pill bg-warning text-dark p-2" 
+        data-bs-toggle="tooltip" data-placement="bottom" 
+        title="The CPU clock cycles requested for environment {cn}"><i class="bi bi-cpu"></i>&nbsp;{used_cpu}/{container.cpurequest}</span>
+  {gpu}
+  <span class="badge rounded-pill bg-warning text-dark p-2" 
+        data-bs-toggle="tooltip" data-placement="bottom" 
+        title="The requested memory for environment {cn}"><i class="bi bi-memory"></i>&nbsp;{used_memory}/{container.memoryrequest}&nbsp;GB</span>
+  <span class="badge rounded-pill bg-warning text-dark p-2" 
+        data-bs-toggle="tooltip" data-placement="bottom" 
+        title="The maximum allowed idle time for environment {cn}"><i class="bi bi-clock-history"></i>&nbsp;{container.idletime}&nbsp;h</span>
+</div>
     """)
 
 
 @register.simple_tag
-def volumes(*args, **kwargs):
-    v = kwargs.get('volumes', [])
-    V = "\n".join(map(lambda x: f"{x.folder}: {x.description}", v))
-    return format_html(f"""
-<span class="badge rounded-pill bg-dark" aria-hidden="true" data-bs-toggle="tooltip" title="Volumes:\n{V}" data-placement="top"><i class="ri-database-2-line"></i> {len(v)}</span>
-    """) if len(v) else ""
-
-
-@register.simple_tag
-def attachments(*args, **kwargs):
-    a = kwargs.get('attachments', [])
-    A = "\n".join(map(lambda x: f"{x.folder} {x.description}", a))
-    return format_html(f"""
-<span class="badge rounded-pill bg-dark" aria-hidden="true" data-bs-toggle="tooltip" title="Attachments:\n{A}" data-placement="top"><i class="ri-attachment-2"></i> {len(a)}</span>
-    """) if len(a) else ""
-
-
-@register.simple_tag
-def projects(*args, **kwargs):
-    p = kwargs.get('projects', [])
+def container_mounts(container):
+    p = container.projects
     P = "\n".join(map(lambda x: f"{x.name} {x.description}", p))
-    return format_html(f"""
-<span class="badge rounded-pill bg-dark" aria-hidden="true" data-bs-toggle="tooltip" title="Projects:\n{P}" data-placement="top"><i class="ri-product-hunt-line"></i> {len(p)}</span>
-    """) if len(p) else ""
-
-
-@register.simple_tag
-def courses(*args, **kwargs):
-    c = kwargs.get('courses', [])
+    c = container.courses
     C = "\n".join(map(lambda x: f"{x.name} {x.description}", c))
+    v = container.volumes
+    vt = lambda x: 'a' if x.scope == Volume.SCP_ATTACHMENT else 'v'
+    V = "\n".join(map(lambda x: f"{x.folder} ({vt(x)}): {x.description}", v))
+    vis = lambda x: '' if len(x) else 'd-none'
     return format_html(f"""
-<span class="badge rounded-pill bg-dark" aria-hidden="true" data-bs-toggle="tooltip" title="Courses:\n{C}" data-placement="top"><i class="ri-copyright-line"></i> {len(c)}</span>
-    """) if len(c) else ""
+<div id="container-mounts-{container.id}" style="display: inline">
+  <span class="badge rounded-pill bg-dark {vis(p)}" aria-hidden="true" data-bs-toggle="tooltip" title="Projects:\n{P}" data-placement="top"><i class="ri-product-hunt-line"></i> {len(p)}</span>
+  <span class="badge rounded-pill bg-dark {vis(c)}" aria-hidden="true" data-bs-toggle="tooltip" title="Courses:\n{C}" data-placement="top"><i class="ri-copyright-line"></i> {len(c)}</span>
+  <span class="badge rounded-pill bg-dark {vis(v)}" aria-hidden="true" data-bs-toggle="tooltip" title="Volumes/Attachments:\n{V}" data-placement="top"><i class="ri-database-2-line"></i> {len(v)}</span>
+</div>
+    """)
+#	  {% report container.report %} {# FIXME: handle report and other images in the same list #}
+#	  {% synchfolders container %}  {# FIXME: check implementation when seafile integrated #}
+#	  {% repos container %}         {# FIXME: check implementation when gitea integrated #}
 
 
 @register.simple_tag
@@ -318,9 +315,9 @@ def button_refreshlog(container, modal_prefix = None):
 
 @register.simple_tag
 def button_configure(container):
-    link = reverse('container:configure', args = [container.id])
+    #link = reverse('container:configure', args = [container.id])
     return format_html(f"""
-<a href="{link}" role="button" class="btn btn-warning btn-sm"><span class="bi bi-tools" aria-hidden="true" data-toggle="tooltip" title="Add/remove project to the service" data-placement="bottom"></span></a>
+<a href="#" onClick="configure({container.id})" role="button" class="btn btn-warning btn-sm"><span class="bi bi-tools" aria-hidden="true" data-toggle="tooltip" title="Add/remove project to the service" data-placement="bottom"></span></a>
     """)
 
 

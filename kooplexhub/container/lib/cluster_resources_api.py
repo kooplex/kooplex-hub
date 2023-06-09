@@ -5,25 +5,31 @@ import pandas as pd
 from kooplexhub.settings import KOOPLEX
 
 def UnitConverter(item, tounit=''):
-    units = { #FIXME: sztem K: 10**3 és Ki 2**10...
-        'm':2**-10,
-        'K':2**10,
-        'M':2**20,
-        'G':2**30}            
+    units = { 
+        'm':10**-3,
+        'K':10**3,
+        'M':10**6,
+        'G':10**9,         
+        'T':10**12,
+        'Ki':2**10,
+        'Mi':2**20,
+        'Gi':2**30,
+        'Ti':2**40}
+
     if tounit:
         return item/units[tounit]
     
     try:
-        if item[-1]=='i':
-            item=item[:-1]
-           
-        unit = item[-1]
-        if unit in units.keys():
+        return float(item)
+    except:
+        if item[-2:] in units.keys():
+            unit = item[-2:]
+            return float(item[:-2])*units[unit]
+        elif item[-1] in units.keys():
+            unit = item[-1]
             return float(item[:-1])*units[unit]
         else:
-            return float(item)
-    except: 
-        return float(item)
+            print(f"Conversion error: {item} ")   
 
 class Cluster():
 
@@ -87,8 +93,8 @@ class Cluster():
         if reset:
             self.pod_df = pd.DataFrame(columns=['node', 'namespace', 'pod','container_name','requested_cpu','requested_memory', 'requested_gpu'])
         
+        fs = ( "status.phase!=Succeeded,status.phase!=Failed")
         if field or label:
-            fs = ( "status.phase!=Succeeded,status.phase!=Failed")
             if field:
                 fs += f",{field[0]}={field[1]}"    
             if label:
@@ -99,7 +105,7 @@ class Cluster():
             pods = self.v1.list_pod_for_all_namespaces(field_selector=fs, label_selector=ls)
         
         if not label and not field:
-            pods =  self.v1.list_pod_for_all_namespaces()
+            pods =  self.v1.list_pod_for_all_namespaces(field_selector=fs)
             #return
         
         for pod in pods.items:
@@ -177,8 +183,8 @@ def get_node_current_usage(node_name):
     usage = nodeinfo['usage']
     used_gpu = usage.get('nvidia.com/gpu',0)
     data={'node_name': node_name,
-          'used_cpu': around(UnitConverter(usage['cpu']), decimals=1),
-          'used_memory': around(UnitConverter(UnitConverter(usage['memory']), tounit='G'), decimals=1),
+          'used_cpu': UnitConverter(usage['cpu']),
+          'used_memory': UnitConverter(UnitConverter(usage['memory']), tounit='Gi'),
           'used_gpu': used_gpu}
     return data
 
@@ -201,12 +207,12 @@ def get_all_node_current_usage():
         node_names.append(node['metadata']['name'])
         usage = node['usage']
         cpu.append(UnitConverter(usage['cpu']))
-        memory.append(UnitConverter(UnitConverter(usage['memory']), tounit='G'))
+        memory.append(UnitConverter(UnitConverter(usage['memory']), tounit='Gi'))
         gpu.append(usage.get('nvidia.com/gpu',0))
 
     data={'node_name': node_names,
-          'used_cpu': around(cpu),
-          'used_memory': around(memory),
+          'used_cpu': cpu,
+          'used_memory': memory,
          'used_gpu': gpu}
     return data
 
@@ -260,7 +266,7 @@ def get_pod_usage(user='', namespace='', container_name=""):
         gpu.append(usage.get('nvidia.com/gpu',0))
 
     data={'pod_names': pod_names,
-            'namespaces': namespaces,
+          'namespaces': namespaces,
               'used_cpu': around(cpu),
               'used_memory': around(memory, decimals=1),
              'used_gpu': gpu}

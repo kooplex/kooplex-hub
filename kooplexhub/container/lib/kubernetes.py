@@ -3,6 +3,9 @@ import os
 import json
 from kubernetes import client, config
 from kubernetes.client import *
+
+from hub.models.token import Token
+from service.models.service import SeafileService, UserSeafileServiceBinding
 client.rest.logger.setLevel(logging.WARNING)
 from urllib.parse import urlparse
 from threading import Timer, Event, Lock
@@ -114,6 +117,36 @@ def storage_resources(volumes):
     claimdict = lambda c: { "name": c, "persistentVolumeClaim": { "claimName": c } }
     return { 'mounts': mounts, 'claims': list(map(claimdict, claims)) }
 
+# For Seafile, NextCloud etc WebDAV mounts
+def create_sidecar_davfs(container, service):    
+
+    secret_volume = V1Volume(name="secrets", secret=V1SecretVolumeSource(
+        #secret_name=KOOPLEX['kubernetes']['secrets'].get("name", "secrets"), 
+        secret_name=service.kubernetes_secret_name,
+        default_mode=0o444, 
+        items=[V1KeyToPath(key=container.user.username, 
+                           path=service.secret_file)]))
+    secret_volume_mount = V1VolumeMount(name="secrets", mount_path=service.secret_mount_dir, read_only=True)
+                                    
+    empty_volume = V1Volume(name="davfs-seafile-empty-dir", empty_dir=V1EmptyDirVolumeSource(medium="", size_limit="30Gi"))
+    empty_volume_mount =  V1VolumeMount(name="davfs-seafile-empty-dir", mount_path=service.mount_dir, mount_propagation = "Bidirectional")
+    
+    container = {
+                    "name": "davfs-sidecar",
+                    "image": "image-registry.vo.elte.hu/sidecar-davfs2", #FIXME
+                    "volumeMounts": [secret_volume_mount, empty_volume_mount],                    
+                    "imagePullPolicy": KOOPLEX['kubernetes'].get('imagePullPolicy', 'IfNotPresent'),
+                    "env": service.get_envs(container.user),
+                    "securityContext": V1SecurityContext(
+                        #run_as_user=1029, 
+                        privileged= True,
+                        capabilities=V1Capabilities(add=["SYS_ADMIN"])
+                        )
+                }
+    # It is different in the usercontainer
+    host_empty_volume_mount =  V1VolumeMount(name="davfs-seafile-empty-dir", mount_path=service.mount_dir, mount_propagation = "HostToContainer")
+    
+    return container, [secret_volume, empty_volume], [host_empty_volume_mount]
 
 def start(container):
     #event = Event()
@@ -157,18 +190,22 @@ def start(container):
         "mountPath": KOOPLEX['kubernetes']['nslcd'].get('mountPath_nslcd', '/etc/mnt'),
         "readOnly": True
     },
-        V1VolumeMount(name="tokens", mount_path="/.s", read_only=True)
+        V1VolumeMount(name="tokens", mount_path=KOOPLEX['kubernetes']["secrets"].get("mount_dir", "/.secrets"), read_only=True)
     ]#FIXME: use class objects instead
 #            V1Volume(name="nslcd", config_map=V1ConfigMapVolumeSource(name="nslcd", default_mode=420, items=[V1KeyToPath(key="nslcd", path='nslcd.conf')])),
     volumes = [{
         "name": "nslcd",
         "configMap": { "name": "nslcd", "items": [{"key": "nslcd", "path": "nslcd.conf" }]}
     },
-        V1Volume(name="tokens", secret=V1SecretVolumeSource(secret_name=f"job-tokens", default_mode=0o444, items=[V1KeyToPath(key=container.user.username, path='job_token')])),#items, change ownership, 0o400: https://stackoverflow.com/questions/49945437/changing-default-file-owner-and-group-owner-of-kubernetes-secrets-files-mounted
+        V1Volume(name="tokens", secret=V1SecretVolumeSource(secret_name=KOOPLEX['kubernetes']['jobs'].get("token_name","job-token"), 
+                                                            default_mode=0o444, 
+                                                            items=[V1KeyToPath(key=container.user.username, 
+                                                                               path=KOOPLEX['kubernetes']['jobs'].get("token_name","job-token"))]
+                                                            )),#items, change ownership, 0o400: https://stackoverflow.com/questions/49945437/changing-default-file-owner-and-group-owner-of-kubernetes-secrets-files-mounted
     ]  #FIXME: use class objects instead
 
-    volume_mounts.append(V1VolumeMount(name="jobtool", mount_path="/etc/jobtool"))
-    volumes.append(V1Volume(name="jobtool", config_map=V1ConfigMapVolumeSource(name="job-py", default_mode=0o777, items=[V1KeyToPath(key="job",path="job")] ))
+    volume_mounts.append(V1VolumeMount(name="jobtool", mount_path=KOOPLEX['kubernetes']['jobs'].get("jobpy","jobtool")))
+    volumes.append(V1Volume(name="jobtool", config_map=V1ConfigMapVolumeSource(name="job.py", default_mode=0o777, items=[V1KeyToPath(key="job",path="job")] ))
             )
             
     volume_mounts.append(V1VolumeMount(name="initscripts", mount_path="/.init_scripts"))
@@ -335,45 +372,6 @@ def start(container):
     volumes.extend(storage['claims'])
 
 
-
-#    has_report = False
-#    has_cache = False
-#
-#    if container.image.mount_report:
-#        if container.image.imagetype == container.image.TP_PROJECT:
-#            report_root_folders = []
-#            for report in container.reports:
-#                if report.project.uniquename in report_root_folders:
-#                    continue
-#                report_root_folders.append(report.project.uniquename)
-#                volume_mounts.append({
-#                    "name": "pv-k8plex-hub-report",
-#                    "mountPath": os.path.join(mount_point, report_subdir, report.project.name),
-#                    #"mountPath": os.path.join(mount_point, report_subdir, f'{report.project.name}-{report.project.groupname}'),
-#                    "subPath": report.project.uniquename,
-#                    "readOnly": True
-#                })
-#                has_report = True
-#        else:
-#            report = container.report
-#            volume_mounts.append({
-#                "name": "pv-k8plex-hub-report",
-#                "mountPath": os.path.join('/srv', 'report', report.cleanname),
-#                "subPath": os.path.join(report.project.uniquename, report.cleanname),
-#                "readOnly": True
-#            })
-#            has_report = True
-#
-#    for sync_lib in container.synced_libraries:
-#        o = urlparse(sync_lib.token.syncserver.url)
-#        server = o.netloc.replace('.', '_')
-#        volume_mounts.append({
-#            "name": "pv-k8plex-hub-cache",
-#            "mountPath": os.path.join(mount_point, 'synchron', f'{sync_lib.library_name}-{server}'),
-#            "subPath": os.path.join('fs', container.user.username, server, 'synchron', sync_lib.library_name),
-#        })
-#        has_cache = True
-#
 #    for repo in container.repos:
 #        o = urlparse(repo.token.repository.url)
 #        server = o.netloc.replace('.', '_')
@@ -383,19 +381,6 @@ def start(container):
 #            "subPath": os.path.join('git', container.user.username, server, repo.clone_folder),
 #        })
 #        has_cache = True
-#
-#    if has_report:
-#        volumes.append({
-#            "name": "pv-k8plex-hub-report",
-#            "persistentVolumeClaim": { "claimName": "pvc-report-k8plex", }
-#        })
-#    
-#    if has_cache:
-#        volumes.append({
-#            "name": "pv-k8plex-hub-cache",
-#            "persistentVolumeClaim": { "claimName": "pvc-cache-k8plex", }
-#        })
-#
 
     resources = KOOPLEX['kubernetes'].get('resources', {}).copy()
     pod_resources = {"requests":{}, "limits": {}}
@@ -409,6 +394,32 @@ def start(container):
     pod_resources["limits"]["memory"] = f"{max(container.memoryrequest, resources['limits']['memory'])}Gi"
 
 #    logger.warning(f"{resources}")
+    
+    container_list = []
+
+    #FIXME check whether user wants cloud access in notebook
+    #if container.start_seafile:        
+    if 1==1:
+        service = UserSeafileServiceBinding.objects.get(user=container.user, service=SeafileService.objects.first()).service
+        c, vs, vms = create_sidecar_davfs(container, service)
+        container_list.append(c)
+        volumes.extend(vs)
+        volume_mounts.extend(vms)
+
+    main_container = {
+                    "name": container.label,
+                    "command": ["/bin/bash", "-c", f"chmod a+x {container.image.command}; {container.image.command}"],                   
+                    "image": container.image.name,
+                    "volumeMounts": volume_mounts,
+                    "ports": pod_ports,
+                    "imagePullPolicy": KOOPLEX['kubernetes'].get('imagePullPolicy', 'IfNotPresent'),
+                    "env": env_variables,
+                    "resources": pod_resources,
+                    #"securityContext": V1SecurityContext(run_as_user=1029, privileged= False)          
+                    #V1SecurityContext(capabilities=V1Capabilities(add=cap_add))              
+                    }
+        
+    container_list.append(main_container)
 
     pod_definition = {
             "apiVersion": "v1",
@@ -420,16 +431,7 @@ def start(container):
                     "user": container.user.username}
             },
             "spec": {
-                "containers": [{
-                    "name": container.label,
-                    "command": ["/bin/bash", "-c", f"chmod a+x {container.image.command}; {container.image.command}"],                   
-                    "image": container.image.name,
-                    "volumeMounts": volume_mounts,
-                    "ports": pod_ports,
-                    "imagePullPolicy": KOOPLEX['kubernetes'].get('imagePullPolicy', 'IfNotPresent'),
-                    "env": env_variables,
-                    "resources": pod_resources,
-                }],
+                "containers": container_list,
                 "volumes": volumes,
                 "nodeSelector": container.target_node, 
             }
@@ -618,7 +620,7 @@ def _parse_podstatus(podstatus):
 def fetch_containerlog(container):
     v1 = client.CoreV1Api()
     try:
-        podlog = v1.read_namespaced_pod_log(namespace = namespace, name = container.label)
+        podlog = v1.read_namespaced_pod_log(namespace = namespace, name = container.label, container = container.label)
         return podlog[-10000:]
     except Exception as e:
         logger.warning(e)

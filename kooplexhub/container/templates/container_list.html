@@ -35,12 +35,38 @@ Environments are user workspaces with limited resources, attached volumes and pr
     {% include 'empty.html' %}
   {% endif %}
 </div>
+
+{# a modal to configure a container or display its logs #}
+<div class="modal modal-xl fade" id="containerInfoModal" tabindex="-1" aria-labelledby="containerInfoModal" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="container-manage" class="form-horizontal was-validated" 
+            action="{{ url_post }}"
+            method="post">
+        {% csrf_token %}
+	<input type="hidden" id="containerid" name="containerid" value="{{ container_id }}">
+	{% block form %}
+	<div id="containerInfoModal-content"></div>
+	{% endblock %}
+      </form>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 
 {% block scripts %}
 <script>
-containerSocket = open_ws('{{ wss_container }}', ws_callback);
+
+{% if form %}
+$(document).ready(function() {
+  m = $("#containerInfoModal")
+  console.log( m )
+  m.modal("show")
+})
+{% endif %}
+
+var containerSocket = open_ws('{{ wss_container }}', ws_callback)
 
 {# make sure search string we got gets applied #}
 $("#search_container").keyup();
@@ -74,37 +100,57 @@ function ws_callback(data) {
   if ('w_image' in data) {
     $("#container-image-" + containerid).replaceWith(data['w_image'])
   }
-  //console.log('SOCK: --> ' + command + ": " + msg);
-  if ('command' in data) {
-    var command = data['command'];
-    var msg = data['message'];
-    if (command == 'container-log') {
-      var widget_msg = $("#container-summary-" + containerid);
-      var widget_log = $("#container-logmessage-" + containerid);
-      widget_msg.text(msg);
-      widget_log.text(data['podlog']);
-      console.log(containerid + " -> " + msg);
-      setTimeout(function() {
-        spinner_state('log', containerid, true); // FIXME
-      }, 2500); // after the model is updated we wait for some time before we reenable refresh log button
-    } 
+  if ('w_modal' in data) {
+    $("#containerInfoModal-content").replaceWith(data['w_modal'])
+    $("#container-manage").attr('action', data['action'])
+    $("#containerid").val(data['container-id'])
+    $("#containerInfoModal").modal("show")
+    {# refresh logs #}
+    $("#container-manage li a[id=tab-logs]").click(function() {
+      containerSocket.send(JSON.stringify({
+        'command': 'container-log',
+        'container-id': data['container-id'],
+      }))
+    })
   }
-};
-
-
-{# refresh logs #}
-$("div[id^=containerInfoModal-]").on('shown.bs.modal', function() {
-  if (containerSocket.readyState != 1) {
-    console.log("Socket not open: " + containerSocket.readyState);
-    containerSocket = open_ws('{{ wss_container }}', ws_callback);
+  if ('podlog' in data) {
+    $("#logs").text(data['podlog'])
   }
-  var containerid = $( this ).attr('id').split('-', 2)[1];
-  spinner_state('log', containerid, false);
-  console.log( "log for container: " + containerid );
-  containerSocket.send(JSON.stringify({
-    'command': 'container-log',
-    'container-id': containerid,
-  }));
+}
+
+{# catch submit event, in order to fill properly the share volume information #}
+$("#container-manage").submit(function (e) {
+  bind_project_ids = $.map($("input[id^=projecttoggler-]"), function (k, v) { if ($(k).prop('checked')) { return $(k).val() } }); 
+  bind_course_ids = $.map($("input[id^=coursetoggler-]"), function (k, v) { if ($(k).prop('checked')) { return $(k).val() } }); 
+  bind_volume_ids = $.map($("input[id^=volumetoggler-]"), function (k, v) { if ($(k).prop('checked')) { return $(k).val() } }); 
+  $("#id_container_config").val(JSON.stringify( {
+    'user_id': {{ user.id }},
+    'container_id': $("#containerid").val(),
+    'bind_project_ids': bind_project_ids,
+    'bind_course_ids': bind_course_ids,
+    'bind_volume_ids': bind_volume_ids
+  }))
+	alert($("#id_container_config").val())
+});
+
+{# catch modal close event #}
+click_x = false
+$("#containerInfoModal").on("hidden.bs.modal", function (ev, o) {
+  url_list = '{{ url_list }}#'
+  if (click_x) {
+    click_x = false
+    if (! window.location.href.endsWith(url_list)) {
+      window.location.href = url_list
+    }
+  } else {
+    if (! window.location.href.endsWith(url_list)) {
+      if (confirm('Are you sure you want to discard changes?')) {
+        window.location.href = url_list
+      } else {
+        $("#containerInfoModal").modal("show")
+      }
+    }
+  }
 });
 
 {# start/restart/stop/open a container, or refresh log clicked in the modal #}
@@ -153,7 +199,7 @@ function is_running(w) {
 }
 
 {# when mouse enters the clickable part of the card change the cursor to pointer #}
-$("div[id^=click-]").mouseenter(function() {
+$("[id^=click-]").mouseenter(function() {
   if (is_running(this)) {
     $( this ).css("cursor", "pointer");
   }
@@ -162,9 +208,37 @@ $("div[id^=click-]").mouseenter(function() {
 {# clickng the card header/body opens the environment #}
 $("div[id^=click-]").click(function() {
   if (is_running(this)) {
-    open_container( $( this ).attr("id").split("-", 3)[2] );
+    open_container( $( this ).attr("id").split("-", 3)[2] )
   }
-});
+})
+
+//FIXME: maybe this is something to be put in common
+{# make sure socket is open #}
+function check_sock(sock, wss, callback) {
+  if (sock.readyState != 1) {
+    console.log("Socket not open: " + sock.readyState)
+    sock = open_ws(wss, callback)
+    console.log("and now: " + sock.readyState)
+  }
+  return sock
+}
+
+{# handle container configuration #}
+function configure(cid) {
+  s = check_sock(containerSocket, '{{ wss_container }}', ws_callback)
+  s.send(JSON.stringify({
+    'command': 'configure',
+    'container-id': cid,
+  }));
+	containerSocket = s
+}
+
+//  {# clickng the card header/body opens the environment #}
+//  $("div[id^=click-]").click(function() {
+//    if (is_running(this)) {
+//      open_container( $( this ).attr("id").split("-", 3)[2] );
+//    }
+//  });
 
 </script>
 {% endblock %}

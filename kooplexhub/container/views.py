@@ -28,9 +28,10 @@ KOOPLEX = settings.KOOPLEX
 
 logger = logging.getLogger(__name__)
 
+
 class ContainerView(LoginRequiredMixin, generic.FormView):
     model = Container
-    template_name = 'container_configure.html'
+    template_name = 'container.html'
     form_class = FormContainer
     success_url = '/hub/container_environment/list/' #FIXME: django.urls.reverse or shortcuts.reverse does not work reverse('project:list')
 
@@ -47,8 +48,12 @@ class ContainerView(LoginRequiredMixin, generic.FormView):
         context['submenu'] = 'configure' if container_id else 'new' 
         context['active'] = self.request.COOKIES.get('configure_env_tab', 'meta') if container_id else 'meta'
         context['url_post'] = reverse('container:configure', args = (container_id, )) if container_id else reverse('container:new')
-        context['wss_container'] = KOOPLEX.get('hub', {}).get('wss_monitor', 'wss://localhost/hub/ws/node_monitor/')
+        context['url_list'] = reverse('container:list')
+        context['wss_container'] = KOOPLEX.get('hub', {}).get('wss_container', 'wss://localhost/hub/ws/container_environment/{userid}/').format(userid = self.request.user.id)
+        context['wss_monitor'] = KOOPLEX.get('hub', {}).get('wss_monitor', 'wss://localhost/hub/ws/node_monitor/')
         context['container_id'] = container_id
+        context['containers'] = Container.objects.filter(user = self.request.user).order_by('name')
+        context['partial'] = 'container_partial_list.html'
         return context
 
     def get_form_kwargs(self):
@@ -64,6 +69,10 @@ class ContainerView(LoginRequiredMixin, generic.FormView):
         container_config = form.cleaned_data.pop('container_config')
         assert user.id == container_config['user_id']
         container_id = container_config['container_id']
+        #FIXME:
+        if container_id == 'None':
+            container_id = None
+        ##
         msgs = []
         if container_id:
             container = Container.objects.get(id = container_id)
@@ -162,6 +171,8 @@ class ContainerListView(LoginRequiredMixin, generic.ListView):
         context['submenu'] = 'list'
         context['partial'] = 'container_partial_list.html'
         context['wss_container'] = KOOPLEX.get('hub', {}).get('wss_container', 'wss://localhost/hub/ws/container_environment/{userid}/').format(userid = self.request.user.id)
+        context['wss_monitor'] = KOOPLEX.get('hub', {}).get('wss_monitor', 'wss://localhost/hub/ws/node_monitor/')
+        context['url_list'] = reverse('container:list')
         context['empty_body'] = format_html(f"""You need to <a href="{l}"><i class="bi bi-boxes"></i><span>&nbsp;create</span></a> environments in order to use the hub.""")
         return context
 

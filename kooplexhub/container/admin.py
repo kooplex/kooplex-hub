@@ -31,5 +31,3 @@ class ProxyAdmin(admin.ModelAdmin):
 @admin.register(EnvVarMapping)
 class EnvVarMappingAdmin(admin.ModelAdmin):
     list_display = ('id', 'image', 'name', 'valuemap')
-
-

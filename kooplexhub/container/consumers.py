@@ -3,10 +3,13 @@ import json
 import threading
 
 from channels.generic.websocket import WebsocketConsumer
+from django.utils.html import format_html
 
 from container.models import Container
 
 from container.lib.kubernetes import CE_POOL
+from container.forms import FormContainer
+from django.template.loader import render_to_string
 from .lib import Cluster
 
 logger = logging.getLogger(__name__)
@@ -91,11 +94,22 @@ class ContainerConsumer(WebsocketConsumer):
     def receive(self, text_data):
         parsed = json.loads(text_data)
         logger.debug(parsed)
-        command = parsed.get('command')
         cid = int(parsed.get('container-id'))
         container = self.get_container(cid)
+        command = parsed.get('command')
+        if command is None:
+            #FIXME: lecsukni a kapcsolatot?
+            pass
+        elif command == 'configure':
+            # request to configure
+            self.handle_configuration(container)
+        else:
+            # request to kube backend
+            self.handle_commands(container, command)
+
+    def handle_commands(self, container, command):
         resp = {
-            'container-id': cid,
+            'container-id': container.id,
         }
         if command == 'container-log':
             resp.update( container.check_state(retrieve_log = True) )
@@ -104,7 +118,28 @@ class ContainerConsumer(WebsocketConsumer):
         elif command in [ 'start', 'stop', 'restart' ]:
             f = getattr(container, command)
             ev = f()
-            self.inspect(cid, ev)
+            self.inspect(container.id, ev)
+
+    def handle_configuration(self, container):
+        from django.urls import reverse
+        from .lib import Cluster
+        from kooplexhub.settings import KOOPLEX
+        api = Cluster()
+        api.query_nodes_status()
+
+        modal = render_to_string('container_configure.html', { 
+            'container': container,
+            'wss_monitor': KOOPLEX.get('hub', {}).get('wss_monitor', 'wss://localhost/hub/ws/node_monitor/'),
+            'form': FormContainer(initial = { 'user': self.scope['user'] }, instance = container, nodes = list(api.node_df['node'].values)),
+        })
+
+        self.send(text_data = json.dumps({
+            'configure': 'container', 
+            'container-id': container.id,
+            'w_modal': modal,
+            'action': reverse('container:configure', args = [container.id])
+        }))
+
 
 
 class MonitorConsumer(WebsocketConsumer):

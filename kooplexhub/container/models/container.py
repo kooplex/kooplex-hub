@@ -47,6 +47,7 @@ class Container(models.Model):
     launched_at = models.DateTimeField(null = True, blank = True)
     start_teleport = models.BooleanField(default = False)
     start_ssh = models.BooleanField(default = False)
+    start_seafile = models.BooleanField(default = False)
 
     state = models.CharField(max_length = 16, choices = ST_LOOKUP.items(), default = ST_NOTPRESENT)
     restart_reasons = models.CharField(max_length = 500, null = True, blank = True)
@@ -168,6 +169,19 @@ class Container(models.Model):
 #FIXME:        from .versioncontrol import VCProjectContainerBinding
 #FIXME:        return [ binding.vcproject for binding in VCProjectContainerBinding.objects.filter(service = self) ]
 
+    @property
+    def mount_cloud(self):
+        mc = {'url' : 'https://seafile.vo.elte.hu/seafdav',
+                'pw' :'vmi' }
+        # Should iterate over the cloud service parameters
+        envs = [
+            {'name': "WEBDRIVE_USERNAME", "value": "seafile-email"}, 
+            {'name': "WEBDRIVE_PASSWORD_FILE", "value": "/.davfssecrets/.davfs"}, 
+            {'name': "WEBDRIVE_MOUNT", "value": "/v/cloud-seafile.vo.elte.hu"}, 
+            {'name': "WEBDRIVE_URL", "value": "https://seafile.vo.elte.hu/seafdav"}, #FIXME Hardcoded
+            {'name': "OWNER", "value": "1029"}, 
+            ]
+        return None
 
     @property
     def volumes(self):

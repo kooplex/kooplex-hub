@@ -231,7 +231,10 @@ def log_job(namespace, user, label):
 def save_token(namespace, user, token):
     config.load_kube_config(kube.get('kubeconfig', '/root/.kube/config'))
     api_core = CoreV1Api()
-    token_store = KOOPLEX.get('kubernetes', {}).get('job_tokens', 'job-tokens')
+    #KeyError miatt cseréltem vissza FIXME: toroljuk a kommentet, ha igy is jo
+    #token_store =KOOPLEX['kubernetes']['jobs'].get("token_name","job-token")
+    token_store = KOOPLEX.get('kubernetes', {}).get('jobs', {}).get('token_name', 'job-tokens')
+    print(token_store)
     secrets = api_core.read_namespaced_secret(namespace=namespace, name=token_store)
     secrets.data[user] = base64.b64encode(token.encode()).decode()
     api_core.replace_namespaced_secret(namespace=namespace, name=token_store, body=secrets)

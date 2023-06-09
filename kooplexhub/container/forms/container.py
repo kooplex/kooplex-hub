@@ -194,6 +194,10 @@ class FormContainer(forms.ModelForm):
         for att in ['node', 'cpurequest', 'memoryrequest', 'gpurequest' ]:
             cleaned_data.pop(f'{att}_old')
         containerid = extra.get('container_id')
+        #FIXME:
+        if containerid == 'None':
+            containerid = None
+        ##
         userid = extra.get('user_id')
         user = User.objects.get(id = userid)
         containername = cleaned_data.get('name')

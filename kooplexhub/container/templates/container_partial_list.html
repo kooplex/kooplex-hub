@@ -5,9 +5,8 @@
 {# the environment cards, buttonbar is shown on mouse over #}
 <div
   class="bg-image card shadow-1-strong border border-2 mb-3 border-warning"
-  style="background-image: url('{% static 'dockercontainerbg.jpg' %}'); max-width: 560px; height: 300px; background-color: #2a69a833; background-blend-mode: darken; background-size: cover;"
+  style="background-image: url('{% static 'dockercontainerbg.jpg' %}'); {#max-width: 560px; height: 300px; #} background-color: #2a69a833; background-blend-mode: darken; background-size: cover;"
 >
-{{ container.running }}
   <input type="hidden" id="container-shown-{{ container.id }}" value="true">
   <input type="hidden" id="container-search-{{ container.id }}" value="{{ container.search }}">
   <input type="hidden" id="container-match-{{ container.id }}" value="true">
@@ -19,27 +18,23 @@
   {% elif container.image.imagetype == container.image.TP_API %}
   <div class="card-header bg-danger bg-opacity-75 border-bottom border-warning border-1 border-opacity-50" id="click-containerhead-{{ container.id }}"></div>
   {% endif %}
-    <h5 class="card-title fw-bold" >{{ container.name|truncatechars:45 }}</h5>
+    {% container_name container %}
   </div>
-    <div class="card-body text-dark fw-bold" id="click-containerbody-{{ container.id }}">
-      <p class="card-text">
-          {% container_image container %}
-          {% container_state container %}
-	  <img src="{{ container.image.thumbnail.img_src }}" alt="{{ container.image.thumbnail.name }}" height="50" style="display: flex;float: inline-end;">
-      </p>
-      <p class="card-text">
-          {% container_resources container %}
-      </p>
-      <p class="card-text">
-	  {% projects projects=container.projects %}
-	  {% courses courses=container.courses %}
-	  {% volumes volumes=container.volumes %}
-	  {% attachments attachments=container.attachments %}
-	  {% report container.report %} {# FIXME: handle report and other images in the same list #}
-	  {% synchfolders container %}  {# FIXME: check implementation when seafile integrated #}
-	  {% repos container %}         {# FIXME: check implementation when gitea integrated #}
-	  {% ifempty container %}
-      </p>
+  <div class="card-body text-dark fw-bold" id="click-containerbody-{{ container.id }}">
+    <p class="card-text">
+        {% container_image container %}
+        {% container_state container %}
+        <img src="{{ container.image.thumbnail.img_src }}" alt="{{ container.image.thumbnail.name }}" height="50" style="display: flex;float: inline-end;">
+    </p>
+    <p class="card-text">
+        {% container_resources container %}
+    </p>
+    <p class="card-text">
+        {% container_mounts container %}
+    </p>
+    <p class="card-text">
+        {% ifempty container %}
+    </p>
     <p class="card-text">
       {% container_restart_reason container %}
     </p>
@@ -51,7 +46,6 @@
           <div>{% button_start_open container %}</div>
           <div class="ms-2">{% button_restart container %}</div>
           <div class="ms-2">{% button_stop container %}</div>
-          <div class="ms-2">{% button_refreshlog container modal_prefix="containerInfoModal-" %}</div>
         </div>
         <div class="d-flex flex-row justify-content-end">
           <div>{% button_configure container %}</div>
@@ -61,22 +55,3 @@
   </div>
 </div>
 
-{# a modal to visit container logs #}
-<div class="modal fade" id="containerInfoModal-{{ container.id }}" tabindex="-1" aria-labelledby="containerInfoModal-{{ container.id }}" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">{{ container.name }}</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <p class="card-text" id="container-summary-{{ container.id }}">Retrieving information...</p>
-        <p class="card-text bg-secondary overflow-scroll" style="max-height: 500px;" id="container-logmessage-{{ container.id }}">Be patient...</p>
-      </div>
-      <div class="modal-footer">
-	{# refresh button #}
-        {% button_refreshlog container %}
-      </div>
-    </div>
-  </div>
-</div>

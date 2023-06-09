@@ -1,4 +1,4 @@
-{% extends "container_layout.html" %}
+{#% extends "container_layout.html" %#}
 {% load container_buttons %}
 {% load render_table from django_tables2 %}
 {% load extras %}
@@ -8,115 +8,75 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/css/bootstrap5-toggle.min.css" rel="stylesheet">
 {% endblock %}
 
-
-{% block bodycontent %}
-<div class="container card shadow p-3 mt-3 mb-3 bg-light rounded">
-  <form id="container-manage" class="form-horizontal was-validated" action="{{ url_post }}" method="post">
-  {% csrf_token %}
-    {% title_with_button "You are now configuring <em>" container.name "</em> environment" %}
+<div id="containerInfoModal-content">
+  <div class="modal-header">
+  {% if container.id %}
+    <h5 class="modal-title">Configuring environment {{container.name}}</h5>
+  {% else %}
+    <h5 class="modal-title">Create environment</h5>
+  {% endif %}
+    <button onclick="click_x=true" type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+  </div>
+  <div class="modal-body" id="containerInfoModal-body">
     <ul class="nav nav-tabs" id="serviceConfigTabs" role="tablist">
       <li class="nav-item" role="presentation">
-        <a class="nav-link mytab {% if active == "meta" %}active{% endif %}" id="tab-meta" data-bs-toggle="tab" href="#meta" role="tab" aria-controls="meta" aria-selected="{% if active == "meta" %}true{% else %}false{% endif %}">Name/Resources</a>
-      </li>
-  {% if app_project_installed %}
-      <li class="nav-item" role="presentation">
-        <a class="nav-link mytab {% if active == "projects" %}active{% endif %}" id="tab-projects" data-bs-toggle="tab" href="#projects" role="tab" aria-controls="projects" aria-selected="{% if active == "projects" %}true{% else %}false{% endif %}">Projects</a>
-      </li>
-  {% endif %}
-  {% if app_education_installed %}
-      <li class="nav-item" role="presentation">
-        <a class="nav-link mytab {% if active == "courses" %}active{% endif %}" id="tab-courses" data-bs-toggle="tab" href="#courses" role="tab" aria-controls="courses" aria-selected="{% if active == "courses" %}true{% else %}false{% endif %}">Courses</a>
-      </li>
-  {% endif %}
-  {% if app_volume_installed %}
-      <li class="nav-item" role="presentation">
-        <a class="nav-link mytab {% if active == "volumes" %}active{% endif %}" id="tab-volumes" data-bs-toggle="tab" href="#volumes" role="tab" aria-controls="volumes" aria-selected="{% if active == "volumes" %}true{% else %}false{% endif %}">Storage</a>
-      </li>
-  {% endif %}
-  {% if app_plugin_installed %}
-      <li class="nav-item" role="presentation">
-        <a class="nav-link {% if active == "filesync" %}active{% endif %}" id="tab-filesync" data-bs-toggle="tab" href="#filesync" role="tab" aria-controls="filesync" aria-selected="{% if active == "filesync" %}true{% else %}false{% endif %}">Synchronized files</a>
+        <a class="nav-link mytab active" id="tab-meta" data-bs-toggle="tab" href="#meta" role="tab" aria-controls="meta" aria-selected="true">Name/Resources</a>
       </li>
       <li class="nav-item" role="presentation">
-        <a class="nav-link {% if active == "versioncontrol" %}active{% endif %}" id="tab-versioncontrol" data-bs-toggle="tab" href="#versioncontrol" role="tab" aria-controls="versioncontrol" aria-selected="{% if active == "versioncontrol" %}true{% else %}false{% endif %}">Version control</a>
+        <a class="nav-link mytab" id="tab-projects" data-bs-toggle="tab" href="#projects" role="tab" aria-controls="projects" aria-selected="false">Projects</a>
       </li>
-  {% endif %}
-  {% if container.id %}
-      <li class="nav-item {% if active == "delete" %}active{% endif %}" role="presentation" aria-selected="{% if active == "delete" %}true{% else %}false{% endif %}">
+      <li class="nav-item" role="presentation">
+        <a class="nav-link mytab" id="tab-courses" data-bs-toggle="tab" href="#courses" role="tab" aria-controls="courses" aria-selected="false">Courses</a>
+      </li>
+      <li class="nav-item" role="presentation">
+        <a class="nav-link mytab" id="tab-volumes" data-bs-toggle="tab" href="#volumes" role="tab" aria-controls="volumes" aria-selected="false">Storage</a>
+      </li>
+
+      {% if container.id %}
+      <li class="nav-item" role="presentation" aria-selected="false">
+        <a class="nav-link mytab text-info" id="tab-logs" data-bs-toggle="tab" href="#logs" role="tab" aria-controls="logs" aria-selected="false">Logs</a>
+      </li>
+      <li class="nav-item" role="presentation" aria-selected="false">
         <a class="nav-link mytab text-danger" id="tab-delete" data-bs-toggle="tab" href="#delete" role="tab" aria-controls="delete" aria-selected="false">Delete</a>
       </li>
-  {% endif %}
+      {% endif %}
     </ul>
-  
+
     <div class="tab-content" id="serviceConfigTabContent">
-      <div class="tab-pane fade {% if active == "meta" %}show active{% endif %}" id="meta" role="tabpanel" aria-labelledby="tab-meta">
+      <div class="tab-pane fade show active" id="meta" role="tabpanel" aria-labelledby="tab-meta">
         {% include 'widget_form_image.html' %}
       </div>
-  
-  {% if app_project_installed %}
-      <div class="tab-pane fade {% if active == "projects" %}show active{% endif %}" id="projects" role="tabpanel" aria-labelledby="tab-projects">
+      <div class="tab-pane fade" id="projects" role="tabpanel" aria-labelledby="tab-projects">
         {# fixme: add project search bar #}
         {% render_table form.t_projects %}
       </div>
-  {% endif %}
-      
-  {% if app_education_installed %}
-      <div class="tab-pane fade {% if active == "courses" %}show active{% endif %}" id="courses" role="tabpanel" aria-labelledby="tab-coursess">
+      <div class="tab-pane fade" id="courses" role="tabpanel" aria-labelledby="tab-coursess">
         {% render_table form.t_courses %}
       </div>
-  {% endif %}
-  
-  {% if app_volume_installed %}
-      <div class="tab-pane fade {% if active == "volumes" %}show active{% endif %}" id="volumes" role="tabpanel" aria-labelledby="tab-volumes">
+      <div class="tab-pane fade" id="volumes" role="tabpanel" aria-labelledby="tab-volumes">
         {% render_table form.t_volumes %}
       </div>
-  {% endif %}
-  
-  {% if app_plugin_installed %}
-      <div class="tab-pane fade {% if active == "filesync" %}show active{% endif %}" id="filesync" role="tabpanel" aria-labelledby="tab-filesync">
-        <h5 class="card-title">Select synchronized libraries to associate with the service environment</h5>
-        {% render_table t_synclibs %}
+      {% if container.id %}
+      <div class="tab-pane fade" id="logs" role="tabpanel" aria-labelledby="tab-logs">
+        Retrieving logs...
       </div>
-  
-      <div class="tab-pane fade {% if active == "versioncontrol" %}show active{% endif %}" id="versioncontrol" role="tabpanel" aria-labelledby="tab-vc">
-        <h5 class="card-title">Select version control repositores to associate with the service environment</h5>
-        {% render_table t_repositories %}
-      </div>
-  {% endif %}
-  {% if container.id %}
-      <div class="tab-pane fade {% if active == "delete" %}show active{% endif %}" id="delete" role="tabpanel" aria-labelledby="tab-delete">
+      <div class="tab-pane fade" id="delete" role="tabpanel" aria-labelledby="tab-delete">
         <p>Delete your container by clicking the dustbin...</p>
         {% button_delete_container container %}
       </div>
-  {% endif %}
+      {% endif %}
     </div>
-  
-  </form>
+  </div>
+  <div class="modal-footer"><button type="submit" class="btn btn-warning" name="button" value="apply"><i class="bi bi-save"></i>&nbsp;Save all changes</button></div>
 </div>
-{% endblock %}
 
 
 {% block scripts %}
 <script>
-{# catch submit event, in order to fill properly the share volume information #}
-$("#container-manage").submit(function (e) {
-  bind_project_ids = $.map($("input[id^=projecttoggler-]"), function (k, v) { if ($(k).prop('checked')) { return $(k).val() } }); 
-  bind_course_ids = $.map($("input[id^=coursetoggler-]"), function (k, v) { if ($(k).prop('checked')) { return $(k).val() } }); 
-  bind_volume_ids = $.map($("input[id^=volumetoggler-]"), function (k, v) { if ($(k).prop('checked')) { return $(k).val() } }); 
-  $("#id_container_config").val(JSON.stringify( {
-    'user_id': {{ user.id }},
-    'container_id': "{{ container.id }}",
-    'bind_project_ids': bind_project_ids,
-    'bind_course_ids': bind_course_ids,
-    'bind_volume_ids': bind_volume_ids
-  }));
-});
-
-containerSocket = open_ws('{{ wss_container }}', ws_callback);
 
 {# handle websocket callback #}
-function ws_callback(data) {
-  //console.log(data);
+function monitor_callback(data) {
+  console.log(data);
   command = data['command'];
   msg = data['message'];
   containerid = data['container-id'];
@@ -147,37 +107,34 @@ function ws_callback(data) {
         if ($(this).attr("max") > 0) {
           $(this).attr('disabled', false ) 
         }
-      });
+      })
     }
   }
-};
+}
+
+$(document).ready(function() {
+  monitorSocket = open_ws('{{ wss_monitor }}', monitor_callback)
+  $("select[name='node']").change()
+})
 
 {# when node selection changes, retrieve node details #}
 $("select[name='node']").change(function() {
-  $( "select[name='node'] option:selected" ).each(function() {
-    node = $(this).attr("value");
-    if (containerSocket.readyState != 1) {
-      console.log("Socket not open: " + containerSocket.readyState);
-      containerSocket = open_ws('{{ wss_container }}', ws_callback);
-    }
-    containerSocket.send(JSON.stringify({
-      'command': 'monitor-node',
-      'node': node,
-    }));
-    $("#busybar").removeClass("d-none");
-    $("input[name$='request'").each(function() { $(this).attr('disabled', true ) });
-  });
-}).change();
+	console.log("hook")
+ $( "select[name='node'] option:selected" ).each(function() {
+   node = $(this).attr("value")
+   if (monitorSocket.readyState != 1) {
+     console.log("Socket not open: " + monitorSocket.readyState)
+     monitorSocket = open_ws('{{ wss_monitor }}', monitor_callback)  //FIXME
+   }
+   monitorSocket.send(JSON.stringify({
+     'command': 'monitor-node',
+     'node': node,
+   }))
+   $("#busybar").removeClass("d-none")
+   $("input[name$='request'").each(function() { $(this).attr('disabled', true ) })
+ })
+})//.change()
 
-{# save active tab in a cookie #}
-$("#serviceConfigTabs li a").on("click", function () {
-  tab = $( this ).attr("id").split('-')[1]
-  console.log( tab )
-  if (tab != "delete") {
-    $.cookie("configure_env_tab", tab, { 'path': '/;SameSite=Strict', 'secure': true });
-  }
-});
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/js/bootstrap5-toggle.min.js"></script>
 {% endblock %}
-
