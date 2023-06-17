@@ -16,22 +16,35 @@ def subpath(report):
 
 
 def dir_reportcandidate(project):
-    from .models import Report
-    list_of_extensions = ["py", "ipynb", "R", "html"]
+    from .models import Report #, ReportType
+    # query from reporttypes the informations below
+    # rts = ReportType.objects.all()
+    # list_of_extensions = []
+    # search_dirs = []
+    # for rt in rts:
+    #   list_of_extensions.extend(rts.list_of_extensions)
+    list_of_extensions = ["py", "ipynb", "R", "html"]   
+    #   search_dirs.extend(rts.search_dirs)
+    search_dirs = ["","_build","_build/html/"] 
     dir_reportprepare = path_report_prepare(project)
-    offset = len(dir_reportprepare) + 1
-    dir_used = [ r.folder for r in Report.objects.filter(project = project) ]
-    abs_path = lambda x: os.path.join(dir_reportprepare, x)
+    #offset = len(dir_reportprepare) + 1
+    #dir_used = [ r.folder for r in Report.objects.filter(project = project) ]
+    #abs_path = lambda x: os.path.join(dir_reportprepare, x)
    # leaves = []
    # for root, _, files in os.walk(dir_reportprepare):
    #     #FIXME: filter files
    #     r = root[offset:]
    #     leaves.extend(list(map(lambda x: os.path.join(r, x), files)))
    # return leaves
+    pp=""
     files = []
-    for rdir in os.listdir(dir_reportprepare):
-        for rfile in filter(lambda c: c.split(".")[-1] in list_of_extensions, os.listdir(os.path.join(dir_reportprepare,rdir))):
-            files.append( os.path.join(rdir,rfile))
+    for sdir in  search_dirs:
+        for rdir in os.listdir(dir_reportprepare):
+            try:
+                for rfile in filter(lambda c: c.split(".")[-1] in list_of_extensions, os.listdir(os.path.join(dir_reportprepare,rdir,sdir))):
+                    files.append( os.path.join(rdir,sdir,rfile))
+            except:
+                continue
     return files
 
 

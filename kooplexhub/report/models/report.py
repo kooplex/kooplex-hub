@@ -33,6 +33,10 @@ class ReportType(models.Model):
     is_static = models.BooleanField(default = True)
     description = models.TextField(max_length = 1000, null = True, default = None)
     #resourcetype_pic = models.ForeignKey(ResourceType, on_delete = models.CASCADE)
+    # which type of files to associate with?
+    #list_of_extensions = ["py", "ipynb", "R", "html"]
+    # where to look for the files?
+    #search_dirs = ["","_build","_build/html/"] 
 
     def __str__(self):
         return self.name

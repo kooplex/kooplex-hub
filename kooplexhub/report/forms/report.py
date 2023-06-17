@@ -73,6 +73,7 @@ class FormReport(forms.ModelForm):
     #)
 
     def __init__(self, *args, **kwargs):
+        from os.path import join
         user = kwargs['initial'].get('user')
         super(FormReport, self).__init__(*args, **kwargs)
         report = kwargs.get('instance', Report())
@@ -87,7 +88,7 @@ class FormReport(forms.ModelForm):
         else:
             for upb in UserProjectBinding.objects.filter(user = user):
                 for folder in dir_reportcandidate(upb.project):
-                    qs.append((f'{upb.project.id}-{folder}', f'{upb.project.name} - {folder.split("/")[0]}: {folder.split("/")[1]}'))
+                    qs.append((f'{upb.project.id}-{folder}', f'{upb.project.name} - {"/".join(folder.split("/")[:-1])}: {folder.split("/")[-1]}'))
         self.fields["user_id"].widget.attrs['value'] = user.id
         self.fields["report_id"].widget.attrs['value'] = report.id
         self.fields["indexfile"].choices = qs

@@ -21,7 +21,12 @@ from api.kube import save_token
 
 @receiver(post_save, sender = Profile)
 def kube_save_token(sender, instance, created, **kwargs):
-    if instance.is_superuser:
-        logger.debug("Admin user %s" % instance)
-        return
+    # FIX_BUG
+    try:
+        if instance.is_superuser:
+            logger.debug("Admin user %s" % instance)
+            return
+    except:
+        pass
+
     save_token(namespace=KOOPLEX.get('kubernetes', {}).get('namespace', 'default'), user=instance.user.username, token=instance.token)

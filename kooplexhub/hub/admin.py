@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from .models import Profile, Note
 from .models import Group, UserGroupBinding
-from .models import Thumbnail, Token
+from .models import Thumbnail, Token#, Service
 
 
 @admin.register(Profile)
@@ -36,5 +36,11 @@ class ThumbnailAdmin(admin.ModelAdmin):
 
 @admin.register(Token)
 class TokenAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name')
+    list_display = ('id', 'value')
+    
+    
+# @admin.register(Service)
+# class ServiceAdmin(admin.ModelAdmin):
+#     list_display = ('id', 'service_type')
+
 

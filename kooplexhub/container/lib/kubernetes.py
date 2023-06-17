@@ -398,8 +398,7 @@ def start(container):
     container_list = []
 
     #FIXME check whether user wants cloud access in notebook
-    #if container.start_seafile:        
-    if 1==1:
+    if container.start_seafile:        
         service = UserSeafileServiceBinding.objects.get(user=container.user, service=SeafileService.objects.first()).service
         c, vs, vms = create_sidecar_davfs(container, service)
         container_list.append(c)
