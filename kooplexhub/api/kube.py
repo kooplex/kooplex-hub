@@ -13,10 +13,14 @@ from kooplexhub.settings import KOOPLEX
 
 kube = KOOPLEX.get('kubernetes', {})
 
-config.load_kube_config(kube.get('kubeconfig_job', '/root/.kube/config'))
+config.load_kube_config() #kube.get('kubeconfig_job', '/root/.kube/config'))
 api_batch = BatchV1Api()
 api_core = CoreV1Api()
 
+def namespaces():
+    yield KOOPLEX.get('kubernetes', {}).get('namespace', 'default')
+    yield KOOPLEX.get('kubernetes', {}).get('jobs', {}).get('namespace', 'jobs')
+    
 
 def _job_pods(namespace, user, label):
     for pod in api_core.list_namespaced_pod(namespace = namespace).items:
@@ -227,14 +231,27 @@ def log_job(namespace, user, label):
             logs.append(oops["message"])
     return logs
 
+def get_or_create_empty_user_secret(user):
+    for ns in namespaces():
+        try:
+            secret = api_core.read_namespaced_secret(namespace=ns, name=user.username)
+        except exceptions.ApiException:
+            secret = api_core.create_namespaced_secret(namespace=ns, body=V1Secret(metadata={'name':user.username}))
+    return secret
+    
+def update_user_secret(user, token):
+    for ns in namespaces():
+        logger.debug(f"{user},{ns},{token}")
+        secret = api_core.read_namespaced_secret(namespace=ns, name=user.username)
+        if not secret.data or not secret.data.get(list(token.keys())[0]):
+                secret.string_data = token
+                #logger.debug(f"{token}, {secret}")
+                api_core.patch_namespaced_secret(namespace=ns, name=user.username, body=secret)
+    
+def check_user_secret(user, token_key):
+    for ns in namespaces():
+        logger.debug(f"{user},{ns},{token_key}")
+        secret = api_core.read_namespaced_secret(namespace=ns, name=user.username)
+        if secret.data.get(token_key):
+            return True
 
-def save_token(namespace, user, token):
-    config.load_kube_config(kube.get('kubeconfig', '/root/.kube/config'))
-    api_core = CoreV1Api()
-    #KeyError miatt cseréltem vissza FIXME: toroljuk a kommentet, ha igy is jo
-    #token_store =KOOPLEX['kubernetes']['jobs'].get("token_name","job-token")
-    token_store = KOOPLEX.get('kubernetes', {}).get('jobs', {}).get('token_name', 'job-tokens')
-    print(token_store)
-    secrets = api_core.read_namespaced_secret(namespace=namespace, name=token_store)
-    secrets.data[user] = base64.b64encode(token.encode()).decode()
-    api_core.replace_namespaced_secret(namespace=namespace, name=token_store, body=secrets)

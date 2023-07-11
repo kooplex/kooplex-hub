@@ -36,7 +36,7 @@ def container_needs_restart(sender, instance, **kwargs):
         return
     old = Container.objects.get(id = instance.id)
     chg = []
-    for a in [ 'node', 'cpurequest', 'gpurequest', 'memoryrequest', 'idletime', 'image', 'start_teleport' ]:
+    for a in [ 'node', 'cpurequest', 'gpurequest', 'memoryrequest', 'idletime', 'image', 'start_teleport', 'start_seafile' ]:
         if getattr(old, a) != getattr(instance, a):
             chg.append(a)
     if chg:

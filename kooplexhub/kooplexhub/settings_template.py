@@ -48,23 +48,23 @@ ALLOWED_HOSTS = [
 
 SERVERNAME=""
 FQDN="https://"+SERVERNAME
-FQDN_AUTH=""
+FQDN_AUTH=FQDN
+URL_AUTH=f'{FQDN_AUTH}/oauth'
 URL_MANUAL="https://xwiki.vo.elte.hu/en/kooplex-manual"
 manual_mapping = {
     'volume': 'folderstructure#volume',
 }
 
-
-URL_PROFILE = f'https://{FQDN_AUTH}/oauth/profile'
-URL_ACCOUNTS_PROFILE = f'https://{FQDN_AUTH}/oauth/accounts/profile'
-LOGIN_URL = ''
-LOGOUT_URL = ''
+URL_PROFILE = f'{URL_AUTH}/profile'
+URL_ACCOUNTS_PROFILE = f'{URL_AUTH}/accounts/profile'
+LOGIN_URL = f'{FQDN}/hub/oauth/login/kooplex'
+LOGOUT_URL = f'{FQDN}/hub/logout'
 SOCIAL_AUTH_KOOPLEX_KEY = ''
 SOCIAL_AUTH_KOOPLEX_SECRET = ''
 SOCIAL_AUTH_USER_FIELDS = [ 'username', 'email' ]
 SOCIAL_AUTH_URL_NAMESPACE = 'social'
-KOOPLEX_OID_AUTHORIZATION_URL = ''
-KOOPLEX_OID_ACCESS_TOKEN_URL = ''
+KOOPLEX_OID_AUTHORIZATION_URL = f'{URL_AUTH}/o/authorize/' 
+KOOPLEX_OID_ACCESS_TOKEN_URL =  f'{URL_AUTH}/o/token/' 
 LOGIN_REDIRECT_URL = 'indexpage'
 LOGOUT_REDIRECT_URL = 'indexpage'
 
@@ -90,6 +90,7 @@ INSTALLED_APPS = [
     'education',
     'volume',
     'api',
+    'service',
     'taggit',
 ]
 
@@ -233,6 +234,14 @@ LOGGING = {
             'filename': '/var/log/hub/hub.log',
             'formatter': 'verbose',
         },
+        'restfile': {
+            'level': 'DEBUG',
+            #'class': 'logging.FileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'maxBytes': 1024 * 1024,  # 1 mb
+            'filename': '/var/log/hub/rest.log',
+            'formatter': 'verbose',
+        },
     },
     'loggers': {
         '': {
@@ -246,7 +255,12 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
-   }
+        'kubernetes': {
+            'handlers': ['restfile'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+           }
 }
 
 KOOPLEX = {
@@ -257,15 +271,15 @@ KOOPLEX = {
         'garbage': '/mnt/garbage',
         'scratch': None,
 
-        'project': '/mnt/project',
+        'project': '/mnt/projects',
         
-        'report': '/mnt/report',
+        'report': '/mnt/reports',
         'report_prepare': '/mnt/report_prepare',
 
+        # claim edu
         'course': '/mnt/course',
         'course_workdir': '/mnt/course_workdir',
         'course_assignment': '/mnt/course_assignment',
-
     },
     'hub': {
         'adminemail': '',
@@ -294,7 +308,7 @@ KOOPLEX = {
         },
     },
     'proxy': {
-        'url_api': 'http://proxy:8001/api',
+        'url_api': f"http://proxy.{KUBERNETES_SERVICE_NAMESPACE}:8001/api",
         'auth_token': '',
         'url_internal': 'http://{container.label}:{proxy.port}',
         'notebook_path': 'notebook/{container.label}',
@@ -303,14 +317,19 @@ KOOPLEX = {
         'report_path_open': '/notebook/report/{container.label}/',
         'static_report_path': '/report/{report.id}/{report.indexfile}',
         'static_report_path_open': '/report/{report.id}/{report.indexfile}',
-        'check_container': 'http://proxy:8001/api/routes/notebook/{container.label}',
+        'check_container_path': 'routes/notebook/{container.label}',
     },
+    'seafile': {
+        'url_api': "https://seafile.vo.elte.hu/api2",
+        'admin' : 'kooplex@elte.hu', #FIX_ME
+        'admin_password' : 'Cut3chohSiepa4vu', #FIX_ME
+        },
     'kubernetes': {
         'namespace': '',
         'jobsnamespace': '',
         'job_tokens': '',
         'nslcd': { 'mountPath_nslcd': '/etc/mnt' },
-        'kubeconfig_job': 'kubejobsconfig', 
+        'kubeconfig_job': '/root/.kube/config', 
         'imagePullPolicy': 'Always',
         'resources': {
             "requests": {
@@ -400,6 +419,7 @@ KOOPLEX = {
             'NB_PORT' : '8000', # same es proxy.port
             'REPORT_URL' : 'notebook/report/{container.label}/', # same es KOOPLEX['proxy']['report_path']
             'REPORT_PORT' : '9000', # same es proxy.port
+            'NS_JOBS': f'{KUBERNETES_SERVICE_NAMESPACE}-jobs', # same as kubernetes.jobsnamespace
             },
 }
 

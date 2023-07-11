@@ -120,13 +120,12 @@ def storage_resources(volumes):
 # For Seafile, NextCloud etc WebDAV mounts
 def create_sidecar_davfs(container, service):    
 
-    secret_volume = V1Volume(name="secrets", secret=V1SecretVolumeSource(
-        #secret_name=KOOPLEX['kubernetes']['secrets'].get("name", "secrets"), 
-        secret_name=service.kubernetes_secret_name,
+    secret_item=[V1KeyToPath(key=service.kubernetes_secret_name, path=service.secret_file)]
+    davfs_secret_volume = V1Volume(name="davfs-secrets", secret=V1SecretVolumeSource(
+        secret_name=container.user.username,
         default_mode=0o444, 
-        items=[V1KeyToPath(key=container.user.username, 
-                           path=service.secret_file)]))
-    secret_volume_mount = V1VolumeMount(name="secrets", mount_path=service.secret_mount_dir, read_only=True)
+        items=secret_item))
+    secret_volume_mount = V1VolumeMount(name="davfs-secrets", mount_path=service.secret_mount_dir, read_only=True)
                                     
     empty_volume = V1Volume(name="davfs-seafile-empty-dir", empty_dir=V1EmptyDirVolumeSource(medium="", size_limit="30Gi"))
     empty_volume_mount =  V1VolumeMount(name="davfs-seafile-empty-dir", mount_path=service.mount_dir, mount_propagation = "Bidirectional")
@@ -146,7 +145,8 @@ def create_sidecar_davfs(container, service):
     # It is different in the usercontainer
     host_empty_volume_mount =  V1VolumeMount(name="davfs-seafile-empty-dir", mount_path=service.mount_dir, mount_propagation = "HostToContainer")
     
-    return container, [secret_volume, empty_volume], [host_empty_volume_mount]
+#    return container, [secret_volume, empty_volume], [host_empty_volume_mount]
+    return container, [davfs_secret_volume, empty_volume], [host_empty_volume_mount]
 
 def start(container):
     #event = Event()
@@ -189,19 +189,13 @@ def start(container):
         "name": "nslcd",
         "mountPath": KOOPLEX['kubernetes']['nslcd'].get('mountPath_nslcd', '/etc/mnt'),
         "readOnly": True
-    },
-        V1VolumeMount(name="tokens", mount_path=KOOPLEX['kubernetes']["secrets"].get("mount_dir", "/.secrets"), read_only=True)
+    }
     ]#FIXME: use class objects instead
 #            V1Volume(name="nslcd", config_map=V1ConfigMapVolumeSource(name="nslcd", default_mode=420, items=[V1KeyToPath(key="nslcd", path='nslcd.conf')])),
     volumes = [{
         "name": "nslcd",
         "configMap": { "name": "nslcd", "items": [{"key": "nslcd", "path": "nslcd.conf" }]}
     },
-        V1Volume(name="tokens", secret=V1SecretVolumeSource(secret_name=KOOPLEX['kubernetes']['jobs'].get("token_name","job-token"), 
-                                                            default_mode=0o444, 
-                                                            items=[V1KeyToPath(key=container.user.username, 
-                                                                               path=KOOPLEX['kubernetes']['jobs'].get("token_name","job-token"))]
-                                                            )),#items, change ownership, 0o400: https://stackoverflow.com/questions/49945437/changing-default-file-owner-and-group-owner-of-kubernetes-secrets-files-mounted
     ]  #FIXME: use class objects instead
 
     volume_mounts.append(V1VolumeMount(name="jobtool", mount_path=KOOPLEX['kubernetes']['jobs'].get("jobpy","jobtool")))
@@ -399,11 +393,23 @@ def start(container):
 
     #FIXME check whether user wants cloud access in notebook
     if container.start_seafile:        
-        service = UserSeafileServiceBinding.objects.get(user=container.user, service=SeafileService.objects.first()).service
-        c, vs, vms = create_sidecar_davfs(container, service)
+        ussb, created = UserSeafileServiceBinding.objects.get_or_create(user=container.user, service=SeafileService.objects.first())
+        #FIXME
+#        if check_user_secret
+        c, vs, vms = create_sidecar_davfs(container, ussb.service)
         container_list.append(c)
         volumes.extend(vs)
         volume_mounts.extend(vms)
+
+    secret_items = [V1KeyToPath(key=KOOPLEX['kubernetes']['jobs'].get("token_name","job-token"), path=KOOPLEX['kubernetes']['jobs'].get("token_name","job-token"))]
+    secret_volume = V1Volume(name="main-secrets", secret=V1SecretVolumeSource(secret_name=container.user.username, 
+                                                            default_mode=0o444, 
+                                                            items=secret_items
+                                                            ))#items, change ownership, 0o400: https://stackoverflow.com/questions/49945437/changing-default-file-owner-and-group-owner-of-kubernetes-secrets-files-mounted
+    secret_volumemount = V1VolumeMount(name="main-secrets", mount_path=KOOPLEX['kubernetes']["secrets"].get("mount_dir", "/.secrets"), read_only=True)
+    volume_mounts.append(secret_volumemount)
+
+    volumes.append(secret_volume)
 
     main_container = {
                     "name": container.label,
@@ -414,8 +420,6 @@ def start(container):
                     "imagePullPolicy": KOOPLEX['kubernetes'].get('imagePullPolicy', 'IfNotPresent'),
                     "env": env_variables,
                     "resources": pod_resources,
-                    #"securityContext": V1SecurityContext(run_as_user=1029, privileged= False)          
-                    #V1SecurityContext(capabilities=V1Capabilities(add=cap_add))              
                     }
         
     container_list.append(main_container)

@@ -17,10 +17,10 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-from api.kube import save_token
+from api.kube import get_or_create_empty_user_secret, update_user_secret
 
 @receiver(post_save, sender = Profile)
-def kube_save_token(sender, instance, created, **kwargs):
+def kube_create_token(sender, instance, created, **kwargs):
     # FIX_BUG
     try:
         if instance.is_superuser:
@@ -29,4 +29,9 @@ def kube_save_token(sender, instance, created, **kwargs):
     except:
         pass
 
-    save_token(namespace=KOOPLEX.get('kubernetes', {}).get('namespace', 'default'), user=instance.user.username, token=instance.token)
+    get_or_create_empty_user_secret(user=instance.user)
+    # FIXME
+    # job token to access jobs api
+    token = {'job_token': instance.token}
+    update_user_secret(user=instance.user, token=token)
+

@@ -11,6 +11,7 @@ from ..models import Container, Image
 from project.models import Project
 from volume.models import Volume
 from education.models import Course
+from service.models import SeafileService
 
 from kooplexhub.lib import my_alphanumeric_validator
 from kooplexhub.common import tooltip_attrs
@@ -67,7 +68,7 @@ class myNumberInput(forms.NumberInput):
 class FormContainer(forms.ModelForm):
     class Meta:
         model = Container
-        fields = [ 'user', 'name', 'image', 'node', 'cpurequest', 'gpurequest', 'memoryrequest', 'idletime', 'start_teleport' ]
+        fields = [ 'user', 'name', 'image', 'node', 'cpurequest', 'gpurequest', 'memoryrequest', 'idletime', 'start_teleport', 'start_seafile' ]
 
     container_config = forms.CharField(widget = forms.HiddenInput(), required = False)
     user = forms.CharField(widget = forms.HiddenInput(), required = True)
@@ -144,6 +145,13 @@ class FormContainer(forms.ModelForm):
     start_teleport = forms.BooleanField(
         widget = forms.CheckboxInput(attrs = { 'data-size': 'small', 'data-toggle': 'toggle', 
            'data-on': "<span class='bi bi-door-open'>&nbsp;ssh</span>", 'data-off': "<span class='bi bi-sign-stop'></span>",
+           'data-onstyle': "success", 'data-offstyle': "secondary" }), 
+        required = False,
+    )
+
+    start_seafile = forms.BooleanField(
+        widget = forms.CheckboxInput(attrs = { 'data-size': 'small', 'data-toggle': 'toggle', 
+           'data-on': "<span class='bi bi-door-open'>&nbsp;on</span>", 'data-off': "<span class='bi bi-sign-stop'>&nbsp;off</span>",
            'data-onstyle': "success", 'data-offstyle': "secondary" }), 
         required = False,
     )

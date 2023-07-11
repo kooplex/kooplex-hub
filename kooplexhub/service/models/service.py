@@ -3,12 +3,12 @@ import unidecode
 import os
 
 from django.db import models
-from django.db.models.signals import pre_save #, post_save, pre_delete, post_delete
+from django.db.models.signals import pre_save , post_save#, pre_delete, post_delete
 from django.dispatch import receiver
 
 from django.contrib.auth.models import User
 
-from hub.models.token import Token
+#from hub.models.token import Token
 from kooplexhub.settings import KOOPLEX
 
 #from jsonfield import JSONField
@@ -30,7 +30,7 @@ class SeafileService(models.Model):
     #service_type = models.CharField(max_length = 32, choices = T_LOOKUP.items())
     
     #mount_dir = models.CharField(max_length = 64, null = False) 
-    kubernetes_secret_name = models.CharField(max_length = 64, null = True, default="seafile-secret")
+    kubernetes_secret_name = models.CharField(max_length = 64, null = True, default="seafile-vo-elte-hu")
     url = models.CharField(max_length = 256, null = False)
  
     @property
@@ -63,26 +63,54 @@ class SeafileService(models.Model):
         }   
         return [ {'name':key, "value": val} for key, val in envs_dict.items()]    
         
-    def create_pw(self):
+    # def _check_secret_exists(self, user):
+    #     try:
+    #         secret = v1.read_namespaced_secret(name=self.kubernetes_secret_name, namespace=KOOPLEX['kubernetes'].get('namespace'))
+    #     except client.exceptions.ApiException:
+    #         v1.create_namespaced_secret(body=client.V1Secret(metadata={'name':self.kubernetes_secret_name}), namespace=KOOPLEX['kubernetes'].get('namespace'))
+    #         return
+        
+    # def check_usersecret_exists(self, user):
+    #     try:
+    #         secret = v1.read_namespaced_secret(name=self.kubernetes_secret_name, namespace=KOOPLEX['kubernetes'].get('namespace'))
+    #         user_secret = secret.data.get(username)
+    #         if user_secret:
+    #             return user_secret
+    #         else:
+    #             pw = self.create_pw(user)
+    #             secret.string_data = {user.username: pw}
+    #             v1.patch_namespaced_secret(name=self.kubernetes_secret_name, namespace=KOOPLEX['kubernetes'].get('namespace'), body=body)
+    #     #except client.exceptions.ApiException:
+    #     except:
+    #         v1.create_namespaced_secret(body=client.V1Secret(metadata={'name':self.kubernetes_secret_name}), namespace=KOOPLEX['kubernetes'].get('namespace'))
+    
+    def create_pw(self, user):
+        import requests, pwgen, json, base64
         # Get admin token
-        ### curl -d "username=kooplex@elte.hu" -d "password=Cut3chohSiepa4vu" https://seafile.vo.elte.hu/api2/auth-token/
+        url = os.path.join(KOOPLEX['seafile'].get('url_api'), 'auth-token') + "/"
+        data = {'username': KOOPLEX['seafile'].get('admin'), 'password': KOOPLEX['seafile'].get('admin_password')}
+        resp = requests.post(url=url, data=data)
+        assert resp.ok, "Cannot retrive admin token"
         # create pw for user
-        ### curl  -X PUT -d "password=proba321" -H "Authorization: Token 185f3819c20bf8fa5b169ed30e8d5cbc73c9468c" -H "Accept: application/json; indent=4" https://seafile.vo.elte.hu/api2/accounts/jozsef.steger@ttk.elte.hu/
-        # Then put it among the kubernetes secrets
-        token="proba3211"
+        admin_token = json.loads(resp.content.decode())['token']
+        url = os.path.join(KOOPLEX['seafile'].get('url_api'), 'accounts', user.email) + "/"
+        headers = {'Authorization': f"Token {admin_token}"}
+        # Seafile PW shouldn't be too long
+        token = pwgen.pwgen(12)
+        data = {'password': token}
+        resp = requests.put(url=url, headers=headers, data=data)
         return token
             
-    # @property
-    # def kubernetes_secret_name(self):
-    #     return "seafile-secret"
     
 class UserSeafileServiceBinding(models.Model):  
     user = models.ForeignKey(User, on_delete = models.CASCADE)
     service = models.ForeignKey(SeafileService, on_delete = models.CASCADE)
-    token = models.ForeignKey(Token, on_delete = models.CASCADE, null=True)
+#    token = models.ForeignKey(Token, on_delete = models.CASCADE, null=True)
     
-receiver(pre_save, sender = UserSeafileServiceBinding)
+@receiver(post_save, sender = UserSeafileServiceBinding)
 def create_pw(sender, instance, **kwargs):
-    # FIXME
-    token.objects.get_or_create(value = instance.create_pw())
+    from api.kube import update_user_secret
+    token = {instance.service.kubernetes_secret_name: instance.service.create_pw(instance.user)}
+    update_user_secret(instance.user, token)
+    
     

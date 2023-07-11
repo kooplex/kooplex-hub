@@ -38,6 +38,7 @@ def user_creation(sender, instance, created, **kwargs):
 
 @receiver(pre_delete, sender = User)
 def garbage_user_home(sender, instance, **kwargs):
+    from hub.models import Task
     Task(
         create = True,
         name = f"Garbage home {instance.username}",

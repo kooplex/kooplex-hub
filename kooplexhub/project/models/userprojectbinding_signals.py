@@ -40,11 +40,11 @@ def grantaccess_project(sender, instance, **kwargs):
                 group, group_created = Group.objects.select_for_update().get_or_create(name = instance.groupname, grouptype = Group.TP_PROJECT)
             if group_created:
                 creator = UserProjectBinding.objects.get(project = instance.project, role = UserProjectBinding.RL_CREATOR).user
-                UserGroupBinding.objects.create(user = creator, group = group)
+                UserGroupBinding.objects.get_or_create(user = creator, group = group)
                 acl = { 'groups_rw': [group.id] }
             else:
                 acl = None
-            UserGroupBinding.objects.create(user = instance.user, group = group)
+            UserGroupBinding.objects.get_or_create(user = instance.user, group = group)
         if acl:
             Task(
                 create = True,

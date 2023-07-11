@@ -9,4 +9,4 @@ class SeafileServiceAdmin(admin.ModelAdmin):
 
 @admin.register(UserSeafileServiceBinding)
 class UserSeafileServiceBindingAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'service', 'token')
+    list_display = ('id', 'user', 'service')
