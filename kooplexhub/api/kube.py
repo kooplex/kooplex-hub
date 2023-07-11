@@ -251,7 +251,7 @@ def update_user_secret(user, token):
 def get_user_secrets(user, token_key):
     secrets = {}
     for ns in namespaces():
-        logger.debug(f"{user},{ns},{token_key}")
+        #logger.debug(f"{user},{ns},{token_key}")
         secret = api_core.read_namespaced_secret(namespace=ns, name=user.username)
         secrets[ns] = secret.data.get(token_key)
     return secrets

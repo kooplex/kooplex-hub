@@ -101,7 +101,7 @@ class SeafileService(models.Model):
             # Seafile PW shouldn't be too long
             token = pwgen.pwgen(12)
 
-        logger.debug(f"{token}")
+        #logger.debug(f"{token}")
         # Get admin token
         url = os.path.join(KOOPLEX['seafile'].get('url_api'), 'auth-token') + "/"
         data = {'username': KOOPLEX['seafile'].get('admin'), 'password': KOOPLEX['seafile'].get('admin_password')}
