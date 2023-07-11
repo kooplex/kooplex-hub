@@ -248,10 +248,11 @@ def update_user_secret(user, token):
                 #logger.debug(f"{token}, {secret}")
                 api_core.patch_namespaced_secret(namespace=ns, name=user.username, body=secret)
     
-def check_user_secret(user, token_key):
+def get_user_secrets(user, token_key):
+    secrets = {}
     for ns in namespaces():
         logger.debug(f"{user},{ns},{token_key}")
         secret = api_core.read_namespaced_secret(namespace=ns, name=user.username)
-        if secret.data.get(token_key):
-            return True
+        secrets[ns] = secret.data.get(token_key)
+    return secrets
 

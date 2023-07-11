@@ -5,7 +5,7 @@ from kubernetes import client, config
 from kubernetes.client import *
 
 from hub.models.token import Token
-from service.models.service import SeafileService, UserSeafileServiceBinding
+from service.models.service import SeafileService
 client.rest.logger.setLevel(logging.WARNING)
 from urllib.parse import urlparse
 from threading import Timer, Event, Lock
@@ -393,10 +393,9 @@ def start(container):
 
     #FIXME check whether user wants cloud access in notebook
     if container.start_seafile:        
-        ussb, created = UserSeafileServiceBinding.objects.get_or_create(user=container.user, service=SeafileService.objects.first())
-        #FIXME
-#        if check_user_secret
-        c, vs, vms = create_sidecar_davfs(container, ussb.service)
+        service = SeafileService.objects.first()
+        service.sync_pw(container.user)
+        c, vs, vms = create_sidecar_davfs(container, service)
         container_list.append(c)
         volumes.extend(vs)
         volume_mounts.extend(vms)
