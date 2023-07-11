@@ -284,11 +284,11 @@ KOOPLEX = {
     'hub': {
         'adminemail': '',
         'smtpserver': '',
-        'wss_project': f'wss://{SERVERNAME}/hub/ws/project/{userid}/',
-        'wss_container': f'wss://{SERVERNAME}/hub/ws/container_environment/{userid}/',
-        'wss_monitor': f'wss://{SERVERNAME}/hub/ws/node_monitor/',
-        'wss_assignment': f'wss://{SERVERNAME}/hub/ws/education/{userid}/',
-        'wss_assignment_summary': f'wss://{SERVERNAME}/hub/ws/assignment_summary/{userid}/',
+        'wss_project': 'wss://%s/hub/ws/project/{userid}/'%SERVERNAME,
+        'wss_container': 'wss://%s/hub/ws/container_environment/{userid}/'%SERVERNAME,
+        'wss_monitor': 'wss://%s/hub/ws/node_monitor/'%SERVERNAME,
+        'wss_assignment': 'wss://%s/hub/ws/education/{userid}/'%SERVERNAME,
+        'wss_assignment_summary': 'wss://%s/hub/ws/assignment_summary/{userid}/'%SERVERNAME,
     },
     'ldap': {
         'host': '',
