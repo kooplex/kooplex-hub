@@ -15,7 +15,7 @@ def kill_idle():
     url_path = KOOPLEX.get('proxy', {}).get('check_container_path', 'routes/notebook/{container.label}')
     url = os.path.join(url_api, url_path)
     logger.debug('Checking container idle time...')
-    for c in Container.objects.filter(state = Container.ST_RUNNING):
+    for c in Container.objects.filter(state__in = [Container.ST_RUNNING, Container.ST_NEED_RESTART]):
         try:
             resp = requests.get(url = url.format(container = c))
             last_activity = resp.json()['last_activity']
