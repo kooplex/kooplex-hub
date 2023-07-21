@@ -320,14 +320,21 @@ KOOPLEX = {
         'check_container_path': 'routes/notebook/{container.label}',
     },
     'seafile': {
-        'url_api': "https://seafile.vo.elte.hu/api2",
-        'admin' : 'kooplex@elte.hu', #FIX_ME
-        'admin_password' : 'Cut3chohSiepa4vu', #FIX_ME
+        'url_api': "",
+        'admin' : '', #FIX_ME
+        'admin_password' : '', #FIX_ME
         },
     'kubernetes': {
         'namespace': '',
-        'jobsnamespace': '',
-        'job_tokens': '',
+         'jobs': {'namespace': 'k8plex-test-jobs',
+                 'jobpy': '/etc/jobtool',
+                 'token_name': 'job_token' # This goes where the secrets go
+                 },
+                
+        # place passwords and secrets here
+        'secrets': {'mount_dir' :'/.secrets',
+                    'name' : 'secrets'},
+        
         'nslcd': { 'mountPath_nslcd': '/etc/mnt' },
         'kubeconfig_job': '/root/.kube/config', 
         'imagePullPolicy': 'Always',
