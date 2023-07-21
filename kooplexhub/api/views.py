@@ -105,7 +105,7 @@ def submit(request, job_name):
 
     shared = Q(user = request.user, volume__scope__in = [ Volume.SCP_PRIVATE, Volume.SCP_INTERNAL ])
     public = Q(volume__scope = Volume.SCP_PUBLIC)
-    volumes = { b.volume.id: b.volume.folder for b in UserVolumeBinding.objects.filter(shared | public).filter(volume__is_present = True) }
+    volumes = { b.volume.id: b.volume for b in UserVolumeBinding.objects.filter(shared | public).filter(volume__is_present = True) }
     attachments = { v.id: v.folder for v in Volume.objects.filter(scope = Volume.SCP_ATTACHMENT, is_present = True) }
     auth_volume = lambda v_ids: set([ volumes[v_id] for v_id in v_ids if v_id in volumes ])
     auth_attachment = lambda v_ids: set([ attachments[v_id] for v_id in v_ids if v_id in attachments ])

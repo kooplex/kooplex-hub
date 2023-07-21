@@ -101,7 +101,7 @@ def submit_job(cnf):
                 "subPath": f'projects/{p}',
             })
     if mnt_p:
-        volumes.append(V1Volume(name="project",persistent_volume_claim = V1PersistentVolumeClaimVolumeSource(claim_name= "project", read_only=ro)))
+        volumes.append(V1Volume(name="project",persistent_volume_claim = V1PersistentVolumeClaimVolumeSource(claim_name= "project", read_only=False)))
 
     mnt_a = False
     for As, ro in zip([cnf.get('attachments_rw'), cnf.get('attachments_ro')], [False, True]):
@@ -118,11 +118,10 @@ def submit_job(cnf):
     for vs, ro in zip([cnf.get('volumes_rw'), cnf.get('volumes_ro')], [False, True]):
         for v in vs:
             volume_mounts.append({
-                "name": f"v-{v}",
-                "name": f"v-{v}",
-                "mountPath": f'/v/volumes/{v}',
+                "name": f"v-{v.folder}",
+                "mountPath": f'/v/volumes/{v.folder}',
             })
-            volumes.append(V1Volume(name=f"v-{v}",persistent_volume_claim = V1PersistentVolumeClaimVolumeSource(claim_name= v, read_only=ro)))
+            volumes.append(V1Volume(name=f"v-{v.folder}",persistent_volume_claim = V1PersistentVolumeClaimVolumeSource(claim_name= v.claim, read_only=ro)))
         
     resources = V1ResourceRequirements(
         limits = {
@@ -146,7 +145,7 @@ def submit_job(cnf):
                name=cnf.get('name'), image=cnf.get('image'),
                #FIXME:command=["/bin/bash", "-c", f"/init/initscripts; {cnf.get('command')}" ],
                # image.command
-               command=["/bin/bash", "-c", f"/entrypoint.sh || {cnf.get('command')}" ],
+               command=["/bin/bash", "-c", f"/entrypoint.sh && {cnf.get('command')}" ],
                #command=["/bin/bash", "-c", "sleep infinity" ],
                #FIXME: vegyük ki az entrypoint végét initscriptbe?
                volume_mounts=volume_mounts, image_pull_policy="IfNotPresent", env=env_variables,
@@ -157,7 +156,7 @@ def submit_job(cnf):
     )
 
     if cnf.get('node'):
-        template.spec.node_name = node_name
+        template.spec.node_name = cnf.get('node')
     else:
         template.spec.node_selector = { cnf.get('nodeselector', "default"): "true" }
     spec = V1JobSpec(template=template, ttl_seconds_after_finished=72000)

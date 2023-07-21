@@ -73,7 +73,10 @@ def container_resources(container):
     label = container.label
     usage = pandas.DataFrame(get_pod_usage(container_name=label))
     if usage.shape[0]>1:
-        raise 
+        #FIXME raise
+        used_cpu = -1
+        used_memory = -1
+        used_gpu = -1
     elif usage.shape[0]==1:
         used_cpu = usage["used_cpu"][0]
         used_memory = usage["used_memory"][0]
