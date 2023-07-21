@@ -128,7 +128,7 @@ def _revokeaccess(user, folder):
     logger.info(f"- access revoked on dir {folder} from user {user}")
 
 
-def _grantgroupaccess(group, folder, readonly = False, recursive = False, follow = False):
+def _grantgroupaccess(group, folder, readonly = False, recursive = False, follow = True):
     R = '-R' if recursive else ''
     if isinstance(group, int):
         gid = group
@@ -136,8 +136,9 @@ def _grantgroupaccess(group, folder, readonly = False, recursive = False, follow
         gid = group.groupid
     if acl_backend == 'nfs4':
         acl = 'rXtcy' if readonly else 'rwaDxtcy'
-        flags = 'fdig' if follow else 'g'
-        bash(f'nfs4_setfacl {R} -a A:{flags}:{gid}:{acl} {folder}')
+        bash(f'nfs4_setfacl {R} -a A:g:{gid}:{acl} {folder}')
+        if follow:
+            bash(f'nfs4_setfacl {R} -a A:fdig:{gid}:{acl} {folder}')
     else:
         NotImplementedError(f'_grantaccess acl_backend {acl_backend}')
     logger.info(f"+ access granted on dir {folder} to group {gid}")

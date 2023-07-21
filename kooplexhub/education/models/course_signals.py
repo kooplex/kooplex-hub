@@ -31,28 +31,22 @@ def create_course(sender, instance, **kwargs):
     f_public = course_public(instance)
     _mkdir(f_public)
     grantaccess_group(group_students, f_public, readonly = True)
-    grantaccess_group(group_students, f_public, readonly = True, follow = True)
     grantaccess_group(group_teachers, f_public, readonly = False)
-    grantaccess_group(group_teachers, f_public, readonly = False, follow = True)
 
     f_prepare = course_assignment_prepare_root(instance)
     _mkdir(f_prepare)
     grantaccess_group(group_teachers, f_prepare, readonly = False)
-    grantaccess_group(group_teachers, f_prepare, readonly = False, follow = True)
 
     _mkdir(course_assignment_snapshot(instance))
 
     f_assignment = course_assignment_root(instance)
     _mkdir(f_assignment)
     grantaccess_group(group_students, f_assignment, readonly = True)
-    grantaccess_group(group_students, f_assignment, readonly = True, follow = True)
     grantaccess_group(group_teachers, f_assignment, readonly = True)
-    grantaccess_group(group_teachers, f_assignment, readonly = True, follow = True)
 
     f_correct = assignment_correct_root(instance)
     _mkdir(f_correct)
     grantaccess_group(group_teachers, f_correct, readonly = True)
-    grantaccess_group(group_teachers, f_correct, readonly = True, follow = True)
 
 
 
@@ -80,6 +74,14 @@ def add_usercourse(sender, instance, **kwargs):
     group = instance.course.group_teachers if instance.is_teacher else instance.course.group_students
     UserGroupBinding.objects.get_or_create(user = user, group = group)
 
+# Create UserAssignmentBindings if a new student is added to the course
+#@receiver(post_save, sender = UserCourseBinding)
+#def add_usercourse(sender, instance, **kwargs):
+#    course = instance.course
+#    user = instance.user
+#    assignments = Assignment.objects.filter(course = course)
+#    for ass in assignments:
+#        UserAssignmentBinding.create(user=user, assignment=ass, 
 
 @receiver(pre_delete, sender = UserCourseBinding)
 def delete_usercourse(sender, instance, **kwargs):
