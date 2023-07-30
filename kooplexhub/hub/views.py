@@ -58,7 +58,8 @@ class IndexView(AccessMixin, generic.TemplateView):
                 showlegend=False,
                 plot_bgcolor='rgba(0,0,0,0)',
                 font = dict(size=15, color='lightgray'),
-                title= dict(text=f"Your current CPU usage = {usage['used_cpu'].sum():.1f} () and Memory usage = {usage['used_memory'].sum():.1f}GB ()", font=dict(size=15, color='lightgray'),  yref='paper')
+                #title= dict(text=f"Your current CPU usage = {usage['used_cpu'].sum():.1f}\t\t---\t\tMemory usage = {usage['used_memory'].sum():.1f}GB ", font=dict(size=15, color='lightgray'),  yref='paper')
+                title= dict(text=f"Environment labels", font=dict(size=22, color='lightgray'),  yref='paper', xanchor="right", x=0.65, xref="paper")
             ),
             font=dict(size=16,color='lightgray'),
             legend_x=0,
@@ -81,10 +82,10 @@ class IndexView(AccessMixin, generic.TemplateView):
             xaxis_dtick=20,
             xaxis_ticktext=list(map(lambda x: f"{x:.1f}", -1*arange(-max_cpu,0.001,max_cpu/6))),
             xaxis_tickvals=list(map(lambda x: f"{x:.1f}", arange(-max_cpu,0.001,max_cpu/6))),
-            xaxis_title="<b>CPU usage</b>",
+            xaxis_title=f"<b>Total CPU {usage['used_cpu'].sum():.1f}</b>",
             #xaxis_fixedrange=True,
             # xaxis2
-            xaxis2_title="<b>Memory usage [GB]</b>",
+            xaxis2_title=f"<b>Total Memory {usage['used_memory'].sum():.1f} [GB]</b>",
             showlegend=False,
             xaxis2_ticktext=list(map(lambda x: f"{x:.1f}", arange(0,max_memory,max_memory/10))),
             xaxis2_tickvals=list(map(lambda x: f"{x:.1f}", arange(0,max_memory,max_memory/10))),
@@ -102,9 +103,9 @@ class IndexView(AccessMixin, generic.TemplateView):
             )
         
         div_cpumem = fig.to_image(format="svg").decode()
-        div_gpu = fig.to_image(format="svg").decode()
+        div_gpu = '<br/> <h2 style="font-family: \'Open Sans\', verdana, arial, sans-serif; font-size: 19px; text-align: center; margin: 20px; color: rgb(211, 211, 211); opacity: 1; font-weight: normal; white-space: pre;">Currently using <strong>%s GPUs</strong></h2>'%usage["used_gpu"].sum()
 
-        return '<div class="m-0 p-0 align-items-center justify-content-center">'+div_cpumem+div_gpu+'</div>'
+        return '<div class="m-0 p-0 align-items-center justify-content-center" style="text-align: center;">'+div_cpumem+div_gpu+'</div>'
 
     def plot_servers_current_usage(self):
     
@@ -152,7 +153,7 @@ class IndexView(AccessMixin, generic.TemplateView):
         
         fig.add_bar(
             x=tot['node_name'], y=tot.apply(lambda x: x.total_cpu - max(x.requested_cpu,x.used_cpu), axis=1),
-            marker_color='lightgreen',
+            marker_color='rgb(90,255, 70)', 
             name="Free CPU",
             offsetgroup=1,
             offset=1/4+0.01,
@@ -162,7 +163,7 @@ class IndexView(AccessMixin, generic.TemplateView):
         )
         fig.add_bar(
             x=tot['node_name'], y=tot.apply(lambda x: max(x.requested_cpu-x.used_cpu,0), axis=1),
-            marker_color='orange',
+            marker_color='rgb(255,195,0)',
             name="Allocated CPU above used",
             offsetgroup=2,
             offset=1/4+0.01,
@@ -172,7 +173,7 @@ class IndexView(AccessMixin, generic.TemplateView):
         )
         fig.add_bar(
             x=tot['node_name'], y=tot['used_cpu'],
-            marker_color='red',
+            marker_color='rgb(220,30,0)',
             name="Used CPU",
             offsetgroup=1,
             offset=1/4+0.01,
@@ -183,7 +184,8 @@ class IndexView(AccessMixin, generic.TemplateView):
 
         fig.add_bar(
             x=tot['node_name'], y=tot.apply(lambda x: x.total_memory-max(x.requested_memory,x.used_memory), axis=1),
-            marker_color='lightblue',
+            marker_color='rgb(80,255, 80)',
+            marker_pattern_shape="x",
             name="Free Memory",
             width=1/4,
             offset=0,
@@ -193,7 +195,8 @@ class IndexView(AccessMixin, generic.TemplateView):
         )
         fig.add_bar(
             x=tot['node_name'], y=tot.apply(lambda x: max(x.requested_memory-x.used_memory,0), axis=1),
-            marker_color='orange',
+            marker_color='rgb(255,135,0)',
+            marker_pattern_shape="x",
             name="Allocated Memory above used",
             offsetgroup=2,
             offset=0,
@@ -203,7 +206,8 @@ class IndexView(AccessMixin, generic.TemplateView):
         )
         fig.add_bar(
             x=tot['node_name'], y=tot['used_memory'],
-            marker_color='red',
+            marker_color='rgb(220,0,0)',
+            marker_pattern_shape="x",
             name="Used Memory",
             offsetgroup=0,
             offset=0,
