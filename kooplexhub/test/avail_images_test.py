@@ -29,7 +29,12 @@ for image in set_images:
     sleep(5)
 
 print("Waiting for containers to start")
-sleep(1000)
+sleep(20)
+for c in list_new_containers:
+    print(c.check_state())
+    
+
+sleep(20)
 
 print("Check test container state:")
 for c in list_new_containers:
@@ -45,4 +50,5 @@ print("Delete test containers")
 for c in list_new_containers:
     c.delete()
     sleep(2)
+
 
