@@ -9,6 +9,7 @@ from service.models.service import SeafileService
 client.rest.logger.setLevel(logging.WARNING)
 from urllib.parse import urlparse
 from threading import Timer, Event, Lock
+from ..models.image import Image
 
 from kooplexhub.lib import now
 from .proxy import addroute, removeroute
@@ -165,7 +166,12 @@ def start(container):
 #        { "name": "SSH_AUTH_SOCK", "value": f"/tmp/{container.user.username}" }, #FIXME: move to db
 #        { "name": "SERVERNAME", "value": SERVERNAME},
 #    ]
-    env_variables = [ {'name': k, "value": v.format(container = container)} for k,v in KOOPLEX['environmental_variables'].items()]
+
+    if container.image.imagetype == Image.TP_REPORT:
+        env_variables = [ {'name': k, "value": v.format(container = container)} for k,v in KOOPLEX['environmental_variables_report'].items()]
+    else:
+        env_variables = [ {'name': k, "value": v.format(container = container)} for k,v in KOOPLEX['environmental_variables'].items()]
+
     #env_variables.extend(container.env_variables)
 
     pod_ports = []
@@ -599,12 +605,13 @@ def _parse_podstatus(podstatus):
             }
         st = sts[0]
         try:
-            if st.state.waiting.reason in [ 'CreateContainerConfigError', 'ImagePullBackOff' ]:
-                return {
-                    'state': Container.ST_ERROR,
-                    'reason': st.state.waiting.reason,
-                    'message': st.state.waiting.message
-                }
+            if st.state.waiting:
+                if st.state.waiting.reason in [ 'CreateContainerConfigError', 'ImagePullBackOff' ]:
+                    return {
+                        'state': Container.ST_ERROR,
+                        'reason': st.state.waiting.reason,
+                        'message': st.state.waiting.message
+                    }
         except Exception as e:
             logger.warning(f"Unhandled exception: {e}")
         indicators = []
