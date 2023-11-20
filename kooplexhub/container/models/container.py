@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.contrib.auth.models import User
 
 #from .report import Report
+from hub.models import Profile
 from .image import Image
 from .envvar import EnvVarMapping
 from .proxy import Proxy
@@ -83,6 +84,14 @@ class Container(models.Model):
     @property
     def url_notebook(self):
         return self.default_proxy.url_notebook(self)
+
+    @property
+    def url_kernel(self):
+        token="fsf"
+        logger.info('Get %s' % (self.user))
+        logger.info('Get %s' % (Profile.objects.get(user=self.user)))
+        token = Profile.objects.get(user=self.user).token
+        return self.default_proxy.url_container(self)+"?token="+token
 
     @property
     def search(self):

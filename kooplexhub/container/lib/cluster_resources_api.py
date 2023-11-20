@@ -1,8 +1,12 @@
+import logging
+
 from kubernetes import config
 from kubernetes.client import CoreV1Api, CustomObjectsApi
 import pandas as pd
 
 from kooplexhub.settings import KOOPLEX
+
+logger = logging.getLogger(__name__)
 
 def UnitConverter(item, tounit=''):
     units = { 
@@ -36,7 +40,7 @@ class Cluster():
     def __init__(self):
         config.load_kube_config()
         self.pod_df = pd.DataFrame(columns=['node', 'namespace', 'pod','container_name','requested_cpu','requested_memory', 'requested_gpu'])
-        self.node_df = pd.DataFrame(columns=['node','total_cpu','total_memory', 'total_gpu']) #,'requestedcpu','requestedmemory'] )
+        self.node_df = pd.DataFrame(columns=['node','total_cpu','total_memory', 'total_gpu', 'capacity_cpu', 'capacity_memory', 'capacity_gpu']) #,'requestedcpu','requestedmemory'] )
         self.summed_df = None
         self.v1 = CoreV1Api()
         
@@ -57,7 +61,7 @@ class Cluster():
         '''
             
         if reset:
-            self.node_df = pd.DataFrame(columns=['node','total_cpu','total_memory', 'total_gpu']) #,'requestedcpu','requestedmemory'] )
+            self.node_df = pd.DataFrame(columns=['node','total_cpu','total_memory', 'total_gpu', 'capacity_cpu', 'capacity_memory', 'capacity_gpu']) #,'requestedcpu','requestedmemory'] )
             
         if label:
             ls = f"{label[0]} in  ({','.join(label[1])})"
@@ -74,8 +78,11 @@ class Cluster():
             if "controlplane" in node_name:
                 continue
             nac = node.status.allocatable
+            ncc = node.status.capacity
+            #logger.info(node.status)
             agpu = int(nac.get('nvidia.com/gpu',0))
-            self.node_df.loc[len(self.node_df)] = [node_name, UnitConverter(nac['cpu']), UnitConverter(nac['memory']), agpu]
+            cgpu = int(ncc.get('nvidia.com/gpu',0))
+            self.node_df.loc[len(self.node_df)] = [node_name, UnitConverter(nac['cpu']), UnitConverter(nac['memory']), agpu, UnitConverter(ncc['cpu']), UnitConverter(ncc['memory']), cgpu]
 
         # Add the default node settings when node == None
         #FIXME: ez igy nem lesz jó, a listában kijön a None node... kubernetes_resources = KOOPLEX['kubernetes'].get('resources').get('maxrequests')

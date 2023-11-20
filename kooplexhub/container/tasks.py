@@ -1,10 +1,10 @@
-import requests
+import requests, os
 from django.utils import timezone
 from datetime import datetime
 from celery import shared_task
 from celery.utils.log import get_task_logger
 
-from container.models import Container
+from container.models import Container, Image
 from kooplexhub.settings import KOOPLEX
 
 logger = get_task_logger(__name__)
@@ -15,7 +15,7 @@ def kill_idle():
     url_path = KOOPLEX.get('proxy', {}).get('check_container_path', 'routes/notebook/{container.label}')
     url = os.path.join(url_api, url_path)
     logger.debug('Checking container idle time...')
-    for c in Container.objects.filter(state__in = [Container.ST_RUNNING, Container.ST_NEED_RESTART]):
+    for c in Container.objects.filter(state__in = [Container.ST_RUNNING, Container.ST_NEED_RESTART], image__imagetype = Image.TP_PROJECT):
         try:
             resp = requests.get(url = url.format(container = c))
             last_activity = resp.json()['last_activity']

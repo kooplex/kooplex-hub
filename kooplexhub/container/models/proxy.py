@@ -36,9 +36,13 @@ class Proxy(models.Model):
         return KOOPLEX['proxy'].get('url_internal', 'http://{container.label}:{proxy.port}').format(proxy = self, container = container, kubernetes_namespace = KOOPLEX['kubernetes']['namespace'])
 
 # URL notebook server
+    def url_container(self, container):
+        return KOOPLEX['proxy'].get('url_notebook', 'http://localhost/notebook/{container.label}').format(container = container)
+
+# URL notebook server
     def url_notebook(self, container):
         ide_suffix = container.env_variable("IDE_SUFFIX")
-        return os.path.join(KOOPLEX['proxy'].get('url_notebook', 'http://localhost/notebook/{container.label}').format(container = container), ide_suffix)
+        return os.path.join(self.url_container(container), ide_suffix)
 
 # # URL report
 #     def url_report(self, container):

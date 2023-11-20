@@ -61,6 +61,31 @@ def upperbound(node, container):
         return from_settings
     return my_range
 
+def capacity(node):
+    if not node:
+        return { 'capacity_cpu' : 0, 'capacity_memory': 0, 'capacity_gpu' : 0}
+    else:
+        return { 'capacity_cpu' : 2, 'capacity_memory': 2, 'capacity_gpu' : 2}
+#    api = Cluster()
+#    api.query_nodes_status(node_list=[node], reset=True)
+#    api.query_pods_status(field=["spec.nodeName=",node], reset=True)
+#    api.resources_summary()
+#    from_node = api.get_data()
+#    mapping = {
+#        'cpurequest': 'avail_cpu',
+#        'memoryrequest': 'avail_memory',
+#        'gpurequest': 'avail_gpu',
+#    }
+#    if container.node == node and container.state in [ Container.ST_RUNNING, Container.ST_NEED_RESTART ]:
+#        #FIXME: what if ST_STARTING, ST_STOPPING?
+#        for k, v in mapping.items():
+#            from_node[v] = [val + float(getattr(container, k)) for val in from_node[v]]
+#    def my_range(attribute):
+#        from_settings = _range(attribute)
+#        if attribute in mapping:
+#            from_settings['max_value'] = round(Decimal(from_node[mapping[attribute]][0]), 1)
+#        return from_settings
+#    return my_range
 
 class myNumberInput(forms.NumberInput):
     template_name = 'widget_decimal.html'
@@ -177,6 +202,7 @@ class FormContainer(forms.ModelForm):
         if container.id:
             pass
         my_range = upperbound(container.node, container)
+        resource_capacity = capacity(container.node)
         if nodes and user.profile.can_choosenode:
             self.fields['node'].choices = [('', '')] + [ (x, x) for x in nodes ]
             if container:

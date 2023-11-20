@@ -10,3 +10,4 @@ kooplexhub/*/migrations/
 .idea/*
 settings.py
 node_modules
+static/

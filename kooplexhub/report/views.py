@@ -77,7 +77,7 @@ class ReportView(LoginRequiredMixin):
                         user = user, 
                         name = name,
                         #friendly_name = report.name,
-                        label = f"{user.username}-{name}",
+                        label = f"{user.username}-{name.tolower()}",
                         image = report.image
                 )
                 ReportContainerBinding.objects.create(report=report, container=container)

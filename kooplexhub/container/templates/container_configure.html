@@ -37,6 +37,12 @@
         <a class="nav-link mytab text-info" id="tab-logs" data-bs-toggle="tab" href="#logs" role="tab" aria-controls="logs" aria-selected="false">Logs</a>
       </li>
       <li class="nav-item" role="presentation" aria-selected="false">
+        <a class="nav-link mytab text-info" id="tab-con" data-bs-toggle="tab" href="#connections" role="tab" aria-controls="connections" aria-selected="false">Connections</a>
+      </li>
+      <li class="nav-item" role="presentation" aria-selected="false">
+        <a class="nav-link mytab text-success" id="tab-export" data-bs-toggle="tab" href="#export" role="tab" aria-controls="export" aria-selected="false">Export</a>
+      </li>
+      <li class="nav-item" role="presentation" aria-selected="false">
         <a class="nav-link mytab text-danger" id="tab-delete" data-bs-toggle="tab" href="#delete" role="tab" aria-controls="delete" aria-selected="false">Delete</a>
       </li>
       {% endif %}
@@ -57,8 +63,14 @@
         {% render_table form.t_volumes %}
       </div>
       {% if container.id %}
-      <div class="tab-pane fade" id="logs" role="tabpanel" aria-labelledby="tab-logs">
+      <div class="tab-pane fade" id="logs" role="tabpanel" aria-labelledby="tab-logs" style="white-space: pre-wrap;">
         Retrieving logs...
+      </div>
+      <div class="tab-pane fade" id="connections" role="tabpanel" aria-labelledby="tab-con" style="white-space: pre-wrap;">
+	      <ul>
+		      <li> Kernel Url:  (use this for accessing the environment's kernels e.g. from VScode) <a href="https://xwiki.vo.elte.hu/en/kooplex-manual/teleport"><span class="ms-2 bi bi-book"></span></a></br>{{ container.url_kernel}}</li>
+	      </ul>
+
       </div>
       <div class="tab-pane fade" id="delete" role="tabpanel" aria-labelledby="tab-delete">
         <p>Delete your container by clicking the dustbin...</p>
