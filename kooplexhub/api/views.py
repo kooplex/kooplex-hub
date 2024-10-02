@@ -120,6 +120,9 @@ def submit(request, job_name):
     ))
 
     api_resp = submit_job(req_parsed)
+    #So that it becomes JsonSerializable
+    api_resp['job_description']['volumes_ro'] = [v.folder for v in api_resp['job_description']['volumes_ro']]
+    api_resp['job_description']['volumes_rw'] = [v.folder for v in api_resp['job_description']['volumes_rw']]
     return JsonResponse(api_resp)
 
 
