@@ -125,14 +125,24 @@ class Cluster():
         
     def resources_summary(self):
             
-        self.pod_df = self.pod_df.set_index(keys='node')
-        self.node_df = self.node_df.set_index(keys='node')
-        # sum up requested cpu and memory of all pods and subtract it from the total of node cpu/memory
-        summed_pod_df = self.pod_df.groupby('node')[['requested_cpu', 'requested_memory', 'requested_gpu']].sum()
-        self.summed_df = pd.merge(self.node_df, summed_pod_df, 'inner', on = 'node')
-        self.summed_df['avail_cpu'] = self.summed_df.total_cpu - self.summed_df.requested_cpu
-        self.summed_df['avail_memory'] = self.summed_df.total_memory - self.summed_df.requested_memory
-        self.summed_df['avail_gpu'] = self.summed_df.total_gpu - self.summed_df.requested_gpu
+        if  self.pod_df.empty:
+            self.summed_df = self.node_df
+            rc=0
+            rm=0
+            rg = 0
+        else:
+            self.pod_df = self.pod_df.set_index(keys='node')
+            self.node_df = self.node_df.set_index(keys='node')
+            # sum up requested cpu and memory of all pods and subtract it from the total of node cpu/memory
+            summed_pod_df = self.pod_df.groupby('node')[['requested_cpu', 'requested_memory', 'requested_gpu']].sum()
+            self.summed_df = pd.merge(self.node_df, summed_pod_df, 'inner', on = 'node')
+            rc = self.summed_df.requested_cpu  
+            rm = self.summed_df.requested_memory 
+            rg = self.summed_df.requested_gpu
+
+        self.summed_df['avail_cpu'] = self.summed_df.total_cpu - rc 
+        self.summed_df['avail_memory'] = self.summed_df.total_memory - rm 
+        self.summed_df['avail_gpu'] = self.summed_df.total_gpu - rg 
         self.summed_df['avail_cpu_per'] = self.summed_df.avail_cpu / self.summed_df.total_cpu *100
         self.summed_df['avail_memory_per'] = self.summed_df.avail_memory / self.summed_df.total_memory * 100
         self.summed_df['avail_gpu_per'] = self.summed_df.avail_gpu / self.summed_df.total_gpu *100

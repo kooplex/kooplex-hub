@@ -24,6 +24,15 @@ from container.lib import Cluster
 def _range(attribute):
     resources_min = KOOPLEX.get('kubernetes', {}).get('resources', {}).get('requests', {})
     resources_max = KOOPLEX.get('kubernetes', {}).get('resources', {}).get('maxrequests', {})
+    api = Cluster()
+    api.query_nodes_status()
+    api.resources_summary()
+    allnodedata = api.get_data()
+
+    resources_max['cpu'] = max(allnodedata['avail_cpu'])
+    resources_max['memory'] =  max(allnodedata['avail_memory'])
+    resources_max['nvidia.com/gpu'] = max(allnodedata['avail_gpu'])
+
     mapping = {
         'idletime': ('idletime', 1, 48),
         'memoryrequest': ('memory', .1, 2),
