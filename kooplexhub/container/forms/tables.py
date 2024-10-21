@@ -5,11 +5,161 @@ from project.models import UserProjectBinding
 from project.models import ProjectContainerBinding
 from education.models import UserCourseBinding
 from education.models import CourseContainerBinding
+from container.models import Container
 from volume.models import Volume, VolumeContainerBinding, UserVolumeBinding
 
 from kooplexhub.common import table_attributes
 
+class TableProject(tables.Table):
+    class Meta:
+        model = UserProjectBinding
+        fields = ('project', 'collaborator')
+        sequence = ('button', 'project', 'collaborator')
+        attrs = table_attributes
+
+    button = tables.Column(verbose_name = 'Attach', orderable = False, empty_values = ())
+    project = tables.Column(orderable = False)
+    collaborator = tables.Column(verbose_name = 'Collaborators', empty_values = (), orderable = False)
+
+    def __init__(self, user):
+        upbs = UserProjectBinding.objects.filter(user = user)
+        self.container_bindings = { k.pk: [] for k in Container.objects.filter(user=user) }
+        for pcb in ProjectContainerBinding.objects.filter(container__user = user):
+            self.container_bindings[pcb.container.pk].append(pcb.project.pk)
+        super().__init__(upbs)
+
+    @property
+    def dump_hidden(self):
+        return format_html(
+            "\n".join([ f"""
+<input id="original_projectlist-{c}" value="{l}" type="hidden">
+                """ for c, l in self.container_bindings.items()
+            ])
+        )
+
+    def render_button(self, record):
+        p = record.project
+        return format_html(f"""
+<input id="projecttoggler-{p.pk}" data-size="small" class="configtoggle"
+     type="checkbox" data-toggle="toggle" name="attach-project"
+     data-on="<span class=' bi bi-person-workspace'></span>"
+     data-off="<span class='bi bi-person-video3'></span>"
+     data-onstyle="success" data-offstyle="secondary" value="{p.id}">
+        """)
+
+    def render_collaborator(self, record):
+        return format_html(', '.join(map(lambda c: c.username, record.project.collaborators)))
+
+
+class TableCourse(tables.Table):
+    class Meta:
+        model = UserCourseBinding
+        fields = ('course',)
+        sequence = ('button', 'course', 'description', 'teachers')
+        attrs = table_attributes
+
+    button = tables.Column(verbose_name = 'Do', orderable = False, empty_values = ())
+    description = tables.Column(empty_values = (), orderable = False)
+    course = tables.Column(orderable = False)
+    teachers = tables.Column(empty_values = (), orderable = False)
+
+    def __init__(self, user):
+        ucbs = UserCourseBinding.objects.filter(user = user)
+        self.container_bindings = { k.pk: [] for k in Container.objects.filter(user=user) }
+        for ccb in CourseContainerBinding.objects.filter(container__user = user):
+            self.container_bindings[ccb.container.pk].append(ccb.course.pk)
+        super().__init__(ucbs)
+
+    @property
+    def dump_hidden(self):
+        return format_html(
+            "\n".join([ f"""
+<input id="original_courselist-{c}" value="{l}" type="hidden">
+                """ for c, l in self.container_bindings.items()
+            ])
+        )
+
+    def render_button(self, record):
+        c = record.course
+        return format_html(f"""
+<input id="coursetoggler-{c.id}" data-size="small" class="configtoggle"
+     type="checkbox" data-toggle="toggle" name="attach-course"
+     data-on="<span class='bi bi-journal-bookmark-fill'></span>"
+     data-off="<span class='bi bi-journal-bookmark'></span>"
+     data-onstyle="success" data-offstyle="secondary" value="{c.id}">
+        """)
+
+    def render_description(self, record):
+        return record.course.description
+
+    def render_teachers(self, record):
+        return record.course.teachers
+
+    def render_course(self, record):
+        return format_html(f"""
+<span data-toggle="tooltip" title="folder: {record.course.folder}" data-placement="bottom">{record.course.name}</span>
+        """)
+
+
+class TableVolume(tables.Table):
+    class Meta:
+        model = Volume
+        fields = ('scope', 'folder', 'description')
+        sequence = ('button', 'scope', 'folder', 'description')
+        attrs = table_attributes
+
+    button = tables.Column(verbose_name = 'Mount', orderable = False, empty_values = ())
+    scope = tables.Column(orderable = False)
+    folder = tables.Column(orderable = False)
+    description = tables.Column(orderable = False)
+
+    def __init__(self, user):
+        volumes = [ b.volume for b in UserVolumeBinding.objects.filter(user = user) ]
+        volumes.extend(Volume.objects.filter(scope = Volume.SCP_ATTACHMENT))
+        self.container_bindings = { k.pk: [] for k in Container.objects.filter(user=user) }
+        for vcb in VolumeContainerBinding.objects.filter(container__user = user):
+            self.container_bindings[vcb.container.pk].append(vcb.volume.pk)
+        super().__init__(set(volumes))
+
+    @property
+    def dump_hidden(self):
+        return format_html(
+            "\n".join([ f"""
+<input id="original_volumelist-{c}" value="{l}" type="hidden">
+                """ for c, l in self.container_bindings.items()
+            ])
+        )
+
+    def render_button(self, record):
+        volume = record
+        if volume.scope == volume.SCP_ATTACHMENT:
+            icon_on = "ri-attachment-line"
+            icon_off = "ri-attachment-2"
+        else:
+            icon_on = "ri-database-2-fill"
+            icon_off = "ri-database-2-line"
+        return format_html(f"""
+<input id="volumetoggler-{record.id}" data-size="small" class="configtoggle"
+     type="checkbox" data-toggle="toggle" name="attach-volume"
+     data-on="<span class='{icon_on}'></span>"
+     data-off="<span class='{icon_off}'></span>"
+     data-onstyle="success" data-offstyle="secondary" value="{record.id}">
+        """)
+
+    def render_scope(self, record):
+        from volume.templatetags.volume_buttons import scope
+        return scope(record)
+
+
+
+
+##################### CUT HERE #######################
+
+
+    
+
 class TableContainerProject(tables.Table):
+    #FIXME: deprecated
     class Meta:
         model = UserProjectBinding
         fields = ('project', 'collaborator')
@@ -49,7 +199,7 @@ class TableContainerCourse(tables.Table):
         sequence = ('button', 'course', 'description', 'teachers')
         attrs = table_attributes
 
-    button = tables.Column(verbose_name = 'Do', orderable = False, empty_values = ())
+    button = tables.Column(verbose_name = 'Bind', orderable = False, empty_values = ())
     description = tables.Column(empty_values = (), orderable = False)
     course = tables.Column(orderable = False)
     teachers = tables.Column(empty_values = (), orderable = False)

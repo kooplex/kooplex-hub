@@ -6,9 +6,6 @@ import json
 import requests
 import logging
 
-from kooplexhub.lib import keeptrying
-from kooplexhub.lib import keeptryinglist
-
 try:
     from kooplexhub.settings import KOOPLEX
 except ImportError:
@@ -19,199 +16,35 @@ KOOPLEX['proxy'].update({})
 logger = logging.getLogger(__name__)
 
 def getroutes():
-    kw = {
-        'url': os.path.join(KOOPLEX['proxy'].get('url_api', 'http://localhost:8001/api'), 'routes'), 
-        'headers': {'Authorization': 'token %s' % KOOPLEX['proxy'].get('auth_token', '') },
-    }
-    return keeptrying(requests.get, 50, **kw)
+    url = os.path.join(KOOPLEX['proxy'].get('url_api', 'http://localhost:8001/api'), 'routes')
+    headers = {'Authorization': 'token %s' % KOOPLEX['proxy'].get('auth_token', '') }
+    return requests.get(url, headers=headres)
 
 
 def droproutes():
     resp = getroutes()
     routes = json.loads(resp.content.decode())
+    headers = {'Authorization': 'token %s' % KOOPLEX['proxy'].get('auth_token', '') }
     for r, v in routes.items():
-        kw = {
-            'url': os.path.join(KOOPLEX['proxy'].get('url_api', 'http://localhost:8001/api'), 'routes', r[1:]), 
-            'headers': {'Authorization': 'token %s' % KOOPLEX['proxy'].get('auth_token', '') },
-        }
-        logging.debug("- %s -/-> %s" % (kw['url'], v['target']))
-        resp_latest = keeptrying(requests.delete, 5, **kw)
-#    return resp_latest
+        url = os.path.join(KOOPLEX['proxy'].get('url_api', 'http://localhost:8001/api'), 'routes', r[1:])
+        requests.delete(url, headers=headers)
+        logging.debug(f'- proxy {url}')
 
 def addroute(container, var_url, var_port):
     proxyconf = KOOPLEX.get('proxy', {})
     port = KOOPLEX['environmental_variables'][var_port]
     namespace = KOOPLEX['kubernetes']['namespace']
-#    kw = {
-#        'url': os.path.join(KOOPLEX['proxy'].get('url_api', 'http://localhost:8001/api'), 'routes', container.proxy_route), 
-#        'headers': {'Authorization': 'token %s' % KOOPLEX['proxy'].get('auth_token', '') },
-#        'data': json.dumps({ 'target': container.url_internal }),
-#    }
-#    logging.debug(f'+ proxy {kw["url"]} ---> {container.url_internal}')
-#    logging.debug(f'ADDROUTE')
-#    return keeptrying(requests.post, 50, **kw)
-#    kws=[]
-    kw = {
-        'url': os.path.join(KOOPLEX['proxy'].get('url_api', 'http://localhost:8001/api'), 'routes', KOOPLEX['environmental_variables'][var_url].format(container=container)), 
-        'headers': {'Authorization': 'token %s' % KOOPLEX['proxy'].get('auth_token', '') },
-        #'data': json.dumps({ 'target': container.url_internal }),
-        'data': json.dumps({ 'target': 'http://{container.label}.{kubernetes_namespace}:{port}'.format(container=container, kubernetes_namespace=namespace, port=port )}),    
-    }
-    logging.debug(f'+ proxy {kw["url"]} ---> {kw["data"]}')
-    return keeptrying(requests.post, 50, **kw)
+    url = os.path.join(KOOPLEX['proxy'].get('url_api', 'http://localhost:8001/api'), 'routes', KOOPLEX['environmental_variables'][var_url].format(container=container)) 
+    headers = {'Authorization': 'token %s' % KOOPLEX['proxy'].get('auth_token', '') }
+    data = json.dumps({ 'target': 'http://{container.label}.{kubernetes_namespace}:{port}'.format(container=container, kubernetes_namespace=namespace, port=port )})
+    requests.post(url, headers=headers, data=data)
+    logging.debug(f'+ proxy {url} ({data})')
 
 def removeroute(container, var_url):
     proxyconf = KOOPLEX.get('proxy', {})
-    kw = {
-        #'url': os.path.join(KOOPLEX['proxy'].get('url_api', 'http://localhost:8001/api'), 'routes', container.proxy_route), 
-        'url': os.path.join(KOOPLEX['proxy'].get('url_api', 'http://localhost:8001/api'), 'routes', KOOPLEX['environmental_variables'][var_url].format(container=container)), 
-        'headers': {'Authorization': 'token %s' % KOOPLEX['proxy'].get('auth_token', '') },
-    }
-    logging.debug(f'+ proxy {kw["url"]} ')
-    return keeptrying(requests.delete, 5, **kw)
+    url = os.path.join(KOOPLEX['proxy'].get('url_api', 'http://localhost:8001/api'), 'routes', KOOPLEX['environmental_variables'][var_url].format(container=container))
+    headers = {'Authorization': 'token %s' % KOOPLEX['proxy'].get('auth_token', '') }
+    requests.delete(url, headers=headers)
+    logging.debug(f'- proxy {url}')
 
-#def _removeroute_report(report):
-#    proxyconf = KOOPLEX.get('proxy', {})
-#    reportconf = KOOPLEX.get('reportserver', {})
-#    target_url = reportconf.get('base_url', 'localhost')
-#    kw = {
-#        'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', report.proxy_path), 
-#        'headers': {'Authorization': 'token %s' % proxyconf.get('auth_token', '') },
-#    }
-#    logging.debug("- %s -/-> %s" % (kw['url'], target_url))
-#    return keeptrying(requests.delete, 5, **kw)
-#
-#def removeroute(instance):
-#    if isinstance(instance, Container):
-#        return _removeroute_container(instance)
-#    elif isinstance(instance, Report):
-#        return _removeroute_report(instance)
-#    logger.error('Not implemented')
-
- 
-#def _addroute_report(report):
-#    proxyconf = KOOPLEX.get('proxy', {})
-#    reportconf = KOOPLEX.get('reportserver', {})
-#    target_url = reportconf.get('base_url', 'localhost')
-#    route_prefix = 'report'
-#    if report.reporttype != report.TP_STATIC:
-#        route_prefix = 'notebook'
-#        target_url = report.url_external
-#    kw = {
-#        'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', route_prefix, report.proxy_path), 
-#        'headers': {'Authorization': 'token %s' % proxyconf.get('auth_token', '') },
-#        'data': json.dumps({ 'target': target_url }),
-#    }
-#    logging.debug("+ %s ---> %s" % (kw['url'], target_url))
-#    keeptrying(requests.post, 50, **kw)
-#
-#    kw = {
-#        'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', route_prefix, report.proxy_path_latest), 
-#        'headers': {'Authorization': 'token %s' % proxyconf.get('auth_token', '') },
-#        'data': json.dumps({ 'target': target_url }),
-#    }
-#    logging.debug("Report proxy + %s ---> %s" % (kw['url'], target_url))
-#    return keeptrying(requests.post, 50, **kw)
-#
-#def addroute(instance):
-#    if isinstance(instance, Container):
-#        _addroute_container(instance, test=False)
-#        return _addroute_container(instance, test=True)
-#    elif isinstance(instance, Report):
-#        return _addroute_report(instance)
-#    logger.error('Not implemented %s type %s' % (instance, type(instance)))
-
-#def _addroute_container(container, test=False):
-#    proxyconf = KOOPLEX.get('proxy', {})
-#    if test:
-#        kw = {
-#            'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', container.proxy_path_test), 
-#            'headers': {'Authorization': 'token %s' % proxyconf.get('auth_token', '') },
-#            'data': json.dumps({ 'target': container.url_test }),
-#        }
-#        logging.debug("+ %s ---> %s test port" % (kw['url'], container.url_test))
-#    else:
-#        kw = {
-#            'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', container.proxy_path), 
-#            'headers': {'Authorization': 'token %s' % proxyconf.get('auth_token', '') },
-#            'data': json.dumps({ 'target': container.url }),
-#        }
-#        logging.debug("+ %s ---> %s proxy path" % (kw['url'], container.url))
-#        try:
-#             rc = ReportContainerBinding.objects.get(container = container)
-#             report = rc.report
-#             kw = {
-#                 'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', 'notebook', report.proxy_path_latest), 
-#                 'headers': {'Authorization': 'token %s' % proxyconf.get('auth_token', '') },
-#                 'data': json.dumps({ 'target': container.url_test }),
-#             }
-#             logging.debug("+ %s ---> %s report proxy path latest" % (kw['url'], container.url))
-#             keeptrying(requests.post, 50, **kw)
-#        except: 
-#             logging.debug("Container is not for report")
-#
-#
-#    logging.debug("+ %s ---> %s" % (kw['url'], container.url))
-#    return keeptrying(requests.post, 50, **kw)
-#
-# 
-#def _addroute_report(report):
-#    proxyconf = KOOPLEX.get('proxy', {})
-#    reportconf = KOOPLEX.get('reportserver', {})
-#    target_url = reportconf.get('base_url', 'localhost')
-#    route_prefix = 'report'
-#    if report.reporttype != report.TP_STATIC:
-#        route_prefix = 'notebook'
-#        target_url = report.url_external
-#    kw = {
-#        'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', route_prefix, report.proxy_path), 
-#        'headers': {'Authorization': 'token %s' % proxyconf.get('auth_token', '') },
-#        'data': json.dumps({ 'target': target_url }),
-#    }
-#    logging.debug("+ %s ---> %s" % (kw['url'], target_url))
-#    keeptrying(requests.post, 50, **kw)
-#
-#    kw = {
-#        'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', route_prefix, report.proxy_path_latest), 
-#        'headers': {'Authorization': 'token %s' % proxyconf.get('auth_token', '') },
-#        'data': json.dumps({ 'target': target_url }),
-#    }
-#    logging.debug("Report proxy + %s ---> %s" % (kw['url'], target_url))
-#    return keeptrying(requests.post, 50, **kw)
-#
-#def addroute(instance):
-#    if isinstance(instance, Container):
-#        _addroute_container(instance, test=False)
-#        return _addroute_container(instance, test=True)
-#    elif isinstance(instance, Report):
-#        return _addroute_report(instance)
-#    logger.error('Not implemented %s type %s' % (instance, type(instance)))
-
-
-#def _removeroute_container(container):
-#    proxyconf = KOOPLEX.get('proxy', {})
-#    kw = {
-#        'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', container.proxy_path), 
-#        'headers': {'Authorization': 'token %s' % proxyconf.get('auth_token', '') },
-#    }
-#    logging.debug("- %s -/-> %s" % (kw['url'], container.url))
-#    return keeptrying(requests.delete, 5, **kw)
-#
-#def _removeroute_report(report):
-#    proxyconf = KOOPLEX.get('proxy', {})
-#    reportconf = KOOPLEX.get('reportserver', {})
-#    target_url = reportconf.get('base_url', 'localhost')
-#    kw = {
-#        'url': os.path.join(proxyconf.get('base_url','localhost'), 'api', 'routes', report.proxy_path), 
-#        'headers': {'Authorization': 'token %s' % proxyconf.get('auth_token', '') },
-#    }
-#    logging.debug("- %s -/-> %s" % (kw['url'], target_url))
-#    return keeptrying(requests.delete, 5, **kw)
-#
-#def removeroute(instance):
-#    if isinstance(instance, Container):
-#        return _removeroute_container(instance)
-#    elif isinstance(instance, Report):
-#        return _removeroute_report(instance)
-#    logger.error('Not implemented')
 

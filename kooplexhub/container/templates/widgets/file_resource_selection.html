@@ -1,0 +1,46 @@
+{% load render_table from django_tables2 %}
+<!-- templates/widgets/file_resource_selection.html -->
+<div class="modal fade fileresource-modal" tabindex="-1" aria-labelledby="fileresourceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="fileresourceModalLabel">Configure file resources</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body vh-25">
+              <ul class="nav nav-tabs" id="containerConfigTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                  <a class="nav-link mytab active" id="tab-projects" data-bs-toggle="tab" href="#projects" role="tab" aria-controls="projects" aria-selected="false">Projects</a>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <a class="nav-link mytab" id="tab-courses" data-bs-toggle="tab" href="#courses" role="tab" aria-controls="courses" aria-selected="false">Courses</a>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <a class="nav-link mytab" id="tab-volumes" data-bs-toggle="tab" href="#volumes" role="tab" aria-controls="volumes" aria-selected="false">Storage</a>
+                </li>
+              </ul>
+
+              <div class="tab-content" id="serviceConfigTabContent">
+                <div class="tab-pane fadeshow active" id="projects" role="tabpanel" aria-labelledby="tab-projects">
+                  {# fixme: add project search bar #}
+                  {% render_table t_project %}
+		  {{ t_project.dump_hidden }}
+                </div>
+                <div class="tab-pane fade" id="courses" role="tabpanel" aria-labelledby="tab-coursess">
+                  {% render_table t_course %}
+		  {{ t_course.dump_hidden }}
+                </div>
+                <div class="tab-pane fade" id="volumes" role="tabpanel" aria-labelledby="tab-volumes">
+                  {% render_table t_volume %}
+		  {{ t_volume.dump_hidden }}
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="confirm-file-selection">Confirm</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Dismiss</button>
+            </div>
+        </div>
+    </div>
+</div>
+

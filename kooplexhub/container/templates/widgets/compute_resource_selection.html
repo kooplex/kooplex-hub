@@ -1,0 +1,24 @@
+<!-- templates/widgets/compute_resource_selection.html -->
+<div class="modal fade computeresource-modal" tabindex="-1" aria-labelledby="computeresourceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="computeresourceModalLabel">Configure compute resources</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body vh-25">
+              <div class="progress d-none" id="busybar" role="progressbar" aria-label="Animated striped example" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
+	        <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" style="width: 100%">Retrieving node resources from cluster...</div>
+              </div>
+              <table>
+		{{ form.as_table }}
+              </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="confirm-compute-selection">Confirm</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Dismiss</button>
+            </div>
+        </div>
+    </div>
+</div>
+

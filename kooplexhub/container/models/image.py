@@ -31,6 +31,10 @@ class Image(models.Model):
         return self.name
 
     @property
+    def hr(self):
+        return self.name.split('/')[-1]
+
+    @property
     def require_home(self):
         return self.imagetype == self.TP_PROJECT
 

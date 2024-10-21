@@ -13,7 +13,7 @@ from django.urls import reverse
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .forms import FormContainer
-from .forms import TableContainerProject, TableContainerCourse, TableContainerVolume
+from .forms import TableProject, TableCourse, TableVolume,                        TableContainerProject, TableContainerCourse, TableContainerVolume
 from .models import Image, Container
 from project.models import Project, UserProjectBinding, ProjectContainerBinding
 from education.models import Course, UserCourseBinding, CourseContainerBinding
@@ -170,10 +170,16 @@ class ContainerListView(LoginRequiredMixin, generic.ListView):
         context['menu_container'] = True
         context['submenu'] = 'list'
         context['partial'] = 'container_partial_list.html'
-        context['wss_container'] = KOOPLEX.get('hub', {}).get('wss_container', 'wss://localhost/hub/ws/container_environment/{userid}/').format(userid = self.request.user.id)
-        context['wss_monitor'] = KOOPLEX.get('hub', {}).get('wss_monitor', 'wss://localhost/hub/ws/node_monitor/')
+        context['wss_container_fetchlog'] = KOOPLEX.get('hub', {}).get('wss_container_fetchlog', 'wss://localhost/hub/ws/container/fetchlog/{userid}/').format(userid = self.request.user.id)
+        context['wss_container_config'] = KOOPLEX.get('hub', {}).get('wss_container_config', 'wss://localhost/hub/ws/container/config/{userid}/').format(userid = self.request.user.id)
+        context['wss_container_control'] = KOOPLEX.get('hub', {}).get('wss_container_control', 'wss://localhost/hub/ws/container/control/{userid}/').format(userid = self.request.user.id)
+        context['wss_monitor_node'] = KOOPLEX.get('hub', {}).get('wss_monitor_node', 'wss://localhost/hub/ws/monitor/node/{userid}/').format(userid = self.request.user.id)
+        context['t_project'] = TableProject(self.request.user)
+        context['t_course'] = TableCourse(self.request.user)
+        context['t_volume'] = TableVolume(self.request.user)
         context['url_list'] = reverse('container:list')
-        context['empty_body'] = format_html(f"""You need to <a href="{l}"><i class="bi bi-boxes"></i><span>&nbsp;create</span></a> environments in order to use the hub.""")
+        context['resource_form']=FormContainer(initial={'user': self.request.user})
+        context['images'] = Image.objects.filter(imagetype = Image.TP_PROJECT, present = True)
         return context
 
     def get_queryset(self):

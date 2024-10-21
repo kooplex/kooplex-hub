@@ -16,7 +16,7 @@ from .proxy import Proxy
 
 from kooplexhub.lib import  now
 from kooplexhub.lib import my_alphanumeric_validator
-from ..lib import start_environment, stop_environment, restart_environment, check_environment, fetch_containerlog
+from ..lib import check_environment, fetch_containerlog
 
 try:
     from kooplexhub.settings import KOOPLEX
@@ -51,8 +51,10 @@ class Container(models.Model):
     start_seafile = models.BooleanField(default = False)
 
     state = models.CharField(max_length = 16, choices = ST_LOOKUP.items(), default = ST_NOTPRESENT)
-    restart_reasons = models.CharField(max_length = 500, null = True, blank = True)
+    state_backend = models.CharField(max_length = 32, null = True, blank = True, default =None)
     state_lastcheck_at = models.DateTimeField(default = None, null = True, blank = True)
+
+    restart_reasons = models.CharField(max_length = 500, null = True, blank = True)
 
     node = models.TextField(max_length = 64, null = True, blank = True)
     cpurequest = models.DecimalField(null = True, blank = True, decimal_places=1, max_digits=4, default=0.2)
@@ -198,17 +200,20 @@ class Container(models.Model):
         return [ binding.volume for binding in VolumeContainerBinding.objects.filter(container = self) ]
 
     def start(self):
-        return start_environment(self)
+        from ..tasks import start_container
+        start_container(self.user.id, self.id)
 
     def stop(self):
+        from ..tasks import stop_container
         self.restart_reasons = None
         self.save()
-        return stop_environment(self)
+        return stop_container(self.user.id, self.id)
 
     def restart(self):
+        from ..tasks import restart_container
         self.restart_reasons = None
         self.save()
-        return restart_environment(self)
+        return restart_container(self.user.id, self.id)
 
     def check_state(self, retrieve_log = False):
         state = check_environment(self)

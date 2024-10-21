@@ -2,39 +2,26 @@
 
 {% load static %}
 
-{% block pagedescription %}
-Environments are user workspaces with limited resources, attached volumes and projects. Multiple environments can be running can run at the same time. <a href="https://xwiki.vo.elte.hu/en/kooplex-manual/environmentpanel"><span class="ms-2 bi bi-book"></span></a>
+{% block head_content %}
+  <!-- bootstrap-toggler requirement -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/css/bootstrap5-toggle.min.css" rel="stylesheet">
+  <link href="{% static 'css/xeditable.css' %}" rel="stylesheet">
 {% endblock %}
-
-{# the search bar #}
-{% block search %}
-{% if containers %}
-<div class="card border border-light border-3 mx-5 mb-3 rounded-3">
-  <div class="input-group">
-    <div class="input-group-prepend">
-      <div class="input-group-text"><span class="bi bi-search"></span></div>
-    </div>
-    <input class="form-control" type="text" id="search_container" placeholder="Search by container name" autofocus value="{{ search_container }}">
-  </div>
-  {# FIXME: toggler to narrow selection according to whether a report container #}
-</div>
-{% endif %}
-{% endblock %}
-
 
 {# render the container cards #}
 {% block bodycontent %}
 <div id="containerListPane" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 w-100 mx-auto justify-content-center">
-  {% if containers %}
     {% for container in containers %}
-      <div class="col" id="hideable-container-{{ container.id }}">
-        {% include partial %} {# FIXME: partial as a variable breaks code symmetry with report #}
+      <div class="col opacity-75" id="card-container-{{ container.id }}">
+        {% include 'container.html' %}
       </div>
     {% endfor %}
-  {% else %}
-    {% include 'empty.html' %}
-  {% endif %}
+    {# new container create button #}
+    <div class="col opacity-75">
+      {% include 'container.html' %}
+    </div>
 </div>
+<script src="{% static 'js/container_buttons.js' %}"></script>
 
 {# a modal to configure a container or display its logs #}
 <div class="modal modal-xl fade" id="containerInfoModal" tabindex="-1" aria-labelledby="containerInfoModal" aria-hidden="true">
@@ -52,10 +39,46 @@ Environments are user workspaces with limited resources, attached volumes and pr
     </div>
   </div>
 </div>
+
+{# a modal to configure a container image #}
+<script src="{% static 'js/container_changes.js' %}"></script>
+{% include 'widgets/image_selection.html' %}
+<script src="{% static 'js/image_selection.js' %}"></script>
+
+{# a modal to configure a container compute resources #}
+{% include 'widgets/compute_resource_selection.html' with form=resource_form %}
+<script src="{% static 'js/computeresource_selection.js' %}"></script>
+
+{# a modal to configure a container filesystem resources #}
+{% include 'widgets/file_resource_selection.html' %}
+<script src="{% static 'js/fileresource_selection.js' %}"></script>
+
+{# a modal to dump logs #}
+{% include 'widgets/fetchlogs.html' %}
+<script src="{% static 'js/fetchlogs.js' %}"></script>
+
 {% endblock %}
 
 
 {% block scripts %}
+<script>
+// Save web socket urls
+const wsURLs = {
+  container_fetchlog: "{{ wss_container_fetchlog }}",
+  container_control: "{{ wss_container_control }}",
+  container_config: "{{ wss_container_config }}",
+  monitor_node: "{{ wss_monitor_node }}"
+}
+
+$(document).ready(function() {
+    // Example initialization, assuming `containers` is passed from Django context
+    {% for container in containers %}
+        updateButtons({{ container.id }}, "", "{{ container.state }}")
+        updateTeleportButton({{ container.id }}, "{{ container.teleport }}")
+    {% endfor %}
+    updateTeleportButton("new", "grant")
+});
+</script>
 <script>
 
 {% if form %}
@@ -66,72 +89,44 @@ $(document).ready(function() {
 })
 {% endif %}
 
-var containerSocket = open_ws('{{ wss_container }}', ws_callback)
+var containerSocketS = open_ws(wsURLs['container_config'], ws_callback)
+var containerSocket = open_ws(wsURLs['container_control'], ws_callback)
 
 {# make sure search string we got gets applied #}
 $("#search_container").keyup();
 
 {# open a container #}
-function open_container(containerid) {
-  var url = $( "#url-containeropen-" + containerid).val();
-  console.log( "opening: " + url );
-  var win = window.open(url, '_blank');
+function open_container(url) {
+  console.log( "opening: " + url )
+  var win = window.open(url, '_blank')
   if (win) {
-    win.focus();
+    win.focus()
   }
 }
+
 
 {# handle websocket callback #}
 function ws_callback(data) {
   console.log(data);
-  containerid = data['container-id'];
-  if ('w_state' in data) {
-    $("#containerstate-" + containerid).replaceWith(data['w_state'])
+  container_id = data['container_id'];
+  if ('overwrite' in data) {
+    $widget=$("#"+data["overwrite"])
+    if ($widget.length === 0) { // FIXME ugly code
+	    if (data["overwrite"]==="container_image_update_name") { container_image_update_name(container_id, data["value"]) }
+    } else {
+      $widget.text(data["value"])
+    }
+    return
   }
-  if ('w_startopen' in data) {
-    $("#container-startopen-" + containerid).replaceWith(data['w_startopen'])
+  if ('container_state' in data) {
+    container_state = data['container_state'];
+    updateButtons(container_id, "", container_state)
   }
-  if ('w_stop' in data) {
-    $("#container-stop-" + containerid).replaceWith(data['w_stop'])
-  }
-  if ('w_restart' in data) {
-    $("#container-restart-" + containerid).replaceWith(data['w_restart'])
-  }
-  if ('w_image' in data) {
-    $("#container-image-" + containerid).replaceWith(data['w_image'])
-  }
-  if ('w_modal' in data) {
-    $("#containerInfoModal-content").replaceWith(data['w_modal'])
-    $("#container-manage").attr('action', data['action'])
-    $("#containerid").val(data['container-id'])
-    $("#containerInfoModal").modal("show")
-    {# refresh logs #}
-    $("#container-manage li a[id=tab-logs]").click(function() {
-      containerSocket.send(JSON.stringify({
-        'command': 'container-log',
-        'container-id': data['container-id'],
-      }))
-    })
-  }
-  if ('podlog' in data) {
-    $("#logs").text(data['podlog'])
+  if ('container_state_backend' in data) {
+    updateContainerState(container_id, data['container_state_backend'])
   }
 }
 
-{# catch submit event, in order to fill properly the share volume information #}
-$("#container-manage").submit(function (e) {
-  bind_project_ids = $.map($("input[id^=projecttoggler-]"), function (k, v) { if ($(k).prop('checked')) { return $(k).val() } }); 
-  bind_course_ids = $.map($("input[id^=coursetoggler-]"), function (k, v) { if ($(k).prop('checked')) { return $(k).val() } }); 
-  bind_volume_ids = $.map($("input[id^=volumetoggler-]"), function (k, v) { if ($(k).prop('checked')) { return $(k).val() } }); 
-  $("#id_container_config").val(JSON.stringify( {
-    'user_id': {{ user.id }},
-    'container_id': $("#containerid").val(),
-    'bind_project_ids': bind_project_ids,
-    'bind_course_ids': bind_course_ids,
-    'bind_volume_ids': bind_volume_ids
-  }))
-	alert($("#id_container_config").val())
-});
 
 {# catch modal close event #}
 click_x = false
@@ -154,9 +149,9 @@ $("#containerInfoModal").on("hidden.bs.modal", function (ev, o) {
 });
 
 {# start/restart/stop/open a container, or refresh log clicked in the modal #}
-function handle_click(w) {
-  containerid = $(w).attr('id').split('-')[2];
-  command = $(w).children("input[name=target]").val();
+function handle_click(command, containerid) {
+  //containerid = $(w).parent().attr('id').split('-')[2];
+  //command = $(w).children("input[name=target]").val();
   if (command == "open") {
     open_container(containerid);
     return;
@@ -167,50 +162,29 @@ function handle_click(w) {
   }
   console.log( command + ": " + containerid );
   containerSocket.send(JSON.stringify({
-    'command': command,
-    'container-id': containerid,
+    pk: containerid,
+    request: command,
   }));
 }
 
 {# on mouse over the card show the buttonbars #}
-$("div[id^=hideable-container-]").mouseenter(function() {
-  var containerid = $( this ).attr("id").split("-", 3)[2];
-  // console.log( "card enter: " + containerid );
-  bar = $( "#buttonbar-" + containerid );
-  bar.removeClass("opacity-25");
-  bar.addClass("opacity-100");
+$("div[id^=card-container-]").mouseenter(function() {
+  $(this).addClass("opacity-100")
+  $(this).removeClass("opacity-75")
 });
 
 {# hide buttons on mouse leaving the card #}
-$("div[id^=hideable-container-]").mouseleave(function() {
-  var containerid = $( this ).attr("id").split("-", 3)[2];
-  // console.log( "card leave: " + containerid );
-  bar = $( "#buttonbar-" + containerid );
-  bar.removeClass("opacity-100");
-  bar.addClass("opacity-25");
-  
+$("div[id^=card-container-]").mouseleave(function() {
+  $(this).addClass("opacity-75")
+  $(this).removeClass("opacity-100")
 });
 
 {# check if the card belongs to a running container #}
-function is_running(w) {
-  var containerid = $(w).attr('id').split('-', 3)[2];
-  return ! $("#container-open-" + containerid).hasClass('d-none');
-  //return ! $("#container-open-" + containerid).hasClass('d-opacity20');
-}
-
-{# when mouse enters the clickable part of the card change the cursor to pointer #}
-$("[id^=click-]").mouseenter(function() {
-  if (is_running(this)) {
-    $( this ).css("cursor", "pointer");
-  }
-});
-
-{# clickng the card header/body opens the environment #}
-$("div[id^=click-]").click(function() {
-  if (is_running(this)) {
-    open_container( $( this ).attr("id").split("-", 3)[2] )
-  }
-})
+//function is_running(w) {
+//  var containerid = $(w).attr('id').split('-', 3)[2];
+//  return ! $("#container-open-" + containerid).hasClass('d-none');
+//  //return ! $("#container-open-" + containerid).hasClass('d-opacity20');
+//}
 
 //FIXME: maybe this is something to be put in common
 {# make sure socket is open #}
@@ -224,14 +198,14 @@ function check_sock(sock, wss, callback) {
 }
 
 {# handle container configuration #}
-function configure(cid) {
-  s = check_sock(containerSocket, '{{ wss_container }}', ws_callback)
-  s.send(JSON.stringify({
-    'command': 'configure',
-    'container-id': cid,
-  }));
-	containerSocket = s
-}
+//function configure(cid) {
+//  s = check_sock(containerSocket, '{{ wss_container }}', ws_callback)
+//  s.send(JSON.stringify({
+//    'command': 'configure',
+//    'container-id': cid,
+//  }));
+//	containerSocket = s
+//}
 
 //  {# clickng the card header/body opens the environment #}
 //  $("div[id^=click-]").click(function() {
@@ -241,4 +215,6 @@ function configure(cid) {
 //  });
 
 </script>
+<script src="{% static 'js/xeditable.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/js/bootstrap5-toggle.min.js"></script>
 {% endblock %}

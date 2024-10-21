@@ -5,7 +5,7 @@ except ImportError:
 
 driver = KOOPLEX.get('driver', 'kubernetes')
 if driver == 'kubernetes':
-    from .kubernetes import start as start_environment, stop as stop_environment, restart as restart_environment, check as check_environment, fetch_containerlog
+    from .kubernetes import start as start_environment, stop as stop_environment, check as check_environment, fetch_containerlog
     from .cluster_resources_api import Cluster
 elif driver == 'docker':
     raise NotImplementedError

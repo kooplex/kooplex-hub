@@ -24,15 +24,6 @@ from container.lib import Cluster
 def _range(attribute):
     resources_min = KOOPLEX.get('kubernetes', {}).get('resources', {}).get('requests', {})
     resources_max = KOOPLEX.get('kubernetes', {}).get('resources', {}).get('maxrequests', {})
-    api = Cluster()
-    api.query_nodes_status()
-    api.resources_summary()
-    allnodedata = api.get_data()
-
-    resources_max['cpu'] = max(allnodedata['avail_cpu'])
-    resources_max['memory'] =  max(allnodedata['avail_memory'])
-    resources_max['nvidia.com/gpu'] = max(allnodedata['avail_gpu'])
-
     mapping = {
         'idletime': ('idletime', 1, 48),
         'memoryrequest': ('memory', .1, 2),
@@ -100,6 +91,64 @@ class myNumberInput(forms.NumberInput):
     template_name = 'widget_decimal.html'
 
 class FormContainer(forms.ModelForm):
+    class Meta:
+        model = Container
+        fields = [ 'node', 'cpurequest', 'gpurequest', 'memoryrequest', 'idletime' ]
+    node = forms.ChoiceField(
+        required = False,
+        widget = forms.Select(attrs = tooltip_attrs({
+            'title': _('Choose a node where to launch the environment.'), 
+        }))
+    )
+    idletime = forms.IntegerField(
+        label = 'Uptime [h]', required = False,
+        **_range("idletime"),
+        widget = myNumberInput(attrs = tooltip_attrs({
+            'title': _('If your container resource will have been idle for longer than this interval resource system is shutting it down.'),
+        }))
+    )
+    cpurequest = forms.DecimalField(
+        label = 'CPU [#]', required = False,
+        #**_range("cpurequest"), 
+        min_value = _range("cpurequest")['min_value'],
+        decimal_places = 1, 
+        #initial = _range("cpurequest")['min_value'],
+        validators = [],
+        widget = myNumberInput(attrs = tooltip_attrs({
+            'title': _('Requested number of cpus for your container.'), 
+            'step': 0.1,
+        }))
+    )
+    gpurequest = forms.IntegerField(
+        label = 'GPU [#]', required = False,
+        #**_range("gpurequest"),
+        min_value = _range("gpurequest")['min_value'],
+        widget = myNumberInput(attrs = tooltip_attrs({
+            'title': _('Requested number of gpus for your container.'), 
+        }))
+    )
+    memoryrequest = forms.DecimalField(
+        label = 'Memory [GB]', required = False,
+        #**_range("memoryrequest"),
+        min_value = _range("memoryrequest")['min_value'],
+        widget = myNumberInput(attrs = tooltip_attrs({
+            'title': _('Requested memory for your container.'), 
+            'step': 0.1
+        }))
+    )
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        user = kwargs.get('initial', {}).get('user')
+        if hasattr(user, 'profile') and user.profile.can_choosenode:
+            api = Cluster()
+            api.query_nodes_status()
+            self.fields['node'].choices = [('', 'Any node will do')] + [ (x, x) for x in api.node_df['node'].values ]
+        else:
+            for att in ['node', 'cpurequest', 'memoryrequest', 'gpurequest' ]:
+                self.fields[att].widget = forms.HiddenInput()
+
+#DEPRECATE BELOW
+class FormContainerOld(forms.ModelForm):
     class Meta:
         model = Container
         fields = [ 'user', 'name', 'image', 'node', 'cpurequest', 'gpurequest', 'memoryrequest', 'idletime', 'start_teleport', 'start_seafile' ]
@@ -194,8 +243,8 @@ class FormContainer(forms.ModelForm):
         import base64
         hidden = lambda i: f"""
 <input type="hidden" id="image-description-{i.id}" value="{i.description}">
-<input type="hidden" id="image-thumbnail-{i.id}" value="{i.thumbnail.img_src}">
         """
+#FIXME: <input type="hidden" id="image-thumbnail-{i.id}" value="{i.thumbnail.img_src}">
         return format_html("".join(list(map(hidden, self.fields['image'].queryset))))
 
 

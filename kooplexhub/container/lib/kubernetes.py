@@ -12,7 +12,6 @@ from threading import Timer, Event, Lock
 from ..models.image import Image
 
 from kooplexhub.lib import now
-from .proxy import addroute, removeroute
 
 try:
     from kooplexhub.settings import KOOPLEX
@@ -29,76 +28,61 @@ logger = logging.getLogger(__name__)
 
 namespace = KOOPLEX['kubernetes'].get('namespace', 'k8plex-hub')
 
-class ContainerEvents:
-    def __init__(self):
-        self.l = Lock()
-        self.e = {}
-
-    def get(self, k):
-        with self.l:
-            return self.e[k]
-
-    def get_or_create(self, k):
-        with self.l:
-            if k in self.e:
-                return self.e[k]
-            e = Event()
-            self.e[k] = e
-            return e
-
-    def set(self, k):
-        with self.l:
-            e = self.e.pop(k)
-            e.set()
-
-CE_POOL = ContainerEvents()
-
 def check(container):
     """
 @summary: retrieve the container state from kubernetes framework
 @returns { 'state': Container:ST, 'message': ... }
     """
+    state_mapper = {
+        'Killing': container.ST_STOPPING,
+        'Scheduled': container.ST_STARTING,
+        'Pulling': container.ST_STARTING,
+        'Pulled': container.ST_STARTING,
+        'Created': container.ST_STARTING,
+        'SandboxChanged': container.ST_STARTING,
+        'Started': container.ST_RUNNING,
+        'Not present': container.ST_NOTPRESENT,
+        'FailedCreatePodSandBox': container.ST_ERROR,
+        'FailedMount': container.ST_ERROR,
+        'FailedKillPod': container.ST_STOPPING,
+
+        'Running': container.ST_RUNNING,
+    }
+    #FIXME: if called too frequently, skip to avoid API stress
+    logger.info(f"? checking {container.label}")
+    previous_state = container.state
+    previous_state_backend = container.state_backend
     config.load_kube_config()
     v1 = client.CoreV1Api()
+    #FIXME: hardcoded timeout
+    events = v1.list_namespaced_event(namespace, field_selector=f'involvedObject.name={container.label}', timeout_seconds = 1).items
+    if len(events):
+        current_state_backend=events[-1].reason
+        message=events[-1].message
+        current_state=state_mapper[current_state_backend]
+    if not len(events) or current_state==container.ST_STOPPING:
+        try:
+            pod_status = v1.read_namespaced_pod_status(namespace = namespace, name = container.label)
+            current_state_backend=pod_status.status.phase  #FIXME what are the possible values???
+            current_state=state_mapper[current_state_backend]
+            message=pod_status.status.message or "Container found"
+        except client.rest.ApiException as e:
+            if e.reason == 'Not Found':
+                current_state_backend=e.reason
+                current_state=container.ST_NOTPRESENT
+                message="Container not found"
+            else:
+                raise
+    container.state_lastcheck_at = now()
+    container.state = current_state
+    container.state_backend = current_state_backend
+    container.save()
     status = { 
-        'message': 'No extra information returned',
-        'phase': 'Missing',
+        'message': message,
+        'phase': current_state_backend,
         'state': container.state,
+        'changed': current_state != previous_state or current_state_backend != previous_state_backend
     }
-    try:
-        podstatus = v1.read_namespaced_pod_status(namespace = namespace, name = container.label)
-        status.update( _parse_podstatus(podstatus) ) #FIXME: deprecate
-        waiting = lambda cs: cs.state.waiting and hasattr(cs.state.waiting, 'message') and cs.state.waiting.message
-        msg = lambda cs: cs.state.waiting.message
-        msg_waiting = '; '.join(map(msg, filter(waiting, podstatus.status.container_statuses))) if podstatus.status.container_statuses else ''
-        msg = lambda c: c.message
-        msg_cond = '; '.join(map(msg, filter(msg, podstatus.status.conditions))) if podstatus.status.conditions else ''
-        status['message'] = f'{msg_waiting}; {msg_cond}' if len(msg_waiting) * len(msg_cond) else f'{msg_waiting}{msg_cond}'
-        status['phase'] = podstatus.status.phase
-
-        if container.state == container.ST_STARTING and status.get('state') == container.ST_RUNNING:
-            container.state = container.ST_RUNNING
-            # FIXME could be cleaner
-            #for proxy in container.proxies:
-            #    addroute(container, KOOPLEX['proxy']['routes'][proxy.name], proxy.port)
-            addroute(container, 'NB_URL', 'NB_PORT')
-            addroute(container, 'REPORT_URL', 'REPORT_PORT')
-#        else:
-#            removeroute(container)
-
-    except client.rest.ApiException as e:
-        e_extract = json.loads(e.body)
-        message = e_extract['message']
-        if message.startswith('pods ') and message.endswith(' not found'):
-            container.state = container.ST_NOTPRESENT
-        elif container.state in [ container.ST_RUNNING, container.ST_NEED_RESTART ]:
-            container.state = container.ST_ERROR
-        status['state'] = container.state
-        status['message'] += message
-    finally:
-        logger.debug(f"podstatus: {status}")
-        container.state_lastcheck_at = now()
-        container.save()
     return status
 
 
@@ -150,12 +134,11 @@ def create_sidecar_davfs(container, service):
     return container, [davfs_secret_volume, empty_volume], [host_empty_volume_mount]
 
 def start(container):
-    #event = Event()
-    event = CE_POOL.get_or_create(container.id)
+    logger.info(f"+ starting {container.label}")
     s = check(container)
     if s['state'] != container.ST_NOTPRESENT:
         logger.warning(f'Not starting container {container.label}, which is in a wrong state {container.state}')
-        return event 
+        return
 
     config.load_kube_config()
     v1 = client.CoreV1Api()
@@ -463,64 +446,33 @@ def start(container):
     try:
         v1.create_namespaced_service(namespace = namespace, body = svc_definition)
     except client.rest.ApiException as e:
-        logger.warning(e)
+        logger.warning(f'{container} service exists')
         if json.loads(e.body)['code'] != 409: # already exists
-            logger.debug(svc_definition)
+            logger.critical(e)
             raise
     try:
         v1.create_namespaced_pod(namespace = namespace, body = pod_definition)
+        container.state = container.ST_STARTING
     except client.rest.ApiException as e:
-        logger.warning(e)
+        logger.warning(f'{container} pod exists')
         if json.loads(e.body)['code'] != 409: # already exists
-            logger.debug(pod_definition)
+            logger.critical(e)
             raise
-    container.state = container.ST_STARTING
     container.save()
-    Timer(.2, _check_starting, args = (container.id, event, 300)).start()
-    return event
-
-
-def _check_starting(container_id, event, left = 10):
-    from container.models import Container
-    try:
-        container = Container.objects.get(id = container_id)
-        assert container.state == container.ST_STARTING, f'wrong state {container.label} {container.state}'
-    except Exception as e:
-        logger.warning(e)
-        return
-    chk = check(container)
-    if chk['state'] == Container.ST_RUNNING:
-        logger.info(f'+ pod of {container.label} is ready')
-        #event.set()
-        CE_POOL.set(container_id)
-    elif left == 0:
-        logger.warning(f"gave up on checking container {container.label}, {chk['message']}")
-    else:
-        dt = 1.5 * max(1, 10 - left)
-        Timer(dt, _check_starting, args = (container.id, event, left - 1)).start()
-        logger.debug(f"container {container.label} is still starting (chk['message']). Next check in {dt}")
 
 
 def stop(container):
-    #event = Event()
-    event = CE_POOL.get_or_create(container.id)
+    logger.info(f"- stopping {container.label}")
     s = check(container)
     if s['state'] == container.ST_NOTPRESENT:
-        CE_POOL.set(container.id)
         logger.warning(f'Not stopping container {container.label}, which is not present')
-        return event 
-
+        return
     container.state = container.ST_STOPPING
+    container.save()
     config.load_kube_config()
     v1 = client.CoreV1Api()
     try:
-        removeroute(container, 'NB_URL')
-        removeroute(container, 'REPORT_URL')
-    except Exception as e:
-        logger.error(f"Cannot remove proxy route of container {container} -- {e}")
-    try:
         msg = v1.delete_namespaced_pod(namespace = namespace, name = container.label)
-        logger.debug(msg)
     except client.rest.ApiException as e:
         logger.warning(e)
         if json.loads(e.body)['code'] != 404: # doesnt exists
@@ -528,52 +480,10 @@ def stop(container):
         container.state = container.ST_NOTPRESENT
     try:
         msg = v1.delete_namespaced_service(namespace = namespace, name = container.label)
-        logger.debug(msg)
     except client.rest.ApiException as e:
         logger.warning(e)
         if json.loads(e.body)['code'] != 404: # doesnt exists
             raise
-    container.save()
-    if container.state == container.ST_STOPPING:
-        Timer(.2, _check_stopping, args = (container.id, event)).start()
-    else:
-        #event.set()
-        CE_POOL.set(container.id)
-    return event
-
-
-def _check_stopping(container_id, event):
-    from container.models import Container
-    try:
-        container = Container.objects.get(id = container_id)
-        if container.state == container.ST_NOTPRESENT:
-            #event.set()
-            CE_POOL.set(container.id)
-            return
-        assert container.state == container.ST_STOPPING, f'wrong state {container.label} {container.state}'
-    except Exception as e:
-        logger.warning(e)
-        return
-    s = check(container)
-    if s['state'] == container.ST_NOTPRESENT:
-        #event.set()
-        CE_POOL.set(container.id)
-        logger.info(f'- pod of {container.label} is not present')
-    else:
-        Timer(1, _check_stopping, args = (container.id, event)).start()
-        logger.debug(f'container {container.label} is still present')
-
-
-def restart(container):
-    from container.models import Container
-    assert container.state not in [ container.ST_NOTPRESENT, container.ST_STOPPING ], f'container {container.label} is {container.ST_LOOKUP[container.state]}.'
-    ev_stop = stop(container)
-    if ev_stop.wait(timeout = 30):
-        container = Container.objects.get(id = container.id)
-        return start(container)
-    else:
-        logger.error(f'Not restarting container {container.label}. It is taking very long to stop')
-        raise Exception(f'Not restarting container {container.label}. It is taking very long to stop.')
 
 
 def _parse_podstatus(podstatus):

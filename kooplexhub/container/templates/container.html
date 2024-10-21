@@ -1,5 +1,66 @@
-{% extends 'container_list.html' %}
+{% load container_buttons %}
+{% load static %}
+{% load check_show %}
 
-{% block form %}
-{% include 'container_configure.html' %}
-{% endblock %}
+{# Render a card that represents a contaner #}
+<div class="card bg-ligth shadow-2-strong border border-3 {% card_border container %} mb-3">
+    <!-- Header -->
+    <div class="card-header d-flex justify-content-start align-items-center {% card_border container %}">
+        {% if container %}
+          {% button_open container %}
+        {% else %}
+          {% button_new_container %}
+        {% endif %}
+        {% container_name container %}
+	<div class="flex-grow-1"></div> <!-- Spacer to push the right button to the end -->
+        {% button_stop container %}
+    </div>
+    
+    <!-- Body -->
+    <div class="card-body">
+        <div class="row">
+            <!-- Left Column -->
+            <div class="col-md-6">
+                <!-- Row 1 -->
+                <div class="d-flex align-items-center mb-3">
+                    {% button_teleport container %}
+		    {% container_image container %}
+                </div>
+                <!-- Row 2 -->
+                <div class="mb-3">
+                    {% container_mounts container %}
+                </div>
+                <!-- Row 3 -->
+                <div>
+                    {% container_resources container %}
+                </div>
+            </div>
+            
+            <!-- Right Column -->
+            <div class="col-md-6 d-flex flex-column">
+                <!-- Row 1 -->
+                <div class="d-flex align-items-center mb-3">
+                    {% button_fetchlogs container %}
+                    {% container_state container %}
+                </div>
+                <!-- Row 2 -->
+                <div class="mb-3">{% container_restart_reason container %}</div>
+                <!-- Row 3 -->
+                <div class="d-flex justify-content-end mt-auto">
+		    {% button_save_changes container %}
+		    {# <button type="button" class="btn btn-danger btn-circle">D</button> FIXME cancel changes #}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <div class="card-footer d-flex justify-content-between {% card_border container %}">
+      {% if container %}
+        {% button_start container %}
+        {% button_delete_container container %}
+      {% else %}
+        <div class="btn-placeholder p-1" style="visibility: hidden;">Placeholder</div>
+      {% endif %}
+    </div>
+</div>

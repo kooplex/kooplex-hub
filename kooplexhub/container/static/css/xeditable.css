@@ -1,0 +1,46 @@
+/* Ensure the submit and cancel buttons have the same width, height, and size */
+.editable-buttons .btn {
+  width: 36px !important; /* Ensure uniform width for both buttons */
+  height: 32px !important; /* Adjust the height to match the text box */
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 !important; /* Remove padding to reduce button size */
+}
+
+/* Override the default submit button to show green */
+.editable-buttons .editable-submit {
+  background-color: #28a745 !important; /* Green background */
+  color: white !important; /* White text */
+  border-color: #28a745 !important; /* Green border */
+  border-radius: 4px !important; /* Add rounded corners */
+}
+
+/* Override the default cancel button to show red */
+.editable-buttons .editable-cancel {
+  background-color: #dc3545 !important; /* Red background */
+  color: white !important; /* White text */
+  border-color: #dc3545 !important; /* Red border */
+  border-radius: 4px !important; /* Add rounded corners */
+}
+
+/* Style the input when it's in editable mode */
+.editable-input input {
+    border-radius: 20px; /* Adjust the border-radius for a rounded look */
+    border: 2px solid #5a5a5a; /* Custom border color and thickness */
+    padding: 8px 15px; /* Padding for a more spacious look */
+    background-color: #f0f0f0; /* Light background for the input */
+    outline: none; /* Remove default outline */
+    transition: all 0.3s ease; /* Smooth transition for hover effects */
+}
+
+/* Add hover effect to the input */
+.editable-input input:hover {
+    border-color: #333; /* Darken the border on hover */
+}
+
+/* Style the input when it is focused */
+.editable-input input:focus {
+    border-color: #4CAF50; /* Custom focus color (e.g., green) */
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.5); /* Add subtle shadow */
+}

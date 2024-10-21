@@ -11,128 +11,145 @@ from django.template.defaultfilters import truncatechars
 
 register = template.Library()
 
-@register.simple_tag
-def container_name(container):
-    cn = truncatechars(container.name, 45)
-    return format_html(f"""<h5 id="container-name-{container.id}" style="display: inline" class="card-title fw-bold">{cn}</h5>""")
+visible = lambda x: "" if x else "d-none"
+cid = lambda container: container.id if container else "new"
+
 
 @register.simple_tag
-def ifempty(container):
-    if container.projects or container.courses or hasattr(container, "report"):
-        return ""
-    return format_html(f"""
-<span id="container-empty-{container.id} class="badge rounded-pill bg-warning " data-bs-toggle="tooltip" 
-      title="This environment is not bound to any projects, courses or reports yet"
-      data-placement="bottom"><i class="oi oi-warning"></i>empty</span>
-    """)
-
-@register.simple_tag
-def container_image(container_or_image):
-    container = container_or_image if isinstance(container_or_image, Container) else Container(image = container_or_image)
-    i = container.image.name.split('/')[-1]
-    if container.state == container.ST_NEED_RESTART:
-        bg = 'bg-danger'
-        tooltip = f'Environment {container.name} needs restart'
-    elif container.state == container.ST_RUNNING:
-        bg = 'bg-success'
-        tooltip = f'Environment {container.name} is running fine'
-    elif container.state in [ container.ST_STOPPING, container.ST_STARTING ]:
-        bg = 'bg-warning'
-        tooltip = f'Environment {container.name} is changing phase...'
+def card_border(container = None):
+    if container:
+        # conditional formatting
+        #if container.image.imagetype == container.image.TP_PROJECT:
+        #if container.image.imagetype == container.image.TP_REPORT:
+        #if container.image.imagetype == container.image.TP_API:
+        # lehet hátteret is betehetjük majd
+        return "border-warning"
     else:
-        bg = 'bg-secondary'
-        tooltip = ''
-    w_id = f'id="container-image-{container.id}"' if container.id else ''
+        return "border-danger"
+
+
+@register.simple_tag
+def container_name(container = None):
+    cn = truncatechars(container.name, 45) if container else "Add a name"
     return format_html(f"""
-<span {w_id} class="badge rounded-pill {bg} p-2" 
-      data-bs-toggle="tooltip" data-placement="bottom" 
-      title="{tooltip} "><i class="ri-image-2-line"></i>&nbsp; {i}</span>
+<a href="#" data-type="text" data-title="Edit container name" data-pk="{cid(container)}" data-field="name" data-orig="{cn}" 
+   class="editable fw-bold mx-2 badge rounded-pill w-100 p-2 text-dark border border-2 border-dark text-start" data-placement="right">{cn}</a>
     """)
 
 
 @register.simple_tag
-def container_state(container):
-    state = container.check_state()
-    msg = state.get('message', 'No extra information returned').replace('{', '(').replace('}', ')')
-    state_ = container.get_state_display()
-    phase = state.get('phase', 'Missing')
-    #FIXME: rename id: containerstate- container-state-
+def button_new_container():
     return format_html(f"""
-<span id="containerstate-{container.id}" class="badge rounded-pill p-2 bg-dark text-light"
-      data-bs-toggle="tooltip" data-placement="bottom" 
-      title="Kubernetes message: {msg}">
-  {phase}&nbsp;/&nbsp;{state_}
+<button class="badge rounded-pill text-bg-success border p-2" name="new"
+        data-toggle="tooltip" title="Create a new environment based on the settings" disabled>
+    <span class="bi bi-plus-lg"></span>
+</button>
+    """)
+
+
+@register.simple_tag
+def button_teleport(container = None):
+    return format_html(f"""
+<div id="container-teleport-{cid(container)}">
+    <button class="badge rounded-pill text-bg-success border p-3 me-2" name="grant"
+            data-toggle="tooltip" title="Grant remote access"
+            onclick="teleportButtonClick('{cid(container)}', true)">
+      <span class="bi bi-door-closed" aria-hidden="true" role="status"></span>
+    </button>
+    <button class="badge rounded-pill text-bg-warning border p-3 me-2" name="revoke"
+            data-toggle="tooltip" title="Revoke remote access"
+            onclick="teleportButtonClick('{cid(container)}', false)">
+      <span class="bi bi-door-open" aria-hidden="true"></span>
+    </button>
+</div>
+    """)
+
+
+@register.simple_tag
+def container_image(container = None):
+    if container:
+        iid = container.image.id
+        ihn = container.image.hr
+    else:
+        iid = -1
+        ihn = "Select image..."
+    return format_html(f"""
+<span data-pk="{cid(container)}" data-field="image" data-orig="{iid}" 
+      class="badge rounded-pill text-bg-secondary p-3 border border-2 border-dark flex-grow-1 text-start" 
+      onclick="ImageSelection.openModal('{cid(container)}', {iid})" role="button">
+  <i class="ri-image-2-line me-2"></i><span name="name" data-pk="{cid(container)}">{ihn}</span>
 </span>
     """)
 
 
 @register.simple_tag
-def container_resources(container):
-    cn = container.name
-    # query actual resource usage of container
-    label = container.label
-    usage = pandas.DataFrame(get_pod_usage(container_name=label))
-    if usage.shape[0]>1:
-        #FIXME raise
-        used_cpu = -1
-        used_memory = -1
-        used_gpu = -1
-    elif usage.shape[0]==1:
-        used_cpu = usage["used_cpu"][0]
-        used_memory = usage["used_memory"][0]
-        used_gpu = usage["used_gpu"][0]
-    else:
-        used_cpu = "-"
-        used_memory = "-"
-        used_gpu = "-"
-
-    gpu = f"""
-<span class="badge rounded-pill bg-warning text-dark p-2" 
-      data-bs-toggle="tooltip" data-placement="bottom" 
-      title="The number of GPU devices requested for environment {cn}"><i class="bi bi-gpu-card"></i>&nbsp;{used_gpu}/{container.gpurequest}</span>
-    """ if container.gpurequest else ""
-    node = f"""
-<span class="badge rounded-pill bg-warning text-dark p-2" 
-      data-bs-toggle="tooltip" data-placement="bottom" 
-      title="Your environment {cn} is assigned to compute node {container.node}"><i class="bi bi-pc"></i>&nbsp;{container.node}</span>
-    """ if container.node else ""
+def container_state(container = None):
+    state = container.check_state() if container else {}
+    phase = state.get('phase', 'Missing')
     return format_html(f"""
-<div id="container-resources-{container.id}" style="display: inline">
-  {node}
-  <span class="badge rounded-pill bg-warning text-dark p-2" 
-        data-bs-toggle="tooltip" data-placement="bottom" 
-        title="The CPU clock cycles requested for environment {cn}"><i class="bi bi-cpu"></i>&nbsp;{used_cpu}/{container.cpurequest}</span>
-  {gpu}
-  <span class="badge rounded-pill bg-warning text-dark p-2" 
-        data-bs-toggle="tooltip" data-placement="bottom" 
-        title="The requested memory for environment {cn}"><i class="bi bi-memory"></i>&nbsp;{used_memory}/{container.memoryrequest}&nbsp;GB</span>
-  <span class="badge rounded-pill bg-warning text-dark p-2" 
-        data-bs-toggle="tooltip" data-placement="bottom" 
-        title="The maximum allowed idle time for environment {cn}"><i class="bi bi-clock-history"></i>&nbsp;{container.idletime}&nbsp;h</span>
-</div>
-    """)
+<span data-pk="{cid(container)}" name="phase" class="badge rounded-pill bg-dark text-light p-3 flex-grow-1 text-start">{phase}</span>
+    """) if container else ""
 
 
 @register.simple_tag
-def container_mounts(container):
-    p = container.projects
-    P = "\n".join(map(lambda x: f"{x.name} {x.description}", p))
-    c = container.courses
-    C = "\n".join(map(lambda x: f"{x.name} {x.description}", c))
-    v = container.volumes
-    vt = lambda x: 'a' if x.scope == Volume.SCP_ATTACHMENT else 'v'
-    V = "\n".join(map(lambda x: f"{x.folder} ({vt(x)}): {x.description}", v))
-    vis = lambda x: '' if len(x) else 'd-none'
+def container_resources(container = None):
+    _atlist = [ "node", "cpurequest", "gpurequest", "memoryrequest", "idletime"]
+    geta = lambda container, attr: getattr(container, attr, None) if container else None
+    atts = { a: geta(container, a) for a in _atlist }
+    cn = container.name if container else ""
+    hv = { a: "" if v else "d-none" for a, v in atts.items() }
+    empty = "d-none" if len(_atlist)>list(atts.values()).count(None) else ""
     return format_html(f"""
-<div id="container-mounts-{container.id}" style="display: inline">
-  <span class="badge rounded-pill bg-dark {vis(p)}" aria-hidden="true" data-bs-toggle="tooltip" title="Projects:\n{P}" data-placement="top"><i class="ri-product-hunt-line"></i> {len(p)}</span>
-  <span class="badge rounded-pill bg-dark {vis(c)}" aria-hidden="true" data-bs-toggle="tooltip" title="Courses:\n{C}" data-placement="top"><i class="ri-copyright-line"></i> {len(c)}</span>
-  <span class="badge rounded-pill bg-dark {vis(v)}" aria-hidden="true" data-bs-toggle="tooltip" title="Volumes/Attachments:\n{V}" data-placement="top"><i class="ri-database-2-line"></i> {len(v)}</span>
+<div id="container-resources-{cid(container)}" style="display: inline"
+      data-bs-toggle="tooltip" data-placement="bottom"
+      title="Requested compute resources. Double click to tune."
+      onclick="ComputeResourceSelection.openModal('{cid(container)}', \'{atts['node']}\')">
+  <span class="badge rounded-pill bg-warning text-dark p-3 border border-2 border-dark w-100 text-start" role="button">
+    <span class="{hv['node']}" name="node"><i class="bi bi-pc me-1"></i><span name="node_name" class="me-2">{atts['node']}</span></span>
+    <span class="{hv['cpurequest']}" name"cpu"><i class="bi bi-cpu me-1"></i><span name="node_cpu_request" class="me-2">{atts['cpurequest']}</span></span>
+    <span class="{hv['gpurequest']}" name="gpu"><i class="bi bi-gpu-card me-1"></i><span name="node_gpu_request" class="me-2">{atts['gpurequest']}</span></span>
+    <span class="{hv['memoryrequest']}" name="mem"><i class="bi bi-memory me-1"></i><span name="node_mem_request" class="me-2">{atts['memoryrequest']} GB</span></span>
+    <span class="{hv['idletime']}" name="up"><i class="bi bi-clock-history me-1"></i><span name="node_idle" class="me-2">{atts['idletime']} h</span></span>
+    <span class="{empty}" name="empty"><i class="bi bi-wrench-adjustable me-1"></i>default resources</span>
+  </span>
 </div>
     """)
-#	  {% report container.report %} {# FIXME: handle report and other images in the same list #}
-#	  {% synchfolders container %}  {# FIXME: check implementation when seafile integrated #}
-#	  {% repos container %}         {# FIXME: check implementation when gitea integrated #}
+
+
+#FIXME: az aktuális fogyasztás mehet a loglekérésbe vagy háttészínbe
+#@register.simple_tag
+#def container_resources(container = None):
+#        # query actual resource usage of container
+#        usage = pandas.DataFrame(get_pod_usage(container_name=container.label))
+#        if usage.shape[0]==1:
+#            used_cpu = usage["used_cpu"][0]
+#            used_memory = usage["used_memory"][0]
+#            used_gpu = usage["used_gpu"][0]
+
+
+@register.simple_tag
+def container_mounts(container = None):
+    hs = lambda x: "" if x else "d-none"
+    if container:
+        p = len(container.projects)
+        c = len(container.courses)
+        v = len(container.volumes)
+    else:
+        p=v=c=0
+    empty = "d-none" if p+v+c else ""
+    return format_html(f"""
+<div id="container-mounts-{cid(container)}" style="display: inline"
+      data-bs-toggle="tooltip" data-placement="bottom"
+      title="Requested filesystem resources. Double click to change mounts."
+      onclick="FileResourceSelection.openModal('{cid(container)}')">
+  <span class="badge rounded-pill bg-secondary-subtle p-3 border border-2 border-secondary text-dark w-100 text-start">
+    <span class="{hs(p)}" name="project"><i class="ri-product-hunt-line me-1"></i><span name="project_count" class="me-2">{p}</span></span>
+    <span class="{hs(c)}" name="course"><i class="ri-copyright-line me-1"></i><span name="course_count" class="me-2">{c}</span></span>
+    <span class="{hs(v)}" name="volume"><i class="ri-database-2-line me-1"></i><span name="volume_count" class="me-2">{v}</span></span>
+    <span class="{empty}" name="empty"><i class="bi bi-folder me-2"></i>default mounts</span>
+  </span>
+</div>
+    """)
 
 
 @register.simple_tag
@@ -147,192 +164,119 @@ def report(report):
 @register.simple_tag
 def synchfolders(container):
     return ""
-#FIXME:
-#          {% if container.synced_libraries|length > 0 %}
-#            <span class="badge rounded-pill bg-dark" aria-hidden="true" data-bs-toggle="tooltip" title="Synchron folders:
-#{% for l in container.synced_libraries %}
-#{{ l.library_name }} from server {{ l.token.syncserver.url }}
-#{% endfor %}" data-placement="top"><i class="ri-refresh-fill"></i> {{container.synced_libraries|length}}</span>
-#          {% endif %}
 
 
 @register.simple_tag
 def repos(container):
     return ""
-#FIXME:
-#          {% if container.repos|length > 0 %}
-#            <span class="badge rounded-pill bg-dark" aria-hidden="true" data-bs-toggle="tooltip" title="Version control repositories:
-#{% for r in container.repos %}
-#{{ r.project_name }} from server {{ r.token.repository.url }}
-#{% endfor %}" data-placement="top"><i class="ri-git-repository-line"></i> {{container.repos|length}}</span>
-#          {% endif %}
 
 
 @register.simple_tag
-def container_restart_reason(container):
+def container_restart_reason(container = None):
     return format_html(f"""
-<span class="bg-warning p-2"><span class="bi bi-exclamation-triangle">&nbsp;<strong aria-hidden="true" data-toggle="tooltip" title="{container.restart_reasons}">Needs restart</strong></span></span>
-    """) if container.restart_reasons else ""
+<span id="container-restartreason-{container.id}" class="{visible(container.restart_reasons)} badge rounded-pill text-bg-warning border p-3 border border-2 border-danger w-100"
+      data-toggle="tooltip" title="{container.restart_reasons}">
+  <i class="bi bi-exclamation-triangle me-1"></i><strong>Needs restart</strong>
+</span>
+    """) if container else ""
 
 
 @register.simple_tag
-def button_delete_container(container):
-    if hasattr(container, "report"):
-        return ""
+def button_save_changes(container = None):
+    return format_html(f"""
+<span id="container-save-{cid(container)}" class="badge rounded-pill bg-danger text-light p-3 d-none" role="button"
+      onclick="save_container_config('{cid(container)}')">
+  <i class="bi bi-save me-1"></i><span>Save changes</span>
+</span>
+    """)
+
+
+@register.simple_tag
+def button_delete_container(container = None):
+    if not container or hasattr(container, "report"):
+        return "" #FIXME: space holder!
     link = reverse('container:destroy', args = [container.id])
     msg = f"Are you sure you want to drop your container {container}?"
     return format_html(f"""
-<div class="float-end">
-  <a href="{link}" onclick="return confirm('{msg}');" role="button" class="btn btn-danger btn-sm"><span class="oi oi-trash" aria-hidden="true" data-toggle="tooltip" title="Remove {container.name}"></span></a>
+<a href="{link}" onclick="return confirm('{msg}');" role="button" class="badge rounded-pill text-bg-danger border p-2"><span class="oi oi-trash" aria-hidden="true" data-toggle="tooltip" title="Remove {container.name}"></span></a>
+    """)
+
+
+@register.simple_tag
+def button_start(container = None, id_suffix = ''):
+    return format_html(f"""
+<div id="container-start-{container.id}{id_suffix}">
+    <button class="badge rounded-pill text-bg-success border p-2" name="start"
+            data-toggle="tooltip" title="Start environment {container.name}"
+            onclick="handle_click('start', {container.id})">
+      <span class="bi bi-lightning" aria-hidden="true" role="status"></span>
+    </button>
+    <button class="badge rounded-pill text-bg-warning border p-2" name="restart"
+            data-toggle="tooltip" title="Restart environment {container.name}"
+            onclick="handle_click('restart', {container.id})">
+      <span class="bi bi-bootstrap-reboot" aria-hidden="true"></span>
+    </button>
+    <button class="badge rounded-pill text-bg-success border p-2" name="busy" disabled>
+      <span class="spinner-grow spinner-grow-sm" aria-hidden="true" role="status"></span>
+    </button>
+    <button class="badge rounded-pill text-bg-secondary border p-2" name="default" disabled>
+      <span class="bi bi-lightning" aria-hidden="true"></span>
+    </button>
 </div>
-    """)
+    """) if container else ""
 
 
 @register.simple_tag
-def button_start_open(container, id_suffix = ''):
-    if container.state in [ container.ST_RUNNING, container.ST_NEED_RESTART ]:
-        tooltip = f'Jump to environment {container.name}'
-        icon_class = 'oi oi-external-link'
-        extra = ''
-        link = reverse('container:open', args = [container.id])
-        hidden = f"""
-<input type="hidden" id="url-containeropen-{container.id}{id_suffix}" value="{link}">
-<input type="hidden" name="target" value="open">
-        """
-    elif container.state == container.ST_NOTPRESENT:
-        tooltip = f'Start environment {container.name}'
-        icon_class = 'bi bi-lightning'
-        extra = ''
-        hidden = '<input type="hidden" name="target" value="start">'
-    else:
-        tooltip = f'unhandled {container.name} {container.state}'
-        icon_class = 'spinner-grow spinner-grow-sm'
-        extra = 'role="status"'
-        hidden = ''
+def button_stop(container = None, id_suffix = ''):
     return format_html(f"""
-<button id="container-startopen-{container.id}{id_suffix}"
-        class="btn btn-success btn-sm " 
-        data-toggle="tooltip" title="{tooltip}"
-        onclick="handle_click(this)"
->
-  <span class="{icon_class}" aria-hidden="true" {extra}></span>
-  {hidden}
-</button>
-    """)
+<div id="container-stop-{container.id}{id_suffix}">
+    <button class="badge rounded-pill text-bg-danger border p-2" name="stop" 
+            data-toggle="tooltip" title="Stop environment {container.name}"
+            onclick="handle_click('stop', {container.id})">
+      <span class="bi bi-x-lg" aria-hidden="true"></span>
+    </button>
+    <button class="badge rounded-pill text-bg-danger border p-2" name="disabled" disabled>
+      <span class="bi bi-x-lg" aria-hidden="true"></span>
+    </button>
+    <button class="badge rounded-pill text-bg-danger border p-2" name="default"
+            onclick="handle_click('stop', {container.id})">
+      <span class="spinner-grow spinner-grow-sm" aria-hidden="true" role="status"></span>
+    </button>
+</div>
+    """) if container else ""
 
-#@register.simple_tag
-#def button_report_start(container):
-#    link = reverse('container:report_open', args = [container.id])
-#    return format_html(f"""
-#<button name="container-report-open" value="{container.id}"
-#        class="btn btn-success btn-sm " 
-#        data-toggle="tooltip" title="Open report url {container.name}"
-#>
-#  <span id="container-report-open-{container.id}" class="oi oi-external-link {s}" aria-hidden="true"></span>
-#  <input type="hidden" id="url-containerreportopen-{container.id}" value="{link}">
-#</button>
-#    """)
 
 @register.simple_tag
-def button_stop(container):
-    if container.state in [ container.ST_RUNNING, container.ST_NEED_RESTART ]:
-        tooltip = f'Stop environment {container.name}'
-        icon_class = 'bi bi-x-lg'
-        extra = ''
-        butt_extra = ''
-    elif container.state == container.ST_NOTPRESENT:
-        tooltip = f''
-        icon_class = 'bi bi-x-lg'
-        extra = ''
-        butt_extra = 'disabled'
-    else:
-        kubestate = container.check_state()
-        phase = kubestate.get('phase', None)
-        butt_extra = ''
-        if phase == 'Pending':
-            tooltip = f'Environment {container.name} is in a pending state...'
-            icon_class = 'bi bi-x-lg'
-            extra = ''
-        else:
-            tooltip = f'Unhandles situation {container.name} state: {container.state} phase: {phase}'
-            icon_class = 'spinner-grow spinner-grow-sm'
-            extra = 'role="status"'
+def button_open(container, id_suffix = ''):
+    link = reverse('container:open', args = [container.id])
     return format_html(f"""
-<button id="container-stop-{container.id}"
-        class="btn btn-danger btn-sm " 
-        data-toggle="tooltip" title="{tooltip}"
-        onclick="handle_click(this)" {butt_extra}
->
-  <span class="{icon_class}" aria-hidden="true" {extra}></span>
-  <input type="hidden" name="target" value="stop">
-</button>
+<span id="container-open-{container.id}{id_suffix}">
+    <button class="badge rounded-pill text-bg-success border p-2" name="open"
+            data-toggle="tooltip" title="Jump to environment {container.name}"
+            onclick="handle_click('open', '{link}')">
+      <span class="oi oi-external-link" aria-hidden="true"></span>
+    </button>
+    <button class="badge rounded-pill text-bg-secondary border p-2" name="default" disabled>
+      <span class="oi oi-external-link" aria-hidden="true"></span>
+    </button>
+</span>
     """)
 
 
 @register.simple_tag
-def button_restart(container):
-    if container.state in [ container.ST_RUNNING, container.ST_NEED_RESTART ]:
-        icon_class = 'bi bi-bootstrap-reboot'
-        butt_extra = ''
-        extra = ''
-    elif container.state == container.ST_NOTPRESENT:
-        icon_class = 'bi bi-bootstrap-reboot'
-        extra = ''
-        butt_extra = 'disabled'
-    else:
-        icon_class = 'spinner-grow spinner-grow-sm'
-        extra = 'role="status"'
-        butt_extra = ''
-
+def button_fetchlogs(container = None, id_suffix = ''):
     return format_html(f"""
-<button id="container-restart-{container.id}"
-        class="btn btn-warning btn-sm" 
-        data-toggle="tooltip" title="Restart inconsistent environment {container.name}"
-        onclick="handle_click(this)" {butt_extra}
->
-  <span class="{icon_class}" aria-hidden="true" {extra}></span>
-  <input type="hidden" name="target" value="restart">
-</button>
-    """)
-
-
-
-
-@register.simple_tag
-def button_refreshlog(container, modal_prefix = None):
-    if modal_prefix:
-        return format_html(f"""
-<button class="btn btn-warning btn-sm mb-1" 
-        data-bs-toggle="modal" data-bs-target="#{modal_prefix}{container.id}"
-        ><span class="bi bi-patch-question" aria-hidden="true" 
-               data-toggle="tooltip" title="Click to retrieve latest container logs" data-placement="bottom"></span></button>
-        """)
-    return format_html(f"""
-<button name="container-log" value="{container.id}" class="btn btn-warning btn-sm mb-1" 
-        data-toggle="tooltip" title="Click to retrieve latest container logs" data-placement="bottom" disabled>
-        <span id="container-log-{container.id}" class="bi bi-patch-question d-none" aria-hidden="true"></span>
-        <span id="spinner-log-{container.id}" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-</button>
-    """)
-
-
-@register.simple_tag
-def button_configure(container):
-    #link = reverse('container:configure', args = [container.id])
-    return format_html(f"""
-<a href="#" onClick="configure({container.id})" role="button" class="btn btn-warning btn-sm"><span class="bi bi-tools" aria-hidden="true" data-toggle="tooltip" title="Add/remove project to the service" data-placement="bottom"></span></a>
-    """)
-
-
-@register.simple_tag
-def button_configure_attachment(attachment, user):
-    if attachment.creator == user:
-        link = reverse('container:configure_attachment', args = [attachment.id])
-        return format_html(f"""
-<a href="{link}" role="button" class="btn btn-secondary btn-sm"><span class="oi oi-wrench" aria-hidden="true" data-toggle="tooltip" title="Update the name or description of this attachment" data-placement="bottom"></span></a>
-        """)
-    else:
-        return ""
+<span id="container-log-{container.id}{id_suffix}">
+    <button class="badge rounded-pill text-bg-info border p-3 me-2" name="fetch"
+        data-toggle="tooltip" title="Click to retrieve latest container logs" data-placement="bottom"
+        onclick='ContainerLogs.openModal({container.id})'>
+        <span class="bi bi-heart-pulse"></span>
+    </button>
+    <button class="badge rounded-pill text-bg-secondary border p-3 me-2" name="default" disabled>
+        <span class="bi bi-heart-pulse"></span>
+    </button>
+</span>
+    """) if container else ""
 
 
 #FIXME
