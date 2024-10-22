@@ -107,8 +107,7 @@
                 const changed = register_changes(selectedContainerId, 'image', selectedImageId, originalImageId) 
 		if (changed) {
                     $(`[data-field=image][data-pk="${selectedContainerId}"]`).text($('#image-name').text())
-                    // show the save button
-                    $(`#container-save-${selectedContainerId}`).removeClass("d-none")
+		    showSaveChanges(selectedContainerId)
 		}
             }
             // Close the modal

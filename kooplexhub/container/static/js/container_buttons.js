@@ -114,6 +114,23 @@ function updateButtons(containerId, suffix, initialState) {
     }
 }
 
+// Show Save Changes button
+function showSaveChanges(containerId) {
+  if (containerId === "new") {
+     // only show if the compulsory attributes are set
+     var count = changes.filter(x => x.pk === "new"  && ["name", "image"].includes(x.field)).length
+     if (count < 2) {
+       return
+     }
+  }
+  $(`#container-save-${containerId}`).removeClass("d-none")
+}
+
+// Hide Save Changes button
+function hideSaveChanges(containerId) {
+  $(`#container-save-${containerId}`).addClass("d-none")
+}
+
 // This function can be triggered initially on page load or from WebSocket events
 const buttonTeleportStates = {
   true: "revoke",
@@ -130,8 +147,7 @@ function teleportButtonClick(containerId, req) {
     const changed = register_changes(containerId, 'start_teleport', req, '') // FIXME: old
     if (changed) {
         updateTeleportButton(containerId, req)
-        // show the save button
-        $(`#container-save-${containerId}`).removeClass("d-none")
+	showSaveChanges(containerId)
     }
 }
 
@@ -151,8 +167,7 @@ function seafileButtonClick(containerId, req) {
     const changed = register_changes(containerId, 'start_seafile', req, '') // FIXME: old
     if (changed) {
         updateSeafileButton(containerId, req)
-        // show the save button
-        $(`#container-save-${containerId}`).removeClass("d-none")
+	showSaveChanges(containerId)
     }
 }
 

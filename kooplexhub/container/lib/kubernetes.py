@@ -56,6 +56,7 @@ def check(container):
     v1 = client.CoreV1Api()
     #FIXME: hardcoded timeout
     events = v1.list_namespaced_event(namespace, field_selector=f'involvedObject.name={container.label}', timeout_seconds = 1).items
+    current_state_backend = None
     if len(events):
         current_state_backend=events[-1].reason
         message=events[-1].message
@@ -63,9 +64,11 @@ def check(container):
     if not len(events) or current_state==container.ST_STOPPING:
         try:
             pod_status = v1.read_namespaced_pod_status(namespace = namespace, name = container.label)
-            current_state_backend=pod_status.status.phase  #FIXME what are the possible values???
-            current_state=state_mapper[current_state_backend]
+            phase=pod_status.status.phase  #FIXME what are the possible values???
+            current_state=state_mapper[phase]
             message=pod_status.status.message or "Container found"
+            if current_state_backend is None:
+                current_state_backend = phase
         except client.rest.ApiException as e:
             if e.reason == 'Not Found':
                 current_state_backend=e.reason

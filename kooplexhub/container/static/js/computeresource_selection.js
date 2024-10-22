@@ -89,8 +89,7 @@
 		changed = changed || register_changes(selectedContainerId, 'idletime', i, '')
 		if (changed) {
 		    updateButtonFace(selectedContainerId, n, c, g, m, i)
-                    // show the save button
-                    $(`#container-save-${selectedContainerId}`).removeClass("d-none")
+		    showSaveChanges(selectedContainerId)
 		}
 
                 // Close the modal

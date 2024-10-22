@@ -51,8 +51,7 @@
 		changed = changed || register_changes(selectedContainerId, 'volumes', volumes, volumes_o)
 		if (changed) {
 		    updateButtonFace(selectedContainerId, projects.length, courses.length, volumes.length)
-                    // show the save button
-                    $(`#container-save-${selectedContainerId}`).removeClass("d-none")
+		    showSaveChanges(selectedContainerId)
 		}
                 // Close the modal
                 $('.fileresource-modal').modal('hide');

@@ -108,8 +108,7 @@ function save_container_config(pk) {
     setTimeout(function() {
         sock.send(JSON.stringify(data))
     }, 200)
-    // Hide Save button
-    $(`#container-save-${pk}`).addClass("d-none")
+    hideSaveChanges(pk)
     // Return a promise to handle asynchronous behavior
     var deferred = $.Deferred();
     deferred.resolve();

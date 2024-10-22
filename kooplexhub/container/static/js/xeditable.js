@@ -19,8 +19,7 @@ $('a.editable').each(function(){
     const pk = $element.data('pk')
     const changed = register_changes(pk, $element.data('field'), $.trim(params.newValue), $element.data('orig'))
     if (changed) {
-      // show the save button
-      $(`#container-save-${pk}`).removeClass("d-none")
+      showSaveChanges(pk)
     }
   })
 
