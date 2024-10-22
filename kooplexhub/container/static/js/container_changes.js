@@ -75,7 +75,7 @@ function container_config_callback(message) {
 	        alert(f.name.error)
 	    } else {
                 //FIXME: ANYTHING UNHANDLED
-		alert ("let kooplex@elte.hu know of: " + str(f))
+		console.log("unhandled failures", f)
 	    }
 	}
     }

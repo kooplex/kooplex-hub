@@ -17,7 +17,7 @@
 
     // lookup original id list
     function getOriginal(pk, binding) {
-        return pk === "new" ? "[]" : $(`#original_${binding}-${containerId}`).val()
+        return pk === "new" ? "[]" : $(`#original_${binding}-${pk}`).val()
     }
 
     // Handle click to show modal

@@ -74,9 +74,11 @@ $(document).ready(function() {
     // Example initialization, assuming `containers` is passed from Django context
     {% for container in containers %}
         updateButtons({{ container.id }}, "", "{{ container.state }}")
-        updateTeleportButton({{ container.id }}, "{{ container.teleport }}")
+        updateTeleportButton({{ container.id }}, "{{ container.start_teleport }}")
+        updateSeafileButton({{ container.id }}, "{{ container.start_seafile }}")
     {% endfor %}
     updateTeleportButton("new", "grant")
+    updateSeafileButton("new", "grant")
 });
 </script>
 <script>

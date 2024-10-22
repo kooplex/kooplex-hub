@@ -8,6 +8,7 @@ from container.lib.cluster_resources_api import *
 import pandas
 
 from django.template.defaultfilters import truncatechars
+from django.templatetags.static import static
 
 register = template.Library()
 
@@ -49,17 +50,37 @@ def button_new_container():
 
 @register.simple_tag
 def button_teleport(container = None):
+    ico = static('teleport.ico')
     return format_html(f"""
 <div id="container-teleport-{cid(container)}">
-    <button class="badge rounded-pill text-bg-success border p-3 me-2" name="grant"
-            data-toggle="tooltip" title="Grant remote access"
+    <button class="badge rounded-pill text-bg-secondary-subtle border border-2 border-dark p-3 me-2" name="grant"
+            data-toggle="tooltip" title="Enable teleport login"
             onclick="teleportButtonClick('{cid(container)}', true)">
-      <span class="bi bi-door-closed" aria-hidden="true" role="status"></span>
+      <img src="{ico}" width="15px" alt="t">
     </button>
-    <button class="badge rounded-pill text-bg-warning border p-3 me-2" name="revoke"
-            data-toggle="tooltip" title="Revoke remote access"
+    <button class="badge rounded-pill text-bg-warning border border-2 border-success p-3 me-2" name="revoke"
+            data-toggle="tooltip" title="Disable teleport login"
             onclick="teleportButtonClick('{cid(container)}', false)">
-      <span class="bi bi-door-open" aria-hidden="true"></span>
+      <img src="{ico}" width="15px" alt="t">
+    </button>
+</div>
+    """)
+
+
+@register.simple_tag
+def button_seafile(container = None):
+    ico = static('seafile.png')
+    return format_html(f"""
+<div id="container-seafile-{cid(container)}">
+    <button class="badge rounded-pill text-bg-secondary-subtle border border-2 border-dark p-3 me-2" name="grant"
+            data-toggle="tooltip" title="Mount cloud folders"
+            onclick="seafileButtonClick('{cid(container)}', true)">
+      <img src="{ico}" width="15px" alt="t">
+    </button>
+    <button class="badge rounded-pill text-bg-success border border-2 border-success border-2 p-3 me-2" name="revoke"
+            data-toggle="tooltip" title="Umount cloud folders"
+            onclick="seafileButtonClick('{cid(container)}', false)">
+      <img src="{ico}" width="15px" alt="t">
     </button>
 </div>
     """)
@@ -69,7 +90,7 @@ def button_teleport(container = None):
 def container_image(container = None):
     if container:
         iid = container.image.id
-        ihn = container.image.hr
+        ihn = truncatechars(container.image.hr, 20)
     else:
         iid = -1
         ihn = "Select image..."
@@ -100,12 +121,14 @@ def container_resources(container = None):
     hv = { a: "" if v else "d-none" for a, v in atts.items() }
     empty = "d-none" if len(_atlist)>list(atts.values()).count(None) else ""
     return format_html(f"""
-<div id="container-resources-{cid(container)}" style="display: inline"
+<div id="container-resources-{cid(container)}"
       data-bs-toggle="tooltip" data-placement="bottom"
       title="Requested compute resources. Double click to tune."
+      data-node="{atts['node']}" data-cpurequest="{atts['cpurequest']}" data-gpurequest="{atts['gpurequest']}"
+      data-memoryrequest="{atts['memoryrequest']}" data-idletime="{atts['idletime']}"
       onclick="ComputeResourceSelection.openModal('{cid(container)}', \'{atts['node']}\')">
   <span class="badge rounded-pill bg-warning text-dark p-3 border border-2 border-dark w-100 text-start" role="button">
-    <span class="{hv['node']}" name="node"><i class="bi bi-pc me-1"></i><span name="node_name" class="me-2">{atts['node']}</span></span>
+    <span class="{hv['node']}" name="node"><i class="bi bi-pc me-1"></i><span name="node_name" class="me-2">{truncatechars(atts['node'], 6)}</span></span>
     <span class="{hv['cpurequest']}" name"cpu"><i class="bi bi-cpu me-1"></i><span name="node_cpu_request" class="me-2">{atts['cpurequest']}</span></span>
     <span class="{hv['gpurequest']}" name="gpu"><i class="bi bi-gpu-card me-1"></i><span name="node_gpu_request" class="me-2">{atts['gpurequest']}</span></span>
     <span class="{hv['memoryrequest']}" name="mem"><i class="bi bi-memory me-1"></i><span name="node_mem_request" class="me-2">{atts['memoryrequest']} GB</span></span>
@@ -138,16 +161,15 @@ def container_mounts(container = None):
         p=v=c=0
     empty = "d-none" if p+v+c else ""
     return format_html(f"""
-<div id="container-mounts-{cid(container)}" style="display: inline"
+<div id="container-mounts-{cid(container)}" data-pk="{cid(container)}"
+      class="badge rounded-pill bg-secondary-subtle p-3 border border-2 border-secondary text-dark flex-grow-1 text-start" 
       data-bs-toggle="tooltip" data-placement="bottom"
       title="Requested filesystem resources. Double click to change mounts."
-      onclick="FileResourceSelection.openModal('{cid(container)}')">
-  <span class="badge rounded-pill bg-secondary-subtle p-3 border border-2 border-secondary text-dark w-100 text-start">
+      onclick="FileResourceSelection.openModal('{cid(container)}')" role="button">
     <span class="{hs(p)}" name="project"><i class="ri-product-hunt-line me-1"></i><span name="project_count" class="me-2">{p}</span></span>
     <span class="{hs(c)}" name="course"><i class="ri-copyright-line me-1"></i><span name="course_count" class="me-2">{c}</span></span>
     <span class="{hs(v)}" name="volume"><i class="ri-database-2-line me-1"></i><span name="volume_count" class="me-2">{v}</span></span>
     <span class="{empty}" name="empty"><i class="bi bi-folder me-2"></i>default mounts</span>
-  </span>
 </div>
     """)
 

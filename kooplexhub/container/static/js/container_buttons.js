@@ -134,3 +134,25 @@ function teleportButtonClick(containerId, req) {
         $(`#container-save-${containerId}`).removeClass("d-none")
     }
 }
+
+// This function can be triggered initially on page load or from WebSocket events
+const buttonSeafileStates = {
+  true: "revoke",
+  default: "grant"
+};
+function updateSeafileButton(containerId, state) {
+    let widgetId = `container-seafile-${containerId}`
+    let selectedButtonName = buttonSeafileStates[state] || "grant"  // Fallback to default if state is unknown
+    applyButton(widgetId, selectedButtonName)
+}
+
+function seafileButtonClick(containerId, req) {
+    containerId = containerId === "new" ? "new" : parseInt(containerId)
+    const changed = register_changes(containerId, 'start_seafile', req, '') // FIXME: old
+    if (changed) {
+        updateSeafileButton(containerId, req)
+        // show the save button
+        $(`#container-save-${containerId}`).removeClass("d-none")
+    }
+}
+

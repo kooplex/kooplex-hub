@@ -26,12 +26,12 @@
             memory = message["avail_memory"];
         }
         $(".progress").addClass("d-none")
-        $("input[name='cpurequest']").attr("max", cpu);
-        $("input[name='memoryrequest']").attr("max", memory);
-        $("input[name='gpurequest']").attr("max", gpu);
-        $("#thresholdhigh-cpurequest").text(cpu);
-        $("#thresholdhigh-memoryrequest").text(memory);
-        $("#thresholdhigh-gpurequest").text(gpu);
+        $("input[name='cpurequest']").attr("max", cpu)
+        $("input[name='memoryrequest']").attr("max", memory)
+        $("input[name='gpurequest']").attr("max", gpu)
+        $("#thresholdhigh-cpurequest").text(cpu)
+        $("#thresholdhigh-memoryrequest").text(memory)
+        $("#thresholdhigh-gpurequest").text(gpu)
         $("input[name$='request'").each(function() { 
           if ($(this).attr("max") > 0) {
             $(this).attr('disabled', false ) 
@@ -42,9 +42,16 @@
     // Handle click to show modal
     function handleClick(containerId, node) {
         selectedContainerId = containerId === "new" ? "new" : parseInt(containerId)
+	const thebutton = $(`#container-resources-${containerId}`)
         if (node === "None") { node = "" }
 	selectedNode = node
 	currentNode = node
+        $("input[name='cpurequest']").val(parseFloat(thebutton.data('cpurequest')))
+        $("input[name='gpurequest']").val(parseInt(thebutton.data('gpurequest')))
+        $("input[name='memoryrequest']").val(parseFloat(thebutton.data('memoryrequest')))
+        $("input[name='idletime']").val(parseInt(thebutton.data('idletime')))
+        $("select[name='node']").val(thebutton.data('node')).change()
+
 	///FIXME: retrieve info if container is running
         $('.computeresource-modal').modal('show')
 
@@ -110,8 +117,20 @@
 	$(`#container-resources-${pk} [name=node] [name=node_name]`).text(n) 
 	$(`#container-resources-${pk} [name=cpu] [name=node_cpu_request]`).text(c)
 	$(`#container-resources-${pk} [name=gpu] [name=node_gpu_request]`).text(g)
-	$(`#container-resources-${pk} [name=mem] [name=node_memory_request]`).text(m)
-	$(`#container-resources-${pk} [name=up] [name=node_idle]`).text(i)
+	$(`#container-resources-${pk} [name=mem] [name=node_memory_request]`).text(m + "GB")
+	$(`#container-resources-${pk} [name=up] [name=node_idle]`).text(i + " h")
+	$wid_node = $(`#container-resources-${pk} [name=node]`)
+	$wid_cpu = $(`#container-resources-${pk} [name=cpu]`)
+	$wid_gpu = $(`#container-resources-${pk} [name=gpu]`)
+	$wid_mem = $(`#container-resources-${pk} [name=mem]`)
+	$wid_up = $(`#container-resources-${pk} [name=up]`)
+	$wid_empty = $(`#container-resources-${pk} [name=empty]`)
+	if (n.length) { $wid_node.removeClass('d-none') } else { $wid_node.addClass('d-none') }
+	if (c) { $wid_cpu.removeClass('d-none') } else { $wid_cpu.addClass('d-none') }
+	if (g) { $wid_gpu.removeClass('d-none') } else { $wid_gpu.addClass('d-none') }
+	if (m) { $wid_mem.removeClass('d-none') } else { $wid_mem.addClass('d-none') }
+	if (i) { $wid_up.removeClass('d-none') } else { $wid_up.addClass('d-none') }
+	if (n.length+c+g+m+i==0) { $wid_empty.removeClass('d-none') } else { $wid_empty.addClass('d-none') }
     }
 
     // update to be called, after server kooplex accepted new values
