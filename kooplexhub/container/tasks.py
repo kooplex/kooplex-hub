@@ -1,9 +1,9 @@
+import logging
 import time
+
 import requests, os
 from django.utils import timezone
 from datetime import datetime
-#from celery import shared_task
-#from celery.utils.log import get_task_logger
 
 from channels.layers import get_channel_layer
 from django_huey import task
@@ -15,7 +15,7 @@ from kooplexhub.settings import KOOPLEX
 from .lib import start_environment, stop_environment
 from .lib.proxy import addroute, removeroute
 
-#logger = get_task_logger(__name__)
+logger = logging.getLogger(__name__)
 
 CHECK_INTERVAL=1 #FIXME: hardcoded timout
 

@@ -1,51 +1,70 @@
 {% extends "project_layout.html" %}
 
+{% load static %}
+
 {% block head_content %}
 <link href="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/css/bootstrap5-toggle.min.css" rel="stylesheet">
+<link href="{% static 'css/xeditable.css' %}" rel="stylesheet">
 {% endblock %}
-
-{% block pagedescription %}
-Projects are a good way to collaborate with each other without much restriction. Permissions on files and folders are set in a restrictive way protecting user's own work. <a href="https://xwiki.vo.elte.hu/en/kooplex-manual/projects"><span class="ms-2 bi bi-book"></span></a>
-{% endblock %}
-
-{# the search bar #}
-{% block search %}
-{% if userprojectbindinglist %}
-<div class="card border border-light border-3 mx-5 mb-3 rounded-3">
-  <div class="input-group">
-    <span class="input-group-text"><span class="bi bi-search"></span></span>
-    <input class="form-control" type="text" id="search_project" placeholder="Search project" title="Type in a name" autofocus >
-    <span class="input-group-text">
-      <input id="toggler-project_hidden" data-size="mini" data-width="50"
-             type="checkbox" data-toggle="toggle" name="search_hidden"
-             data-on="<span class='bi bi-eye'></span>"
-	     data-off="<span class='bi bi-eye-slash' id='hidden-counter'> {{n_hidden}}</span>"
-             data-onstyle="success" data-offstyle="secondary">
-    </span>
-  </div>
-</div>
-{% endif %}
-{% endblock %}
-
 
 {# render the project cards #}
 {% block bodycontent %}
-{% if userprojectbindinglist|length %}
-  <div class="row row-cols-1 row-cols-md-2">
-    {% for upb in userprojectbindinglist %}
-      <div class="col" id="hideable-project-{{ upb.project.id }}">
-        {% include 'project_partial_list.html' with project=upb.project projectcontainerbindings=upb.projectcontainerbindings is_admin=upb.is_admin hidden=upb.is_hidden upb_id=upb.id %}
-      </div>
-    {% endfor %}
-  </div>
-{% else %}
-  {% include 'empty.html' %}
-{% endif %}
+<div class="container-fluid">
+  {# create new project card #}
+  {% include 'project.html' with is_admin=True %}
+  {# joina project card #}
+  {#% include 'join.html' %#}
+  {% for upb in userprojectbindinglist %}
+      {% include 'project.html' with project=upb.project projectcontainerbindings=upb.projectcontainerbindings is_admin=upb.is_admin %}
+  {% endfor %}
+</div>
+<script src="{% static 'js/project_buttons.js' %}"></script>
+<script src="{% static 'js/project_changes.js' %}"></script>
+
+
+{# a modal to configure a project image #}
+{% include 'widgets/image_selection.html' %}
+<script src="{% static 'js/image_selection.js' %}"></script>
+
+{# a modal to configure a project collaborators #}
+{% include 'widgets/select_users.html' %}
+<script src="{% static 'js/select_users.js' %}"></script>
+
+{# a modal to configure a project volumes #}
+{% include 'widgets/volumes.html' %}
+<script src="{% static 'js/volume_selection.js' %}"></script>
+
+{# a modal to configure project environments or jump to an environment #}
+{#% include 'widgets/environments.html' %#}
+<script src="{% static 'js/select_environments.js' %}"></script>
+
 {% endblock %}
 
 
 {% block scripts %}
 <script>
+// Save web socket urls
+const wsURLs = {
+//  container_fetchlog: "{{ wss_container_fetchlog }}",
+//  container_control: "{{ wss_container_control }}",
+  project_config: "{{ wss_project_config }}",
+//  monitor_node: "{{ wss_monitor_node }}"
+}
+
+$(document).ready(function() {
+    // Example initialization, assuming `containers` is passed from Django context
+    {% for upb in userprojectbindinglist %}
+        updateProjectScope({{ upb.project.id }}, "{{ upb.project.scope }}")
+    {% endfor %}
+    updateProjectScope("new", "")
+    // remove control from those entries for which user is not a creator os admin
+    $("[data-editable=False] .editable").editable().off('click')
+    $("[data-editable=False] [onclick]").not("[onclick^=return]").prop("onclick", null).off("click")
+});   
+
+
+
+
 {# before redirecting to container page save info to narrow search #}
 $("a[name=shortcut]").on("click", function(event) {
   //event.preventDefault();
@@ -56,8 +75,8 @@ $("a[name=shortcut]").on("click", function(event) {
   $.cookie("search_container_id", container_id, { 'path': '/;SameSite=Strict', 'secure': true, 'expires': expire });
 });
 
-containerSocket = open_ws('{{ wss_container }}', ws_callback_container);
-projectSocket = open_ws('{{ wss_project }}', ws_callback_project);
+//containerSocket = open_ws('{{ wss_container }}', ws_callback_container);
+//projectSocket = open_ws('{{ wss_project }}', ws_callback_project);
 
 {# handle websocket callback #}
 function ws_callback_project(data) {
@@ -162,6 +181,7 @@ function handle_click(w) { // FIXME: code repetition
 }
 
 </script>
+<script src="{% static 'js/p_xeditable.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/js/bootstrap5-toggle.min.js"></script>
 {% endblock %}
 

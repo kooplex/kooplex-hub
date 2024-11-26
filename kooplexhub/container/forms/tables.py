@@ -116,19 +116,7 @@ class TableVolume(tables.Table):
     def __init__(self, user):
         volumes = [ b.volume for b in UserVolumeBinding.objects.filter(user = user) ]
         volumes.extend(Volume.objects.filter(scope = Volume.SCP_ATTACHMENT))
-        self.container_bindings = { k.pk: [] for k in Container.objects.filter(user=user) }
-        for vcb in VolumeContainerBinding.objects.filter(container__user = user):
-            self.container_bindings[vcb.container.pk].append(vcb.volume.pk)
         super().__init__(set(volumes))
-
-    @property
-    def dump_hidden(self):
-        return format_html(
-            "\n".join([ f"""
-<input id="original_volumelist-{c}" value="{l}" type="hidden">
-                """ for c, l in self.container_bindings.items()
-            ])
-        )
 
     def render_button(self, record):
         volume = record

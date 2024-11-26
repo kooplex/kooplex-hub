@@ -15,7 +15,6 @@ register = template.Library()
 visible = lambda x: "" if x else "d-none"
 cid = lambda container: container.id if container else "new"
 
-
 @register.simple_tag
 def card_border(container = None):
     if container:
@@ -29,6 +28,7 @@ def card_border(container = None):
         return "border-danger"
 
 
+#FIXME: be but a
 @register.simple_tag
 def container_name(container = None):
     cn = truncatechars(container.name, 45) if container else "Add a name"
@@ -53,15 +53,17 @@ def button_teleport(container = None):
     ico = static('teleport.ico')
     return format_html(f"""
 <div id="container-teleport-{cid(container)}">
-    <button class="badge rounded-pill text-bg-secondary-subtle border border-2 border-dark p-3 me-2" name="grant"
+    <button class="badge rounded-pill border border-1 border-dark p-3 me-2 position-relative" name="grant"
             data-toggle="tooltip" title="Enable teleport login"
-            onclick="teleportButtonClick('{cid(container)}', true)">
+            onclick="teleportButtonClick('{cid(container)}', 'True')">
       <img src="{ico}" width="15px" alt="t">
+      <span class="position-absolute top-0 start-100 translate-middle badge bg-secondary small">off</span>
     </button>
-    <button class="badge rounded-pill text-bg-warning border border-2 border-success p-3 me-2" name="revoke"
+    <button class="badge rounded-pill border border-2 border-success p-3 me-2 position-relative" name="revoke"
             data-toggle="tooltip" title="Disable teleport login"
-            onclick="teleportButtonClick('{cid(container)}', false)">
+            onclick="teleportButtonClick('{cid(container)}', 'False')">
       <img src="{ico}" width="15px" alt="t">
+      <span class="position-absolute top-0 start-100 translate-middle badge bg-success small">on</span>
     </button>
 </div>
     """)
@@ -72,15 +74,17 @@ def button_seafile(container = None):
     ico = static('seafile.png')
     return format_html(f"""
 <div id="container-seafile-{cid(container)}">
-    <button class="badge rounded-pill text-bg-secondary-subtle border border-2 border-dark p-3 me-2" name="grant"
+    <button class="badge rounded-pill border border-1 border-dark p-3 me-2 position-relative" name="grant"
             data-toggle="tooltip" title="Mount cloud folders"
-            onclick="seafileButtonClick('{cid(container)}', true)">
+            onclick="seafileButtonClick('{cid(container)}', 'True')">
       <img src="{ico}" width="15px" alt="t">
+      <span class="position-absolute top-0 start-100 translate-middle badge bg-secondary small">off</span>
     </button>
-    <button class="badge rounded-pill text-bg-success border border-2 border-success border-2 p-3 me-2" name="revoke"
+    <button class="badge rounded-pill border border-2 border-success p-3 me-2 position-relative" name="revoke"
             data-toggle="tooltip" title="Umount cloud folders"
-            onclick="seafileButtonClick('{cid(container)}', false)">
+            onclick="seafileButtonClick('{cid(container)}', 'False')">
       <img src="{ico}" width="15px" alt="t">
+      <span class="position-absolute top-0 start-100 translate-middle badge bg-success small">on</span>
     </button>
 </div>
     """)
@@ -95,11 +99,11 @@ def container_image(container = None):
         iid = -1
         ihn = "Select image..."
     return format_html(f"""
-<span data-pk="{cid(container)}" data-field="image" data-orig="{iid}" 
-      class="badge rounded-pill text-bg-secondary p-3 border border-2 border-dark flex-grow-1 text-start" 
+<button data-pk="{cid(container)}" data-field="image" data-orig="{iid}" 
+      class="badge rounded-pill text-dark p-3 border border-1 border-dark flex-grow-1 text-start" 
       onclick="ImageSelection.openModal('{cid(container)}', {iid})" role="button">
   <i class="ri-image-2-line me-2"></i><span name="name" data-pk="{cid(container)}">{ihn}</span>
-</span>
+</button>
     """)
 
 
@@ -127,14 +131,14 @@ def container_resources(container = None):
       data-node="{atts['node']}" data-cpurequest="{atts['cpurequest']}" data-gpurequest="{atts['gpurequest']}"
       data-memoryrequest="{atts['memoryrequest']}" data-idletime="{atts['idletime']}"
       onclick="ComputeResourceSelection.openModal('{cid(container)}', \'{atts['node']}\')">
-  <span class="badge rounded-pill bg-warning text-dark p-3 border border-2 border-dark w-100 text-start" role="button">
+  <button class="badge rounded-pill text-dark p-3 border border-1 border-dark w-100 text-start" role="button">
     <span class="{hv['node']}" name="node"><i class="bi bi-pc me-1"></i><span name="node_name" class="me-2">{truncatechars(atts['node'], 6)}</span></span>
     <span class="{hv['cpurequest']}" name"cpu"><i class="bi bi-cpu me-1"></i><span name="node_cpu_request" class="me-2">{atts['cpurequest']}</span></span>
     <span class="{hv['gpurequest']}" name="gpu"><i class="bi bi-gpu-card me-1"></i><span name="node_gpu_request" class="me-2">{atts['gpurequest']}</span></span>
     <span class="{hv['memoryrequest']}" name="mem"><i class="bi bi-memory me-1"></i><span name="node_mem_request" class="me-2">{atts['memoryrequest']} GB</span></span>
     <span class="{hv['idletime']}" name="up"><i class="bi bi-clock-history me-1"></i><span name="node_idle" class="me-2">{atts['idletime']} h</span></span>
     <span class="{empty}" name="empty"><i class="bi bi-wrench-adjustable me-1"></i>default resources</span>
-  </span>
+  </button>
 </div>
     """)
 
@@ -156,21 +160,24 @@ def container_mounts(container = None):
     if container:
         p = len(container.projects)
         c = len(container.courses)
-        v = len(container.volumes)
+        volume_ids=[v.id for v in container.volumes]
+        v = len(volume_ids)
     else:
+        volume_ids=[]
         p=v=c=0
     empty = "d-none" if p+v+c else ""
     return format_html(f"""
-<div id="container-mounts-{cid(container)}" data-pk="{cid(container)}"
-      class="badge rounded-pill bg-secondary-subtle p-3 border border-2 border-secondary text-dark flex-grow-1 text-start" 
+<button id="container-mounts-{cid(container)}" data-pk="{cid(container)}"
+      class="badge rounded-pill p-3 border border-1 border-dark text-dark flex-grow-1 text-start" 
       data-bs-toggle="tooltip" data-placement="bottom"
+      data-volumes="{volume_ids}"
       title="Requested filesystem resources. Double click to change mounts."
       onclick="FileResourceSelection.openModal('{cid(container)}')" role="button">
     <span class="{hs(p)}" name="project"><i class="ri-product-hunt-line me-1"></i><span name="project_count" class="me-2">{p}</span></span>
     <span class="{hs(c)}" name="course"><i class="ri-copyright-line me-1"></i><span name="course_count" class="me-2">{c}</span></span>
     <span class="{hs(v)}" name="volume"><i class="ri-database-2-line me-1"></i><span name="volume_count" class="me-2">{v}</span></span>
     <span class="{empty}" name="empty"><i class="bi bi-folder me-2"></i>default mounts</span>
-</div>
+</button>
     """)
 
 

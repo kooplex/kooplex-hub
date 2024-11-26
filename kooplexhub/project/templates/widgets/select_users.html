@@ -1,0 +1,194 @@
+<!-- templates/widgets/select_users.html -->
+{% load django_tables2 %}
+<div class="modal fade users-modal" tabindex="-1" aria-labelledby="usersModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="usersModalLabel">Select Users</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body vh-25">
+                <div class="container mt-3">
+                    <!-- Search Bar -->
+	            <div class="input-group">
+                        <span class="input-group-text"><span class="bi bi-search"></span></span>
+                        <input class="form-control" type="text" id="search-user" placeholder="Search collaborator" title="Type in a name">
+                    </div>
+                    <!-- Search Results Dropdown -->
+                    <ul id="user-search-results" class="list-group position-absolute border border-2 border-secondary" style="max-height: 150px; overflow-y: auto; width: 100%;">
+                        <!-- Dynamic list of matching users will be appended here -->
+                    </ul>
+                    <!-- Selected Users Table -->
+		    {# FIXME mt-2 #}
+		    {% render_table t_users %}
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="confirm-users-selection">Confirm</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Dismiss</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// User Selection Modal Logic
+(function() {
+    var selectedObjectId = null
+    var selectedUserIds = null
+    var originalUserIds = null
+    var selectedAdmins = null
+    const users = []
+
+    // Initialize users object
+    function initUsers() {
+        // Parse the JSON data from the <script> tag
+        const usersData = JSON.parse(document.getElementById('users_data').textContent)
+
+        // Loop through each item in usersData to structure the objects
+        usersData.forEach(userDict => {
+            // Extract the PK and user details
+            const pk = Object.keys(userDict)[0] // Get the first (and only) key, which is the PK
+            const userDetails = userDict[pk] // Get the user's details
+
+            // Construct a new user object
+            users.push({
+                pk: parseInt(pk, 10), // Convert PK to an integer
+                name_and_username: userDetails.name_and_username,
+                search: userDetails.search
+            })
+        })
+
+	// hide search results
+        $('#user-search-results').hide()
+	initTogglers()
+    }
+
+    // Handle search bar input
+    $('#search-user').on('input', function () {
+        const query = $(this).val().toLowerCase().trim().replaceAll(' ', '')
+	    console.log(query)
+        if (query) {
+            const matches = users.filter(user =>
+                selectedUserIds.indexOf(user.pk) == -1 && user.search.includes(query)
+            ).slice(0, 5) // Limit to top 5 matches
+
+            $('#user-search-results').empty().show() // Clear previous results and show dropdown
+            matches.forEach(user => {
+                $('#user-search-results').append(
+                    `<li class="list-group-item list-group-item-action" onclick="UserSelection.addUser(${user.pk})">
+                         ${user.name_and_username}
+                     </li>`
+                )
+            })
+        } else {
+            $('#user-search-results').hide()
+        }
+    })
+
+    // Handle removal
+    function handleRemoveClick(pk) {
+        $(`tr[data-pk=${pk}]`).hide()
+	selectedUserIds = $.grep(selectedUserIds, function(value) {
+            return value != pk
+        })
+    }
+
+    // Handle addition
+    function handleAddition(pk) {
+        selectedUserIds.push(pk)
+        const is_admin = $(`span[data-pk=${pk}]`).prop('checked')
+        if (is_admin) {
+            selectedAdmins.push(pk)
+        } else {
+            selectedAdmins = $.grep(selectedAdmins, function(value) {
+                return value != pk
+            })
+        }
+        $(`tr[data-pk=${pk}]`).show()
+        $('#search-user').val('')
+        $('#user-search-results').hide()
+    }
+
+    // Handle modal open
+    function handleOpen(objectId) {
+        selectedObjectId = objectId === "new" ? "new" : parseInt(objectId)
+        selectedUserIds = $(`[data-pk=${objectId}][data-userlist]`).data('userlist')
+	originalUserIds = $(`[data-pk=${objectId}][data-userlist]`).data('userlist')
+	selectedAdmins = $(`[data-pk=${objectId}][data-adminlist]`).data('adminlist')
+	originalAdmins = $(`[data-pk=${objectId}][data-adminlist]`).data('adminlist')
+	$('tr[data-pk]').each(function() {
+            const pk = $(this).data('pk')
+
+            // Show row if pk is in users list, hide otherwise
+            if (selectedUserIds.includes(pk)) {
+                $(this).show()
+            } else {
+                $(this).hide()
+            }
+
+            // Find the toggle button within the row
+            const toggleButton = $(this).find(`input[data-pk=${pk}]`)
+            // Check if pk is in admins list
+            if (selectedAdmins.includes(pk)) {
+                toggleButton.bootstrapToggle('on')
+	    } else {
+                toggleButton.bootstrapToggle('off')
+	    }
+        })
+        $(".users-modal").modal('show')
+    }
+
+    // Handle toggle changes
+    function initTogglers() {
+        $("input[data-pk]").on("change", function() {
+            const pk = $(this).data('pk')
+            if ($(this).prop('checked')) {
+                selectedAdmins.push(pk)
+            } else {
+                selectedAdmins = $.grep(selectedAdmins, function(value) {
+                    return value != pk
+                })
+            }
+        })
+    }
+
+    // Confirm user selection
+    $('#confirm-users-selection').on('click', function() {
+    	console.log(selectedObjectId)
+        if (selectedObjectId) {
+            var changed = register_changes(selectedObjectId, 'admins', selectedAdmins, originalAdmins)
+	    if (changed) {
+                register_changes(selectedObjectId, 'users', selectedUserIds, []) // we have to enforce listing project users
+	    } else {
+                changed = register_changes(selectedObjectId, 'users', selectedUserIds, originalUserIds) // otherwise if no change to former users' roles, new users may have been added
+	    }
+            if (changed) {
+		let userlist = users.filter(user => selectedUserIds.includes(user.pk)).map(user => user.name_and_username).join("<br>")
+		$($(`div[data-pk=${selectedObjectId}] p`)[1]).html(userlist)  //FIXME: use div /class; better rendering
+                showSaveChanges(selectedObjectId)
+            }
+            // Close the modal
+            $('.users-modal').modal('hide')
+            selectedObjectId = null
+        }
+    })
+
+
+    // Expose the functionality globally so it can be reused
+    window.UserSelection = {
+	init: initUsers,
+        openModal: handleOpen,
+	addUser: handleAddition,
+        removeUser: handleRemoveClick
+    }
+
+})()
+
+$(document).ready(function () {
+     UserSelection.init()
+})
+
+</script>
+{{ users|json_script:"users_data" }}

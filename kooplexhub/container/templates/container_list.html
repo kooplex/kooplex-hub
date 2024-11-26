@@ -11,15 +11,15 @@
 {# render the container cards #}
 {% block bodycontent %}
 <div id="containerListPane" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 w-100 mx-auto justify-content-center">
+    {# new container create card #}
+    <div class="col" id="card-container-new">
+      {% include 'container.html' %}
+    </div>
     {% for container in containers %}
-      <div class="col opacity-75" id="card-container-{{ container.id }}">
+      <div class="col" id="card-container-{{ container.id }}">
         {% include 'container.html' %}
       </div>
     {% endfor %}
-    {# new container create button #}
-    <div class="col opacity-75" id="card-container-new">
-      {% include 'container.html' %}
-    </div>
 </div>
 <script src="{% static 'js/container_buttons.js' %}"></script>
 
@@ -169,17 +169,6 @@ function handle_click(command, containerid) {
   }));
 }
 
-{# on mouse over the card show the buttonbars #}
-$("div[id^=card-container-]").mouseenter(function() {
-  $(this).addClass("opacity-100")
-  $(this).removeClass("opacity-75")
-});
-
-{# hide buttons on mouse leaving the card #}
-$("div[id^=card-container-]").mouseleave(function() {
-  $(this).addClass("opacity-75")
-  $(this).removeClass("opacity-100")
-});
 
 {# check if the card belongs to a running container #}
 //function is_running(w) {

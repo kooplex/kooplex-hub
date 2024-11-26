@@ -1,0 +1,60 @@
+{% load project_buttons %}
+{% load container_buttons %}
+{% load check_show %}
+
+{# FIXME: read only if not admin!!! #}
+
+<div class="card w-100 rounded rounded-3 mb-2 border border-2 {% project_card_border project %}" id="card-{{ project.id }}" data-editable="{{is_admin}}">
+    <div class="card-body">
+        <div class="row">
+            <!-- First Column -->
+            <div class="col">
+                <div class="d-flex align-items-center mb-3">
+		    {% project_name project %}
+	            {% project_scope project %}
+                </div>
+                <div class="d-flex">
+		    {% project_image project %}
+                </div>
+            </div>
+
+            <!-- Second Column -->
+            <div class="col">
+                <div class="rounded border p-3 rounded-3 border-2 border-dark" style="max-height: 118px; height: 100%; overflow-y: auto;">
+                    <div class="content">
+		        {% project_folder project %}
+			{% project_creator project user %}
+			{% project_description project %}
+			{% list_reports project %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Third Column -->
+            <div class="col">
+                <div class="rounded border p-3 rounded-3 border-2 border-dark" style="max-height: 118px; height: 100%; overflow-y: auto;">
+		    {% list_collaborators project user %}
+                </div>
+            </div>
+
+            <!-- Fourth Column -->
+            <div class="col">
+                <div class="rounded border p-3 rounded-3 border-2 border-dark" style="max-height: 118px; height: 100%; overflow-y: auto;">
+		    {% list_volumes project %}
+                </div>
+            </div>
+
+            <!-- Fifth Column -->
+            <div class="col">
+                <div class="mb-3">
+                    <input type="text" class="form-control form-control-lg rounded-pill" placeholder="modal to start/open">
+                </div>
+                <div class="d-flex justify-content-end">
+		    {% button_save_project_changes project %}
+		    {% button_project_delete project %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

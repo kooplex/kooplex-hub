@@ -13,8 +13,10 @@ from django.contrib.auth.models import User
 #from django.urls import reverse
 
 from .forms import FormProject, FormJoinProject
+from container.forms import TableVolume
+from .forms import TableCollaborator
 from .models import Project, UserProjectBinding, ProjectContainerBinding
-from container.models import Container
+from container.models import Image, Container
 from volume.models import Volume, VolumeContainerBinding
 
 from kooplexhub.settings import KOOPLEX
@@ -170,10 +172,14 @@ class UserProjectBindingListView(LoginRequiredMixin, generic.ListView):
         context['submenu'] = 'list'
         context['menu_project'] = True
         context['empty_title'] = "You have no projects"
-        context['wss_container'] = KOOPLEX.get('hub', {}).get('wss_container', 'wss://localhost/hub/ws/container_environment/{userid}/').format(userid = self.request.user.id)
-        context['wss_project'] = KOOPLEX.get('hub', {}).get('wss_project', 'wss://localhost/hub/ws/project/{userid}/').format(userid = self.request.user.id)
-        context['empty_body'] = format_html(f"""You can create a <a href="{l}"><i class="bi bi-bag-plus"></i><span>&nbsp;new project</span></a>.""")
+        #context['wss_container'] = KOOPLEX.get('hub', {}).get('wss_container', 'wss://localhost/hub/ws/container_environment/{userid}/').format(userid = self.request.user.id)
+        #context['wss_project'] = KOOPLEX.get('hub', {}).get('wss_project', 'wss://localhost/hub/ws/project/{userid}/').format(userid = self.request.user.id)
+        context['wss_project_config'] = KOOPLEX.get('hub', {}).get('wss_project_config', 'wss://localhost/hub/ws/project/config/{userid}/').format(userid = self.request.user.id)
         context['n_hidden'] = len(context['object_list'].filter(is_hidden = True))
+        context['images'] = Image.objects.filter(imagetype = Image.TP_PROJECT, present = True)
+        context['users'] = [ u.profile._repr for u in User.objects.all().exclude(id = self.request.user.id) ]
+        context['t_users'] = TableCollaborator(User.objects.all().exclude(id = self.request.user.id))
+        context['t_volume'] = TableVolume(self.request.user)
         return context
 
     def get_queryset(self):

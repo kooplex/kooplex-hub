@@ -17,3 +17,8 @@ class VolumeContainerBindingAdmin(admin.ModelAdmin):
 class UserVolumeBindingAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'volume', 'role')
     search_fields = ('user__username','volume__name')
+
+@admin.register(ProjectVolumeBinding)
+class ProjectVolumeBindingAdmin(admin.ModelAdmin):
+    list_display = ('id', 'project', 'volume')
+    search_fields = ('project__name','volume__name')

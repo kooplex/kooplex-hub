@@ -44,3 +44,20 @@
     border-color: #4CAF50; /* Custom focus color (e.g., green) */
     box-shadow: 0 0 5px rgba(76, 175, 80, 0.5); /* Add subtle shadow */
 }
+
+
+/* Remove dotted line for x-editable elements */
+.editable {
+    outline: none; /* Remove focus outline */
+    box-shadow: none; /* Remove any potential shadow that may appear */
+    border: none; /* Remove the dotted or dashed border */
+}
+
+/* Optionally, you can also prevent dotted lines when the element is focused */
+.editable:focus,
+.editable:hover {
+    outline: none;
+    box-shadow: none;
+    border: none;
+}
+

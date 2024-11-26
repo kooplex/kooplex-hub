@@ -1,6 +1,9 @@
-from celery import shared_task
-#import logging
+import logging
 import time
+
+from channels.layers import get_channel_layer
+from django_huey import task
+from asgiref.sync import async_to_sync
 
 from django.contrib.auth.models import User
 from django.db import transaction
@@ -13,12 +16,11 @@ from hub.lib import grantaccess_group, revokeaccess_group
 from hub.lib import filename, dirname
 from hub.lib import mkdir, archivedir, rmdir
 
-#logger = logging.getLogger(__name__)
-from celery.utils.log import get_task_logger
-logger = get_task_logger(__name__)
+logger = logging.getLogger(__name__)
 
-@shared_task()
+@task(queue = 'project')
 def grant_access(folders, acl):
+    channel_layer=get_channel_layer()
     #FIXME: lehetne ACL: [{'folder': '...', 'groups_rw': [...], 'groups_ro': [...]}, ...]
     for f in folders:
         for gid in acl.get('groups_rw', []):
@@ -28,11 +30,22 @@ def grant_access(folders, acl):
         for uid in acl.get('users_rw', []):
             grantaccess_user(User.objects.get(id = uid), f, readonly = False, recursive = True)
 
+    async_to_sync(channel_layer.group_send)("project", {
+            "type": "feedback",
+            "feedback": f"Folders {folders} got acl {acl}",
+        })
+    return "Completed"
 
-@shared_task()
+@task(queue = 'project')
 def revoke_access(user_id, folders):
+    u = User.objects.get(id = user_id)
     for f in folders:
-        revokeaccess_user(User.objects.get(id = user_id), f)
+        revokeaccess_user(u, f)
+    async_to_sync(channel_layer.group_send)("project", {
+            "type": "feedback",
+            "feedback": f"{u}'s acls are removed from folders {folders}",
+        })
+    return "Completed"
 
 
 

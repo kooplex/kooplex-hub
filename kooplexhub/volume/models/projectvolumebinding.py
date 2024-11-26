@@ -17,11 +17,7 @@ class ProjectVolumeBinding(models.Model):
         unique_together = [['project', 'volume']]
 
     def __str__(self):
-       return "%s-%s" % (self.project.name, self.volume.username)
-
-    @property
-    def uniquename(self):#FIXME: deprecate
-        return "%s-%s" % (self.project.uniquename, self.volume.username)
+       return "%s-%s" % (self.project.name, self.volume.folder)
 
 #    @property
 #    def groupname(self):

@@ -28,7 +28,8 @@ def mkdir_project(sender, instance, **kwargs):
 @receiver(pre_delete, sender = Project)
 def rmdir_project(sender, instance, **kwargs):
     try:
-        Group.objects.get(name = instance.groupname, grouptype = Group.TP_PROJECT).delete()
+        #FIXME: Group.objects.get(name = instance.groupname, grouptype = Group.TP_PROJECT).delete()
+        pass
     except Group.DoesNotExist:
         pass
     Task(

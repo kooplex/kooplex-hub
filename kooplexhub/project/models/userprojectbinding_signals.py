@@ -62,9 +62,10 @@ def revokeaccess_project(sender, instance, **kwargs):
     if instance.role != UserProjectBinding.RL_CREATOR:
         group = Group.objects.get(name = instance.groupname, grouptype = Group.TP_PROJECT)
         UserGroupBinding.objects.get(user = instance.user, group = group).delete()
+        creator = instance.project.creator.username if instance.project.creator is not None else "creator_missing"
         Task(
             create = True,
-            name = f"Revoke access {instance.project.name}({instance.project.creator.username}) from {instance.user.username}",
+            name = f"Revoke access {instance.project.name}({creator}) from {instance.user.username}",
             task = "project.tasks.revoke_access",
             kwargs = {
                 'folders': [ fs.path_project(instance.project), fs.path_report_prepare(instance.project) ],

@@ -143,7 +143,7 @@ class ContainerConfigConsumer(SyncSkeleton):
             container.save()
             response["reloadpage"]=True
         else:
-            cid = int(parsed.get('pk'))
+            cid = int(pk)
             container = self.get_container(cid)
         response["container_id"]=container.id
         restart=[]

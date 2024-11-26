@@ -1,6 +1,6 @@
 // static/js/fileresource_selection.js
 
-// Compute Resource Selection Modal Logic
+// FileSystem Resource Selection Modal Logic
 (function() {
     var selectedContainerId = null
 

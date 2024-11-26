@@ -2,10 +2,11 @@
 
 // Image Selection Modal Logic
 (function() {
-    var selectedContainerId = null
+    var selectedObjectId = null
     var selectedImageId = null
     var originalImageId = null
     var selectedIndex = -1
+    var targetAttribute = null
 
     // Handle image item click
     function handleImageItemClick() {
@@ -73,8 +74,9 @@
     }
 
     // Handle click to show modal
-    function handleClick(containerId, imageSelectedId) {
-        selectedContainerId = containerId === "new" ? "new" : parseInt(containerId)
+    function handleClick(pk, imageSelectedId, attribute = "image") {
+        selectedObjectId = pk === "new" ? "new" : parseInt(pk)
+	targetAttribute = attribute
 	imageId = imageSelectedId
         $('.image-modal').modal('show')
     
@@ -103,11 +105,11 @@
     // Confirm image selection
     function confirmSelection() {
         $('#confirm-image-selection').on('click', function() {
-            if (selectedContainerId && selectedImageId) {
-                const changed = register_changes(selectedContainerId, 'image', selectedImageId, originalImageId) 
+            if (selectedObjectId && selectedImageId) {
+                const changed = register_changes(selectedObjectId, targetAttribute, selectedImageId, originalImageId) 
 		if (changed) {
-                    $(`[data-field=image][data-pk="${selectedContainerId}"]`).text($('#image-name').text())
-		    showSaveChanges(selectedContainerId)
+                    $(`[data-field=image][data-pk="${selectedObjectId}"]`).text($('#image-name').text())
+		    showSaveChanges(selectedObjectId)
 		}
             }
             // Close the modal

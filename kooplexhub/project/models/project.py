@@ -81,8 +81,13 @@ class Project(models.Model):
         return list(UserProjectBinding.objects.filter(project = self))
 
     @property
+    def volumes(self):
+        from volume.models import ProjectVolumeBinding
+        return [ b.volume for b in ProjectVolumeBinding.objects.filter(project = self) ]
+
+    @property
     def reports(self):
-        from .report import Report
+        from report.models import Report
         return Report.objects.filter(project = self)
 
 #FIXME:

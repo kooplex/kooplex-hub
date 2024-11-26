@@ -133,12 +133,14 @@ function hideSaveChanges(containerId) {
 
 // This function can be triggered initially on page load or from WebSocket events
 const buttonTeleportStates = {
-  true: "revoke",
+  "True": "revoke",
   default: "grant"
 };
 function updateTeleportButton(containerId, state) {
+	console.log("KALL")
+	console.log(state)
     let widgetId = `container-teleport-${containerId}`
-    let selectedButtonName = buttonTeleportStates[state] || "grant"  // Fallback to default if state is unknown
+    let selectedButtonName = buttonTeleportStates[state] || "grant"
     applyButton(widgetId, selectedButtonName)
 }
 
@@ -153,12 +155,12 @@ function teleportButtonClick(containerId, req) {
 
 // This function can be triggered initially on page load or from WebSocket events
 const buttonSeafileStates = {
-  true: "revoke",
+  "True": "revoke",
   default: "grant"
 };
 function updateSeafileButton(containerId, state) {
     let widgetId = `container-seafile-${containerId}`
-    let selectedButtonName = buttonSeafileStates[state] || "grant"  // Fallback to default if state is unknown
+    let selectedButtonName = buttonSeafileStates[state] || "grant"
     applyButton(widgetId, selectedButtonName)
 }
 
