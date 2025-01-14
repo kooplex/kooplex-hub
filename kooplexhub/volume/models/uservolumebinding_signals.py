@@ -136,6 +136,6 @@ def garbage_attachment(sender, instance, **kwargs):
 def assert_not_shared(sender, instance, **kwargs):
     from ..models import VolumeContainerBinding
     for pcb in VolumeContainerBinding.objects.filter(volume = instance.volume, container__user = instance.user):
-        pcb.container.mark_restart(f"Revoked access to volume {instance.volume.name}")
+        pcb.container.mark_restart(f"Revoked access to volume {instance.volume.folder}")
         pcb.delete()
 

@@ -1,9 +1,42 @@
 from kooplexhub import settings
 from .models import Note
+from django.urls import reverse
+from django.utils.html import format_html
+import re
 
+__r_ref = re.compile(r'^(\w+):\w+$')
+__r_ext = re.compile(r'^https?://[\w-]+\.[\w-]+')
+__r_ico = re.compile(r'^\w+\s+[\w-]*$')
 
-def next_page(request):
-    return { 'next_page': request.POST.get('next_page') } if request.method == 'POST' else { 'next_page': request.GET.get('next_page', 'indexpage') }
+def menu(request):
+    #TODO: const -> memcache?
+    url = request.get_full_path()
+    menu = []
+    for item in getattr(settings, 'MENU', []):
+        icon = item.get('icon')
+        target = item.get('target')
+        if re.match(__r_ext, icon):
+            item['ico'] = format_html(f'<img src="{icon}" width="20" alt="[]" class="pe-1">')
+        elif re.match(__r_ico, icon):
+            item['ico'] = format_html(f'<i class="{icon} pe-1"></i>')
+        else:
+            item['ico'] = ''
+        if re.match(__r_ext, target):
+            item['tgt']=target
+            menu.append(item)
+        elif re.match(__r_ref, target):
+            app = re.split(__r_ref, target)[1]
+            if app in settings.INSTALLED_APPS:
+                tgt=reverse(item['target'])
+                item['active']= 'active border-1 border-start' if tgt == url else ''
+                item['tgt']=tgt
+                menu.append(item)
+        #TODO: add separator filter here
+    #raise Exception(str( menu ))
+    return { 'menu': menu }
+
+#def next_page(request):
+#    return { 'next_page': request.POST.get('next_page') } if request.method == 'POST' else { 'next_page': request.GET.get('next_page', 'indexpage') }
 
 
 def user(request):
@@ -14,14 +47,14 @@ def notes(request):
     return { 'notes': Note.objects.filter(expired = False) if request.user.is_authenticated else Note.objects.filter(is_public = True, expired = False)}
 
 
-def installed_apps(request):
-    return {
-      'app_report_installed': 'report' in settings.INSTALLED_APPS,       
-      'app_project_installed': 'project' in settings.INSTALLED_APPS,       
-      'app_education_installed': 'education' in settings.INSTALLED_APPS,       
-      'app_volume_installed': 'volume' in settings.INSTALLED_APPS,       
-      'app_plugin_installed': 'plugin' in settings.INSTALLED_APPS,       
-    }
+#def installed_apps(request):
+#    return {
+#      'app_report_installed': 'report' in settings.INSTALLED_APPS,       
+#      'app_project_installed': 'project' in settings.INSTALLED_APPS,       
+#      'app_education_installed': 'education' in settings.INSTALLED_APPS,       
+#      'app_volume_installed': 'volume' in settings.INSTALLED_APPS,       
+#      'app_plugin_installed': 'plugin' in settings.INSTALLED_APPS,       
+#    }
 
 
 #def table(request):

@@ -1,9 +1,10 @@
+{% load widgets %}
 {% load container_buttons %}
 {% load static %}
 {% load check_show %}
 
 {# Render a card that represents a contaner #}
-<div class="card bg-ligth shadow-2-strong border border-3 {% card_border container %} mb-3">
+<div class="card bg-ligth shadow-2-strong border border-3 shadow bg-light {% card_border container %} mb-3">
     <!-- Header -->
     <div class="card-header d-flex justify-content-start align-items-center {% card_border container %}">
         {% if container %}
@@ -11,7 +12,7 @@
         {% else %}
           {% button_new_container %}
         {% endif %}
-        {% container_name container %}
+        {% field_name container 'container' 'mx-2 w-100 p-2' %}
 	<div class="flex-grow-1"></div> <!-- Spacer to push the right button to the end -->
         {% button_stop container %}
     </div>

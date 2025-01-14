@@ -13,16 +13,7 @@ pid = lambda project: project.id if project else "new"
 
 @register.simple_tag
 def project_card_border(project = None):
-    return "border-secondary" if project else "border-danger"
-
-
-@register.simple_tag
-def project_name(project = None):
-    pn = project.name if project else "Add a name"
-    return format_html(f"""
-<div data-type="text" data-title="Edit project name" data-pk="{pid(project)}" data-field="name" data-orig="{pn}" 
-   class="editable fw-bold badge rounded-pill p-3 text-dark border border-2 border-dark text-start flex-grow-1" data-placement="right">{truncatechars(pn, 45)}</div>
-    """)
+    return "border-success" if project else "border-warning"
 
 
 @register.simple_tag
@@ -51,20 +42,6 @@ def project_image(project = None):
       onclick="ImageSelection.openModal('{pid(project)}', {iid}, 'preferred_image')" role="button">
   <i class="ri-image-2-line me-2"></i><span name="name" data-pk="{pid(project)}">{ihn}</span>
 </button>
-    """)
-
-
-@register.simple_tag
-def project_description(project = None):
-    d = project.description if project else "Add a description"
-    return format_html(f"""
-<div role="button">
-    <p class="card-text mb-1"><strong>Description:</strong></p>
-    <p class="card-text editable"
-       data-type="textarea" data-pk="{pid(project)}" data-title="Edit Description"
-       data-name="description" data-placement="right" data-field="description" data-orig="{d}"
-    >{d}</p>
-</div>
     """)
 
 
@@ -115,7 +92,6 @@ def list_collaborators(project = None, user = None):
     return format_html(f"""
 <div onclick="UserSelection.openModal('{pid(project)}')" role="button" class="content" 
     data-pk="{pid(project)}" data-userlist="{u}" data-adminlist="{a}">
-    <p class="card-text mb-1"><strong>Collaborators:</strong></p>
     <p class="card-text my-0">{t}</p>
 </div>
     """)
@@ -130,7 +106,6 @@ def list_volumes(project = None):
     return format_html(f"""
 <div onclick="VolumeSelection.openModal('{pid(project)}')" role="button" class="content" 
     data-pk="{pid(project)}" data-volumes="{v}">
-    <p class="card-text mb-1"><strong>Volumes:</strong></p>
     <p class="card-text my-0">{t}</p>
 </div>
     """)

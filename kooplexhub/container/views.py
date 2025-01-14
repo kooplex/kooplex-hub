@@ -44,8 +44,7 @@ class ContainerView(LoginRequiredMixin, generic.FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         container_id = self.kwargs.get('pk')
-        context['menu_container'] = True
-        context['submenu'] = 'configure' if container_id else 'new' 
+        #FIXME? kell az active?
         context['active'] = self.request.COOKIES.get('configure_env_tab', 'meta') if container_id else 'meta'
         context['url_post'] = reverse('container:configure', args = (container_id, )) if container_id else reverse('container:new')
         context['url_list'] = reverse('container:list')

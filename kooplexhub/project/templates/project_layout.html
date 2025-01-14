@@ -7,17 +7,3 @@
 {% endblock %}
 
 
-{% block submenu %}
-<ul class="navbar-nav flex-row flex-md-row">
-  <li class="ms-3 nav-item text-center">
-    <a data-toggle="tooltip" title="New project" data-placement="bottom" class="nav-link {% if submenu == 'new' %}active border-2 border-bottom{% endif %}" href="{% url 'project:new' %}"><i class="bi bi-bag-plus"></i><span class="d-md-block d-none">&nbsp;New project</span></a>
-  </li>
-  <li class="ms-3 nav-item text-center">
-    <a data-toggle="tooltip" title="Join" data-placement="bottom" class="nav-link {% if submenu == 'join' %}active border-2 border-bottom{% endif %}" href="{% url 'project:join' %}"><i class="bi bi-bag-heart"></i><span class="d-md-block d-none">&nbsp;Join project</span></a>
-  </li>
-  <li class="ms-3 nav-item text-center">
-    <a data-toggle="tooltip" title="Lit project" data-placement="bottom" class="nav-link {% if submenu == 'list' %}active border-2 border-bottom{% endif %}" href="{% url 'project:list' %}"><i class="bi bi-bag-dash"></i><span class="d-md-block d-none">&nbsp;List project</span></a>
-  </li>
-</ul>
-{% endblock %}
-

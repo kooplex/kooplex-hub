@@ -1,54 +1,73 @@
+{% load widgets %}
 {% load project_buttons %}
 {% load container_buttons %}
 {% load check_show %}
 
 {# FIXME: read only if not admin!!! #}
 
-<div class="card w-100 rounded rounded-3 mb-2 border border-2 {% project_card_border project %}" id="card-{{ project.id }}" data-editable="{{is_admin}}">
+<div class="card rounded rounded-3 mb-3 border border-2 shadow bg-light {% project_card_border project %}" id="card-{{ project.id }}" data-editable="{{is_admin}}">
     <div class="card-body">
         <div class="row">
             <!-- First Column -->
             <div class="col">
                 <div class="d-flex align-items-center mb-3">
-		    {% project_name project %}
-	            {% project_scope project %}
+		    {% field_name project 'project' %}
                 </div>
-                <div class="d-flex">
+		{% if not project %}
+		{# FIXME ugly code ugly rendering #}
+		        {% project_folder project %}
+		{% endif %}
+                <div class="d-flex mb-2">
 		    {% project_image project %}
                 </div>
+	            {% button_environment project %}
             </div>
 
             <!-- Second Column -->
-            <div class="col">
-                <div class="rounded border p-3 rounded-3 border-2 border-dark" style="max-height: 118px; height: 100%; overflow-y: auto;">
+            <div class="col position-relative">
+                <div class="rounded border p-3 rounded-3 border-2 border-secondary" style="max-height: 160px; height: 100%; overflow-y: auto;">
                     <div class="content">
-		        {% project_folder project %}
-			{% project_creator project user %}
-			{% project_description project %}
-			{% list_reports project %}
+			{% field_description project 'project' %}
+                    </div>
+		    <div class="position-absolute top-0 start-0 badge rounded-pill bg-secondary text-white shadow-sm p-2" style="transform: translate(0%, -50%);">
+                      Description
                     </div>
                 </div>
             </div>
 
             <!-- Third Column -->
-            <div class="col">
-                <div class="rounded border p-3 rounded-3 border-2 border-dark" style="max-height: 118px; height: 100%; overflow-y: auto;">
-		    {% list_collaborators project user %}
+            <div class="col position-relative">
+                <div class="rounded border p-3 rounded-3 border-2 border-secondary" style="max-height: 160px; height: 100%; overflow-y: auto;">
+                    <div class="content">
+		        {% list_collaborators project user %}
+                    </div>
+		    <div class="position-absolute top-0 start-0 badge rounded-pill bg-secondary text-white shadow-sm p-2" style="transform: translate(0%, -50%);">
+                      Collaborators
+                    </div>
                 </div>
             </div>
 
             <!-- Fourth Column -->
-            <div class="col">
-                <div class="rounded border p-3 rounded-3 border-2 border-dark" style="max-height: 118px; height: 100%; overflow-y: auto;">
-		    {% list_volumes project %}
+            <div class="col position-relative">
+                <div class="rounded border p-3 rounded-3 border-2 border-secondary" style="max-height: 160px; height: 100%; overflow-y: auto;">
+                    <div class="content">
+		        {% list_volumes project %}
+                    </div>
+		    <div class="position-absolute top-0 start-0 badge rounded-pill bg-secondary text-white shadow-sm p-2" style="transform: translate(0%, -50%);">
+                      Volumes
+                    </div>
                 </div>
             </div>
 
             <!-- Fifth Column -->
             <div class="col">
-                <div class="mb-3">
-                    <input type="text" class="form-control form-control-lg rounded-pill" placeholder="modal to start/open">
-                </div>
+	        {% project_scope project %}
+		{# FIXME: az alábbi infókat tooltipre tenni? #}
+		{% comment %}
+		        {% project_folder project %}
+			{% project_creator project user %}
+			{% list_reports project %}
+		{% endcomment %}
                 <div class="d-flex justify-content-end">
 		    {% button_save_project_changes project %}
 		    {% button_project_delete project %}

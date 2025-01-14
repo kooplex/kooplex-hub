@@ -23,19 +23,20 @@ def card_border(container = None):
         #if container.image.imagetype == container.image.TP_REPORT:
         #if container.image.imagetype == container.image.TP_API:
         # lehet hátteret is betehetjük majd
-        return "border-warning"
+        return "border-success"
     else:
-        return "border-danger"
+        return "border-warning"
 
 
-#FIXME: be but a
 @register.simple_tag
-def container_name(container = None):
-    cn = truncatechars(container.name, 45) if container else "Add a name"
+def button_environment(obj = None):
+    pk = getattr(obj, 'id', None)
     return format_html(f"""
-<a href="#" data-type="text" data-title="Edit container name" data-pk="{cid(container)}" data-field="name" data-orig="{cn}" 
-   class="editable fw-bold mx-2 badge rounded-pill w-100 p-2 text-dark border border-2 border-dark text-start" data-placement="right">{cn}</a>
-    """)
+<button type="button" class="btn btn-secondary btn-sm rounded rounded-5 border border-2 border-dark" data-bs-toggle="modal" data-bs-target="#environmentsModal" data-id="{pk}">
+    <i class="bi bi-boxes pe-1"></i>
+    Environments
+</button>
+    """) if pk else ""
 
 
 @register.simple_tag

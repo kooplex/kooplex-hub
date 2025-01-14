@@ -10,10 +10,20 @@
 {# render the project cards #}
 {% block bodycontent %}
 <div class="container-fluid">
+    <div class="d-flex flex-wrap gap-3">
+        <div class="card rounded rounded-3 mb-3 border border-2 border-warning shadow bg-light">
+            <div class="card-body">
+	        join project
+  {# join a project card #}
+  {#% include 'join.html' %#}
+            </div>
+        </div>
   {# create new project card #}
   {% include 'project.html' with is_admin=True %}
-  {# joina project card #}
-  {#% include 'join.html' %#}
+    </div>
+</div>
+
+<div class="container-fluid">
   {% for upb in userprojectbindinglist %}
       {% include 'project.html' with project=upb.project projectcontainerbindings=upb.projectcontainerbindings is_admin=upb.is_admin %}
   {% endfor %}
@@ -181,7 +191,7 @@ function handle_click(w) { // FIXME: code repetition
 }
 
 </script>
-<script src="{% static 'js/p_xeditable.js' %}"></script>
+<script src="{% static 'js/xeditable.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/js/bootstrap5-toggle.min.js"></script>
 {% endblock %}
 

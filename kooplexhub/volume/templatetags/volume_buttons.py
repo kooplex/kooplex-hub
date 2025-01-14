@@ -26,6 +26,13 @@ def scope(volume):
 <i class="oi oi-cloud h5" aria-hidden="true" data-bs-toggle="tooltip" title="Public volume" data-placement="top"></i>
         """)
 
+
+@register.simple_tag(name= 'render_volume')
+def render_volume(volume):
+    return format_html(f"""
+<span data-toggle="tooltip" title="{volume.description}" data-placement="top">{scope(volume)} {volume.folder}</span>
+    """)
+
 @register.simple_tag
 def admin_or_creator(volume, p_class = 'card-text'):
     if volume.scope == volume.SCP_ATTACHMENT:

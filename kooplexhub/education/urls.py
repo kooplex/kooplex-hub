@@ -5,7 +5,8 @@ from education import views
 app_name = 'education'
 
 urlpatterns = [
-    path('course/', views.CourseBindingListView.as_view(), name = 'courses'),
+    path('student/course/', views.StudentCourseBindingListView.as_view(), name = 'courses'),
+    path('teacher/course/', views.TeacherCourseBindingListView.as_view(), name = 'teaching'),
     path('configure/<int:pk>/', views.ConfigureCourseView.as_view(), name = 'configure'),
     path('assignment_new/', views.NewAssignmentView.as_view(), name = 'assignment_new'),
     path('assignment_configure/', views.ConfigureAssignmentView.as_view(), name = 'assignment_configure'),

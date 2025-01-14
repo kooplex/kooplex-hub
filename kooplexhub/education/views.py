@@ -14,7 +14,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.db import IntegrityError
 
-from django_celery_beat.models import ClockedSchedule, PeriodicTask
+#from django_celery_beat.models import ClockedSchedule, PeriodicTask
 
 from kooplexhub.lib import now
 
@@ -75,20 +75,32 @@ def addcontainer(request, usercoursebinding_id):
     return redirect('container:list')
 
 
-class CourseBindingListView(LoginRequiredMixin, generic.ListView):
+class StudentCourseBindingListView(LoginRequiredMixin, generic.ListView):
     template_name = 'course_list.html'
     context_object_name = 'coursebindinglist'
 
     def get_queryset(self):
         user = self.request.user
-        profile = user.profile
-        return UserCourseBinding.objects.filter(user = user)
+        return UserCourseBinding.objects.filter(user = user, is_teacher=False)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['menu_education'] = True
-        context['submenu'] = 'courses'
         context['wss_container'] = KOOPLEX.get('hub', {}).get('wss_container', 'wss://localhost/hub/ws/container_environment/{userid}/').format(userid = self.request.user.id)
+        return context
+
+
+class TeacherCourseBindingListView(LoginRequiredMixin, generic.ListView):
+    template_name = 'course_admin.html'
+    context_object_name = 'coursebindinglist'
+
+    def get_queryset(self):
+        user = self.request.user
+        return UserCourseBinding.objects.filter(user = user, is_teacher=True)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['wss_container'] = KOOPLEX.get('hub', {}).get('wss_container', 'wss://localhost/hub/ws/container_environment/{userid}/').format(userid = self.request.user.id)
+        context['images'] = Image.objects.filter(imagetype = Image.TP_PROJECT, present = True)
         return context
 
 

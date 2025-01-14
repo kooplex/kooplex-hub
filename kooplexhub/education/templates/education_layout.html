@@ -8,17 +8,3 @@
 {% include 'educationhelp.html' %}
 {% endblock %}
 
-{% block submenu %}
-<ul class="navbar-nav flex-row flex-md-row">
-  <li class="ms-3 nav-item text-center">
-    <a data-toggle="tooltip" title="Courses" data-placement="bottom" {% if submenu == 'courses' %} class="nav-link active active border-2 border-bottom" href="#" {% else %} class="nav-link" href="{% url 'education:courses' %}" {% endif %}><i class="bi bi-card-heading" style="margin-left: auto; margin-right: auto;"></i><span class="d-none d-md-block">&nbsp;Courses</span></a>
-  </li>
-  <li class="ms-3 nav-item text-center">
-    <a data-toggle="tooltip" title="Assignment due" data-placement="bottom" {% if submenu == 'assignment_student' %} class="nav-link active active border-2 border-bottom" href="#" {% else %} class="nav-link" href="{% url 'education:assignment_student' %}" {% endif %}><i class="bi bi-calendar-check"></i><span class="d-none d-md-block">&nbsp;Assignments</span></a>
-  </li>
-  <li class="ms-3 nav-item text-center">
-    <a data-toggle="tooltip" title="Assignment manager" data-placement="bottom" {% if submenu == 'assignment_teacher' %} class="nav-link active active border-2 border-bottom" href="#" {% else %} class="nav-link" href="{% url 'education:assignment_teacher' %}" {% endif %}><i class="bi bi-folder-check"></i><span class="d-none d-md-block">&nbsp;Assignment management</span></a>
-  </li>
-</ul>
-{% endblock %}
-
