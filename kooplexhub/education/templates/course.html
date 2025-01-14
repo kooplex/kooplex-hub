@@ -1,0 +1,97 @@
+{% load widgets %}
+{% load course_buttons %}
+{% load container_buttons %}
+
+<div class="card rounded rounded-3 mb-3 border border-2 {% if course %}w-100 border-success{% else %}border-warning{% endif %} shadow bg-light" id="card-{{ course.id }}" data-editable="true">
+    <div class="card-body">
+        <div class="row">
+	    {% if course %}
+            <div class="col">
+	        {% button_environment course %}
+            </div>
+	    {% endif %}
+
+            <!-- First Column -->
+            <div class="col">
+                <div class="d-flex align-items-center mb-3">
+		    {% field_name course 'course' %}
+                </div>
+                <div class="d-flex">
+		    {% course_image course %}
+                </div>
+            </div>
+
+            <!-- Second Column -->
+            <div class="col position-relative">
+                <div class="rounded border p-3 rounded-3 border-2 border-secondary" style="max-height: 118px; height: 100%; overflow-y: auto;">
+                    <div class="content">
+			{% field_description course 'course' %}
+                    </div>
+		    <div class="position-absolute top-0 start-0 badge rounded-pill bg-secondary text-white shadow-sm p-2" style="transform: translate(0%, -50%);">
+                      Description
+                    </div>
+                </div>
+            </div>
+
+            <!-- Third Column -->
+            <div class="col position-relative">
+                <div class="rounded border p-3 rounded-3 border-2 border-secondary" style="max-height: 118px; height: 100%; overflow-y: auto;">
+                    <div class="content">
+			ass
+                    </div>
+		    <div class="position-absolute top-0 start-0 badge rounded-pill bg-secondary text-white shadow-sm p-2" style="transform: translate(0%, -50%);">
+                      Assignments
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fourth Column -->
+            <div class="col position-relative">
+                <div class="rounded border p-3 rounded-3 border-2 border-secondary" style="max-height: 118px; height: 100%; overflow-y: auto;">
+                    <div class="content">
+			stud
+		    {# % list_volumes course % #}
+                    </div>
+		    <div class="position-absolute top-0 start-0 badge rounded-pill bg-secondary text-white shadow-sm p-2" style="transform: translate(0%, -50%);">
+                      Students
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fifth Column -->
+            <div class="col position-relative">
+                <div class="rounded border p-3 rounded-3 border-2 border-secondary" style="max-height: 118px; height: 100%; overflow-y: auto;">
+                    <div class="content">
+		    vols
+		    {# % list_volumes course % #}
+                    </div>
+		    <div class="position-absolute top-0 start-0 badge rounded-pill bg-secondary text-white shadow-sm p-2" style="transform: translate(0%, -50%);">
+                      Volumes
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sixth Column -->
+            <div class="col position-relative">
+                <div class="rounded border p-3 rounded-3 border-2 border-secondary" style="max-height: 118px; height: 100%; overflow-y: auto;">
+                    <div class="content">
+		    teachers
+		    {# % list_volumes course % #}
+                    </div>
+		    <div class="position-absolute top-0 start-0 badge rounded-pill bg-secondary text-white shadow-sm p-2" style="transform: translate(0%, -50%);">
+                      Teachers
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seventh Column -->
+            <div class="col">
+                <div class="d-flex justify-content-end">
+		    {# % button_save_project_changes project %#}
+		    {% button_course_delete course %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

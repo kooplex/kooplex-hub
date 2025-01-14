@@ -1,0 +1,33 @@
+{% load container_buttons %}
+
+<div class="card w-100 rounded rounded-3 mb-3 border border-2 border-success shadow bg-light" id="card-{{ course.id }}" style="height: 180px;">
+    <div class="card-header p-2 d-flex justify-content-between align-items-center">
+        <p class="card-text m-0" data-toggle="tooltip" title="Teachers: {{ course.teachers }}">{{ course.name }}</p>
+	{% button_environment course %}
+    </div>
+    <div class="card-body">
+        <div class="row" style="height: 100%;">
+            <!-- First Column -->
+            <div class="col position-relative">
+                <div class="rounded border p-3 rounded-3 border-2 border-secondary" style="max-height: 100px; height: 100%; overflow-y: auto;">
+                    <div class="content">{{ course.description }}</div>
+		    <div class="position-absolute top-0 start-0 badge rounded-pill bg-secondary text-white shadow-sm p-2" style="transform: translate(0%, -50%);">
+                      Description
+                    </div>
+                </div>
+            </div>
+
+            <!-- Second Column -->
+            <div class="col position-relative">
+                <div class="rounded border p-3 rounded-3 border-2 border-secondary" style="max-height: 100px; height: 100%; overflow-y: auto;">
+	            <div class="content">{{ course|csv_assignments }} {# FIXME: tablazat, beküldővel #}</div>
+		    <div class="position-absolute top-0 start-0 badge rounded-pill bg-secondary text-white shadow-sm p-2" style="transform: translate(0%, -50%);">
+                      Assignments
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+

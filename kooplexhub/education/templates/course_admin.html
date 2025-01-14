@@ -1,0 +1,94 @@
+{% extends "education_layout.html" %}
+{% load static %}
+
+{% block head_content %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/css/bootstrap5-toggle.min.css" rel="stylesheet">
+<link href="{% static 'css/xeditable.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block pagedescription %}
+{% endblock %}
+
+{# render the course cards #}
+{% block bodycontent %}
+<div class="container-fluid">
+    <div class="d-flex flex-wrap gap-3">
+        <div class="card rounded rounded-3 mb-3 border border-2 border-warning shadow bg-light">
+            <div class="card-body">
+	        canvas
+            </div>
+        </div>
+        {% include 'course.html' %}
+    </div>
+</div>
+<div class="container-fluid">
+  {% for ucb in coursebindinglist %}
+      {% include 'course.html' with course=ucb.course %}
+  {% endfor %}
+</div>
+
+{# a modal to configure a project image #}
+{% include 'widgets/image_selection.html' %}
+<script src="{% static 'js/image_selection.js' %}"></script>
+
+{% endblock %}
+
+{% block scripts %}
+<script>  
+{# when course name is clicked open info #}
+$("div[id^=course-name-]").click(function() {
+  //console.log( this );
+  var cid = $( this ).attr("id").split("-", 3)[2];
+  $("#courseInfoModal-" + cid).modal('show');
+});
+
+{# when hovering course name is change pointer type #}
+$("div[id^=course-name-]").mouseenter(function() {
+  $( this ).css("cursor", "pointer");
+});
+
+
+{# FIXME: code repetition see project #}
+containerSocket = open_ws('{{ wss_container }}', ws_callback_container);
+
+{# handle websocket callback #}
+function ws_callback_container(data) {
+  console.log(data);
+  containerid = data['container-id'];
+  if ('w_startopen' in data) {
+    $("#container-startopen-" + containerid).replaceWith(data['w_startopen'])
+  }
+};
+
+{# open a container #} //FIXME: repetition
+function open_container(containerid) {
+  var url = $( "#url-containeropen-" + containerid).val();
+  console.log( "opening: " + url );
+  var win = window.open(url, '_blank');
+  if (win) {
+    win.focus();
+  }
+}
+
+{# start/open a container #}
+function handle_click(w) { // FIXME: code repetition
+  containerid = $(w).attr('id').split('-')[2];
+  command = $(w).children("input[name=target]").val();
+  if (command == "open") {
+    open_container(containerid);
+    return;
+  }
+  if (containerSocket.readyState != 1) {
+    console.log("Socket not open: " + containerSocket.readyState);
+    containerSocket = open_ws('{{ wss_container }}', ws_callback);
+  }
+  console.log( command + ": " + containerid );
+  containerSocket.send(JSON.stringify({
+    'command': command,
+    'container-id': containerid,
+  }));
+}
+</script>
+<script src="{% static 'js/xeditable.js' %}"></script>
+{% endblock %}
+

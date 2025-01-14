@@ -1,0 +1,21 @@
+{% load render_table from django_tables2 %}
+<!-- templates/widgets/volumes.html -->
+<div class="modal fade volumes-modal" tabindex="-1" aria-labelledby="fileresourceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="fileresourceModalLabel">Bind volumes</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body vh-25">
+                  {% render_table t_volume %}
+		  {{ t_volume.dump_hidden }}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="confirm-file-selection">Confirm</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Dismiss</button>
+            </div>
+        </div>
+    </div>
+</div>
+
