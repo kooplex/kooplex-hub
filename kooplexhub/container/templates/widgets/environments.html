@@ -1,0 +1,54 @@
+{% load static %}
+
+<!-- templates/widgets/environments.html -->
+<div id="environmentsModal" class="modal fade environments-modal" tabindex="-1" aria-labelledby="environmentsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="environmentsModalLabel">Start, stop and access environments</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body vh-25">
+	        <table id="environmentControl">
+	        </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{# place in static/js #}
+<script src="{% static 'js/container_buttons.js' %}"></script>
+<script>
+//$(document).on('click', '.open-modal', function () {
+$(document).on('click', '[data-bs-toggle="modal"]', function () {
+  const objectId = $(this).data('id'); // Get the id from the button's data-id attribute
+
+  $("#environmentControl").html('<div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>')
+
+    // Send the updated value via WebSocket to kooplex
+    var data = {
+        projectid: objectId,
+        courseid: objectId,  //FIXME: grrrr
+    }
+    //sock = open_ws(wsURLs['project_config'], project_config_callback)
+    setTimeout(function() {
+        sockkkk.send(JSON.stringify(data))
+    }, 200)
+
+
+  // Update modal body content dynamically (e.g., via an AJAX call)
+  //$.ajax({
+  //  url: '/get-course-details', // Your server endpoint to fetch course details
+  //  type: 'GET',
+  //  data: { id: objectId },
+  //  success: function (data) {
+  //    alert(data);
+  //  },
+  //  error: function () {
+  //    // Handle error
+  //    $('#sharedModal .modal-body').html('<p class="text-danger">Failed to load content.</p>');
+  //  },
+  //});
+});
+</script>

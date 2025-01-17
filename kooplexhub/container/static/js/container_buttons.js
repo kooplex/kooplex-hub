@@ -62,9 +62,9 @@ const buttonOpenStates = {
   default: "default"
 };
 
-function updateButtonOpenState(containerId, suffix, state) {
-    let widgetId = `container-open-${containerId}${suffix}`
-    let selectedButtonName = buttonOpenStates[state] || "default"  // Fallback to default if state is unknown
+function updateButtonOpenState(containerId, state) {
+    let widgetId = `container-open-${containerId}`
+    let selectedButtonName = buttonOpenStates[state] || buttonOpenStates.default  // Fallback to default if state is unknown
     applyButton(widgetId, selectedButtonName)
 }
 
@@ -137,8 +137,6 @@ const buttonTeleportStates = {
   default: "grant"
 };
 function updateTeleportButton(containerId, state) {
-	console.log("KALL")
-	console.log(state)
     let widgetId = `container-teleport-${containerId}`
     let selectedButtonName = buttonTeleportStates[state] || "grant"
     applyButton(widgetId, selectedButtonName)

@@ -8,13 +8,13 @@
     <!-- Header -->
     <div class="card-header d-flex justify-content-start align-items-center {% card_border container %}">
         {% if container %}
-          {% button_open container %}
+	  {{ container.render_open_html }}
         {% else %}
           {% button_new_container %}
         {% endif %}
         {% field_name container 'container' 'mx-2 w-100 p-2' %}
 	<div class="flex-grow-1"></div> <!-- Spacer to push the right button to the end -->
-        {% button_stop container %}
+	{{ container.render_button_html }}
     </div>
     
     <!-- Body -->
@@ -59,7 +59,7 @@
     <!-- Footer -->
     <div class="card-footer d-flex justify-content-between {% card_border container %}">
       {% if container %}
-        {% button_start container %}
+        {{ container.render_start_html }}
         {% button_delete_container container %}
       {% else %}
         <div class="btn-placeholder p-1" style="visibility: hidden;">Placeholder</div>

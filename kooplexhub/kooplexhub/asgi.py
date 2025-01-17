@@ -17,8 +17,8 @@ from django.core.asgi import get_asgi_application
 from django.urls import re_path, path
 
 from container.consumers import ContainerFetchlogConsumer, ContainerControlConsumer, ContainerConfigConsumer, MonitorConsumer
-from project.consumers import ProjectConfigConsumer
-from education.consumers import AssignmentConsumer, AssignmentSummaryConsumer
+from project.consumers import ProjectConfigConsumer, ProjectGetContainersConsumer
+from education.consumers import AssignmentConsumer, AssignmentSummaryConsumer, CourseGetContainersConsumer
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'kooplexhub.settings')
 
@@ -35,7 +35,9 @@ application = ProtocolTypeRouter({
                 re_path(r"hub/ws/container/config/(?P<userid>\d+)/$", ContainerConfigConsumer.as_asgi()),
                 re_path(r"hub/ws/monitor/node/(?P<userid>\d+)/$", MonitorConsumer.as_asgi()),
                 re_path(r"hub/ws/project/config/(?P<userid>\d+)/$", ProjectConfigConsumer.as_asgi()),
+                re_path(r"hub/ws/project/container/(?P<userid>\d+)/$", ProjectGetContainersConsumer.as_asgi()),
                 re_path(r"hub/ws/education/(?P<userid>\d+)/$", AssignmentConsumer.as_asgi()),
+                re_path(r"hub/ws/education/container/(?P<userid>\d+)/$", CourseGetContainersConsumer.as_asgi()),
                 re_path(r"hub/ws/assignment_summary/(?P<userid>\d+)/$", AssignmentSummaryConsumer.as_asgi()),
             ])
         )

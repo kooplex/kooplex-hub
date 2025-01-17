@@ -86,6 +86,7 @@ class StudentCourseBindingListView(LoginRequiredMixin, generic.ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['wss_container'] = KOOPLEX.get('hub', {}).get('wss_container', 'wss://localhost/hub/ws/container_environment/{userid}/').format(userid = self.request.user.id)
+        context['wss_course_container'] = KOOPLEX.get('hub', {}).get('wss_course_container', 'wss://localhost/hub/ws/education/container/{userid}/').format(userid = self.request.user.id)
         return context
 
 
@@ -100,6 +101,7 @@ class TeacherCourseBindingListView(LoginRequiredMixin, generic.ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['wss_container'] = KOOPLEX.get('hub', {}).get('wss_container', 'wss://localhost/hub/ws/container_environment/{userid}/').format(userid = self.request.user.id)
+        context['wss_course_container'] = KOOPLEX.get('hub', {}).get('wss_course_container', 'wss://localhost/hub/ws/education/container/{userid}/').format(userid = self.request.user.id)
         context['images'] = Image.objects.filter(imagetype = Image.TP_PROJECT, present = True)
         return context
 

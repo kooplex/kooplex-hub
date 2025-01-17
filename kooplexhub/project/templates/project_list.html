@@ -44,9 +44,9 @@
 {% include 'widgets/volumes.html' %}
 <script src="{% static 'js/volume_selection.js' %}"></script>
 
-{# a modal to configure project environments or jump to an environment #}
-{#% include 'widgets/environments.html' %#}
-<script src="{% static 'js/select_environments.js' %}"></script>
+{# a modal to start/stop/jump to project environments #}
+{% include 'widgets/environments.html' %}
+{# <script src="{% static 'js/select_environments.js' %}"></script> #}
 
 {% endblock %}
 
@@ -58,6 +58,7 @@ const wsURLs = {
 //  container_fetchlog: "{{ wss_container_fetchlog }}",
 //  container_control: "{{ wss_container_control }}",
   project_config: "{{ wss_project_config }}",
+  project_container: "{{ wss_project_container }}",
 //  monitor_node: "{{ wss_monitor_node }}"
 }
 
@@ -72,6 +73,23 @@ $(document).ready(function() {
     $("[data-editable=False] [onclick]").not("[onclick^=return]").prop("onclick", null).off("click")
 });   
 
+
+
+//
+
+
+	function pch(message) {
+
+        console.log(message)
+		$("#environmentControl").html(message["response"])
+
+	}
+
+    sockkkk = open_ws(wsURLs['project_container'], pch)
+
+
+
+//
 
 
 

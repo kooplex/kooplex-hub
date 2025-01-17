@@ -73,7 +73,6 @@ const wsURLs = {
 $(document).ready(function() {
     // Example initialization, assuming `containers` is passed from Django context
     {% for container in containers %}
-        updateButtons({{ container.id }}, "", "{{ container.state }}")
         updateTeleportButton({{ container.id }}, "{{ container.start_teleport }}")
         updateSeafileButton({{ container.id }}, "{{ container.start_seafile }}")
     {% endfor %}

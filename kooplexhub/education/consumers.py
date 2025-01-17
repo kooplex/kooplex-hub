@@ -7,15 +7,14 @@ from django_pandas.io import read_frame
 
 from channels.generic.websocket import WebsocketConsumer
 
-from education.models import UserAssignmentBinding, Assignment, UserCourseBinding
+from education.models import UserAssignmentBinding, Assignment, UserCourseBinding, CourseContainerBinding
 from education.forms import TableAssignmentHandle
-
-from container.lib.kubernetes import CE_POOL
 
 logger = logging.getLogger(__name__)
 
-
-class AssignmentConsumer(WebsocketConsumer):
+#FIXME: code repetition!
+from django.db.models.query import QuerySet
+class SyncConsumer(WebsocketConsumer):
     def connect(self):
         if not self.scope['user'].is_authenticated:
             return
@@ -26,6 +25,7 @@ class AssignmentConsumer(WebsocketConsumer):
     def disconnect(self, close_code):
         pass
 
+class AssignmentConsumer(SyncConsumer):
     def receive(self, text_data):
         parsed = json.loads(text_data)
         logger.debug(parsed)
@@ -48,17 +48,7 @@ class AssignmentConsumer(WebsocketConsumer):
         self.send(text_data = json.dumps(f"""<h6 class="">Handle assignment {assignment.name}</h6>{t.as_html(None)}"""))
 
 
-class AssignmentSummaryConsumer(WebsocketConsumer):
-    def connect(self):
-        if not self.scope['user'].is_authenticated:
-            return
-        self.accept()
-        self.userid = int(self.scope["url_route"]["kwargs"].get('userid'))
-        assert self.scope['user'].id == self.userid, "not authorized"
-
-    def disconnect(self, close_code):
-        pass
-
+class AssignmentSummaryConsumer(SyncConsumer):
     def receive(self, text_data):
         parsed = json.loads(text_data)
         logger.debug(parsed)
@@ -79,4 +69,47 @@ class AssignmentSummaryConsumer(WebsocketConsumer):
         t = result.to_html(classes = "table table-bordered table-striped text-center", index_names = False, justify = "center", na_rep = "—", border = None)
         self.send(text_data = json.dumps(f"""<h6 class="">The score table for course {course.name}</h6>{t}"""))
 
+# Custom JSON encoder
+class CustomEncoder(json.JSONEncoder):
+    def default(self, obj):
+#        if isinstance(obj, Image):
+#            return { "preferred_image": obj.id }
+#        elif isinstance(obj, QuerySet):
+        if isinstance(obj, QuerySet):
+#            if obj.model == ProjectContainerBinding:
+#                return { "projects": [ b.project.id for b in obj ] } #FIXME: too deep a hierarchy
+#            elif obj.model == CourseContainerBinding:
+#                return { "courses":  [ b.course.id for b in obj ] }
+#            elif obj.model == VolumeContainerBinding:
+#                return { "volumes": [ b.volume.id for b in obj ] }
+#            if obj.model == UserProjectBinding:
+#                return [ b.user.id for b in obj ]
+#            elif obj.model == ProjectVolumeBinding:
+#                return [ b.volume.id for b in obj ]
+#            elif obj.model == ProjectContainerBinding:
+#                r=""
+#                for o in obj:
+#                    r+= f"<tr><td>{o.container.render_start_html()}</td><td>{o.container.render_stop_html()}</td><td>{o.container.render_open_html()}</td><td>{o.container.render_name_html()}</td></tr>"
+#                return r
+#            elif obj.model == CourseContainerBinding:
+            if obj.model == CourseContainerBinding:
+                r=""
+                for o in obj:
+                    r+= f"<tr><td>{o.container.render_start_html()}</td><td>{o.container.render_stop_html()}</td><td>{o.container.render_open_html()}</td><td>{o.container.render_name_html()}</td></tr>"
+                return r
+        return super().default(obj)
+#################
+
+class CourseGetContainersConsumer(SyncConsumer):
+    def receive(self, text_data):
+        parsed = json.loads(text_data)
+        logger.debug(parsed)
+        #assert parsed.get('request')=='configure-project', "wrong request"
+        courseid = parsed.get('courseid')
+        message_back = {
+            "feedback": f"Container list refreshed",
+            "response": CourseContainerBinding.objects.filter(container__user__id=self.userid, course__id=courseid),
+        }
+        logger.debug(message_back)
+        self.send(text_data=json.dumps(message_back, cls=CustomEncoder))
 

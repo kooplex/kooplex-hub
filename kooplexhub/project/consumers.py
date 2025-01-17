@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from channels.generic.websocket import WebsocketConsumer
 
 from django.contrib.auth.models import User
-from project.models import Project, UserProjectBinding
+from project.models import Project, UserProjectBinding, ProjectContainerBinding
 from volume.models import Volume, ProjectVolumeBinding
 from container.models import Image
 
@@ -45,10 +45,16 @@ class CustomEncoder(json.JSONEncoder):
                 return [ b.user.id for b in obj ]
             elif obj.model == ProjectVolumeBinding:
                 return [ b.volume.id for b in obj ]
+            elif obj.model == ProjectContainerBinding:
+                #return ",".join([o.container.name for o in obj])
+                r=""
+                for o in obj:
+                    r+= f"<tr><td>{o.container.render_start_html()}</td><td>{o.container.render_stop_html()}</td><td>{o.container.render_open_html()}</td><td>{o.container.render_name_html()}</td></tr>"
+                return r
         return super().default(obj)
 #################
 
-class ProjectConfigConsumer(WebsocketConsumer):
+class SyncConsumer(WebsocketConsumer):
     def connect(self):
         if not self.scope['user'].is_authenticated:
             return
@@ -59,6 +65,7 @@ class ProjectConfigConsumer(WebsocketConsumer):
     def disconnect(self, close_code):
         pass
 
+class ProjectConfigConsumer(SyncConsumer):
     def receive(self, text_data):
         parsed = json.loads(text_data)
         logger.debug(parsed)
@@ -118,6 +125,21 @@ class ProjectConfigConsumer(WebsocketConsumer):
         message_back = {
             "feedback": f"Project {project.name} is configured",
             "response": response,
+        }
+        logger.debug(message_back)
+        self.send(text_data=json.dumps(message_back, cls=CustomEncoder))
+
+
+class ProjectGetContainersConsumer(SyncConsumer):
+    def receive(self, text_data):
+        parsed = json.loads(text_data)
+        logger.debug(parsed)
+        #assert parsed.get('request')=='configure-project', "wrong request"
+        projectid = parsed.get('projectid')
+        logger.debug(projectid)
+        message_back = {
+            "feedback": f"Container list refreshed",
+            "response": ProjectContainerBinding.objects.filter(container__user__id=self.userid, project__id=projectid),
         }
         logger.debug(message_back)
         self.send(text_data=json.dumps(message_back, cls=CustomEncoder))

@@ -1,3 +1,4 @@
+#FIXME    link = reverse('container:open', args = [container.id])
 from django import template
 from django.utils.html import format_html
 from django.urls import reverse
@@ -229,67 +230,6 @@ def button_delete_container(container = None):
     msg = f"Are you sure you want to drop your container {container}?"
     return format_html(f"""
 <a href="{link}" onclick="return confirm('{msg}');" role="button" class="badge rounded-pill text-bg-danger border p-2"><span class="oi oi-trash" aria-hidden="true" data-toggle="tooltip" title="Remove {container.name}"></span></a>
-    """)
-
-
-@register.simple_tag
-def button_start(container = None, id_suffix = ''):
-    return format_html(f"""
-<div id="container-start-{container.id}{id_suffix}">
-    <button class="badge rounded-pill text-bg-success border p-2" name="start"
-            data-toggle="tooltip" title="Start environment {container.name}"
-            onclick="handle_click('start', {container.id})">
-      <span class="bi bi-lightning" aria-hidden="true" role="status"></span>
-    </button>
-    <button class="badge rounded-pill text-bg-warning border p-2" name="restart"
-            data-toggle="tooltip" title="Restart environment {container.name}"
-            onclick="handle_click('restart', {container.id})">
-      <span class="bi bi-bootstrap-reboot" aria-hidden="true"></span>
-    </button>
-    <button class="badge rounded-pill text-bg-success border p-2" name="busy" disabled>
-      <span class="spinner-grow spinner-grow-sm" aria-hidden="true" role="status"></span>
-    </button>
-    <button class="badge rounded-pill text-bg-secondary border p-2" name="default" disabled>
-      <span class="bi bi-lightning" aria-hidden="true"></span>
-    </button>
-</div>
-    """) if container else ""
-
-
-@register.simple_tag
-def button_stop(container = None, id_suffix = ''):
-    return format_html(f"""
-<div id="container-stop-{container.id}{id_suffix}">
-    <button class="badge rounded-pill text-bg-danger border p-2" name="stop" 
-            data-toggle="tooltip" title="Stop environment {container.name}"
-            onclick="handle_click('stop', {container.id})">
-      <span class="bi bi-x-lg" aria-hidden="true"></span>
-    </button>
-    <button class="badge rounded-pill text-bg-danger border p-2" name="disabled" disabled>
-      <span class="bi bi-x-lg" aria-hidden="true"></span>
-    </button>
-    <button class="badge rounded-pill text-bg-danger border p-2" name="default"
-            onclick="handle_click('stop', {container.id})">
-      <span class="spinner-grow spinner-grow-sm" aria-hidden="true" role="status"></span>
-    </button>
-</div>
-    """) if container else ""
-
-
-@register.simple_tag
-def button_open(container, id_suffix = ''):
-    link = reverse('container:open', args = [container.id])
-    return format_html(f"""
-<span id="container-open-{container.id}{id_suffix}">
-    <button class="badge rounded-pill text-bg-success border p-2" name="open"
-            data-toggle="tooltip" title="Jump to environment {container.name}"
-            onclick="handle_click('open', '{link}')">
-      <span class="oi oi-external-link" aria-hidden="true"></span>
-    </button>
-    <button class="badge rounded-pill text-bg-secondary border p-2" name="default" disabled>
-      <span class="oi oi-external-link" aria-hidden="true"></span>
-    </button>
-</span>
     """)
 
 

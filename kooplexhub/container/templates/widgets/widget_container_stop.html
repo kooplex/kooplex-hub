@@ -1,0 +1,21 @@
+<div id="container-stop-{{container.id}}">
+    <button class="badge rounded-pill text-bg-danger border p-2" name="stop" 
+            data-toggle="tooltip" title="Stop environment {}container.name}}"
+            onclick="handle_click('stop', {{container.id}})">
+      <span class="bi bi-x-lg" aria-hidden="true"></span>
+    </button>
+    <button class="badge rounded-pill text-bg-danger border p-2" name="disabled" disabled>
+      <span class="bi bi-x-lg" aria-hidden="true"></span>
+    </button>
+    <button class="badge rounded-pill text-bg-danger border p-2" name="default"
+            onclick="handle_click('stop', {{container.id}})">
+      <span class="spinner-grow spinner-grow-sm" aria-hidden="true" role="status"></span>
+    </button>
+</div>
+
+<script>
+$(document).ready(function() {
+    updateButtonStopState({{ container.id }}, "", "{{ container.state }}")
+});
+</script>
+

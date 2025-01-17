@@ -1,0 +1,17 @@
+<span id="container-open-{{container.id}}">
+    <button class="badge rounded-pill text-bg-success border p-2" name="open"
+            data-toggle="tooltip" title="Jump to environment {{container.name}}"
+            onclick="handle_click('open', '{{container.link}}')">
+      <span class="oi oi-external-link" aria-hidden="true"></span>
+    </button>
+    <button class="badge rounded-pill text-bg-secondary border p-2" name="default" disabled>
+      <span class="oi oi-external-link" aria-hidden="true"></span>
+    </button>
+</span>
+
+<script>
+$(document).ready(function() {
+    updateButtonOpenState({{ container.id }}, "{{ container.state }}")
+});
+</script>
+

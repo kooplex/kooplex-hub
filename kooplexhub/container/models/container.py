@@ -7,6 +7,7 @@ import time
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User
+from django.template.loader import render_to_string
 
 #from .report import Report
 from hub.models import Profile
@@ -131,6 +132,7 @@ class Container(models.Model):
         from .proxy import Proxy
         return list(Proxy.objects.filter(image = self.image))
 
+#FIXME: pl project app ha nincs istallálva, itt gondok lehetnek
     @property
     def projects(self):
         from project.models import ProjectContainerBinding
@@ -232,4 +234,17 @@ class Container(models.Model):
         if save:
             self.save()
         return True
+
+    # rendering logic
+    def render_name_html(self):
+        return self.name #FIXME render_to_string("widgets/widget_container_start.html", {"container": self})
+
+    def render_start_html(self):
+        return render_to_string("widgets/widget_container_start.html", {"container": self})
+
+    def render_stop_html(self):
+        return render_to_string("widgets/widget_container_stop.html", {"container": self})
+
+    def render_open_html(self):
+        return render_to_string("widgets/widget_container_open.html", {"container": self})
 

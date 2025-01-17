@@ -1,0 +1,24 @@
+<div id="container-start-{{container.id}}">
+    <button class="badge rounded-pill text-bg-success border p-2" name="start"
+            data-toggle="tooltip" title="Start environment {container.name}"
+            onclick="handle_click('start', {{container.id}})">
+      <span class="bi bi-lightning" aria-hidden="true" role="status"></span>
+    </button>
+    <button class="badge rounded-pill text-bg-warning border p-2" name="restart"
+            data-toggle="tooltip" title="Restart environment {container.name}"
+            onclick="handle_click('restart', {{container.id}})">
+      <span class="bi bi-bootstrap-reboot" aria-hidden="true"></span>
+    </button>
+    <button class="badge rounded-pill text-bg-success border p-2" name="busy" disabled>
+      <span class="spinner-grow spinner-grow-sm" aria-hidden="true" role="status"></span>
+    </button>
+    <button class="badge rounded-pill text-bg-secondary border p-2" name="default" disabled>
+      <span class="bi bi-lightning" aria-hidden="true"></span>
+    </button>
+</div>
+
+<script>
+$(document).ready(function() {
+    updateButtonStartState({{ container.id }}, "", "{{ container.state }}")
+});
+</script>

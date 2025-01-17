@@ -175,6 +175,7 @@ class UserProjectBindingListView(LoginRequiredMixin, generic.ListView):
         #context['wss_container'] = KOOPLEX.get('hub', {}).get('wss_container', 'wss://localhost/hub/ws/container_environment/{userid}/').format(userid = self.request.user.id)
         #context['wss_project'] = KOOPLEX.get('hub', {}).get('wss_project', 'wss://localhost/hub/ws/project/{userid}/').format(userid = self.request.user.id)
         context['wss_project_config'] = KOOPLEX.get('hub', {}).get('wss_project_config', 'wss://localhost/hub/ws/project/config/{userid}/').format(userid = self.request.user.id)
+        context['wss_project_container'] = KOOPLEX.get('hub', {}).get('wss_project_container', 'wss://localhost/hub/ws/project/container/{userid}/').format(userid = self.request.user.id)
         context['n_hidden'] = len(context['object_list'].filter(is_hidden = True))
         context['images'] = Image.objects.filter(imagetype = Image.TP_PROJECT, present = True)
         context['users'] = [ u.profile._repr for u in User.objects.all().exclude(id = self.request.user.id) ]
