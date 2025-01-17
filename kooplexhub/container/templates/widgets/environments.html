@@ -21,7 +21,7 @@
 <script src="{% static 'js/container_buttons.js' %}"></script>
 <script>
 //$(document).on('click', '.open-modal', function () {
-$(document).on('click', '[data-bs-toggle="modal"]', function () {
+$(document).on('click', '[data-bs-target="#environmentsModal"]', function () {
   const objectId = $(this).data('id'); // Get the id from the button's data-id attribute
 
   $("#environmentControl").html('<div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>')

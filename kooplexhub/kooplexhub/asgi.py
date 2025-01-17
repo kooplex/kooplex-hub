@@ -19,6 +19,7 @@ from django.urls import re_path, path
 from container.consumers import ContainerFetchlogConsumer, ContainerControlConsumer, ContainerConfigConsumer, MonitorConsumer
 from project.consumers import ProjectConfigConsumer, ProjectGetContainersConsumer
 from education.consumers import AssignmentConsumer, AssignmentSummaryConsumer, CourseGetContainersConsumer
+from canvas.consumers import CanvasGetCoursesConsumer
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'kooplexhub.settings')
 
@@ -39,6 +40,7 @@ application = ProtocolTypeRouter({
                 re_path(r"hub/ws/education/(?P<userid>\d+)/$", AssignmentConsumer.as_asgi()),
                 re_path(r"hub/ws/education/container/(?P<userid>\d+)/$", CourseGetContainersConsumer.as_asgi()),
                 re_path(r"hub/ws/assignment_summary/(?P<userid>\d+)/$", AssignmentSummaryConsumer.as_asgi()),
+                re_path(r"hub/ws/canvas/fetchcourses/(?P<userid>\d+)/$", CanvasGetCoursesConsumer.as_asgi()),
             ])
         )
     ),

@@ -1,5 +1,7 @@
 {% extends "education_layout.html" %}
 {% load static %}
+{# FIXME: only if app_installed #}
+{% load canvas_buttons %}
 
 {% block head_content %}
 <link href="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/css/bootstrap5-toggle.min.css" rel="stylesheet">
@@ -15,7 +17,7 @@
     <div class="d-flex flex-wrap gap-3">
         <div class="card rounded rounded-3 mb-3 border border-2 border-warning shadow bg-light">
             <div class="card-body">
-	        canvas
+                {% button_fetch_canvascourses user %}
             </div>
         </div>
         {% include 'course.html' %}
@@ -27,7 +29,9 @@
   {% endfor %}
 </div>
 
-{# a modal to configure a project image #}
+{# a modal to create using canvas course #}
+{% include 'widgets/fetch_canvascourses_modal.html' %}
+{# a modal to configure a course image #}
 {% include 'widgets/image_selection.html' %}
 <script src="{% static 'js/image_selection.js' %}"></script>
 
@@ -43,6 +47,7 @@
 const wsURLs = {
 //  container_control: "{{ wss_container_control }}",
   wss_container: "{{ wss_container }}",
+  wss_canvas: "{{ wss_canvas }}",
   course_container: "{{ wss_course_container }}",
 //  monitor_node: "{{ wss_monitor_node }}"
 }
@@ -54,7 +59,15 @@ const wsURLs = {
 
 	}
 
+	function pch2(message) {
+
+        console.log(message)
+		$("#canvascourseSelection").html(message["response"])
+
+	}
+
     sockkkk = open_ws(wsURLs['course_container'], pch)
+    sockkkk2 = open_ws(wsURLs['wss_canvas'], pch2)
 
 {# when course name is clicked open info #}
 $("div[id^=course-name-]").click(function() {
@@ -70,7 +83,7 @@ $("div[id^=course-name-]").mouseenter(function() {
 
 
 {# FIXME: code repetition see project #}
-containerSocket = open_ws('{{ wss_container }}', ws_callback_container);
+//containerSocket = open_ws('{{ wss_container }}', ws_callback_container);
 
 {# handle websocket callback #}
 function ws_callback_container(data) {

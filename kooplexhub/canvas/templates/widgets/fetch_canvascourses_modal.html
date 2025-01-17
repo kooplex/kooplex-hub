@@ -1,0 +1,29 @@
+{% load static %}
+
+<!-- templates/widgets/fetch_canvascourses_modal.html -->
+<div id="canvascoursesModal" class="modal fade canvascourses-modal" tabindex="-1" aria-labelledby="canvascoursesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="canvascoursesModalLabel">Select from your canvas courses be created in kooplex</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body vh-25">
+	        <table id="canvascourseSelection">
+	        </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{# place in static/js #}
+<script>
+$(document).on('click', '[data-bs-target="#canvascoursesModal"]', function () {
+  $("#canvascourseSelection").html('<div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>')
+    //sock = open_ws(wsURLs['project_config'], project_config_callback)
+    setTimeout(function() {
+    sockkkk2.send(JSON.stringify({}))
+    }, 200)
+});
+</script>
