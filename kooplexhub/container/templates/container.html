@@ -42,8 +42,8 @@
             <div class="col-md-6 d-flex flex-column">
                 <!-- Row 1 -->
                 <div class="d-flex align-items-center mb-3">
-                    {% button_fetchlogs container %}
-                    {% container_state container %}
+		    {{ container.render_fetchlogs_html }}
+		    {{ container.render_state_html }}
                 </div>
                 <!-- Row 2 -->
                 <div class="mb-3">{% container_restart_reason container %}</div>

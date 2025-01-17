@@ -110,15 +110,6 @@ def container_image(container = None):
 
 
 @register.simple_tag
-def container_state(container = None):
-    state = container.check_state() if container else {}
-    phase = state.get('phase', 'Missing')
-    return format_html(f"""
-<span data-pk="{cid(container)}" name="phase" class="badge rounded-pill bg-dark text-light p-3 flex-grow-1 text-start">{phase}</span>
-    """) if container else ""
-
-
-@register.simple_tag
 def container_resources(container = None):
     _atlist = [ "node", "cpurequest", "gpurequest", "memoryrequest", "idletime"]
     geta = lambda container, attr: getattr(container, attr, None) if container else None
@@ -231,22 +222,6 @@ def button_delete_container(container = None):
     return format_html(f"""
 <a href="{link}" onclick="return confirm('{msg}');" role="button" class="badge rounded-pill text-bg-danger border p-2"><span class="oi oi-trash" aria-hidden="true" data-toggle="tooltip" title="Remove {container.name}"></span></a>
     """)
-
-
-@register.simple_tag
-def button_fetchlogs(container = None, id_suffix = ''):
-    return format_html(f"""
-<span id="container-log-{container.id}{id_suffix}">
-    <button class="badge rounded-pill text-bg-info border p-3 me-2" name="fetch"
-        data-toggle="tooltip" title="Click to retrieve latest container logs" data-placement="bottom"
-        onclick='ContainerLogs.openModal({container.id})'>
-        <span class="bi bi-heart-pulse"></span>
-    </button>
-    <button class="badge rounded-pill text-bg-secondary border p-3 me-2" name="default" disabled>
-        <span class="bi bi-heart-pulse"></span>
-    </button>
-</span>
-    """) if container else ""
 
 
 #FIXME
