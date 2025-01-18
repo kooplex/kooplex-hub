@@ -3,6 +3,7 @@ import re
 import os
 
 from django.db import models
+from django.template.loader import render_to_string
 
 from kooplexhub.lib import my_alphanumeric_validator
 
@@ -79,6 +80,12 @@ class Volume(models.Model):
             return False
 
 
+    # rendering logic
+    def render_scope_html(self):
+        return render_to_string("widgets/volume_scope.html", {"volume": self})
+
+    def render_html(self):
+        return render_to_string("widgets/volume.html", {"volume": self})
 
 #    def is_collaborator(self, user):
 #        from .uservolumebinding import UserVolumeBinding

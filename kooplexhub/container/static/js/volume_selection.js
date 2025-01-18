@@ -24,7 +24,7 @@
     // Handle click to show modal
     function handleClick(objectId) {
         selectedObjectId = objectId === "new" ? "new" : parseInt(objectId)
-	volumes_o = $(`[data-pk=${selectedObjectId}][data-volumes]`).data('volumes')
+	volumes_o = $(`[data-id=${selectedObjectId}][data-volumes]`).data('volumes')
         $(".configtoggle").each(function() {
 	    pk = parseInt($(this).val())
 	    if (volumes_o.includes(pk)) {

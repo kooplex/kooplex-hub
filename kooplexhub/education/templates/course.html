@@ -60,15 +60,7 @@
 
             <!-- Fifth Column -->
             <div class="col position-relative">
-                <div class="rounded border p-3 rounded-3 border-2 border-secondary" style="max-height: 118px; height: 100%; overflow-y: auto;">
-                    <div class="content">
-		    vols
-		    {# % list_volumes course % #}
-                    </div>
-		    <div class="position-absolute top-0 start-0 badge rounded-pill bg-secondary text-white shadow-sm p-2" style="transform: translate(0%, -50%);">
-                      Volumes
-                    </div>
-                </div>
+              {% include 'widgets/widget_volumes.html' with maxheight="118px" pk=course.id volumes=course.volumes %}
             </div>
 
             <!-- Sixth Column -->

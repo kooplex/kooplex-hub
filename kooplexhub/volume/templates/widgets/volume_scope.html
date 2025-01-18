@@ -1,0 +1,10 @@
+{% if volume.scope == volume.SCP_PRIVATE %}
+  <i class="oi oi-key h5" aria-hidden="true" data-bs-toggle="tooltip" title="Private volume" data-placement="top"></i>
+{% elif volume.scope == volume.SCP_INTERNAL %}
+  <i class="oi oi-lock-unlocked h5" aria-hidden="true" data-bs-toggle="tooltip" title="Internal shared volume" data-placement="top"></i>
+{% elif volume.scope == volume.SCP_ATTACHMENT %}
+  <i class="oi oi-paperclip h5" aria-hidden="true" data-bs-toggle="tooltip" title="Attachment" data-placement="top"></i>
+{% else %}
+  <i class="oi oi-cloud h5" aria-hidden="true" data-bs-toggle="tooltip" title="Public volume" data-placement="top"></i>
+{% endif %}
+

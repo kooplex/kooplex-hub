@@ -7,31 +7,11 @@ from ..models import UserVolumeBinding
 register = template.Library()
 
 
-@register.simple_tag
-def scope(volume):
-    if volume.scope == volume.SCP_PRIVATE:
-        return format_html(f"""
-<i class="oi oi-key h5" aria-hidden="true" data-bs-toggle="tooltip" title="Private volume" data-placement="top"></i>
-        """)
-    elif volume.scope == volume.SCP_INTERNAL:
-        return format_html(f"""
-<i class="oi oi-lock-unlocked h5" aria-hidden="true" data-bs-toggle="tooltip" title="Internal shared volume" data-placement="top"></i>
-        """)
-    elif volume.scope == volume.SCP_ATTACHMENT:
-        return format_html(f"""
-<i class="oi oi-paperclip h5" aria-hidden="true" data-bs-toggle="tooltip" title="Attachment" data-placement="top"></i>
-        """)
-    else:
-        return format_html(f"""
-<i class="oi oi-cloud h5" aria-hidden="true" data-bs-toggle="tooltip" title="Public volume" data-placement="top"></i>
-        """)
+#FIXME: common
+@register.filter
+def id_list(queryset):
+    return list(map(lambda o: o.id, queryset))
 
-
-@register.simple_tag(name= 'render_volume')
-def render_volume(volume):
-    return format_html(f"""
-<span data-toggle="tooltip" title="{volume.description}" data-placement="top">{scope(volume)} {volume.folder}</span>
-    """)
 
 @register.simple_tag
 def admin_or_creator(volume, p_class = 'card-text'):

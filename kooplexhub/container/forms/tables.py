@@ -135,8 +135,7 @@ class TableVolume(tables.Table):
         """)
 
     def render_scope(self, record):
-        from volume.templatetags.volume_buttons import scope
-        return scope(record)
+        return record.render_scope_html()
 
 
 

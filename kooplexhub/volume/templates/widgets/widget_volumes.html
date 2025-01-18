@@ -1,0 +1,14 @@
+{% load volume_buttons %}
+<div name="volumes" data-id="{{pk}}" data-volumes="{{volumes|id_list}}" class="rounded border p-3 rounded-3 border-2 border-secondary" style="max-height: {{maxheight}}; height: 100%; overflow-y: auto;">
+    <div class="content">
+        {% for volume in volumes %}
+          {{ volume.render_html }}<br>
+	{% empty %}
+	  Click to add filesystem resources
+        {% endfor %}
+    </div>
+    <div class="position-absolute top-0 start-0 badge rounded-pill bg-secondary text-white shadow-sm p-2" style="transform: translate(0%, -50%);">
+      Volumes
+    </div>
+</div>
+

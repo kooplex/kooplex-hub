@@ -18,6 +18,7 @@ from django.db import IntegrityError
 
 from kooplexhub.lib import now
 
+from container.forms import TableVolume
 from hub.templatetags.extras import render_user
 from container.models import Image, Container
 from education.models import UserCourseBinding, UserAssignmentBinding, Assignment, CourseContainerBinding, Course
@@ -104,6 +105,7 @@ class TeacherCourseBindingListView(LoginRequiredMixin, generic.ListView):
         context['wss_course_container'] = KOOPLEX.get('hub', {}).get('wss_course_container', 'wss://localhost/hub/ws/education/container/{userid}/').format(userid = self.request.user.id)
         context['wss_canvas'] = KOOPLEX.get('hub', {}).get('wss_canvas', 'wss://localhost/hub/ws/canvas/fetchcourses/{userid}/').format(userid = self.request.user.id)
         context['images'] = Image.objects.filter(imagetype = Image.TP_PROJECT, present = True)
+        context['t_volume'] = TableVolume(self.request.user)
         return context
 
 

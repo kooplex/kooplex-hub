@@ -31,13 +31,20 @@
 
 {# a modal to create using canvas course #}
 {% include 'widgets/fetch_canvascourses_modal.html' %}
+
 {# a modal to configure a course image #}
 {% include 'widgets/image_selection.html' %}
 <script src="{% static 'js/image_selection.js' %}"></script>
 
-{# a modal to start/stop/jump to project environments #}
+{# a modal to start/stop/jump to course environments #}
 {% include 'widgets/environments.html' %}
 <script src="{% static 'js/environments.js' %}"></script>
+
+{# a modal to configure a course volumes #}
+{% include 'widgets/volumes.html' %}
+<script src="{% static 'js/widget_volumes.js' %}"></script>
+<script src="{% static 'js/volume_selection.js' %}"></script>
+
 
 {% endblock %}
 
@@ -122,5 +129,6 @@ function handle_click(w) { // FIXME: code repetition
 }
 </script>
 <script src="{% static 'js/xeditable.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/js/bootstrap5-toggle.min.js"></script>
 {% endblock %}
 
