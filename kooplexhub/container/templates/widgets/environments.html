@@ -20,35 +20,32 @@
 {# place in static/js #}
 <script src="{% static 'js/container_buttons.js' %}"></script>
 <script>
-//$(document).on('click', '.open-modal', function () {
+$(document).ready(function() {
+    if (wsURLs.project_container) { //FIXME APP_INSTALLED
+      sock_fetch_containers = open_ws(wsURLs['project_container'], refresh_environmenttable)
+    } else if (wsURLs.course_container) {
+      sock_fetch_containers = open_ws(wsURLs['course_container'], refresh_environmenttable)
+    }
+})
+
+// wss callback handler
+function refresh_environmenttable(message) {
+  if (message.response) {
+    $("#environmentControl").replaceWith(message.response)
+  }
+}
+
+
 $(document).on('click', '[data-bs-target="#environmentsModal"]', function () {
   const objectId = $(this).data('id'); // Get the id from the button's data-id attribute
-
   $("#environmentControl").html('<div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>')
 
-    // Send the updated value via WebSocket to kooplex
-    var data = {
-        projectid: objectId,
-        courseid: objectId,  //FIXME: grrrr
-    }
-    //sock = open_ws(wsURLs['project_config'], project_config_callback)
-    setTimeout(function() {
-        sockkkk.send(JSON.stringify(data))
-    }, 200)
-
-
-  // Update modal body content dynamically (e.g., via an AJAX call)
-  //$.ajax({
-  //  url: '/get-course-details', // Your server endpoint to fetch course details
-  //  type: 'GET',
-  //  data: { id: objectId },
-  //  success: function (data) {
-  //    alert(data);
-  //  },
-  //  error: function () {
-  //    // Handle error
-  //    $('#sharedModal .modal-body').html('<p class="text-danger">Failed to load content.</p>');
-  //  },
-  //});
-});
+  // Send the requested resource id via WebSocket to kooplex
+  var data = {
+      pk: objectId,
+  }
+  setTimeout(function() {
+      sock_fetch_containers.send(JSON.stringify(data))
+  }, 200)
+})
 </script>

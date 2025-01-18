@@ -1,0 +1,15 @@
+{% if containers %}
+<table id="environmentControl">
+    {% for container in containers %}
+      <tr>
+	  <td>{{ container.render_start_html }}</td>
+          <td>{{ container.render_stop_html }}</td>
+          <td>{{ container.render_open_html }}</td>
+          <td>{{ container.render_name_html }}</td>
+          <td>{{ container.render_state_html }}</td>
+      </tr>
+    {% endfor %}
+</table>
+{% else %}
+todo generate automatically
+{% endif %}

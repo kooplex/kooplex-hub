@@ -48,7 +48,7 @@ class ContainerView(LoginRequiredMixin, generic.FormView):
         context['active'] = self.request.COOKIES.get('configure_env_tab', 'meta') if container_id else 'meta'
         context['url_post'] = reverse('container:configure', args = (container_id, )) if container_id else reverse('container:new')
         context['url_list'] = reverse('container:list')
-        context['wss_container'] = KOOPLEX.get('hub', {}).get('wss_container', 'wss://localhost/hub/ws/container_environment/{userid}/').format(userid = self.request.user.id)
+        context['wss_container'] = KOOPLEX.get('hub', {}).get('wss_container_control', 'wss://localhost/hub/ws/container_environment/{userid}/').format(userid = self.request.user.id)
         context['wss_monitor'] = KOOPLEX.get('hub', {}).get('wss_monitor', 'wss://localhost/hub/ws/node_monitor/')
         context['container_id'] = container_id
         context['containers'] = Container.objects.filter(user = self.request.user).order_by('name')

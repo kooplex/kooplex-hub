@@ -16,7 +16,6 @@ from education.models import Course, CourseContainerBinding
 from volume.models import Volume, VolumeContainerBinding
 
 from container.forms import FormContainer
-from django.template.loader import render_to_string
 from .lib import Cluster
 
 from .tasks import *
