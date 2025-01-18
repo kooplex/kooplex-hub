@@ -2,6 +2,7 @@ import logging
 import json
 import threading
 from django.core.exceptions import ValidationError
+from django.template.loader import render_to_string
 
 from channels.generic.websocket import WebsocketConsumer
 
@@ -46,11 +47,7 @@ class CustomEncoder(json.JSONEncoder):
             elif obj.model == ProjectVolumeBinding:
                 return [ b.volume.id for b in obj ]
             elif obj.model == ProjectContainerBinding:
-                #return ",".join([o.container.name for o in obj])
-                r=""
-                for o in obj:
-                    r+= f"<tr><td>{o.container.render_start_html()}</td><td>{o.container.render_stop_html()}</td><td>{o.container.render_open_html()}</td><td>{o.container.render_name_html()}</td></tr>"
-                return r
+                return render_to_string("widgets/widget_containertable.html", {"containers": map(lambda o: o.container, obj) })
         return super().default(obj)
 #################
 
@@ -135,7 +132,7 @@ class ProjectGetContainersConsumer(SyncConsumer):
         parsed = json.loads(text_data)
         logger.debug(parsed)
         #assert parsed.get('request')=='configure-project', "wrong request"
-        projectid = parsed.get('projectid')
+        projectid = parsed.get('pk')
         logger.debug(projectid)
         message_back = {
             "feedback": f"Container list refreshed",
