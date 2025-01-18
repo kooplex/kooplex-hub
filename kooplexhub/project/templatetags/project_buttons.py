@@ -98,20 +98,6 @@ def list_collaborators(project = None, user = None):
 
 
 @register.simple_tag
-def list_volumes(project = None):
-    from volume.templatetags.volume_buttons import render_volume
-    vols = project.volumes if project else []
-    t = "<br>".join([ render_volume(v) for v in vols ]) if vols else "click to add"
-    v = [ v.id for v in vols ]
-    return format_html(f"""
-<div onclick="VolumeSelection.openModal('{pid(project)}')" role="button" class="content" 
-    data-pk="{pid(project)}" data-volumes="{v}">
-    <p class="card-text my-0">{t}</p>
-</div>
-    """)
-
-
-@register.simple_tag
 def list_reports(project = None):
     reps = project.reports if project else []
     t = "<br>".join([ render_report(r) for r in reps ])
