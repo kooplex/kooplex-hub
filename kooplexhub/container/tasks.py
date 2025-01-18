@@ -19,10 +19,23 @@ logger = logging.getLogger(__name__)
 
 CHECK_INTERVAL=1 #FIXME: hardcoded timout
 
+def _replace_widgets(container):
+    return {
+        'startcontainer': container.render_start_html(),
+        'stopcontainer': container.render_stop_html(),
+        'opencontainer': container.render_open_html(),
+        'fetch': container.render_fetchlogs_html(),
+        'phase': container.render_state_html(),
+        'restartreasons': container.render_restartreasons_html(),
+        }
+
 @task(queue = 'container')
 def start_container(user_id, container_id):
     channel_layer=get_channel_layer()
-    container=Container.objects.get(user_id=user_id, id=container_id)    
+    try:
+        container=Container.objects.get(user_id=user_id, id=container_id)    
+    except container.DoesNotExist:
+        return "not found"
     start_environment(container)
     while True:
         time.sleep(CHECK_INTERVAL)
@@ -34,6 +47,7 @@ def start_container(user_id, container_id):
                     "container_id": container.id,
                     "container_state": container.state,
                     "container_state_backend": container.state_backend,
+                    "replace_widgets": _replace_widgets(container),
                 })
         if container.state == container.ST_RUNNING:
             addroute(container, 'NB_URL', 'NB_PORT')
@@ -47,7 +61,12 @@ def start_container(user_id, container_id):
 @task(queue = 'container')
 def stop_container(user_id, container_id):
     channel_layer=get_channel_layer()
-    container=Container.objects.get(user_id=user_id, id=container_id)    
+    try:
+        container=Container.objects.get(user_id=user_id, id=container_id)    
+        container.restart_reasons=None
+        container.save()
+    except container.DoesNotExist:
+        return "not found"
     removeroute(container, 'NB_URL')
     removeroute(container, 'REPORT_URL')
     stop_environment(container)
@@ -61,6 +80,7 @@ def stop_container(user_id, container_id):
                     "container_id": container.id,
                     "container_state": container.state,
                     "container_state_backend": container.state_backend,
+                    "replace_widgets": _replace_widgets(container),
                 })
         if container.state==container.ST_NOTPRESENT:
             break
@@ -71,7 +91,12 @@ def stop_container(user_id, container_id):
 @task(queue = 'container')
 def restart_container(user_id, container_id):
     channel_layer=get_channel_layer()
-    container=Container.objects.get(user_id=user_id, id=container_id)    
+    try:
+        container=Container.objects.get(user_id=user_id, id=container_id)    
+        container.restart_reasons=None
+        container.save()
+    except container.DoesNotExist:
+        return "not found"
     stop_environment(container)
     while True:
         time.sleep(CHECK_INTERVAL)
@@ -83,6 +108,7 @@ def restart_container(user_id, container_id):
                     "container_id": container.id,
                     "container_state": container.state,
                     "container_state_backend": container.state_backend,
+                    "replace_widgets": _replace_widgets(container),
                 })
         if container.state == container.ST_NOTPRESENT:
             break
@@ -97,6 +123,7 @@ def restart_container(user_id, container_id):
                     "container_id": container.id,
                     "container_state": container.state,
                     "container_state_backend": container.state_backend,
+                    "replace_widgets": _replace_widgets(container),
                 })
         if container.state == container.ST_RUNNING:
             addroute(container, 'NB_URL', 'NB_PORT')

@@ -47,6 +47,8 @@ def check(container):
         'FailedKillPod': container.ST_STOPPING,
 
         'Running': container.ST_RUNNING,
+
+        'FailedToUpdateEndpoint': container.ST_NOTPRESENT, #FIXME ??? jó ez a mapping?
     }
     #FIXME: if called too frequently, skip to avoid API stress
     logger.info(f"? checking {container.label}")

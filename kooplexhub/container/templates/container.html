@@ -14,7 +14,7 @@
         {% endif %}
         {% field_name container 'container' 'mx-2 w-100 p-2' %}
 	<div class="flex-grow-1"></div> <!-- Spacer to push the right button to the end -->
-	{{ container.render_button_html }}
+	{{ container.render_stop_html }}
     </div>
     
     <!-- Body -->
@@ -46,7 +46,7 @@
 		    {{ container.render_state_html }}
                 </div>
                 <!-- Row 2 -->
-                <div class="mb-3">{% container_restart_reason container %}</div>
+                <div class="mb-3">{{ container.render_restartreasons_html }}</div>
                 <!-- Row 3 -->
                 <div class="d-flex justify-content-end mt-auto">
 		    {% button_save_changes container %}

@@ -1,19 +1,52 @@
- 
-// update container image button's state indicator
-function updateContainerState(container_id, state) {
-  $(`[name=phase][data-pk=${container_id}]`).html(state)
+///////////////////////////////////////
+// Container Control button Logic
+
+// Handle web socket callbacks
+function containerbutton_callback(message) {
+  if (message.replace_widgets && message.container_id) {
+    let objectId=message.container_id
+    $.each(message.replace_widgets, function(key, value) {
+      $(`[name=${key}][data-id=${objectId}]`).replaceWith(value)
+    })
+  }
 }
 
-// update container image button's name field
-function container_image_update_name(container_id, image) {
-  $(`#container-image-${widget_id} > [name=name]`).html(image)
-}
+$(document).ready(function() {
+  sock_containercontrol = open_ws(wsURLs['container_control'], containerbutton_callback)
+})
 
 
-// update container name
-function updateContainerName(container_id, value) {
-  $(`a.editable[data-pk=${container_id}]`).text(value)
-}
+// start a container
+$(document).on('click', 'button[name="startcontainer"]', function () {
+  const objectId = $(this).data('id'); // Get the id from the button's data-id attribute
+  const command = $(this).data('command')
+  sock_containercontrol.send(JSON.stringify({
+    pk: objectId,
+    request: command,
+  }))
+})
+
+
+// stop a container
+$(document).on('click', 'button[name="stopcontainer"]', function () {
+  const objectId = $(this).data('id'); // Get the id from the button's data-id attribute
+  sock_containercontrol.send(JSON.stringify({
+    pk: objectId,
+    request: 'stop',
+  }))
+})
+
+
+// open a container
+$(document).on('click', 'button[name="opencontainer"]', function () {
+  const url = $(this).data('url') // Get the url from the button's data-url attribute
+  console.log( "opening: " + url )
+  var win = window.open(url, '_blank')
+  if (win) {
+    win.focus()
+  }
+})
+
 
 
 // hide and show button faces
@@ -25,94 +58,9 @@ function applyButton(widgetId, selectedButtonName) {
     $(`#${widgetId} > [name=${selectedButtonName}]`).show()
 }
 
-// Update button_start state based on the container state
-const buttonStartStates = {
-  run: "restart",
-  restart: "restart",
-  np: "start",
-  starting: "busy",
-  default: "default"
-};
-
-function updateButtonStartState(containerId, suffix, state) {
-    let widgetId = `container-start-${containerId}${suffix}`
-    let selectedButtonName = buttonStartStates[state] || "default"  // Fallback to default if state is unknown
-    applyButton(widgetId, selectedButtonName)
-}
-
-// Update button_stop state based on the container state
-const buttonStopStates = {
-  run: "stop",
-  restart: "stop",
-  starting: "stop",
-  np: "disabled",
-  default: "default"
-};
-
-function updateButtonStopState(containerId, suffix, state) {
-    let widgetId = `container-stop-${containerId}${suffix}`
-    let selectedButtonName = buttonStopStates[state] || "default"  // Fallback to default if state is unknown
-    applyButton(widgetId, selectedButtonName)
-}
-
-// Update button_open state based on the container state
-const buttonOpenStates = {
-  run: "open",
-  restart: "open",
-  default: "default"
-};
-
-function updateButtonOpenState(containerId, state) {
-    let widgetId = `container-open-${containerId}`
-    let selectedButtonName = buttonOpenStates[state] || buttonOpenStates.default  // Fallback to default if state is unknown
-    applyButton(widgetId, selectedButtonName)
-}
-
-// Update button_fetchlogs state based on the container state
-const buttonFetchlogStates = {
-  run: "fetch",
-  restart: "fetch",
-  default: "default"
-};
-
-function updateButtonFetchlogState(containerId, suffix, state) {
-    let widgetId = `container-log-${containerId}${suffix}`
-    let selectedButtonName = buttonFetchlogStates[state] || "default"  // Fallback to default if state is unknown
-    applyButton(widgetId, selectedButtonName)
-}
-
-// open a container
-function open_container(containerId) {
-  var url = $( "#url-containeropen-" + containerId).val()
-  var win = window.open(url, '_blank')
-  if (win) {
-    win.focus()
-  }
-}
 
 
-// Show restart reason badge and update tooltip
-function updateRestartReason(containerId, tooltip) {
-    $(`#container-restartreason-${containerId}`).attr('title', tooltip)
-    $(`#container-restartreason-${containerId}`).removeClass('d-none')
-}
 
-// Hide restart reason badge
-function hideRestartReason(containerId) {
-    $(`#container-restartreason-${containerId}`).addClass('d-none')
-}
-
-
-// This function can be triggered initially on page load or from WebSocket events
-function updateButtons(containerId, suffix, initialState) {
-    updateButtonStartState(containerId, suffix, initialState)
-    updateButtonStopState(containerId, suffix, initialState)
-    updateButtonOpenState(containerId, suffix, initialState)
-    updateButtonFetchlogState(containerId, suffix, initialState)
-    if (initialState === 'np') {
-	hideRestartReason(containerId)
-    }
-}
 
 // Show Save Changes button
 function showSaveChanges(containerId) {

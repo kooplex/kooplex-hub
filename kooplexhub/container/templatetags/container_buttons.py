@@ -1,4 +1,3 @@
-#FIXME    link = reverse('container:open', args = [container.id])
 from django import template
 from django.utils.html import format_html
 from django.urls import reverse
@@ -191,16 +190,6 @@ def synchfolders(container):
 @register.simple_tag
 def repos(container):
     return ""
-
-
-@register.simple_tag
-def container_restart_reason(container = None):
-    return format_html(f"""
-<span id="container-restartreason-{container.id}" class="{visible(container.restart_reasons)} badge rounded-pill text-bg-warning border p-3 border border-2 border-danger w-100"
-      data-toggle="tooltip" title="{container.restart_reasons}">
-  <i class="bi bi-exclamation-triangle me-1"></i><strong>Needs restart</strong>
-</span>
-    """) if container else ""
 
 
 @register.simple_tag

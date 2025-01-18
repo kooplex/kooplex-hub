@@ -8,6 +8,7 @@ from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User
 from django.template.loader import render_to_string
+from django.urls import reverse
 
 #from .report import Report
 from hub.models import Profile
@@ -246,5 +247,17 @@ class Container(models.Model):
         return render_to_string("widgets/widget_container_stop.html", {"container": self})
 
     def render_open_html(self):
-        return render_to_string("widgets/widget_container_open.html", {"container": self})
+        _link = reverse('container:open', args = [self.id]) if self.id else ""
+        return render_to_string("widgets/widget_container_open.html", {"container": self, "link": _link})
 
+    def render_fetchlogs_html(self):
+        _active = [ Container.ST_RUNNING, Container.ST_NEED_RESTART, Container.ST_ERROR ]
+        return render_to_string("widgets/widget_container_fetchlogs.html", {"container": self, "is_active": self.state in _active})
+
+    def render_state_html(self):
+        state = self.check_state()
+        phase = state.get('phase', 'Missing')
+        return render_to_string("widgets/widget_container_state.html", {"container": self, "phase": phase})
+
+    def render_restartreasons_html(self):
+        return render_to_string("widgets/widget_container_restartreasons.html", {"container": self})

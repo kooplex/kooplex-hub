@@ -1,21 +1,14 @@
-<div id="container-stop-{{container.id}}">
-    <button class="badge rounded-pill text-bg-danger border p-2" name="stop" 
-            data-toggle="tooltip" title="Stop environment {}container.name}}"
-            onclick="handle_click('stop', {{container.id}})">
-      <span class="bi bi-x-lg" aria-hidden="true"></span>
-    </button>
-    <button class="badge rounded-pill text-bg-danger border p-2" name="disabled" disabled>
-      <span class="bi bi-x-lg" aria-hidden="true"></span>
-    </button>
-    <button class="badge rounded-pill text-bg-danger border p-2" name="default"
-            onclick="handle_click('stop', {{container.id}})">
-      <span class="spinner-grow spinner-grow-sm" aria-hidden="true" role="status"></span>
-    </button>
-</div>
-
-<script>
-$(document).ready(function() {
-    updateButtonStopState({{ container.id }}, "", "{{ container.state }}")
-});
-</script>
-
+{% if container.state == container.ST_RUNNING or container.state == conatiner.ST_NEED_RESTART or container.state == conatiner.ST_ERROR %}
+<button name="stopcontainer" data-id="{{container.id}}" class="badge rounded-pill text-bg-danger border p-2"
+        data-toggle="tooltip" title="Stop environment {{container.name}}">
+  <span class="bi bi-x-lg" aria-hidden="true"></span>
+</button>
+{% elif container.state == container.ST_STARTING or container.state == conatiner.ST_STOPPING %}
+<button name="stopcontainer" data-id="{{container.id}}" class="badge rounded-pill text-bg-danger border p-2" disabled>
+  <span class="spinner-grow spinner-grow-sm" aria-hidden="true" role="status"></span>
+</button>
+{% else %}
+<button name="stopcontainer" data-id="{{container.id}}" class="badge rounded-pill text-bg-danger border p-2" disabled>
+  <span class="bi bi-x-lg" aria-hidden="true"></span>
+</button>
+{% endif %}
