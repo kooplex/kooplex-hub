@@ -1,4 +1,4 @@
-{% load volume_buttons %}
+{% load extras %}
 <div name="volumes" data-id="{{pk}}" data-volumes="{{volumes|id_list}}" class="rounded border p-3 rounded-3 border-2 border-secondary" style="max-height: {{maxheight}}; height: 100%; overflow-y: auto;">
     <div class="content">
         {% for volume in volumes %}

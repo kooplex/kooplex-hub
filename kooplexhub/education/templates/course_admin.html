@@ -36,6 +36,10 @@
 {% include 'widgets/image_selection.html' %}
 <script src="{% static 'js/image_selection.js' %}"></script>
 
+{# a modal to configure a course's students/teachers #}
+{% include 'widgets/select_users.html' %}
+<script src="{% static 'js/select_users.js' %}"></script>
+
 {# a modal to start/stop/jump to course environments #}
 {% include 'widgets/environments.html' %}
 <script src="{% static 'js/environments.js' %}"></script>
@@ -49,6 +53,15 @@
 {% endblock %}
 
 {% block scripts %}
+{# FIXME static/sj/ #}
+<script>
+$(document).on('click', '[name="users"]', function() {
+    const objectId = $(this).data('id')  // Get the id from the button's data-id attribute
+    const kind = $(this).data('kind')  // Get the id from the button's data-id attribute
+    UserSelection.openModal(objectId, kind)
+})
+</script>
+
 <script>  
 // Save web socket urls
 const wsURLs = {

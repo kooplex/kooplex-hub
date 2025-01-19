@@ -37,14 +37,7 @@
 
             <!-- Third Column -->
             <div class="col position-relative">
-                <div class="rounded border p-3 rounded-3 border-2 border-secondary" style="max-height: 160px; height: 100%; overflow-y: auto;">
-                    <div class="content">
-		        {% list_collaborators project user %}
-                    </div>
-		    <div class="position-absolute top-0 start-0 badge rounded-pill bg-secondary text-white shadow-sm p-2" style="transform: translate(0%, -50%);">
-                      Collaborators
-                    </div>
-                </div>
+              {% include 'widgets/widget_users.html' with maxheight="160px" pk=project.id users=project.collaborators kind="Collaborators" skip=user %}
             </div>
 
             <!-- Fourth Column -->

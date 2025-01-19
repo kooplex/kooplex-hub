@@ -112,12 +112,12 @@
     }
 
     // Handle modal open
-    function handleOpen(objectId) {
+    function handleOpen(objectId, kind) {
         selectedObjectId = objectId === "new" ? "new" : parseInt(objectId)
-        selectedUserIds = $(`[data-pk=${objectId}][data-userlist]`).data('userlist')
-	originalUserIds = $(`[data-pk=${objectId}][data-userlist]`).data('userlist')
-	selectedAdmins = $(`[data-pk=${objectId}][data-adminlist]`).data('adminlist')
-	originalAdmins = $(`[data-pk=${objectId}][data-adminlist]`).data('adminlist')
+	selectedUserIds = $(`[name="users"][data-id=${objectId}][data-kind=${kind}][data-users]`).data('users')
+	originalUserIds = $(`[name="users"][data-id=${objectId}][data-kind=${kind}][data-users]`).data('users')
+	selectedAdmins = [] //$(`[data-pk=${objectId}][data-adminlist]`).data('adminlist')
+	originalAdmins = [] //$(`[data-pk=${objectId}][data-adminlist]`).data('adminlist')
 	$('tr[data-pk]').each(function() {
             const pk = $(this).data('pk')
 

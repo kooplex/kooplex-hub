@@ -14,6 +14,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.db import IntegrityError
 
+from project.forms import TableCollaborator #FIXME: put in hub and rename /admin?
+
 #from django_celery_beat.models import ClockedSchedule, PeriodicTask
 
 from kooplexhub.lib import now
@@ -106,6 +108,7 @@ class TeacherCourseBindingListView(LoginRequiredMixin, generic.ListView):
         context['wss_canvas'] = KOOPLEX.get('hub', {}).get('wss_canvas', 'wss://localhost/hub/ws/canvas/fetchcourses/{userid}/').format(userid = self.request.user.id)
         context['images'] = Image.objects.filter(imagetype = Image.TP_PROJECT, present = True)
         context['t_volume'] = TableVolume(self.request.user)
+        context['t_users'] = TableCollaborator(User.objects.all().exclude(id = self.request.user.id))  #FIXME rename
         return context
 
 

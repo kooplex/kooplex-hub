@@ -59,6 +59,14 @@
 
 
 
+{# FIXME static/sj/ #}
+<script>
+$(document).on('click', '[name="users"]', function() {
+    const objectId = $(this).data('id')  // Get the id from the button's data-id attribute
+    const kind = $(this).data('kind')  // Get the id from the button's data-id attribute
+    UserSelection.openModal(objectId, kind)
+})
+</script>
 
 
 

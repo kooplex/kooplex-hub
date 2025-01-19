@@ -84,20 +84,6 @@ def icon_collaborator(project, user):
 
 
 @register.simple_tag
-def list_collaborators(project = None, user = None):
-    upbs = project.userprojectbindings if project else []
-    t = "<br>".join([ render_user(upb.user) for upb in upbs if upb.user != user ]) if upbs else "click to add"
-    u = [ upb.user.id for upb in upbs if upb.user != user ]
-    a = [ upb.user.id for upb in upbs if upb.user != user and upb.role == upb.RL_ADMIN ]
-    return format_html(f"""
-<div onclick="UserSelection.openModal('{pid(project)}')" role="button" class="content" 
-    data-pk="{pid(project)}" data-userlist="{u}" data-adminlist="{a}">
-    <p class="card-text my-0">{t}</p>
-</div>
-    """)
-
-
-@register.simple_tag
 def list_reports(project = None):
     reps = project.reports if project else []
     t = "<br>".join([ render_report(r) for r in reps ])

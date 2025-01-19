@@ -57,11 +57,8 @@ class Course(models.Model):
         return ', '.join(map(lambda x: x.courseid, self.coursecodes))
 
     @property
-    def teacherbindings(self):
-        return UserCourseBinding.objects.filter(course = self, is_teacher = True)
-
     def teachers(self):
-        return ", ".join([ f"{ucb.user.first_name} {ucb.user.last_name}" for ucb in self.teacherbindings ])
+        return list(map(lambda x: x.user, UserCourseBinding.objects.filter(course = self, is_teacher = True)))
 
     def is_teacher(self, user):
         try:
@@ -70,8 +67,8 @@ class Course(models.Model):
             return False
 
     @property
-    def studentbindings(self):
-        return UserCourseBinding.objects.filter(course = self, is_teacher = False)
+    def students(self):
+        return list(map(lambda x: x.user, UserCourseBinding.objects.filter(course = self, is_teacher = False)))
 
     @property
     def assignments(self):

@@ -47,15 +47,8 @@
 
             <!-- Fourth Column -->
             <div class="col position-relative">
-                <div class="rounded border p-3 rounded-3 border-2 border-secondary" style="max-height: 118px; height: 100%; overflow-y: auto;">
-                    <div class="content">
-			stud
-		    {# % list_volumes course % #}
-                    </div>
-		    <div class="position-absolute top-0 start-0 badge rounded-pill bg-secondary text-white shadow-sm p-2" style="transform: translate(0%, -50%);">
-                      Students
-                    </div>
-                </div>
+                {% include 'widgets/widget_users.html' with maxheight="118px" pk=course.id users=course.students kind="Students" %}
+		{{ course.students.first }}
             </div>
 
             <!-- Fifth Column -->
@@ -65,15 +58,7 @@
 
             <!-- Sixth Column -->
             <div class="col position-relative">
-                <div class="rounded border p-3 rounded-3 border-2 border-secondary" style="max-height: 118px; height: 100%; overflow-y: auto;">
-                    <div class="content">
-		    teachers
-		    {# % list_volumes course % #}
-                    </div>
-		    <div class="position-absolute top-0 start-0 badge rounded-pill bg-secondary text-white shadow-sm p-2" style="transform: translate(0%, -50%);">
-                      Teachers
-                    </div>
-                </div>
+                {% include 'widgets/widget_users.html' with maxheight="118px" pk=course.id users=course.teachers kind="Teachers" %}
             </div>
 
             <!-- Seventh Column -->

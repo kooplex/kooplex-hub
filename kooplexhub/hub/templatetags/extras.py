@@ -10,6 +10,11 @@ from kooplexhub.settings import URL_MANUAL, manual_mapping
 register = template.Library()
 
 
+@register.filter
+def id_list(queryset):
+    return list(map(lambda o: o.id, queryset))
+
+
 @register.simple_tag(name = 'manual_link')
 def manual_link(item = None, label = "documentation", target = "_blank"):
     path = manual_mapping[item] if item in manual_mapping else "overview"

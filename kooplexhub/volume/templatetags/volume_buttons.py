@@ -7,12 +7,6 @@ from ..models import UserVolumeBinding
 register = template.Library()
 
 
-#FIXME: common
-@register.filter
-def id_list(queryset):
-    return list(map(lambda o: o.id, queryset))
-
-
 @register.simple_tag
 def admin_or_creator(volume, p_class = 'card-text'):
     if volume.scope == volume.SCP_ATTACHMENT:
