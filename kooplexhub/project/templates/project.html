@@ -37,7 +37,7 @@
 
             <!-- Third Column -->
             <div class="col position-relative">
-              {% include 'widgets/widget_users.html' with maxheight="160px" pk=project.id users=project.collaborators kind="Collaborators" skip=user %}
+              {% include 'widgets/widget_users.html' with maxheight="160px" pk=project.id users=project.collaborators marked=project.admins kind="Collaborators" skip=user %}
             </div>
 
             <!-- Fourth Column -->

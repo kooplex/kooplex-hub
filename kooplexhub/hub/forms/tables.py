@@ -1,10 +1,8 @@
 #from django.utils.translation import gettext_lazy as _
-from django.utils.html import format_html
+from django.template.loader import render_to_string
 import django_tables2 as tables
 
 from django.contrib.auth.models import User
-
-from hub.templatetags.extras import render_user as ru
 
 from kooplexhub.common import table_attributes
 
@@ -21,7 +19,7 @@ class TableUsers(tables.Table):
         sequence = ('user', 'remove',)
         attrs = _a
         row_attrs = {
-            'data-pk': lambda record: record.pk
+            'data-id': lambda record: record.pk
         }
 
     def __init__(self, users, marker_column=None):
@@ -29,6 +27,7 @@ class TableUsers(tables.Table):
         if marker_column:
             self.base_columns[marker_column] = tables.Column(verbose_name = marker_column, orderable = False, empty_values = ())
             self.Meta.sequence = ('user', marker_column, 'remove',)
+            setattr(self, f"render_{marker_column}", self.marked_render)
         super().__init__(users)
         self._initialize_columns()
         self.marker_column=marker_column
@@ -40,24 +39,13 @@ class TableUsers(tables.Table):
         self.sequence = self.Meta.sequence
         self.columns = tables.columns.BoundColumns(self, self.base_columns)
 
-#    def render_user(self, record):
-#        return record.profile.render_html()
-#
-    def render(self, column, record):
-        if column == getattr(self, 'marker_column', None):
-            return format_html(f"""
-<span id="admintoggler-{record.id}"><input data-size="small"
-  type="checkbox" data-toggle="toggle" name="admin_id"
-  data-on="<span class='oi oi-lock-unlocked'></span>"
-  data-off="<span class='oi oi-lock-locked'></span>"
-  data-pk="{record.pk}"
-  data-onstyle="success" data-offstyle="danger" value="{record.id}"></span>
-        """)
-        return super().render(column, record)
+    def marked_render(self, value, record):
+        return render_to_string("widgets/widget_toggler.html", {"pk": record.id, "mark": self.marker_column })
 
-#    def render_remove(self, record):
-#        return format_html(f"""
-#<button role="button" class="badge rounded-pill text-bg-danger border text-light p-2" onclick="UserSelection.removeUser({record.pk})"><span class="oi oi-minus" data-toggle="tooltip" title="Remove {record.first_name} {record.last_name} from collaboration" data-placement="top"></span></button>
-#        """)
+    def render_user(self, record):
+        return record.profile.render_html()
+
+    def render_remove(self, record):
+        return render_to_string("widgets/widget_remove.html", {"pk": record.id, "remove": "user", "tooltip": "Remove user"}) #FIXME: 
 
 

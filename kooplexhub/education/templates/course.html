@@ -47,8 +47,7 @@
 
             <!-- Fourth Column -->
             <div class="col position-relative">
-                {% include 'widgets/widget_users.html' with maxheight="118px" pk=course.id users=course.students kind="Students" %}
-		{{ course.students.first }}
+                {% include 'widgets/widget_users.html' with maxheight="119px" pk=course.id users=course.students marked=course.teachers kind="Students/Teachers" %}
             </div>
 
             <!-- Fifth Column -->
@@ -57,11 +56,6 @@
             </div>
 
             <!-- Sixth Column -->
-            <div class="col position-relative">
-                {% include 'widgets/widget_users.html' with maxheight="118px" pk=course.id users=course.teachers kind="Teachers" %}
-            </div>
-
-            <!-- Seventh Column -->
             <div class="col">
                 <div class="d-flex justify-content-end">
 		    {# % button_save_project_changes project %#}

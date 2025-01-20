@@ -114,12 +114,12 @@
     // Handle modal open
     function handleOpen(objectId, kind) {
         selectedObjectId = objectId === "new" ? "new" : parseInt(objectId)
-	selectedUserIds = $(`[name="users"][data-id=${objectId}][data-kind=${kind}][data-users]`).data('users')
-	originalUserIds = $(`[name="users"][data-id=${objectId}][data-kind=${kind}][data-users]`).data('users')
-	selectedAdmins = [] //$(`[data-pk=${objectId}][data-adminlist]`).data('adminlist')
-	originalAdmins = [] //$(`[data-pk=${objectId}][data-adminlist]`).data('adminlist')
-	$('tr[data-pk]').each(function() {
-            const pk = $(this).data('pk')
+	selectedUserIds = $(`[name="users"][data-id="${objectId}"][data-kind="${kind}"][data-users]`).data('users')
+	originalUserIds = $(`[name="users"][data-id="${objectId}"][data-kind="${kind}"][data-users]`).data('users')
+        selectedAdmins = $(`[name="users"][data-id="${objectId}"][data-kind="${kind}"][data-marked]`).data('marked') //FIXME rename Admins --- selected
+	originalAdmins = $(`[name="users"][data-id="${objectId}"][data-kind="${kind}"][data-marked]`).data('marked')
+	$('tr[data-id]').each(function() {
+            const pk = $(this).data('id')
 
             // Show row if pk is in users list, hide otherwise
             if (selectedUserIds.includes(pk)) {
@@ -129,7 +129,7 @@
             }
 
             // Find the toggle button within the row
-            const toggleButton = $(this).find(`input[data-pk=${pk}]`)
+            const toggleButton = $(this).find(`input[name="toggler"][data-id=${pk}]`)
             // Check if pk is in admins list
             if (selectedAdmins.includes(pk)) {
                 toggleButton.bootstrapToggle('on')

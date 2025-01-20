@@ -1,5 +1,7 @@
 {% load extras %}
-<div name="users" data-id="{{pk}}" data-kind="{{kind}}" data-users="{{users|id_list}}" class="rounded border p-3 rounded-3 border-2 border-secondary" style="max-height: {{maxheight}}; height: 100%; overflow-y: auto;">
+<div name="users" data-id="{{pk}}" data-kind="{{kind}}"
+     data-users="{{users|id_list}}" data-marked="{{marked|id_list}}"
+     class="rounded border p-3 rounded-3 border-2 border-secondary" style="max-height: {{maxheight}}; height: 100%; overflow-y: auto;">
     <div class="content">
         {% for user in users %}
 	{% if user != skip %}
