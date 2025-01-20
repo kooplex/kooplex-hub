@@ -75,7 +75,7 @@
 
     // Handle click to show modal
     function handleClick(pk, imageSelectedId, attribute = "image") {
-        selectedObjectId = pk === "new" ? "new" : parseInt(pk)
+        selectedObjectId = pk === "" ? "" : parseInt(pk)
 	targetAttribute = attribute
 	imageId = imageSelectedId
         $('.image-modal').modal('show')
@@ -104,12 +104,13 @@
 
     // Confirm image selection
     function confirmSelection() {
-        $('#confirm-image-selection').on('click', function() {
+	let submitButton=$('#confirm-image-selection')
+        submitButton.on('click', function() {
             if (selectedObjectId && selectedImageId) {
                 const changed = register_changes(selectedObjectId, targetAttribute, selectedImageId, originalImageId) 
 		if (changed) {
-                    $(`[data-field=image][data-pk="${selectedObjectId}"]`).text($('#image-name').text())
-		    showSaveChanges(selectedObjectId)
+                    $(`[data-field=image][data-id="${selectedObjectId}"]`).text($('#image-name').text())
+		    showSaveChanges(selectedObjectId, submitButton.data('instance'))
 		}
             }
             // Close the modal

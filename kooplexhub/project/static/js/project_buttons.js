@@ -1,14 +1,14 @@
 // Show Save Changes button
-function showSaveChanges(projectId) {
-  if (projectId === "new") {
-     // only show if the compulsory attributes are set
-     var count = changes.filter(x => x.pk === "new"  && ["name", "subpath", "preferred_image", "description"].includes(x.field)).length
-     if (count < 4) {
-       return
-     }
-  }
-  $(`#project-save-${projectId}`).removeClass("d-none")
-}
+//function showSaveChanges(projectId) {
+//  if (projectId === "new") {
+//     // only show if the compulsory attributes are set
+//     var count = changes.filter(x => x.pk === "new"  && ["name", "subpath", "preferred_image", "description"].includes(x.field)).length
+//     if (count < 4) {
+//       return
+//     }
+//  }
+//  $(`#project-save-${projectId}`).removeClass("d-none")
+//}
 
 // hide and show button faces  //FIXME: repeated code!
 function applyButton(widgetId, selectedButtonName) {
@@ -33,11 +33,11 @@ function updateProjectScope(projectId, scope) {
 }
 
 function projectScopeButtonClick(projectId, req) {
-    projectId = projectId === "new" ? "new" : parseInt(projectId)
+    projectId = projectId === "" ? "" : parseInt(projectId)
     const changed = register_changes(projectId, 'scope', req, '') // FIXME: old
     if (changed) {
         updateProjectScope(projectId, req)
-	showSaveChanges(projectId)
+	showSaveChanges(projectId)  //FIXME: instance!!
     }
 }
 

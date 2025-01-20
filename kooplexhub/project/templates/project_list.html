@@ -1,6 +1,7 @@
 {% extends "project_layout.html" %}
 
 {% load static %}
+{% load project_buttons %}
 
 {% block head_content %}
 <link href="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/css/bootstrap5-toggle.min.css" rel="stylesheet">
@@ -13,9 +14,7 @@
     <div class="d-flex flex-wrap gap-3">
         <div class="card rounded rounded-3 mb-3 border border-2 border-warning shadow bg-light">
             <div class="card-body">
-	        join project
-  {# join a project card #}
-  {#% include 'join.html' %#}
+                {% button_fetch_joinable_projects user %}
             </div>
         </div>
   {# create new project card #}
@@ -31,9 +30,12 @@
 <script src="{% static 'js/project_buttons.js' %}"></script>
 <script src="{% static 'js/project_changes.js' %}"></script>
 
+{# a modal to join a project #}
+{% include 'widgets/fetch_joinproject_modal.html' %}
+
 
 {# a modal to configure a project image #}
-{% include 'widgets/image_selection.html' %}
+{% include 'widgets/image_selection.html' with instance="project" %}
 <script src="{% static 'js/image_selection.js' %}"></script>
 
 {# a modal to configure a project collaborators #}
@@ -41,7 +43,7 @@
 <script src="{% static 'js/select_users.js' %}"></script>
 
 {# a modal to configure a project volumes #}
-{% include 'widgets/volumes.html' %}
+{% include 'widgets/volumes.html' with instance="project" %}
 <script src="{% static 'js/volume_selection.js' %}"></script>
 
 {# a modal to start/stop/jump to project environments #}
@@ -78,9 +80,38 @@ $(document).on('click', '[name="users"]', function() {
 const wsURLs = {
   container_control: "{{ wss_container }}",
   project_config: "{{ wss_project_config }}",
+  project_joinable: "{{ wss_project_joinable }}",
   get_containers: "{{ wss_project_container }}",
 }
 
+//FIXME: hub/static/js/buttons.js    
+// Show Save Changes button
+function showSaveChanges(objectId, instance) {
+//  if (projectId === "") {
+//     // only show if the compulsory attributes are set
+//     var count = changes.filter(x => x.pk === "new"  && ["name", "subpath", "preferred_image", "description"].includes(x.field)).length
+//     if (count < 4) {
+//       return
+//     }
+//  }
+  let widget = $(`[name="save"][data-id="${objectId}"][data-instance="${instance}"]`)
+  widget.removeClass("d-none")
+  widget.removeAttr("disabled")
+}
+
+
+
+
+
+//FIXME
+
+	function pch3(message) {
+
+        console.log(message)
+		$("#projectSelection").replaceWith(message["response"])
+
+	}
+sockkkk3 = open_ws(wsURLs['project_joinable'], pch3)
 
 //FIXME should be placed somewhere else
 $(document).ready(function() {

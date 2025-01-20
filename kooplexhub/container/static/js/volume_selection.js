@@ -23,8 +23,8 @@
 
     // Handle click to show modal
     function handleClick(objectId) {
-        selectedObjectId = objectId === "new" ? "new" : parseInt(objectId)
-	volumes_o = $(`[data-id=${selectedObjectId}][data-volumes]`).data('volumes')
+        selectedObjectId = objectId === "" ? "" : parseInt(objectId)
+	volumes_o = $(`[data-id="${selectedObjectId}"][data-volumes]`).data('volumes')
         $(".configtoggle").each(function() {
 	    pk = parseInt($(this).val())
 	    if (volumes_o.includes(pk)) {
@@ -42,14 +42,15 @@
 
     // Confirm file resource selection
     function confirmSelection() {
-        $('#confirm-file-selection').on('click', function() {
+	let submitButton = $('#confirm-file-selection')
+        submitButton.on('click', function() {
             if (selectedObjectId) {
                 var volumes = $('[name=attach-volume]:checked').map(function() { return parseInt(this.value) }).get()
 
 		var changed = register_changes(selectedObjectId, 'volumes', volumes, volumes_o)
 		if (changed) {
 		    //FIXME updateButtonFace(selectedContainerId, projects.length, courses.length, volumes.length)
-		    showSaveChanges(selectedObjectId)
+		    showSaveChanges(selectedObjectId, submitButton.data("instance"))
 		}
                 // Close the modal
                 $('.volumes-modal').modal('hide');

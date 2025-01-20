@@ -22,15 +22,8 @@
             </div>
 
             <!-- Second Column -->
-            <div class="col position-relative">
-                <div class="rounded border p-3 rounded-3 border-2 border-secondary" style="max-height: 118px; height: 100%; overflow-y: auto;">
-                    <div class="content">
-			{% field_description course 'course' %}
-                    </div>
-		    <div class="position-absolute top-0 start-0 badge rounded-pill bg-secondary text-white shadow-sm p-2" style="transform: translate(0%, -50%);">
-                      Description
-                    </div>
-                </div>
+            <div class="col">
+                {% include 'widgets/widget_description.html' with pk=course.id orig=course.description placeholder="Add course description" tooltip="Describe course" maxheight="118px" instance="course" %}
             </div>
 
             <!-- Third Column -->
@@ -58,8 +51,8 @@
             <!-- Sixth Column -->
             <div class="col">
                 <div class="d-flex justify-content-end">
-		    {# % button_save_project_changes project %#}
-		    {% button_course_delete course %}
+		    {% include 'widgets/widget_savechanges.html' with pk=course.id obj="course" %}
+	            {% include 'widgets/widget_delete.html' with msg="Are you sure you want to delete or leave course?" tooltip="Leave/delete course" link=course|link_course_drop obj=course %}
                 </div>
             </div>
         </div>

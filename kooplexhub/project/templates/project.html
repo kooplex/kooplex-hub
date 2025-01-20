@@ -10,22 +10,25 @@
         <div class="row">
             <!-- First Column -->
             <div class="col">
-                <div class="d-flex align-items-center mb-3">
-		    {% field_name project 'project' %}
+                <div class="d-flex align-items-center mb-2">
+		    {% include 'widgets/widget_input.html' with orig=project.name pk=project.id field="name" placeholder="Give a unique name to the project" instance="project" %}
                 </div>
 		{% if not project %}
-		{# FIXME ugly code ugly rendering #}
-		        {% project_folder project %}
+                <div class="d-flex align-items-center mb-2">
+		    {% include 'widgets/widget_input.html' with field="folder" placeholder="Add a unique folder name" instance="project" %}
+                </div>
 		{% endif %}
                 <div class="d-flex mb-2">
 		    {% project_image project %}
                 </div>
+                <div class="d-flex align-items-center">
 	            {% button_environment project %}
+                </div>
             </div>
 
             <!-- Second Column -->
             <div class="col">
-              {% include 'widgets/widget_description.html' with pk=project.id orig=project.description placeholder="Add project description" tooltip="Describe project" maxheight="160px" %}
+              {% include 'widgets/widget_description.html' with pk=project.id orig=project.description placeholder="Add project description" tooltip="Describe project" maxheight="160px" instance="project" %}
             </div>
 
             <!-- Third Column -->

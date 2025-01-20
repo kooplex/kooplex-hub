@@ -45,7 +45,7 @@
 <script src="{% static 'js/environments.js' %}"></script>
 
 {# a modal to configure a course volumes #}
-{% include 'widgets/volumes.html' %}
+{% include 'widgets/volumes.html' with instance="course" %}
 <script src="{% static 'js/widget_volumes.js' %}"></script>
 <script src="{% static 'js/volume_selection.js' %}"></script>
 

@@ -142,3 +142,24 @@ class ProjectGetContainersConsumer(SyncConsumer):
         self.send(text_data=json.dumps(message_back, cls=CustomEncoder))
 
 
+class ProjectGetJoinableConsumer(SyncConsumer):
+    def receive(self, text_data):
+        parsed = json.loads(text_data)
+        logger.debug(parsed)
+        #assert parsed.get('request')=='configure-project', "wrong request"
+
+        published = list(map(lambda b: b.project, UserProjectBinding.objects.filter(project__scope__in = [ Project.SCP_INTERNAL, Project.SCP_PUBLIC ], role = UserProjectBinding.RL_CREATOR).exclude(user__id = self.userid)))
+        logger.debug(published)
+        joined = list(map(lambda b: b.project, UserProjectBinding.objects.filter(user__id = self.userid, role__in = [ UserProjectBinding.RL_ADMIN, UserProjectBinding.RL_COLLABORATOR ])))
+        logger.debug(joined)
+        joinable = set(published).difference(joined)
+        logger.debug(joinable)
+
+
+        message_back = {
+            "feedback": f"Joinable project list refreshed",
+            #FIXME:
+            "response": str(list(map(lambda p:p.name, joinable))) #ProjectContainerBinding.objects.filter(container__user__id=self.userid, project__id=projectid),
+        }
+        logger.debug(message_back)
+        self.send(text_data=json.dumps(message_back, cls=CustomEncoder))

@@ -1,4 +1,5 @@
 {% load static %}
+{% load course_buttons %}
 
 <!-- templates/widgets/fetch_canvascourses_modal.html -->
 <div id="canvascoursesModal" class="modal fade canvascourses-modal" tabindex="-1" aria-labelledby="canvascoursesModalLabel" aria-hidden="true">
@@ -12,11 +13,14 @@
               <div class="container">
                 <div class="row mb-3">
                   <!-- First Row: Two Inputs -->
-                  <div class="col-md-6">
-		    {% include 'widgets/widget_input.html' with field="name" placeholder="Give unique name to kooplex course" %}
+                  <div class="col-md-4">
+		    {% include 'widgets/widget_input.html' with field="name" placeholder="Give unique name to kooplex course" instance="course" %}
                   </div>
-                  <div class="col-md-6">
-		    {% include 'widgets/widget_input.html' with field="folder" placeholder="Add a unique folder name" %}
+                  <div class="col-md-4">
+		    {% include 'widgets/widget_input.html' with field="folder" placeholder="Add a unique folder name" instance="course" %}
+                  </div>
+                  <div class="col-md-4">
+		    {% course_image course %}
                   </div>
                 </div>
                 <div class="row">
@@ -25,7 +29,7 @@
 	            <div id="canvascourseSelection"></div>
                   </div>
                   <div class="col-md-6">
-		    {% include 'widgets/widget_description.html' with placeholder="Add course description" maxheight="200px" %}
+		    {% include 'widgets/widget_description.html' with placeholder="Add course description" maxheight="200px" iinstance="course" %}
                   </div>
                 </div>
               </div>

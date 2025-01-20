@@ -12,20 +12,30 @@ pid = lambda project: project.id if project else "new"
 
 
 @register.simple_tag
+def button_fetch_joinable_projects(user):
+    return format_html(f"""
+<button type="button" class="btn btn-secondary btn-sm rounded rounded-5 border border-2 border-dark" data-bs-toggle="modal" data-bs-target="#joinprojectModal" data-id="{user.id}">
+    <i class="bi bi-boxes pe-1"></i>
+    Retrieve joinable projects...
+</button>
+    """)
+
+
+@register.simple_tag
 def project_card_border(project = None):
     return "border-success" if project else "border-warning"
 
 
-@register.simple_tag
-def project_folder(project = None):
-    editable = "" if project else "editable"
-    folder = project.subpath if project else "Add a folder"
-    return format_html(f"""
-<p class="card-text mb-1"><strong>Folder:</strong>
-<span data-type="text" data-title="Define project folder" data-pk="{pid(project)}" data-field="subpath" data-typed="false"
-   class="{editable} fw-bold w-100 text-dark text-start" data-placement="right">{folder}</span>
-</p>
-    """)
+#@register.simple_tag
+#def project_folder(project = None):
+#    editable = "" if project else "editable"
+#    folder = project.subpath if project else "Add a folder"
+#    return format_html(f"""
+#<p class="card-text mb-1"><strong>Folder:</strong>
+#<span data-type="text" data-title="Define project folder" data-pk="{pid(project)}" data-field="subpath" data-typed="false"
+#   class="{editable} fw-bold w-100 text-dark text-start" data-placement="right">{folder}</span>
+#</p>
+#    """)
 
 
 @register.simple_tag

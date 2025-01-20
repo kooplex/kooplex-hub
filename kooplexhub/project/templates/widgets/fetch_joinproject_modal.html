@@ -1,0 +1,33 @@
+{% load static %}
+
+<!-- templates/widgets/fetch_joinproject_modal.html -->
+<div id="joinprojectModal" class="modal fade joinproject-modal" tabindex="-1" aria-labelledby="joinprojectModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="joinprojectModalLabel">Select from accessible kooplex projects</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body vh-25">
+              <div class="container">
+	        <div id="projectSelection"></div>
+              </div>
+	      <div class="modal-footer">
+		{% include 'widgets/widget_savechanges.html' with obj="joinproject" show=True %}
+              </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{# place in static/js #}
+<script>
+$(document).on('click', '[data-bs-target="#joinprojectModal"]', function () {
+  $("#projectSelection").replaceWith('<div id="projectSelection" class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>')
+    //sock = open_ws(wsURLs['project_config'], project_config_callback)
+    setTimeout(function() {
+    sockkkk3.send(JSON.stringify({}))
+    }, 200)
+});
+</script>

@@ -174,6 +174,7 @@ class UserProjectBindingListView(LoginRequiredMixin, generic.ListView):
         context['empty_title'] = "You have no projects"
         context['wss_container'] = KOOPLEX.get('hub', {}).get('wss_container_control', 'wss://localhost/hub/ws/container_environment/{userid}/').format(userid = self.request.user.id)
         #context['wss_project'] = KOOPLEX.get('hub', {}).get('wss_project', 'wss://localhost/hub/ws/project/{userid}/').format(userid = self.request.user.id)
+        context['wss_project_joinable'] = KOOPLEX.get('hub', {}).get('wss_project_joinable', 'wss://localhost/hub/ws/project/fetchjoinable/{userid}/').format(userid = self.request.user.id)
         context['wss_project_config'] = KOOPLEX.get('hub', {}).get('wss_project_config', 'wss://localhost/hub/ws/project/config/{userid}/').format(userid = self.request.user.id)
         context['wss_project_container'] = KOOPLEX.get('hub', {}).get('wss_project_container', 'wss://localhost/hub/ws/project/container/{userid}/').format(userid = self.request.user.id)
         context['n_hidden'] = len(context['object_list'].filter(is_hidden = True))

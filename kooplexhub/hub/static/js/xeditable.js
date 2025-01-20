@@ -17,10 +17,10 @@ $('.editable').each(function(){
     }
   }).on('save', function(e, params) {
     const $element = $(this)
-    const pk = $element.data('pk')
+    const pk = $element.data('id')
     const changed = register_changes(pk, $element.data('field'), $.trim(params.newValue), $element.data('orig'))
     if (changed) {
-      showSaveChanges(pk)
+      showSaveChanges(pk, $element.data('instance'))
     }
   })
 
@@ -62,10 +62,10 @@ $('p.editable').on('shown', function(e, editable) {
 // Attach event listener for x-editable's shown event
 $('p.editable').on('save', function(e, params) {
     const $element = $(this)
-    const pk = $element.data('pk')
+    const pk = $element.data('id')
     const changed = register_changes(pk, $element.data('field'), $.trim(params.newValue), $element.data('orig'))
     if (changed) {
-      showSaveChanges(pk)
+      showSaveChanges(pk, $(element).data('instance'))
     }
 })
 
