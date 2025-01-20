@@ -47,43 +47,7 @@ class TableJoinProject(tables.Table):
         cols = UserProjectBinding.objects.filter(project = record.project).exclude(user = record.user)
         return format_html(', '.join([ ru(c.user) for c in cols ])) if cols else '--'
 
-_a = table_attributes.copy()
-_a['class'] += " mt-2"
-
-class TableCollaborator(tables.Table):
-    user = tables.Column(verbose_name = "Collaborator", order_by = ('first_name', 'last_name'), orderable = False, empty_values = ())
-    username = tables.Column(verbose_name = "Username", orderable = False, empty_values = ())
-    admin = tables.Column(verbose_name = "Admin", orderable = False, empty_values = ())
-    remove = tables.Column(verbose_name = "Remove", orderable = False, empty_values = ())
-
-    class Meta:
-        model = User
-        fields = ('username', )
-        sequence = ('user', 'username', 'admin', 'remove',)
-        attrs = _a
-        row_attrs = {
-            'data-pk': lambda record: record.pk
-        }
-
-    def render_user(self, record):
-        return f"{record.first_name} {record.last_name}"
-
-    def render_admin(self, record):
-        return format_html(f"""
-<span id="admintoggler-{record.id}"><input data-size="small"
-  type="checkbox" data-toggle="toggle" name="admin_id"
-  data-on="<span class='oi oi-lock-unlocked'></span>"
-  data-off="<span class='oi oi-lock-locked'></span>"
-  data-pk="{record.pk}"
-  data-onstyle="success" data-offstyle="danger" value="{record.id}"></span>
-        """)
-
-    def render_remove(self, record):
-        return format_html(f"""
-<button role="button" class="badge rounded-pill text-bg-danger border text-light p-2" onclick="UserSelection.removeUser({record.pk})"><span class="oi oi-minus" data-toggle="tooltip" title="Remove {record.first_name} {record.last_name} from collaboration" data-placement="top"></span></button>
-        """)
-
-
+#FIXME: check still used?
 class TableContainer(tables.Table):
     image = tables.Column(orderable = False)
     name = tables.Column(verbose_name = 'Environment', orderable = False)
