@@ -16,22 +16,12 @@ from django.template.loader import render_to_string
 
 from .models import Canvas
 
+from hub.util import SyncSkeleton
+
 logger = logging.getLogger(__name__)
 
 #################
 # FIXME put somewhere common 
-
-def model_field(instance, attr_name):
-    # Get the class of the instance
-    cls = instance.__class__
-    # Check if the attribute is a Django model field
-    try:
-        instance._meta.get_field(attr_name)
-        return True
-    except FieldDoesNotExist:
-        pass
-    return False
-
 
 # Custom JSON encoder
 class CustomEncoder(json.JSONEncoder):
@@ -51,29 +41,15 @@ class CustomEncoder(json.JSONEncoder):
 
 
 
-class SyncSkeleton(WebsocketConsumer):
-    def connect(self):
-        if not self.scope['user'].is_authenticated:
-            return
-        self.accept()
-        self.userid = int(self.scope["url_route"]["kwargs"].get('userid'))
-        assert self.scope['user'].id == self.userid, "not authorized"
-#
-#    def disconnect(self, close_code):
-#        self.killed.set()
-#
-    def get_container(self, container_id):
-        return Container.objects.get(id = container_id, user__id = self.userid)
-    def get_userid(self):
-        return self.userid
-
 class CanvasGetCoursesConsumer(SyncSkeleton):
     def receive(self, text_data):
         canvas = Canvas.objects.get(user__id = self.userid)
+        canvas_courses = canvas.get_courses()
+        #FIXME: filter what is present
+        ######################
         resp = {
             "feedback": "Your canvas course list is refreshed", 
-            "response": render_to_string("widgets/list_canvascourses.html", { "canvascourses": canvas.get_courses() }) , #FIXME: filter old/filter present
-            "echo": canvas.get_courses() , #FIXME: filter old/filter present
+            "response": render_to_string("widgets/list_canvascourses.html", {"canvascourses":  canvas_courses, "maxheight": "200px" }),
         }
         self.send(text_data = json.dumps(resp))
 

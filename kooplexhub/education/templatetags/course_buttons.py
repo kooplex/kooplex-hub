@@ -28,15 +28,9 @@ def course_image(course = None):
     """)
 
 
-@register.simple_tag
-def button_course_delete(course = None):
-    if course:
-        #FIXME???: implement link = reverse('course:delete', args = [ cid(course) ])
-        link = ''
-        return format_html(f"""
-<a href="{link}" role="button" class="badge rounded-pill text-bg-danger border text-light p-3" onclick="return confirm('Are you sure?');"><span class="oi oi-trash" aria-hidden="true" data-toggle="tooltip" title="Delete course {course.name}." data-placement="top"></span></a>
-        """)
-    else:
-        return ""
+@register.filter
+def link_course_drop(course):
+    #FIXME: return reverse('education:delete', args = [ cid(course) ]) if course else ""
+    return ""
 
 

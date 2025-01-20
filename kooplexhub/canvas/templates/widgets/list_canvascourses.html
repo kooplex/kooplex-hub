@@ -1,4 +1,17 @@
-{% for canvascourse in canvascourses %}
- <tr><td>{{ canvascourse.name }}</td></tr>
-{% endfor %}
+{% load canvas_buttons %} {# FIXME: rename missleading source file #}
+<div class="position-relative">
+  <div class="rounded border p-3 rounded-3 border-2 border-secondary" style="max-height: {{maxheight}}; height: 100%; overflow-y: auto;">
+      <div class="content">
+          <table>
+            {% for canvascourse in canvascourses %}
+            <tr data-bs-toggle="tooltip" title="{{canvascourse.name}}" data-id="{{canvascourse.id}}"><td>{{ canvascourse.name|canvas_tail|truncatechars:45 }}</td></tr>
+            {% endfor %}
+          </table>
+      </div>
+      <div class="position-absolute top-0 start-0 badge rounded-pill bg-secondary text-white shadow-sm p-2" style="transform: translate(0%, -50%);">
+        Your canvas courses
+      </div>
+  </div>
+</div>
+
 

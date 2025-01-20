@@ -9,8 +9,29 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body vh-25">
-	        <table id="canvascourseSelection">
-	        </table>
+              <div class="container">
+                <div class="row mb-3">
+                  <!-- First Row: Two Inputs -->
+                  <div class="col-md-6">
+		    {% include 'widgets/widget_input.html' with field="name" placeholder="Give unique name to kooplex course" %}
+                  </div>
+                  <div class="col-md-6">
+		    {% include 'widgets/widget_input.html' with field="folder" placeholder="Add a unique folder name" %}
+                  </div>
+                </div>
+                <div class="row">
+                  <!-- Second Row: Two Textareas or Tables -->
+                  <div class="col-md-6">
+	            <div id="canvascourseSelection"></div>
+                  </div>
+                  <div class="col-md-6">
+		    {% include 'widgets/widget_description.html' with placeholder="Add course description" maxheight="200px" %}
+                  </div>
+                </div>
+              </div>
+	      <div class="modal-footer">
+		{% include 'widgets/widget_savechanges.html' with obj="canvascourse" show=True %}
+              </div>
             </div>
         </div>
     </div>
@@ -20,7 +41,7 @@
 {# place in static/js #}
 <script>
 $(document).on('click', '[data-bs-target="#canvascoursesModal"]', function () {
-  $("#canvascourseSelection").html('<div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>')
+  $("#canvascourseSelection").replaceWith('<div id="canvascourseSelection" class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>')
     //sock = open_ws(wsURLs['project_config'], project_config_callback)
     setTimeout(function() {
     sockkkk2.send(JSON.stringify({}))

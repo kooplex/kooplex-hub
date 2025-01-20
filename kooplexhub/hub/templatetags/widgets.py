@@ -7,7 +7,7 @@ register = template.Library()
 
 instance_id = lambda instance: getattr(instance, 'id', 'new')
 
-
+#FIXME deprecate
 @register.simple_tag
 def field_name(instance=None, instance_type='', cls='p-3'):
     orig = getattr(instance, 'name',  'Add a name')

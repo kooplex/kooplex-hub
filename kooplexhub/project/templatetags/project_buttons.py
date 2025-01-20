@@ -93,15 +93,9 @@ def list_reports(project = None):
     """) if reps else ""
 
 
-@register.simple_tag
-def button_project_delete(project = None):
-    if project:
-        link = reverse('project:delete', args = [ pid(project) ])
-        return format_html(f"""
-<a href="{link}" role="button" class="badge rounded-pill text-bg-danger border text-light p-3" onclick="return confirm('Are you sure?');"><span class="oi oi-trash" aria-hidden="true" data-toggle="tooltip" title="Delete project {project.name}." data-placement="top"></span></a>
-        """)
-    else:
-        return ""
+@register.filter
+def link_project_drop(project):
+    return reverse('project:delete', args = [ pid(project) ]) if project else ""
 
 
 @register.simple_tag

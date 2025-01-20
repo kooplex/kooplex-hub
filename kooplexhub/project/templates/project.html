@@ -24,15 +24,8 @@
             </div>
 
             <!-- Second Column -->
-            <div class="col position-relative">
-                <div class="rounded border p-3 rounded-3 border-2 border-secondary" style="max-height: 160px; height: 100%; overflow-y: auto;">
-                    <div class="content">
-			{% field_description project 'project' %}
-                    </div>
-		    <div class="position-absolute top-0 start-0 badge rounded-pill bg-secondary text-white shadow-sm p-2" style="transform: translate(0%, -50%);">
-                      Description
-                    </div>
-                </div>
+            <div class="col">
+              {% include 'widgets/widget_description.html' with pk=project.id orig=project.description placeholder="Add project description" tooltip="Describe project" maxheight="160px" %}
             </div>
 
             <!-- Third Column -->
@@ -55,8 +48,8 @@
 			{% list_reports project %}
 		{% endcomment %}
                 <div class="d-flex justify-content-end">
-		    {% button_save_project_changes project %}
-		    {% button_project_delete project %}
+		    {% include 'widgets/widget_savechanges.html' with pk=project.id obj="project" %}
+	            {% include 'widgets/widget_delete.html' with msg="Are you sure you want to delete or leave project?" tooltip="Leave/delete project" link=project|link_project_drop obj=project %}
                 </div>
             </div>
         </div>

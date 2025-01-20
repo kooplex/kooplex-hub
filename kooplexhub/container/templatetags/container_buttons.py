@@ -192,67 +192,8 @@ def repos(container):
     return ""
 
 
-@register.simple_tag
-def button_save_changes(container = None):
-    return format_html(f"""
-<span id="container-save-{cid(container)}" class="badge rounded-pill bg-danger text-light p-3 d-none" role="button"
-      onclick="save_container_config('{cid(container)}')">
-  <i class="bi bi-save me-1"></i><span>Save changes</span>
-</span>
-    """)
-
-
-@register.simple_tag
-def button_delete_container(container = None):
-    if not container or hasattr(container, "report"):
-        return "" #FIXME: space holder!
-    link = reverse('container:destroy', args = [container.id])
-    msg = f"Are you sure you want to drop your container {container}?"
-    return format_html(f"""
-<a href="{link}" onclick="return confirm('{msg}');" role="button" class="badge rounded-pill text-bg-danger border p-2"><span class="oi oi-trash" aria-hidden="true" data-toggle="tooltip" title="Remove {container.name}"></span></a>
-    """)
-
-
-#FIXME
-#<a href="{link}" role="button" class="btn btn-secondary btn-sm" value="{b.container.id}"><span class="bi bi-boxes" aria-hidden="true"></span>{b.container.name}</a>
-# Attribute value not allowed on element a
-@register.simple_tag
-def dropdown_start_open(bindings, ancestor, ancestor_type, id_suffix = ''):
-    if len(bindings):
-        items = ""
-        for b in bindings:
-            but_start_open = button_start_open(b.container, id_suffix)
-            link = reverse('container:list')
-            items += f"""
-<div class="dropdown-item" style="display: inline-block">
-  <div class="btn-group" role="group" aria-label="control buttons">
-    {but_start_open}
-    <a href="{link}" role="button" class="btn btn-secondary btn-sm" value="{b.container.id}"><span class="bi bi-boxes" aria-hidden="true"></span>{b.container.name}</a>
-  </div>
-</div>
-            """
-        an = getattr(ancestor, ancestor_type).name
-        return format_html(f"""
-<div class="dropdown" style="display: inline-block" data-bs-toggle="tooltip" data-bs-placement="top" title="Service environments associated with {ancestor_type} {an}">
-  <button class="btn btn-outline-secondary dropdown-toggle btn-sm" id="dc-svcs-{ancestor.id}" data-bs-toggle="dropdown" aria-expanded="false">
-    <i class="oi oi-terminal"></i>&nbsp;{len(bindings)}
-  </button>
-  <div class="dropdown-menu" aria-labelledby="dc-svcs-{ancestor.id}">
-    {items}
-  </div>
-</div>
-        """)
-    else:
-        if ancestor_type == 'project':
-            link = reverse('project:autoaddcontainer', args = [ancestor.id])
-        elif ancestor_type == 'course':
-            link = reverse('education:autoaddcontainer', args = [ancestor.id])
-        else:
-            link = '#'
-        return format_html(f"""
-<a class="btn btn-danger btn-sm" role="button" href="{link}">
-  <i class="bi bi-boxes" data-bs-toggle="tooltip" data-bs-placement="top" title="Create a default environment for your {ancestor_type}"></i>
-</a>
-        """)
+@register.filter
+def link_container_drop(container):
+    link = reverse('container:destroy', args = [container.id]) if container else ""
 
 

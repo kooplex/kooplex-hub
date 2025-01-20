@@ -14,3 +14,7 @@ def button_fetch_canvascourses(user):
     """)
 
 
+@register.filter
+def canvas_tail(value):
+    #FIXME: use regular expression defined in settings.py
+    return value.split(" - ")[-1]

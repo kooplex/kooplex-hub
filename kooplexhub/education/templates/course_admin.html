@@ -80,7 +80,7 @@ const wsURLs = {
 	function pch2(message) {
 
         console.log(message)
-		$("#canvascourseSelection").html(message["response"])
+		$("#canvascourseSelection").replaceWith(message["response"])
 
 	}
 

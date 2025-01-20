@@ -49,8 +49,7 @@
                 <div class="mb-3">{{ container.render_restartreasons_html }}</div>
                 <!-- Row 3 -->
                 <div class="d-flex justify-content-end mt-auto">
-		    {% button_save_changes container %}
-		    {# <button type="button" class="btn btn-danger btn-circle">D</button> FIXME cancel changes #}
+		    {% include 'widgets/widget_savechanges.html' with pk=container.id obj="container" %}
                 </div>
             </div>
         </div>
@@ -60,7 +59,7 @@
     <div class="card-footer d-flex justify-content-between {% card_border container %}">
       {% if container %}
         {{ container.render_start_html }}
-        {% button_delete_container container %}
+	{% include 'widgets/widget_delete.html' with msg="Are you sure you want to drop your container?" tooltip="Delete container" link=container|link_container_drop obj=container %}
       {% else %}
         <div class="btn-placeholder p-1" style="visibility: hidden;">Placeholder</div>
       {% endif %}
