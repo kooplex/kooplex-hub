@@ -9,6 +9,7 @@ urlpatterns = [
     path('teacher/course/', views.TeacherCourseBindingListView.as_view(), name = 'teaching'),
     path('configure/<int:pk>/', views.ConfigureCourseView.as_view(), name = 'configure'),
     path('assignment_new/', views.NewAssignmentView.as_view(), name = 'assignment_new'),
+    path('assignment_new/<int:pk>/', views.NewAssignmentView.as_view(), name = 'newass'),
     path('assignment_configure/', views.ConfigureAssignmentView.as_view(), name = 'assignment_configure'),
     path('assignment_handler/', views.HandleAssignmentView.as_view(), name = 'assignment_handle'),
     path('assignment_teachers_view/', views.assignment_teacher, name = 'assignment_teacher'), # just a dispatcher

@@ -211,6 +211,11 @@ class NewAssignmentView(LoginRequiredMixin, generic.FormView):
         context['active'] = self.request.COOKIES.get('assignment_teacher_tab', 'new')
         return context
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['pk'] = self.kwargs['pk']
+        return kwargs
+
     def form_valid(self, form):
         logger.info(form.cleaned_data)
         #authorize

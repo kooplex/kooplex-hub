@@ -114,7 +114,7 @@ class ContainerConfigConsumer(CSyncSkeleton):
         }
         pk = parsed.get('pk')
         changes = parsed.get('changes')
-        if pk == "new":
+        if pk == "":
             container=Container(name=changes['name'], user_id=self.get_userid(), image_id=changes['image'])
             container.save()
             response["reloadpage"]=True

@@ -106,7 +106,7 @@
     function confirmSelection() {
 	let submitButton=$('#confirm-image-selection')
         submitButton.on('click', function() {
-            if (selectedObjectId && selectedImageId) {
+            if ((selectedObjectId != null) && selectedImageId) {
                 const changed = register_changes(selectedObjectId, targetAttribute, selectedImageId, originalImageId) 
 		if (changed) {
                     $(`[data-field=image][data-id="${selectedObjectId}"]`).text($('#image-name').text())
@@ -116,6 +116,11 @@
             // Close the modal
             $('.image-modal').modal('hide')
         })
+	$(document).on('click', 'button[data-id][data-field=image]', function() {
+            let pk = $(this).data('id')
+            let imageSelectedId = $(this).data('orig')
+            handleClick(pk, imageSelectedId)
+	})
     }
 
     // Initialize the modal logic

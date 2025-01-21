@@ -129,12 +129,12 @@ class TableAssignmentConf(tables.Table):
         """)
 
     def render_dates(self, record):
-        rd = lambda t: t.clocked.schedule.clocked_time.strftime("%m/%d/%Y, %H:%M") if t else ""
-        d1 = rd(record.task_handout)
-        d2 = rd(record.task_collect)
+        rd = lambda t: t.strftime("%m/%d/%Y, %H:%M") if t else ""
+        d1 = rd(record.valid_from)
+        d2 = rd(record.expires_at)
         rd = lambda t: "disabled" if t and t.last_run_at else ""
-        st1 = rd(record.task_handout)
-        st2 = rd(record.task_collect)
+        st1 = rd(record.valid_from)
+        st2 = rd(record.expires_at)
         chk = 'checked' if record.remove_collected else ''
         return format_html(f"""
 <div class="container">

@@ -1,5 +1,6 @@
 from django import template
 from django.utils.html import format_html
+from django.template.loader import render_to_string
 from django.urls import reverse
 
 from ..models import Container
@@ -92,20 +93,8 @@ def button_seafile(container = None):
 
 
 @register.simple_tag
-def container_image(container = None):
-    if container:
-        iid = container.image.id
-        ihn = truncatechars(container.image.hr, 20)
-    else:
-        iid = -1
-        ihn = "Select image..."
-    return format_html(f"""
-<button data-pk="{cid(container)}" data-field="image" data-orig="{iid}" 
-      class="badge rounded-pill text-dark p-3 border border-1 border-dark flex-grow-1 text-start" 
-      onclick="ImageSelection.openModal('{cid(container)}', {iid})" role="button">
-  <i class="ri-image-2-line me-2"></i><span name="name" data-pk="{cid(container)}">{ihn}</span>
-</button>
-    """)
+def container_image(obj = None):
+    return render_to_string("widgets/widget_image.html", {"pk": getattr(obj, 'id', ""), "image": getattr(obj, "image", "")})
 
 
 @register.simple_tag

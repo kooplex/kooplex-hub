@@ -240,6 +240,9 @@ class Container(models.Model):
     def render_name_html(self):
         return self.name #FIXME render_to_string("widgets/widget_container_start.html", {"container": self})
 
+    def render_image_html(self):
+        return render_to_string("widgets/widget_image.html", {"pk": self.id, "image": self.image})
+
     def render_start_html(self):
         return render_to_string("widgets/widget_container_start.html", {"container": self})
 

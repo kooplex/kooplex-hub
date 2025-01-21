@@ -34,3 +34,6 @@ def link_course_drop(course):
     return ""
 
 
+@register.filter
+def link_new_ass(course):
+    return reverse('education:newass', args = [ course.id ]) if course else ""

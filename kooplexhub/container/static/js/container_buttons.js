@@ -66,19 +66,26 @@ function applyButton(widgetId, selectedButtonName) {
 
 // Show Save Changes button
 function showSaveChanges(containerId) {
-  if (containerId === "new") {
+  containerId=(containerId===undefined)?"":containerId
+  if (containerId === "") {
      // only show if the compulsory attributes are set
-     var count = changes.filter(x => x.pk === "new"  && ["name", "image"].includes(x.field)).length
+     var count = changes.filter(x => x.pk === ""  && ["name", "image"].includes(x.field)).length
      if (count < 2) {
        return
      }
   }
-  $(`#container-save-${containerId}`).removeClass("d-none")
+  $(`[name=save][data-id="${containerId}"][data-instance=container]`).removeClass("d-none")
 }
+
+
+$(document).on('click', '[name=save][data-id][data-instance=container]', function() {
+    save_container_config($(this).data('id'))
+})
+
 
 // Hide Save Changes button
 function hideSaveChanges(containerId) {
-  $(`#container-save-${containerId}`).addClass("d-none")
+  $(`[name=save][data-id="${containerId}"][data-instance=container]`).addClass("d-none")
 }
 
 // This function can be triggered initially on page load or from WebSocket events

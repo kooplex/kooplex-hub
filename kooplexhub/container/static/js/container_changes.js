@@ -25,6 +25,7 @@ function arraysEqual(arr1, arr2) {
 
 // Container configuration logic
 function register_changes(pk, fieldName, newValue, oldValue) {
+    pk=(pk===undefined)?"":pk
     var changed = $.isArray(newValue) ? ! arraysEqual(newValue, oldValue) : oldValue !== newValue
     if (changed) {
         // Check if the change already exists
@@ -82,9 +83,9 @@ function container_config_callback(message) {
 }
 
 
-// Save chanegs
+// Save changes
 function save_container_config(pk) {
-    pk = pk === "new" ? "new" : parseInt(pk)
+    pk = pk === "" ? "" : parseInt(pk)
     console.log(pk)
     // Object to represent the changes
     var changeObject = { }
@@ -104,9 +105,8 @@ function save_container_config(pk) {
         request: 'configure-container',
         changes: changeObject
     }
-    sock = open_ws(wsURLs['container_config'], container_config_callback)
     setTimeout(function() {
-        sock.send(JSON.stringify(data))
+        wss_containerconfig.send(JSON.stringify(data))
     }, 200)
     hideSaveChanges(pk)
     // Return a promise to handle asynchronous behavior
@@ -114,4 +114,13 @@ function save_container_config(pk) {
     deferred.resolve();
     return deferred.promise();
 }
+
+
+$(document).ready(function() {
+  if (wsURLs.container_config) {
+    wss_containerconfig = new ManagedWebSocket(wsURLs.container_config, {
+      onMessage: container_config_callback,
+    })
+  } 
+})
 

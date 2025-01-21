@@ -27,9 +27,10 @@
             </div>
 
             <!-- Third Column -->
+	    {% if course %}
             <div class="col position-relative">
                 <div class="rounded border p-3 rounded-3 border-2 border-secondary" style="max-height: 118px; height: 100%; overflow-y: auto;">
-                    <div class="content">
+                    <div name="assignment" class="content" data-id="{{course.id}}" data-url="{{ course|link_new_ass }}">
 			ass
                     </div>
 		    <div class="position-absolute top-0 start-0 badge rounded-pill bg-secondary text-white shadow-sm p-2" style="transform: translate(0%, -50%);">
@@ -37,6 +38,7 @@
                     </div>
                 </div>
             </div>
+	    {% endif %}
 
             <!-- Fourth Column -->
             <div class="col position-relative">

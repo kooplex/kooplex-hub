@@ -51,12 +51,24 @@
 <script src="{% static 'js/widget_volumes.js' %}"></script>
 <script src="{% static 'js/volume_selection.js' %}"></script>
 
+{# a modal to configure assignments #}
+{# FIXME amíg ez nincs, addig a régi formokat szűkítjük #}
+{#% include 'widgets/modal_assignment.html' with instance="course" %#}
 
 {% endblock %}
 
 {% block scripts %}
 {# FIXME static/sj/ #}
 <script>
+
+$(document).on('click', '[name="assignment"][data-id][data-url]', function() {
+    const url = $(this).data('url')
+    if (url) {
+        window.location.href = url;
+    }
+})
+
+
 $(document).on('click', '[name="users"]', function() {
     const objectId = $(this).data('id')  // Get the id from the button's data-id attribute
     const kind = $(this).data('kind')  // Get the id from the button's data-id attribute

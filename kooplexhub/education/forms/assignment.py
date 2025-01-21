@@ -119,12 +119,17 @@ class FormAssignment(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         user = kwargs['initial'].get('user')
+        self.pk = kwargs.pop('pk', None)
         super().__init__(*args, **kwargs)
         #self.fields["creator_id"].value = user.id
         assignment = kwargs.get('instance', Assignment())
         folders = []
-        for ucb in UserCourseBinding.objects.filter(user = user, is_teacher = True):
-            folders.extend([ (f'{ucb.course.id}---{folder}', f'{ucb.course.name}: {folder}') for folder in ucb.course.dir_assignmentcandidate() ])
+        q=UserCourseBinding.objects.filter(user=user, course_id=self.pk, is_teacher=True) if self.pk else UserCourseBinding.objects.filter(user=user, is_teacher=True)
+        for ucb in q:
+            try:
+                folders.extend([ (f'{ucb.course.id}---{folder}', f'{ucb.course.name}: {folder}') for folder in ucb.course.dir_assignmentcandidate() ])
+            except:
+                pass
         if folders:
             self.okay = True
             self.fields["folder_assignment"].choices = folders

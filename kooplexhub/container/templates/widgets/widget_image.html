@@ -1,0 +1,8 @@
+<button data-id="{{pk}}" data-field="image" data-orig="{{image.id}}" 
+      class="badge rounded-pill text-dark p-3 border border-1 border-dark flex-grow-1 text-start" 
+      role="button">
+  <i class="ri-image-2-line me-2"></i><span name="image" data-id="{{pk}}"
+      data-bs-toggle="tooltip" data-placement="bottom"
+      title="Iname: {{image.name}}">{% if image %}{{image.hr|truncatechars:20}}{% else %}Select image{% endif %}</span>
+</button>
+

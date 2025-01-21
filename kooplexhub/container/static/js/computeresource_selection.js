@@ -6,7 +6,6 @@
     var selectedNode = ""
     var currentNode = null
     var containerrunning = null
-    var sock = null  //FIXME: monitoring
 
     // Handle web socket callbacks
     function nodeinfo_callback(message) {
@@ -55,7 +54,6 @@
 	///FIXME: retrieve info if container is running
         $('.computeresource-modal').modal('show')
 
-	sock = open_ws(wsURLs['monitor_node'], nodeinfo_callback)
     
         setTimeout(function() {
 	    $("#id_node").val(node)
@@ -65,7 +63,7 @@
 
     // Call server via websocket to fetch up to date resource information
     function retrieveResources(node) {
-        sock.send(JSON.stringify({
+        wss_monitor.send(JSON.stringify({
           'request': 'monitor-node',
           'node': node,
         }))
@@ -94,7 +92,6 @@
 
                 // Close the modal
                 $('.computeresource-modal').modal('hide');
-		sock.close()
 		selectedContainerId = null
             }
         });
@@ -142,6 +139,11 @@
     function initializeComputeResourceSelection() {
         handleNodeselectChange()
         confirmSelection()
+        if (wsURLs.monitor_node) {
+          wss_monitor = new ManagedWebSocket(wsURLs.monitor_node, {
+            onMessage: nodeinfo_callback,
+          })
+        } 
     }
 
     // Expose the functionality globally so it can be reused

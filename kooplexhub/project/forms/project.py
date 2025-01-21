@@ -13,7 +13,7 @@ from ..models import Project, UserProjectBinding
 from kooplexhub.lib import my_slug_validator, my_end_validator
 from kooplexhub.common import tooltip_attrs
 
-
+#FIXME: depreate
 class FolderTextWidget(forms.TextInput):
     template_name = 'folder.html'
 
