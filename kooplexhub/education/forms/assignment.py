@@ -12,7 +12,6 @@ from django_pandas.io import read_frame
 from kooplexhub.common import tooltip_attrs
 
 from education.models import Assignment, UserCourseBinding, Course, UserAssignmentBinding, UserCourseGroupBinding, CourseGroup
-from hub.models import Task
 from education.filesystem import *
 
 try:

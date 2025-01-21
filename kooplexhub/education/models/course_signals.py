@@ -6,7 +6,7 @@ from django.db import transaction
 from django.db.models.signals import pre_save, post_save, pre_delete, post_delete
 
 from kooplexhub.settings import KOOPLEX
-from hub.models import Group, UserGroupBinding, Task
+from hub.models import Group, UserGroupBinding
 from education.models import Course, UserCourseBinding, UserAssignmentBinding
 from education.filesystem import *
 
@@ -56,15 +56,8 @@ def delete_course(sender, instance, **kwargs):
         instance.group_students.delete()
     if instance.group_teachers:
         instance.group_teachers.delete()
-    Task(
-        create = True,
-        name = f"Delete course {instance.name} ({instance.folder})",
-        task = "kooplexhub.tasks.delete_folders",
-        kwargs = {
-            'folders': [ f(instance) for f in [ course_workdir_root, course_assignment_root, assignment_correct_root, course_root ] ],
-        }
-    )
-    #FIXME: what if garbage is still running!?
+    from hub.tasks import removefolders
+    removefolders(folders=[ f(instance) for f in [ course_workdir_root, course_assignment_root, assignment_correct_root, course_root ] ])
 
 
 @receiver(pre_save, sender = UserCourseBinding)
@@ -93,17 +86,17 @@ def delete_usercourse(sender, instance, **kwargs):
     except UserGroupBinding.DoesNotExist:
         pass
     #FIXME: below
-    UserAssignmentBinding.objects.filter(user = user, assignment__course = course).delete()
-    folders = [ f(instance.course) for f in [ course_public, course_assignment_prepare_root, assignment_correct_root ] ]
-    Task(
-        create = True,
-        name = f"Delete user {instance.user.username} from course {instance.course.name}",
-        task = "kooplexhub.tasks.delete_folders",
-        kwargs = {
-            'folders': [ assignment_workdir_root(instance) ],
-            'archives': { course_workdir_garbage(instance): course_workdir(instance) },
-            'revoke_useraccess': { instance.user.id: folders }
-        }
-    )
+    #UserAssignmentBinding.objects.filter(user = user, assignment__course = course).delete()
+    #folders = [ f(instance.course) for f in [ course_public, course_assignment_prepare_root, assignment_correct_root ] ]
+    #Task(
+    #    create = True,
+    #    name = f"Delete user {instance.user.username} from course {instance.course.name}",
+    #    task = "kooplexhub.tasks.delete_folders",
+    #    kwargs = {
+    #        'folders': [ assignment_workdir_root(instance) ],
+    #        'archives': { course_workdir_garbage(instance): course_workdir(instance) },
+    #        'revoke_useraccess': { instance.user.id: folders }
+    #    }
+    #)
 
 

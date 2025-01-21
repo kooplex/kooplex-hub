@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.db.models.signals import post_save, pre_delete, post_delete
 
-from hub.models import * #Profile, Task
+from hub.models import *
 from hub.lib import filename, dirname
 from hub.lib import mkdir, grantaccess_user
 

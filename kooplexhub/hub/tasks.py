@@ -30,3 +30,9 @@ def garbage_home(user_id):
         archivedir( dirname.userhome(user), filename.userhome_garbage(user), remove = True)
     else:
         rmdir( dirname.userhome(user) )
+
+
+@task(queue = 'hub')
+def archive(folder, tarbal, remove=False):
+    from .lib import archivedir
+    archivedir(folder, tarbal, remove = remove_folder)

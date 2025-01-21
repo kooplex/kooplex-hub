@@ -8,7 +8,6 @@ from django.dispatch import receiver
 
 from kooplexhub.lib.libbase import standardize_str
 from hub.models import Group, UserGroupBinding
-from hub.models import Task
 from ..models import UserProjectBinding
 from .. import filesystem as fs
 
@@ -28,6 +27,7 @@ def assert_single_creator(sender, instance, **kwargs):
 
 @receiver(pre_save, sender = UserProjectBinding)
 def grantaccess_project(sender, instance, **kwargs):
+    from ..tasks import grant_access
     p = instance.project
     if instance.id is None:
         is_creator = instance.role == UserProjectBinding.RL_CREATOR
@@ -46,32 +46,17 @@ def grantaccess_project(sender, instance, **kwargs):
                 acl = None
             UserGroupBinding.objects.get_or_create(user = instance.user, group = group)
         if acl:
-            Task(
-                create = True,
-                name = f"Grant access {p.name}({creator_username}) to {instance.user.username}",
-                task = "project.tasks.grant_access",
-                kwargs = {
-                    'folders': [ fs.path_project(p), fs.path_report_prepare(p) ],
-                    'acl': acl,
-                }
-            )
+            grant_access(folders=[ fs.path_project(p), fs.path_report_prepare(p) ],acl=acl)
        
 
 @receiver(pre_delete, sender = UserProjectBinding)
 def revokeaccess_project(sender, instance, **kwargs):
+    from ..tasks import revoke_access
     if instance.role != UserProjectBinding.RL_CREATOR:
         group = Group.objects.get(name = instance.groupname, grouptype = Group.TP_PROJECT)
         UserGroupBinding.objects.get(user = instance.user, group = group).delete()
         creator = instance.project.creator.username if instance.project.creator is not None else "creator_missing"
-        Task(
-            create = True,
-            name = f"Revoke access {instance.project.name}({creator}) from {instance.user.username}",
-            task = "project.tasks.revoke_access",
-            kwargs = {
-                'folders': [ fs.path_project(instance.project), fs.path_report_prepare(instance.project) ],
-                'user_id': instance.user.id,
-            }
-        )
+        revoke_access(user_id=instance.user.id, folders=[ fs.path_project(instance.project), fs.path_report_prepare(instance.project) ])
 
 
 @receiver(pre_delete, sender = UserProjectBinding)
@@ -84,23 +69,8 @@ def assert_not_shared(sender, instance, **kwargs):
 
 @receiver(pre_delete, sender = UserProjectBinding)
 def garbagedir_project(sender, instance, **kwargs):
+    from hub.tasks import archive
     if instance.role != UserProjectBinding.RL_CREATOR:
         return
-    Task(
-        create = True,
-        name = f"Garbage project {instance.id}",
-        task = "kooplexhub.tasks.create_tar",
-        kwargs = {
-            'folder': fs.path_project(instance.project), 
-            'tarbal': fs.garbage_project(instance.project),
-        }
-    )
-    Task(
-        create = True,
-        name = f"Garbage report prepare {instance.id}",
-        task = "kooplexhub.tasks.create_tar",
-        kwargs = {
-            'folder': fs.path_report_prepare(instance.project),
-            'tarbal': fs.garbage_report_prepare(instance.project),
-        }
-    )
+    archive(folder=fs.path_project(instance.project), tarbal=fs.garbage_project(instance.project), remove=True)
+    archive(folder=fs.path_report_prepare(instance.project), tarbal=fs.garbage_report_prepare(instance.project), remove=True)

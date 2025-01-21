@@ -7,7 +7,8 @@ from django.db.models.signals import pre_save, post_save, pre_delete, post_delet
 from django.dispatch import receiver
 
 from kooplexhub.lib.libbase import standardize_str
-from hub.models import Group, UserGroupBinding, Task
+from hub.models import Group, UserGroupBinding
+from hub.tasks import delete_folder
 from hub.lib.filesystem import _mkdir
 from ..models import Project
 from .. import filesystem as fs
@@ -32,11 +33,5 @@ def rmdir_project(sender, instance, **kwargs):
         pass
     except Group.DoesNotExist:
         pass
-    Task(
-        create = True,
-        name = f"Delete folders {instance.id}",
-        task = "kooplexhub.tasks.delete_folders",
-        kwargs = {
-            'folders': [ fs.path_project(instance), fs.path_report_prepare(instance) ],
-        }
-    )
+    delete_folder(fs.path_project(instance))
+    delete_folder(fs.path_report_prepare(instance))
