@@ -9,7 +9,9 @@ function fetchlog_callback(message) {
 }
 
 $(document).ready(function() {
-  sock_fetchlog = open_ws(wsURLs['container_fetchlog'], fetchlog_callback)
+  wss_fetchlog = new ManagedWebSocket(wsURLs['container_fetchlog'], {
+    onMessage: fetchlog_callback,
+  })
 })
 
 
@@ -17,7 +19,7 @@ $(document).on('click', '[data-bs-target="#fetchlogsModal"]', function () {
   const objectId = $(this).data('id'); // Get the id from the button's data-id attribute
   $("#container-log").text("Retrieving container logs. It may take a while to download...")
   $(".progress").removeClass("d-none")
-  sock_fetchlog.send(JSON.stringify({
+  wss_fetchlog.send(JSON.stringify({
     pk: objectId,
     request: 'container-log',
   }))

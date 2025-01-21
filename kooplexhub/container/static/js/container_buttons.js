@@ -12,7 +12,9 @@ function containerbutton_callback(message) {
 }
 
 $(document).ready(function() {
-  sock_containercontrol = open_ws(wsURLs['container_control'], containerbutton_callback)
+  wss_containercontrol = new ManagedWebSocket(wsURLs['container_control'], {
+    onMessage: containerbutton_callback,
+  })
 })
 
 
@@ -20,7 +22,7 @@ $(document).ready(function() {
 $(document).on('click', 'button[name="startcontainer"]', function () {
   const objectId = $(this).data('id'); // Get the id from the button's data-id attribute
   const command = $(this).data('command')
-  sock_containercontrol.send(JSON.stringify({
+  wss_containercontrol.send(JSON.stringify({
     pk: objectId,
     request: command,
   }))
@@ -30,7 +32,7 @@ $(document).on('click', 'button[name="startcontainer"]', function () {
 // stop a container
 $(document).on('click', 'button[name="stopcontainer"]', function () {
   const objectId = $(this).data('id'); // Get the id from the button's data-id attribute
-  sock_containercontrol.send(JSON.stringify({
+  wss_containercontrol.send(JSON.stringify({
     pk: objectId,
     request: 'stop',
   }))

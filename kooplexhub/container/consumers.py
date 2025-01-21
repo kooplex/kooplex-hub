@@ -44,8 +44,11 @@ class CustomEncoder(json.JSONEncoder):
         return super().default(obj)
 #################
 
+class CSyncSkeleton(SyncSkeleton):
+    def get_container(self, container_id):
+        return Container.objects.get(id = container_id, user__id = self.userid)
 
-class ContainerFetchlogConsumer(SyncSkeleton):
+class ContainerFetchlogConsumer(CSyncSkeleton):
     def receive(self, text_data):
         parsed = json.loads(text_data)
         logger.debug(parsed)
@@ -100,7 +103,7 @@ class ContainerControlConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps(event))
 
 
-class ContainerConfigConsumer(SyncSkeleton):
+class ContainerConfigConsumer(CSyncSkeleton):
     def receive(self, text_data):
         parsed = json.loads(text_data)
         logger.debug(parsed)

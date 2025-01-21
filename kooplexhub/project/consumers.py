@@ -146,20 +146,33 @@ class ProjectGetJoinableConsumer(SyncConsumer):
     def receive(self, text_data):
         parsed = json.loads(text_data)
         logger.debug(parsed)
-        #assert parsed.get('request')=='configure-project', "wrong request"
-
         published = list(map(lambda b: b.project, UserProjectBinding.objects.filter(project__scope__in = [ Project.SCP_INTERNAL, Project.SCP_PUBLIC ], role = UserProjectBinding.RL_CREATOR).exclude(user__id = self.userid)))
         logger.debug(published)
         joined = list(map(lambda b: b.project, UserProjectBinding.objects.filter(user__id = self.userid, role__in = [ UserProjectBinding.RL_ADMIN, UserProjectBinding.RL_COLLABORATOR ])))
         logger.debug(joined)
         joinable = set(published).difference(joined)
         logger.debug(joinable)
-
-
         message_back = {
             "feedback": f"Joinable project list refreshed",
-            #FIXME:
-            "response": str(list(map(lambda p:p.name, joinable))) #ProjectContainerBinding.objects.filter(container__user__id=self.userid, project__id=projectid),
+            "response": render_to_string('widgets/list_joinableprojects.html', {'projects': joinable})
         }
         logger.debug(message_back)
-        self.send(text_data=json.dumps(message_back, cls=CustomEncoder))
+        self.send(text_data=json.dumps(message_back))
+
+
+class JoinProjectConsumer(SyncConsumer):
+    def receive(self, text_data):
+        parsed = json.loads(text_data)
+        logger.debug(parsed)
+        projectid = parsed.get('pk')
+        published = UserProjectBinding.objects.filter(project__scope__in = [ Project.SCP_INTERNAL, Project.SCP_PUBLIC ], role = UserProjectBinding.RL_CREATOR, project__id=projectid).exclude(user__id = self.userid)
+        joined = UserProjectBinding.objects.filter(user__id = self.userid, project__id = projectid)
+        deny = not published or joined 
+        if not deny:
+            b=UserProjectBinding.objects.create(project_id=projectid, user_id=self.userid, role=UserProjectBinding.RL_COLLABORATOR)
+        message_back = {
+            "feedback": f"Cannot join project" if deny else f"Project {b.project.name} joined",
+            "reloadpage": True,
+        }
+        logger.debug(message_back)
+        self.send(text_data=json.dumps(message_back))

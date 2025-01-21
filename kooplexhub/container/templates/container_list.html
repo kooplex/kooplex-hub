@@ -61,6 +61,7 @@
 
 
 {% block scripts %}
+<script src="{% static 'js/wss.js' %}"></script>
 <script>
 // Save web socket urls
 const wsURLs = {
@@ -82,6 +83,7 @@ $(document).ready(function() {
 </script>
 <script>
 
+	//FIXME EZ MI A SZÖSZ???
 {% if form %}
 $(document).ready(function() {
   m = $("#containerInfoModal")
@@ -124,28 +126,6 @@ $("#containerInfoModal").on("hidden.bs.modal", function (ev, o) {
 
 
 
-
-///////////////////////////////////////
-//FIXME: maybe this is something to be put in common
-{# make sure socket is open #}
-function check_sock(sock, wss, callback) {
-  if (sock.readyState != 1) {
-    console.log("Socket not open: " + sock.readyState)
-    sock = open_ws(wss, callback)
-    console.log("and now: " + sock.readyState)
-  }
-  return sock
-}
-
-{# handle container configuration #}
-//function configure(cid) {
-//  s = check_sock(containerSocket, '{{ wss_container }}', ws_callback)
-//  s.send(JSON.stringify({
-//    'command': 'configure',
-//    'container-id': cid,
-//  }));
-//	containerSocket = s
-//}
 
 
 </script>

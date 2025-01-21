@@ -32,6 +32,7 @@
 
 {# a modal to join a project #}
 {% include 'widgets/fetch_joinproject_modal.html' %}
+<script src="{% static 'js/project_join.js' %}"></script>
 
 
 {# a modal to configure a project image #}
@@ -45,11 +46,12 @@
 {# a modal to configure a project volumes #}
 {% include 'widgets/volumes.html' with instance="project" %}
 <script src="{% static 'js/volume_selection.js' %}"></script>
+<script src="{% static 'js/widget_volumes.js' %}"></script>
 
 {# a modal to start/stop/jump to project environments #}
 {% include 'widgets/environments.html' %}
-<script src="{% static 'js/widget_volumes.js' %}"></script>
 <script src="{% static 'js/environments.js' %}"></script>
+<script src="{% static 'js/container_buttons.js' %}"></script>
 
 {% endblock %}
 
@@ -75,12 +77,14 @@ $(document).on('click', '[name="users"]', function() {
 
 
 
+<script src="{% static 'js/wss.js' %}"></script>
 <script>
 // Save web socket urls
 const wsURLs = {
   container_control: "{{ wss_container }}",
   project_config: "{{ wss_project_config }}",
   project_joinable: "{{ wss_project_joinable }}",
+  project_join: "{{ wss_project_join }}",
   get_containers: "{{ wss_project_container }}",
 }
 
@@ -103,15 +107,6 @@ function showSaveChanges(objectId, instance) {
 
 
 
-//FIXME
-
-	function pch3(message) {
-
-        console.log(message)
-		$("#projectSelection").replaceWith(message["response"])
-
-	}
-sockkkk3 = open_ws(wsURLs['project_joinable'], pch3)
 
 //FIXME should be placed somewhere else
 $(document).ready(function() {
@@ -127,13 +122,6 @@ $(document).ready(function() {
 
 
 
-//
-
-
-
-
-
-//
 
 
 

@@ -31,6 +31,7 @@
 
 {# a modal to create using canvas course #}
 {% include 'widgets/fetch_canvascourses_modal.html' %}
+<script src="{% static 'js/canvascourse.js' %}"></script>
 
 {# a modal to configure a course image #}
 {% include 'widgets/image_selection.html' %}
@@ -43,6 +44,7 @@
 {# a modal to start/stop/jump to course environments #}
 {% include 'widgets/environments.html' %}
 <script src="{% static 'js/environments.js' %}"></script>
+<script src="{% static 'js/container_buttons.js' %}"></script>
 
 {# a modal to configure a course volumes #}
 {% include 'widgets/volumes.html' with instance="course" %}
@@ -62,83 +64,13 @@ $(document).on('click', '[name="users"]', function() {
 })
 </script>
 
+<script src="{% static 'js/wss.js' %}"></script>
 <script>  
 // Save web socket urls
 const wsURLs = {
   container_control: "{{ wss_container }}",
   wss_canvas: "{{ wss_canvas }}",
   get_containers: "{{ wss_course_container }}",
-}
-
-	function pch(message) {
-
-        console.log(message)
-		$("#environmentControl").html(message["response"])
-
-	}
-
-	function pch2(message) {
-
-        console.log(message)
-		$("#canvascourseSelection").replaceWith(message["response"])
-
-	}
-
-    sockkkk = open_ws(wsURLs['course_container'], pch)
-    sockkkk2 = open_ws(wsURLs['wss_canvas'], pch2)
-
-{# when course name is clicked open info #}
-$("div[id^=course-name-]").click(function() {
-  //console.log( this );
-  var cid = $( this ).attr("id").split("-", 3)[2];
-  $("#courseInfoModal-" + cid).modal('show');
-});
-
-{# when hovering course name is change pointer type #}
-$("div[id^=course-name-]").mouseenter(function() {
-  $( this ).css("cursor", "pointer");
-});
-
-
-{# FIXME: code repetition see project #}
-//containerSocket = open_ws('{{ wss_container }}', ws_callback_container);
-
-{# handle websocket callback #}
-function ws_callback_container(data) {
-  console.log(data);
-  containerid = data['container-id'];
-  if ('w_startopen' in data) {
-    $("#container-startopen-" + containerid).replaceWith(data['w_startopen'])
-  }
-};
-
-{# open a container #} //FIXME: repetition
-function open_container(containerid) {
-  var url = $( "#url-containeropen-" + containerid).val();
-  console.log( "opening: " + url );
-  var win = window.open(url, '_blank');
-  if (win) {
-    win.focus();
-  }
-}
-
-{# start/open a container #}
-function handle_click(w) { // FIXME: code repetition
-  containerid = $(w).attr('id').split('-')[2];
-  command = $(w).children("input[name=target]").val();
-  if (command == "open") {
-    open_container(containerid);
-    return;
-  }
-  if (containerSocket.readyState != 1) {
-    console.log("Socket not open: " + containerSocket.readyState);
-    containerSocket = open_ws('{{ wss_container }}', ws_callback);
-  }
-  console.log( command + ": " + containerid );
-  containerSocket.send(JSON.stringify({
-    'command': command,
-    'container-id': containerid,
-  }));
 }
 </script>
 <script src="{% static 'js/xeditable.js' %}"></script>

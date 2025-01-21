@@ -24,8 +24,6 @@ class SyncSkeleton(WebsocketConsumer):
 #    def disconnect(self, close_code):
 #        self.killed.set()
 #
-    def get_container(self, container_id):
-        return Container.objects.get(id = container_id, user__id = self.userid)
     def get_userid(self):
         return self.userid
 

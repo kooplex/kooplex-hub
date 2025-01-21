@@ -4,7 +4,9 @@
 // open websocket for data retrieval
 $(document).ready(function() {
   if (wsURLs.get_containers) {
-    sock_fetch_containers = open_ws(wsURLs.get_containers, refresh_environmenttable)
+    wss_fetchcontainers = new ManagedWebSocket(wsURLs.get_containers, {
+      onMessage: refresh_environmenttable,
+    })
   } 
 })
 
@@ -27,7 +29,7 @@ $(document).on('click', '[data-bs-target="#environmentsModal"]', function () {
       pk: objectId,
   }
   setTimeout(function() {
-      sock_fetch_containers.send(JSON.stringify(data))
+      wss_fetchcontainers.send(JSON.stringify(data))
   }, 200)
 })
 
