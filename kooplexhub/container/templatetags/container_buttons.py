@@ -137,29 +137,7 @@ def container_resources(container = None):
 
 @register.simple_tag
 def container_mounts(container = None):
-    hs = lambda x: "" if x else "d-none"
-    if container:
-        p = len(container.projects)
-        c = len(container.courses)
-        volume_ids=[v.id for v in container.volumes]
-        v = len(volume_ids)
-    else:
-        volume_ids=[]
-        p=v=c=0
-    empty = "d-none" if p+v+c else ""
-    return format_html(f"""
-<button id="container-mounts-{cid(container)}" data-pk="{cid(container)}"
-      class="badge rounded-pill p-3 border border-1 border-dark text-dark flex-grow-1 text-start" 
-      data-bs-toggle="tooltip" data-placement="bottom"
-      data-volumes="{volume_ids}"
-      title="Requested filesystem resources. Double click to change mounts."
-      onclick="FileResourceSelection.openModal('{cid(container)}')" role="button">
-    <span class="{hs(p)}" name="project"><i class="ri-product-hunt-line me-1"></i><span name="project_count" class="me-2">{p}</span></span>
-    <span class="{hs(c)}" name="course"><i class="ri-copyright-line me-1"></i><span name="course_count" class="me-2">{c}</span></span>
-    <span class="{hs(v)}" name="volume"><i class="ri-database-2-line me-1"></i><span name="volume_count" class="me-2">{v}</span></span>
-    <span class="{empty}" name="empty"><i class="bi bi-folder me-2"></i>default mounts</span>
-</button>
-    """)
+    return render_to_string("widgets/widget_mount.html", {"container": container })
 
 
 @register.simple_tag

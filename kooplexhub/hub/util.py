@@ -1,5 +1,6 @@
 from channels.generic.websocket import WebsocketConsumer
 from channels.generic.websocket import AsyncWebsocketConsumer
+from django.core.exceptions import FieldDoesNotExist
 
 def is_model_field(instance, attr_name):
     # Get the class of the instance

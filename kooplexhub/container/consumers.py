@@ -7,7 +7,6 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import sync_to_async
 from django.utils.html import format_html
 from django.core.exceptions import ValidationError
-from django.core.exceptions import FieldDoesNotExist
 
 from django.db.models.query import QuerySet
 from container.models import Container
