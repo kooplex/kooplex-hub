@@ -55,10 +55,6 @@ class CourseContainerBindingAdmin(admin.ModelAdmin):
 
 @admin.register(Assignment)
 class AssignmentAdmin(admin.ModelAdmin):
-    def valid_from(self, instance):
-        return instance.task_handout.clocked if instance.task_handout else "-"
-    def expires_at(self, instance):
-        return instance.task_collect.clocked if instance.task_collect else "-"
     list_display = ('id', 'course', 'name', 'folder', 'creator', 'description', 'created_at', 'filename', 'valid_from', 'expires_at', 'remove_collected', 'max_size')
     search_fields = ('name', 'creator__first_name', 'creator__last_name', 'course__name')
 
@@ -69,7 +65,7 @@ class UserAssignmentAdmin(admin.ModelAdmin):
         return instance.assignment.course.name
     def assignment_name(self, instance):
         return instance.assignment.name
-    list_display = ('id', 'assignment_course_name', 'assignment_name', 'user', 'state', 'submit_count', 'score', 'feedback_text')
+    list_display = ('id', 'assignment_course_name', 'assignment_name', 'user', 'state','last_received_at', 'last_submitted_at', 'last_corrected_at', 'submit_count', 'score', 'feedback_text')
     search_fields = ('assignment__name', 'user__first_name', 'user__last_name')
 
 

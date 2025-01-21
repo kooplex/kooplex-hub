@@ -1,6 +1,9 @@
-from celery import shared_task
-#import logging
+import logging
 import time
+
+from channels.layers import get_channel_layer
+from django_huey import task
+from asgiref.sync import async_to_sync
 
 from django.contrib.auth.models import User
 
@@ -9,13 +12,15 @@ from hub.lib import archivedir, extracttarbal, grantaccess_user
 from hub.lib import filename, dirname
 from hub.lib import mkdir, archivedir, rmdir
 
-#logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
-from celery.utils.log import get_task_logger
-logger = get_task_logger(__name__)
+@task(queue = 'hub')
+def delete_folder(folder):
+    logging.warning(f'Deleting folder {folder}')
+    rmdir( folder )
 
 
-@shared_task()
+@task(queue = 'hub')
 def garbage_home(user_id):
     user = User.objects.get(id = user_id)
     rmdir( dirname.usergarbage(user) )

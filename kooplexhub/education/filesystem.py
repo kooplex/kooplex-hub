@@ -68,7 +68,7 @@ def course_workdir_garbage(usercoursebinding):
 
 def assignment_collection(userassignmentbinding):
     assignment = userassignmentbinding.assignment
-    return os.path.join(course_assignment_snapshot(assignment.course), 'collection-%s-%s.%d.tar.gz' % (assignment._safename, userassignmentbinding.user.username, userassignmentbinding.submitted_at.timestamp()))
+    return os.path.join(course_assignment_snapshot(assignment.course), 'collection-%s-%s.%d.tar.gz' % (assignment._safename, userassignmentbinding.user.username, userassignmentbinding.last_submitted_at.timestamp()))
 
 
 def assignment_feedback(userassignmentbinding):

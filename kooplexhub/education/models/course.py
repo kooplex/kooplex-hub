@@ -33,6 +33,7 @@ class Course(models.Model):
     def search(self):
         return f"{self.name} {self.folder} {self.description} {self.teachers()}".upper()
 
+#FIXME
     @property
     def groups(self):
         from education.models import CourseGroup

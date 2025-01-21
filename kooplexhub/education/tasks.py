@@ -1,5 +1,9 @@
-from celery import shared_task
-from celery.utils.log import get_task_logger
+import logging
+
+from channels.layers import get_channel_layer
+from django_huey import task, periodic_task, get_queue
+from huey import crontab
+from asgiref.sync import async_to_sync
 
 from django.contrib.auth.models import User
 
@@ -11,56 +15,49 @@ from hub.models import Group
 from hub.lib import archivedir, extracttarbal
 from hub.lib import grantaccess_user
 from hub.lib import grantaccess_group
-
-logger = get_task_logger(__name__)
-
-
-def callback(uab_id, new_state):
-    cnt = UserAssignmentBinding.objects.filter(id = uab_id).update(state = new_state)
-    logger.info(f"callback {uab_id} -> {new_state} {cnt}")
+from django.utils import timezone
+import time
 
 
-@shared_task()
-def assignment_handout(course_id, assignment_folder):
-    a = Assignment.objects.get(course__id = course_id, folder = assignment_folder)
-    logger.info(f"handing out assignment {a.name} of course {a.course}")
-    for sb in a.course.studentbindings:
-        b, created = UserAssignmentBinding.objects.get_or_create(assignment = a, user = sb.user)
-        try:
-            b.handout()
-        except Exception as e:
-            flag = 'new' if created else 'old'
-            logger.error(f"Cannot handout assignment {a.name} / {a.course.name} -> {b} {flag}. -- {e}")
+logger = logging.getLogger(__name__)
+
+qc=get_queue('course')
+
+@qc.periodic_task(crontab(minute='*'))
+def check_handout_and_collect():
+    now=timezone.now()
+    for a in Assignment.objects.filter(valid_from__lt=now).exclude(expires_at__lt=now):
+        a.handout()
+    for a in Assignment.objects.filter(expires_at__lt=now):
+        a.collect()
 
 
-@shared_task()
-def assignment_collect(course_id, assignment_folder):
-    a = Assignment.objects.get(course__id = course_id, folder = assignment_folder)
-    logger.info(f"Collecting assignment {a.name} of course {a.course}")
-    for b in UserAssignmentBinding.objects.filter(assignment = a, state = UserAssignmentBinding.ST_WORKINPROGRESS):
-        try:
-            b.collect(submit = False)
-        except Exception as e:
-            logger.error(f"Cannot collect assignment {a.name} / {a.course.name} <- {b}. -- {e}")
+@task(queue = 'course')
+def assignment_create(assignment):
+    assignment.filename = os.path.join(course_assignment_snapshot(self.course), f'assignment-snapshot-{self._safename}.{time.time()}.tar.gz')
+    folder=assignment_source(assignment)
+    archivedir(folder, assignment.filename, remove=False)
 
 
-@shared_task()
-def submission(userassignmentbinding_id, new_state):
-    uab = UserAssignmentBinding.objects.get(id = userassignmentbinding_id)
-    logger.debug(f"Submission {uab}")
-    folder = assignment_workdir(uab)
-    tarbal = assignment_collection(uab)
-    # UJ
-    group_teachers = Group.objects.get(name = f't-{uab.assignment.course.folder}').groupid 
-    ##
-    correct_folder = assignment_correct_dir(uab)
-    archivedir(folder, tarbal, remove = uab.assignment.remove_collected)
+@task(queue = 'course')
+def assignment_handout(userassignmentbinding):
+    folder=assignment_workdir(userassignmentbinding)
+    extracttarbal(userassignmentbinding.assignment.filename, folder)
+    gid=userassignmentbinding.assignment.course.group_teachers.groupid
+    grantaccess_group(gid, folder, readonly=True, recursive=True)
+    userassignmentbinding.state=userassignmentbinding.ST_WORKINPROGRESS
+    userassignmentbinding.save()
+
+
+@task(queue = 'course')
+def assignment_collect(userassignmentbinding):
+    folder=assignment_workdir(userassignmentbinding)
+    tarbal=assignment_collection(userassignmentbinding)
+    gid=userassignmentbinding.assignment.course.group_teachers.groupid
+    correct_folder=assignment_correct_dir(userassignmentbinding)
+    archivedir(folder, tarbal, remove=userassignmentbinding.assignment.remove_collected)
     extracttarbal(tarbal, correct_folder)
-    # for ucb in uab.assignment.course.teacherbindings:
-    #     grantaccess_user(ucb.user, correct_folder, readonly = False, recursive = True, follow = False)
-    ## UJ
-    grantaccess_group(group_teachers, correct_folder, readonly = False)
-    ##
-    uab.state = new_state
-    uab.save()
-    logger.info(f"Submission finished {uab}")
+    grantaccess_group(gid, correct_folder, readonly=False)
+    userassignmentbinding.state=userassignmentbinding.ST_COLLECTED
+    userassignmentbinding.save()
+
