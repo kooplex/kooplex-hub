@@ -12,9 +12,11 @@ function containerbutton_callback(message) {
 }
 
 $(document).ready(function() {
-  wss_containercontrol = new ManagedWebSocket(wsURLs['container_control'], {
-    onMessage: containerbutton_callback,
-  })
+  if (wsURLs.container_control) {
+    wss_containercontrol = new ManagedWebSocket(wsURLs.container_control, {
+      onMessage: containerbutton_callback,
+    })
+  }
 })
 
 

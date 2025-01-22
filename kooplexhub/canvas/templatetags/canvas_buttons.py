@@ -7,8 +7,8 @@ register = template.Library()
 @register.simple_tag
 def button_fetch_canvascourses(user):
     return format_html(f"""
-<button type="button" class="btn btn-secondary btn-sm rounded rounded-5 border border-2 border-dark" data-bs-toggle="modal" data-bs-target="#canvascoursesModal" data-id="{user.id}">
-    <i class="bi bi-boxes pe-1"></i>
+<button type="button" class="btn btn-secondary btn-sm rounded rounded-5 border border-2 border-dark mb-2" data-bs-toggle="modal" data-bs-target="#canvascoursesModal" data-id="{user.id}">
+    <i class="bi bi-cloud-download pe-1"></i>
     Retrieve canvas courses...
 </button>
     """)

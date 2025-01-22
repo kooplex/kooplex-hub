@@ -7,16 +7,18 @@ function fetchcanvas_callback(message) {
 }
 
 $(document).ready(function() {
-  wss_fetchcanvas = new ManagedWebSocket(wsURLs['wss_canvas'], {
-    onMessage: fetchcanvas_callback,
-  })
+  if (wsURLs.wss_canvas) {
+    wss_fetchcanvas = new ManagedWebSocket(wsURLs.wss_canvas, {
+      onMessage: fetchcanvas_callback,
+    })
+  }
 })
 
 
 $(document).on('click', '[data-bs-target="#canvascoursesModal"]', function () {
   $("#canvascourseSelection").replaceWith('<div id="canvascourseSelection" class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>')
     setTimeout(function() {
-    sockkkk2.send(JSON.stringify({}))
+    wss_fetchcanvas.send(JSON.stringify({}))
     }, 200)
 })
 

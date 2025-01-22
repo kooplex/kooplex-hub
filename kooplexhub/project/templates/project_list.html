@@ -14,11 +14,32 @@
     <div class="d-flex flex-wrap gap-3">
         <div class="card rounded rounded-3 mb-3 border border-2 border-warning shadow bg-light">
             <div class="card-body">
-                {% button_fetch_joinable_projects user %}
+                <div class="d-flex flex-column">
+                    {% button_fetch_joinable_projects user %}
+                    {% button_new_project user %}
+                </div>
             </div>
         </div>
-  {# create new project card #}
-  {% include 'project.html' with is_admin=True %}
+    </div>
+</div>
+
+{# new project cration modal #}
+<div id="newProjectModal" class="modal fade" tabindex="-1" aria-labelledby="newProjectModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newProjectModalLabel">Create a new project</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body vh-25">
+              <div class="container">
+                {% include 'project.html' with is_admin=True %}
+              </div>
+	      <div class="modal-footer">
+		{% include 'widgets/widget_savechanges.html' with obj="project" show=True %}
+              </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -27,6 +48,7 @@
       {% include 'project.html' with project=upb.project projectcontainerbindings=upb.projectcontainerbindings is_admin=upb.is_admin %}
   {% endfor %}
 </div>
+<script src="{% static 'js/config_register.js' %}"></script>
 <script src="{% static 'js/project_buttons.js' %}"></script>
 <script src="{% static 'js/project_changes.js' %}"></script>
 
