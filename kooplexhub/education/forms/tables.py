@@ -38,7 +38,7 @@ class TableAssignment(tables.Table):
         if record.state == record.ST_WORKINPROGRESS:
             return format_html(f"""
 <div class="form-check form-switch">
-  <input class="form-check-input" type="checkbox" name="userassignmentbinding_ids" name="selection" value="{record.id}" />
+  <input class="form-check-input" type="checkbox" name="userassignmentbinding_ids" name="selection" value="{record.id}" data-course="{record.assignment.course.id}" />
 </div>
             """)
         elif record.state in [ record.ST_SUBMITTED, record.ST_COLLECTED ]:

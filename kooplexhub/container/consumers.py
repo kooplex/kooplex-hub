@@ -2,8 +2,6 @@ import logging
 import json
 import threading
 
-from channels.generic.websocket import WebsocketConsumer
-from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import sync_to_async
 from django.utils.html import format_html
 from django.core.exceptions import ValidationError
@@ -19,7 +17,7 @@ from .lib import Cluster
 
 from .tasks import *
 
-from hub.util import is_model_field, SyncSkeleton
+from hub.util import is_model_field, SyncSkeleton, AsyncSkeleton
 
 logger = logging.getLogger(__name__)
 
@@ -60,23 +58,11 @@ class ContainerFetchlogConsumer(CSyncSkeleton):
         self.send(text_data = json.dumps(resp))
 
 
-class ContainerControlConsumer(AsyncWebsocketConsumer):
+class ContainerControlConsumer(AsyncSkeleton):
+    identifier='container'
+
     def get_container(self, container_id):
         return sync_to_async(Container.objects.get)(id = container_id, user__id = self.userid)
-
-    async def connect(self):
-        if not self.scope['user'].is_authenticated:
-            return
-        self.userid = int(self.scope["url_route"]["kwargs"].get('userid'))
-        if self.scope['user'].id != self.userid: #not authorized
-            return
-
-        self.identifier = 'container'
-        await self.channel_layer.group_add(self.identifier, self.channel_name)
-        await self.accept()
-
-    async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(self.identifier, self.channel_name)
 
     async def receive(self, text_data):
         parsed = json.loads(text_data)
@@ -96,10 +82,6 @@ class ContainerControlConsumer(AsyncWebsocketConsumer):
             start_container(self.userid, container.id)
         else:
             logger.error(f'wrong ws call request: {request}')
-
-    async def feedback(self, event):
-        # Send message to WebSocket
-        await self.send(text_data=json.dumps(event))
 
 
 class ContainerConfigConsumer(CSyncSkeleton):

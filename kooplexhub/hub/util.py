@@ -1,6 +1,7 @@
 from channels.generic.websocket import WebsocketConsumer
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.core.exceptions import FieldDoesNotExist
+import json
 
 def is_model_field(instance, attr_name):
     # Get the class of the instance
@@ -29,3 +30,20 @@ class SyncSkeleton(WebsocketConsumer):
         return self.userid
 
 
+class  AsyncSkeleton(AsyncWebsocketConsumer):
+    async def connect(self):
+        if not self.scope['user'].is_authenticated:
+            return
+        self.userid = int(self.scope["url_route"]["kwargs"].get('userid'))
+        if self.scope['user'].id != self.userid: #not authorized
+            return
+        assert hasattr(self, 'identifier'), "Make sure child class implements self.identifier:str"
+        await self.channel_layer.group_add(self.identifier, self.channel_name)
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(self.identifier, self.channel_name)
+
+    async def feedback(self, event):
+        # Send message to WebSocket
+        await self.send(text_data=json.dumps(event))

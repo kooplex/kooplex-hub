@@ -40,12 +40,42 @@
 
 {% block scripts %}
 <script src="{% static 'js/wss.js' %}"></script>
-<script>  
+<script>
 // Save web socket urls
 const wsURLs = {
   container_control: "{{ wss_container }}",
   get_containers: "{{ wss_course_container }}",
+  wss_handin: "{{ wss_handin }}",
 }
+</script>
+
+<script>
+
+$(document).ready(function () {
+  if (wsURLs.wss_handin) {
+    wss_handin = new ManagedWebSocket(wsURLs.wss_handin, {
+      onMessage: console.log,
+    })
+  } 
+})
+
+$(document).on('click', '[type=submit][data-submit=handin][data-id]', function() {
+  let pk=$(this).data('id')
+  let id_list = $(`[name="userassignmentbinding_ids"][data-course="${pk}"]:checked`).map(function() {
+    return parseInt(this.value)
+  }).get()
+  if (id_list.length) {
+	console.log(pk, id_list)
+        setTimeout(function() {
+          wss_handin.send(JSON.stringify({
+            'pk': pk,
+            'uabs': id_list,
+          }))
+        }, 200)
+    }
+
+
+})
 </script>
 {% endblock %}
 

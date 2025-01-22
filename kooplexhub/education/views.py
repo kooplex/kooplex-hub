@@ -90,6 +90,7 @@ class StudentCourseBindingListView(LoginRequiredMixin, generic.ListView):
         context = super().get_context_data(**kwargs)
         context['wss_container'] = KOOPLEX.get('hub', {}).get('wss_container_control', 'wss://localhost/hub/ws/container_environment/{userid}/').format(userid = self.request.user.id)
         context['wss_course_container'] = KOOPLEX.get('hub', {}).get('wss_course_container', 'wss://localhost/hub/ws/education/container/{userid}/').format(userid = self.request.user.id)
+        context['wss_handin'] = KOOPLEX.get('hub', {}).get('wss_course_handin', 'wss://localhost/hub/ws/education/handin/{userid}/').format(userid = self.request.user.id)
         return context
 
 
