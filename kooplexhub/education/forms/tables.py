@@ -20,24 +20,21 @@ except ImportError:
     KOOPLEX = {}
 
 ta_light = table_attributes.copy()
-ta_light.update({ "td": { "class": "p-1 text-light" } })
+ta_light.update({ "td": { "class": "p-1 text-secondary" } })
 
 class TableAssignment(tables.Table):
     class Meta:
         model = UserAssignmentBinding
-        fields = ('course', 'assignment', 'score', 'feedback_text')
-        sequence = ('button', 'course', 'assignment', 'info', 'score', 'feedback_text')
+        fields = ('assignment', 'score')
+        sequence = ('button', 'assignment', 'score')
         attrs = ta_light
 
-    button = tables.Column(verbose_name = 'Select/Jump', orderable = False, empty_values = ())
-    course = tables.Column(orderable = False, empty_values = ())
+    button = tables.Column(verbose_name = '', orderable = False, empty_values = ())
     assignment = tables.Column(orderable = False)
-    info = tables.Column(orderable = False, empty_values = ())
     score = tables.Column(orderable = False, empty_values = ())
-    feedback_text = tables.Column(orderable = False, empty_values = ())
 
 
-    def _render_button(self, record):
+    def render_button(self, record):
         if record.state == record.ST_WORKINPROGRESS:
             return format_html(f"""
 <div class="form-check form-switch">
@@ -57,35 +54,20 @@ class TableAssignment(tables.Table):
 <span class="bi bi-hourglass-bottom" data-toggle="tooltip" title="{record.ST_LOOKUP[record.state]}" />
             """)
 
-    def render_button(self, record):
-        from container.templatetags.container_buttons import dropdown_start_open
-        from ..models import UserCourseBinding
-        binding = UserCourseBinding.objects.get(user = record.user, course = record.assignment.course)
-        so = dropdown_start_open(binding.coursecontainerbindings(), binding, 'course')
-        return format_html(f"""
-{self._render_button(record)}&nbsp;/&nbsp;{so}
-        """)
-
-    def render_course(self, record):
-        return record.assignment.course.name
 
     def render_assignment(self, record):
         return format_html(f"""
+<span data-toggle="tooltip" title="Submit count: {record.submit_count}\nCorrection count: {record.correction_count}">
 {record.assignment.name}
+</span>
 <input type="hidden" id="assignment-search-{record.id}" value="{record.assignment.search}">
 <input type="hidden" id="assignment-match-{record.id}" value=true>
 <input type="hidden" id="assignment-isshown-{record.id}" value=true>
         """)
 
-    def render_info(self, record):
-        rd = lambda t: t.clocked if t else "Manual"
-        return format_html(f"""
-<span class="bi bi-arrow-up-right-square-fill" data-toggle="tooltip" title="Submit count">&nbsp;{record.submit_count}</span>
-<span class="bi bi-check-square-fill ms-3" data-toggle="tooltip" title="Correction count">&nbsp;{record.correction_count}</span>
-        """)
 
     def render_score(self, record):
-        return record.score if record.score else ''
+        return format_html(f'<span data-toggle="tooltip" title="{record.feedback_text}">record.score</span>') if record.score else ''
 
 
 

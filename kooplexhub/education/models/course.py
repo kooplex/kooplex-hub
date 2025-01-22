@@ -56,6 +56,7 @@ class Course(models.Model):
     @register.filter
     def csv_coursecodes(self):
         return ', '.join(map(lambda x: x.courseid, self.coursecodes))
+#################
 
     @property
     def teachers(self):
@@ -74,11 +75,8 @@ class Course(models.Model):
     @property
     def assignments(self):
         from . import Assignment
-        return Assignment.objects.filter(course = self) #FIXME: is_active
+        return Assignment.objects.filter(course = self)
 
-    @register.filter
-    def csv_assignments(self):
-        return ', '.join(map(lambda x: x.name, self.assignments))
 
     def dir_assignmentcandidate(self):
         from education.filesystem import get_assignment_prepare_subfolders
@@ -97,7 +95,6 @@ class Course(models.Model):
             return False
 
 
-
 class UserCourseBinding(models.Model):
     user = models.ForeignKey(User, null = False, on_delete = models.CASCADE)
     course = models.ForeignKey(Course, null = False, on_delete = models.CASCADE)
@@ -112,16 +109,14 @@ class UserCourseBinding(models.Model):
         else:
             return "student {} in course {}".format(self.user, self.course)
 
-    #@property
-    #def assignments(self):
-    #    return []
-    #    from education.models import Assignment
-    #    for a in Assignment.objects.filter(course = self.course):
-    #        yield a
-
     def coursecontainerbindings(self):
         from . import CourseContainerBinding
         return CourseContainerBinding.objects.filter(course = self.course, container__user = self.user)
+
+    def assignments_table(self):
+        from ..forms import TableAssignment
+        from . import UserAssignmentBinding
+        return TableAssignment(UserAssignmentBinding.objects.filter(user=self.user, assignment__course=self.course))
 
 
 class CourseCode(models.Model):
