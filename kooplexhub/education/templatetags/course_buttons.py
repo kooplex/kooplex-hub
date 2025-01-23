@@ -8,7 +8,7 @@ from ..models import Course
 
 register = template.Library()
 
-cid = lambda course: course.id if course else "new"
+cid = lambda course: course.id if course else ""
 
 
 @register.simple_tag
@@ -30,10 +30,10 @@ def course_image(course = None):
         iid = -1
         ihn = "Select image..."
     return format_html(f"""
-<button data-pk="{cid(course)}" data-field="image" data-orig="{iid}" 
+<button data-id="{cid(course)}" data-field="image" data-orig="{iid}" 
       class="badge rounded-pill p-3 border border-2 border-dark flex-grow-1 text-start text-dark" 
       onclick="ImageSelection.openModal('{cid(course)}', {iid}, 'preferred_image')" role="button">
-  <i class="ri-image-2-line me-2"></i><span name="name" data-pk="{cid(course)}">{ihn}</span>
+  <i class="ri-image-2-line me-2"></i><span name="name" data-id="{cid(course)}">{ihn}</span>
 </button>
     """)
 

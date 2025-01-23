@@ -87,7 +87,7 @@ class HandinConsumer(AsyncSkeleton):
         cid = int(parsed.get('pk'))
         idlist = parsed.get('uabs')
         logger.info(idlist)
-        bindings = await sync_to_async(list)(UserAssignmentBinding.objects.filter(user__id=self.userid, assignment__id__in=idlist, assignment__course__id=cid))
+        bindings = await sync_to_async(list)(UserAssignmentBinding.objects.filter(user__id=self.userid, id__in=idlist, assignment__course__id=cid))
         for b in bindings:
             await sync_to_async(b.collect)()
             await self.send(text_data=json.dumps({"feedback": f'A snapshot is being prepared for {b.assignment.name}.' }))

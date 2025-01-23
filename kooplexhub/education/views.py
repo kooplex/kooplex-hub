@@ -16,8 +16,6 @@ from django.db import IntegrityError
 
 from hub.forms import TableUsers
 
-#from django_celery_beat.models import ClockedSchedule, PeriodicTask
-
 from kooplexhub.lib import now
 
 from container.forms import TableVolume
@@ -109,6 +107,7 @@ class TeacherCourseBindingListView(LoginRequiredMixin, generic.ListView):
         context['wss_canvas'] = KOOPLEX.get('hub', {}).get('wss_canvas', 'wss://localhost/hub/ws/canvas/fetchcourses/{userid}/').format(userid = self.request.user.id)
         context['images'] = Image.objects.filter(imagetype = Image.TP_PROJECT, present = True)
         context['t_volume'] = TableVolume(self.request.user)
+        context['users'] = [ u.profile._repr for u in User.objects.all().exclude(id = self.request.user.id) ]
         context['t_users'] = TableUsers(User.objects.all().exclude(id = self.request.user.id), marker_column='Teacher')
         return context
 

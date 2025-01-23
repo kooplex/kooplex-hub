@@ -41,7 +41,7 @@ class TableAssignment(tables.Table):
   <input class="form-check-input" type="checkbox" name="userassignmentbinding_ids" name="selection" value="{record.id}" data-course="{record.assignment.course.id}" />
 </div>
             """)
-        elif record.state in [ record.ST_SUBMITTED, record.ST_COLLECTED ]:
+        elif record.state == record.ST_COLLECTED:
             return format_html(f"""
 <span class="bi bi-hand-thumbs-up" data-toggle="tooltip" title="{record.ST_LOOKUP[record.state]}" />
             """)
@@ -209,7 +209,7 @@ class TableAssignmentHandle(tables.Table):
   <label class="form-check-label" for="uab-{record.id}" id="lbl_uab-{record.id}"> <span class="bi bi-box-arrow-in-down-right" data-toggle="tooltip" title="Collect"></span></label>
 </div>
             """)
-        elif record.state in [ record.ST_COLLECTED, record.ST_SUBMITTED ]:
+        elif record.state == record.ST_COLLECTED:
             return format_html(f"""
 <div class="form-check form-switch">
   <input class="form-check-input" type="checkbox" id="uab-{record.id}" name="selection_finalize" value="{record.id}" />
@@ -238,7 +238,7 @@ class TableAssignmentHandle(tables.Table):
 
     def render_score(self, record):
         s = '' if record.score is None else record.score
-        if record.state in [ record.ST_SUBMITTED, record.ST_COLLECTED, record.ST_READY ]:
+        if record.state in [ record.ST_COLLECTED, record.ST_READY ]:
             return format_html(f"""
 <input class="form-text-input" type="text" id="score-{record.id}" name="score" value="{s}" />
 <input type="hidden" id="score-old-{record.id}" value="{s}" />
@@ -248,7 +248,7 @@ class TableAssignmentHandle(tables.Table):
 
     def render_feedback_text(self, record):
         t = '' if record.feedback_text is None else record.feedback_text
-        if record.state in [ record.ST_SUBMITTED, record.ST_COLLECTED, record.ST_READY ]:
+        if record.state in [ record.ST_COLLECTED, record.ST_READY ]:
             return format_html(f"""
 <textarea class="form-textarea" id="feedback_text-{record.id}" name="feedback_text">{t}</textarea>
 <input type="hidden" id="feedback_text-old-{record.id}" value="{t}" />

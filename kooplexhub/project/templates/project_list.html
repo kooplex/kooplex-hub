@@ -110,23 +110,6 @@ const wsURLs = {
   get_containers: "{{ wss_project_container }}",
 }
 
-//FIXME: hub/static/js/buttons.js    
-// Show Save Changes button
-function showSaveChanges(objectId, instance) {
-//  if (projectId === "") {
-//     // only show if the compulsory attributes are set
-//     var count = changes.filter(x => x.pk === "new"  && ["name", "subpath", "preferred_image", "description"].includes(x.field)).length
-//     if (count < 4) {
-//       return
-//     }
-//  }
-  let widget = $(`[name="save"][data-id="${objectId}"][data-instance="${instance}"]`)
-  widget.removeClass("d-none")
-  widget.removeAttr("disabled")
-}
-
-
-
 
 
 

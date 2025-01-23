@@ -63,20 +63,10 @@ function applyButton(widgetId, selectedButtonName) {
 }
 
 
-
-
-
 // Show Save Changes button
-function showSaveChanges(containerId) {
-  containerId=(containerId===undefined)?"":containerId
-  if (containerId === "") {
-     // only show if the compulsory attributes are set
-     var count = changes.filter(x => x.pk === ""  && ["name", "image"].includes(x.field)).length
-     if (count < 2) {
-       return
-     }
-  }
-  $(`[name=save][data-id="${containerId}"][data-instance=container]`).removeClass("d-none")
+showSaveNew['container']=function() {
+  var count = changes.filter(x => x.pk === ""  && ["name", "image"].includes(x.field)).length
+  return count<2?false:true
 }
 
 
@@ -106,7 +96,7 @@ function teleportButtonClick(containerId, req) {
     const changed = register_changes(containerId, 'start_teleport', req, '') // FIXME: old
     if (changed) {
         updateTeleportButton(containerId, req)
-	showSaveChanges(containerId)
+	showSaveChanges(containerId, 'container')
     }
 }
 
@@ -126,7 +116,7 @@ function seafileButtonClick(containerId, req) {
     const changed = register_changes(containerId, 'start_seafile', req, '') // FIXME: old
     if (changed) {
         updateSeafileButton(containerId, req)
-	showSaveChanges(containerId)
+	showSaveChanges(containerId, 'container')
     }
 }
 

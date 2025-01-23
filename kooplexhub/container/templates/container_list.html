@@ -43,7 +43,7 @@
 
 {# a modal to configure a container image #}
 <script src="{% static 'js/container_changes.js' %}"></script>
-{% include 'widgets/image_selection.html' %}
+{% include 'widgets/image_selection.html' with instance="container" %}
 <script src="{% static 'js/image_selection.js' %}"></script>
 
 {# a modal to configure a container compute resources #}
@@ -51,7 +51,7 @@
 <script src="{% static 'js/computeresource_selection.js' %}"></script>
 
 {# a modal to configure a container filesystem resources #}
-{% include 'widgets/file_resource_selection.html' %}
+{% include 'widgets/file_resource_selection.html' with instance="container" %}
 <script src="{% static 'js/fileresource_selection.js' %}"></script>
 
 {# a modal to dump logs #}

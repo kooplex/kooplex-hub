@@ -8,7 +8,7 @@ from ..models import Project
 
 register = template.Library()
 
-pid = lambda project: project.id if project else "new"
+pid = lambda project: project.id if project else ""
 
 
 @register.simple_tag
@@ -57,10 +57,10 @@ def project_image(project = None):
         iid = -1
         ihn = "Select image..."
     return format_html(f"""
-<button data-pk="{pid(project)}" data-field="image" data-orig="{iid}" 
+<button data-id="{pid(project)}" data-field="image" data-orig="{iid}" 
       class="badge rounded-pill p-3 border border-2 border-dark flex-grow-1 text-start text-dark" 
       onclick="ImageSelection.openModal('{pid(project)}', {iid}, 'preferred_image')" role="button">
-  <i class="ri-image-2-line me-2"></i><span name="name" data-pk="{pid(project)}">{ihn}</span>
+  <i class="ri-image-2-line me-2"></i><span name="name" data-id="{pid(project)}">{ihn}</span>
 </button>
     """)
 

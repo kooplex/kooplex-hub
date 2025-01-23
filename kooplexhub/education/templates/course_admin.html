@@ -54,12 +54,14 @@
   {% endfor %}
 </div>
 
+<script src="{% static 'js/config_register.js' %}"></script>
+
 {# a modal to create using canvas course #}
 {% include 'widgets/fetch_canvascourses_modal.html' %}
 <script src="{% static 'js/canvascourse.js' %}"></script>
 
 {# a modal to configure a course image #}
-{% include 'widgets/image_selection.html' %}
+{% include 'widgets/image_selection.html' with instance="course" %}
 <script src="{% static 'js/image_selection.js' %}"></script>
 
 {# a modal to configure a course's students/teachers #}

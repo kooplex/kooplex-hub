@@ -3,6 +3,7 @@
 
 // keep track of changes
 let changes = []
+let showSaveNew = {}
 
 
 // Check equality of two arrays
@@ -48,5 +49,18 @@ function register_changes(pk, fieldName, newValue, oldValue) {
     } else {
         return false
     }
+}
+
+
+// Show Save Changes button
+function showSaveChanges(pk, instance) {
+  pk=(pk===undefined)?"":pk
+	console.log(pk, instance)
+  if ((pk === "") && !showSaveNew[instance]()) {
+       return
+  }
+  let widget=$(`[name=save][data-id="${pk}"][data-instance=${instance}]`)
+  widget.removeClass("d-none")
+  widget.removeAttr("disabled")
 }
 

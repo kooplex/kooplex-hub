@@ -1,3 +1,4 @@
+{# FIXME move to hub/templaes/widgets #}
 <!-- templates/widgets/select_users.html -->
 {% load django_tables2 %}
 <div class="modal fade users-modal" tabindex="-1" aria-labelledby="usersModalLabel" aria-hidden="true">
@@ -89,7 +90,7 @@
 
     // Handle removal
     function handleRemoveClick(pk) {
-        $(`tr[data-pk=${pk}]`).hide()
+        $(`tr[data-id=${pk}]`).hide()
 	selectedUserIds = $.grep(selectedUserIds, function(value) {
             return value != pk
         })
@@ -98,7 +99,7 @@
     // Handle addition
     function handleAddition(pk) {
         selectedUserIds.push(pk)
-        const is_admin = $(`span[data-pk=${pk}]`).prop('checked')
+        const is_admin = $(`span[data-id=${pk}]`).prop('checked')
         if (is_admin) {
             selectedAdmins.push(pk)
         } else {
@@ -106,7 +107,7 @@
                 return value != pk
             })
         }
-        $(`tr[data-pk=${pk}]`).show()
+        $(`tr[data-id=${pk}]`).show()
         $('#search-user').val('')
         $('#user-search-results').hide()
     }
@@ -142,7 +143,7 @@
 
     // Handle toggle changes
     function initTogglers() {
-        $("input[data-pk]").on("change", function() {
+        $("input[data-id]").on("change", function() {
             const pk = $(this).data('pk')
             if ($(this).prop('checked')) {
                 selectedAdmins.push(pk)
@@ -166,7 +167,7 @@
 	    }
             if (changed) {
 		let userlist = users.filter(user => selectedUserIds.includes(user.pk)).map(user => user.name_and_username).join("<br>")
-		$($(`div[data-pk=${selectedObjectId}] p`)[1]).html(userlist)  //FIXME: use div /class; better rendering
+		$($(`div[data-id=${selectedObjectId}] p`)[1]).html(userlist)  //FIXME: use div /class; better rendering
                 showSaveChanges(selectedObjectId)
             }
             // Close the modal

@@ -87,7 +87,7 @@
 		changed = changed || register_changes(selectedContainerId, 'idletime', i, '')
 		if (changed) {
 		    updateButtonFace(selectedContainerId, n, c, g, m, i)
-		    showSaveChanges(selectedContainerId)
+		    showSaveChanges(selectedContainerId, 'container')
 		}
 
                 // Close the modal
