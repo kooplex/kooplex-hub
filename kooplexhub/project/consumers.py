@@ -129,14 +129,18 @@ class ProjectConfigConsumer(SyncConsumer):
 
 class ProjectGetContainersConsumer(SyncConsumer):
     def receive(self, text_data):
+        from django.urls import reverse
         parsed = json.loads(text_data)
         logger.debug(parsed)
         #assert parsed.get('request')=='configure-project', "wrong request"
         projectid = parsed.get('pk')
         logger.debug(projectid)
+        bindings=ProjectContainerBinding.objects.filter(container__user__id=self.userid, project__id=projectid)
+        upb=UserProjectBinding.objects.get(user__id=self.userid, project__id=projectid)
+        link_autocreate=reverse('project:autoaddcontainer', args=[upb.id,])
         message_back = {
             "feedback": f"Container list refreshed",
-            "response": ProjectContainerBinding.objects.filter(container__user__id=self.userid, project__id=projectid),
+            "response": render_to_string("widgets/widget_containertable.html", {"containers": map(lambda o: o.container, bindings), "link_autocreate": link_autocreate }),
         }
         logger.debug(message_back)
         self.send(text_data=json.dumps(message_back, cls=CustomEncoder))

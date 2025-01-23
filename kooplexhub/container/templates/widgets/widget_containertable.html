@@ -8,6 +8,10 @@
           <td>{{ container.render_name_html }}</td>
           <td>{{ container.render_state_html }}</td>
       </tr>
+    {% empty %}
+      <a type="button" class="btn btn-secondary btn-sm rounded rounded-5 border border-2 border-dark mb-2" href="{{link_autocreate}}">
+          <i class="bi bi-boxes pe-1"></i>Generate default environment
+      </a>
     {% endfor %}
 </table>
 {% else %}

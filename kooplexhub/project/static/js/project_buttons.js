@@ -1,7 +1,7 @@
 // Show Save Changes button
-showSaveNew['project']=function(pk) {
-     var count = changes.filter(x => x.pk === "new"  && ["name", "subpath", "preferred_image", "description"].includes(x.field)).length
-     return (count >= 4) 
+showSaveNew['project']=function() {
+     var count = changes.filter(x => x.pk === ""  && ["name", "folder", "image", "description"].includes(x.field)).length
+     return count>=4 
 }
 
 // hide and show button faces  //FIXME: repeated code!

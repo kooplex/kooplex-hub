@@ -63,7 +63,7 @@ def addcontainer(request, usercoursebinding_id):
             name = f'generated for {course.name}', 
             label = f'edu-{user.username}-{standardize_str(course.name)}',
             user = user,
-            image = course.image
+            image = course.preferred_image
         )
         CourseContainerBinding.objects.create(course = course, container = container)
         if created:
@@ -104,6 +104,7 @@ class TeacherCourseBindingListView(LoginRequiredMixin, generic.ListView):
         context = super().get_context_data(**kwargs)
         context['wss_container'] = KOOPLEX.get('hub', {}).get('wss_container_control', 'wss://localhost/hub/ws/container_environment/{userid}/').format(userid = self.request.user.id)
         context['wss_course_container'] = KOOPLEX.get('hub', {}).get('wss_course_container', 'wss://localhost/hub/ws/education/container/{userid}/').format(userid = self.request.user.id)
+        context['wss_course_config'] = KOOPLEX.get('hub', {}).get('wss_course_config', 'wss://localhost/hub/ws/course/config/{userid}/').format(userid = self.request.user.id)
         context['wss_canvas'] = KOOPLEX.get('hub', {}).get('wss_canvas', 'wss://localhost/hub/ws/canvas/fetchcourses/{userid}/').format(userid = self.request.user.id)
         context['images'] = Image.objects.filter(imagetype = Image.TP_PROJECT, present = True)
         context['t_volume'] = TableVolume(self.request.user)

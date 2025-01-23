@@ -14,7 +14,10 @@
             <!-- First Column -->
             <div class="col">
                 <div class="d-flex align-items-center mb-3">
-		    {% field_name course 'course' %}
+                    {% field_name course 'course' %} {# FIXME field_name replace like below #}
+		    {% if course %}{% else %}
+                    {% include 'widgets/widget_input.html' with field="folder" placeholder="Add a unique folder name" instance="course" %}
+		    {% endif %}
                 </div>
                 <div class="d-flex">
 		    {% course_image course %}

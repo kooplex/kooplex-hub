@@ -87,6 +87,68 @@
 {% block scripts %}
 {# FIXME static/sj/ #}
 <script>
+// Show Save Changes button
+showSaveNew['course']=function() {
+     var count = changes.filter(x => x.pk === ""  && ["name", "folder", "image", "description"].includes(x.field)).length
+     return count>=4 
+}
+
+// handle web socket callback
+function course_config_callback(message) {
+        console.log(message)
+	//FIXME: put reload in common
+    if (message.response) {
+        const resp=message.response
+	if (resp.reloadpage) {
+            location.reload()
+	    return
+	}
+        pk = resp.course_id
+	if (resp.failed) {
+	    alert(resp.failed)
+	}
+    }
+}
+
+
+$(document).ready(function() {
+  if (wsURLs.course_config) {
+    wss_courseconfig = new ManagedWebSocket(wsURLs.course_config, {
+      onMessage: course_config_callback,
+    })
+  } 
+})
+
+// Save changes  FIXME: common code, put in util
+function save_course_config(pk) {
+    pk = pk === "" ? "" : parseInt(pk)
+    console.log(pk)
+    // Object to represent the changes
+    var changeObject = { }
+    // Iterate and pop elements where pk equals s
+    for (var i = changes.length - 1; i >= 0; i--) {
+        if (changes[i].pk === pk) {
+            // Use the field as the key and newValue as the value
+            changeObject[changes[i].field] = changes[i].newValue;
+            // Remove the element from the original array
+            changes.splice(i, 1)
+        }
+    }
+
+    // Send the updated value via WebSocket to kooplex
+    var data = {
+        pk: pk,
+        changes: changeObject
+    }
+    setTimeout(function() {
+        wss_courseconfig.send(JSON.stringify(data))
+    }, 200)
+    hideSaveChanges(pk)
+    // Return a promise to handle asynchronous behavior
+    var deferred = $.Deferred();
+    deferred.resolve();
+    return deferred.promise();
+}
 
 $(document).on('click', '[name="assignment"][data-id][data-url]', function() {
     const url = $(this).data('url')
@@ -110,6 +172,7 @@ const wsURLs = {
   container_control: "{{ wss_container }}",
   wss_canvas: "{{ wss_canvas }}",
   get_containers: "{{ wss_course_container }}",
+  course_config: "{{ wss_course_config }}",
 }
 </script>
 <script src="{% static 'js/xeditable.js' %}"></script>

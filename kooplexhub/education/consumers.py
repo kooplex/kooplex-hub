@@ -11,7 +11,8 @@ from asgiref.sync import sync_to_async
 from education.models import UserAssignmentBinding, Assignment, UserCourseBinding, CourseContainerBinding
 from education.forms import TableAssignmentHandle
 
-from hub.util import SyncSkeleton, AsyncSkeleton
+from hub.util import is_model_field, SyncSkeleton, AsyncSkeleton
+from .models import Course
 
 logger = logging.getLogger(__name__)
 
@@ -65,14 +66,17 @@ logger = logging.getLogger(__name__)
 
 class CourseGetContainersConsumer(SyncSkeleton):
     def receive(self, text_data):
+        from django.urls import reverse
         parsed = json.loads(text_data)
         logger.debug(parsed)
         #assert parsed.get('request')=='configure-project', "wrong request"
         courseid = parsed.get('pk')
         bindings = CourseContainerBinding.objects.filter(container__user__id=self.userid, course__id=courseid)
+        ucb=UserCourseBinding.objects.get(user__id=self.userid, course__id=courseid)
+        link_autocreate=reverse('education:autoaddcontainer', args=[ucb.id,])
         message_back = {
             "feedback": f"Container list refreshed",
-            "response": render_to_string("widgets/widget_containertable.html", {"containers": map(lambda o: o.container, bindings) }),
+            "response": render_to_string("widgets/widget_containertable.html", {"containers": map(lambda o: o.container, bindings), "link_autocreate": link_autocreate }),
         }
         logger.debug(message_back)
         self.send(text_data=json.dumps(message_back))
@@ -80,7 +84,6 @@ class CourseGetContainersConsumer(SyncSkeleton):
 
 class HandinConsumer(AsyncSkeleton):
     identifier='handin'
-
     async def receive(self, text_data):
         parsed = json.loads(text_data)
         logger.debug(parsed)
@@ -92,3 +95,75 @@ class HandinConsumer(AsyncSkeleton):
             await sync_to_async(b.collect)()
             await self.send(text_data=json.dumps({"feedback": f'A snapshot is being prepared for {b.assignment.name}.' }))
 
+
+class CourseConfigConsumer(SyncSkeleton):
+    from container.models import Image
+    def get_course(self, course_id):
+        c=Course.objects.get(id = course_id)
+        assert self.userid in map(lambda o:o.id, c.teachers), "You are not a teacher to config"
+        return c
+
+    def receive(self, text_data):
+        parsed = json.loads(text_data)
+        logger.debug(parsed)
+        response = {
+            "success": {},
+            "failed": {},
+        }
+        pk = parsed.get('pk')
+        changes = parsed.get('changes')
+        if pk == "":
+            course=Course.objects.create(name=changes.pop('name'), preferred_image_id=changes.pop('image'), description=changes.pop('description'))
+            binding=UserCourseBinding.objects.create(user_id=self.get_userid(), course=course)
+            response["reloadpage"]=True
+        else:
+            cid = int(pk)
+            course = self.get_course(cid)
+        # Iterate over the changes and try to update the model instance
+        for field, new_value in changes.items():
+            if field == 'image':
+                new_value=Image.objects.get(id=new_value)
+                field='preferred_image'
+            # Check if the field is a valid attribute of the model
+            if is_model_field(container, field):
+                old_value = getattr(container, field)
+                try:
+                    # Try assigning the new value to the model's field
+                    setattr(course, field, new_value)
+                    # Run Django's model validation for the field
+                    course.full_clean(validate_unique=True, exclude=[f for f in changes.keys() if f != field])
+                    # If no exception was raised, add it to the success response
+                    response["success"][field] = new_value
+                except ValidationError as e:
+                    # Validation failed, record the error message
+                    response["failed"][field] = { "error": str(e), "value": old_value }
+#            elif field == 'projects':
+#                for project in Project.objects.filter(id__in = new_value):
+#                    ProjectContainerBinding.objects.get_or_create(project = project, container = container)
+#                ProjectContainerBinding.objects.filter(container = container).exclude(project__id__in = new_value).delete()
+#                response["success"]['projects']=ProjectContainerBinding.objects.filter(container = container)
+#                restart.append("project mounts changed")
+#            elif field == 'courses':
+#                for course in Course.objects.filter(id__in = new_value):
+#                    CourseContainerBinding.objects.get_or_create(course = course, container = container)
+#                CourseContainerBinding.objects.filter(container = container).exclude(course__id__in = new_value).delete()
+#                response["success"]['courses']=CourseContainerBinding.objects.filter(container = container)
+#                restart.append("course mounts changed")
+#            elif field == 'volumes':
+#                for volume in Volume.objects.filter(id__in = new_value):
+#                    VolumeContainerBinding.objects.get_or_create(volume = volume, container = container)
+#                VolumeContainerBinding.objects.filter(container = container).exclude(volume__id__in = new_value).delete()
+#                response["success"]['volumes']=VolumeContainerBinding.objects.filter(container = container)
+#                restart.append("volume mounts changed")
+#            else:
+#                # Attribute does not exist on the model
+#                logger.error(f"Container model attribute {field} does not exist.")
+#        # Save the instance if there are any successful changes
+        if response["success"]:
+            course.save()
+        message_back = {
+            "feedback": f"Course {course.name} is configured",
+            "response": response,
+        }
+        logger.debug(message_back)
+        self.send(text_data=json.dumps(message_back))
