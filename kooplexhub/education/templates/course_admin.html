@@ -65,7 +65,7 @@
 <script src="{% static 'js/image_selection.js' %}"></script>
 
 {# a modal to configure a course's students/teachers #}
-{% include 'widgets/select_users.html' %}
+{% include 'widgets/select_users.html' with instance="course" %}
 <script src="{% static 'js/select_users.js' %}"></script>
 
 {# a modal to start/stop/jump to course environments #}

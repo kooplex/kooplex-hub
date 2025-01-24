@@ -103,11 +103,11 @@ class ProjectConfigConsumer(SyncConsumer):
                 for user in User.objects.filter(id__in = new_value):
                     upb, _ = UserProjectBinding.objects.get_or_create(project = project, user = user)
                     if upb.role != UserProjectBinding.RL_CREATOR:
-                        upb.role = UserProjectBinding.RL_ADMIN if user.id in changes.get('admins') else UserProjectBinding.RL_COLLABORATOR
+                        upb.role = UserProjectBinding.RL_ADMIN if user.id in changes.get('marked') else UserProjectBinding.RL_COLLABORATOR
                         upb.save()
                 UserProjectBinding.objects.filter(project = project).exclude(user__id__in = new_value).exclude(role = UserProjectBinding.RL_CREATOR).delete()
                 response["success"]['users']=UserProjectBinding.objects.filter(project = project).exclude(user__id = self.userid)
-                response["success"]['admins']=UserProjectBinding.objects.filter(project = project, role= UserProjectBinding.RL_ADMIN).exclude(user__id = self.userid)
+                response["success"]['marked']=UserProjectBinding.objects.filter(project = project, role= UserProjectBinding.RL_ADMIN).exclude(user__id = self.userid)
             elif field == 'volumes':
                 for volume in Volume.objects.filter(id__in = new_value):
                     ProjectVolumeBinding.objects.get_or_create(volume = volume, project = project)

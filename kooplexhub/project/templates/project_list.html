@@ -62,7 +62,7 @@
 <script src="{% static 'js/image_selection.js' %}"></script>
 
 {# a modal to configure a project collaborators #}
-{% include 'widgets/select_users.html' %}
+{% include 'widgets/select_users.html' with instance="project" %}
 <script src="{% static 'js/select_users.js' %}"></script>
 
 {# a modal to configure a project volumes #}

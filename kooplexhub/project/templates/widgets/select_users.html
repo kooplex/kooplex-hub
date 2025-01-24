@@ -1,7 +1,7 @@
 {# FIXME move to hub/templaes/widgets #}
 <!-- templates/widgets/select_users.html -->
 {% load django_tables2 %}
-<div class="modal fade users-modal" tabindex="-1" aria-labelledby="usersModalLabel" aria-hidden="true">
+<div class="modal fade users-modal" tabindex="-1" aria-labelledby="usersModalLabel" aria-hidden="true" data-instance="{{instance}}">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -36,10 +36,12 @@
 <script>
 // User Selection Modal Logic
 (function() {
-    var selectedObjectId = null
+    var pk = null
+    var instance = null
     var selectedUserIds = null
     var originalUserIds = null
-    var selectedAdmins = null
+    var markedUserIds = null
+    var originalMarkedIds = null
     const users = []
 
     // Initialize users object
@@ -55,7 +57,7 @@
 
             // Construct a new user object
             users.push({
-                pk: parseInt(pk, 10), // Convert PK to an integer
+                pk: parseInt(pk),
                 name_and_username: userDetails.name_and_username,
                 search: userDetails.search
             })
@@ -101,9 +103,9 @@
         selectedUserIds.push(pk)
         const is_admin = $(`span[data-id=${pk}]`).prop('checked')
         if (is_admin) {
-            selectedAdmins.push(pk)
+            markedUserIds.push(pk)
         } else {
-            selectedAdmins = $.grep(selectedAdmins, function(value) {
+            markedUserIds = $.grep(markedUserIds, function(value) {
                 return value != pk
             })
         }
@@ -114,11 +116,12 @@
 
     // Handle modal open
     function handleOpen(objectId, kind) {
-        selectedObjectId = objectId === "new" ? "new" : parseInt(objectId)
+        pk = objectId==="" ?"":parseInt(objectId)
+        instance=$(".users-modal").data('instance')
 	selectedUserIds = $(`[name="users"][data-id="${objectId}"][data-kind="${kind}"][data-users]`).data('users')
 	originalUserIds = $(`[name="users"][data-id="${objectId}"][data-kind="${kind}"][data-users]`).data('users')
-        selectedAdmins = $(`[name="users"][data-id="${objectId}"][data-kind="${kind}"][data-marked]`).data('marked') //FIXME rename Admins --- selected
-	originalAdmins = $(`[name="users"][data-id="${objectId}"][data-kind="${kind}"][data-marked]`).data('marked')
+        markedUserIds = $(`[name="users"][data-id="${objectId}"][data-kind="${kind}"][data-marked]`).data('marked')
+	originalMarkedIds = $(`[name="users"][data-id="${objectId}"][data-kind="${kind}"][data-marked]`).data('marked')
 	$('tr[data-id]').each(function() {
             const pk = $(this).data('id')
 
@@ -131,8 +134,8 @@
 
             // Find the toggle button within the row
             const toggleButton = $(this).find(`input[name="toggler"][data-id=${pk}]`)
-            // Check if pk is in admins list
-            if (selectedAdmins.includes(pk)) {
+            // Check if pk is in marked list
+            if (markedUserIds.includes(pk)) {
                 toggleButton.bootstrapToggle('on')
 	    } else {
                 toggleButton.bootstrapToggle('off')
@@ -146,9 +149,9 @@
         $("input[data-id]").on("change", function() {
             const pk = $(this).data('pk')
             if ($(this).prop('checked')) {
-                selectedAdmins.push(pk)
+                markedUserIds.push(pk)
             } else {
-                selectedAdmins = $.grep(selectedAdmins, function(value) {
+                markedUserIds = $.grep(markedUserIds, function(value) {
                     return value != pk
                 })
             }
@@ -157,22 +160,22 @@
 
     // Confirm user selection
     $('#confirm-users-selection').on('click', function() {
-    	console.log(selectedObjectId)
-        if (selectedObjectId) {
-            var changed = register_changes(selectedObjectId, 'admins', selectedAdmins, originalAdmins)
+    	console.log(pk)
+        if (pk) {
+            var changed = register_changes(pk, 'marked', markedUserIds, originalMarkedIds)
 	    if (changed) {
-                register_changes(selectedObjectId, 'users', selectedUserIds, []) // we have to enforce listing project users
+                register_changes(pk, 'users', selectedUserIds, []) // we have to enforce listing users
 	    } else {
-                changed = register_changes(selectedObjectId, 'users', selectedUserIds, originalUserIds) // otherwise if no change to former users' roles, new users may have been added
+                changed = register_changes(pk, 'users', selectedUserIds, originalUserIds) // otherwise if no change to former marking
 	    }
             if (changed) {
 		let userlist = users.filter(user => selectedUserIds.includes(user.pk)).map(user => user.name_and_username).join("<br>")
-		$($(`div[data-id=${selectedObjectId}] p`)[1]).html(userlist)  //FIXME: use div /class; better rendering
-                showSaveChanges(selectedObjectId)
+		$(`div[data-id="${pk}"] [class=content][name=userlist]`).html(userlist)  //FIXME: use div /class; better rendering
+                showSaveChanges(pk, instance)
             }
             // Close the modal
             $('.users-modal').modal('hide')
-            selectedObjectId = null
+            pk=null
         }
     })
 
@@ -186,6 +189,10 @@
     }
 
 })()
+
+$(document).on('click', '[name=remove][data-id][data-remove=user]', function() {
+    UserSelection.removeUser($(this).data('id'))
+})
 
 $(document).ready(function () {
      UserSelection.init()

@@ -110,6 +110,23 @@ class CourseConfigConsumer(SyncSkeleton):
         else:
             cid = int(pk)
             course = self.get_course(cid)
+        # Add students and teachers
+        users=changes.pop('users', [])
+        if users:
+            teachers=changes.pop('marked', [])
+            for u in users:
+                is_teacher=u in teachers
+                b=UserCourseBinding.objects.filter(user__id=u, course=course)
+                if b:
+                    b=b.first()
+                    if b.is_teacher==is_teacher:
+                        continue
+                    # if student/teacher state changes, delete old relationship instance
+                    b.delete()
+                UserCourseBinding.objects.create(user_id=u, course=course, is_teacher=is_teacher)
+            # Remove students and teachers
+            users.append(self.userid)  # make sure caller is not removed
+            UserCourseBinding.objects.filter(course=course).exclude(user__id__in=users).delete()
         # Iterate over the changes and try to update the model instance
         for field, new_value in changes.items():
             if field == 'image':

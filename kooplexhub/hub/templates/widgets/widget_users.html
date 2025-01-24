@@ -2,16 +2,16 @@
 <div name="users" data-id="{{pk}}" data-kind="{{kind}}"
      data-users="{{users|id_list}}" data-marked="{{marked|id_list}}"
      class="rounded border p-3 rounded-3 border-2 border-secondary" style="max-height: {{maxheight}}; height: 100%; overflow-y: auto;">
-    <div class="content">
+    <div class="content" name="userlist">
         {% for user in users %}
 	{% if user != skip %}
           {{ user.profile.render_html }}<br>
 	  {% endif %}
 	{% empty %}
-	  Click to add {{kind|lower}} resources
+	  Click to add {{kind|lower}}
         {% endfor %}
 	{% if skip and users|length == 1 %}
-	  Click to add {{kind|lower}} resources
+	  Click to add {{kind|lower}}
 	{% endif %}
     </div>
     <div class="position-absolute top-0 start-0 badge rounded-pill bg-secondary text-white shadow-sm p-2" style="transform: translate(0%, -50%);">

@@ -82,6 +82,11 @@ class Course(models.Model):
         from education.filesystem import get_assignment_prepare_subfolders
         return get_assignment_prepare_subfolders(self)
 
+    @property
+    def volumes(self):
+        from . import VolumeCourseBinding
+        return list(map(lambda o: o.volume, VolumeCourseBinding.objects.filter(course=self)))
+
 
     @staticmethod
     def get_usercourse(course_id, user):
