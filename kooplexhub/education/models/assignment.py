@@ -49,6 +49,7 @@ class Assignment(models.Model):
 
     @property
     def n_queued(self):
+        if not self.id: return None
         students = self.course.students
         missing = len(students)-len(UserAssignmentBinding.objects.filter(assignment=self, user__in=students))
         return len(UserAssignmentBinding.objects.filter(assignment=self, state=UserAssignmentBinding.ST_QUEUED)) + missing

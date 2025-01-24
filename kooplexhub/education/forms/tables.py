@@ -71,7 +71,7 @@ class TableAssignment(tables.Table):
         return format_html(f'<span data-toggle="tooltip" title="{record.feedback_text}">record.score</span>') if record.score else ''
 
 
-#FIXME call it TableAssignment!!!
+#FIXME call it TableAssignmentHandler!!!
 class TableAssignmentConf(tables.Table):
     class Meta:
         model = Assignment
@@ -164,101 +164,9 @@ class TableAssignmentConf(tables.Table):
         """)
 
 
-class TableAssignmentHandle(tables.Table):
-    class Meta:
-        model = UserAssignmentBinding
-        fields = ('user', 'score', 'feedback_text')
-        sequence = ('button', 'user', 'info', 'score', 'feedback_text')
-        attrs = table_attributes
-        empty_text = _("This table is still empty")
-
-    button = tables.Column(verbose_name = 'Operation', orderable = False, empty_values = ())
-    user = tables.Column(orderable = False, empty_values = (), verbose_name = 'Student')
-    info = tables.Column(orderable = False, empty_values = (), verbose_name = 'Info')
-    score = tables.Column(orderable = False, empty_values = ())
-    feedback_text = tables.Column(orderable = False, empty_values = ())
-    
-
-    def render_button(self, record):
-        if record.id is None:
-            return format_html(f"""
-<div class="form-check form-switch">
-  <input class="form-check-input" type="checkbox" id="uab-{record.assignment.id}-{record.user.id}" name="selection_createhandout" value="{record.assignment.id}-{record.user.id}" />
-  <label class="form-check-label" for="uab-{record.assignment.id}-{record.user.id}" id="lbl_uab-{record.assignment.id}-{record.user.id}"> <span class="bi bi-box-arrow-up-right" data-toggle="tooltip" title="Hand out"></span></label>
-</div>
-            """)
-        elif record.state == record.ST_QUEUED:
-            return format_html(f"""
-<div class="form-check form-switch">
-  <input class="form-check-input" type="checkbox" id="uab-{record.assignment.id}-{record.user.id}" name="selection_handout" value="{record.id}" />
-  <label class="form-check-label" for="uab-{record.assignment.id}-{record.user.id}" id="lbl_uab-{record.assignment.id}-{record.user.id}"> <span class="bi bi-box-arrow-up-right" data-toggle="tooltip" title="Hand out"></span></label>
-</div>
-            """)
-        elif record.state == record.ST_WORKINPROGRESS:
-            return format_html(f"""
-<div class="form-check form-switch">
-  <input class="form-check-input" type="checkbox" id="uab-{record.id}" name="selection_collect" value="{record.id}" />
-  <label class="form-check-label" for="uab-{record.id}" id="lbl_uab-{record.id}"> <span class="bi bi-box-arrow-in-down-right" data-toggle="tooltip" title="Collect"></span></label>
-</div>
-            """)
-        elif record.state == record.ST_COLLECTED:
-            return format_html(f"""
-<div class="form-check form-switch">
-  <input class="form-check-input" type="checkbox" id="uab-{record.id}" name="selection_finalize" value="{record.id}" />
-  <label class="form-check-label" for="uab-{record.id}" id="lbl_uab-{record.id}"> <span class="bi bi-check-square-fill" data-toggle="tooltip" title="Correct"></span></label>
-</div>
-            """)
-        elif record.state == record.ST_READY:
-            return format_html(f"""
-<div class="form-check form-switch">
-  <input class="form-check-input" type="checkbox" id="uab-{record.id}" name="selection_reassign" value="{record.id}" />
-  <label class="form-check-label" for="uab-{record.id}" id="lbl_uab-{record.id}"> <span class="bi bi-recycle" data-toggle="tooltip" title="Reassign"</span></label>
-</div>
-            """)
-        else:
-            return format_html(f"""
-<span class="bi bi-check-hourglass" data-toggle="tooltip" title="{record.get_state_display()}"></span>
-            """)
-
-    def render_user(self, record):
-        return format_html(f"""
-{ru(record.user)}
-<input type="hidden" id="student-search-{record.id}" value="{record.user.profile.search}">
-<input type="hidden" id="student-match-{record.id}" value=true>
-<input type="hidden" id="student-isshown-{record.id}" value=true>
-        """)
-
-    def render_score(self, record):
-        s = '' if record.score is None else record.score
-        if record.state in [ record.ST_COLLECTED, record.ST_READY ]:
-            return format_html(f"""
-<input class="form-text-input" type="text" id="score-{record.id}" name="score" value="{s}" />
-<input type="hidden" id="score-old-{record.id}" value="{s}" />
-            """)
-        else:
-            return record.score if record.score else format_html('—')
-
-    def render_feedback_text(self, record):
-        t = '' if record.feedback_text is None else record.feedback_text
-        if record.state in [ record.ST_COLLECTED, record.ST_READY ]:
-            return format_html(f"""
-<textarea class="form-textarea" id="feedback_text-{record.id}" name="feedback_text">{t}</textarea>
-<input type="hidden" id="feedback_text-old-{record.id}" value="{t}" />
-            """)
-        else:
-            return record.feedback_text if record.feedback_text else format_html('--')
-
-    def render_info(self, record):
-        rd = lambda t: t.clocked if t else "—"
-        exp = rd(record.assignment.task_collect)
-        return format_html(f"""
-Collection due: {exp}<br>
-<span class="bi bi-arrow-up-right-square-fill" data-toggle="tooltip" title="Submit count">&nbsp;{record.submit_count}</span>
-<span class="bi bi-check-square-fill ms-3" data-toggle="tooltip" title="Correction count">&nbsp;{record.correction_count}</span>
-        """)
 
 
-
+#DEPRECATE
 class TableAssignmentMass(tables.Table):
     class Meta:
         model = Assignment

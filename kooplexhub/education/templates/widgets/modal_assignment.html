@@ -22,15 +22,9 @@
                 </ul>
                 
                 <div class="tab-content bg-light container rounded-bottom" id="assignmentTeacherTabContent">
-                  <div class="tab-pane show active py-3" id="new" role="tabpanel" aria-labelledby="tab-new">
-                    a
-                  </div>
-                  <div class="tab-pane fade py-3" id="config" role="tabpanel" aria-labelledby="tab-config">
-                    b
-                  </div>
-                  <div class="tab-pane fade py-3" id="summary" role="tabpanel" aria-labelledby="tab-summary">
-                    c
-                  </div>
+                  <div class="tab-pane show active py-3" id="new" role="tabpanel" aria-labelledby="tab-new"></div>
+                  <div class="tab-pane fade py-3" id="config" role="tabpanel" aria-labelledby="tab-config"></div>
+                  <div class="tab-pane fade py-3" id="summary" role="tabpanel" aria-labelledby="tab-summary"></div>
                 </div>
             </div>
         </div>
@@ -49,8 +43,14 @@
 
     // Handle wss callback
     function callback(message) {
+        if (message.f_new) {
+            $("[id=new][role]").html(message.f_new)
+	}
         if (message.t_assignment) {
             $("[id=config][role]").html(message.t_assignment)
+	}
+        if (message.t_score) {
+            $("[id=summary][role]").html(message.t_score)
 	}
     }
 

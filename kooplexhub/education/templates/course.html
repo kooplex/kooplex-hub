@@ -34,7 +34,11 @@
             <div class="col position-relative">
                 <div class="rounded border p-3 rounded-3 border-2 border-secondary" style="max-height: 118px; height: 100%; overflow-y: auto;">
                     <div name="assignment" class="content" data-id="{{course.id}}">
-			ass
+			{% for a in course.assignments %}
+			<p>{{a.name}}</p>
+			{% empty %}
+			<p>Create a new assignment</p>
+			{% endfor %}
                     </div>
 		    <div class="position-absolute top-0 start-0 badge rounded-pill bg-secondary text-white shadow-sm p-2" style="transform: translate(0%, -50%);">
                       Assignments

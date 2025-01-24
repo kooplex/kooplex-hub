@@ -272,7 +272,7 @@ class ConfigureAssignmentView(LoginRequiredMixin, generic.FormView):
             messages.info(self.request, ' '.join(msgs))
         return super().form_valid(form)
 
-
+#DEPRECATE
 class HandleAssignmentView(LoginRequiredMixin, generic.FormView):
     template_name = 'assignment_handle.html'
     form_class = FormAssignmentHandle

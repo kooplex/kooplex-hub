@@ -3,6 +3,7 @@ import json
 import threading
 
 import pandas
+import numpy #FIXME: with newer pandas we may fall back to pandas.NA
 from django_pandas.io import read_frame
 from django.template.loader import render_to_string
 
@@ -23,35 +24,33 @@ class AssignmentConsumer(SyncSkeleton):
         logger.debug(parsed)
         course_id = parsed.get('course_id')
         # authorize
-        UserCourseBinding.objects.get(user__id=self.userid, course__id=course_id, is_teacher=True)
+        course=UserCourseBinding.objects.get(user__id=self.userid, course__id=course_id, is_teacher=True).course
+        # folder for new assignment
+        folders=course.dir_assignmentcandidate()
+        # assignment manager table
         a=Assignment.objects.filter(course=course_id)
-        t=TableAssignmentConf(a)  #FIXME rename to TableAssignment
+        t=TableAssignmentConf(a)  #FIXME rename to TableAssignmentHandler
+        # calculate students' scores
+        #FIXME pandas version may be too old?
+        #dfm = read_frame(UserAssignmentBinding.objects.filter(assignment__course__id = course_id)).fillna(pandas.NA)
+        dfm = read_frame(UserAssignmentBinding.objects.filter(assignment__course__id = course_id)).fillna(numpy.nan)
+        dfm=dfm[['user', 'assignment', 'score']]
+        if not dfm.empty:
+            table = dfm.pivot(index = "user", columns = "assignment", values = "score")
+            table.columns = [tc.split("Assignment ")[1].split(" (")[0] for tc in table.columns]  #FIXME: not a very nice way to parse
+            points = dfm.fillna(0).groupby(by="user").agg("sum")[["score"]].rename(columns={"score":"Total points"})
+            result = pandas.merge(left=table, right=points, left_on="user", right_on="user", how="inner")
+            t_score = result.to_html(classes = "table table-bordered table-striped text-center", index_names = False, justify = "center", na_rep = "—", border = None)
+        else:
+            t_score=f"<h6 class="">There are no assignments in this course.</h6>"
         self.send(text_data=json.dumps({
             "feedback": "Assignment list is refreshed",
+            "f_new": render_to_string('widgets/form_new_assignment.html', {'course': course, 'folders': folders, 'table': TableAssignmentConf([Assignment()])}),
             "t_assignment": render_to_string('django_table.html', {'table':t}),
+            "t_score": t_score,
             }))
 
 
-#class AssignmentSummaryConsumer(SyncConsumer):
-#    def receive(self, text_data):
-#        parsed = json.loads(text_data)
-#        logger.debug(parsed)
-#        self.send(text_data = json.dumps(parsed)) #ping
-#        userid = parsed.get('user_id')
-#        courseid = parsed.get('course_id')
-#        # authorize
-#        course = UserCourseBinding.objects.get(user__id = userid, course__id = courseid, is_teacher = True).course
-#        bindings = UserAssignmentBinding.objects.filter(assignment__course = course)
-#        if bindings.count() == 0:
-#            self.send(text_data = json.dumps(f"""<h6 class="">There are no assignments in this course {course.name}</h6>"""))
-#            return None
-#        dfm = read_frame(bindings)
-#        table = dfm.pivot(index = "user", columns = "assignment", values = "score")
-#        table.columns = [tc.split("Assignment ")[1].split(" (")[0] for tc in table.columns]
-#        points = dfm.fillna(0).groupby(by="user").agg("sum")[["score"]].rename(columns={"score":"Total points"})
-#        result = pandas.merge(left=table, right=points, left_on="user", right_on="user", how="inner")
-#        t = result.to_html(classes = "table table-bordered table-striped text-center", index_names = False, justify = "center", na_rep = "—", border = None)
-#        self.send(text_data = json.dumps(f"""<h6 class="">The score table for course {course.name}</h6>{t}"""))
 
 #################
 

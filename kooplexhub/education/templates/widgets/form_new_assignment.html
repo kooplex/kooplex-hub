@@ -1,0 +1,13 @@
+{% load render_table from django_tables2 %}
+{% if folders|length %}
+<select class="form-select" name="selectfolder">
+  <option label="Select a folder..."></option>
+  {% for f in folders %}
+      <option value="{{f}}"> {{f}}</option>
+  {% endfor %}
+</select>
+{% render_table table %}
+{% else %}
+{# FIXME hardcoded!! #}
+<p>There are no folders in the course ({{ course.name }}) assignment_prepare folder. Or those are empty.<p>
+{% endif %}
