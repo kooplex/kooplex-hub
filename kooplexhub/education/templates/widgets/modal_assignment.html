@@ -1,0 +1,91 @@
+{% load static %}
+
+<!-- templates/widgets/modal_assignment.html -->
+<div id="assignmentsModal" class="modal fade assignments-modal" tabindex="-1" aria-labelledby="assignmentsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="assignmentsModalLabel">Manage assignments</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body vh-25">
+                <ul class="nav nav-tabs mt-3 mb-0 container" id="assignmentTabs" role="tablist">
+                  <li class="nav-item" role="presentation">
+                    <a class="nav-link mytab active" id="tab-new" data-bs-toggle="tab" href="#new" type="button" role="tab" aria-controls="new" aria-selected="true">New</a>
+                  </li>
+                  <li class="nav-item" role="presentation">
+                    <a class="nav-link mytab" id="tab-config" data-bs-toggle="tab" href="#config" type="button" role="tab" aria-controls="config" aria-selected="false">Control</a>
+                  </li>
+                  <li class="nav-item" role="presentation">
+                    <a class="nav-link mytab" id="tab-summary" data-bs-toggle="tab" href="#summary" type="button" role="tab" aria-controls="summary" aria-selected="false">Summary</a>
+                  </li>
+                </ul>
+                
+                <div class="tab-content bg-light container rounded-bottom" id="assignmentTeacherTabContent">
+                  <div class="tab-pane show active py-3" id="new" role="tabpanel" aria-labelledby="tab-new">
+                    a
+                  </div>
+                  <div class="tab-pane fade py-3" id="config" role="tabpanel" aria-labelledby="tab-config">
+                    b
+                  </div>
+                  <div class="tab-pane fade py-3" id="summary" role="tabpanel" aria-labelledby="tab-summary">
+                    c
+                  </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Assignment manager Modal Logic
+(function() {
+    var pk = null
+    const w=$("#assignmentsModal")
+
+    // Handle search bar input
+    $('#search-user').on('input', function () {
+    })
+
+    // Handle wss callback
+    function callback(message) {
+        if (message.t_assignment) {
+            $("[id=config][role]").html(message.t_assignment)
+	}
+    }
+
+    // Handle modal open
+    function handleOpen(courseId) {
+        pk = parseInt(courseId)
+        $(w).modal('show')
+	wss_assignment.send(JSON.stringify({
+          'course_id': pk,
+	}))
+    }
+
+
+    // Confirm user selection
+    $('#confirm-users-selection').on('click', function() {
+        // Close the modal
+        $(w).modal('hide')
+        pk = null
+    })
+
+
+    // Expose the functionality globally so it can be reused
+    window.AssignmentHandler = {
+        openModal: handleOpen,
+        callback: callback,
+    }
+
+})()
+
+$(document).ready(function () {
+  if (wsURLs.assignment_config) {
+    wss_assignment = new ManagedWebSocket(wsURLs.assignment_config, {
+      onMessage: AssignmentHandler.callback,
+    })
+  } 
+})
+
+</script>

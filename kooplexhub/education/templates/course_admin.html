@@ -79,8 +79,7 @@
 <script src="{% static 'js/volume_selection.js' %}"></script>
 
 {# a modal to configure assignments #}
-{# FIXME amíg ez nincs, addig a régi formokat szűkítjük #}
-{#% include 'widgets/modal_assignment.html' with instance="course" %#}
+{% include 'widgets/modal_assignment.html' %}
 
 {% endblock %}
 
@@ -89,8 +88,9 @@
 <script>
 // Show Save Changes button
 showSaveNew['course']=function() {
-     var count = changes.filter(x => x.pk === ""  && ["name", "folder", "image", "description"].includes(x.field)).length
-     return count>=4 
+     let req=$('#canvascoursesModal').hasClass('show')?["name", "folder", "image", "description", "canvasid"]:["name", "folder", "image", "description"]
+     var count = changes.filter(x => x.pk === ""  && req.includes(x.field)).length
+     return count>=req.length
 }
 
 // handle web socket callback
@@ -143,18 +143,23 @@ function save_course_config(pk) {
     setTimeout(function() {
         wss_courseconfig.send(JSON.stringify(data))
     }, 200)
-    hideSaveChanges(pk)
     // Return a promise to handle asynchronous behavior
     var deferred = $.Deferred();
     deferred.resolve();
     return deferred.promise();
 }
 
-$(document).on('click', '[name="assignment"][data-id][data-url]', function() {
-    const url = $(this).data('url')
-    if (url) {
-        window.location.href = url;
-    }
+
+$(document).on('click', '[name="assignment"][data-id]', function() {
+    let pk = $(this).data('id')
+    AssignmentHandler.openModal(pk)
+})
+
+
+$(document).on('click', '[name="save"][data-id][data-instance=course]', function() {
+    const pk = $(this).data('id')
+    save_course_config(pk)
+    hideSaveChanges(pk, 'course')
 })
 
 
@@ -173,6 +178,7 @@ const wsURLs = {
   wss_canvas: "{{ wss_canvas }}",
   get_containers: "{{ wss_course_container }}",
   course_config: "{{ wss_course_config }}",
+  assignment_config: "{{ wss_assignment_config }}",
 }
 </script>
 <script src="{% static 'js/xeditable.js' %}"></script>

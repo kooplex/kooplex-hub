@@ -60,7 +60,7 @@ function save_container_config(pk) {
     setTimeout(function() {
         wss_containerconfig.send(JSON.stringify(data))
     }, 200)
-    hideSaveChanges(pk)
+    hideSaveChanges(pk, 'container')
     // Return a promise to handle asynchronous behavior
     var deferred = $.Deferred();
     deferred.resolve();

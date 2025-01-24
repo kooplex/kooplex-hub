@@ -1,5 +1,6 @@
 {% load static %}
 {% load course_buttons %}
+{% load container_buttons %}
 
 <!-- templates/widgets/fetch_canvascourses_modal.html -->
 <div id="canvascoursesModal" class="modal fade canvascourses-modal" tabindex="-1" aria-labelledby="canvascoursesModalLabel" aria-hidden="true">
@@ -11,26 +12,11 @@
             </div>
             <div class="modal-body vh-25">
               <div class="container">
-                <div class="row mb-3">
-                  <!-- First Row: Two Inputs -->
-                  <div class="col-md-4">
-		    {% include 'widgets/widget_input.html' with field="name" placeholder="Give unique name to kooplex course" instance="course" %}
-                  </div>
-                  <div class="col-md-4">
-		    {% include 'widgets/widget_input.html' with field="folder" placeholder="Add a unique folder name" instance="course" %}
-                  </div>
-                  <div class="col-md-4">
-		    {% course_image course %}
-                  </div>
-                </div>
-                <div class="row">
-                  <!-- Second Row: Two Textareas or Tables -->
-                  <div class="col-md-6">
-	            <div id="canvascourseSelection"></div>
-                  </div>
-                  <div class="col-md-6">
-		    {% include 'widgets/widget_description.html' with placeholder="Add course description" maxheight="200px" iinstance="course" %}
-                  </div>
+                <div class="d-flex flex-column">
+	          <div id="canvascourseSelection" class="mb-2"></div>
+		  {% container_image course %}
+		  {% include 'widgets/widget_description.html' with placeholder="Add course description" maxheight="200px" iinstance="course" %}
+                  {% include 'widgets/widget_volumes.html' with maxheight="118px" pk=course.id volumes=course.volumes %}
                 </div>
               </div>
 	      <div class="modal-footer">

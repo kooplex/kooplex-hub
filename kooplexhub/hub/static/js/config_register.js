@@ -55,12 +55,18 @@ function register_changes(pk, fieldName, newValue, oldValue) {
 // Show Save Changes button
 function showSaveChanges(pk, instance) {
   pk=(pk===undefined)?"":pk
-	console.log(pk, instance)
   if ((pk === "") && !showSaveNew[instance]()) {
        return
   }
   let widget=$(`[name=save][data-id="${pk}"][data-instance=${instance}]`)
   widget.removeClass("d-none")
   widget.removeAttr("disabled")
+}
+
+
+// Hide Save Changes button
+function hideSaveChanges(pk, instance) {
+  pk=(pk===undefined)?"":pk
+  $(`[name=save][data-id="${pk}"][data-instance=${instance}]`).addClass("d-none")
 }
 

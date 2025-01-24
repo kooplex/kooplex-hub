@@ -1,13 +1,5 @@
 // static/js/project_changes.js
 
-
-
-// Hide Save Changes button
-function hideSaveChanges(pk) {
-  $(`#project-save-${pk}`).addClass("d-none")
-}
-
-
 // handle web socket callback
 function project_config_callback(message) {
         console.log(message)
@@ -64,11 +56,10 @@ function save_project_config(pk) {
         request: 'configure-project',
         changes: changeObject
     }
-    sock = open_ws(wsURLs['project_config'], project_config_callback)
     setTimeout(function() {
-        sock.send(JSON.stringify(data))
+        wss_projectconfig.send(JSON.stringify(data))
     }, 200)
-    hideSaveChanges(pk)
+    hideSaveChanges(pk, 'project')
     // Return a promise to handle asynchronous behavior
     var deferred = $.Deferred()
     deferred.resolve()
@@ -76,3 +67,10 @@ function save_project_config(pk) {
 }
 
 
+$(document).ready(function() {
+  if (wsURLs.project_config) {
+    wss_projectconfig = new ManagedWebSocket(wsURLs.project_config, {
+      onMessage: project_config_callback,
+    })
+  } 
+})

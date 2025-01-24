@@ -35,27 +35,6 @@ function feedback(msg) {
 }
 
 
-//FIXME: deprecated
-// open a websocket
-//function open_ws(url, callback, onclose) {
-//  console.log('open socket:', url);
-//  const socket = new WebSocket(url);
-//  socket.onclose = function(e) {
-//    console.error('Socket closed unexpectedly');
-//    if (onclose) {
-//      onclose(e);
-//    }
-//  };
-//  socket.onmessage = function(e) {
-//    const data = JSON.parse(e.data);
-//    if (data['feedback']) {
-//      feedback(data['feedback']);
-//    }
-//    callback(data);
-//  }
-//  return socket;
-//};
-
 
 // search objects by userinput
 //FIXME: when typing very fast we may sleep a while

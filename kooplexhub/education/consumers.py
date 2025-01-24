@@ -9,38 +9,29 @@ from django.template.loader import render_to_string
 from asgiref.sync import sync_to_async
 
 from education.models import UserAssignmentBinding, Assignment, UserCourseBinding, CourseContainerBinding
-from education.forms import TableAssignmentHandle
+from education.forms import TableAssignmentConf
 
 from hub.util import is_model_field, SyncSkeleton, AsyncSkeleton
 from .models import Course
+from volume.models import Volume
 
 logger = logging.getLogger(__name__)
 
-#from django.db.models.query import QuerySet
-#
-#class AssignmentConsumer(SyncConsumer):
-#    def receive(self, text_data):
-#        parsed = json.loads(text_data)
-#        logger.debug(parsed)
-#        userid = parsed.get('user_id')
-#        assignment_id = parsed.get('assignment_id')
-#        group_id = parsed.get('group_id')
-#        # authorize
-#        assignment = Assignment.objects.get(id = assignment_id)
-#        UserCourseBinding.objects.get(user__id = userid, course = assignment.course, is_teacher = True)
-#        if group_id == "all":
-#            students = [ b.user for b in assignment.course.studentbindings ]
-#        else:
-#            groups = { 'n' if g is None else str(g.id): students for g, students in assignment.course.groups.items() }
-#            students = groups[group_id]
-#        bindings_present = list(UserAssignmentBinding.objects.filter(assignment = assignment, user__in = students))
-#        students_present = [ b.user for b in bindings_present ]
-#        bindings = [ UserAssignmentBinding(user = u, assignment = assignment) for u in students if u not in students_present ]
-#        bindings.extend(bindings_present)
-#        t = TableAssignmentHandle(bindings)
-#        self.send(text_data = json.dumps(f"""<h6 class="">Handle assignment {assignment.name}</h6>{t.as_html(None)}"""))
-#
-#
+class AssignmentConsumer(SyncSkeleton):
+    def receive(self, text_data):
+        parsed = json.loads(text_data)
+        logger.debug(parsed)
+        course_id = parsed.get('course_id')
+        # authorize
+        UserCourseBinding.objects.get(user__id=self.userid, course__id=course_id, is_teacher=True)
+        a=Assignment.objects.filter(course=course_id)
+        t=TableAssignmentConf(a)  #FIXME rename to TableAssignment
+        self.send(text_data=json.dumps({
+            "feedback": "Assignment list is refreshed",
+            "t_assignment": render_to_string('django_table.html', {'table':t}),
+            }))
+
+
 #class AssignmentSummaryConsumer(SyncConsumer):
 #    def receive(self, text_data):
 #        parsed = json.loads(text_data)
@@ -96,14 +87,15 @@ class HandinConsumer(AsyncSkeleton):
             await self.send(text_data=json.dumps({"feedback": f'A snapshot is being prepared for {b.assignment.name}.' }))
 
 
+from .models import VolumeCourseBinding
 class CourseConfigConsumer(SyncSkeleton):
-    from container.models import Image
     def get_course(self, course_id):
         c=Course.objects.get(id = course_id)
         assert self.userid in map(lambda o:o.id, c.teachers), "You are not a teacher to config"
         return c
 
     def receive(self, text_data):
+        from container.models import Image
         parsed = json.loads(text_data)
         logger.debug(parsed)
         response = {
@@ -125,8 +117,8 @@ class CourseConfigConsumer(SyncSkeleton):
                 new_value=Image.objects.get(id=new_value)
                 field='preferred_image'
             # Check if the field is a valid attribute of the model
-            if is_model_field(container, field):
-                old_value = getattr(container, field)
+            if is_model_field(course, field):
+                old_value = getattr(course, field)
                 try:
                     # Try assigning the new value to the model's field
                     setattr(course, field, new_value)
@@ -137,28 +129,16 @@ class CourseConfigConsumer(SyncSkeleton):
                 except ValidationError as e:
                     # Validation failed, record the error message
                     response["failed"][field] = { "error": str(e), "value": old_value }
-#            elif field == 'projects':
-#                for project in Project.objects.filter(id__in = new_value):
-#                    ProjectContainerBinding.objects.get_or_create(project = project, container = container)
-#                ProjectContainerBinding.objects.filter(container = container).exclude(project__id__in = new_value).delete()
-#                response["success"]['projects']=ProjectContainerBinding.objects.filter(container = container)
-#                restart.append("project mounts changed")
-#            elif field == 'courses':
-#                for course in Course.objects.filter(id__in = new_value):
-#                    CourseContainerBinding.objects.get_or_create(course = course, container = container)
-#                CourseContainerBinding.objects.filter(container = container).exclude(course__id__in = new_value).delete()
-#                response["success"]['courses']=CourseContainerBinding.objects.filter(container = container)
-#                restart.append("course mounts changed")
-#            elif field == 'volumes':
-#                for volume in Volume.objects.filter(id__in = new_value):
-#                    VolumeContainerBinding.objects.get_or_create(volume = volume, container = container)
-#                VolumeContainerBinding.objects.filter(container = container).exclude(volume__id__in = new_value).delete()
-#                response["success"]['volumes']=VolumeContainerBinding.objects.filter(container = container)
-#                restart.append("volume mounts changed")
-#            else:
-#                # Attribute does not exist on the model
-#                logger.error(f"Container model attribute {field} does not exist.")
-#        # Save the instance if there are any successful changes
+            elif field=="volumes":
+                for volume in Volume.objects.filter(id__in=new_value):
+                    VolumeCourseBinding.objects.get_or_create(volume=volume, course=course)
+                VolumeCourseBinding.objects.filter(course=course).exclude(volume__id__in=new_value).delete()
+                response["success"]['volumes']=VolumeCourseBinding.objects.filter(course=course)
+            else:
+                # Attribute does not exist on the model
+                logger.error(f"Course model attribute {field} does not exist.")
+        # Save the instance if there are any successful changes
+        logger.debug(response)
         if response["success"]:
             course.save()
         message_back = {

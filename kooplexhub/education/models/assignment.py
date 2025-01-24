@@ -48,6 +48,20 @@ class Assignment(models.Model):
         return standardize_str(f'{self.course.name}-{self.folder}')
 
     @property
+    def n_queued(self):
+        students = self.course.students
+        missing = len(students)-len(UserAssignmentBinding.objects.filter(assignment=self, user__in=students))
+        return len(UserAssignmentBinding.objects.filter(assignment=self, state=UserAssignmentBinding.ST_QUEUED)) + missing
+
+    @property
+    def n_workinprogress(self):
+        return len(UserAssignmentBinding.objects.filter(assignment=self, state=UserAssignmentBinding.ST_WORKINPROGRESS))
+
+    @property
+    def n_collected(self):
+        return len(UserAssignmentBinding.objects.filter(assignment=self, state__in=[UserAssignmentBinding.ST_COLLECTED, UserAssignmentBinding.ST_READY]))
+
+    @property
     def _snapshot(self):
         from ..tasks import assignment_create
         assignment_create(self)
@@ -65,7 +79,6 @@ class Assignment(models.Model):
             except Exception as e:
                 flag = 'new' if created else 'old'
                 logger.error(f"Cannot handout assignment {self.name} / {self.course.name} -> {b} {flag}. -- {e}")
-
 
     def collect(self):
         now=timezone.now()

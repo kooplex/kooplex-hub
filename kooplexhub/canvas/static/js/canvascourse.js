@@ -23,7 +23,8 @@ $(document).on('click', '[data-bs-target="#canvascoursesModal"]', function () {
 })
 
 $(document).on('click', 'tr[data-id]', function() {
-  objectId=$(this).data('id')
+  let objectId=$(this).data('id')
+  let name=$(this).data('tail')
   $('tr[data-id]').each(function() {
     if ($(this).data('id') == objectId) {
       $(this).addClass('bg-secondary text-light')
@@ -32,5 +33,8 @@ $(document).on('click', 'tr[data-id]', function() {
     }
   })
   $('#canvascourseSelection').data('selected', objectId)
-
+  register_changes('', 'canvasid', objectId, '')
+  register_changes('', 'name', name, '')
+  register_changes('', 'folder', name.replaceAll(' ', '_').toLowerCase().normalize("NFD").replace(/[\.\u0300-\u036f]/g, ""), '')
+  showSaveChanges('', 'course')
 })

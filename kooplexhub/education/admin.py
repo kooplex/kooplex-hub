@@ -6,6 +6,7 @@ from education.models import CourseContainerBinding
 from education.models import Assignment, UserAssignmentBinding
 from education.models import CourseGroup, UserCourseGroupBinding
 from education.models import UserCourseGroupBinding
+from education.models import VolumeCourseBinding
 
 
 @admin.register(Course)
@@ -88,3 +89,12 @@ class UserCourseGroupBindingAdmin(admin.ModelAdmin):
         return f'{u.first_name} {u.last_name} ({u.username})'
     list_display = ('id', 'course_name', 'group_name', 'username')
     search_fields = ('usercoursebinding__course__name', 'usercoursebinding__user__username', 'usercoursebinding__user__first_name', 'usercoursebinding__user__last_name')
+
+@admin.register(VolumeCourseBinding)
+class VolumeCourseBindingAdmin(admin.ModelAdmin):
+    def course_name(self, instance):
+        return instance.course.name
+    def volume_folder(self, instance):
+        return instance.volume.folder
+    list_display = ('id', 'course_name', 'volume_folder')
+    search_fields = ('course__name', 'volume__folder', 'volume__description')

@@ -49,23 +49,6 @@ def project_card_border(project = None):
 
 
 @register.simple_tag
-def project_image(project = None):
-    if project and project.preferred_image:
-        iid = project.preferred_image.id
-        ihn = truncatechars(project.preferred_image.hr, 20)
-    else:
-        iid = -1
-        ihn = "Select image..."
-    return format_html(f"""
-<button data-id="{pid(project)}" data-field="image" data-orig="{iid}" 
-      class="badge rounded-pill p-3 border border-2 border-dark flex-grow-1 text-start text-dark" 
-      onclick="ImageSelection.openModal('{pid(project)}', {iid}, 'preferred_image')" role="button">
-  <i class="ri-image-2-line me-2"></i><span name="name" data-id="{pid(project)}">{ihn}</span>
-</button>
-    """)
-
-
-@register.simple_tag
 def project_creator(project = None, user = None):
     return format_html(f"""
 <p class="card-text mb-2"><strong>Creator:</strong> {project.creator.profile.name_and_username}</p>

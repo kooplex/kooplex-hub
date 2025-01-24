@@ -4,7 +4,7 @@
       <div class="content">
           <table>
             {% for canvascourse in canvascourses %}
-            <tr data-bs-toggle="tooltip" title="{{canvascourse.name}}" data-id="{{canvascourse.id}}"><td>{{ canvascourse.name|canvas_tail|truncatechars:45 }}</td></tr>
+	    <tr data-id="{{canvascourse.id}}" data-tail="{{canvascourse.name|canvas_tail}}"><td>{{canvascourse.name}}</td></tr>
             {% endfor %}
           </table>
       </div>

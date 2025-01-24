@@ -93,8 +93,8 @@ def button_seafile(container = None):
 
 
 @register.simple_tag
-def container_image(obj = None):
-    return render_to_string("widgets/widget_image.html", {"pk": getattr(obj, 'id', ""), "image": getattr(obj, "image", "")})
+def container_image(obj=None, attr="image"):
+    return render_to_string("widgets/widget_image.html", {"pk": getattr(obj, 'id', ""), "image": getattr(obj, attr, "")})
 
 
 @register.simple_tag

@@ -3,6 +3,7 @@ import json
 from django.utils.translation import gettext_lazy as _
 from django.utils.safestring import mark_safe
 from django.utils.html import format_html
+from django.template.loader import render_to_string
 from django.db import models
 import django_tables2 as tables
 from django.contrib.auth.models import User
@@ -70,45 +71,23 @@ class TableAssignment(tables.Table):
         return format_html(f'<span data-toggle="tooltip" title="{record.feedback_text}">record.score</span>') if record.score else ''
 
 
-
+#FIXME call it TableAssignment!!!
 class TableAssignmentConf(tables.Table):
     class Meta:
         model = Assignment
         fields = () 
-        sequence = ('meta', 'details', 'dates', 'quota', 'extra_info', 'delete')
+        sequence = ('details', 'manage', 'dates', 'quota', 'delete')
         attrs = table_attributes
         empty_text = _("You have not created any assignments yet")
 
-    meta = tables.Column(orderable = False, empty_values = ())
     details = tables.Column(orderable = False, empty_values = ())
     dates = tables.Column(orderable = False, empty_values = ())
     quota = tables.Column(orderable = False, empty_values = ())
-    extra_info = tables.Column(orderable = False, empty_values = ())
+    manage = tables.Column(orderable = False, empty_values = ())
     delete = tables.Column(orderable = False, empty_values = ())
 
-    def render_meta(self, record):
-        return format_html(f"""
-<label class="form-check-label" for="a-{record.id}" id="lbl_a-{record.id}" data-toggle="tooltip" title="Course"><i class="bi bi-journal-bookmark-fill"></i>&nbsp;</label>
-<span id="a-{record.id}">{record.course.name}</span><br>
-<label class="form-check-label mt-1" for="userid-{record.creator.id}" id="lbl_ac-{record.id}" data-toggle="tooltip" title="Creator of this assignment"><i class="bi bi-incognito"></i>&nbsp;</label>
-{ru(record.creator)}<br>
-<label class="form-check-label mt-1 mb-1" for="cts-{record.id}" id="lbl_ats-{record.id}" data-toggle="tooltip" title="Creation timestamp"><i class="bi bi-clock-history"></i>&nbsp;</label>
-<span id="cts-{record.id}">{rd(record.created_at)}</span><br>
-{rf(record.folder)}
-<input type="hidden" id="assignment-search-{record.id}" value="{record.search}">
-<input type="hidden" id="assignment-match-{record.id}" value=true>
-<input type="hidden" id="assignment-isshown-{record.id}" value=true>
-        """)
-
     def render_details(self, record):
-        return format_html(f"""
-<label class="form-check-label align-top" for="name-{record.id}" id="lbl_anm-{record.id}" data-toggle="tooltip" title="Assignment's name"><i class="bi bi-card-heading"></i>&nbsp;</label>
-<input class="form-text-input" type="text" id="name-{record.id}" name="name-{record.id}" value="{record.name}" /><br>
-<label class="form-check-label align-top mt-2" for="description-{record.id}" id="lbl_dsc-{record.id}" data-toggle="tooltip" title="Assignment's description"><i class="bi bi-journal-richtext"></i>&nbsp;</label>
-<textarea class="form-textarea mt-2" id="description-{record.id}" name="description-{record.id}">{record.description}</textarea>
-<input type="hidden" id="description-old-{record.id}" name="description-old-{record.id}" value="{record.description}" />
-<input type="hidden" id="name-old-{record.id}" name="name-old-{record.id}" value="{record.name}" />
-        """)
+        return render_to_string("widgets/assignment_conf_meta.html", {'assignment': record})
 
     def render_dates(self, record):
         rd = lambda t: t.strftime("%m/%d/%Y, %H:%M") if t else ""
@@ -117,7 +96,6 @@ class TableAssignmentConf(tables.Table):
         rd = lambda t: "disabled" if t and t.last_run_at else ""
         st1 = rd(record.valid_from)
         st2 = rd(record.expires_at)
-        chk = 'checked' if record.remove_collected else ''
         return format_html(f"""
 <div class="container">
   <div class="row">
@@ -136,6 +114,36 @@ class TableAssignmentConf(tables.Table):
       </span>
     </div>
   </div>
+</div>
+<input type="hidden" id="valid_from-old-{record.id}" value="{d1}" />
+<input type="hidden" id="expires_at-old-{record.id}" value="{d2}" />
+<input type="hidden" id="remove_collected-old-{record.id}" value="{record.remove_collected}" />
+        """)
+
+    def render_manage(self, record):
+        return format_html(f"""
+<div class="form-check form-switch">
+  <input class="form-check-input" type="checkbox" name="handout" value="{record.id}" />
+  <label class="form-check-label"><span class="bi bi-box-arrow-up-right" data-toggle="tooltip" title="Hand out"></span>{record.n_queued}</label>
+</div>
+<div class="form-check form-switch">
+  <input class="form-check-input" type="checkbox" name="collect" value="{record.id}" />
+  <label class="form-check-label"><span class="bi bi-box-arrow-in-down-right" data-toggle="tooltip" title="Collect"></span>{record.n_workinprogress}</label>
+</div>
+<div class="form-check form-switch">
+  <input class="form-check-input" type="checkbox" name="reassign" value="{record.id}" />
+  <label class="form-check-label"><span class="bi bi-recycle" data-toggle="tooltip" title="Reassign"</span>{record.n_collected}</label>
+</div>
+            """)
+
+
+    def render_quota(self, record):
+        ms = record.max_size if record.max_size else ''
+        chk = 'checked' if record.remove_collected else ''
+        return format_html(f"""
+<label class="form-check-label align-top" for="max_size-{record.id}" id="lbl_frm-{record.id}" data-toggle="tooltip" title="Maximum size of collection folder in MB"><i class="bi bi-box-seam"></i>&nbsp;</label>
+<input class="form-text-input" type="text" id="max_size-{record.id}" name="max_size-{record.id}" value="{ms}" size="4" />
+<input type="hidden" id="max_size-old-{record.id}" value="{ms}" />
   <div class="input-group my-2">
     <span class="input-group-text"><span class="bi bi-eraser" data-toggle="tooltip" title="Remove student's assignment folder upon submittion or collection"></span></span>
     <input id="remove_collected-{record.id}" 
@@ -144,22 +152,6 @@ class TableAssignmentConf(tables.Table):
        data-off="<span class='bi bi-check-lg'></span>"
        data-onstyle="danger" data-offstyle="secondary" value="{record.remove_collected}" {chk}>
   </div>
-</div>
-<input type="hidden" id="valid_from-old-{record.id}" value="{d1}" />
-<input type="hidden" id="expires_at-old-{record.id}" value="{d2}" />
-<input type="hidden" id="remove_collected-old-{record.id}" value="{record.remove_collected}" />
-        """)
-
-    def render_extra_info(self, record):
-        n = len(UserAssignmentBinding.objects.filter(assignment = record))
-        return format_html( f"""<span class="bi bi-box-arrow-in-down-right" data-toggle="tooltip" title="Assignments received or collected so far"></span>&nbsp;{n}""" if n else "" )
-
-    def render_quota(self, record):
-        ms = record.max_size if record.max_size else ''
-        return format_html(f"""
-<label class="form-check-label align-top" for="max_size-{record.id}" id="lbl_frm-{record.id}" data-toggle="tooltip" title="Maximum size of collection folder in MB"><i class="bi bi-box-seam"></i>&nbsp;</label>
-<input class="form-text-input" type="text" id="max_size-{record.id}" name="max_size-{record.id}" value="{ms}" size="4" />
-<input type="hidden" id="max_size-old-{record.id}" value="{ms}" />
         """)
 
     def render_delete(self, record):

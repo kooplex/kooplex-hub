@@ -1,0 +1,43 @@
+<label class="form-check-label align-top" for="name-{{assignment.id}}" id="lbl_anm-{{assignment.id}}" data-toggle="tooltip" title="Assignment's name"><i class="bi bi-card-heading"></i>&nbsp;</label>
+<input class="form-text-input" type="text" id="name-{{assignment.id}}" name="name-{{assignment.id}}" value="{{assignment.name}}" /><br>
+<label class="form-check-label align-top mt-2" for="description-{{assignment.id}}" id="lbl_dsc-{{assignment.id}}" data-toggle="tooltip" title="Assignment's description"><i class="bi bi-journal-richtext"></i>&nbsp;</label>
+<textarea class="form-textarea mt-2" id="description-{{assignment.id}}" name="description-{{assignment.id}}">{{assignment.description}}</textarea>
+<input type="hidden" id="description-old-{{assignment.id}}" name="description-old-{{assignment.id}}" value="{{assignment.description}}" />
+<input type="hidden" id="name-old-{{assignment.id}}" name="name-old-{{assignment.id}}" value="{{assignment.name}}" />
+
+
+
+
+{% comment %}
+{# FIXME html aware tooltip #}
+<!-- Include Bootstrap CSS and JS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<div>
+  <!-- Tooltip Trigger -->
+  <button type="button" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-html="true" title="<span class='d-flex align-items-center'><i class='bi bi-clock me-2'></i> 2023-02-27 09:25</span><br><span class='d-flex align-items-center'><i class='bi bi-folder me-2'></i> feladatsor</span>">
+    Hover for Tooltip
+  </button>
+</div>
+
+<script>
+  // Initialize all tooltips
+  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+  const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl)
+  })
+</script>
+#    def render_meta(self, assignment):
+#        return format_html(f"""
+#<label class="form-check-label mt-1" for="userid-{{assignment.creator.id}}" id="lbl_ac-{{assignment.id}}" data-toggle="tooltip" title="Creator of this assignment"><i class="bi bi-incognito"></i>&nbsp;</label>
+#{{ru(assignment.creator)}}<br>
+#<label class="form-check-label mt-1 mb-1" for="cts-{{assignment.id}}" id="lbl_ats-{{assignment.id}}" data-toggle="tooltip" title="Creation timestamp"><i class="bi bi-clock-history"></i>&nbsp;</label>
+#<span id="cts-{{assignment.id}}">{{rd(assignment.created_at)}}</span><br>
+#{{rf(assignment.folder)}}
+#<input type="hidden" id="assignment-search-{{assignment.id}}" value="{{assignment.search}}">
+#<input type="hidden" id="assignment-match-{{assignment.id}}" value=true>
+#<input type="hidden" id="assignment-isshown-{{assignment.id}}" value=true>
+#        """)
+{% endcomment %}
+

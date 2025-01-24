@@ -21,23 +21,6 @@ def button_new_course(user):
     """)
 
 
-@register.simple_tag
-def course_image(course = None):
-    if course and course.preferred_image:
-        iid = course.preferred_image.id
-        ihn = truncatechars(course.preferred_image.hr, 20)
-    else:
-        iid = -1
-        ihn = "Select image..."
-    return format_html(f"""
-<button data-id="{cid(course)}" data-field="image" data-orig="{iid}" 
-      class="badge rounded-pill p-3 border border-2 border-dark flex-grow-1 text-start text-dark" 
-      onclick="ImageSelection.openModal('{cid(course)}', {iid}, 'preferred_image')" role="button">
-  <i class="ri-image-2-line me-2"></i><span name="name" data-id="{cid(course)}">{ihn}</span>
-</button>
-    """)
-
-
 @register.filter
 def link_course_drop(course):
     #FIXME: return reverse('education:delete', args = [ cid(course) ]) if course else ""

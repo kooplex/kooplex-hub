@@ -75,11 +75,6 @@ $(document).on('click', '[name=save][data-id][data-instance=container]', functio
 })
 
 
-// Hide Save Changes button
-function hideSaveChanges(containerId) {
-  $(`[name=save][data-id="${containerId}"][data-instance=container]`).addClass("d-none")
-}
-
 // This function can be triggered initially on page load or from WebSocket events
 const buttonTeleportStates = {
   "True": "revoke",
