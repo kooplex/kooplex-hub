@@ -26,7 +26,7 @@ class Assignment(models.Model):
     creator = models.ForeignKey(User, null = False, on_delete = models.CASCADE)
     description = models.TextField(max_length = 500)
     folder = models.CharField(max_length = 32, null = False)
-    created_at = models.DateTimeField(editable=False,null=True)
+    created_at = models.DateTimeField(editable=False,null=True,auto_now_add=True)
     valid_from = models.DateTimeField(blank=True,null=True)
     expires_at = models.DateTimeField(blank=True,null=True)
     remove_collected = models.BooleanField(default = False,null=True)

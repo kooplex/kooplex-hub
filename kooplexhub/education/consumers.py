@@ -31,6 +31,9 @@ class AssignmentConsumer(SyncSkeleton):
         elif query=='configure':
             self.delete(course, parsed.get('remove'))
             self.configure(course, parsed.get('data'))
+            self.reassign(course, parsed.get('reassign'))
+            self.collect(course, parsed.get('collect'))
+            self.handout(course, parsed.get('handout'))
             self.refresh_list(course)
 
     def refresh_list(self, course):
@@ -77,6 +80,18 @@ class AssignmentConsumer(SyncSkeleton):
 
     def delete(self, course, deletelist):
         Assignment.objects.filter(course=course, id__in=deletelist).delete()
+
+    def handout(self, course, handoutlist):
+        for a in Assignment.objects.filter(course=course, id__in=handoutlist):
+            a.handout()
+
+    def collect(self, course, collectlist):
+        for a in Assignment.objects.filter(course=course, id__in=collectlist):
+            a.collect()
+
+    def reassign(self, course, reassignlist):
+        for a in Assignment.objects.filter(course=course, id__in=reassignlist):
+            a.reassign()
 
 
 #################

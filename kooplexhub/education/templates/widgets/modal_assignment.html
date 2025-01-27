@@ -80,6 +80,19 @@
             return $(this).data('id')
 	}).get()
 
+	const handoutList = $("[name=handout]:checked").map(function() {
+            let id=$(this).val()
+            if (! deleteList.includes(id)) { return id }
+	}).get()
+	const collectList = $("[name=collect]:checked").map(function() {
+            let id=$(this).val()
+            if (! deleteList.includes(id)) { return id }
+	}).get()
+	const reassignList = $("[name=reassign]:checked").map(function() {
+            let id=$(this).val()
+            if (! deleteList.includes(id)) { return id }
+	}).get()
+
         // Get the list of elements
         widgets = $('[data-field][data-id][data-orig][data-instance=assignment]')
         
@@ -117,12 +130,15 @@
             Object.assign(newItem.changed, { folder: folder })
         }
 
-	if (groupedChanges.length || deleteList.length) {
+	if (groupedChanges.length || deleteList.length || handoutList.length || collectList.length || reassignList.length) {
 	    wss_assignment.send(JSON.stringify({
               course_id: pk,
               query: 'configure',
               data: groupedChanges,
               remove: deleteList,
+              handout: handoutList,
+              collect: collectList,
+              reassign: reassignList,
 	    }))
 	}
 
