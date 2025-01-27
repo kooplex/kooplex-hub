@@ -1,0 +1,50 @@
+.datetime-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background-color: #f8f9fa;
+    border: 1px solid #ced4da;
+    border-radius: 1.5em;
+    overflow: hidden;
+}
+
+.datetime-row .icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background-color: #e9ecef;
+    color: #495057;
+    border-right: 1px solid #ced4da;
+    font-size: 1.2rem;
+}
+
+.datetime-row input {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 5px 10px;
+    background-color: transparent;
+}
+
+.datetime-row input:focus {
+    box-shadow: none;
+}
+
+.datetime-row .clear-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background-color: #e9ecef;
+    border-left: 1px solid #ced4da;
+    color: #495057;
+    cursor: pointer;
+    font-size: 1.2rem;
+}
+
+.datetime-row .clear-btn:hover {
+    background-color: #ced4da;
+}

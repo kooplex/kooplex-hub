@@ -1,19 +1,23 @@
-<div class="container">
-  <div class="row">
-    <div class="input-group log-event" id="linkedPickers1-{{assignment.id}}" data-td-target-input="nearest" data-td-target-toggle="nearest">
-      <input id="valid_from-{{assignment.id}}" name="valid_from-{{assignment.id}}" type="text" class="form-control" data-td-target="#linkedPickers1-{{assignment.id}}" {{st1}}>
-      <span class="input-group-text" data-td-target="#linkedPickers1-{{assignment.id}}" data-td-toggle="datetimepicker">
-        <span class="bi bi-clock"></span>
-      </span>
+<div class="container mt-4">
+    <!-- Start Date-Time -->
+    <div class="datetime-row mb-3">
+        <div class="icon" title="Start">
+            <i class="bi bi-alarm"></i>
+        </div>
+	<input type="text" name="start-datetime" data-id="{{assignment.id}}" data-field="valid_from" data-orig="{{assignment.valid_from}}" data-instance="assignment" class="form-control flatpickr" placeholder="Handout date and time" value="{{assignment.valid_from}}">
+        <div class="icon clear-btn" title="Clear handout" data-target="start-datetime">
+            <i class="bi bi-eraser"></i>
+        </div>
     </div>
-  </div>
-  <div class="row mt-2">
-    <div class="input-group log-event" id="linkedPickers2-{{assignment.id}}" data-td-target-input="nearest" data-td-target-toggle="nearest">
-      <input id="expires_at-{{assignment.id}}" name="expires_at-{{assignment.id}}" type="text" class="form-control" data-td-target="#linkedPickers2-{{assignment.id}}" {{st2}}>
-      <span class="input-group-text" data-td-target="#linkedPickers2-{{assignment.id}}" data-td-toggle="datetimepicker">
-        <span class="bi bi-bell"></span>
-      </span>
-    </div>
-  </div>
-</div>
 
+    <!-- End Date-Time -->
+    <div class="datetime-row">
+        <div class="icon" title="End">
+            <i class="bi bi-bell"></i>
+        </div>
+	<input type="text" name="end-datetime" data-id="{{assignment.id}}" data-field="expires_at" data-orig="{{assignment.expires_at}}" data-instance="assignment" class="form-control flatpickr" placeholder="Collection date and time" value="{{assignment.expires_at}}">
+        <div class="icon clear-btn" title="Clear collection" data-target="end-datetime">
+            <i class="bi bi-eraser"></i>
+        </div>
+    </div>
+</div>

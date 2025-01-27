@@ -6,6 +6,8 @@
 
 {% block head_content %}
 <link href="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/css/bootstrap5-toggle.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link href="{% static 'css/datetimepicker.css' %}" rel="stylesheet">
 <link href="{% static 'css/xeditable.css' %}" rel="stylesheet">
 {% endblock %}
 
@@ -80,6 +82,7 @@
 
 {# a modal to configure assignments #}
 {% include 'widgets/modal_assignment.html' %}
+<script src="{% static 'js/datetimepicker.js' %}"></script>
 
 {% endblock %}
 
@@ -180,8 +183,10 @@ const wsURLs = {
   course_config: "{{ wss_course_config }}",
   assignment_config: "{{ wss_assignment_config }}",
 }
+
 </script>
 <script src="{% static 'js/xeditable.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/js/bootstrap5-toggle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 {% endblock %}
 

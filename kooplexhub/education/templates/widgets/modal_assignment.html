@@ -54,6 +54,7 @@
 	}
         if (message.t_assignment) {
             $("[id=config][role]").html(message.t_assignment)
+	    DatetimePickers.init()
 	}
         if (message.t_score) {
             $("[id=summary][role]").html(message.t_score)

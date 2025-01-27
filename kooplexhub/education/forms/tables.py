@@ -92,8 +92,7 @@ class TableAssignmentConf(tables.Table):
             for column in exclude_columns:
                 if column in self.base_columns:
                     self.columns.hide(column)
-        # FIXME: until refactored don't show dates
-        self.columns.hide('dates')
+        # FIXME: until refactored don't show quota
         self.columns.hide('quota')
 
     def render_details(self, record):
