@@ -23,7 +23,7 @@ from hub.templatetags.extras import render_user
 from container.models import Image, Container
 from education.models import UserCourseBinding, UserAssignmentBinding, Assignment, CourseContainerBinding, Course
 from education.forms import FormCourse
-from education.forms import FormAssignment, FormAssignmentList, FormAssignmentConfigure, FormAssignmentHandle
+from education.forms import FormAssignment, FormAssignmentList, FormAssignmentConfigure#, FormAssignmentHandle
 
 from kooplexhub.settings import KOOPLEX
 
@@ -273,40 +273,40 @@ class ConfigureAssignmentView(LoginRequiredMixin, generic.FormView):
         return super().form_valid(form)
 
 #DEPRECATE
-class HandleAssignmentView(LoginRequiredMixin, generic.FormView):
-    template_name = 'assignment_handle.html'
-    form_class = FormAssignmentHandle
-    success_url = '/hub/education/assignment_handler/'
-
-    def get_initial(self):
-        initial = super().get_initial()
-        user = self.request.user
-        initial['user'] = user
-        return initial
-
-    def get_context_data(self, **kwargs):
-        user = self.request.user
-        context = super().get_context_data(**kwargs)
-        context['menu_education'] = True
-        context['submenu'] = 'assignment_teacher'
-        context['active'] = self.request.COOKIES.get('assignment_teacher_tab', 'handle')
-        context['wss_assignment'] = KOOPLEX.get('hub', {}).get('wss_assignment', 'wss://localhost/hub/ws/education/{userid}/').format(userid = self.request.user.id)
-        return context
-
-#FIXME: messages
-    def form_valid(self, form):
-        logger.info(form.cleaned_data)
-        for create, uab in form.cleaned_data['handout']:
-            if create:
-                uab.save()
-            uab.handout()
-        for uab in form.cleaned_data['collect']:
-            uab.collect()
-        for uab in form.cleaned_data['reassign']:
-            uab.reassign()
-        for uab in form.cleaned_data['finalize']:
-            uab.save()
-        return super().form_valid(form)
+#class HandleAssignmentView(LoginRequiredMixin, generic.FormView):
+#    template_name = 'assignment_handle.html'
+#    form_class = FormAssignmentHandle
+#    success_url = '/hub/education/assignment_handler/'
+#
+#    def get_initial(self):
+#        initial = super().get_initial()
+#        user = self.request.user
+#        initial['user'] = user
+#        return initial
+#
+#    def get_context_data(self, **kwargs):
+#        user = self.request.user
+#        context = super().get_context_data(**kwargs)
+#        context['menu_education'] = True
+#        context['submenu'] = 'assignment_teacher'
+#        context['active'] = self.request.COOKIES.get('assignment_teacher_tab', 'handle')
+#        context['wss_assignment'] = KOOPLEX.get('hub', {}).get('wss_assignment', 'wss://localhost/hub/ws/education/{userid}/').format(userid = self.request.user.id)
+#        return context
+#
+##FIXME: messages
+#    def form_valid(self, form):
+#        logger.info(form.cleaned_data)
+#        for create, uab in form.cleaned_data['handout']:
+#            if create:
+#                uab.save()
+#            uab.handout()
+#        for uab in form.cleaned_data['collect']:
+#            uab.collect()
+#        for uab in form.cleaned_data['reassign']:
+#            uab.reassign()
+#        for uab in form.cleaned_data['finalize']:
+#            uab.save()
+#        return super().form_valid(form)
 
 
 class AssignmentSummaryView(LoginRequiredMixin, generic.TemplateView):

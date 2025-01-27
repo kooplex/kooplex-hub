@@ -1,0 +1,12 @@
+<label class="form-check-label align-top" for="max_size-{{assignment.id}}" id="lbl_frm-{{assignment.id}}" data-toggle="tooltip" title="Maximum size of collection folder in MB"><i class="bi bi-box-seam"></i>&nbsp;</label>
+<input name="quota" data-id="{{assignment.id}}" data-orig="{{assignment.max_size}}" class="form-text-input" type="text" id="max_size-{{assignment.id}}" value="{% if assignment.max_size %}{{assignment.max_size}}{%endif%}" size="4" />
+
+<div class="input-group my-2">
+  <span class="input-group-text"><span class="bi bi-eraser" data-toggle="tooltip" title="Remove student's assignment folder upon submittion or collection"></span></span>
+  <input name="remove_collected" data-id="{{assignment.id}}" data-orig="{{assignment.remove_collected}}"
+     type="checkbox" data-toggle="toggle" name="remove_when_ready"
+     data-on="<span class='oi oi-trash'></span>"
+     data-off="<span class='bi bi-check-lg'></span>"
+     data-onstyle="danger" data-offstyle="secondary" {% if assignment.remove_collected %}checked{%endif%}>
+</div>
+

@@ -20,20 +20,29 @@ logger = logging.getLogger(__name__)
 
 class AssignmentConsumer(SyncSkeleton):
     def receive(self, text_data):
-        parsed = json.loads(text_data)
+        parsed=json.loads(text_data)
         logger.debug(parsed)
-        course_id = parsed.get('course_id')
+        course_id=parsed.get('course_id')
         # authorize
         course=UserCourseBinding.objects.get(user__id=self.userid, course__id=course_id, is_teacher=True).course
+        query=parsed.get('query')
+        if query=='list':
+            self.refresh_list(course)
+        elif query=='configure':
+            self.delete(course, parsed.get('remove'))
+            self.configure(course, parsed.get('data'))
+            self.refresh_list(course)
+
+    def refresh_list(self, course):
         # folder for new assignment
         folders=course.dir_assignmentcandidate()
         # assignment manager table
-        a=Assignment.objects.filter(course=course_id)
-        t=TableAssignmentConf(a)  #FIXME rename to TableAssignmentHandler
+        a=Assignment.objects.filter(course=course)
+        t=TableAssignmentConf(a)
         # calculate students' scores
         #FIXME pandas version may be too old?
-        #dfm = read_frame(UserAssignmentBinding.objects.filter(assignment__course__id = course_id)).fillna(pandas.NA)
-        dfm = read_frame(UserAssignmentBinding.objects.filter(assignment__course__id = course_id)).fillna(numpy.nan)
+        #dfm = read_frame(UserAssignmentBinding.objects.filter(assignment__course = course)).fillna(pandas.NA)
+        dfm = read_frame(UserAssignmentBinding.objects.filter(assignment__course = course)).fillna(numpy.nan)
         dfm=dfm[['user', 'assignment', 'score']]
         if not dfm.empty:
             table = dfm.pivot(index = "user", columns = "assignment", values = "score")
@@ -45,11 +54,29 @@ class AssignmentConsumer(SyncSkeleton):
             t_score=f"<h6 class="">There are no assignments in this course.</h6>"
         self.send(text_data=json.dumps({
             "feedback": "Assignment list is refreshed",
-            "f_new": render_to_string('widgets/form_new_assignment.html', {'course': course, 'folders': folders, 'table': TableAssignmentConf([Assignment()])}),
+            "f_new": render_to_string('widgets/form_new_assignment.html', {'course': course, 'folders': folders, 'table': TableAssignmentConf([Assignment()], exclude_columns=['manage', 'delete'])}),
             "t_assignment": render_to_string('django_table.html', {'table':t}),
             "t_score": t_score,
             }))
 
+    def configure(self, course, configlist):
+        for c in configlist:
+            assignment_id=c['id']
+            chg=c['changed']
+            if assignment_id=='None':  #FIXME: ""
+                a=Assignment.objects.create(course=course, creator_id=self.userid, **chg)
+                a.snapshot()
+                #FIXME: feedback message
+            else:
+                a=Assignment.objects.get(id=assignment_id, course=course)
+                for field, value in chg.items():
+                    setattr(a, field, value)
+                #FIXME: validate!
+                a.save()
+                #FIXME: feedback message
+
+    def delete(self, course, deletelist):
+        Assignment.objects.filter(course=course, id__in=deletelist).delete()
 
 
 #################

@@ -34,7 +34,6 @@ class TableAssignment(tables.Table):
     assignment = tables.Column(orderable = False)
     score = tables.Column(orderable = False, empty_values = ())
 
-
     def render_button(self, record):
         if record.state == record.ST_WORKINPROGRESS:
             return format_html(f"""
@@ -71,7 +70,6 @@ class TableAssignment(tables.Table):
         return format_html(f'<span data-toggle="tooltip" title="{record.feedback_text}">record.score</span>') if record.score else ''
 
 
-#FIXME call it TableAssignmentHandler!!!
 class TableAssignmentConf(tables.Table):
     class Meta:
         model = Assignment
@@ -86,179 +84,137 @@ class TableAssignmentConf(tables.Table):
     manage = tables.Column(orderable = False, empty_values = ())
     delete = tables.Column(orderable = False, empty_values = ())
 
+    def __init__(self, data, exclude_columns=None, *args, **kwargs):
+        super().__init__(data, *args, **kwargs)
+
+        # Exclude columns dynamically if provided
+        if exclude_columns:
+            for column in exclude_columns:
+                if column in self.base_columns:
+                    self.columns.hide(column)
+        # FIXME: until refactored don't show dates
+        self.columns.hide('dates')
+        self.columns.hide('quota')
+
     def render_details(self, record):
-        return render_to_string("widgets/assignment_conf_meta.html", {'assignment': record})
+        return render_to_string("widgets/assignment_conf_meta.html", {'assignment': record, 'instance': 'assignment'})
 
     def render_dates(self, record):
-        rd = lambda t: t.strftime("%m/%d/%Y, %H:%M") if t else ""
-        d1 = rd(record.valid_from)
-        d2 = rd(record.expires_at)
-        rd = lambda t: "disabled" if t and t.last_run_at else ""
-        st1 = rd(record.valid_from)
-        st2 = rd(record.expires_at)
-        return format_html(f"""
-<div class="container">
-  <div class="row">
-    <div class="input-group log-event" id="linkedPickers1-{record.id}" data-td-target-input="nearest" data-td-target-toggle="nearest">
-      <input id="valid_from-{record.id}" name="valid_from-{record.id}" type="text" class="form-control" data-td-target="#linkedPickers1-{record.id}" {st1}>
-      <span class="input-group-text" data-td-target="#linkedPickers1-{record.id}" data-td-toggle="datetimepicker">
-        <span class="bi bi-clock"></span>
-      </span>
-    </div>
-  </div>
-  <div class="row mt-2">
-    <div class="input-group log-event" id="linkedPickers2-{record.id}" data-td-target-input="nearest" data-td-target-toggle="nearest">
-      <input id="expires_at-{record.id}" name="expires_at-{record.id}" type="text" class="form-control" data-td-target="#linkedPickers2-{record.id}" {st2}>
-      <span class="input-group-text" data-td-target="#linkedPickers2-{record.id}" data-td-toggle="datetimepicker">
-        <span class="bi bi-bell"></span>
-      </span>
-    </div>
-  </div>
-</div>
-<input type="hidden" id="valid_from-old-{record.id}" value="{d1}" />
-<input type="hidden" id="expires_at-old-{record.id}" value="{d2}" />
-<input type="hidden" id="remove_collected-old-{record.id}" value="{record.remove_collected}" />
-        """)
+        #FIXME rd = lambda t: t.strftime("%m/%d/%Y, %H:%M") if t else ""
+        #FIXME d1 = rd(record.valid_from)
+        #FIXME d2 = rd(record.expires_at)
+        #FIXME rd = lambda t: "disabled" if t and t.last_run_at else ""
+        #FIXME st1 = rd(record.valid_from)
+        #FIXME st2 = rd(record.expires_at)
+        return render_to_string("widgets/assignment_conf_dates.html", {'assignment': record})
 
     def render_manage(self, record):
-        return format_html(f"""
-<div class="form-check form-switch">
-  <input class="form-check-input" type="checkbox" name="handout" value="{record.id}" />
-  <label class="form-check-label"><span class="bi bi-box-arrow-up-right" data-toggle="tooltip" title="Hand out"></span>{record.n_queued}</label>
-</div>
-<div class="form-check form-switch">
-  <input class="form-check-input" type="checkbox" name="collect" value="{record.id}" />
-  <label class="form-check-label"><span class="bi bi-box-arrow-in-down-right" data-toggle="tooltip" title="Collect"></span>{record.n_workinprogress}</label>
-</div>
-<div class="form-check form-switch">
-  <input class="form-check-input" type="checkbox" name="reassign" value="{record.id}" />
-  <label class="form-check-label"><span class="bi bi-recycle" data-toggle="tooltip" title="Reassign"</span>{record.n_collected}</label>
-</div>
-            """)
+        return render_to_string("widgets/assignment_conf_handlerbuttons.html", {'assignment': record})
 
 
     def render_quota(self, record):
-        ms = record.max_size if record.max_size else ''
-        chk = 'checked' if record.remove_collected else ''
-        return format_html(f"""
-<label class="form-check-label align-top" for="max_size-{record.id}" id="lbl_frm-{record.id}" data-toggle="tooltip" title="Maximum size of collection folder in MB"><i class="bi bi-box-seam"></i>&nbsp;</label>
-<input class="form-text-input" type="text" id="max_size-{record.id}" name="max_size-{record.id}" value="{ms}" size="4" />
-<input type="hidden" id="max_size-old-{record.id}" value="{ms}" />
-  <div class="input-group my-2">
-    <span class="input-group-text"><span class="bi bi-eraser" data-toggle="tooltip" title="Remove student's assignment folder upon submittion or collection"></span></span>
-    <input id="remove_collected-{record.id}" 
-       type="checkbox" data-toggle="toggle" name="remove_when_ready"
-       data-on="<span class='oi oi-trash'></span>"
-       data-off="<span class='bi bi-check-lg'></span>"
-       data-onstyle="danger" data-offstyle="secondary" value="{record.remove_collected}" {chk}>
-  </div>
-        """)
+        return render_to_string("widgets/assignment_conf_quotaanddelete.html", {'assignment': record})
+
 
     def render_delete(self, record):
-        return format_html(f"""
-<input id="dustbin-{record.id}"
-  type="checkbox" data-toggle="toggle" name="selection_delete"
-  data-on="<span class='oi oi-trash'></span>"
-  data-off="<span class='bi bi-check-lg'></span>"
-  data-onstyle="danger" data-offstyle="secondary" value="{record.id}">
-        """)
+        return render_to_string("widgets/assignment_conf_dustbin.html", {'assignment': record, 'instance': 'assignment'})
 
 
 
 
 #DEPRECATE
-class TableAssignmentMass(tables.Table):
-    class Meta:
-        model = Assignment
-        fields = ('course', 'name')
-        sequence = ('course', 'name', 'group', 'transition', 'handout', 'collect', 'correcting', 'reassign')
-        attrs = table_attributes
-        empty_text = _("Empty table")
-
-    course = tables.Column(orderable = False)
-    name = tables.Column(verbose_name = 'Assignment', orderable = False)
-    group = tables.Column(orderable = False, empty_values = ())
-    handout = tables.Column(orderable = False, empty_values = ())
-    collect = tables.Column(orderable = False, empty_values = ())
-    correcting = tables.Column(orderable = False, empty_values = ())
-    reassign = tables.Column(orderable = False, empty_values = ())
-    transition = tables.Column(orderable = False, empty_values = ())
-
-    def render_course(self, record):
-        return format_html(f"""
-{record.course.name}<br>{rf(record.folder)}
-        """)
-
-    def render_name(self, record):
-        return format_html(f"""
-{record.name}<br>
-<input type="radio" name="assignment_tbl" value="{record.id}-all">&nbsp;all students
-<input type="hidden" id="assignment-search-{record.id}" value="{record.search}">
-<input type="hidden" id="assignment-match-{record.id}" value=true>
-<input type="hidden" id="assignment-isshown-{record.id}" value=true>
-        """)
-
-    def render_group(self, record):
-        rows = []
-        for gid, gn in self.groups[record.course.id]:
-            gid = 'n' if gid == -1 else gid
-            n = 'FIXME' #len(students)
-            radio= f"""<input type="radio" name="assignment_tbl" value="{record.id}-{gid}">"""
-            rows.append(f"<div>{radio}&nbsp;{gn} ({n} students)</div>")
-        return format_html("<br>".join( rows ))
-
-    def render_transition(self, record):
-        rows = []
-        for gid, gn in self.groups[record.course.id]:
-            n1 = self.get_count(record.id, gid, 'ext')
-            n2 = self.get_count(record.id, gid, 'snap')
-            rows.append(f"<div data-toggle='tooltip' title='{n1} assignments are being handed out and {n2} are being tarballed'>{n1 + n2}</div>")
-        return format_html("<br>".join( rows ))
-
-    def _render_factory(self, record, state, task, icon):
-        rows = []
-        for gid, gn in self.groups.get(record.course.id, [-1, 'Ungrouped']):
-            idx = f'{record.id}-n' if gid is -1 else f'{record.id}-{gid}'
-            n = self.get_count(record.id, gid, state)
-            d = '' if n else 'disabled'
-            rows.append(f"""
-<div class="form-check form-switch">
-  <input class="form-check-input" type="checkbox" id="{task}-{idx}" name="{task}" value="{idx}" {d}/>
-  <label class="form-check-label" for="{task}-{idx}"> <span class="{icon}"> {n}</span></label>
-</div>
-            """)
-        return format_html("<br>".join( rows ))
-
-    def render_handout(self, record):
-        return self._render_factory(record, 'qed', 'handout', 'bi bi-box-arrow-up-right')
-        
-    def render_collect(self, record):
-        return self._render_factory(record, 'wip', 'collect', 'bi bi-box-arrow-in-down-right')
-
-    def render_correcting(self, record):
-        rows = []
-        for gid, gn in self.groups[record.course.id]:
-            n1 = self.get_count(record.id, gid, 'sub')
-            n2 = self.get_count(record.id, gid, 'col')
-            rows.append(f"<div data-toggle='tooltip' title='{n1} assignments are submitted and {n2} are collected'>{n1 + n2}</div>")
-        return format_html("<br>".join( rows ))
-
-    def render_reassign(self, record):
-        return self._render_factory(record, 'rdy', 'reassign', 'bi bi-recycle')
-
-
-    def __init__(self, assignments, groups, count):
-        super().__init__(assignments)
-        self.groups = {}
-        for g in groups:
-            if g.course.id not in self.groups:
-                self.groups[g.course.id] = [(-1, 'Ungrouped')]
-            self.groups[g.course.id].append((g.id, g.name))
-        for a in assignments:
-            if a.course.id not in self.groups:
-                self.groups[a.course.id] = [(-1, 'Ungrouped')]
-        self._count = count
-        self.get_count = lambda assignment_id, group_id, state: self._count.get((assignment_id, group_id, state), 0)
+#class TableAssignmentMass(tables.Table):
+#    class Meta:
+#        model = Assignment
+#        fields = ('course', 'name')
+#        sequence = ('course', 'name', 'group', 'transition', 'handout', 'collect', 'correcting', 'reassign')
+#        attrs = table_attributes
+#        empty_text = _("Empty table")
+#
+#    course = tables.Column(orderable = False)
+#    name = tables.Column(verbose_name = 'Assignment', orderable = False)
+#    group = tables.Column(orderable = False, empty_values = ())
+#    handout = tables.Column(orderable = False, empty_values = ())
+#    collect = tables.Column(orderable = False, empty_values = ())
+#    correcting = tables.Column(orderable = False, empty_values = ())
+#    reassign = tables.Column(orderable = False, empty_values = ())
+#    transition = tables.Column(orderable = False, empty_values = ())
+#
+#    def render_course(self, record):
+#        return format_html(f"""
+#{record.course.name}<br>{rf(record.folder)}
+#        """)
+#
+#    def render_name(self, record):
+#        return format_html(f"""
+#{record.name}<br>
+#<input type="radio" name="assignment_tbl" value="{record.id}-all">&nbsp;all students
+#<input type="hidden" id="assignment-search-{record.id}" value="{record.search}">
+#<input type="hidden" id="assignment-match-{record.id}" value=true>
+#<input type="hidden" id="assignment-isshown-{record.id}" value=true>
+#        """)
+#
+#    def render_group(self, record):
+#        rows = []
+#        for gid, gn in self.groups[record.course.id]:
+#            gid = 'n' if gid == -1 else gid
+#            n = 'FIXME' #len(students)
+#            radio= f"""<input type="radio" name="assignment_tbl" value="{record.id}-{gid}">"""
+#            rows.append(f"<div>{radio}&nbsp;{gn} ({n} students)</div>")
+#        return format_html("<br>".join( rows ))
+#
+#    def render_transition(self, record):
+#        rows = []
+#        for gid, gn in self.groups[record.course.id]:
+#            n1 = self.get_count(record.id, gid, 'ext')
+#            n2 = self.get_count(record.id, gid, 'snap')
+#            rows.append(f"<div data-toggle='tooltip' title='{n1} assignments are being handed out and {n2} are being tarballed'>{n1 + n2}</div>")
+#        return format_html("<br>".join( rows ))
+#
+#    def _render_factory(self, record, state, task, icon):
+#        rows = []
+#        for gid, gn in self.groups.get(record.course.id, [-1, 'Ungrouped']):
+#            idx = f'{record.id}-n' if gid is -1 else f'{record.id}-{gid}'
+#            n = self.get_count(record.id, gid, state)
+#            d = '' if n else 'disabled'
+#            rows.append(f"""
+#<div class="form-check form-switch">
+#  <input class="form-check-input" type="checkbox" id="{task}-{idx}" name="{task}" value="{idx}" {d}/>
+#  <label class="form-check-label" for="{task}-{idx}"> <span class="{icon}"> {n}</span></label>
+#</div>
+#            """)
+#        return format_html("<br>".join( rows ))
+#
+#    def render_handout(self, record):
+#        return self._render_factory(record, 'qed', 'handout', 'bi bi-box-arrow-up-right')
+#        
+#    def render_collect(self, record):
+#        return self._render_factory(record, 'wip', 'collect', 'bi bi-box-arrow-in-down-right')
+#
+#    def render_correcting(self, record):
+#        rows = []
+#        for gid, gn in self.groups[record.course.id]:
+#            n1 = self.get_count(record.id, gid, 'sub')
+#            n2 = self.get_count(record.id, gid, 'col')
+#            rows.append(f"<div data-toggle='tooltip' title='{n1} assignments are submitted and {n2} are collected'>{n1 + n2}</div>")
+#        return format_html("<br>".join( rows ))
+#
+#    def render_reassign(self, record):
+#        return self._render_factory(record, 'rdy', 'reassign', 'bi bi-recycle')
+#
+#
+#    def __init__(self, assignments, groups, count):
+#        super().__init__(assignments)
+#        self.groups = {}
+#        for g in groups:
+#            if g.course.id not in self.groups:
+#                self.groups[g.course.id] = [(-1, 'Ungrouped')]
+#            self.groups[g.course.id].append((g.id, g.name))
+#        for a in assignments:
+#            if a.course.id not in self.groups:
+#                self.groups[a.course.id] = [(-1, 'Ungrouped')]
+#        self._count = count
+#        self.get_count = lambda assignment_id, group_id, state: self._count.get((assignment_id, group_id, state), 0)
 
 
 class TableUser(tables.Table):

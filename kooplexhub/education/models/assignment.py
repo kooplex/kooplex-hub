@@ -62,8 +62,7 @@ class Assignment(models.Model):
     def n_collected(self):
         return len(UserAssignmentBinding.objects.filter(assignment=self, state__in=[UserAssignmentBinding.ST_COLLECTED, UserAssignmentBinding.ST_READY]))
 
-    @property
-    def _snapshot(self):
+    def snapshot(self):
         from ..tasks import assignment_create
         assignment_create(self)
 

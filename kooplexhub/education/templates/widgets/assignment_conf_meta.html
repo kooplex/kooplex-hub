@@ -1,9 +1,7 @@
 <label class="form-check-label align-top" for="name-{{assignment.id}}" id="lbl_anm-{{assignment.id}}" data-toggle="tooltip" title="Assignment's name"><i class="bi bi-card-heading"></i>&nbsp;</label>
-<input class="form-text-input" type="text" id="name-{{assignment.id}}" name="name-{{assignment.id}}" value="{{assignment.name}}" /><br>
+<input class="form-text-input" type="text" id="name-{{assignment.id}}" data-instance="{{instance}}" data-field="name" data-id="{{assignment.id}}" data-orig="{{assignment.name}}" value="{{assignment.name}}" placeholder="Add an assignment name"/><br>
 <label class="form-check-label align-top mt-2" for="description-{{assignment.id}}" id="lbl_dsc-{{assignment.id}}" data-toggle="tooltip" title="Assignment's description"><i class="bi bi-journal-richtext"></i>&nbsp;</label>
-<textarea class="form-textarea mt-2" id="description-{{assignment.id}}" name="description-{{assignment.id}}">{{assignment.description}}</textarea>
-<input type="hidden" id="description-old-{{assignment.id}}" name="description-old-{{assignment.id}}" value="{{assignment.description}}" />
-<input type="hidden" id="name-old-{{assignment.id}}" name="name-old-{{assignment.id}}" value="{{assignment.name}}" />
+<textarea class="form-textarea mt-2" data-instance="{{instance}}" data-field="description" data-id="{{assignment.id}}" data-orig="{{assignment.description}}" placeholder="Provide a description">{{assignment.description}}</textarea>
 
 
 

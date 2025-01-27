@@ -27,6 +27,12 @@
                   <div class="tab-pane fade py-3" id="summary" role="tabpanel" aria-labelledby="tab-summary"></div>
                 </div>
             </div>
+            <div class="modal-footer">
+		<button type="submit" data-submit="finalize" class="badge rounded-pill bg-warning shadow-sm text-dark p-2 border border-secondary">
+		  <i class="bi bi-arrow-right-square me-1"></i>Issue changes
+                </button>
+		    
+            </div>
         </div>
     </div>
 </div>
@@ -38,8 +44,8 @@
     const w=$("#assignmentsModal")
 
     // Handle search bar input
-    $('#search-user').on('input', function () {
-    })
+//    $('#search-user').on('input', function () {
+//    })
 
     // Handle wss callback
     function callback(message) {
@@ -59,16 +65,70 @@
         pk = parseInt(courseId)
         $(w).modal('show')
 	wss_assignment.send(JSON.stringify({
-          'course_id': pk,
+          course_id: pk,
+          query: 'list',
 	}))
     }
 
 
     // Confirm user selection
-    $('#confirm-users-selection').on('click', function() {
+    $('[type=submit][data-submit=finalize]').on('click', function() {
+	let folder = $("[name=selectfolder]").val()
+        // Get list of assignments to be deleted
+	let widgets = $('[name=dustbin][data-id]:checked')
+	const deleteList = widgets.map(function() {
+            return $(this).data('id')
+	}).get()
+
+        // Get the list of elements
+        widgets = $('[data-field][data-id][data-orig][data-instance=assignment]')
+        
+        // Map and filter the objects
+        const changedWidgets = widgets.map(function() {
+            // Extract attributes and current value
+            const id = $(this).data('id')
+            if (deleteList.includes(id)) { return }
+            const field = $(this).data('field')
+            const orig = $(this).data('orig')
+            const value = $.trim($(this).val()) // Strip the value
+        
+            // Return an object if the values differ, otherwise return null
+            if (value !== orig) {
+                return { id, field, value, orig }
+            }
+        }).get() // Convert jQuery object to an array
+        
+        // Group changes by id
+        const groupedChanges = changedWidgets.reduce((acc, obj) => {
+            // Check if the ID already exists in the accumulator
+            let item = acc.find(item => item.id === obj.id)
+            if (!item) {
+                // If not found, create a new entry
+                item = { id: obj.id, changed: {} }
+                acc.push(item)
+            }
+            // Add the changed field and its new value
+            item.changed[obj.field] = obj.value
+            return acc
+        }, []) // Start with an empty array as the accumulator
+        
+        const newItem = groupedChanges.find(item => item.id === 'None')  //FIXME: ""
+        if (newItem) {
+            Object.assign(newItem.changed, { folder: folder })
+        }
+
+	if (groupedChanges.length || deleteList.length) {
+	    wss_assignment.send(JSON.stringify({
+              course_id: pk,
+              query: 'configure',
+              data: groupedChanges,
+              remove: deleteList,
+	    }))
+	}
+
         // Close the modal
-        $(w).modal('hide')
-        pk = null
+//        $(w).modal('hide')
+//        pk = null
     })
 
 
