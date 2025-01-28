@@ -5,7 +5,8 @@ from django.utils.html import format_html
 
 from django.contrib.auth.models import User
 from container.models import Image
-from education.models import Course, CourseGroup, UserCourseBinding, UserCourseGroupBinding
+#from education.models import Course, CourseGroup, UserCourseBinding, UserCourseGroupBinding
+from education.models import Course, UserCourseBinding
 
 from kooplexhub.common import tooltip_attrs
 from kooplexhub.lib import my_slug_validator, my_end_validator

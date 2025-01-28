@@ -4,8 +4,7 @@ from education.models import Course, CourseCode
 from education.models import UserCourseBinding, UserCourseCodeBinding
 from education.models import CourseContainerBinding
 from education.models import Assignment, UserAssignmentBinding
-from education.models import CourseGroup, UserCourseGroupBinding
-from education.models import UserCourseGroupBinding
+#from education.models import CourseGroup, UserCourseGroupBinding
 from education.models import VolumeCourseBinding
 
 
@@ -70,25 +69,25 @@ class UserAssignmentAdmin(admin.ModelAdmin):
     search_fields = ('assignment__name', 'user__first_name', 'user__last_name')
 
 
-@admin.register(CourseGroup)
-class CourseGroupAdmin(admin.ModelAdmin):
-    def course_name(self, instance):
-        return instance.course.name
-    list_display = ('id', 'course_name', 'name', 'description')
-    search_fields = ('course__name', 'name')
-
-
-@admin.register(UserCourseGroupBinding)
-class UserCourseGroupBindingAdmin(admin.ModelAdmin):
-    def course_name(self, instance):
-        return instance.usercoursebinding.course.name
-    def group_name(self, instance):
-        return instance.group.name
-    def username(self, instance):
-        u = instance.usercoursebinding.user
-        return f'{u.first_name} {u.last_name} ({u.username})'
-    list_display = ('id', 'course_name', 'group_name', 'username')
-    search_fields = ('usercoursebinding__course__name', 'usercoursebinding__user__username', 'usercoursebinding__user__first_name', 'usercoursebinding__user__last_name')
+#@admin.register(CourseGroup)
+#class CourseGroupAdmin(admin.ModelAdmin):
+#    def course_name(self, instance):
+#        return instance.course.name
+#    list_display = ('id', 'course_name', 'name', 'description')
+#    search_fields = ('course__name', 'name')
+#
+#
+#@admin.register(UserCourseGroupBinding)
+#class UserCourseGroupBindingAdmin(admin.ModelAdmin):
+#    def course_name(self, instance):
+#        return instance.usercoursebinding.course.name
+#    def group_name(self, instance):
+#        return instance.group.name
+#    def username(self, instance):
+#        u = instance.usercoursebinding.user
+#        return f'{u.first_name} {u.last_name} ({u.username})'
+#    list_display = ('id', 'course_name', 'group_name', 'username')
+#    search_fields = ('usercoursebinding__course__name', 'usercoursebinding__user__username', 'usercoursebinding__user__first_name', 'usercoursebinding__user__last_name')
 
 @admin.register(VolumeCourseBinding)
 class VolumeCourseBindingAdmin(admin.ModelAdmin):

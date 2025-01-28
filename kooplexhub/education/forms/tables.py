@@ -8,7 +8,7 @@ from django.db import models
 import django_tables2 as tables
 from django.contrib.auth.models import User
 
-from education.models import UserCourseBinding, UserAssignmentBinding, Assignment, UserCourseCodeBinding, CourseGroup, UserCourseGroupBinding
+from education.models import UserCourseBinding, UserAssignmentBinding, Assignment, UserCourseCodeBinding#, CourseGroup, UserCourseGroupBinding
 from hub.templatetags.extras import render_user as ru
 from hub.templatetags.extras import render_date as rd
 from hub.templatetags.extras import render_folder as rf
@@ -250,47 +250,47 @@ class TableUser(tables.Table):
         super(TableUser, self).__init__(bindings)
 
 
-class TableGroup(tables.Table):
-    class Meta:
-        model = CourseGroup
-        fields = ('name', 'description',)
-        fields = ('button', 'name', 'description',)
-        attrs = table_attributes
-
-    button = tables.Column(verbose_name = '', orderable = False, empty_values = ())
-    name = tables.Column(orderable = False, empty_values = ())
-    description = tables.Column(orderable = False, empty_values = ())
-
-    def render_button(self, record):
-        if record.id:
-            return format_html(f"""
-<input type="checkbox" class="btn-check" name="selection_group_removal" value="{record.id}" id="btn-dg-{record.id}">
-<label class="btn btn-outline-danger" for="btn-dg-{record.id}"><i class="bi bi-trash"></i></label>
-            """)
-        else:
-            return format_html("""<button type="button" class="btn btn-success"><i class="bi bi-plus"></i></button>""")
-
-    def render_name(self, record):
-        if record.id:
-            return format_html(f"""
-<input type="hidden" name="group-name" id="group-name-before-{record.id}" value="{record.name}">
-<input type="text" name="group-name" id="group-name-after-{record.id}" value="{record.name}">
-            """)
-        else:
-            return format_html(f"""
-<input type="text" name="group-name" id="group-name-new-1" value="" placeholder="name a new group">
-            """)
-
-    def render_description(self, record):
-        if record.id:
-            return format_html(f"""
-<input type="hidden" name="group-description" id="group-description-before-{record.id}" value="{record.description}">
-<textarea name="group-description" id="group-description-after-{record.id}">{record.description}</textarea>
-            """)
-        else:
-            return format_html(f"""
-<textarea name="group-description" id="group-description-new-1" placeholder="describe a new group"></textarea>
-            """)
+#class TableGroup(tables.Table):
+#    class Meta:
+#        model = CourseGroup
+#        fields = ('name', 'description',)
+#        fields = ('button', 'name', 'description',)
+#        attrs = table_attributes
+#
+#    button = tables.Column(verbose_name = '', orderable = False, empty_values = ())
+#    name = tables.Column(orderable = False, empty_values = ())
+#    description = tables.Column(orderable = False, empty_values = ())
+#
+#    def render_button(self, record):
+#        if record.id:
+#            return format_html(f"""
+#<input type="checkbox" class="btn-check" name="selection_group_removal" value="{record.id}" id="btn-dg-{record.id}">
+#<label class="btn btn-outline-danger" for="btn-dg-{record.id}"><i class="bi bi-trash"></i></label>
+#            """)
+#        else:
+#            return format_html("""<button type="button" class="btn btn-success"><i class="bi bi-plus"></i></button>""")
+#
+#    def render_name(self, record):
+#        if record.id:
+#            return format_html(f"""
+#<input type="hidden" name="group-name" id="group-name-before-{record.id}" value="{record.name}">
+#<input type="text" name="group-name" id="group-name-after-{record.id}" value="{record.name}">
+#            """)
+#        else:
+#            return format_html(f"""
+#<input type="text" name="group-name" id="group-name-new-1" value="" placeholder="name a new group">
+#            """)
+#
+#    def render_description(self, record):
+#        if record.id:
+#            return format_html(f"""
+#<input type="hidden" name="group-description" id="group-description-before-{record.id}" value="{record.description}">
+#<textarea name="group-description" id="group-description-after-{record.id}">{record.description}</textarea>
+#            """)
+#        else:
+#            return format_html(f"""
+#<textarea name="group-description" id="group-description-new-1" placeholder="describe a new group"></textarea>
+#            """)
 
 
 

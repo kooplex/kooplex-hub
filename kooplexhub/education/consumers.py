@@ -153,8 +153,16 @@ class CourseConfigConsumer(SyncSkeleton):
         pk = parsed.get('pk')
         changes = parsed.get('changes')
         if pk == "":
-            course=Course.objects.create(name=changes.pop('name'), preferred_image_id=changes.pop('image'), description=changes.pop('description'))
-            binding=UserCourseBinding.objects.create(user_id=self.get_userid(), course=course)
+            canvas_id=changes.pop('canvasid', None)
+            course=Course.objects.create(name=changes.pop('name'), preferred_image_id=changes.pop('image'), description=changes.pop('description'), folder=changes.pop('folder'))
+            binding=UserCourseBinding.objects.create(user_id=self.get_userid(), course=course, is_teacher=True)
+            if canvas_id:
+                from canvas.models import CanvasCourse, Canvas
+                canvas=Canvas.objects.get(user_id=self.get_userid())
+                #FIXME: keep canvasname
+                canvascourse=CanvasCourse.objects.create(name=course.name, canvas_course_id=canvas_id, course=course)
+                for cs in canvascourse.get_course_students(canvas.token):
+                    UserCourseBinding.objects.create(course=course, user=cs)
             response["reloadpage"]=True
         else:
             cid = int(pk)

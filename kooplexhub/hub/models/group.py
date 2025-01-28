@@ -16,7 +16,7 @@ class Group(models.Model):
     }
 
     groupid = models.IntegerField(null = False, unique = True, blank = False)
-    name = models.CharField(max_length = 32, unique = True, null = False)
+    name = models.CharField(max_length = 64, unique = True, null = False)
     grouptype = models.CharField(max_length = 16, choices = TP_LOOKUP.items(), default = TP_PROJECT)
     #description = models.TextField(null = True)
 

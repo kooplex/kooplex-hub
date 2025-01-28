@@ -1,8 +1,8 @@
-<div class="position-relative">
+<div class="position-relative mb-2 mt-2">
   <div class="rounded border rounded-3 border-2 border-secondary p-3" style="max-height: {{maxheight}}; height: 100%; overflow-y: auto;">
       <div class="content">
           <div data-type="textarea" data-title="{{tooltip}}" data-id="{{pk}}" data-field="description" data-orig="{{orig}}" data-instance="{{instance}}"
-               class="editable" data-placement="right">{% if orig %}{{orig}}{% else %}{{placeholder}}{% endif %}</div>
+               class="editable" data-placement="right" placeholder="{{placeholder}}">{% if orig %}{{orig}}{% endif %}</div>
       </div>
       <div class="position-absolute top-0 start-0 badge rounded-pill bg-secondary text-white shadow-sm p-2" style="transform: translate(0%, -50%);">
         Description
