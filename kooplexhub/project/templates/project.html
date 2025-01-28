@@ -6,44 +6,29 @@
 {# FIXME: read only if not admin!!! #}
 
 <div class="card rounded rounded-3 mb-3 border border-2 shadow bg-light {% project_card_border project %}" id="card-{{ project.id }}" data-editable="{{is_admin}}">
+    <div class="card-header d-flex justify-content-start align-items-center">
+        {% include 'widgets/widget_input.html' with orig=project.name pk=project.id field="name" placeholder="Give a unique name to the project" instance="project" %}
+	{% project_scope project %}
+    </div>
     <div class="card-body">
+	    {% if project %}
+	    {% include 'widgets/pmulti.html' %} {# merge pmulti and multitabs #}
+	    {% endif %}
         <div class="row">
             <!-- First Column -->
             <div class="col">
-                <div class="d-flex align-items-center mb-2">
-		    {% include 'widgets/widget_input.html' with orig=project.name pk=project.id field="name" placeholder="Give a unique name to the project" instance="project" %}
-                </div>
 		{% if not project %}
                 <div class="d-flex align-items-center mb-2">
 		    {% include 'widgets/widget_input.html' with field="folder" placeholder="Add a unique folder name" instance="project" %}
                 </div>
 		{% endif %}
-                <div class="d-flex mb-2">
-		    {% container_image project "preferred_image" %}
-                </div>
-                <div class="d-flex align-items-center">
-	            {% button_environment project %}
-                </div>
             </div>
 
-            <!-- Second Column -->
-            <div class="col">
-              {% include 'widgets/widget_description.html' with pk=project.id orig=project.description placeholder="Add project description" tooltip="Describe project" maxheight="160px" instance="project" %}
-            </div>
 
-            <!-- Third Column -->
-            <div class="col position-relative">
-              {% include 'widgets/widget_users.html' with maxheight="160px" pk=project.id users=project.collaborators marked=project.admins kind="Collaborators" skip=user %}
-            </div>
 
-            <!-- Fourth Column -->
-            <div class="col position-relative">
-              {% include 'widgets/widget_volumes.html' with maxheight="160px" pk=project.id volumes=project.volumes %}
-            </div>
 
             <!-- Fifth Column -->
             <div class="col">
-	        {% project_scope project %}
 		{# FIXME: az alábbi infókat tooltipre tenni? #}
 		{% comment %}
 		        {% project_folder project %}
@@ -52,10 +37,12 @@
 		{% endcomment %}
                 <div class="d-flex justify-content-end">
 		    {% include 'widgets/widget_savechanges.html' with pk=project.id obj="project" %}
-	            {% include 'widgets/widget_delete.html' with msg="Are you sure you want to delete or leave project?" tooltip="Leave/delete project" link=project|link_project_drop obj=project %}
                 </div>
             </div>
         </div>
+    </div>
+    <div class="card-footer">
+	 {% button_environment project %}
     </div>
 </div>
 

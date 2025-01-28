@@ -1,0 +1,82 @@
+/* Container for the tabs */
+.tab-container {
+    border-radius: 10px;
+    padding: 5px;
+    background: #f8f9fa;
+    position: relative;
+}
+
+/* Styling for the tab navigation */
+.nav-tabs {
+    border-bottom: 2px solid #6c757d; /* Dark gray border */
+}
+
+/* All tabs have a gray background and a thin border */
+.nav-tabs .nav-link {
+    background: #e9ecef; /* Light gray */
+    border: 1px solid #b3b3b3; /* Thin border */
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    color: #6c757d; /* Dark gray icons */
+    padding: 8px 12px;
+    text-align: center;
+    position: relative;
+    transition: background 0.2s, border-width 0.2s;
+}
+
+/* Ensure icons are dark gray */
+.nav-tabs .nav-link i {
+    color: #6c757d !important; /* Dark gray */
+}
+
+/* When an inactive tab is hovered, make the border thicker */
+.nav-tabs .nav-link:hover {
+    border-width: 2px;
+    background: #d6d8db; /* Slightly darker gray */
+}
+
+/* Tooltip effect for inactive tabs */
+.nav-tabs .nav-link[data-title]:hover::after {
+    content: attr(data-title);
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    white-space: nowrap;
+    font-size: 0.85rem;
+}
+
+/* Active tab styling */
+.nav-tabs .nav-link.active {
+    background: #ced4da; /* Darker gray */
+    border: 2px solid #6c757d; /* Thicker dark gray border */
+    border-bottom: 2px solid white !important; /* Hide bottom border */
+    color: black; /* Text is black for contrast */
+    font-weight: bold;
+    position: relative;
+    z-index: 2;
+}
+
+/* Inactive tabs keep their background gray */
+.nav-tabs .nav-link:not(.active) {
+    background: #e9ecef;
+}
+
+/* Tab content */
+.tab-content {
+    padding: 15px;
+    background: white;
+    border: 2px solid #6c757d; /* Dark gray border */
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    position: relative;
+    z-index: 1;
+    min-height: 160px; /* Ensures minimum height */
+    height: 160px; /* Fixed height */
+    overflow-y: auto; /* Enable scrolling */
+}
+

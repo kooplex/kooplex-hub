@@ -1,70 +1,25 @@
 {% load widgets %}
-{% load course_buttons %}
 {% load container_buttons %}
 
-<div class="card rounded rounded-3 mb-3 border border-2 {% if course %}w-100 border-success{% else %}border-warning{% endif %} shadow bg-light" id="card-{{ course.id }}" data-editable="true">
+<div class="card rounded rounded-3 mb-3 border border-2 {% if course %}border-success{% else %}border-warning{% endif %} shadow bg-light" id="card-{{ course.id }}" data-editable="true">
+    <div class="card-header">
+         {% field_name course 'course' %} {# FIXME field_name replace like below #}
+    </div>
     <div class="card-body">
-        <div class="row">
 	    {% if course %}
-            <div class="col">
-	        {% button_environment course %}
-            </div>
+		{% include 'widgets/multitabs.html' %}
 	    {% endif %}
 
-            <!-- First Column -->
-            <div class="col">
-                <div class="d-flex align-items-center mb-3">
-                    {% field_name course 'course' %} {# FIXME field_name replace like below #}
 		    {% if course %}{% else %}
                     {% include 'widgets/widget_input.html' with field="folder" placeholder="Add a unique folder name" instance="course" %}
 		    {% endif %}
-                </div>
-                <div class="d-flex">
-		    {% container_image course "preferred_image" %}
-                </div>
-            </div>
 
-            <!-- Second Column -->
-            <div class="col">
-                {% include 'widgets/widget_description.html' with pk=course.id orig=course.description placeholder="Add course description" tooltip="Describe course" maxheight="118px" instance="course" %}
-            </div>
 
-            <!-- Third Column -->
-	    {% if course %}
-            <div class="col position-relative">
-                <div class="rounded border p-3 rounded-3 border-2 border-secondary" style="max-height: 118px; height: 100%; overflow-y: auto;">
-                    <div name="assignment" class="content" data-id="{{course.id}}">
-			{% for a in course.assignments %}
-			<p>{{a.name}}</p>
-			{% empty %}
-			<p>Create a new assignment</p>
-			{% endfor %}
-                    </div>
-		    <div class="position-absolute top-0 start-0 badge rounded-pill bg-secondary text-white shadow-sm p-2" style="transform: translate(0%, -50%);">
-                      Assignments
-                    </div>
-                </div>
-            </div>
-	    {% endif %}
-
-            <!-- Fourth Column -->
-            <div class="col position-relative">
-                {% include 'widgets/widget_users.html' with maxheight="119px" pk=course.id users=course.students marked=course.teachers kind="Students/Teachers" %}
-            </div>
-
-            <!-- Fifth Column -->
-            <div class="col position-relative">
-              {% include 'widgets/widget_volumes.html' with maxheight="118px" pk=course.id volumes=course.volumes %}
-            </div>
-
-            <!-- Sixth Column -->
-            <div class="col">
                 <div class="d-flex justify-content-end">
 		    {% include 'widgets/widget_savechanges.html' with pk=course.id obj="course" %}
-	            {% include 'widgets/widget_delete.html' with msg="Are you sure you want to delete or leave course?" tooltip="Leave/delete course" link=course|link_course_drop obj=course %}
                 </div>
-            </div>
-        </div>
+    </div>
+    <div class="card-footer">
+	 {% button_environment course %}
     </div>
 </div>
-

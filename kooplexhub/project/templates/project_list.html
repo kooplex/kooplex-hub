@@ -5,10 +5,10 @@
 
 {% block head_content %}
 <link href="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/css/bootstrap5-toggle.min.css" rel="stylesheet">
+<link href="{% static 'css/multitabs.css' %}" rel="stylesheet">
 <link href="{% static 'css/xeditable.css' %}" rel="stylesheet">
 {% endblock %}
 
-{# render the project cards #}
 {% block bodycontent %}
 <div class="container-fluid">
     <div class="d-flex flex-wrap gap-3">
@@ -43,7 +43,8 @@
     </div>
 </div>
 
-<div class="container-fluid">
+{# render the project cards #}
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 w-100 mx-auto justify-content-center gap-3">
   {% for upb in userprojectbindinglist %}
       {% include 'project.html' with project=upb.project projectcontainerbindings=upb.projectcontainerbindings is_admin=upb.is_admin %}
   {% endfor %}
@@ -79,6 +80,7 @@
 
 
 {% block scripts %}
+<script src="{% static 'js/multitabs.js' %}"></script>
 
 
 

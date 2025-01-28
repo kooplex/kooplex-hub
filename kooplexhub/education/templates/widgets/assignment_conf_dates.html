@@ -4,7 +4,7 @@
         <div class="icon" title="Start">
             <i class="bi bi-alarm"></i>
         </div>
-	<input type="text" name="start-datetime" data-id="{{assignment.id}}" data-field="valid_from" data-orig="{{assignment.valid_from}}" data-instance="assignment" class="form-control flatpickr" placeholder="Handout date and time" value="{{assignment.valid_from}}">
+	<input type="text" name="start-datetime" data-id="{{assignment.id}}" data-field="valid_from" data-orig="{{assignment.valid_from}}" data-instance="assignment" class="form-control flatpickr" placeholder="Handout date and time" {% if assignment.valid_from %}value="{{assignment.valid_from}}{% endif %}">
         <div class="icon clear-btn" title="Clear handout" data-target="start-datetime">
             <i class="bi bi-eraser"></i>
         </div>
@@ -15,7 +15,7 @@
         <div class="icon" title="End">
             <i class="bi bi-bell"></i>
         </div>
-	<input type="text" name="end-datetime" data-id="{{assignment.id}}" data-field="expires_at" data-orig="{{assignment.expires_at}}" data-instance="assignment" class="form-control flatpickr" placeholder="Collection date and time" value="{{assignment.expires_at}}">
+	<input type="text" name="end-datetime" data-id="{{assignment.id}}" data-field="expires_at" data-orig="{{assignment.expires_at}}" data-instance="assignment" class="form-control flatpickr" placeholder="Collection date and time" {% if assignment.expires_at %}value="{{assignment.expires_at}}"{% endif %}>
         <div class="icon clear-btn" title="Clear collection" data-target="end-datetime">
             <i class="bi bi-eraser"></i>
         </div>

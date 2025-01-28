@@ -18,8 +18,9 @@
                 allowInput: true,
                 minDate: now, // Prevent past dates
                 onChange: function(selectedDates) {
-                    if (endInput._flatpickr) {
-                        endInput._flatpickr.set('minDate', selectedDates[0])
+                    let value=selectedDates[0]
+                    if (endInput._flatpickr && value!==undefined) {
+                        endInput._flatpickr.set('minDate', value)
                     }
                 }
             })
@@ -29,9 +30,11 @@
                 dateFormat: "Y-m-d H:i",
                 time_24hr: true,
                 allowInput: true,
+                minDate: now, // Prevent past dates
                 onChange: function(selectedDates) {
-                    if (startInput._flatpickr) {
-                        startInput._flatpickr.set('maxDate', selectedDates[0])
+                    let value=selectedDates[0]
+                    if (startInput._flatpickr && value!==undefined) {
+                        startInput._flatpickr.set('maxDate', value)
                     }
                 }
             })

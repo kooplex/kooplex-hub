@@ -1,13 +1,19 @@
+{% if assignment.n_queued %}
 <div class="form-check form-switch">
   <input class="form-check-input" type="checkbox" name="handout" value="{{assignment.id}}" />
   <label class="form-check-label"><span class="bi bi-box-arrow-up-right" data-toggle="tooltip" title="Hand out"></span>{{assignment.n_queued}}</label>
 </div>
+{% endif %}
 <div class="form-check form-switch">
+{% if assignment.n_workinprogress %}
   <input class="form-check-input" type="checkbox" name="collect" value="{{assignment.id}}" />
   <label class="form-check-label"><span class="bi bi-box-arrow-in-down-right" data-toggle="tooltip" title="Collect"></span>{{assignment.n_workinprogress}}</label>
 </div>
+{% endif %}
 <div class="form-check form-switch">
+{% if assignment.n_collected %}
   <input class="form-check-input" type="checkbox" name="reassign" value="{{assignment.id}}" />
   <label class="form-check-label"><span class="bi bi-recycle" data-toggle="tooltip" title="Reassign"</span>{{assignment.n_collected}}</label>
 </div>
+{% endif %}
 

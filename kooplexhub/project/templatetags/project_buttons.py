@@ -59,13 +59,13 @@ def project_creator(project = None, user = None):
 def project_scope(project = None):
     return format_html(f"""
 <div id="project-scope-{pid(project)}">
-    <button class="badge rounded-pill border border-2 border-dark p-3 ms-2 text-dark position-relative" name="{Project.SCP_PRIVATE}"
+    <button class="badge rounded-pill border border-2 border-dark p-2 ms-2 text-dark position-relative" name="{Project.SCP_PRIVATE}"
             data-toggle="tooltip" title="Make project public"
             onclick="projectScopeButtonClick('{pid(project)}', '{Project.SCP_PUBLIC}')">
       <i class="oi oi-key"></i>
       <span class="position-absolute top-0 start-100 translate-middle badge bg-success small">private</span>
     </button>
-    <button class="badge rounded-pill border border-2 border-dark p-3 ms-2 text-dark position-relative" name="{Project.SCP_PUBLIC}"
+    <button class="badge rounded-pill border border-2 border-dark p-2 ms-2 text-dark position-relative" name="{Project.SCP_PUBLIC}"
             data-toggle="tooltip" title="Make project private"
             onclick="projectScopeButtonClick('{pid(project)}', '{Project.SCP_PRIVATE}')">
       <i class="oi oi-cloud"></i>

@@ -1,0 +1,73 @@
+{% load container_buttons %}
+{% load course_buttons %}
+<div class="container mt-4">
+    <div class="tab-container">
+        <!-- Tabs -->
+        <ul class="nav nav-tabs" id="dynamicTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+		    
+                <button class="nav-link active" id="tab-one" data-bs-toggle="tab" data-bs-target="#content-one-{{course.id}}" type="button" role="tab" aria-controls="content-one-{{course.id}}" aria-selected="true" data-text="Description" data-icon="bi bi-chat-left-text">
+                    Description
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-two" data-bs-toggle="tab" data-bs-target="#content-two-{{course.id}}" type="button" role="tab" aria-controls="content-two-{{course.id}}" aria-selected="false" data-text="Assignments" data-icon="bi bi-pencil">
+                    <i class="bi bi-pencil" title="Assignments"></i>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-three" data-bs-toggle="tab" data-bs-target="#content-three-{{course.id}}" type="button" role="tab" aria-controls="content-three-{{course.id}}" aria-selected="false" data-text="Students/teachers" data-icon="bi bi-people">
+                    <i class="bi bi-people" title="Students/teachers"></i>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-four" data-bs-toggle="tab" data-bs-target="#content-four-{{course.id}}" type="button" role="tab" aria-controls="content-four-{{course.id}}" aria-selected="false" data-text="Volumes" data-icon="bi bi-folder">
+                    <i class="bi bi-folder" title="Volumes"></i>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-five" data-bs-toggle="tab" data-bs-target="#content-five-{{course.id}}" type="button" role="tab" aria-controls="content-five-{{course.id}}" aria-selected="false" data-text="Image" data-icon="bi bi-card-image">
+                    <i class="bi bi-card-image" title="Image"></i>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-six" data-bs-toggle="tab" data-bs-target="#content-six-{{course.id}}" type="button" role="tab" aria-controls="content-six-{{course.id}}" aria-selected="false" data-text="Delete" data-icon="bi bi-trash">
+		    <i class="bi bi-trash" title="Delete"></i>
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="content-one-{{course.id}}" role="tabpanel" aria-labelledby="tab-one">
+                <div class="content">
+                    <div data-type="textarea" data-id="{{course.id}}" data-field="description" data-orig="{{course.description}}" data-instance="course"
+                         class="editable" data-placement="right" placeholder="Add description">{% if course.description %}{{course.description}}{% endif %}</div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="content-two-{{course.id}}" role="tabpanel" aria-labelledby="tab-two">
+                    <div name="assignment" class="content" data-id="{{course.id}}">
+			{% for a in course.assignments %}
+			<p>{{a.name}}</p>
+			{% empty %}
+			<p>Create a new assignment</p>
+			{% endfor %}
+                    </div>
+            </div>
+            <div class="tab-pane fade" id="content-three-{{course.id}}" role="tabpanel" aria-labelledby="tab-three">
+                {% include 'widgets/widget_users.html' with maxheight="119px" pk=course.id users=course.students marked=course.teachers kind="Students/Teachers" %}
+            </div>
+            <div class="tab-pane fade" id="content-four-{{course.id}}" role="tabpanel" aria-labelledby="tab-four">
+                {% include 'widgets/widget_volumes.html' with maxheight="118px" pk=course.id volumes=course.volumes %}
+            </div>
+            <div class="tab-pane fade" id="content-five-{{course.id}}" role="tabpanel" aria-labelledby="tab-five">
+		{% container_image course "preferred_image" %}
+            </div>
+            <div class="tab-pane fade" id="content-six-{{course.id}}" role="tabpanel" aria-labelledby="tab-six">
+		<p class="card-text">Are you sure you want to delete this course?</p>
+	        {% include 'widgets/widget_delete.html' with msg="Are you sure you want to delete or leave course?" tooltip="Leave/delete course" link=course|link_course_drop obj=course %}
+            </div>
+        </div>
+    </div>
+</div>
+

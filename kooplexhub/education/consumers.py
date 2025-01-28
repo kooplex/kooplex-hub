@@ -6,7 +6,7 @@ import pandas
 import numpy #FIXME: with newer pandas we may fall back to pandas.NA
 from django_pandas.io import read_frame
 from django.template.loader import render_to_string
-
+from django.core.exceptions import ValidationError
 from asgiref.sync import sync_to_async
 
 from education.models import UserAssignmentBinding, Assignment, UserCourseBinding, CourseContainerBinding
@@ -73,8 +73,15 @@ class AssignmentConsumer(SyncSkeleton):
             else:
                 a=Assignment.objects.get(id=assignment_id, course=course)
                 for field, value in chg.items():
+                    if value=="":
+                        value=None
+                    old=getattr(a, field)
                     setattr(a, field, value)
-                #FIXME: validate!
+                    try:
+                        a.full_clean()
+                    except ValidationError as e:
+                        # fixme feedback error
+                        setattr(a, field, old)
                 a.save()
                 #FIXME: feedback message
 
