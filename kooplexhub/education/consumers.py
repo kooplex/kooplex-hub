@@ -122,7 +122,7 @@ class CourseGetContainersConsumer(SyncSkeleton):
 
 
 class HandinConsumer(AsyncSkeleton):
-    identifier='handin'
+    identifier_='handin'
     async def receive(self, text_data):
         parsed = json.loads(text_data)
         logger.debug(parsed)

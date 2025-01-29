@@ -41,7 +41,7 @@ def start_container(user_id, container_id):
         time.sleep(CHECK_INTERVAL)
         status = container.check_state()
         if status['changed']:
-            async_to_sync(channel_layer.group_send)("container", {
+            async_to_sync(channel_layer.group_send)(f"container-{user_id}", {
                     "type": "feedback",
                     "feedback": status['message'],
                     "container_id": container.id,
@@ -74,7 +74,7 @@ def stop_container(user_id, container_id):
         time.sleep(CHECK_INTERVAL)
         status = container.check_state()
         if status['changed']:
-            async_to_sync(channel_layer.group_send)("container", {
+            async_to_sync(channel_layer.group_send)(f"container-{user_id}", {
                     "type": "feedback",
                     "feedback": status['message'],
                     "container_id": container.id,
@@ -102,7 +102,7 @@ def restart_container(user_id, container_id):
         time.sleep(CHECK_INTERVAL)
         status = container.check_state()
         if status['changed']:
-            async_to_sync(channel_layer.group_send)("container", {
+            async_to_sync(channel_layer.group_send)(f"container-{user_id}", {
                     "type": "feedback",
                     "feedback": status['message'],
                     "container_id": container.id,
@@ -117,7 +117,7 @@ def restart_container(user_id, container_id):
         time.sleep(CHECK_INTERVAL)
         status = container.check_state()
         if status['changed']:
-            async_to_sync(channel_layer.group_send)("container", {
+            async_to_sync(channel_layer.group_send)(f"container-{user_id}", {
                     "type": "feedback",
                     "feedback": status['message'],
                     "container_id": container.id,

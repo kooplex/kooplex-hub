@@ -37,7 +37,8 @@ class  AsyncSkeleton(AsyncWebsocketConsumer):
         self.userid = int(self.scope["url_route"]["kwargs"].get('userid'))
         if self.scope['user'].id != self.userid: #not authorized
             return
-        assert hasattr(self, 'identifier'), "Make sure child class implements self.identifier:str"
+        assert hasattr(self, 'identifier_'), "Make sure child class implements self.identifier:str"
+        self.identifier=f"{self.identifier_}-{self.userid}"
         await self.channel_layer.group_add(self.identifier, self.channel_name)
         await self.accept()
 
