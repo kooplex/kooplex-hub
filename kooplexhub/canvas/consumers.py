@@ -17,6 +17,7 @@ from django.template.loader import render_to_string
 from .models import Canvas, CanvasCourse
 
 from hub.util import SyncSkeleton
+from kooplexhub.settings import KOOPLEX
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +28,10 @@ class CanvasGetCoursesConsumer(SyncSkeleton):
             canvas = Canvas.objects.get(user__id = self.userid)
             created_ids=list(map(lambda o: o.canvas_course_id, CanvasCourse.objects.all()))
             canvas_courses = filter(lambda x: x['id'] not in created_ids, canvas.get_courses())
+            #filter those very old
+            old_filter=KOOPLEX.get('canvas', {}).get('old_filter')
+            if old_filter:
+                canvas_courses=filter(old_filter, canvas_courses)
             resp = {
                 "feedback": "Your canvas course list is refreshed", 
                 "response": render_to_string("widgets/list_canvascourses.html", {"canvascourses":  canvas_courses, "maxheight": "200px" }),
