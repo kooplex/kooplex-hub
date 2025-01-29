@@ -1,19 +1,22 @@
 {% if container.state == container.ST_NOTPRESENT %}
-<button name="startcontainer" data-id="{{container.id}}" class="badge rounded-pill text-bg-success border p-2" data-command="start"
+<button name="startcontainer" data-id="{{container.id}}" class="badge rounded-pill text-bg-success border p-2"
         data-toggle="tooltip" title="Start environment {{container.name}}">
   <span class="bi bi-lightning" aria-hidden="true" role="status"></span>
 </button>
-{% elif container.state == container.ST_RUNNING %}
+{% elif container.state == container.ST_RUNNING or container.state == container.ST_NEED_RESTART %}
 <button name="startcontainer" data-id="{{container.id}}" class="badge rounded-pill text-bg-secondary border p-2" disabled>
   <span class="bi bi-lightning" aria-hidden="true"></span>
 </button>
-{% elif container.state == conatiner.ST_NEED_RESTART or container.state == conatiner.ST_ERROR %}
-<button name="startcontainer" data-id="{{container.id}}" class="badge rounded-pill text-bg-warning border p-2" data-command="restart"
-        data-toggle="tooltip" title="Restart environment {{container.name}}">
-  <span class="bi bi-bootstrap-reboot" aria-hidden="true"></span>
+{% elif container.state == container.ST_ERROR %}
+<button name="startcontainer" data-id="{{container.id}}" class="badge rounded-pill text-bg-danger border p-2" disabled>
+  <span class="spinner-grow spinner-grow-sm" aria-hidden="true" role="status"></span>
 </button>
-{% else %}
-<button name="startcontainer" data-id="{{container.id}}" class="badge rounded-pill text-bg-success border p-2" name="busy" disabled>
+{% elif container.state == container.ST_STARTING %}
+<button name="startcontainer" data-id="{{container.id}}" class="badge rounded-pill text-bg-success border p-2" disabled>
+  <span class="spinner-grow spinner-grow-sm" aria-hidden="true" role="status"></span>
+</button>
+{% elif container.state == container.ST_STOPPING %}
+<button name="startcontainer" data-id="{{container.id}}" class="badge rounded-pill text-bg-warning border p-2" disabled>
   <span class="spinner-grow spinner-grow-sm" aria-hidden="true" role="status"></span>
 </button>
 {% endif %}

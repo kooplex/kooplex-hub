@@ -18,7 +18,6 @@ from .proxy import Proxy
 
 from kooplexhub.lib import  now
 from kooplexhub.lib import my_alphanumeric_validator
-from ..lib import check_environment, fetch_containerlog
 
 try:
     from kooplexhub.settings import KOOPLEX
@@ -101,6 +100,7 @@ class Container(models.Model):
     def search(self):
         return self.name.upper()
 
+    #DEPRECATE
     def wait_until_ready(self):
         from kooplexhub.lib import keeptrying
         for _ in range(5):
@@ -117,17 +117,6 @@ class Container(models.Model):
         except:
             return ""
 
-#    @property
-#    def env_variables(self):
-#        for envmap in EnvVarMapping.objects.filter(image = self.image):
-#            yield { "name": envmap.name, "value": envmap.valuemap.format(container = self) }
-
-#    @property
-#    def uptime(self):
-#        timenow = now()
-#        delta = timenow - self.launched_at
-#        return delta if self.is_running else -1 #FIXME: ez nem mukodhet nincs ilyen attributum
-
     @property
     def proxies(self):
         from .proxy import Proxy
@@ -143,23 +132,6 @@ class Container(models.Model):
     def courses(self):
         from education.models import CourseContainerBinding
         return [ binding.course for binding in CourseContainerBinding.objects.filter(container = self) ]
-
-    @property
-    def reports_bb(self):
-        "relevant only for project containers"
-        ##This is elegant but is buggy in current django version! update() also sucks
-        ##reports = Report.objects.none()
-        ##for p in self.projects:
-        ##    reports = reports.union( Report.objects.filter(project = p) )
-        ##return reports
-#FIXME:        reports = Report.objects.none()
-#FIXME:        for p in self.projects:
-#FIXME:            if len( reports ) == 0:
-#FIXME:                reports = Report.objects.filter(project = p)
-#FIXME:            else:
-#FIXME:                reports = reports.union( Report.objects.filter(project = p) )
-#FIXME:        return reports
-        return []
 
     @property
     def reports(self):
@@ -202,26 +174,56 @@ class Container(models.Model):
         from volume.models import VolumeContainerBinding
         return [ binding.volume for binding in VolumeContainerBinding.objects.filter(container = self) ]
 
+    @property
+    def mapped_backend_state(self):
+        from ..lib import state_mapper
+        return state_mapper[self.state_backend]
+
     def start(self):
         from ..tasks import start_container
+        self.check_state()
+        if self.mapped_backend_state!=self.ST_NOTPRESENT:
+            logger.warning(f"Not starting {self} because {self.state} {self.mapped_backend_state}")
+            return
+        self.state = self.ST_STARTING
+        self.restart_reasons = None
+        self.save()
         start_container(self.user.id, self.id)
 
     def stop(self):
         from ..tasks import stop_container
+        self.check_state()
+        if self.mapped_backend_state not in [self.ST_RUNNING, self.ST_ERROR]:
+            logger.warning(f"Not stopping {self} because {self.state} and {self.mapped_backend_state}")
+            return
+        self.state = self.ST_STOPPING
         self.restart_reasons = None
         self.save()
         return stop_container(self.user.id, self.id)
 
     def restart(self):
         from ..tasks import restart_container
+        self.check_state()
+        if self.mapped_backend_state not in [self.ST_RUNNING, self.ST_ERROR]:
+            logger.warning(f"Not restarting {self} because {self.state} and {self.mapped_backend_state}")
+            return
         self.restart_reasons = None
+        self.state = self.ST_STOPPING
         self.save()
         return restart_container(self.user.id, self.id)
 
     def check_state(self, retrieve_log = False):
+        from ..lib import check_environment, fetch_containerlog
         state = check_environment(self)
         if retrieve_log:
             state['podlog'] = fetch_containerlog(self)
+        mapped_state=self.mapped_backend_state
+        if self.state in [self.ST_STARTING, self.ST_STOPPING] and mapped_state in [self.ST_NOTPRESENT, self.ST_RUNNING, self.ST_ERROR, self.ST_NEED_RESTART]:
+            self.state=mapped_state
+            self.save()
+        elif self.state==self.ST_ERROR and mapped_state==self.ST_NOTPRESENT:
+            self.state=self.ST_NOTPRESENT
+            self.save()
         return state
 
     def mark_restart(self, reason, save = True):
@@ -254,13 +256,11 @@ class Container(models.Model):
         return render_to_string("widgets/widget_container_open.html", {"container": self, "link": _link})
 
     def render_fetchlogs_html(self):
-        _active = [ Container.ST_RUNNING, Container.ST_NEED_RESTART, Container.ST_ERROR ]
-        return render_to_string("widgets/widget_container_fetchlogs.html", {"container": self, "is_active": self.state in _active})
+        _active = [ Container.ST_RUNNING, Container.ST_ERROR ]
+        return render_to_string("widgets/widget_container_fetchlogs.html", {"container": self, "is_active": self.mapped_backend_state in _active})
 
     def render_state_html(self):
-        state = self.check_state()
-        phase = state.get('phase', 'Missing')
-        return render_to_string("widgets/widget_container_state.html", {"container": self, "phase": phase})
+        return render_to_string("widgets/widget_container_state.html", {"container": self})
 
     def render_restartreasons_html(self):
         return render_to_string("widgets/widget_container_restartreasons.html", {"container": self})

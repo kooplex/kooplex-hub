@@ -23,10 +23,9 @@ $(document).ready(function() {
 // start a container
 $(document).on('click', 'button[name="startcontainer"]', function () {
   const objectId = $(this).data('id'); // Get the id from the button's data-id attribute
-  const command = $(this).data('command')
   wss_containercontrol.send(JSON.stringify({
     pk: objectId,
-    request: command,
+    request: 'start',
   }))
 })
 
@@ -37,6 +36,16 @@ $(document).on('click', 'button[name="stopcontainer"]', function () {
   wss_containercontrol.send(JSON.stringify({
     pk: objectId,
     request: 'stop',
+  }))
+})
+
+
+// restart a container
+$(document).on('click', 'button[name="restartcontainer"]', function () {
+  const objectId = $(this).data('id'); // Get the id from the button's data-id attribute
+  wss_containercontrol.send(JSON.stringify({
+    pk: objectId,
+    request: 'restart',
   }))
 })
 

@@ -71,14 +71,13 @@ class ContainerControlConsumer(AsyncSkeleton):
         request = parsed.get('request')
         if request == 'start':
             await self.send(text_data=json.dumps({"feedback": f'Starting container {container.name}. Keep calm until its state is finalized.' }))
-            start_container(self.userid, container.id)
+            await sync_to_async(container.start)()
         elif request == 'stop':
             await self.send(text_data=json.dumps({"feedback": f'Stopping container {container.name}.' }))
-            stop_container(self.userid, container.id)
+            await sync_to_async(container.stop)()
         elif request == 'restart':
             await self.send(text_data=json.dumps({"feedback": f'Restarting container {container.name}' }))
-            stop_container(self.userid, container.id)
-            start_container(self.userid, container.id)
+            await sync_to_async(container.restart)()
         else:
             logger.error(f'wrong ws call request: {request}')
 

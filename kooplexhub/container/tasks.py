@@ -26,7 +26,7 @@ def _replace_widgets(container):
         'opencontainer': container.render_open_html(),
         'fetch': container.render_fetchlogs_html(),
         'phase': container.render_state_html(),
-        'restartreasons': container.render_restartreasons_html(),
+        'restartcontainer': container.render_restartreasons_html(),
         }
 
 @task(queue = 'container')
@@ -63,8 +63,6 @@ def stop_container(user_id, container_id):
     channel_layer=get_channel_layer()
     try:
         container=Container.objects.get(user_id=user_id, id=container_id)    
-        container.restart_reasons=None
-        container.save()
     except container.DoesNotExist:
         return "not found"
     removeroute(container, 'NB_URL')
@@ -93,8 +91,6 @@ def restart_container(user_id, container_id):
     channel_layer=get_channel_layer()
     try:
         container=Container.objects.get(user_id=user_id, id=container_id)    
-        container.restart_reasons=None
-        container.save()
     except container.DoesNotExist:
         return "not found"
     stop_environment(container)

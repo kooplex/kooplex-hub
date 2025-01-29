@@ -9,7 +9,7 @@ from service.models.service import SeafileService
 client.rest.logger.setLevel(logging.WARNING)
 from urllib.parse import urlparse
 from threading import Timer, Event, Lock
-from ..models.image import Image
+from ..models import Image, Container
 
 from kooplexhub.lib import now
 
@@ -28,67 +28,76 @@ logger = logging.getLogger(__name__)
 
 namespace = KOOPLEX['kubernetes'].get('namespace', 'k8plex-hub')
 
+state_mapper = {
+    'Killing': Container.ST_STOPPING,
+    'Scheduled': Container.ST_STARTING,
+    'Pending': Container.ST_STARTING,
+    'Pulling': Container.ST_STARTING,
+    'Pulled': Container.ST_STARTING,
+    'Created': Container.ST_STARTING,
+    'SandboxChanged': Container.ST_STARTING,
+    'Started': Container.ST_RUNNING,
+    'Not present': Container.ST_NOTPRESENT,
+    'Not Found': Container.ST_NOTPRESENT,
+    'FailedCreatePodSandBox': Container.ST_ERROR,
+    'FailedMount': Container.ST_ERROR,
+    'FailedKillPod': Container.ST_STOPPING,
+
+    'Running': Container.ST_RUNNING,
+
+    'FailedToUpdateEndpoint': Container.ST_NOTPRESENT, #FIXME: is it complete? possible keys: 'CreateContainerConfigError', 'ImagePullBackOff'
+}
+
 def check(container):
     """
 @summary: retrieve the container state from kubernetes framework
 @returns { 'state': Container:ST, 'message': ... }
     """
-    state_mapper = {
-        'Killing': container.ST_STOPPING,
-        'Scheduled': container.ST_STARTING,
-        'Pulling': container.ST_STARTING,
-        'Pulled': container.ST_STARTING,
-        'Created': container.ST_STARTING,
-        'SandboxChanged': container.ST_STARTING,
-        'Started': container.ST_RUNNING,
-        'Not present': container.ST_NOTPRESENT,
-        'FailedCreatePodSandBox': container.ST_ERROR,
-        'FailedMount': container.ST_ERROR,
-        'FailedKillPod': container.ST_STOPPING,
-
-        'Running': container.ST_RUNNING,
-
-        'FailedToUpdateEndpoint': container.ST_NOTPRESENT, #FIXME ??? jó ez a mapping?
-    }
     #FIXME: if called too frequently, skip to avoid API stress
     logger.info(f"? checking {container.label}")
-    previous_state = container.state
     previous_state_backend = container.state_backend
     config.load_kube_config()
     v1 = client.CoreV1Api()
-    #FIXME: hardcoded timeout
+
+##    #FIXME: hardcoded timeout
     events = v1.list_namespaced_event(namespace, field_selector=f'involvedObject.name={container.label}', timeout_seconds = 1).items
-    current_state_backend = None
+    messages=[]
     if len(events):
-        current_state_backend=events[-1].reason
-        message=events[-1].message
-        current_state=state_mapper[current_state_backend]
-    if not len(events) or current_state==container.ST_STOPPING:
-        try:
-            pod_status = v1.read_namespaced_pod_status(namespace = namespace, name = container.label)
-            phase=pod_status.status.phase  #FIXME what are the possible values???
-            current_state=state_mapper[phase]
-            message=pod_status.status.message or "Container found"
-            if current_state_backend is None:
-                current_state_backend = phase
-        except client.rest.ApiException as e:
-            if e.reason == 'Not Found':
-                current_state_backend=e.reason
-                current_state=container.ST_NOTPRESENT
-                message="Container not found"
-            else:
-                raise
+        last_event=events[-1].reason
+        messages.append(events[-1].message)
+    else:
+        last_event=None
+    try:
+        pod_status = v1.read_namespaced_pod_status(namespace = namespace, name = container.label)
+        pod_phase=pod_status.status.phase
+        messages.append(pod_status.status.message or "Container found")
+    except client.rest.ApiException as e:
+        if e.reason == 'Not Found':
+            pod_phase=e.reason
+            messages.append("Container not found")
+        else:
+            raise
     container.state_lastcheck_at = now()
-    container.state = current_state
-    container.state_backend = current_state_backend
+    container.state_backend=pod_phase if pod_phase=="Not Found" else last_event or pod_phase
     container.save()
     status = { 
-        'message': message,
-        'phase': current_state_backend,
+        'message': "; ".join(messages[::-1]),
+        'last_event': last_event,
+        'pod_phase': pod_phase,
         'state': container.state,
-        'changed': current_state != previous_state or current_state_backend != previous_state_backend
+        'changed': container.state_backend != previous_state_backend
     }
     return status
+
+
+def fetch_containerlog(container):
+    v1 = client.CoreV1Api()
+    try:
+        podlog = v1.read_namespaced_pod_log(namespace = namespace, name = container.label, container = container.label)
+        return podlog[-10000:]
+    except Exception as e:
+        logger.warning(e)
+        return "There are no environment log messages yet to retrieve"
 
 
 def storage_resources(volumes):
@@ -140,11 +149,6 @@ def create_sidecar_davfs(container, service):
 
 def start(container):
     logger.info(f"+ starting {container.label}")
-    s = check(container)
-    if s['state'] != container.ST_NOTPRESENT:
-        logger.warning(f'Not starting container {container.label}, which is in a wrong state {container.state}')
-        return
-
     config.load_kube_config()
     v1 = client.CoreV1Api()
 
@@ -457,23 +461,15 @@ def start(container):
             raise
     try:
         v1.create_namespaced_pod(namespace = namespace, body = pod_definition)
-        container.state = container.ST_STARTING
     except client.rest.ApiException as e:
         logger.warning(f'{container} pod exists')
         if json.loads(e.body)['code'] != 409: # already exists
             logger.critical(e)
             raise
-    container.save()
 
 
 def stop(container):
     logger.info(f"- stopping {container.label}")
-    s = check(container)
-    if s['state'] == container.ST_NOTPRESENT:
-        logger.warning(f'Not stopping container {container.label}, which is not present')
-        return
-    container.state = container.ST_STOPPING
-    container.save()
     config.load_kube_config()
     v1 = client.CoreV1Api()
     try:
@@ -491,61 +487,3 @@ def stop(container):
             raise
 
 
-def _parse_podstatus(podstatus):
-    from container.models import Container
-    sts = podstatus.status.container_statuses
-    cds = podstatus.status.conditions
-    logger.debug(sts)
-    logger.debug(cds)
-
-    if podstatus.status.phase == 'Pending':
-        return {
-       #     'state': Container.state,
-       #     'message': 'Pending, image pull?...'
-        }
-
-    if cds is not None:
-        if cds[0].reason in [ 'Unschedulable', 'BadRequest' ]:
-            return {
-                'state': Container.ST_ERROR,
-                'reason': cds[0].reason,
-                'message': cds[0].message
-            }
-        sts = podstatus.status.container_statuses
-        if sts is None:
-            return {
-                'state': Container.ST_ERROR,
-                'reason': 'unknown',
-                'message': 'Ask kooplex admins to investigate logs'
-            }
-        st = sts[0]
-        try:
-            if st.state.waiting:
-                if st.state.waiting.reason in [ 'CreateContainerConfigError', 'ImagePullBackOff' ]:
-                    return {
-                        'state': Container.ST_ERROR,
-                        'reason': st.state.waiting.reason,
-                        'message': st.state.waiting.message
-                    }
-        except Exception as e:
-            logger.warning(f"Unhandled exception: {e}")
-        indicators = []
-        if st.started:
-            indicators.append('started')
-        if st.ready:
-            indicators.append('ready')
-        indicators.append(f'restarted {st.restart_count} times')
-        return {
-            'state': Container.ST_RUNNING,
-            'message': ', '.join(indicators)
-        }
-
-
-def fetch_containerlog(container):
-    v1 = client.CoreV1Api()
-    try:
-        podlog = v1.read_namespaced_pod_log(namespace = namespace, name = container.label, container = container.label)
-        return podlog[-10000:]
-    except Exception as e:
-        logger.warning(e)
-        return "There are no environment log messages yet to retrieve"
