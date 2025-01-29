@@ -33,6 +33,7 @@ state_mapper = {
     'Scheduled': Container.ST_STARTING,
     'Pending': Container.ST_STARTING,
     'Pulling': Container.ST_STARTING,
+    'BackOff': Container.ST_STARTING,
     'Pulled': Container.ST_STARTING,
     'Created': Container.ST_STARTING,
     'SandboxChanged': Container.ST_STARTING,

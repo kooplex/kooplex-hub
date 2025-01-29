@@ -52,7 +52,7 @@ class Container(models.Model):
     start_seafile = models.BooleanField(default = False)
 
     state = models.CharField(max_length = 16, choices = ST_LOOKUP.items(), default = ST_NOTPRESENT)
-    state_backend = models.CharField(max_length = 32, null = True, blank = True, default =None)
+    state_backend = models.CharField(max_length = 32, null = True, blank = True, default = None)
     state_lastcheck_at = models.DateTimeField(default = None, null = True, blank = True)
 
     restart_reasons = models.CharField(max_length = 500, null = True, blank = True)
@@ -177,7 +177,7 @@ class Container(models.Model):
     @property
     def mapped_backend_state(self):
         from ..lib import state_mapper
-        return state_mapper[self.state_backend]
+        return state_mapper.get(self.state_backend,  self.ST_NOTPRESENT)
 
     def start(self):
         from ..tasks import start_container
@@ -214,15 +214,19 @@ class Container(models.Model):
 
     def check_state(self, retrieve_log = False):
         from ..lib import check_environment, fetch_containerlog
+        from ..lib import state_mapper
         state = check_environment(self)
         if retrieve_log:
             state['podlog'] = fetch_containerlog(self)
         mapped_state=self.mapped_backend_state
-        if self.state in [self.ST_STARTING, self.ST_STOPPING] and mapped_state in [self.ST_NOTPRESENT, self.ST_RUNNING, self.ST_ERROR, self.ST_NEED_RESTART]:
+        if self.state in [self.ST_STARTING, self.ST_STOPPING] and mapped_state in [self.ST_NOTPRESENT, self.ST_RUNNING, self.ST_ERROR]:
             self.state=mapped_state
             self.save()
         elif self.state==self.ST_ERROR and mapped_state==self.ST_NOTPRESENT:
             self.state=self.ST_NOTPRESENT
+            self.save()
+        elif self.state==self.ST_NOTPRESENT and state_mapper.get(state.get('pod_phase'))==self.ST_RUNNING:
+            self.state=self.ST_RUNNING
             self.save()
         return state
 
