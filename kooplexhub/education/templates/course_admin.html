@@ -16,7 +16,9 @@
 {% endblock %}
 
 {# render the course cards #}
+
 {% block bodycontent %}
+{% if user.profile.can_createcourse %}
 <div class="container-fluid">
     <div class="d-flex flex-wrap gap-3">
         <div class="card rounded rounded-3 mb-3 border border-2 border-warning shadow bg-light">
@@ -49,7 +51,9 @@
         </div>
     </div>
 </div>
+{% endif %}
 
+{% if coursebindinglist %}
 <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 w-100 mx-auto justify-content-center gap-3">
   {% for ucb in coursebindinglist %}
       {% include 'course.html' with course=ucb.course %}
@@ -84,10 +88,23 @@
 {# a modal to configure assignments #}
 {% include 'widgets/modal_assignment.html' %}
 <script src="{% static 'js/datetimepicker.js' %}"></script>
+{% else %}
+{% if not user.profile.can_createcourse %}
+<p>You cannot create a course. You are redirected to <a href="{% url 'education:courses' %}">Courses</a></p>
+<script>
+$(document).ready(function() {
+    setTimeout(function() {
+        window.location.href = "{% url 'education:courses' %}"
+    }, 3000)
+})
+</script>
+{% endif %}
+{% endif %}
 
 {% endblock %}
 
 {% block scripts %}
+{% if user.profile.can_createcourse %}
 {# FIXME static/sj/ #}
 <script>
 // Show Save Changes button
@@ -190,5 +207,6 @@ const wsURLs = {
 <script src="{% static 'js/multitabs.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/js/bootstrap5-toggle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+{% endif %}
 {% endblock %}
 

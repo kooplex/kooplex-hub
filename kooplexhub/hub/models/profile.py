@@ -15,6 +15,7 @@ class Profile(models.Model):
     can_createproject = models.BooleanField(default = True)
     can_createimage = models.BooleanField(default = False)
     can_createattachment = models.BooleanField(default = False)
+    can_createcourse = models.BooleanField(default = False)
     can_runjob = models.BooleanField(default = False)
     can_choosenode = models.BooleanField(default = False)
     can_teleport = models.BooleanField(default = False)
