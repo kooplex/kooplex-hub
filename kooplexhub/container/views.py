@@ -141,16 +141,15 @@ class ConfigureContainerView(ContainerView, generic.edit.UpdateView):
 
 
 @login_required
-def destroy(request, container_id):
+def destroy(request, pk):
     """Deletes a container instance"""
     user = request.user
-    try:
-        container = Container.objects.get(id = container_id, user = user)
+    container = Container.objects.filter(id = pk, user = user).first()
+    if container:
+        logger.debug(f'deleting {container}')
         container.stop()
         container.delete()
         messages.info(request, f'Your environment {container.name} is deleted.')
-    except Container.DoesNotExist:
-        messages.error(request, 'Container environment does not exist')
     return redirect('container:list')
 
 

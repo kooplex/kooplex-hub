@@ -159,8 +159,3 @@ def repos(container):
     return ""
 
 
-@register.filter
-def link_container_drop(container):
-    link = reverse('container:destroy', args = [container.id]) if container else ""
-
-

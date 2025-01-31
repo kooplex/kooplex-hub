@@ -8,7 +8,7 @@ urlpatterns = [
     path('list/', views.ContainerListView.as_view(), name = 'list'),
     path('new/', views.NewContainerView.as_view(), name = 'new'),
     path('configure/<int:pk>/', views.ConfigureContainerView.as_view(), name = 'configure'),
-    re_path('^delete/(?P<container_id>\d+)/?', views.destroy, name = 'destroy'),
+    path('delete/<int:pk>/', views.destroy, name = 'destroy'),
     re_path('^open/(?P<container_id>\d+)/?', views.open, name = 'open'),
 #    re_path('^report_open/(?P<container_id>\d+)/?', views.report_open, name = 'report_open'),
 ]

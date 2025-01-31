@@ -59,7 +59,7 @@
     <div class="card-footer d-flex justify-content-between {% card_border container %}">
       {% if container %}
         {{ container.render_start_html }}
-	{% include 'widgets/widget_delete.html' with msg="Are you sure you want to drop your container?" tooltip="Delete container" link=container|link_container_drop obj=container %}
+	{% include 'widgets/widget_delete.html' with msg="Are you sure you want to drop your container?" tooltip="Delete container" link=container.link_drop obj=container %}
       {% else %}
         <div class="btn-placeholder p-1" style="visibility: hidden;">Placeholder</div>
       {% endif %}

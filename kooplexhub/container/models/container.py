@@ -73,6 +73,11 @@ class Container(models.Model):
         return self.label
 
     @property
+    def link_drop(self):
+        from django.urls import reverse
+        return reverse('container:destroy', args = [self.id]) if self else ""
+
+    @property
     def default_proxy(self):
         return Proxy.objects.get(image = self.image, default = True)
 

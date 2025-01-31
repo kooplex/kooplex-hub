@@ -34,17 +34,16 @@ logger = logging.getLogger(__name__)
 def delete_or_leave(request, pk_course, pk_user):
     """Delete or leave a course."""
     user = request.user
-    logger.debug(f'del {pk_course}, {pk_user}')
     teachers=UserCourseBinding.objects.filter(course_id=pk_course, is_teacher=True)
     caller=teachers.filter(user_id=pk_user)
     others=teachers.exclude(user_id=pk_user)
     if caller:
-        logger.debug('del if')
         if others:
+            logger.debug(f'leave course {caller}')
             logger.debug(others)
             caller.delete()
         else:
-            logger.debug('delc')
+            logger.debug(f'delete course by {caller}')
             caller.course.delete()
     return redirect('education:teaching')
 
