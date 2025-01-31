@@ -6,7 +6,8 @@ from django.utils import timezone
 from datetime import datetime
 
 from channels.layers import get_channel_layer
-from django_huey import task
+from django_huey import task, periodic_task, get_queue
+from huey import crontab
 from asgiref.sync import async_to_sync
 
 from container.models import Container, Image
@@ -14,6 +15,7 @@ from kooplexhub.settings import KOOPLEX
 
 from .lib import start_environment, stop_environment
 from .lib.proxy import addroute, removeroute
+
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +30,31 @@ def _replace_widgets(container):
         'phase': container.render_state_html(),
         'restartcontainer': container.render_restartreasons_html(),
         }
+
+#FIXME: hardcoded crontab entry
+qc=get_queue('container')
+@qc.periodic_task(crontab(minute='*/15'))
+def periodic_container_check():
+    channel_layer=get_channel_layer()
+    for container in Container.objects.all():
+        status = container.check_state()
+        if status['changed']:
+            async_to_sync(channel_layer.group_send)(f"container-{container.user.id}", {
+                    "type": "feedback",
+                    "feedback": status['message'],
+                    "container_id": container.id,
+                    "container_state": container.state,
+                    "container_state_backend": container.state_backend,
+                    "replace_widgets": _replace_widgets(container),
+                })
+            if container.state == container.ST_RUNNING:
+                addroute(container, 'NB_URL', 'NB_PORT')
+                addroute(container, 'REPORT_URL', 'REPORT_PORT')
+            elif container.state == container.ST_NOTPRESENT:
+                removeroute(container, 'NB_URL')
+                removeroute(container, 'REPORT_URL')
+    return "Completed"
+
 
 @task(queue = 'container')
 def start_container(user_id, container_id):

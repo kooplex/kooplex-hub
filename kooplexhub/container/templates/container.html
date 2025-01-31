@@ -4,7 +4,7 @@
 {% load check_show %}
 
 {# Render a card that represents a contaner #}
-<div class="card bg-ligth shadow-2-strong border border-3 shadow bg-light {% card_border container %} mb-3">
+<div class="card bg-ligth shadow-2-strong border border-3 shadow bg-light {% card_border container %} mb-3" data-widget="containercard" data-id="{{container.id}}">
     <!-- Header -->
     <div class="card-header d-flex justify-content-start align-items-center {% card_border container %}">
         {% if container %}

@@ -17,6 +17,11 @@
 	return $(`[name=mount][data-id="${pk}"]`).data(binding)
     }
 
+    // lookup original id list
+    function overwriteOriginal(pk, binding, value) {
+	$(`[name=mount][data-id="${pk}"]`).data(binding, value)
+    }
+
     // Handle click to show modal
     function handleClick(containerId) {
         selectedContainerId = containerId === "" ? "" : parseInt(containerId)
@@ -41,6 +46,9 @@
 	    var projects_o = getOriginal(selectedContainerId, 'projects')
 	    var courses_o = getOriginal(selectedContainerId, 'courses')
 	    var volumes_o = getOriginal(selectedContainerId, 'volumes')
+            overwriteOriginal(selectedContainerId, 'projects', projects)
+            overwriteOriginal(selectedContainerId, 'courses', courses)
+            overwriteOriginal(selectedContainerId, 'volumes', volumes)
 
 	    var changed = register_changes(selectedContainerId, 'projects', projects, projects_o)
 	    changed = changed || register_changes(selectedContainerId, 'courses', courses, courses_o)

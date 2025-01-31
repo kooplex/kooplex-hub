@@ -50,46 +50,15 @@ def button_new_container():
     """)
 
 
+#FIXME: these 2 templates are very much alike, could be merged
 @register.simple_tag
 def button_teleport(container = None):
-    ico = static('teleport.ico')
-    return format_html(f"""
-<div id="container-teleport-{cid(container)}">
-    <button class="badge rounded-pill border border-1 border-dark p-3 me-2 position-relative" name="grant"
-            data-toggle="tooltip" title="Enable teleport login"
-            onclick="teleportButtonClick('{cid(container)}', 'True')">
-      <img src="{ico}" width="15px" alt="t">
-      <span class="position-absolute top-0 start-100 translate-middle badge bg-secondary small">off</span>
-    </button>
-    <button class="badge rounded-pill border border-2 border-success p-3 me-2 position-relative" name="revoke"
-            data-toggle="tooltip" title="Disable teleport login"
-            onclick="teleportButtonClick('{cid(container)}', 'False')">
-      <img src="{ico}" width="15px" alt="t">
-      <span class="position-absolute top-0 start-100 translate-middle badge bg-success small">on</span>
-    </button>
-</div>
-    """)
+    return render_to_string("widgets/button_teleport.html", {"container": container, 'icon': static('teleport.ico')}) if container else ""
 
 
 @register.simple_tag
 def button_seafile(container = None):
-    ico = static('seafile.png')
-    return format_html(f"""
-<div id="container-seafile-{cid(container)}">
-    <button class="badge rounded-pill border border-1 border-dark p-3 me-2 position-relative" name="grant"
-            data-toggle="tooltip" title="Mount cloud folders"
-            onclick="seafileButtonClick('{cid(container)}', 'True')">
-      <img src="{ico}" width="15px" alt="t">
-      <span class="position-absolute top-0 start-100 translate-middle badge bg-secondary small">off</span>
-    </button>
-    <button class="badge rounded-pill border border-2 border-success p-3 me-2 position-relative" name="revoke"
-            data-toggle="tooltip" title="Umount cloud folders"
-            onclick="seafileButtonClick('{cid(container)}', 'False')">
-      <img src="{ico}" width="15px" alt="t">
-      <span class="position-absolute top-0 start-100 translate-middle badge bg-success small">on</span>
-    </button>
-</div>
-    """)
+    return render_to_string("widgets/button_seafile.html", {"container": container, 'icon': static('seafile.png')}) if container else ""
 
 
 @register.simple_tag

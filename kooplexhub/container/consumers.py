@@ -5,6 +5,7 @@ import threading
 from asgiref.sync import sync_to_async
 from django.utils.html import format_html
 from django.core.exceptions import ValidationError
+from django.template.loader import render_to_string
 
 from django.db.models.query import QuerySet
 from container.models import Container
@@ -87,19 +88,18 @@ class ContainerConfigConsumer(CSyncSkeleton):
         parsed = json.loads(text_data)
         logger.debug(parsed)
         assert parsed.get('request')=='configure-container', "wrong request"
-        response = {
-            "success": {},
-            "failed": {},
-        }
-        pk = parsed.get('pk')
-        changes = parsed.get('changes')
+        response={}
+        failed={}
+        pk=parsed.get('pk')
+        changes=parsed.get('changes')
+        success=False
         if pk == "":
             container=Container(name=changes['name'], user_id=self.get_userid(), image_id=changes['image'])
             container.save()
             response["reloadpage"]=True
         else:
-            cid = int(pk)
-            container = self.get_container(cid)
+            cid=int(pk)
+            container=self.get_container(cid)
         response["container_id"]=container.id
         restart=[]
         # Iterate over the changes and try to update the model instance
@@ -114,34 +114,33 @@ class ContainerConfigConsumer(CSyncSkeleton):
                     setattr(container, field, new_value)
                     # Run Django's model validation for the field
                     container.full_clean(validate_unique=True, exclude=[f for f in changes.keys() if f != field])
-                    # If no exception was raised, add it to the success response
-                    response["success"][field] = new_value
+                    success=True
                 except ValidationError as e:
                     # Validation failed, record the error message
-                    response["failed"][field] = { "error": str(e), "value": old_value }
+                    failed[field] = { "error": str(e), "value": old_value }
             elif field == 'projects':
                 for project in Project.objects.filter(id__in = new_value):
                     ProjectContainerBinding.objects.get_or_create(project = project, container = container)
                 ProjectContainerBinding.objects.filter(container = container).exclude(project__id__in = new_value).delete()
-                response["success"]['projects']=ProjectContainerBinding.objects.filter(container = container)
                 restart.append("project mounts changed")
+                success=True
             elif field == 'courses':
                 for course in Course.objects.filter(id__in = new_value):
                     CourseContainerBinding.objects.get_or_create(course = course, container = container)
                 CourseContainerBinding.objects.filter(container = container).exclude(course__id__in = new_value).delete()
-                response["success"]['courses']=CourseContainerBinding.objects.filter(container = container)
                 restart.append("course mounts changed")
+                success=True
             elif field == 'volumes':
                 for volume in Volume.objects.filter(id__in = new_value):
                     VolumeContainerBinding.objects.get_or_create(volume = volume, container = container)
                 VolumeContainerBinding.objects.filter(container = container).exclude(volume__id__in = new_value).delete()
-                response["success"]['volumes']=VolumeContainerBinding.objects.filter(container = container)
                 restart.append("volume mounts changed")
+                success=True
             else:
                 # Attribute does not exist on the model
                 logger.error(f"Container model attribute {field} does not exist.")
         # Save the instance if there are any successful changes
-        if response["success"]:
+        if success:
             container.save()
         if 'image' in changes.keys():
             restart.append("image changed")
@@ -149,13 +148,13 @@ class ContainerConfigConsumer(CSyncSkeleton):
             restart.append("teleport {}".format("enabled" if container.start_teleport else "disabled"))
         if restart:
             container.mark_restart(", ".join(restart))
-            response["restart"] = container.restart_reasons
         message_back = {
+            "container_id": container.id,
             "feedback": f"Container {container.name} is configured",
-            "response": response,
+            "response": render_to_string("container.html", {"container": container, "errors": failed}),
         }
-        logger.debug(message_back)
-        self.send(text_data=json.dumps(message_back, cls=CustomEncoder))
+        logger.debug(message_back["feedback"])
+        self.send(text_data=json.dumps(message_back))
                 
 
 class MonitorConsumer(SyncSkeleton):

@@ -73,6 +73,8 @@ def addcontainer(request, usercoursebinding_id):
     @param usercoursebinding_id
     """
     from kooplexhub.lib.libbase import standardize_str
+    from .models import VolumeCourseBinding
+    from volume.models import VolumeContainerBinding
     user = request.user
     logger.debug("user %s, method: %s" % (user, request.method))
     try:
@@ -84,6 +86,8 @@ def addcontainer(request, usercoursebinding_id):
             image = course.preferred_image
         )
         CourseContainerBinding.objects.create(course = course, container = container)
+        for b in VolumeCourseBinding.objects.filter(course=course):
+            VolumeContainerBinding.objects.get_or_create(container=container, volume=b.volume)
         if created:
             messages.info(request, f'We created a new environment {container.name} for course {course.name}.')
         else:

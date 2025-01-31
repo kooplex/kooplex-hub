@@ -4,33 +4,13 @@
 // handle web socket callback
 function container_config_callback(message) {
         console.log(message)
-    if (message.response) {
-        const resp=message.response
-	if (resp.reloadpage) {
-            location.reload()
-	    return
-	}
-        pk = resp.container_id
-        if (resp.restart) {
-            updateRestartReason(pk, resp.restart)
-        }
-        if (resp.success) {
-            const s = resp.success
-	    projects = s.projects ? s.projects.projects : "dummy"
-	    courses = s.courses ? s.courses.courses : "dummy"
-	    volumes = s.volumes ? s.volumes.volumes : "dummy"
-            FileResourceSelection.update(pk, projects, courses, volumes)
-        }
-	if (resp.failed) {
-	    const f = resp.failed
-	    if (f.name) {
-		updateContainerName(pk, f.name.value)
-	        alert(f.name.error)
-	    } else {
-                //FIXME: ANYTHING UNHANDLED
-		console.log("unhandled failures", f)
-	    }
-	}
+    if (message.reloadpage) {
+        location.reload()
+        return
+    }
+    if (message.response && message.container_id) {
+        pk = message.container_id
+	$(`[data-widget=containercard][data-id="${pk}"]`).replaceWith(message.response)
     }
 }
 
