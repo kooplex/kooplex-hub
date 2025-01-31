@@ -8,8 +8,6 @@ from ..models import Course
 
 register = template.Library()
 
-cid = lambda course: course.id if course else ""
-
 
 @register.simple_tag
 def button_new_course(user):
@@ -19,12 +17,6 @@ def button_new_course(user):
     Create new course...
 </button>
     """)
-
-
-@register.filter
-def link_course_drop(course):
-    #FIXME: return reverse('education:delete', args = [ cid(course) ]) if course else ""
-    return ""
 
 
 @register.filter

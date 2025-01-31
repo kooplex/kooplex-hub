@@ -7,6 +7,7 @@ app_name = 'education'
 urlpatterns = [
     path('student/course/', views.StudentCourseBindingListView.as_view(), name = 'courses'),
     path('teacher/course/', views.TeacherCourseBindingListView.as_view(), name = 'teaching'),
+    path('course/delete/<int:pk_course>/<int:pk_user>/', views.delete_or_leave, name = 'delete_or_leave'),
     path('configure/<int:pk>/', views.ConfigureCourseView.as_view(), name = 'configure'),
     path('assignment_new/', views.NewAssignmentView.as_view(), name = 'assignment_new'),
     path('assignment_new/<int:pk>/', views.NewAssignmentView.as_view(), name = 'newass'),

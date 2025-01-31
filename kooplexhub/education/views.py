@@ -30,6 +30,25 @@ from kooplexhub.settings import KOOPLEX
 logger = logging.getLogger(__name__)
 
 
+@login_required
+def delete_or_leave(request, pk_course, pk_user):
+    """Delete or leave a course."""
+    user = request.user
+    logger.debug(f'del {pk_course}, {pk_user}')
+    teachers=UserCourseBinding.objects.filter(course_id=pk_course, is_teacher=True)
+    caller=teachers.filter(user_id=pk_user)
+    others=teachers.exclude(user_id=pk_user)
+    if caller:
+        logger.debug('del if')
+        if others:
+            logger.debug(others)
+            caller.delete()
+        else:
+            logger.debug('delc')
+            caller.course.delete()
+    return redirect('education:teaching')
+
+
 @require_http_methods(['GET'])
 @login_required
 def assignment_teacher(request):

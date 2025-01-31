@@ -219,7 +219,10 @@ class Container(models.Model):
         if retrieve_log:
             state['podlog'] = fetch_containerlog(self)
         mapped_state=self.mapped_backend_state
-        if self.state in [self.ST_STARTING, self.ST_STOPPING] and mapped_state in [self.ST_NOTPRESENT, self.ST_RUNNING, self.ST_ERROR]:
+        if self.state==self.ST_RUNNING and state_mapper.get(state.get('pod_phase'))==self.ST_NOTPRESENT:
+            self.state=self.ST_NOTPRESENT
+            self.save()
+        elif self.state in [self.ST_STARTING, self.ST_STOPPING] and mapped_state in [self.ST_NOTPRESENT, self.ST_RUNNING, self.ST_ERROR]:
             self.state=mapped_state
             self.save()
         elif self.state==self.ST_ERROR and mapped_state==self.ST_NOTPRESENT:
