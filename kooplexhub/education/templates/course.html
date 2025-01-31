@@ -1,7 +1,7 @@
 {% load widgets %}
 {% load container_buttons %}
 
-<div class="card rounded rounded-3 mb-3 border border-2 {% if course %}border-success{% else %}border-warning{% endif %} shadow bg-light" id="card-{{ course.id }}" data-editable="true">
+<div class="card rounded rounded-3 mb-3 border border-2 {% if course %}border-success{% else %}border-warning{% endif %} shadow bg-light" id="card-{{ course.id }}" data-widget="coursecard" data-id="{{course.id}}">
     <div class="card-header">
          {% field_name course 'course' %} {# FIXME field_name replace like below #}
     </div>

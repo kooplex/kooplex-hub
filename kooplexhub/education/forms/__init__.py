@@ -1,3 +1,3 @@
 from .course import FormCourse
-from .tables import TableAssignment, TableAssignmentConf, TableUser#, TableGroup, TableAssignmentMass
-from .assignment import FormAssignment, FormAssignmentList, FormAssignmentConfigure#, FormAssignmentHandle
+from .tables import TableAssignment, TableAssignmentConf, TableStudentsAndTeachers
+from .assignment import FormAssignment, FormAssignmentList, FormAssignmentConfigure

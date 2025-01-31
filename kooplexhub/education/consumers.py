@@ -39,6 +39,13 @@ class AssignmentConsumer(SyncSkeleton):
     def refresh_list(self, course):
         # folder for new assignment
         folders=course.dir_assignmentcandidate()
+        # get canvas assignments too? if it is a course canvas
+        try:
+            if course.canvas_course_id:
+                print(course.get_course_assignments())
+        except: 
+            pass
+        # canvas.api.get_course_assignment
         # assignment manager table
         a=Assignment.objects.filter(course=course)
         t=TableAssignmentConf(a)
@@ -146,10 +153,9 @@ class CourseConfigConsumer(SyncSkeleton):
         from container.models import Image
         parsed = json.loads(text_data)
         logger.debug(parsed)
-        response = {
-            "success": {},
-            "failed": {},
-        }
+        response = {}
+        failed={}
+        success=False
         pk = parsed.get('pk')
         changes = parsed.get('changes')
         if pk == "":
@@ -197,26 +203,26 @@ class CourseConfigConsumer(SyncSkeleton):
                     setattr(course, field, new_value)
                     # Run Django's model validation for the field
                     course.full_clean(validate_unique=True, exclude=[f for f in changes.keys() if f != field])
-                    # If no exception was raised, add it to the success response
-                    response["success"][field] = new_value
+                    success=True
                 except ValidationError as e:
                     # Validation failed, record the error message
-                    response["failed"][field] = { "error": str(e), "value": old_value }
+                    failed[field] = { "error": str(e), "value": old_value }
             elif field=="volumes":
                 for volume in Volume.objects.filter(id__in=new_value):
                     VolumeCourseBinding.objects.get_or_create(volume=volume, course=course)
                 VolumeCourseBinding.objects.filter(course=course).exclude(volume__id__in=new_value).delete()
-                response["success"]['volumes']=VolumeCourseBinding.objects.filter(course=course)
+                success=True
             else:
                 # Attribute does not exist on the model
                 logger.error(f"Course model attribute {field} does not exist.")
         # Save the instance if there are any successful changes
         logger.debug(response)
-        if response["success"]:
+        if success:
             course.save()
         message_back = {
             "feedback": f"Course {course.name} is configured",
-            "response": response,
+            "response": render_to_string("course.html", {"course": course, "user": self.scope['user'] }),
+            "course_id": course.id,
         }
-        logger.debug(message_back)
+        logger.debug(message_back["feedback"])
         self.send(text_data=json.dumps(message_back))

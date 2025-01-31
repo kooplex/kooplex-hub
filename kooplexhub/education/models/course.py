@@ -104,6 +104,11 @@ class Course(models.Model):
         except UserCourseBinding.DoesNotExist:
             return False
 
+    @register.filter
+    def table_attendee(self, user=None):
+        from ..forms import TableStudentsAndTeachers
+        return TableStudentsAndTeachers(UserCourseBinding.objects.filter(course=self).exclude(user=user))
+
 
 class UserCourseBinding(models.Model):
     user = models.ForeignKey(User, null = False, on_delete = models.CASCADE)

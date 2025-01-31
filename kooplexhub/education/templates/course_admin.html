@@ -118,16 +118,12 @@ showSaveNew['course']=function() {
 function course_config_callback(message) {
         console.log(message)
 	//FIXME: put reload in common
-    if (message.response) {
-        const resp=message.response
-	if (resp.reloadpage) {
-            location.reload()
-	    return
-	}
-        pk = resp.course_id
-	if (resp.failed) {
-	    alert(resp.failed)
-	}
+    if (message.reloadpage) {
+        location.reload()
+        return
+    }
+    if (message.response && message.course_id) {
+	$(`[data-widget=coursecard][data-id="${message.course_id}"]`).replaceWith(message.response)
     }
 }
 
