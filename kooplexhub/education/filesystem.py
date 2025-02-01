@@ -36,8 +36,8 @@ def assignment_workdir_root(usercoursebinding):
 
 def userassignment_dir(userassignmentbinding):
     from education.models import UserCourseBinding
-    ucb = UserCourseBinding.objects.get(user = userassignmentbinding.user, course = userassignmentbinding.assignment.course)
-    return os.path.join(assignment_workdir_root(ucb), userassignmentbinding.assignment.folder)
+    ucb = UserCourseBinding.objects.filter(user = userassignmentbinding.user, course = userassignmentbinding.assignment.course).first()
+    return os.path.join(assignment_workdir_root(ucb), userassignmentbinding.assignment.folder) if ucb else None
     
 def assignment_workdir(userassignmentbinding):
 #    return os.path.join(userassignment_dir(userassignmentbinding), 'assignment')
@@ -51,8 +51,8 @@ def assignment_correct_root(course):
 
 def assignment_correct_dir(userassignmentbinding):
     from education.models import UserCourseBinding
-    ucb = UserCourseBinding.objects.get(user = userassignmentbinding.user, course = userassignmentbinding.assignment.course)
-    return os.path.join(assignment_correct_root(ucb.course), userassignmentbinding.assignment.folder, userassignmentbinding.user.username)
+    ucb = UserCourseBinding.objects.filter(user = userassignmentbinding.user, course = userassignmentbinding.assignment.course).first()
+    return os.path.join(assignment_correct_root(ucb.course), userassignmentbinding.assignment.folder, userassignmentbinding.user.username) if ucb else None
 
 #      def course_garbage(course):
 #          return os.path.join(Dirname.mountpoint['garbage'], "course-%s.%f.tar.gz" % (course.folder, time.time()))
