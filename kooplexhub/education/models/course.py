@@ -32,7 +32,7 @@ class Course(models.Model):
     @register.simple_tag
     def link_drop(self, user):
         from django.urls import reverse
-        return reverse('education:delete_or_leave', args = [ self.id, user.id]) if self and user else ""
+        return reverse('education:delete_or_leave', args = [ self.id, user.id]) if self.id and user else ""
 
     @property
     def search(self):
@@ -76,6 +76,10 @@ class Course(models.Model):
     @property
     def students(self):
         return list(map(lambda x: x.user, UserCourseBinding.objects.filter(course = self, is_teacher = False)))
+
+    @property
+    def members(self):
+        return list(map(lambda x: x.user, UserCourseBinding.objects.filter(course = self)))
 
     @property
     def assignments(self):

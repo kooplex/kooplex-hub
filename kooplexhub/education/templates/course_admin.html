@@ -32,6 +32,7 @@
     </div>
 </div>
 
+
 {# new course creation modal #}
 <div id="newCourseModal" class="modal fade" tabindex="-1" aria-labelledby="newCourseModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -42,23 +43,33 @@
             </div>
             <div class="modal-body vh-25">
               <div class="container">
-                {% include 'course.html' %}
-              </div>
-	      <div class="modal-footer">
-		{% include 'widgets/widget_savechanges.html' with obj="course" show=True %}
+                {% include 'course.html' with course=empty_course %}
               </div>
             </div>
         </div>
     </div>
 </div>
+{% else %}
+{% if not coursebindinglist %}
+<p>You cannot create a course. You are redirected to <a href="{% url 'education:courses' %}">Courses</a></p>
+<script>
+$(document).ready(function() {
+    setTimeout(function() {
+        window.location.href = "{% url 'education:courses' %}"
+    }, 3000)
+})
+</script>
+{% endif %}
 {% endif %}
 
 {% if coursebindinglist %}
 <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 w-100 mx-auto justify-content-center gap-3">
+                {#% include 'course.html' with course=empty_course %#}
   {% for ucb in coursebindinglist %}
       {% include 'course.html' with course=ucb.course %}
   {% endfor %}
 </div>
+{% endif %}
 
 
 <script src="{% static 'js/config_register.js' %}"></script>
@@ -88,19 +99,6 @@
 {# a modal to configure assignments #}
 {% include 'widgets/modal_assignment.html' %}
 <script src="{% static 'js/datetimepicker.js' %}"></script>
-{% else %}
-{% if not user.profile.can_createcourse %}
-<p>You cannot create a course. You are redirected to <a href="{% url 'education:courses' %}">Courses</a></p>
-<script>
-$(document).ready(function() {
-    setTimeout(function() {
-        window.location.href = "{% url 'education:courses' %}"
-    }, 3000)
-})
-</script>
-{% endif %}
-{% endif %}
-
 {% endblock %}
 
 {% block scripts %}
@@ -138,7 +136,8 @@ $(document).ready(function() {
 
 // Save changes  FIXME: common code, put in util
 function save_course_config(pk) {
-    pk = pk === "" ? "" : parseInt(pk)
+    //pk = pk === "" ? "" : parseInt(pk)
+    pk=(pk === null || pk === undefined || pk === "" || (typeof pk === "number" && isNaN(pk)))?"None":pk
     console.log(pk)
     // Object to represent the changes
     var changeObject = { }

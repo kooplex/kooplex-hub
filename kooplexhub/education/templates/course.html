@@ -1,25 +1,18 @@
 {% load widgets %}
 {% load container_buttons %}
 
-<div class="card rounded rounded-3 mb-3 border border-2 {% if course %}border-success{% else %}border-warning{% endif %} shadow bg-light" id="card-{{ course.id }}" data-widget="coursecard" data-id="{{course.id}}">
+<div class="card rounded rounded-3 mb-3 border border-2 {% if course.id %}border-success{% else %}border-warning{% endif %} shadow bg-light" id="card-{{ course.id }}" data-widget="coursecard" data-id="{{course.id}}">
     <div class="card-header">
          {% field_name course 'course' %} {# FIXME field_name replace like below #}
     </div>
     <div class="card-body">
-	    {% if course %}
-		{% include 'widgets/multitabs.html' %}
-	    {% endif %}
-
-		    {% if course %}{% else %}
-                    {% include 'widgets/widget_input.html' with field="folder" placeholder="Add a unique folder name" instance="course" %}
-		    {% endif %}
-
-
-                <div class="d-flex justify-content-end">
-		    {% include 'widgets/widget_savechanges.html' with pk=course.id obj="course" %}
-                </div>
+        {% include 'widgets/multitabs.html' %}
+        <div class="d-flex justify-content-end">
+            {% include 'widgets/widget_savechanges.html' with pk=course.id obj="course" %}
+        </div>
     </div>
     <div class="card-footer">
 	 {% button_environment course %}
     </div>
+    <input type="hidden" name="changes" data-pk="{{course.id|default:''}}" data-instance="course">
 </div>

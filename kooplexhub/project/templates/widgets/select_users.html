@@ -13,7 +13,7 @@
                     <!-- Search Bar -->
 	            <div class="input-group">
                         <span class="input-group-text"><span class="bi bi-search"></span></span>
-                        <input class="form-control" type="text" id="search-user" placeholder="Search collaborator" title="Type in a name">
+			<input class="form-control" type="text" id="search-user" placeholder="{{placeholder_search|default:'Search user'}}" title="Type in a name">
                     </div>
                     <!-- Search Results Dropdown -->
                     <ul id="user-search-results" class="list-group position-absolute border border-2 border-secondary" style="max-height: 150px; overflow-y: auto; width: 100%;">
@@ -100,15 +100,18 @@
 
     // Handle addition
     function handleAddition(pk) {
+	    console.log(pk)
         selectedUserIds.push(pk)
-        const is_admin = $(`span[data-id=${pk}]`).prop('checked')
-        if (is_admin) {
+        const is_marked = $(`input[data-id=${pk}]`).prop('checked')
+        if (is_marked) {
             markedUserIds.push(pk)
         } else {
             markedUserIds = $.grep(markedUserIds, function(value) {
                 return value != pk
             })
         }
+
+	    console.log(selectedUserIds,markedUserIds)
         $(`tr[data-id=${pk}]`).show()
         $('#search-user').val('')
         $('#user-search-results').hide()
@@ -122,6 +125,7 @@
 	originalUserIds = $(`[name="users"][data-id="${objectId}"][data-kind="${kind}"][data-users]`).data('users')
         markedUserIds = $(`[name="users"][data-id="${objectId}"][data-kind="${kind}"][data-marked]`).data('marked')
 	originalMarkedIds = $(`[name="users"][data-id="${objectId}"][data-kind="${kind}"][data-marked]`).data('marked')
+	    console.log(selectedUserIds,markedUserIds)
 	$('tr[data-id]').each(function() {
             const pk = $(this).data('id')
 
@@ -146,9 +150,10 @@
 
     // Handle toggle changes
     function initTogglers() {
-        $("input[data-id]").on("change", function() {
-            const pk = $(this).data('pk')
-            if ($(this).prop('checked')) {
+        $(document).on("change", "[data-toggle='toggle']", function() {
+            let isChecked = $(this).prop("checked")  // Get new state (true/false)
+            const pk = $(this).data('id')
+            if (isChecked) {
                 markedUserIds.push(pk)
             } else {
                 markedUserIds = $.grep(markedUserIds, function(value) {
@@ -160,7 +165,7 @@
 
     // Confirm user selection
     $('#confirm-users-selection').on('click', function() {
-    	console.log(pk)
+    	console.log(pk, markedUserIds, originalMarkedIds, selectedUserIds, originalUserIds)
         if (pk) {
             var changed = register_changes(pk, 'marked', markedUserIds, originalMarkedIds)
 	    if (changed) {
@@ -170,7 +175,8 @@
 	    }
             if (changed) {
 		let userlist = users.filter(user => selectedUserIds.includes(user.pk)).map(user => user.name_and_username).join("<br>")
-		$(`div[data-id="${pk}"] [class=content][name=userlist]`).html(userlist)  //FIXME: use div /class; better rendering
+		    alert ("egyelore nem frissiti itt a listát, de a savere rendben lesz")
+		//$(`div[data-id="${pk}"] [class=content][name=userlist]`).html(userlist)  //FIXME: use div /class; better rendering
                 showSaveChanges(pk, instance)
             }
             // Close the modal

@@ -151,6 +151,8 @@ class CourseConfigConsumer(SyncSkeleton):
 
     def receive(self, text_data):
         from container.models import Image
+        from kooplexhub.lib.libbase import standardize_str
+        import datetime
         parsed = json.loads(text_data)
         logger.debug(parsed)
         response = {}
@@ -158,9 +160,11 @@ class CourseConfigConsumer(SyncSkeleton):
         success=False
         pk = parsed.get('pk')
         changes = parsed.get('changes')
-        if pk == "":
+        if pk=="None":
             canvas_id=changes.pop('canvasid', None)
-            course=Course.objects.create(name=changes.pop('name'), preferred_image_id=changes.pop('image'), description=changes.pop('description'), folder=changes.pop('folder'))
+            _name=changes.pop('name')
+            _folder=f"{datetime.datetime.now().year}-{standardize_str(_name)}" #FIXME settings.py-ba át lehetne tenni, year 
+            course=Course.objects.create(name=_name, preferred_image_id=changes.pop('image'), description=changes.pop('description'), folder=_folder)
             binding=UserCourseBinding.objects.create(user_id=self.get_userid(), course=course, is_teacher=True)
             if canvas_id:
                 from canvas.models import CanvasCourse, Canvas
