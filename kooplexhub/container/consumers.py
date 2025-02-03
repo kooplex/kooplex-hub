@@ -88,19 +88,18 @@ class ContainerConfigConsumer(CSyncSkeleton):
         parsed = json.loads(text_data)
         logger.debug(parsed)
         assert parsed.get('request')=='configure-container', "wrong request"
-        response={}
         failed={}
         pk=parsed.get('pk')
         changes=parsed.get('changes')
         success=False
-        if pk == "":
+        if pk == "None":
+            reloadpage=True
             container=Container(name=changes['name'], user_id=self.get_userid(), image_id=changes['image'])
             container.save()
-            response["reloadpage"]=True
         else:
+            reloadpage=False
             cid=int(pk)
             container=self.get_container(cid)
-        response["container_id"]=container.id
         restart=[]
         # Iterate over the changes and try to update the model instance
         for field, new_value in changes.items():
@@ -150,8 +149,9 @@ class ContainerConfigConsumer(CSyncSkeleton):
             container.mark_restart(", ".join(restart))
         message_back = {
             "container_id": container.id,
-            "feedback": f"Container {container.name} is configured",
-            "response": render_to_string("container.html", {"container": container, "errors": failed}),
+            "feedback": f"Container {container.name} is created" if reloadpage else f"Container {container.name} is configured",
+            "response": "reloadpage" if reloadpage else render_to_string("container.html", {"container": container, "errors": failed}),
+            "container_id": container.id,
         }
         logger.debug(message_back["feedback"])
         self.send(text_data=json.dumps(message_back))

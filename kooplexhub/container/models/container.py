@@ -75,7 +75,7 @@ class Container(models.Model):
     @property
     def link_drop(self):
         from django.urls import reverse
-        return reverse('container:destroy', args = [self.id]) if self else ""
+        return reverse('container:destroy', args = [self.id]) if self.id else ""
 
     @property
     def default_proxy(self):
@@ -258,10 +258,10 @@ class Container(models.Model):
         return render_to_string("widgets/widget_image.html", {"pk": self.id, "image": self.image})
 
     def render_start_html(self):
-        return render_to_string("widgets/widget_container_start.html", {"container": self})
+        return render_to_string("widgets/widget_container_start.html", {"container": self}) if self.id else ""
 
     def render_stop_html(self):
-        return render_to_string("widgets/widget_container_stop.html", {"container": self})
+        return render_to_string("widgets/widget_container_stop.html", {"container": self}) if self.id else ""
 
     def render_open_html(self):
         _link = reverse('container:open', args = [self.id]) if self.id else ""
@@ -269,10 +269,10 @@ class Container(models.Model):
 
     def render_fetchlogs_html(self):
         _active = [ Container.ST_RUNNING, Container.ST_ERROR ]
-        return render_to_string("widgets/widget_container_fetchlogs.html", {"container": self, "is_active": self.mapped_backend_state in _active})
+        return render_to_string("widgets/widget_container_fetchlogs.html", {"container": self, "is_active": self.mapped_backend_state in _active}) if self.id else ""
 
     def render_state_html(self):
-        return render_to_string("widgets/widget_container_state.html", {"container": self})
+        return render_to_string("widgets/widget_container_state.html", {"container": self}) if self.id else ""
 
     def render_restartreasons_html(self):
-        return render_to_string("widgets/widget_container_restartreasons.html", {"container": self})
+        return render_to_string("widgets/widget_container_restartreasons.html", {"container": self}) if self.id else ""

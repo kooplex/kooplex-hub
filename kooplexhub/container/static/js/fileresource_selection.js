@@ -24,7 +24,7 @@
 
     // Handle click to show modal
     function handleClick(containerId) {
-        selectedContainerId = containerId === "" ? "" : parseInt(containerId)
+        selectedContainerId = containerId === "None" ? "None" : parseInt(containerId)
         $(".configtoggle").each(function() {
             $(this).bootstrapToggle("off")
         })

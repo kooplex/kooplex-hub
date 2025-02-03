@@ -13,7 +13,7 @@
 <div id="containerListPane" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 w-100 mx-auto justify-content-center">
     {# new container create card #}
     <div class="col" id="card-container-new">
-      {% include 'container.html' %}
+      {% include 'container.html' with container=empty_container %}
     </div>
     {% for container in containers %}
       <div class="col" id="card-container-{{ container.id }}">

@@ -4,11 +4,11 @@
 // handle web socket callback
 function container_config_callback(message) {
         console.log(message)
-    if (message.reloadpage) {
-        location.reload()
-        return
-    }
     if (message.response && message.container_id) {
+        if (message.response=="reloadpage") {
+            location.reload()
+            return
+        }
         pk = message.container_id
 	$(`[data-widget=containercard][data-id="${pk}"]`).replaceWith(message.response)
     }
@@ -17,7 +17,7 @@ function container_config_callback(message) {
 
 // Save changes
 function save_container_config(pk) {
-    pk = pk === "" ? "" : parseInt(pk)
+    pk = pk === "None" ? "None" : parseInt(pk)
     console.log(pk)
     // Object to represent the changes
     var changeObject = { }

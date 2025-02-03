@@ -4,10 +4,10 @@
 {% load check_show %}
 
 {# Render a card that represents a contaner #}
-<div class="card bg-ligth shadow-2-strong border border-3 shadow bg-light {% card_border container %} mb-3" data-widget="containercard" data-id="{{container.id}}">
+<div class="card bg-ligth shadow-2-strong border border-3 shadow bg-light {% if container.id %}border-success{%else%}border-warning{%endif%} mb-3" data-widget="containercard" data-id="{{container.id}}">
     <!-- Header -->
-    <div class="card-header d-flex justify-content-start align-items-center {% card_border container %}">
-        {% if container %}
+    <div class="card-header d-flex justify-content-start align-items-center {% if container.id %}border-success{%else%}border-warning{%endif%}">
+        {% if container.id %}
 	  {{ container.render_open_html }}
         {% else %}
           {% button_new_container %}
@@ -56,8 +56,8 @@
     </div>
     
     <!-- Footer -->
-    <div class="card-footer d-flex justify-content-between {% card_border container %}">
-      {% if container %}
+    <div class="card-footer d-flex justify-content-between {% if container.id %}border-success{%else%}border-warning{%endif%}">
+      {% if container.id %}
         {{ container.render_start_html }}
 	{% include 'widgets/widget_delete.html' with msg="Are you sure you want to drop your container?" tooltip="Delete container" link=container.link_drop obj=container %}
       {% else %}

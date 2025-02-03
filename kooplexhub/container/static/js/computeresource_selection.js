@@ -40,7 +40,7 @@
 
     // Handle click to show modal
     function handleClick(containerId, node) {
-        selectedContainerId = containerId === "new" ? "new" : parseInt(containerId)
+        selectedContainerId = containerId === "None" ? "None" : parseInt(containerId)
 	const thebutton = $(`#container-resources-${containerId}`)
         if (node === "None") { node = "" }
 	selectedNode = node

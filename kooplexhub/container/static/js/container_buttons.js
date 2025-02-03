@@ -74,7 +74,7 @@ function applyButton(widgetId, selectedButtonName) {
 
 // Show Save Changes button
 showSaveNew['container']=function() {
-  var count = changes.filter(x => x.pk === ""  && ["name", "image"].includes(x.field)).length
+  var count = changes.filter(x => x.pk === "None"  && ["name", "image"].includes(x.field)).length
   return count>=2
 }
 

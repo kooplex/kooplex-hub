@@ -16,18 +16,6 @@ register = template.Library()
 visible = lambda x: "" if x else "d-none"
 cid = lambda container: container.id if container else "new"
 
-@register.simple_tag
-def card_border(container = None):
-    if container:
-        # conditional formatting
-        #if container.image.imagetype == container.image.TP_PROJECT:
-        #if container.image.imagetype == container.image.TP_REPORT:
-        #if container.image.imagetype == container.image.TP_API:
-        # lehet hátteret is betehetjük majd
-        return "border-success"
-    else:
-        return "border-warning"
-
 
 @register.simple_tag
 def button_environment(obj = None):

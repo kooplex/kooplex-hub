@@ -178,6 +178,7 @@ class ContainerListView(LoginRequiredMixin, generic.ListView):
         context['url_list'] = reverse('container:list')
         context['resource_form']=FormContainer(initial={'user': self.request.user})
         context['images'] = Image.objects.filter(imagetype = Image.TP_PROJECT, present = True)
+        context['empty_container'] = Container()
         return context
 
     def get_queryset(self):
