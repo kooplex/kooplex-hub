@@ -68,7 +68,9 @@ function applyButton(widgetId, selectedButtonName) {
     $(`#${widgetId} > [name]`).each(function () { $(this).hide() })
 
     // Show the selected button
-    $(`#${widgetId} > [name=${selectedButtonName}]`).show()
+    let button=$(`#${widgetId} > [name=${selectedButtonName}]`)
+    button.show()
+    button.removeClass('d-none')
 }
 
 
@@ -84,43 +86,26 @@ $(document).on('click', '[name=save][data-id][data-instance=container]', functio
 })
 
 
-// This function can be triggered initially on page load or from WebSocket events
-const buttonTeleportStates = {
-  "True": "revoke",
-  default: "grant"
-};
-function updateTeleportButton(containerId, state) {
-    let widgetId = `container-teleport-${containerId}`
-    let selectedButtonName = buttonTeleportStates[state] || "grant"
-    applyButton(widgetId, selectedButtonName)
-}
+// handle teleport button
+$(document).on('click', '[data-field=start_teleport][name][data-id]', function() {
+    let pk=$(this).data('id')
+    let name=$(this).attr('name')
+    let widgetId = `container-teleport-${pk}`
+    containerId = pk === "None" ? "None" : parseInt(pk)
+    applyButton(widgetId, name==='grant'?'revoke':'grant')
+    register_changes(containerId, 'start_teleport', name, $(widgetId).data('orig'))
+    showSaveChanges(containerId, 'container')
+})
 
-function teleportButtonClick(containerId, req) {
-    containerId = containerId === "new" ? "new" : parseInt(containerId)
-    const changed = register_changes(containerId, 'start_teleport', req, '') // FIXME: old
-    if (changed) {
-        updateTeleportButton(containerId, req)
-	showSaveChanges(containerId, 'container')
-    }
-}
 
-// This function can be triggered initially on page load or from WebSocket events
-const buttonSeafileStates = {
-  "True": "revoke",
-  default: "grant"
-};
-function updateSeafileButton(containerId, state) {
-    let widgetId = `container-seafile-${containerId}`
-    let selectedButtonName = buttonSeafileStates[state] || "grant"
-    applyButton(widgetId, selectedButtonName)
-}
-
-function seafileButtonClick(containerId, req) {
-    containerId = containerId === "new" ? "new" : parseInt(containerId)
-    const changed = register_changes(containerId, 'start_seafile', req, '') // FIXME: old
-    if (changed) {
-        updateSeafileButton(containerId, req)
-	showSaveChanges(containerId, 'container')
-    }
-}
+// handle seafile button
+$(document).on('click', '[data-field=start_seafile][name][data-id]', function() {
+    let pk=$(this).data('id')
+    let name=$(this).attr('name')
+    let widgetId = `container-seafile-${pk}`
+    containerId = pk === "None" ? "None" : parseInt(pk)
+    applyButton(widgetId, name==='grant'?'revoke':'grant')
+    register_changes(containerId, 'start_seafile', name, $(widgetId).data('orig'))
+    showSaveChanges(containerId, 'container')
+})
 

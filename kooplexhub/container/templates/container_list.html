@@ -71,16 +71,6 @@ const wsURLs = {
   container_config: "{{ wss_container_config }}",
   monitor_node: "{{ wss_monitor_node }}"
 }
-
-$(document).ready(function() {
-    // Example initialization, assuming `containers` is passed from Django context
-    {% for container in containers %}
-        updateTeleportButton({{ container.id }}, "{{ container.start_teleport }}")
-        updateSeafileButton({{ container.id }}, "{{ container.start_seafile }}")
-    {% endfor %}
-    updateTeleportButton("new", "grant")
-    updateSeafileButton("new", "grant")
-});
 </script>
 <script>
 
