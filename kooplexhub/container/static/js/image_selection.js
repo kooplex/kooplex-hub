@@ -75,7 +75,7 @@
 
     // Handle click to show modal
     function handleClick(pk, imageSelectedId, attribute = "image") {
-        selectedObjectId = pk === "" ? "" : parseInt(pk)
+        selectedObjectId = pk === "None" ? "None" : parseInt(pk)
 	targetAttribute = attribute
 	imageId = imageSelectedId
         $('.image-modal').modal('show')

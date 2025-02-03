@@ -14,8 +14,9 @@
               <div class="container">
                 <div class="d-flex flex-column">
 	          <div id="canvascourseSelection" class="mb-2"></div>
-		  {% include 'widgets/widget_description.html' with placeholder="Add course description" maxheight="200px" instance="course" %}
-		  {% container_image course %}
+                  {% include 'course.html' with course=empty_course canvas='canvas' %}
+		  {#% include 'widgets/widget_description.html' with placeholder="Add course description" maxheight="200px" instance="course" %#}
+		  {#% container_image course %#}
                   {# FIXME rendering etc % include 'widgets/widget_volumes.html' with maxheight="118px" pk=course.id volumes=course.volumes % #}
                 </div>
               </div>

@@ -6,7 +6,15 @@
          {% field_name course 'course' %} {# FIXME field_name replace like below #}
     </div>
     <div class="card-body">
-        {% include 'widgets/multitabs.html' %}
+	{% if course.id %}
+        {% include 'widgets/multitabs.html' with pk=course.id %}
+	{% else %}
+	{% if canvas %}
+        {% include 'widgets/multitabs.html' with pk='canvas' new=True %}
+	{% else %}
+        {% include 'widgets/multitabs.html' with pk=course.id new=True %}
+	{% endif%}
+	{% endif%}
         <div class="d-flex justify-content-end">
             {% include 'widgets/widget_savechanges.html' with pk=course.id obj="course" %}
         </div>
@@ -14,5 +22,4 @@
     <div class="card-footer">
 	 {% button_environment course %}
     </div>
-    <input type="hidden" name="changes" data-pk="{{course.id|default:''}}" data-instance="course">
 </div>

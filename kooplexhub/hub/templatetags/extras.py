@@ -10,11 +10,6 @@ from kooplexhub.settings import URL_MANUAL, manual_mapping
 register = template.Library()
 
 
-#@register.filter
-#def obj_id(obj):
-#    return getattr(obj, 'id', '') or ''
-
-
 @register.filter
 def id_list(queryset):
     return list(map(lambda o: o.id, queryset))

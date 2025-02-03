@@ -63,9 +63,6 @@ def button_seafile(container = None):
 
 @register.simple_tag
 def container_image(obj, attr="image"):
-    #FIXME
-    if isinstance(obj, str):
-        obj=object()
     return render_to_string("widgets/widget_image.html", {"pk": getattr(obj, 'id', None), "image": getattr(obj, attr, "")})
 
 

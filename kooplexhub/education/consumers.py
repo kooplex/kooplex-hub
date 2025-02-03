@@ -155,12 +155,12 @@ class CourseConfigConsumer(SyncSkeleton):
         import datetime
         parsed = json.loads(text_data)
         logger.debug(parsed)
-        response = {}
         failed={}
         success=False
         pk = parsed.get('pk')
         changes = parsed.get('changes')
         if pk=="None":
+            reloadpage=True
             canvas_id=changes.pop('canvasid', None)
             _name=changes.pop('name')
             _folder=f"{datetime.datetime.now().year}-{standardize_str(_name)}" #FIXME settings.py-ba át lehetne tenni, year 
@@ -173,8 +173,8 @@ class CourseConfigConsumer(SyncSkeleton):
                 canvascourse=CanvasCourse.objects.create(name=course.name, canvas_course_id=canvas_id, course=course)
                 for cs in canvascourse.get_course_students(canvas.token):
                     UserCourseBinding.objects.create(course=course, user=cs)
-            response["reloadpage"]=True
         else:
+            reloadpage=False
             cid = int(pk)
             course = self.get_course(cid)
         # Add students and teachers
@@ -220,12 +220,11 @@ class CourseConfigConsumer(SyncSkeleton):
                 # Attribute does not exist on the model
                 logger.error(f"Course model attribute {field} does not exist.")
         # Save the instance if there are any successful changes
-        logger.debug(response)
         if success:
             course.save()
         message_back = {
-            "feedback": f"Course {course.name} is configured",
-            "response": render_to_string("course.html", {"course": course, "user": self.scope['user'] }),
+            "feedback": f"Course {course.name} is createed" if reloadpage else f"Course {course.name} is configured",
+            "response": "reloadpage" if reloadpage else render_to_string("course.html", {"course": course, "user": self.scope['user'] }),
             "course_id": course.id,
         }
         logger.debug(message_back["feedback"])
