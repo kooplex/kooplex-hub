@@ -1,39 +1,3 @@
-{# FIXME move to hub/templaes/widgets #}
-<!-- templates/widgets/select_users.html -->
-{% load django_tables2 %}
-<div class="modal fade users-modal" tabindex="-1" aria-labelledby="usersModalLabel" aria-hidden="true" data-instance="{{instance}}">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="usersModalLabel">Select Users</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body vh-25">
-                <div class="container mt-3">
-                    <!-- Search Bar -->
-	            <div class="input-group">
-                        <span class="input-group-text"><span class="bi bi-search"></span></span>
-			<input class="form-control" type="text" id="search-user" placeholder="{{placeholder_search|default:'Search user'}}" title="Type in a name">
-                    </div>
-                    <!-- Search Results Dropdown -->
-                    <ul id="user-search-results" class="list-group position-absolute border border-2 border-secondary" style="max-height: 150px; overflow-y: auto; width: 100%;">
-                        <!-- Dynamic list of matching users will be appended here -->
-                    </ul>
-                    <!-- Selected Users Table -->
-		    {# FIXME mt-2 #}
-		    {% render_table t_users %}
-                </div>
-
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" id="confirm-users-selection">Confirm</button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Dismiss</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
 // User Selection Modal Logic
 (function() {
     var pk = null
@@ -71,7 +35,6 @@
     // Handle search bar input
     $('#search-user').on('input', function () {
         const query = $(this).val().toLowerCase().trim().replaceAll(' ', '')
-	    console.log(query)
         if (query) {
             const matches = users.filter(user =>
                 selectedUserIds.indexOf(user.pk) == -1 && user.search.includes(query)
@@ -100,7 +63,6 @@
 
     // Handle addition
     function handleAddition(pk) {
-	    console.log(pk)
         selectedUserIds.push(pk)
         const is_marked = $(`input[data-id=${pk}]`).prop('checked')
         if (is_marked) {
@@ -111,7 +73,6 @@
             })
         }
 
-	    console.log(selectedUserIds,markedUserIds)
         $(`tr[data-id=${pk}]`).show()
         $('#search-user').val('')
         $('#user-search-results').hide()
@@ -119,13 +80,12 @@
 
     // Handle modal open
     function handleOpen(objectId, kind) {
-        pk = objectId==="" ?"":parseInt(objectId)
+        pk = objectId==="None" ?"None":parseInt(objectId)
         instance=$(".users-modal").data('instance')
 	selectedUserIds = $(`[name="users"][data-id="${objectId}"][data-kind="${kind}"][data-users]`).data('users')
 	originalUserIds = $(`[name="users"][data-id="${objectId}"][data-kind="${kind}"][data-users]`).data('users')
         markedUserIds = $(`[name="users"][data-id="${objectId}"][data-kind="${kind}"][data-marked]`).data('marked')
 	originalMarkedIds = $(`[name="users"][data-id="${objectId}"][data-kind="${kind}"][data-marked]`).data('marked')
-	    console.log(selectedUserIds,markedUserIds)
 	$('tr[data-id]').each(function() {
             const pk = $(this).data('id')
 
@@ -137,7 +97,7 @@
             }
 
             // Find the toggle button within the row
-            const toggleButton = $(this).find(`input[name="toggler"][data-id=${pk}]`)
+            const toggleButton = $(this).find(`input[name=usermarker][data-id=${pk}]`)
             // Check if pk is in marked list
             if (markedUserIds.includes(pk)) {
                 toggleButton.bootstrapToggle('on')
@@ -150,7 +110,7 @@
 
     // Handle toggle changes
     function initTogglers() {
-        $(document).on("change", "[data-toggle='toggle']", function() {
+        $(document).on("change", "[data-toggle='toggle'][name=usermarker]", function() {
             let isChecked = $(this).prop("checked")  // Get new state (true/false)
             const pk = $(this).data('id')
             if (isChecked) {
@@ -165,7 +125,6 @@
 
     // Confirm user selection
     $('#confirm-users-selection').on('click', function() {
-    	console.log(pk, markedUserIds, originalMarkedIds, selectedUserIds, originalUserIds)
         if (pk) {
             var changed = register_changes(pk, 'marked', markedUserIds, originalMarkedIds)
 	    if (changed) {
@@ -204,5 +163,3 @@ $(document).ready(function () {
      UserSelection.init()
 })
 
-</script>
-{{ users|json_script:"users_data" }}

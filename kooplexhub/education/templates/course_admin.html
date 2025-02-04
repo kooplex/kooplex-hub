@@ -24,7 +24,6 @@
         <div class="card rounded rounded-3 mb-3 border border-2 border-warning shadow bg-light">
             <div class="card-body">
                 <div class="d-flex flex-column">
-                    {% button_fetch_canvascourses user %}
                     {% button_new_course user %}
                 </div>
             </div>
@@ -34,21 +33,8 @@
 
 
 {# new course creation modal #}
-<div id="newCourseModal" class="modal fade" tabindex="-1" aria-labelledby="newCourseModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="newCourseModalLabel">Create a new course</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body vh-25">
-              <div class="container">
-                {% include 'course.html' with course=empty_course %}
-              </div>
-            </div>
-        </div>
-    </div>
-</div>
+{% include modal_new %}
+
 {% else %}
 {% if not coursebindinglist %}
 <p>You cannot create a course. You are redirected to <a href="{% url 'education:courses' %}">Courses</a></p>
@@ -64,7 +50,6 @@ $(document).ready(function() {
 
 {% if coursebindinglist %}
 <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 w-100 mx-auto justify-content-center gap-3">
-                {#% include 'course.html' with course=empty_course %#}
   {% for ucb in coursebindinglist %}
       {% include 'course.html' with course=ucb.course %}
   {% endfor %}
@@ -72,11 +57,8 @@ $(document).ready(function() {
 {% endif %}
 
 
+{# load common configuration logic #}
 <script src="{% static 'js/config_register.js' %}"></script>
-
-{# a modal to create using canvas course #}
-{% include 'widgets/fetch_canvascourses_modal.html' %}
-<script src="{% static 'js/canvascourse.js' %}"></script>
 
 {# a modal to configure a course image #}
 {% include 'widgets/image_selection.html' with instance="course" %}

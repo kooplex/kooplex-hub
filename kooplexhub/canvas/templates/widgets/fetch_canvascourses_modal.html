@@ -1,30 +1,8 @@
+{% extends 'new_course.html' %}
 {% load static %}
-{% load course_buttons %}
-{% load container_buttons %}
 
-<!-- templates/widgets/fetch_canvascourses_modal.html -->
-<div id="canvascoursesModal" class="modal fade canvascourses-modal" tabindex="-1" aria-labelledby="canvascoursesModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="canvascoursesModalLabel">Select from your canvas courses be created in kooplex</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body vh-25">
-              <div class="container">
-                <div class="d-flex flex-column">
-	          <div id="canvascourseSelection" class="mb-2"></div>
-                  {% include 'course.html' with course=empty_course canvas='canvas' %}
-		  {#% include 'widgets/widget_description.html' with placeholder="Add course description" maxheight="200px" instance="course" %#}
-		  {#% container_image course %#}
-                  {# FIXME rendering etc % include 'widgets/widget_volumes.html' with maxheight="118px" pk=course.id volumes=course.volumes % #}
-                </div>
-              </div>
-	      <div class="modal-footer">
-		{% include 'widgets/widget_savechanges.html' with obj="course" %}
-              </div>
-            </div>
-        </div>
-    </div>
-</div>
+{% block course_plugin %}
+<div id="canvascourseSelection" class="mb-2"></div>
+<script src="{% static 'js/canvascourse.js' %}"></script>
+{% endblock %}
 

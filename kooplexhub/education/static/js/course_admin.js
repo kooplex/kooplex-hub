@@ -7,7 +7,6 @@ showSaveNew['course']=function() {
 
 // handle web socket callback
 function course_config_callback(message) {
-        console.log(message)
     if (message.response && message.course_id) {
         if (message.response=="reloadpage") {
             location.reload()
@@ -58,7 +57,7 @@ function save_course_config(pk) {
 }
 
 
-$(document).on('click', '[name="assignment"][data-id]', function() {
+$(document).on('click', '[name=assignment][data-id]', function() {
     let pk = $(this).data('id')
     AssignmentHandler.openModal(pk)
 })
@@ -71,7 +70,7 @@ $(document).on('click', '[name="save"][data-id][data-instance=course]', function
 })
 
 
-$(document).on('click', '[name="users"]', function() {
+$(document).on('click', '[name=users][data-id][data-kind]', function() {
     const objectId = $(this).data('id')  // Get the id from the button's data-id attribute
     const kind = $(this).data('kind')  // Get the id from the button's data-id attribute
     UserSelection.openModal(objectId, kind)

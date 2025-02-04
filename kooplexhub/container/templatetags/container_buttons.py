@@ -54,6 +54,7 @@ def container_image(obj, attr="image"):
     return render_to_string("widgets/widget_image.html", {"pk": getattr(obj, 'id', None), "image": getattr(obj, attr, "")})
 
 
+#FIXME be a templated widget
 @register.simple_tag
 def container_resources(container = None):
     _atlist = [ "node", "cpurequest", "gpurequest", "memoryrequest", "idletime"]
@@ -69,7 +70,7 @@ def container_resources(container = None):
       data-node="{atts['node']}" data-cpurequest="{atts['cpurequest']}" data-gpurequest="{atts['gpurequest']}"
       data-memoryrequest="{atts['memoryrequest']}" data-idletime="{atts['idletime']}"
       onclick="ComputeResourceSelection.openModal('{cid(container)}', \'{atts['node']}\')">
-  <button class="badge rounded-pill text-dark p-3 border border-1 border-dark w-100 text-start" role="button">
+  <button class="badge rounded-pill text-dark p-2 border border-1 border-dark w-100 text-start" role="button">
     <span class="{hv['node']}" name="node"><i class="bi bi-pc me-1"></i><span name="node_name" class="me-2">{truncatechars(atts['node'], 6)}</span></span>
     <span class="{hv['cpurequest']}" name"cpu"><i class="bi bi-cpu me-1"></i><span name="node_cpu_request" class="me-2">{atts['cpurequest']}</span></span>
     <span class="{hv['gpurequest']}" name="gpu"><i class="bi bi-gpu-card me-1"></i><span name="node_gpu_request" class="me-2">{atts['gpurequest']}</span></span>

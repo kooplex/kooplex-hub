@@ -1,11 +1,11 @@
 {% if is_active %}
-<button name="fetch" data-id="{{container.id}}" class="badge rounded-pill text-bg-info border p-3 me-2"
+<button name="fetch" data-id="{{container.id}}" class="badge rounded-pill text-bg-info border p-2 me-2"
     data-toggle="tooltip" title="Click to retrieve latest container logs" data-placement="bottom"
     data-bs-toggle="modal" data-bs-target="#fetchlogsModal">
     <span class="bi bi-heart-pulse"></span>
 </button>
 {% else %}
-<button name="fetch" data-id="{{container.id}}" class="badge rounded-pill text-bg-secondary border p-3 me-2" disabled>
+<button name="fetch" data-id="{{container.id}}" class="badge rounded-pill text-bg-secondary border p-2 me-2" disabled>
     <span class="bi bi-heart-pulse"></span>
 </button>
 {% endif %}

@@ -27,6 +27,8 @@
       <div class="col" id="hideable-course-{{ ucb.course.id }}">
         {% include 'student_course.html' with course=ucb.course t_assignments=ucb.assignments_table %}
       </div>
+    {% empty %}
+    <p>You have not been added to a course yet.</p>
     {% endfor %}
   </div>
 </div>

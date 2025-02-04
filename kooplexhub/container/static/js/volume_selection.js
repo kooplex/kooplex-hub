@@ -23,20 +23,25 @@
 
     // Handle click to show modal
     function handleClick(objectId) {
-        selectedObjectId = objectId === "" ? "" : parseInt(objectId)
+        selectedObjectId = objectId === "None" ? "None" : parseInt(objectId)
 	volumes_o = $(`[data-id="${selectedObjectId}"][data-volumes]`).data('volumes')
-        $(".configtoggle").each(function() {
-	    pk = parseInt($(this).val())
-	    if (volumes_o.includes(pk)) {
-                $(this).bootstrapToggle("on")
-	    } else {
-                $(this).bootstrapToggle("off")
-	    }
-        })
+	if ($(".configtoggle[name=attach-volume]").length > 0) {
+            $(".configtoggle[name=attach-volume]").each(function() {
+	        pk = parseInt($(this).val())
+	        console.log(pk)
+	        console.log($(this))
+                $(this).bootstrapToggle();  // Initialize it
+	        if (volumes_o.includes(pk)) {
+                    $(this).bootstrapToggle("on")
+	        } else {
+                    $(this).bootstrapToggle("off")
+	        }
+            })
+	}
         $('.volumes-modal').modal('show')
 
 	// preset togglers
-	ary_set(getOriginal(objectId, 'volumelist'), "volumetoggler")
+	//ary_set(getOriginal(objectId, 'volumelist'), "volumetoggler")
     }
 
 

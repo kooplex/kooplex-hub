@@ -22,8 +22,8 @@ class ManagedWebSocket {
         };
 
         this.socket.onmessage = (event) => {
-            console.log('Message received:', event.data);
             const data = JSON.parse(event.data);
+            console.log("Received attributes:", Object.keys(data));
             if (data['feedback']) {
               feedback(data['feedback']);
             }
@@ -42,6 +42,7 @@ class ManagedWebSocket {
         };
 
         this.socket.onerror = (error) => {
+		$("#oopses").text(error)//FIXME : remove it
             console.error('WebSocket error:', error, this.endpoint);
             if (this.callbacks.onError) this.callbacks.onError(error);
         };
@@ -51,6 +52,7 @@ class ManagedWebSocket {
         if (this.socket.readyState === WebSocket.OPEN) {
             this.socket.send(data);
         } else {
+		$("#oopses").text(this.socket.readyState)//FIXME : remove it
             console.warn('WebSocket ${this.endpoint} is not ready. Attempting to reconnect...');
             this.pendingMessages.push(data); // Store the message for later
             if (this.socket.readyState === WebSocket.CLOSED) {

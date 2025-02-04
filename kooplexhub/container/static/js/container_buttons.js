@@ -21,7 +21,7 @@ $(document).ready(function() {
 
 
 // start a container
-$(document).on('click', 'button[name="startcontainer"]', function () {
+$(document).on('click', 'button[name="startcontainer"][data-id]', function () {
   const objectId = $(this).data('id'); // Get the id from the button's data-id attribute
   wss_containercontrol.send(JSON.stringify({
     pk: objectId,
@@ -31,7 +31,7 @@ $(document).on('click', 'button[name="startcontainer"]', function () {
 
 
 // stop a container
-$(document).on('click', 'button[name="stopcontainer"]', function () {
+$(document).on('click', 'button[name="stopcontainer"][data-id]', function () {
   const objectId = $(this).data('id'); // Get the id from the button's data-id attribute
   wss_containercontrol.send(JSON.stringify({
     pk: objectId,
@@ -41,7 +41,7 @@ $(document).on('click', 'button[name="stopcontainer"]', function () {
 
 
 // restart a container
-$(document).on('click', 'button[name="restartcontainer"]', function () {
+$(document).on('click', 'button[name="restartcontainer"][data-id]', function () {
   const objectId = $(this).data('id'); // Get the id from the button's data-id attribute
   wss_containercontrol.send(JSON.stringify({
     pk: objectId,
@@ -51,7 +51,7 @@ $(document).on('click', 'button[name="restartcontainer"]', function () {
 
 
 // open a container
-$(document).on('click', 'button[name="opencontainer"]', function () {
+$(document).on('click', 'button[name="opencontainer"][data-url]', function () {
   const url = $(this).data('url') // Get the url from the button's data-url attribute
   console.log( "opening: " + url )
   var win = window.open(url, '_blank')
@@ -75,9 +75,11 @@ function applyButton(widgetId, selectedButtonName) {
 
 
 // Show Save Changes button
-showSaveNew['container']=function() {
-  var count = changes.filter(x => x.pk === "None"  && ["name", "image"].includes(x.field)).length
-  return count>=2
+if (typeof showSaveNew !== "undefined") {
+    showSaveNew['container']=function() {
+      var count = changes.filter(x => x.pk === "None"  && ["name", "image"].includes(x.field)).length
+      return count>=2
+    }
 }
 
 

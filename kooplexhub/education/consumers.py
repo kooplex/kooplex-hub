@@ -173,6 +173,8 @@ class CourseConfigConsumer(SyncSkeleton):
                 canvascourse=CanvasCourse.objects.create(name=course.name, canvas_course_id=canvas_id, course=course)
                 for cs in canvascourse.get_course_students(canvas.token):
                     UserCourseBinding.objects.create(course=course, user=cs)
+                for ct in canvascourse.get_course_teachers(canvas.token):
+                    UserCourseBinding.objects.get_or_create(course=course, user=ct, is_teacher=True)
         else:
             reloadpage=False
             cid = int(pk)
@@ -182,6 +184,9 @@ class CourseConfigConsumer(SyncSkeleton):
         if users:
             teachers=changes.pop('marked', [])
             for u in users:
+                if u==self.userid:
+                    # skip caller
+                    continue
                 is_teacher=u in teachers
                 b=UserCourseBinding.objects.filter(user__id=u, course=course)
                 if b:
@@ -193,7 +198,7 @@ class CourseConfigConsumer(SyncSkeleton):
                 UserCourseBinding.objects.create(user_id=u, course=course, is_teacher=is_teacher)
             # Remove students and teachers
             users.append(self.userid)  # make sure caller is not removed
-            UserCourseBinding.objects.filter(course=course).exclude(user__id__in=users).delete()
+            UserCourseBinding.objects.filter(course=course).exclude(user__id__in=users).exclude(user__id=self.userid).delete()
         # Iterate over the changes and try to update the model instance
         for field, new_value in changes.items():
             if field == 'image':
