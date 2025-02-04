@@ -109,6 +109,10 @@ class ContainerConfigConsumer(CSyncSkeleton):
             if is_model_field(container, field):
                 old_value = getattr(container, field)
                 try:
+                    if field in ['start_teleport', 'start_seafile']:
+                        _what=field.split('_')[-1]
+                        restart.append(f"the {_what} requested state is changed")
+                        new_value=new_value=="grant"
                     # Try assigning the new value to the model's field
                     setattr(container, field, new_value)
                     # Run Django's model validation for the field
@@ -143,8 +147,6 @@ class ContainerConfigConsumer(CSyncSkeleton):
             container.save()
         if 'image' in changes.keys():
             restart.append("image changed")
-        if 'start_teleport' in changes.keys():
-            restart.append("teleport {}".format("enabled" if container.start_teleport else "disabled"))
         if restart:
             container.mark_restart(", ".join(restart))
         message_back = {

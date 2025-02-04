@@ -164,7 +164,6 @@ class ContainerListView(LoginRequiredMixin, generic.ListView):
         if container_id:
             c = Container.objects.get(id = container_id)
             context["search_container"] = c.search
-        l = reverse('container:new')
         context['menu_container'] = True
         context['submenu'] = 'list'
         context['partial'] = 'container_partial_list.html'

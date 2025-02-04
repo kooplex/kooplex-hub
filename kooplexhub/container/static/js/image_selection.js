@@ -89,7 +89,9 @@
                 $item = $('.image-item').first()
                 selectedIndex = 0
                 imageId = $item.data('id')  // Update the imageId with the first item's id
-                $('#imageModalAlert').removeClass('d-none')  // Show the alert box
+		if (pk!=='None') {
+                    $('#imageModalAlert').removeClass('d-none')  // Show the alert box
+		}
             } else {
                 // Find the index of the $item in the list of image-items
                 selectedIndex = $item.index()

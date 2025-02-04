@@ -71,6 +71,11 @@
         $("input[name$='request'").each(function() { $(this).attr('disabled', true ) })
     }
 
+    // translate None as ''
+    function mynone(x) {
+        return x==='None'?'':x
+    }
+
     // Confirm compute resource selection
     function confirmSelection() {
         $('#confirm-compute-selection').on('click', function() {
@@ -80,12 +85,14 @@
 		const g = $('#id_gpurequest').val()
 		const m = $('#id_memoryrequest').val()
 		const i = $('#id_idletime').val()
-		var changed = register_changes(selectedContainerId, 'node', n, '')
-		changed = changed || register_changes(selectedContainerId, 'cpurequest', c, '')
-		changed = changed || register_changes(selectedContainerId, 'gpurequest', g, '')
-		changed = changed || register_changes(selectedContainerId, 'memoryrequest', m, '')
-		changed = changed || register_changes(selectedContainerId, 'idletime', i, '')
-		if (changed) {
+		var changed = [ 
+		    register_changes(selectedContainerId, 'node', n, mynone($(`[id=container-resources-${selectedContainerId}]`).data('node'))),
+		    register_changes(selectedContainerId, 'cpurequest', c, mynone($(`[id=container-resources-${selectedContainerId}]`).data('cpurequest'))),
+		    register_changes(selectedContainerId, 'gpurequest', g, mynone($(`[id=container-resources-${selectedContainerId}]`).data('gpurequest'))),
+		    register_changes(selectedContainerId, 'memoryrequest', m, mynone($(`[id=container-resources-${selectedContainerId}]`).data('memoryrequest'))),
+		    register_changes(selectedContainerId, 'idletime', i, mynone($(`[id=container-resources-${selectedContainerId}]`).data('idletime')))
+		]
+		if (changed.includes(true)) {
 		    updateButtonFace(selectedContainerId, n, c, g, m, i)
 		    showSaveChanges(selectedContainerId, 'container')
 		}
