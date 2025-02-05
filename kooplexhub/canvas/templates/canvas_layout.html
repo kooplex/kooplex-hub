@@ -1,0 +1,15 @@
+{% extends "layout.html" %}
+{% load static %}
+{% load project_buttons %}
+
+{% block page_title %}Kooplex Canvas{% endblock %}
+
+{% block submenu %}
+<ul class="navbar-nav flex-row flex-md-row">
+  <li class="ms-3 nav-item text-center">
+    <a data-toggle="tooltip" title="Canvases" data-placement="bottom" {% if submenu == 'canvas' %} class="nav-link active active border-2 border-bottom" href="#" {% else %} class="nav-link" href="{% url 'canvas:canvas' %}" {% endif %}><i class="bi bi-card-heading" style="margin-left: auto; margin-right: auto;"></i><span class="d-none d-md-block">&nbsp;Canvas</span></a>
+  </li>
+
+</ul>
+{% endblock %}
+
