@@ -10,7 +10,7 @@ class Command(BaseCommand):
     help = 'Manage images'
 
     def add_arguments(self, parser):
-        parser.add_argument('--add_image', help = "Add image", nargs = 2)
+        parser.add_argument('--add_image', help = "Add image", nargs = 3)
         parser.add_argument('--add_imagedescription', help = "Add description to the image", nargs = 3)
         parser.add_argument('--add_proxy', help = "Add Proxy", nargs = 5)
         parser.add_argument('--add_envvar', help = "Add Proxy", nargs = 3)
@@ -29,11 +29,12 @@ class Command(BaseCommand):
         remove_proxy = options.get('remove_proxy')
         remove_envvar = options.get('remove_envvar')
         if add_image:
+            command = add_image.pop()
             imagetype = add_image.pop() 
             rt = Thumbnail.objects.get(name=imagetype)
             #imagetype=Image.TP_LOOKUP.get(imagetype)
             name = add_image.pop()
-            i, s = Image.objects.get_or_create(name=name, thumbnail=rt)
+            i, s = Image.objects.get_or_create(name=name, thumbnail=rt, command=command)
             #i.imagetype=imagetype
             #i.save()
             logger.info('Image %s %s' % (i, 'created' if s else 'exists'))
