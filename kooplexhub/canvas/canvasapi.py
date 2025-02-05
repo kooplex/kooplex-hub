@@ -5,7 +5,7 @@ class CanvasAPI:
     paging = "?per_page=100"
 
     def __init__(self, token):
-        self.base_url = "https://canvas.elte.hu/api/v1"
+        self.base_url = token.type.base_url
         if not token:
             raise ValueError("Token is required")
         self.headers = {

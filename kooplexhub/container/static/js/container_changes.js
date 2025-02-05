@@ -3,7 +3,6 @@
 
 // handle web socket callback
 function container_config_callback(message) {
-        console.log("Received attributes:", Object.keys(message))
     if (message.response && message.container_id) {
         if (message.response=="reloadpage") {
             location.reload()

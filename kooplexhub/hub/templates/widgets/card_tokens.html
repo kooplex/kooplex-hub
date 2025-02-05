@@ -1,0 +1,50 @@
+{% load static %}
+
+<div id="tokencard" class="card rounded rounded-3 bg-ligth shadow shadow-2-strong border border-3 mb-3">
+    <div class="card-header">
+        Tokens
+    </div>
+    <div class="card-body">
+        <!-- Tokens Row by row -->
+        {% for token in tokens %}
+            <div class="row mb-3">
+                <div class="col-md-3">
+    	        <span data-bs-toggle="tooltip" title="{{ token.type.description}}">{{ token.type }} </span>
+                </div>
+                <div class="col-md-3">
+                    <span>Value:  {{ token.value|truncatechars:4 }}</span>
+                </div>
+                <div class="col-md-3">
+    	            <input type="button" name="test_token" value="Test" data-token="{{token.value}}" data-type="{{ token.type }}">
+                </div>
+                <div class="col-md-3">
+    	            <input type="button" name="drop_token" value="Remove" data-id="{{token.pk}}">
+                </div>
+            </div>
+        {% endfor %}
+
+        <!-- Last row for a new token if any -->
+        {% if tokentypes %}
+            <div class="row mb-3">
+                <div class="col-md-3">
+    	        <select name="tokentype">
+    	            <option value="">Select token type</option>
+    	            {% for tt in tokentypes %}
+    	            <option data-bs-toggle="tooltip" title="{{tt.description}}" value="{{ tt.name }}">{{ tt.name }}</option>
+    	            {%endfor%}
+    	        </select>
+                </div>
+                <div class="col-md-3">
+    	            <input type="text" name="token" placeholder="Enter your token">
+                </div>
+                <div class="col-md-3">
+    	            <input type="button" name="test_token" value="Test">
+                </div>
+                <div class="col-md-3">
+                    <input type="button" name="save" value="Save">
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+

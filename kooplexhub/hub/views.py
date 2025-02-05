@@ -10,6 +10,8 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import plotly.express as px
 from container.lib.cluster_resources_api import *
+from kooplexhub.settings import KOOPLEX
+
 #import plotly
 
 class IndexView(AccessMixin, generic.TemplateView):
@@ -240,25 +242,15 @@ class UserTokenView(AccessMixin, generic.TemplateView):
     context_object_name = 'usertokens'
 
     def get_context_data(self, **kwargs):
+        from hub.models import TokenType
         context = super().get_context_data(**kwargs)
-        context['tokens'] = Token.objects.filter(user=self.request.user)
+        user_tokens=Token.objects.filter(user=self.request.user)
+        context['tokens'] = user_tokens
+        context['tokentypes']=TokenType.objects.all().exclude(id__in=[ t.type.id for t in user_tokens])
+        context['wss_token_config'] = KOOPLEX.get('hub', {}).get('wss_token_config', 'wss://localhost/hub/ws/tokens/{userid}/').format(userid = self.request.user.id)
         return context
 
 
-#TEST TASK
-
-from django.shortcuts import redirect
-import logging
-import time
-from kooplexhub.tasks import task_do_something
-logger = logging.getLogger(__name__)
-from django.shortcuts import render
-
-def task(request, duma):
-    logger.info("DEFINE TASK")
-    a = task_do_something.delay(duma)
-    logger.info(a)
-    return redirect('indexpage')
 
 
 def widgets(request):
