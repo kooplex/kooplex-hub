@@ -1,4 +1,4 @@
-from celery import shared_task
+#from celery import shared_task
 
 import importlib
 import time
@@ -10,8 +10,10 @@ from hub.lib import archivedir, extracttarbal
 from hub.lib import grantaccess_user, revokeaccess_user
 from hub.lib import grantaccess_group, revokeaccess_group
 
-from celery.utils.log import get_task_logger
-logger = get_task_logger(__name__)
+#from celery.utils.log import get_task_logger
+#logger = get_task_logger(__name__)
+from logging import getLogger as get_logger
+logger=get_logger(__name__)
 
 
 def handle_callback(callback):
@@ -34,7 +36,7 @@ def handle_callback(callback):
 
 
 
-@shared_task()
+#@shared_task()
 def create_folders(folders = [], grant_useraccess = {}, grant_groupaccess = {}, callback = {}):
     for folder in folders:
         mkdir(folder)
@@ -50,7 +52,7 @@ def create_folders(folders = [], grant_useraccess = {}, grant_groupaccess = {}, 
         handle_callback(callback)
 
 
-@shared_task()
+#@shared_task()
 def delete_folders(folders = [], archives = {}, revoke_useraccess = {}, revoke_groupaccess = {}, callback = {}):
     for folder in folders:
         rmdir(folder)
@@ -68,14 +70,14 @@ def delete_folders(folders = [], archives = {}, revoke_useraccess = {}, revoke_g
         handle_callback(callback)
 
 
-@shared_task()
+#@shared_task()
 def create_tar(folder, tarbal, remove_folder = False, callback = {}):
     archivedir(folder, tarbal, remove = remove_folder)
     if callback:
         handle_callback(callback)
 
 
-@shared_task()
+#@shared_task()
 #def extract_tar(tarbal, folder, recursive = False, users_rw = [], users_ro = [], callback = {}):
 def extract_tar(tarbal, folder, recursive = False, users_rw = [], group_ro = None, callback = {}):
     extracttarbal(tarbal, folder)
@@ -94,7 +96,7 @@ def extract_tar(tarbal, folder, recursive = False, users_rw = [], group_ro = Non
 
 
 
-@shared_task()
+#@shared_task()
 def task_do_something(vmi):
     with open('/tmp/retek.dat', 'a') as f:
         f.write("alma " + vmi + ' ' + __name__ + '\n')
