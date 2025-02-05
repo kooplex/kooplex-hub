@@ -113,6 +113,152 @@ INSTALLED_APPS = [
     'taggit',
 ]
 
+
+
+#########added
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            #"hosts": [("127.0.0.1", 6379)],
+            "hosts": [("redis://:kortefa321@127.0.0.1:6379/0")],
+        },
+    },
+}
+
+#HUEY = {
+#    'name': 'jobq',
+#    'huey_class': 'huey.RedisHuey',  # Huey implementation to use.
+#    'results': True,  # Store return values of tasks.
+#    'store_none': False,  # If a task returns None, do not save to results.
+#    'immediate': False,  # If DEBUG=True, run synchronously.
+#    'utc': True,  # Use UTC for all times internally.
+#    'blocking': True,  # Perform blocking pop rather than poll Redis.
+#    'connection': {
+#        'host': 'localhost',
+#        'port': 6379,
+#        'db': 0,
+#        'password': 'kortefa321',
+#        'connection_pool': None,  # Definitely you should use pooling!
+#        # ... tons of other options, see redis-py for details.
+#
+#        # huey-specific connection parameters.
+#        'read_timeout': 1,  # If not polling (blocking pop), use timeout.
+#        'url': None,  # Allow Redis config via a DSN.
+#    },
+#    'consumer': {
+#        'workers': 1,
+#        'worker_type': 'thread',
+#        'initial_delay': 0.1,  # Smallest polling interval, same as -d.
+#        'backoff': 1.15,  # Exponential backoff using this rate, -b.
+#        'max_delay': 10.0,  # Max possible polling interval, -m.
+#        'scheduler_interval': 1,  # Check schedule every second, -s.
+#        'periodic': True,  # Enable crontab feature.
+#        'check_worker_health': True,  # Enable worker health checks.
+#        'health_check_interval': 1,  # Check worker health every second.
+#    },
+#}
+
+DJANGO_HUEY = {
+    'default': 'container', #this name must match with any of the queues defined below.
+    'queues': {
+        'hub': {#this name will be used in decorators below
+            'huey_class': 'huey.RedisHuey',
+            'name': 'hub_tasks',
+            'consumer': {
+                'workers': 2,
+                'worker_type': 'thread',
+            },
+            'immediate': False, # ADDED coz error
+            'connection': {
+                'host': 'localhost',
+                'port': 6379,
+                'db': 0,
+                'password': 'kortefa321',
+                'connection_pool': None,  # Definitely you should use pooling!
+                # ... tons of other options, see redis-py for details.
+
+                # huey-specific connection parameters.
+                'read_timeout': 1,  # If not polling (blocking pop), use timeout.
+                'url': None,  # Allow Redis config via a DSN.
+            },
+        },
+        'container': {#this name will be used in decorators below
+            'huey_class': 'huey.RedisHuey',
+            'name': 'container_tasks',
+            'consumer': {
+                'workers': 32,
+                'worker_type': 'thread',
+            },
+            'immediate': False, # ADDED coz error
+            'connection': {
+                'host': 'localhost',
+                'port': 6379,
+                'db': 0,
+                'password': 'kortefa321',
+                'connection_pool': None,  # Definitely you should use pooling!
+                # ... tons of other options, see redis-py for details.
+
+                # huey-specific connection parameters.
+                'read_timeout': 1,  # If not polling (blocking pop), use timeout.
+                'url': None,  # Allow Redis config via a DSN.
+            },
+        },
+        'project': {#this name will be used in decorators below
+            'huey_class': 'huey.RedisHuey',
+            'name': 'project_tasks',
+            'consumer': {
+                'workers': 8,
+                'worker_type': 'thread',
+            },
+            'immediate': False, # ADDED coz error
+            'connection': {
+                'host': 'localhost',
+                'port': 6379,
+                'db': 0,
+                'password': 'kortefa321',
+                'connection_pool': None,  # Definitely you should use pooling!
+                # ... tons of other options, see redis-py for details.
+
+                # huey-specific connection parameters.
+                'read_timeout': 1,  # If not polling (blocking pop), use timeout.
+                'url': None,  # Allow Redis config via a DSN.
+            },
+        },
+        'course': {#this name will be used in decorators below
+            'huey_class': 'huey.RedisHuey',
+            'name': 'course_tasks',
+            'consumer': {
+                'workers': 32,
+                'worker_type': 'thread',
+            },
+            'immediate': False, # ADDED coz error
+            'connection': {
+                'host': 'localhost',
+                'port': 6379,
+                'db': 0,
+                'password': 'kortefa321',
+                'connection_pool': None,  # Definitely you should use pooling!
+                # ... tons of other options, see redis-py for details.
+
+                # huey-specific connection parameters.
+                'read_timeout': 1,  # If not polling (blocking pop), use timeout.
+                'url': None,  # Allow Redis config via a DSN.
+            },
+        },
+        'emails': {#this name will be used in decorators below
+            'huey_class': 'huey.RedisHuey',
+            'name': 'emails_tasks',
+            'consumer': {
+                'workers': 5,
+                'worker_type': 'thread',
+            },
+        },
+    }
+}
+############## end of addded
+
+
 ASGI_APPLICATION = "kooplexhub.asgi.application"   #websocket
 
 MIDDLEWARE = [
