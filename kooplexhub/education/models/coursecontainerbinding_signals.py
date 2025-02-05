@@ -17,6 +17,10 @@ def restartrequired_create(sender, instance, created, **kwargs):
 
 @receiver(post_delete, sender = CourseContainerBinding)
 def restartrequired_delete(sender, instance, **kwargs):
-    instance.container.mark_restart(reason = f"Folders of course {instance.course.name} needs to be unmounted")
+    try:
+        instance.container.mark_restart(reason = f"Folders of course {instance.course.name} needs to be unmounted")
+    except Exception as e:
+        # container already removed, possibly container removal triggered the binding's deletion
+        pass
 
 
