@@ -16,12 +16,6 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Task scheduler message queue 
-# set password like
-# CELERY_BROKER_URL = "redis://:THEPASSWORD@localhost:6379"
-# CELERY_RESULT_BACKEND = "redis://:THEPASSWORD@localhost:6379"
-CELERY_BROKER_URL = "redis://localhost:6379"
-CELERY_RESULT_BACKEND = "redis://localhost:6379"
 
 # teleport redis
 REDIS_PASSWORD=""
@@ -41,6 +35,10 @@ DEBUG = True
 
 PREFIX = os.getenv('PREFIX', 'kooplex')
 DOMAIN = os.getenv('DOMAIN', 'localhost')
+
+CSRF_TRUSTED_ORIGINS = [
+        "https://localost",
+        ]
 
 ALLOWED_HOSTS = [
     DOMAIN,
@@ -70,7 +68,28 @@ LOGOUT_REDIRECT_URL = 'indexpage'
 
 # Application definition
 
+#MENU
+MENU = [
+    { 'caption': 'Environments', 'tooltip': 'Manage your environments', 'target': 'container:list', 'icon': 'bi bi-boxes', },
+    { 'caption': 'Projects', 'tooltip': 'Manage projects', 'target': 'project:list', 'icon': 'bi bi-person-workspace', },
+    { 'caption': 'Reports', 'tooltip': 'View and create reports', 'target': 'report:list', 'icon': 'bi bi-projector', },
+    { 'caption': 'Courses', 'tooltip': 'Access your courses', 'target': 'education:courses', 'icon': 'bi bi-textarea-t', },
+    { 'caption': 'Teaching', 'tooltip': 'Configure courses and assignments', 'target': 'education:teaching', 'icon': 'bi bi-pen', },
+    { 'caption': 'Storage', 'tooltip': 'List or manage data volumes you have access', 'target': 'volume:list', 'icon': 'bi bi-folder2-open', },
+    { 'caption': 'Monitoring', 'tooltip': 'Investigate system monitoring metrics', 'target': 'monitoring', 'icon': 'bi bi-activity', },
+    { 'caption': 'Gitea', 'tooltip': 'Shortcut to the version control repository', 'target': 'https://gitea.vo.elte.hu', 'icon': 'https://gitea.vo.elte.hu/assets/img/logo.svg', },
+    { 'caption': 'Seafile', 'tooltip': 'Shortcut to the file share service', 'target': 'https://seafile.vo.elte.hu', 'icon': '/static/seafile-transparent-1024.png', },
+    # { }, dummy for separator
+#   { 'caption': 'Environment', 'target': '', 'icon': '', 'id': 'env', },
+#   { 'caption': 'Environment', 'target': '', 'icon': '', 'id': 'env', },
+]
+
+
 INSTALLED_APPS = [
+    'bx_django_utils', # ADDED ; https://github.com/boxine/bx_django_utils
+    'huey_monitor', # ADDED
+    'django_huey', # ADDED
+    #'huey.contrib.djhuey',
         #python -m pip install -U channels["daphne"]
     'daphne', #web socket framework
     'django.contrib.admin',
@@ -79,7 +98,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django_celery_beat',
     'social_django',
     'django_tables2',
     'django_bootstrap5',
@@ -91,6 +109,7 @@ INSTALLED_APPS = [
     'volume',
     'api',
     'service',
+    'canvas',
     'taggit',
 ]
 
@@ -126,10 +145,11 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'hub.context_processors.next_page',
+                'hub.context_processors.menu',
+#                'hub.context_processors.next_page',
                 'hub.context_processors.user',
                 'hub.context_processors.notes',
-                'hub.context_processors.installed_apps',
+#                'hub.context_processors.installed_apps',
                 'container.context_processors.warnings',
                 'project.context_processors.warnings',
                 'education.context_processors.assignment_warnings',
@@ -233,33 +253,82 @@ LOGGING = {
             'maxBytes': 1024 * 1024,  # 1 mb
             'filename': '/var/log/hub/hub.log',
             'formatter': 'verbose',
+            'backupCount': 5,
         },
-        'restfile': {
+        'container': {
+            'level': 'DEBUG',
+            #'class': 'logging.FileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'maxBytes': 1024 * 10240,  # 1 mb
+            'filename': '/var/log/hub/container.log',
+            'formatter': 'verbose',
+            'backupCount': 5,
+        },
+        'education': {
+            'level': 'DEBUG',
+            #'class': 'logging.FileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'maxBytes': 1024 * 10240,  # 1 mb
+            'filename': '/var/log/hub/edu.log',
+            'formatter': 'verbose',
+            'backupCount': 5,
+        },
+        'kubernetes': {
+            'level': 'DEBUG',
+            #'class': 'logging.FileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'maxBytes': 1024 * 10240,  # 1 mb
+            'filename': '/var/log/hub/kubernetes.log',
+            'formatter': 'verbose',
+            'backupCount': 5,
+        },
+        'project': {
             'level': 'DEBUG',
             #'class': 'logging.FileHandler',
             'class': 'logging.handlers.RotatingFileHandler',
             'maxBytes': 1024 * 1024,  # 1 mb
-            'filename': '/var/log/hub/rest.log',
+            'filename': '/var/log/hub/project.log',
             'formatter': 'verbose',
+            'backupCount': 5,
         },
     },
     'loggers': {
+        'kubernetes': {
+            'handlers': ['kubernetes'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'education': {
+            'handlers': ['education'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'container': {
+            'handlers': ['container'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'project': {
+            'handlers': ['project'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
         '': {
             'handlers': ['dfile'],
             'level': 'DEBUG',
             'propagate': True,
         },
-        'celery': {
-            #'handlers': ['celery', 'console'],
-            'handlers': ['dfile'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-        'kubernetes': {
-            'handlers': ['restfile'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
+#        'celery': {
+#            #'handlers': ['celery', 'console'],
+#            'handlers': ['dfile'],
+#            'level': 'INFO',
+#            'propagate': False,
+#        },
+#        'kubernetes': {
+#            'handlers': ['restfile'],
+#            'level': 'DEBUG',
+#            'propagate': False,
+#        },
            }
 }
 
@@ -282,13 +351,25 @@ KOOPLEX = {
         'course_assignment': '/mnt/course_assignment',
     },
     'hub': {
-        'adminemail': '',
-        'smtpserver': '',
-        'wss_project': 'wss://%s/hub/ws/project/{userid}/'%SERVERNAME,
-        'wss_container': 'wss://%s/hub/ws/container_environment/{userid}/'%SERVERNAME,
-        'wss_monitor': 'wss://%s/hub/ws/node_monitor/'%SERVERNAME,
-        'wss_assignment': 'wss://%s/hub/ws/education/{userid}/'%SERVERNAME,
-        'wss_assignment_summary': 'wss://%s/hub/ws/assignment_summary/{userid}/'%SERVERNAME,
+        'adminemail': 'kooplex@elte.hu',
+        'smtpserver': 'mail.elte.hu',
+        'wss_container_fetchlog': 'wss://%s/hub/ws/container/fetchlog/{userid}/'%SERVERNAME,
+        'wss_container_control': 'wss://%s/hub/ws/container/control/{userid}/'%SERVERNAME,
+        'wss_container_config': 'wss://%s/hub/ws/container/config/{userid}/'%SERVERNAME,
+        'wss_monitor_node': 'wss://%s/hub/ws/monitor/node/{userid}/'%SERVERNAME,
+
+        'wss_project_config': 'wss://%s/hub/ws/project/config/{userid}/'%SERVERNAME,
+        'wss_project_joinable': 'wss://%s/hub/ws/project/fetchjoinable/{userid}/'%SERVERNAME,
+        'wss_project_join': 'wss://%s/hub/ws/project/join/{userid}/'%SERVERNAME,
+        'wss_project_container': 'wss://%s/hub/ws/project/container/{userid}/'%SERVERNAME,
+
+        'wss_course_container': 'wss://%s/hub/ws/education/container/{userid}/'%SERVERNAME,
+        'wss_course_handin': 'wss://%s/hub/ws/education/handin/{userid}/'%SERVERNAME,
+        'wss_course_config': 'wss://%s/hub/ws/course/config/{userid}/'%SERVERNAME,
+        'wss_assignment_config': 'wss://%s/hub/ws/assignment/{userid}/'%SERVERNAME,
+        #'wss_assignment_summary': 'wss://%s/hub/ws/assignment_summary/{userid}/'%SERVERNAME,
+
+        'wss_canvas': 'wss://%s/hub/ws/canvas/fetchcourses/{userid}/'%SERVERNAME,
     },
     'ldap': {
         'host': '',
@@ -417,16 +498,33 @@ KOOPLEX = {
             'SERVERNAME': SERVERNAME,
             'NB_USER' : '{container.user.username}',
             'NB_TOKEN' : '{container.user.profile.token}',            
-            'REPORT_USER' : '{container.user.username}',
-            'REPORT_FOLDER' : '/srv/report',
-            'REPORT_FILE' : 'main.py',
             # FIXME could be cleaner
             # These needs to be the same as in proxy
             'NB_URL' : 'notebook/{container.label}', # same es KOOPLEX['proxy']['url_notebook']
             'NB_PORT' : '8000', # same es proxy.port
             'REPORT_URL' : 'notebook/report/{container.label}/', # same es KOOPLEX['proxy']['report_path']
-            'REPORT_PORT' : '9000', # same es proxy.port
+            'REPORT_PORT' : '9000', # same es proxy.port,
             'NS_JOBS': f'{KUBERNETES_SERVICE_NAMESPACE}-jobs', # same as kubernetes.jobsnamespace
+            'POD_NAMESPACE': KUBERNETES_SERVICE_NAMESPACE + 'pods', 
             },
+    'environmental_variables_report': {
+            'LANG' : 'en_US.UTF-8',
+            'SSH_AUTH_SOCK': '/tmp/{container.user.username}', #FIXME: move to db
+            'SERVERNAME': SERVERNAME,
+            'NB_USER' : '{container.user.username}',
+            'REPORT_USER' : '{container.user.username}',
+            'REPORT_FOLDER' : '/srv/report',
+            'REPORT_FILE' : 'main.py', # ? ho to do this ? '{report.indexfile}',
+            # FIXME could be cleaner
+            # These needs to be the same as in proxy
+            'REPORT_URL' : 'notebook/report/{container.label}/', # same es KOOPLEX['proxy']['report_path']
+            'REPORT_PORT' : '9000', # same es proxy.port
+            },
+    'education': {
+        'new_course': 'widgets/fetch_canvascourses_modal.html',
+    },
+    'canvas': {
+        'old_filter': lambda x: '2024/25' in x['name'],
+    },
 }
 
