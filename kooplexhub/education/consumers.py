@@ -40,14 +40,22 @@ class AssignmentConsumer(SyncSkeleton):
         # folder for new assignment
         folders=course.dir_assignmentcandidate()
         # get canvas assignments too? if it is a course canvas
+        from canvas.models import CanvasCourse, Canvas
+        canvas_courses = []
         try:
-            if course.canvas_course_id:
-                print(course.get_course_assignments())
-        except: 
-            pass
-        # canvas.api.get_course_assignment
+            ccourse = CanvasCourse.objects.filter(course=course).first()
+            if ccourse.canvas_course_id:
+                logger.debug(f"Canvas course: {ccourse} - {ccourse.canvas_course_id}")
+                canvas_courses = ccourse.get_course_assignments()                
+        except Exception as e: 
+            logger.debug(f"Exc {e}")
+
         # assignment manager table
         a=Assignment.objects.filter(course=course)
+        UAbind_dict = {
+            (ua.user_id, ua.assignment_id): ua.state
+            for ua in UserAssignmentBinding.objects.filter(assignment__in=a)
+        }
         t=TableAssignmentConf(a)
         # calculate students' scores
         #FIXME pandas version may be too old?
@@ -66,6 +74,7 @@ class AssignmentConsumer(SyncSkeleton):
             "feedback": "Assignment list is refreshed",
             "f_new": render_to_string('widgets/form_new_assignment.html', {'course': course, 'folders': folders, 'table': TableAssignmentConf([Assignment()], exclude_columns=['manage', 'delete'])}),
             "t_assignment": render_to_string('django_table.html', {'table':t}),
+            "t_individual": render_to_string('widgets/table_handle_individual.html', {'assignments': a, 'students': course.students, 'bindings': UAbind_dict}),
             "t_score": t_score,
             }))
 

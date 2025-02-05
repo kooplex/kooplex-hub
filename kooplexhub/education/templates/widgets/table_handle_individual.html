@@ -1,0 +1,24 @@
+{% load course_buttons %}
+<table class="table">
+    <thead>
+    	<tr>
+    		<td>Student</td>
+    		{% for a in assignments %}
+    		<td>{{a.name}}</td>
+    		{% endfor %}
+    	</tr>
+    </thead>
+    <tbody>
+    	{% for s in students %}
+    	<tr>
+    		<td>{{s.username}}</td>
+    		{% for a in assignments %}
+    		<td>
+    		  {% get_uabind_value bindings s.id a.id %}
+    		</td>
+    		{% endfor %}
+    	</tr>
+    	{% endfor %}
+    </tbody>
+</table>
+

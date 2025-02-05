@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 class TokenType(models.Model):  
     name = models.CharField(max_length = 64, null = False)
     description = models.CharField(max_length = 512, null = True)
+    base_url = models.CharField(max_length = 64, null = False)
     #service = models.ForeignKey('Service', on_delete = models.CASCADE, null = False)
 
     def __str__(self):
