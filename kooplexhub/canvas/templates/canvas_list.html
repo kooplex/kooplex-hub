@@ -1,0 +1,31 @@
+{% extends "canvas_layout.html" %}
+{% load static %}
+
+{% block pagedescription %}
+{# one liner . <a href="https://xwiki.vo.elte.hu/en/kooplex-manual/educaion"><span class="ms-2 bi bi-book"></span></a>#}
+{% endblock %}
+
+{# the search bar #}
+{% block search %}
+{% if coursebindinglist %}
+<div class="card border border-light border-3 mx-5 mb-3 rounded-3">
+  <div class="input-group">
+    <span class="input-group-text"><span class="bi bi-search"></span></span>
+    <input class="form-control" type="text" id="search_course" placeholder="Search course" title="Type in a name" autofocus >
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block bodycontent %}
+
+    <h1>Canvas Model Objects</h1>
+    <ul>
+        {% for c in courses %}
+          
+                <li>{{ c }}</li>
+          
+        {% endfor %}
+    </ul>
+
+{% endblock %}
