@@ -41,6 +41,7 @@
     </div>
 </div>
 
+{#FIXME js/static #}
 <script>
 // Assignment manager Modal Logic
 (function() {
@@ -138,7 +139,11 @@
             Object.assign(newItem.changed, { folder: folder })
         }
 
-	if (groupedChanges.length || deleteList.length || handoutList.length || collectList.length || reassignList.length) {
+	let individual_tasks = $("[name=individual][data-todo][data-assignment][data-user]:checked").map(function() { 
+		return { todo: $(this).data('todo'), assignment_id: $(this).data('assignment'), user_id: $(this).data('user')}
+	}).get()
+
+	if (groupedChanges.length || deleteList.length || handoutList.length || collectList.length || reassignList.length || individual_tasks.length ) {
 	    wss_assignment.send(JSON.stringify({
               course_id: pk,
               query: 'configure',
@@ -147,6 +152,7 @@
               handout: handoutList,
               collect: collectList,
               reassign: reassignList,
+              individual: individual_tasks,
 	    }))
 	}
 

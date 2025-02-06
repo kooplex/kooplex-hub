@@ -34,6 +34,7 @@ class AssignmentConsumer(SyncSkeleton):
             self.reassign(course, parsed.get('reassign'))
             self.collect(course, parsed.get('collect'))
             self.handout(course, parsed.get('handout'))
+            self.individual(course, parsed.get('individual'))
             self.refresh_list(course)
 
     def refresh_list(self, course):
@@ -115,6 +116,16 @@ class AssignmentConsumer(SyncSkeleton):
     def reassign(self, course, reassignlist):
         for a in Assignment.objects.filter(course=course, id__in=reassignlist):
             a.reassign()
+
+    def individual(self, course, individual):
+        for t in individual:
+            b, _ = UserAssignmentBinding.objects.get_or_create(user_id=t['user_id'], assignment_id=t['assignment_id'])
+            if t['todo']=='handout':
+                b.handout()
+            if t['todo']=='collect':
+                b.collect()
+            if t['todo']=='reassigne':
+                b.reassign()
 
 
 #################
