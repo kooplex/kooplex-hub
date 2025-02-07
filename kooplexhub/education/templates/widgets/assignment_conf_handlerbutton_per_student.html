@@ -11,7 +11,7 @@
 </div>
 {% endif %}
 <div class="form-check form-switch">
-{% if state == assignment.ST_SUBMITTED %}
+{% if state == assignment.ST_SUBMITTED or state == assignment.ST_COLLECTED %}
   <input class="form-check-input" type="checkbox" name="individual" data-toto="reassign" data-assignment="{{aid}}" data-user="{{uid}}" />
   <label class="form-check-label"><span class="bi bi-recycle" data-toggle="tooltip" title="Reassign"</span></label>
 </div>

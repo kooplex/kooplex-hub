@@ -24,23 +24,6 @@
 <script src="{% static 'js/config_register.js' %}"></script>
 <script src="{% static 'js/container_buttons.js' %}"></script>
 
-{# a modal to configure a container or display its logs #}
-<div class="modal modal-xl fade" id="containerInfoModal" tabindex="-1" aria-labelledby="containerInfoModal" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <form id="container-manage" class="form-horizontal was-validated" 
-            action="{{ url_post }}"
-            method="post">
-        {% csrf_token %}
-	<input type="hidden" id="containerid" name="containerid" value="{{ container_id }}">
-	{% block form %}
-	<div id="containerInfoModal-content"></div>
-	{% endblock %}
-      </form>
-    </div>
-  </div>
-</div>
-
 {# a modal to configure a container image #}
 <script src="{% static 'js/container_changes.js' %}"></script>
 {% include 'widgets/image_selection.html' with instance="container" %}
@@ -86,29 +69,6 @@ $(document).ready(function() {
 
 {# make sure search string we got gets applied #}
 $("#search_container").keyup();
-
-
-
-{# catch modal close event #}
-click_x = false
-$("#containerInfoModal").on("hidden.bs.modal", function (ev, o) {
-  url_list = '{{ url_list }}#'
-  if (click_x) {
-    click_x = false
-    if (! window.location.href.endsWith(url_list)) {
-      window.location.href = url_list
-    }
-  } else {
-    if (! window.location.href.endsWith(url_list)) {
-      if (confirm('Are you sure you want to discard changes?')) {
-        window.location.href = url_list
-      } else {
-        $("#containerInfoModal").modal("show")
-      }
-    }
-  }
-});
-
 
 
 

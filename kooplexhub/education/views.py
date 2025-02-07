@@ -58,6 +58,9 @@ def delete_or_leave(request, pk_course, pk_user):
 @require_http_methods(['GET'])
 @login_required
 def assignment_teacher(request):
+    """
+    @summary: handle the tabs in the teacher's assignment page
+    """
     active = request.COOKIES.get('assignment_teacher_tab', 'conf')
     if active == 'new':
         return redirect('education:assignment_new')
@@ -118,6 +121,8 @@ class StudentCourseBindingListView(LoginRequiredMixin, generic.ListView):
         context['wss_container'] = KOOPLEX.get('hub', {}).get('wss_container_control', 'wss://localhost/hub/ws/container_environment/{userid}/').format(userid = self.request.user.id)
         context['wss_course_container'] = KOOPLEX.get('hub', {}).get('wss_course_container', 'wss://localhost/hub/ws/education/container/{userid}/').format(userid = self.request.user.id)
         context['wss_handin'] = KOOPLEX.get('hub', {}).get('wss_course_handin', 'wss://localhost/hub/ws/education/handin/{userid}/').format(userid = self.request.user.id)
+        context['search_placeholder'] = 'Search course...'
+        context['search_what'] = 'course'
         return context
 
 
@@ -142,217 +147,8 @@ class TeacherCourseBindingListView(LoginRequiredMixin, generic.ListView):
         context['t_users'] = TableUsers(User.objects.all().exclude(id = self.request.user.id), marker_column='Teacher')
         context['empty_course'] = Course()
         context['modal_new'] = KOOPLEX.get('education', {}).get('new_course', 'new_course.html')
+        context['search_placeholder'] = 'Search course...'
+        context['search_what'] = 'course'
         return context
 
-
-class StudentAssignmentListView(LoginRequiredMixin, generic.FormView):
-    template_name = 'assignment_student.html'
-    form_class = FormAssignmentList
-    success_url = '/hub/education/assignment/'
-
-    def get_initial(self):
-        initial = super().get_initial()
-        user = self.request.user
-        initial['user'] = user
-        return initial
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['menu_education'] = True
-        context['submenu'] = 'assignment_student'
-        context['wss_container'] = KOOPLEX.get('hub', {}).get('wss_container', 'wss://localhost/hub/ws/container_environment/{userid}/').format(userid = self.request.user.id)
-        return context
-
-    def form_valid(self, form):
-        logger.info(form.cleaned_data)
-        for uab in form.cleaned_data['submit']:
-            uab.collect(submit = True)
-            #FIXME: feedback messages
-        return super().form_valid(form)
-
-
-#DEPRECATE
-#class ConfigureCourseView(LoginRequiredMixin, generic.edit.UpdateView):
-#    model = Course
-#    template_name = 'course_configure.html'
-#    form_class = FormCourse
-#    success_url = '/hub/education/course/' #FIXME: django.urls.reverse or shortcuts.reverse does not work reverse('education:courses')
-#
-#    def get_initial(self):
-#        initial = super().get_initial()
-#        user = self.request.user
-#        initial['user'] = user
-#        return initial
-#
-#    def get_context_data(self, **kwargs):
-#        context = super().get_context_data(**kwargs)
-#        course_id = self.kwargs.get('pk')
-#        context['menu_education'] = True
-#        context['submenu'] = 'configure' if course_id else 'new' 
-#        context['active'] = self.request.COOKIES.get('configure_course_tab', 'meta') if course_id else 'meta'
-#        context['url_post'] = reverse('education:configure', args = (course_id, )) #TODO: if course_id else reverse('education:new')
-#        context['course_id'] = course_id
-#        return context
-#
-#    def form_valid(self, form):
-#        logger.info(form.cleaned_data)
-#        msgs = []
-#        for group in form.cleaned_data.pop('new_groups', []):
-#            group.save()
-#            msgs.append(f"New group {group.name} is created.")
-#        for group in form.cleaned_data.pop('groups', []):
-#            group.save()
-#            msgs.append(f"Updated group {group.name}.")
-#        del_students = form.cleaned_data.pop('delete_students', None)
-#        if del_students:
-#            del_students.delete()
-#            msgs.append(f"Deleted {len(del_students)} students.")
-#        del_teachers = form.cleaned_data.pop('delete_teachers', None)
-#        if del_teachers:
-#            del_teachers.delete()
-#            msgs.append(f"Deleted {len(del_teachers)} teachers.")
-#        for b in form.cleaned_data.pop('new_bindings', []):
-#            b.save()
-#            msgs.append("New {} {} added to course".format("teacher" if b.is_teacher else "student", b.user))
-#        for b in form.cleaned_data.pop('group_bindings_del', []):
-#            b.delete()
-#        for b in form.cleaned_data.pop('group_bindings_add', []):
-#            b.save()
-#            msgs.append("{b.usercoursebinding.user} is put in group {b.group.name}")
-#        if msgs:
-#            logger.info(' '.join(msgs))
-#            messages.info(self.request, ' '.join(msgs))
-#        return super().form_valid(form)
-#
-#
-#class NewAssignmentView(LoginRequiredMixin, generic.FormView):
-#    model = Assignment
-#    template_name = 'assignment_new.html'
-#    form_class = FormAssignment
-#    success_url = '/hub/education/course/'
-#
-#    def get_initial(self):
-#        initial = super().get_initial()
-#        user = self.request.user
-#        initial['user'] = user
-#        return initial
-#
-#    def get_context_data(self, **kwargs):
-#        l = reverse('education:courses')
-#        context = super().get_context_data(**kwargs)
-#        context['menu_education'] = True
-#        context['submenu'] = 'assignment_teacher'
-#        context['active'] = self.request.COOKIES.get('assignment_teacher_tab', 'new')
-#        return context
-#
-#    def get_form_kwargs(self):
-#        kwargs = super().get_form_kwargs()
-#        kwargs['pk'] = self.kwargs['pk']
-#        return kwargs
-#
-#    def form_valid(self, form):
-#        logger.info(form.cleaned_data)
-#        #authorize
-#        UserCourseBinding.objects.get(user = self.request.user, course = form.cleaned_data["course"], is_teacher = True)
-#        msg = f'Assignment {form.cleaned_data["name"]} created in course {form.cleaned_data["course"].name} by {self.request.user}'
-#        for task in ['task_snapshot', 'task_handout', 'task_collect']:
-#            if task in form.cleaned_data:
-#                form.cleaned_data[task].save()
-#        Assignment.objects.create(**form.cleaned_data)
-#        logger.info(msg)
-#        messages.info(self.request, msg)
-#        return super().form_valid(form)
-#
-#
-#class ConfigureAssignmentView(LoginRequiredMixin, generic.FormView):
-#    template_name = 'assignment_configure.html'
-#    form_class = FormAssignmentConfigure
-#    success_url = '/hub/education/assignment_handler/'
-#
-#    def get_initial(self):
-#        initial = super().get_initial()
-#        user = self.request.user
-#        initial['user'] = user
-#        courses = [ b.course for b in UserCourseBinding.objects.filter(user = user, is_teacher = True) ]
-#        initial['assignments'] = Assignment.objects.filter(course__in = courses)
-#        return initial
-#
-#    def get_context_data(self, **kwargs):
-#        context = super().get_context_data(**kwargs)
-#        context['menu_education'] = True
-#        context['submenu'] = 'assignment_teacher'
-#        context['active'] = self.request.COOKIES.get('assignment_teacher_tab', 'conf')
-#        return context
-#
-#    def form_valid(self, form):
-#        logger.info(form.cleaned_data)
-#        msgs = []
-#        for ts in form.cleaned_data.get("timestamps", []):
-#            ts.save()
-#        for tsk in form.cleaned_data.get("tasks", []):
-#            tsk.save()
-#        for ts in form.cleaned_data.get("delete_timestamps", []):
-#            ts.delete()
-#        for a in form.cleaned_data.get("delete_assignments", []):
-#            a.delete()
-#            msgs.append(f"Assignment {a.name} is deleted from course {a.course.name}.")
-#        for a in form.cleaned_data.get("assignments", []):
-#            a.save()
-#            msgs.append(f"Assignment {a.name} in course {a.course.name} is updated.")
-#        if msgs:
-#            logger.info(' '.join(msgs))
-#            messages.info(self.request, ' '.join(msgs))
-#        return super().form_valid(form)
-#
-#DEPRECATE
-#class HandleAssignmentView(LoginRequiredMixin, generic.FormView):
-#    template_name = 'assignment_handle.html'
-#    form_class = FormAssignmentHandle
-#    success_url = '/hub/education/assignment_handler/'
-#
-#    def get_initial(self):
-#        initial = super().get_initial()
-#        user = self.request.user
-#        initial['user'] = user
-#        return initial
-#
-#    def get_context_data(self, **kwargs):
-#        user = self.request.user
-#        context = super().get_context_data(**kwargs)
-#        context['menu_education'] = True
-#        context['submenu'] = 'assignment_teacher'
-#        context['active'] = self.request.COOKIES.get('assignment_teacher_tab', 'handle')
-#        context['wss_assignment'] = KOOPLEX.get('hub', {}).get('wss_assignment', 'wss://localhost/hub/ws/education/{userid}/').format(userid = self.request.user.id)
-#        return context
-#
-##FIXME: messages
-#    def form_valid(self, form):
-#        logger.info(form.cleaned_data)
-#        for create, uab in form.cleaned_data['handout']:
-#            if create:
-#                uab.save()
-#            uab.handout()
-#        for uab in form.cleaned_data['collect']:
-#            uab.collect()
-#        for uab in form.cleaned_data['reassign']:
-#            uab.reassign()
-#        for uab in form.cleaned_data['finalize']:
-#            uab.save()
-#        return super().form_valid(form)
-
-
-class AssignmentSummaryView(LoginRequiredMixin, generic.TemplateView):
-    template_name = 'assignment.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        user = self.request.user
-        courses = [ b.course for b in UserCourseBinding.objects.filter(user = user, is_teacher = True) ]
-        assignments = Assignment.objects.filter(course__in = courses)
-        context['menu_education'] = True
-        context['submenu'] = 'assignment_teacher'
-        context['active'] = self.request.COOKIES.get('assignment_teacher_tab', 'summary')
-        context['wss_assignment'] = KOOPLEX.get('hub', {}).get('wss_assignment_summary', 'wss://localhost/hub/ws/assignment_summary/{userid}/').format(userid = self.request.user.id)
-        context['d_course_assignments'] = { c: assignments.filter(course = c) for c in courses if assignments.filter(course = c) }
-        return context
 

@@ -36,7 +36,7 @@ class Course(models.Model):
 
     @property
     def search(self):
-        return f"{self.name} {self.folder} {self.description} {self.teachers()}".upper()
+        return f"{self.name} {self.description}".upper()
 
 #FIXME
     @property

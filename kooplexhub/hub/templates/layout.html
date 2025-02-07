@@ -34,11 +34,32 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
     {% comment %}
     {% endcomment %}
+    <style>
+        /* Initially hide input field */
+        .search-input {
+            width: 0;
+            opacity: 0;
+            transition: width 0.3s ease, opacity 0.3s ease;
+        }
+
+        /* Expand input field when active */
+        .search-container.active .search-input {
+            width: 200px;  /* Adjust width as needed */
+            opacity: 1;
+            padding: 5px 10px;
+        }
+
+        /* Style search button */
+        .search-btn {
+            cursor: pointer;
+        }
+    </style>
   </head>
 
 
   <body {#class="bg-dark bg-gradient"#}>
     <noscript>You need to enable JavaScript to browse kooplex.</noscript>
+    <div id="oopses"></div>
     {% block menu_and_content %}
     <div class="container-fluid d-flex flex-row flex-md-row">
       {% block menu %}
@@ -63,6 +84,13 @@
 		    Welcome to Kooplex!
 		  </p>
                 {% endif %}
+    <!-- Search Bar -->
+    <div class="search-container d-flex align-items-center">
+        <span class="search-btn text-white">
+            <i class="bi bi-search"></i>  <!-- Bootstrap Magnifying Glass Icon -->
+        </span>
+	<input type="text" class="form-control search-input ms-2" placeholder="{{search_placeholder|default:'Search...'}}" data-search="{{search_what}}">
+    </div>
 	      {% block toprightmenu %}
 	        {% if user.is_authenticated %}
               <ul class="navbar-nav d-flex flex-row ms-2">
@@ -179,6 +207,47 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     {% endcomment %}
 
+<script>
+    $(document).ready(function () {
+        const searchInput = $(".search-input");
+        const searchContainer = $(".search-container");
+	const searchWhat = searchInput.data('search')
+
+        $(".search-btn").click(function () {
+            searchContainer.addClass("active");
+            searchContainer.find(".search-input").focus();
+        });
+
+        // Hide search input when clicked outside
+        $(document).click(function (event) {
+            if (!$(event.target).closest(".search-container").length) {
+                searchContainer.removeClass("active");
+                searchInput.val("");  // Clear input
+            }
+        });
+
+        // Handle keypress events inside the search field
+        searchInput.on("keyup", function (event) {
+	    var search=$(this).val().toUpperCase()
+            $(`[data-search_what='${searchWhat}'][data-search]`).each(function() {
+		 let pattern=$(this).data('search')
+                 if (search==='' || pattern.includes(search)) {
+		     $(this).show()
+		 } else {
+		     $(this).hide()
+		 }
+            })
+            if (event.key === "Enter") {
+                event.preventDefault(); // Prevent form submission
+            }
+            else if (event.key === "Escape") {
+                console.log("Search canceled");
+                searchContainer.removeClass("active");
+                searchInput.val("");  // Clear input
+            }
+        });
+    });
+</script>
     {% block scripts %}{% endblock %}
   </body>
 </html>
