@@ -45,7 +45,10 @@ def assignment_handout(userassignmentbinding):
     folder=assignment_workdir(userassignmentbinding)
     extracttarbal(userassignmentbinding.assignment.filename, folder)
     gid=userassignmentbinding.assignment.course.group_teachers.groupid
-    grantaccess_group(gid, folder, readonly=True, recursive=True)
+    grantaccess_group(gid, folder, readonly=True, recursive=True, follow=True)
+    gid=userassignmentbinding.assignment.course.group_students.groupid
+    grantaccess_user(userassignmentbinding.user, folder, readonly=False, follow=True)
+    grantaccess_user(userassignmentbinding.user, folder, readonly=False, follow=False)
     userassignmentbinding.state=userassignmentbinding.ST_WORKINPROGRESS
     userassignmentbinding.save()
 
