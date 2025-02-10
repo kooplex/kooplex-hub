@@ -28,67 +28,6 @@ logger = logging.getLogger(__name__)
 
 namespace = KOOPLEX['kubernetes'].get('namespace', 'k8plex-hub')
 
-#state_mapper = {
-#    'Killing': Container.ST_STOPPING,
-#    'Scheduled': Container.ST_STARTING,
-#    'Pending': Container.ST_STARTING,
-#    'Pulling': Container.ST_STARTING,
-#    'BackOff': Container.ST_STARTING,
-#    'Pulled': Container.ST_STARTING,
-#    'Created': Container.ST_STARTING,
-#    'SandboxChanged': Container.ST_STARTING,
-#    'Started': Container.ST_RUNNING,
-#    'Not present': Container.ST_NOTPRESENT,
-#    'Not Found': Container.ST_NOTPRESENT,
-#    'FailedCreatePodSandBox': Container.ST_ERROR,
-#    'FailedMount': Container.ST_ERROR,
-#    'FailedKillPod': Container.ST_STOPPING,
-#
-#    'Running': Container.ST_RUNNING,
-#
-#    'FailedToUpdateEndpoint': Container.ST_NOTPRESENT, #FIXME: is it complete? possible keys: 'CreateContainerConfigError', 'ImagePullBackOff'
-#}
-
-#def check(container):
-#    """
-#@summary: retrieve the container state from kubernetes framework
-#@returns { 'state': Container:ST, 'message': ... }
-#    """
-#    #FIXME: if called too frequently, skip to avoid API stress
-#    logger.info(f"? checking {container.label}")
-#    previous_state_backend = container.state_backend
-#    config.load_kube_config()
-#    v1 = client.CoreV1Api()
-#
-###    #FIXME: hardcoded timeout
-#    events = v1.list_namespaced_event(namespace, field_selector=f'involvedObject.name={container.label}', timeout_seconds = 1).items
-#    messages=[]
-#    if len(events):
-#        last_event=events[-1].reason
-#        messages.append(events[-1].message)
-#    else:
-#        last_event=None
-#    try:
-#        pod_status = v1.read_namespaced_pod_status(namespace = namespace, name = container.label)
-#        pod_phase=pod_status.status.phase
-#        messages.append(pod_status.status.message or "Container found")
-#    except client.rest.ApiException as e:
-#        if e.reason == 'Not Found':
-#            pod_phase=e.reason
-#            messages.append("Container not found")
-#        else:
-#            raise
-#    container.state_lastcheck_at = now()
-#    container.state_backend=pod_phase if pod_phase=="Not Found" else last_event or pod_phase
-#    container.save()
-#    status = { 
-#        'message': "; ".join(messages[::-1]),
-#        'last_event': last_event,
-#        'pod_phase': pod_phase,
-#        'state': container.state,
-#        'changed': container.state_backend != previous_state_backend
-#    }
-#    return status
 
 
 def fetch_containerlog(container):
@@ -479,7 +418,6 @@ def stop(container):
         logger.warning(e)
         if json.loads(e.body)['code'] != 404: # doesnt exists
             raise
-        container.state = container.ST_NOTPRESENT
     try:
         msg = v1.delete_namespaced_service(namespace = namespace, name = container.label)
     except client.rest.ApiException as e:

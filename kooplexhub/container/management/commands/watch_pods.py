@@ -107,6 +107,7 @@ class Command(BaseCommand):
 
 
     def handle(self, *args, **options):
+        from container.lib.proxy import addroute
         print("Starting Kubernetes Pod Watcher...")
         v1 = client.CoreV1Api()
         namespace = "k8plex-test-pods"  # Change to your namespace
@@ -165,6 +166,11 @@ class Command(BaseCommand):
                         container.save()
                         self.feedback(container, f'Container {container.name} changed its state: {backend_state}({state_new}).')
                         containers[pod_name]=(container.id, container.state, container.state_backend)
+                        if state_new==container.ST_NOTPRESENT and container.require_running:
+                            container.start()
+                        elif state_new==container.ST_RUNNING:
+                            addroute(container, 'NB_URL', 'NB_PORT')
+                            addroute(container, 'REPORT_URL', 'REPORT_PORT')
             except Exception as e:
                 print(f"⚠️ Error in watcher: {e}")
                 print("Restarting watcher in 5 seconds...")
@@ -173,13 +179,3 @@ class Command(BaseCommand):
 
 
 
-#Event	Where to Look	Description
-#Pod Created	event["type"] == "ADDED"	Pod creation request received.
-#Pod Scheduled	pod.status.conditions where type == "PodScheduled"	Pod has been scheduled to a node.
-#Pulling Image	container_status.state.waiting.reason == "ContainerCreating"	Image is being pulled.
-#Container Created	container_status.state.running	Container started.
-#Container Ready	pod.status.conditions where type == "Ready"	Pod is fully initialized and running.
-#Pod Running	pod.status.phase == "Running"	Pod is active.
-#Termination Requested	pod.metadata.deletion_timestamp	Pod is marked for deletion.
-#Container Terminating	container_status.state.terminated	Container is shutting down.
-#Pod Deleted	event["type"] == "DELETED"	Pod is fully removed.

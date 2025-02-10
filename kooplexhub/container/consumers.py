@@ -54,9 +54,9 @@ class ContainerFetchlogConsumer(CSyncSkeleton):
         container = self.get_container(cid)
         request = parsed.get('request')
         assert request == 'container-log', "wrong request"
-        resp = container.check_state(retrieve_log = True)
-        logger.debug(f"fetch {container} -> {resp}")
-        self.send(text_data = json.dumps(resp))
+        resp = container.retrieve_log()
+        logger.debug(f"fetch {container} -> {resp[:10]}...")
+        self.send(text_data = json.dumps({ 'podlog': resp}))
 
 
 class ContainerControlConsumer(AsyncSkeleton):
