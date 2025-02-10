@@ -1,4 +1,5 @@
 import logging
+import subprocess
 import time
 
 import requests, os
@@ -19,41 +20,56 @@ from .lib.proxy import addroute, removeroute
 
 logger = logging.getLogger(__name__)
 
-CHECK_INTERVAL=1 #FIXME: hardcoded timout
+#CHECK_INTERVAL=1 #FIXME: hardcoded timout
 
-def _replace_widgets(container):
-    return {
-        'startcontainer': container.render_start_html(),
-        'stopcontainer': container.render_stop_html(),
-        'opencontainer': container.render_open_html(),
-        'fetch': container.render_fetchlogs_html(),
-        'phase': container.render_state_html(),
-        'restartcontainer': container.render_restartreasons_html(),
-        }
+#def _replace_widgets(container):
+#    return {
+#        'startcontainer': container.render_start_html(),
+#        'stopcontainer': container.render_stop_html(),
+#        'opencontainer': container.render_open_html(),
+#        'fetch': container.render_fetchlogs_html(),
+#        'phase': container.render_state_html(),
+#        'restartcontainer': container.render_restartreasons_html(),
+#        }
+
+
+@periodic_task(crontab(minute="*/5"))  # Runs every 5 minutes
+def ensure_k8s_watcher_running():
+    try:
+        # Check if the watcher is running
+        output = subprocess.check_output(["pgrep", "-f", "manage.py watch_pods"])
+        logger.debug(f"Kubernetes watcher is running: {output.decode().strip()}")
+    except subprocess.CalledProcessError:
+        # Watcher is not running, so restart it
+        logger.warning("Kubernetes watcher is not running. Restarting it...")
+        subprocess.Popen(["python", "manage.py", "watch_pods"], 
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
 
 #FIXME: hardcoded crontab entry
-qc=get_queue('container')
-@qc.periodic_task(crontab(minute='*/15'))
-def periodic_container_check():
-    channel_layer=get_channel_layer()
-    for container in Container.objects.all():
-        status = container.check_state()
-        if status['changed']:
-            async_to_sync(channel_layer.group_send)(f"container-{container.user.id}", {
-                    "type": "feedback",
-                    "feedback": status['message'],
-                    "container_id": container.id,
-                    "container_state": container.state,
-                    "container_state_backend": container.state_backend,
-                    "replace_widgets": _replace_widgets(container),
-                })
-            if container.state == container.ST_RUNNING:
-                addroute(container, 'NB_URL', 'NB_PORT')
-                addroute(container, 'REPORT_URL', 'REPORT_PORT')
-            elif container.state == container.ST_NOTPRESENT:
-                removeroute(container, 'NB_URL')
-                removeroute(container, 'REPORT_URL')
-    return "Completed"
+#qc=get_queue('container')
+#@qc.periodic_task(crontab(minute='*/15'))
+#def periodic_container_check():
+#    channel_layer=get_channel_layer()
+#    for container in Container.objects.all():
+#        status = container.check_state()
+#        if status['changed']:
+#            async_to_sync(channel_layer.group_send)(f"container-{container.user.id}", {
+#                    "type": "feedback",
+#                    "feedback": status['message'],
+#                    "container_id": container.id,
+#                    "container_state": container.state,
+#                    "container_state_backend": container.state_backend,
+#                    "replace_widgets": _replace_widgets(container),
+#                })
+#            if container.state == container.ST_RUNNING:
+#                addroute(container, 'NB_URL', 'NB_PORT')
+#                addroute(container, 'REPORT_URL', 'REPORT_PORT')
+#            elif container.state == container.ST_NOTPRESENT:
+#                removeroute(container, 'NB_URL')
+#                removeroute(container, 'REPORT_URL')
+#    return "Completed"
 
 
 @task(queue = 'container')
@@ -64,24 +80,28 @@ def start_container(user_id, container_id):
     except container.DoesNotExist:
         return "not found"
     start_environment(container)
-    while True:
-        time.sleep(CHECK_INTERVAL)
-        status = container.check_state()
-        if status['changed']:
-            async_to_sync(channel_layer.group_send)(f"container-{user_id}", {
-                    "type": "feedback",
-                    "feedback": status['message'],
-                    "container_id": container.id,
-                    "container_state": container.state,
-                    "container_state_backend": container.state_backend,
-                    "replace_widgets": _replace_widgets(container),
-                })
-        if container.state == container.ST_RUNNING:
-            addroute(container, 'NB_URL', 'NB_PORT')
-            addroute(container, 'REPORT_URL', 'REPORT_PORT')
-            break
-        elif container.state == container.ST_ERROR:
-            break
+
+#    while True:
+#        time.sleep(CHECK_INTERVAL)
+#        status = container.check_state()
+#        if status['changed']:
+#            async_to_sync(channel_layer.group_send)(f"container-{user_id}", {
+#                    "type": "feedback",
+#                    "feedback": status['message'],
+#                    "container_id": container.id,
+#                    "container_state": container.state,
+#                    "container_state_backend": container.state_backend,
+#                    "replace_widgets": _replace_widgets(container),
+#                })
+#        if container.state == container.ST_RUNNING:
+#            addroute(container, 'NB_URL', 'NB_PORT')
+#            addroute(container, 'REPORT_URL', 'REPORT_PORT')
+#            break
+#        elif container.state == container.ST_ERROR:
+#            break
+#        elif container.state == container.ST_NOTPRESENT:
+#            #external kill?
+#            break
     return "Completed"
 
 
@@ -95,20 +115,20 @@ def stop_container(user_id, container_id):
     removeroute(container, 'NB_URL')
     removeroute(container, 'REPORT_URL')
     stop_environment(container)
-    while True:
-        time.sleep(CHECK_INTERVAL)
-        status = container.check_state()
-        if status['changed']:
-            async_to_sync(channel_layer.group_send)(f"container-{user_id}", {
-                    "type": "feedback",
-                    "feedback": status['message'],
-                    "container_id": container.id,
-                    "container_state": container.state,
-                    "container_state_backend": container.state_backend,
-                    "replace_widgets": _replace_widgets(container),
-                })
-        if container.state==container.ST_NOTPRESENT:
-            break
+#    while True:
+#        time.sleep(CHECK_INTERVAL)
+#        status = container.check_state()
+#        if status['changed']:
+#            async_to_sync(channel_layer.group_send)(f"container-{user_id}", {
+#                    "type": "feedback",
+#                    "feedback": status['message'],
+#                    "container_id": container.id,
+#                    "container_state": container.state,
+#                    "container_state_backend": container.state_backend,
+#                    "replace_widgets": _replace_widgets(container),
+#                })
+#        if container.state==container.ST_NOTPRESENT:
+#            break
     return "Completed"
 
 

@@ -179,64 +179,64 @@ class Container(models.Model):
         from volume.models import VolumeContainerBinding
         return [ binding.volume for binding in VolumeContainerBinding.objects.filter(container = self) ]
 
-    @property
-    def mapped_backend_state(self):
-        from ..lib import state_mapper
-        return state_mapper.get(self.state_backend,  self.ST_NOTPRESENT)
+#    @property
+#    def mapped_backend_state(self):
+#        from ..lib import state_mapper
+#        return state_mapper.get(self.state_backend,  self.ST_NOTPRESENT)
 
     def start(self):
         from ..tasks import start_container
-        self.check_state()
-        if self.mapped_backend_state!=self.ST_NOTPRESENT:
-            logger.warning(f"Not starting {self} because {self.state} {self.mapped_backend_state}")
-            return
-        self.state = self.ST_STARTING
-        self.restart_reasons = None
-        self.save()
+#        self.check_state()
+#        if self.mapped_backend_state!=self.ST_NOTPRESENT:
+#            logger.warning(f"Not starting {self} because {self.state} {self.mapped_backend_state}")
+#            return
+#        self.state = self.ST_STARTING
+#        self.restart_reasons = None
+#        self.save()
         start_container(self.user.id, self.id)
 
     def stop(self):
         from ..tasks import stop_container
-        self.check_state()
-        if self.mapped_backend_state not in [self.ST_RUNNING, self.ST_ERROR]:
-            logger.warning(f"Not stopping {self} because {self.state} and {self.mapped_backend_state}")
-            return
-        self.state = self.ST_STOPPING
-        self.restart_reasons = None
-        self.save()
-        return stop_container(self.user.id, self.id)
+#        self.check_state()
+#        if self.mapped_backend_state not in [self.ST_RUNNING, self.ST_ERROR] and self.state_backend!='Pending':
+#            logger.warning(f"Not stopping {self} because {self.state} and {self.mapped_backend_state}")
+#            return
+#        self.state = self.ST_STOPPING
+#        self.restart_reasons = None
+#        self.save()
+        stop_container(self.user.id, self.id)
 
     def restart(self):
         from ..tasks import restart_container
-        self.check_state()
-        if self.mapped_backend_state not in [self.ST_RUNNING, self.ST_ERROR]:
-            logger.warning(f"Not restarting {self} because {self.state} and {self.mapped_backend_state}")
-            return
-        self.restart_reasons = None
-        self.state = self.ST_STOPPING
-        self.save()
-        return restart_container(self.user.id, self.id)
+#        self.check_state()
+#        if self.mapped_backend_state not in [self.ST_RUNNING, self.ST_ERROR]:
+#            logger.warning(f"Not restarting {self} because {self.state} and {self.mapped_backend_state}")
+#            return
+#        self.restart_reasons = None
+#        self.state = self.ST_STOPPING
+#        self.save()
+        restart_container(self.user.id, self.id)
 
-    def check_state(self, retrieve_log = False):
-        from ..lib import check_environment, fetch_containerlog
-        from ..lib import state_mapper
-        state = check_environment(self)
-        if retrieve_log:
-            state['podlog'] = fetch_containerlog(self)
-        mapped_state=self.mapped_backend_state
-        if self.state==self.ST_RUNNING and state_mapper.get(state.get('pod_phase'))==self.ST_NOTPRESENT:
-            self.state=self.ST_NOTPRESENT
-            self.save()
-        elif self.state in [self.ST_STARTING, self.ST_STOPPING] and mapped_state in [self.ST_NOTPRESENT, self.ST_RUNNING, self.ST_ERROR]:
-            self.state=mapped_state
-            self.save()
-        elif self.state==self.ST_ERROR and mapped_state==self.ST_NOTPRESENT:
-            self.state=self.ST_NOTPRESENT
-            self.save()
-        elif self.state==self.ST_NOTPRESENT and state_mapper.get(state.get('pod_phase'))==self.ST_RUNNING:
-            self.state=self.ST_RUNNING
-            self.save()
-        return state
+#    def check_state(self, retrieve_log = False):
+#        from ..lib import check_environment, fetch_containerlog
+#        from ..lib import state_mapper
+#        state = check_environment(self)
+#        if retrieve_log:
+#            state['podlog'] = fetch_containerlog(self)
+#        mapped_state=self.mapped_backend_state
+#        if self.state==self.ST_RUNNING and state_mapper.get(state.get('pod_phase'))==self.ST_NOTPRESENT:
+#            self.state=self.ST_NOTPRESENT
+#            self.save()
+#        elif self.state in [self.ST_STARTING, self.ST_STOPPING] and mapped_state in [self.ST_NOTPRESENT, self.ST_RUNNING, self.ST_ERROR]:
+#            self.state=mapped_state
+#            self.save()
+#        elif self.state==self.ST_ERROR and mapped_state==self.ST_NOTPRESENT:
+#            self.state=self.ST_NOTPRESENT
+#            self.save()
+#        elif self.state==self.ST_NOTPRESENT and state_mapper.get(state.get('pod_phase'))==self.ST_RUNNING:
+#            self.state=self.ST_RUNNING
+#            self.save()
+#        return state
 
     def mark_restart(self, reason, save = True):
         if self.state not in [ self.ST_RUNNING, self.ST_NEED_RESTART ]:
@@ -268,8 +268,8 @@ class Container(models.Model):
         return render_to_string("widgets/widget_container_open.html", {"container": self, "link": _link})
 
     def render_fetchlogs_html(self):
-        _active = [ Container.ST_RUNNING, Container.ST_ERROR ]
-        return render_to_string("widgets/widget_container_fetchlogs.html", {"container": self, "is_active": self.mapped_backend_state in _active}) if self.id else ""
+        _active = [ Container.ST_RUNNING, Container.ST_ERROR, Container.ST_NEED_RESTART ]
+        return render_to_string("widgets/widget_container_fetchlogs.html", {"container": self, "is_active": self.state in _active}) if self.id else ""
 
     def render_state_html(self):
         return render_to_string("widgets/widget_container_state.html", {"container": self}) if self.id else ""

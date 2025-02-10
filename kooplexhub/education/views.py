@@ -77,7 +77,7 @@ def assignment_teacher(request):
 
 @require_http_methods(['GET'])
 @login_required
-def addcontainer(request, usercoursebinding_id):
+def addcontainer(request, pk):
     """
     @summary: automagically create an environment
     @param usercoursebinding_id
@@ -87,6 +87,7 @@ def addcontainer(request, usercoursebinding_id):
     from volume.models import VolumeContainerBinding
     user = request.user
     logger.debug("user %s, method: %s" % (user, request.method))
+    usercoursebinding_id = pk
     try:
         course = UserCourseBinding.objects.get(id = usercoursebinding_id, user = user).course
         container, created = Container.objects.get_or_create(
