@@ -7,11 +7,6 @@
 	      <strong data-bs-toggle="tooltip" title="Your have assignment{% if due_assignments|length > 1 %}s{% endif %} due: {{ due_assignments|join:", " }}.">Due assignment{% if due_assignments|length > 1 %}s{% endif %}</strong> {{ due_assignments|join:", " }}.
       </div>
     {% endif %}
-    {% if unbound_courses %}
-      <div class="alert bg-warning alert-dismissible fade show"  role="alert">
-	      <strong data-bs-toggle="tooltip" title="Your course{% if unbound_courses|length > 1 %}s {{ unbound_courses|join:", " }} are{% else %} {{ unbound_courses|first }} is{% endif %} not bound to a container environment">Unbound course{% if unbound_courses|length > 1 %}s{% endif %}</strong> {{ unbound_courses|join_links:user }}.
-      </div>
-    {% endif %}
     {% if unbound_projects %}
       <div class="alert bg-warning alert-dismissible fade show" role="alert">
               <strong data-bs-toggle="tooltip" title="Your project{% if unbound_projects|length > 1 %}s {{ unbound_projects|join:" " }} are {% else %} {{ unbound_projects|first }} is{% endif %} not bound to a container environment">Unbound project{% if unbound_projects|length > 1 %}s{% endif %}</strong> {{ unbound_projects|join:", " }}.

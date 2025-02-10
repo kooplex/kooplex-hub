@@ -130,22 +130,58 @@ class AssignmentConsumer(SyncSkeleton):
 
 #################
 
+
+
 class CourseGetContainersConsumer(SyncSkeleton):
     def receive(self, text_data):
         from django.urls import reverse
         parsed = json.loads(text_data)
         logger.debug(parsed)
         #assert parsed.get('request')=='configure-project', "wrong request"
-        courseid = parsed.get('pk')
+        if parsed.get('request')=='autoadd':
+            usercoursebinding_id=parsed.get('pk')
+            message, courseid=self.addcontainer(usercoursebinding_id)
+        else:
+            message=None
+            courseid = parsed.get('pk')
         bindings = CourseContainerBinding.objects.filter(container__user__id=self.userid, course__id=courseid)
+        logger.debug(bindings)
         ucb=UserCourseBinding.objects.get(user__id=self.userid, course__id=courseid)
-        link_autocreate=reverse('education:autoaddcontainer', args=[ucb.id,])
         message_back = {
-            "feedback": f"Container list refreshed",
-            "response": render_to_string("widgets/widget_containertable.html", {"containers": map(lambda o: o.container, bindings), "link_autocreate": link_autocreate }),
+            "feedback": message if message else f"Container list refreshed",
+            "response": render_to_string("widgets/widget_containertable.html", {"containers": list(map(lambda o: o.container, bindings)), "pk": ucb.id }),
         }
         logger.debug(message_back)
         self.send(text_data=json.dumps(message_back))
+
+    def addcontainer(self, usercoursebinding_id):
+        """
+        @summary: automagically create an environment
+        @param usercoursebinding_id
+        """
+        from kooplexhub.lib.libbase import standardize_str
+        from .models import VolumeCourseBinding
+        from volume.models import VolumeContainerBinding
+        from container.models import Container
+        try:
+            ucb = UserCourseBinding.objects.get(id = usercoursebinding_id, user_id = self.userid)
+            course = ucb.course
+            user = ucb.user
+            container, created = Container.objects.get_or_create(
+                name = f'generated for {course.name}', 
+                label = f'edu-{user.username}-{standardize_str(course.name)}',
+                user = user,
+                image = course.preferred_image
+            )
+            CourseContainerBinding.objects.create(course = course, container = container)
+            for b in VolumeCourseBinding.objects.filter(course=course):
+                VolumeContainerBinding.objects.get_or_create(container=container, volume=b.volume)
+            if created:
+                return f'We created a new environment {container.name} for course {course.name}.', course.id
+            else:
+                return f'We associated your course {course.name} with your former environment {container.name}.', course.id
+        except Exception as e:
+            return f'We failed -- {e}', course.id
 
 
 class HandinConsumer(AsyncSkeleton):

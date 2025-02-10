@@ -30,12 +30,6 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
       </div>
     {% endif %}
-    {% if unbound_courses %}
-    <div class="alert alert-warning alert-dismissible fade show" role="alert">
-	      <strong data-bs-toggle="tooltip" title="Your course{% if unbound_courses|length > 1 %}s {{ unbound_courses|join:", " }} are{% else %} {{ unbound_courses|first }} is{% endif %} not bound to a container environment">Unbound course{% if unbound_courses|length > 1 %}s{% endif %}</strong> {{ unbound_courses|join_links:user }}.
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-      </div>
-    {% endif %}
     {% if unbound_projects %}
     <div class="alert alert-warning alert-dismissible fade show" role="alert">
               <strong data-bs-toggle="tooltip" title="Your project{% if unbound_projects|length > 1 %}s {{ unbound_projects|join:" " }} are {% else %} {{ unbound_projects|first }} is{% endif %} not bound to a container environment">Unbound project{% if unbound_projects|length > 1 %}s{% endif %}</strong> {{ unbound_projects|join:", " }}.

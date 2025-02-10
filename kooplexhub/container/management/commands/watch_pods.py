@@ -158,7 +158,11 @@ class Command(BaseCommand):
                     changed=(state_backend_old != backend_state) or (state_new and (state_old != state_new))
                     print ("State machine", "state change" if changed else "state remains", 'backend', state_backend_old, '->', backend_state, 'model', state_old, '->', state_new)
                     if changed:
-                        container=Container.objects.get(id=container_id)
+                        container=Container.objects.filter(id=container_id).first()
+                        if not container:
+                            print(f"⚠️  container {pod_name} disappeared")
+                            containers.pop(pod_name)
+                            continue
                         container.state_backend=backend_state
                         if state_new:
                             container.state=state_new

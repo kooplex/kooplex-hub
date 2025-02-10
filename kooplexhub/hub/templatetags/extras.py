@@ -1,5 +1,6 @@
 from django import template
 from django.utils.html import format_html
+from django.template.loader import render_to_string
 from django.urls import reverse
 from datetime import datetime
 
@@ -8,6 +9,7 @@ from education.models import UserCourseBinding
 from kooplexhub.settings import URL_MANUAL, manual_mapping
 
 register = template.Library()
+
 
 
 @register.filter
@@ -56,16 +58,6 @@ def apply_cancel(hide_apply = False, label_apply = 'Submit', icon_apply = None, 
 {submit}{cancel}
 </div>
     """)
-
-
-@register.filter(name = 'join_links')
-def join_links(courses, user):
-    links = []
-    for c in courses:
-        ucb = UserCourseBinding.objects.get(course = c, user = user)
-        link = reverse('education:autoaddcontainer', args = [ucb.id])
-        links.append(f'<a href="{link}" data-toggle="tooltip" title="Following this link automatically creates a course environment.">{c.name} ({c.folder})</a>')
-    return format_html(', '.join(links))
 
 
 @register.filter(name = 'popupmessage')

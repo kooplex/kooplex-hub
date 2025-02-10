@@ -75,40 +75,6 @@ def assignment_teacher(request):
         return redirect('indexpage')
 
 
-@require_http_methods(['GET'])
-@login_required
-def addcontainer(request, pk):
-    """
-    @summary: automagically create an environment
-    @param usercoursebinding_id
-    """
-    from kooplexhub.lib.libbase import standardize_str
-    from .models import VolumeCourseBinding
-    from volume.models import VolumeContainerBinding
-    user = request.user
-    logger.debug("user %s, method: %s" % (user, request.method))
-    usercoursebinding_id = pk
-    try:
-        course = UserCourseBinding.objects.get(id = usercoursebinding_id, user = user).course
-        container, created = Container.objects.get_or_create(
-            name = f'generated for {course.name}', 
-            label = f'edu-{user.username}-{standardize_str(course.name)}',
-            user = user,
-            image = course.preferred_image
-        )
-        CourseContainerBinding.objects.create(course = course, container = container)
-        for b in VolumeCourseBinding.objects.filter(course=course):
-            VolumeContainerBinding.objects.get_or_create(container=container, volume=b.volume)
-        if created:
-            messages.info(request, f'We created a new environment {container.name} for course {course.name}.')
-        else:
-            messages.info(request, f'We associated your course {course.name} with your former environment {container.name}.')
-    except Exception as e:
-        messages.error(request, f'We failed -- {e}')
-        raise
-    return redirect('container:list')
-
-
 class StudentCourseBindingListView(LoginRequiredMixin, generic.ListView):
     template_name = 'course_list.html'
     context_object_name = 'coursebindinglist'
