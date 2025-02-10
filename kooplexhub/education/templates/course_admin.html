@@ -13,6 +13,7 @@
 {% endblock %}
 
 {% block pagedescription %}
+Create a new course or import courses from Canvas using a canvas api token <a href="https://xwiki.vo.elte.hu/en/kooplex-manual/education#canvas"  target="_blank"><span class="ms-2 bi bi-book"></span></a>
 {% endblock %}
 
 {# render the course cards #}
@@ -50,7 +51,7 @@ $(document).ready(function() {
 
 {% if coursebindinglist %}
 <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 w-100 mx-auto justify-content-center gap-3">
-  {% for ucb in coursebindinglist %}
+  {% for ucb in coursebindinglist reversed %}
       {% include 'course.html' with course=ucb.course %}
   {% endfor %}
 </div>

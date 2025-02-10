@@ -8,6 +8,11 @@
   <link href="{% static 'css/xeditable.css' %}" rel="stylesheet">
 {% endblock %}
 
+{% block pagedescription %}
+Environments are user workspaces with limited resources, attached volumes and projects. Multiple environments can run at the same time. <a href="https://xwiki.vo.elte.hu/en/kooplex-manual/environmentpanel"><span class="ms-2 bi bi-book"></span></a>
+{% endblock %}
+
+
 {# render the container cards #}
 {% block bodycontent %}
 <div id="containerListPane" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 w-100 mx-auto justify-content-center">
