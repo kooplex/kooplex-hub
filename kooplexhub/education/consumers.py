@@ -84,6 +84,11 @@ class AssignmentConsumer(SyncSkeleton):
             assignment_id=c['id']
             chg=c['changed']
             if assignment_id=='None':  #FIXME: ""
+                for att in ['valid_from', 'expires_at', 'folder']:
+                    if chg.get(att, None) in ['', None]:
+                        chg.pop(att)
+                if not 'folder' in chg:
+                    continue
                 a=Assignment.objects.create(course=course, creator_id=self.userid, **chg)
                 a.snapshot()
                 #FIXME: feedback message
