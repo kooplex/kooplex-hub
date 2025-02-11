@@ -7,7 +7,8 @@ from asgiref.sync import async_to_sync
 
 from container.models import Container
 
-from kooplexhub.lib import now  #FIXME: django now
+from django.utils import timezone
+from kooplexhub.settings import KOOPLEX
 
 def _replace_widgets(container):
     return {
@@ -110,7 +111,7 @@ class Command(BaseCommand):
         from container.lib.proxy import addroute
         print("Starting Kubernetes Pod Watcher...")
         v1 = client.CoreV1Api()
-        namespace = "k8plex-test-pods"  # Change to your namespace
+        namespace = KOOPLEX.get('kubernetes', {}).get('namespace', 'default')
 
         # Load Kubernetes configuration
         try:
@@ -130,7 +131,7 @@ class Command(BaseCommand):
                     feedback=container.state!=container.ST_NOTPRESENT
                     container.state=container.ST_NOTPRESENT
                     container.state_backend=e.reason
-                    container.state_lastcheck_at = now()
+                    container.state_lastcheck_at = timezone.now()
                     container.save()
                     if feedback:
                         self.feedback(container, f'Container {container.name} is not present any more')
@@ -166,7 +167,7 @@ class Command(BaseCommand):
                         container.state_backend=backend_state
                         if state_new:
                             container.state=state_new
-                        container.state_lastcheck_at = now()
+                        container.state_lastcheck_at = timezone.now()
                         container.save()
                         self.feedback(container, f'Container {container.name} changed its state: {backend_state}({state_new}).')
                         containers[pod_name]=(container.id, container.state, container.state_backend)
