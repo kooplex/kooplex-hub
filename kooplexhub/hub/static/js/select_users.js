@@ -82,9 +82,9 @@
     function handleOpen(objectId, kind) {
         pk = objectId==="None" ?"None":parseInt(objectId)
         instance=$(".users-modal").data('instance')
-	selectedUserIds = $(`[name="users"][data-id="${objectId}"][data-kind="${kind}"][data-users]`).data('users')
+	selectedUserIds = $(`[name="users"][data-id="${objectId}"][data-kind="${kind}"][data-users]`).data('users').slice()
 	originalUserIds = $(`[name="users"][data-id="${objectId}"][data-kind="${kind}"][data-users]`).data('users')
-        markedUserIds = $(`[name="users"][data-id="${objectId}"][data-kind="${kind}"][data-marked]`).data('marked')
+        markedUserIds = $(`[name="users"][data-id="${objectId}"][data-kind="${kind}"][data-marked]`).data('marked').slice()
 	originalMarkedIds = $(`[name="users"][data-id="${objectId}"][data-kind="${kind}"][data-marked]`).data('marked')
 	$('tr[data-id]').each(function() {
             const pk = $(this).data('id')

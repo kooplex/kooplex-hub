@@ -211,6 +211,7 @@ class CourseConfigConsumer(SyncSkeleton):
         return c
 
     def receive(self, text_data):
+        from hub.models import Profile
         from container.models import Image
         from kooplexhub.lib.libbase import standardize_str
         import datetime
@@ -221,6 +222,8 @@ class CourseConfigConsumer(SyncSkeleton):
         pk = parsed.get('pk')
         changes = parsed.get('changes')
         if pk=="None":
+            if not Profile.objects.filter(user__id=self.get_userid(), can_createcourse=True).first():
+                return
             reloadpage=True
             canvas_id=changes.pop('canvasid', None)
             _name=changes.pop('name')

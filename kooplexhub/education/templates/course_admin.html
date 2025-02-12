@@ -85,7 +85,6 @@ $(document).ready(function() {
 {% endblock %}
 
 {% block scripts %}
-{% if user.profile.can_createcourse %}
 <script src="{% static 'js/course_admin.js' %}"></script>
 <script src="{% static 'js/wss.js' %}"></script>
 <script>  
@@ -103,6 +102,5 @@ const wsURLs = {
 <script src="{% static 'js/multitabs.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/js/bootstrap5-toggle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-{% endif %}
 {% endblock %}
 
