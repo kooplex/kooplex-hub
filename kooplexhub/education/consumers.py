@@ -18,6 +18,24 @@ from volume.models import Volume
 
 logger = logging.getLogger(__name__)
 
+class AssignmentScoreConsumer(SyncSkeleton):
+    def receive(self, text_data):
+        parsed=json.loads(text_data)
+        logger.debug(parsed)
+        query=parsed.get('request')
+        student=parsed.get('student')
+        assignment=parsed.get('assignment')
+        uab=UserAssignmentBinding.objects.filter(user__username=student, assignment__name=assignment).first()
+        if not uab:
+            return
+        if query=='fetch':
+            self.send(text_data=json.dumps({'student': student, 'assignment': assignment, 'score': uab.score, 'comment': uab.feedback_text}))
+        elif query=='store':
+            uab.score=parsed.get('score')
+            uab.feedback_text=parsed.get('comment')
+            uab.save()
+
+
 class AssignmentConsumer(SyncSkeleton):
     def receive(self, text_data):
         parsed=json.loads(text_data)
@@ -38,7 +56,21 @@ class AssignmentConsumer(SyncSkeleton):
             self.refresh_list(course)
 
     def refresh_list(self, course):
-        # folder for new assignment
+        import django_tables2 as tables
+        # Function to dynamically create the table class
+        def create_table_class(df, editable_columns):
+            table_attrs = {
+                'Meta': type('Meta', (), {'attrs': {'class': 'table table-bordered table-hover'}})  # Bootstrap styling
+            }
+            # Dynamically add columns
+            for col in df.columns:
+                table_attrs[col] = tables.Column(
+                    orderable = False,
+                    attrs={'td': {'data-editable': 'true', 'data-assignment': col}} if col in editable_columns else {}
+                )
+            # Create and return the table class
+            return type('DynamicEditableTable', (tables.Table,), table_attrs)
+        # folders for new assignment
         folders=course.dir_assignmentcandidate()
         # get canvas assignments too? if it is a course canvas
         from canvas.models import CanvasCourse, Canvas
@@ -67,8 +99,9 @@ class AssignmentConsumer(SyncSkeleton):
             table = dfm.pivot(index = "user", columns = "assignment", values = "score")
             table.columns = [tc.split("Assignment ")[1].split(" (")[0] for tc in table.columns]  #FIXME: not a very nice way to parse
             points = dfm.fillna(0).groupby(by="user").agg("sum")[["score"]].rename(columns={"score":"Total points"})
-            result = pandas.merge(left=table, right=points, left_on="user", right_on="user", how="inner")
-            t_score = result.to_html(classes = "table table-bordered table-striped text-center", index_names = False, justify = "center", na_rep = "—", border = None)
+            result = pandas.merge(left=table, right=points, left_on="user", right_on="user", how="inner").reset_index()
+            EditableTable = create_table_class(result, table.columns)
+            t_score = EditableTable(result.fillna("—").to_dict(orient='records'))  # Convert DataFrame to Django Table
         else:
             t_score=f"<h6 class="">There are no assignments in this course.</h6>"
         self.send(text_data=json.dumps({
@@ -76,7 +109,7 @@ class AssignmentConsumer(SyncSkeleton):
             "f_new": render_to_string('widgets/form_new_assignment.html', {'course': course, 'folders': folders, 'table': TableAssignmentConf([Assignment()], exclude_columns=['manage', 'delete'])}),
             "t_assignment": render_to_string('django_table.html', {'table':t}),
             "t_individual": render_to_string('widgets/table_handle_individual.html', {'assignments': a, 'students': course.students, 'bindings': UAbind_dict}),
-            "t_score": t_score,
+            "t_score": render_to_string('widgets/table_scores.html', {'table': t_score}),
             }))
 
     def configure(self, course, configlist):
@@ -91,7 +124,7 @@ class AssignmentConsumer(SyncSkeleton):
                     continue
                 a=Assignment.objects.create(course=course, creator_id=self.userid, **chg)
                 a.snapshot()
-                #FIXME: feedback message
+                self.send(text_data=json.dumps({"feedback": f"New assignment {a.name} registered and is queued to archive."}))
             else:
                 a=Assignment.objects.get(id=assignment_id, course=course)
                 for field, value in chg.items():
@@ -102,10 +135,11 @@ class AssignmentConsumer(SyncSkeleton):
                     try:
                         a.full_clean()
                     except ValidationError as e:
-                        # fixme feedback error
+                        self.send(text_data=json.dumps({"feedback": f"Warning: failed to set {a.name}'s {field}, old value {old} is kept."}))
                         setattr(a, field, old)
                 a.save()
-                #FIXME: feedback message
+                self.send(text_data=json.dumps({"feedback": f"Assignment {a.name} is configured."}))
+                
 
     def delete(self, course, deletelist):
         Assignment.objects.filter(course=course, id__in=deletelist).delete()

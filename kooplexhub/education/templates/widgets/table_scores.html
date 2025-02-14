@@ -1,0 +1,25 @@
+{% extends 'django_table.html' %}
+
+{% block tableextension %}
+<style>
+    /* Style for the popup input bubble */
+    .popup {
+        position: absolute;
+        background: white;
+        border: 1px solid #ddd;
+        box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+        padding: 10px;
+        display: none;
+        z-index: 10;
+    }
+</style>
+
+<!-- Floating Popup for Input -->
+<div class="popup" id="popup">
+    <label>Score:</label>
+    <input type="number" id="popup-score" class="form-control">
+    <label>Comment:</label>
+    <input type="text" id="popup-comment" class="form-control">
+    <button id="save-btn" class="btn btn-primary btn-sm mt-2">Save</button>
+</div>
+{% endblock %}

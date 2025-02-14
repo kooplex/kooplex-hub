@@ -1,5 +1,5 @@
+import logging
 import time
-import threading
 from kubernetes import client, config, watch
 from django.core.management.base import BaseCommand
 from channels.layers import get_channel_layer
@@ -9,6 +9,8 @@ from container.models import Container
 
 from django.utils import timezone
 from kooplexhub.settings import KOOPLEX
+
+logger = logging.getLogger(__name__)
 
 def _replace_widgets(container):
     return {
@@ -136,7 +138,8 @@ class Command(BaseCommand):
                     if feedback:
                         self.feedback(container, f'Container {container.name} is not present any more')
                 else:
-                    raise
+                    logger.error(f'Unhandled error pod label: {label} -- {e}')
+
         w = watch.Watch()
 
         while True:
@@ -149,20 +152,23 @@ class Command(BaseCommand):
                     if not pod_name in containers:
                         c_new=Container.objects.filter(label=pod_name).first()
                         if c_new:
-                            print ("A new container cached", pod_name)
                             containers[pod_name]=(c_new.id, c_new.state, c_new.state_backend)
+                            logger.info(f"A new container cached {pod_name}")
                         else:
-                            print ("Most probably this is a dangling container. Consider removing:", pod_name)
+                            logger.warning(f"Most probably {pod_name} is a dangling container. Consider removing")
                             continue
                     container_id, state_old, state_backend_old = containers.get(pod_name)
                     state_new=state_mapper.get(backend_state)
                     changed=(state_backend_old != backend_state) or (state_new and (state_old != state_new))
-                    print ("State machine", "state change" if changed else "state remains", 'backend', state_backend_old, '->', backend_state, 'model', state_old, '->', state_new)
+                    _chg="state change" if changed else "state remains"
+                    logger.debug (f"{pod_name} {_chg}: backend {state_backend_old} -> {backend_state} | model {state_old} -> {state_new}")
                     if changed:
                         container=Container.objects.filter(id=container_id).first()
                         if not container:
                             print(f"⚠️  container {pod_name} disappeared")
-                            containers.pop(pod_name)
+                            if pod_name in containers:
+                                containers.pop(pod_name)
+                                logger.info(f"A container {pod_name} removed from cache")
                             continue
                         container.state_backend=backend_state
                         if state_new:
@@ -178,6 +184,7 @@ class Command(BaseCommand):
                             addroute(container, 'REPORT_URL', 'REPORT_PORT')
             except Exception as e:
                 print(f"⚠️ Error in watcher: {e}")
+                logger.error(f"⚠️ Error in watcher -- {e}")
                 print("Restarting watcher in 5 seconds...")
                 time.sleep(5)
                 continue

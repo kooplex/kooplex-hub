@@ -82,6 +82,7 @@ $(document).ready(function() {
 {# a modal to configure assignments #}
 {% include 'widgets/modal_assignment.html' %}
 <script src="{% static 'js/datetimepicker.js' %}"></script>
+<script src="{% static 'js/score.js' %}"></script>
 {% endblock %}
 
 {% block scripts %}
@@ -95,6 +96,7 @@ const wsURLs = {
   get_containers: "{{ wss_course_container }}",
   course_config: "{{ wss_course_config }}",
   assignment_config: "{{ wss_assignment_config }}",
+  assignment_score: "{{ wss_assignment_score }}",
 }
 
 </script>

@@ -395,17 +395,13 @@ def start(container):
     try:
         v1.create_namespaced_service(namespace = namespace, body = svc_definition)
     except client.rest.ApiException as e:
-        logger.warning(f'{container} service exists')
         if json.loads(e.body)['code'] != 409: # already exists
             logger.critical(e)
-            raise
     try:
         v1.create_namespaced_pod(namespace = namespace, body = pod_definition)
     except client.rest.ApiException as e:
-        logger.warning(f'{container} pod exists')
         if json.loads(e.body)['code'] != 409: # already exists
             logger.critical(e)
-            raise
 
 
 def stop(container):
@@ -415,14 +411,12 @@ def stop(container):
     try:
         msg = v1.delete_namespaced_pod(namespace = namespace, name = container.label)
     except client.rest.ApiException as e:
-        logger.warning(e)
         if json.loads(e.body)['code'] != 404: # doesnt exists
-            raise
+            logger.error(e)
     try:
         msg = v1.delete_namespaced_service(namespace = namespace, name = container.label)
     except client.rest.ApiException as e:
-        logger.warning(e)
         if json.loads(e.body)['code'] != 404: # doesnt exists
-            raise
+            logger.error(e)
 
 

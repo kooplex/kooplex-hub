@@ -11,7 +11,7 @@
     <tbody>
     	{% for s in students %}
     	<tr>
-    		<td>{{s.username}}</td>
+		<td><span data-bs-toggle="tooltip" title="{{s.username}}">{{s.last_name}}, {{s.first_name}}</span></td>
     		{% for a in assignments %}
     		<td>
     		  {% get_uabind_value bindings s.id a.id %}
