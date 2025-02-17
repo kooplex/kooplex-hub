@@ -1,6 +1,7 @@
 import logging
 import time
 from kubernetes import client, config, watch
+from django.db import connection, connections
 from django.core.management.base import BaseCommand
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
@@ -146,6 +147,7 @@ class Command(BaseCommand):
             try:
                 print("🔍 Watching for pod events...")
                 for event in w.stream(v1.list_namespaced_pod, namespace=namespace):
+                    connection.ensure_connection()
                     backend_state=self.parse_pod_event(event)
                     pod = event["object"]
                     pod_name = pod.metadata.name
@@ -184,6 +186,7 @@ class Command(BaseCommand):
                             addroute(container, 'REPORT_URL', 'REPORT_PORT')
             except Exception as e:
                 print(f"⚠️ Error in watcher: {e}")
+                connections.close_all()
                 logger.error(f"⚠️ Error in watcher -- {e}")
                 print("Restarting watcher in 5 seconds...")
                 time.sleep(5)
