@@ -2,7 +2,7 @@ import logging
 
 from channels.layers import get_channel_layer
 from django_huey import task, db_task, periodic_task, get_queue
-from django.db import connections
+from django.db import connection, connections
 from huey import crontab
 from asgiref.sync import async_to_sync
 
@@ -27,6 +27,7 @@ qc=get_queue('course')
 @qc.periodic_task(crontab(minute='*'))
 def check_handout_and_collect():
     try:
+        connection.ensure_connection()
         now=timezone.now()
         for a in Assignment.objects.filter(valid_from__lt=now).exclude(expires_at__lt=now):
             a.handout()
