@@ -8,7 +8,7 @@ from django.db import connections
 from datetime import datetime
 
 from channels.layers import get_channel_layer
-from django_huey import db_task, periodic_task, get_queue
+from django_huey import db_task, db_periodic_task, periodic_task, get_queue
 from huey import crontab
 from asgiref.sync import async_to_sync
 
@@ -66,12 +66,11 @@ def stop_container(user_id, container_id):
         connections.close_all()
 
 
-#@shared_task()
+@db_periodic_task(crontab(minute="55"))  # Runs every hour at 55
 def kill_idle():
     url_api = KOOPLEX.get('proxy', {}).get('url_api', 'http://proxy:8001/api')
     url_path = KOOPLEX.get('proxy', {}).get('check_container_path', 'routes/notebook/{container.label}')
     url = os.path.join(url_api, url_path)
-    #logger.debug('Checking container idle time...')
     for c in Container.objects.filter(state__in = [Container.ST_RUNNING, Container.ST_NEED_RESTART], image__imagetype = Image.TP_PROJECT):
         try:
             resp = requests.get(url = url.format(container = c))
@@ -80,8 +79,7 @@ def kill_idle():
             elasped_time = timezone.now() - timezone.make_aware(ts)
             # FIXME added +1 because proxy's timezone is different
             if elasped_time.days*24+ elasped_time.seconds / 3600 > c.idletime:          
-                #logger.info(f'Container {c.name} of {c.user.username} is idle for {elasped_time.seconds} seconds, stopping it.')
                 c.stop()
         except Exception as e:
-            #logger.error(f'Failed to check container {c.name} of {c.user.username} -- {e}')
+            logger.error(f'Failed to check container {c.name} of {c.user.username} -- {e}')
             pass
