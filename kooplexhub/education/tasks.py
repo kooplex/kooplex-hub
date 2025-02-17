@@ -1,7 +1,8 @@
 import logging
 
 from channels.layers import get_channel_layer
-from django_huey import task, periodic_task, get_queue
+from django_huey import task, db_task, periodic_task, get_queue
+from django.db import connections
 from huey import crontab
 from asgiref.sync import async_to_sync
 
@@ -25,43 +26,55 @@ qc=get_queue('course')
 
 @qc.periodic_task(crontab(minute='*'))
 def check_handout_and_collect():
-    now=timezone.now()
-    for a in Assignment.objects.filter(valid_from__lt=now).exclude(expires_at__lt=now):
-        a.handout()
-    for a in Assignment.objects.filter(expires_at__lt=now):
-        a.collect()
+    try:
+        now=timezone.now()
+        for a in Assignment.objects.filter(valid_from__lt=now).exclude(expires_at__lt=now):
+            a.handout()
+        for a in Assignment.objects.filter(expires_at__lt=now):
+            a.collect()
+    finally:
+        connections.close_all()
 
 
-@task(queue = 'course')
+@db_task(queue = 'course')
 def assignment_create(assignment):
-    assignment.filename = os.path.join(course_assignment_snapshot(assignment.course), f'assignment-snapshot-{assignment._safename}.{time.time()}.tar.gz')
-    folder=assignment_source(assignment)
-    archivedir(folder, assignment.filename, remove=False)
-    assignment.save()
+    try:
+        assignment.filename = os.path.join(course_assignment_snapshot(assignment.course), f'assignment-snapshot-{assignment._safename}.{time.time()}.tar.gz')
+        folder=assignment_source(assignment)
+        archivedir(folder, assignment.filename, remove=False)
+        assignment.save()
+    finally:
+        connections.close_all()
 
 
-@task(queue = 'course')
+@db_task(queue = 'course')
 def assignment_handout(userassignmentbinding):
-    folder=assignment_workdir(userassignmentbinding)
-    extracttarbal(userassignmentbinding.assignment.filename, folder)
-    gid=userassignmentbinding.assignment.course.group_teachers.groupid
-    grantaccess_group(gid, folder, readonly=True, recursive=True, follow=True)
-    gid=userassignmentbinding.assignment.course.group_students.groupid
-    grantaccess_user(userassignmentbinding.user, folder, readonly=False, follow=True)
-    grantaccess_user(userassignmentbinding.user, folder, readonly=False, follow=False)
-    userassignmentbinding.state=userassignmentbinding.ST_WORKINPROGRESS
-    userassignmentbinding.save()
+    try:
+        folder=assignment_workdir(userassignmentbinding)
+        extracttarbal(userassignmentbinding.assignment.filename, folder)
+        gid=userassignmentbinding.assignment.course.group_teachers.groupid
+        grantaccess_group(gid, folder, readonly=True, recursive=True, follow=True)
+        gid=userassignmentbinding.assignment.course.group_students.groupid
+        grantaccess_user(userassignmentbinding.user, folder, readonly=False, follow=True)
+        grantaccess_user(userassignmentbinding.user, folder, readonly=False, follow=False)
+        userassignmentbinding.state=userassignmentbinding.ST_WORKINPROGRESS
+        userassignmentbinding.save()
+    finally:
+        connections.close_all()
 
 
-@task(queue = 'course')
+@db_task(queue = 'course')
 def assignment_collect(userassignmentbinding):
-    folder=assignment_workdir(userassignmentbinding)
-    tarbal=assignment_collection(userassignmentbinding)
-    gid=userassignmentbinding.assignment.course.group_teachers.groupid
-    correct_folder=assignment_correct_dir(userassignmentbinding)
-    archivedir(folder, tarbal, remove=userassignmentbinding.assignment.remove_collected)
-    extracttarbal(tarbal, correct_folder)
-    grantaccess_group(gid, correct_folder, readonly=False)
-    userassignmentbinding.state=userassignmentbinding.ST_COLLECTED
-    userassignmentbinding.save()
+    try:
+        folder=assignment_workdir(userassignmentbinding)
+        tarbal=assignment_collection(userassignmentbinding)
+        gid=userassignmentbinding.assignment.course.group_teachers.groupid
+        correct_folder=assignment_correct_dir(userassignmentbinding)
+        archivedir(folder, tarbal, remove=userassignmentbinding.assignment.remove_collected)
+        extracttarbal(tarbal, correct_folder)
+        grantaccess_group(gid, correct_folder, readonly=False)
+        userassignmentbinding.state=userassignmentbinding.ST_COLLECTED
+        userassignmentbinding.save()
+    finally:
+        connections.close_all()
 

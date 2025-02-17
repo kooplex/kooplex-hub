@@ -4,10 +4,11 @@ import time
 
 import requests, os
 from django.utils import timezone
+from django.db import connections
 from datetime import datetime
 
 from channels.layers import get_channel_layer
-from django_huey import task, periodic_task, get_queue
+from django_huey import db_task, periodic_task, get_queue
 from huey import crontab
 from asgiref.sync import async_to_sync
 
@@ -32,31 +33,37 @@ def ensure_k8s_watcher_running():
         logger.warning("Kubernetes watcher is not running. Restarting it...")
         subprocess.Popen(["python", "manage.py", "watch_pods"], 
                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    finally:
+        connections.close_all()
 
 
 #FIXME feedback signal received
-@task(queue = 'container')
+@db_task(queue = 'container')
 def start_container(user_id, container_id):
     channel_layer=get_channel_layer()
     try:
         container=Container.objects.get(user_id=user_id, id=container_id)    
+        start_environment(container)
+        return "Completed"
     except container.DoesNotExist:
         return "not found"
-    start_environment(container)
-    return "Completed"
+    finally:
+        connections.close_all()
 
 
-@task(queue = 'container')
+@db_task(queue = 'container')
 def stop_container(user_id, container_id):
     channel_layer=get_channel_layer()
     try:
         container=Container.objects.get(user_id=user_id, id=container_id)    
+        removeroute(container, 'NB_URL')
+        removeroute(container, 'REPORT_URL')
+        stop_environment(container)
+        return "Completed"
     except container.DoesNotExist:
         return "not found"
-    removeroute(container, 'NB_URL')
-    removeroute(container, 'REPORT_URL')
-    stop_environment(container)
-    return "Completed"
+    finally:
+        connections.close_all()
 
 
 #@shared_task()

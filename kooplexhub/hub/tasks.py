@@ -2,7 +2,7 @@ import logging
 import time
 
 from channels.layers import get_channel_layer
-from django_huey import task
+from django_huey import db_task, task
 from asgiref.sync import async_to_sync
 
 from django.contrib.auth.models import User
