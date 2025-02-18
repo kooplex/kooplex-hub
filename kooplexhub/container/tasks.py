@@ -4,12 +4,11 @@ import time
 
 import requests, os
 from django.utils import timezone
-from django.db import connections
 from datetime import datetime
 
 from channels.layers import get_channel_layer
 from django_huey import db_task, db_periodic_task, periodic_task, get_queue
-from huey import crontab
+from huey import crontab, RetryTask
 from asgiref.sync import async_to_sync
 
 from container.models import Container, Image
@@ -33,27 +32,20 @@ def ensure_k8s_watcher_running():
         logger.warning("Kubernetes watcher is not running. Restarting it...")
         subprocess.Popen(["python", "manage.py", "watch_pods"], 
                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    finally:
-        connections.close_all()
 
 
-#FIXME feedback signal received
-@db_task(queue = 'container')
+@db_task(queue='container', retries=3, retry_delay=10)
 def start_container(user_id, container_id):
-    channel_layer=get_channel_layer()
     try:
         container=Container.objects.get(user_id=user_id, id=container_id)    
         start_environment(container)
         return "Completed"
     except container.DoesNotExist:
-        return "not found"
-    finally:
-        connections.close_all()
+        return "Container not found"
 
 
-@db_task(queue = 'container')
+@db_task(queue='container', retries=3, retry_delay=10)
 def stop_container(user_id, container_id):
-    channel_layer=get_channel_layer()
     try:
         container=Container.objects.get(user_id=user_id, id=container_id)    
         removeroute(container, 'NB_URL')
@@ -61,9 +53,7 @@ def stop_container(user_id, container_id):
         stop_environment(container)
         return "Completed"
     except container.DoesNotExist:
-        return "not found"
-    finally:
-        connections.close_all()
+        return "Container not found"
 
 
 @db_periodic_task(crontab(minute="55"))  # Runs every hour at 55
@@ -82,4 +72,4 @@ def kill_idle():
                 c.stop()
         except Exception as e:
             logger.error(f'Failed to check container {c.name} of {c.user.username} -- {e}')
-            pass
+
