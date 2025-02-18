@@ -21,7 +21,7 @@ from .lib.proxy import addroute, removeroute
 logger = logging.getLogger(__name__)
 
 
-@periodic_task(crontab(minute="*/5"))  # Runs every 5 minutes
+@periodic_task(crontab(minute="*/5"), queue='container')  # Runs every 5 minutes
 def ensure_k8s_watcher_running():
     try:
         # Check if the watcher is running
@@ -56,7 +56,7 @@ def stop_container(user_id, container_id):
         return "Container not found"
 
 
-@db_periodic_task(crontab(minute="55"))  # Runs every hour at 55
+@db_periodic_task(crontab(minute="55"), queue='container')  # Runs every hour at 55
 def kill_idle():
     url_api = KOOPLEX.get('proxy', {}).get('url_api', 'http://proxy:8001/api')
     url_path = KOOPLEX.get('proxy', {}).get('check_container_path', 'routes/notebook/{container.label}')

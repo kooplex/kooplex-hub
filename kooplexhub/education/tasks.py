@@ -1,7 +1,7 @@
 import logging
 
 from channels.layers import get_channel_layer
-from django_huey import task, db_task, periodic_task, get_queue
+from django_huey import task, db_task, periodic_task, db_periodic_task
 from huey import crontab
 from asgiref.sync import async_to_sync
 
@@ -21,9 +21,8 @@ import time
 
 logger = logging.getLogger(__name__)
 
-qc=get_queue('course')
 
-@qc.db_periodic_task(crontab(minute='*'))
+@db_periodic_task(crontab(minute='*'), queue='course')
 def check_handout_and_collect():
     now=timezone.now()
     for a in Assignment.objects.filter(valid_from__lt=now).exclude(expires_at__lt=now):
