@@ -1,7 +1,7 @@
 import logging
 import time
 from kubernetes import client, config, watch
-from django.db import connection, connections
+from django.db import connection, connections, close_old_connections
 from django.core.management.base import BaseCommand
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
@@ -147,6 +147,7 @@ class Command(BaseCommand):
             try:
                 print("🔍 Watching for pod events...")
                 for event in w.stream(v1.list_namespaced_pod, namespace=namespace):
+                    close_old_connections()  # Close any stale DB connections
                     connection.ensure_connection()
                     backend_state=self.parse_pod_event(event)
                     pod = event["object"]
