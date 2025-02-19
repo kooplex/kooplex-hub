@@ -11,38 +11,13 @@
 	{% project_scope project %}
     </div>
     <div class="card-body">
-	    {% if project %}
-	    {% include 'widgets/pmulti.html' %} {# merge pmulti and multitabs #}
-	    {% endif %}
-        <div class="row">
-            <!-- First Column -->
-            <div class="col">
-		{% if not project %}
-                <div class="d-flex align-items-center mb-2">
-		    {% include 'widgets/widget_input.html' with field="folder" placeholder="Add a unique folder name" instance="project" %}
-                </div>
-		{% endif %}
-            </div>
-
-
-
-
-            <!-- Fifth Column -->
-            <div class="col">
-		{# FIXME: az alábbi infókat tooltipre tenni? #}
-		{% comment %}
-		        {% project_folder project %}
-			{% project_creator project user %}
-			{% list_reports project %}
-		{% endcomment %}
-                <div class="d-flex justify-content-end">
-		    {% include 'widgets/widget_savechanges.html' with pk=project.id obj="project" %}
-                </div>
-            </div>
-        </div>
+        {% include 'widgets/pmulti.html' %} {# FIXME merge pmulti and multitabs #}
     </div>
     <div class="card-footer">
-	 {% button_environment project %}
+	{% button_environment project %}
+        <div class="d-flex justify-content-end">
+	    {% include 'widgets/widget_savechanges.html' with pk=project.id obj="project" %}
+        </div>
     </div>
 </div>
 

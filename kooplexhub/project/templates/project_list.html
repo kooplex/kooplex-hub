@@ -9,6 +9,12 @@
 <link href="{% static 'css/xeditable.css' %}" rel="stylesheet">
 {% endblock %}
 
+{% comment %}
+{% block pagedescription %}
+Projects are a good way to collaborate with each other without much restriction. Permissions on files and folders are set in a restrictive way protecting user's own work. <a href="https://xwiki.vo.elte.hu/en/kooplex-manual/projects"><span class="ms-2 bi bi-book"></span></a>
+{% endblock %)
+{% endcomment %}
+
 {% block bodycontent %}
 <div class="container-fluid">
     <div class="d-flex flex-wrap gap-3">
@@ -23,25 +29,7 @@
     </div>
 </div>
 
-{# new project cration modal #}
-<div id="newProjectModal" class="modal fade" tabindex="-1" aria-labelledby="newProjectModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="newProjectModalLabel">Create a new project</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body vh-25">
-              <div class="container">
-                {% include 'project.html' with is_admin=True %}
-              </div>
-	      <div class="modal-footer">
-		{% include 'widgets/widget_savechanges.html' with obj="project" show=True %}
-              </div>
-            </div>
-        </div>
-    </div>
-</div>
+{% include 'new_project.html' %}
 
 {# render the project cards #}
 <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 w-100 mx-auto justify-content-center gap-3">

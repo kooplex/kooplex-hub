@@ -2,41 +2,18 @@
 
 // handle web socket callback
 function project_config_callback(message) {
-        console.log(message)
-/*    if (message.response) {
-        const resp=message.response
-	if (resp.reloadpage) {
-            location.reload()
-	    return
-	}
-        pk = resp.container_id
-        if (resp.restart) {
-            updateRestartReason(pk, resp.restart)
-        }
-        if (resp.success) {
-            const s = resp.success
-	    projects = s.projects ? s.projects.projects : "dummy"
-	    courses = s.courses ? s.courses.courses : "dummy"
-	    volumes = s.volumes ? s.volumes.volumes : "dummy"
-            FileResourceSelection.update(pk, projects, courses, volumes)
-        }
-	if (resp.failed) {
-	    const f = resp.failed
-	    if (f.name) {
-		updateContainerName(pk, f.name.value)
-	        alert(f.name.error)
-	    } else {
-                //FIXME: ANYTHING UNHANDLED
-		console.log("unhandled failures", f)
-	    }
-	}
-    }*/
+        console.log(message.project_id)
+    if (message.response==="reloadpage") {
+        location.reload()
+    }
+    let pk = message.project_id
+    $(`div[id=card-${pk}`).replaceWith(message.response)
 }
 
 
 // Save chanegs
 function save_project_config(pk) {
-    pk = pk === "new" ? "new" : parseInt(pk)
+    pk = pk === "None" ? "None" : parseInt(pk)
     console.log(pk)
     // Object to represent the changes
     var changeObject = { }

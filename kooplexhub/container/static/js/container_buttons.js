@@ -82,7 +82,7 @@ if (typeof showSaveNew !== "undefined") {
     }
 }
 
-
+// Attach Save Changes Event
 $(document).on('click', '[name=save][data-id][data-instance=container]', function() {
     save_container_config($(this).data('id'))
 })

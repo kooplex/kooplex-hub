@@ -1,5 +1,6 @@
 from django import template
 from django.utils.html import format_html
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.template.defaultfilters import truncatechars
 
@@ -8,17 +9,8 @@ from ..models import Project
 
 register = template.Library()
 
+#FIXME: get rid of it
 pid = lambda project: project.id if project else ""
-
-
-@register.simple_tag
-def button_fetch_joinable_projects(user):
-    return format_html(f"""
-<button type="button" class="btn btn-secondary btn-sm rounded rounded-5 border border-2 border-dark mb-2" data-bs-toggle="modal" data-bs-target="#joinprojectModal" data-id="{user.id}">
-    <i class="bi bi-boxes pe-1"></i>
-    Retrieve joinable projects...
-</button>
-    """)
 
 
 @register.simple_tag
@@ -26,7 +18,17 @@ def button_new_project(user):
     return format_html(f"""
 <button type="button" class="btn btn-secondary btn-sm rounded rounded-5 border border-2 border-dark mb-2" data-bs-toggle="modal" data-bs-target="#newProjectModal" data-id="{user.id}">
     <i class="bi bi-plus-square pe-1"></i>
-    Create new project...
+    New project...
+</button>
+    """)
+
+
+@register.simple_tag
+def button_fetch_joinable_projects(user):
+    return format_html(f"""
+<button type="button" class="btn btn-secondary btn-sm rounded rounded-5 border border-2 border-dark mb-2" data-bs-toggle="modal" data-bs-target="#joinprojectModal" data-id="{user.id}">
+    <i class="bi bi-plus-square pe-1"></i>
+    Join a project...
 </button>
     """)
 
@@ -57,22 +59,7 @@ def project_creator(project = None, user = None):
 
 @register.simple_tag
 def project_scope(project = None):
-    return format_html(f"""
-<div id="project-scope-{pid(project)}">
-    <button class="badge rounded-pill border border-2 border-dark p-2 ms-2 text-dark position-relative" name="{Project.SCP_PRIVATE}"
-            data-toggle="tooltip" title="Make project public"
-            onclick="projectScopeButtonClick('{pid(project)}', '{Project.SCP_PUBLIC}')">
-      <i class="oi oi-key"></i>
-      <span class="position-absolute top-0 start-100 translate-middle badge bg-success small">private</span>
-    </button>
-    <button class="badge rounded-pill border border-2 border-dark p-2 ms-2 text-dark position-relative" name="{Project.SCP_PUBLIC}"
-            data-toggle="tooltip" title="Make project private"
-            onclick="projectScopeButtonClick('{pid(project)}', '{Project.SCP_PRIVATE}')">
-      <i class="oi oi-cloud"></i>
-      <span class="position-absolute top-0 start-100 translate-middle badge bg-success small">puplic</span>
-    </button>
-</div>
-    """)
+    return render_to_string("widgets/button_scope.html", {'project':project})
 
 
 @register.simple_tag
@@ -121,7 +108,7 @@ def button_save_project_changes(project = None):
     return format_html(f"""
 <span id="project-save-{pid(project)}" class="badge rounded-pill bg-danger text-light p-3 me-3 d-none" role="button"
       onclick="save_project_config('{pid(project)}')">
-  <i class="bi bi-save me-1"></i><span>Save changes</span>
+  <i class="bi bi-save me-1"></i><span>Create</span>
 </span>
     """)
 

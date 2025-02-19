@@ -24,7 +24,6 @@ from kooplexhub.settings import KOOPLEX
 
 logger = logging.getLogger(__name__)
 
-#URL_PROJECT_LIST = redirect('project:list')
 
 @require_http_methods(['GET'])
 @login_required
@@ -55,82 +54,7 @@ def addcontainer(request, userprojectbinding_id):
     return redirect('container:list')
 
 
-
-class ProjectView(LoginRequiredMixin):
-    model = Project
-    template_name = 'project_configure.html'
-    form_class = FormProject
-    success_url = '/hub/project/list/' #FIXME: django.urls.reverse or shortcuts.reverse does not work reverse('project:list')
-
-    def get_initial(self):
-        initial = super().get_initial()
-        user = self.request.user
-        initial['user'] = user
-        return initial
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        project_id = self.kwargs.get('pk')
-        context['menu_project'] = True
-        context['submenu'] = 'configure' if project_id else 'new' 
-        context['active'] = self.request.COOKIES.get('configure_project_tab', 'collaboration') if project_id else 'meta'
-        context['url_post'] = reverse('project:configure', args = (project_id, )) if project_id else reverse('project:new')
-        context['project_id'] = project_id
-        return context
-
-    def form_valid(self, form):
-        logger.info(form.cleaned_data)
-        projectname = form.cleaned_data['name']
-        subpath = form.cleaned_data['subpath']
-        user = self.request.user
-        project_config = form.cleaned_data.pop('project_config')
-        assert user.id == project_config['user_id']
-        project_id = project_config['project_id']
-        msgs = []
-        if project_id:
-            project = Project.objects.get(id = project_id)
-        else:
-            project = Project.objects.create(**form.cleaned_data)
-            UserProjectBinding.objects.create(user = user, project = project, role = UserProjectBinding.RL_CREATOR)
-            msgs.append(f'Project {project} created.')
-        container_add = []
-        for container in project_config['bind_containers']:
-            _, created = ProjectContainerBinding.objects.get_or_create(project = project, container = container)
-            if created:
-                container_add.append(str(container))
-        if container_add:
-            msgs.append('Project associated with container(s): {}.'.format(', '.join(container_add)))
-        remove = ProjectContainerBinding.objects.filter(project = project).exclude(container__in = project_config['bind_containers'])
-        remove.delete()
-        if remove:
-            msgs.append('Project disconnected from container(s): {}.'.format(', '.join([ str(b.container) for b in remove ])))
-        collaborator_add = []
-        for collaborator in project_config['collaborators']:
-            role = UserProjectBinding.RL_ADMIN if collaborator in project_config['admins'] else UserProjectBinding.RL_COLLABORATOR
-            b, created = UserProjectBinding.objects.get_or_create(user = collaborator, project = project)
-            b.role = role
-            b.save()
-            if created:
-                collaborator_add.append(str(collaborator))
-        if collaborator_add:
-            msgs.append('Collaborator(s) added to the project: {}.'.format(', '.join(collaborator_add)))
-        remove = UserProjectBinding.objects.filter(project = project).exclude(user = user).exclude(user__in = project_config['collaborators'])
-        remove.delete()
-        if remove:
-            msgs.append('Collaborator(s) removed from the project: {}.'.format(', '.join([ str(b.user) for b in remove ])))
-        if msgs:
-            messages.info(self.request, ' '.join(msgs))
-        return super().form_valid(form)
-
-
-class NewProjectView(ProjectView, generic.FormView):
-    pass
-
-
-class ConfigureProjectView(ProjectView, generic.edit.UpdateView):
-    pass
-
-
+@require_http_methods(['GET'])
 @login_required
 def delete_or_leave(request, project_id):
     """Delete or leave a project."""
@@ -167,7 +91,6 @@ class UserProjectBindingListView(LoginRequiredMixin, generic.ListView):
     context_object_name = 'userprojectbindinglist'
 
     def get_context_data(self, **kwargs):
-        l = reverse('project:new')
         context = super().get_context_data(**kwargs)
         context['submenu'] = 'list'
         context['menu_project'] = True
@@ -183,6 +106,7 @@ class UserProjectBindingListView(LoginRequiredMixin, generic.ListView):
         context['users'] = [ u.profile._repr for u in User.objects.all().exclude(id = self.request.user.id) ]
         context['t_users'] = TableUsers(User.objects.all().exclude(id = self.request.user.id), marker_column='Admin')
         context['t_volume'] = TableVolume(self.request.user)
+        context['empty_project'] = Project()
         return context
 
     def get_queryset(self):
@@ -190,20 +114,4 @@ class UserProjectBindingListView(LoginRequiredMixin, generic.ListView):
         projectbindings = UserProjectBinding.objects.filter(user = user).order_by('project__name')
         return projectbindings
 
-
-class JoinProjectView(LoginRequiredMixin, generic.FormView):
-    template_name = 'project_join.html'
-    form_class = FormJoinProject
-    success_url = '/hub/project/list/' #FIXME: django.urls.reverse or shortcuts.reverse does not work reverse('project:list')
-
-    def get_initial(self):
-        initial = super().get_initial()
-        initial['user'] = self.request.user
-        return initial
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['menu_project'] = True
-        context['submenu'] = 'join'
-        return context
 
