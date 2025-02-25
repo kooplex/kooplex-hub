@@ -103,13 +103,13 @@ class AssignmentConsumer(SyncSkeleton):
             EditableTable = create_table_class(result, table.columns)
             t_score = EditableTable(result.fillna("—").to_dict(orient='records'))  # Convert DataFrame to Django Table
         else:
-            t_score=f"<h6 class="">There are no assignments in this course.</h6>"
+            t_score=None
         self.send(text_data=json.dumps({
             "feedback": "Assignment list is refreshed",
             "f_new": render_to_string('widgets/form_new_assignment.html', {'course': course, 'folders': folders, 'table': TableAssignmentConf([Assignment()], exclude_columns=['manage', 'delete'])}),
             "t_assignment": render_to_string('django_table.html', {'table':t}),
             "t_individual": render_to_string('widgets/table_handle_individual.html', {'assignments': a, 'students': course.students, 'bindings': UAbind_dict}),
-            "t_score": render_to_string('widgets/table_scores.html', {'table': t_score}),
+            "t_score": render_to_string('widgets/table_scores.html', {'table': t_score}) if t_score else f"<h6 class="">There are no assignments in this course.</h6>",
             }))
 
     def configure(self, course, configlist):
@@ -163,7 +163,7 @@ class AssignmentConsumer(SyncSkeleton):
                 b.handout()
             if t['todo']=='collect':
                 b.collect()
-            if t['todo']=='reassigne':
+            if t['todo']=='reassign':
                 b.reassign()
 
 
@@ -184,7 +184,6 @@ class CourseGetContainersConsumer(SyncSkeleton):
             message=None
             courseid = parsed.get('pk')
         bindings = CourseContainerBinding.objects.filter(container__user__id=self.userid, course__id=courseid)
-        logger.debug(bindings)
         ucb=UserCourseBinding.objects.get(user__id=self.userid, course__id=courseid)
         message_back = {
             "feedback": message if message else f"Container list refreshed",
