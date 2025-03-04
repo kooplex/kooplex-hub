@@ -116,17 +116,49 @@ class ProjectGetContainersConsumer(SyncConsumer):
         parsed = json.loads(text_data)
         logger.debug(parsed)
         #assert parsed.get('request')=='configure-project', "wrong request"
-        projectid = parsed.get('pk')
-        logger.debug(projectid)
+        if parsed.get('request')=='autoadd':
+            userprojectbinding_id=parsed.get('pk')
+            message, projectid=self.addcontainer(userprojectbinding_id)
+        else:
+            message=None
+            projectid = parsed.get('pk')
         bindings=ProjectContainerBinding.objects.filter(container__user__id=self.userid, project__id=projectid)
         upb=UserProjectBinding.objects.get(user__id=self.userid, project__id=projectid)
-        link_autocreate=reverse('project:autoaddcontainer', args=[upb.id,])
         message_back = {
             "feedback": f"Container list refreshed",
-            "response": render_to_string("widgets/widget_containertable.html", {"containers": map(lambda o: o.container, bindings), "link_autocreate": link_autocreate }),
+            "response": render_to_string("widgets/widget_containertable.html", {"containers": list(map(lambda o: o.container, bindings)), "pk": upb.id }),
         }
         logger.debug(message_back)
         self.send(text_data=json.dumps(message_back))
+
+    def addcontainer(self, userprojectbinding_id):
+        """
+        @summary: automagically create an environment
+        @param userprojectbinding_id
+        """
+        from kooplexhub.lib.libbase import standardize_str
+        from volume.models import ProjectVolumeBinding
+        from volume.models import VolumeContainerBinding
+        from container.models import Container
+        try:
+            upb = UserProjectBinding.objects.get(id = userprojectbinding_id, user_id = self.userid)
+            project = upb.project
+            user = upb.user
+            container, created = Container.objects.get_or_create(
+                name = f'generated for {project.name}', 
+                label = f'p-{user.username}-{standardize_str(project.name)}-{project.creator.username}',
+                user = user,
+                image = project.preferred_image
+            )
+            ProjectContainerBinding.objects.create(project = project, container = container)
+            for b in ProjectVolumeBinding.objects.filter(project=project):
+                VolumeContainerBinding.objects.get_or_create(container=container, volume=b.volume)
+            if created:
+                return f'We created a new environment {container.name} for project {project.name}.', project.id
+            else:
+                return f'We associated your project {project.name} with your former environment {container.name}.', project.id
+        except Exception as e:
+            return f'We failed -- {e}', project.id
 
 
 class ProjectGetJoinableConsumer(SyncConsumer):

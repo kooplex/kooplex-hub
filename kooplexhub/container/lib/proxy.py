@@ -30,21 +30,17 @@ def droproutes():
         requests.delete(url, headers=headers)
         logging.debug(f'- proxy {url}')
 
-def addroute(container, var_url, var_port):
-    proxyconf = KOOPLEX.get('proxy', {})
-    port = KOOPLEX['environmental_variables'][var_port]
-    namespace = KOOPLEX['kubernetes']['namespace']
-    url = os.path.join(KOOPLEX['proxy'].get('url_api', 'http://localhost:8001/api'), 'routes', KOOPLEX['environmental_variables'][var_url].format(container=container)) 
+
+def addroute(basepath, endpoint):
+    url = os.path.join(KOOPLEX['proxy'].get('url_api', 'http://localhost:8001/api'), 'routes', basepath) 
     headers = {'Authorization': 'token %s' % KOOPLEX['proxy'].get('auth_token', '') }
-    data = json.dumps({ 'target': 'http://{container.label}.{kubernetes_namespace}:{port}'.format(container=container, kubernetes_namespace=namespace, port=port )})
+    data = json.dumps({ 'target': endpoint })
     requests.post(url, headers=headers, data=data)
     logging.debug(f'+ proxy {url} ({data})')
 
-def removeroute(container, var_url):
-    proxyconf = KOOPLEX.get('proxy', {})
-    url = os.path.join(KOOPLEX['proxy'].get('url_api', 'http://localhost:8001/api'), 'routes', KOOPLEX['environmental_variables'][var_url].format(container=container))
+
+def removeroute(basepath):
+    url = os.path.join(KOOPLEX['proxy'].get('url_api', 'http://localhost:8001/api'), 'routes', basepath)
     headers = {'Authorization': 'token %s' % KOOPLEX['proxy'].get('auth_token', '') }
     requests.delete(url, headers=headers)
     logging.debug(f'- proxy {url}')
-
-

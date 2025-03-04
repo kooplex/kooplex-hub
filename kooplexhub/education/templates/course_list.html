@@ -2,7 +2,11 @@
 {% load static %}
 
 {% block pagedescription %}
-For help on courses visit the wiki site <a href="https://xwiki.vo.elte.hu/en/kooplex-manual/education" target="_blank"><span class="ms-2 bi bi-book"></span></a>
+For help on courses see the documentation <a href="https://xwiki.vo.elte.hu/en/kooplex-manual/education" target="_blank"><span class="ms-2 bi bi-book"></span></a>
+{% endblock %}
+
+{% block head_content %}
+<link href="{% static 'css/dropdown.css' %}" rel="stylesheet">
 {% endblock %}
 
 {# the search bar #}
@@ -37,6 +41,7 @@ For help on courses visit the wiki site <a href="https://xwiki.vo.elte.hu/en/koo
 {% include 'widgets/environments.html' %}
 <script src="{% static 'js/environments.js' %}"></script>
 <script src="{% static 'js/container_buttons.js' %}"></script>
+<script src="{% static 'js/dropdown.js' %}"></script>
 
 {% endblock %}
 

@@ -18,6 +18,10 @@ cid = lambda container: container.id if container else "new"
 
 
 @register.simple_tag
+def button_view(view, container, show_name=False):
+    return view.render_open_html(container, show_name) if view and container else ""
+
+@register.simple_tag
 def button_environment(obj = None):
     pk = getattr(obj, 'id', None)
     return format_html(f"""

@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.contrib.auth.models import User
 from django.template.loader import render_to_string
 from django.urls import reverse
+from django.utils.html import format_html
 
 #from .report import Report
 from hub.models import Profile
@@ -74,48 +75,80 @@ class Container(models.Model):
         return self.label
 
     @property
+    def search(self):
+        return self.name.upper()
+
+    @property
     def link_drop(self):
         from django.urls import reverse
         return reverse('container:destroy', args = [self.id]) if self.id else ""
 
-    @property
-    def default_proxy(self):
-        return Proxy.objects.get(image = self.image, default = True)
+    def redirect(self, serviceview_id):
+        from . import ServiceView ,ProxyImageBinding
+        from kooplexhub.lib import custom_redirect
+        #sv = ServiceView.objects.filter(id=serviceview_id, proxy__image=self.image).first()
+        #FIXME: simplify ???
+        sv = ServiceView.objects.filter(id=serviceview_id).first()
+        if sv:
+            b=ProxyImageBinding.objects.filter(image=self.image, proxy=sv.proxy).first()
+            if not b:
+                return reverse('container:list')
+            url=sv.url_substitute(self)
+            if sv.pass_token:
+                return custom_redirect(url, token=self.user.profile.token)
+            else:
+                return custom_redirect(url)
+        else:
+            return reverse('container:list')
+
 
     @property
-    def proxy_route(self):
-        return self.default_proxy.proxy_route(self)
+    def proxies(self):
+        from . import ProxyImageBinding
+        proxy_list = [ b.proxy for b in ProxyImageBinding.objects.filter(image=self.image) ]
+        return proxy_list
 
-    @property
-    def url_internal(self):
-        return self.default_proxy.url_internal(self)
 
-    @property
-    def url_notebook(self):
-        return self.default_proxy.url_notebook(self)
+    def addroutes(self):
+        for proxy in self.proxies:
+            proxy.addroute(self)
 
-    @property
-    def url_kernel(self):
-        token="fsf"
-        logger.info('Get %s' % (self.user))
-        logger.info('Get %s' % (Profile.objects.get(user=self.user)))
-        token = Profile.objects.get(user=self.user).token
-        return self.default_proxy.url_container(self)+"?token="+token
 
-    @property
-    def search(self):
-        return self.name.upper()
+    def removeroutes(self):
+        for proxy in self.proxies:
+            proxy.removeroute(self)
 
-    #DEPRECATE
-    def wait_until_ready(self):
-        from kooplexhub.lib import keeptrying
-        for _ in range(5):
-            resp = keeptrying(method = requests.get, times = 5, url = self.url_notebook, timeout = .05, allow_redirects = False)
-            logger.info('Get %s -> [%d]' % (self.url_notebook, resp.status_code))
-            time.sleep(.1)
-            if resp.status_code != 503:
-                return resp
-            logger.warning('Proxy target missing: %s' % self.url_notebook)
+
+    def views(self):
+        views = {}
+        for proxy in self.proxies:
+            views.update(proxy.views)
+        return [ v for v, o in views.items() if o ]
+
+
+    #FIXME: deprecate
+    #@property
+    #def default_proxy(self):
+    #    return Proxy.objects.get(image = self.image, default = True)
+
+    #FIXME: deprecate
+    #@property
+    #def url_internal(self):
+    #    return self.default_proxy.service_endpoint(self)
+
+    #FIXME: deprecate
+    #@property
+    #def url_notebook(self):
+    #    return self.default_proxy.url_notebook(self)
+
+    #FIXME: deprecate
+    #@property
+    #def url_kernel(self):
+    #    token="fsf"
+    #    logger.info('Get %s' % (self.user))
+    #    logger.info('Get %s' % (Profile.objects.get(user=self.user)))
+    #    token = Profile.objects.get(user=self.user).token
+    #    return self.default_proxy.url_container(self)+"?token="+token
 
     def env_variable(self, var_name):
         try:
@@ -124,9 +157,12 @@ class Container(models.Model):
             return ""
 
     @property
-    def proxies(self):
-        from .proxy import Proxy
-        return list(Proxy.objects.filter(image = self.image))
+    def env_variables(self):
+        try:
+            return [ {'name': envs.name, "value":envs.valuemap}  for envs in EnvVarMapping.objects.filter(image = self.image)]
+        except:
+            return {}
+
 
 #FIXME: pl project app ha nincs istallálva, itt gondok lehetnek
     @property
@@ -190,6 +226,7 @@ class Container(models.Model):
         self.require_running=False
         self.restart_reasons=None
         self.save()
+        self.removeroutes()
         stop_container(self.user.id, self.id)
 
     def restart(self):
@@ -229,8 +266,7 @@ class Container(models.Model):
         return render_to_string("widgets/widget_container_stop.html", {"container": self}) if self.id else ""
 
     def render_open_html(self):
-        _link = reverse('container:open', args = [self.id]) if self.id else ""
-        return render_to_string("widgets/widget_container_open.html", {"container": self, "link": _link})
+        return render_to_string("widgets/widget_container_views.html", {"container": self })
 
     def render_fetchlogs_html(self):
         _active = [ Container.ST_RUNNING, Container.ST_ERROR, Container.ST_NEED_RESTART ]

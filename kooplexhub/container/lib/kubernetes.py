@@ -104,18 +104,21 @@ def start(container):
     else:
         env_variables = [ {'name': k, "value": v.format(container = container)} for k,v in KOOPLEX['environmental_variables'].items()]
 
-    #env_variables.extend(container.env_variables)
+    env_variables.extend(container.env_variables)
+    logger.info(f" ENV {env_variables}")
 
     pod_ports = []
     svc_ports = []
+    logger.info(f" PROXY {container.proxies}")
     for proxy in container.proxies:
+        logger.info(f" {proxy}, {proxy.svc_port}")
         pod_ports.append({
-            "containerPort": proxy.port,
+            "containerPort": proxy.svc_port,
             "name": proxy.name, 
         })
         svc_ports.append({
-            "port": proxy.port,
-            "targetPort": proxy.port,
+            "port": proxy.svc_port,
+            "targetPort": proxy.svc_port,
             "protocol": "TCP",
             "name": proxy.name, 
         })
@@ -145,12 +148,12 @@ def start(container):
             V1KeyToPath(key="nsswitch",path="01-nsswitch"),
             V1KeyToPath(key="nslcd",path="02-nslcd"),
             V1KeyToPath(key="usermod",path="03-usermod"),
-            V1KeyToPath(key="munge",path="04-munge"),
+            #V1KeyToPath(key="munge",path="04-munge"),
             V1KeyToPath(key="ssh",path="05-ssh"),
             V1KeyToPath(key="jobtools",path="06-jobtool-path"),
             ]
 
-    if container.user.profile.can_teleport:
+    if container.user.profile.can_teleport and container.start_teleport:
         initscripts.append(V1KeyToPath(key="teleport",path="06-teleport"))
         env_variables.append({ "name": "REDIS_PASSWORD", "value": REDIS_PASSWORD })
 
@@ -323,7 +326,7 @@ def start(container):
     pod_resources["requests"]["cpu"] = f"{1000*max(container.cpurequest, resources['requests']['cpu'])}m"
     pod_resources["limits"]["cpu"] = f"{1000*max(container.cpurequest, resources['limits']['cpu'])}m"
     pod_resources["requests"]["memory"] = f"{max(container.memoryrequest, resources['requests']['memory'])}Gi"
-    pod_resources["limits"]["memory"] = f"{max(container.memoryrequest, resources['limits']['memory'])}Gi"
+    pod_resources["limits"]["memory"] = "1Gi"  #FIXME: f"{max(container.memoryrequest, resources['limits']['memory'])}Gi"
 
 #    logger.warning(f"{resources}")
     

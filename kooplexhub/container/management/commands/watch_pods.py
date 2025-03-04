@@ -17,7 +17,7 @@ def _replace_widgets(container):
     return {
         'startcontainer': container.render_start_html(),
         'stopcontainer': container.render_stop_html(),
-        'opencontainer': container.render_open_html(),
+        'opencombo': container.render_open_html(),
         'fetch': container.render_fetchlogs_html(),
         'phase': container.render_state_html(),
         'restartcontainer': container.render_restartreasons_html(),
@@ -55,7 +55,12 @@ class Command(BaseCommand):
         event_type = event["type"]
         pod_name = pod.metadata.name
         phase = pod.status.phase
-        print(f"\n🔹 Event: {event_type} | Pod: {pod_name} | Phase: {phase}")
+        reason = pod.status.reason
+        print(f"\n🔹 Event: {event_type} | Pod: {pod_name} | Phase: {phase} | Reason {reason}")
+
+        # Is the pod evicted?
+        if reason == "Evicted":
+            print ("JAJJ")
     
         # Print pod conditions
         if pod.status.conditions:
@@ -111,7 +116,6 @@ class Command(BaseCommand):
 
 
     def handle(self, *args, **options):
-        from container.lib.proxy import addroute
         print("Starting Kubernetes Pod Watcher...")
         v1 = client.CoreV1Api()
         namespace = KOOPLEX.get('kubernetes', {}).get('namespace', 'default')
@@ -183,8 +187,7 @@ class Command(BaseCommand):
                         if state_new==container.ST_NOTPRESENT and container.require_running:
                             container.start()
                         elif state_new==container.ST_RUNNING:
-                            addroute(container, 'NB_URL', 'NB_PORT')
-                            addroute(container, 'REPORT_URL', 'REPORT_PORT')
+                            container.addroutes()
             except Exception as e:
                 print(f"⚠️ Error in watcher: {e}")
                 connections.close_all()

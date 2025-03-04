@@ -1,4 +1,3 @@
-import logging
 import os
 
 from django.db import models
@@ -10,40 +9,67 @@ try:
 except ImportError:
     KOOPLEX = {}
 
-KOOPLEX['proxy'].update({})
+try:
+    from kooplexhub.settings import proto
+except ImportError:
+    proto = 'https'
 
-logger = logging.getLogger(__name__)
 
 class Proxy(models.Model):
     name = models.CharField(max_length = 64, null = True)
-    port = models.IntegerField(null = False)
-    # FIXME Delete in KOOPLEX.settings
-    #path = models.CharField(max_length = 64, null = True, blank = True)
-    # FIXME Delete in KOOPLEX.settings
-    #path_open = models.CharField(max_length = 64, null = True, blank = True)
-    image = models.ForeignKey(Image, null = False, on_delete = models.CASCADE)
-    default = models.BooleanField(default = True)
-    token_as_argument = models.BooleanField(default = False)
- 
+    basepath = models.CharField(max_length = 64, null = False, default='notebook/{container.label}')
+    register = models.BooleanField(default = True)
+    svc_proto = models.CharField(max_length = 8, choices = map(lambda x:(x,x), ['http', 'https']), default = 'http')
+    svc_hostname = models.CharField(max_length = 64, null = False, default='{container.label}')
+    svc_port = models.IntegerField(null = False)
+
+    def __str__(self):
+        return f"<Proxy: {self.name} reg:{self.register} basepath:{self.basepath}>"
+
+
+    @property
+    def proto(self):
+        return KOOPLEX.get('proxy', {}).get('proto', 'https')
+
+    @property
+    def fqdn(self):
+        from kooplexhub.settings import SERVERNAME as FQDN
+        return FQDN
+
+    @property
+    def svc_dn(self):
+        ns=KOOPLEX.get('kubernetes', {}).get('namespace', 'default')
+        return f"{self.svc_hostname}.{ns}"
+
+    @property
+    def svc_endpoint(self): 
+        return f"{self.svc_proto}://{self.svc_dn}:{self.svc_port}/"
+
+    @property
+    def hub_url(self):
+        return f"{proto}://{self.fqdn}"
+
+    @property
+    def views(self):
+        from . import ServiceView
+        return { v: v.openable for v in ServiceView.objects.filter(proxy=self) }
+
+    def addroute(self, container):
+        from ..lib.proxy import addroute
+        if not self.register:
+            return
+        addroute(self.basepath.format(container = container), self.svc_endpoint.format(container=container))
+        
+
+    def removeroute(self, container):
+        from ..lib.proxy import removeroute
+        removeroute(self.basepath.format(container = container))
+
+
+class ProxyImageBinding(models.Model):
+    from .image import Image
+    proxy = models.ForeignKey(Proxy, on_delete = models.CASCADE, null=False)
+    image = models.ForeignKey(Image, on_delete = models.CASCADE, null=False)
+
     class Meta:
-        unique_together = [['image', 'name']]
-
-    def proxy_route(self, container):
-        return self.path.format(container = container) if self.path else None
-
-# URL to the container
-    def url_internal(self, container):
-        return KOOPLEX['proxy'].get('url_internal', 'http://{container.label}:{proxy.port}').format(proxy = self, container = container, kubernetes_namespace = KOOPLEX['kubernetes']['namespace'])
-
-# URL notebook server
-    def url_container(self, container):
-        return KOOPLEX['proxy'].get('url_notebook', 'http://localhost/notebook/{container.label}').format(container = container)
-
-# URL notebook server
-    def url_notebook(self, container):
-        ide_suffix = container.env_variable("IDE_SUFFIX")
-        return os.path.join(self.url_container(container), ide_suffix)
-
-# # URL report
-#     def url_report(self, container):
-#         return os.path.join(KOOPLEX['proxy'].get('url_report', 'http://localhost/notebook/report/{container.label}').format(container = container))
+        unique_together = [['image', 'proxy']]

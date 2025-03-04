@@ -22,6 +22,23 @@ class ImageAdmin(admin.ModelAdmin):
 
     actions = [enable_image, disable_image]
 
+
+@admin.register(ServiceView)
+class ServiceViewAdmin(admin.ModelAdmin):
+    def endpoint(self, instance):
+        return instance.proxy.svc_endpoint
+    list_display = ('id', 'name', 'suffix', 'openable', 'pass_token', 'url', 'endpoint')
+    search_labels = ('name', 'suffix')
+    search_fields = ('name', 'suffix')
+
+
+@admin.register(ProxyImageBinding)
+class ProxyImageBindingAdmin(admin.ModelAdmin):
+    def proxyname(self, instance):
+        return instance.proxy.name
+    list_display = ('id', 'image', 'proxyname')
+
+
 @admin.register(Container)
 class ContainerAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'user', 'label', 'image', 'state', 'launched_at', 'restart_reasons')
@@ -41,7 +58,9 @@ class ContainerAdmin(admin.ModelAdmin):
 
 @admin.register(Proxy)
 class ProxyAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'image', 'default', 'token_as_argument', 'port')
+    def bound_images(self, instance):
+        return len(ProxyImageBinding.objects.filter(proxy=instance))
+    list_display = ('id', 'name', 'svc_port', 'register', 'views', 'bound_images')
     search_fields = ('image__name', 'name', 'port')
 
 @admin.register(EnvVarMapping)

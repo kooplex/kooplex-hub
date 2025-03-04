@@ -15,7 +15,6 @@ from container.models import Container, Image
 from kooplexhub.settings import KOOPLEX
 
 from .lib import start_environment, stop_environment
-from .lib.proxy import addroute, removeroute
 
 
 logger = logging.getLogger(__name__)
@@ -48,8 +47,6 @@ def start_container(user_id, container_id):
 def stop_container(user_id, container_id):
     try:
         container=Container.objects.get(user_id=user_id, id=container_id)    
-        removeroute(container, 'NB_URL')
-        removeroute(container, 'REPORT_URL')
         stop_environment(container)
         return "Completed"
     except container.DoesNotExist:
