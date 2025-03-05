@@ -2,6 +2,7 @@ from django.db import models
 from django.template.loader import render_to_string
 from django.urls import reverse
 
+from hub.models import Thumbnail
 from ..models import Image
 
 class ServiceView(models.Model):
@@ -11,6 +12,7 @@ class ServiceView(models.Model):
     suffix = models.CharField(max_length = 128)
     openable = models.BooleanField(default = True)
     pass_token = models.BooleanField(default = False)
+    icon = models.ForeignKey(Thumbnail, on_delete = models.SET_NULL, null=True)
 
     def __str__(self):
         return self.name

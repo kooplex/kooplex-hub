@@ -27,7 +27,9 @@ class ImageAdmin(admin.ModelAdmin):
 class ServiceViewAdmin(admin.ModelAdmin):
     def endpoint(self, instance):
         return instance.proxy.svc_endpoint
-    list_display = ('id', 'name', 'suffix', 'openable', 'pass_token', 'url', 'endpoint')
+    def show_icon(self, instance):
+        return instance.icon.to_html if instance.icon else '-'
+    list_display = ('id', 'name', 'suffix', 'show_icon', 'openable', 'pass_token', 'url', 'endpoint')
     search_labels = ('name', 'suffix')
     search_fields = ('name', 'suffix')
 

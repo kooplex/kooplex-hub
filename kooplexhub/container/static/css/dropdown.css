@@ -21,3 +21,11 @@
     margin-bottom: 5px;
 }
 
+.left-align {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start; /* Aligns content to the left */
+    text-align: left; /* Ensures text aligns left */
+    gap: 5px; /* Optional: Adds space between icon and text */
+}
+

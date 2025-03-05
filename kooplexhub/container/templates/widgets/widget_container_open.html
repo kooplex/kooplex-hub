@@ -1,7 +1,9 @@
 {% if container.state == container.ST_RUNNING or container.state == container.ST_NEED_RESTART %}
-<button name="opencontainer" data-id="{{container.id}}" data-url="{{link}}" class="badge rounded-pill text-bg-success border p-2"
+<button name="opencontainer" data-id="{{container.id}}" data-url="{{link}}" class="badge rounded-pill text-bg-success border p-2 left-align"
         data-toggle="tooltip" title="Jump to {{view.name}} in environment {{container.name}}">
-	<span class="oi oi-external-link" aria-hidden="true"></span>{% if show_name %}{{view.name}}{% endif %}
+	{% if view.icon %}
+	<img src="{{view.icon.img_src}}" alt="iko" style="height: 16px; width: auto;">{% else %}
+	<span class="oi oi-external-link" aria-hidden="true"></span>{% endif %}{% if show_name %}<span>{{view.name}}</span>{% endif %}
 </button>
 {% else %}
 <button name="opencontainer" data-id="{{container.id}}" class="badge rounded-pill text-bg-secondary border p-2" name="default" disabled>
