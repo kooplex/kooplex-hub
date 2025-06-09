@@ -13,9 +13,14 @@
 	{% include 'widgets/card_tokens.html' %}
 </div>
 
+<div class="container mt-4">
+	{% include 'widgets/widget_resources.html' %}
+</div>
+
 <script>
 const wsURLs = {
   tokens: "{{ wss_token_config }}",
+  nodes: "{{ wss_resources }}",
 }
 </script>
 <script src="{% static 'js/wss.js' %}"></script>

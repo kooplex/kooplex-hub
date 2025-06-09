@@ -3,6 +3,7 @@ from django.contrib.auth import views as ca_views
 
 from . import views
 
+
 #TEST MIATT
 from django.urls import re_path
 
@@ -11,6 +12,8 @@ urlpatterns = [
     path('logout/', ca_views.LogoutView.as_view(), name = 'logout'),
     path('', views.IndexView.as_view(), name = 'indexpage'),
     path('monitoring/', views.MonitoringView.as_view(), name = 'monitoring'),
+    path('usertokens/', views.UserTokenView.as_view(), name = 'usertokens'),
+    path('mywidgets/', views.widgets),
 #    path('gitea/', "gitea.vo.elte.hu", name = 'gitea'),
 #    path('seafile/', "seafile.vo.elte.hu", name = 'seafile'),
 
