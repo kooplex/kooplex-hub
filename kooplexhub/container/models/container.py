@@ -175,15 +175,15 @@ class Container(models.Model):
         from education.models import CourseContainerBinding
         return [ binding.course for binding in CourseContainerBinding.objects.filter(container = self) ]
 
-    @property
-    def reports(self):
-        "relevant only for report containers"
-        from report.models import ReportContainerBinding
-        return [ binding.report for binding in ReportContainerBinding.objects.filter(container = self) ]
+#    @property
+#    def reports(self):
+#        "relevant only for report containers"
+#        from report.models import ReportContainerBinding
+#        return [ binding.report for binding in ReportContainerBinding.objects.filter(container = self) ]
     
     @property
     def target_node(self):
-        return {'kubernetes.io/hostname': self.node} if self.node else KOOPLEX['kubernetes'].get('nodeSelector_k8s') 
+        return {'kubernetes.io/hostname': self.node} if self.node else KOOPLEX.get('kubernetes', {}).get('nodeSelector_k8s', {}) 
 
     @property
     def synced_libraries(self):
