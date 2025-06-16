@@ -67,7 +67,7 @@ class TableAssignment(tables.Table):
 
 
     def render_score(self, record):
-        return format_html(f'<span data-toggle="tooltip" title="{record.feedback_text}">record.score</span>') if record.score else ''
+        return format_html(f'<span data-toggle="tooltip" title="{record.feedback_text}">{record.score}</span>') if record.score else ''
 
 
 class TableAssignmentConf(tables.Table):
