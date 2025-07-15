@@ -19,7 +19,6 @@ from project.models import Project, UserProjectBinding, ProjectContainerBinding
 from education.models import Course, UserCourseBinding, CourseContainerBinding
 from volume.models import Volume, VolumeContainerBinding
 
-from kooplexhub.lib import custom_redirect
 
 from kooplexhub import settings
 from .lib import Cluster
@@ -72,27 +71,15 @@ class ContainerListView(LoginRequiredMixin, generic.ListView):
 
 
 @login_required
-def open(request, pk):
+def open(request, pk, pkView):
     """Opens a container"""
     user = request.user
-    try:
-        container = Container.objects.get(id = pk, user = user)
-        if container.state in [ Container.ST_RUNNING, Container.ST_NEED_RESTART ]:
-            logger.debug(f'wait_until_ready {container.url_notebook}')
-            container.wait_until_ready()
-            logger.debug(f'try to redirect to url {container.url_notebook}')
-            if container.default_proxy.token_as_argument:
-                return custom_redirect(container.url_notebook, token = container.user.profile.token)
-            else:
-                return custom_redirect(container.url_notebook)
-        else:
-            messages.error(request, f'Cannot open {container.name} of state {container.state}')
-    except Container.DoesNotExist:
-        messages.error(request, 'Environment is missing')
-    except requests.TooManyRedirects:
-        messages.error(request, f'Cannot redirect to url {container.url_notebook}')
-    except Exception as e:
-        logger.error(f'cannot redirect to url {container.url_notebook} -- {e}')
-        messages.error(request, f'Cannot redirect to url {container.url_notebook}')
+    container = Container.objects.filter(id = pk, user = user).first()
+    if not container:
+        return redirect('container:list')
+    if container.state in [ Container.ST_RUNNING, Container.ST_NEED_RESTART ]:
+        return container.redirect(pkView)
+    else:
+        messages.error(request, f'Cannot open {container.name} of state {container.state}')
     return redirect('container:list')
 

@@ -248,10 +248,71 @@ class UserTokenView(AccessMixin, generic.TemplateView):
         context['tokens'] = user_tokens
         context['tokentypes']=TokenType.objects.all().exclude(id__in=[ t.type.id for t in user_tokens])
         context['wss_token_config'] = KOOPLEX.get('hub', {}).get('wss_token_config', 'wss://localhost/hub/ws/tokens/{userid}/').format(userid = self.request.user.id)
+        context['wss_resources'] = KOOPLEX.get('hub', {}).get('wss_resources', 'wss://localhost/hub/ws/resources/')
         return context
 
 
 
 
 def widgets(request):
-    return render(request, "testwidget.html", {})
+    #import pandas as pd
+    #from education.models import UserAssignmentBinding
+    #from django_pandas.io import read_frame
+    #import django_tables2 as tables
+    #import numpy
+    #from django.utils.html import format_html
+    ## Function to dynamically create the table class
+    #def create_table_class(df, editable_columns):
+    #    table_attrs = {
+    #        'Meta': type('Meta', (), {'attrs': {'class': 'table table-bordered table-hover'}})  # Bootstrap styling
+    #    }
+    #
+    #    # Dynamically add columns
+    #    for col in df.columns:
+    #        table_attrs[col] = tables.Column(
+    #            orderable = False,
+    #            attrs={'td': {'data-editable': 'true'}} if col in editable_columns else {}
+    #        )
+    #
+    #    # Create and return the table class
+    #    return type('DynamicEditableTable', (tables.Table,), table_attrs)
+    #
+    #dfm = read_frame(UserAssignmentBinding.objects.filter(assignment__course__name = 'józsi kurzus')).fillna(numpy.nan)
+    #dfm=dfm[['user', 'assignment', 'score']]
+    #if not dfm.empty:
+    #    table = dfm.pivot(index = "user", columns = "assignment", values = "score")
+    #    table.columns = [tc.split("Assignment ")[1].split(" (")[0] for tc in table.columns]  #FIXME: not a very nice way to parse
+    #    points = dfm.fillna(0).groupby(by="user").agg("sum")[["score"]].rename(columns={"score":"Total points"})
+    #    result = pandas.merge(left=table, right=points, left_on="user", right_on="user", how="inner").reset_index()
+    #EditableTable = create_table_class(result, table.columns)
+    ## Django View to render the table
+    #table = EditableTable(result.to_dict(orient='records'))  # Convert DataFrame to Django Table
+    from container.models import Container
+    c=Container.objects.get(id=458)
+    return render(request, 'testwidget.html', {'container': c})  # Pass table to template
+
+
+###        t_score = result.to_html(classes = "table table-bordered table-striped text-center table-hover", index_names = False, justify = "center", na_rep = "—", border = None, escape=False,
+###            formatters={ c: lambda x: make_editable(x) for c in result.columns }
+###                                 )
+###    
+###    
+###    # Send df_html via WebSocket to the frontend
+###    #send_data_via_ws({'table_html': df_html})
+###
+###    return render(request, "testwidget.html", {
+###        'table_html': format_html(t_score)
+###        })
+
+#    from education.models import Course, Assignment, UserAssignmentBinding
+#    c=Course.objects.get(id=137)
+#    a=Assignment.objects.filter(course=c)
+#    UAbind_dict = {
+#        (ua.user_id, ua.assignment_id): ua.state
+#        for ua in UserAssignmentBinding.objects.filter(assignment__in=a)
+#    }
+#    return render(request, "testwidget.html", {
+#        'assignments': a,
+#        'students': c.students,
+#        'bindings': UAbind_dict,
+#        })

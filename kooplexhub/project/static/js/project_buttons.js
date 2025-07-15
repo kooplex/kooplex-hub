@@ -1,8 +1,15 @@
 // Show Save Changes button
 showSaveNew['project']=function() {
-     var count = changes.filter(x => x.pk === ""  && ["name", "folder", "image", "description"].includes(x.field)).length
-     return count>=4 
+     var count = changes.filter(x => x.pk === "None"  && ["name", "image", "description"].includes(x.field)).length
+     return count>=3 
 }
+
+
+// Attach Save Changes Event
+$(document).on('click', '[name=save][data-id][data-instance=project]', function() {
+    save_project_config($(this).data('id'))
+})
+
 
 // hide and show button faces  //FIXME: repeated code!
 function applyButton(widgetId, selectedButtonName) {
@@ -13,43 +20,15 @@ function applyButton(widgetId, selectedButtonName) {
     $(`#${widgetId} > [name=${selectedButtonName}]`).show()
 }
 
-// update project scope button's state indicator
-const buttonScopeStates = {
-  "public": "public",
-  "private": "private",
-  default: "private"
-};
-
-function updateProjectScope(projectId, scope) {
-    let widgetId = `project-scope-${projectId}`
-    let selectedButtonName = buttonScopeStates[scope] || buttonScopeStates["default"]
-    applyButton(widgetId, selectedButtonName)
-}
-
-function projectScopeButtonClick(projectId, req) {
-    projectId = projectId === "" ? "" : parseInt(projectId)
-    const changed = register_changes(projectId, 'scope', req, '') // FIXME: old
-    if (changed) {
-        updateProjectScope(projectId, req)
-	showSaveChanges(projectId)  //FIXME: instance!!
-    }
-}
-
-
-$(document).ready(function() {
-// When typing the new name, guess a folder name
-$('.editable[data-field=subpath][data-id=""]').on('shown', function(e, editable) {
-    editable.input.$input.on('keyup', function(event) {
-        $('.editable[data-field=subpath][data-id=""]').data('typed', true)
-    })
-})
-$('.editable[data-field=name][data-id=""]').on('shown', function(e, editable) {
-    // Now attach a keyup event listener to the dynamically created input
-    editable.input.$input.on('keyup', function(event) {
-        if (! $('.editable[field=subpath][data-id=""]').data('typed') ) {
-            $('.editable[data-field=subpath][data-id=""]').text($('.editable[data-field=name][data-id=""]').text().toLowerCase().replace(eval("/[^a-z0-9]/g"), '_'))
-        }
-    })
+// handle scope button
+$(document).on('click', '[data-field=scope][name][data-id]', function() {
+    let pk=$(this).data('id')
+    let name=$(this).attr('name')
+    let req_val=name==='public'?'private':'public'
+    let widgetId = `project-scope-${pk}`
+    projectId = pk === "None" ? "None" : parseInt(pk)
+    applyButton(widgetId, req_val)
+    register_changes(projectId, 'scope', req_val, $(widgetId).data('orig'))
+    showSaveChanges(projectId, 'project')
 })
 
-})

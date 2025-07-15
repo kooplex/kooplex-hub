@@ -30,27 +30,6 @@ def model_field(instance, attr_name):
     return False
 
 
-# Custom JSON encoder
-class CustomEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, Image):
-            return { "preferred_image": obj.id }
-        elif isinstance(obj, QuerySet):
-#            if obj.model == ProjectContainerBinding:
-#                return { "projects": [ b.project.id for b in obj ] } #FIXME: too deep a hierarchy
-#            elif obj.model == CourseContainerBinding:
-#                return { "courses":  [ b.course.id for b in obj ] }
-#            elif obj.model == VolumeContainerBinding:
-#                return { "volumes": [ b.volume.id for b in obj ] }
-            if obj.model == UserProjectBinding:
-                return [ b.user.id for b in obj ]
-            elif obj.model == ProjectVolumeBinding:
-                return [ b.volume.id for b in obj ]
-            elif obj.model == ProjectContainerBinding:
-                return render_to_string("widgets/widget_containertable.html", {"containers": map(lambda o: o.container, obj) })
-        return super().default(obj)
-#################
-
 class SyncConsumer(WebsocketConsumer):
     def connect(self):
         if not self.scope['user'].is_authenticated:
@@ -64,28 +43,32 @@ class SyncConsumer(WebsocketConsumer):
 
 class ProjectConfigConsumer(SyncConsumer):
     def receive(self, text_data):
+        from kooplexhub.lib.libbase import standardize_str
         parsed = json.loads(text_data)
         logger.debug(parsed)
         assert parsed.get('request')=='configure-project', "wrong request"
-        response = {
-            "success": {},
-            "failed": {},
-        }
+        failed={}
+        success=False
         pk = parsed.get('pk')
         changes = parsed.get('changes')
-        if pk == "new":
-            project=Project(name=changes['name'], subpath=changes['subpath'], preferred_image_id=changes['preferred_image'], description=changes['description'])
+        if pk == "None":
+            name=changes['name']
+            subpath=standardize_str(name)
+            s={'scope': changes['scope']} if 'scope' in changes else {}
+            project=Project(name=name, subpath=subpath, preferred_image_id=changes['image'], description=changes['description'], **s)
+            #FIXME: validate
             project.save()
             UserProjectBinding(user_id = self.userid, project = project, role = UserProjectBinding.RL_CREATOR).save()
-            response["reloadpage"]=True
+            reloadpage=True
         else:
+            reloadpage=False
             pid = int(pk)
             project = UserProjectBinding.objects.get(user__id = self.userid, project__id = pid, role__in = [UserProjectBinding.RL_CREATOR, UserProjectBinding.RL_ADMIN]).project
-        response["project_id"]=project.id
         # Iterate over the changes and try to update the model instance
         for field, new_value in changes.items():
-            if field == 'preferred_image':
+            if field == 'image':
                 new_value=Image.objects.get(id=new_value)
+                field='preferred_image'
             # Check if the field is a valid attribute of the model
             if model_field(project, field):
                 old_value = getattr(project, field)
@@ -95,10 +78,10 @@ class ProjectConfigConsumer(SyncConsumer):
                     # Run Django's model validation for the field
                     project.full_clean(validate_unique=True, exclude=[f for f in changes.keys() if f != field])
                     # If no exception was raised, add it to the success response
-                    response["success"][field] = new_value
+                    success=True
                 except ValidationError as e:
                     # Validation failed, record the error message
-                    response["failed"][field] = { "error": str(e), "value": old_value }
+                    failed[field] = { "error": str(e), "value": old_value }
             elif field == 'users':
                 for user in User.objects.filter(id__in = new_value):
                     upb, _ = UserProjectBinding.objects.get_or_create(project = project, user = user)
@@ -106,25 +89,25 @@ class ProjectConfigConsumer(SyncConsumer):
                         upb.role = UserProjectBinding.RL_ADMIN if user.id in changes.get('marked') else UserProjectBinding.RL_COLLABORATOR
                         upb.save()
                 UserProjectBinding.objects.filter(project = project).exclude(user__id__in = new_value).exclude(role = UserProjectBinding.RL_CREATOR).delete()
-                response["success"]['users']=UserProjectBinding.objects.filter(project = project).exclude(user__id = self.userid)
-                response["success"]['marked']=UserProjectBinding.objects.filter(project = project, role= UserProjectBinding.RL_ADMIN).exclude(user__id = self.userid)
+                success=True
             elif field == 'volumes':
                 for volume in Volume.objects.filter(id__in = new_value):
                     ProjectVolumeBinding.objects.get_or_create(volume = volume, project = project)
                 ProjectVolumeBinding.objects.filter(project = project).exclude(volume__id__in = new_value).delete()
-                response["success"]['volumes']=ProjectVolumeBinding.objects.filter(project = project)
+                success=True
             else:
                 # Attribute does not exist on the model
-                logger.error(f"Container model attribute {field} does not exist.")
+                logger.error(f"Project model attribute {field} does not exist.")
         # Save the instance if there are any successful changes
-        if response["success"]:
+        if success:
             project.save()
         message_back = {
             "feedback": f"Project {project.name} is configured",
-            "response": response,
+            "response": "reloadpage" if reloadpage else render_to_string("project.html", {'project':project}),
+            "project_id": project.id,
         }
-        logger.debug(message_back)
-        self.send(text_data=json.dumps(message_back, cls=CustomEncoder))
+        logger.debug(message_back["feedback"])
+        self.send(text_data=json.dumps(message_back))
 
 
 class ProjectGetContainersConsumer(SyncConsumer):
@@ -133,17 +116,49 @@ class ProjectGetContainersConsumer(SyncConsumer):
         parsed = json.loads(text_data)
         logger.debug(parsed)
         #assert parsed.get('request')=='configure-project', "wrong request"
-        projectid = parsed.get('pk')
-        logger.debug(projectid)
+        if parsed.get('request')=='autoadd':
+            userprojectbinding_id=parsed.get('pk')
+            message, projectid=self.addcontainer(userprojectbinding_id)
+        else:
+            message=None
+            projectid = parsed.get('pk')
         bindings=ProjectContainerBinding.objects.filter(container__user__id=self.userid, project__id=projectid)
         upb=UserProjectBinding.objects.get(user__id=self.userid, project__id=projectid)
-        link_autocreate=reverse('project:autoaddcontainer', args=[upb.id,])
         message_back = {
             "feedback": f"Container list refreshed",
-            "response": render_to_string("widgets/widget_containertable.html", {"containers": map(lambda o: o.container, bindings), "link_autocreate": link_autocreate }),
+            "response": render_to_string("widgets/widget_containertable.html", {"containers": list(map(lambda o: o.container, bindings)), "pk": upb.id }),
         }
         logger.debug(message_back)
-        self.send(text_data=json.dumps(message_back, cls=CustomEncoder))
+        self.send(text_data=json.dumps(message_back))
+
+    def addcontainer(self, userprojectbinding_id):
+        """
+        @summary: automagically create an environment
+        @param userprojectbinding_id
+        """
+        from kooplexhub.lib.libbase import standardize_str
+        from volume.models import ProjectVolumeBinding
+        from volume.models import VolumeContainerBinding
+        from container.models import Container
+        try:
+            upb = UserProjectBinding.objects.get(id = userprojectbinding_id, user_id = self.userid)
+            project = upb.project
+            user = upb.user
+            container, created = Container.objects.get_or_create(
+                name = f'generated for {project.name}', 
+                label = f'p-{user.username}-{standardize_str(project.name)}-{project.creator.username}',
+                user = user,
+                image = project.preferred_image
+            )
+            ProjectContainerBinding.objects.create(project = project, container = container)
+            for b in ProjectVolumeBinding.objects.filter(project=project):
+                VolumeContainerBinding.objects.get_or_create(container=container, volume=b.volume)
+            if created:
+                return f'We created a new environment {container.name} for project {project.name}.', project.id
+            else:
+                return f'We associated your project {project.name} with your former environment {container.name}.', project.id
+        except Exception as e:
+            return f'We failed -- {e}', project.id
 
 
 class ProjectGetJoinableConsumer(SyncConsumer):

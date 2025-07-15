@@ -1,25 +1,22 @@
-import logging
-
 from django.db import models
-# from kooplex.settings import KOOPLEX
 
 from hub.models import Thumbnail
-
-logger = logging.getLogger(__name__)
 
 
 class Image(models.Model):
     TP_PROJECT = 'projectimage'
     TP_REPORT = 'reportimage'
+    TP_APP = 'appimage'
     TP_API = 'apiimage'
     TP_JOB = 'jobimage'
     TP_LOOKUP = {
         TP_PROJECT: 'project image',
         TP_REPORT: 'report image',
+        TP_APP: 'app image',
         TP_API: 'api image',
         TP_JOB: 'job image',
     }
-    name = models.CharField(max_length = 64)
+    name = models.CharField(max_length = 64, unique = True)
     present = models.BooleanField(default = True)
     imagetype = models.CharField(max_length = 32, choices = TP_LOOKUP.items(), default = TP_PROJECT)
     description = models.CharField(max_length = 250, default = "description missing")
@@ -45,3 +42,5 @@ class Image(models.Model):
     @property
     def mount_report(self):
         return True
+
+

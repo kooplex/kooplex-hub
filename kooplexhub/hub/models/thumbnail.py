@@ -7,7 +7,7 @@ from django.db import models
 logger = logging.getLogger(__name__)
 
 class Thumbnail(models.Model):
-    name = models.CharField(max_length = 64)
+    name = models.CharField(max_length = 64, unique=True)
     imagecode = models.BinaryField(null=True, blank=True, editable=True)
 
     @property

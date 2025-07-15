@@ -6,21 +6,39 @@ from .models import *
 
 @admin.register(Image)
 class ImageAdmin(admin.ModelAdmin):
-    list_display = ('id', 'present', 'name', 'imagetype', 'description', 'require_home', 'mount_project', 'mount_report')
+    list_display = ('id', 'present', 'name', 'show_thumbnail', 'imagetype', 'description', 'require_home', 'mount_project', 'mount_report')
     search_labels = ('name', 'imagetype')
     search_fields = ('name', 'imagetype', 'description' )
-
+    def show_thumbnail(self, instance):
+        return instance.thumbnail.to_html if instance.thumbnail else '-'
     def enable_image(self, request, queryset):
         for obj in queryset:
             obj.present = True
             obj.save()
-
     def disable_image(self, request, queryset):
         for obj in queryset:
             obj.present = False
             obj.save()
-
     actions = [enable_image, disable_image]
+
+
+@admin.register(ServiceView)
+class ServiceViewAdmin(admin.ModelAdmin):
+    def endpoint(self, instance):
+        return instance.proxy.svc_endpoint
+    def show_icon(self, instance):
+        return instance.icon.to_html if instance.icon else '-'
+    list_display = ('id', 'name', 'suffix', 'show_icon', 'openable', 'pass_token', 'url', 'endpoint')
+    search_labels = ('name', 'suffix')
+    search_fields = ('name', 'suffix')
+
+
+@admin.register(ProxyImageBinding)
+class ProxyImageBindingAdmin(admin.ModelAdmin):
+    def proxyname(self, instance):
+        return instance.proxy.name
+    list_display = ('id', 'image', 'proxyname')
+
 
 @admin.register(Container)
 class ContainerAdmin(admin.ModelAdmin):
@@ -37,11 +55,18 @@ class ContainerAdmin(admin.ModelAdmin):
             obj.stop()
     start_container.short_description = "Start container"
 
-    actions = [start_container, stop_container]
+    def restart_container(self, request, queryset):
+        for obj in queryset:
+            obj.stop()
+    start_container.short_description = "Restart container"
+
+    actions = [start_container, restart_container, stop_container]
 
 @admin.register(Proxy)
 class ProxyAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'image', 'default', 'token_as_argument', 'port')
+    def bound_images(self, instance):
+        return len(ProxyImageBinding.objects.filter(proxy=instance))
+    list_display = ('id', 'name', 'svc_port', 'register', 'views', 'bound_images')
     search_fields = ('image__name', 'name', 'port')
 
 @admin.register(EnvVarMapping)

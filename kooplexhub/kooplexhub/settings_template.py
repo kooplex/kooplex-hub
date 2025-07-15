@@ -18,7 +18,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # teleport redis
-REDIS_PASSWORD=""
+REDIS_PASSWORD=os.getenv("REDIS_TELEPORT")
 
 KUBERNETES_SERVICE_NAMESPACE=""
 
@@ -121,43 +121,11 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
             #"hosts": [("127.0.0.1", 6379)],
-            "hosts": [("redis://:kortefa321@127.0.0.1:6379/0")],
+            "hosts": [(f"redis://:{REDIS_PASSWORD}@127.0.0.1:6379/0")],
         },
     },
 }
 
-#HUEY = {
-#    'name': 'jobq',
-#    'huey_class': 'huey.RedisHuey',  # Huey implementation to use.
-#    'results': True,  # Store return values of tasks.
-#    'store_none': False,  # If a task returns None, do not save to results.
-#    'immediate': False,  # If DEBUG=True, run synchronously.
-#    'utc': True,  # Use UTC for all times internally.
-#    'blocking': True,  # Perform blocking pop rather than poll Redis.
-#    'connection': {
-#        'host': 'localhost',
-#        'port': 6379,
-#        'db': 0,
-#        'password': 'kortefa321',
-#        'connection_pool': None,  # Definitely you should use pooling!
-#        # ... tons of other options, see redis-py for details.
-#
-#        # huey-specific connection parameters.
-#        'read_timeout': 1,  # If not polling (blocking pop), use timeout.
-#        'url': None,  # Allow Redis config via a DSN.
-#    },
-#    'consumer': {
-#        'workers': 1,
-#        'worker_type': 'thread',
-#        'initial_delay': 0.1,  # Smallest polling interval, same as -d.
-#        'backoff': 1.15,  # Exponential backoff using this rate, -b.
-#        'max_delay': 10.0,  # Max possible polling interval, -m.
-#        'scheduler_interval': 1,  # Check schedule every second, -s.
-#        'periodic': True,  # Enable crontab feature.
-#        'check_worker_health': True,  # Enable worker health checks.
-#        'health_check_interval': 1,  # Check worker health every second.
-#    },
-#}
 
 DJANGO_HUEY = {
     'default': 'container', #this name must match with any of the queues defined below.
@@ -174,7 +142,7 @@ DJANGO_HUEY = {
                 'host': 'localhost',
                 'port': 6379,
                 'db': 0,
-                'password': 'kortefa321',
+                'password': REDIS_PASSWORD,
                 'connection_pool': None,  # Definitely you should use pooling!
                 # ... tons of other options, see redis-py for details.
 
@@ -216,7 +184,7 @@ DJANGO_HUEY = {
                 'host': 'localhost',
                 'port': 6379,
                 'db': 0,
-                'password': 'kortefa321',
+                'password': REDIS_PASSWORD,
                 'connection_pool': None,  # Definitely you should use pooling!
                 # ... tons of other options, see redis-py for details.
 
@@ -237,7 +205,7 @@ DJANGO_HUEY = {
                 'host': 'localhost',
                 'port': 6379,
                 'db': 0,
-                'password': 'kortefa321',
+                'password': REDIS_PASSWORD,
                 'connection_pool': None,  # Definitely you should use pooling!
                 # ... tons of other options, see redis-py for details.
 
@@ -321,6 +289,16 @@ DATABASES = {
         'PASSWORD': os.getenv('HUBDB_PW'),
         'HOST': os.getenv('HUBDB_HOSTNAME', '%s-hub-mysql' % PREFIX),
         'PORT': '3306',
+        'CONN_MAX_AGE': 3600,  # Keep connection alive for 10 minutes
+        #'CONN_MAX_AGE': 10,
+        'OPTIONS': {
+            'autocommit': True,
+            #'pool_name': 'mypool',
+            #'pool_size': 20,  # Adjust as needed
+            'init_command': "SET SESSION wait_timeout=28800",
+            #'init_command': "SET SESSION wait_timeout=20",
+            #'reconnect': True,
+        },
     }
 }
 
@@ -428,12 +406,30 @@ LOGGING = {
             'formatter': 'verbose',
             'backupCount': 5,
         },
+        'api': {
+            'level': 'DEBUG',
+            #'class': 'logging.FileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'maxBytes': 1024 * 1024,  # 1 mb
+            'filename': '/var/log/hub/api.log',
+            'formatter': 'verbose',
+            'backupCount': 5,
+        },
         'project': {
             'level': 'DEBUG',
             #'class': 'logging.FileHandler',
             'class': 'logging.handlers.RotatingFileHandler',
             'maxBytes': 1024 * 1024,  # 1 mb
             'filename': '/var/log/hub/project.log',
+            'formatter': 'verbose',
+            'backupCount': 5,
+        },
+         'test': {
+            'level': 'DEBUG',
+            #'class': 'logging.FileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'maxBytes': 1024 * 1024,  # 1 mb
+            'filename': '/var/log/hub/test.log',
             'formatter': 'verbose',
             'backupCount': 5,
         },
@@ -454,6 +450,11 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': True,
         },
+        'api': {
+            'handlers': ['api'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
         'project': {
             'handlers': ['project'],
             'level': 'DEBUG',
@@ -464,12 +465,11 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': True,
         },
-#        'celery': {
-#            #'handlers': ['celery', 'console'],
-#            'handlers': ['dfile'],
-#            'level': 'INFO',
-#            'propagate': False,
-#        },
+       'test': {
+           'handlers': ['test'],
+           'level': 'DEBUG',
+           'propagate': False,
+       },
 #        'kubernetes': {
 #            'handlers': ['restfile'],
 #            'level': 'DEBUG',
@@ -499,6 +499,8 @@ KOOPLEX = {
     'hub': {
         'adminemail': 'kooplex@elte.hu',
         'smtpserver': 'mail.elte.hu',
+        'wss_token_config': 'wss://%s/hub/ws/tokens/{userid}/'%SERVERNAME,
+        'wss_resources': 'wss://%s/hub/ws/resources/'%SERVERNAME,
         'wss_container_fetchlog': 'wss://%s/hub/ws/container/fetchlog/{userid}/'%SERVERNAME,
         'wss_container_control': 'wss://%s/hub/ws/container/control/{userid}/'%SERVERNAME,
         'wss_container_config': 'wss://%s/hub/ws/container/config/{userid}/'%SERVERNAME,
@@ -513,6 +515,7 @@ KOOPLEX = {
         'wss_course_handin': 'wss://%s/hub/ws/education/handin/{userid}/'%SERVERNAME,
         'wss_course_config': 'wss://%s/hub/ws/course/config/{userid}/'%SERVERNAME,
         'wss_assignment_config': 'wss://%s/hub/ws/assignment/{userid}/'%SERVERNAME,
+        'wss_assignment_score': 'wss://%s/hub/ws/score/{userid}/'%SERVERNAME,
         #'wss_assignment_summary': 'wss://%s/hub/ws/assignment_summary/{userid}/'%SERVERNAME,
 
         'wss_canvas': 'wss://%s/hub/ws/canvas/fetchcourses/{userid}/'%SERVERNAME,

@@ -26,8 +26,8 @@ class AssignmentScoreConsumer(SyncSkeleton):
         student=parsed.get('student')
         assignment=parsed.get('assignment')
         course_id=parsed.get('courseid')
-        logger.debug(f"{student} - {assignment}  - {course_id}")
         uab=UserAssignmentBinding.objects.filter(user__username=student, assignment__name=assignment, assignment__course__id=course_id).first()
+#        uab=UserAssignmentBinding.objects.filter(user__username=student, assignment__name=assignment, course__id=course_id).first()
         if not uab:
             return
         if query=='fetch':

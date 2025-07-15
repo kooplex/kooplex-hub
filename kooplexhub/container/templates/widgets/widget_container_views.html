@@ -1,0 +1,17 @@
+{% load container_buttons %}
+{% if container.state == container.ST_RUNNING or container.state == container.ST_NEED_RESTART %}
+<div name="opencombo" data-id="{{container.id}}">
+    <div class="hover-dropdown">
+	    {% button_view container.views|first container %}
+        <div class="dropdown-content">
+		{% for view in container.views %}
+		{% button_view view container True %}
+		{% endfor %}
+        </div>
+    </div>
+</div>
+{% else %}
+<div name="opencombo" data-id="{{container.id}}" class="badge rounded-pill text-bg-secondary border p-2" name="default" disabled>
+  <span class="oi oi-external-link" aria-hidden="true"></span>
+</div>
+{% endif %}

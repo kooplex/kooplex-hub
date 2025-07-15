@@ -22,3 +22,10 @@ class UserVolumeBindingAdmin(admin.ModelAdmin):
 class ProjectVolumeBindingAdmin(admin.ModelAdmin):
     list_display = ('id', 'project', 'volume')
     search_fields = ('project__name','volume__name')
+
+
+# Create volume in kubernetes
+# pv and pvc
+# 
+
+# run automatic test by launching a pod maybe

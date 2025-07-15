@@ -1,4 +1,5 @@
 import logging
+import uuid
 import os
 import json
 from kubernetes import client, config
@@ -87,6 +88,53 @@ def create_sidecar_davfs(container, service):
 #    return container, [secret_volume, empty_volume], [host_empty_volume_mount]
     return container, [davfs_secret_volume, empty_volume], [host_empty_volume_mount]
 
+class MyClaimsAndVolumes:
+    def __init__(self):
+        self._c=[]
+        self._v=[]
+        self._l={}
+    def add(self, mountPath, subPath, claimName):
+        if claimName in self._l:
+            c=self._l[claimName]
+        else:
+            c=str(uuid.uuid4())
+            self._l[claimName]=c
+            self._c.append({
+                    "name": c,
+                    "persistentVolumeClaim": { "claimName": claimName }
+               })
+        self._v.append({
+            "name": c,
+            "mountPath": mountPath,
+            "subPath": subPath,
+        })
+
+    def add_cm(self, mountPath, configMap, claimName):
+        if claimName in self._l:
+            c=self._l[claimName]
+        else:
+            c=str(uuid.uuid4())
+            self._l[claimName]=c
+            self._c.append(
+                    V1Volume(name=c, config_map=configMap,
+                             )
+               )
+        self._v.append(
+            V1VolumeMount(
+                name=c, 
+                mount_path=mountPath ,
+            )
+        )
+
+
+    @property
+    def claims(self):
+        return self._c
+
+    @property
+    def volumes(self):
+        return self._v
+
 def start(container):
     logger.info(f"+ starting {container.label}")
     config.load_kube_config()
@@ -104,186 +152,170 @@ def start(container):
     else:
         env_variables = [ {'name': k, "value": v.format(container = container)} for k,v in KOOPLEX['environmental_variables'].items()]
 
-    #env_variables.extend(container.env_variables)
+    env_variables.extend(container.env_variables)
+    logger.info(f" ENV {env_variables}")
 
     pod_ports = []
     svc_ports = []
+    logger.info(f" PROXY {container.proxies}")
     for proxy in container.proxies:
+        logger.info(f" {proxy}, {proxy.svc_port}")
         pod_ports.append({
-            "containerPort": proxy.port,
+            "containerPort": proxy.svc_port,
             "name": proxy.name, 
         })
         svc_ports.append({
-            "port": proxy.port,
-            "targetPort": proxy.port,
+            "port": proxy.svc_port,
+            "targetPort": proxy.svc_port,
             "protocol": "TCP",
             "name": proxy.name, 
         })
 
 
-    # LDAP nslcd.conf
-            #V1VolumeMount(name="nslcd", mount_path='/etc/mnt'),
-    volume_mounts = [{
-        "name": "nslcd",
-        "mountPath": KOOPLEX['kubernetes']['nslcd'].get('mountPath_nslcd', '/etc/mnt'),
-        "readOnly": True
-    }
-    ]#FIXME: use class objects instead
-#            V1Volume(name="nslcd", config_map=V1ConfigMapVolumeSource(name="nslcd", default_mode=420, items=[V1KeyToPath(key="nslcd", path='nslcd.conf')])),
-    volumes = [{
-        "name": "nslcd",
-        "configMap": { "name": "nslcd", "items": [{"key": "nslcd", "path": "nslcd.conf" }]}
-    },
-    ]  #FIXME: use class objects instead
-
-    volume_mounts.append(V1VolumeMount(name="jobtool", mount_path=KOOPLEX['kubernetes']['jobs'].get("jobpy","jobtool")))
-    volumes.append(V1Volume(name="jobtool", config_map=V1ConfigMapVolumeSource(name="job.py", default_mode=0o777, items=[V1KeyToPath(key="job",path="job")] ))
+    mCV=MyClaimsAndVolumes()
+    logger.debug('mount nslcd')
+    mCV.add_cm(
+            claimName='nslcd',
+            mountPath=KOOPLEX['kubernetes']['nslcd'].get('mountPath_nslcd', '/etc/mnt'),
+            configMap=V1ConfigMapVolumeSource(name="nslcd", default_mode=0o400, items=[V1KeyToPath(key="nslcd",path="nslcd.conf")])
             )
+
+    logger.debug('mount jobpy')
+    mCV.add_cm(
+        claimName='jobtool',
+        mountPath=KOOPLEX['kubernetes']['jobs'].get("jobpy","jobtool"),
+        configMap=V1ConfigMapVolumeSource(name="job.py", default_mode=0o777, items=[V1KeyToPath(key="job",path="job")] ),
+        )
             
-    volume_mounts.append(V1VolumeMount(name="initscripts", mount_path="/.init_scripts"))
+            
+    logger.debug('mount initscripts')
     initscripts = [
             V1KeyToPath(key="nsswitch",path="01-nsswitch"),
             V1KeyToPath(key="nslcd",path="02-nslcd"),
             V1KeyToPath(key="usermod",path="03-usermod"),
-            V1KeyToPath(key="munge",path="04-munge"),
-            V1KeyToPath(key="ssh",path="05-ssh"),
-            V1KeyToPath(key="jobtools",path="06-jobtool-path"),
+    #        V1KeyToPath(key="ssh",path="05-ssh"),
             ]
 
     if container.user.profile.can_teleport and container.start_teleport:
         initscripts.append(V1KeyToPath(key="teleport",path="06-teleport"))
         env_variables.append({ "name": "REDIS_PASSWORD", "value": REDIS_PASSWORD })
 
-
-    if container.start_ssh:
-        initscripts.append(V1KeyToPath(key="sshstart",path="07-sshstart"))
-        sshport = 2222
-        pod_ports.append({
-            "containerPort": 22,
-            "name": "ssh", 
-        })
-        svc_ports.append({
-            "port": sshport,
-            "targetPort": 22,
-            "protocol": "TCP",
-            "name": "ssh", 
-        })
+    mCV.add_cm(
+        claimName='initscripts',
+        mountPath=KOOPLEX['kubernetes']['initscripts'].get("mountPath_initscripts","/.init_scripts"),
+        configMap=V1ConfigMapVolumeSource(name="initscripts", default_mode=0o777, items=initscripts),
+        )
 
 
-    volumes.append(
-            V1Volume(name="initscripts", config_map=V1ConfigMapVolumeSource(name="initscripts", default_mode=0o777, items=initscripts ))
-            )
-            
+#    if container.start_ssh:
+#        initscripts.append(V1KeyToPath(key="sshstart",path="07-sshstart"))
+#        sshport = 2222
+#        pod_ports.append({
+#            "containerPort": 22,
+#            "name": "ssh", 
+#        })
+#        svc_ports.append({
+#            "port": sshport,
+#            "targetPort": 22,
+#            "protocol": "TCP",
+#            "name": "ssh", 
+#        })
+
+
 
     # jobs kubeconf and slurm
-    if container.user.profile.can_runjob:
-        # SLURM
-        #if "munge" in initscripts.data.keys():   
-        volume_mounts.append(V1VolumeMount(name="munge", mount_path="/etc/munge_tmp", read_only=True))
-        volumes.append(V1Volume(name="munge", config_map=V1ConfigMapVolumeSource(name='munge', default_mode=400, items=[V1KeyToPath(key="munge",path="munge.key")])))
-        volume_mounts.append(V1VolumeMount(name="slurmconf", mount_path="/etc/slurm-llnl", read_only=True))
-        volumes.append(V1Volume(name="slurmconf", config_map=V1ConfigMapVolumeSource(name='slurmconf', items=[V1KeyToPath(key="slurmconf",path="slurm.conf")])))
+    #if container.user.profile.can_runjob:
+    #    # SLURM
+    #    #if "munge" in initscripts.data.keys():   
+    #    volume_mounts.append(V1VolumeMount(name="munge", mount_path="/etc/munge_tmp", read_only=True))
+    #    volumes.append(V1Volume(name="munge", config_map=V1ConfigMapVolumeSource(name='munge', default_mode=400, items=[V1KeyToPath(key="munge",path="munge.key")])))
+    #    volume_mounts.append(V1VolumeMount(name="slurmconf", mount_path="/etc/slurm-llnl", read_only=True))
+    #    volumes.append(V1Volume(name="slurmconf", config_map=V1ConfigMapVolumeSource(name='slurmconf', items=[V1KeyToPath(key="slurmconf",path="slurm.conf")])))
     # user's home and garbage
-    claim_userdata = False
     if container.image.require_home:
         logger.debug('mount home')
-        claim_userdata = True
-        volume_mounts.extend([{
-            "name": "home",
-            "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_home', '/home/{user.username}').format(user = container.user),
-            "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_home', 'home/{user.username}').format(user = container.user),
-        }, {
-            "name": "garbage",
-            "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_garbage', '/home/garbage').format(user = container.user),
-            "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_garbage', 'garbage/{user.username}').format(user = container.user),
-        }])
-    if claim_userdata:
-        volumes.extend([
-            {
-            "name": "home",
-            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-home', 'home') }
-        },
-            {
-            "name": "garbage",
-            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-garbage', 'garbage') }
-        }])
+        mCV.add(
+                mountPath=KOOPLEX['kubernetes']['userdata'].get('mountPath_home', '/home/{user.username}').format(user = container.user),
+                subPath=KOOPLEX['kubernetes']['userdata'].get('subPath_home', 'home/{user.username}').format(user = container.user),
+                claimName=KOOPLEX['kubernetes']['userdata'].get('claim-home', 'home')
+                )
+        mCV.add(
+                mountPath=KOOPLEX['kubernetes']['userdata'].get('mountPath_garbage', '/garbage/{user.username}').format(user = container.user),
+                subPath=KOOPLEX['kubernetes']['userdata'].get('subPath_garbage', 'garbage/{user.username}').format(user = container.user),
+                claimName=KOOPLEX['kubernetes']['userdata'].get('claim-garbage', 'garbage')
+                )
 
 
     # user's scratch folder
     if container.user.profile.has_scratch:
-        volume_mounts.append({
-            "name": "scratch",
-            "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_scratch', '/v/scratch/{user.username}').format(user = container.user),
-            "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_scratch', '{user.username}').format(user = container.user),
-        })
-        volumes.append({
-            "name": "scratch",
-            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-scratch', 'scratch') }
-        })
-
+        mCV.add(
+                mountPath=KOOPLEX['kubernetes']['userdata'].get('mountPath_scratch', '/scratch/{user.username}').format(user = container.user),
+                subPath=KOOPLEX['kubernetes']['userdata'].get('subPath_garbage', 'scratch/{user.username}').format(user = container.user),
+                claimName=KOOPLEX['kubernetes']['userdata'].get('claim-scratch', 'scratch')
+                )
 
     # education
-    claim_edu = False
     for course in container.courses:
         logger.debug(f'mount course folders {course.name}')
-        claim_edu = True
-        volume_mounts.extend([{
-            "name": "edu",
-            "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_course_workdir', '/course/{course.folder}').format(course = course),
-            "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_course_workdir', 'course_workdir/{course.folder}/{user.username}').format(course = course, user = container.user),
-        }, {
-            "name": "edu",
-            "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_course_public', '/course/{course.folder}.public').format(course = course),
-            "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_course_public', 'course/{course.folder}/public').format(course = course),
-        }])
+        mCV.add(
+                mountPath=KOOPLEX['kubernetes']['userdata'].get('mountPath_course_workdir', '/course/{course.folder}').format(course = course),
+                subPath=KOOPLEX['kubernetes']['userdata'].get('subPath_course_workdir', '/course/{course.folder}/{user.username}').format(course = course, user = container.user),
+                claimName=KOOPLEX['kubernetes']['userdata'].get('claim-edu', 'edu')
+                )
+        mCV.add(
+                mountPath=KOOPLEX['kubernetes']['userdata'].get('mountPath_course_public', '/course/{course.folder}.public').format(course = course),
+                subPath=KOOPLEX['kubernetes']['userdata'].get('subPath_course_public', '/course/{course.folder}/public').format(course = course),
+                claimName=KOOPLEX['kubernetes']['userdata'].get('claim-edu', 'edu')
+                )
         if course.is_teacher(container.user):
-            volume_mounts.extend([{
-                "name": "edu",
-                "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_course_assignment', '/course/{course.folder}.everyone').format(course = course),
-                "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_course_assignment_all', 'course_assignment/{course.folder}').format(course = course, user = container.user),
-            }, {
-                "name": "edu",
-                "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_course_assignment_prepare', '/course/{course.folder}.prepare').format(course = course),
-                "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_course_assignment_prepare', 'course/{course.folder}/assignment_prepare').format(course = course),
-            }, {
-                "name": "edu",
-                "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_course_assignment_correct', '/course/{course.folder}.correct').format(course = course),
-                "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_course_assignment_correct_all', 'course_assignment/{course.folder}/correctdir').format(course = course, user = container.user),
-            }])
+            mCV.add(
+                    mountPath=KOOPLEX['kubernetes']['userdata'].get('mountPath_course_assignment', '/course/{course.folder}.everyone').format(course = course),
+                    subPath=KOOPLEX['kubernetes']['userdata'].get('subPath_course_assignment_all', '/course/{course.folder}/assignment').format(course = course),
+                    claimName=KOOPLEX['kubernetes']['userdata'].get('claim-edu', 'edu')
+                    )
+            mCV.add(
+                    mountPath=KOOPLEX['kubernetes']['userdata'].get('mountPath_course_assignment_prepare', '/course/{course.folder}.prepare').format(course = course),
+                    subPath=KOOPLEX['kubernetes']['userdata'].get('subPath_course_assignment_prepare', '/course/{course.folder}/assignment_prepare').format(course = course),
+                    claimName=KOOPLEX['kubernetes']['userdata'].get('claim-edu', 'edu')
+                    )
+            mCV.add(
+                    mountPath=KOOPLEX['kubernetes']['userdata'].get('mountPath_course_assignment_correct', '/course/{course.folder}.correct').format(course = course),
+                    subPath=KOOPLEX['kubernetes']['userdata'].get('subPath_course_assignment_correct_all', '/course/{course.folder}/correct').format(course = course),
+                    claimName=KOOPLEX['kubernetes']['userdata'].get('claim-edu', 'edu')
+                    )
         else:
-            volume_mounts.extend([{
-                "name": "edu",
-                "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_course_assignment', '/course/{course.folder}.everyone').format(course = course),
-                "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_course_assignment', 'course_assignment/{course.folder}/{user.username}').format(course = course, user = container.user),
-            }])#CORRECTDIR
-    if claim_edu:
-        volumes.append({
-            "name": "edu",
-            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-edu', 'edu') }
-        })
+            mCV.add(
+                    mountPath=KOOPLEX['kubernetes']['userdata'].get('mountPath_course_assignment', '/course/{course.folder}.everyone').format(course = course),
+                    subPath=KOOPLEX['kubernetes']['userdata'].get('subPath_course_assignment', '/course/{course.folder}/{user.username}').format(course = course, user = container.user),
+                    claimName=KOOPLEX['kubernetes']['userdata'].get('claim-edu', 'edu')
+                    )
+            mCV.add(
+                    mountPath=KOOPLEX['kubernetes']['userdata'].get('mountPath_course_assignment_correct', '/course/{course.folder}.correct').format(course = course),
+                    subPath=KOOPLEX['kubernetes']['userdata'].get('subPath_course_assignment_correct', '/course/{course.folder}/correct/{user.username}').format(course = course, user = container.user),
+                    claimName=KOOPLEX['kubernetes']['userdata'].get('claim-edu', 'edu')
+                    )
 
-
-    # project
-    claim_project = False
-    for project in container.projects:
-        volume_mounts.extend([{
-             "name": "project",
-             "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_project', '/project/{project.subpath}').format(project = project),
-             "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_project', '{project.subpath}').format(project = project, user = container.user),
-        }, {
-             "name": "project",
-             "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_report_prepare', '/report_prepare/{project.subpath}').format(project = project),
-             "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_report_prepare', '{project.subpath}').format(project = project, user = container.user),
-        }])
-        claim_project = True
-    if claim_project:
-        volumes.append({
-            "name": "project",
-            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-project', 'project') }
-        })
+######    # project
+######    claim_project = False
+######    for project in container.projects:
+######        volume_mounts.extend([{
+######             "name": "project",
+######             "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_project', '/project/{project.subpath}').format(project = project),
+######             "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_project', '{project.subpath}').format(project = project, user = container.user),
+######        }, {
+######             "name": "project",
+######             "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_report_prepare', '/report_prepare/{project.subpath}').format(project = project),
+######             "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_report_prepare', '{project.subpath}').format(project = project, user = container.user),
+######        }])
+######        claim_project = True
+######    if claim_project:
+######        volumes.append({
+######            "name": "project",
+######            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-project', 'project') }
+######        })
 
     # report
-    claim_report = False
+#    claim_report = False
 #    for report in container.reports:
 #        volume_mounts.extend([{
 #             "name": "report",
@@ -292,14 +324,16 @@ def start(container):
 #        }
 #        ])
 #        claim_report = True
-    if claim_report:
-        volumes.append({
-            "name": "report",
-            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-report', 'report') }
-        })
+#    if claim_report:
+#        volumes.append({
+#            "name": "report",
+#            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-report', 'report') }
+#        })
 
     # volumes
     storage = storage_resources(container.volumes)
+    volume_mounts=mCV.volumes
+    volumes=mCV.claims
     volume_mounts.extend(storage['mounts'])
     volumes.extend(storage['claims'])
 
@@ -323,7 +357,7 @@ def start(container):
     pod_resources["requests"]["cpu"] = f"{1000*max(container.cpurequest, resources['requests']['cpu'])}m"
     pod_resources["limits"]["cpu"] = f"{1000*max(container.cpurequest, resources['limits']['cpu'])}m"
     pod_resources["requests"]["memory"] = f"{max(container.memoryrequest, resources['requests']['memory'])}Gi"
-    pod_resources["limits"]["memory"] = f"{max(container.memoryrequest, resources['limits']['memory'])}Gi"
+    pod_resources["limits"]["memory"] = "1Gi"  #FIXME: f"{max(container.memoryrequest, resources['limits']['memory'])}Gi"
 
 #    logger.warning(f"{resources}")
     
@@ -373,7 +407,7 @@ def start(container):
             "spec": {
                 "containers": container_list,
                 "volumes": volumes,
-                "nodeSelector": container.target_node, 
+#                "nodeSelector": container.target_node, 
             }
         }
 

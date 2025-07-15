@@ -10,6 +10,7 @@
 <link href="{% static 'css/datetimepicker.css' %}" rel="stylesheet">
 <link href="{% static 'css/multitabs.css' %}" rel="stylesheet">
 <link href="{% static 'css/xeditable.css' %}" rel="stylesheet">
+<link href="{% static 'css/dropdown.css' %}" rel="stylesheet">
 {% endblock %}
 
 {% block pagedescription %}
@@ -73,6 +74,7 @@ $(document).ready(function() {
 {% include 'widgets/environments.html' %}
 <script src="{% static 'js/environments.js' %}"></script>
 <script src="{% static 'js/container_buttons.js' %}"></script>
+<script src="{% static 'js/dropdown.js' %}"></script>
 
 {# a modal to configure a course volumes #}
 {% include 'widgets/volumes.html' with instance="course" %}
