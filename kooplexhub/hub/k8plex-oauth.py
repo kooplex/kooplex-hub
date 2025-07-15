@@ -4,7 +4,7 @@ import os
 from urllib.parse import urlencode
 from social_core.backends.open_id_connect import BaseOAuth2
 
-from kooplexhub.settings import KOOPLEX_OID_AUTHORIZATION_URL, KOOPLEX_OID_ACCESS_TOKEN_URL, FQDN_AUTH, URL_PROFILE
+from kooplexhub.settings import KOOPLEX_OID_AUTHORIZATION_URL, KOOPLEX_OID_ACCESS_TOKEN_URL, URL_PROFILE
 
 logger = logging.getLogger(__name__)
 

@@ -11,7 +11,8 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('--add_image', help = "Add image", nargs = 3)
-        parser.add_argument('--add_imagedescription', help = "Add description to the image", nargs = 3)
+        parser.add_argument('--list_images', help = "List images", nargs = 1)
+#        parser.add_argument('--add_imagedescription', help = "Add description to the image", nargs = 3)
         parser.add_argument('--add_proxy', help = "Add Proxy", nargs = 5)
         parser.add_argument('--add_envvar', help = "Add Proxy", nargs = 3)
 #        parser.add_argument('--add_type', help = "Add Type", nargs = 3)
@@ -22,12 +23,23 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         logger.info("call %s %s" % (args, options))
         add_image = options.get('add_image')
+        list_images = options.get('list_images')
         add_imagedescription = options.get('add_imagedescription')
         add_proxy = options.get('add_proxy')
         add_envvar = options.get('add_envvar')
         remove_image = options.get('remove')
         remove_proxy = options.get('remove_proxy')
         remove_envvar = options.get('remove_envvar')
+        if list_images:
+            from docker_registry_client import DockerRegistryClient as drc, Repository as rep
+            client = drc("https://image-registry.vo.elte.hu")
+            reps = client.repositories()
+            for rep in list(reps.keys()):
+                if "v8" in rep or "v9" in rep:
+                 if "jupyter" == rep.split("-")[0]:
+                  print(rep)
+
+            
         if add_image:
             command = add_image.pop()
             imagetype = add_image.pop() 

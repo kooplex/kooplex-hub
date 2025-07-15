@@ -18,7 +18,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # teleport redis
-REDIS_PASSWORD=""
+REDIS_PASSWORD=os.getenv("REDIS_TELEPORT")
 
 KUBERNETES_SERVICE_NAMESPACE=""
 
@@ -121,7 +121,7 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
             #"hosts": [("127.0.0.1", 6379)],
-            "hosts": [("redis://:kortefa321@127.0.0.1:6379/0")],
+            "hosts": [(f"redis://:{REDIS_PASSWORD}@127.0.0.1:6379/0")],
         },
     },
 }
@@ -174,7 +174,7 @@ DJANGO_HUEY = {
                 'host': 'localhost',
                 'port': 6379,
                 'db': 0,
-                'password': 'kortefa321',
+                'password': REDIS_PASSWORD,
                 'connection_pool': None,  # Definitely you should use pooling!
                 # ... tons of other options, see redis-py for details.
 
@@ -216,7 +216,7 @@ DJANGO_HUEY = {
                 'host': 'localhost',
                 'port': 6379,
                 'db': 0,
-                'password': 'kortefa321',
+                'password': REDIS_PASSWORD,
                 'connection_pool': None,  # Definitely you should use pooling!
                 # ... tons of other options, see redis-py for details.
 
@@ -237,7 +237,7 @@ DJANGO_HUEY = {
                 'host': 'localhost',
                 'port': 6379,
                 'db': 0,
-                'password': 'kortefa321',
+                'password': REDIS_PASSWORD,
                 'connection_pool': None,  # Definitely you should use pooling!
                 # ... tons of other options, see redis-py for details.
 
