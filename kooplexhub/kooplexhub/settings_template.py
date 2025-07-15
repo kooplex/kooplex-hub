@@ -566,6 +566,7 @@ KOOPLEX = {
                     'name' : 'secrets'},
         
         'nslcd': { 'mountPath_nslcd': '/etc/mnt' },
+        'initscripts': { 'mountPath_initscripts': '/.init_scripts' },
         'kubeconfig_job': '/root/.kube/config', 
         'imagePullPolicy': 'Always',
         'resources': {
