@@ -59,10 +59,10 @@ class Container(models.Model):
     restart_reasons = models.CharField(max_length = 500, null = True, blank = True)
 
     node = models.TextField(max_length = 64, null = True, blank = True)
-    cpurequest = models.DecimalField(null = True, blank = True, decimal_places=1, max_digits=4, default=0.2)
-    gpurequest = models.IntegerField(null = True, blank = True, default=0)
-    memoryrequest = models.DecimalField( null = True, blank = True, decimal_places=1, max_digits=5, default=0.4)
-    idletime = models.IntegerField( null = True, blank = True, default=28)
+    cpurequest = models.DecimalField(null = True, blank = True, decimal_places=1, max_digits=4, default=0.2) # FIXME default from settings.pu!
+    gpurequest = models.IntegerField(null = True, blank = True, default=0) # FIXME default!
+    memoryrequest = models.DecimalField( null = True, blank = True, decimal_places=1, max_digits=5, default=1.0) # FIXME default!
+    idletime = models.IntegerField( null = True, blank = True, default=28) # FIXME default!
 
     class Meta:
         unique_together = [['user', 'name']]
