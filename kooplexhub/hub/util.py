@@ -43,6 +43,8 @@ class  AsyncSkeleton(AsyncWebsocketConsumer):
         await self.accept()
 
     async def disconnect(self, close_code):
+        self.userid = int(self.scope["url_route"]["kwargs"].get('userid'))
+        self.identifier=f"{self.identifier_}-{self.userid}"
         await self.channel_layer.group_discard(self.identifier, self.channel_name)
 
     async def feedback(self, event):
