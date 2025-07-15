@@ -6,20 +6,19 @@ from .models import *
 
 @admin.register(Image)
 class ImageAdmin(admin.ModelAdmin):
-    list_display = ('id', 'present', 'name', 'imagetype', 'description', 'require_home', 'mount_project', 'mount_report')
+    list_display = ('id', 'present', 'name', 'show_thumbnail', 'imagetype', 'description', 'require_home', 'mount_project', 'mount_report')
     search_labels = ('name', 'imagetype')
     search_fields = ('name', 'imagetype', 'description' )
-
+    def show_thumbnail(self, instance):
+        return instance.thumbnail.to_html if instance.thumbnail else '-'
     def enable_image(self, request, queryset):
         for obj in queryset:
             obj.present = True
             obj.save()
-
     def disable_image(self, request, queryset):
         for obj in queryset:
             obj.present = False
             obj.save()
-
     actions = [enable_image, disable_image]
 
 
@@ -56,7 +55,12 @@ class ContainerAdmin(admin.ModelAdmin):
             obj.stop()
     start_container.short_description = "Start container"
 
-    actions = [start_container, stop_container]
+    def restart_container(self, request, queryset):
+        for obj in queryset:
+            obj.stop()
+    start_container.short_description = "Restart container"
+
+    actions = [start_container, restart_container, stop_container]
 
 @admin.register(Proxy)
 class ProxyAdmin(admin.ModelAdmin):

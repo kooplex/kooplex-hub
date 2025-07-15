@@ -110,7 +110,7 @@ INSTALLED_APPS = [
     'api',
     'service',
     'canvas',
-    'taggit',
+#    'taggit',
 ]
 
 
