@@ -1,5 +1,5 @@
 {% load course_buttons %}
-<table class="table">
+<table class="table" style="width: max-content">
     <thead>
     	<tr>
     		<td>Student</td>
@@ -11,7 +11,7 @@
     <tbody>
     	{% for s in students %}
     	<tr>
-		<td><span data-bs-toggle="tooltip" title="{{s.username}}">{{s.last_name}}, {{s.first_name}}</span></td>
+		<td><span data-bs-toggle="tooltip" title="{{s.username}}">{{s.last_name}}, {{s.first_name}} ({{s.username}})</span></td>
     		{% for a in assignments %}
     		<td>
     		  {% get_uabind_value bindings s.id a.id %}

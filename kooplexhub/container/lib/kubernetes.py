@@ -150,7 +150,7 @@ def start(container):
             V1KeyToPath(key="jobtools",path="06-jobtool-path"),
             ]
 
-    if container.user.profile.can_teleport:
+    if container.user.profile.can_teleport and container.start_teleport:
         initscripts.append(V1KeyToPath(key="teleport",path="06-teleport"))
         env_variables.append({ "name": "REDIS_PASSWORD", "value": REDIS_PASSWORD })
 
@@ -284,14 +284,14 @@ def start(container):
 
     # report
     claim_report = False
-    for report in container.reports:
-        volume_mounts.extend([{
-             "name": "report",
-             "mountPath": '/srv/report', # KOOPLEX['kubernetes']['userdata'].get('mountPath_report', '/srv/report').format(report = report),
-             "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_report', '{report.subpath}').format(report = report),
-        }
-        ])
-        claim_report = True
+#    for report in container.reports:
+#        volume_mounts.extend([{
+#             "name": "report",
+#             "mountPath": '/srv/report', # KOOPLEX['kubernetes']['userdata'].get('mountPath_report', '/srv/report').format(report = report),
+#             "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_report', '{report.subpath}').format(report = report),
+#        }
+#        ])
+#        claim_report = True
     if claim_report:
         volumes.append({
             "name": "report",

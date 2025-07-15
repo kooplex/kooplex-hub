@@ -66,7 +66,7 @@ class UserAssignmentAdmin(admin.ModelAdmin):
     def assignment_name(self, instance):
         return instance.assignment.name
     list_display = ('id', 'assignment_course_name', 'assignment_name', 'user', 'state','last_received_at', 'last_submitted_at', 'last_corrected_at', 'submit_count', 'score', 'feedback_text')
-    search_fields = ('assignment__name', 'user__first_name', 'user__last_name')
+    search_fields = ('assignment__name', 'user__first_name', 'user__last_name', 'user__username')
 
 
 #@admin.register(CourseGroup)

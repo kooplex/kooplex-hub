@@ -41,6 +41,7 @@ $(document).on("click", "td[data-editable='true']", function (e) {
 $(document).on("click", "[id=save-btn]", function () {
     let score = $("#popup-score").val()
     let comment = $("#popup-comment").val()
+    let courseid = $("#popup-course_id").val()
 
     // Update the clicked cell with the new value
     selectedCell.text(score)
@@ -55,6 +56,7 @@ $(document).on("click", "[id=save-btn]", function () {
         assignment: assignment,
         score: score,
         comment: comment,
+	courseid: courseid,
     }
     setTimeout(function() {
         wss_score.send(JSON.stringify(data))

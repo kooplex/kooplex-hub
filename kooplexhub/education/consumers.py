@@ -25,7 +25,9 @@ class AssignmentScoreConsumer(SyncSkeleton):
         query=parsed.get('request')
         student=parsed.get('student')
         assignment=parsed.get('assignment')
-        uab=UserAssignmentBinding.objects.filter(user__username=student, assignment__name=assignment).first()
+        course_id=parsed.get('courseid')
+        logger.debug(f"{student} - {assignment}  - {course_id}")
+        uab=UserAssignmentBinding.objects.filter(user__username=student, assignment__name=assignment, assignment__course__id=course_id).first()
         if not uab:
             return
         if query=='fetch':
@@ -96,20 +98,24 @@ class AssignmentConsumer(SyncSkeleton):
         dfm = read_frame(UserAssignmentBinding.objects.filter(assignment__course = course)).fillna(numpy.nan)
         dfm=dfm[['user', 'assignment', 'score']]
         if not dfm.empty:
-            table = dfm.pivot(index = "user", columns = "assignment", values = "score")
-            table.columns = [tc.split("Assignment ")[1].split(" (")[0] for tc in table.columns]  #FIXME: not a very nice way to parse
-            points = dfm.fillna(0).groupby(by="user").agg("sum")[["score"]].rename(columns={"score":"Total points"})
-            result = pandas.merge(left=table, right=points, left_on="user", right_on="user", how="inner").reset_index()
-            EditableTable = create_table_class(result, table.columns)
-            t_score = EditableTable(result.fillna("—").to_dict(orient='records'))  # Convert DataFrame to Django Table
+            try:
+                table = dfm.pivot(index = "user", columns = "assignment", values = "score")
+                table.columns = [tc.split("Assignment ")[1].split(" (")[0] for tc in table.columns]  #FIXME: not a very nice way to parse
+                points = dfm.fillna(0).groupby(by="user").agg("sum")[["score"]].rename(columns={"score":"Total points"})
+                result = pandas.merge(left=table, right=points, left_on="user", right_on="user", how="inner").reset_index()
+                EditableTable = create_table_class(result, table.columns)
+                t_score = EditableTable(result.fillna("—").to_dict(orient='records'))  # Convert DataFrame to Django Table
+            except Exception as e:
+                logger.critical(f"FIXME pivot -- {e}")
+                t_score=None
         else:
-            t_score=f"<h6 class="">There are no assignments in this course.</h6>"
+            t_score=None
         self.send(text_data=json.dumps({
             "feedback": "Assignment list is refreshed",
             "f_new": render_to_string('widgets/form_new_assignment.html', {'course': course, 'folders': folders, 'table': TableAssignmentConf([Assignment()], exclude_columns=['manage', 'delete'])}),
             "t_assignment": render_to_string('django_table.html', {'table':t}),
             "t_individual": render_to_string('widgets/table_handle_individual.html', {'assignments': a, 'students': course.students, 'bindings': UAbind_dict}),
-            "t_score": render_to_string('widgets/table_scores.html', {'table': t_score}),
+            "t_score": render_to_string('widgets/table_scores.html', {'table': t_score, "course_id": course.id}) if t_score else f"<h6 class="">There are no assignments in this course.</h6>",
             }))
 
     def configure(self, course, configlist):
@@ -163,7 +169,7 @@ class AssignmentConsumer(SyncSkeleton):
                 b.handout()
             if t['todo']=='collect':
                 b.collect()
-            if t['todo']=='reassigne':
+            if t['todo']=='reassign':
                 b.reassign()
 
 
@@ -184,7 +190,6 @@ class CourseGetContainersConsumer(SyncSkeleton):
             message=None
             courseid = parsed.get('pk')
         bindings = CourseContainerBinding.objects.filter(container__user__id=self.userid, course__id=courseid)
-        logger.debug(bindings)
         ucb=UserCourseBinding.objects.get(user__id=self.userid, course__id=courseid)
         message_back = {
             "feedback": message if message else f"Container list refreshed",
