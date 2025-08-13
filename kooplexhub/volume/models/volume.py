@@ -35,6 +35,10 @@ class Volume(models.Model):
         return "Volume /{} ({}:{})".format(self.folder, self.claim, self.subPath)
 
     @property
+    def name(self):
+        return self.folder
+
+    @property
     def search(self):
         return f"{self.folder} {self.description}".upper()
 
@@ -78,7 +82,6 @@ class Volume(models.Model):
             return True
         except UserVolumeBinding.DoesNotExist:
             return False
-
 
     # rendering logic
     def render_scope_html(self):

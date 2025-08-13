@@ -42,6 +42,65 @@ class SyncConsumer(WebsocketConsumer):
         pass
 
 class ProjectConfigConsumer(SyncConsumer):
+    def _msg(self, project, message, errors={}, reload=False):
+        message_back = {
+            "project_id": project.id,
+            "feedback": message,
+            "response": "reloadpage" if reload else render_to_string("project.html", {"project": project, "errors": errors}),
+        }
+        logger.debug(message_back["feedback"])
+        self.send(text_data=json.dumps(message_back))
+
+    def _chg_image(self, project, image):
+        old_value=project.preferred_image.name
+        project.preferred_image=image
+        project.save()
+        m=f"The preferred image of project {project.name} changed from {old_value} to {image.name}"
+        self._msg(project, m)
+
+    def _chg_bindings(self, project, ids, obj_type, bind_type, attr, m):
+        a=[]
+        r=[]
+        for o in obj_type.objects.filter(id__in = ids):
+            b, _=bind_type.objects.get_or_create(**{attr: o, 'project': project})
+            a.append(getattr(b, attr).name)
+        for b in bind_type.objects.filter(project = project).exclude(**{f"{attr}__id__in": ids}):
+            r.append(getattr(b, attr).name)
+            b.delete()
+        if a:
+            m += "added " + ", ".join(a) + "\n"
+        if r:
+            m += "removed " + ", ".join(r) + "\n"
+        if a or r:
+            self._msg(project, m)
+
+    def _chg_user_bindings(self, project, ids, marked, m):
+        c=[]
+        a=[]
+        r=[]
+        for user in User.objects.filter(id__in = ids):
+            upb, created = UserProjectBinding.objects.get_or_create(project = project, user = user)
+            if created:
+                a.append(str(user))
+            if upb.role != UserProjectBinding.RL_CREATOR:
+                upb.role = UserProjectBinding.RL_ADMIN if user.id in marked else UserProjectBinding.RL_COLLABORATOR
+                upb.save()
+                if not created:
+                    c.append(str(user))
+        for upb in UserProjectBinding.objects.filter(project = project).exclude(user__id__in = ids).exclude(role = UserProjectBinding.RL_CREATOR):
+            upb.delete()
+            r.append(str(upb.user))
+        if a:
+            m += "added " + ", ".join(a) + "\n"
+        if r:
+            m += "removed " + ", ".join(r) + "\n"
+        if c:
+            m += "role changed " + ", ".join(c) + "\n"
+        if a or r or c:
+            self._msg(project, m)
+
+
+
     def receive(self, text_data):
         from kooplexhub.lib.libbase import standardize_str
         parsed = json.loads(text_data)
@@ -59,55 +118,38 @@ class ProjectConfigConsumer(SyncConsumer):
             #FIXME: validate
             project.save()
             UserProjectBinding(user_id = self.userid, project = project, role = UserProjectBinding.RL_CREATOR).save()
-            reloadpage=True
+            self._msg(project, f"New project {project.name} is created", reload=True)
         else:
-            reloadpage=False
             pid = int(pk)
             project = UserProjectBinding.objects.get(user__id = self.userid, project__id = pid, role__in = [UserProjectBinding.RL_CREATOR, UserProjectBinding.RL_ADMIN]).project
         # Iterate over the changes and try to update the model instance
         for field, new_value in changes.items():
             if field == 'image':
                 new_value=Image.objects.get(id=new_value)
-                field='preferred_image'
+                self._chg_image(project, new_value)
+            elif field == 'users':
+                self._chg_user_bindings(project, new_value, changes.get('marked'), f"Collaborators of project {project.name} changed:\n")
+            elif field == 'volumes':
+                self._chg_bindings(project, new_value, Volume, ProjectVolumeBinding, 'volume', f"Project mounts of {project.name} changed:\n")
             # Check if the field is a valid attribute of the model
-            if model_field(project, field):
+            elif model_field(project, field):
                 old_value = getattr(project, field)
                 try:
+                    m=f"Attribute {field} of project {project.name} changed from {getattr(project, field)} to {new_value}"
                     # Try assigning the new value to the model's field
                     setattr(project, field, new_value)
                     # Run Django's model validation for the field
                     project.full_clean(validate_unique=True, exclude=[f for f in changes.keys() if f != field])
                     # If no exception was raised, add it to the success response
-                    success=True
+                    self._msg(project, m)
+                    project.save()
                 except ValidationError as e:
                     # Validation failed, record the error message
                     failed[field] = { "error": str(e), "value": old_value }
-            elif field == 'users':
-                for user in User.objects.filter(id__in = new_value):
-                    upb, _ = UserProjectBinding.objects.get_or_create(project = project, user = user)
-                    if upb.role != UserProjectBinding.RL_CREATOR:
-                        upb.role = UserProjectBinding.RL_ADMIN if user.id in changes.get('marked') else UserProjectBinding.RL_COLLABORATOR
-                        upb.save()
-                UserProjectBinding.objects.filter(project = project).exclude(user__id__in = new_value).exclude(role = UserProjectBinding.RL_CREATOR).delete()
-                success=True
-            elif field == 'volumes':
-                for volume in Volume.objects.filter(id__in = new_value):
-                    ProjectVolumeBinding.objects.get_or_create(volume = volume, project = project)
-                ProjectVolumeBinding.objects.filter(project = project).exclude(volume__id__in = new_value).delete()
-                success=True
+                    self._msg(container, f"Problem configuring project {project.name}", errors=failed)
             else:
                 # Attribute does not exist on the model
                 logger.error(f"Project model attribute {field} does not exist.")
-        # Save the instance if there are any successful changes
-        if success:
-            project.save()
-        message_back = {
-            "feedback": f"Project {project.name} is configured",
-            "response": "reloadpage" if reloadpage else render_to_string("project.html", {'project':project}),
-            "project_id": project.id,
-        }
-        logger.debug(message_back["feedback"])
-        self.send(text_data=json.dumps(message_back))
 
 
 class ProjectGetContainersConsumer(SyncConsumer):

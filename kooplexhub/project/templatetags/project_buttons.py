@@ -14,16 +14,6 @@ pid = lambda project: project.id if project else ""
 
 
 @register.simple_tag
-def button_new_project(user):
-    return format_html(f"""
-<button type="button" class="btn btn-secondary btn-sm rounded rounded-5 border border-2 border-dark mb-2" data-bs-toggle="modal" data-bs-target="#newProjectModal" data-id="{user.id}">
-    <i class="bi bi-plus-square pe-1"></i>
-    New project...
-</button>
-    """)
-
-
-@register.simple_tag
 def button_fetch_joinable_projects(user):
     return format_html(f"""
 <button type="button" class="btn btn-secondary btn-sm rounded rounded-5 border border-2 border-dark mb-2" data-bs-toggle="modal" data-bs-target="#joinprojectModal" data-id="{user.id}">

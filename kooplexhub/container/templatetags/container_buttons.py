@@ -54,8 +54,8 @@ def button_seafile(container = None):
 
 
 @register.simple_tag
-def container_image(obj, attr="image"):
-    return render_to_string("widgets/widget_image.html", {"pk": getattr(obj, 'id', None), "image": getattr(obj, attr, "")})
+def container_image(obj, attr="image", callback=None):
+    return render_to_string("widgets/widget_image.html", {"pk": getattr(obj, 'id', None), "image": getattr(obj, attr, ""), "callback": callback or ''})
 
 
 @register.simple_tag
@@ -83,8 +83,8 @@ def container_resources(container = None):
 
 
 @register.simple_tag
-def container_mounts(container = None):
-    return render_to_string("widgets/widget_mount.html", {"container": container })
+def container_mounts(container = None, callback=None):
+    return render_to_string("widgets/widget_mount.html", {"container": container, "callback": callback or ''})
 
 
 @register.simple_tag

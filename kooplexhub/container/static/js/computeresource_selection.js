@@ -1,170 +1,248 @@
 // static/js/computeresource_selection.js
 
 // Compute Resource Selection Modal Logic
-(function() {
-    var selectedContainerId = null
-    var selectedNode = ""
-    var currentNode = null
-    var containerrunning = null
+class ComputeResourceHandler {
+  /**
+   * @param {Object} opts
+   * @param {string} [opts.modalSelector='.computeresource-modal']
+   * @param {string} [opts.triggerSelector='[id^="container-resources-"]'] // clickables per container
+   * @param {string} [opts.confirmSelector='#confirm-compute-selection']
+   * @param {string} [opts.nodeInputSelector='#id_node'] // select input in modal
+   * @param {string} [opts.progressSelector='.progress']
+   * @param {string} [opts.wsEndpoint=null] // e.g., wsURLs.monitor_node
+   * @param {function} [opts.wsFactory] // optional custom WS factory; defaults to new ManagedWebSocket(endpoint,{onMessage})
+   */
+  constructor(opts = {}) {
+    this.modalSelector = opts.modalSelector || '.computeresource-modal';
+    this.triggerSelector = opts.triggerSelector || '[data-action="ComputeResourceSelection.openModal"][data-id]';
+    this.confirmSelector = opts.confirmSelector || '#confirm-compute-selection';
+    this.nodeInputSelector = opts.nodeInputSelector || '#id_node';
+    this.progressSelector = opts.progressSelector || '.progress';
 
-    // Handle web socket callbacks
-    function nodeinfo_callback(message) {
-	node = message['node']
-        if (node != selectedNode) {
-            console.error("out of sync? >>" + node + ">>"+selectedNode+">>")
-	    return
-	}
-        if (node === currentNode && node != "" && containerrunning) {
-		// FIXME these are not updated when modal is open!
-            cpu = parseFloat($("#id_cpurequest_old").val()) + parseFloat(data["avail_cpu"]);
-            gpu = parseInt($("#id_gpurequest_old").val()) + parseInt(data["avail_gpu"]);
-            memory = parseFloat($("#id_memoryrequest_old").val()) + parseFloat(data["avail_memory"]);
-        } else {
-            cpu = message["avail_cpu"];
-            gpu = message["avail_gpu"];
-            memory = message["avail_memory"];
-        }
-        $(".progress").addClass("d-none")
-        $("input[name='cpurequest']").attr("max", cpu)
-        $("input[name='memoryrequest']").attr("max", memory)
-        $("input[name='gpurequest']").attr("max", gpu)
-        $("#thresholdhigh-cpurequest").text(cpu)
-        $("#thresholdhigh-memoryrequest").text(memory)
-        $("#thresholdhigh-gpurequest").text(gpu)
-        $("input[name$='request'").each(function() { 
-          if ($(this).attr("max") > 0) {
-            $(this).attr('disabled', false ) 
-          }
-        })
+    this.wsEndpoint = opts.wsEndpoint || null;
+    this.wsFactory = typeof opts.wsFactory === 'function'
+      ? opts.wsFactory
+      : (endpoint, handlers) => new ManagedWebSocket(endpoint, handlers);
+
+    // state
+    this.selectedContainerId = null; // number | 'None'
+    this.selectedNode = '';          // current selected node in UI
+    this.currentNode = null;         // node that container currently uses
+    this.containerRunning = null;    // TODO: set if you have this info
+
+    // cache
+    this.$modal = $(this.modalSelector);
+    this.$nodeInput = $(this.nodeInputSelector);
+
+    // bind handlers
+    this._onWSMessage = this._onWSMessage.bind(this);
+    this._onTriggerClick = this._onTriggerClick.bind(this);
+    this._onConfirmClick = this._onConfirmClick.bind(this);
+    this._onNodeChange = this._onNodeChange.bind(this);
+
+    // ws instance
+    this.wssMonitor = null;
+  }
+
+  init() {
+    // wire UI
+    $(document).on('click', this.triggerSelector, this._onTriggerClick);
+
+    $(document).on('click', this.confirmSelector, this._onConfirmClick);
+    this.$nodeInput.on('change', this._onNodeChange);
+
+    // create WS if endpoint provided
+    if (this.wsEndpoint) {
+      this.wssMonitor = this.wsFactory(this.wsEndpoint, { onMessage: this._onWSMessage });
+    }
+  }
+
+  destroy() {
+    $(document).off('click', this.triggerSelector, this._onTriggerClick);
+    $(document).off('click', this.confirmSelector, this._onConfirmClick);
+    this.$nodeInput.off('change', this._onNodeChange);
+    // optionally close WS
+    if (this.wssMonitor && typeof this.wssMonitor.close === 'function') {
+      this.wssMonitor.close();
+    }
+  }
+
+  // Public API (match your previous global)
+  openModal(containerId, node) {
+    this._open(containerId, node);
+  }
+
+  update(pk, node, cpurequest, gpurequest, memoryrequest, idletime) {
+    // FIXME SAVE originals (as you noted)
+    this._updateButtonFace(pk, node, cpurequest, gpurequest, memoryrequest, idletime);
+  }
+
+  // ========== Internals ==========
+
+  _onTriggerClick(e) {
+    e.preventDefault();
+    const $root = $(e.currentTarget).closest('[data-id]');
+    const containerId = $root.data('id');
+    const node = String($root.data('node') || '');
+    this._open(containerId, node);
+  }
+
+  _open(containerId, node) {
+    this.selectedContainerId = (containerId === 'None') ? 'None' : parseInt(containerId, 10);
+    const $button = $(`#container-resources-${containerId}`);
+
+    const currentNode = String($button.data('node') || '');
+    this.currentNode = currentNode;
+
+    const normalized = this._mynone(node);
+    this.selectedNode = normalized;
+
+    // preload values
+    $("input[name='cpurequest']").val(parseFloat($button.data('cpurequest') || 0));
+    $("input[name='gpurequest']").val(parseInt($button.data('gpurequest') || 0, 10));
+    $("input[name='memoryrequest']").val(parseFloat($button.data('memoryrequest') || 0));
+    $("input[name='idletime']").val(parseInt($button.data('idletime') || 0, 10));
+    $("select[name='node']").val(currentNode).change();
+
+    // show modal
+    this.$modal.modal('show');
+
+    setTimeout(() => {
+      $(this.nodeInputSelector).val(normalized);
+      this._retrieveResources(normalized);
+    }, 200);
+  }
+
+  _onNodeChange() {
+    const node = $(this.nodeInputSelector).val() || '';
+    this.selectedNode = node;
+    this._retrieveResources(node);
+  }
+
+  _retrieveResources(node) {
+    if (this.wssMonitor && typeof this.wssMonitor.send === 'function') {
+      this.wssMonitor.send(JSON.stringify({
+        request: 'monitor-node',
+        node: node,
+      }));
+    }
+    $(this.progressSelector).removeClass('d-none');
+    $("input[name$='request']").each(function() { $(this).attr('disabled', true); });
+  }
+
+  _onWSMessage(message) {
+    // normalize to JS object if MessageEvent or JSON string
+    let data = message;
+    if (data && data.data !== undefined) {
+      try { data = JSON.parse(data.data); } catch {}
+    } else if (typeof data === 'string') {
+      try { data = JSON.parse(data); } catch {}
     }
 
-    // Handle click to show modal
-    function handleClick(containerId, node) {
-        selectedContainerId = containerId === "None" ? "None" : parseInt(containerId)
-	const thebutton = $(`#container-resources-${containerId}`)
-        if (node === "None") { node = "" }
-	selectedNode = node
-	currentNode = node
-        $("input[name='cpurequest']").val(parseFloat(thebutton.data('cpurequest')))
-        $("input[name='gpurequest']").val(parseInt(thebutton.data('gpurequest')))
-        $("input[name='memoryrequest']").val(parseFloat(thebutton.data('memoryrequest')))
-        $("input[name='idletime']").val(parseInt(thebutton.data('idletime')))
-        $("select[name='node']").val(thebutton.data('node')).change()
-
-	///FIXME: retrieve info if container is running
-        $('.computeresource-modal').modal('show')
-
-    
-        setTimeout(function() {
-	    $("#id_node").val(node)
-	    retrieveResources(node)
-        }, 200);  // Timeout ensures the modal is fully visible before focusing
+    const node = data?.node || '';
+    if (node !== this.selectedNode) {
+      console.error(`out of sync? >>${node}>>${this.selectedNode}>>`);
+      return;
     }
 
-    // Call server via websocket to fetch up to date resource information
-    function retrieveResources(node) {
-        wss_monitor.send(JSON.stringify({
-          'request': 'monitor-node',
-          'node': node,
-        }))
-        $(".progress").removeClass("d-none")
-        $("input[name$='request'").each(function() { $(this).attr('disabled', true ) })
+    let cpu, gpu, memory;
+    if (node === this.currentNode && node !== '' && this.containerRunning) {
+      // If container running, add back old allocated amounts
+      const cpuOld = parseFloat($("#id_cpurequest_old").val() || 0);
+      const gpuOld = parseInt($("#id_gpurequest_old").val() || 0, 10);
+      const memOld = parseFloat($("#id_memoryrequest_old").val() || 0);
+      cpu = cpuOld + parseFloat(data.avail_cpu || 0);
+      gpu = gpuOld + parseInt(data.avail_gpu || 0, 10);
+      memory = memOld + parseFloat(data.avail_memory || 0);
+    } else {
+      cpu = parseFloat(data.avail_cpu || 0);
+      gpu = parseInt(data.avail_gpu || 0, 10);
+      memory = parseFloat(data.avail_memory || 0);
     }
 
-    // translate None as ''
-    function mynone(x) {
-        return x==='None'?'':x
+    $(this.progressSelector).addClass('d-none');
+
+    $("input[name='cpurequest']").attr('max', cpu);
+    $("input[name='memoryrequest']").attr('max', memory);
+    $("input[name='gpurequest']").attr('max', gpu);
+    $("#thresholdhigh-cpurequest").text(cpu);
+    $("#thresholdhigh-memoryrequest").text(memory);
+    $("#thresholdhigh-gpurequest").text(gpu);
+
+    $("input[name$='request']").each(function() {
+      const mx = parseFloat($(this).attr('max') || 0);
+      if (mx > 0) $(this).attr('disabled', false);
+    });
+  }
+
+  _onConfirmClick() {
+    const pk = this.selectedContainerId;
+    if (!pk) return;
+
+    const n = $('#id_node').val() || '';
+    const c = $('#id_cpurequest').val();
+    const g = $('#id_gpurequest').val();
+    const m = $('#id_memoryrequest').val();
+    const i = $('#id_idletime').val();
+
+    const $btn = $(`#container-resources-${pk}`);
+
+    this._reg(pk, 'node',         n, this._mynone(String($btn.data('node') || ''))),
+    this._reg(pk, 'cpurequest',   c, this._mynone(String($btn.data('cpurequest') || ''))),
+    this._reg(pk, 'gpurequest',   g, this._mynone(String($btn.data('gpurequest') || ''))),
+    this._reg(pk, 'memoryrequest',m, this._mynone(String($btn.data('memoryrequest') || ''))),
+    this._reg(pk, 'idletime',     i, this._mynone(String($btn.data('idletime') || ''))),
+
+    this._updateButtonFace(pk, n, c, g, m, i);
+
+    this.$modal.modal('hide');
+    this.selectedContainerId = null;
+  }
+
+  _updateButtonFace(pk, n, c, g, m, i) {
+    $(`#container-resources-${pk} [name=node] [name=node_name]`).text(n);
+    $(`#container-resources-${pk} [name=cpu] [name=node_cpu_request]`).text(c);
+    $(`#container-resources-${pk} [name=gpu] [name=node_gpu_request]`).text(g);
+    $(`#container-resources-${pk} [name=mem] [name=node_memory_request]`).text(`${m}GB`);
+    $(`#container-resources-${pk} [name=up] [name=node_idle]`).text(`${i} h`);
+
+    const $wid_node  = $(`#container-resources-${pk} [name=node]`);
+    const $wid_cpu   = $(`#container-resources-${pk} [name=cpu]`);
+    const $wid_gpu   = $(`#container-resources-${pk} [name=gpu]`);
+    const $wid_mem   = $(`#container-resources-${pk} [name=mem]`);
+    const $wid_up    = $(`#container-resources-${pk} [name=up]`);
+    const $wid_empty = $(`#container-resources-${pk} [name=empty]`);
+
+    n && n.length ? $wid_node.removeClass('d-none') : $wid_node.addClass('d-none');
+    c ? $wid_cpu.removeClass('d-none') : $wid_cpu.addClass('d-none');
+    g ? $wid_gpu.removeClass('d-none') : $wid_gpu.addClass('d-none');
+    m ? $wid_mem.removeClass('d-none') : $wid_mem.addClass('d-none');
+    i ? $wid_up.removeClass('d-none') : $wid_up.addClass('d-none');
+
+    const sum = (n && n.length ? 1 : 0) + (c?1:0) + (g?1:0) + (m?1:0) + (i?1:0);
+    sum === 0 ? $wid_empty.removeClass('d-none') : $wid_empty.addClass('d-none');
+  }
+
+  _mynone(x) {
+    return x === 'None' ? '' : x;
+  }
+
+  _reg(pk, field, newVal, oldVal) {
+    if (typeof wss_containerconfig.register_changes === 'function') {
+      return !!wss_containerconfig.register_changes(pk, field, newVal, oldVal);
     }
+    console.warn('ComputeResourceHandler: wss_containerconfig.register_changes not found');
+    return false;
+  }
+}
 
-    // Confirm compute resource selection
-    function confirmSelection() {
-        $('#confirm-compute-selection').on('click', function() {
-            if (selectedContainerId) {
-		const n = $('#id_node').val()
-		const c = $('#id_cpurequest').val()
-		const g = $('#id_gpurequest').val()
-		const m = $('#id_memoryrequest').val()
-		const i = $('#id_idletime').val()
-		var changed = [ 
-		    register_changes(selectedContainerId, 'node', n, mynone($(`[id=container-resources-${selectedContainerId}]`).data('node'))),
-		    register_changes(selectedContainerId, 'cpurequest', c, mynone($(`[id=container-resources-${selectedContainerId}]`).data('cpurequest'))),
-		    register_changes(selectedContainerId, 'gpurequest', g, mynone($(`[id=container-resources-${selectedContainerId}]`).data('gpurequest'))),
-		    register_changes(selectedContainerId, 'memoryrequest', m, mynone($(`[id=container-resources-${selectedContainerId}]`).data('memoryrequest'))),
-		    register_changes(selectedContainerId, 'idletime', i, mynone($(`[id=container-resources-${selectedContainerId}]`).data('idletime')))
-		]
-		if (changed.includes(true)) {
-		    updateButtonFace(selectedContainerId, n, c, g, m, i)
-		    showSaveChanges(selectedContainerId, 'container')
-		}
-
-                // Close the modal
-                $('.computeresource-modal').modal('hide');
-		selectedContainerId = null
-            }
-        });
-    }
-
-    // trigger node info retrieval in case selection changes
-    function handleNodeselectChange() {
-        $("#id_node").change(function() {
-            $("#id_node option:selected").each(function() {
-                node = $(this).attr("value")
-		selectedNode = node
-		retrieveResources(node)
-	    })
-	})
-    }
-
-    // Update button captions
-    function updateButtonFace(pk, n, c, g, m, i) {
-	$(`#container-resources-${pk} [name=node] [name=node_name]`).text(n) 
-	$(`#container-resources-${pk} [name=cpu] [name=node_cpu_request]`).text(c)
-	$(`#container-resources-${pk} [name=gpu] [name=node_gpu_request]`).text(g)
-	$(`#container-resources-${pk} [name=mem] [name=node_memory_request]`).text(m + "GB")
-	$(`#container-resources-${pk} [name=up] [name=node_idle]`).text(i + " h")
-	$wid_node = $(`#container-resources-${pk} [name=node]`)
-	$wid_cpu = $(`#container-resources-${pk} [name=cpu]`)
-	$wid_gpu = $(`#container-resources-${pk} [name=gpu]`)
-	$wid_mem = $(`#container-resources-${pk} [name=mem]`)
-	$wid_up = $(`#container-resources-${pk} [name=up]`)
-	$wid_empty = $(`#container-resources-${pk} [name=empty]`)
-	if (n.length) { $wid_node.removeClass('d-none') } else { $wid_node.addClass('d-none') }
-	if (c) { $wid_cpu.removeClass('d-none') } else { $wid_cpu.addClass('d-none') }
-	if (g) { $wid_gpu.removeClass('d-none') } else { $wid_gpu.addClass('d-none') }
-	if (m) { $wid_mem.removeClass('d-none') } else { $wid_mem.addClass('d-none') }
-	if (i) { $wid_up.removeClass('d-none') } else { $wid_up.addClass('d-none') }
-	if (n.length+c+g+m+i==0) { $wid_empty.removeClass('d-none') } else { $wid_empty.addClass('d-none') }
-    }
-
-    // update to be called, after server kooplex accepted new values
-    function updateWidget(pk, node, cpurequest, gpurequest, memoryrequest, idletime) {
-	// FIXME SAVE originals
-	updateButtonFace(pk, node, cpurequest, gpurequest, memoryrequest, idletime)
-    }
-
-    // Initialize the modal logic
-    function initializeComputeResourceSelection() {
-        handleNodeselectChange()
-        confirmSelection()
-        if (wsURLs.monitor_node) {
-          wss_monitor = new ManagedWebSocket(wsURLs.monitor_node, {
-            onMessage: nodeinfo_callback,
-          })
-        } 
-    }
-
-    // Expose the functionality globally so it can be reused
-    window.ComputeResourceSelection = {
-        init: initializeComputeResourceSelection,
-        openModal: handleClick,
-	update: updateWidget
-    }
-
-})()
 
 // Run when document is ready
 $(document).ready(function() {
-    ComputeResourceSelection.init()
+  const ComputeResourceSelection = new ComputeResourceHandler({
+    wsEndpoint: wsURLs?.monitor_node || null,
+  });
+  ComputeResourceSelection.init();
 });
 
 

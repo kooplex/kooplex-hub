@@ -18,17 +18,22 @@ $('.editable').each(function(){
   }).on('save', function(e, params) {
     const $element = $(this)
     const pk = $element.data('id')
-    const changed = register_changes(pk, $element.data('field'), $.trim(params.newValue), $element.data('orig'))
-    if (changed) {
-      showSaveChanges(pk, $element.data('instance'))
+    const path = $element.data('callback');
+    const { fn, ctx } = getMethodAndContext(path);
+
+    if (typeof fn === 'function') {
+      fn.call(ctx, pk, $element.data('field'), $.trim(params.newValue), $element.data('orig'));
+    } else {
+      console.error('Callback not found:', path, { fn, ctx });
     }
+
   })
 
   // After showing the editable mode, replace the default icons with FontAwesome
   $(this).on('shown', function() {
-    // Replace default OK button icon with FontAwesome check
+    // Replace default OK button icon with FontAwesome
     $('.editable-submit i').removeClass('icon-ok').addClass('fas fa-thumbs-up')
-    // Replace default Cancel button icon with FontAwesome times
+    // Replace default Cancel button icon with FontAwesome
     $('.editable-cancel i').removeClass('icon-remove').addClass('fas fa-thumbs-down')
   })
 })

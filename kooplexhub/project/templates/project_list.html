@@ -1,42 +1,38 @@
-{% extends "project_layout.html" %}
+{% extends "layout.html" %}
 
 {% load static %}
 {% load project_buttons %}
+
+{% comment %}
+{% block infoline %}
+Projects are a good way to collaborate with each other without much restriction. Permissions on files and folders are set in a restrictive way protecting user's own work.
+<a href="https://xwiki.vo.elte.hu/en/kooplex-manual/projects"><span class="ms-2 bi bi-book"></span></a>
+{% endblock %)
+{% endcomment %}
 
 {% block head_content %}
 <link href="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/css/bootstrap5-toggle.min.css" rel="stylesheet">
 <link href="{% static 'css/multitabs.css' %}" rel="stylesheet">
 <link href="{% static 'css/xeditable.css' %}" rel="stylesheet">
+<link href="{% static 'css/dropdown.css' %}" rel="stylesheet">
+<link href="{% static 'css/cardlist.css' %}" rel="stylesheet">
 {% endblock %}
 
-{% comment %}
-{% block pagedescription %}
-Projects are a good way to collaborate with each other without much restriction. Permissions on files and folders are set in a restrictive way protecting user's own work. <a href="https://xwiki.vo.elte.hu/en/kooplex-manual/projects"><span class="ms-2 bi bi-book"></span></a>
-{% endblock %)
-{% endcomment %}
 
-{% block bodycontent %}
-<div class="container-fluid">
-    <div class="d-flex flex-wrap gap-3">
-        <div class="card rounded rounded-3 mb-3 border border-2 border-warning shadow bg-light">
-            <div class="card-body">
-                <div class="d-flex flex-column">
-                    {% button_fetch_joinable_projects user %}
-                    {% button_new_project user %}
-                </div>
-            </div>
-        </div>
+{% block content %}
+<div id="listPane" class="d-flex flex-wrap justify-content-center gap-3">
+    {# new project create card #}
+    <div class="card-container" id="card-container-new">
+      {% include 'project.html' with is_admin=True project=empty_project %}
     </div>
+    {% for upb in userprojectbindinglist %}
+      <div class="card-container" id="card-container-{{ project.id }}">
+        {% include 'project.html' with project=upb.project projectcontainerbindings=upb.projectcontainerbindings is_admin=upb.is_admin %}
+      </div>
+    {% endfor %}
 </div>
-
-{% include 'new_project.html' %}
 
 {# render the project cards #}
-<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 w-100 mx-auto justify-content-center gap-3">
-  {% for upb in userprojectbindinglist %}
-      {% include 'project.html' with project=upb.project projectcontainerbindings=upb.projectcontainerbindings is_admin=upb.is_admin %}
-  {% endfor %}
-</div>
 <script src="{% static 'js/config_register.js' %}"></script>
 <script src="{% static 'js/project_buttons.js' %}"></script>
 <script src="{% static 'js/project_changes.js' %}"></script>
@@ -57,12 +53,12 @@ Projects are a good way to collaborate with each other without much restriction.
 {# a modal to configure a project volumes #}
 {% include 'widgets/volumes.html' with instance="project" %}
 <script src="{% static 'js/volume_selection.js' %}"></script>
-<script src="{% static 'js/widget_volumes.js' %}"></script>
 
 {# a modal to start/stop/jump to project environments #}
 {% include 'widgets/environments.html' %}
 <script src="{% static 'js/environments.js' %}"></script>
 <script src="{% static 'js/container_buttons.js' %}"></script>
+<script src="{% static 'js/dropdown.js' %}"></script>
 
 {% endblock %}
 
@@ -72,17 +68,6 @@ Projects are a good way to collaborate with each other without much restriction.
 
 
 
-
-
-
-{# FIXME static/sj/ #}
-<script>
-$(document).on('click', '[name="users"]', function() {
-    const objectId = $(this).data('id')  // Get the id from the button's data-id attribute
-    const kind = $(this).data('kind')  // Get the id from the button's data-id attribute
-    UserSelection.openModal(objectId, kind)
-})
-</script>
 
 
 
@@ -104,16 +89,16 @@ const wsURLs = {
 
 
 //FIXME should be placed somewhere else
-$(document).ready(function() {
-    // Example initialization, assuming `containers` is passed from Django context
-    {% for upb in userprojectbindinglist %}
-        updateProjectScope({{ upb.project.id }}, "{{ upb.project.scope }}")
-    {% endfor %}
-    updateProjectScope("new", "")
-    // remove control from those entries for which user is not a creator os admin
-    $("[data-editable=False] .editable").editable().off('click')
-    $("[data-editable=False] [onclick]").not("[onclick^=return]").prop("onclick", null).off("click")
-});   
+//$(document).ready(function() {
+//    // Example initialization, assuming `containers` is passed from Django context
+//    {% for upb in userprojectbindinglist %}
+//        updateProjectScope({{ upb.project.id }}, "{{ upb.project.scope }}")
+//    {% endfor %}
+//    updateProjectScope("new", "")
+//    // remove control from those entries for which user is not a creator os admin
+//    $("[data-editable=False] .editable").editable().off('click')
+//    $("[data-editable=False] [onclick]").not("[onclick^=return]").prop("onclick", null).off("click")
+//});   
 
 
 

@@ -1,173 +1,137 @@
 {% load static %}
-{% load extras %}
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block page_title %}K8plex Hub{% endblock %}</title>
-    <link rel="shortcut icon" type="image/png" href="/static/kooplexicon.png"> {# FIXME static #}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}Kooplex{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+    <style>
+    body {
+      overflow-x: hidden;
+      padding-top: 56px; /* height of the navbar */
+    }
+    #searchInput {
+      display: none;
+      width: 200px;
+             transition: width 0.3s;
+    }
+    .info-line {
+      color: #ccc;
+      margin-left: 1rem;
+      white-space: nowrap;
+    }
+    @media (max-width: 576px) {
+      #infoLine {
+        display: none;
+      }
+    }
+    .sidebar {
+      width: 90px;
+      background-color: #212529;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      padding-top: 56px; /* to match navbar height */
+      z-index: 1020; /* lower than navbar */
+    }
 
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    .sidebar .nav-link {
+      color: #aaa;
+      font-size: 0.75rem;
+      text-align: center;
+      padding: 10px 5px;
+    }
+
+    .sidebar .nav-link.active {
+      background-color: #343a40;
+      color: #fff;
+    }
+
+    .navbar {
+      z-index: 1030; /* higher than sidebar */
+    }
+    .main-content {
+      margin-left: 90px;
+    }
+
+    .offcanvas-body {
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <!-- X-Editable CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/x-editable/1.5.1/bootstrap-editable/css/bootstrap-editable.css" rel="stylesheet">
-    <!-- FontAwesome for icons -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-
-    {% comment %}
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
-    {% endcomment %}
-
     {# most used icons #}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css">
     <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
     <link rel="stylesheet" type="text/css" href="{% static 'fonts/open-iconic-master/font/css/open-iconic-bootstrap.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'fonts/remix-icon/remixicon.css' %}">
-    <link rel="stylesheet" type="text/css" href="{% static 'common.css' %}">
-
-
-    {% block head_content %}{% endblock %}
     <!-- JQuery motor -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
-    {% comment %}
-    {% endcomment %}
-    <style>
-        /* Initially hide input field */
-        .search-input {
-            width: 0;
-            opacity: 0;
-            transition: width 0.3s ease, opacity 0.3s ease;
-        }
+    {% block head_content %}{% endblock %}
+</head>
+<body class="bg-dark text-light">
+<nav class="navbar navbar-dark bg-dark px-3 py-2 d-flex align-items-center fixed-top">
+  <!-- Left: Logo -->
+  <a class="navbar-brand d-flex align-items-center me-2" href="#">
+    <img src="/static/t_logo-halfcolored.png" alt="Logo" class="d-none d-sm-block" style="height: 30px;">
+    <img src="/static/t_logo-onlycogwheels.png" alt="Small Logo" class="d-block d-sm-none" style="height: 30px;">
+  </a>
 
-        /* Expand input field when active */
-        .search-container.active .search-input {
-            width: 200px;  /* Adjust width as needed */
-            opacity: 1;
-            padding: 5px 10px;
-        }
+  <!-- Info Line: justify-left after logo -->
+  <div class="flex-grow-1 d-flex align-items-center">
+    <span id="infoLine" class="info-line">{% block infoline %}{% endblock %}</span>
+  </div>
 
-        /* Style search button */
-        .search-btn {
-            cursor: pointer;
-        }
-    </style>
-  </head>
-
-
-  <body {#class="bg-dark bg-gradient"#}>
-    <noscript>You need to enable JavaScript to browse kooplex.</noscript>
-    <div id="oopses"></div>
-    {% block menu_and_content %}
-    <div class="container-fluid d-flex flex-row flex-md-row">
-      {% block menu %}
-        {% if user.is_authenticated %}
-          {% include 'mainmenu.html' %}
-        {% endif %}
-      {% endblock %}
-      <main class="w-100">
-      {% block content %}
-        {% block header %}
-        <div class="container-fluid bg-dark" style="max-height: 105px;" id="topbar">
-          <nav class="navbar navbar-expand-lg navbar-dark bg-dark d-flex">
-            <div class="container-fluid d-flex flex-column flex-md-row flex-column-reverse">
-              {% if user.is_authenticated %}
-	        {% block submenu %}
-	          <p class="ms-4 mt-3 d-none d-md-block navbar-brand d-flex justify-content-start fs-6">
-		    Hi,&nbsp;<span style="font-weight: bold;"> {{ user.first_name }} {{ user.last_name }}</span>. Welcome to Kooplex!
-		  </p>
-	        {% endblock %}
-              {% else %}
-	          <p class="ms-4 mt-3 d-none d-md-block navbar-brand d-flex justify-content-start fs-6">
-		    Welcome to Kooplex!
-		  </p>
-                {% endif %}
-    <!-- Search Bar -->
-    <div class="search-container d-flex align-items-center">
-        <span class="search-btn text-white">
-            <i class="bi bi-search"></i>  <!-- Bootstrap Magnifying Glass Icon -->
-        </span>
-	<input type="text" class="form-control search-input ms-2" placeholder="{{search_placeholder|default:'Search...'}}" data-search="{{search_what}}">
+  <!-- Right: Search and Login -->
+  <div class="d-flex align-items-center gap-2">
+    <!-- Search -->
+    <div class="position-relative d-flex align-items-center">
+      <button id="searchToggle" class="btn btn-sm btn-outline-light me-1" aria-label="Search">
+        <i class="bi bi-search"></i>
+      </button>
+      <input type="text" id="searchInput" class="form-control form-control-sm bg-dark text-light" placeholder="{{search_placeholder|default:'Search...'}}" data-search="{{search_what}}"
     </div>
-	      {% block toprightmenu %}
-	        {% if user.is_authenticated %}
-              <ul class="navbar-nav d-flex flex-row ms-2">
-                <li class="nav-item">{% block help %}{% endblock %}</li>
-		<li class="nav-item ms-3 ms-md-1">
-		  <a href="#" class="nav-link" 
-                    data-bs-toggle="offcanvas" data-bs-target="#offcanvasMessages" aria-controls="offcanvasMessages"
-		    ><span class="bi bi-chat-left-dots" data-toggle="tooltip" title="Messages" data-placement="bottom"></span>
-		  </a>
-		</li>
-                <li class="nav-item ms-3 ms-md-1">
-                  <a href="#" class="nav-link"
-                     data-bs-toggle="offcanvas" data-bs-target="#offcanvasProfile" role="button" aria-expanded="false"
-		     ><span class="bi bi-person-fill" data-toggle="tooltip" title="Profile" data-placement="bottom"></span>
-                  </a>
-                </li>
-              </ul>
-	        {% endif %}
-	      {% endblock %}
-            </div>
-          </nav>
-        </div>
 
-	{# messages #}
-        <div class="offcanvas offcanvas-end bg-dark mt-5" data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1" id="offcanvasMessages" aria-labelledby="offcanvasMessagesLabel">
-          <div class="offcanvas-header">
-            <h5 class="offcanvas-title text-white" id="offcanvasMessagesLabel">Messages</h5>
-            <button type="button" class="btn-close btn-close-white"  data-bs-dismiss="offcanvas" aria-label="Close"></button>
-          </div>
-          <div class="offcanvas-body">
-	    {% block messages %}
-              {% include "alert.html" %}
-	    {% endblock %}
-	    {# TODO: save popup messages here for some time #}
-          </div>
-        </div>
+    <!-- Messages -->
+    {% if user.is_authenticated %}
+    <button class="btn btn-sm btn-outline-light" data-bs-toggle="offcanvas" data-bs-target="#messagesPanel" aria-controls="messagesPanel">
+      <i class="bi bi-chat-dots"></i>
+    </button>
+    {% endif %}
+    <!-- Login -->
+    <a href="{{ url_login }}" class="btn btn-sm btn-outline-light">Login</a>
+  </div>
+</nav>
 
 
-	{# user profile button #}
-        <div class="offcanvas offcanvas-end bg-dark mt-5 round" style="width: 270px" 
-             data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1" id="offcanvasProfile" aria-labelledby="offcanvasMessagesLabel2">
-          <div class="offcanvas-header">
-            <h5 class="offcanvas-title text-white" id="offcanvasMessagesLabel2">Main menu</h5>
-            <button type="button" class="btn-close btn-close-white"  data-bs-dismiss="offcanvas" aria-label="Close"></button>
-          </div>
-          <div class="offcanvas-body">
-            <ul>
-              <li><a class="text-white text-decoration-none" href="{{ url_profile }}">{{ user.first_name }} {{ user.last_name }}</a></li>
-	      <li class="divider">&nbsp;</li>
-              <li><a class="text-white text-decoration-none" href="{# FIXME % url 'usertokens' %#}">Tokens</a></li>
-	      <li class="divider">&nbsp;</li>
-              <li><a class="text-white text-decoration-none" href="{% url 'logout' %}">Logout&nbsp;<span class="oi oi-account-logout"></span></a></li>
-	      <li class="divider">&nbsp;</li>
-              <!--li><a class="dropdown-item" href="#" data-toggle="modal" data-target="#reset-token">Reset token</a></li-->
-              <li><a class="text-white text-decoration-none" href="https://xwiki.vo.elte.hu/en/kooplex-manual/overview" target="_blank">Documentation</a></li>
-	      <li class="divider">&nbsp;</li>
-              <li><a class="text-white text-decoration-none" target="_blank" href="https://kooplex.github.io/#portfolioModal3" data-toggle="modal" data-target="#about-contacts">About/Contact us</a></li>
-            </ul>
-          </div>
-        </div>
+<!-- Sidebar Menu -->
+{% if user.is_authenticated %}
+{% include 'mainmenu.html' %}
+{% endif %}
 
-        {% endblock %}
 
-	{# a place for an optional page description area #}
-        <div class="m-2 d-none d-xl-block" id="descriptionblock" style="color: #5c4646; text-align: center;">
-	{% block pagedescription %}{% endblock %}
-        </div>
-	{# a place for an optional search bar #}
-        <div class="m-2" id="searchblock">
-	{% block search %}{% endblock %}
-        </div>
-	{# the main content is rendered here #}
-        <div class="m-2" style="overflow-y: scroll;" id="bodyblock">
-	{% block bodycontent %}{% endblock %}
-        </div>
 
-	{# dynamic popup window for messages #}
+<!-- Offcanvas Messages Panel -->
+<div class="offcanvas offcanvas-end text-bg-dark" tabindex="-1" id="messagesPanel" aria-labelledby="messagesLabel">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title" id="messagesLabel">Messages</h5>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body">
+    {% block messages %}
+      {% include "alert.html" %}
+    {% endblock %}
+  </div>
+</div>
+
+        {# dynamic popup window for messages #}
         <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
           <div id="feedbackMessages" class="toast fade show" role="alert" aria-live="assertive" aria-atomic="true">
             <div class="toast-header">
@@ -179,12 +143,13 @@
           </div>
         </div>
 
-      {% endblock %}
-      </main>
-    </div>
+
+<!-- Optional Main Content Area -->
+<main class="main-content p-3 mt-3">
+    {% block content %}
     {% endblock %}
-  
-    {% block footer %}{% endblock %}
+</main>
+
     <!-- jQuery (must come first) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
@@ -196,58 +161,70 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/x-editable/1.5.1/bootstrap-editable/js/bootstrap-editable.min.js"></script>
 
     <script src="{% static 'common.js' %}"></script>
-    {% comment %}
-    <!-- JavaScript Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js" 
-	    integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2" crossorigin="anonymous"></script>
-    {% endcomment %}
 
-    <!-- Bootstrap JS and Popper -->
-    {% comment %}
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    {% endcomment %}
+    <script>
+  const searchInput = document.getElementById("searchInput");
+  const searchToggle = document.getElementById("searchToggle");
 
-<script>
-    $(document).ready(function () {
-        const searchInput = $(".search-input");
-        const searchContainer = $(".search-container");
-	const searchWhat = searchInput.data('search')
+  function showSearch() {
+    searchInput.style.display = "block";
+    searchInput.focus();
+  }
 
-        $(".search-btn").click(function () {
-            searchContainer.addClass("active");
-            searchContainer.find(".search-input").focus();
-        });
+  function hideSearch() {
+    searchInput.style.display = "none";
+    searchInput.value = "";
+  }
 
-        // Hide search input when clicked outside
-        $(document).click(function (event) {
-            if (!$(event.target).closest(".search-container").length) {
-                searchContainer.removeClass("active");
-                searchInput.val("");  // Clear input
-            }
-        });
+  // Toggle on icon click
+  searchToggle.addEventListener("click", (e) => {
+    e.preventDefault();
+    showSearch();
+  });
 
-        // Handle keypress events inside the search field
-        searchInput.on("keyup", function (event) {
-	    var search=$(this).val().toUpperCase()
-            $(`[data-search_what='${searchWhat}'][data-search]`).each(function() {
-		 let pattern=$(this).data('search')
-                 if (search==='' || pattern.includes(search)) {
-		     $(this).show()
-		 } else {
-		     $(this).hide()
-		 }
-            })
-            if (event.key === "Enter") {
-                event.preventDefault(); // Prevent form submission
-            }
-            else if (event.key === "Escape") {
-                console.log("Search canceled");
-                searchContainer.removeClass("active");
-                searchInput.val("");  // Clear input
-            }
-        });
+  // Trigger on `/` or Ctrl+F
+  document.addEventListener("keydown", (e) => {
+    if ((e.ctrlKey && e.key === "f") || e.key === "/") {
+      e.preventDefault();
+      showSearch();
+    }
+
+    // Hide input on ESC when focused
+    if (e.key === "Escape" && document.activeElement === searchInput) {
+      hideSearch();
+    }
+  });
+
+  // Handle keypress events inside the search field
+  document.addEventListener('DOMContentLoaded', function () {
+    const searchBox = document.getElementById('searchInput');
+    const listPane = document.getElementById('listPane');
+  
+    // Keep original cards in memory (except the "new" one)
+    const allCards = Array.from(listPane.querySelectorAll('.card-container'))
+      .filter(el => el.id !== 'card-container-new')
+      .map(el => el.cloneNode(true));
+  
+    searchBox.addEventListener('input', () => {
+      const query = searchBox.value.trim().toLowerCase();
+  
+      // Remove all cards (except the "new" one)
+      listPane.querySelectorAll('.card-container').forEach(el => {
+        if (el.id !== 'card-container-new') el.remove();
+      });
+  
+      // Filter matching cards
+      const matchingCards = allCards.filter(card => {
+        const text = card.textContent.toLowerCase();
+        return text.includes(query);
+      });
+  
+      // Append matches
+      matchingCards.forEach(card => listPane.appendChild(card));
     });
+  });
 </script>
     {% block scripts %}{% endblock %}
-  </body>
+</body>
 </html>
+

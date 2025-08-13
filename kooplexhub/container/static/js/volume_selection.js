@@ -1,99 +1,150 @@
 // static/js/volume_selection.js
 
 // Volume Selection Modal Logic
-(function() {
-    var selectedObjectId = null
-    var volumes_o = null
+class VolumeHandler {
+  /**
+   * @param {Object} opts
+   * @param {string} [opts.modalSelector='.volumes-modal']
+   * @param {string} [opts.confirmSelector='#confirm-file-selection']
+   * @param {string} [opts.toggleSelector='.configtoggle[name=attach-volume]']
+   * @param {string} [opts.triggerSelector] // optional: e.g. 'button[data-action="edit-volumes"][data-id]'
+   */
+  constructor(opts = {}) {
+    this.modalSelector   = opts.modalSelector   || '.volumes-modal';
+    this.confirmSelector = opts.confirmSelector || '#confirm-file-selection';
+    this.toggleSelector  = opts.toggleSelector  || '.configtoggle[name=attach-volume]';
+    this.triggerSelector = opts.triggerSelector || null;
 
-    // Parse the string as JSON to convert it to an array and set toggler to checked based on the values
-    function ary_set(a, toggler) {
-	if (typeof a === 'undefined') { return }
-        var arr = JSON.parse(a)
+    this.register = null;
+    this.selectedObjectId = null;
+    this.originalVolumes  = []; // array of ints
 
-        // Iterate over the array
-        $.each(arr, function(index, value) {
-            $(`#${toggler}-${value}`).bootstrapToggle("on")
-        })
+    // cache
+    this.$modal = $(this.modalSelector);
+
+    // bind
+    this._onConfirmClick = this._onConfirmClick.bind(this);
+    this._onTriggerClick = this._onTriggerClick.bind(this);
+  }
+
+  init() {
+    $(document).on('click', this.confirmSelector, this._onConfirmClick);
+    if (this.triggerSelector) {
+      $(document).on('click', this.triggerSelector, this._onTriggerClick);
+    }
+  }
+
+  destroy() {
+    $(document).off('click', this.confirmSelector, this._onConfirmClick);
+    if (this.triggerSelector) {
+      $(document).off('click', this.triggerSelector, this._onTriggerClick);
+    }
+  }
+
+  // Programmatic open
+  openModal(objectId) {
+    this._open(objectId);
+  }
+
+  // ---------------- internals ----------------
+
+  _onTriggerClick(e) {
+    e.preventDefault();
+    const $btn = $(e.currentTarget);
+    const id = $btn.data('id');
+    this.register = $btn.data('callback');
+    this._open(id);
+  }
+
+  _open(objectId) {
+    this.selectedObjectId = objectId === 'None' ? 'None' : parseInt(objectId, 10);
+
+    // Read current/original volumes from any element that carries both data-id and data-volumes
+    const $src = $(`[data-id="${this.selectedObjectId}"][data-volumes]`).first();
+    this.originalVolumes = this._ensureArrayOfInts($src.data('volumes'));
+
+    // Initialize all toggles OFF then set according to originals
+    const self = this;
+    $(this.toggleSelector).each(function () {
+      const $tog = $(this);
+      const pk = parseInt($tog.val(), 10);
+      try { $tog.bootstrapToggle(); } catch (_) {}
+      if (self.originalVolumes.includes(pk)) {
+        $tog.bootstrapToggle('on');
+      } else {
+        $tog.bootstrapToggle('off');
+      }
+    });
+
+    this.$modal.modal('show');
+  }
+
+  _onConfirmClick(e) {
+    if (!this.selectedObjectId) return;
+
+    const volumes = $('[name=attach-volume]:checked')
+      .map(function () { return parseInt(this.value, 10); })
+      .get();
+
+    let changed = false;
+    const saver = this._resolveSaveFn(this.register);
+    if (typeof saver === 'function') {
+      saver(this.selectedObjectId, 'volumes', volumes, this.originalVolumes);
+    } else {
+      console.warn('VolumeHandler: register_changes not found');
     }
 
-    // lookup original id list
-    function getOriginal(pk, binding) {
-        return pk === "new" ? "[]" : $(`#original_${binding}-${pk}`).val()
+    this.$modal.modal('hide');
+    this.selectedObjectId = null;
+    this.originalVolumes = [];
+  }
+
+  // -------- helpers --------
+
+  _resolveSaveFn(pathOrFn) {
+    if (!pathOrFn) return null;
+    if (typeof pathOrFn === 'function') return pathOrFn;
+    if (typeof pathOrFn === 'string') {
+      // Resolve "obj.method" safely
+      const parts = pathOrFn.split('.');
+      const method = parts.pop();
+      const ctx = parts.reduce((acc, key) => (acc ? acc[key] : undefined), window);
+      const fn = ctx?.[method];
+      if (typeof fn === 'function') {
+        // bind to ctx so `this` works for instance methods
+        return fn.bind(ctx);
+      }
     }
+    return null;
+  }
 
-    // Handle click to show modal
-    function handleClick(objectId) {
-        selectedObjectId = objectId === "None" ? "None" : parseInt(objectId)
-	volumes_o = $(`[data-id="${selectedObjectId}"][data-volumes]`).data('volumes')
-	if ($(".configtoggle[name=attach-volume]").length > 0) {
-            $(".configtoggle[name=attach-volume]").each(function() {
-	        pk = parseInt($(this).val())
-	        console.log(pk)
-	        console.log($(this))
-                $(this).bootstrapToggle();  // Initialize it
-	        if (volumes_o.includes(pk)) {
-                    $(this).bootstrapToggle("on")
-	        } else {
-                    $(this).bootstrapToggle("off")
-	        }
-            })
-	}
-        $('.volumes-modal').modal('show')
 
-	// preset togglers
-	//ary_set(getOriginal(objectId, 'volumelist'), "volumetoggler")
+
+  _ensureArrayOfInts(val) {
+    if (Array.isArray(val)) {
+      return val.map(x => parseInt(x, 10)).filter(n => !Number.isNaN(n));
     }
-
-
-    // Confirm file resource selection
-    function confirmSelection() {
-	let submitButton = $('#confirm-file-selection')
-        submitButton.on('click', function() {
-            if (selectedObjectId) {
-                var volumes = $('[name=attach-volume]:checked').map(function() { return parseInt(this.value) }).get()
-
-		var changed = register_changes(selectedObjectId, 'volumes', volumes, volumes_o)
-		if (changed) {
-		    //FIXME updateButtonFace(selectedContainerId, projects.length, courses.length, volumes.length)
-		    showSaveChanges(selectedObjectId, submitButton.data("instance"))
-		}
-                // Close the modal
-                $('.volumes-modal').modal('hide');
-		selectedObjectId = null
-            }
-        });
+    if (val == null || val === '') return [];
+    if (typeof val === 'string') {
+      try {
+        const parsed = JSON.parse(val);
+        if (Array.isArray(parsed)) {
+          return parsed.map(x => parseInt(x, 10)).filter(n => !Number.isNaN(n));
+        }
+      } catch (_) {}
     }
+    // jQuery may give a scalar for data-volumes="3" — normalize
+    const n = parseInt(val, 10);
+    return Number.isNaN(n) ? [] : [n];
+  }
+}
 
-    // Update button captions
-    //FIXME: function updateButtonFace(pk, p, c, v) {
-    //}
 
-    // update mount lists
-    function updateLists(pk, volumes) {
-	if ($.isArray(volumes)) {
-	    vrep=JSON.stringify(volumes.map(function (x) {return parseInt(x)}))
-	    $(`#original_volumelist-${pk}`).val(vrep)
-	} else {
-            volumes = JSON.parse($(`#original_volumelist-${pk}`).val())
-	}
-	//FIXME updateButtonFace(pk, projects.length, courses.length, volumes.length)
-    }
-
-    // Initialize the modal logic
-    function initializeVolumeSelection() {
-        confirmSelection();
-    }
-
-    // Expose the functionality globally so it can be reused
-    window.VolumeSelection = {
-        init: initializeVolumeSelection,
-        openModal: handleClick,
-	update: updateLists,
-    };
-
-})();
 
 // Run when document is ready
 $(document).ready(function() {
-    VolumeSelection.init()
+  const vh = new VolumeHandler({
+    triggerSelector: '[name=volumes][data-id][data-volumes][data-bind][data-callback]'
+  });
+  vh.init();
 })

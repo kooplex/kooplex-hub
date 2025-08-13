@@ -8,12 +8,12 @@
       </div>
     {% endif %}
     {% if unbound_projects %}
-      <div class="alert bg-warning alert-dismissible fade show" role="alert">
+      <div class="alert bg-warning text-dark" role="alert">
               <strong data-bs-toggle="tooltip" title="Your project{% if unbound_projects|length > 1 %}s {{ unbound_projects|join:" " }} are {% else %} {{ unbound_projects|first }} is{% endif %} not bound to a container environment">Unbound project{% if unbound_projects|length > 1 %}s{% endif %}</strong> {{ unbound_projects|join:", " }}.
       </div>
     {% endif %}
     {% if unbound_containers %}
-      <div class="alert bg-warning alert-dismissible fade show"  role="alert">
+      <div class="alert bg-warning text-dark"  role="alert">
 	      <strong data-bs-toggle="tooltip" title="Your container environment{% if unbound_containers|length > 1 %}s {{ unbound_containers|join:", " }} are{% else %} {{ unbound_containers|first }} is{% endif %} not bound to a project">Empty environment{% if unbound_containers|length > 1 %}s{% endif %}</strong> {{ unbound_containers|join:", " }}.
       </div>
     {% endif %}

@@ -1,165 +1,183 @@
 // User Selection Modal Logic
-(function() {
-    var pk = null
-    var instance = null
-    var selectedUserIds = null
-    var originalUserIds = null
-    var markedUserIds = null
-    var originalMarkedIds = null
-    const users = []
+class UserHandler {
+    constructor(usersDataSelector = '#users_data') {
+        this.pk = null;
+        this.instance = null;
+        this.selectedUserIds = [];
+        this.originalUserIds = [];
+        this.markedUserIds = [];
+        this.originalMarkedIds = [];
+        this.users = [];
 
-    // Initialize users object
-    function initUsers() {
-        // Parse the JSON data from the <script> tag
-        const usersData = JSON.parse(document.getElementById('users_data').textContent)
+        this.usersDataSelector = usersDataSelector;
 
-        // Loop through each item in usersData to structure the objects
+        this.register = null;
+
+    }
+
+    init() {
+        this._initUsers();
+        this._initTogglers();
+        this._initSearch();
+        this._initConfirmButton();
+    }
+
+    _initUsers() {
+        const usersData = JSON.parse(document.querySelector(this.usersDataSelector).textContent);
+
         usersData.forEach(userDict => {
-            // Extract the PK and user details
-            const pk = Object.keys(userDict)[0] // Get the first (and only) key, which is the PK
-            const userDetails = userDict[pk] // Get the user's details
-
-            // Construct a new user object
-            users.push({
+            const pk = Object.keys(userDict)[0];
+            const userDetails = userDict[pk];
+            this.users.push({
                 pk: parseInt(pk),
                 name_and_username: userDetails.name_and_username,
                 search: userDetails.search
-            })
-        })
+            });
+        });
 
-	// hide search results
-        $('#user-search-results').hide()
-	initTogglers()
+        $('#user-search-results').hide();
     }
 
-    // Handle search bar input
-    $('#search-user').on('input', function () {
-        const query = $(this).val().toLowerCase().trim().replaceAll(' ', '')
-        if (query) {
-            const matches = users.filter(user =>
-                selectedUserIds.indexOf(user.pk) == -1 && user.search.includes(query)
-            ).slice(0, 5) // Limit to top 5 matches
+    _initSearch() {
+        $('#search-user').on('input', () => {
+            const query = $('#search-user').val().toLowerCase().trim().replaceAll(' ', '');
+            if (query) {
+                const matches = this.users
+                    .filter(user =>
+                        this.selectedUserIds.indexOf(user.pk) === -1 &&
+                        user.search.includes(query)
+                    )
+                    .slice(0, 5);
 
-            $('#user-search-results').empty().show() // Clear previous results and show dropdown
-            matches.forEach(user => {
-                $('#user-search-results').append(
-                    `<li class="list-group-item list-group-item-action" onclick="UserSelection.addUser(${user.pk})">
-                         ${user.name_and_username}
-                     </li>`
-                )
-            })
-        } else {
-            $('#user-search-results').hide()
-        }
-    })
+                $('#user-search-results').empty().show();
+                matches.forEach(user => {
+                    $('#user-search-results').append(
+                        `<li class="list-group-item list-group-item-action" data-pk="${user.pk}">
+                            ${user.name_and_username}
+                        </li>`
+                    );
+                });
 
-    // Handle removal
-    function handleRemoveClick(pk) {
-        $(`tr[data-id=${pk}]`).hide()
-	selectedUserIds = $.grep(selectedUserIds, function(value) {
-            return value != pk
-        })
-    }
-
-    // Handle addition
-    function handleAddition(pk) {
-        selectedUserIds.push(pk)
-        const is_marked = $(`input[data-id=${pk}]`).prop('checked')
-        if (is_marked) {
-            markedUserIds.push(pk)
-        } else {
-            markedUserIds = $.grep(markedUserIds, function(value) {
-                return value != pk
-            })
-        }
-
-        $(`tr[data-id=${pk}]`).show()
-        $('#search-user').val('')
-        $('#user-search-results').hide()
-    }
-
-    // Handle modal open
-    function handleOpen(objectId, kind) {
-        pk = objectId==="None" ?"None":parseInt(objectId)
-        instance=$(".users-modal").data('instance')
-	selectedUserIds = $(`[name="users"][data-id="${objectId}"][data-kind="${kind}"][data-users]`).data('users').slice()
-	originalUserIds = $(`[name="users"][data-id="${objectId}"][data-kind="${kind}"][data-users]`).data('users')
-        markedUserIds = $(`[name="users"][data-id="${objectId}"][data-kind="${kind}"][data-marked]`).data('marked').slice()
-	originalMarkedIds = $(`[name="users"][data-id="${objectId}"][data-kind="${kind}"][data-marked]`).data('marked')
-	$('tr[data-id]').each(function() {
-            const pk = $(this).data('id')
-
-            // Show row if pk is in users list, hide otherwise
-            if (selectedUserIds.includes(pk)) {
-                $(this).show()
+                // Attach click handler for adding users
+                $('#user-search-results li').off('click').on('click', (e) => {
+                    const pk = $(e.currentTarget).data('pk');
+                    this.addUser(pk);
+                });
             } else {
-                $(this).hide()
+                $('#user-search-results').hide();
             }
-
-            // Find the toggle button within the row
-            const toggleButton = $(this).find(`input[name=usermarker][data-id=${pk}]`)
-            // Check if pk is in marked list
-            if (markedUserIds.includes(pk)) {
-                toggleButton.bootstrapToggle('on')
-	    } else {
-                toggleButton.bootstrapToggle('off')
-	    }
-        })
-        $(".users-modal").modal('show')
+        });
     }
 
-    // Handle toggle changes
-    function initTogglers() {
-        $(document).on("change", "[data-toggle='toggle'][name=usermarker]", function() {
-            let isChecked = $(this).prop("checked")  // Get new state (true/false)
-            const pk = $(this).data('id')
+    _initTogglers() {
+        $(document).on("change", "[data-toggle='toggle'][name=usermarker]", (e) => {
+            const isChecked = $(e.currentTarget).prop("checked");
+            const pk = $(e.currentTarget).data('id');
             if (isChecked) {
-                markedUserIds.push(pk)
+                this.markedUserIds.push(pk);
             } else {
-                markedUserIds = $.grep(markedUserIds, function(value) {
-                    return value != pk
-                })
+                this.markedUserIds = this.markedUserIds.filter(value => value !== pk);
             }
-        })
+        });
     }
 
-    // Confirm user selection
-    $('#confirm-users-selection').on('click', function() {
-        if (pk) {
-            var changed = register_changes(pk, 'marked', markedUserIds, originalMarkedIds)
-	    if (changed) {
-                register_changes(pk, 'users', selectedUserIds, []) // we have to enforce listing users
-	    } else {
-                changed = register_changes(pk, 'users', selectedUserIds, originalUserIds) // otherwise if no change to former marking
-	    }
-            if (changed) {
-		let userlist = users.filter(user => selectedUserIds.includes(user.pk)).map(user => user.name_and_username).join("<br>")
-		    alert ("egyelore nem frissiti itt a listát, de a savere rendben lesz")
-		//$(`div[data-id="${pk}"] [class=content][name=userlist]`).html(userlist)  //FIXME: use div /class; better rendering
-                showSaveChanges(pk, instance)
+    _initConfirmButton() {
+        $('#confirm-users-selection').on('click', () => {
+            if (!this.pk) return;
+
+            const cb    = this._resolveFn(this.register); // bound if it's a method path
+
+            if (typeof cb === 'function') {
+                let changed = cb(this.pk, 'marked', this.markedUserIds, this.originalMarkedIds);
+                if (changed) {
+                    cb(this.pk, 'users', this.selectedUserIds, []);
+                } else {
+                    cb(this.pk, 'users', this.selectedUserIds, this.originalUserIds);
+                }
+            } else {
+              console.warn('UserHandler: no save function (register_changes) found.');
             }
-            // Close the modal
-            $('.users-modal').modal('hide')
-            pk=null
+
+            $('.users-modal').modal('hide');
+            this.pk = null;
+        });
+    }
+
+    _resolveFn(pathOrFn) {
+      if (!pathOrFn) return null;
+      if (typeof pathOrFn === 'function') return pathOrFn;
+  
+      if (typeof pathOrFn === 'string') {
+        const parts = pathOrFn.split('.');
+        const method = parts.pop();
+        const ctx = parts.reduce((acc, key) => (acc ? acc[key] : undefined), window);
+        const fn = ctx?.[method];
+        if (typeof fn === 'function') return fn.bind(ctx);
+      }
+      return null;
+    }
+
+    openModal(objectId, kind, callback) {
+        this.pk = objectId === "None" ? "None" : parseInt(objectId);
+        this.instance = $(".users-modal").data('instance');
+        this.register = callback;
+
+        const $dataEl = $(`[name="users"][data-id="${objectId}"][data-kind="${kind}"]`);
+        this.selectedUserIds = $dataEl.data('users').slice();
+        this.originalUserIds = $dataEl.data('users');
+        this.markedUserIds = $dataEl.data('marked').slice();
+        this.originalMarkedIds = $dataEl.data('marked');
+
+        $('tr[data-id]').each((_, el) => {
+            const pk = $(el).data('id');
+
+            $(el).toggle(this.selectedUserIds.includes(pk));
+
+            const toggleButton = $(el).find(`input[name=usermarker][data-id=${pk}]`);
+            if (this.markedUserIds.includes(pk)) {
+                toggleButton.bootstrapToggle('on');
+            } else {
+                toggleButton.bootstrapToggle('off');
+            }
+        });
+
+        $(".users-modal").modal('show');
+    }
+
+    addUser(pk) {
+        this.selectedUserIds.push(pk);
+        const is_marked = $(`input[data-id=${pk}]`).prop('checked');
+        if (is_marked) {
+            this.markedUserIds.push(pk);
+        } else {
+            this.markedUserIds = this.markedUserIds.filter(value => value !== pk);
         }
-    })
 
-
-    // Expose the functionality globally so it can be reused
-    window.UserSelection = {
-	init: initUsers,
-        openModal: handleOpen,
-	addUser: handleAddition,
-        removeUser: handleRemoveClick
+        $(`tr[data-id=${pk}]`).show();
+        $('#search-user').val('');
+        $('#user-search-results').hide();
     }
 
-})()
+    removeUser(pk) {
+        $(`tr[data-id=${pk}]`).hide();
+        this.selectedUserIds = this.selectedUserIds.filter(value => value !== pk);
+    }
+}
 
-$(document).on('click', '[name=remove][data-id][data-remove=user]', function() {
-    UserSelection.removeUser($(this).data('id'))
-})
+// ---- Initialization ----
+$(document).ready(function() {
+    const userHandler = new UserHandler();
+    userHandler.init();
+    
+    $(document).on('click', '[name=remove][data-id][data-remove=user]', function () {
+        userHandler.removeUser($(this).data('id'));
+    });
 
-$(document).ready(function () {
-     UserSelection.init()
-})
+    $(document).on('click', '[name=users]', function() {
+        const objectId = $(this).data('id');  // Get the id from the button's data-id attribute
+        const kind = $(this).data('kind');
+        const cb = $(this).data('callback');
+        userHandler.openModal(objectId, kind, cb);
+    });
+});
 

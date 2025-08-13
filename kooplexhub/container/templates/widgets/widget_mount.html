@@ -1,7 +1,7 @@
 {% load extras %}
 <button name="mount" data-id="{{container.id}}"
       class="badge rounded-pill p-2 border border-1 border-dark text-dark flex-grow-1 text-start" 
-      data-bs-toggle="tooltip" data-placement="bottom"
+      data-bs-toggle="tooltip" data-placement="bottom" data-callback="{{callback}}"
       data-projects="{{container.projects|id_list}}"
       data-courses="{{container.courses|id_list}}"
       data-volumes="{{container.volumes|id_list}}"

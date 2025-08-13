@@ -84,6 +84,41 @@ class ContainerControlConsumer(AsyncSkeleton):
 
 
 class ContainerConfigConsumer(CSyncSkeleton):
+    def _msg(self, container, message, errors={}, reload=False):
+        message_back = {
+            "container_id": container.id,
+            "feedback": message,
+            "response": "reloadpage" if reload else render_to_string("container.html", {"container": container, "errors": errors}),
+        }
+        logger.debug(message_back["feedback"])
+        self.send(text_data=json.dumps(message_back))
+
+    def _chg_image(self, container, image):
+        old_value=container.image.name
+        container.image=image
+        container.save()
+        m=f"Environment image of {container.name} changed from {old_value} to {image.name}"
+        container.mark_restart(m)
+        self._msg(container, m)
+
+    def _chg_bindings(self, container, ids, obj_type, bind_type, attr, m):
+        a=[]
+        r=[]
+        for o in obj_type.objects.filter(id__in = ids):
+            b, _=bind_type.objects.get_or_create(**{attr: o, 'container': container})
+            a.append(getattr(b, attr).name)
+        for b in bind_type.objects.filter(container = container).exclude(**{f"{attr}__id__in": ids}):
+            r.append(getattr(b, attr).name)
+            b.delete()
+        if a:
+            m += "added " + ", ".join(a) + "\n"
+        if r:
+            m += "removed " + ", ".join(r) + "\n"
+        if a or r:
+            container.mark_restart(m)
+            self._msg(container, m)
+
+
     def receive(self, text_data):
         parsed = json.loads(text_data)
         logger.debug(parsed)
@@ -91,72 +126,49 @@ class ContainerConfigConsumer(CSyncSkeleton):
         failed={}
         pk=parsed.get('pk')
         changes=parsed.get('changes')
-        success=False
         if pk == "None":
             reloadpage=True
             container=Container(name=changes['name'], user_id=self.get_userid(), image_id=changes['image'])
             container.save()
+            self._msg(container, f"New environment {container.name} is created", reload=True)
         else:
-            reloadpage=False
             cid=int(pk)
             container=self.get_container(cid)
-        restart=[]
         # Iterate over the changes and try to update the model instance
         for field, new_value in changes.items():
-            if field == 'image':
+            if field == 'image' and pk != "None":
                 new_value=Image.objects.get(id=new_value)
+                self._chg_image(container, new_value)
+            elif field == 'projects':
+                self._chg_bindings(container, new_value, Project, ProjectContainerBinding, 'project', f"Project mounts of environment {container.name} changed:\n")
+            elif field == 'courses':
+                self._chg_bindings(container, new_value, Course, CourseContainerBinding, 'course', f"Course mounts of environment {container.name} changed:\n")
+            elif field == 'volumes':
+                self._chg_bindings(container, new_value, Volume, VolumeContainerBinding, 'volume', f"Storage mounts of environment {container.name} changed:\n")
             # Check if the field is a valid attribute of the model
-            if is_model_field(container, field):
+            elif is_model_field(container, field):
                 old_value = getattr(container, field)
                 try:
                     if field in ['start_teleport', 'start_seafile']:
                         _what=field.split('_')[-1]
-                        restart.append(f"the {_what} requested state is changed")
+                        m=f"The {_what} in environment {container.name} requested state change"
                         new_value=new_value=="grant"
+                        container.mark_restart(m)
+                    else:
+                        m=f"Attribute {field} of environment {container.name} changed from {getattr(container, field)} to {new_value}"
                     # Try assigning the new value to the model's field
                     setattr(container, field, new_value)
                     # Run Django's model validation for the field
                     container.full_clean(validate_unique=True, exclude=[f for f in changes.keys() if f != field])
-                    success=True
+                    self._msg(container, m)
+                    container.save()
                 except ValidationError as e:
                     # Validation failed, record the error message
                     failed[field] = { "error": str(e), "value": old_value }
-            elif field == 'projects':
-                for project in Project.objects.filter(id__in = new_value):
-                    ProjectContainerBinding.objects.get_or_create(project = project, container = container)
-                ProjectContainerBinding.objects.filter(container = container).exclude(project__id__in = new_value).delete()
-                restart.append("project mounts changed")
-                success=True
-            elif field == 'courses':
-                for course in Course.objects.filter(id__in = new_value):
-                    CourseContainerBinding.objects.get_or_create(course = course, container = container)
-                CourseContainerBinding.objects.filter(container = container).exclude(course__id__in = new_value).delete()
-                restart.append("course mounts changed")
-                success=True
-            elif field == 'volumes':
-                for volume in Volume.objects.filter(id__in = new_value):
-                    VolumeContainerBinding.objects.get_or_create(volume = volume, container = container)
-                VolumeContainerBinding.objects.filter(container = container).exclude(volume__id__in = new_value).delete()
-                restart.append("volume mounts changed")
-                success=True
+                    self._msg(container, f"Problem configuring environment {container.name}", errors=failed)
             else:
                 # Attribute does not exist on the model
                 logger.error(f"Container model attribute {field} does not exist.")
-        # Save the instance if there are any successful changes
-        if success:
-            container.save()
-        if 'image' in changes.keys():
-            restart.append("image changed")
-        if restart:
-            container.mark_restart(", ".join(restart))
-        message_back = {
-            "container_id": container.id,
-            "feedback": f"Container {container.name} is created" if reloadpage else f"Container {container.name} is configured",
-            "response": "reloadpage" if reloadpage else render_to_string("container.html", {"container": container, "errors": failed}),
-            "container_id": container.id,
-        }
-        logger.debug(message_back["feedback"])
-        self.send(text_data=json.dumps(message_back))
                 
 
 class MonitorConsumer(SyncSkeleton):

@@ -74,17 +74,9 @@ function applyButton(widgetId, selectedButtonName) {
 }
 
 
-// Show Save Changes button
-if (typeof showSaveNew !== "undefined") {
-    showSaveNew['container']=function() {
-      var count = changes.filter(x => x.pk === "None"  && ["name", "image"].includes(x.field)).length
-      return count>=2
-    }
-}
-
 // Attach Save Changes Event
 $(document).on('click', '[name=save][data-id][data-instance=container]', function() {
-    save_container_config($(this).data('id'))
+    wss_containerconfig.createnew();
 })
 
 
@@ -95,7 +87,7 @@ $(document).on('click', '[data-field=start_teleport][name][data-id]', function()
     let widgetId = `container-teleport-${pk}`
     containerId = pk === "None" ? "None" : parseInt(pk)
     applyButton(widgetId, name==='grant'?'revoke':'grant')
-    register_changes(containerId, 'start_teleport', name, $(widgetId).data('orig'))
+    wss_containerconfig.register_changes(containerId, 'start_teleport', name, $(widgetId).data('orig'))
     showSaveChanges(containerId, 'container')
 })
 
@@ -107,7 +99,7 @@ $(document).on('click', '[data-field=start_seafile][name][data-id]', function() 
     let widgetId = `container-seafile-${pk}`
     containerId = pk === "None" ? "None" : parseInt(pk)
     applyButton(widgetId, name==='grant'?'revoke':'grant')
-    register_changes(containerId, 'start_seafile', name, $(widgetId).data('orig'))
+    wss_containerconfig.register_changes(containerId, 'start_seafile', name, $(widgetId).data('orig'))
     showSaveChanges(containerId, 'container')
 })
 

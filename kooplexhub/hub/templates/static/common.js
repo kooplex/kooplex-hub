@@ -1,3 +1,13 @@
+// A unique id generator and assign function
+function ensureUniqueId($el, prefix = "elem") {
+  let id = $el.attr("id");
+  if (!id) {
+    id = prefix + "_" + Math.random().toString(36).substr(2, 9);
+    $el.attr("id", id);
+  }
+  return id;
+}
+
 // when window is resized, we recalculate main block's height, so cntent can scroll under the search bar is present
 $( window ).resize(function () {
   h_full = $( window ).height();
@@ -26,14 +36,58 @@ $(document).ready(function () {
 });
 
 // display some feedback messages
+//function feedback(msg) {
+//  var widget = $("#feedbackMessages");
+//  widget.show();
+//  $("#feedbackContent").append("<p>" + msg + "</p>");
+//  setTimeout(function () { widget.hide() }, 10000);
+//	// TODO: too many paragraphs, clear oldest
+//}
+let feedbackMessages = [];
+let toastTimer = null;
+const toastDuration = 10000; // 10 seconds
+
 function feedback(msg) {
-  var widget = $("#feedbackMessages");
-  widget.show();
-  $("#feedbackContent").append("<p>" + msg + "</p>");
-  setTimeout(function () { widget.hide() }, 10000);
-	// TODO: too many paragraphs, clear oldest
+  const $toast = $("#feedbackMessages");
+  const $content = $("#feedbackContent");
+
+  // Add new message to queue
+  feedbackMessages.push(msg);
+
+  // Display messages in toast
+  $content.html(feedbackMessages.map(m => `<div class="alert alert-secondary mb-1">${m}</div>`).join(""));
+
+  // Show toast
+  $toast.show();
+
+  // Reset timer if already running
+  if (toastTimer) clearTimeout(toastTimer);
+
+  // Set new timer
+  toastTimer = setTimeout(() => {
+    // Move messages to offcanvas
+    moveMessagesToOffcanvas();
+    // Clear toast
+    feedbackMessages = [];
+    $content.empty();
+    $toast.hide();
+    toastTimer = null;
+  }, toastDuration);
 }
 
+function moveMessagesToOffcanvas() {
+  const $offcanvasBody = $(".offcanvas-body");
+  feedbackMessages.forEach(msg => {
+    // Create a dismissible alert
+    const $alert = $(`
+      <div class="alert alert-secondary alert-dismissible fade show mb-2" role="alert">
+        ${msg}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    `);
+    $offcanvasBody.append($alert);
+  });
+}
 
 
 // search objects by userinput

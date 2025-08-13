@@ -5,9 +5,13 @@
 
 {# FIXME: read only if not admin!!! #}
 
-<div class="card rounded rounded-3 mb-3 border border-2 shadow bg-light {% project_card_border project %}" id="card-{{ project.id }}" data-editable="{{is_admin}}">
+<div class="card bg-ligth shadow-2-strong border border-3 shadow-light bg-light {% if project.id %}border-success{% else %}border-warning{% endif %} mb-3" data-widget="containercard" data-id="{{project.id}}" data-editable="{{is_admin}}">
     <div class="card-header d-flex justify-content-start align-items-center">
-        {% include 'widgets/widget_input.html' with orig=project.name pk=project.id field="name" placeholder="Give a unique name to the project" instance="project" %}
+	{% if not project.id %}
+                    {% button_fetch_joinable_projects user %}
+	{% endif %}
+        {% field_name project 'project' 'mx-2 w-100 p-2' 'wss_projectconfig.register_changes' %}
+        {#% include 'widgets/widget_input.html' with orig=project.name pk=project.id field="name" placeholder="Give a unique name to the project" instance="project" %#}
 	{% project_scope project %}
     </div>
     <div class="card-body">

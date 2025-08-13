@@ -1,11 +1,12 @@
 {% extends "education_layout.html" %}
 {% load static %}
 
-{% block pagedescription %}
+{% block infoline %}
 For help on courses see the documentation <a href="https://xwiki.vo.elte.hu/en/kooplex-manual/education" target="_blank"><span class="ms-2 bi bi-book"></span></a>
 {% endblock %}
 
 {% block head_content %}
+<link href="{% static 'css/course.css' %}" rel="stylesheet">
 <link href="{% static 'css/dropdown.css' %}" rel="stylesheet">
 {% endblock %}
 
@@ -25,7 +26,7 @@ For help on courses see the documentation <a href="https://xwiki.vo.elte.hu/en/k
 
 
 {# render the course cards #}
-{% block bodycontent %}
+{% block content %}
   <div class="row row-cols-1 row-cols-md-2">
     {% for ucb in coursebindinglist reversed %}
       <div class="col" id="hideable-course-{{ ucb.course.id }}">

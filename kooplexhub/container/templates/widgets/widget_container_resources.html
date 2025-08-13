@@ -3,7 +3,7 @@
       title="Requested compute resources. Click to tune."
       data-node="{{node}}" data-cpurequest="{{cpurequest}}" data-gpurequest="{{gpurequest}}"
       data-memoryrequest="{{memoryrequest}}" data-idletime="{{idletime}}"
-      onclick="ComputeResourceSelection.openModal('{{container.id}}', '{{node}}')">
+      data-action="ComputeResourceSelection.openModal" data-id="{{container.id}}">
   <button class="badge rounded-pill text-dark p-2 border border-1 border-dark w-100 text-start" role="button">
     <span class="{% if not node %}d-none{%endif%}" name="node"><i class="bi bi-pc me-1"></i><span name="node_name" class="me-2">{{node|truncatechars:6}}</span></span>
     <span class="{% if not cpurequest %}d-none{%endif%}" name"cpu"><i class="bi bi-cpu me-1"></i><span name="node_cpu_request" class="me-2">{{cpurequest}}</span></span>

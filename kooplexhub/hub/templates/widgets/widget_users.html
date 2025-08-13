@@ -1,6 +1,6 @@
 {% load extras %}
 <div name="users" data-id="{{pk}}" data-kind="{{kind}}" {# FIXME data-kind -> data-instance ?? #}
-     data-users="{{users|id_list}}" data-marked="{{marked|id_list}}">
+     data-users="{{users|id_list}}" data-marked="{{marked|id_list}}" data-callback="{{callback}}">
     <div class="content" name="userlist">
         {% for user in users %}
 	{% if user != skip %}

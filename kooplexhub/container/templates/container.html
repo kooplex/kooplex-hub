@@ -4,7 +4,7 @@
 {% load check_show %}
 
 {# Render a card that represents a contaner #}
-<div class="card bg-ligth shadow-2-strong border border-3 shadow bg-light {% if container.id %}border-success{%else%}border-warning{%endif%} mb-3" data-widget="containercard" data-id="{{container.id}}" data-search="{{container.search}}" data-search_what="container">
+<div class="card bg-ligth shadow-2-strong border border-3 shadow-light bg-light {% if container.id %}border-success{%else%}border-warning{%endif%} mb-3" data-widget="containercard" data-id="{{container.id}}" data-search="{{container.search}}" data-search_what="container">
     <!-- Header -->
     <div class="card-header d-flex justify-content-start align-items-center {% if container.id %}border-success{%else%}border-warning{%endif%}">
         {% if container.id %}
@@ -12,7 +12,7 @@
         {% else %}
           {% button_new_container %}
         {% endif %}
-        {% field_name container 'container' 'mx-2 w-100 p-2' %}
+        {% field_name container 'container' 'mx-2 w-100 p-2' 'wss_containerconfig.register_changes' %}
 	<div class="flex-grow-1"></div> <!-- Spacer to push the right button to the end -->
 	{{ container.render_stop_html }}
     </div>
@@ -25,12 +25,12 @@
                 <!-- Row 1 -->
                 <div class="d-flex align-items-center mb-3">
                     {% button_teleport container %}
-		    {% container_image container %}
+		    {% container_image container callback="wss_containerconfig.register_changes" %}
                 </div>
                 <!-- Row 2 -->
                 <div class="d-flex mb-3">
                     {% button_seafile container %}
-                    {% container_mounts container %}
+                    {% container_mounts container callback="wss_containerconfig.register_changes" %}
                 </div>
                 <!-- Row 3 -->
                 <div>
