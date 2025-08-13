@@ -8,6 +8,7 @@ For help on courses see the documentation <a href="https://xwiki.vo.elte.hu/en/k
 {% block head_content %}
 <link href="{% static 'css/course.css' %}" rel="stylesheet">
 <link href="{% static 'css/dropdown.css' %}" rel="stylesheet">
+<link href="{% static 'css/cardlist.css' %}" rel="stylesheet">
 {% endblock %}
 
 {# the search bar #}
@@ -27,9 +28,9 @@ For help on courses see the documentation <a href="https://xwiki.vo.elte.hu/en/k
 
 {# render the course cards #}
 {% block content %}
-  <div class="row row-cols-1 row-cols-md-2">
+<div id="listPane" class="d-flex flex-wrap justify-content-center gap-3">
     {% for ucb in coursebindinglist reversed %}
-      <div class="col" id="hideable-course-{{ ucb.course.id }}">
+      <div class="card-container" id="card-container-{{ ucb.course.id }}">
         {% include 'student_course.html' with course=ucb.course t_assignments=ucb.assignments_table %}
       </div>
     {% empty %}

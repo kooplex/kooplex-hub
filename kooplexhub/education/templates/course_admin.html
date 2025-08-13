@@ -11,6 +11,7 @@
 <link href="{% static 'css/multitabs.css' %}" rel="stylesheet">
 <link href="{% static 'css/xeditable.css' %}" rel="stylesheet">
 <link href="{% static 'css/dropdown.css' %}" rel="stylesheet">
+<link href="{% static 'css/cardlist.css' %}" rel="stylesheet">
 {% endblock %}
 
 {% block infoline %}
@@ -53,7 +54,9 @@ $(document).ready(function() {
 {% if coursebindinglist %}
 <div id="listPane" class="d-flex flex-wrap justify-content-center gap-3">
   {% for ucb in coursebindinglist reversed %}
+      <div class="card-container" id="card-container-{{ ucb.course.id }}">
       {% include 'course.html' with course=ucb.course %}
+      </div>
   {% endfor %}
 </div>
 {% endif %}

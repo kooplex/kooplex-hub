@@ -1,18 +1,62 @@
+import logging
 from channels.generic.websocket import WebsocketConsumer
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.core.exceptions import FieldDoesNotExist
+from django.template.loader import render_to_string
 import json
 
-def is_model_field(instance, attr_name):
-    # Get the class of the instance
-    cls = instance.__class__
-    # Check if the attribute is a Django model field
-    try:
-        instance._meta.get_field(attr_name)
-        return True
-    except FieldDoesNotExist:
-        pass
-    return False
+logger = logging.getLogger(__name__)
+
+
+class Config:
+    @staticmethod
+    def is_model_field(instance, attr_name):
+        # Get the class of the instance
+        cls = instance.__class__
+        # Check if the attribute is a Django model field
+        try:
+            instance._meta.get_field(attr_name)
+            return True
+        except FieldDoesNotExist:
+            pass
+        return False
+
+    def _msg(self, instance, message, errors={}, reload=False):
+        template_kwargs=getattr(self, 'template_kwargs', {})
+        template_kwargs.update({
+            self.instance_reference: instance,
+            "errors": errors,
+            })
+        message_back = {
+            f"{self.instance_reference}_id": instance.id,
+            "feedback": message,
+            "response": "reloadpage" if reload else render_to_string(self.template, template_kwargs),
+        }
+        logger.debug(message_back["feedback"])
+        self.send(text_data=json.dumps(message_back))
+
+    def _chg_image(self, instance, image, attribute='image'):
+        old_value=getattr(instance, attribute).name
+        setattr(instance, attribute, image)
+        instance.save()
+        m=f"The {attribute} of {self.instance_reference} {instance.name} changed from {old_value} to {image.name}"
+        self._msg(instance, m)
+
+    def _chg_bindings(self, instance, ids, obj_type, bind_type, attr, m):
+        a=[]
+        r=[]
+        for o in obj_type.objects.filter(id__in = ids):
+            b, _=bind_type.objects.get_or_create(**{attr: o, self.instance_reference: instance})
+            a.append(getattr(b, attr).name)
+        for b in bind_type.objects.filter(**{self.instance_reference: instance}).exclude(**{f"{attr}__id__in": ids}):
+            r.append(getattr(b, attr).name)
+            b.delete()
+        if a:
+            m += "added " + ", ".join(a) + "\n"
+        if r:
+            m += "removed " + ", ".join(r) + "\n"
+        if a or r:
+            self._msg(instance, m)
 
 
 class SyncSkeleton(WebsocketConsumer):
