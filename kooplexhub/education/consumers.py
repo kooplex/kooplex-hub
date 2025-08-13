@@ -13,8 +13,8 @@ from education.models import UserAssignmentBinding, Assignment, UserCourseBindin
 from education.forms import TableAssignmentConf
 from django.contrib.auth.models import User
 
-from hub.util import is_model_field, SyncSkeleton, AsyncSkeleton
-from .models import Course
+from hub.util import SyncSkeleton, AsyncSkeleton, Config
+from .models import Course, VolumeCourseBinding
 from volume.models import Volume
 
 logger = logging.getLogger(__name__)
@@ -205,7 +205,6 @@ class CourseGetContainersConsumer(SyncSkeleton):
         @param usercoursebinding_id
         """
         from kooplexhub.lib.libbase import standardize_str
-        from .models import VolumeCourseBinding
         from volume.models import VolumeContainerBinding
         from container.models import Container
         try:
@@ -243,44 +242,18 @@ class HandinConsumer(AsyncSkeleton):
             await self.send(text_data=json.dumps({"feedback": f'A snapshot is being prepared for {b.assignment.name}.' }))
 
 
-from .models import VolumeCourseBinding
-class CourseConfigConsumer(SyncSkeleton):
+class CourseConfigConsumer(SyncSkeleton, Config):
+    template='course.html'
+    instance_reference='course'
+
+    @property
+    def template_kwargs(self):
+        return {"user": self.scope['user']}
+
     def get_course(self, course_id):
         c=Course.objects.get(id = course_id)
         assert self.userid in map(lambda o:o.id, c.teachers), "You are not a teacher to config"
         return c
-
-    def _msg(self, course, message, errors={}, reload=False):
-        message_back = {
-            "course_id": course.id,
-            "feedback": message,
-            "response": "reloadpage" if reload else render_to_string("course.html", {"course": course, "user": self.scope['user'], "errors": errors}),
-        }
-        logger.debug(message_back["feedback"])
-        self.send(text_data=json.dumps(message_back))
-
-    def _chg_image(self, course, image):
-        old_value=course.preferred_image.name
-        course.preferred_image=image
-        course.save()
-        m=f"The preferred image of course {course.name} changed from {old_value} to {image.name}"
-        self._msg(course, m)
-
-    def _chg_bindings(self, course, ids, obj_type, bind_type, attr, m):
-        a=[]
-        r=[]
-        for o in obj_type.objects.filter(id__in = ids):
-            b, _=bind_type.objects.get_or_create(**{attr: o, 'course': course})
-            a.append(getattr(b, attr).name)
-        for b in bind_type.objects.filter(course = course).exclude(**{f"{attr}__id__in": ids}):
-            r.append(getattr(b, attr).name)
-            b.delete()
-        if a:
-            m += "added " + ", ".join(a) + "\n"
-        if r:
-            m += "removed " + ", ".join(r) + "\n"
-        if a or r:
-            self._msg(course, m)
 
     def _chg_user_bindings(self, course, ids, marked, m):
         c=[]
@@ -351,13 +324,13 @@ class CourseConfigConsumer(SyncSkeleton):
         for field, new_value in changes.items():
             if field == 'image':
                 new_value=Image.objects.get(id=new_value)
-                self._chg_image(course, new_value)
+                self._chg_image(course, new_value, attribute='preferred_image')
             elif field == 'users':
                 self._chg_user_bindings(course, new_value, changes.get('marked'), f"Members of course {course.name} changed:\n")
             elif field=="volumes":
-                self._chg_bindings(course, new_value, Volume, ProjectCourseBinding, 'volume', f"Course mounts of {course.name} changed:\n")
+                self._chg_bindings(course, new_value, Volume, VolumeCourseBinding, 'volume', f"Course mounts of {course.name} changed:\n")
             # Check if the field is a valid attribute of the model
-            elif is_model_field(course, field):
+            elif self.is_model_field(course, field):
                 old_value = getattr(course, field)
                 try:
                     m=f"Attribute {field} of course {course.name} changed from {getattr(course, field)} to {new_value}"

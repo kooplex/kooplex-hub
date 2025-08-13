@@ -18,29 +18,10 @@ from .lib import Cluster
 
 from .tasks import *
 
-from hub.util import is_model_field, SyncSkeleton, AsyncSkeleton
+from hub.util import SyncSkeleton, AsyncSkeleton, Config
 
 logger = logging.getLogger(__name__)
 
-#################
-# FIXME put somewhere common 
-
-
-
-# Custom JSON encoder
-class CustomEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, Image):
-            return { "image": obj.id }
-        elif isinstance(obj, QuerySet):
-            if obj.model == ProjectContainerBinding:
-                return { "projects": [ b.project.id for b in obj ] }
-            elif obj.model == CourseContainerBinding:
-                return { "courses":  [ b.course.id for b in obj ] }
-            elif obj.model == VolumeContainerBinding:
-                return { "volumes": [ b.volume.id for b in obj ] }
-        return super().default(obj)
-#################
 
 class CSyncSkeleton(SyncSkeleton):
     def get_container(self, container_id):
@@ -83,41 +64,9 @@ class ContainerControlConsumer(AsyncSkeleton):
             logger.error(f'wrong ws call request: {request}')
 
 
-class ContainerConfigConsumer(CSyncSkeleton):
-    def _msg(self, container, message, errors={}, reload=False):
-        message_back = {
-            "container_id": container.id,
-            "feedback": message,
-            "response": "reloadpage" if reload else render_to_string("container.html", {"container": container, "errors": errors}),
-        }
-        logger.debug(message_back["feedback"])
-        self.send(text_data=json.dumps(message_back))
-
-    def _chg_image(self, container, image):
-        old_value=container.image.name
-        container.image=image
-        container.save()
-        m=f"Environment image of {container.name} changed from {old_value} to {image.name}"
-        container.mark_restart(m)
-        self._msg(container, m)
-
-    def _chg_bindings(self, container, ids, obj_type, bind_type, attr, m):
-        a=[]
-        r=[]
-        for o in obj_type.objects.filter(id__in = ids):
-            b, _=bind_type.objects.get_or_create(**{attr: o, 'container': container})
-            a.append(getattr(b, attr).name)
-        for b in bind_type.objects.filter(container = container).exclude(**{f"{attr}__id__in": ids}):
-            r.append(getattr(b, attr).name)
-            b.delete()
-        if a:
-            m += "added " + ", ".join(a) + "\n"
-        if r:
-            m += "removed " + ", ".join(r) + "\n"
-        if a or r:
-            container.mark_restart(m)
-            self._msg(container, m)
-
+class ContainerConfigConsumer(CSyncSkeleton, Config):
+    template='container.html'
+    instance_reference='container'
 
     def receive(self, text_data):
         parsed = json.loads(text_data)
@@ -146,7 +95,7 @@ class ContainerConfigConsumer(CSyncSkeleton):
             elif field == 'volumes':
                 self._chg_bindings(container, new_value, Volume, VolumeContainerBinding, 'volume', f"Storage mounts of environment {container.name} changed:\n")
             # Check if the field is a valid attribute of the model
-            elif is_model_field(container, field):
+            elif self.is_model_field(container, field):
                 old_value = getattr(container, field)
                 try:
                     if field in ['start_teleport', 'start_seafile']:

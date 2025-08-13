@@ -6,6 +6,7 @@ from django.template.loader import render_to_string
 
 from channels.generic.websocket import WebsocketConsumer
 
+from hub.util import Config
 from django.contrib.auth.models import User
 from project.models import Project, UserProjectBinding, ProjectContainerBinding
 from volume.models import Volume, ProjectVolumeBinding
@@ -18,16 +19,6 @@ from django.core.exceptions import FieldDoesNotExist
 from django.db.models.query import QuerySet
 # FIXME put somewhere common 
 
-def model_field(instance, attr_name):
-    # Get the class of the instance
-    cls = instance.__class__
-    # Check if the attribute is a Django model field
-    try:
-        instance._meta.get_field(attr_name)
-        return True
-    except FieldDoesNotExist:
-        pass
-    return False
 
 
 class SyncConsumer(WebsocketConsumer):
@@ -41,38 +32,9 @@ class SyncConsumer(WebsocketConsumer):
     def disconnect(self, close_code):
         pass
 
-class ProjectConfigConsumer(SyncConsumer):
-    def _msg(self, project, message, errors={}, reload=False):
-        message_back = {
-            "project_id": project.id,
-            "feedback": message,
-            "response": "reloadpage" if reload else render_to_string("project.html", {"project": project, "errors": errors}),
-        }
-        logger.debug(message_back["feedback"])
-        self.send(text_data=json.dumps(message_back))
-
-    def _chg_image(self, project, image):
-        old_value=project.preferred_image.name
-        project.preferred_image=image
-        project.save()
-        m=f"The preferred image of project {project.name} changed from {old_value} to {image.name}"
-        self._msg(project, m)
-
-    def _chg_bindings(self, project, ids, obj_type, bind_type, attr, m):
-        a=[]
-        r=[]
-        for o in obj_type.objects.filter(id__in = ids):
-            b, _=bind_type.objects.get_or_create(**{attr: o, 'project': project})
-            a.append(getattr(b, attr).name)
-        for b in bind_type.objects.filter(project = project).exclude(**{f"{attr}__id__in": ids}):
-            r.append(getattr(b, attr).name)
-            b.delete()
-        if a:
-            m += "added " + ", ".join(a) + "\n"
-        if r:
-            m += "removed " + ", ".join(r) + "\n"
-        if a or r:
-            self._msg(project, m)
+class ProjectConfigConsumer(SyncConsumer, Config):
+    template='project.html'
+    instance_reference='project'
 
     def _chg_user_bindings(self, project, ids, marked, m):
         c=[]
@@ -123,13 +85,13 @@ class ProjectConfigConsumer(SyncConsumer):
         for field, new_value in changes.items():
             if field == 'image':
                 new_value=Image.objects.get(id=new_value)
-                self._chg_image(project, new_value)
+                self._chg_image(project, new_value, attribute='preferred_image')
             elif field == 'users':
                 self._chg_user_bindings(project, new_value, changes.get('marked'), f"Collaborators of project {project.name} changed:\n")
             elif field == 'volumes':
                 self._chg_bindings(project, new_value, Volume, ProjectVolumeBinding, 'volume', f"Project mounts of {project.name} changed:\n")
             # Check if the field is a valid attribute of the model
-            elif model_field(project, field):
+            elif self.is_model_field(project, field):
                 old_value = getattr(project, field)
                 try:
                     m=f"Attribute {field} of project {project.name} changed from {getattr(project, field)} to {new_value}"

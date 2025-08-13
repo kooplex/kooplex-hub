@@ -9,7 +9,7 @@ from django.template.loader import render_to_string
 
 
 
-from hub.util import is_model_field, SyncSkeleton, AsyncSkeleton
+from hub.util import SyncSkeleton, AsyncSkeleton
 
 logger = logging.getLogger(__name__)
 
