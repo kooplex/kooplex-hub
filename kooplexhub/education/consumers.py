@@ -11,6 +11,7 @@ from asgiref.sync import sync_to_async
 
 from education.models import UserAssignmentBinding, Assignment, UserCourseBinding, CourseContainerBinding
 from education.forms import TableAssignmentConf
+from django.contrib.auth.models import User
 
 from hub.util import is_model_field, SyncSkeleton, AsyncSkeleton
 from .models import Course
@@ -249,6 +250,70 @@ class CourseConfigConsumer(SyncSkeleton):
         assert self.userid in map(lambda o:o.id, c.teachers), "You are not a teacher to config"
         return c
 
+    def _msg(self, course, message, errors={}, reload=False):
+        message_back = {
+            "course_id": course.id,
+            "feedback": message,
+            "response": "reloadpage" if reload else render_to_string("course.html", {"course": course, "user": self.scope['user'], "errors": errors}),
+        }
+        logger.debug(message_back["feedback"])
+        self.send(text_data=json.dumps(message_back))
+
+    def _chg_image(self, course, image):
+        old_value=course.preferred_image.name
+        course.preferred_image=image
+        course.save()
+        m=f"The preferred image of course {course.name} changed from {old_value} to {image.name}"
+        self._msg(course, m)
+
+    def _chg_bindings(self, course, ids, obj_type, bind_type, attr, m):
+        a=[]
+        r=[]
+        for o in obj_type.objects.filter(id__in = ids):
+            b, _=bind_type.objects.get_or_create(**{attr: o, 'course': course})
+            a.append(getattr(b, attr).name)
+        for b in bind_type.objects.filter(course = course).exclude(**{f"{attr}__id__in": ids}):
+            r.append(getattr(b, attr).name)
+            b.delete()
+        if a:
+            m += "added " + ", ".join(a) + "\n"
+        if r:
+            m += "removed " + ", ".join(r) + "\n"
+        if a or r:
+            self._msg(course, m)
+
+    def _chg_user_bindings(self, course, ids, marked, m):
+        c=[]
+        a=[]
+        r=[]
+        for user in User.objects.filter(id__in = ids):
+            if user.id==self.userid:
+                # skip caller
+                continue
+            is_teacher=user.id in marked
+            b=UserCourseBinding.objects.filter(user=user, course=course)
+            if b:=b.first():
+                if b.is_teacher==is_teacher:
+                    continue
+                # if student/teacher state changes, delete old relationship instance
+                c.append(str(user))
+                b.delete()
+            ucb= UserCourseBinding.objects.create(user=user, course=course, is_teacher=is_teacher)
+            if not str(user) in c:
+                a.append(str(user))
+        # Remove students and teachers
+        for ucb in UserCourseBinding.objects.filter(course=course).exclude(user__id__in=ids).exclude(user__id=self.userid):
+            ucb.delete()
+            r.append(str(ucb.user))
+        if a:
+            m += "added " + ", ".join(a) + "\n"
+        if r:
+            m += "removed " + ", ".join(r) + "\n"
+        if c:
+            m += "role changed " + ", ".join(c) + "\n"
+        if a or r or c:
+            self._msg(course, m)
+
     def receive(self, text_data):
         from hub.models import Profile
         from container.models import Image
@@ -263,77 +328,49 @@ class CourseConfigConsumer(SyncSkeleton):
         if pk=="None":
             if not Profile.objects.filter(user__id=self.get_userid(), can_createcourse=True).first():
                 return
-            reloadpage=True
             canvas_id=changes.pop('canvasid', None)
             _name=changes.pop('name')
             _folder=f"{datetime.datetime.now().year}-{standardize_str(_name)}" #FIXME settings.py-ba át lehetne tenni, year 
             course=Course.objects.create(name=_name, preferred_image_id=changes.pop('image'), description=changes.pop('description'), folder=_folder)
             binding=UserCourseBinding.objects.create(user_id=self.get_userid(), course=course, is_teacher=True)
             if canvas_id:
+                # logger.debug(f"Course has canvasid {canvas_id}.")
                 from canvas.models import CanvasCourse, Canvas
                 canvas=Canvas.objects.get(user_id=self.get_userid())
                 #FIXME: keep canvasname
-                canvascourse=CanvasCourse.objects.create(name=course.name, canvas_course_id=canvas_id, course=course)
+                canvascourse=CanvasCourse.objects.create(name=course.name, canvas_course_id=canvas_id, course=course, canvas=canvas)
                 for cs in canvascourse.get_course_students(canvas.token):
                     UserCourseBinding.objects.create(course=course, user=cs)
                 for ct in canvascourse.get_course_teachers(canvas.token):
                     UserCourseBinding.objects.get_or_create(course=course, user=ct, is_teacher=True)
+            self._msg(course, f"New course {course.name} is created", reload=True)
         else:
-            reloadpage=False
             cid = int(pk)
             course = self.get_course(cid)
-        # Add students and teachers
-        users=changes.pop('users', [])
-        if users:
-            teachers=changes.pop('marked', [])
-            for u in users:
-                if u==self.userid:
-                    # skip caller
-                    continue
-                is_teacher=u in teachers
-                b=UserCourseBinding.objects.filter(user__id=u, course=course)
-                if b:
-                    b=b.first()
-                    if b.is_teacher==is_teacher:
-                        continue
-                    # if student/teacher state changes, delete old relationship instance
-                    b.delete()
-                UserCourseBinding.objects.create(user_id=u, course=course, is_teacher=is_teacher)
-            # Remove students and teachers
-            users.append(self.userid)  # make sure caller is not removed
-            UserCourseBinding.objects.filter(course=course).exclude(user__id__in=users).exclude(user__id=self.userid).delete()
         # Iterate over the changes and try to update the model instance
         for field, new_value in changes.items():
             if field == 'image':
                 new_value=Image.objects.get(id=new_value)
-                field='preferred_image'
+                self._chg_image(course, new_value)
+            elif field == 'users':
+                self._chg_user_bindings(course, new_value, changes.get('marked'), f"Members of course {course.name} changed:\n")
+            elif field=="volumes":
+                self._chg_bindings(course, new_value, Volume, ProjectCourseBinding, 'volume', f"Course mounts of {course.name} changed:\n")
             # Check if the field is a valid attribute of the model
-            if is_model_field(course, field):
+            elif is_model_field(course, field):
                 old_value = getattr(course, field)
                 try:
+                    m=f"Attribute {field} of course {course.name} changed from {getattr(course, field)} to {new_value}"
                     # Try assigning the new value to the model's field
                     setattr(course, field, new_value)
                     # Run Django's model validation for the field
                     course.full_clean(validate_unique=True, exclude=[f for f in changes.keys() if f != field])
-                    success=True
+                    self._msg(course, m)
+                    course.save()
                 except ValidationError as e:
                     # Validation failed, record the error message
                     failed[field] = { "error": str(e), "value": old_value }
-            elif field=="volumes":
-                for volume in Volume.objects.filter(id__in=new_value):
-                    VolumeCourseBinding.objects.get_or_create(volume=volume, course=course)
-                VolumeCourseBinding.objects.filter(course=course).exclude(volume__id__in=new_value).delete()
-                success=True
+                    self._msg(course, f"Problem configuring course {course.name}", errors=failed)
             else:
                 # Attribute does not exist on the model
                 logger.error(f"Course model attribute {field} does not exist.")
-        # Save the instance if there are any successful changes
-        if success:
-            course.save()
-        message_back = {
-            "feedback": f"Course {course.name} is createed" if reloadpage else f"Course {course.name} is configured",
-            "response": "reloadpage" if reloadpage else render_to_string("course.html", {"course": course, "user": self.scope['user'] }),
-            "course_id": course.id,
-        }
-        logger.debug(message_back["feedback"])
-        self.send(text_data=json.dumps(message_back))

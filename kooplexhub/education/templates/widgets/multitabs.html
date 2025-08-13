@@ -44,6 +44,7 @@
             <div class="tab-pane fade show active" id="content-one-{{pk}}" role="tabpanel" aria-labelledby="tab-one-{{pk}}">
                 <div class="content">
                     <div data-type="textarea" data-id="{{pk}}" data-field="description" data-orig="{{course.description}}" data-instance="course"
+                         data-callback="wss_courseconfig.register_changes"
                          class="editable" data-placement="right" placeholder="Add description">{% if course.description %}{{course.description}}{% endif %}</div>
                 </div>
             </div>
@@ -57,16 +58,16 @@
                     </div>
             </div>
             <div class="tab-pane fade" id="content-three-{{pk}}" role="tabpanel" aria-labelledby="tab-three-{{pk}}">
-                <div name="users" data-id="{{pk}}" data-kind="Students/Teachers" {# FIXME data-kind -> data-instance ?? #}
+                <div name="users" data-id="{{pk}}" data-kind="Students/Teachers" data-callback="wss_courseconfig.register_changes" data-kind="course"
                      data-users="{{course.members|id_list}}" data-marked="{{course.teachers|id_list}}">
                     {% render_table course|table_attendee:user %}
                 </div>
             </div>
             <div class="tab-pane fade" id="content-four-{{pk}}" role="tabpanel" aria-labelledby="tab-four-{{pk}}">
-                {% include 'widgets/widget_volumes.html' with maxheight="118px" pk=pk volumes=course.volumes %}
+                {% include 'widgets/widget_volumes.html' with maxheight="118px" pk=pk volumes=course.volumes callback="wss_courseconfig.register_changes" instance="course" %}
             </div>
             <div class="tab-pane fade" id="content-five-{{pk}}" role="tabpanel" aria-labelledby="tab-five-{{pk}}">
-		{% container_image course "preferred_image" %}
+		{% container_image course "preferred_image" callback="wss_courseconfig.register_changes" %}
             </div>
             <div class="tab-pane fade" id="content-six-{{pk}}" role="tabpanel" aria-labelledby="tab-six-{{pk}}">
 		{% link_drop course user as drop_url %}

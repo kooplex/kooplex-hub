@@ -109,6 +109,7 @@ class TeacherCourseBindingListView(LoginRequiredMixin, generic.ListView):
         context['wss_assignment_config'] = KOOPLEX.get('hub', {}).get('wss_assignment_config', 'wss://localhost/hub/ws/assignment/config/{userid}/').format(userid = self.request.user.id)
         context['wss_assignment_score'] = KOOPLEX.get('hub', {}).get('wss_assignment_score', 'wss://localhost/hub/ws/assignment/score/{userid}/').format(userid = self.request.user.id)
         context['wss_canvas'] = KOOPLEX.get('hub', {}).get('wss_canvas', 'wss://localhost/hub/ws/canvas/fetchcourses/{userid}/').format(userid = self.request.user.id)
+        context['wss_canvascourseassignments'] = KOOPLEX.get('hub', {}).get('wss_canvascourseassignments', 'wss://localhost/hub/ws/canvas/fetchcourseassignments/')
         context['images'] = Image.objects.filter(imagetype = Image.TP_PROJECT, present = True)
         context['t_volume'] = TableVolume(self.request.user)
         context['users'] = [ u.profile._repr for u in User.objects.all().exclude(id = self.request.user.id) ]

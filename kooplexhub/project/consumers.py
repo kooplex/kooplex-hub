@@ -99,15 +99,12 @@ class ProjectConfigConsumer(SyncConsumer):
         if a or r or c:
             self._msg(project, m)
 
-
-
     def receive(self, text_data):
         from kooplexhub.lib.libbase import standardize_str
         parsed = json.loads(text_data)
         logger.debug(parsed)
         assert parsed.get('request')=='configure-project', "wrong request"
         failed={}
-        success=False
         pk = parsed.get('pk')
         changes = parsed.get('changes')
         if pk == "None":
@@ -146,7 +143,7 @@ class ProjectConfigConsumer(SyncConsumer):
                 except ValidationError as e:
                     # Validation failed, record the error message
                     failed[field] = { "error": str(e), "value": old_value }
-                    self._msg(container, f"Problem configuring project {project.name}", errors=failed)
+                    self._msg(project, f"Problem configuring project {project.name}", errors=failed)
             else:
                 # Attribute does not exist on the model
                 logger.error(f"Project model attribute {field} does not exist.")

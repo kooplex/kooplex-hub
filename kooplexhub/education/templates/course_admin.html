@@ -13,13 +13,13 @@
 <link href="{% static 'css/dropdown.css' %}" rel="stylesheet">
 {% endblock %}
 
-{% block pagedescription %}
+{% block infoline %}
 Create a new course or import courses from Canvas using a canvas api token <a href="https://xwiki.vo.elte.hu/en/kooplex-manual/education#canvas"  target="_blank"><span class="ms-2 bi bi-book"></span></a>
 {% endblock %}
 
 {# render the course cards #}
 
-{% block bodycontent %}
+{% block content %}
 {% if user.profile.can_createcourse %}
 <div class="container-fluid">
     <div class="d-flex flex-wrap gap-3">
@@ -51,7 +51,7 @@ $(document).ready(function() {
 {% endif %}
 
 {% if coursebindinglist %}
-<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 w-100 mx-auto justify-content-center gap-3">
+<div id="listPane" class="d-flex flex-wrap justify-content-center gap-3">
   {% for ucb in coursebindinglist reversed %}
       {% include 'course.html' with course=ucb.course %}
   {% endfor %}
@@ -95,6 +95,7 @@ $(document).ready(function() {
 const wsURLs = {
   container_control: "{{ wss_container }}",
   wss_canvas: "{{ wss_canvas }}",
+  wss_canvascourseassignments: "{{ wss_canvascourseassignments }}",
   get_containers: "{{ wss_course_container }}",
   course_config: "{{ wss_course_config }}",
   assignment_config: "{{ wss_assignment_config }}",
