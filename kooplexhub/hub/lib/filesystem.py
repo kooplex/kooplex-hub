@@ -58,7 +58,7 @@ def _du(path):
 
 
 
-def _mkdir(path, other_rx = False):
+def _mkdir(path, other_rx = False, writable = False):
     """
     @summary: make a directory
     @param path: the directory to make
@@ -69,16 +69,15 @@ def _mkdir(path, other_rx = False):
         assert not os.path.exists(path), f"{path} is present in the filesystem, but not a directory"
         dir_util.mkpath(path)
 #        assert os.path.isdir(path), f"{path} directory not created"
-        rx = 'rx' if other_rx else ''
+        rx = 'rxTC' if other_rx else ''
+        w = 'waD' if writable else ''
         if acl_backend == 'nfs4':
-            acl = f"""
-A::OWNER@:rwaDxtTcCy
+            acl = f"""A::OWNER@:rwaDxtTcCy
 A::GROUP@:tcy
-A::EVERYONE@:{rx}tcy
+A::EVERYONE@:{w}{rx}tcy
 A:fdi:OWNER@:rwaDxtTcCy
 A:fdi:GROUP@:tcy
-A:fdi:EVERYONE@:tcy
-        """
+A:fdi:EVERYONE@:{w}{rx}tcy"""
             fn_acl = '/tmp/acl.dat'
             open(fn_acl, 'w').write(acl)
             bash(f'nfs4_setfacl -S {fn_acl} {path}')
@@ -181,12 +180,30 @@ def _archivedir(folder, target, remove = True, fakeroot = True):
             _rmdir(folder)
 
 
+def is_within_directory(directory, target):
+    abs_directory = os.path.abspath(directory)
+    abs_target = os.path.abspath(target)
+    prefix = os.path.commonprefix([abs_directory, abs_target])
+    return prefix == abs_directory
+
+
+def safe_extract(tar, path, numeric_owner=False):
+    members=[]
+    for member in tar.getmembers():
+        member_path = os.path.join(path, member.name)
+        if is_within_directory(path, member_path):
+            members.append(member)
+        else:
+            logger.critical(f"Attempted Path Traversal in Tar File {tar}. Skipping item {member}")
+    tar.extractall(path, members, numeric_owner=numeric_owner)
+
 def _extracttarbal(tarbal, target):
     if os.path.exists(target):
         logger.warning(f"Extract target folder {target} exists, may overwrite content")
     try:
         with tarfile.open(tarbal, mode = 'r') as archive:
-            archive.extractall(path = target)
+            #archive.extractall(path = target)
+            safe_extract(archive, path = target)
         logger.info(f"Extracted archive {tarbal} to folder {target}")
     except Exception as e:
         logger.error(f"Cannot extract archive {tarbal} to folder {target} -- {e}")
