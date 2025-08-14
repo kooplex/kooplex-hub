@@ -13,13 +13,15 @@ $(document).ready(function() {
 
 // wss callback handler
 function refresh_environmenttable(message) {
-  if (message.response) {
+  if (message.response && message.pk) {
+    $(`#environmentControl-${message.pk}`).replaceWith(message.response)
+  } else if (message.response) {
     $("#environmentControl").replaceWith(message.response)
   }
 }
 
 
-// attech button click event handler
+// attach button click event handler
 $(document).on('click', '[data-bs-target="#environmentsModal"]', function () {
   const objectId = $(this).data('id'); // Get the id from the button's data-id attribute
   $("#environmentControl").replaceWith('<div id="environmentControl" class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>')
@@ -33,7 +35,7 @@ $(document).on('click', '[data-bs-target="#environmentsModal"]', function () {
   }, 200)
 })
 
-// attech button click event handler
+// attach button click event handler
 $(document).on('click', '[id=environmentControl][data-id][data-autoadd]', function () {
   const objectId = $(this).data('id'); // Get the id from the button's data-id attribute
   $("#environmentControl").replaceWith('<div id="environmentControl" class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>')

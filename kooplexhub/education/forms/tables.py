@@ -37,9 +37,9 @@ class TableAssignment(tables.Table):
     def render_button(self, record):
         if record.state == record.ST_WORKINPROGRESS:
             return format_html(f"""
-<div class="form-check form-switch">
-  <input class="form-check-input" type="checkbox" name="userassignmentbinding_ids" name="selection" value="{record.id}" data-course="{record.assignment.course.id}" />
-</div>
+<button type="submit" data-id="{record.id}" data-submit="handin" class="badge rounded-pill bg-warning shadow-sm text-dark p-2 border border-secondary">
+  <i class="bi bi-arrow-right-square me-1"></i>Hand in
+</button>
             """)
         elif record.state == record.ST_COLLECTED:
             return format_html(f"""

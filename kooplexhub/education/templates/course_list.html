@@ -69,22 +69,15 @@ $(document).ready(function () {
 })
 
 $(document).on('click', '[type=submit][data-submit=handin][data-id]', function() {
-  let pk=$(this).data('id')
-  let id_list = $(`[name="userassignmentbinding_ids"][data-course="${pk}"]:checked`).map(function() {
-    return parseInt(this.value)
-  }).get()
-  if (id_list.length) {
-	console.log(pk, id_list)
-        setTimeout(function() {
-          wss_handin.send(JSON.stringify({
-            'pk': pk,
-            'uabs': id_list,
-          }))
-        }, 200)
-    }
-
-
-})
+  let pk=$(this).data('id');
+    console.log(pk)
+   setTimeout(function() {
+     wss_handin.send(JSON.stringify({
+       'pk': pk,
+     }))
+   }, 200);
+	$(this).attr('disabled', true);
+});
 </script>
 {% endblock %}
 

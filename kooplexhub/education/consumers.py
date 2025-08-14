@@ -194,6 +194,7 @@ class CourseGetContainersConsumer(SyncSkeleton):
         ucb=UserCourseBinding.objects.get(user__id=self.userid, course__id=courseid)
         message_back = {
             "feedback": message if message else f"Container list refreshed",
+            "pk": courseid,
             "response": render_to_string("widgets/widget_containertable.html", {"containers": list(map(lambda o: o.container, bindings)), "pk": ucb.id }),
         }
         logger.debug(message_back)
@@ -229,17 +230,32 @@ class CourseGetContainersConsumer(SyncSkeleton):
 
 
 class HandinConsumer(AsyncSkeleton):
-    identifier_='handin'
+    identifier_ = 'handin'
+
     async def receive(self, text_data):
-        parsed = json.loads(text_data)
-        logger.debug(parsed)
-        cid = int(parsed.get('pk'))
-        idlist = parsed.get('uabs')
-        logger.info(idlist)
-        bindings = await sync_to_async(list)(UserAssignmentBinding.objects.filter(user__id=self.userid, id__in=idlist, assignment__course__id=cid))
-        for b in bindings:
-            await sync_to_async(b.collect)()
-            await self.send(text_data=json.dumps({"feedback": f'A snapshot is being prepared for {b.assignment.name}.' }))
+        try:
+            parsed = json.loads(text_data or "{}")
+            bid = int(parsed.get("pk"))
+        except (json.JSONDecodeError, TypeError, ValueError):
+            return
+        binding, assignment_name = await sync_to_async(
+            lambda: (
+                lambda b: (b, b.assignment.name) if b else (None, None)
+            )(
+                UserAssignmentBinding.objects
+                .select_related("assignment")              # avoid extra query
+                .filter(user_id=self.userid, id=bid)
+                .first()
+            )
+        )()
+        if binding:
+            await self.send(text_data=json.dumps({
+                "feedback": f"A snapshot is being prepared for assignment {assignment_name}. Hand in button disabled."
+            }))
+            await sync_to_async(binding.collect)()
+        else:
+            msg = f"Assignment binding {bid} for user_id {self.userid} does not exist"
+            logger.error(msg)
 
 
 class CourseConfigConsumer(SyncSkeleton, Config):

@@ -1,58 +1,113 @@
-{% load container_buttons %}
 {% load django_tables2 %}
+
 
 <div class="container py-5">
   <div class="outer-frame shadow-light">
-    <!-- Tabs -->
-    <ul class="nav nav-tabs" id="mainTabs" role="tablist">
+    <ul class="nav nav-tabs" id="mainTabs-{{ course.id }}" role="tablist">
       <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="name-tab" data-bs-toggle="tab" data-bs-target="#name" type="button" role="tab" aria-controls="name" aria-selected="true" data-toggle="tooltip" title="Teachers: {{ course.teachers }}">
+        {# Tab button IDs are unique and used by aria-labelledby on the pane #}
+        <button
+          class="nav-link active"
+          id="name-tab-{{ course.id }}"
+          data-bs-toggle="tab"
+          data-bs-target="#name-pane-{{ course.id }}"
+          type="button"
+          role="tab"
+          aria-controls="name-pane-{{ course.id }}"
+          aria-selected="true"
+          data-bs-toggle="tooltip"  {# Bootstrap 5 tooltip attr #}
+          title="Teachers: {{ course.teachers|join:", " }}"
+        >
           {{ course.name }}
         </button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" id="assignments-tab" data-bs-toggle="tab" data-bs-target="#assignments" type="button" role="tab" aria-controls="assignments" aria-selected="false">
+        <button
+          class="nav-link"
+          id="assignments-tab-{{ course.id }}"
+          data-bs-toggle="tab"
+          data-bs-target="#assignments-pane-{{ course.id }}"
+          type="button"
+          role="tab"
+          aria-controls="assignments-pane-{{ course.id }}"
+          aria-selected="false"
+        >
           Assignments
         </button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" id="environments-tab" data-bs-toggle="tab" data-bs-target="#environments" type="button" role="tab" aria-controls="environments" aria-selected="false">
+        <button
+          class="nav-link"
+          id="environments-tab-{{ course.id }}"
+          data-bs-toggle="tab"
+          data-bs-target="#environments-pane-{{ course.id }}"
+          data-id="{{ course.id }}"
+          type="button"
+          role="tab"
+          aria-controls="environments-pane-{{ course.id }}"
+          aria-selected="false"
+        >
           Environments
         </button>
       </li>
     </ul>
 
-    <!-- Tab panes -->
     <div class="tab-content">
-      <!-- Name Tab -->
-      <div class="tab-pane fade show active" id="name" role="tabpanel" aria-labelledby="name-tab">
+      <div
+        class="tab-pane fade show active"
+        id="name-pane-{{ course.id }}"
+        role="tabpanel"
+        aria-labelledby="name-tab-{{ course.id }}"
+      >
         <div class="inner-frame">
-              <div class="card bg-transparent border-muted h-100">
-                <div class="card-body">
-                  <p class="mb-3 text-secondary">{{ course.description }}</p>
-                  <p class="mb-3 text-secondary">Teacher{{ course.teachers|pluralize  }}: {{ course.teachers|join:", " }}</p>
-                </div>
-              </div>
-
+          <div class="card bg-transparent border-muted h-100">
+            <div class="card-body">
+              <p class="mb-3 text-secondary">{{ course.description }}</p>
+              <p class="mb-3 text-secondary">
+                Teacher{{ course.teachers|pluralize }}: {{ course.teachers|join:", " }}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Assignments Tab -->
-      <div class="tab-pane fade" id="assignments" role="tabpanel" aria-labelledby="assignments-tab">
+      <div
+        class="tab-pane fade"
+        id="assignments-pane-{{ course.id }}"
+        role="tabpanel"
+        aria-labelledby="assignments-tab-{{ course.id }}"
+      >
         <div class="inner-frame">
           {% render_table t_assignments %}
-    	    <button type="submit" data-id="{{course.id}}" data-submit="handin" class="position-absolute bottom-0 end-0 badge rounded-pill bg-warning shadow-sm text-dark p-2 border border-secondary" style="transform: translate(0%, 50%);">
-    	      <i class="bi bi-arrow-right-square me-1"></i>Hand in
-                </button>
         </div>
       </div>
 
-      <!-- Environments Tab -->
-      <div class="tab-pane fade" id="environments" role="tabpanel" aria-labelledby="environments-tab">
+      <div
+        class="tab-pane fade"
+        id="environments-pane-{{ course.id }}"
+        role="tabpanel"
+        aria-labelledby="environments-tab-{{ course.id }}"
+      >
         <div class="inner-frame">
-          {% button_environment course %}
+          <div id="environmentControl-{{ course.id }}" class="spinner-border" role="status"></div>
         </div>
       </div>
     </div>
   </div>
 </div>
+
+
+<script>
+	// attach button click event handler
+$(document).on('click', 'button[role=tab][id^=environments-tab-]', function () {
+  const objectId = $(this).data('id'); // Get the id from the button's data-id attribute
+
+  // Send the requested resource id via WebSocket to kooplex
+  var data = {
+      pk: objectId,
+  }
+  setTimeout(function() {
+      wss_fetchcontainers.send(JSON.stringify(data))
+  }, 200)
+})
+</script>
