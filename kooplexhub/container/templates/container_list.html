@@ -18,11 +18,24 @@ Environments are user workspaces with limited resources, attached volumes and pr
 
 {# render the container cards #}
 {% block content %}
-<div id="listPane" class="d-flex flex-wrap justify-content-center gap-3">
-    {# new container create card #}
-    <div class="card-container" id="card-container-new">
-      {% include 'container.html' with container=empty_container %}
+{# new container create #}
+<div id="newContainer" class="modal fade createcontainer-modal" tabindex="-1" aria-labelledby="containerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="containerModalLabel">Create a new environment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="container-fluid p-0" id="card-container-new">
+                {% include 'container.html' with container=empty_container %}
+              </div>
+            </div>
+        </div>
     </div>
+</div>
+
+<div id="listPane" class="d-flex flex-wrap justify-content-center gap-3">
     {% for container in containers %}
       <div class="card-container" id="card-container-{{ container.id }}">
         {% include 'container.html' %}
@@ -68,14 +81,11 @@ const wsURLs = {
 </script>
 <script>
 
-	//FIXME EZ MI A SZÖSZ???
-{% if form %}
 $(document).ready(function() {
-  m = $("#containerInfoModal")
-  console.log( m )
-  m.modal("show")
+  $("#add").on('click', function() {
+    $("#newContainer").modal("show");
+  })
 })
-{% endif %}
 
 
 </script>

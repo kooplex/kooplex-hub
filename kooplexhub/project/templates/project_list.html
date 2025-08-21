@@ -19,12 +19,25 @@ Projects are a good way to collaborate with each other without much restriction.
 {% endblock %}
 
 
+{# render the project cards #}
 {% block content %}
-<div id="listPane" class="d-flex flex-wrap justify-content-center gap-3">
-    {# new project create card #}
-    <div class="card-container" id="card-container-new">
-      {% include 'project.html' with is_admin=True project=empty_project %}
+{# new project create or join #}
+<div id="newProject" class="modal fade createproject-modal" tabindex="-1" aria-labelledby="projectModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="projectModalLabel">Create a new environment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="container-fluid p-0" id="card-container-new">
+                 {% include 'project.html' with is_admin=True project=empty_project %}
+              </div>
+            </div>
+        </div>
     </div>
+</div>
+<div id="listPane" class="d-flex flex-wrap justify-content-center gap-3">
     {% for upb in userprojectbindinglist %}
       <div class="card-container" id="card-container-{{ project.id }}">
         {% include 'project.html' with project=upb.project projectcontainerbindings=upb.projectcontainerbindings is_admin=upb.is_admin %}
@@ -86,6 +99,11 @@ const wsURLs = {
 }
 
 
+$(document).ready(function() {
+  $("#add").on('click', function() {
+    $("#newProject").modal("show");
+  })
+})
 
 
 //FIXME should be placed somewhere else

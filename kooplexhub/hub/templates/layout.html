@@ -59,6 +59,16 @@
       overflow-y: auto;
     }
 
+    .btn-icon-sm {
+      width: 1.5rem;
+      height: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-icon-sm i {
+      font-size: 1rem; /* bigger icon */
+    }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
@@ -91,20 +101,26 @@
 
   <!-- Right: Search and Login -->
   <div class="d-flex align-items-center gap-2">
+    <!-- Add a new item -->
+    <button id="add" class="btn btn-sm btn-outline-light btn-icon-sm">
+      <i class="bi bi-plus"  style="font-size: 1.7rem; line-height: 1;"></i>
+    </button>
+  
     <!-- Search -->
     <div class="position-relative d-flex align-items-center">
-      <button id="searchToggle" class="btn btn-sm btn-outline-light me-1" aria-label="Search">
+      <button id="searchToggle" class="btn btn-sm btn-outline-light btn-icon-sm" aria-label="Search">
         <i class="bi bi-search"></i>
       </button>
-      <input type="text" id="searchInput" class="form-control form-control-sm bg-dark text-light" placeholder="{{search_placeholder|default:'Search...'}}" data-search="{{search_what}}"
+      <input type="text" id="searchInput" class="form-control form-control-sm bg-dark text-light" placeholder="{{search_placeholder|default:'Search...'}}" data-search="{{search_what}}">
     </div>
-
+  
     <!-- Messages -->
     {% if user.is_authenticated %}
-    <button class="btn btn-sm btn-outline-light" data-bs-toggle="offcanvas" data-bs-target="#messagesPanel" aria-controls="messagesPanel">
+    <button class="btn btn-sm btn-outline-light btn-icon-sm" data-bs-toggle="offcanvas" data-bs-target="#messagesPanel" aria-controls="messagesPanel">
       <i class="bi bi-chat-dots"></i>
     </button>
     {% endif %}
+  
     <!-- Login -->
     <a href="{{ url_login }}" class="btn btn-sm btn-outline-light">Login</a>
   </div>

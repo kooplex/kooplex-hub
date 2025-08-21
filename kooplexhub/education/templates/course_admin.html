@@ -22,23 +22,9 @@ Create a new course or import courses from Canvas using a canvas api token <a hr
 
 {% block content %}
 {% if user.profile.can_createcourse %}
-<div class="container-fluid">
-    <div class="d-flex flex-wrap gap-3">
-        <div class="card rounded rounded-3 mb-3 border border-2 border-warning shadow bg-light">
-            <div class="card-body">
-                <div class="d-flex flex-column">
-                    {% button_new_course user %}
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-
 {# new course creation modal #}
 {% include modal_new %}
 
-{% else %}
 {% if not coursebindinglist %}
 <p>You cannot create a course. You are redirected to <a href="{% url 'education:courses' %}">Courses</a></p>
 <script>
