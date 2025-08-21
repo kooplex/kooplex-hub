@@ -15,9 +15,7 @@ $(document).on('click', '[name=assignment][data-id]', function() {
 
 
 $(document).on('click', '[name="save"][data-id][data-instance=course]', function() {
-    const pk = $(this).data('id')
-    save_course_config(pk)
-    hideSaveChanges(pk, 'course')
+    wss_courseconfig.createnew();
 })
 
 

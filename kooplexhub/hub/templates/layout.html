@@ -42,6 +42,14 @@
       padding: 10px 5px;
     }
 
+    .nav-link i {
+      font-size: 1.1rem;
+    }
+
+    .nav-link img {
+      height: 1.4rem;
+    }
+
     .sidebar .nav-link.active {
       background-color: #343a40;
       color: #fff;
@@ -177,6 +185,107 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/x-editable/1.5.1/bootstrap-editable/js/bootstrap-editable.min.js"></script>
 
     <script src="{% static 'common.js' %}"></script>
+
+<script>
+// Save the active tab per group and trigger data load on show
+$(document).on('shown.bs.tab', 'button[data-bs-toggle="tab"]', function (e) {
+  const btn = e.target;
+  const group = btn.closest('.nav-tabs')?.id;
+  const tabId = btn.id;
+	  console.log(btn)
+	  console.log(group)
+	  console.log(tabId)
+  if (group && tabId) {
+    localStorage.setItem('activeTab:' + group, tabId); // per-card persistence
+  }
+
+  // If it's an Environments tab, fire the data fetch
+  if (tabId && tabId.startsWith('environments-tab-')) {
+    const objectId = $(btn).data('id');
+    const payload = { pk: objectId };
+    setTimeout(function () {
+      wss_fetchcontainers.send(JSON.stringify(payload));
+    }, 200);
+  }
+});
+
+// Restore each card's saved tab on load
+$(function () {
+  document.querySelectorAll('.nav-tabs[id]').forEach(function (nav) {
+    const key = 'activeTab:' + nav.id;
+    const savedTabId = localStorage.getItem(key);
+    if (!savedTabId) return;
+    const btn = document.getElementById(savedTabId);
+    if (!btn) return;
+    new bootstrap.Tab(btn).show();
+  });
+});
+</script>
+
+{% comment %}
+<script>
+// Save active tab when changed and trigger data load
+$(document).on('shown.bs.tab', 'button[data-bs-toggle="tab"]', function (e) {
+  const tabId = $(e.target).attr('id'); // e.g. environments-tab-123
+	  console.log(tabId)
+  localStorage.setItem('activeTab', tabId);
+
+  // If it's an environments tab, trigger WebSocket fetch
+  if (tabId.startsWith('environments-tab-')) {
+    const objectId = $(e.target).data('id');
+    var data = { pk: objectId };
+    setTimeout(function() {
+      wss_fetchcontainers.send(JSON.stringify(data));
+    }, 200);
+  }
+});
+
+// Restore active tab on page load
+$(document).ready(function () {
+  const activeTabId = localStorage.getItem('activeTab');
+  if (activeTabId) {
+    const tabButton = $('#' + activeTabId);
+    if (tabButton.length) {
+      const tab = new bootstrap.Tab(tabButton[0]);
+      tab.show();
+    }
+  }
+});
+</script>
+
+<script>
+  // Save the active tab whenever a tab is shown
+  document.addEventListener('shown.bs.tab', function (e) {
+    const tabBtn = e.target; // the button that just became active
+    const group   = tabBtn.closest('.nav-tabs')?.id;  // e.g., "mainTabs-42"
+    const tabId   = tabBtn.id;                        // e.g., "assignments-tab-42"
+	  console.log(tabBtn)
+	  console.log(group)
+	  console.log(tabId)
+    if (group && tabId) {
+      localStorage.setItem('activeTab:' + group, tabId);
+    }
+  });
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.nav-tabs[id]').forEach(function (nav) {
+      const key = 'activeTab:' + nav.id;
+      const savedTabId = localStorage.getItem(key);
+      if (savedTabId) {
+        const btn = document.getElementById(savedTabId);
+        if (btn) {
+          // Bootstrap 5 API to show a tab
+          const tab = new bootstrap.Tab(btn);
+          tab.show();
+        }
+      }
+    });
+  });
+</script>
+{% endcomment %}
+
+
 
     <script>
   const searchInput = document.getElementById("searchInput");

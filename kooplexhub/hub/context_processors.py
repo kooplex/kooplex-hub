@@ -16,7 +16,7 @@ def menu(request):
         icon = item.get('icon')
         target = item.get('target')
         if re.match(__r_ext, icon):
-            item['ico'] = format_html(f'<img src="{icon}" width="20" alt="[]" class="pe-1">')
+            item['ico'] = format_html(f'<img src="{icon}" alt="[]" class="pe-1">')
         elif re.match(__r_ico, icon):
             item['ico'] = format_html(f'<i class="{icon} pe-1"></i>')
         else:

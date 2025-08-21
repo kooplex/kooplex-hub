@@ -97,17 +97,3 @@
 </div>
 
 
-<script>
-	// attach button click event handler
-$(document).on('click', 'button[role=tab][id^=environments-tab-]', function () {
-  const objectId = $(this).data('id'); // Get the id from the button's data-id attribute
-
-  // Send the requested resource id via WebSocket to kooplex
-  var data = {
-      pk: objectId,
-  }
-  setTimeout(function() {
-      wss_fetchcontainers.send(JSON.stringify(data))
-  }, 200)
-})
-</script>
