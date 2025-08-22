@@ -2,7 +2,7 @@
 {% load container_buttons %}
 {% load course_buttons %}
 {% load render_table from django_tables2 %}
-<div class="container mt-4">
+<div class="container">
     <div class="tab-container">
         <!-- Tabs -->
 	<ul class="nav nav-tabs" role="tablist" id="teachertabs-{{course.id}}">
@@ -79,6 +79,22 @@
                     <i class="bi bi-card-image" title="Image"></i>
                 </button>
             </li>
+            <li class="nav-item" role="presentation">   
+               <button 
+		 class="nav-link {% if new%}disabled{% endif %}" 
+                 id="environments-tab-{{pk}}"
+                 data-id="{{pk}}"
+		 data-bs-toggle="tab" 
+		 data-bs-target="#environments-pane-{{pk}}" 
+		 type="button" 
+		 role="tab" 
+		 aria-controls="environments-pane-{{pk}}" 
+		 aria-selected="true" 
+		 data-text="Environments" 
+		 data-icon="bi bi-boxes">
+                    Environments
+                </button>
+            </li>
             <li class="nav-item" role="presentation">
                 <button 
 		  class="nav-link {% if new%}disabled{% endif %}" 
@@ -124,6 +140,11 @@
             </div>
             <div class="tab-pane fade" id="content-five-{{pk}}" role="tabpanel" aria-labelledby="tab-five-{{pk}}">
 		{% container_image course "preferred_image" callback="wss_courseconfig.register_changes" %}
+            </div>
+            <div class="tab-pane fade" id="environments-pane-{{pk}}" role="tabpanel" aria-labelledby="environments-tab-{{pk}}">
+              <div class="inner-frame">
+                <div id="environmentControl-{{pk}}" class="spinner-border" role="status"></div>
+              </div>
             </div>
             <div class="tab-pane fade" id="content-six-{{pk}}" role="tabpanel" aria-labelledby="tab-six-{{pk}}">
 		{% link_drop course user as drop_url %}

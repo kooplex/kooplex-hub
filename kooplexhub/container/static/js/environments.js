@@ -36,9 +36,9 @@ $(document).on('click', '[data-bs-target="#environmentsModal"]', function () {
 })
 
 // attach button click event handler
-$(document).on('click', '[id=environmentControl][data-id][data-autoadd]', function () {
+$(document).on('click', '[id^=environmentControl-][data-id][data-autoadd]', function () {
   const objectId = $(this).data('id'); // Get the id from the button's data-id attribute
-  $("#environmentControl").replaceWith('<div id="environmentControl" class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>')
+  $(`#environmentControl-${objectId}`).replaceWith(`<div id="environmentControl-${objectId}" class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>`)
 
   // Send the requested resource id via WebSocket to kooplex
   var data = {

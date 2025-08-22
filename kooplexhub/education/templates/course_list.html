@@ -11,20 +11,6 @@ For help on courses see the documentation <a href="https://xwiki.vo.elte.hu/en/k
 <link href="{% static 'css/cardlist.css' %}" rel="stylesheet">
 {% endblock %}
 
-{# the search bar #}
-{% comment %}
-{% block search %}
-{% if coursebindinglist %}
-<div class="card border border-light border-3 mx-5 mb-3 rounded-3">
-  <div class="input-group">
-    <span class="input-group-text"><span class="bi bi-search"></span></span>
-    <input class="form-control" type="text" id="search_course" placeholder="Search course" title="Type in a name" autofocus >
-  </div>
-</div>
-{% endif %}
-{% endblock %}
-{% endcomment %}
-
 
 {# render the course cards #}
 {% block content %}
