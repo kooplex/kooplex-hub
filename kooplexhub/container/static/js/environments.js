@@ -20,21 +20,6 @@ function refresh_environmenttable(message) {
   }
 }
 
-
-// attach button click event handler
-$(document).on('click', '[data-bs-target="#environmentsModal"]', function () {
-  const objectId = $(this).data('id'); // Get the id from the button's data-id attribute
-  $("#environmentControl").replaceWith('<div id="environmentControl" class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>')
-
-  // Send the requested resource id via WebSocket to kooplex
-  var data = {
-      pk: objectId,
-  }
-  setTimeout(function() {
-      wss_fetchcontainers.send(JSON.stringify(data))
-  }, 200)
-})
-
 // attach button click event handler
 $(document).on('click', '[id^=environmentControl-][data-id][data-autoadd]', function () {
   const objectId = $(this).data('id'); // Get the id from the button's data-id attribute

@@ -1,5 +1,5 @@
 {% if containers|length %}
-<table id="environmentControl-{{pk}}">
+<table id="environmentControl-{{objectId}}">
     {% for container in containers %}
       <tr>
 	  <td>{{ container.render_start_html }}</td>
@@ -11,7 +11,7 @@
     {% endfor %}
 </table>
 {% else %}
-<button id="environmentControl-{{pk}}"  class="btn btn-secondary btn-sm rounded rounded-5 border border-2 border-dark mb-2" data-id="{{pk}}" data-autoadd="container">
+<button id="environmentControl-{{objectId}}"  class="btn btn-secondary btn-sm rounded rounded-5 border border-2 border-dark mb-2" data-id="{{pk}}" data-autoadd="container">
     <i class="bi bi-boxes pe-1"></i>Generate default environment
 </button>
 {% endif %}

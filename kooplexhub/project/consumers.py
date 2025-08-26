@@ -127,7 +127,8 @@ class ProjectGetContainersConsumer(SyncConsumer):
         upb=UserProjectBinding.objects.get(user__id=self.userid, project__id=projectid)
         message_back = {
             "feedback": f"Container list refreshed",
-            "response": render_to_string("widgets/widget_containertable.html", {"containers": list(map(lambda o: o.container, bindings)), "pk": upb.id }),
+            "pk": projectid,
+            "response": render_to_string("widgets/widget_containertable.html", {"containers": list(map(lambda o: o.container, bindings)), "pk": upb.id, "objectId": projectid }),
         }
         logger.debug(message_back)
         self.send(text_data=json.dumps(message_back))
