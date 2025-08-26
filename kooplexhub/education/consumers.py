@@ -28,8 +28,8 @@ class AssignmentScoreConsumer(SyncSkeleton):
         assignment=parsed.get('assignment')
         course_id=parsed.get('courseid')
         uab=UserAssignmentBinding.objects.filter(user__username=student, assignment__name=assignment, assignment__course__id=course_id).first()
-#        uab=UserAssignmentBinding.objects.filter(user__username=student, assignment__name=assignment, course__id=course_id).first()
         if not uab:
+            logger.warn("received wrong argument list")
             return
         if query=='fetch':
             self.send(text_data=json.dumps({'student': student, 'assignment': assignment, 'score': uab.score, 'comment': uab.feedback_text}))
@@ -63,14 +63,27 @@ class AssignmentConsumer(SyncSkeleton):
         # Function to dynamically create the table class
         def create_table_class(df, editable_columns):
             table_attrs = {
-                'Meta': type('Meta', (), {'attrs': {'class': 'table table-bordered table-hover'}})  # Bootstrap styling
+                'Meta': type('Meta', (), {'attrs': {'class': 'table table-bordered table-hover mb-0'}})  # Bootstrap styling
             }
             # Dynamically add columns
             for col in df.columns:
-                table_attrs[col] = tables.Column(
-                    orderable = False,
-                    attrs={'td': {'data-editable': 'true', 'data-assignment': col}} if col in editable_columns else {}
-                )
+                if col in editable_columns:
+                    template = f"""
+                    <span class="score-popover"
+                          role="button" tabindex="0"
+                          data-bs-toggle="popover" data-bs-trigger="manual"
+                          data-assignment="{col}"
+                          data-student="{{{{ record.user }}}}">
+                      {{{{ record.{col}|default:"—" }}}}
+                    </span>
+                    """
+                    table_attrs[col] = tables.TemplateColumn(
+                        template_code=template,
+                        orderable=False,
+                        verbose_name=col
+                    )
+                else:
+                    table_attrs[col] = tables.Column(orderable=False, verbose_name=col)
             # Create and return the table class
             return type('DynamicEditableTable', (tables.Table,), table_attrs)
         # folders for new assignment
@@ -342,7 +355,7 @@ class CourseConfigConsumer(SyncSkeleton, Config):
                 new_value=Image.objects.get(id=new_value)
                 self._chg_image(course, new_value, attribute='preferred_image')
             elif field == 'users':
-                self._chg_user_bindings(course, new_value, changes.get('marked'), f"Members of course {course.name} changed:\n")
+                self._chg_user_bindings(course, new_value, changes.get('marked', []), f"Members of course {course.name} changed:\n")
             elif field=="volumes":
                 self._chg_bindings(course, new_value, Volume, VolumeCourseBinding, 'volume', f"Course mounts of {course.name} changed:\n")
             # Check if the field is a valid attribute of the model

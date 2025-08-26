@@ -1,26 +1,24 @@
 {% extends 'django_table.html' %}
 
 {% block tableextension %}
-<style>
-    /* Style for the popup input bubble */
-    .popup {
-        position: absolute;
-        background: white;
-        border: 1px solid #ddd;
-        box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
-        padding: 10px;
-        display: none;
-        z-index: 10;
-    }
-</style>
+<template id="score-popover-template" data-id="{{course_id}}">
+  <div class="p-2" style="width: 240px;">
+    <div class="mb-2">
+      <label class="form-label mb-1">Score</label>
+      <input type="number" class="form-control form-control-sm js-score">
+    </div>
+    <div class="mb-2">
+      <label class="form-label mb-1">Comment</label>
+      <input type="text" class="form-control form-control-sm js-comment">
+    </div>
+    <div class="d-flex justify-content-end gap-2">
+      <button type="button" class="btn btn-sm btn-secondary js-cancel">Cancel</button>
+      <button type="button" class="btn btn-sm btn-primary js-save">Save</button>
+    </div>
+  </div>
+</template>
 
-<!-- Floating Popup for Input -->
-<div class="popup" id="popup">
-    <label>Score:</label>
-    <input type="number" id="popup-score" class="form-control">
-    <label>Comment:</label>
-    <input type="text" id="popup-comment" class="form-control">
-    <input type="hidden" id="popup-courseid" value="{{course_id}}">
-    <button id="save-btn" class="btn btn-primary btn-sm mt-2">Save</button>
-</div>
+<style>
+    .popover { z-index: 1056; }
+</style>
 {% endblock %}
