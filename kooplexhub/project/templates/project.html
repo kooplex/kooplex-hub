@@ -11,14 +11,10 @@
                     {% button_fetch_joinable_projects user %}
 	{% endif %}
         {% field_name project 'project' 'mx-2 w-100 p-2' 'wss_projectconfig.register_changes' %}
-        {#% include 'widgets/widget_input.html' with orig=project.name pk=project.id field="name" placeholder="Give a unique name to the project" instance="project" %#}
 	{% project_scope project %}
     </div>
     <div class="card-body">
         {% include 'widgets/pmulti.html' %} {# FIXME merge pmulti and multitabs #}
-    </div>
-    <div class="card-footer">
-	{% button_environment project %}
         <div class="d-flex justify-content-end">
 	    {% include 'widgets/widget_savechanges.html' with pk=project.id obj="project" %}
         </div>

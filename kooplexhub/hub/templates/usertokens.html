@@ -1,26 +1,16 @@
 {% extends "layout.html" %}
-{% block page_title %}Kooplex Home ??{% endblock %}
-
-{% block help %} 
-{% include 'homehelp.html' %}
-  {% endblock %}
-
 {% load static %}
 
-{% block bodycontent %}
-
+{% block content %}
 <div class="container mt-4">
-	{% include 'widgets/card_tokens.html' %}
+{% include 'widgets/card_tokens.html' %}
 </div>
+{% endblock %}
 
-<div class="container mt-4">
-	{% include 'widgets/widget_resources.html' %}
-</div>
-
+{% block scripts %}
 <script>
 const wsURLs = {
   tokens: "{{ wss_token_config }}",
-  nodes: "{{ wss_resources }}",
 }
 </script>
 <script src="{% static 'js/wss.js' %}"></script>

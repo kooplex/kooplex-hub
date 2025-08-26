@@ -13,7 +13,6 @@ urlpatterns = [
     path('', views.IndexView.as_view(), name = 'indexpage'),
     path('monitoring/', views.MonitoringView.as_view(), name = 'monitoring'),
     path('usertokens/', views.UserTokenView.as_view(), name = 'usertokens'),
-    path('mywidgets/', views.widgets),
 #    path('gitea/', "gitea.vo.elte.hu", name = 'gitea'),
 #    path('seafile/', "seafile.vo.elte.hu", name = 'seafile'),
 

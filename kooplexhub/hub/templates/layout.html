@@ -75,7 +75,7 @@
       justify-content: center;
     }
     .btn-icon-sm i {
-      font-size: 1rem; /* bigger icon */
+      font-size: .9rem;
     }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
@@ -110,9 +110,11 @@
   <!-- Right: Search and Login -->
   <div class="d-flex align-items-center gap-2">
     <!-- Add a new item -->
+    {% if user.is_authenticated %}
     <button id="add" class="btn btn-sm btn-outline-light btn-icon-sm">
-      <i class="bi bi-plus"  style="font-size: 1.7rem; line-height: 1;"></i>
+      <i class="bi bi-plus"  style="font-size: 1.5rem; line-height: 1;"></i>
     </button>
+    {% endif %}
   
     <!-- Search -->
     <div class="position-relative d-flex align-items-center">
@@ -129,8 +131,28 @@
     </button>
     {% endif %}
   
-    <!-- Login -->
-    <a href="{{ url_login }}" class="btn btn-sm btn-outline-light">Login</a>
+    <!-- Login or profile  -->
+    {% if user.is_authenticated %}
+    <div class="d-flex">
+    <div class="dropdown">
+    <button class="btn btn-sm btn-outline-light btn-icon-sm"
+	    type="button"
+            id="profileButton"
+            data-bs-toggle="dropdown"
+            aria-expanded="false">
+      <i class="bi bi-person"></i>
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileButton">
+	  <li><a class="dropdown-item" href="{% url 'usertokens' %}"><i class="bi bi-incognito pe-2"></i>{{ user.first_name }} {{ user.last_name }}</a></li>
+          <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="bi bi-box-arrow-right pe-2"></i>Logout</a></li>
+          <li><a class="dropdown-item" href="https://xwiki.vo.elte.hu/en/kooplex-manual/overview" target="_blank"><i class="bi bi-book pe-2"></i>Documentation</a></li>
+          <li><a class="dropdown-item" target="_blank" href="https://kooplex.github.io/#portfolioModal3"><i class="bi bi-info-circle pe-2"></i>About/Contact us</a></li>
+    </ul>
+    </div>
+    </div>
+    {% else %}
+    <a href="{{ url_login }}" class="btn btn-sm btn-outline-light btn-icon-sm"><i class="bi bi-door-open"></i></a>
+    {% endif %}
   </div>
 </nav>
 
@@ -180,6 +202,8 @@
     <!-- Popper.js and Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
 
     <!-- Patched Bootstrap-Editable for Bootstrap 5 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/x-editable/1.5.1/bootstrap-editable/js/bootstrap-editable.min.js"></script>
@@ -221,69 +245,6 @@ $(function () {
   });
 });
 </script>
-
-{% comment %}
-<script>
-// Save active tab when changed and trigger data load
-$(document).on('shown.bs.tab', 'button[data-bs-toggle="tab"]', function (e) {
-  const tabId = $(e.target).attr('id'); // e.g. environments-tab-123
-	  console.log(tabId)
-  localStorage.setItem('activeTab', tabId);
-
-  // If it's an environments tab, trigger WebSocket fetch
-  if (tabId.startsWith('environments-tab-')) {
-    const objectId = $(e.target).data('id');
-    var data = { pk: objectId };
-    setTimeout(function() {
-      wss_fetchcontainers.send(JSON.stringify(data));
-    }, 200);
-  }
-});
-
-// Restore active tab on page load
-$(document).ready(function () {
-  const activeTabId = localStorage.getItem('activeTab');
-  if (activeTabId) {
-    const tabButton = $('#' + activeTabId);
-    if (tabButton.length) {
-      const tab = new bootstrap.Tab(tabButton[0]);
-      tab.show();
-    }
-  }
-});
-</script>
-
-<script>
-  // Save the active tab whenever a tab is shown
-  document.addEventListener('shown.bs.tab', function (e) {
-    const tabBtn = e.target; // the button that just became active
-    const group   = tabBtn.closest('.nav-tabs')?.id;  // e.g., "mainTabs-42"
-    const tabId   = tabBtn.id;                        // e.g., "assignments-tab-42"
-	  console.log(tabBtn)
-	  console.log(group)
-	  console.log(tabId)
-    if (group && tabId) {
-      localStorage.setItem('activeTab:' + group, tabId);
-    }
-  });
-</script>
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('.nav-tabs[id]').forEach(function (nav) {
-      const key = 'activeTab:' + nav.id;
-      const savedTabId = localStorage.getItem(key);
-      if (savedTabId) {
-        const btn = document.getElementById(savedTabId);
-        if (btn) {
-          // Bootstrap 5 API to show a tab
-          const tab = new bootstrap.Tab(btn);
-          tab.show();
-        }
-      }
-    });
-  });
-</script>
-{% endcomment %}
 
 
 
