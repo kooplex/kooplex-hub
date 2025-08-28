@@ -32,14 +32,18 @@ class SyncConsumer(WebsocketConsumer):
     def disconnect(self, close_code):
         pass
 
-class ProjectConfigConsumer(SyncConsumer, Config):
-    template='project.html'
-    instance_reference='project'
+class UserHandler(SyncConsumer):
+    def get_course(self, course_id):
+        #FIXME: code repetition!
+        c=Course.objects.get(id = course_id)
+        assert self.userid in map(lambda o:o.id, c.teachers), "You are not a teacher to config"
+        return c
 
-    def _chg_user_bindings(self, project, ids, marked, m):
+    def _chg_user_bindings(self, project, ids, marked):
         c=[]
         a=[]
         r=[]
+        m=""
         for user in User.objects.filter(id__in = ids):
             upb, created = UserProjectBinding.objects.get_or_create(project = project, user = user)
             if created:
@@ -58,8 +62,43 @@ class ProjectConfigConsumer(SyncConsumer, Config):
             m += "removed " + ", ".join(r) + "\n"
         if c:
             m += "role changed " + ", ".join(c) + "\n"
-        if a or r or c:
-            self._msg(project, m)
+        return m
+
+    def receive(self, text_data):
+        parsed = json.loads(text_data)
+        logger.debug(parsed)
+        request = parsed.get('request')
+        project_id = parsed.get('pk')
+        project = UserProjectBinding.objects.get(user__id = self.userid, project__id = project_id, role__in = [UserProjectBinding.RL_CREATOR, UserProjectBinding.RL_ADMIN]).project
+        response = {
+            'response': request,
+            'request_id': parsed.get('request_id'),
+            'pk': project_id,
+        }
+        if request=='parse-users-from-file':
+            usernames = parsed.get('content').splitlines()
+            users = User.objects.filter(username__in = usernames)
+            response['ids'] = list(map(lambda u: u.id, users))
+            logger.debug(response)
+            self.send(text_data=json.dumps(response))
+        elif request=='get-users':
+            _uid = lambda b: b.user.id
+            response['ids'] = list(map(_uid, UserProjectBinding.objects.filter(project=project).exclude(user__id=self.userid)))
+            response['marked_ids'] = list(map(_uid, UserProjectBinding.objects.filter(project=project, role__in = [UserProjectBinding.RL_CREATOR, UserProjectBinding.RL_ADMIN]).exclude(user__id=self.userid)))
+            logger.debug(response)
+            self.send(text_data=json.dumps(response))
+        elif request=='save-users':
+            message = self._chg_user_bindings(project, parsed.get('ids'), parsed.get('marked_ids', []))
+            if message:
+                response['feedback'] = message
+                response['refresh'] = render_to_string('widgets/table_users.html', {'pk': project_id, 'table': project.table_collaborators(User.objects.get(id=self.userid))})
+                self.send(text_data=json.dumps(response))
+        else:
+            logger.critical(request)
+
+class ProjectConfigConsumer(SyncConsumer, Config):
+    template='project.html'
+    instance_reference='project'
 
     def receive(self, text_data):
         from kooplexhub.lib.libbase import standardize_str

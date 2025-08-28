@@ -18,7 +18,7 @@ from django.urls import re_path, path
 
 from hub.consumers import TokenConfigurator, ResourceConsumer
 from container.consumers import ContainerFetchlogConsumer, ContainerControlConsumer, ContainerConfigConsumer, MonitorConsumer
-from project.consumers import ProjectGetJoinableConsumer, JoinProjectConsumer, ProjectConfigConsumer, ProjectGetContainersConsumer
+from project.consumers import ProjectGetJoinableConsumer, JoinProjectConsumer, ProjectConfigConsumer, ProjectGetContainersConsumer, UserHandler as ProjectUserHandler
 from education.consumers import CourseGetContainersConsumer, CourseConfigConsumer, HandinConsumer, AssignmentConsumer, AssignmentScoreConsumer, UserHandler as CourseUserHandler
 from canvas.consumers import CanvasGetCoursesConsumer
 
@@ -39,6 +39,7 @@ application = ProtocolTypeRouter({
                 re_path(r"hub/ws/container/config/(?P<userid>\d+)/$", ContainerConfigConsumer.as_asgi()),
                 re_path(r"hub/ws/monitor/node/(?P<userid>\d+)/$", MonitorConsumer.as_asgi()),
                 re_path(r"hub/ws/project/config/(?P<userid>\d+)/$", ProjectConfigConsumer.as_asgi()),
+                re_path(r"hub/ws/project/userhandler/(?P<userid>\d+)/$", ProjectUserHandler.as_asgi()),
                 re_path(r"hub/ws/project/fetchjoinable/(?P<userid>\d+)/$", ProjectGetJoinableConsumer.as_asgi()),
                 re_path(r"hub/ws/project/join/(?P<userid>\d+)/$", JoinProjectConsumer.as_asgi()),
                 re_path(r"hub/ws/project/container/(?P<userid>\d+)/$", ProjectGetContainersConsumer.as_asgi()),

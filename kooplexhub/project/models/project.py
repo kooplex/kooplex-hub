@@ -1,6 +1,7 @@
 import logging
 
 from django.db import models
+from django.template.defaulttags import register
 from django.contrib.auth.models import User
 
 from container.models import Image
@@ -69,6 +70,12 @@ class Project(models.Model):
             return UserProjectBinding.objects.get(project = self, user = user).role == UserProjectBinding.RL_COLLABORATOR
         except UserProjectBinding.DoesNotExist:
             return False
+
+    @register.filter
+    def table_collaborators(self, user=None):
+        from .userprojectbinding import UserProjectBinding
+        from ..forms import TableCollaborators
+        return TableCollaborators(UserProjectBinding.objects.filter(project=self).exclude(user=user))
 
     @property
     def collaborators(self):

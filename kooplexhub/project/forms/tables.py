@@ -13,6 +13,25 @@ from hub.templatetags.extras import render_user as ru
 
 from kooplexhub.common import table_attributes
 
+class TableCollaborators(tables.Table):
+    user=tables.Column(verbose_name = "User", order_by = ('scope', 'user__first_name', 'user__last_name'), orderable = False)
+    username=tables.Column(verbose_name = "username", orderable = False, empty_values = ())
+    role=tables.Column(verbose_name = "role", orderable = False, empty_values = ())
+    class Meta:
+        model = UserProjectBinding
+        fields = ('user',)
+        attrs = table_attributes
+
+    def render_user(self, record):
+        return f"{record.user.first_name}, {record.user.last_name}"
+
+    def render_username(self, record):
+        return record.user.username
+
+    def render_role(self, record):
+        return record.role
+
+
 class TableJoinProject(tables.Table):
     button = tables.Column (verbose_name = 'Join', orderable = False, empty_values = ())
     project = tables.Column (orderable = False)

@@ -194,7 +194,7 @@ class UserHandler {
         return;
       }
 
-      if (data.response==='parsed-users') {
+      if (data.response==='parse-users-from-file') {
         this._parsed_users(data);
       } else if (data.response==='get-users') {
         this._set_users(data);
