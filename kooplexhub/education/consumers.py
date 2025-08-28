@@ -271,6 +271,26 @@ class HandinConsumer(AsyncSkeleton):
             logger.error(msg)
 
 
+class UserHandler(SyncSkeleton):
+    def receive(self, text_data):
+        parsed = json.loads(text_data)
+        logger.debug(parsed)
+        request = parsed.get('request')
+        response = {
+            'response': request,
+            'request_id': parsed.get('request_id'),
+        }
+        #FIXME AUTHORIZE!
+        if request=='parse-users-from-file':
+            usernames = parsed.get('content').splitlines()
+            users = User.objects.filter(username__in = usernames)
+            response['ids'] = list(map(lambda u: u.id, users))
+            logger.debug(response)
+            self.send(text_data=json.dumps(response))
+        else:
+            logger.critical(request)
+
+
 class CourseConfigConsumer(SyncSkeleton, Config):
     template='course.html'
     instance_reference='course'

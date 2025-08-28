@@ -19,7 +19,7 @@ from django.urls import re_path, path
 from hub.consumers import TokenConfigurator, ResourceConsumer
 from container.consumers import ContainerFetchlogConsumer, ContainerControlConsumer, ContainerConfigConsumer, MonitorConsumer
 from project.consumers import ProjectGetJoinableConsumer, JoinProjectConsumer, ProjectConfigConsumer, ProjectGetContainersConsumer
-from education.consumers import CourseGetContainersConsumer, CourseConfigConsumer, HandinConsumer, AssignmentConsumer, AssignmentScoreConsumer
+from education.consumers import CourseGetContainersConsumer, CourseConfigConsumer, HandinConsumer, AssignmentConsumer, AssignmentScoreConsumer, UserHandler as CourseUserHandler
 from canvas.consumers import CanvasGetCoursesConsumer
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'kooplexhub.settings')
@@ -43,6 +43,7 @@ application = ProtocolTypeRouter({
                 re_path(r"hub/ws/project/join/(?P<userid>\d+)/$", JoinProjectConsumer.as_asgi()),
                 re_path(r"hub/ws/project/container/(?P<userid>\d+)/$", ProjectGetContainersConsumer.as_asgi()),
                 re_path(r"hub/ws/course/config/(?P<userid>\d+)/$", CourseConfigConsumer.as_asgi()),
+                re_path(r"hub/ws/course/userhandler/(?P<userid>\d+)/$", CourseUserHandler.as_asgi()),
                 re_path(r"hub/ws/education/container/(?P<userid>\d+)/$", CourseGetContainersConsumer.as_asgi()),
                 re_path(r"hub/ws/education/handin/(?P<userid>\d+)/$", HandinConsumer.as_asgi()),
                 re_path(r"hub/ws/assignment/(?P<userid>\d+)/$", AssignmentConsumer.as_asgi()),

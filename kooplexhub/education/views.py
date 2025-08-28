@@ -106,6 +106,7 @@ class TeacherCourseBindingListView(LoginRequiredMixin, generic.ListView):
         context['wss_container'] = KOOPLEX.get('hub', {}).get('wss_container_control', 'wss://localhost/hub/ws/container_environment/{userid}/').format(userid = self.request.user.id)
         context['wss_course_container'] = KOOPLEX.get('hub', {}).get('wss_course_container', 'wss://localhost/hub/ws/education/container/{userid}/').format(userid = self.request.user.id)
         context['wss_course_config'] = KOOPLEX.get('hub', {}).get('wss_course_config', 'wss://localhost/hub/ws/course/config/{userid}/').format(userid = self.request.user.id)
+        context['wss_course_users'] = KOOPLEX.get('hub', {}).get('wss_course_users', 'wss://localhost/hub/ws/course/userhandler/{userid}/').format(userid = self.request.user.id)
         context['wss_assignment_config'] = KOOPLEX.get('hub', {}).get('wss_assignment_config', 'wss://localhost/hub/ws/assignment/config/{userid}/').format(userid = self.request.user.id)
         context['wss_assignment_score'] = KOOPLEX.get('hub', {}).get('wss_assignment_score', 'wss://localhost/hub/ws/assignment/score/{userid}/').format(userid = self.request.user.id)
         context['wss_canvas'] = KOOPLEX.get('hub', {}).get('wss_canvas', 'wss://localhost/hub/ws/canvas/fetchcourses/{userid}/').format(userid = self.request.user.id)

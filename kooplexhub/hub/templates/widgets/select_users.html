@@ -1,35 +1,48 @@
 <!-- templates/widgets/select_users.html -->
 {% load django_tables2 %}
 <div class="modal fade users-modal" tabindex="-1" aria-labelledby="usersModalLabel" aria-hidden="true" data-instance="{{instance}}">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="usersModalLabel">Select Users</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="usersModalLabel">Select Users</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body vh-25">
+        <div class="container mt-3">
+          <!-- Upload users -->
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <label for="user-upload" class="form-label mb-0">Import users:</label>
+            <input type="file"
+                   id="user-upload"
+                   accept=".txt,text/plain"
+                   class="form-control form-control-sm"
+                   style="max-width: 260px;">
+            <!-- Spinner while server parses -->
+            <div id="user-upload-spinner" class="ms-2 d-none">
+              <div class="spinner-border spinner-border-sm text-secondary" role="status" aria-hidden="true"></div>
+              <span class="ms-1 small">processing…</span>
             </div>
-            <div class="modal-body vh-25">
-                <div class="container mt-3">
-                    <!-- Search Bar -->
-	            <div class="input-group">
-                        <span class="input-group-text"><span class="bi bi-search"></span></span>
-			<input class="form-control" type="text" id="search-user" placeholder="{{placeholder_search|default:'Search user'}}" title="Type in a name">
-                    </div>
-                    <!-- Search Results Dropdown -->
-                    <ul id="user-search-results" class="list-group position-absolute border border-2 border-secondary" style="max-height: 150px; overflow-y: auto; width: 100%;">
-                        <!-- Dynamic list of matching users will be appended here -->
-                    </ul>
-                    <!-- Selected Users Table -->
-		    {# FIXME mt-2 #}
-		    {% render_table t_users %}
-                </div>
-
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" id="confirm-users-selection">Confirm</button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Dismiss</button>
-            </div>
+          </div>
+          <!-- Search Bar -->
+          <div class="input-group">
+            <span class="input-group-text"><span class="bi bi-search"></span></span>
+            <input class="form-control" type="text" id="search-user" placeholder="{{placeholder_search|default:'Search user'}}" title="Type in a name">
+          </div>
+          <!-- Search Results Dropdown -->
+          <ul id="user-search-results" class="list-group position-absolute border border-2 border-secondary" style="max-height: 150px; overflow-y: auto; width: 100%;">
+            <!-- Dynamic list of matching users will be appended here -->
+          </ul>
+          <!-- Selected Users Table -->
+          {% render_table t_users %}
         </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="confirm-users-selection">Confirm</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Dismiss</button>
+      </div>
     </div>
+  </div>
 </div>
 
 {{ users|json_script:"users_data" }}
+

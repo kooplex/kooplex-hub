@@ -1,6 +1,6 @@
 // User Selection Modal Logic
 class UserHandler {
-    constructor(usersDataSelector = '#users_data') {
+    constructor(opts = {}) {
         this.pk = null;
         this.instance = null;
         this.selectedUserIds = [];
@@ -9,10 +9,16 @@ class UserHandler {
         this.originalMarkedIds = [];
         this.users = [];
 
-        this.usersDataSelector = usersDataSelector;
-
-        this.register = null;
-
+        this.usersDataSelector     = opts.usersDataSelector     || '#users_data';
+        this.uploadInputSelector   = opts.uploadInputSelector   || '#user-upload';
+        this.spinnerSelector       = opts.spinnerSelector       || '#user-upload-spinner';
+        this.wsEndpoint            = opts.wsEndpoint            || (wsURLs && wsURLs.handle_users) || null;
+        this.wss                   = null;    // ManagedWebSocket for parsing
+        this.pendingRequests       = new Set(); // track request_ids while processing
+    
+        // bind
+        this._onUploadChange = this._onUploadChange.bind(this);
+        this._onWSMessage    = this._onWSMessage.bind(this);
     }
 
     init() {
@@ -20,6 +26,11 @@ class UserHandler {
         this._initTogglers();
         this._initSearch();
         this._initConfirmButton();
+        this._initUpload();
+
+        if (this.wsEndpoint) {
+          this.wss = new ManagedWebSocket(this.wsEndpoint, { onMessage: this._onWSMessage });
+        }
     }
 
     _initUsers() {
@@ -117,6 +128,110 @@ class UserHandler {
       return null;
     }
 
+    _initUpload() {
+      const $input = $(this.uploadInputSelector);
+      if (!$input.length) return;
+  
+      $input.on('change', this._onUploadChange);
+    }
+  
+    async _onUploadChange(e) {
+      const file = e.currentTarget.files && e.currentTarget.files[0];
+      if (!file) return;
+  
+      // Only plaintext allowed
+      if (!(file.type === 'text/plain' || /\.txt$/i.test(file.name))) {
+        this._toast('Please upload a plain text file (.txt).');
+        e.currentTarget.value = '';
+        return;
+      }
+  
+      const text = await file.text(); // modern browsers
+      const request_id = this._uuid();
+  
+      this._setUploadBusy(true);
+  
+      if (!this.wss || typeof this.wss.send !== 'function') {
+        this._setUploadBusy(false);
+        this._toast('Upload channel is not available.');
+        e.currentTarget.value = '';
+        return;
+      }
+  
+      // Track request so we only react to our own response
+      this.pendingRequests.add(request_id);
+  
+      // Send to server for parsing
+      this.wss.send(JSON.stringify({
+        request: 'parse-users-from-file',
+        request_id,
+        filename: file.name,
+        content: text
+      }));
+  
+      // clear input so same file can be selected again if needed
+      e.currentTarget.value = '';
+    }
+  
+    _onWSMessage(message) {
+      // Normalize WS payload
+      let data = message;
+      if (data && typeof data === 'object' && 'data' in data) {
+        try { data = JSON.parse(data.data); } catch { /* ignore */ }
+      } else if (typeof data === 'string') {
+        try { data = JSON.parse(data); } catch { /* ignore */ }
+      }
+  
+      if (!data || data.request_id && !this.pendingRequests.has(data.request_id)) {
+        // Not our response
+        return;
+      }
+  
+      // Stop spinner for our request
+      if (data.request_id) this.pendingRequests.delete(data.request_id);
+      if (this.pendingRequests.size === 0) this._setUploadBusy(false);
+  
+      if (data.error) {
+        this._toast(`Parse error: ${data.error}`);
+        return;
+      }
+  
+      // Expecting { response: 'parsed-users', ids: [..] }
+      const ids = Array.isArray(data.ids) ? data.ids : [];
+      let added = 0;
+      ids.forEach(id => {
+        if (!this.selectedUserIds.includes(id)) {
+          this.addUser(id);
+          added++;
+        }
+      });
+  
+      if (added === 0) {
+        this._toast('No new users found in the file.');
+      } else {
+        this._toast(`Added ${added} user${added === 1 ? '' : 's'} from file.`);
+      }
+    }
+  
+    _setUploadBusy(isBusy) {
+      $(this.spinnerSelector).toggleClass('d-none', !isBusy);
+      const $input = $(this.uploadInputSelector);
+      $input.prop('disabled', isBusy);
+      // Optionally disable the confirm while busy:
+      $('#confirm-users-selection').prop('disabled', isBusy);
+    }
+  
+    _toast(msg) {
+      // Replace with your own toaster if you have one
+      feedback(msg);
+    }
+  
+    _uuid() {
+      // Simple request id (good enough for correlating)
+      return 'req_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    }
+
+
     openModal(objectId, kind, callback) {
         this.pk = objectId === "None" ? "None" : parseInt(objectId);
         this.instance = $(".users-modal").data('instance');
@@ -166,6 +281,7 @@ class UserHandler {
 
 // ---- Initialization ----
 $(document).ready(function() {
+	console.log(wsURLs)
     const userHandler = new UserHandler();
     userHandler.init();
     
