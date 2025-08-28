@@ -107,12 +107,19 @@
     <span id="infoLine" class="info-line">{% block infoline %}{% endblock %}</span>
   </div>
 
-  <!-- Right: Search and Login -->
+  <!-- Right: small shortcut buttons -->
   <div class="d-flex align-items-center gap-2">
     <!-- Add a new item -->
     {% if user.is_authenticated %}
     <button id="add" class="btn btn-sm btn-outline-light btn-icon-sm">
       <i class="bi bi-plus"  style="font-size: 1.5rem; line-height: 1;"></i>
+    </button>
+    {% endif %}
+  
+    <!-- Cluster monitor -->
+    {% if user.is_authenticated %}
+    <button id="clusterInfo" class="btn btn-sm btn-outline-light btn-icon-sm">
+      <i class="bi bi-graph-up"></i>
     </button>
     {% endif %}
   

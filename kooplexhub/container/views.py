@@ -13,7 +13,7 @@ from django.urls import reverse
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .forms import FormContainer
-from .forms import TableProject, TableCourse, TableVolume,                        TableContainerProject, TableContainerCourse, TableContainerVolume
+from .forms import TableProject, TableCourse, TableVolume,                        TableContainerProject, TableContainerCourse
 from .models import Image, Container
 from project.models import Project, UserProjectBinding, ProjectContainerBinding
 from education.models import Course, UserCourseBinding, CourseContainerBinding

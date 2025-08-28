@@ -2,42 +2,45 @@
 
 {% load static %}
 
-{% block pagedescription %}
-A volume is the place for storing large, read-only datasets and user created storages for e.g. tools and test datasets. <a href="https://xwiki.vo.elte.hu/en/kooplex-manual/storages"><span class="ms-2 bi bi-book"></span></a>
+{% block infoline %}
+A storage is the place for large, read-only datasets and for tools or user's test datasets. <a href="https://xwiki.vo.elte.hu/en/kooplex-manual/storages"><span class="ms-2 bi bi-book"></span></a>
 {% endblock %}
 
-{% block bodycontent %}
-{# the search bar #}
-{% if volumes %}
-<div class="card border border-light border-3 mx-5 mb-3 rounded-3">
-  <div class="input-group">
-    <span class="input-group-text"><span class="bi bi-search"></span></span>
-    <input class="form-control" type="text" id="search_volume" placeholder="Search volume" title="Type in a folder" autofocus >
-  </div>
-</div>
-{% endif %}
+{% block content %}
+<style>
+/* fixed card box */
+.card-fixed {
+  width: 320px;          /* pick your width */
+  height: 280px;         /* pick your height */
+}
+
+/* make the body scroll within the fixed box */
+.card-fixed .card-body {
+  flex: 1 1 auto;        /* take remaining vertical space */
+  overflow-y: auto;      /* scroll only the body */
+  min-height: 0;         /* IMPORTANT so flex can shrink and allow scrolling */
+}
+
+/* optional: keep header/footer from shrinking */
+.card-fixed .card-header,
+.card-fixed .card-footer {
+  flex: 0 0 auto;
+}
+
+/* If you're using a flex wrapper already, no change needed.
+   If you want a tighter layout, you can also give the outer containers fixed basis: */
+.card-container { flex: 0 0 auto; }
+</style>
+
 
 {# render the volume cards #}
-{% if volumes|length %}
-  <div class="row row-cols-4">
+<div id="listPane" class="d-flex flex-wrap justify-content-center gap-3">
     {% for volume in volumes %}
-      <div class="col" id="hideable-volume-{{ volume.id }}">
+      <div class="card-container" id="card-container-{{ volume.id }}">
         {% include 'volume_partial_list.html' %}
       </div>
+    {% empty %}
+  {% include 'empty.html' %}
     {% endfor %}
   </div>
-{% else %}
-  {% include 'empty.html' %}
-{% endif %}
-{% endblock %}
-
-{% block scripts %}
-<script>
-{# on click show modal #}
-$("div[id^=hideable-volume-]").click(function() {
-  // console.log( this );
-  var obj_id = $( this ).attr("id").split("-", 3)[2];
-  $("#volumeInfoModal-" + obj_id).modal('show');
-});
-</script>
 {% endblock %}

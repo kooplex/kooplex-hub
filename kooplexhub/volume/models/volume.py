@@ -51,11 +51,6 @@ class Volume(models.Model):
             logger.error(f"Volume {self} has no owner")
             return "MISSING"
 
-#    @property
-#    def admins(self):
-#        from .uservolumebinding import UserVolumeBinding
-#        return [ b.user for b in UserVolumeBinding.objects.filter(volume = self, role__in = [ UserVolumeBinding.RL_OWNER, UserVolumeBinding.RL_ADMIN ]) ]
-
     def is_admin(self, user):
         from .uservolumebinding import UserVolumeBinding
         try:
@@ -90,25 +85,7 @@ class Volume(models.Model):
     def render_html(self):
         return render_to_string("widgets/volume.html", {"volume": self})
 
-#    def is_collaborator(self, user):
-#        from .uservolumebinding import UserVolumeBinding
-#        try:
-#            return UserVolumeBinding.objects.get(volume = self, user = user).role == UserVolumeBinding.RL_COLLABORATOR
-#        except UserVolumeBinding.DoesNotExist:
-#            return False
-#
-#    @property
-#    def collaborators(self):
-#        from .uservolumebinding import UserVolumeBinding
-#        return [ b.user for b in UserVolumeBinding.objects.filter(volume = self) ]
-#
-##FIXME:
-#    @staticmethod
-#    def get_uservolume(volume_id, user):
-#        from .uservolumebinding import UserVolumeBinding
-#        return UserVolumeBinding.objects.get(user = user, volume_id = volume_id).volume
-#
-#    @staticmethod
-#    def get_uservolumes(user):
-#        from .uservolumebinding import UserVolumeBinding
-#        return [ upb.volume for upb in UserVolumeBinding.objects.filter(user = user) ]
+    def render_admins(self):
+        from .uservolumebinding import UserVolumeBinding
+        return "Users with admin rights: " + ", ".join([ str(b.user) for b in UserVolumeBinding.objects.filter(volume = self, role__in = [ UserVolumeBinding.RL_OWNER, UserVolumeBinding.RL_ADMIN ]) ])
+

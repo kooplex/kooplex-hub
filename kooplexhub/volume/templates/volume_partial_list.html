@@ -1,50 +1,22 @@
 {% load extras %}
-{% load container_buttons %}
-{% load volume_buttons %}
-
-{% comment %}
-	{% render_folder attachment.folder %}<br>
-	{% button_configure_attachment attachment user %}
-        {{ attachment.description }} (created by {{ attachment.creator.profile.name }})
-{% endcomment %}
 
 
-
-<div class="card bg-light rounded mb-3" id="card-{{ volume.id }}" style="height: 200px;">
-  <input type="hidden" id="volume-search-{{ volume.id }}" value="{{ volume.search }}">
-  <input type="hidden" id="volume-match-{{ volume.id }}" value=true>
-  <input type="hidden" id="volume-isshown-{{ volume.id }}" value=true>
-  {% if volume.scope == volume.SCP_ATTACHMENT %}
-    <div class="card-header bg-info">
-  {% else %}
-    <div class="card-header bg-warning">
-  {% endif %}
-    {% render_folder volume.folder %}
-    <div class="float-end">
-      {% scope volume %}
-    </div>
+<div class="card bg-light rounded rounded-3 mb-3 shadow-light card-fixed d-flex flex-column" id="card-{{ volume.id }}">
+  <div class="card-header py-2">
+    {{ volume.render_scope_html }}
+    {{ volume.folder }}
   </div>
+
   <div class="card-body">
-    {{ volume.description|truncatechars:200 }} 
-	{#% button_configure_volume volume user %#}
+    <!-- long content here will scroll vertically -->
+    {{ volume.description }}
+    <!-- etc. -->
   </div>
-</div>
 
-<div class="modal fade" id="volumeInfoModal-{{ volume.id }}" tabindex="-1" aria-labelledby="volumeInfoModal-{{ volume.id }}" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        {% render_folder volume.folder %}
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        {{ volume.description }} 
-        {% admin_or_creator volume %} 
-      </div>
-      <div class="modal-footer">
-	{% button_configure_volume volume user %}
-      </div>
+  {% if volume.owner != user %}
+    <div class="card-footer py-2" data-toggle="tooltip" title="{{volume.render_admins}}">
+      Created by {{ volume.owner }}
     </div>
-  </div>
+  {% endif %}
 </div>
 
