@@ -3,11 +3,10 @@ class UserHandler {
     constructor(opts = {}) {
         this.pk = null;
         this.instance = null;
-        this.selectedUserIds = [];
-        this.originalUserIds = [];
-        this.markedUserIds = [];
-        this.originalMarkedIds = [];
+	this.changed = null;
         this.users = [];
+        this.selectedUserIds = [];
+        this.markedUserIds = [];
 
         this.usersDataSelector     = opts.usersDataSelector     || '#users_data';
         this.uploadInputSelector   = opts.uploadInputSelector   || '#user-upload';
@@ -89,49 +88,47 @@ class UserHandler {
             } else {
                 this.markedUserIds = this.markedUserIds.filter(value => value !== pk);
             }
+            this.changed = true;
         });
     }
 
     _initConfirmButton() {
         $('#confirm-users-selection').on('click', () => {
             if (!this.pk) return;
-
-            const cb    = this._resolveFn(this.register); // bound if it's a method path
-
-            if (typeof cb === 'function') {
-                let changed = cb(this.pk, 'marked', this.markedUserIds, this.originalMarkedIds);
-                if (changed) {
-                    cb(this.pk, 'users', this.selectedUserIds, []);
-                } else {
-                    cb(this.pk, 'users', this.selectedUserIds, this.originalUserIds);
-                }
-            } else {
-              console.warn('UserHandler: no save function (register_changes) found.');
-            }
+            if (this.changed) {
+              this._saveChanges();
+	    } else {
+              this._toast('Userlist is unchanged');
+	    }
 
             $('.users-modal').modal('hide');
             this.pk = null;
         });
     }
 
-    _resolveFn(pathOrFn) {
-      if (!pathOrFn) return null;
-      if (typeof pathOrFn === 'function') return pathOrFn;
-  
-      if (typeof pathOrFn === 'string') {
-        const parts = pathOrFn.split('.');
-        const method = parts.pop();
-        const ctx = parts.reduce((acc, key) => (acc ? acc[key] : undefined), window);
-        const fn = ctx?.[method];
-        if (typeof fn === 'function') return fn.bind(ctx);
+    _saveChanges() {
+      const request_id = this._uuid();
+      this._setUploadBusy(true);
+      if (!this.wss || typeof this.wss.send !== 'function') {
+        this._setUploadBusy(false);
+        this._toast('Save userlist channel is not available.');
+        return;
       }
-      return null;
+      // Track request so we only react to our own response
+      this.pendingRequests.add(request_id);
+      // Send to server new userlist to save
+      this.wss.send(JSON.stringify({
+        request: 'save-users',
+        request_id,
+        pk: this.pk,
+	ids: this.selectedUserIds,
+	marked_ids: this.markedUserIds
+      }));
     }
 
     _initUpload() {
       const $input = $(this.uploadInputSelector);
       if (!$input.length) return;
-  
       $input.on('change', this._onUploadChange);
     }
   
@@ -165,6 +162,7 @@ class UserHandler {
       this.wss.send(JSON.stringify({
         request: 'parse-users-from-file',
         request_id,
+        pk: this.pk,
         filename: file.name,
         content: text
       }));
@@ -195,7 +193,19 @@ class UserHandler {
         this._toast(`Parse error: ${data.error}`);
         return;
       }
+
+      if (data.response==='parsed-users') {
+        this._parsed_users(data);
+      } else if (data.response==='get-users') {
+        this._set_users(data);
+      } else if (data.response==='save-users') {
+	$(`[name="users"][data-id="${data.pk}"]`).replaceWith(data.refresh);
+      }
+
   
+    }
+
+    _parsed_users(data) {
       // Expecting { response: 'parsed-users', ids: [..] }
       const ids = Array.isArray(data.ids) ? data.ids : [];
       let added = 0;
@@ -205,7 +215,6 @@ class UserHandler {
           added++;
         }
       });
-  
       if (added === 0) {
         this._toast('No new users found in the file.');
       } else {
@@ -213,6 +222,31 @@ class UserHandler {
       }
     }
   
+    _set_users(data) {
+      // Expecting { response: 'get-users', pk:, ids: [..], marked_ids: [..] }
+      const ids = Array.isArray(data.ids) ? data.ids : [];
+      const marked_ids = Array.isArray(data.marked_ids) ? data.marked_ids : [];
+      const objectId = data.pk ? data.pk : null;
+      const $dataEl = $(`[name="users"][data-id="${objectId}"]`);
+      this.selectedUserIds = ids.slice();
+      this.markedUserIds = marked_ids.slice();
+      this.changed = false;
+
+      $('tr[data-id]').each((_, el) => {
+          const pk = $(el).data('id');
+	  const selected = this.selectedUserIds.includes(pk);
+	  const marked = this.markedUserIds.includes(pk);
+          $(el).toggle(selected);
+          const toggleButton = $(el).find(`input[name=usermarker][data-id=${pk}]`);
+          if (selected && marked) {
+            toggleButton.bootstrapToggle('on');
+          } else {
+            toggleButton.bootstrapToggle('off');
+          }
+      });
+      this._toast('Userlist refreshed');
+    }
+
     _setUploadBusy(isBusy) {
       $(this.spinnerSelector).toggleClass('d-none', !isBusy);
       const $input = $(this.uploadInputSelector);
@@ -233,30 +267,28 @@ class UserHandler {
 
 
     openModal(objectId, kind, callback) {
-        this.pk = objectId === "None" ? "None" : parseInt(objectId);
-        this.instance = $(".users-modal").data('instance');
-        this.register = callback;
+      this.pk = objectId === "None" ? "None" : parseInt(objectId);
+      this.instance = $(".users-modal").data('instance');
+      const request_id = this._uuid();
+      this._setUploadBusy(true);
+  
+      if (!this.wss || typeof this.wss.send !== 'function') {
+        this._setUploadBusy(false);
+        this._toast('Refresh userlist channel is not available.');
+        return;
+      }
+  
+      // Track request so we only react to our own response
+      this.pendingRequests.add(request_id);
+  
+      // Send to server userlist request
+      this.wss.send(JSON.stringify({
+        request: 'get-users',
+        request_id,
+        pk: this.pk
+      }));
 
-        const $dataEl = $(`[name="users"][data-id="${objectId}"][data-kind="${kind}"]`);
-        this.selectedUserIds = $dataEl.data('users').slice();
-        this.originalUserIds = $dataEl.data('users');
-        this.markedUserIds = $dataEl.data('marked').slice();
-        this.originalMarkedIds = $dataEl.data('marked');
-
-        $('tr[data-id]').each((_, el) => {
-            const pk = $(el).data('id');
-
-            $(el).toggle(this.selectedUserIds.includes(pk));
-
-            const toggleButton = $(el).find(`input[name=usermarker][data-id=${pk}]`);
-            if (this.markedUserIds.includes(pk)) {
-                toggleButton.bootstrapToggle('on');
-            } else {
-                toggleButton.bootstrapToggle('off');
-            }
-        });
-
-        $(".users-modal").modal('show');
+      $(".users-modal").modal('show');
     }
 
     addUser(pk) {
@@ -271,11 +303,13 @@ class UserHandler {
         $(`tr[data-id=${pk}]`).show();
         $('#search-user').val('');
         $('#user-search-results').hide();
+        this.changed = true;
     }
 
     removeUser(pk) {
         $(`tr[data-id=${pk}]`).hide();
         this.selectedUserIds = this.selectedUserIds.filter(value => value !== pk);
+        this.changed = true;
     }
 }
 

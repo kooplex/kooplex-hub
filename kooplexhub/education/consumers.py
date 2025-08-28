@@ -272,42 +272,17 @@ class HandinConsumer(AsyncSkeleton):
 
 
 class UserHandler(SyncSkeleton):
-    def receive(self, text_data):
-        parsed = json.loads(text_data)
-        logger.debug(parsed)
-        request = parsed.get('request')
-        response = {
-            'response': request,
-            'request_id': parsed.get('request_id'),
-        }
-        #FIXME AUTHORIZE!
-        if request=='parse-users-from-file':
-            usernames = parsed.get('content').splitlines()
-            users = User.objects.filter(username__in = usernames)
-            response['ids'] = list(map(lambda u: u.id, users))
-            logger.debug(response)
-            self.send(text_data=json.dumps(response))
-        else:
-            logger.critical(request)
-
-
-class CourseConfigConsumer(SyncSkeleton, Config):
-    template='course.html'
-    instance_reference='course'
-
-    @property
-    def template_kwargs(self):
-        return {"user": self.scope['user']}
-
     def get_course(self, course_id):
+        #FIXME: code repetition!
         c=Course.objects.get(id = course_id)
         assert self.userid in map(lambda o:o.id, c.teachers), "You are not a teacher to config"
         return c
 
-    def _chg_user_bindings(self, course, ids, marked, m):
+    def _chg_user_bindings(self, course, ids, marked):
         c=[]
         a=[]
         r=[]
+        m=""
         for user in User.objects.filter(id__in = ids):
             if user.id==self.userid:
                 # skip caller
@@ -333,8 +308,54 @@ class CourseConfigConsumer(SyncSkeleton, Config):
             m += "removed " + ", ".join(r) + "\n"
         if c:
             m += "role changed " + ", ".join(c) + "\n"
-        if a or r or c:
-            self._msg(course, m)
+        return m
+
+    def receive(self, text_data):
+        parsed = json.loads(text_data)
+        logger.debug(parsed)
+        request = parsed.get('request')
+        course_id = parsed.get('pk')
+        course = self.get_course(course_id)
+        response = {
+            'response': request,
+            'request_id': parsed.get('request_id'),
+            'pk': course_id,
+        }
+        if request=='parse-users-from-file':
+            usernames = parsed.get('content').splitlines()
+            users = User.objects.filter(username__in = usernames)
+            response['ids'] = list(map(lambda u: u.id, users))
+            logger.debug(response)
+            self.send(text_data=json.dumps(response))
+        elif request=='get-users':
+            _uid = lambda b: b.user.id
+            response['ids'] = list(map(_uid, UserCourseBinding.objects.filter(course=course).exclude(user__id=self.userid)))
+            response['marked_ids'] = list(map(_uid, UserCourseBinding.objects.filter(course=course, is_teacher=True).exclude(user__id=self.userid)))
+            logger.debug(response)
+            self.send(text_data=json.dumps(response))
+        elif request=='save-users':
+            message = self._chg_user_bindings(course, parsed.get('ids'), parsed.get('marked_ids', []))
+            if message:
+                response['feedback'] = message
+                response['refresh'] = render_to_string('widgets/table_users.html', {'pk': course_id, 'table': course.table_attendee(User.objects.get(id=self.userid))})
+                self.send(text_data=json.dumps(response))
+        else:
+            logger.critical(request)
+
+
+class CourseConfigConsumer(SyncSkeleton, Config):
+    template='course.html'
+    instance_reference='course'
+
+    @property
+    def template_kwargs(self):
+        return {"user": self.scope['user']}
+
+    def get_course(self, course_id):
+        c=Course.objects.get(id = course_id)
+        assert self.userid in map(lambda o:o.id, c.teachers), "You are not a teacher to config"
+        return c
+
 
     def receive(self, text_data):
         from hub.models import Profile
@@ -374,8 +395,6 @@ class CourseConfigConsumer(SyncSkeleton, Config):
             if field == 'image':
                 new_value=Image.objects.get(id=new_value)
                 self._chg_image(course, new_value, attribute='preferred_image')
-            elif field == 'users':
-                self._chg_user_bindings(course, new_value, changes.get('marked', []), f"Members of course {course.name} changed:\n")
             elif field=="volumes":
                 self._chg_bindings(course, new_value, Volume, VolumeCourseBinding, 'volume', f"Course mounts of {course.name} changed:\n")
             # Check if the field is a valid attribute of the model
