@@ -7,9 +7,6 @@
 
 <div class="card bg-ligth shadow-2-strong border border-3 shadow-light bg-light {% if project.id %}border-success{% else %}border-warning{% endif %} mb-3" data-widget="containercard" data-id="{{project.id}}" data-editable="{{is_admin}}">
     <div class="card-header d-flex justify-content-start align-items-center">
-	{% if not project.id %}
-                    {% button_fetch_joinable_projects user %}
-	{% endif %}
         {% field_name project 'project' 'mx-2 w-100 p-2' 'wss_projectconfig.register_changes' %}
 	{% project_scope project %}
     </div>

@@ -128,7 +128,7 @@ class TableStudentsAndTeachers(tables.Table):
         attrs = table_attributes
 
     def render_user(self, record):
-        return f"{record.user.first_name}, {record.user.last_name}"
+        return record.user.profile.render_html()
 
     def render_username(self, record):
         return record.user.username

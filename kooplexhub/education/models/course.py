@@ -29,10 +29,6 @@ class Course(models.Model):
     def __str__(self):
         return f'{self.name} ({self.folder})'
 
-    @register.simple_tag
-    def link_drop(self, user):
-        from django.urls import reverse
-        return reverse('education:delete_or_leave', args = [ self.id, user.id]) if self.id and user else ""
 
     @property
     def search(self):

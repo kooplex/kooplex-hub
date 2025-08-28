@@ -56,9 +56,10 @@ def addcontainer(request, userprojectbinding_id):
 
 @require_http_methods(['GET'])
 @login_required
-def delete_or_leave(request, project_id):
+def delete_or_leave(request, project_id, pk_user):
     """Delete or leave a project."""
     user = request.user
+    assert user.id == pk_user, "user mismatch"
     logger.debug("method: %s, project id: %s, user: %s" % (request.method, project_id, user))
     try:
         project = Project.get_userproject(project_id = project_id, user = user)

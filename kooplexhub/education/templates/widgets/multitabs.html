@@ -147,7 +147,7 @@
                 {% if course.teachers|length > 1 %}
 		<p class="card-text">There are {{ course.teachers|length }} teachers subscribed to this course. Are you sure you want to leave this course? Later you can ask
                 {% for u in course.teachers %}
-		{% if u != user %}{{ u.profile.render_html }}, {% endif %}
+		{% if u != user %}{{ u.profile.render_html }}{% if not forloop.last %}, {% endif %}{% endif %}
 		{% endfor %} to add you if necessary.
 		{% include 'widgets/widget_delete.html' with msg="Are you sure you want to leave course?" tooltip="Leave/delete course" link=drop_url obj=course %}
 		</p>

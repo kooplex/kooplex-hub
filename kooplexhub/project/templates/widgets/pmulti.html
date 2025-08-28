@@ -1,3 +1,4 @@
+{% load extras %}
 {% load container_buttons %}
 {% load project_buttons %}
 <div class="container">
@@ -121,8 +122,15 @@
               </div>
             </div>
             <div class="tab-pane fade" id="content-six-{{project.id}}" role="tabpanel" aria-labelledby="tab-six-{{project.id}}">
-		<p class="card-text">Are you sure you want to delete/leave this project?</p>
-	        {# FIXME % include 'widgets/widget_delete.html' with msg="Are you sure you want to delete or leave project?" tooltip="Leave/delete project" project|link_project_drop obj=project %#}
+		{% link_drop project user as drop_url %}
+                {% if project.creator == user %}
+		<p class="card-text">There are {{ project.collaborators|length }} collaborators on this project and you are the owner. Are you sure you want to delete the project?
+		{% include 'widgets/widget_delete.html' with msg="Are you sure you want to delete project?" tooltip="Delete project" link=drop_url obj=project %}
+		</p>
+		{% else %}
+		<p class="card-text">You decide to leave the project?</p>
+		{% include 'widgets/widget_delete.html' with msg="Are you sure you want to leave project?" tooltip="Leave project" link=drop_url obj=project %}
+		{% endif %}
             </div>
         </div>
     </div>

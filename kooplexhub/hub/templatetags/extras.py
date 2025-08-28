@@ -10,7 +10,15 @@ from kooplexhub.settings import URL_MANUAL, manual_mapping
 
 register = template.Library()
 
-
+@register.simple_tag
+def link_drop(obj, user):
+    if not obj or not getattr(obj, "pk", None) or not user:
+        return ""
+    app_label = obj._meta.app_label
+    try:
+        return reverse(f"{app_label}:delete_or_leave", args=[obj.pk, user.pk])
+    except Exception:
+        return ""
 
 @register.filter
 def id_list(queryset):
