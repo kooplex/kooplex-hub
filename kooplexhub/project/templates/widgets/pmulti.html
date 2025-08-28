@@ -67,7 +67,7 @@
             </li>
             <li class="nav-item" role="presentation">   
                <button 
-		 class="nav-link {% if new%}disabled{% endif %}" 
+		 class="nav-link {% if new%}d-none{% endif %}" 
                  id="environments-tab-{{project.id}}"
                  data-id="{{project.id}}"
 		 data-bs-toggle="tab" 
@@ -83,7 +83,7 @@
             </li>
             <li class="nav-item" role="presentation">
                 <button
-		  class="nav-link" 
+		  class="nav-link {% if new%}d-none{% endif %}" 
 		  id="tab-six-{{project.id}}" 
 		  data-bs-toggle="tab" 
 		  data-bs-target="#content-six-{{project.id}}" 

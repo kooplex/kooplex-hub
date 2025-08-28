@@ -1,15 +1,50 @@
-<div class="position-relative" id="projectSelection" data-selected="">
-  <div class="rounded border p-3 rounded-3 border-2 border-secondary" style="max-height: {{maxheight}}; height: 100%; overflow-y: auto;">
-      <div class="content">
-          <table>
-            {% for project in projects %}
-            <tr data-bs-toggle="tooltip" title="Creator {{project.creator}}" data-id="{{project.id}}"><td>{{ project.name }}</td></tr>
-            {% endfor %}
-          </table>
-      </div>
-      <div class="position-absolute top-0 start-0 badge rounded-pill bg-secondary text-white shadow-sm p-2" style="transform: translate(0%, -50%);">
-        Accessible projects
-      </div>
-  </div>
-</div>
+<style>
+/* base table styling */
+table[name="join-project"] {
+  border-collapse: separate;      /* allow spacing */
+  border-spacing: 0 0.5rem;       /* horizontal & vertical cell gaps */
+  width: 100%;
+}
 
+/* header underline */
+table[name="join-project"] thead th {
+  border-bottom: 2px solid #ccc;  /* thicker underline */
+  padding: 0.5rem 1rem;
+  text-align: left;
+}
+
+/* odd rows slightly darker background */
+table[name="join-project"] tbody tr:nth-child(odd) {
+  background-color: #e9ecef;      /* Bootstrap’s light gray */
+}
+
+/* hover effect: darker + pointer */
+table[name="join-project"] tbody tr:hover {
+  background-color: #d9dcdf;      /* slightly darker gray */
+  cursor: pointer;
+}
+
+/* give cells a bit more breathing space */
+table[name="join-project"] td {
+  padding: 0.5rem 1rem;           /* increase left/right padding */
+}
+</style>
+
+{% if projects|length %}
+<table name="join-project" class="selectrow" class="m-3">
+  <thead>
+    <tr><th>Name</th><th>Creator</th><th>Description</th>
+  </thead>
+  <tbody>
+  {% for project in projects %}
+  <tr data-id="{{project.id}}">
+    <td>{{ project.name }}</td>
+    <td>{{ project.creator.profile.render_html }}</td>
+    <td>{{ project.description }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="m-3">There are no projects you can join right now</p> 
+{% endif %}

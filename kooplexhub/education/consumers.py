@@ -13,7 +13,7 @@ from education.models import UserAssignmentBinding, Assignment, UserCourseBindin
 from education.forms import TableAssignmentConf
 from django.contrib.auth.models import User
 
-from hub.util import SyncSkeleton, AsyncSkeleton, Config
+from hub.util import SyncSkeleton, AsyncSkeleton, Config, normalize_pk
 from .models import Course, VolumeCourseBinding
 from volume.models import Volume
 
@@ -273,10 +273,12 @@ class HandinConsumer(AsyncSkeleton):
 
 class UserHandler(SyncSkeleton):
     def get_course(self, course_id):
-        #FIXME: code repetition!
-        c=Course.objects.get(id = course_id)
-        assert self.userid in map(lambda o:o.id, c.teachers), "You are not a teacher to config"
-        return c
+        #FIXME: code repetition! (but modified)
+        try:
+            c=Course.objects.get(id = course_id)
+            return c if self.userid in map(lambda o:o.id, c.teachers) else None
+        except Course.DoesNotExist:
+            return None
 
     def _chg_user_bindings(self, course, ids, marked):
         c=[]
@@ -314,7 +316,7 @@ class UserHandler(SyncSkeleton):
         parsed = json.loads(text_data)
         logger.debug(parsed)
         request = parsed.get('request')
-        course_id = parsed.get('pk')
+        course_id = normalize_pk(parsed.get('pk'))
         course = self.get_course(course_id)
         response = {
             'response': request,

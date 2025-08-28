@@ -4,7 +4,7 @@
 <div class="container">
     <div class="tab-container">
         <!-- Tabs -->
-	<ul class="nav nav-tabs" role="tablist" id="teachertabs-{{course.id}}">
+	<ul class="nav nav-tabs" role="tablist" id="teachertabs-{{pk}}">
             <li class="nav-item" role="presentation">   
                <button 
 		 class="nav-link active {%if new%}border-danger{% endif %}" 
@@ -22,7 +22,7 @@
             </li>
 	    <li class="nav-item" role="presentation">
                 <button 
-	          class="nav-link {% if new%}disabled{% endif %}" 
+	          class="nav-link {% if new%}d-none{% endif %}" 
 		  id="tab-two-{{pk}}" 
 		  data-bs-toggle="tab" 
 		  data-bs-target="#content-two-{{pk}}" 
@@ -80,7 +80,7 @@
             </li>
             <li class="nav-item" role="presentation">   
                <button 
-		 class="nav-link {% if new%}disabled{% endif %}" 
+		 class="nav-link {% if new%}d-none{% endif %}" 
                  id="environments-tab-{{pk}}"
                  data-id="{{pk}}"
 		 data-bs-toggle="tab" 
@@ -96,7 +96,7 @@
             </li>
             <li class="nav-item" role="presentation">
                 <button 
-		  class="nav-link {% if new%}disabled{% endif %}" 
+		  class="nav-link {% if new%}d-none{% endif %}" 
 		  id="tab-six-{{pk}}" 
 		  data-bs-toggle="tab" 
 		  data-bs-target="#content-six-{{pk}}" 
@@ -114,9 +114,9 @@
         <div class="tab-content multitabs">
             <div class="tab-pane fade show active" id="content-one-{{pk}}" role="tabpanel" aria-labelledby="tab-one-{{pk}}">
                 <div class="content">
-                    <div data-type="textarea" data-id="{{pk}}" data-field="description" data-orig="{{course.description}}" data-instance="course"
+                    <div data-type="textarea" data-id="{{pk}}" data-field="description" data-orig="{{description}}" data-instance="course"
                          data-callback="wss_courseconfig.register_changes"
-                         class="editable" data-placement="right" placeholder="Add description">{% if course.description %}{{course.description}}{% endif %}</div>
+                         class="editable" data-placement="right" placeholder="Add description">{% if description %}{{description}}{% endif %}</div>
                 </div>
             </div>
             <div class="tab-pane fade" id="content-two-{{pk}}" role="tabpanel" aria-labelledby="tab-two-{{pk}}">

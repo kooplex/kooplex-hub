@@ -6,7 +6,7 @@ from django.template.loader import render_to_string
 
 from channels.generic.websocket import WebsocketConsumer
 
-from hub.util import Config
+from hub.util import Config, normalize_pk
 from django.contrib.auth.models import User
 from project.models import Project, UserProjectBinding, ProjectContainerBinding
 from volume.models import Volume, ProjectVolumeBinding
@@ -68,8 +68,11 @@ class UserHandler(SyncConsumer):
         parsed = json.loads(text_data)
         logger.debug(parsed)
         request = parsed.get('request')
-        project_id = parsed.get('pk')
-        project = UserProjectBinding.objects.get(user__id = self.userid, project__id = project_id, role__in = [UserProjectBinding.RL_CREATOR, UserProjectBinding.RL_ADMIN]).project
+        project_id = normalize_pk(parsed.get('pk'))
+        try:
+            project = UserProjectBinding.objects.get(user__id = self.userid, project__id = project_id, role__in = [UserProjectBinding.RL_CREATOR, UserProjectBinding.RL_ADMIN]).project
+        except UserProjectBinding.DoesNotExist:
+            project = None
         response = {
             'response': request,
             'request_id': parsed.get('request_id'),
@@ -202,37 +205,30 @@ class ProjectGetContainersConsumer(SyncConsumer):
             return f'We failed -- {e}', project.id
 
 
-class ProjectGetJoinableConsumer(SyncConsumer):
-    def receive(self, text_data):
-        parsed = json.loads(text_data)
-        logger.debug(parsed)
-        published = list(map(lambda b: b.project, UserProjectBinding.objects.filter(project__scope__in = [ Project.SCP_INTERNAL, Project.SCP_PUBLIC ], role = UserProjectBinding.RL_CREATOR).exclude(user__id = self.userid)))
-        logger.debug(published)
-        joined = list(map(lambda b: b.project, UserProjectBinding.objects.filter(user__id = self.userid, role__in = [ UserProjectBinding.RL_ADMIN, UserProjectBinding.RL_COLLABORATOR ])))
-        logger.debug(joined)
-        joinable = set(published).difference(joined)
-        logger.debug(joinable)
-        message_back = {
-            "feedback": f"Joinable project list refreshed",
-            "response": render_to_string('widgets/list_joinableprojects.html', {'projects': joinable})
-        }
-        logger.debug(message_back)
-        self.send(text_data=json.dumps(message_back))
-
-
 class JoinProjectConsumer(SyncConsumer):
     def receive(self, text_data):
         parsed = json.loads(text_data)
         logger.debug(parsed)
-        projectid = parsed.get('pk')
-        published = UserProjectBinding.objects.filter(project__scope__in = [ Project.SCP_INTERNAL, Project.SCP_PUBLIC ], role = UserProjectBinding.RL_CREATOR, project__id=projectid).exclude(user__id = self.userid)
-        joined = UserProjectBinding.objects.filter(user__id = self.userid, project__id = projectid)
-        deny = not published or joined 
-        if not deny:
-            b=UserProjectBinding.objects.create(project_id=projectid, user_id=self.userid, role=UserProjectBinding.RL_COLLABORATOR)
-        message_back = {
-            "feedback": f"Cannot join project" if deny else f"Project {b.project.name} joined",
-            "reloadpage": True,
+        request = parsed.get('request')
+        response = {
+            'response': request,
         }
-        logger.debug(message_back)
-        self.send(text_data=json.dumps(message_back))
+        published = list(map(lambda b: b.project, UserProjectBinding.objects.filter(project__scope__in = [ Project.SCP_INTERNAL, Project.SCP_PUBLIC ], role = UserProjectBinding.RL_CREATOR).exclude(user__id = self.userid)))
+        joined = list(map(lambda b: b.project, UserProjectBinding.objects.filter(user__id = self.userid, role__in = [ UserProjectBinding.RL_ADMIN, UserProjectBinding.RL_COLLABORATOR ])))
+        joinable = set(published).difference(joined)
+        if request=='get-joinable':
+            response.update({
+                "feedback": f"Joinable project list is refreshed",
+                "replace": render_to_string('widgets/list_joinableprojects.html', {'projects': joinable})
+            })
+            logger.debug(response)
+            self.send(text_data=json.dumps(response))
+        elif request=='join':
+            projectid = parsed.get('pk')
+            if filter(lambda p: p.id==projectid, joinable):
+                UserProjectBinding.objects.create(project_id=projectid, user_id=self.userid, role=UserProjectBinding.RL_COLLABORATOR)
+            response["reloadpage"]=True
+            logger.debug(response)
+            self.send(text_data=json.dumps(response))
+        else:
+            logger.critical(request)

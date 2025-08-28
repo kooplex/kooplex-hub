@@ -7,6 +7,14 @@ import json
 
 logger = logging.getLogger(__name__)
 
+def normalize_pk(value):
+    if value in (None, '', 'None'):
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
 
 class Config:
     @staticmethod

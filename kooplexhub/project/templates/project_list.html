@@ -19,24 +19,10 @@ Projects are a good way to collaborate with each other without much restriction.
 {% endblock %}
 
 
-{# render the project cards #}
 {% block content %}
 {# new project create or join #}
-<div id="newProject" class="modal fade createproject-modal" tabindex="-1" aria-labelledby="projectModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="projectModalLabel">Create a new environment</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-              <div class="container-fluid p-0" id="card-container-new">
-                 {% include 'project.html' with is_admin=True project=empty_project %}
-              </div>
-            </div>
-        </div>
-    </div>
-</div>
+{% include 'project_new.html' %}
+{# render the project cards #}
 <div id="listPane" class="d-flex flex-wrap justify-content-center gap-3">
     {% for upb in userprojectbindinglist %}
       <div class="card-container" id="card-container-{{ project.id }}">
@@ -45,14 +31,13 @@ Projects are a good way to collaborate with each other without much restriction.
     {% endfor %}
 </div>
 
-{# render the project cards #}
 <script src="{% static 'js/config_register.js' %}"></script>
 <script src="{% static 'js/project_buttons.js' %}"></script>
 <script src="{% static 'js/project_changes.js' %}"></script>
 
 {# a modal to join a project #}
 {% include 'widgets/fetch_joinproject_modal.html' %}
-<script src="{% static 'js/project_join.js' %}"></script>
+{# FIXME <script src="{% static 'js/project_join.js' %}"></script> #}
 
 
 {# a modal to configure a project image #}
@@ -84,7 +69,6 @@ Projects are a good way to collaborate with each other without much restriction.
 const wsURLs = {
   container_control: "{{ wss_container }}",
   project_config: "{{ wss_project_config }}",
-  project_joinable: "{{ wss_project_joinable }}",
   project_join: "{{ wss_project_join }}",
   get_containers: "{{ wss_project_container }}",
   handle_users: "{{ wss_project_users }}",
