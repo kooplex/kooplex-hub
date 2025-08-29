@@ -40,7 +40,7 @@ class FormProject(forms.ModelForm):
         })),
     )
     scope = forms.ChoiceField(
-        choices = Project.SCP_LOOKUP.items(), required = True,
+        #FIXME choices = Project.Scope.LOOKUP.items(), required = True,
         widget = forms.Select(attrs = tooltip_attrs({ 'title': _('Select the scope of the project') }))
     )
     preferred_image = forms.ModelChoiceField(
@@ -109,7 +109,7 @@ class FormJoinProject(forms.Form):
         from ..forms import TableJoinProject   #, TableCollaborator, TableContainer
         user = kwargs['initial'].pop('user')
         super().__init__(*argv, **kwargs)
-        joinable_bindings = UserProjectBinding.objects.filter(project__scope__in = [ Project.SCP_INTERNAL, Project.SCP_PUBLIC ], role = UserProjectBinding.RL_CREATOR).exclude(user = user)
+        joinable_bindings = UserProjectBinding.objects.filter(project__scope__in = [ Project.Scope.INTERNAL, Project.Scope.PUBLIC ], role = UserProjectBinding.RL_CREATOR).exclude(user = user)
         joined_projects = [ upb.project for upb in UserProjectBinding.objects.filter(user = user, role__in = [ UserProjectBinding.RL_ADMIN, UserProjectBinding.RL_COLLABORATOR ]) ]
         joinable_bindings = joinable_bindings.exclude(Q(project__in = joined_projects))
         self.t_joinable = TableJoinProject(joinable_bindings)
@@ -119,7 +119,7 @@ class FormJoinProject(forms.Form):
         join_info = json.loads(cleaned_data['join'])
         user = User.objects.get(id = join_info['user_id'])
         for project_id in join_info.get('join_project_ids', []):
-            project = Project.objects.get(id = project_id, scope__in = [ Project.SCP_INTERNAL, Project.SCP_PUBLIC ])
+            project = Project.objects.get(id = project_id, scope__in = [ Project.Scope.INTERNAL, Project.Scope.PUBLIC ])
             UserProjectBinding.objects.create(user = user, project = project, role = UserProjectBinding.RL_COLLABORATOR)
             #FIXME: feedback, save method?
         return cleaned_data

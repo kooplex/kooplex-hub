@@ -1,27 +1,22 @@
 import logging
 
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 
-from ..models import Project
+User = get_user_model()
 
 logger = logging.getLogger(__name__)
 
 class UserProjectBinding(models.Model):
-    RL_CREATOR = 'creator'
-    RL_ADMIN = 'administrator'
-    RL_COLLABORATOR = 'member'
-    RL_LOOKUP = {
-        RL_CREATOR: 'The creator of this project.',
-        RL_ADMIN: 'Can modify project properties.',
-        RL_COLLABORATOR: 'Member of this project.',
-    }
-    ROLE_LIST = [ RL_CREATOR, RL_ADMIN, RL_COLLABORATOR ]
+    class Role(models.TextChoices):
+        CREATOR = 'creator', 'The creator of this project.'
+        ADMIN = 'administrator', 'Can modify project properties.'
+        COLLABORATOR = 'member', 'Member of this project.'
 
-    user = models.ForeignKey(User, on_delete = models.CASCADE, null = False)
-    project = models.ForeignKey(Project, on_delete = models.CASCADE, null = False)
+    user = models.ForeignKey(User, on_delete = models.CASCADE)
+    project = models.ForeignKey('project.Project', on_delete = models.CASCADE, related_name = 'userbindings')
     is_hidden = models.BooleanField(default = False)
-    role = models.CharField(max_length = 16, choices = RL_LOOKUP.items(), null = False)
+    role = models.CharField(max_length = 16, choices = Role.choices)
 
     class Meta:
         unique_together = [['user', 'project']]
@@ -37,12 +32,17 @@ class UserProjectBinding(models.Model):
     def groupname(self):
         return f"p-{self.project.subpath}"
 
-    def projectcontainerbindings(self):
-        from ..models import ProjectContainerBinding
-        return ProjectContainerBinding.objects.filter(project = self.project, container__user = self.user)
+    @property
+    def containers(self):
+        return { 
+            b.container
+            for b in self.project.containerbindings
+                .filter(project = self.project, container__user = self.user)
+                .select_related('container')
+                }
 
     @property
     def is_admin(self):
-        return self.role in [ self.RL_ADMIN, self.RL_CREATOR ]
+        return self.role in [ self.Role.ADMIN, self.Role.CREATOR ]
 
 

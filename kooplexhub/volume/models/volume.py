@@ -69,7 +69,6 @@ class Volume(models.Model):
                      .select_related('user')
         }
 
-
     def is_admin(self, user):
         return user in self.admins
 

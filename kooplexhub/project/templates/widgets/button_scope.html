@@ -1,12 +1,12 @@
 <div id="project-scope-{{project.id}}" class="me-1" data-orig="{{project.scope}}">
-	<button class="badge rounded-pill border border-2 border-dark p-2 ms-2 text-dark position-relative {% if project.scope == project.SCP_PUBLIC %}d-none{% endif %}" 
-            name="{{project.SCP_PRIVATE}}" data-id="{{project.id}}" data-field="scope"
+	<button class="badge rounded-pill border border-2 border-dark p-2 ms-2 text-dark position-relative {% if project.scope == project.Scope.PUBLIC %}d-none{% endif %}" 
+            name="{{project.Scope.PRIVATE}}" data-id="{{project.id}}" data-field="scope"
             data-toggle="tooltip" title="Make project public">
       <i class="oi oi-key"></i>
       <span class="position-absolute top-0 start-100 translate-middle badge bg-success small">private</span>
     </button>
-    <button class="badge rounded-pill border border-2 border-dark p-2 ms-2 text-dark position-relative {% if project.scope == project.SCP_PRIVATE %}d-none{% endif %}" 
-	    name="{{project.SCP_PUBLIC}}" data-id="{{project.id}}" data-field="scope"
+    <button class="badge rounded-pill border border-2 border-dark p-2 ms-2 text-dark position-relative {% if project.scope == project.Scope.PRIVATE %}d-none{% endif %}" 
+	    name="{{project.Scope.PUBLIC}}" data-id="{{project.id}}" data-field="scope"
             data-toggle="tooltip" title="Make project private">
       <i class="oi oi-cloud"></i>
       <span class="position-absolute top-0 start-100 translate-middle badge bg-success small">puplic</span>

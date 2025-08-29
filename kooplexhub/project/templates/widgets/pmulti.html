@@ -108,7 +108,7 @@
                 </div>
             </div>
             <div class="tab-pane fade" id="content-three-{{project.id}}" role="tabpanel" aria-labelledby="tab-three-{{project.id}}">
-                {% include 'widgets/table_users.html' with pk=project.id table=project|table_collaborators:user %}
+		{% render_collaborators project user %}
             </div>
             <div class="tab-pane fade" id="content-four-{{project.id}}" role="tabpanel" aria-labelledby="tab-four-{{project.id}}">
                 {% include 'widgets/widget_volumes.html' with maxheight="118px" pk=project.id volumes=project.volumes callback="wss_projectconfig.register_changes" instance="project" %}

@@ -48,12 +48,12 @@ class UserHandler(SyncConsumer):
             upb, created = UserProjectBinding.objects.get_or_create(project = project, user = user)
             if created:
                 a.append(str(user))
-            if upb.role != UserProjectBinding.RL_CREATOR:
-                upb.role = UserProjectBinding.RL_ADMIN if user.id in marked else UserProjectBinding.RL_COLLABORATOR
+            if upb.role != UserProjectBinding.Role.CREATOR:
+                upb.role = UserProjectBinding.Role.ADMIN if user.id in marked else UserProjectBinding.Role.COLLABORATOR
                 upb.save()
                 if not created:
                     c.append(str(user))
-        for upb in UserProjectBinding.objects.filter(project = project).exclude(user__id__in = ids).exclude(role = UserProjectBinding.RL_CREATOR):
+        for upb in UserProjectBinding.objects.filter(project = project).exclude(user__id__in = ids).exclude(role = UserProjectBinding.Role.CREATOR):
             upb.delete()
             r.append(str(upb.user))
         if a:
@@ -70,7 +70,7 @@ class UserHandler(SyncConsumer):
         request = parsed.get('request')
         project_id = normalize_pk(parsed.get('pk'))
         try:
-            project = UserProjectBinding.objects.get(user__id = self.userid, project__id = project_id, role__in = [UserProjectBinding.RL_CREATOR, UserProjectBinding.RL_ADMIN]).project
+            project = UserProjectBinding.objects.get(user__id = self.userid, project__id = project_id, role__in = [UserProjectBinding.Role.CREATOR, UserProjectBinding.Role.ADMIN]).project
         except UserProjectBinding.DoesNotExist:
             project = None
         response = {
@@ -87,14 +87,17 @@ class UserHandler(SyncConsumer):
         elif request=='get-users':
             _uid = lambda b: b.user.id
             response['ids'] = list(map(_uid, UserProjectBinding.objects.filter(project=project).exclude(user__id=self.userid)))
-            response['marked_ids'] = list(map(_uid, UserProjectBinding.objects.filter(project=project, role__in = [UserProjectBinding.RL_CREATOR, UserProjectBinding.RL_ADMIN]).exclude(user__id=self.userid)))
+            response['marked_ids'] = list(map(_uid, UserProjectBinding.objects.filter(project=project, role__in = [UserProjectBinding.Role.CREATOR, UserProjectBinding.Role.ADMIN]).exclude(user__id=self.userid)))
             logger.debug(response)
             self.send(text_data=json.dumps(response))
         elif request=='save-users':
             message = self._chg_user_bindings(project, parsed.get('ids'), parsed.get('marked_ids', []))
             if message:
+                from ..forms import TableCollaborators
+                collaborators = project.collaborators_excluding(User.objects.get(self.userid))
+                t_collaborators = TableCollaborators(collaborators)
                 response['feedback'] = message
-                response['refresh'] = render_to_string('widgets/table_users.html', {'pk': project_id, 'table': project.table_collaborators(User.objects.get(id=self.userid))})
+                response['refresh'] = render_to_string('widgets/table_users.html', {'pk': project_id, 'table': t_collaborators})
                 self.send(text_data=json.dumps(response))
         else:
             logger.critical(request)
@@ -118,11 +121,11 @@ class ProjectConfigConsumer(SyncConsumer, Config):
             project=Project(name=name, subpath=subpath, preferred_image_id=changes['image'], description=changes['description'], **s)
             #FIXME: validate
             project.save()
-            UserProjectBinding(user_id = self.userid, project = project, role = UserProjectBinding.RL_CREATOR).save()
+            UserProjectBinding(user_id = self.userid, project = project, role = UserProjectBinding.Role.CREATOR).save()
             self._msg(project, f"New project {project.name} is created", reload=True)
         else:
             pid = int(pk)
-            project = UserProjectBinding.objects.get(user__id = self.userid, project__id = pid, role__in = [UserProjectBinding.RL_CREATOR, UserProjectBinding.RL_ADMIN]).project
+            project = UserProjectBinding.objects.get(user__id = self.userid, project__id = pid, role__in = [UserProjectBinding.Role.CREATOR, UserProjectBinding.Role.ADMIN]).project
         # Iterate over the changes and try to update the model instance
         for field, new_value in changes.items():
             if field == 'image':
@@ -213,8 +216,8 @@ class JoinProjectConsumer(SyncConsumer):
         response = {
             'response': request,
         }
-        published = list(map(lambda b: b.project, UserProjectBinding.objects.filter(project__scope__in = [ Project.SCP_INTERNAL, Project.SCP_PUBLIC ], role = UserProjectBinding.RL_CREATOR).exclude(user__id = self.userid)))
-        joined = list(map(lambda b: b.project, UserProjectBinding.objects.filter(user__id = self.userid, role__in = [ UserProjectBinding.RL_ADMIN, UserProjectBinding.RL_COLLABORATOR ])))
+        published = list(map(lambda b: b.project, UserProjectBinding.objects.filter(project__scope__in = [ Project.Scope.INTERNAL, Project.Scope.PUBLIC ], role = UserProjectBinding.Role.CREATOR).exclude(user__id = self.userid)))
+        joined = list(map(lambda b: b.project, UserProjectBinding.objects.filter(user__id = self.userid, role__in = [ UserProjectBinding.Role.ADMIN, UserProjectBinding.Role.COLLABORATOR ])))
         joinable = set(published).difference(joined)
         if request=='get-joinable':
             response.update({
@@ -226,7 +229,7 @@ class JoinProjectConsumer(SyncConsumer):
         elif request=='join':
             projectid = parsed.get('pk')
             if filter(lambda p: p.id==projectid, joinable):
-                UserProjectBinding.objects.create(project_id=projectid, user_id=self.userid, role=UserProjectBinding.RL_COLLABORATOR)
+                UserProjectBinding.objects.create(project_id=projectid, user_id=self.userid, role=UserProjectBinding.Role.COLLABORATOR)
             response["reloadpage"]=True
             logger.debug(response)
             self.send(text_data=json.dumps(response))

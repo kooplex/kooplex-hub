@@ -2,28 +2,23 @@ import logging
 
 from django.db import models
 from django.template.defaulttags import register
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 
-from container.models import Image
+User = get_user_model()
 
 logger = logging.getLogger(__name__)
 
 class Project(models.Model):
-    SCP_PUBLIC = 'public'
-    SCP_INTERNAL = 'internal'
-    SCP_PRIVATE = 'private'
-    SCP_LOOKUP = {
-        SCP_PRIVATE: 'Only the creator can invite collaborators to this project.',
-        SCP_INTERNAL: 'Only users in specific groups can list and may join this project.',
-        SCP_PUBLIC: 'Any authenticated user can list and may join this project.',
-    }
+    class Scope(models.TextChoices):
+        PUBLIC = 'public', 'Any authenticated user can list and may join this project.'
+        INTERNAL = 'internal', 'Only users in specific groups can list and may join this project.'
+        PRIVATE = 'private', 'Only the creator can invite collaborators to this project.'
 
-    name = models.TextField(max_length = 200, null = False)
+    name = models.TextField(max_length = 200)
     description = models.TextField(null = True)
-    scope = models.CharField(max_length = 16, choices = SCP_LOOKUP.items(), default = SCP_PRIVATE)
+    scope = models.CharField(max_length = 16, choices = Scope.choices, default = Scope.PRIVATE)
     subpath = models.CharField(max_length = 200, null = True, unique = True)
-    preferred_image = models.ForeignKey(Image, on_delete = models.CASCADE, default = None, null = True)
-
+    preferred_image = models.ForeignKey('container.Image', on_delete = models.CASCADE, default = None, null = True)
 
     def __str__(self):
         return self.name 
@@ -32,122 +27,31 @@ class Project(models.Model):
         return self.name < p.name
 
     @property
-    def search(self):
-        return f"{self.name} {self.description} {self.subpath}".upper()
-
-    @property
     def creator(self):
-        from .userprojectbinding import UserProjectBinding
-        try:
-            return UserProjectBinding.objects.get(project = self, role = UserProjectBinding.RL_CREATOR).user
-        except UserProjectBinding.DoesNotExist:
-            logger.warning(f'no creator for {self.name} {self.id}')
-            return
-
-    def is_user_authorized(self, user):
-        from .userprojectbinding import UserProjectBinding
-        try:
-            UserProjectBinding.objects.get(user = user, project = self)
-            return True
-        except UserProjectBinding.DoesNotExist:
-            return False
-
-    def is_admin(self, user):
-        from .userprojectbinding import UserProjectBinding
-        try:
-            return UserProjectBinding.objects.get(project = self, user = user).role in [ UserProjectBinding.RL_CREATOR, UserProjectBinding.RL_ADMIN ]
-        except UserProjectBinding.DoesNotExist:
-            return False
+        role = self.userbindings.model.Role
+        return self.userbindings.filter(role = role.CREATOR).first().user
 
     @property
     def admins(self):
-        from .userprojectbinding import UserProjectBinding
-        return [ b.user for b in UserProjectBinding.objects.filter(project = self, role__in = [ UserProjectBinding.RL_CREATOR, UserProjectBinding.RL_ADMIN ]) ]
+        Binding = self.userbindings.model
+        return {
+            b.user
+            for b in self.userbindings
+                     .filter(role__in=[Binding.Role.CREATOR, Binding.Role.ADMIN])
+                     .select_related('user')
+        } if self.pk else {}
 
-    def is_collaborator(self, user):
-        from .userprojectbinding import UserProjectBinding
-        try:
-            return UserProjectBinding.objects.get(project = self, user = user).role == UserProjectBinding.RL_COLLABORATOR
-        except UserProjectBinding.DoesNotExist:
-            return False
+    def is_admin(self, user):
+        return user in self.admins
 
-    @register.filter
-    def table_collaborators(self, user=None):
-        from .userprojectbinding import UserProjectBinding
-        from ..forms import TableCollaborators
-        return TableCollaborators(UserProjectBinding.objects.filter(project=self).exclude(user=user))
-
-    @property
-    def collaborators(self):
-        from .userprojectbinding import UserProjectBinding
-        return [ b.user for b in UserProjectBinding.objects.filter(project = self) ]
-
-    @property
-    def userprojectbindings(self):
-        from .userprojectbinding import UserProjectBinding
-        return list(UserProjectBinding.objects.filter(project = self))
+    def collaborators_excluding(self, user):
+        return self.userbindings.exclude(user__pk=user.pk) if self.pk else {}
 
     @property
     def volumes(self):
-        from volume.models import ProjectVolumeBinding
-        return [ b.volume for b in ProjectVolumeBinding.objects.filter(project = self) ]
-
-    @property
-    def reports(self):
-        from report.models import Report
-        return Report.objects.filter(project = self)
-
-#FIXME:
-    @staticmethod
-    def get_userproject(project_id, user):
-        from .userprojectbinding import UserProjectBinding
-        return UserProjectBinding.objects.get(user = user, project_id = project_id).project
-
-    @staticmethod
-    def get_userprojects(user):
-        from .userprojectbinding import UserProjectBinding
-        return [ upb.project for upb in UserProjectBinding.objects.filter(user = user) ]
-
-    def set_roles(self, roles):
-        from .userprojectbinding import UserProjectBinding
-        msg = []
-        for role in roles:
-            targetrole, userid = role.split('-')
-            u = User.objects.get(id = userid)
-            if targetrole == 'skip':
-                users = []
-                try:
-                    UserProjectBinding.objects.get(user = u, project = self).delete()
-                    users.append(str(u))
-                except UserProjectBinding.DoesNotExist:
-                    pass
-                if len(users):
-                    msg.append("User(s) removed from the collaboration: %s" % ','.join(users))
-            elif targetrole == 'collaborator':
-                users = []
-                try:
-                    upb = UserProjectBinding.objects.get(user = u, project = self)
-                    if upb.role != UserProjectBinding.RL_COLLABORATOR:
-                        upb.role = UserProjectBinding.RL_COLLABORATOR
-                        upb.save()
-                        users.append(str(u))
-                except UserProjectBinding.DoesNotExist:
-                    UserProjectBinding.objects.create(user = u, project = self, role = UserProjectBinding.RL_COLLABORATOR)
-                    users.append(str(u))
-                if len(users):
-                    msg.append("User(s) set as members of the collaboration: %s" % ','.join(users))
-            elif targetrole == 'admin':
-                users = []
-                try:
-                    upb = UserProjectBinding.objects.get(user = u, project = self)
-                    if upb.role != UserProjectBinding.RL_ADMIN:
-                        upb.role = UserProjectBinding.RL_ADMIN    
-                        upb.save()
-                        users.append(str(u))
-                except UserProjectBinding.DoesNotExist:
-                    UserProjectBinding.objects.create(user = u, project = self, role = UserProjectBinding.RL_ADMIN)
-                    msg.append("%s is in collaboration and is an admin" % u)
-                if len(users):
-                    msg.append("User(s) set as administrator(s) of the collaboration: %s" % ','.join(users))
-        return msg
+        return {
+            b.volume
+            for b in self.volumebindings
+                     .select_related('volume')
+        } if self.pk else {}
 
