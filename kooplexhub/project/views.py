@@ -67,7 +67,7 @@ def delete_or_leave(request, project_id, pk_user):
     except Project.DoesNotExist:
         messages.error(request, 'Project does not exist')
         return redirect('project:list')
-    if upb.role == upb.RL_CREATOR:
+    if upb.role == upb.Role.CREATOR:
         collab = []
         for upb_i in UserProjectBinding.objects.filter(project = project):
             if upb != upb_i:

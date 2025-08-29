@@ -24,9 +24,9 @@ class TableVolumeShare(tables.Table):
 <input type="hidden" name="user_id" value="{record.user.id}">
         """
         dhidden = "me-2" if self.is_collaborator_table else 'class="me-2 d-none"'
-        chk = "checked" if self.is_collaborator_table and record.role == record.RL_ADMIN else ""
-        o_adm = "opacity-75" if self.is_collaborator_table and record.role == record.RL_ADMIN else ""
-        o_nadm = "" if self.is_collaborator_table and record.role == record.RL_ADMIN else "opacity-75"
+        chk = "checked" if self.is_collaborator_table and record.role == record.Role.ADMIN else ""
+        o_adm = "opacity-75" if self.is_collaborator_table and record.role == record.Role.ADMIN else ""
+        o_nadm = "" if self.is_collaborator_table and record.role == record.Role.ADMIN else "opacity-75"
         return format_html(f"""
 <span id="admintoggler-{user.id}" {dhidden}><input id="admin-{user.id}" data-size="small"
   type="checkbox" data-toggle="toggle" name="{prefix}admin_id"

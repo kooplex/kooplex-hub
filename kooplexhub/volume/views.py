@@ -52,7 +52,7 @@ class NewAttachmentView(LoginRequiredMixin, generic.FormView):
         logger.info(form.cleaned_data)
         user = self.request.user
         v = Volume.objects.create(**form.cleaned_data)
-        UserVolumeBinding.objects.create(volume = v, user = user, role = UserVolumeBinding.RL_OWNER) 
+        UserVolumeBinding.objects.create(volume = v, user = user, role = UserVolumeBinding.Role.OWNER) 
         messages.info(self.request, f'Attachment {v.folder} is created')
         return super().form_valid(form)
 
@@ -90,7 +90,7 @@ class ConfigureVolumeView(LoginRequiredMixin, generic.edit.UpdateView):
         logger.info(f"unshared: {bindings_rm}")
         # maintain roles for bindings kept
         for b in UserVolumeBinding.objects.filter(volume__id = form.cleaned_data['id'], id__in = shared['bindings']):
-            role = UserVolumeBinding.RL_ADMIN if b.user.id in admins else UserVolumeBinding.RL_COLLABORATOR
+            role = UserVolumeBinding.Role.ADMIN if b.user.id in admins else UserVolumeBinding.Role.COLLABORATOR
             if b.role != role:
                 b.role = role
                 b.save()
@@ -98,7 +98,7 @@ class ConfigureVolumeView(LoginRequiredMixin, generic.edit.UpdateView):
         # create new bindings
         volume = Volume.objects.get(id = form.cleaned_data['id'])
         for uid in map(int, shared['bind_users']):
-            role = UserVolumeBinding.RL_ADMIN if uid in admins else UserVolumeBinding.RL_COLLABORATOR
+            role = UserVolumeBinding.Role.ADMIN if uid in admins else UserVolumeBinding.Role.COLLABORATOR
             user = User.objects.get(id = uid)
             b = UserVolumeBinding.objects.create(volume = volume, user = user, role = role)
             logger.info(f"shared: {b}")

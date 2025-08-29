@@ -30,6 +30,6 @@ class UserVolumeBinding(models.Model):
 
     @property
     def is_admin(self):
-        return self.role in [ self.RL_ADMIN, self.RL_OWNER ]
+        return self.role in [ self.Role.ADMIN, self.Role.OWNER ]
 
 

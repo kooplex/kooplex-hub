@@ -109,8 +109,8 @@ class FormJoinProject(forms.Form):
         from ..forms import TableJoinProject   #, TableCollaborator, TableContainer
         user = kwargs['initial'].pop('user')
         super().__init__(*argv, **kwargs)
-        joinable_bindings = UserProjectBinding.objects.filter(project__scope__in = [ Project.Scope.INTERNAL, Project.Scope.PUBLIC ], role = UserProjectBinding.RL_CREATOR).exclude(user = user)
-        joined_projects = [ upb.project for upb in UserProjectBinding.objects.filter(user = user, role__in = [ UserProjectBinding.RL_ADMIN, UserProjectBinding.RL_COLLABORATOR ]) ]
+        joinable_bindings = UserProjectBinding.objects.filter(project__scope__in = [ Project.Scope.INTERNAL, Project.Scope.PUBLIC ], role = UserProjectBinding.Role.CREATOR).exclude(user = user)
+        joined_projects = [ upb.project for upb in UserProjectBinding.objects.filter(user = user, role__in = [ UserProjectBinding.Role.ADMIN, UserProjectBinding.Role.COLLABORATOR ]) ]
         joinable_bindings = joinable_bindings.exclude(Q(project__in = joined_projects))
         self.t_joinable = TableJoinProject(joinable_bindings)
 
@@ -120,7 +120,7 @@ class FormJoinProject(forms.Form):
         user = User.objects.get(id = join_info['user_id'])
         for project_id in join_info.get('join_project_ids', []):
             project = Project.objects.get(id = project_id, scope__in = [ Project.Scope.INTERNAL, Project.Scope.PUBLIC ])
-            UserProjectBinding.objects.create(user = user, project = project, role = UserProjectBinding.RL_COLLABORATOR)
+            UserProjectBinding.objects.create(user = user, project = project, role = UserProjectBinding.Role.COLLABORATOR)
             #FIXME: feedback, save method?
         return cleaned_data
 

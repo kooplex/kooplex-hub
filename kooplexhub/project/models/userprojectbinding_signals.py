@@ -18,11 +18,11 @@ logger = logging.getLogger(__name__)
 def assert_single_creator(sender, instance, **kwargs):
     p = instance.project
     try:
-        upb = UserProjectBinding.objects.get(project = p, role = UserProjectBinding.RL_CREATOR)
-        if instance.role == UserProjectBinding.RL_CREATOR:
+        upb = UserProjectBinding.objects.get(project = p, role = UserProjectBinding.Role.CREATOR)
+        if instance.role == UserProjectBinding.Role.CREATOR:
             assert upb.id == instance.id, "Project %s cannot have more than one creator" % p
     except UserProjectBinding.DoesNotExist:
-        assert instance.role == UserProjectBinding.RL_CREATOR, "The first user project binding must be the creator %s" % instance
+        assert instance.role == UserProjectBinding.Role.CREATOR, "The first user project binding must be the creator %s" % instance
 
 
 @receiver(pre_save, sender = UserProjectBinding)
@@ -30,7 +30,7 @@ def grantaccess_project(sender, instance, **kwargs):
     from ..tasks import grant_access
     p = instance.project
     if instance.id is None:
-        is_creator = instance.role == UserProjectBinding.RL_CREATOR
+        is_creator = instance.role == UserProjectBinding.Role.CREATOR
         if is_creator:
             acl = { 'users_rw': [instance.user.id] }
             creator_username = instance.user.username
@@ -39,7 +39,7 @@ def grantaccess_project(sender, instance, **kwargs):
             with transaction.atomic():
                 group, group_created = Group.objects.select_for_update().get_or_create(name = instance.groupname, grouptype = Group.TP_PROJECT)
             if group_created:
-                creator = UserProjectBinding.objects.get(project = instance.project, role = UserProjectBinding.RL_CREATOR).user
+                creator = UserProjectBinding.objects.get(project = instance.project, role = UserProjectBinding.Role.CREATOR).user
                 UserGroupBinding.objects.get_or_create(user = creator, group = group)
                 acl = { 'groups_rw': [group.id] }
             else:
@@ -52,7 +52,7 @@ def grantaccess_project(sender, instance, **kwargs):
 @receiver(pre_delete, sender = UserProjectBinding)
 def revokeaccess_project(sender, instance, **kwargs):
     from ..tasks import revoke_access
-    if instance.role != UserProjectBinding.RL_CREATOR:
+    if instance.role != UserProjectBinding.Role.CREATOR:
         group = Group.objects.get(name = instance.groupname, grouptype = Group.TP_PROJECT)
         UserGroupBinding.objects.get(user = instance.user, group = group).delete()
         creator = instance.project.creator.username if instance.project.creator is not None else "creator_missing"
@@ -70,7 +70,7 @@ def assert_not_shared(sender, instance, **kwargs):
 @receiver(pre_delete, sender = UserProjectBinding)
 def garbagedir_project(sender, instance, **kwargs):
     from hub.tasks import archive
-    if instance.role != UserProjectBinding.RL_CREATOR:
+    if instance.role != UserProjectBinding.Role.CREATOR:
         return
     archive(folder=fs.path_project(instance.project), tarbal=fs.garbage_project(instance.project), remove=True)
     archive(folder=fs.path_report_prepare(instance.project), tarbal=fs.garbage_report_prepare(instance.project), remove=True)

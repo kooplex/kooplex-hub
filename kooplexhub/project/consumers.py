@@ -12,6 +12,7 @@ from project.models import Project, UserProjectBinding, ProjectContainerBinding
 from volume.models import Volume, ProjectVolumeBinding
 from container.models import Image
 
+from project.forms import TableCollaborators
 logger = logging.getLogger(__name__)
 
 #################
@@ -93,8 +94,7 @@ class UserHandler(SyncConsumer):
         elif request=='save-users':
             message = self._chg_user_bindings(project, parsed.get('ids'), parsed.get('marked_ids', []))
             if message:
-                from ..forms import TableCollaborators
-                collaborators = project.collaborators_excluding(User.objects.get(self.userid))
+                collaborators = project.collaborators_excluding(User.objects.get(pk=self.userid))
                 t_collaborators = TableCollaborators(collaborators)
                 response['feedback'] = message
                 response['refresh'] = render_to_string('widgets/table_users.html', {'pk': project_id, 'table': t_collaborators})
