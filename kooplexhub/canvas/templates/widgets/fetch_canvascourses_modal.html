@@ -2,7 +2,11 @@
 {% load static %}
 
 {% block course_plugin %}
-<div id="canvascourseSelection" class="mb-2"></div>
+    {% include 'widgets/list_canvascourses.html' %}
+    {% include 'course.html' with course=empty_course %}
+{% endblock %}
+
+{% block script_course_plugin %}
 <script src="{% static 'js/canvascourse.js' %}"></script>
 {% endblock %}
 

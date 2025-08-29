@@ -21,9 +21,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
   modalEl.addEventListener('shown.bs.modal', function (event) {
-    // Your logic here
     console.log("Modal is now shown:", event.target.id);
-    wss_joinproject = new ManagedWebSocket(wsURLs['project_join'], {
+    wss_joinproject = new ManagedWebSocket(wsURLs.project_join, {
         onMessage: cb,
     });
     wss_joinproject.send(JSON.stringify({

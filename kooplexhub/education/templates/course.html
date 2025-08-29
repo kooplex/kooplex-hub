@@ -3,21 +3,13 @@
 
 <div class="card rounded rounded-3 mb-3 border border-2 {% if course.id %}border-success{% else %}border-warning{% endif %} shadow-light bg-light" id="card-{{ course.id }}" data-widget="coursecard" data-id="{{course.id}}" data-search="{{course.search}}" data-search_what="course">
     <div class="card-header">
-         {% field_name course 'course' 'mx-2 w-100 p-2' 'wss_courseconfig.register_changes' %} {# FIXME field_name replace like below #}
-                {% if canvas %} Canvas {% endif %}
+        {% field_name course 'course' 'mx-2 w-100 p-2' 'wss_courseconfig.register_changes' %}
     </div>
     <div class="card-body">
 	{% if course.id %}
-        {% include 'widgets/multitabs.html' with pk=course.id %}
-	{% else %}
-	{% if canvas %}
-        {% include 'widgets/multitabs.html' with pk='canvas' new=True %}
+        {% include 'widgets/multitabs.html' with pk=course.id description=course.description %}
 	{% else %}
         {% include 'widgets/multitabs.html' with pk=course.id new=True %}
 	{% endif%}
-	{% endif%}
-        <div class="d-flex justify-content-end">
-            {% include 'widgets/widget_savechanges.html' with pk=course.id obj="course" %}
-        </div>
     </div>
 </div>

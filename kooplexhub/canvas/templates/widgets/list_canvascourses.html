@@ -1,17 +1,47 @@
-{% load canvas_buttons %} {# FIXME: rename missleading source file #}
+{% load canvas_buttons %}
+<style>
+/* base table styling */
+table[name="canvas-course"] {
+  border-collapse: separate;      /* allow spacing */
+  border-spacing: 0 0.5rem;       /* horizontal & vertical cell gaps */
+  width: 100%;
+}
+
+/* odd rows slightly darker background */
+table[name="canvas-course"] tbody tr:nth-child(odd) {
+  background-color: #e9ecef;      /* Bootstrap’s light gray */
+}
+
+/* hover effect: darker + pointer */
+table[name="canvas-course"] tbody tr:hover {
+  background-color: #d9dcdf;      /* slightly darker gray */
+  cursor: pointer;
+}
+
+/* give cells a bit more breathing space */
+table[name="canvas-course"] td {
+  padding: 0.5rem 1rem;           /* increase left/right padding */
+}
+</style>
+
 <div class="position-relative mb-2" id="canvasSelection" data-selected="">
-  <div class="rounded border p-3 rounded-3 border-2 border-secondary" style="max-height: {{maxheight}}; height: 100%; overflow-y: auto;">
+  <div class="rounded border p-3 rounded-3 border-2 border-secondary">
       <div class="content">
-          <table>
+        {% if canvascourses %}
+          <table name="canvas-course">
             {% for canvascourse in canvascourses %}
 	    <tr data-id="{{canvascourse.id}}" data-tail="{{canvascourse.name|canvas_digest}}"><td>{{canvascourse.name}}</td></tr>
             {% endfor %}
           </table>
+	{% elif canvascourses is not None %}
+	  <p>You have no canvas courses to template a new course.</p>
+	{% else %}
+          {% include 'widgets/growing_spinner.html' %}
+	{% endif %}
       </div>
       <div class="position-absolute top-0 start-0 badge rounded-pill bg-secondary text-white shadow-sm p-2" style="transform: translate(0%, -50%);">
         Your canvas courses
       </div>
   </div>
 </div>
-
 

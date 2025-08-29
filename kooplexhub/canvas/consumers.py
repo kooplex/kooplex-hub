@@ -24,6 +24,12 @@ logger = logging.getLogger(__name__)
 
 class CanvasGetCoursesConsumer(SyncSkeleton):
     def receive(self, text_data):
+        parsed = json.loads(text_data)
+        logger.debug(parsed)
+        request = parsed.get('request')
+        response = {
+            'response': request,
+        }
         try:
             canvas = Canvas.objects.get(user__id = self.userid)
             created_ids=list(map(lambda o: o.canvas_course_id, CanvasCourse.objects.all()))
@@ -31,16 +37,16 @@ class CanvasGetCoursesConsumer(SyncSkeleton):
             #filter those very old
             old_filter=KOOPLEX.get('canvas', {}).get('old_filter')
             if old_filter:
-                canvas_courses=filter(old_filter, canvas_courses)
-            resp = {
+                canvas_courses=list(filter(old_filter, canvas_courses))
+            response.update({
                 "feedback": "Your canvas course list is refreshed", 
-                "response": render_to_string("widgets/list_canvascourses.html", {"canvascourses":  canvas_courses, "maxheight": "200px" }),
-            }
+                "replace": render_to_string("widgets/list_canvascourses.html", {"canvascourses":  canvas_courses }),
+            })
         except Exception as e:
-            resp = {
+            response.update({
                 "feedback": f"Failed to fetch canvas course list", 
-                "response": f"problem loading canvas resources -- {e}",
-            }
-        self.send(text_data = json.dumps(resp))
+                "error": f"problem loading canvas resources -- {e}",
+            })
+        self.send(text_data = json.dumps(response))
 
 

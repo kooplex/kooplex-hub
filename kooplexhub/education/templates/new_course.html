@@ -7,11 +7,16 @@
             </div>
             <div class="modal-body vh-25">
               <div class="container">
-		      {% block course_plugin %}{% endblock %}
+                {% block course_plugin %}
                 {% include 'course.html' with course=empty_course %}
+		{% endblock %}
               </div>
+            </div>
+            <div class="modal-footer">
+              {% include 'widgets/widget_savechanges.html' with pk=None obj='course' show=True %}
             </div>
         </div>
     </div>
 </div>
 
+{% block script_course_plugin %}{% endblock %}

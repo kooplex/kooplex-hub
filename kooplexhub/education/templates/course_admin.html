@@ -91,6 +91,11 @@ const wsURLs = {
   assignment_score: "{{ wss_assignment_score }}",
 }
 
+$(document).ready(function() {
+  $("#add").on('click', function() {
+    $("#newCourseModal").modal("show");
+  })
+})
 </script>
 <script src="{% static 'js/xeditable.js' %}"></script>
 <script src="{% static 'js/multitabs.js' %}"></script>
