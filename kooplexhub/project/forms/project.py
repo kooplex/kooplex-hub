@@ -13,10 +13,6 @@ from ..models import Project, UserProjectBinding
 from kooplexhub.lib import my_slug_validator, my_end_validator
 from kooplexhub.common import tooltip_attrs
 
-#FIXME: depreate
-class FolderTextWidget(forms.TextInput):
-    template_name = 'folder.html'
-
 
 class FormProject(forms.ModelForm):
     class Meta:
@@ -35,9 +31,6 @@ class FormProject(forms.ModelForm):
             my_slug_validator('Enter a valid folder name containing only small letters, numbers or underscore.'),
         ],
         max_length = 200, required = True,
-        widget = FolderTextWidget(attrs = tooltip_attrs({
-            'title': _('This folder is created for the project, which has to be unique. The folder name is constant for the project\'s lifetime. If left empty it is generated from the project name and username.'), 
-        })),
     )
     description = forms.CharField(
         max_length = 100, required = True,
