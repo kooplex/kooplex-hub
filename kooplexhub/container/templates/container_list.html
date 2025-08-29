@@ -40,6 +40,8 @@ Environments are user workspaces with limited resources, attached volumes and pr
       <div class="card-container" id="card-container-{{ container.id }}">
         {% include 'container.html' %}
       </div>
+    {% empty %}
+      {% include 'empty.html' with empty_title="You have no envoronments yet." empty_p_before='Use the add (<i class="bi bi-plus border"></i>) button in the navbar to create your first environment.' %}
     {% endfor %}
 </div>
 <script src="{% static 'js/config_register.js' %}"></script>

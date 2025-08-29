@@ -27,7 +27,7 @@ Create a new course or import courses from Canvas using a canvas api token <a hr
 {% include modal_new %}
 
 {% if not coursebindinglist %}
-<p>You cannot create a course. You are redirected to <a href="{% url 'education:courses' %}">Courses</a></p>
+{% include 'empty.html' with empty_title="You cannot create a course. You are shortly redirected to student courses" %}
 <script>
 $(document).ready(function() {
     setTimeout(function() {

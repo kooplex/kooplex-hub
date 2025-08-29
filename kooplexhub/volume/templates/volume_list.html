@@ -1,4 +1,4 @@
-{% extends "volume_layout.html" %}
+{% extends "layout.html" %}
 {% block title %}Kooplex Volumes{% endblock %}
 
 {% load static %}
@@ -38,7 +38,7 @@ A storage is the place for large, read-only datasets and for tools or user's tes
 <div id="listPane" class="d-flex flex-wrap justify-content-center gap-3">
     {% for volume in volumes %}
       <div class="card-container" id="card-container-{{ volume.id }}">
-        {% include 'volume_partial_list.html' %}
+        {% include 'volume.html' %}
       </div>
     {% empty %}
   {% include 'empty.html' %}

@@ -21,7 +21,7 @@ For help on courses see the documentation <a href="https://xwiki.vo.elte.hu/en/k
         {% include 'student_course.html' with course=ucb.course t_assignments=ucb.assignments_table %}
       </div>
     {% empty %}
-    <p>You have not been added to a course yet.</p>
+      {% include 'empty.html' with empty_title="You have not been added to a course yet." %}
     {% endfor %}
   </div>
 </div>
