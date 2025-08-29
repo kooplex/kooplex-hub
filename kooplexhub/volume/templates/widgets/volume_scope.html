@@ -1,10 +1,65 @@
-{% if volume.scope == volume.SCP_PRIVATE %}
-  <i class="oi oi-key h5" aria-hidden="true" data-bs-toggle="tooltip" title="Private volume" data-placement="top"></i>
-{% elif volume.scope == volume.SCP_INTERNAL %}
-  <i class="oi oi-lock-unlocked h5" aria-hidden="true" data-bs-toggle="tooltip" title="Internal shared volume" data-placement="top"></i>
-{% elif volume.scope == volume.SCP_ATTACHMENT %}
-  <i class="oi oi-paperclip h5" aria-hidden="true" data-bs-toggle="tooltip" title="Attachment" data-placement="top"></i>
-{% else %}
-  <i class="oi oi-cloud h5" aria-hidden="true" data-bs-toggle="tooltip" title="Public volume" data-placement="top"></i>
-{% endif %}
+{# volume_scope_button.html (or inline) #}
+{% if editable %}
+<div class="btn-group dropend d-inline-block">
+  <button
+    class="btn btn-outline-secondary rounded-circle d-inline-flex align-items-center justify-content-center scope-btn"
+    type="button"
+    data-bs-toggle="dropdown"
+    aria-expanded="false"
+    title="Change visibility"
+    style="width: 2.25rem; height: 2.25rem;"
+    data-volume-id="{{ volume.id }}"
+    data-current-scope="{{ volume.scope }}"
+  >
+    {% if volume.scope == volume.Scope.PRIVATE %}
+      <i class="oi oi-key h5 m-0" aria-hidden="true"></i>
+    {% elif volume.scope == volume.Scope.INTERNAL %}
+      <i class="oi oi-lock-unlocked h5 m-0" aria-hidden="true"></i>
+    {% elif volume.scope == volume.Scope.ATTACHMENT %}
+      <i class="oi oi-paperclip h5 m-0" aria-hidden="true"></i>
+    {% else %}
+      <i class="oi oi-cloud h5 m-0" aria-hidden="true"></i>
+    {% endif %}
+  </button>
 
+  <ul class="dropdown-menu dropdown-menu-end p-1 shadow">
+    <li>
+      <button class="dropdown-item d-flex align-items-center gap-2 {% if volume.scope == volume.Scope.PRIVATE %}active{% endif %}"
+              type="button"
+              data-action="set-scope"
+              data-scope="{{ volume.Scope.PRIVATE }}">
+        <i class="oi oi-key" aria-hidden="true"></i>
+        <span>Private</span>
+      </button>
+    </li>
+    <li>
+      <button class="dropdown-item d-flex align-items-center gap-2 {% if volume.scope == volume.Scope.INTERNAL %}active{% endif %}"
+              type="button"
+              data-action="set-scope"
+              data-scope="{{ volume.Scope.INTERNAL }}">
+        <i class="oi oi-lock-unlocked" aria-hidden="true"></i>
+        <span>Internal</span>
+      </button>
+    </li>
+    <li>
+      <button class="dropdown-item d-flex align-items-center gap-2 {% if volume.scope == volume.Scope.ATTACHMENT %}active{% endif %}"
+              type="button"
+              data-action="set-scope"
+              data-scope="{{ volume.Scope.ATTACHMENT }}">
+        <i class="oi oi-paperclip" aria-hidden="true"></i>
+        <span>Attachment</span>
+      </button>
+    </li>
+  </ul>
+</div>
+{% else %}
+    {% if volume.scope == volume.Scope.PRIVATE %}
+      <i class="oi oi-key h5 m-0" aria-hidden="true"></i>
+    {% elif volume.scope == volume.Scope.INTERNAL %}
+      <i class="oi oi-lock-unlocked h5 m-0" aria-hidden="true"></i>
+    {% elif volume.scope == volume.Scope.ATTACHMENT %}
+      <i class="oi oi-paperclip h5 m-0" aria-hidden="true"></i>
+    {% else %}
+      <i class="oi oi-cloud h5 m-0" aria-hidden="true"></i>
+    {% endif %}
+{% endif %}

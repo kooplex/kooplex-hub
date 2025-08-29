@@ -1,4 +1,5 @@
 from django.utils.html import format_html
+from django.template.loader import render_to_string
 import django_tables2 as tables
 
 from project.models import UserProjectBinding
@@ -115,12 +116,12 @@ class TableVolume(tables.Table):
 
     def __init__(self, user):
         volumes = [ b.volume for b in UserVolumeBinding.objects.filter(user = user) ]
-        volumes.extend(Volume.objects.filter(scope = Volume.SCP_ATTACHMENT))
+        volumes.extend(Volume.objects.filter(scope = Volume.Scope.ATTACHMENT))
         super().__init__(set(volumes))
 
     def render_button(self, record):
         volume = record
-        if volume.scope == volume.SCP_ATTACHMENT:
+        if volume.scope == volume.Scope.ATTACHMENT:
             icon_on = "ri-attachment-line"
             icon_off = "ri-attachment-2"
         else:
@@ -135,7 +136,7 @@ class TableVolume(tables.Table):
         """)
 
     def render_scope(self, record):
-        return record.render_scope_html()
+        return render_to_string('widgets/volume_scope.html', {'volume': record})
 
 
 

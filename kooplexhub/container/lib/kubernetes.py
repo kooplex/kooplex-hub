@@ -46,7 +46,7 @@ def storage_resources(volumes):
     claims = set()
     for volume in volumes:
         mountPath = KOOPLEX['kubernetes']['userdata'].get('mountPath_attachment', '/attachments/{volume.folder}') \
-                if volume.scope == volume.SCP_ATTACHMENT else \
+                if volume.scope == volume.Scope.ATTACHMENT else \
                 KOOPLEX['kubernetes']['userdata'].get('mountPath_volume', '/volume/{volume.folder}')
         mounts.append({
             "name": volume.claim,

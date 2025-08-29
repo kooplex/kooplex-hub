@@ -11,7 +11,7 @@ mp_attachment = KOOPLEX.get('mountpoint_hub', {}).get('attachment', '/mnt/attach
 mp_report_prepare = KOOPLEX.get('mountpoint_hub', {}).get('report_prepare', '/mnt/report_prepare')
 
 def folder_attachment(volume):
-    assert volume.scope == volume.SCP_ATTACHMENT, "Only attachments are automatically created"
+    assert volume.scope == volume.Scope.ATTACHMENT, "Only attachments are automatically created"
     return os.path.join( mp_attachment, volume.subPath )
 
 #TODO: only if report app is loaded
@@ -25,6 +25,6 @@ def grantaccess_volume(volume):
     #FIXME: everybody read only
 
 def garbage_attachment(volume):
-    if volume.scope == volume.SCP_ATTACHMENT:
+    if volume.scope == volume.Scope.ATTACHMENT:
         pass
     #FIXME: NotImplemented

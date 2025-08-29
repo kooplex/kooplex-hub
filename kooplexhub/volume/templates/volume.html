@@ -1,20 +1,24 @@
+{% load render_scope from volume_tags %}
+{% load widgets %}
 {% load extras %}
 
 
 <div class="card bg-light rounded rounded-3 mb-3 shadow-light card-fixed d-flex flex-column" id="card-{{ volume.id }}">
   <div class="card-header py-2">
-    {{ volume.render_scope_html }}
-    {{ volume.folder }}
+    {% render_scope volume %}
+    {% field_name volume 'volume' 'mx-2 w-100 p-2' 'wss_projectconfig.register_changes' %} {# fixme #}
   </div>
 
   <div class="card-body">
     <!-- long content here will scroll vertically -->
-    {{ volume.description }}
+    <div data-type="textarea" data-id="{{volume.id}}" data-field="description" data-orig="{{volume.description}}" data-instance="volume"
+         data-callback="wss_projectconfig.register_changes"
+         class="editable" data-placement="right" placeholder="Add description">{% if volume.description %}{{volume.description}}{% endif %}</div>
     <!-- etc. -->
   </div>
 
   {% if volume.owner != user %}
-    <div class="card-footer py-2" data-toggle="tooltip" title="{{volume.render_admins}}">
+    <div class="card-footer py-2" data-toggle="tooltip" title="{{volume.admins|join:', '}}">
       Created by {{ volume.owner }}
     </div>
   {% endif %}

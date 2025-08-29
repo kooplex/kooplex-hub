@@ -46,11 +46,11 @@ def projects(request):
 @login_required
 @require_http_methods(["GET"])
 def volumes(request):
-    shared = Q(user = request.user, volume__scope__in = [ Volume.SCP_PRIVATE, Volume.SCP_INTERNAL ])
-    public = Q(volume__scope = Volume.SCP_PUBLIC)
+    shared = Q(user = request.user, volume__scope__in = [ Volume.Scope.PRIVATE, Volume.Scope.INTERNAL ])
+    public = Q(volume__scope = Volume.Scope.PUBLIC)
     return JsonResponse({ 
         'volumes': [ { 'id': b.volume.id, 'folder': b.volume.folder } for b in UserVolumeBinding.objects.filter(shared | public).filter(volume__is_present = True) ],
-        'attachments': [ { 'id': v.id, 'folder': v.folder } for v in Volume.objects.filter(scope = Volume.SCP_ATTACHMENT, is_present = True) ],
+        'attachments': [ { 'id': v.id, 'folder': v.folder } for v in Volume.objects.filter(scope = Volume.Scope.ATTACHMENT, is_present = True) ],
     })
 
 @login_required
@@ -104,10 +104,10 @@ def submit(request, job_name):
 
     auth_project = lambda p_ids: set([ b.project.subpath for b in UserProjectBinding.objects.filter(user = request.user, project__id__in = p_ids) ])
 
-    shared = Q(user = request.user, volume__scope__in = [ Volume.SCP_PRIVATE, Volume.SCP_INTERNAL ])
-    public = Q(volume__scope = Volume.SCP_PUBLIC)
+    shared = Q(user = request.user, volume__scope__in = [ Volume.Scope.PRIVATE, Volume.Scope.INTERNAL ])
+    public = Q(volume__scope = Volume.Scope.PUBLIC)
     volumes = { b.volume.id: b.volume for b in UserVolumeBinding.objects.filter(shared | public).filter(volume__is_present = True) }
-    attachments = { v.id: v.folder for v in Volume.objects.filter(scope = Volume.SCP_ATTACHMENT, is_present = True) }
+    attachments = { v.id: v.folder for v in Volume.objects.filter(scope = Volume.Scope.ATTACHMENT, is_present = True) }
     auth_volume = lambda v_ids: set([ volumes[v_id] for v_id in v_ids if v_id in volumes ])
     auth_attachment = lambda v_ids: set([ attachments[v_id] for v_id in v_ids if v_id in attachments ])
 

@@ -1,7 +1,8 @@
 {% extends "layout.html" %}
-{% block title %}Kooplex Volumes{% endblock %}
-
+{% load render_volume from volume_tags %}
 {% load static %}
+
+{% block title %}Kooplex Volumes{% endblock %}
 
 {% block infoline %}
 A storage is the place for large, read-only datasets and for tools or user's test datasets. <a href="https://xwiki.vo.elte.hu/en/kooplex-manual/storages"><span class="ms-2 bi bi-book"></span></a>
@@ -38,7 +39,7 @@ A storage is the place for large, read-only datasets and for tools or user's tes
 <div id="listPane" class="d-flex flex-wrap justify-content-center gap-3">
     {% for volume in volumes %}
       <div class="card-container" id="card-container-{{ volume.id }}">
-        {% include 'volume.html' %}
+        {% render_volume volume %}
       </div>
     {% empty %}
   {% include 'empty.html' %}

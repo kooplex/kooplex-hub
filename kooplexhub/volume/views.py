@@ -72,7 +72,7 @@ class ConfigureVolumeView(LoginRequiredMixin, generic.edit.UpdateView):
         context = super().get_context_data(**kwargs)
         context['menu_storage'] = True
         context['volume_id'] = self.kwargs['pk']
-        if Volume.objects.get(id = self.kwargs['pk']).scope == Volume.SCP_ATTACHMENT:
+        if Volume.objects.get(id = self.kwargs['pk']).scope == Volume.Scope.ATTACHMENT:
             context['active'] = 'meta'
             context['is_attachment'] = True
         else:

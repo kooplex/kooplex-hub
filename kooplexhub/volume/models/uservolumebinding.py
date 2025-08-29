@@ -1,26 +1,21 @@
 import logging
 
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 
-from ..models import Volume
+User = get_user_model()
 
 logger = logging.getLogger(__name__)
 
 class UserVolumeBinding(models.Model):
-    RL_OWNER = 'owner'
-    RL_ADMIN = 'administrator'
-    RL_COLLABORATOR = 'member'
-    RL_LOOKUP = {
-        RL_OWNER: 'The owner of this volume.',
-        RL_ADMIN: 'Can modify volume properties.',
-        RL_COLLABORATOR: 'User can mount this volume read-only.',
-    }
-    ROLE_LIST = [ RL_OWNER, RL_ADMIN, RL_COLLABORATOR ]
+    class Role(models.TextChoices):
+        OWNER = 'owner', 'The owner of this volume.'
+        ADMIN = 'administrator', 'Can modify volume properties.'
+        COLLABORATOR = 'member', 'User can mount this volume read-only.'
 
-    user = models.ForeignKey(User, on_delete = models.CASCADE, null = False)
-    volume = models.ForeignKey(Volume, on_delete = models.CASCADE, null = False)
-    role = models.CharField(max_length = 16, choices = RL_LOOKUP.items(), null = False)
+    user = models.ForeignKey(User, on_delete = models.CASCADE)
+    volume = models.ForeignKey('volume.Volume', on_delete = models.CASCADE, related_name = 'userbindings')
+    role = models.CharField(max_length = 16, choices = Role.choices)
 
     class Meta:
         unique_together = [['user', 'volume']]
@@ -28,9 +23,6 @@ class UserVolumeBinding(models.Model):
     def __str__(self):
         return "Binding: {} -- {}".format(self.volume, self.user)
 
-#    @property
-#    def groupname(self):
-#        return f"p-{self.volume.subpath}"
 
     def volumecontainerbindings(self):
         from ..models import VolumeContainerBinding
