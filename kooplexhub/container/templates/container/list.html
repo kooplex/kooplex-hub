@@ -6,9 +6,9 @@
 {% block head_content %}
   <!-- bootstrap-toggler requirement -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/css/bootstrap5-toggle.min.css" rel="stylesheet">
-  <link href="{% static 'css/xeditable.css' %}" rel="stylesheet">
-  <link href="{% static 'css/dropdown.css' %}" rel="stylesheet">
-  <link href="{% static 'css/cardlist.css' %}" rel="stylesheet">
+  <link href="{% static 'hub/css/xeditable.css' %}" rel="stylesheet">
+  <link href="{% static 'hub/css/dropdown.css' %}" rel="stylesheet">
+  <link href="{% static 'hub/css/cardlist.css' %}" rel="stylesheet">
 {% endblock %}
 
 {% block infoline %}
@@ -44,33 +44,33 @@ Environments are user workspaces with limited resources, attached volumes and pr
       {% include 'empty.html' with empty_title="You have no envoronments yet." empty_p_before='Use the add (<i class="bi bi-plus border"></i>) button in the navbar to create your first environment.' %}
     {% endfor %}
 </div>
-<script src="{% static 'js/config_register.js' %}"></script>
-<script src="{% static 'js/container_buttons.js' %}"></script>
-<script src="{% static 'js/dropdown.js' %}"></script>
+<script src="{% static 'hub/js/config_register.js' %}"></script>
+<script src="{% static 'container/js/buttons.js' %}"></script>
+<script src="{% static 'hub/js/dropdown.js' %}"></script>
 
 {# a modal to configure a container image #}
-<script src="{% static 'js/container_changes.js' %}"></script>
+<script src="{% static 'container/js/changes.js' %}"></script>
 {% include 'widgets/image_selection.html' with instance="container" %}
-<script src="{% static 'js/image_selection.js' %}"></script>
+<script src="{% static 'container/js/image_selection.js' %}"></script>
 
 {# a modal to configure a container compute resources #}
 {% include 'widgets/compute_resource_selection.html' with form=resource_form %}
-<script src="{% static 'js/computeresource_selection.js' %}"></script>
+<script src="{% static 'container/js/computeresource_selection.js' %}"></script>
 
 {# a modal to configure a container filesystem resources #}
 {% include 'widgets/file_resource_selection.html' with instance="container" %}
-<script src="{% static 'js/fileresource_selection.js' %}"></script>
+<script src="{% static 'container/js/fileresource_selection.js' %}"></script>
 
 {# a modal to dump logs #}
 {% include 'widgets/fetchlogs.html' %}
-<script src="{% static 'js/fetchlogs.js' %}"></script>
+<script src="{% static 'container/js/fetchlogs.js' %}"></script>
 
 {% endblock %}
 
 
 {% block scripts %}
 
-<script src="{% static 'js/wss.js' %}"></script>
+<script src="{% static 'hub/js/wss.js' %}"></script>
 
 <script>
 // Save web socket urls
@@ -91,6 +91,6 @@ $(document).ready(function() {
 
 
 </script>
-<script src="{% static 'js/xeditable.js' %}"></script>
+<script src="{% static 'hub/js/xeditable.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/js/bootstrap5-toggle.min.js"></script>
 {% endblock %}

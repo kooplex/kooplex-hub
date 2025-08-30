@@ -89,11 +89,11 @@ def indicator_state(container):
 
 @inclusion_tag_ex("container/button/teleport.html")
 def button_teleport(container):
-    return {"container": container, 'icon': static('teleport.ico')}
+    return {"container": container, 'icon': static('container/img/teleport.ico')}
 
 @inclusion_tag_ex("container/button/seafile.html")
 def button_seafile(container):
-    return {"container": container, 'icon': static('seafile.png')}
+    return {"container": container, 'icon': static('container/img/seafile.png')}
 
 @inclusion_tag_ex("container/button/mount.html")
 def button_mount(container, callback):

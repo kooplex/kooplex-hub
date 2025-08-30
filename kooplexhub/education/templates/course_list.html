@@ -7,9 +7,9 @@ For help on courses see the documentation <a href="https://xwiki.vo.elte.hu/en/k
 {% endblock %}
 
 {% block head_content %}
-<link href="{% static 'css/course.css' %}" rel="stylesheet">
-<link href="{% static 'css/dropdown.css' %}" rel="stylesheet">
-<link href="{% static 'css/cardlist.css' %}" rel="stylesheet">
+<link href="{% static 'education/css/course.css' %}" rel="stylesheet">
+<link href="{% static 'hub/css/dropdown.css' %}" rel="stylesheet">
+<link href="{% static 'hub/css/cardlist.css' %}" rel="stylesheet">
 {% endblock %}
 
 
@@ -27,14 +27,14 @@ For help on courses see the documentation <a href="https://xwiki.vo.elte.hu/en/k
 </div>
 
 {# a modal to start/stop/jump to project environments #}
-<script src="{% static 'js/environments.js' %}"></script>
-<script src="{% static 'js/container_buttons.js' %}"></script>
-<script src="{% static 'js/dropdown.js' %}"></script>
+<script src="{% static 'container/js/environments.js' %}"></script>
+<script src="{% static 'container/js/buttons.js' %}"></script>
+<script src="{% static 'hub/js/dropdown.js' %}"></script>
 
 {% endblock %}
 
 {% block scripts %}
-<script src="{% static 'js/wss.js' %}"></script>
+<script src="{% static 'hub/js/wss.js' %}"></script>
 <script>
 // Save web socket urls
 const wsURLs = {

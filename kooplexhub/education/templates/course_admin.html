@@ -8,11 +8,11 @@
 {% block head_content %}
 <link href="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/css/bootstrap5-toggle.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<link href="{% static 'css/datetimepicker.css' %}" rel="stylesheet">
-<link href="{% static 'css/multitabs.css' %}" rel="stylesheet">
-<link href="{% static 'css/xeditable.css' %}" rel="stylesheet">
-<link href="{% static 'css/dropdown.css' %}" rel="stylesheet">
-<link href="{% static 'css/cardlist.css' %}" rel="stylesheet">
+<link href="{% static 'education/css/datetimepicker.css' %}" rel="stylesheet">
+<link href="{% static 'hub/css/multitabs.css' %}" rel="stylesheet">
+<link href="{% static 'hub/css/xeditable.css' %}" rel="stylesheet">
+<link href="{% static 'hub/css/dropdown.css' %}" rel="stylesheet">
+<link href="{% static 'hub/css/cardlist.css' %}" rel="stylesheet">
 {% endblock %}
 
 {% block infoline %}
@@ -50,20 +50,20 @@ $(document).ready(function() {
 
 
 {# load common configuration logic #}
-<script src="{% static 'js/config_register.js' %}"></script>
+<script src="{% static 'hub/js/config_register.js' %}"></script>
 
 {# a modal to configure a course image #}
 {% include 'widgets/image_selection.html' with instance="course" %}
-<script src="{% static 'js/image_selection.js' %}"></script>
+<script src="{% static 'container/js/image_selection.js' %}"></script>
 
 {# a modal to configure a course's students/teachers #}
 {% include 'widgets/select_users.html' with instance="course" %}
-<script src="{% static 'js/select_users.js' %}"></script>
+<script src="{% static 'hub/js/select_users.js' %}"></script>
 
 {# a modal to start/stop/jump to course environments #}
-<script src="{% static 'js/environments.js' %}"></script>
-<script src="{% static 'js/container_buttons.js' %}"></script>
-<script src="{% static 'js/dropdown.js' %}"></script>
+<script src="{% static 'container/js/environments.js' %}"></script>
+<script src="{% static 'container/js/buttons.js' %}"></script>
+<script src="{% static 'hub/js/dropdown.js' %}"></script>
 
 {# a modal to configure a course volumes #}
 {% include 'widgets/volumes.html' with instance="course" %}
@@ -72,13 +72,13 @@ $(document).ready(function() {
 
 {# a modal to configure assignments #}
 {% include 'widgets/modal_assignment.html' %}
-<script src="{% static 'js/datetimepicker.js' %}"></script>
-<script src="{% static 'js/score.js' %}"></script>
+<script src="{% static 'education/js/datetimepicker.js' %}"></script>
+<script src="{% static 'education/js/score.js' %}"></script>
 {% endblock %}
 
 {% block scripts %}
-<script src="{% static 'js/course_admin.js' %}"></script>
-<script src="{% static 'js/wss.js' %}"></script>
+<script src="{% static 'education/js/course_admin.js' %}"></script>
+<script src="{% static 'hub/js/wss.js' %}"></script>
 <script>  
 // Save web socket urls
 const wsURLs = {
@@ -98,8 +98,8 @@ $(document).ready(function() {
   })
 })
 </script>
-<script src="{% static 'js/xeditable.js' %}"></script>
-<script src="{% static 'js/multitabs.js' %}"></script>
+<script src="{% static 'hub/js/xeditable.js' %}"></script>
+<script src="{% static 'hub/js/multitabs.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/js/bootstrap5-toggle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 {% endblock %}
