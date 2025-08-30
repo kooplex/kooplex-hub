@@ -18,7 +18,7 @@ from .forms import FormAttachment, FormVolumeUpdate
 logger = logging.getLogger(__name__)
 
 class VolumeListView(LoginRequiredMixin, generic.ListView):
-    template_name = 'volume_list.html'
+    template_name = 'volume/list.html'
     context_object_name = 'volumes'
     model = Volume
 

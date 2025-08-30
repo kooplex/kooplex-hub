@@ -1,7 +1,7 @@
 from django import template
 register = template.Library()
 
-@register.inclusion_tag("volume.html")
+@register.inclusion_tag("volume/card.html")
 def render_volume(volume):
     return {"volume": volume}
 
