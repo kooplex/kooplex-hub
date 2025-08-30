@@ -28,7 +28,7 @@ Environments are user workspaces with limited resources, attached volumes and pr
             </div>
             <div class="modal-body">
               <div class="container-fluid p-0" id="card-container-new">
-                {% include 'container.html' with container=empty_container %}
+                {% include 'container/card.html' with container=empty_container %}
               </div>
             </div>
         </div>
@@ -38,7 +38,7 @@ Environments are user workspaces with limited resources, attached volumes and pr
 <div id="listPane" class="d-flex flex-wrap justify-content-center gap-3">
     {% for container in containers %}
       <div class="card-container" id="card-container-{{ container.id }}">
-        {% include 'container.html' %}
+        {% include 'container/card.html' %}
       </div>
     {% empty %}
       {% include 'empty.html' with empty_title="You have no envoronments yet." empty_p_before='Use the add (<i class="bi bi-plus border"></i>) button in the navbar to create your first environment.' %}

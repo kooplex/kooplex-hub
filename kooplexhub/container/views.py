@@ -41,7 +41,7 @@ def destroy(request, pk):
 
 
 class ContainerListView(LoginRequiredMixin, generic.ListView):
-    template_name = 'container_list.html'
+    template_name = 'container/list.html'
     context_object_name = 'containers'
     model = Container
 

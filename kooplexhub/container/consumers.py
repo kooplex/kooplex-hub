@@ -65,7 +65,7 @@ class ContainerControlConsumer(AsyncSkeleton):
 
 
 class ContainerConfigConsumer(CSyncSkeleton, Config):
-    template='container.html'
+    template='container/card.html'
     instance_reference='container'
 
     def receive(self, text_data):
