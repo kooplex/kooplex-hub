@@ -12,7 +12,7 @@ from project.models import Project, UserProjectBinding, ProjectContainerBinding
 from volume.models import Volume, ProjectVolumeBinding
 from container.models import Image
 
-from project.forms import TableCollaborators
+from project.tables import TableCollaborators
 logger = logging.getLogger(__name__)
 
 #################

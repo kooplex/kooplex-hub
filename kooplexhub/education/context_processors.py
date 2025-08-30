@@ -11,7 +11,7 @@ def assignment_warnings(request):
 def warnings(request):
     user = request.user
     return { 
-        'unbound_courses': [ ucb.course for ucb in UserCourseBinding.objects.filter(user = user).exclude(course__coursecontainerbinding__container__user = user) ],
+        'unbound_courses': { b.course for b in UserCourseBinding.objects.filter(user = user).exclude(course__containerbindings__container__user = user) },
     } if user.is_authenticated else {}
 
 def group_warnings(request):

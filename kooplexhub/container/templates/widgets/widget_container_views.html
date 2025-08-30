@@ -1,5 +1,5 @@
 {% load container_buttons %}
-{% if container.state == container.ST_RUNNING or container.state == container.ST_NEED_RESTART %}
+{% if container.state == container.State.RUNNING or container.state == container.State.NEED_RESTART %}
 <div name="opencombo" data-id="{{container.id}}">
     <div class="hover-dropdown">
 	    {% button_view container.views|first container %}

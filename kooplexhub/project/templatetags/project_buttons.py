@@ -20,6 +20,6 @@ def project_scope(project = None):
 
 @register.inclusion_tag("widgets/table_users.html")
 def render_collaborators(project, user):
-    from ..forms import TableCollaborators
+    from ..tables import TableCollaborators
     return {"pk": project.id, "table": TableCollaborators(project.collaborators_excluding(user))}
 

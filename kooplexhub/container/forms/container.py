@@ -50,8 +50,8 @@ def upperbound(node, container):
         'memoryrequest': 'avail_memory',
         'gpurequest': 'avail_gpu',
     }
-    if container.node == node and container.state in [ Container.ST_RUNNING, Container.ST_NEED_RESTART ]:
-        #FIXME: what if ST_STARTING, ST_STOPPING?
+    if container.node == node and container.state in [ Container.State.RUNNING, Container.State.NEED_RESTART ]:
+        #FIXME: what if State.STARTING, State.STOPPING?
         for k, v in mapping.items():
             from_node[v] = [val + float(getattr(container, k)) for val in from_node[v]]
     def my_range(attribute):
@@ -76,8 +76,8 @@ def capacity(node):
 #        'memoryrequest': 'avail_memory',
 #        'gpurequest': 'avail_gpu',
 #    }
-#    if container.node == node and container.state in [ Container.ST_RUNNING, Container.ST_NEED_RESTART ]:
-#        #FIXME: what if ST_STARTING, ST_STOPPING?
+#    if container.node == node and container.state in [ Container.State.RUNNING, Container.State.NEED_RESTART ]:
+#        #FIXME: what if State.STARTING, State.STOPPING?
 #        for k, v in mapping.items():
 #            from_node[v] = [val + float(getattr(container, k)) for val in from_node[v]]
 #    def my_range(attribute):

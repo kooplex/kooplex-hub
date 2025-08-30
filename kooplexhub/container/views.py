@@ -13,11 +13,10 @@ from django.urls import reverse
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .forms import FormContainer
-from .forms import TableProject, TableCourse, TableVolume,                        TableContainerProject, TableContainerCourse
+from project.tables import TableProject
+from education.tables import TableCourse
+from volume.tables import TableVolume
 from .models import Image, Container
-from project.models import Project, UserProjectBinding, ProjectContainerBinding
-from education.models import Course, UserCourseBinding, CourseContainerBinding
-from volume.models import Volume, VolumeContainerBinding
 
 
 from kooplexhub import settings
@@ -53,9 +52,9 @@ class ContainerListView(LoginRequiredMixin, generic.ListView):
         context['wss_container_config'] = KOOPLEX.get('hub', {}).get('wss_container_config', 'wss://localhost/hub/ws/container/config/{userid}/').format(userid = self.request.user.id)
         context['wss_container_control'] = KOOPLEX.get('hub', {}).get('wss_container_control', 'wss://localhost/hub/ws/container/control/{userid}/').format(userid = self.request.user.id)
         context['wss_monitor_node'] = KOOPLEX.get('hub', {}).get('wss_monitor_node', 'wss://localhost/hub/ws/monitor/node/{userid}/').format(userid = self.request.user.id)
-        context['t_project'] = TableProject(self.request.user)
-        context['t_course'] = TableCourse(self.request.user)
-        context['t_volume'] = TableVolume(self.request.user)
+        context['t_project'] = TableProject.from_user(self.request.user)
+        context['t_course'] = TableCourse.from_user(self.request.user)
+        context['t_volume'] = TableVolume.for_user(self.request.user)
         context['resource_form']=FormContainer(initial={'user': self.request.user})
         context['images'] = Image.objects.filter(imagetype = Image.TP_PROJECT, present = True)
         context['empty_container'] = Container()
@@ -77,7 +76,7 @@ def open(request, pk, pkView):
     container = Container.objects.filter(id = pk, user = user).first()
     if not container:
         return redirect('container:list')
-    if container.state in [ Container.ST_RUNNING, Container.ST_NEED_RESTART ]:
+    if container.state in [ Container.State.RUNNING, Container.State.NEED_RESTART ]:
         return container.redirect(pkView)
     else:
         messages.error(request, f'Cannot open {container.name} of state {container.state}')

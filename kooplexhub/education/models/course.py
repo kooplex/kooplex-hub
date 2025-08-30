@@ -2,12 +2,14 @@ import os
 import logging
 
 from django.db import models
-from django.contrib.auth.models import User
 from django.template.defaulttags import register
 
 from kooplexhub.lib import my_alphanumeric_validator
 from container.models import Image
 from hub.models import Group
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 
 logger = logging.getLogger(__name__)
@@ -106,13 +108,13 @@ class Course(models.Model):
 
     @register.filter
     def table_attendee(self, user=None):
-        from ..forms import TableStudentsAndTeachers
+        from ..tables import TableStudentsAndTeachers
         return TableStudentsAndTeachers(UserCourseBinding.objects.filter(course=self).exclude(user=user))
 
 
 class UserCourseBinding(models.Model):
-    user = models.ForeignKey(User, null = False, on_delete = models.CASCADE)
-    course = models.ForeignKey(Course, null = False, on_delete = models.CASCADE)
+    user = models.ForeignKey(User, null = False, on_delete = models.CASCADE, related_name = "coursebindings")
+    course = models.ForeignKey(Course, null = False, on_delete = models.CASCADE, related_name = "userbindings")
     is_teacher = models.BooleanField(default = False)
 
     class Meta:
@@ -129,7 +131,7 @@ class UserCourseBinding(models.Model):
         return CourseContainerBinding.objects.filter(course = self.course, container__user = self.user)
 
     def assignments_table(self):
-        from ..forms import TableAssignment
+        from ..tables import TableAssignment
         from . import UserAssignmentBinding
         return TableAssignment(UserAssignmentBinding.objects.filter(user=self.user, assignment__course=self.course))
 

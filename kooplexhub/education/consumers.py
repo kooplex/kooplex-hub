@@ -10,7 +10,7 @@ from django.core.exceptions import ValidationError
 from asgiref.sync import sync_to_async
 
 from education.models import UserAssignmentBinding, Assignment, UserCourseBinding, CourseContainerBinding
-from education.forms import TableAssignmentConf
+from education.tables import TableAssignmentConf
 from django.contrib.auth.models import User
 
 from hub.util import SyncSkeleton, AsyncSkeleton, Config, normalize_pk

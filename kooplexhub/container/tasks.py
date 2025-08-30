@@ -58,7 +58,7 @@ def kill_idle():
     url_api = KOOPLEX.get('proxy', {}).get('url_api', 'http://proxy:8001/api')
     url_path = KOOPLEX.get('proxy', {}).get('check_container_path', 'routes/notebook/{container.label}')
     url = os.path.join(url_api, url_path)
-    for c in Container.objects.filter(state__in = [Container.ST_RUNNING, Container.ST_NEED_RESTART], image__imagetype = Image.TP_PROJECT):
+    for c in Container.objects.filter(state__in = [Container.State.RUNNING, Container.State.NEED_RESTART], image__imagetype = Image.TP_PROJECT):
         try:
             resp = requests.get(url = url.format(container = c))
             last_activity = resp.json()['last_activity']

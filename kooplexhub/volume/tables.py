@@ -1,11 +1,84 @@
 from django.utils.html import format_html
 import django_tables2 as tables
+from django.db.models import Exists, OuterRef, Q
 
 from hub.templatetags.extras import render_user as ru
-from ..models import UserVolumeBinding
 from hub.models import Profile
+from .models import Volume, UserVolumeBinding
 
 from kooplexhub.common import table_attributes
+
+
+class TableVolume(tables.Table):
+    button = tables.TemplateColumn(
+        template_name="tables/volume_attach_toggle.html",
+        verbose_name="Attach",
+        orderable=False,
+        extra_context={"size": "small"}, 
+    )
+
+    folder = tables.Column(
+        verbose_name="Volume",
+        orderable=False,
+    )
+
+    description = tables.Column(
+        verbose_name="Description",
+        orderable=False,
+    )
+
+    scope = tables.TemplateColumn(
+        template_name="widgets/volume_scope.html",
+        verbose_name="Scope",
+        orderable=False,
+    )
+
+    class Meta:
+        model = Volume
+        fields = ('scope', 'folder', 'description')
+        sequence = ('button', 'scope', 'folder', 'description')
+        attrs = table_attributes
+
+    # ---- Factory
+    @classmethod
+    def for_user(cls, user, **kwargs):
+        bindings = UserVolumeBinding.objects.filter(
+            user=user, volume=OuterRef("pk")
+        )
+        qs = (
+            Volume.objects
+            .annotate(has_binding=Exists(bindings))
+            .filter(Q(has_binding=True) | Q(scope__in=[Volume.Scope.PUBLIC, Volume.Scope.ATTACHMENT]))
+            # Optional: show user-bound volumes first
+            .order_by("-has_binding", "folder")
+        )
+        return cls(qs, **kwargs)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 class TableVolumeShare(tables.Table):
     user = tables.Column(verbose_name = "Collaborators", order_by = ('user__first_name', 'user__last_name'), orderable = False)

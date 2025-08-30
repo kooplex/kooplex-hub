@@ -9,8 +9,8 @@ from education.models import Course
 logger = logging.getLogger(__name__)
 
 class CourseContainerBinding(models.Model):
-    course = models.ForeignKey(Course, null = False, on_delete = models.CASCADE)
-    container = models.ForeignKey(Container, null = False, on_delete = models.CASCADE)
+    course = models.ForeignKey(Course, null = False, on_delete = models.CASCADE, related_name='containerbindings')
+    container = models.ForeignKey(Container, null = False, on_delete = models.CASCADE, related_name='coursebindings')
 
     class Meta:
         unique_together = [['course', 'container']]

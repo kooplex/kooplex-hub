@@ -17,7 +17,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         logger.info("call %s %s" % (args, options))
-        for c in Container.objects.filter(state=Container.ST_RUNNING, image__imagetype='projectimage'):
+        for c in Container.objects.filter(state=Container.State.RUNNING, image__imagetype='projectimage'):
             print(c)
             c.addroutes()
 

@@ -6,7 +6,6 @@ import time
 
 from django.db import models
 from django.utils import timezone
-from django.contrib.auth.models import User
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.html import format_html
@@ -16,6 +15,9 @@ from hub.models import Profile
 from .image import Image
 from .envvar import EnvVarMapping
 from .proxy import Proxy
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 from kooplexhub.lib import  now
 from kooplexhub.lib import my_alphanumeric_validator
@@ -28,20 +30,13 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 class Container(models.Model):
-    ST_NOTPRESENT = 'np'
-    ST_STARTING = 'starting'
-    ST_RUNNING = 'run'
-    ST_NEED_RESTART = 'restart'
-    ST_ERROR = 'oops'
-    ST_STOPPING = 'stopping'
-    ST_LOOKUP = {
-        ST_NOTPRESENT: 'Not present.',
-        ST_STARTING: 'Starting...',
-        ST_RUNNING: 'Running fine.',
-        ST_NEED_RESTART: 'Restart required',
-        ST_ERROR: 'Error occured.',
-        ST_STOPPING: 'Stopping...',
-    }
+    class State(models.TextChoices):
+        NOTPRESENT = 'np', 'Not present.'
+        STARTING = 'starting', 'Starting...'
+        RUNNING = 'run', 'Running fine.'
+        NEED_RESTART = 'restart', 'Restart required'
+        ERROR = 'oops', 'Error occured'
+        STOPPING = 'stopping', 'Stopping...'
 
     name = models.CharField(max_length = 200, null = False)
     label = models.CharField(max_length = 200, null = False, unique = True)
@@ -53,7 +48,7 @@ class Container(models.Model):
     start_seafile = models.BooleanField(default = False)
 
     require_running = models.BooleanField(default = False)
-    state = models.CharField(max_length = 16, choices = ST_LOOKUP.items(), default = ST_NOTPRESENT)
+    state = models.CharField(max_length = 16, choices = State.choices, default = State.NOTPRESENT)
     state_backend = models.CharField(max_length = 32, null = True, blank = True, default = None)
     state_lastcheck_at = models.DateTimeField(default = None, null = True, blank = True)
 
@@ -126,30 +121,6 @@ class Container(models.Model):
         return [ v for v, o in views.items() if o ]
 
 
-    #FIXME: deprecate
-    #@property
-    #def default_proxy(self):
-    #    return Proxy.objects.get(image = self.image, default = True)
-
-    #FIXME: deprecate
-    #@property
-    #def url_internal(self):
-    #    return self.default_proxy.service_endpoint(self)
-
-    #FIXME: deprecate
-    #@property
-    #def url_notebook(self):
-    #    return self.default_proxy.url_notebook(self)
-
-    #FIXME: deprecate
-    #@property
-    #def url_kernel(self):
-    #    token="fsf"
-    #    logger.info('Get %s' % (self.user))
-    #    logger.info('Get %s' % (Profile.objects.get(user=self.user)))
-    #    token = Profile.objects.get(user=self.user).token
-    #    return self.default_proxy.url_container(self)+"?token="+token
-
     def env_variable(self, var_name):
         try:
             return EnvVarMapping.objects.get(image = self.image, name = var_name).valuemap
@@ -164,38 +135,22 @@ class Container(models.Model):
             return {}
 
 
-#FIXME: pl project app ha nincs istallálva, itt gondok lehetnek
     @property
     def projects(self):
-        from project.models import ProjectContainerBinding
-        return [ binding.project for binding in ProjectContainerBinding.objects.filter(container = self) ]
+        return { b.project for b in self.projectbindings.all() } if self.pk else {}
 
     @property
     def courses(self):
-        from education.models import CourseContainerBinding
-        return [ binding.course for binding in CourseContainerBinding.objects.filter(container = self) ]
+        return { b.course for b in self.coursebindings.all() } if self.pk else {}
 
-#    @property
-#    def reports(self):
-#        "relevant only for report containers"
-#        from report.models import ReportContainerBinding
-#        return [ binding.report for binding in ReportContainerBinding.objects.filter(container = self) ]
-    
+    @property
+    def volumes(self):
+        return { b.volume for b in self.volumebindings.all() } if self.pk else {}
+
     @property
     def target_node(self):
         return {'kubernetes.io/hostname': self.node} if self.node else KOOPLEX.get('kubernetes', {}).get('nodeSelector_k8s', {}) 
 
-    @property
-    def synced_libraries(self):
-        return []
-#FIXME:        from .filesync import FSLibraryContainerBinding
-#FIXME:        return [ binding.fslibrary for binding in FSLibraryContainerBinding.objects.filter(service = self) ]
-
-    @property
-    def repos(self):
-        return []
-#FIXME:        from .versioncontrol import VCProjectContainerBinding
-#FIXME:        return [ binding.vcproject for binding in VCProjectContainerBinding.objects.filter(service = self) ]
 
     @property
     def mount_cloud(self):
@@ -210,11 +165,6 @@ class Container(models.Model):
             {'name': "OWNER", "value": "1029"}, 
             ]
         return None
-
-    @property
-    def volumes(self):
-        from volume.models import VolumeContainerBinding
-        return [ binding.volume for binding in VolumeContainerBinding.objects.filter(container = self) ]
 
     def start(self):
         from ..tasks import start_container
@@ -241,13 +191,13 @@ class Container(models.Model):
         return  fetch_containerlog(self)
 
     def mark_restart(self, reason, save = True):
-        if self.state not in [ self.ST_RUNNING, self.ST_NEED_RESTART ]:
+        if self.state not in [ self.State.RUNNING, self.State.NEED_RESTART ]:
             return False
         if self.restart_reasons:
             self.restart_reasons += '; ' + reason
         else:
             self.restart_reasons = reason
-        self.state = self.ST_NEED_RESTART
+        self.state = self.State.NEED_RESTART
         if save:
             self.save()
         return True
@@ -269,7 +219,7 @@ class Container(models.Model):
         return render_to_string("widgets/widget_container_views.html", {"container": self })
 
     def render_fetchlogs_html(self):
-        _active = [ Container.ST_RUNNING, Container.ST_ERROR, Container.ST_NEED_RESTART ]
+        _active = [ Container.State.RUNNING, Container.State.ERROR, Container.State.NEED_RESTART ]
         return render_to_string("widgets/widget_container_fetchlogs.html", {"container": self, "is_active": self.state in _active}) if self.id else ""
 
     def render_state_html(self):

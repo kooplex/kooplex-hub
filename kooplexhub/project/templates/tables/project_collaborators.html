@@ -1,0 +1,15 @@
+{% with users=record.project.userbindings.all %}
+  {% if users %}
+    <div class="d-flex flex-wrap gap-2">
+      {% for ub in users|slice:":5" %}
+        <span class="badge text-bg-light">{{ ub.user.get_full_name|default:ub.user.username }}</span>
+      {% endfor %}
+      {% if users|length > 5 %}
+        <span class="badge text-bg-secondary">+{{ users|length|add:"-5" }}</span>
+      {% endif %}
+    </div>
+  {% else %}
+    <span class="text-muted">—</span>
+  {% endif %}
+{% endwith %}
+

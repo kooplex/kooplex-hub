@@ -24,24 +24,24 @@ def _replace_widgets(container):
         }
 
 state_mapper = {
-    'Running': Container.ST_RUNNING,
-    'Not Found': Container.ST_NOTPRESENT,
-    'Killing': Container.ST_STOPPING,
-    'Pending': Container.ST_STARTING,
-#    'Scheduled': Container.ST_STARTING,
-#    'Pulling': Container.ST_STARTING,
-#    'BackOff': Container.ST_STARTING,
-#    'Pulled': Container.ST_STARTING,
-#    'Created': Container.ST_STARTING,
-#    'SandboxChanged': Container.ST_STARTING,
-#    'Started': Container.ST_RUNNING,
-#    'Not present': Container.ST_NOTPRESENT,
-#    'FailedCreatePodSandBox': Container.ST_ERROR,
-#    'FailedMount': Container.ST_ERROR,
-#    'FailedKillPod': Container.ST_STOPPING,
+    'Running': Container.State.RUNNING,
+    'Not Found': Container.State.NOTPRESENT,
+    'Killing': Container.State.STOPPING,
+    'Pending': Container.State.STARTING,
+#    'Scheduled': Container.State.STARTING,
+#    'Pulling': Container.State.STARTING,
+#    'BackOff': Container.State.STARTING,
+#    'Pulled': Container.State.STARTING,
+#    'Created': Container.State.STARTING,
+#    'SandboxChanged': Container.State.STARTING,
+#    'Started': Container.State.RUNNING,
+#    'Not present': Container.State.NOTPRESENT,
+#    'FailedCreatePodSandBox': Container.State.ERROR,
+#    'FailedMount': Container.State.ERROR,
+#    'FailedKillPod': Container.State.STOPPING,
 #
 #
-#    'FailedToUpdateEndpoint': Container.ST_NOTPRESENT, #FIXME: is it complete? possible keys: 'CreateContainerConfigError', 'ImagePullBackOff'
+#    'FailedToUpdateEndpoint': Container.State.NOTPRESENT, #FIXME: is it complete? possible keys: 'CreateContainerConfigError', 'ImagePullBackOff'
 }
 
 
@@ -135,8 +135,8 @@ class Command(BaseCommand):
             except client.rest.ApiException as e:
                 if e.reason == 'Not Found':
                     container=Container.objects.get(id=container_id)
-                    feedback=container.state!=container.ST_NOTPRESENT
-                    container.state=container.ST_NOTPRESENT
+                    feedback=container.state!=container.State.NOTPRESENT
+                    container.state=container.State.NOTPRESENT
                     container.state_backend=e.reason
                     container.state_lastcheck_at = timezone.now()
                     container.save()
@@ -184,9 +184,9 @@ class Command(BaseCommand):
                         container.save()
                         self.feedback(container, f'Container {container.name} changed its state: {backend_state}({state_new}).')
                         containers[pod_name]=(container.id, container.state, container.state_backend)
-                        if state_new==container.ST_NOTPRESENT and container.require_running:
+                        if state_new==container.State.NOTPRESENT and container.require_running:
                             container.start()
-                        elif state_new==container.ST_RUNNING:
+                        elif state_new==container.State.RUNNING:
                             container.addroutes()
             except Exception as e:
                 print(f"⚠️ Error in watcher: {e}")

@@ -13,8 +13,8 @@ from django.contrib.auth.models import User
 #from django.urls import reverse
 
 from .forms import FormProject, FormJoinProject
-from container.forms import TableVolume
-from hub.forms import TableUsers
+from volume.tables import TableVolume
+from hub.tables import TableUsers
 from .models import Project, UserProjectBinding, ProjectContainerBinding
 from container.models import Image, Container
 from volume.models import Volume, VolumeContainerBinding
@@ -105,7 +105,7 @@ class UserProjectBindingListView(LoginRequiredMixin, generic.ListView):
         context['images'] = Image.objects.filter(imagetype = Image.TP_PROJECT, present = True)
         context['users'] = [ u.profile._repr for u in User.objects.all().exclude(id = self.request.user.id) ]
         context['t_users'] = TableUsers(User.objects.all().exclude(id = self.request.user.id), marker_column='Admin')
-        context['t_volume'] = TableVolume(self.request.user)
+        context['t_volume'] = TableVolume.for_user(self.request.user)
         context['empty_project'] = Project()
         return context
 

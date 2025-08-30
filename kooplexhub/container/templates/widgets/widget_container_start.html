@@ -1,21 +1,21 @@
-{% if container.state == container.ST_NOTPRESENT %}
+{% if container.state == container.State.NOTPRESENT %}
 <button name="startcontainer" data-id="{{container.id}}" class="badge rounded-pill text-bg-success border p-2"
         data-toggle="tooltip" title="Start environment {{container.name}}">
   <span class="bi bi-lightning" aria-hidden="true" role="status"></span>
 </button>
-{% elif container.state == container.ST_RUNNING or container.state == container.ST_NEED_RESTART %}
+{% elif container.state == container.State.RUNNING or container.state == container.State.NEED_RESTART %}
 <button name="startcontainer" data-id="{{container.id}}" class="badge rounded-pill text-bg-secondary border p-2" disabled>
   <span class="bi bi-lightning" aria-hidden="true"></span>
 </button>
-{% elif container.state == container.ST_ERROR %}
+{% elif container.state == container.State.ERROR %}
 <button name="startcontainer" data-id="{{container.id}}" class="badge rounded-pill text-bg-danger border p-2" disabled>
   <span class="spinner-grow spinner-grow-sm" aria-hidden="true" role="status"></span>
 </button>
-{% elif container.state == container.ST_STARTING %}
+{% elif container.state == container.State.STARTING %}
 <button name="startcontainer" data-id="{{container.id}}" class="badge rounded-pill text-bg-success border p-2" disabled>
   <span class="spinner-grow spinner-grow-sm" aria-hidden="true" role="status"></span>
 </button>
-{% elif container.state == container.ST_STOPPING %}
+{% elif container.state == container.State.STOPPING %}
 <button name="startcontainer" data-id="{{container.id}}" class="badge rounded-pill text-bg-warning border p-2" disabled>
   <span class="spinner-grow spinner-grow-sm" aria-hidden="true" role="status"></span>
 </button>

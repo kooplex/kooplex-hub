@@ -2,8 +2,8 @@
 from django.utils.html import format_html
 import django_tables2 as tables
 
-from ..models import UserProjectBinding
-from ..models import ProjectContainerBinding
+from .models import UserProjectBinding
+from .models import ProjectContainerBinding
 from container.models import Container
 from django.contrib.auth.models import User
 from hub.models import Profile
@@ -12,6 +12,66 @@ from container.templatetags.container_buttons import container_image
 from hub.templatetags.extras import render_user as ru
 
 from kooplexhub.common import table_attributes
+
+
+class TableProject(tables.Table):
+    button = tables.TemplateColumn(
+        template_name="tables/project_attach_toggle.html",
+        verbose_name="Attach",
+        orderable=False,
+        extra_context={"size": "small"}, 
+    )
+
+    project = tables.Column(
+        verbose_name="Project",
+        orderable=False,
+    )
+
+    collaborators = tables.TemplateColumn(
+        template_name="tables/project_collaborators.html",
+        verbose_name="Collaborators",
+        orderable=False,
+    )
+
+    class Meta:
+        model = UserProjectBinding
+        fields = ("project",) 
+        sequence = ("button", "project", "collaborators")
+        attrs = table_attributes
+
+    # ---- Factory
+    @classmethod
+    def from_user(cls, user, **kwargs):
+        qs = (
+            UserProjectBinding.objects
+            .filter(user=user)
+            .select_related("project")
+            .prefetch_related("project__userbindings__user")
+        )
+        return cls(qs, **kwargs)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 class TableCollaborators(tables.Table):
     user=tables.Column(verbose_name = "User", order_by = ('scope', 'user__first_name', 'user__last_name'), orderable = False)

@@ -20,6 +20,65 @@ try:
 except ImportError:
     KOOPLEX = {}
 
+
+
+class TableCourse(tables.Table):
+    button = tables.TemplateColumn(
+        template_name="tables/course_attach_toggle.html",
+        verbose_name="Attach",
+        orderable=False,
+        extra_context={"size": "small"}, 
+    )
+
+    course = tables.Column(
+        verbose_name="Course",
+        orderable=False,
+    )
+
+    description = tables.Column(
+        accessor="course.description",
+        verbose_name="Description",
+        orderable=False,
+    )
+
+    teachers = tables.TemplateColumn(
+        template_name="tables/course_teachers.html",
+        verbose_name="Teachers",
+        orderable=False,
+    )
+
+    class Meta:
+        model = UserCourseBinding
+        fields = ("course", ) 
+        sequence = ("button", "course", "teachers")
+        attrs = table_attributes
+
+    # ---- Factory
+    @classmethod
+    def from_user(cls, user, **kwargs):
+        qs = (
+            UserCourseBinding.objects
+            .filter(user=user)
+            .select_related("course")
+            .prefetch_related("course__userbindings__user")
+        )
+        return cls(qs, **kwargs)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ta_light = table_attributes.copy()
 ta_light.update({ "td": { "class": "p-1 text-secondary" } })
 

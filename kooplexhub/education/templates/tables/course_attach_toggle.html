@@ -1,0 +1,15 @@
+{# templates/tables/course_attach_toggle.html #}
+{% comment %}record is the UserCourseBinding; record.course is the course{% endcomment %}
+<input id="coursetoggler-{{ record.course.pk }}"
+       name="attach-course"
+       class="configtoggle"
+       type="checkbox"
+       data-toggle="toggle"
+       data-size="{{ size|default:'small' }}"
+       name="attach-project"
+       data-on="<span class='bi bi-person-workspace'></span>"
+       data-off="<span class='bi bi-person-video3'></span>"
+       data-onstyle="success"
+       data-offstyle="secondary"
+       value="{{ record.course.pk }}">
+

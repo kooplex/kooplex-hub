@@ -1,0 +1,15 @@
+{# templates/tables/volume_attach_toggle.html #}
+{% comment %}record is the volume{% endcomment %}
+<input id="volumetoggler-{{ record.pk }}"
+       name="attach-volume"
+       class="configtoggle"
+       type="checkbox"
+       data-toggle="toggle"
+       data-size="{{ size|default:'small' }}"
+       name="attach-project"
+       data-on="<span class='bi bi-person-workspace'></span>"
+       data-off="<span class='bi bi-person-video3'></span>"
+       data-onstyle="success"
+       data-offstyle="secondary"
+       value="{{ record.pk }}">
+

@@ -14,11 +14,11 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.db import IntegrityError
 
-from hub.forms import TableUsers
+from hub.tables import TableUsers
 
 from kooplexhub.lib import now
 
-from container.forms import TableVolume
+from volume.tables import TableVolume
 from hub.templatetags.extras import render_user
 from container.models import Image, Container
 from education.models import UserCourseBinding, UserAssignmentBinding, Assignment, CourseContainerBinding, Course
@@ -112,7 +112,7 @@ class TeacherCourseBindingListView(LoginRequiredMixin, generic.ListView):
         context['wss_canvas'] = KOOPLEX.get('hub', {}).get('wss_canvas', 'wss://localhost/hub/ws/canvas/fetchcourses/{userid}/').format(userid = self.request.user.id)
         context['wss_canvascourseassignments'] = KOOPLEX.get('hub', {}).get('wss_canvascourseassignments', 'wss://localhost/hub/ws/canvas/fetchcourseassignments/')
         context['images'] = Image.objects.filter(imagetype = Image.TP_PROJECT, present = True)
-        context['t_volume'] = TableVolume(self.request.user)
+        context['t_volume'] = TableVolume.for_user(self.request.user)
         context['users'] = [ u.profile._repr for u in User.objects.all().exclude(id = self.request.user.id) ]
         context['t_users'] = TableUsers(User.objects.all().exclude(id = self.request.user.id), marker_column='Teacher')
         context['empty_course'] = Course()
