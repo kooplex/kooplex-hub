@@ -88,7 +88,7 @@ def delete_or_leave(request, project_id, pk_user):
 
 
 class UserProjectBindingListView(LoginRequiredMixin, generic.ListView):
-    template_name = 'project_list.html'
+    template_name = 'project/list.html'
     context_object_name = 'userprojectbindinglist'
 
     def get_context_data(self, **kwargs):

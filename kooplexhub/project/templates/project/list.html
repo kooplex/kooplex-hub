@@ -20,12 +20,12 @@ Projects are a good way to collaborate with each other without much restriction.
 
 {% block content %}
 {# new project create or join #}
-{% include 'project_new.html' %}
+{% include 'project/new_or_join.html' %}
 {# render the project cards #}
 <div id="listPane" class="d-flex flex-wrap justify-content-center gap-3">
     {% for upb in userprojectbindinglist %}
       <div class="card-container" id="card-container-{{ project.id }}">
-        {% include 'project.html' with project=upb.project projectcontainerbindings=upb.projectcontainerbindings is_admin=upb.is_admin %}
+        {% include 'project/card.html' with project=upb.project projectcontainerbindings=upb.projectcontainerbindings is_admin=upb.is_admin %}
       </div>
     {% empty %}
       {% include 'empty.html' with empty_title="You have no projects yet." empty_p_before='Use the add (<i class="bi bi-plus border"></i>) button in the navbar to create your first project or join an active collaboration.' %}

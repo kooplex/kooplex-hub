@@ -103,7 +103,7 @@ class UserHandler(SyncConsumer):
             logger.critical(request)
 
 class ProjectConfigConsumer(SyncConsumer, Config):
-    template='project.html'
+    template='project/card.html'
     instance_reference='project'
 
     def receive(self, text_data):
