@@ -8,7 +8,7 @@ from container.models import Container
 from django.contrib.auth.models import User
 from hub.models import Profile
 
-from container.templatetags.container_buttons import container_image
+from container.templatetags.container_buttons import button_image
 from hub.templatetags.extras import render_user as ru
 
 from kooplexhub.common import table_attributes
@@ -162,7 +162,7 @@ class TableContainer(tables.Table):
         """)
 
     def render_image(self, record):
-        return container_image(record)
+        return button_image(record)
 
 
     def __init__(self, user, project):

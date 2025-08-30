@@ -135,7 +135,7 @@
                 {% include 'widgets/widget_volumes.html' with maxheight="118px" pk=pk volumes=course.volumes callback="wss_courseconfig.register_changes" instance="course" %}
             </div>
             <div class="tab-pane fade" id="content-five-{{pk}}" role="tabpanel" aria-labelledby="tab-five-{{pk}}">
-		{% container_image course "preferred_image" callback="wss_courseconfig.register_changes" %}
+		{% button_image course "preferred_image" callback="wss_courseconfig.register_changes" %}
             </div>
             <div class="tab-pane fade" id="environments-pane-{{pk}}" role="tabpanel" aria-labelledby="environments-tab-{{pk}}">
               <div class="inner-frame">

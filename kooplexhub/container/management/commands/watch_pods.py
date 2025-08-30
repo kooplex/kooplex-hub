@@ -11,16 +11,22 @@ from container.models import Container
 from django.utils import timezone
 from kooplexhub.settings import KOOPLEX
 
+from container.templatetags.container_buttons import (
+        button_start, button_stop,
+        button_open, button_restart,
+        button_fetchlogs, indicator_state
+    )
+
 logger = logging.getLogger(__name__)
 
 def _replace_widgets(container):
     return {
-        'startcontainer': container.render_start_html(),
-        'stopcontainer': container.render_stop_html(),
-        'opencombo': container.render_open_html(),
-        'fetch': container.render_fetchlogs_html(),
-        'phase': container.render_state_html(),
-        'restartcontainer': container.render_restartreasons_html(),
+        'startcontainer': button_start.render(container),
+        'stopcontainer': button_stop.render(container),
+        'opencombo': button_open.render(container),
+        'fetch': button_fetchlogs.render(container),
+        'phase': indicator_state.render(container),
+        'restartcontainer': button_restart.render(container),
         }
 
 state_mapper = {

@@ -13,51 +13,93 @@ from django.templatetags.static import static
 
 register = template.Library()
 
-@register.inclusion_tag("container/button/start.html")
+def inclusion_tag_ex(template_name, **tag_kwargs):
+    """
+    Extended inclusion_tag that:
+      - attaches .template_name to the returned tag function
+      - attaches .render(*args, **kwargs) to render server-side
+      - preserves support for takes_context / name / extra_context
+
+    Usage:
+      @inclusion_tag_ex("path/to/tpl.html")
+      def mytag(arg1, arg2=False): ...
+
+      html = mytag.render(obj, arg2=True)   # in Python (e.g., WS consumer)
+    """
+    takes_context = tag_kwargs.get("takes_context", False)
+
+    def _decorator(func):
+        # Register the real inclusion tag with Django
+        tag_func = register.inclusion_tag(template_name, **tag_kwargs)(func)
+
+        # Attach metadata & original callable for direct use
+        tag_func.template_name = template_name
+        tag_func.original_func = func
+
+        # Add a convenient server-side renderer
+        def _render(*args, context=None, **kwargs):
+            """
+            Render the inclusion tag to HTML without going through a template.
+            If the original tag declared takes_context=True, you may pass a dict
+            via `context=`; otherwise it will use {}.
+            """
+            if takes_context:
+                # First arg must be a Context-like mapping
+                ctx = context or {}
+                ctx_dict = dict(ctx) if not isinstance(ctx, dict) else ctx
+                context_dict = func(ctx_dict, *args, **kwargs)
+            else:
+                context_dict = func(*args, **kwargs)
+            return render_to_string(template_name, context_dict)
+
+        tag_func.render = _render
+        return tag_func
+
+    return _decorator
+
+
+
+@inclusion_tag_ex("container/button/start.html")
 def button_start(container):
     return {"container": container}
 
-@register.inclusion_tag("container/button/stop.html")
+@inclusion_tag_ex("container/button/stop.html")
 def button_stop(container):
     return {"container": container}
 
-@register.inclusion_tag("container/button/fetchlogs.html")
+@inclusion_tag_ex("container/button/fetchlogs.html")
 def button_fetchlogs(container):
     return {"container": container}
 
-@register.inclusion_tag("container/button/image.html")
-def button_image(container):
-    return {
-        "pk": container.pk, 
-        "image": getattr(container, 'image', None),
-        "callback": 'wss_containerconfig.register_changes',
-    }
+@inclusion_tag_ex("container/button/image.html")
+def button_image(obj, attr="image", callback=''):
+    return {"pk": getattr(obj, 'pk', None), "image": getattr(obj, attr, ""), "callback": callback}
 
-@register.inclusion_tag("container/button/open.html")
+@inclusion_tag_ex("container/button/open.html")
 def button_open(container):
     return {"container": container}
 
-@register.inclusion_tag("container/button/restart.html")
+@inclusion_tag_ex("container/button/restart.html")
 def button_restart(container):
     return {"container": container}
 
-@register.inclusion_tag("container/badge_state.html")
+@inclusion_tag_ex("container/badge_state.html")
 def indicator_state(container):
     return {"container": container}
 
-@register.inclusion_tag("container/button/teleport.html")
+@inclusion_tag_ex("container/button/teleport.html")
 def button_teleport(container):
     return {"container": container, 'icon': static('teleport.ico')}
 
-@register.inclusion_tag("container/button/seafile.html")
+@inclusion_tag_ex("container/button/seafile.html")
 def button_seafile(container):
     return {"container": container, 'icon': static('seafile.png')}
 
-@register.inclusion_tag("container/button/mount.html")
+@inclusion_tag_ex("container/button/mount.html")
 def button_mount(container, callback):
     return {"container": container, "callback": callback}
 
-@register.inclusion_tag("container/button/resources.html")
+@inclusion_tag_ex("container/button/resources.html")
 def button_resources(container = None):
     #FIXME geta could be put in the template already?
     geta = lambda container, attr: getattr(container, attr, None) if container else None
@@ -101,8 +143,5 @@ def button_environment(obj = None):
     """) if pk else ""
 
 
-@register.simple_tag
-def container_image(obj, attr="image", callback=None):
-    return render_to_string("widgets/widget_image.html", {"pk": getattr(obj, 'id', None), "image": getattr(obj, attr, ""), "callback": callback or ''})
 
 
