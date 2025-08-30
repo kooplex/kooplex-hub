@@ -7,14 +7,10 @@
 <div class="card bg-ligth shadow-2-strong border border-3 shadow-light bg-light {% if container.id %}border-success{%else%}border-warning{%endif%} mb-3" data-widget="containercard" data-id="{{container.id}}" data-search="{{container.search}}" data-search_what="container">
     <!-- Header -->
     <div class="card-header d-flex justify-content-start align-items-center {% if container.id %}border-success{%else%}border-warning{%endif%}">
-        {% if container.id %}
-	  {{ container.render_open_html }}
-        {% else %}
-          {% button_new_container %}
-        {% endif %}
+	{% button_open container %}
         {% field_name container 'container' 'mx-2 w-100 p-2' 'wss_containerconfig.register_changes' %}
 	<div class="flex-grow-1"></div> <!-- Spacer to push the right button to the end -->
-	{{ container.render_stop_html }}
+	{% button_stop container %}
     </div>
     
     <!-- Body -->
@@ -25,16 +21,16 @@
                 <!-- Row 1 -->
                 <div class="d-flex align-items-center mb-3">
                     {% button_teleport container %}
-		    {% container_image container callback="wss_containerconfig.register_changes" %}
+		    {% button_image container %}
                 </div>
                 <!-- Row 2 -->
                 <div class="d-flex mb-3">
                     {% button_seafile container %}
-                    {% container_mounts container callback="wss_containerconfig.register_changes" %}
+                    {% button_mount container callback="wss_containerconfig.register_changes" %}
                 </div>
                 <!-- Row 3 -->
                 <div>
-                    {% container_resources container %}
+                    {% button_resources container %}
                 </div>
             </div>
             
@@ -42,11 +38,11 @@
             <div class="col-md-6 d-flex flex-column">
                 <!-- Row 1 -->
                 <div class="d-flex align-items-center mb-3">
-		    {{ container.render_fetchlogs_html }}
-		    {{ container.render_state_html }}
+		    {% button_fetchlogs container %}
+		    {% indicator_state container %}
                 </div>
                 <!-- Row 2 -->
-                <div class="mb-3">{{ container.render_restartreasons_html }}</div>
+                <div class="mb-3">{% button_restart container %}</div>
                 <!-- Row 3 -->
                 <div class="d-flex justify-content-end mt-auto">
 		    {% include 'widgets/widget_savechanges.html' with pk=container.id obj="container" %}
@@ -58,7 +54,7 @@
     <!-- Footer -->
     <div class="card-footer d-flex justify-content-between {% if container.id %}border-success{%else%}border-warning{%endif%}">
       {% if container.id %}
-        {{ container.render_start_html }}
+        {% button_start container %}
 	{% include 'widgets/widget_delete.html' with msg="Are you sure you want to drop your container?" tooltip="Delete container" link=container.link_drop obj=container %}
       {% else %}
         <div class="btn-placeholder p-1" style="visibility: hidden;">Placeholder</div>

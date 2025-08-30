@@ -202,28 +202,3 @@ class Container(models.Model):
             self.save()
         return True
 
-    # rendering logic
-    def render_name_html(self):
-        return self.name #FIXME render_to_string("widgets/widget_container_start.html", {"container": self})
-
-    def render_image_html(self):
-        return render_to_string("widgets/widget_image.html", {"pk": self.id, "image": self.image})
-
-    def render_start_html(self):
-        return render_to_string("widgets/widget_container_start.html", {"container": self}) if self.id else ""
-
-    def render_stop_html(self):
-        return render_to_string("widgets/widget_container_stop.html", {"container": self}) if self.id else ""
-
-    def render_open_html(self):
-        return render_to_string("widgets/widget_container_views.html", {"container": self })
-
-    def render_fetchlogs_html(self):
-        _active = [ Container.State.RUNNING, Container.State.ERROR, Container.State.NEED_RESTART ]
-        return render_to_string("widgets/widget_container_fetchlogs.html", {"container": self, "is_active": self.state in _active}) if self.id else ""
-
-    def render_state_html(self):
-        return render_to_string("widgets/widget_container_state.html", {"container": self}) if self.id else ""
-
-    def render_restartreasons_html(self):
-        return render_to_string("widgets/widget_container_restartreasons.html", {"container": self}) if self.id else ""
