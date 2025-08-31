@@ -121,12 +121,15 @@ class ProjectConfigConsumer(SyncConsumer, Config):
             project=Project(name=name, subpath=subpath, preferred_image_id=changes['image'], description=changes['description'], **s)
             #FIXME: validate
             project.save()
-            UserProjectBinding(user_id = self.userid, project = project, role = UserProjectBinding.Role.CREATOR).save()
+            user=UserProjectBinding.objects.create(user_id = self.userid, project = project, role = UserProjectBinding.Role.CREATOR).user
             self._msg(project, f"New project {project.name} is created", reload=True)
         else:
             pid = int(pk)
-            project = UserProjectBinding.objects.get(user__id = self.userid, project__id = pid, role__in = [UserProjectBinding.Role.CREATOR, UserProjectBinding.Role.ADMIN]).project
+            b = UserProjectBinding.objects.get(user__id = self.userid, project__id = pid, role__in = [UserProjectBinding.Role.CREATOR, UserProjectBinding.Role.ADMIN])
+            project = b.project
+            user = b.user
         # Iterate over the changes and try to update the model instance
+        self.template_kwargs = {'user': user}
         for field, new_value in changes.items():
             if field == 'image':
                 new_value=Image.objects.get(id=new_value)
