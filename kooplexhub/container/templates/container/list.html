@@ -50,19 +50,19 @@ Environments are user workspaces with limited resources, attached volumes and pr
 
 {# a modal to configure a container image #}
 <script src="{% static 'container/js/changes.js' %}"></script>
-{% include 'widgets/image_selection.html' with instance="container" %}
+{% include 'container/image_selection.html' with instance="container" %}
 <script src="{% static 'container/js/image_selection.js' %}"></script>
 
 {# a modal to configure a container compute resources #}
-{% include 'widgets/compute_resource_selection.html' with form=resource_form %}
+{% include 'container/compute_resource_selection.html' with form=resource_form %}
 <script src="{% static 'container/js/computeresource_selection.js' %}"></script>
 
 {# a modal to configure a container filesystem resources #}
-{% include 'widgets/file_resource_selection.html' with instance="container" %}
+{% include 'container/file_resource_selection.html' with instance="container" %}
 <script src="{% static 'container/js/fileresource_selection.js' %}"></script>
 
 {# a modal to dump logs #}
-{% include 'widgets/fetchlogs.html' %}
+{% include 'container/modal_logs.html' %}
 <script src="{% static 'container/js/fetchlogs.js' %}"></script>
 
 {% endblock %}

@@ -2,9 +2,11 @@ from kooplexhub import settings
 from .models import Note
 from django.urls import reverse
 from django.utils.html import format_html
+from django.templatetags.static import static
 import re
 
 __r_ref = re.compile(r'^(\w+):\w+$')
+__r_static = re.compile(r'^static:(.+)$')
 __r_ext = re.compile(r'^https?://[\w-]+\.[\w-]+')
 __r_ico = re.compile(r'^\w+\s+[\w-]*$')
 
@@ -19,6 +21,10 @@ def menu(request):
             item['ico'] = format_html(f'<img src="{icon}" alt="[]" class="pe-1">')
         elif re.match(__r_ico, icon):
             item['ico'] = format_html(f'<i class="{icon} pe-1"></i>')
+        elif re.match(__r_static, icon):
+            ptr = re.split(__r_static, icon)[1]
+            src=static(ptr)
+            item['ico'] = format_html(f'<img src="{src}" alt="[]" pe-1">')
         else:
             item['ico'] = ''
         if re.match(__r_ext, target):

@@ -208,7 +208,7 @@ class CourseGetContainersConsumer(SyncSkeleton):
         message_back = {
             "feedback": message if message else f"Container list refreshed",
             "pk": courseid,
-            "response": render_to_string("widgets/widget_containertable.html", {"containers": list(map(lambda o: o.container, bindings)), "pk": ucb.id, "objectId": courseid }),
+            "response": render_to_string("container/table_control_shortcut.html", {"containers": list(map(lambda o: o.container, bindings)), "pk": ucb.id, "objectId": courseid }),
         }
         logger.debug(message_back)
         self.send(text_data=json.dumps(message_back))

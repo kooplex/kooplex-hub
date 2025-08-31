@@ -53,7 +53,7 @@ $(document).ready(function() {
 <script src="{% static 'hub/js/config_register.js' %}"></script>
 
 {# a modal to configure a course image #}
-{% include 'widgets/image_selection.html' with instance="course" %}
+{% include 'container/image_selection.html' with instance="course" %}
 <script src="{% static 'container/js/image_selection.js' %}"></script>
 
 {# a modal to configure a course's students/teachers #}
@@ -66,8 +66,8 @@ $(document).ready(function() {
 <script src="{% static 'hub/js/dropdown.js' %}"></script>
 
 {# a modal to configure a course volumes #}
-{% include 'widgets/volumes.html' with instance="course" %}
-<script src="{% static 'js/widget_volumes.js' %}"></script>
+{% include 'volume/modal_volumes.html' with instance="course" %}
+<script src="{% static 'volume/js/widget_volumes.js' %}"></script>
 <script src="{% static 'js/volume_selection.js' %}"></script>
 
 {# a modal to configure assignments #}

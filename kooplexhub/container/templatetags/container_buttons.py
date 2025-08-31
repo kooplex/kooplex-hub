@@ -72,7 +72,7 @@ def button_fetchlogs(container):
     return {"container": container}
 
 @inclusion_tag_ex("container/button/image.html")
-def button_image(obj, attr="image", callback=''):
+def button_image(obj, attr="image", callback='wss_containerconfig.register_changes'):
     return {"pk": getattr(obj, 'pk', None), "image": getattr(obj, attr, ""), "callback": callback}
 
 @inclusion_tag_ex("container/button/open.html")

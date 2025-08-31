@@ -88,7 +88,6 @@ $(document).on('click', '[data-field=start_teleport][name][data-id]', function()
     containerId = pk === "None" ? "None" : parseInt(pk)
     applyButton(widgetId, name==='grant'?'revoke':'grant')
     wss_containerconfig.register_changes(containerId, 'start_teleport', name, $(widgetId).data('orig'))
-    showSaveChanges(containerId, 'container')
 })
 
 
@@ -100,6 +99,5 @@ $(document).on('click', '[data-field=start_seafile][name][data-id]', function() 
     containerId = pk === "None" ? "None" : parseInt(pk)
     applyButton(widgetId, name==='grant'?'revoke':'grant')
     wss_containerconfig.register_changes(containerId, 'start_seafile', name, $(widgetId).data('orig'))
-    showSaveChanges(containerId, 'container')
 })
 

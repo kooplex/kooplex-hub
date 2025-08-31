@@ -42,7 +42,7 @@ Projects are a good way to collaborate with each other without much restriction.
 
 
 {# a modal to configure a project image #}
-{% include 'widgets/image_selection.html' with instance="project" %}
+{% include 'container/image_selection.html' with instance="project" %}
 <script src="{% static 'container/js/image_selection.js' %}"></script>
 
 {# a modal to configure a project collaborators #}
@@ -50,8 +50,8 @@ Projects are a good way to collaborate with each other without much restriction.
 <script src="{% static 'hub/js/select_users.js' %}"></script>
 
 {# a modal to configure a project volumes #}
-{% include 'widgets/volumes.html' with instance="project" %}
-<script src="{% static 'container/js/volume_selection.js' %}"></script>
+{% include 'volume/modal_volumes.html' with instance="project" %}
+<script src="{% static 'volume/js/volume_selection.js' %}"></script>
 
 {# a modal to start/stop/jump to project environments #}
 <script src="{% static 'container/js/environments.js' %}"></script>
