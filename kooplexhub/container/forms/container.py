@@ -88,7 +88,7 @@ def capacity(node):
 #    return my_range
 
 class myNumberInput(forms.NumberInput):
-    template_name = 'widget_decimal.html'
+    template_name = 'hub/widgets/decimal.html'
 
 class FormContainer(forms.ModelForm):
     class Meta:
