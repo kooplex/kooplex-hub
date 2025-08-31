@@ -72,4 +72,11 @@ class Volume(models.Model):
     def is_admin(self, user):
         return user in self.admins
 
+    def usercontainer_names(self, user):
+        return list(
+            self.containerbindings
+                .filter(container__user=user)
+                .values_list('container__name', flat=True)
+                .distinct()
+        )
 

@@ -1,0 +1,25 @@
+{% load extras %}
+{% load volume_tags %}
+<div name="volumes" data-id="{{pk}}" data-volumes="{{volumes|id_list}}" data-bind="{{instance}}" data-callback="{{callback}}">
+    <div class="content">
+      {% if volumes|length %}
+        <table class="resourcetable">
+	    <thead>
+              <tr><th>Scope</th><th>Folder</th><th>Containers</th></tr>
+	    </thead>
+	    <tbody>
+              {% for volume in volumes %}
+                <tr>
+                    <td>{% render_scope volume %}</td>
+                    <td>{{ volume.folder }}</td>
+                    <td>{% render_usercontainers volume user %}</td>
+                </tr>
+              {% endfor %}
+	    </tbody>
+	</table>
+      {% else %}
+        <p>Click to add filesystem resources</p>
+      {% endif %}
+    </div>
+</div>
+

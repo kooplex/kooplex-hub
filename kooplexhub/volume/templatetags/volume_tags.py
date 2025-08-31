@@ -9,3 +9,6 @@ def render_volume(volume):
 def render_scope(volume):
     return {"volume": volume}
 
+@register.simple_tag
+def render_usercontainers(volume, user):
+    return ", ".join(volume.usercontainer_names(user))

@@ -11,7 +11,7 @@
 	{% project_scope project %}
     </div>
     <div class="card-body">
-        {% include 'widgets/pmulti.html' %} {# FIXME merge pmulti and multitabs #}
+        {% include 'project/multitabs.html' %}
         <div class="d-flex justify-content-end">
 	    {% include 'widgets/widget_savechanges.html' with pk=project.id obj="project" %}
         </div>
