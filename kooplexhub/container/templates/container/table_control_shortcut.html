@@ -1,12 +1,15 @@
+{% load container_buttons %}
+
 {% if containers|length %}
 <table id="environmentControl-{{objectId}}">
     {% for container in containers %}
       <tr>
-	  <td>{{ container.render_start_html }}</td>
-          <td>{{ container.render_stop_html }}</td>
-          <td>{{ container.render_open_html }}</td>
-          <td>{{ container.render_name_html }}</td>
-          <td>{{ container.render_state_html }}</td>
+          <td>{% button_open container %}</td>
+	  <td>{% button_start container %}</td>
+          <td>{% button_stop container %}</td>
+          <td>{% button_restart container %}</td>
+          <td>{{ container.name }}</td>
+          <td>{% indicator_state container %}</td>
       </tr>
     {% endfor %}
 </table>
