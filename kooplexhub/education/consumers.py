@@ -346,7 +346,7 @@ class UserHandler(SyncSkeleton):
 
 
 class CourseConfigConsumer(SyncSkeleton, Config):
-    template='course.html'
+    template='education/course/card_teacher.html'
     instance_reference='course'
 
     @property

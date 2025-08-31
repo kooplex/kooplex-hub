@@ -76,7 +76,7 @@ def assignment_teacher(request):
 
 
 class StudentCourseBindingListView(LoginRequiredMixin, generic.ListView):
-    template_name = 'course_list.html'
+    template_name = 'education/course/list_student.html'
     context_object_name = 'coursebindinglist'
 
     def get_queryset(self):
@@ -94,7 +94,7 @@ class StudentCourseBindingListView(LoginRequiredMixin, generic.ListView):
 
 
 class TeacherCourseBindingListView(LoginRequiredMixin, generic.ListView):
-    template_name = 'course_admin.html'
+    template_name = 'education/course/list_teacher.html'
     context_object_name = 'coursebindinglist'
 
     def get_queryset(self):
