@@ -51,8 +51,7 @@ class Proxy(models.Model):
 
     @property
     def views(self):
-        from . import ServiceView
-        return { v: v.openable for v in ServiceView.objects.filter(proxy=self) }
+        return self.viewbindings.all()
 
     def addroute(self, container):
         from ..lib.proxy import addroute
@@ -68,8 +67,8 @@ class Proxy(models.Model):
 
 class ProxyImageBinding(models.Model):
     from .image import Image
-    proxy = models.ForeignKey(Proxy, on_delete = models.CASCADE, null=False)
-    image = models.ForeignKey(Image, on_delete = models.CASCADE, null=False)
+    proxy = models.ForeignKey(Proxy, on_delete = models.CASCADE, related_name = 'imagebindings')
+    image = models.ForeignKey(Image, on_delete = models.CASCADE, related_name = 'proxybindings')
 
     class Meta:
         unique_together = [['image', 'proxy']]

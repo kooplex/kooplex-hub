@@ -8,7 +8,7 @@ from ..models import Image
 class ServiceView(models.Model):
     from .proxy import Proxy
     name = models.CharField(max_length = 16, unique=True)
-    proxy = models.ForeignKey(Proxy, on_delete = models.CASCADE, null=False)
+    proxy = models.ForeignKey(Proxy, on_delete = models.CASCADE, related_name='viewbindings')
     suffix = models.CharField(max_length = 128, null=True, blank=True)
     openable = models.BooleanField(default = True)
     pass_token = models.BooleanField(default = False)
@@ -28,11 +28,4 @@ class ServiceView(models.Model):
 
     def url_substitute(self, container):
         return self.url.format(container = container)
-
-    # rendering logic
-    def render_open_html(self, container, show_name=False):
-        if not self.openable or not getattr(container, 'id', None):
-            return ""
-        _link = reverse('container:open_serviceview', args = [container.id, self.id])
-        return render_to_string("widgets/widget_container_open.html", {"container": container, "view": self, "link": _link, "show_name": show_name})
 

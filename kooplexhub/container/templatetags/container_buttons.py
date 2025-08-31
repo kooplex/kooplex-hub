@@ -112,6 +112,14 @@ def button_resources(container = None):
         "idletime": geta(container, 'idletime'),
         }
 
+@register.simple_tag
+def button_view(view, container, show_name=False):
+    try:
+        _link = reverse('container:open_serviceview', args = [container.id, view.id])
+    except:
+        return "<i class='bi bi-eye-slash'></i>"
+    return render_to_string("container/button/view.html", {"container": container, "view": view, "link": _link, "show_name": show_name})
+
 
 #FIXME: az aktuális fogyasztás mehet a loglekérésbe vagy háttészínbe
 #@register.simple_tag
@@ -125,11 +133,6 @@ def button_resources(container = None):
 
 
 
-
-@register.simple_tag
-def button_view(view, container, show_name=False):
-    #FIXME: get rid of model instance rendering
-    return view.render_open_html(container, show_name) if view and container else ""
 
 @register.simple_tag
 def button_environment(obj = None):

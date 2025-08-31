@@ -99,9 +99,7 @@ class Container(models.Model):
 
     @property
     def proxies(self):
-        from . import ProxyImageBinding
-        proxy_list = [ b.proxy for b in ProxyImageBinding.objects.filter(image=self.image) ]
-        return proxy_list
+        return { b.proxy for b in self.image.proxybindings.all() }
 
 
     def addroutes(self):
@@ -113,12 +111,12 @@ class Container(models.Model):
         for proxy in self.proxies:
             proxy.removeroute(self)
 
-
+    @property
     def views(self):
-        views = {}
-        for proxy in self.proxies:
-            views.update(proxy.views)
-        return [ v for v, o in views.items() if o ]
+        v = []
+        for p in self.proxies:
+            v.extend(p.views.filter(openable=True))
+        return v
 
 
     def env_variable(self, var_name):
