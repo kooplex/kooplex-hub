@@ -18,7 +18,7 @@ For help on courses see the documentation <a href="https://xwiki.vo.elte.hu/en/k
 <div id="listPane" class="d-flex flex-wrap justify-content-center gap-3">
     {% for ucb in coursebindinglist reversed %}
       <div class="card-container" id="card-container-{{ ucb.course.id }}">
-        {% include 'student_course.html' with course=ucb.course t_assignments=ucb.assignments_table %}
+        {% include 'education/course/card_student.html' with course=ucb.course t_assignments=ucb.assignments_table %}
       </div>
     {% empty %}
       {% include 'empty.html' with empty_title="You have not been added to a course yet." %}

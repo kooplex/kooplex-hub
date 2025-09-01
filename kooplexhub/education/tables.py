@@ -24,7 +24,7 @@ except ImportError:
 
 class TableCourse(tables.Table):
     button = tables.TemplateColumn(
-        template_name="tables/course_attach_toggle.html",
+        template_name="education/tables/course_attach_toggle.html",
         verbose_name="Attach",
         orderable=False,
         extra_context={"size": "small"}, 
@@ -42,7 +42,7 @@ class TableCourse(tables.Table):
     )
 
     teachers = tables.TemplateColumn(
-        template_name="tables/course_teachers.html",
+        template_name="education/tables/course_teachers.html",
         verbose_name="Teachers",
         orderable=False,
     )
@@ -155,7 +155,7 @@ class TableAssignmentConf(tables.Table):
         self.columns.hide('quota')
 
     def render_details(self, record):
-        return render_to_string("widgets/assignment_conf_meta.html", {'assignment': record, 'instance': 'assignment'})
+        return render_to_string("education/assignment/meta.html", {'assignment': record, 'instance': 'assignment'})
 
     def render_dates(self, record):
         #FIXME rd = lambda t: t.strftime("%m/%d/%Y, %H:%M") if t else ""
@@ -164,16 +164,16 @@ class TableAssignmentConf(tables.Table):
         #FIXME rd = lambda t: "disabled" if t and t.last_run_at else ""
         #FIXME st1 = rd(record.valid_from)
         #FIXME st2 = rd(record.expires_at)
-        return render_to_string("widgets/assignment_conf_dates.html", {'assignment': record})
+        return render_to_string("education/assignment/dates.html", {'assignment': record})
 
     def render_manage(self, record):
-        return render_to_string("widgets/assignment_conf_handlerbuttons.html", {'assignment': record})
+        return render_to_string("education/assignment/button_handle_all.html", {'assignment': record})
 
     def render_quota(self, record):
-        return render_to_string("widgets/assignment_conf_quotaanddelete.html", {'assignment': record})
+        return render_to_string("education/assignment/quota_and_delete.html", {'assignment': record})
 
     def render_delete(self, record):
-        return render_to_string("widgets/assignment_conf_dustbin.html", {'assignment': record, 'instance': 'assignment'})
+        return render_to_string("education/assignment/dustbin.html", {'assignment': record, 'instance': 'assignment'})
 
 
 

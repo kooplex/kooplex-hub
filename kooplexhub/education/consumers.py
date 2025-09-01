@@ -126,10 +126,10 @@ class AssignmentConsumer(SyncSkeleton):
             t_score=None
         self.send(text_data=json.dumps({
             "feedback": "Assignment list is refreshed",
-            "f_new": render_to_string('widgets/form_new_assignment.html', {'course': course, 'folders': folders, 'table': TableAssignmentConf([Assignment()], exclude_columns=['manage', 'delete'])}),
+            "f_new": render_to_string('education/assignment/new.html', {'course': course, 'folders': folders, 'table': TableAssignmentConf([Assignment()], exclude_columns=['manage', 'delete'])}),
             "t_assignment": render_to_string('django_table.html', {'table':t}),
-            "t_individual": render_to_string('widgets/table_handle_individual.html', {'assignments': a, 'students': course.students, 'bindings': UAbind_dict}),
-            "t_score": render_to_string('widgets/table_scores.html', {'table': t_score, "course_id": course.id}) if t_score else f"<h6 class="">There are no assignments in this course.</h6>",
+            "t_individual": render_to_string('education/tables/assignment_individual.html', {'assignments': a, 'students': course.students, 'bindings': UAbind_dict}),
+            "t_score": render_to_string('education/tables/assignment_scores.html', {'table': t_score, "course_id": course.id}) if t_score else f"<h6 class="">There are no assignments in this course.</h6>",
             }))
 
     def configure(self, course, configlist):

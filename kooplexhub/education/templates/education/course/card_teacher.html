@@ -7,9 +7,9 @@
     </div>
     <div class="card-body">
 	{% if course.id %}
-        {% include 'widgets/multitabs.html' with pk=course.id description=course.description %}
+        {% include 'education/multitabs.html' with pk=course.id description=course.description %}
 	{% else %}
-        {% include 'widgets/multitabs.html' with pk=course.id new=True %}
+        {% include 'education/multitabs.html' with pk=course.id new=True %}
 	{% endif%}
     </div>
 </div>

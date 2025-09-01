@@ -42,7 +42,7 @@ $(document).ready(function() {
 <div id="listPane" class="d-flex flex-wrap justify-content-center gap-3">
   {% for ucb in coursebindinglist reversed %}
       <div class="card-container" id="card-container-{{ ucb.course.id }}">
-      {% include 'course.html' with course=ucb.course %}
+      {% include 'education/course/card_teacher.html' with course=ucb.course %}
       </div>
   {% endfor %}
 </div>
@@ -71,7 +71,7 @@ $(document).ready(function() {
 <script src="{% static 'js/volume_selection.js' %}"></script>
 
 {# a modal to configure assignments #}
-{% include 'widgets/modal_assignment.html' %}
+{% include 'education/assignment/modal.html' %}
 <script src="{% static 'education/js/datetimepicker.js' %}"></script>
 <script src="{% static 'education/js/score.js' %}"></script>
 {% endblock %}

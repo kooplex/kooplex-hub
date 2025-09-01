@@ -10,7 +10,7 @@ def get_uabind_value(UAbind_dict, user_id, assignment_id):
     Fetches the value of UAbind.x for a given (user_id, assignment_id).
     """
     from education.models import UserAssignmentBinding
-    return render_to_string('widgets/assignment_conf_handlerbutton_per_student.html', {
+    return render_to_string('education/assignment/button_handle_student.html', {
         "assignment": UserAssignmentBinding(),
         "aid": assignment_id,
         "uid": user_id,

@@ -116,7 +116,7 @@ class TeacherCourseBindingListView(LoginRequiredMixin, generic.ListView):
         context['users'] = [ u.profile._repr for u in User.objects.all().exclude(id = self.request.user.id) ]
         context['t_users'] = TableUsers(User.objects.all().exclude(id = self.request.user.id), marker_column='Teacher')
         context['empty_course'] = Course()
-        context['modal_new'] = KOOPLEX.get('education', {}).get('new_course', 'new_course.html')
+        context['modal_new'] = KOOPLEX.get('education', {}).get('new_course', 'education/templates/course/new.html')
         context['search_placeholder'] = 'Search course...'
         context['search_what'] = 'course'
         return context
