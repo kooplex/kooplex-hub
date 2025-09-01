@@ -15,6 +15,8 @@ from .models import Volume, UserVolumeBinding
 ##from .forms import TableVolumeShare
 from .forms import FormAttachment, FormVolumeUpdate
 
+from kooplexhub.settings import KOOPLEX
+
 logger = logging.getLogger(__name__)
 
 class VolumeListView(LoginRequiredMixin, generic.ListView):
@@ -26,26 +28,24 @@ class VolumeListView(LoginRequiredMixin, generic.ListView):
         l = manual_link(item = "volume")
         context = super().get_context_data(**kwargs)
         context['menu_storage'] = True
-        context['submenu'] = 'list_volume'
+        context['wss_volume_config'] = KOOPLEX.get('hub', {}).get('wss_volume_config', 'wss://localhost/hub/ws/volume/config/{userid}/').format(userid = self.request.user.id)
         context['empty_title'] = 'No volumes available'
         context['empty_body'] = format_html(f'You do no have access to the volumes yet. Ask volume owners or volume administrators for collaboration. {l}')
         return context
 
     def get_queryset(self):
         user = self.request.user
-        volumes = filter(lambda v: v.authorize(user), Volume.objects.all() )
-        return list(volumes)
+        return Volume.objects.filter(userbindings__user=user)
 
 
 class NewAttachmentView(LoginRequiredMixin, generic.FormView):
-    template_name = 'attachment_new.html'
+    template_name = 'volume/new.html'
     form_class = FormAttachment
     success_url = '/hub/volume/list' #FIXME: reverse('volume:list')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['menu_storage'] = True
-        context['submenu'] = 'new_attachment'
         return context
 
     def form_valid(self, form):
@@ -54,54 +54,6 @@ class NewAttachmentView(LoginRequiredMixin, generic.FormView):
         v = Volume.objects.create(**form.cleaned_data)
         UserVolumeBinding.objects.create(volume = v, user = user, role = UserVolumeBinding.Role.OWNER) 
         messages.info(self.request, f'Attachment {v.folder} is created')
-        return super().form_valid(form)
-
-
-class ConfigureVolumeView(LoginRequiredMixin, generic.edit.UpdateView):
-    model = Volume
-    form_class = FormVolumeUpdate
-    template_name = 'volume_configure.html'
-    success_url = '/hub/volume/list' #FIXME: 
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['user'] = self.request.user
-        return kwargs
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['menu_storage'] = True
-        context['volume_id'] = self.kwargs['pk']
-        if Volume.objects.get(id = self.kwargs['pk']).scope == Volume.Scope.ATTACHMENT:
-            context['active'] = 'meta'
-            context['is_attachment'] = True
-        else:
-            context['active'] = self.request.COOKIES.get('configure_volume_tab', 'meta')
-            context['is_attachment'] = False
-        return context
-
-    def form_valid(self, form):
-        logger.info(form.cleaned_data)
-        shared = json.loads(form.cleaned_data['shared'])
-        admins = set(map(int, shared['admin_users']))
-        # remove dropped bindings
-        bindings_rm = UserVolumeBinding.objects.filter(volume__id = form.cleaned_data['id']).exclude(user = self.request.user).exclude(id__in = shared['bindings'])
-        bindings_rm.delete()
-        logger.info(f"unshared: {bindings_rm}")
-        # maintain roles for bindings kept
-        for b in UserVolumeBinding.objects.filter(volume__id = form.cleaned_data['id'], id__in = shared['bindings']):
-            role = UserVolumeBinding.Role.ADMIN if b.user.id in admins else UserVolumeBinding.Role.COLLABORATOR
-            if b.role != role:
-                b.role = role
-                b.save()
-                logger.info(f"role changed {b} -> {role}")
-        # create new bindings
-        volume = Volume.objects.get(id = form.cleaned_data['id'])
-        for uid in map(int, shared['bind_users']):
-            role = UserVolumeBinding.Role.ADMIN if uid in admins else UserVolumeBinding.Role.COLLABORATOR
-            user = User.objects.get(id = uid)
-            b = UserVolumeBinding.objects.create(volume = volume, user = user, role = role)
-            logger.info(f"shared: {b}")
         return super().form_valid(form)
 
 

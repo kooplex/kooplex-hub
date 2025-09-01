@@ -18,6 +18,7 @@ from django.urls import re_path, path
 
 from hub.consumers import TokenConfigurator, ResourceConsumer
 from container.consumers import ContainerFetchlogConsumer, ContainerControlConsumer, ContainerConfigConsumer, MonitorConsumer
+from volume.consumers import VolumeConfigConsumer
 from project.consumers import JoinProjectConsumer, ProjectConfigConsumer, ProjectGetContainersConsumer, UserHandler as ProjectUserHandler
 from education.consumers import CourseGetContainersConsumer, CourseConfigConsumer, HandinConsumer, AssignmentConsumer, AssignmentScoreConsumer, UserHandler as CourseUserHandler
 from canvas.consumers import CanvasGetCoursesConsumer
@@ -37,6 +38,7 @@ application = ProtocolTypeRouter({
                 re_path(r"hub/ws/container/fetchlog/(?P<userid>\d+)/$", ContainerFetchlogConsumer.as_asgi()),
                 re_path(r"hub/ws/container/control/(?P<userid>\d+)/$", ContainerControlConsumer.as_asgi()),
                 re_path(r"hub/ws/container/config/(?P<userid>\d+)/$", ContainerConfigConsumer.as_asgi()),
+                re_path(r"hub/ws/volume/config/(?P<userid>\d+)/$", VolumeConfigConsumer.as_asgi()),
                 re_path(r"hub/ws/monitor/node/(?P<userid>\d+)/$", MonitorConsumer.as_asgi()),
                 re_path(r"hub/ws/project/config/(?P<userid>\d+)/$", ProjectConfigConsumer.as_asgi()),
                 re_path(r"hub/ws/project/userhandler/(?P<userid>\d+)/$", ProjectUserHandler.as_asgi()),

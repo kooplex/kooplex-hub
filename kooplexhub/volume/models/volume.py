@@ -29,30 +29,10 @@ class Volume(models.Model):
     def __str__(self):
         return "Volume /{} ({}:{})".format(self.folder, self.claim, self.subPath)
 
-    @property
-    def name(self):
-        return self.folder
+#    @property
+#    def name(self):
+#        return self.folder
 
-
-    def authorize(self, user):
-        from .uservolumebinding import UserVolumeBinding
-        if self.scope in [ self.Scope.ATTACHMENT, self.Scope.PUBLIC ]:
-            return self
-        else:
-            #FIXME: how to authorize internal volume?
-            try:
-                UserVolumeBinding.objects.get(user = user, volume = self)
-                return self
-            except:
-                pass
-
-    def is_user_authorized(self, user):
-        from .uservolumebinding import UserVolumeBinding
-        try:
-            UserVolumeBinding.objects.get(user = user, volume = self)
-            return True
-        except UserVolumeBinding.DoesNotExist:
-            return False
 
     @property
     def owner(self):

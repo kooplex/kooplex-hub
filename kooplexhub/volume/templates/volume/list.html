@@ -9,6 +9,10 @@ A storage is the place for large, read-only datasets and for tools or user's tes
 {% endblock %}
 
 {% block content %}
+{% comment %}
+FIXME: this is not loaded???
+<style src="{% static 'volume/css/card.css' %}"></style>
+{% endcomment %}
 <style>
 /* fixed card box */
 .card-fixed {
@@ -33,6 +37,7 @@ A storage is the place for large, read-only datasets and for tools or user's tes
    If you want a tighter layout, you can also give the outer containers fixed basis: */
 .card-container { flex: 0 0 auto; }
 </style>
+<style src="{% static 'hub/css/inline.css' %}"></style>
 
 
 {# render the volume cards #}
@@ -42,7 +47,30 @@ A storage is the place for large, read-only datasets and for tools or user's tes
         {% render_volume volume %}
       </div>
     {% empty %}
-  {% include 'empty.html' %}
+      {% include 'empty.html' %}
     {% endfor %}
-  </div>
+</div>
+
+
+<script src="{% static 'hub/js/wss.js' %}"></script>
+<script src="{% static 'hub/js/inline.js' %}"></script>
+<script>
+function callback(message) {
+    const oid = message.volume_id;
+    $(`#card-${oid}`).replaceWith(message.response);
+  }
+
+
+// init once DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  window.inlineEditor = new InlineEditor(opts = {
+      wsEndpoint: "{{ wss_volume_config }}",
+      userid: {{ user.id }},
+      request: 'config-volume',
+      callback
+  });
+});
+</script>
+
+
 {% endblock %}
