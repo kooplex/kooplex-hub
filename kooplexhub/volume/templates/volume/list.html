@@ -8,38 +8,13 @@
 A storage is the place for large, read-only datasets and for tools or user's test datasets. <a href="https://xwiki.vo.elte.hu/en/kooplex-manual/storages"><span class="ms-2 bi bi-book"></span></a>
 {% endblock %}
 
+{% block head_content %}
+<link href="{% static 'volume/css/card.css' %}" rel="stylesheet"></link>
+<link href="{% static 'hub/css/inline.css' %}" rel="stylesheet"></link>
+{% endblock %}
+
+
 {% block content %}
-{% comment %}
-FIXME: this is not loaded???
-<style src="{% static 'volume/css/card.css' %}"></style>
-{% endcomment %}
-<style>
-/* fixed card box */
-.card-fixed {
-  width: 320px;          /* pick your width */
-  height: 280px;         /* pick your height */
-}
-
-/* make the body scroll within the fixed box */
-.card-fixed .card-body {
-  flex: 1 1 auto;        /* take remaining vertical space */
-  overflow-y: auto;      /* scroll only the body */
-  min-height: 0;         /* IMPORTANT so flex can shrink and allow scrolling */
-}
-
-/* optional: keep header/footer from shrinking */
-.card-fixed .card-header,
-.card-fixed .card-footer {
-  flex: 0 0 auto;
-}
-
-/* If you're using a flex wrapper already, no change needed.
-   If you want a tighter layout, you can also give the outer containers fixed basis: */
-.card-container { flex: 0 0 auto; }
-</style>
-<style src="{% static 'hub/css/inline.css' %}"></style>
-
-
 {# render the volume cards #}
 <div id="listPane" class="d-flex flex-wrap justify-content-center gap-3">
     {% for volume in volumes %}
@@ -50,8 +25,10 @@ FIXME: this is not loaded???
       {% include 'empty.html' %}
     {% endfor %}
 </div>
+{% endblock %}
 
 
+{% block scripts %}
 <script src="{% static 'hub/js/wss.js' %}"></script>
 <script src="{% static 'hub/js/inline.js' %}"></script>
 <script>
@@ -71,6 +48,5 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 </script>
-
-
 {% endblock %}
+
