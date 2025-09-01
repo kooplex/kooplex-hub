@@ -129,10 +129,10 @@
                     </div>
             </div>
             <div class="tab-pane fade" id="content-three-{{pk}}" role="tabpanel" aria-labelledby="tab-three-{{pk}}">
-                {% include 'widgets/table_users.html' with table=course|table_attendee:user %}
+		{% render_attendees course user %}
             </div>
             <div class="tab-pane fade" id="content-four-{{pk}}" role="tabpanel" aria-labelledby="tab-four-{{pk}}">
-                {% include 'volume/table/volumes.html' with maxheight="118px" pk=pk volumes=course.volumes callback="wss_courseconfig.register_changes" instance="course" %}
+                {% include 'volume/tables/volumes.html' with maxheight="118px" pk=pk volumes=course.volumes callback="wss_courseconfig.register_changes" instance="course" %}
             </div>
             <div class="tab-pane fade" id="content-five-{{pk}}" role="tabpanel" aria-labelledby="tab-five-{{pk}}">
 		{% button_image course "preferred_image" callback="wss_courseconfig.register_changes" %}

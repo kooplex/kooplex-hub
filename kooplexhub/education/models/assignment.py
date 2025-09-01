@@ -5,7 +5,6 @@ import json
 
 from django.db import models
 from django.contrib.auth.models import User
-from django.template.defaulttags import register
 
 
 from django.utils import timezone
@@ -127,10 +126,6 @@ class UserAssignmentBinding(models.Model):
 
     def __str__(self):
         return f'{self.assignment.name} ({self.assignment.course.name})'
-
-    @register.filter
-    def state_long(self):
-        return ST_LOOKUP[self.state] 
 
 
     def handout(self):

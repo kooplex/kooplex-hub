@@ -17,3 +17,8 @@ def get_uabind_value(UAbind_dict, user_id, assignment_id):
         "state": UAbind_dict.get((user_id, assignment_id), UserAssignmentBinding.ST_QUEUED)
         })
 
+
+@register.inclusion_tag("widgets/table_users.html")
+def render_attendees(course, user):
+    from ..tables import TableStudentsAndTeachers
+    return {"pk": course.id, "table": TableStudentsAndTeachers(course.userbindings.exclude(user=user))} if course.pk else {}

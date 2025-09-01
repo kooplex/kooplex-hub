@@ -1,7 +1,6 @@
 import logging
 
 from django.db import models
-from django.template.defaulttags import register
 from django.contrib.auth import get_user_model
 
 User = get_user_model()

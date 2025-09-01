@@ -11,7 +11,7 @@ from kooplexhub.common import table_attributes
 
 class TableVolume(tables.Table):
     button = tables.TemplateColumn(
-        template_name="tables/volume_attach_toggle.html",
+        template_name="volume/tables/volume_attach_toggle.html",
         verbose_name="Attach",
         orderable=False,
         extra_context={"size": "small"}, 
@@ -28,7 +28,7 @@ class TableVolume(tables.Table):
     )
 
     scope = tables.TemplateColumn(
-        template_name="widgets/volume_scope.html",
+        template_name="volume/scope.html",
         verbose_name="Scope",
         orderable=False,
     )

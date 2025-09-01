@@ -15,6 +15,7 @@ from django.contrib.auth.models import User
 
 from hub.util import SyncSkeleton, AsyncSkeleton, Config, normalize_pk
 from .models import Course, VolumeCourseBinding
+from .templatetags.course_buttons import render_attendees
 from volume.models import Volume
 
 logger = logging.getLogger(__name__)
@@ -339,7 +340,7 @@ class UserHandler(SyncSkeleton):
             message = self._chg_user_bindings(course, parsed.get('ids'), parsed.get('marked_ids', []))
             if message:
                 response['feedback'] = message
-                response['refresh'] = render_to_string('widgets/table_users.html', {'pk': course_id, 'table': course.table_attendee(User.objects.get(id=self.userid))})
+                response['refresh'] = render_to_string('widgets/table_users.html', render_attendees(course, User.objects.get(id=self.userid)))
                 self.send(text_data=json.dumps(response))
         else:
             logger.critical(request)

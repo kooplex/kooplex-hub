@@ -2,7 +2,6 @@ import os
 import logging
 
 from django.db import models
-from django.template.defaulttags import register
 
 from kooplexhub.lib import my_alphanumeric_validator
 from container.models import Image
@@ -48,17 +47,11 @@ class Course(models.Model):
             groups[None] = students
         return groups
 
-    @register.filter
-    def csv_groups(self):
-        return ', '.join(map(lambda x: f'{"ungrouped" if x[0] is None else x[0].name} ({len(x[1])} students)', self.groups.items()))
 
     @property
     def coursecodes(self):
         return CourseCode.objects.filter(course = self)
 
-    @register.filter
-    def csv_coursecodes(self):
-        return ', '.join(map(lambda x: x.courseid, self.coursecodes))
 #################
 
     @property
@@ -106,10 +99,6 @@ class Course(models.Model):
         except UserCourseBinding.DoesNotExist:
             return False
 
-    @register.filter
-    def table_attendee(self, user=None):
-        from ..tables import TableStudentsAndTeachers
-        return TableStudentsAndTeachers(UserCourseBinding.objects.filter(course=self).exclude(user=user))
 
 
 class UserCourseBinding(models.Model):

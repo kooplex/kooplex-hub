@@ -5,7 +5,7 @@ register = template.Library()
 def render_volume(volume):
     return {"volume": volume}
 
-@register.inclusion_tag("widgets/volume_scope.html")
+@register.inclusion_tag("volume/scope.html")
 def render_scope(volume):
     return {"volume": volume}
 

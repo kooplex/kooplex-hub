@@ -1,5 +1,9 @@
 {% load render_table from django_tables2 %}
 <div name="users" data-id="{{pk}}">
-    {% render_table table %}
+    {% if table %}
+      {% render_table table %}
+    {% else %}
+      <p>Empty table</>
+    {% endif %}
 </div>
 
