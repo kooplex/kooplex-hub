@@ -9,7 +9,7 @@ class ProjectAdmin(admin.ModelAdmin):
     def project_creator(self, instance):
         return instance.creator
     def project_Nusers(self, instance):
-        return len(instance.userprojectbindings)
+        return instance.userbindings.count()
     list_display = ('id', 'name', 'subpath', 'project_creator', 'scope', 'project_Nusers')
     search_labels = ('name', 'project_creator__username')
     search_fields = ('name', 'project_creator__username')

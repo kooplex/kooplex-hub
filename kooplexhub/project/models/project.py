@@ -29,7 +29,8 @@ class Project(models.Model):
     @property
     def creator(self):
         role = self.userbindings.model.Role
-        return self.userbindings.filter(role = role.CREATOR).first().user
+        b = self.userbindings.filter(role = role.CREATOR).first()
+        return b.user if b else "CREATOR MISSING!"
 
     @property
     def admins(self):
@@ -55,3 +56,8 @@ class Project(models.Model):
                      .select_related('volume')
         } if self.pk else {}
 
+
+    # factory functions
+    @classmethod
+    def get_userproject(cls, pk, user):
+        return cls.objects.filter(pk=pk).filter(userbindings__user=user).first()

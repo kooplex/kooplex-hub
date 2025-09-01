@@ -62,7 +62,7 @@ def delete_or_leave(request, project_id, pk_user):
     assert user.id == pk_user, "user mismatch"
     logger.debug("method: %s, project id: %s, user: %s" % (request.method, project_id, user))
     try:
-        project = Project.get_userproject(project_id = project_id, user = user)
+        project = Project.get_userproject(pk = project_id, user = user)
         upb = UserProjectBinding.objects.get(user = user, project = project)
     except Project.DoesNotExist:
         messages.error(request, 'Project does not exist')
