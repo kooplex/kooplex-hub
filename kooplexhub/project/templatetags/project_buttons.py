@@ -15,7 +15,7 @@ def project_creator(project = None, user = None):
 
 @register.simple_tag
 def project_scope(project = None):
-    return render_to_string("widgets/button_scope.html", {'project':project})
+    return render_to_string("project/button_scope.html", {'project':project})
 
 
 @register.inclusion_tag("widgets/table_users.html")

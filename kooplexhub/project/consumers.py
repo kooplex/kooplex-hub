@@ -225,7 +225,7 @@ class JoinProjectConsumer(SyncConsumer):
         if request=='get-joinable':
             response.update({
                 "feedback": f"Joinable project list is refreshed",
-                "replace": render_to_string('widgets/list_joinableprojects.html', {'projects': joinable})
+                "replace": render_to_string('project/list_joinableprojects.html', {'projects': joinable})
             })
             logger.debug(response)
             self.send(text_data=json.dumps(response))
