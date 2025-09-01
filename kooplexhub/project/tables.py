@@ -16,7 +16,7 @@ from kooplexhub.common import table_attributes
 
 class TableProject(tables.Table):
     button = tables.TemplateColumn(
-        template_name="tables/project_attach_toggle.html",
+        template_name="project/tables/project_attach_toggle.html",
         verbose_name="Attach",
         orderable=False,
         extra_context={"size": "small"}, 
@@ -28,7 +28,7 @@ class TableProject(tables.Table):
     )
 
     collaborators = tables.TemplateColumn(
-        template_name="tables/project_collaborators.html",
+        template_name="project/tables/project_collaborators.html",
         verbose_name="Collaborators",
         orderable=False,
     )
