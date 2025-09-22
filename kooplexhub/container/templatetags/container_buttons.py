@@ -72,8 +72,10 @@ def button_fetchlogs(container):
     return {"container": container}
 
 @register.simple_tag
-def button_image(obj, model, attr="image"):
-    return render_to_string("container/button/image.html", {"pk": getattr(obj, 'pk', None), "image": getattr(obj, attr, ""), "model": model, "attr": attr})
+def button_image(obj=None, model=None, attr="image", **kwargs):
+    return render_to_string("container/button/image.html", {
+        "pk": getattr(obj, 'pk', None), "image": getattr(obj, attr, kwargs.get('value')), "model": model, "attr": attr
+        })
 
 @inclusion_tag_ex("container/button/open.html")
 def button_open(container):
@@ -88,19 +90,19 @@ def indicator_state(container):
     return {"container": container}
 
 @register.simple_tag
-def button_teleport(container):
+def button_teleport(container=None, **kwargs):
     return render_to_string("hub/buttons/toggle.html",  {
-        "on": container.start_teleport, 
-        "pk": container.pk, "model": "container",
+        "on": getattr(container, 'start_teleport', kwargs.get('value')), 
+        "pk": getattr(container, 'pk', None), "model": "container",
         "attr": "start_teleport",
         'icon': static('container/img/teleport.ico')
     })
 
 @register.simple_tag
-def button_seafile(container):
+def button_seafile(container=None, **kwargs):
     return render_to_string("hub/buttons/toggle.html", {
-        "on": container.start_seafile, 
-        "pk": container.pk, "model": "container",
+        "on": getattr(container, 'start_seafile', kwargs.get('value')), 
+        "pk": getattr(container, 'pk', None), "model": "container", "model": "container",
         "attr": "start_seafile",
         'icon': static('container/img/seafile.png')
     })
@@ -119,6 +121,63 @@ def button_resources(container = None):
         "gpurequest": geta(container, 'gpurequest'),
         "memoryrequest": geta(container, 'memoryrequest'),
         "idletime": geta(container, 'idletime'),
+    })
+
+@register.simple_tag
+def button_resource_node(container=None, **kwargs):
+    node=getattr(container, 'node', kwargs.get('value'))
+    return render_to_string("container/button/resource_attribute.html", {
+        "pk": getattr(container, 'pk', None),
+        "attribute": "node",
+        "hidden": not node,
+        "icon": "bi bi-pc",
+        "value": node,
+    })
+
+@register.simple_tag
+def button_resource_cpurequest(container=None, **kwargs):
+    cpurequest = getattr(container, 'cpurequest', kwargs.get('value'))
+    return render_to_string("container/button/resource_attribute.html", {
+        "pk": getattr(container, 'pk', None),
+        "attribute": "cpurequest",
+        "hidden": not cpurequest,
+        "icon": "bi bi-cpu",
+        "value": cpurequest,
+    })
+
+@register.simple_tag
+def button_resource_gpurequest(container=None, **kwargs):
+    gpurequest = getattr(container, 'gpurequest', kwargs.get('value'))
+    return render_to_string("container/button/resource_attribute.html", {
+        "pk": getattr(container, 'pk', None),
+        "attribute": "gpurequest",
+        "hidden": not gpurequest or gpurequest == 0,
+        "icon": "bi bi-gpu-card",
+        "value": gpurequest,
+    })
+
+@register.simple_tag
+def button_resource_memoryrequest(container=None, **kwargs):
+    memoryrequest = getattr(container, 'memoryrequest', kwargs.get('value'))
+    return render_to_string("container/button/resource_attribute.html", {
+        "pk": getattr(container, 'pk', None),
+        "attribute": "memoryrequest",
+        "hidden": not memoryrequest,
+        "icon": "bi bi-memory",
+        "value": memoryrequest,
+        "unit": "GB",
+    })
+
+@register.simple_tag
+def button_resource_idletime(container=None, **kwargs):
+    idletime = getattr(container, 'idletime', kwargs.get('value'))
+    return render_to_string("container/button/resource_attribute.html", {
+        "pk": getattr(container, 'pk', None),
+        "attribute": "idletime",
+        "hidden": not idletime,
+        "icon": "bi bi-clock-history",
+        "value": idletime,
+        "unit": "h",
     })
 
 @register.simple_tag

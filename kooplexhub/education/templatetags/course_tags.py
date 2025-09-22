@@ -5,8 +5,8 @@ from django.template.loader import render_to_string
 register = template.Library()
 
 @register.simple_tag
-def render_name(course):
-    return render_to_string('hub/widgets/inline_textfield.html', {'model': 'course', 'attr': 'name', 'obj': course, 'value': course.name, 'editable': True})
+def render_name(course=None, **kwargs):
+    return render_to_string('hub/widgets/inline_textfield.html', {'model': 'course', 'attr': 'name', 'pk': getattr(course, 'pk', None), 'value': getattr(course, 'name', kwargs.get('value')), 'editable': True})
 
 @register.simple_tag
 def render_description(course):

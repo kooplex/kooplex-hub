@@ -9,7 +9,7 @@ class ComputeResourceHandler {
     this.confirmSelector = opts.confirmSelector || '#confirm-compute-selection';
     this.nodeInputSelector = opts.nodeInputSelector || '#id_node';
     this.progressSelector = opts.progressSelector || '.progress';
-    this.busy = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>Saving...`;
+    this.busy = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>render...`;
 
     this.wsEndpoint = opts.wsEndpoint || null;
     this.wsFactory = typeof opts.wsFactory === 'function'
@@ -89,10 +89,10 @@ class ComputeResourceHandler {
     this.selectedNode = normalized;
 
     // preload values
-    $("input[name='cpurequest']").val(parseFloat($button.data('cpurequest') || 0));
-    $("input[name='gpurequest']").val(parseInt($button.data('gpurequest') || 0, 10));
-    $("input[name='memoryrequest']").val(parseFloat($button.data('memoryrequest') || 0));
-    $("input[name='idletime']").val(parseInt($button.data('idletime') || 0, 10));
+    $("input[name='cpurequest']").val(parseFloat($button.find("span[data-name='cpurequest']").data('value') || 0.1));
+    $("input[name='gpurequest']").val(parseInt($button.find("span[data-name='gpurequest']").data('value') || 0, 10));
+    $("input[name='memoryrequest']").val(parseFloat($button.find("span[data-name='memoryrequest']").data('value') || 0.1));
+    $("input[name='idletime']").val(parseInt($button.find("span[data-name='idletime']").data('value') || 1, 10));
     $("select[name='node']").val(currentNode).change();
 
     // show modal
@@ -177,12 +177,23 @@ class ComputeResourceHandler {
     const i = $('#id_idletime').val();
 
     const $btn = $(`button[data-name=resources][data-pk="${this.selectedContainerId}"]`);
-    $btn.html(this.busy).prop('disabled', true);
+    //$btn.html(this.busy).prop('disabled', true);
+    $btn.prop('disabled', true);
     try {
+        $btn.find("span[data-name=node]").html(this.busy);
+        $btn.find("span[data-name=node]").removeClass('d-none');
         this.register.register_changes(pk, 'node',         n, this._mynone(String($btn.data('node') || '')));
+        $btn.find("span[data-name=cpurequest]").html(this.busy);
+        $btn.find("span[data-name=cpurequest]").removeClass('d-none');
         this.register.register_changes(pk, 'cpurequest',   c, this._mynone(String($btn.data('cpurequest') || '')));
+        $btn.find("span[data-name=gpurequest]").html(this.busy);
+        $btn.find("span[data-name=gpurequest]").removeClass('d-none');
         this.register.register_changes(pk, 'gpurequest',   g, this._mynone(String($btn.data('gpurequest') || '')));
+        $btn.find("span[data-name=memoryrequest]").html(this.busy);
+        $btn.find("span[data-name=memoryrequest]").removeClass('d-none');
         this.register.register_changes(pk, 'memoryrequest',m, this._mynone(String($btn.data('memoryrequest') || '')));
+        $btn.find("span[data-name=idletime]").html(this.busy);
+        $btn.find("span[data-name=idletime]").removeClass('d-none');
         this.register.register_changes(pk, 'idletime',     i, this._mynone(String($btn.data('idletime') || '')));
     } catch (err) {
         console.error(err);

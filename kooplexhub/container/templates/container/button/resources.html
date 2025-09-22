@@ -1,17 +1,16 @@
+{% load container_buttons %}
 <button 
     class="badge rounded-pill text-dark p-2 border border-1 border-dark w-100 text-start" 
     role="button"
     data-bs-toggle="tooltip" data-placement="bottom"
     title="Requested compute resources. Click to tune."
-    data-node="{{node}}" data-cpurequest="{{cpurequest}}" data-gpurequest="{{gpurequest}}"
-    data-memoryrequest="{{memoryrequest}}" data-idletime="{{idletime}}"
     data-pk="{{container.id}}" data-name="resources" data-model="container"
     >
-    {% if node %}<span><i class="bi bi-pc me-1"></i><span class="me-2">{{node|truncatechars:6}}</span></span>{% endif %}
-    {% if cpurequest %}<span><i class="bi bi-cpu me-1"></i><span class="me-2">{{cpurequest}}</span></span>{% endif %}
-    {% if gpurequest %}<span><i class="bi bi-gpu-card me-1"></i><span class="me-2">{{gpurequest}}</span></span>{% endif %}
-    {% if memoryrequest %}<span><i class="bi bi-memory me-1"></i><span class="me-2">{{memoryrequest}} GB</span></span>{% endif %}
-    {% if idletime %}<span><i class="bi bi-clock-history me-1"></i><span class="me-2">{{idletime}} h</span></span>{% endif %}
+    {% button_resource_node container %}
+    {% button_resource_cpurequest container %}
+    {% button_resource_gpurequest container %}
+    {% button_resource_memoryrequest container %}
+    {% button_resource_idletime container %}
     {% if not node and not cpurequest and not gpurequest and not memoryrequest and not idletime %} 
       <span><i class="bi bi-wrench-adjustable me-1"></i>default resources</span>
     {% endif %}

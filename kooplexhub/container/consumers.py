@@ -183,6 +183,35 @@ class ContainerConfigConsumer(CSyncSkeleton):
             cid=int(pk)
             container=self.get_container(cid)
             configurator = ContainerConfigHandler(container)
+        elif request =='update-widget':
+            field=parsed.get('field')
+            if field=='start_seafile':
+                from .templatetags.container_buttons import button_seafile
+                self.send(text_data=json.dumps({'replace_widgets': {f"[data-name=start_seafile][data-pk=None][data-model=container]": button_seafile(value=parsed.get('value'))}}))
+            elif field=='start_teleport':
+                from .templatetags.container_buttons import button_teleport
+                self.send(text_data=json.dumps({'replace_widgets': {f"[data-name=start_teleport][data-pk=None][data-model=container]": button_teleport(value=parsed.get('value'))}}))
+            elif field=='image':
+                from .templatetags.container_buttons import button_image
+                image = Image.objects.get(id=parsed.get('value'))
+                self.send(text_data=json.dumps({'replace_widgets': {f"[data-name=image][data-pk=None][data-model=container]": button_image(model='container', attr='image', value=image)}}))
+            elif field=='node':
+                from .templatetags.container_buttons import button_resource_node
+                self.send(text_data=json.dumps({'replace_widgets': {f"[data-name=node][data-pk=None][data-model=container]": button_resource_node(value=parsed.get('value'))}}))
+            elif field=='cpurequest':
+                from .templatetags.container_buttons import button_resource_cpurequest
+                self.send(text_data=json.dumps({'replace_widgets': {f"[data-name=cpurequest][data-pk=None][data-model=container]": button_resource_cpurequest(value=parsed.get('value'))}}))
+            elif field=='gpurequest':
+                from .templatetags.container_buttons import button_resource_gpurequest
+                self.send(text_data=json.dumps({'replace_widgets': {f"[data-name=gpurequest][data-pk=None][data-model=container]": button_resource_gpurequest(value=parsed.get('value'))}}))
+            elif field=='memoryrequest':
+                from .templatetags.container_buttons import button_resource_memoryrequest
+                self.send(text_data=json.dumps({'replace_widgets': {f"[data-name=memoryrequest][data-pk=None][data-model=container]": button_resource_memoryrequest(value=parsed.get('value'))}}))
+            elif field=='idletime':
+                from .templatetags.container_buttons import button_resource_idletime
+                self.send(text_data=json.dumps({'replace_widgets': {f"[data-name=idletime][data-pk=None][data-model=container]": button_resource_idletime(value=parsed.get('value'))}}))
+
+            return
         else:
             logger.error(f"wrong request: {request}")
             return

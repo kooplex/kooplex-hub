@@ -80,6 +80,8 @@ document.addEventListener('DOMContentLoaded', () => {
         endpoint: "{{ wss_course_config }}",
         userid: {{ user.id }},
         request: "configure-course",
+        model: "course",
+        required: [ "name", "description", "preferred_image" ],
     });
     window.inlineEditor = new InlineEditor(window.wss_conf_course);
     window.imageSelector = new ImageSelectionHandler(window.wss_conf_course);
