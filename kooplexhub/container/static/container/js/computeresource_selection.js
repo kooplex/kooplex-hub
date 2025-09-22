@@ -2,22 +2,14 @@
 
 // Compute Resource Selection Modal Logic
 class ComputeResourceHandler {
-  /**
-   * @param {Object} opts
-   * @param {string} [opts.modalSelector='.computeresource-modal']
-   * @param {string} [opts.triggerSelector='[id^="container-resources-"]'] // clickables per container
-   * @param {string} [opts.confirmSelector='#confirm-compute-selection']
-   * @param {string} [opts.nodeInputSelector='#id_node'] // select input in modal
-   * @param {string} [opts.progressSelector='.progress']
-   * @param {string} [opts.wsEndpoint=null] // e.g., wsURLs.monitor_node
-   * @param {function} [opts.wsFactory] // optional custom WS factory; defaults to new ManagedWebSocket(endpoint,{onMessage})
-   */
-  constructor(opts = {}) {
+  constructor(register, opts = {}) {
+    this.register = register;
     this.modalSelector = opts.modalSelector || '.computeresource-modal';
-    this.triggerSelector = opts.triggerSelector || '[data-action="ComputeResourceSelection.openModal"][data-id]';
+    this.triggerSelector = opts.triggerSelector || '[data-pk][data-name=resources]';
     this.confirmSelector = opts.confirmSelector || '#confirm-compute-selection';
     this.nodeInputSelector = opts.nodeInputSelector || '#id_node';
     this.progressSelector = opts.progressSelector || '.progress';
+    this.busy = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>Saving...`;
 
     this.wsEndpoint = opts.wsEndpoint || null;
     this.wsFactory = typeof opts.wsFactory === 'function'
@@ -42,6 +34,8 @@ class ComputeResourceHandler {
 
     // ws instance
     this.wssMonitor = null;
+
+    this.init();
   }
 
   init() {
@@ -54,6 +48,8 @@ class ComputeResourceHandler {
     // create WS if endpoint provided
     if (this.wsEndpoint) {
       this.wssMonitor = this.wsFactory(this.wsEndpoint, { onMessage: this._onWSMessage });
+    } else {
+      console.warn("option wsEndpoint is not specified.");
     }
   }
 
@@ -67,14 +63,9 @@ class ComputeResourceHandler {
     }
   }
 
-  // Public API (match your previous global)
-  openModal(containerId, node) {
-    this._open(containerId, node);
-  }
-
-  update(pk, node, cpurequest, gpurequest, memoryrequest, idletime) {
-    // FIXME SAVE originals (as you noted)
-    this._updateButtonFace(pk, node, cpurequest, gpurequest, memoryrequest, idletime);
+  // Public API
+  openModal(containerId) {
+    this._open(containerId);
   }
 
   // ========== Internals ==========
@@ -87,14 +78,14 @@ class ComputeResourceHandler {
     this._open(containerId, node);
   }
 
-  _open(containerId, node) {
+  _open(containerId) {
     this.selectedContainerId = (containerId === 'None') ? 'None' : parseInt(containerId, 10);
-    const $button = $(`#container-resources-${containerId}`);
+    const $button = $(`button[data-name=resources][data-pk="${containerId}"]`);
 
     const currentNode = String($button.data('node') || '');
     this.currentNode = currentNode;
 
-    const normalized = this._mynone(node);
+    const normalized = this._mynone(currentNode);
     this.selectedNode = normalized;
 
     // preload values
@@ -185,66 +176,27 @@ class ComputeResourceHandler {
     const m = $('#id_memoryrequest').val();
     const i = $('#id_idletime').val();
 
-    const $btn = $(`#container-resources-${pk}`);
-
-    this._reg(pk, 'node',         n, this._mynone(String($btn.data('node') || ''))),
-    this._reg(pk, 'cpurequest',   c, this._mynone(String($btn.data('cpurequest') || ''))),
-    this._reg(pk, 'gpurequest',   g, this._mynone(String($btn.data('gpurequest') || ''))),
-    this._reg(pk, 'memoryrequest',m, this._mynone(String($btn.data('memoryrequest') || ''))),
-    this._reg(pk, 'idletime',     i, this._mynone(String($btn.data('idletime') || ''))),
-
-    this._updateButtonFace(pk, n, c, g, m, i);
-
-    this.$modal.modal('hide');
-    this.selectedContainerId = null;
-  }
-
-  _updateButtonFace(pk, n, c, g, m, i) {
-    $(`#container-resources-${pk} [name=node] [name=node_name]`).text(n);
-    $(`#container-resources-${pk} [name=cpu] [name=node_cpu_request]`).text(c);
-    $(`#container-resources-${pk} [name=gpu] [name=node_gpu_request]`).text(g);
-    $(`#container-resources-${pk} [name=mem] [name=node_memory_request]`).text(`${m}GB`);
-    $(`#container-resources-${pk} [name=up] [name=node_idle]`).text(`${i} h`);
-
-    const $wid_node  = $(`#container-resources-${pk} [name=node]`);
-    const $wid_cpu   = $(`#container-resources-${pk} [name=cpu]`);
-    const $wid_gpu   = $(`#container-resources-${pk} [name=gpu]`);
-    const $wid_mem   = $(`#container-resources-${pk} [name=mem]`);
-    const $wid_up    = $(`#container-resources-${pk} [name=up]`);
-    const $wid_empty = $(`#container-resources-${pk} [name=empty]`);
-
-    n && n.length ? $wid_node.removeClass('d-none') : $wid_node.addClass('d-none');
-    c ? $wid_cpu.removeClass('d-none') : $wid_cpu.addClass('d-none');
-    g ? $wid_gpu.removeClass('d-none') : $wid_gpu.addClass('d-none');
-    m ? $wid_mem.removeClass('d-none') : $wid_mem.addClass('d-none');
-    i ? $wid_up.removeClass('d-none') : $wid_up.addClass('d-none');
-
-    const sum = (n && n.length ? 1 : 0) + (c?1:0) + (g?1:0) + (m?1:0) + (i?1:0);
-    sum === 0 ? $wid_empty.removeClass('d-none') : $wid_empty.addClass('d-none');
+    const $btn = $(`button[data-name=resources][data-pk="${this.selectedContainerId}"]`);
+    $btn.html(this.busy).prop('disabled', true);
+    try {
+        this.register.register_changes(pk, 'node',         n, this._mynone(String($btn.data('node') || '')));
+        this.register.register_changes(pk, 'cpurequest',   c, this._mynone(String($btn.data('cpurequest') || '')));
+        this.register.register_changes(pk, 'gpurequest',   g, this._mynone(String($btn.data('gpurequest') || '')));
+        this.register.register_changes(pk, 'memoryrequest',m, this._mynone(String($btn.data('memoryrequest') || '')));
+        this.register.register_changes(pk, 'idletime',     i, this._mynone(String($btn.data('idletime') || '')));
+    } catch (err) {
+        console.error(err);
+        // Basic error hint (replace with your toast)
+        $btn.html(`<span class="text-danger">Save failed</span>`).prop('disabled', true);
+    } finally {
+        this.$modal.modal('hide');
+        this.selectedContainerId = null;
+    }
   }
 
   _mynone(x) {
     return x === 'None' ? '' : x;
   }
-
-  _reg(pk, field, newVal, oldVal) {
-    if (typeof wss_containerconfig.register_changes === 'function') {
-      return !!wss_containerconfig.register_changes(pk, field, newVal, oldVal);
-    }
-    console.warn('ComputeResourceHandler: wss_containerconfig.register_changes not found');
-    return false;
-  }
 }
-
-
-// Run when document is ready
-$(document).ready(function() {
-  const ComputeResourceSelection = new ComputeResourceHandler({
-    wsEndpoint: wsURLs?.monitor_node || null,
-  });
-  ComputeResourceSelection.init();
-});
-
-
 
 

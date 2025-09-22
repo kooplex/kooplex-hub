@@ -1,6 +1,9 @@
-{% extends 'django_table.html' %}
+{% load render_table from django_tables2 %}
 
-{% block tableextension %}
+<div data-tab="summary">
+{% if table %} 
+{% render_table table %}
+
 <template id="score-popover-template" data-id="{{course_id}}">
   <div class="p-2" style="width: 240px;">
     <div class="mb-2">
@@ -21,4 +24,7 @@
 <style>
     .popover { z-index: 1056; }
 </style>
-{% endblock %}
+{% else %}
+<p>There are no assignments collected yet.</p>
+{% endif %}
+</div>

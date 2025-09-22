@@ -1,0 +1,14 @@
+{% load render_table from django_tables2 %}
+<div data-tab="config">
+{% if table %}
+{% render_table table %}
+
+<div class="d-flex justify-content-end">
+  <button type="submit" data-submit="config" class="badge rounded-pill bg-warning shadow-sm text-dark p-2 border border-secondary">
+    <i class="bi bi-arrow-right-square me-1"></i>Finalize
+  </button>
+</div>
+{% else %}
+<p>There are no assignments.<p>
+{% endif %}
+</div>

@@ -25,44 +25,30 @@ For help on courses see the documentation <a href="https://xwiki.vo.elte.hu/en/k
     {% endfor %}
   </div>
 </div>
-
-{# a modal to start/stop/jump to project environments #}
-<script src="{% static 'container/js/environments.js' %}"></script>
-<script src="{% static 'container/js/buttons.js' %}"></script>
-<script src="{% static 'hub/js/dropdown.js' %}"></script>
-
 {% endblock %}
 
 {% block scripts %}
+<script src="{% static 'container/js/environments.js' %}"></script>
+<script src="{% static 'container/js/controller.js' %}"></script>
+<script src="{% static 'hub/js/buttons.js' %}"></script>
 <script src="{% static 'hub/js/wss.js' %}"></script>
+<script src="{% static 'education/js/handin.js' %}"></script>
 <script>
-// Save web socket urls
-const wsURLs = {
-  container_control: "{{ wss_container }}",
-  get_containers: "{{ wss_course_container }}",
-  wss_handin: "{{ wss_handin }}",
-}
-</script>
+document.addEventListener('DOMContentLoaded', () => {
+    window.fetchContainers = new FetchContainer(opts = {
+        endpoint: "{{ wss_course_container }}",
+        userid: {{user.id}}
+    });
 
-<script>
+    window.containerControl = new ContainerControl(opts = {
+        endpoint: "{{ wss_container_control }}",
+        userid: {{ user.id }}
+    });
 
-$(document).ready(function () {
-  if (wsURLs.wss_handin) {
-    wss_handin = new ManagedWebSocket(wsURLs.wss_handin, {
-      onMessage: console.log,
-    })
-  } 
-})
-
-$(document).on('click', '[type=submit][data-submit=handin][data-id]', function() {
-  let pk=$(this).data('id');
-    console.log(pk)
-   setTimeout(function() {
-     wss_handin.send(JSON.stringify({
-       'pk': pk,
-     }))
-   }, 200);
-	$(this).attr('disabled', true);
+    window.assignmentHadler = new AssignmentHandin(opts={
+        endpoint: "{{ wss_handin }}",
+        userid: {{ user.id }}
+    });
 });
 </script>
 {% endblock %}

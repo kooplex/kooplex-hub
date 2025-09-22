@@ -29,23 +29,19 @@ A storage is the place for large, read-only datasets and for tools or user's tes
 
 
 {% block scripts %}
-<script src="{% static 'hub/js/wss.js' %}"></script>
 <script src="{% static 'hub/js/inline.js' %}"></script>
+<script src="{% static 'volume/js/button_scope.js' %}"></script>
+<script src="{% static 'hub/js/wss.js' %}"></script> {# FIXME: we could get rid of it if js export/import properly implemented #}
+<script src="{% static 'hub/js/config_register.js' %}"></script>
 <script>
-function callback(message) {
-    const oid = message.volume_id;
-    $(`#card-${oid}`).replaceWith(message.response);
-  }
-
-
-// init once DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-  window.inlineEditor = new InlineEditor(opts = {
-      wsEndpoint: "{{ wss_volume_config }}",
-      userid: {{ user.id }},
-      request: 'config-volume',
-      callback
-  });
+    window.wss_conf_volume = new ConfigHandler(opts = {
+        endpoint: "{{ wss_volume_config }}",
+        userid: {{ user.id }},
+        request: "configure-volume",
+    });
+    window.inlineEditor = new InlineEditor(window.wss_conf_volume);
+    window.scopeButton = new ScopeButton(window.wss_conf_volume);
 });
 </script>
 {% endblock %}

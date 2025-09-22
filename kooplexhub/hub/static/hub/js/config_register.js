@@ -8,26 +8,27 @@ function getMethodAndContext(path, root = window) {
   return { fn, ctx };
 }
 
-//
-//
-//
 class ConfigHandler {
-    constructor(endpoint, request, widget = null, instancetype = null, attribute = null, required = [], dummy = "None", sendDelay = 300) {
-        this.widget = widget;
-        this.instancetype = instancetype;
-        this.attribute = attribute;
-        this.required = required;
-        this.dummy = dummy;
-        this.request = request;
-        this.sendDelay = sendDelay;
-        // Internal change buffer
-        this.changeBuffer = new Map();
-        // Timer to throttle sends
-        this.sendTimer = null;
+    constructor(opts = {}) {
+        this.endpoint = opts.endpoint || null;
+        this.userid = opts.userid || null;
+        this.request = opts.request || 'config';
+        this.model = opts.model || '';
+        this.pk_mapping = opts.pk_mapping || 'pk';
+        this.required = opts.required || [];
+        this.dummy = opts.pk_new || 'None';
+        this.sendDelay = opts.sendDelay || 300;
+        this.changeBuffer = new Map();        // Internal change buffer
+        this.sendTimer = null;                // Timer to throttle sends
         this.handleCallback = this.handleCallback.bind(this); // <- bind once
-        this.wss = new ManagedWebSocket(endpoint, {
-            onMessage: this.handleCallback,
-        });
+        this.pendingRequests       = new Set(); // track request_ids while processing
+        if (this.endpoint) {
+            this.wss = new ManagedWebSocket(this.endpoint, {
+                onMessage: this.handleCallback,
+            });
+	} else {
+            throw new Error('No endpoint is provided. Cannot send changes to server.');
+        }
     }
 
     // Check equality of two arrays
@@ -54,6 +55,11 @@ class ConfigHandler {
         return (pk === null || pk === undefined || pk === "" || (typeof pk === "number" && isNaN(pk)));
     }
 
+    _uuid() {
+      // Simple request id (good enough for correlating)
+      return 'req_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    }
+
 
     // Send record to server via ws
     flushChanges(pk) {
@@ -66,11 +72,16 @@ class ConfigHandler {
 
     // Keep track of changes entered in UI
     register_changes(pk, fieldName, newValue, oldValue) {
-        pk = this.isnew(pk) ? this.dummy : pk;
+	    //FIXME
+        const request_id = this._uuid();
+        // Track request so we only react to our own response
+        this.pendingRequests.add(request_id);
+        
+	pk = this.isnew(pk) ? this.dummy : pk;
         let entry = this.changeBuffer.get(pk);
 
         if (!entry) {
-            entry = { pk: pk, request: this.request, changes: {}, timer: null };
+            entry = { userid: this.userid, pk: pk, request_id, request: this.request, changes: {}, timer: null };
             this.changeBuffer.set(pk, entry);
         }
 
@@ -118,17 +129,7 @@ class ConfigHandler {
 
     // handle web socket callback
     handleCallback(message) {
-        if (message.response) {
-            if (message.response=="reloadpage") {
-                location.reload();
-                return;
-            }
-            if (this.widget && this.attribute in message) {
-                let pk = message[this.attribute];
-                console.log("replacing" + this.widget + "(" + pk + ")");
-                $(`[data-widget=${this.widget}][data-id="${pk}"]`).replaceWith(message.response)
-            }
-        }
+        $(`[data-model=${message.model}][data-pk="${message.pk}"][data-name=${message.attr}]`).replaceWith(message.widget);
     }
 
 }

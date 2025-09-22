@@ -1,10 +1,10 @@
 {% if container.restart_reasons %}
-<button name="restartcontainer" data-id="{{container.id}}" class="badge rounded-pill text-bg-warning border p-2 border border-2 border-danger w-100"
+<button data-action="restart" data-pk="{{container.id}}" class="badge rounded-pill text-bg-warning border p-2 border border-2 border-danger w-100"
       data-toggle="tooltip" title="Click to retstart environment. Reasons to do so: {{container.restart_reasons}}">
   <i class="bi bi-exclamation-triangle me-1"></i><strong>Needs restart</strong>
 </button>
 {% else %}
-<button name="restartcontainer" data-id="{{container.id}}" class="d-none">
+<button data-action="restart" data-pk="{{container.id}}" class="d-none" disabled>
 </button>
 {% endif %}
 

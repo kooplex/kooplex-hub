@@ -94,7 +94,7 @@ class UserProjectBindingListView(LoginRequiredMixin, generic.ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['menu_project'] = True
-        context['wss_container'] = KOOPLEX.get('hub', {}).get('wss_container_control', 'wss://localhost/hub/ws/container_environment/{userid}/').format(userid = self.request.user.id)
+        context['wss_container_control'] = KOOPLEX.get('hub', {}).get('wss_container_control', 'wss://localhost/hub/ws/container_environment/{userid}/').format(userid = self.request.user.id)
         #context['wss_project'] = KOOPLEX.get('hub', {}).get('wss_project', 'wss://localhost/hub/ws/project/{userid}/').format(userid = self.request.user.id)
         context['wss_project_join'] = KOOPLEX.get('hub', {}).get('wss_project_join', 'wss://localhost/hub/ws/project/join/{userid}/').format(userid = self.request.user.id)
         context['wss_project_config'] = KOOPLEX.get('hub', {}).get('wss_project_config', 'wss://localhost/hub/ws/project/config/{userid}/').format(userid = self.request.user.id)

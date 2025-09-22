@@ -2,20 +2,13 @@
 
 // FileSystem Resource Selection Modal Logic
 class MountHandler {
-  /**
-   * @param {Object} opts
-   * @param {string} [opts.modalSelector='.fileresource-modal']
-   * @param {string} [opts.triggerSelector='button[name=mount][data-id]']
-   * @param {string} [opts.confirmSelector='button#confirm-file-selection']
-   * @param {string} [opts.toggleSelector='.configtoggle']
-   * @param {string} [opts.mountRowSelector='[name=mount][data-id]']
-   */
-  constructor(opts = {}) {
+  constructor(register, opts = {}) {
+    this.register = register;
     this.modalSelector     = opts.modalSelector     || '.fileresource-modal';
-    this.triggerSelector   = opts.triggerSelector   || 'button[name=mount][data-id]';
+    this.triggerSelector   = opts.triggerSelector   || 'button[data-pk][data-name=mount]';
     this.confirmSelector   = opts.confirmSelector   || 'button#confirm-file-selection';
     this.toggleSelector    = opts.toggleSelector    || '.configtoggle';
-    this.mountRowSelector  = opts.mountRowSelector  || '[name=mount][data-id]';
+    this.busy = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>Saving...`;
 
     // state
     this.selectedContainerId = null;
@@ -27,39 +20,35 @@ class MountHandler {
 
     // cache
     this.$modal = $(this.modalSelector);
+
+    this.init();
   }
 
   init() {
-    $(document).on('mouseenter', this.triggerSelector, function () {
-      $(this).css('cursor', 'pointer');
-    });
     $(document).on('click', this.triggerSelector, this._onTriggerClick);
     $(document).on('click', this.confirmSelector, this._onConfirmClick);
   }
 
   destroy() {
-    $(document).off('mouseenter', this.triggerSelector);
     $(document).off('click', this.triggerSelector, this._onTriggerClick);
     $(document).off('click', this.confirmSelector, this._onConfirmClick);
   }
 
   // Programmatic open
-  openModal(containerId, callbackPathOrFn = null) {
-    this._open(containerId, callbackPathOrFn);
+  openModal(containerId) {
+    this._open(containerId);
   }
 
   // ---------------- internals ----------------
 
   _onTriggerClick(e) {
     const $btn = $(e.currentTarget);
-    const containerId = String($btn.data('id'));
-    const cb = $btn.data('callback'); // e.g., "wss_containerconfig.registerchanges"
-    this._open(containerId, cb);
+    const containerId = String($btn.data('pk'));
+    this._open(containerId);
   }
 
-  _open(containerId, callbackPathOrFn) {
+  _open(containerId) {
     this.selectedContainerId = (containerId === 'None') ? 'None' : parseInt(containerId, 10);
-    this.callbackPathOrFn = callbackPathOrFn || null;
 
     // reset all toggles OFF
     $(this.toggleSelector).each(function() {
@@ -88,31 +77,20 @@ class MountHandler {
     const courses_o  = this._getOriginal(pk, 'courses');
     const volumes_o  = this._getOriginal(pk, 'volumes');
 
-    // overwrite originals in DOM dataset
-    this._overwriteOriginal(pk, 'projects', projects);
-    this._overwriteOriginal(pk, 'courses',  courses);
-    this._overwriteOriginal(pk, 'volumes',  volumes);
-
-    // resolve saver and per-call callback
-    const cb    = this._resolveFn(this.callbackPathOrFn); // bound if it's a method path
-
-    let c1=false, c2=false, c3=false;
-    if (typeof cb === 'function') {
-      // keep API compatible; pass callback as 5th arg if saver accepts it (extra args are ignored if not used)
-      c1 = !!cb(pk, 'projects', projects, projects_o);
-      c2 = !!cb(pk, 'courses',  courses,  courses_o);
-      c3 = !!cb(pk, 'volumes',  volumes,  volumes_o);
-    } else {
-      console.warn('MountHandler: no save function (register_changes) found.');
+    const $btn = $(`${this.triggerSelector}[data-pk="${pk}"]`);
+    $btn.html(this.busy).prop('disabled', true);
+    try {
+        this.register.register_changes(pk, 'projects', projects, projects_o);
+        this.register.register_changes(pk, 'courses',  courses,  courses_o);
+        this.register.register_changes(pk, 'volumes',  volumes,  volumes_o);
+    } catch (err) {
+        console.error(err);
+        // Basic error hint (replace with your toast)
+        $btn.html(`<span class="text-danger">Save failed</span>`).prop('disabled', true);
+    } finally {
+        this.$modal.modal('hide');
+        this.selectedContainerId = null;
     }
-
-    if (c1 || c2 || c3) {
-      this._updateButtonFace(pk, projects.length, courses.length, volumes.length);
-    }
-
-    // close modal & reset state
-    this.$modal.modal('hide');
-    this.selectedContainerId = null;
   }
 
   // -------- helpers from original code (polished) --------
@@ -125,35 +103,13 @@ class MountHandler {
   }
 
   _getOriginal(pk, binding) {
-    const $row = $(`${this.mountRowSelector}[data-id="${pk}"]`);
+    const $row = $(`${this.triggerSelector}[data-pk="${pk}"]`);
     const val = $row.data(binding);
     // tolerate strings from data-attrs (e.g., "[1,2,3]")
     if (typeof val === 'string') {
       try { return JSON.parse(val); } catch { /* fallthrough */ }
     }
     return val ?? [];
-  }
-
-  _overwriteOriginal(pk, binding, value) {
-    const $row = $(`${this.mountRowSelector}[data-id="${pk}"]`);
-    $row.data(binding, value);
-  }
-
-  _updateButtonFace(pk, p, c, v) {
-    const base = `${this.mountRowSelector}[data-id="${pk}"]`;
-    $(`${base} [name=project_count]`).text(p);
-    $(`${base} [name=course_count]`).text(c);
-    $(`${base} [name=volume_count]`).text(v);
-
-    const $wid_project = $(`${base} [name=project]`);
-    const $wid_course  = $(`${base} [name=course]`);
-    const $wid_volume  = $(`${base} [name=volume]`);
-    const $wid_empty   = $(`${base} [name=empty]`);
-
-    (p===0) ? $wid_project.addClass('d-none') : $wid_project.removeClass('d-none');
-    (c===0) ? $wid_course .addClass('d-none') : $wid_course .removeClass('d-none');
-    (v===0) ? $wid_volume .addClass('d-none') : $wid_volume .removeClass('d-none');
-    ((p+c+v)===0) ? $wid_empty.removeClass('d-none') : $wid_empty.addClass('d-none');
   }
 
   _ensureArrayOfInts(val) {
@@ -168,27 +124,5 @@ class MountHandler {
     return [];
   }
 
-  _resolveFn(pathOrFn) {
-    if (!pathOrFn) return null;
-    if (typeof pathOrFn === 'function') return pathOrFn;
-
-    if (typeof pathOrFn === 'string') {
-      const parts = pathOrFn.split('.');
-      const method = parts.pop();
-      const ctx = parts.reduce((acc, key) => (acc ? acc[key] : undefined), window);
-      const fn = ctx?.[method];
-      if (typeof fn === 'function') return fn.bind(ctx);
-    }
-    return null;
-  }
 }
-
-
-
-// Run when document is ready
-$(document).ready(function() {
-  const mountHandler = new MountHandler();
-  mountHandler.init();
-});
-
 

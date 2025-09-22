@@ -1,13 +1,13 @@
-{% load render_scope from volume_tags %}
+{% load volume_tags %}
 {% load extras %}
 
 <div class="card bg-light rounded rounded-3 mb-3 shadow-light card-fixed d-flex flex-column" id="card-{{ volume.id }}">
   <div class="card-header py-2">
-    {% render_scope volume %}
+    {% render_scope volume user %}
     {{ volume.folder }}
   </div>
   <div class="card-body">
-    {% include 'hub/widgets/inline_textarea.html' with obj=volume %}
+    {% render_description volume user %}
   </div>
 
   {% if volume.owner != user %}

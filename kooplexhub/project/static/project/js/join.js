@@ -1,34 +1,52 @@
-// project_join.js
 // join a project logic
+class FetchJoinableProjects {
+    constructor(opts = {}) {
+        this.userid = opts.userid || null;
+        this.endpoint = opts.endpoint || null;
+        this._callback = this._callback.bind(this);
 
-document.addEventListener("DOMContentLoaded", function() {
-  const modalEl = document.getElementById('newProject');
+        this.wss = null;
+        this._fetch = this._fetch.bind(this);
 
-  function cb(data) {
-    if (data.response==='get-joinable') {
-        $("#joinProjectSelection").replaceWith(data.replace);
-	$("table[name=join-project] tbody tr").on('click', function () {
-            const pk = $(this).data('id');
-            wss_joinproject.send(JSON.stringify({
-              request: 'join',
-              pk
-            }));
-        });
-    } else if (data.response==='join') {
-        location.reload();
+        this.init();
     }
-  }
 
+    init() {
+        this.wss = new ManagedWebSocket(this.endpoint, {
+          onMessage: this._callback,
+        });
 
-  modalEl.addEventListener('shown.bs.modal', function (event) {
-    console.log("Modal is now shown:", event.target.id);
-    wss_joinproject = new ManagedWebSocket(wsURLs.project_join, {
-        onMessage: cb,
-    });
-    wss_joinproject.send(JSON.stringify({
-      request: 'get-joinable',
-    }));
+        $(document).on('shown.bs.modal', 'button[data-bs-toggle="tab"]', this._fetch);
+    }
 
-  });
-});
+    destroy() {
+        $(document).off('shown.bs.modal', 'button[data-bs-toggle="tab"]', this._fetch);
+    }
+
+    _fetch (e) {
+        const btn = e.target;
+        const group = btn.closest('.nav-tabs')?.id;
+        const tabId = btn.id;
+
+        // If it's an Environments tab, fire the data fetch
+        if (tabId && tabId.startsWith('environments-tab-')) {
+          const objectId = $(btn).data('id');
+          const payload = { request: 'get-joinable' };
+          this.wss.send(JSON.stringify(payload));
+        }
+    }
+
+    _callback(message) {
+        if (message.response==='get-joinable') {
+            $("#joinProjectSelection").replaceWith(data.replace);
+	    $("table[name=join-project] tbody tr").on('click', function () {
+                const pk = $(this).data('id');
+                this.wss.send(JSON.stringify({
+                    request: 'join',
+                    pk
+                }));
+            });
+        } 
+    }
+}
 

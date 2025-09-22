@@ -17,8 +17,9 @@ from container.forms import FormContainer
 from .lib import Cluster
 
 from .tasks import *
+from .models import Image
 
-from hub.util import SyncSkeleton, AsyncSkeleton, Config
+from hub.util import SyncSkeleton, AsyncSkeleton
 
 logger = logging.getLogger(__name__)
 
@@ -64,10 +65,105 @@ class ContainerControlConsumer(AsyncSkeleton):
             logger.error(f'wrong ws call request: {request}')
 
 
-class ContainerConfigConsumer(CSyncSkeleton, Config):
-    template='container/card.html'
-    instance_reference='container'
 
+class ContainerConfigHandler:
+    def __init__(self, instance):
+        self.instance = instance
+        self.attribute_handlers = {
+            'name': (False, self.handle_name_update),
+            'image': (False, self.handle_image_update),
+            'node': (True, self.handle_resource_update),
+            'cpurequest': (True, self.handle_resource_update),
+            'gpurequest': (True, self.handle_resource_update),
+            'memoryrequest': (True, self.handle_resource_update),
+            'idletime': (True, self.handle_resource_update),
+            'start_teleport': (True, self.handle_onoff_update),
+            'start_seafile': (True, self.handle_onoff_update),
+            'projects': (True, self.handle_mounts_update),
+            'courses': (True, self.handle_mounts_update),
+            'volumes': (True, self.handle_mounts_update),
+        }
+
+    def handle_attribute(self, attribute_name, new_value):
+        pass_attribute, handler = self.attribute_handlers.get(attribute_name)
+        if handler and pass_attribute:
+            return handler(attribute_name, new_value)
+        elif handler:
+            return handler(new_value)
+        else:
+            logger.critical(f"No handler for container configuration attribute: {attribute_name}")
+
+    def handle_name_update(self, new_value):
+        from .templatetags.container_tags import render_name
+        old_value = self.instance.name
+        self.instance.name = new_value
+        self.instance.save()
+        return f"name changed from {old_value} to {new_value}", {f"[data-name=name][data-pk={self.instance.pk}][data-model=container]": render_name(self.instance)}
+
+    def handle_image_update(self, new_value):
+        from .templatetags.container_buttons import button_image
+        old_value = self.instance.image.name
+        image = Image.objects.get(id=new_value)
+        self.instance.image = image
+        self.instance.save()
+        return f"image changed from {old_value} to {image.name}", {f"[data-name=image][data-pk={self.instance.pk}][data-model=container]": button_image(self.instance, 'container', 'image')}
+
+    def handle_resource_update(self, attribute, new_value):
+        from .templatetags.container_buttons import button_resources
+        old_value = getattr(self.instance, attribute)
+        setattr(self.instance, attribute, new_value)
+        self.instance.save()
+        return f"{attribute} request changed from {old_value} to {new_value}", {f"[data-name=resources][data-pk={self.instance.pk}][data-model=container]": button_resources(self.instance)}
+
+    def handle_onoff_update(self, attribute, new_value):
+        from .templatetags.container_buttons import button_seafile, button_teleport
+        old_value = getattr(self.instance, attribute)
+        _what=attribute.split('_')[-1]
+        _newstate = 'enabled' if new_value else 'disabled'
+        setattr(self.instance, attribute, new_value)
+        m=f"{_what} is {_newstate}"
+        self.instance.mark_restart(m)
+        self.instance.save()
+        render_map = {
+            'start_teleport': button_teleport,
+            'start_seafile': button_seafile,
+        }
+        if render:=render_map.get(attribute):
+            w = render(self.instance)
+        else:
+            w = None
+        return m, {f"[data-name={attribute}][data-pk={self.instance.pk}][data-model=container]": w}
+
+    def handle_mounts_update(self, attribute, new_value):
+        from .templatetags.container_buttons import button_mount
+        mapper = {
+            'projects': (Project, ProjectContainerBinding),
+            'courses':  (Course, CourseContainerBinding),
+            'volumes':  (Volume, VolumeContainerBinding),
+        }
+        obj_type, bind_type = mapper.get(attribute)
+        attribute=attribute[:-1] # split off s
+        a=[]
+        r=[]
+        m=f"{attribute} mounts changed: "
+        n = lambda b: getattr(b, attribute).folder if attribute == 'volume' else getattr(b, attribute).name
+        for o in obj_type.objects.filter(id__in = new_value):
+            b, _=bind_type.objects.get_or_create(**{attribute: o, 'container': self.instance})
+            a.append(n(b))
+        for b in bind_type.objects.filter(container=self.instance).exclude(**{f"{attribute}__id__in": new_value}):
+            r.append(n(b))
+            b.delete()
+        if a:
+            m += "added " + ", ".join(a) + "\n"
+        if r:
+            m += "removed " + ", ".join(r) + "\n"
+        if a or r:
+            return m, {f"[data-name=mount][data-pk={self.instance.pk}][data-model=container]": button_mount(self.instance)}
+        else:
+            return "", {}
+
+
+class ContainerConfigConsumer(CSyncSkeleton):
     def receive(self, text_data):
         parsed = json.loads(text_data)
         logger.debug(parsed)
@@ -76,49 +172,30 @@ class ContainerConfigConsumer(CSyncSkeleton, Config):
         pk=parsed.get('pk')
         changes=parsed.get('changes')
         if pk == "None":
-            reloadpage=True
             container=Container(name=changes['name'], user_id=self.get_userid(), image_id=changes['image'])
             container.save()
-            self._msg(container, f"New environment {container.name} is created", reload=True)
+            self.send(text_data=json.dumps({
+                'feedback': f"New environment {container.name} is created",
+                'reload_page': True,
+            }))
         else:
             cid=int(pk)
             container=self.get_container(cid)
         # Iterate over the changes and try to update the model instance
+        configurator = ContainerConfigHandler(container)
+        widgets={}
+        messages=[]
         for field, new_value in changes.items():
-            if field == 'image' and pk != "None":
-                new_value=Image.objects.get(id=new_value)
-                self._chg_image(container, new_value)
-            elif field == 'projects':
-                self._chg_bindings(container, new_value, Project, ProjectContainerBinding, 'project', f"Project mounts of environment {container.name} changed:\n")
-            elif field == 'courses':
-                self._chg_bindings(container, new_value, Course, CourseContainerBinding, 'course', f"Course mounts of environment {container.name} changed:\n")
-            elif field == 'volumes':
-                self._chg_bindings(container, new_value, Volume, VolumeContainerBinding, 'volume', f"Storage mounts of environment {container.name} changed:\n")
-            # Check if the field is a valid attribute of the model
-            elif self.is_model_field(container, field):
-                old_value = getattr(container, field)
-                try:
-                    if field in ['start_teleport', 'start_seafile']:
-                        _what=field.split('_')[-1]
-                        m=f"The {_what} in environment {container.name} requested state change"
-                        new_value=new_value=="grant"
-                        container.mark_restart(m)
-                    else:
-                        m=f"Attribute {field} of environment {container.name} changed from {getattr(container, field)} to {new_value}"
-                    # Try assigning the new value to the model's field
-                    setattr(container, field, new_value)
-                    # Run Django's model validation for the field
-                    container.full_clean(validate_unique=True, exclude=[f for f in changes.keys() if f != field])
-                    self._msg(container, m)
-                    container.save()
-                except ValidationError as e:
-                    # Validation failed, record the error message
-                    failed[field] = { "error": str(e), "value": old_value }
-                    self._msg(container, f"Problem configuring environment {container.name}", errors=failed)
-            else:
-                # Attribute does not exist on the model
-                logger.error(f"Container model attribute {field} does not exist.")
-                
+            m, w = configurator.handle_attribute(field, new_value)
+            messages.append(m)
+            widgets.update(w)
+        if messages:
+            self.send(text_data=json.dumps({
+                'feedback': f"Container {container.name} is configured: " + ",".join(messages) + ".",
+                'replace_widgets': widgets,
+            }))
+
+
 
 class MonitorConsumer(SyncSkeleton):
     def receive(self, text_data):

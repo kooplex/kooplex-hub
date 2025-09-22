@@ -71,9 +71,9 @@ def button_stop(container):
 def button_fetchlogs(container):
     return {"container": container}
 
-@inclusion_tag_ex("container/button/image.html")
-def button_image(obj, attr="image", callback='wss_containerconfig.register_changes'):
-    return {"pk": getattr(obj, 'pk', None), "image": getattr(obj, attr, ""), "callback": callback}
+@register.simple_tag
+def button_image(obj, model, attr="image"):
+    return render_to_string("container/button/image.html", {"pk": getattr(obj, 'pk', None), "image": getattr(obj, attr, ""), "model": model, "attr": attr})
 
 @inclusion_tag_ex("container/button/open.html")
 def button_open(container):
@@ -87,30 +87,39 @@ def button_restart(container):
 def indicator_state(container):
     return {"container": container}
 
-@inclusion_tag_ex("container/button/teleport.html")
+@register.simple_tag
 def button_teleport(container):
-    return {"container": container, 'icon': static('container/img/teleport.ico')}
+    return render_to_string("hub/buttons/toggle.html",  {
+        "on": container.start_teleport, 
+        "pk": container.pk, "model": "container",
+        "attr": "start_teleport",
+        'icon': static('container/img/teleport.ico')
+    })
 
-@inclusion_tag_ex("container/button/seafile.html")
+@register.simple_tag
 def button_seafile(container):
-    return {"container": container, 'icon': static('container/img/seafile.png')}
+    return render_to_string("hub/buttons/toggle.html", {
+        "on": container.start_seafile, 
+        "pk": container.pk, "model": "container",
+        "attr": "start_seafile",
+        'icon': static('container/img/seafile.png')
+    })
 
-@inclusion_tag_ex("container/button/mount.html")
-def button_mount(container, callback):
-    return {"container": container, "callback": callback}
+@register.simple_tag
+def button_mount(container):
+    return render_to_string("container/button/mount.html", {"container": container})
 
-@inclusion_tag_ex("container/button/resources.html")
+@register.simple_tag
 def button_resources(container = None):
-    #FIXME geta could be put in the template already?
     geta = lambda container, attr: getattr(container, attr, None) if container else None
-    return {
+    return render_to_string("container/button/resources.html", {
         "container": container,
         "node": geta(container, 'node'),
         "cpurequest": geta(container, 'cpurequest'),
         "gpurequest": geta(container, 'gpurequest'),
         "memoryrequest": geta(container, 'memoryrequest'),
         "idletime": geta(container, 'idletime'),
-        }
+    })
 
 @register.simple_tag
 def button_view(view, container, show_name=False):

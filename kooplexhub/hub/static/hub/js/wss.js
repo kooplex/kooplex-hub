@@ -27,10 +27,17 @@ class ManagedWebSocket {
         this.socket.onmessage = (event) => {
             const data = JSON.parse(event.data);
             console.log("Received attributes:", Object.keys(data));
-            if (data['feedback']) {
-              feedback(data['feedback']);
+            if (data.feedback) {
+              feedback(data.feedback);
             }
-            //if (this.callbacks.onMessage) this.callbacks.onMessage(event);
+            if (data.replace_widgets) {
+              $.each(data.replace_widgets, (key, value) => {
+                $(`${key}`).replaceWith(value);
+              });
+            }
+            if (data.reload_page) {
+                location.reload();
+	    }
             if (this.callbacks.onMessage) this.callbacks.onMessage(data);
         };
 

@@ -1,6 +1,6 @@
 {% load extras %}
 {% load volume_tags %}
-<div name="volumes" data-id="{{pk}}" data-volumes="{{volumes|id_list}}" data-bind="{{instance}}" data-callback="{{callback}}">
+<div data-name="volumes" data-pk="{{pk}}" data-volumes="{{volumes|id_list}}" data-model="{{model}}">
     <div class="content">
       {% if volumes|length %}
         <table class="resourcetable">
@@ -10,7 +10,7 @@
 	    <tbody>
               {% for volume in volumes %}
                 <tr>
-                    <td>{% render_scope volume %}</td>
+                    <td>{% render_scope volume user %}</td>
                     <td>{{ volume.folder }}</td>
                     <td>{% render_usercontainers volume user %}</td>
                 </tr>

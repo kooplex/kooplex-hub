@@ -6,7 +6,7 @@
 {% block head_content %}
   <!-- bootstrap-toggler requirement -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/css/bootstrap5-toggle.min.css" rel="stylesheet">
-  <link href="{% static 'hub/css/xeditable.css' %}" rel="stylesheet">
+  <link href="{% static 'hub/css/inline.css' %}" rel="stylesheet">
   <link href="{% static 'hub/css/dropdown.css' %}" rel="stylesheet">
   <link href="{% static 'hub/css/cardlist.css' %}" rel="stylesheet">
 {% endblock %}
@@ -44,53 +44,61 @@ Environments are user workspaces with limited resources, attached volumes and pr
       {% include 'empty.html' with empty_title="You have no envoronments yet." empty_p_before='Use the add (<i class="bi bi-plus border"></i>) button in the navbar to create your first environment.' %}
     {% endfor %}
 </div>
-<script src="{% static 'hub/js/config_register.js' %}"></script>
-<script src="{% static 'container/js/buttons.js' %}"></script>
-<script src="{% static 'hub/js/dropdown.js' %}"></script>
 
 {# a modal to configure a container image #}
-<script src="{% static 'container/js/changes.js' %}"></script>
 {% include 'container/image_selection.html' with instance="container" %}
-<script src="{% static 'container/js/image_selection.js' %}"></script>
 
 {# a modal to configure a container compute resources #}
 {% include 'container/compute_resource_selection.html' with form=resource_form %}
-<script src="{% static 'container/js/computeresource_selection.js' %}"></script>
 
 {# a modal to configure a container filesystem resources #}
 {% include 'container/file_resource_selection.html' with instance="container" %}
-<script src="{% static 'container/js/fileresource_selection.js' %}"></script>
 
 {# a modal to dump logs #}
 {% include 'container/modal_logs.html' %}
-<script src="{% static 'container/js/fetchlogs.js' %}"></script>
 
 {% endblock %}
 
 
 {% block scripts %}
-
-<script src="{% static 'hub/js/wss.js' %}"></script>
-
+<script src="{% static 'container/js/fetchlogs.js' %}"></script>
+<script src="{% static 'container/js/fileresource_selection.js' %}"></script>
+<script src="{% static 'container/js/computeresource_selection.js' %}"></script>
+<script src="{% static 'container/js/image_selection.js' %}"></script>
+<script src="{% static 'container/js/controller.js' %}"></script>
+<script src="{% static 'hub/js/buttons.js' %}"></script>
+<script src="{% static 'hub/js/inline.js' %}"></script>
+<script src="{% static 'hub/js/wss.js' %}"></script> {# FIXME: we could get rid of it if js export/import properly implemented #}
+<script src="{% static 'hub/js/config_register.js' %}"></script>
 <script>
-// Save web socket urls
-const wsURLs = {
-  container_fetchlog: "{{ wss_container_fetchlog }}",
-  container_control: "{{ wss_container_control }}",
-  container_config: "{{ wss_container_config }}",
-  monitor_node: "{{ wss_monitor_node }}"
-}
+document.addEventListener('DOMContentLoaded', () => {
+    window.wss_conf_container = new ConfigHandler(opts = {
+        endpoint: "{{ wss_container_config }}",
+        userid: {{ user.id }},
+        request: "configure-container",
+    });
+    window.inlineEditor = new InlineEditor(window.wss_conf_container);
+    window.imageSelector = new ImageSelectionHandler(window.wss_conf_container);
+    window.resourceSelector = new ComputeResourceHandler(window.wss_conf_container, opts = { wsEndpoint: "{{ wss_monitor_node }}"});
+    window.mountSelector = new MountHandler(window.wss_conf_container);
+    window.toggleButton = new ToggleButton(window.wss_conf_container);
+
+    window.fetchLogs = new FetchLogs(opts = {
+        endpoint: "{{ wss_container_fetchlog }}"
+    });
+
+    window.containerControl = new ContainerControl(opts = {
+        endpoint: "{{ wss_container_control }}",
+        userid: {{ user.id }}
+    });
+
+    window.openControl = new HoverDropDown();
+
+    $("#add").on('click', function() {
+      $("#newContainer").modal("show");
+    })
+});
 </script>
-<script>
 
-$(document).ready(function() {
-  $("#add").on('click', function() {
-    $("#newContainer").modal("show");
-  })
-})
-
-
-</script>
-<script src="{% static 'hub/js/xeditable.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/js/bootstrap5-toggle.min.js"></script>
 {% endblock %}

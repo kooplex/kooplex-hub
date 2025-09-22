@@ -1,14 +1,20 @@
 from django import template
+from django.template.loader import render_to_string
+
 register = template.Library()
 
-@register.inclusion_tag("volume/card.html")
-def render_volume(volume):
-    return {"volume": volume}
+@register.inclusion_tag("volume/card.html", takes_context=True)
+def render_volume(context, volume):
+    return {"volume": volume, "user": context.get("request").user }
 
-@register.inclusion_tag("volume/scope.html")
-def render_scope(volume):
-    return {"volume": volume}
+@register.simple_tag
+def render_scope(volume, user):
+    return render_to_string("volume/scope.html", {"volume": volume, "editable": volume.is_admin(user)})
 
 @register.simple_tag
 def render_usercontainers(volume, user):
     return ", ".join(volume.usercontainer_names(user))
+
+@register.simple_tag
+def render_description(volume, user):
+    return render_to_string("hub/widgets/inline_textarea.html", {'obj': volume, 'model': 'volume', "editable": volume.is_admin(user)})

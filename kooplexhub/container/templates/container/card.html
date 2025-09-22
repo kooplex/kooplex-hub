@@ -1,4 +1,5 @@
 {% load widgets %}
+{% load container_tags %}
 {% load container_buttons %}
 {% load static %}
 {% load check_show %}
@@ -8,7 +9,7 @@
     <!-- Header -->
     <div class="card-header d-flex justify-content-start align-items-center {% if container.id %}border-success{%else%}border-warning{%endif%}">
 	{% button_open container %}
-        {% field_name container 'container' 'mx-2 w-100 p-2' 'wss_containerconfig.register_changes' %}
+        {% render_name container %}
 	<div class="flex-grow-1"></div> <!-- Spacer to push the right button to the end -->
 	{% button_stop container %}
     </div>
@@ -21,12 +22,12 @@
                 <!-- Row 1 -->
                 <div class="d-flex align-items-center mb-3">
                     {% button_teleport container %}
-		    {% button_image container %}
+		    {% button_image container "container" "image" %}
                 </div>
                 <!-- Row 2 -->
                 <div class="d-flex mb-3">
                     {% button_seafile container %}
-                    {% button_mount container callback="wss_containerconfig.register_changes" %}
+                    {% button_mount container %}
                 </div>
                 <!-- Row 3 -->
                 <div>

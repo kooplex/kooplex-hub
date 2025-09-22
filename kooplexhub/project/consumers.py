@@ -6,7 +6,7 @@ from django.template.loader import render_to_string
 
 from channels.generic.websocket import WebsocketConsumer
 
-from hub.util import Config, normalize_pk
+from hub.util import normalize_pk
 from django.contrib.auth.models import User
 from project.models import Project, UserProjectBinding, ProjectContainerBinding
 from volume.models import Volume, ProjectVolumeBinding
@@ -102,10 +102,82 @@ class UserHandler(SyncConsumer):
         else:
             logger.critical(request)
 
-class ProjectConfigConsumer(SyncConsumer, Config):
-    template='project/card.html'
-    instance_reference='project'
 
+class ProjectConfigHandler:
+    def __init__(self, instance, user):
+        self.instance = instance
+        self.user = user
+        self.attribute_handlers = {
+            'name': (False, self.handle_name_update),
+            'description': (False, self.handle_description_update),
+            'preferred_image': (False, self.handle_image_update),
+            'scope': (False, self.handle_scope_update),
+            'volumes': (True, self.handle_mounts_update),
+        }
+
+    def handle_attribute(self, attribute_name, new_value):
+        pass_attribute, handler = self.attribute_handlers.get(attribute_name)
+        if handler and pass_attribute:
+            return handler(attribute_name, new_value)
+        elif handler:
+            return handler(new_value)
+        else:
+            logger.critical(f"No handler for container configuration attribute: {attribute_name}")
+
+    def handle_name_update(self, new_value):
+        from .templatetags.project_tags import render_name
+        old_value = self.instance.name
+        self.instance.name = new_value
+        self.instance.save()
+        return f"name changed from {old_value} to {new_value}", {f"[data-name=name][data-pk={self.instance.pk}][data-model=project]": render_name(self.instance, self.user)}
+
+    def handle_description_update(self, new_value):
+        from .templatetags.project_tags import render_description
+        old_value = self.instance.description
+        self.instance.description = new_value
+        self.instance.save()
+        return f"description changed from {old_value} to {new_value}", {f"[data-name=description][data-pk={self.instance.pk}][data-model=project]": render_description(self.instance, self.user)}
+
+    def handle_image_update(self, new_value):
+        from container.templatetags.container_buttons import button_image
+        old_value = self.instance.preferred_image.name
+        image = Image.objects.get(id=new_value)
+        self.instance.preferred_image = image
+        self.instance.save()
+        return f"image changed from {old_value} to {image.name}", {f"[data-name=preferred_image][data-pk={self.instance.pk}][data-model=project]": button_image(self.instance, 'project', 'preferred_image')}
+
+    def handle_scope_update(self, new_value):
+        from .templatetags.project_buttons import project_scope
+        old_value = self.instance.scope
+        self.instance.scope = new_value
+        self.instance.save()
+        return f"scope changed from {old_value} to {new_value}", {f"[data-name=scope][data-pk={self.instance.pk}][data-model=project]": project_scope(self.instance)}
+
+    def handle_mounts_update(self, attribute, new_value):
+        from .templatetags.project_tags import render_volumes
+        obj_type, bind_type = Volume, ProjectVolumeBinding
+        attribute='volume'
+        a=[]
+        r=[]
+        m=f"mounts changed: "
+        n = lambda b: getattr(b, attribute).folder
+        for o in obj_type.objects.filter(id__in = new_value):
+            b, _=bind_type.objects.get_or_create(**{attribute: o, 'project': self.instance})
+            a.append(n(b))
+        for b in bind_type.objects.filter(project=self.instance).exclude(**{f"{attribute}__id__in": new_value}):
+            r.append(n(b))
+            b.delete()
+        if a:
+            m += "added " + ", ".join(a) + "\n"
+        if r:
+            m += "removed " + ", ".join(r) + "\n"
+        if a or r:
+            return m, {f"[data-name=volumes][data-pk={self.instance.pk}][data-model=project]": render_volumes(self.instance, self.user)}
+        else:
+            return "", {}
+
+
+class ProjectConfigConsumer(SyncConsumer):
     def receive(self, text_data):
         from kooplexhub.lib.libbase import standardize_str
         parsed = json.loads(text_data)
@@ -129,34 +201,18 @@ class ProjectConfigConsumer(SyncConsumer, Config):
             project = b.project
             user = b.user
         # Iterate over the changes and try to update the model instance
-        self.template_kwargs = {'user': user}
+        configurator = ProjectConfigHandler(project, user)
+        widgets={}
+        messages=[]
         for field, new_value in changes.items():
-            if field == 'image':
-                new_value=Image.objects.get(id=new_value)
-                self._chg_image(project, new_value, attribute='preferred_image')
-            elif field == 'users':
-                self._chg_user_bindings(project, new_value, changes.get('marked'), f"Collaborators of project {project.name} changed:\n")
-            elif field == 'volumes':
-                self._chg_bindings(project, new_value, Volume, ProjectVolumeBinding, 'volume', f"Project mounts of {project.name} changed:\n")
-            # Check if the field is a valid attribute of the model
-            elif self.is_model_field(project, field):
-                old_value = getattr(project, field)
-                try:
-                    m=f"Attribute {field} of project {project.name} changed from {getattr(project, field)} to {new_value}"
-                    # Try assigning the new value to the model's field
-                    setattr(project, field, new_value)
-                    # Run Django's model validation for the field
-                    project.full_clean(validate_unique=True, exclude=[f for f in changes.keys() if f != field])
-                    # If no exception was raised, add it to the success response
-                    self._msg(project, m)
-                    project.save()
-                except ValidationError as e:
-                    # Validation failed, record the error message
-                    failed[field] = { "error": str(e), "value": old_value }
-                    self._msg(project, f"Problem configuring project {project.name}", errors=failed)
-            else:
-                # Attribute does not exist on the model
-                logger.error(f"Project model attribute {field} does not exist.")
+            m, w = configurator.handle_attribute(field, new_value)
+            messages.append(m)
+            widgets.update(w)
+        if messages:
+            self.send(text_data=json.dumps({
+                'feedback': f"Project {project.name} is configured: " + ",".join(messages) + ".",
+                'replace_widgets': widgets,
+            }))
 
 
 class ProjectGetContainersConsumer(SyncConsumer):
@@ -175,8 +231,9 @@ class ProjectGetContainersConsumer(SyncConsumer):
         upb=UserProjectBinding.objects.get(user__id=self.userid, project__id=projectid)
         message_back = {
             "feedback": f"Container list refreshed",
-            "pk": projectid,
-            "response": render_to_string("container/table_control_shortcut.html", {"containers": list(map(lambda o: o.container, bindings)), "pk": upb.id, "objectId": projectid }),
+            "replace_widgets": {
+                f'[id=environmentControl-{courseid}]': render_to_string("container/table_control_shortcut.html", {"containers": list(map(lambda o: o.container, bindings)), "pk": upb.id, "objectId": projectid }),
+            },
         }
         logger.debug(message_back)
         self.send(text_data=json.dumps(message_back))

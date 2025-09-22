@@ -1,10 +1,13 @@
 <!-- Textarea field -->
 <div
+  {% if editable %}
   class="editable"
+  {% endif %}
   data-type="textarea"
   data-name="description"
   data-pk="{{ obj.pk }}"
+  data-model="{{ model }}"
 >
-  {{ obj.description }}
+  {{ obj.description|linebreaksbr }}
 </div>
 

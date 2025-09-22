@@ -40,7 +40,7 @@ class CanvasGetCoursesConsumer(SyncSkeleton):
                 canvas_courses=list(filter(old_filter, canvas_courses))
             response.update({
                 "feedback": "Your canvas course list is refreshed", 
-                "replace": render_to_string("widgets/list_canvascourses.html", {"canvascourses":  canvas_courses }),
+                "replace_widgets": { '[id=canvasSelection]': render_to_string("widgets/list_canvascourses.html", {"canvascourses":  canvas_courses }) },
             })
         except Exception as e:
             response.update({

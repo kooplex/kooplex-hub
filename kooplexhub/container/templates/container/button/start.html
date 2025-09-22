@@ -1,22 +1,22 @@
 {% if container.state == container.State.NOTPRESENT %}
-<button name="startcontainer" data-id="{{container.id}}" class="badge rounded-pill text-bg-success border p-2"
+<button data-action="start" data-pk="{{container.id}}" class="badge rounded-pill text-bg-success border p-2"
         data-toggle="tooltip" title="Start environment {{container.name}}">
   <span class="bi bi-lightning" aria-hidden="true" role="status"></span>
 </button>
 {% elif container.state == container.State.RUNNING or container.state == container.State.NEED_RESTART %}
-<button name="startcontainer" data-id="{{container.id}}" class="badge rounded-pill text-bg-secondary border p-2" disabled>
+<button data-action="start" data-pk="{{container.id}}" class="badge rounded-pill text-bg-secondary border p-2" disabled>
   <span class="bi bi-lightning" aria-hidden="true"></span>
 </button>
 {% elif container.state == container.State.ERROR %}
-<button name="startcontainer" data-id="{{container.id}}" class="badge rounded-pill text-bg-danger border p-2" disabled>
+<button data-action="start" data-pk="{{container.id}}" class="badge rounded-pill text-bg-danger border p-2" disabled>
   <span class="spinner-grow spinner-grow-sm" aria-hidden="true" role="status"></span>
 </button>
 {% elif container.state == container.State.STARTING %}
-<button name="startcontainer" data-id="{{container.id}}" class="badge rounded-pill text-bg-success border p-2" disabled>
+<button data-action="start" data-pk="{{container.id}}" class="badge rounded-pill text-bg-success border p-2" disabled>
   <span class="spinner-grow spinner-grow-sm" aria-hidden="true" role="status"></span>
 </button>
 {% elif container.state == container.State.STOPPING %}
-<button name="startcontainer" data-id="{{container.id}}" class="badge rounded-pill text-bg-warning border p-2" disabled>
+<button data-action="start" data-pk="{{container.id}}" class="badge rounded-pill text-bg-warning border p-2" disabled>
   <span class="spinner-grow spinner-grow-sm" aria-hidden="true" role="status"></span>
 </button>
 {% endif %}

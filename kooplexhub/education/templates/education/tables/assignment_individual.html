@@ -1,4 +1,6 @@
 {% load course_buttons %}
+<div data-tab="individual">
+{% if assignments|length %}
 <table class="table" style="width: max-content">
     <thead>
     	<tr>
@@ -22,3 +24,12 @@
     </tbody>
 </table>
 
+<div class="d-flex justify-content-end">
+  <button type="submit" data-submit="individual" class="badge rounded-pill bg-warning shadow-sm text-dark p-2 border border-secondary">
+    <i class="bi bi-arrow-right-square me-1"></i>Trigger
+  </button>
+</div>
+{% else %}
+<p>There are no assignments you can hand out or collect per students.</p>
+{% endif %}
+</div>

@@ -1,9 +1,12 @@
 <!-- Text field -->
 <span
+  {% if editable %}
   class="editable"
+  {% endif %}
   data-type="text"
   data-name="{{ attr }}"
   data-pk="{{ obj.pk }}"
+  data-model="{{ model }}"
 >
   {{ value }}
 </span>

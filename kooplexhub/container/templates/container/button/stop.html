@@ -1,18 +1,18 @@
 {% if container.state == container.State.NOTPRESENT %}
-<button name="stopcontainer" data-id="{{container.id}}" class="badge rounded-pill text-bg-secondary border p-2" disabled>
+<button data-action="stop" data-pk="{{container.id}}" class="badge rounded-pill text-bg-secondary border p-2" disabled>
   <span class="bi bi-x-lg" aria-hidden="true"></span>
 </button>
 {% elif container.state == container.State.RUNNING or container.state == container.State.NEED_RESTART or container.state == container.State.ERROR %}
-<button name="stopcontainer" data-id="{{container.id}}" class="badge rounded-pill text-bg-danger border p-2"
+<button data-action="stop" data-pk="{{container.id}}" class="badge rounded-pill text-bg-danger border p-2"
         data-toggle="tooltip" title="Stop environment {{container.name}}">
   <span class="bi bi-x-lg" aria-hidden="true"></span>
 </button>
 {% elif container.state == container.State.STARTING %}
-<button name="stopcontainer" data-id="{{container.id}}" class="badge rounded-pill text-bg-danger border p-2" >
+<button data-action="stop" data-pk="{{container.id}}" class="badge rounded-pill text-bg-danger border p-2" >
   <span class="bi bi-x-lg" aria-hidden="true"></span>
 </button>
 {% elif container.state == container.State.STOPPING %}
-<button name="stopcontainer" data-id="{{container.id}}" class="badge rounded-pill text-bg-danger border p-2" disabled>
+<button data-action="stop" data-pk="{{container.id}}" class="badge rounded-pill text-bg-danger border p-2" disabled>
   <span class="spinner-grow spinner-grow-sm" aria-hidden="true" role="status"></span>
 </button>
 {% endif %}

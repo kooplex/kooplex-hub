@@ -2,20 +2,13 @@
 
 // Volume Selection Modal Logic
 class VolumeHandler {
-  /**
-   * @param {Object} opts
-   * @param {string} [opts.modalSelector='.volumes-modal']
-   * @param {string} [opts.confirmSelector='#confirm-file-selection']
-   * @param {string} [opts.toggleSelector='.configtoggle[name=attach-volume]']
-   * @param {string} [opts.triggerSelector] // optional: e.g. 'button[data-action="edit-volumes"][data-id]'
-   */
-  constructor(opts = {}) {
+  constructor(register, opts = {}) {
+    this.register = register;
     this.modalSelector   = opts.modalSelector   || '.volumes-modal';
     this.confirmSelector = opts.confirmSelector || '#confirm-file-selection';
     this.toggleSelector  = opts.toggleSelector  || '.configtoggle[name=attach-volume]';
-    this.triggerSelector = opts.triggerSelector || null;
+    this.triggerSelector = opts.triggerSelector || '[data-name=volumes][data-pk][data-volumes][data-model]'
 
-    this.register = null;
     this.selectedObjectId = null;
     this.originalVolumes  = []; // array of ints
 
@@ -25,25 +18,23 @@ class VolumeHandler {
     // bind
     this._onConfirmClick = this._onConfirmClick.bind(this);
     this._onTriggerClick = this._onTriggerClick.bind(this);
+
+    this.init();
   }
 
   init() {
     $(document).on('click', this.confirmSelector, this._onConfirmClick);
-    if (this.triggerSelector) {
-      $(document).on('click', this.triggerSelector, this._onTriggerClick);
-    }
+    $(document).on('click', this.triggerSelector, this._onTriggerClick);
   }
 
   destroy() {
     $(document).off('click', this.confirmSelector, this._onConfirmClick);
-    if (this.triggerSelector) {
-      $(document).off('click', this.triggerSelector, this._onTriggerClick);
-    }
+    $(document).off('click', this.triggerSelector, this._onTriggerClick);
   }
 
   // Programmatic open
-  openModal(objectId) {
-    this._open(objectId);
+  openModal(objectId, currentList=[]) {
+    this._open(objectId, currentList);
   }
 
   // ---------------- internals ----------------
@@ -51,17 +42,14 @@ class VolumeHandler {
   _onTriggerClick(e) {
     e.preventDefault();
     const $btn = $(e.currentTarget);
-    const id = $btn.data('id');
-    this.register = $btn.data('callback');
-    this._open(id);
+    const pk = $btn.data('pk');
+    const current = $btn.data('volumes')
+    this._open(pk, current);
   }
 
-  _open(objectId) {
+  _open(objectId, currentList) {
     this.selectedObjectId = objectId === 'None' ? 'None' : parseInt(objectId, 10);
-
-    // Read current/original volumes from any element that carries both data-id and data-volumes
-    const $src = $(`[data-id="${this.selectedObjectId}"][data-volumes]`).first();
-    this.originalVolumes = this._ensureArrayOfInts($src.data('volumes'));
+    this.originalVolumes = this._ensureArrayOfInts(currentList);
 
     // Initialize all toggles OFF then set according to originals
     const self = this;
@@ -86,13 +74,7 @@ class VolumeHandler {
       .map(function () { return parseInt(this.value, 10); })
       .get();
 
-    let changed = false;
-    const saver = this._resolveSaveFn(this.register);
-    if (typeof saver === 'function') {
-      saver(this.selectedObjectId, 'volumes', volumes, this.originalVolumes);
-    } else {
-      console.warn('VolumeHandler: register_changes not found');
-    }
+    this.register.register_changes(this.selectedObjectId, 'volumes', volumes, this.originalVolumes);
 
     this.$modal.modal('hide');
     this.selectedObjectId = null;
@@ -100,25 +82,6 @@ class VolumeHandler {
   }
 
   // -------- helpers --------
-
-  _resolveSaveFn(pathOrFn) {
-    if (!pathOrFn) return null;
-    if (typeof pathOrFn === 'function') return pathOrFn;
-    if (typeof pathOrFn === 'string') {
-      // Resolve "obj.method" safely
-      const parts = pathOrFn.split('.');
-      const method = parts.pop();
-      const ctx = parts.reduce((acc, key) => (acc ? acc[key] : undefined), window);
-      const fn = ctx?.[method];
-      if (typeof fn === 'function') {
-        // bind to ctx so `this` works for instance methods
-        return fn.bind(ctx);
-      }
-    }
-    return null;
-  }
-
-
 
   _ensureArrayOfInts(val) {
     if (Array.isArray(val)) {
@@ -141,10 +104,3 @@ class VolumeHandler {
 
 
 
-// Run when document is ready
-$(document).ready(function() {
-  const vh = new VolumeHandler({
-    triggerSelector: '[name=volumes][data-id][data-volumes][data-bind][data-callback]'
-  });
-  vh.init();
-})

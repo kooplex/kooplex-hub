@@ -11,15 +11,21 @@ class UserHandler {
         this.usersDataSelector     = opts.usersDataSelector     || '#users_data';
         this.uploadInputSelector   = opts.uploadInputSelector   || '#user-upload';
         this.spinnerSelector       = opts.spinnerSelector       || '#user-upload-spinner';
-        this.wsEndpoint            = opts.wsEndpoint            || (wsURLs && wsURLs.handle_users) || null;
+        this.removeUserSelector    = opts.removeUserSelector    || '[name=remove][data-id][data-remove=user]';
+        this.triggerSelector       = opts.triggerSelector       || '[name=users]';
+        this.wsEndpoint            = opts.wsEndpoint            || null;
         this.wss                   = null;    // ManagedWebSocket for parsing
         this.pendingRequests       = new Set(); // track request_ids while processing
     
         // bind
         this._onUploadChange = this._onUploadChange.bind(this);
         this._onWSMessage    = this._onWSMessage.bind(this);
+        this._removeUserClick = this._removeUserClick.bind(this);
+        this._triggerClick = this._triggerClick.bind(this);
+        this.init();
     }
 
+// ---- Initialization ----
     init() {
         this._initUsers();
         this._initTogglers();
@@ -30,6 +36,25 @@ class UserHandler {
         if (this.wsEndpoint) {
           this.wss = new ManagedWebSocket(this.wsEndpoint, { onMessage: this._onWSMessage });
         }
+        $(document).on('click', this.removeUserSelector, this._removeUserClick);
+        $(document).on('click', this.triggerSelector, this._triggerClick);
+    }
+
+    destroy() {
+        $(document).off('click', this.removeUserSelector, this._removeUserClick);
+        $(document).off('click', this.removeUserSelector, this._removeUserClick);
+    }
+
+    _triggerClick(event) {
+        const $widget = $(event.currentTarget);
+        const objectId = $widget.data('id');
+        const kind = $widget.data('kind');
+        this.openModal(objectId, kind);
+    }
+
+    _removeUserClick(event) {
+        const $button = $(event.currentTarget);
+        this.removeUser($button.data('id'));
     }
 
     _initUsers() {
@@ -266,7 +291,7 @@ class UserHandler {
     }
 
 
-    openModal(objectId, kind, callback) {
+    openModal(objectId, kind) {
       this.pk = objectId === "None" ? "None" : parseInt(objectId);
       this.instance = $(".users-modal").data('instance');
       const request_id = this._uuid();
@@ -312,22 +337,4 @@ class UserHandler {
         this.changed = true;
     }
 }
-
-// ---- Initialization ----
-$(document).ready(function() {
-	console.log(wsURLs)
-    const userHandler = new UserHandler();
-    userHandler.init();
-    
-    $(document).on('click', '[name=remove][data-id][data-remove=user]', function () {
-        userHandler.removeUser($(this).data('id'));
-    });
-
-    $(document).on('click', '[name=users]', function() {
-        const objectId = $(this).data('id');  // Get the id from the button's data-id attribute
-        const kind = $(this).data('kind');
-        const cb = $(this).data('callback');
-        userHandler.openModal(objectId, kind, cb);
-    });
-});
 

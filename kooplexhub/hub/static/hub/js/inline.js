@@ -1,25 +1,15 @@
 // ---- Inline editor ----
 class InlineEditor {
-  constructor(opts = {}) {
+  constructor(register, opts = {}) {
+    this.register = register;
     this.selector = opts.selector || '.editable';
-    this.saveFn = opts.saveFn || this.defaultSaveFn.bind(this);
-    this.wsEndpoint = opts.wsEndpoint || null;
-    this.callback = opts.callback || null;
-    this.userid = opts.userid || null;
-    this.request = opts.request || 'config';
-    this.active = null; // currently editing element
-    this.wss = null;
+    this.active = null;      // currently editing element
+    this.oldValue = null;    // save currently edited elements original value
+    this.busy = `<div class="spinner-border" role="status"><span class="visually-hidden">Saving...</span></div>`;
     this.init();
   }
 
   init() {
-    if (this.wsEndpoint) {
-      this.wss = new ManagedWebSocket(this.wsEndpoint, {
-        onMessage: this.callback,
-      });
-    } else {
-      throw new Error('No wsEndpoint provided, cannot save changes.');
-    }
     document.addEventListener('click', (e) => {
       // If clicking on an editable not in editing mode, start editing
       const el = e.target.closest(this.selector);
@@ -36,6 +26,7 @@ class InlineEditor {
 
     const type = (el.dataset.type || 'text').toLowerCase();
     const value = this._getPlainText(el);
+    this.oldValue = value;
     el.classList.add('editing');
 
     // Create editor UI
@@ -99,26 +90,20 @@ class InlineEditor {
   }
 
   async save(el, newVal) {
-    const payload = {
-      pk: el.dataset.pk,
-      name: el.dataset.name,
-      value: newVal
-    };
-
     // optimistic UI: disable inputs
     const inputs = el.querySelectorAll('input, textarea, button');
     inputs.forEach(i => i.disabled = true);
 
     try {
-      const result = await this.saveFn(el, payload);
+      this.register.register_changes(el.dataset.pk, el.dataset.name, newVal, this.oldValue);
       // Update UI with returned value (or the submitted one)
-      const display = (result && result.value !== undefined) ? result.value : newVal;
-      el.innerHTML = this._escapeHTML(display).replace(/\n/g, '<br>');
+      if (el.dataset.pk !== "None") {
+        el.innerHTML = this.busy;
+      }
     } catch (err) {
       console.error(err);
       // Basic error hint (replace with your toast)
       el.innerHTML = `<span class="text-danger">Save failed</span>`;
-      setTimeout(() => { el.innerHTML = this._escapeHTML(newVal).replace(/\n/g, '<br>'); }, 1500);
     } finally {
       el.classList.remove('editing');
       this.active = null;
@@ -129,12 +114,6 @@ class InlineEditor {
     el.innerHTML = el._origHTML || '';
     el.classList.remove('editing');
     this.active = null;
-  }
-
-  async defaultSaveFn(el, payload) {
-    payload.userId = this.userid;
-    payload.request = this.request;
-    this.wss.send(JSON.stringify(payload));
   }
 
   _getPlainText(el) {

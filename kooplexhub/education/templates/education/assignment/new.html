@@ -1,4 +1,5 @@
 {% load render_table from django_tables2 %}
+<div data-tab="new">
 {% if folders|length %}
 <select class="form-select" name="selectfolder">
   <option label="Select a folder..."></option>
@@ -7,7 +8,14 @@
   {% endfor %}
 </select>
 {% render_table table %}
+
+<div class="d-flex justify-content-end">
+  <button type="submit" data-submit="new" class="badge rounded-pill bg-warning shadow-sm text-dark p-2 border border-secondary">
+    <i class="bi bi-arrow-right-square me-1"></i>Create
+  </button>
+</div>
 {% else %}
 {# FIXME hardcoded!! #}
 <p>There are no new folders in the course ({{ course.name }}) assignment_prepare folder. Or those are empty.<p>
 {% endif %}
+</div>

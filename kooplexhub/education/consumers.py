@@ -11,14 +11,16 @@ from asgiref.sync import sync_to_async
 
 from education.models import UserAssignmentBinding, Assignment, UserCourseBinding, CourseContainerBinding
 from education.tables import TableAssignmentConf
-from django.contrib.auth.models import User
 
-from hub.util import SyncSkeleton, AsyncSkeleton, Config, normalize_pk
+from hub.util import SyncSkeleton, AsyncSkeleton, normalize_pk
 from .models import Course, VolumeCourseBinding
 from .templatetags.course_buttons import render_attendees
 from volume.models import Volume
 
+from django.contrib.auth import get_user_model
+
 logger = logging.getLogger(__name__)
+User = get_user_model()
 
 class AssignmentScoreConsumer(SyncSkeleton):
     def receive(self, text_data):
@@ -40,145 +42,142 @@ class AssignmentScoreConsumer(SyncSkeleton):
             uab.save()
 
 
-class AssignmentConsumer(SyncSkeleton):
-    def receive(self, text_data):
-        parsed=json.loads(text_data)
-        logger.debug(parsed)
-        course_id=parsed.get('course_id')
-        # authorize
-        course=UserCourseBinding.objects.get(user__id=self.userid, course__id=course_id, is_teacher=True).course
-        query=parsed.get('query')
-        if query=='list':
-            self.refresh_list(course)
-        elif query=='configure':
-            self.delete(course, parsed.get('remove'))
-            self.configure(course, parsed.get('data'))
-            self.reassign(course, parsed.get('reassign'))
-            self.collect(course, parsed.get('collect'))
-            self.handout(course, parsed.get('handout'))
-            self.individual(course, parsed.get('individual'))
-            self.refresh_list(course)
-
-    def refresh_list(self, course):
+class AssignmentConfigureHandler:
+    @staticmethod
+    def create_table_class(df, editable_columns):
         import django_tables2 as tables
-        # Function to dynamically create the table class
-        def create_table_class(df, editable_columns):
-            table_attrs = {
-                'Meta': type('Meta', (), {'attrs': {'class': 'table table-bordered table-hover mb-0'}})  # Bootstrap styling
-            }
-            # Dynamically add columns
-            for col in df.columns:
-                if col in editable_columns:
-                    template = f"""
-                    <span class="score-popover"
-                          role="button" tabindex="0"
-                          data-bs-toggle="popover" data-bs-trigger="manual"
-                          data-assignment="{col}"
-                          data-student="{{{{ record.user }}}}">
-                      {{{{ record.{col}|default:"—" }}}}
-                    </span>
-                    """
-                    table_attrs[col] = tables.TemplateColumn(
-                        template_code=template,
-                        orderable=False,
-                        verbose_name=col
-                    )
-                else:
-                    table_attrs[col] = tables.Column(orderable=False, verbose_name=col)
-            # Create and return the table class
-            return type('DynamicEditableTable', (tables.Table,), table_attrs)
-        # folders for new assignment
-        folders=course.dir_assignmentcandidate()
-        # get canvas assignments too? if it is a course canvas
-        from canvas.models import CanvasCourse, Canvas
-        canvas_courses = []
-        try:
-            ccourse = CanvasCourse.objects.filter(course=course).first()
-            if ccourse.canvas_course_id:
-                logger.debug(f"Canvas course: {ccourse} - {ccourse.canvas_course_id}")
-                canvas_courses = ccourse.get_course_assignments()                
-        except Exception as e: 
-            logger.debug(f"Exc {e}")
+        table_attrs = {
+            'Meta': type('Meta', (), {'attrs': {'class': 'table table-bordered table-hover mb-0'}})  # Bootstrap styling
+        }
+        # Dynamically add columns
+        for col in df.columns:
+            if col in editable_columns:
+                template = f"""
+                <span class="score-popover"
+                      role="button" tabindex="0"
+                      data-bs-toggle="popover" data-bs-trigger="manual"
+                      data-assignment="{col}"
+                      data-student="{{{{ record.user }}}}">
+                  {{{{ record.{col}|default:"—" }}}}
+                </span>
+                """
+                table_attrs[col] = tables.TemplateColumn(
+                    template_code=template,
+                    orderable=False,
+                    verbose_name=col
+                )
+            else:
+                table_attrs[col] = tables.Column(orderable=False, verbose_name=col)
+        # Create and return the table class
+        return type('DynamicEditableTable', (tables.Table,), table_attrs)
 
-        # assignment manager table
-        a=Assignment.objects.filter(course=course)
+    def __init__(self, instance, user):
+        self.course = instance
+        self.user = user
+        self.dispatcher = {
+            'list-new': self.handle_tab_new,
+            'list-config': self.handle_tab_config,
+            'list-individual': self.handle_tab_individual,
+            'list-summary': self.handle_tab_summary,
+            'new-assignment': self.handle_assignment_create,
+            'configure-assignment': self.handle_assignment_config,
+            'handout-assignment': self.handle_assignment_handout,
+            'collect-assignment': self.handle_assignment_collect,
+            'reassign-assignment': self.handle_assignment_reassign,
+            'delete-assignment': self.handle_assignment_delete,
+            'manage-individual': self.handle_individual,
+        }
+
+    @property
+    def assignments(self):
+        return Assignment.objects.filter(course=self.course)
+
+    def handle_query(self, query, data):
+        handler = self.dispatcher.get(query)
+        if handler:
+            return handler(data)
+        else:
+            logger.critical(f"No handler for assignment configurator: {query}")
+
+    def handle_tab_new(self, data):
+        folders=self.course.dir_assignmentcandidate()
+        return { '[data-tab=new]': render_to_string('education/assignment/new.html', {
+            'course': self.course, 'folders': folders, 
+            'table': TableAssignmentConf([Assignment()], exclude_columns=['manage', 'delete'])}) 
+        }
+
+    def handle_tab_config(self, data):
+        return { '[data-tab=config]': render_to_string('education/assignment/config.html', { 'table': TableAssignmentConf(self.assignments) }) }
+
+    def handle_tab_individual(self, data):
         UAbind_dict = {
             (ua.user_id, ua.assignment_id): ua.state
-            for ua in UserAssignmentBinding.objects.filter(assignment__in=a)
+            for ua in UserAssignmentBinding.objects.filter(assignment__in=self.assignments)
         }
-        t=TableAssignmentConf(a)
-        # calculate students' scores
-        #FIXME pandas version may be too old?
+        return { '[data-tab=individual]': render_to_string('education/tables/assignment_individual.html', {
+            'assignments': self.assignments, 'students': self.course.students, 'bindings': UAbind_dict})
+        }
+
+    def handle_tab_summary(self, data):
         #dfm = read_frame(UserAssignmentBinding.objects.filter(assignment__course = course)).fillna(pandas.NA)
-        dfm = read_frame(UserAssignmentBinding.objects.filter(assignment__course = course)).fillna(numpy.nan)
+        dfm = read_frame(UserAssignmentBinding.objects.filter(assignment__course = self.course)).fillna(numpy.nan)
         dfm=dfm[['user', 'assignment', 'score']]
-        if not dfm.empty:
+        if dfm.empty:
+            t_score=None
+        else:
             try:
                 table = dfm.pivot(index = "user", columns = "assignment", values = "score")
                 table.columns = [tc.split("Assignment ")[1].split(" (")[0] for tc in table.columns]  #FIXME: not a very nice way to parse
                 points = dfm.fillna(0).groupby(by="user").agg("sum")[["score"]].rename(columns={"score":"Total points"})
                 result = pandas.merge(left=table, right=points, left_on="user", right_on="user", how="inner").reset_index()
-                EditableTable = create_table_class(result, table.columns)
+                EditableTable = self.create_table_class(result, table.columns)
                 t_score = EditableTable(result.fillna("—").to_dict(orient='records'))  # Convert DataFrame to Django Table
             except Exception as e:
                 logger.critical(f"FIXME pivot -- {e}")
                 t_score=None
-        else:
-            t_score=None
-        self.send(text_data=json.dumps({
-            "feedback": "Assignment list is refreshed",
-            "f_new": render_to_string('education/assignment/new.html', {'course': course, 'folders': folders, 'table': TableAssignmentConf([Assignment()], exclude_columns=['manage', 'delete'])}),
-            "t_assignment": render_to_string('django_table.html', {'table':t}),
-            "t_individual": render_to_string('education/tables/assignment_individual.html', {'assignments': a, 'students': course.students, 'bindings': UAbind_dict}),
-            "t_score": render_to_string('education/tables/assignment_scores.html', {'table': t_score, "course_id": course.id}) if t_score else f"<h6 class="">There are no assignments in this course.</h6>",
-            }))
+        return { '[data-tab=summary]': render_to_string('education/tables/assignment_scores.html', {
+            'table': t_score, "course_id": self.course.id}) 
+        }
 
-    def configure(self, course, configlist):
-        for c in configlist:
-            assignment_id=c['id']
-            chg=c['changed']
-            if assignment_id=='None':  #FIXME: ""
-                for att in ['valid_from', 'expires_at', 'folder']:
-                    if chg.get(att, None) in ['', None]:
-                        chg.pop(att)
-                if not 'folder' in chg:
-                    continue
-                a=Assignment.objects.create(course=course, creator_id=self.userid, **chg)
-                a.snapshot()
-                self.send(text_data=json.dumps({"feedback": f"New assignment {a.name} registered and is queued to archive."}))
-            else:
-                a=Assignment.objects.get(id=assignment_id, course=course)
-                for field, value in chg.items():
-                    if value=="":
-                        value=None
-                    old=getattr(a, field)
-                    setattr(a, field, value)
-                    try:
-                        a.full_clean()
-                    except ValidationError as e:
-                        self.send(text_data=json.dumps({"feedback": f"Warning: failed to set {a.name}'s {field}, old value {old} is kept."}))
-                        setattr(a, field, old)
-                a.save()
-                self.send(text_data=json.dumps({"feedback": f"Assignment {a.name} is configured."}))
-                
+    def handle_assignment_create(self, data):
+        attributes = { 'course': self.course, 'creator': self.user }
+        attributes.update(data['attributes'])
+        try:
+            Assignment.objects.create(**attributes)
+        except Exception as e:
+            logger.critical(e)
+        return self.handle_tab_new({})
 
-    def delete(self, course, deletelist):
-        Assignment.objects.filter(course=course, id__in=deletelist).delete()
+    def handle_assignment_config(self, data):
+        for r in data.get('changes'):
+            a=Assignment.objects.get(pk=r['id'])
+            for attr, new_value in r['changed'].items():
+                setattr(a, attr, new_value)
+            a.save()
+        return self.handle_tab_config({})
 
-    def handout(self, course, handoutlist):
-        for a in Assignment.objects.filter(course=course, id__in=handoutlist):
+    def handle_assignment_handout(self, data):
+        for a in self.assignments.filter(id__in=data['handout']):
             a.handout()
+        return self.handle_tab_config({})
 
-    def collect(self, course, collectlist):
-        for a in Assignment.objects.filter(course=course, id__in=collectlist):
+    def handle_assignment_collect(self, data):
+        for a in self.assignments.filter(id__in=data['collect']):
             a.collect()
+        return self.handle_tab_config({})
 
-    def reassign(self, course, reassignlist):
-        for a in Assignment.objects.filter(course=course, id__in=reassignlist):
+    def handle_assignment_reassign(self, data):
+        for a in self.assignments.filter(id__in=data['reassign']):
             a.reassign()
+        return self.handle_tab_config({})
 
-    def individual(self, course, individual):
-        for t in individual:
+    def handle_assignment_delete(self, data):
+        Assignment.objects.filter(pk__in=data['remove']).delete()
+        return self.handle_tab_config({})
+
+    def handle_individual(self, data):
+        from .templatetags.course_tags import render_busy
+        for t in data.get('individual'):
             b, _ = UserAssignmentBinding.objects.get_or_create(user_id=t['user_id'], assignment_id=t['assignment_id'])
             if t['todo']=='handout':
                 b.handout()
@@ -186,9 +185,26 @@ class AssignmentConsumer(SyncSkeleton):
                 b.collect()
             if t['todo']=='reassign':
                 b.reassign()
+        return { '[data-tab=individual]': render_busy('individual') }
 
 
-#################
+class AssignmentConsumer(SyncSkeleton):
+    def receive(self, text_data):
+        parsed=json.loads(text_data)
+        logger.debug(parsed)
+        course_id=parsed.get('pk')
+        try:
+            b=UserCourseBinding.objects.get(user__id=self.userid, course__id=course_id, is_teacher=True)
+        except UserCourseBinding.DoesNotExist:
+            logger.error(parsed)
+            return
+        dispatcher = AssignmentConfigureHandler(b.course, b.user)
+        query=parsed.get('query')
+        re=dispatcher.handle_query(query, parsed)
+        self.send(text_data=json.dumps({
+            "feedback": 'Assignment pane refreshed',
+            'replace_widgets': re,
+        }))
 
 
 
@@ -208,8 +224,9 @@ class CourseGetContainersConsumer(SyncSkeleton):
         ucb=UserCourseBinding.objects.get(user__id=self.userid, course__id=courseid)
         message_back = {
             "feedback": message if message else f"Container list refreshed",
-            "pk": courseid,
-            "response": render_to_string("container/table_control_shortcut.html", {"containers": list(map(lambda o: o.container, bindings)), "pk": ucb.id, "objectId": courseid }),
+            "replace_widgets": {
+                f'[id=environmentControl-{courseid}]': render_to_string("container/table_control_shortcut.html", {"containers": list(map(lambda o: o.container, bindings)), "pk": ucb.id, "objectId": courseid }),
+            },
         }
         logger.debug(message_back)
         self.send(text_data=json.dumps(message_back))
@@ -346,10 +363,73 @@ class UserHandler(SyncSkeleton):
             logger.critical(request)
 
 
-class CourseConfigConsumer(SyncSkeleton, Config):
-    template='education/course/card_teacher.html'
-    instance_reference='course'
+class CourseConfigHandler:
+    def __init__(self, instance, user):
+        self.instance = instance
+        self.user = user
+        self.attribute_handlers = {
+            'name': (False, self.handle_name_update),
+            'description': (False, self.handle_description_update),
+            'preferred_image': (False, self.handle_image_update),
+            'volumes': (True, self.handle_mounts_update),
+        }
 
+    def handle_attribute(self, attribute_name, new_value):
+        pass_attribute, handler = self.attribute_handlers.get(attribute_name)
+        if handler and pass_attribute:
+            return handler(attribute_name, new_value)
+        elif handler:
+            return handler(new_value)
+        else:
+            logger.critical(f"No handler for container configuration attribute: {attribute_name}")
+
+    def handle_name_update(self, new_value):
+        from .templatetags.course_tags import render_name
+        old_value = self.instance.name
+        self.instance.name = new_value
+        self.instance.save()
+        return f"name changed from {old_value} to {new_value}", {f"[data-name=name][data-pk={self.instance.pk}][data-model=course]": render_name(self.instance)}
+
+    def handle_description_update(self, new_value):
+        from .templatetags.course_tags import render_description
+        old_value = self.instance.description
+        self.instance.description = new_value
+        self.instance.save()
+        return f"description changed from {old_value} to {new_value}", {f"[data-name=description][data-pk={self.instance.pk}][data-model=course]": render_description(self.instance)}
+
+    def handle_image_update(self, new_value):
+        from container.templatetags.container_buttons import button_image
+        old_value = self.instance.preferred_image.name
+        image = Image.objects.get(id=new_value)
+        self.instance.preferred_image = image
+        self.instance.save()
+        return f"image changed from {old_value} to {image.name}", {f"[data-name=preferred_image][data-pk={self.instance.pk}][data-model=course]": button_image(self.instance, 'course', 'preferred_image')}
+
+    def handle_mounts_update(self, attribute, new_value):
+        from .templatetags.course_tags import render_volumes
+        obj_type, bind_type = Volume, VolumeCourseBinding
+        attribute='volume'
+        a=[]
+        r=[]
+        m=f"mounts changed: "
+        n = lambda b: getattr(b, attribute).folder
+        for o in obj_type.objects.filter(id__in = new_value):
+            b, _=bind_type.objects.get_or_create(**{attribute: o, 'course': self.instance})
+            a.append(n(b))
+        for b in bind_type.objects.filter(course=self.instance).exclude(**{f"{attribute}__id__in": new_value}):
+            r.append(n(b))
+            b.delete()
+        if a:
+            m += "added " + ", ".join(a) + "\n"
+        if r:
+            m += "removed " + ", ".join(r) + "\n"
+        if a or r:
+            return m, {f"[data-name=volumes][data-pk={self.instance.pk}][data-model=course]": render_volumes(self.instance, self.user)}
+        else:
+            return "", {}
+
+
+class CourseConfigConsumer(SyncSkeleton):
     @property
     def template_kwargs(self):
         return {"user": self.scope['user']}
@@ -361,6 +441,7 @@ class CourseConfigConsumer(SyncSkeleton, Config):
 
 
     def receive(self, text_data):
+        from container.templatetags.container_buttons import button_image
         from hub.models import Profile
         from container.models import Image
         from kooplexhub.lib.libbase import standardize_str
@@ -394,27 +475,17 @@ class CourseConfigConsumer(SyncSkeleton, Config):
             cid = int(pk)
             course = self.get_course(cid)
         # Iterate over the changes and try to update the model instance
+        user = User.objects.get(pk=self.userid)
+        configurator = CourseConfigHandler(course, user)
+        widgets={}
+        messages=[]
         for field, new_value in changes.items():
-            if field == 'image':
-                new_value=Image.objects.get(id=new_value)
-                self._chg_image(course, new_value, attribute='preferred_image')
-            elif field=="volumes":
-                self._chg_bindings(course, new_value, Volume, VolumeCourseBinding, 'volume', f"Course mounts of {course.name} changed:\n")
-            # Check if the field is a valid attribute of the model
-            elif self.is_model_field(course, field):
-                old_value = getattr(course, field)
-                try:
-                    m=f"Attribute {field} of course {course.name} changed from {getattr(course, field)} to {new_value}"
-                    # Try assigning the new value to the model's field
-                    setattr(course, field, new_value)
-                    # Run Django's model validation for the field
-                    course.full_clean(validate_unique=True, exclude=[f for f in changes.keys() if f != field])
-                    self._msg(course, m)
-                    course.save()
-                except ValidationError as e:
-                    # Validation failed, record the error message
-                    failed[field] = { "error": str(e), "value": old_value }
-                    self._msg(course, f"Problem configuring course {course.name}", errors=failed)
-            else:
-                # Attribute does not exist on the model
-                logger.error(f"Course model attribute {field} does not exist.")
+            m, w = configurator.handle_attribute(field, new_value)
+            messages.append(m)
+            widgets.update(w)
+        if messages:
+            self.send(text_data=json.dumps({
+                'feedback': f"Course {course.name} is configured: " + ",".join(messages) + ".",
+                'replace_widgets': widgets,
+            }))
+

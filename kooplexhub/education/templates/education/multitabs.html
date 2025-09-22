@@ -1,5 +1,6 @@
 {% load extras %}
 {% load container_buttons %}
+{% load course_tags %}
 {% load course_buttons %}
 <div class="container">
     <div class="tab-container">
@@ -114,13 +115,11 @@
         <div class="tab-content multitabs">
             <div class="tab-pane fade show active" id="content-one-{{pk}}" role="tabpanel" aria-labelledby="tab-one-{{pk}}">
                 <div class="content">
-                    <div data-type="textarea" data-id="{{pk}}" data-field="description" data-orig="{{description}}" data-instance="course"
-                         data-callback="wss_courseconfig.register_changes"
-                         class="editable" data-placement="right" placeholder="Add description">{% if description %}{{description}}{% endif %}</div>
+		    {% render_description course %}
                 </div>
             </div>
             <div class="tab-pane fade" id="content-two-{{pk}}" role="tabpanel" aria-labelledby="tab-two-{{pk}}">
-                    <div name="assignment" class="content" data-id="{{pk}}">
+                    <div name="assignment" class="content" data-pk="{{pk}}">
 			{% for a in course.assignments %}
 			<p>{{a.name}}</p>
 			{% empty %}
@@ -132,10 +131,10 @@
 		{% render_attendees course user %}
             </div>
             <div class="tab-pane fade" id="content-four-{{pk}}" role="tabpanel" aria-labelledby="tab-four-{{pk}}">
-                {% include 'volume/tables/volumes.html' with maxheight="118px" pk=pk volumes=course.volumes callback="wss_courseconfig.register_changes" instance="course" %}
+                {% render_volumes course user %}
             </div>
             <div class="tab-pane fade" id="content-five-{{pk}}" role="tabpanel" aria-labelledby="tab-five-{{pk}}">
-		{% button_image course "preferred_image" callback="wss_courseconfig.register_changes" %}
+		{% button_image course "course" "preferred_image" %}
             </div>
             <div class="tab-pane fade" id="environments-pane-{{pk}}" role="tabpanel" aria-labelledby="environments-tab-{{pk}}">
               <div class="inner-frame">

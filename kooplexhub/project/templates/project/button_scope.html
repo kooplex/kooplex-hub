@@ -1,15 +1,49 @@
-<div id="project-scope-{{project.id}}" class="me-1" data-orig="{{project.scope}}">
-	<button class="badge rounded-pill border border-2 border-dark p-2 ms-2 text-dark position-relative {% if project.scope == project.Scope.PUBLIC %}d-none{% endif %}" 
-            name="{{project.Scope.PRIVATE}}" data-id="{{project.id}}" data-field="scope"
-            data-toggle="tooltip" title="Make project public">
-      <i class="oi oi-key"></i>
-      <span class="position-absolute top-0 start-100 translate-middle badge bg-success small">private</span>
-    </button>
-    <button class="badge rounded-pill border border-2 border-dark p-2 ms-2 text-dark position-relative {% if project.scope == project.Scope.PRIVATE %}d-none{% endif %}" 
-	    name="{{project.Scope.PUBLIC}}" data-id="{{project.id}}" data-field="scope"
-            data-toggle="tooltip" title="Make project private">
-      <i class="oi oi-cloud"></i>
-      <span class="position-absolute top-0 start-100 translate-middle badge bg-success small">puplic</span>
-    </button>
+<div class="btn-group dropend d-inline-block">
+  <button
+    class="btn btn-outline-secondary rounded-circle d-inline-flex align-items-center justify-content-center scope-btn"
+    type="button"
+    data-bs-toggle="dropdown"
+    aria-expanded="false"
+    title="Change visibility"
+    style="width: 2.25rem; height: 2.25rem;"
+    data-name="scope"
+    data-model="project"
+    data-pk="{{ project.id }}"
+    data-value="{{ project.scope }}"
+  >
+{% if project.scope == project.Scope.PRIVATE %}
+      <i class="oi oi-key h5 m-0"></i>
+{% elif project.scope == project.Scope.INTERNAL %}
+      <i class="oi oi-lock-unlocked h5 m-0"></i>
+{% elif project.scope == project.Scope.PUBLIC %}
+      <i class="oi oi-cloud h5 m-0"></i>
+{% else %}
+{% endif %}
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end p-1 shadow">
+    <li>
+      <button class="dropdown-item d-flex align-items-center gap-2 {% if project.scope == project.Scope.PRIVATE %}active{% endif %}"
+              type="button"
+              data-value="{{ project.Scope.PRIVATE }}">
+        <i class="oi oi-key" aria-hidden="true"></i>
+        <span>Private</span>
+      </button>
+    </li>
+    <li>
+      <button class="dropdown-item d-flex align-items-center gap-2 {% if project.scope == project.Scope.INTERNAL %}active{% endif %}"
+              type="button"
+              data-value="{{ project.Scope.INTERNAL }}">
+        <i class="oi oi-lock-unlocked" aria-hidden="true"></i>
+        <span>Internal</span>
+      </button>
+    </li>
+    <li>
+      <button class="dropdown-item d-flex align-items-center gap-2 {% if project.scope == project.Scope.PUBLIC %}active{% endif %}"
+              type="button"
+              data-value="{{ project.Scope.PUBLIC }}">
+        <i class="oi oi-cloud" aria-hidden="true"></i>
+        <span>Public</span>
+      </button>
+    </li>
+  </ul>
 </div>
-

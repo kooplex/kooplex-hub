@@ -1,5 +1,6 @@
 {% load extras %}
 {% load container_buttons %}
+{% load project_tags %}
 {% load project_buttons %}
 <div class="container">
     <div class="tab-container">
@@ -102,19 +103,17 @@
         <div class="tab-content multitabs">
             <div class="tab-pane fade show active" id="content-one-{{project.id}}" role="tabpanel" aria-labelledby="tab-one-{{project.id}}">
                 <div class="content">
-                    <div data-type="textarea" data-id="{{project.id}}" data-field="description" data-orig="{{project.description}}" data-instance="project"
-			 data-callback="wss_projectconfig.register_changes"
-                         class="editable" data-placement="right" placeholder="Add description">{% if project.description %}{{project.description}}{% endif %}</div>
+		    {% render_description project user %}
                 </div>
             </div>
             <div class="tab-pane fade" id="content-three-{{project.id}}" role="tabpanel" aria-labelledby="tab-three-{{project.id}}">
 		{% render_collaborators project user %}
             </div>
             <div class="tab-pane fade" id="content-four-{{project.id}}" role="tabpanel" aria-labelledby="tab-four-{{project.id}}">
-                {% include 'volume/tables/volumes.html' with maxheight="118px" pk=project.id volumes=project.volumes callback="wss_projectconfig.register_changes" instance="project" %}
+                {% render_volumes project user %}
             </div>
             <div class="tab-pane fade" id="content-five-{{project.id}}" role="tabpanel" aria-labelledby="tab-five-{{project.id}}">
-		{% button_image project "preferred_image" callback="wss_projectconfig.register_changes" %}
+		{% button_image project "project" "preferred_image" %}
             </div>
             <div class="tab-pane fade" id="environments-pane-{{project.id}}" role="tabpanel" aria-labelledby="environments-tab-{{project.id}}">
               <div class="inner-frame">

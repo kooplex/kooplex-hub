@@ -1,4 +1,5 @@
 {% load static %}
+{% load render_busy from course_tags %}
 
 <!-- templates/widgets/modal_assignment.html -->
 <div id="assignmentsModal" class="modal fade assignments-modal" tabindex="-1" aria-labelledby="assignmentsModalLabel" aria-hidden="true">
@@ -25,158 +26,212 @@
                 </ul>
                 
                 <div class="tab-content bg-light container rounded-bottom" id="assignmentTeacherTabContent">
-                  <div class="tab-pane show active py-3" id="new" role="tabpanel" aria-labelledby="tab-new"></div>
-                  <div class="tab-pane fade py-3" id="config" role="tabpanel" aria-labelledby="tab-config"></div>
-                  <div class="tab-pane fade py-3" id="individual" role="tabpanel" aria-labelledby="tab-individual"></div>
-                  <div class="tab-pane fade py-3" id="summary" role="tabpanel" aria-labelledby="tab-summary"></div>
+                  <div class="tab-pane show active py-3" id="new" role="tabpanel" aria-labelledby="tab-new">{% render_busy "new" %}</div>
+                  <div class="tab-pane fade py-3" id="config" role="tabpanel" aria-labelledby="tab-config">{% render_busy "config" %}</div>
+                  <div class="tab-pane fade py-3" id="individual" role="tabpanel" aria-labelledby="tab-individual">{% render_busy "individual" %}</div>
+                  <div class="tab-pane fade py-3" id="summary" role="tabpanel" aria-labelledby="tab-summary">{% render_busy "summary" %}</div>
                 </div>
-            </div>
-            <div class="modal-footer">
-		<button type="submit" data-submit="finalize" class="badge rounded-pill bg-warning shadow-sm text-dark p-2 border border-secondary">
-		  <i class="bi bi-arrow-right-square me-1"></i>Issue changes
-                </button>
-		    
             </div>
         </div>
     </div>
 </div>
-
-{#FIXME js/static #}
 
 
 <script>
 
 
 // Assignment manager Modal Logic
-(function() {
-    var pk = null
-    const w=$("#assignmentsModal")
+class AssignmentHandler {
+    constructor(opts = {}) {
+        this.userid = opts.userid || null;
+        this.endpoint = opts.endpoint || null;
+        this.modalSelector = opts.modalSelector || '#assignmentsModal';
+        this.triggerSelector = opts.triggerSelector || '[name=assignment][data-pk]';
 
+        this.wss = null;
+        this.pk = null;
 
-    // Handle wss callback
-    function callback(message) {
-        if (message.f_new) {
-            $("[id=new][role]").html(message.f_new)
-	}
-        if (message.t_assignment) {
-            $("[id=config][role]").html(message.t_assignment)
-	    DatetimePickers.init()
-	}
-        if (message.t_score) {
-            $("[id=summary][role]").html(message.t_score)
-	}
-	if (message.t_individual) {
-            $("[id=individual][role]").html(message.t_individual)
-	}
+        this._openModal = this._openModal.bind(this);
+        this._fetch = this._fetch.bind(this);
+        this._callback = this._callback.bind(this);
+        this._newAssignment = this._newAssignment.bind(this);
+        this._configAssignment = this._configAssignment.bind(this);
+        this._individualAssignment = this._individualAssignment.bind(this);
+
+        this.init();
     }
 
-    // Handle modal open
-    function handleOpen(courseId) {
-        pk = parseInt(courseId)
-        $(w).modal('show')
-	wss_assignment.send(JSON.stringify({
-          course_id: pk,
-          query: 'list',
-	}))
+    init() {
+        if (this.endpoint) {
+          this.wss = new ManagedWebSocket(this.endpoint, {
+            onMessage: this._callback,
+          });
+	} else {
+          console.log("endpoint option is not set");
+	}
+        $(document).on('click', this.triggerSelector, this._openModal);
+        $(document).on('show.bs.tab', 'a[data-bs-toggle=tab]', this._fetch);
+        $(document).on('click', 'button[data-submit=new]', this._newAssignment);
+        $(document).on('click', 'button[data-submit=config]', this._configAssignment);
+        $(document).on('click', 'button[data-submit=individual]', this._individualAssignment);
     }
 
+    destructor() {
+        $(document).off('click', this.triggerSelector, this._openModal);
+        $(document).off('show.bs.tab', 'a[data-bs-toggle=tab]', this._fetch);
+    }
 
-    // Confirm user selection
-    $('[type=submit][data-submit=finalize]').on('click', function() {
-	let folder = $("[name=selectfolder]").val()
-        // Get list of assignments to be deleted
-	let widgets = $('[name=dustbin][data-id]:checked')
-	const deleteList = widgets.map(function() {
-            return $(this).data('id')
-	}).get()
+    _openModal(event) {
+        const $widget = $(event.target).closest(this.triggerSelector);
+        const pk = $widget.data('pk');
+        this.openModal(pk);
+    }
 
-	const handoutList = $("[name=handout]:checked").map(function() {
-            let id=$(this).val()
-            if (! deleteList.includes(id)) { return id }
-	}).get()
-	const collectList = $("[name=collect]:checked").map(function() {
-            let id=$(this).val()
-            if (! deleteList.includes(id)) { return id }
-	}).get()
-	const reassignList = $("[name=reassign]:checked").map(function() {
-            let id=$(this).val()
-            if (! deleteList.includes(id)) { return id }
-	}).get()
+    openModal(courseId) {
+        this.pk = parseInt(courseId);
+        const $modal = $(this.modalSelector);
+        $modal.modal('show');
+        let $tab = $modal.find('a[data-bs-toggle="tab"].active');
+        if ($tab.length === 0) {
+          $tab = $modal.find('a[data-bs-toggle="tab"]').first();
+        }
+        this._fetch({ target: $tab[0], currentTarget: $tab[0] });
 
-        // Get the list of elements
-        widgets = $('[data-field][data-id][data-orig][data-instance=assignment]')
-        
-        // Map and filter the objects
-        const changedWidgets = widgets.map(function() {
-            // Extract attributes and current value
-            const id = $(this).data('id')
+    }
+
+    _fetch(event) {
+        const $widget = $(event.currentTarget);
+        const tab = $widget.attr('aria-controls');
+        this.wss.send(JSON.stringify({
+          pk: this.pk,
+          query: `list-${tab}`,
+        }));
+    }
+
+    _newAssignment(event) {
+      let folder = $("[name=selectfolder]").val();
+      let description = $("[data-field=description]").val();
+      let name = $("[data-field=name]").val();
+      let valid_from = $("[data-field=valid_from]").val();
+      let expires_at = $("[data-field=expires_at]").val();
+      if (name && description && folder) {
+        var attributes = { name, description, folder };
+      } else {
+        return
+      }
+      if (valid_from) { attributes.valid_from = valid_from; }
+      if (expires_at) { attributes.expires_at = expires_at; }
+      this.wss.send(JSON.stringify({
+          pk: this.pk,
+          query: 'new-assignment', attributes,
+      }));
+    }
+
+    _configAssignment(event) {
+      let widgets = $('[name=dustbin][data-id]:checked');
+      const deleteList = widgets.map(function() {
+          return $(this).data('id');
+      }).get();
+      if (deleteList.length) {
+        this.wss.send(JSON.stringify({
+            pk: this.pk,
+            query: 'delete-assignment',
+            remove: deleteList,
+	}));
+      }
+      const handoutList = $("[name=handout]:checked").map(function() {
+          let id=$(this).val();
+          if (! deleteList.includes(id)) { return id; }
+      }).get();
+      if (handoutList.length) {
+        this.wss.send(JSON.stringify({
+            pk: this.pk,
+            query: 'handout-assignment',
+            handout: handoutList,
+	}));
+      }
+      const collectList = $("[name=collect]:checked").map(function() {
+          let id=$(this).val();
+          if (! deleteList.includes(id)) { return id; }
+      }).get();
+      if (collectList.length) {
+        this.wss.send(JSON.stringify({
+            pk: this.pk,
+            query: 'collect-assignment',
+            collect: collectList,
+	}));
+      }
+      const reassignList = $("[name=reassign]:checked").map(function() {
+          let id=$(this).val();
+          if (! deleteList.includes(id)) { return id; }
+      }).get();
+      if (reassignList.length) {
+        this.wss.send(JSON.stringify({
+            pk: this.pk,
+            query: 'reassign-assignment',
+            reassign: reassignList,
+	}));
+      }
+      widgets = $('[data-field][data-id][data-orig][data-instance=assignment]');
+      const changedWidgets = widgets.map(function() {
+            const id = $(this).data('id');
+            if (id==="None") { return }
             if (deleteList.includes(id)) { return }
-            const field = $(this).data('field')
-            const orig = $(this).data('orig')
-            const value = $.trim($(this).val()) // Strip the value
-        
-            // Return an object if the values differ, otherwise return null
+            const field = $(this).data('field');
+            const orig = $(this).data('orig');
+            const value = $.trim($(this).val());
             if (value !== orig) {
                 return { id, field, value, orig }
             }
-        }).get() // Convert jQuery object to an array
-        
-        // Group changes by id
-        const groupedChanges = changedWidgets.reduce((acc, obj) => {
-            // Check if the ID already exists in the accumulator
-            let item = acc.find(item => item.id === obj.id)
+      }).get();
+      const groupedChanges = changedWidgets.reduce((acc, obj) => {
+            let item = acc.find(item => item.id === obj.id);
             if (!item) {
-                // If not found, create a new entry
                 item = { id: obj.id, changed: {} }
                 acc.push(item)
             }
-            // Add the changed field and its new value
-            item.changed[obj.field] = obj.value
-            return acc
-        }, []) // Start with an empty array as the accumulator
-        
-        const newItem = groupedChanges.find(item => item.id === 'None')  //FIXME: ""
-        if (newItem) {
-            Object.assign(newItem.changed, { folder: folder })
-        }
-
-	let individual_tasks = $("[name=individual][data-todo][data-assignment][data-user]:checked").map(function() { 
-		return { todo: $(this).data('todo'), assignment_id: $(this).data('assignment'), user_id: $(this).data('user')}
-	}).get()
-
-	if (groupedChanges.length || deleteList.length || handoutList.length || collectList.length || reassignList.length || individual_tasks.length ) {
-	    wss_assignment.send(JSON.stringify({
-              course_id: pk,
-              query: 'configure',
-              data: groupedChanges,
-              remove: deleteList,
-              handout: handoutList,
-              collect: collectList,
-              reassign: reassignList,
-              individual: individual_tasks,
-	    }))
-	}
-
-        // Close the modal
-//        $(w).modal('hide')
-//        pk = null
-    })
-
-
-    // Expose the functionality globally so it can be reused
-    window.AssignmentHandler = {
-        openModal: handleOpen,
-        callback: callback,
+            item.changed[obj.field] = obj.value;
+            return acc;
+      }, []);
+      if (groupedChanges.length) {
+        this.wss.send(JSON.stringify({
+            pk: this.pk,
+            query: 'configure-assignment',
+            changes: groupedChanges,
+	}));
+      }
     }
 
-})()
+    _individualAssignment(event) {
+      let individual_tasks = $("[name=individual][data-todo][data-assignment][data-user]:checked").map(function() { 
+      	return { todo: $(this).data('todo'), assignment_id: $(this).data('assignment'), user_id: $(this).data('user') };
+      }).get();
 
-$(document).ready(function () {
-  if (wsURLs.assignment_config) {
-    wss_assignment = new ManagedWebSocket(wsURLs.assignment_config, {
-      onMessage: AssignmentHandler.callback,
-    })
-  } 
-})
+      if ( individual_tasks.length ) {
+        this.wss.send(JSON.stringify({
+          pk: this.pk,
+          query: 'manage-individual',
+          individual: individual_tasks,
+        }));
+      }
+    }
+
+    _callback(message) {
+      const newSelector = '[data-tab=new]';
+      const confSelector = '[data-tab=config]';
+      const scoreSelector = '[data-tab=summary]';
+      const modalSelector = '#assignmentsModal';
+      if (message.replace_widgets && (
+	      Object.hasOwn(message.replace_widgets, newSelector) ||
+	      Object.hasOwn(message.replace_widgets, confSelector)
+        )
+      ) {
+          DatetimePickers.init();
+      }
+      if (message.replace_widgets && Object.hasOwn(message.replace_widgets, scoreSelector)) {
+          window.initPopovers($(modalSelector)[0]);
+      }
+    }
+}
 
 </script>

@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <link href="{% static 'education/css/datetimepicker.css' %}" rel="stylesheet">
 <link href="{% static 'hub/css/multitabs.css' %}" rel="stylesheet">
-<link href="{% static 'hub/css/xeditable.css' %}" rel="stylesheet">
+<link href="{% static 'hub/css/inline.css' %}" rel="stylesheet">
 <link href="{% static 'hub/css/dropdown.css' %}" rel="stylesheet">
 <link href="{% static 'hub/css/cardlist.css' %}" rel="stylesheet">
 <link href="{% static 'hub/css/tables.css' %}" rel="stylesheet">
@@ -20,25 +20,15 @@
 Create a new course or import courses from Canvas using a canvas api token <a href="https://xwiki.vo.elte.hu/en/kooplex-manual/education#canvas"  target="_blank"><span class="ms-2 bi bi-book"></span></a>
 {% endblock %}
 
-{# render the course cards #}
-
 {% block content %}
 {% if user.profile.can_createcourse %}
 {# new course creation modal #}
 {% include modal_new %}
-
-{% if not coursebindinglist %}
+{% elif coursebindinglist|length == 0 %}
 {% include 'empty.html' with empty_title="You cannot create a course. You are shortly redirected to student courses" %}
-<script>
-$(document).ready(function() {
-    setTimeout(function() {
-        window.location.href = "{% url 'education:courses' %}"
-    }, 3000)
-})
-</script>
-{% endif %}
 {% endif %}
 
+{# render the course cards #}
 {% if coursebindinglist %}
 <div id="listPane" class="d-flex flex-wrap justify-content-center gap-3">
   {% for ucb in coursebindinglist reversed %}
@@ -49,58 +39,87 @@ $(document).ready(function() {
 </div>
 {% endif %}
 
-
-{# load common configuration logic #}
-<script src="{% static 'hub/js/config_register.js' %}"></script>
-
 {# a modal to configure a course image #}
 {% include 'container/image_selection.html' with instance="course" %}
-<script src="{% static 'container/js/image_selection.js' %}"></script>
 
 {# a modal to configure a course's students/teachers #}
 {% include 'widgets/select_users.html' with instance="course" %}
-<script src="{% static 'hub/js/select_users.js' %}"></script>
-
-{# a modal to start/stop/jump to course environments #}
-<script src="{% static 'container/js/environments.js' %}"></script>
-<script src="{% static 'container/js/buttons.js' %}"></script>
-<script src="{% static 'hub/js/dropdown.js' %}"></script>
 
 {# a modal to configure a course volumes #}
 {% include 'volume/modal_volumes.html' with instance="course" %}
-<script src="{% static 'volume/js/widget_volumes.js' %}"></script>
-<script src="{% static 'js/volume_selection.js' %}"></script>
 
 {# a modal to configure assignments #}
 {% include 'education/assignment/modal.html' %}
-<script src="{% static 'education/js/datetimepicker.js' %}"></script>
-<script src="{% static 'education/js/score.js' %}"></script>
 {% endblock %}
 
 {% block scripts %}
-<script src="{% static 'education/js/course_admin.js' %}"></script>
-<script src="{% static 'hub/js/wss.js' %}"></script>
-<script>  
-// Save web socket urls
-const wsURLs = {
-  container_control: "{{ wss_container }}",
-  wss_canvas: "{{ wss_canvas }}",
-  wss_canvascourseassignments: "{{ wss_canvascourseassignments }}",
-  get_containers: "{{ wss_course_container }}",
-  course_config: "{{ wss_course_config }}",
-  handle_users: "{{ wss_course_users }}",
-  assignment_config: "{{ wss_assignment_config }}",
-  assignment_score: "{{ wss_assignment_score }}",
-}
-
-$(document).ready(function() {
-  $("#add").on('click', function() {
-    $("#newCourseModal").modal("show");
-  })
-})
-</script>
-<script src="{% static 'hub/js/xeditable.js' %}"></script>
+<script src="{% static 'container/js/image_selection.js' %}"></script>
+<script src="{% static 'hub/js/select_users.js' %}"></script>
+<script src="{% static 'container/js/environments.js' %}"></script>
+<script src="{% static 'container/js/controller.js' %}"></script>
+<script src="{% static 'hub/js/buttons.js' %}"></script>
+<script src="{% static 'volume/js/volume_selection.js' %}"></script>
+<script src="{% static 'education/js/datetimepicker.js' %}"></script>
+<script src="{% static 'hub/js/inline.js' %}"></script>
 <script src="{% static 'hub/js/multitabs.js' %}"></script>
+<script src="{% static 'education/js/score.js' %}"></script>
+<script src="{% static 'hub/js/wss.js' %}"></script> {# FIXME: we could get rid of it if js export/import properly implemented #}
+<script src="{% static 'hub/js/config_register.js' %}"></script>
+<script src="{% static 'js/canvascourse.js' %}"></script> {# FIXME: wrong place of the source file #}
+<script>
+{% if not user.profile.can_createcourse and not coursebindinglist %}
+$(document).ready(function() {
+    setTimeout(function() {
+        window.location.href = "{% url 'education:courses' %}"
+    }, 3000)
+})
+{% endif %}
+
+document.addEventListener('DOMContentLoaded', () => {
+    window.wss_conf_course = new ConfigHandler(opts = {
+        endpoint: "{{ wss_course_config }}",
+        userid: {{ user.id }},
+        request: "configure-course",
+    });
+    window.inlineEditor = new InlineEditor(window.wss_conf_course);
+    window.imageSelector = new ImageSelectionHandler(window.wss_conf_course);
+    window.mountHandler = new VolumeHandler(window.wss_conf_course);
+	window.fetchCanvasCourses = new FetchCanvasCourses(window.wss_conf_course, opts={   {# FIXME should be placed elsewhere #}
+        endpoint: "{{ wss_canvas }}",
+        userid: {{ user.id }}
+    });
+
+    window.userHandler = new UserHandler(opts = {
+        wsEndpoint: "{{ wss_course_users }}"
+    });
+
+    window.fetchContainers = new FetchContainer(opts = {
+        endpoint: "{{ wss_course_container }}",
+        userid: {{user.id}}
+    });
+
+    window.containerControl = new ContainerControl(opts = {
+        endpoint: "{{ wss_container_control }}",
+        userid: {{ user.id }}
+    });
+
+    $("#add").on('click', function() {
+      $("#newCourseModal").modal("show");
+    });
+
+    window.assignmentHandler = new AssignmentHandler(opts = {
+        endpoint: "{{ wss_assignment_config }}",
+        userid: {{ user.id }},
+    });
+
+    window.scoreHandler = new ScoreHandler(opts={
+        endpoint: "{{ wss_assignment_score }}",
+    });
+  window.initPopovers = (modal) => window.scoreHandler.initPopovers(modal); //FIXME
+
+
+});
+</script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/js/bootstrap5-toggle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 {% endblock %}

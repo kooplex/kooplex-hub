@@ -1,21 +1,9 @@
 // image_selection.js
 
 // Image Selection Modal Logic
-
 class ImageSelectionHandler {
-  /**
-   * @param {Object} opts
-   * @param {string} [opts.modalSelector='.image-modal']
-   * @param {string} [opts.listSelector='#image-list']
-   * @param {string} [opts.itemSelector='.image-item']
-   * @param {string} [opts.confirmSelector='#confirm-image-selection']
-   * @param {string} [opts.alertSelector='#imageModalAlert']
-   * @param {string} [opts.previewNameSelector='#image-name']
-   * @param {string} [opts.previewDescSelector='#image-description']
-   * @param {string} [opts.previewThumbSelector='#image-thumbnail']
-   * @param {string} [opts.triggerSelector='button[data-id][data-field=image]']  // buttons that open the modal
-   */
-  constructor(opts = {}) {
+  constructor(register, opts = {}) {
+    this.register = register;
     this.modalSelector = opts.modalSelector || '.image-modal';
     this.listSelector = opts.listSelector || '#image-list';
     this.itemSelector = opts.itemSelector || '.image-item';
@@ -24,7 +12,8 @@ class ImageSelectionHandler {
     this.previewNameSelector = opts.previewNameSelector || '#image-name';
     this.previewDescSelector = opts.previewDescSelector || '#image-description';
     this.previewThumbSelector = opts.previewThumbSelector || '#image-thumbnail';
-    this.triggerSelector = opts.triggerSelector || 'button[data-id][data-field=image]';
+    this.triggerSelector = opts.triggerSelector || 'button[data-pk][data-field=image]';
+    this.busy = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>Saving...`;
 
     // State
     this.selectedObjectId = null;
@@ -32,7 +21,6 @@ class ImageSelectionHandler {
     this.originalImageId = null;
     this.selectedIndex = -1;
     this.targetAttribute = 'image';
-    this.callbackPathOrFn = null;
 
     // Cache
     this.$modal = $(this.modalSelector);
@@ -43,6 +31,8 @@ class ImageSelectionHandler {
     this._onKeyDown = this._onKeyDown.bind(this);
     this._onConfirm = this._onConfirm.bind(this);
     this._onTriggerClick = this._onTriggerClick.bind(this);
+
+    this.init();
   }
 
   init() {
@@ -64,22 +54,21 @@ class ImageSelectionHandler {
   }
 
   // Public API to open the modal programmatically
-  openModal(pk, imageSelectedId, attribute = 'image', callbackPathOrFn = null) {
-    this._openModalInternal(pk, imageSelectedId, attribute, callbackPathOrFn);
+  openModal(pk, imageSelectedId, attribute = 'image') {
+    this._openModalInternal(pk, imageSelectedId, attribute);
   }
 
   // ---------------- Internals ----------------
 
   _onTriggerClick(e) {
     const $btn = $(e.currentTarget);
-    const pk = String($btn.data('id'));
+    const pk = String($btn.data('pk'));
     const imageSelectedId = $btn.data('orig');
-    const cb = $btn.data('callback');
-    this._openModalInternal(pk, imageSelectedId, 'image', cb);
+    const attr = $btn.data('name');
+    this._openModalInternal(pk, imageSelectedId, attr);
   }
 
-  _openModalInternal(pk, imageSelectedId, attribute, callbackPathOrFn) {
-    this.callbackPathOrFn = callbackPathOrFn || null;
+  _openModalInternal(pk, imageSelectedId, attribute) {
     this.selectedObjectId = pk === 'None' ? 'None' : parseInt(pk, 10);
     this.targetAttribute = attribute || 'image';
     this.originalImageId = imageSelectedId || null; // remember original
@@ -127,23 +116,25 @@ class ImageSelectionHandler {
     }
   }
 
-  _onConfirm(e) {
-    const $btn = $(e.currentTarget);
+  _onConfirm(el) {
+    const $btn = $(el.currentTarget);
     if (this.selectedObjectId != null && this.selectedImageId) {
       const field = this.targetAttribute;
       const newVal = this.selectedImageId;
       const oldVal = this.originalImageId;
-
-      const saver = this._resolveSaveFn(this.callbackPathOrFn);
-      if (typeof saver === 'function') {
-        saver(this.selectedObjectId, field, newVal, oldVal);
-        // update label next to the button (customize as needed)
-        $(`[data-field=${field}][data-id="${this.selectedObjectId}"]`).text($(this.previewNameSelector).text());
-      } else {
-        console.warn('No save function resolved for image selection');
+      const $widget = $(`button[data-name=${field}][data-pk="${this.selectedObjectId}"]`);
+      try {
+        this.register.register_changes(this.selectedObjectId, field, newVal, this.oldValue);
+        // Update UI with returned value (or the submitted one)
+        $widget.html(this.busy).prop('disabled', true);
+      } catch (err) {
+        console.error(err);
+        // Basic error hint (replace with your toast)
+        $widget.html(`<span class="text-danger">Save failed</span>`).prop('disabled', true);
+      } finally {
+        this.$modal.modal('hide');
       }
     }
-    this.$modal.modal('hide');
   }
 
   _selectImage(index) {
@@ -180,32 +171,6 @@ class ImageSelectionHandler {
     return elementTop >= containerTop && elementBottom <= containerBottom;
   }
 
-  _resolveSaveFn(pathOrFn) {
-    if (!pathOrFn) return null;
-    if (typeof pathOrFn === 'function') return pathOrFn;
-    if (typeof pathOrFn === 'string') {
-      // Resolve "obj.method" safely
-      const parts = pathOrFn.split('.');
-      const method = parts.pop();
-      const ctx = parts.reduce((acc, key) => (acc ? acc[key] : undefined), window);
-      const fn = ctx?.[method];
-      if (typeof fn === 'function') {
-        // bind to ctx so `this` works for instance methods
-        return fn.bind(ctx);
-      }
-    }
-    return null;
-  }
 }
-
-
-
-
-// Run when document is ready
-$(document).ready(function() {
-    const imgSel = new ImageSelectionHandler({});
-    imgSel.init();
-});
-
 
 

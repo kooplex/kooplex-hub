@@ -12,7 +12,7 @@ Projects are a good way to collaborate with each other without much restriction.
 {% block head_content %}
 <link href="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/css/bootstrap5-toggle.min.css" rel="stylesheet">
 <link href="{% static 'hub/css/multitabs.css' %}" rel="stylesheet">
-<link href="{% static 'hub/css/xeditable.css' %}" rel="stylesheet">
+<link href="{% static 'hub/css/inline.css' %}" rel="stylesheet">
 <link href="{% static 'hub/css/dropdown.css' %}" rel="stylesheet">
 <link href="{% static 'hub/css/cardlist.css' %}" rel="stylesheet">
 <link href="{% static 'hub/css/tables.css' %}" rel="stylesheet">
@@ -33,59 +33,73 @@ Projects are a good way to collaborate with each other without much restriction.
     {% endfor %}
 </div>
 
-<script src="{% static 'hub/js/config_register.js' %}"></script>
-<script src="{% static 'project/js/buttons.js' %}"></script>
-<script src="{% static 'project/js/changes.js' %}"></script>
 
 {# a modal to join a project #}
 {% include 'project/fetch_joinproject_modal.html' %}
-{# FIXME <script src="{% static 'js/project_join.js' %}"></script> #}
-
 
 {# a modal to configure a project image #}
 {% include 'container/image_selection.html' with instance="project" %}
-<script src="{% static 'container/js/image_selection.js' %}"></script>
 
 {# a modal to configure a project collaborators #}
 {% include 'widgets/select_users.html' with instance="project" %}
-<script src="{% static 'hub/js/select_users.js' %}"></script>
 
 {# a modal to configure a project volumes #}
 {% include 'volume/modal_volumes.html' with instance="project" %}
-<script src="{% static 'volume/js/volume_selection.js' %}"></script>
-
-{# a modal to start/stop/jump to project environments #}
-<script src="{% static 'container/js/environments.js' %}"></script>
-<script src="{% static 'container/js/buttons.js' %}"></script>
-<script src="{% static 'hub/js/dropdown.js' %}"></script>
-
 {% endblock %}
 
 
 {% block scripts %}
+<script src="{% static 'hub/js/inline.js' %}"></script>
+<script src="{% static 'project/js/join.js' %}"></script>
+<script src="{% static 'container/js/image_selection.js' %}"></script>
+<script src="{% static 'hub/js/select_users.js' %}"></script>
+<script src="{% static 'hub/js/buttons.js' %}"></script>
+<script src="{% static 'volume/js/volume_selection.js' %}"></script>
+<script src="{% static 'container/js/environments.js' %}"></script>
+<script src="{% static 'container/js/controller.js' %}"></script>
 <script src="{% static 'hub/js/multitabs.js' %}"></script>
+<script src="{% static 'hub/js/wss.js' %}"></script> {# FIXME: we could get rid of it if js export/import properly implemented #}
+<script src="{% static 'hub/js/config_register.js' %}"></script>
 
-<script src="{% static 'hub/js/wss.js' %}"></script>
 <script>
-// Save web socket urls
-const wsURLs = {
-  container_control: "{{ wss_container }}",
-  project_config: "{{ wss_project_config }}",
-  project_join: "{{ wss_project_join }}",
-  get_containers: "{{ wss_project_container }}",
-  handle_users: "{{ wss_project_users }}",
-}
+document.addEventListener('DOMContentLoaded', () => {
+    window.wss_conf_project = new ConfigHandler(opts = {
+        endpoint: "{{ wss_project_config }}",
+        userid: {{ user.id }},
+        request: "configure-project",
+    });
+    window.inlineEditor = new InlineEditor(window.wss_conf_project);
+    window.imageSelector = new ImageSelectionHandler(window.wss_conf_project);
+    window.mountHandler = new VolumeHandler(window.wss_conf_project);
+    window.scopeButton = new DropDown(window.wss_conf_project, opts = {
+        selector: ".scope-btn",
+        field: "scope",
+    });
 
+    window.userHandler = new UserHandler(opts = {
+        wsEndpoint: "{{ wss_project_users }}"
+    });
 
-$(document).ready(function() {
-  $("#add").on('click', function() {
-    $("#newProject").modal("show");
-  })
-})
+    window.fetchContainers = new FetchContainer(opts = {
+        endpoint: "{{ wss_project_container }}",
+        userid: {{user.id}}
+    });
 
+    window.containerControl = new ContainerControl(opts = {
+        endpoint: "{{ wss_container_control }}",
+        userid: {{ user.id }}
+    });
 
+    window.fetchJoinableProjects = new FetchJoinableProjects(opts={
+        endpoint: "{{ wss_project_join }}",
+        userid: {{ user.id }}
+    });
+
+    $("#add").on('click', function() {
+      $("#newProject").modal("show");
+    });
+});
 </script>
-<script src="{% static 'hub/js/xeditable.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap5-toggle@3.7.0/js/bootstrap5-toggle.min.js"></script>
 {% endblock %}
 
