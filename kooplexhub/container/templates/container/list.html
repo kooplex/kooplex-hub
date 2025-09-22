@@ -76,6 +76,8 @@ document.addEventListener('DOMContentLoaded', () => {
         endpoint: "{{ wss_container_config }}",
         userid: {{ user.id }},
         request: "configure-container",
+        model: "container",
+        required: [ "name", "image"],
     });
     window.inlineEditor = new InlineEditor(window.wss_conf_container);
     window.imageSelector = new ImageSelectionHandler(window.wss_conf_container);

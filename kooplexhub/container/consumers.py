@@ -167,22 +167,27 @@ class ContainerConfigConsumer(CSyncSkeleton):
     def receive(self, text_data):
         parsed = json.loads(text_data)
         logger.debug(parsed)
-        assert parsed.get('request')=='configure-container', "wrong request"
-        failed={}
-        pk=parsed.get('pk')
-        changes=parsed.get('changes')
-        if pk == "None":
-            container=Container(name=changes['name'], user_id=self.get_userid(), image_id=changes['image'])
+        request = parsed.get('request')
+        if request == "create-container":
+            container=Container(name=parsed['name'], user_id=self.get_userid(), image_id=parsed['image'])
             container.save()
             self.send(text_data=json.dumps({
                 'feedback': f"New environment {container.name} is created",
                 'reload_page': True,
             }))
-        else:
+            configurator = ContainerConfigHandler(container)
+            changes = { k: request[k] for k in configurator.attribute_handlers.keys() if k in request and not k in ["name", "image"] }
+        elif request =='configure-container':
+            pk=parsed.get('pk')
+            changes=parsed.get('changes')
             cid=int(pk)
             container=self.get_container(cid)
+            configurator = ContainerConfigHandler(container)
+        else:
+            logger.error(f"wrong request: {request}")
+            return
+        failed={}
         # Iterate over the changes and try to update the model instance
-        configurator = ContainerConfigHandler(container)
         widgets={}
         messages=[]
         for field, new_value in changes.items():

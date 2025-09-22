@@ -19,9 +19,10 @@ class ConfigHandler {
         this.dummy = opts.pk_new || 'None';
         this.sendDelay = opts.sendDelay || 300;
         this.changeBuffer = new Map();        // Internal change buffer
+        this.newObject = {};
         this.sendTimer = null;                // Timer to throttle sends
         this.handleCallback = this.handleCallback.bind(this); // <- bind once
-        this.pendingRequests       = new Set(); // track request_ids while processing
+        this.pendingRequests = new Set(); // track request_ids while processing
         if (this.endpoint) {
             this.wss = new ManagedWebSocket(this.endpoint, {
                 onMessage: this.handleCallback,
@@ -52,7 +53,7 @@ class ConfigHandler {
 
     // Check if pk references new instance config
     isnew(pk) {
-        return (pk === null || pk === undefined || pk === "" || (typeof pk === "number" && isNaN(pk)));
+        return (pk === null || pk === undefined || pk === "" || pk === "None" || (typeof pk === "number" && isNaN(pk)));
     }
 
     _uuid() {
@@ -67,62 +68,55 @@ class ConfigHandler {
         if (!entry || !entry.changes || Object.keys(entry.changes).length === 0) return;
         this.wss.send(JSON.stringify(entry));
         console.log("Dequeued changes:", entry);
-        this.changeBuffer.delete(pk); // Clean up
+        this.changeBuffer.delete(pk); // Clean up // FIXME: only on respoonse!
     }
 
     // Keep track of changes entered in UI
     register_changes(pk, fieldName, newValue, oldValue) {
-	    //FIXME
-        const request_id = this._uuid();
-        // Track request so we only react to our own response
-        this.pendingRequests.add(request_id);
-        
-	pk = this.isnew(pk) ? this.dummy : pk;
-        let entry = this.changeBuffer.get(pk);
-
-        if (!entry) {
-            entry = { userid: this.userid, pk: pk, request_id, request: this.request, changes: {}, timer: null };
-            this.changeBuffer.set(pk, entry);
-        }
-
-        var changed = $.isArray(newValue) ? ! this.arraysEqual(newValue, oldValue) : oldValue !== newValue;
-        if (! changed) {
-            return false;
-        }
-
-        // Store the change
-        entry.changes[fieldName] = newValue;
-
-        // Reset debounce timer
-        if (entry.timer) {
-            clearTimeout(entry.timer);
-        }
-
-        if (pk === this.dummy) {
+        if (this.isnew(pk)) {
+            this.newObject[fieldName]=newValue;
             this.showSaveChanges();
 	} else {
-	    // only deque automatically if instance already exists
+            const request_id = this._uuid();
+            this.pendingRequests.add(request_id);
+            let entry = this.changeBuffer.get(pk);
+            if (!entry) {
+                entry = { userid: this.userid, pk: pk, request_id, request: this.request, changes: {}, timer: null };
+                this.changeBuffer.set(pk, entry);
+            }
+            var changed = $.isArray(newValue) ? ! this.arraysEqual(newValue, oldValue) : oldValue !== newValue;
+            if (! changed) {
+                return false;
+            }
+            entry.changes[fieldName] = newValue;
+            if (entry.timer) {
+                clearTimeout(entry.timer);
+            }
             entry.timer = setTimeout(() => this.flushChanges(pk), this.sendDelay);
-        }
+	}
 	return true;
     }
 
     // Helper to request saving new instance
     createnew() {
-        this.flushChanges(this.dummy);
+        this.newObject["request"] = `create-${this.model}`;
+        this.wss.send(JSON.stringify(this.newObject));
+        console.log("Sent as new:", this.newObject);
     }
 
     // Show Save Changes button
     showSaveChanges() {
-        let entry = this.changeBuffer.get(this.dummy);
-        if (! entry) {
+        if (Object.keys(this.newObject).length == 0) {
             return;
 	}
-        const hasAllKeys = this.required.every(key => Object.prototype.hasOwnProperty.call(entry.changes, key));
-        if (! hasAllKeys) {
+        const hasAllKeys = this.required.every(key => Object.prototype.hasOwnProperty.call(this.newObject, key));
+        if (this.required.length > 0 && ! hasAllKeys) {
             return;
 	}
-        let widget=$(`[name=save][data-id=${this.dummy}][data-instance=${this.instancetype}]`);
+        let widget=$(`[name=save][data-id=${this.dummy}][data-instance=${this.model}]`);
+        this.createnew = this.createnew.bind(this);
+        $(document).on('click', widget, this.createnew);
+	    console.log(widget)
         widget.removeClass("d-none");
         widget.removeAttr("disabled");
     }
