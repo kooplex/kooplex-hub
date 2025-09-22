@@ -176,7 +176,7 @@ class ContainerConfigConsumer(CSyncSkeleton):
                 'reload_page': True,
             }))
             configurator = ContainerConfigHandler(container)
-            changes = { k: request[k] for k in configurator.attribute_handlers.keys() if k in request and not k in ["name", "image"] }
+            changes = { k: parsed[k] for k in configurator.attribute_handlers.keys() if k in parsed and not k in ["name", "image"] }
         elif request =='configure-container':
             pk=parsed.get('pk')
             changes=parsed.get('changes')
