@@ -8,7 +8,7 @@ class MountHandler {
     this.triggerSelector   = opts.triggerSelector   || 'button[data-pk][data-name=mount]';
     this.confirmSelector   = opts.confirmSelector   || 'button#confirm-file-selection';
     this.toggleSelector    = opts.toggleSelector    || '.configtoggle';
-    this.busy = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>Saving...`;
+    this.busy = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>render...`;
 
     // state
     this.selectedContainerId = null;
@@ -78,10 +78,17 @@ class MountHandler {
     const volumes_o  = this._getOriginal(pk, 'volumes');
 
     const $btn = $(`${this.triggerSelector}[data-pk="${pk}"]`);
-    $btn.html(this.busy).prop('disabled', true);
+    //$btn.html(this.busy).prop('disabled', true);
+    $btn.prop('disabled', true);
     try {
+        $btn.find("span[data-name=projects]").html(this.busy);
+        $btn.find("span[data-name=projects]").removeClass('d-none');
         this.register.register_changes(pk, 'projects', projects, projects_o);
+        $btn.find("span[data-name=courses]").html(this.busy);
+        $btn.find("span[data-name=courses]").removeClass('d-none');
         this.register.register_changes(pk, 'courses',  courses,  courses_o);
+        $btn.find("span[data-name=volumes]").html(this.busy);
+        $btn.find("span[data-name=volumes]").removeClass('d-none');
         this.register.register_changes(pk, 'volumes',  volumes,  volumes_o);
     } catch (err) {
         console.error(err);
@@ -104,7 +111,8 @@ class MountHandler {
 
   _getOriginal(pk, binding) {
     const $row = $(`${this.triggerSelector}[data-pk="${pk}"]`);
-    const val = $row.data(binding);
+    //const val = $row.data(binding);
+    const val = $row.find(`span[data-name=${binding}]`).data('value');
     // tolerate strings from data-attrs (e.g., "[1,2,3]")
     if (typeof val === 'string') {
       try { return JSON.parse(val); } catch { /* fallthrough */ }

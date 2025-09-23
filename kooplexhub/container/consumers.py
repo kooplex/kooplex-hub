@@ -210,6 +210,19 @@ class ContainerConfigConsumer(CSyncSkeleton):
             elif field=='idletime':
                 from .templatetags.container_buttons import button_resource_idletime
                 self.send(text_data=json.dumps({'replace_widgets': {f"[data-name=idletime][data-pk=None][data-model=container]": button_resource_idletime(value=parsed.get('value'))}}))
+            elif field=='projects':
+                from .templatetags.container_buttons import button_mount_projects
+                self.send(text_data=json.dumps({'replace_widgets': {f"[data-name=projects][data-pk=None][data-model=container]": button_mount_projects(value=parsed.get('value'))}}))
+            elif field=='courses':
+                from .templatetags.container_buttons import button_mount_courses
+                self.send(text_data=json.dumps({'replace_widgets': {f"[data-name=courses][data-pk=None][data-model=container]": button_mount_courses(value=parsed.get('value'))}}))
+            elif field=='volumes':
+                from .templatetags.container_buttons import button_mount_volumes
+                self.send(text_data=json.dumps({'replace_widgets': {f"[data-name=volumes][data-pk=None][data-model=container]": button_mount_volumes(value=parsed.get('value'))}}))
+
+
+            else:
+                logger.critical(f"unknown {field}")
 
             return
         else:

@@ -108,6 +108,42 @@ def button_seafile(container=None, **kwargs):
     })
 
 @register.simple_tag
+def button_mount_projects(container=None, **kwargs):
+    ids=getattr(container, 'projects', kwargs.get('value', []))
+    return render_to_string("container/button/resource_attribute.html", {
+        "pk": getattr(container, 'pk', None),
+        "attribute": "projects",
+        "hidden": not ids,
+        "icon": "ri-product-hunt-line",
+        "value": list(map(lambda x: x.pk, ids)),
+        "caption": len(ids),
+    })
+
+@register.simple_tag
+def button_mount_courses(container=None, **kwargs):
+    ids=getattr(container, 'courses', kwargs.get('value', []))
+    return render_to_string("container/button/resource_attribute.html", {
+        "pk": getattr(container, 'pk', None),
+        "attribute": "courses",
+        "hidden": not ids,
+        "icon": "ri-copyright-line",
+        "value": list(map(lambda x: x.pk, ids)),
+        "caption": len(ids),
+    })
+
+@register.simple_tag
+def button_mount_volumes(container=None, **kwargs):
+    ids=getattr(container, 'volumes', kwargs.get('value', []))
+    return render_to_string("container/button/resource_attribute.html", {
+        "pk": getattr(container, 'pk', None),
+        "attribute": "volumes",
+        "hidden": not ids,
+        "icon": "ri-database-2-line",
+        "value": list(map(lambda x: x.pk, ids)),
+        "caption": len(ids),
+    })
+
+@register.simple_tag
 def button_mount(container):
     return render_to_string("container/button/mount.html", {"container": container})
 

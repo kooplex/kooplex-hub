@@ -1,17 +1,15 @@
 {% load extras %}
+{% load container_buttons %}
 <button 
     class="badge rounded-pill p-2 border border-1 border-dark text-dark flex-grow-1 text-start" 
     role="button"
     data-bs-toggle="tooltip" data-placement="bottom"
     title="Requested filesystem resources. Click to change mounts."
-    data-projects="{{container.projects|id_list}}"
-    data-courses="{{container.courses|id_list}}"
-    data-volumes="{{container.volumes|id_list}}"
     data-name="mount" data-pk="{{container.id}}" data-model="container"
     >
-    {% if container.projects|length %}<span><i class="ri-product-hunt-line me-1"></i><span class="me-2">{{container.projects|length}}</span></span>{% endif %}
-    {% if container.courses|length %}<span><i class="ri-copyright-line me-1"></i><span class="me-2">{{container.courses|length}}</span></span>{% endif %}
-    {% if container.volumes|length %}<span><i class="ri-database-2-line me-1"></i><span class="me-2">{{container.volumes|length}}</span></span>{% endif %}
+    {% button_mount_projects container %}
+    {% button_mount_courses container %}
+    {% button_mount_volumes container %}
     {% if container.projects|length == 0 and container.courses|length == 0 and container.volumes|length == 0 %}
       <span><i class="bi bi-folder me-2"></i>default mounts</span>
     {% endif %}
