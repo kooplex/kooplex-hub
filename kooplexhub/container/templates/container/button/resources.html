@@ -4,7 +4,7 @@
     role="button"
     data-bs-toggle="tooltip" data-placement="bottom"
     title="Requested compute resources. Click to tune."
-    data-pk="{{container.id}}" data-name="resources" data-model="container"
+    data-pk="{{container.id|default:'None'}}" data-name="resources" data-model="container"
     >
     {% button_resource_node container %}
     {% button_resource_cpurequest container %}

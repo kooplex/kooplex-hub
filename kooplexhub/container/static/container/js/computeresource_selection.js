@@ -73,8 +73,10 @@ class ComputeResourceHandler {
   _onTriggerClick(e) {
     e.preventDefault();
     const $root = $(e.currentTarget).closest('[data-id]');
-    const containerId = $root.data('id');
+    const containerId = $root.data('id') || 'None';
     const node = String($root.data('node') || '');
+	  console.log(node)
+	  console.log(containerId)
     this._open(containerId, node);
   }
 

@@ -5,7 +5,7 @@
     role="button"
     data-bs-toggle="tooltip" data-placement="bottom"
     title="Requested filesystem resources. Click to change mounts."
-    data-name="mount" data-pk="{{container.id}}" data-model="container"
+    data-name="mount" data-pk="{{container.id|default:'None'}}" data-model="container"
     >
     {% button_mount_projects container %}
     {% button_mount_courses container %}

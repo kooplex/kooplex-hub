@@ -1,21 +1,23 @@
 {% load container_buttons %}
-{% if container.state == container.State.RUNNING or container.state == container.State.NEED_RESTART %}
-<div name="opencombo" data-id="{{container.id}}">
-  {% if container.views|length == 0 %}
-    <i class="bi bi-eye-slash"></i>
+{% if container %}
+  {% if container.state == container.State.RUNNING or container.state == container.State.NEED_RESTART %}
+  <div name="opencombo" data-id="{{container.id}}">
+    {% if container.views|length == 0 %}
+      <i class="bi bi-eye-slash"></i>
+    {% else %}
+      <div class="hover-dropdown">
+  	    {% button_view container.views|first container %}
+          <div class="dropdown-content">
+  		{% for view in container.views %}
+  		{% button_view view container True %}
+  		{% endfor %}
+          </div>
+      </div>
+    {% endif %}
+  </div>
   {% else %}
-    <div class="hover-dropdown">
-	    {% button_view container.views|first container %}
-        <div class="dropdown-content">
-		{% for view in container.views %}
-		{% button_view view container True %}
-		{% endfor %}
-        </div>
-    </div>
+  <div name="opencombo" data-id="{{container.id}}" class="badge rounded-pill text-bg-secondary border p-2" name="default" disabled>
+    <span class="oi oi-external-link" aria-hidden="true"></span>
+  </div>
   {% endif %}
-</div>
-{% else %}
-<div name="opencombo" data-id="{{container.id}}" class="badge rounded-pill text-bg-secondary border p-2" name="default" disabled>
-  <span class="oi oi-external-link" aria-hidden="true"></span>
-</div>
 {% endif %}

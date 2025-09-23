@@ -37,6 +37,7 @@
             
             <!-- Right Column -->
             <div class="col-md-6 d-flex flex-column">
+              {% if container %}
                 <!-- Row 1 -->
                 <div class="d-flex align-items-center mb-3">
 		    {% button_fetchlogs container %}
@@ -44,21 +45,29 @@
                 </div>
                 <!-- Row 2 -->
                 <div class="mb-3">{% button_restart container %}</div>
-                <!-- Row 3 -->
-                <div class="d-flex justify-content-end mt-auto">
-		    {% include 'widgets/widget_savechanges.html' with pk=container.id obj="container" %}
-                </div>
+              {% else %}
+                <div class="mb-3 alert alert-info" role="alert">
+                  <p>Requirements:</p>
+		  <ul>
+                    <li>Name (at least 3 characters)</li>
+                    <li>Image (click Select image button)</li>
+		  </ul>
+		</div>
+              {% endif %}
             </div>
         </div>
     </div>
     
     <!-- Footer -->
     <div class="card-footer d-flex justify-content-between {% if container.id %}border-success{%else%}border-warning{%endif%}">
-      {% if container.id %}
+      {% if container %}
         {% button_start container %}
 	{% include 'widgets/widget_delete.html' with msg="Are you sure you want to drop your container?" tooltip="Delete container" link=container.link_drop obj=container %}
       {% else %}
         <div class="btn-placeholder p-1" style="visibility: hidden;">Placeholder</div>
+                <div class="d-flex justify-content-end mt-auto">
+		    {% include 'widgets/widget_savechanges.html' with pk="None" obj="container" %}
+                </div>
       {% endif %}
     </div>
 </div>

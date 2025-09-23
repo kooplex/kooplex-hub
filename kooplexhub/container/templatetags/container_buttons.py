@@ -92,7 +92,7 @@ def indicator_state(container):
 @register.simple_tag
 def button_teleport(container=None, **kwargs):
     return render_to_string("hub/buttons/toggle.html",  {
-        "on": getattr(container, 'start_teleport', kwargs.get('value')), 
+        "on": getattr(container, 'start_teleport', kwargs.get('value', 'False')), 
         "pk": getattr(container, 'pk', None), "model": "container",
         "attr": "start_teleport",
         'icon': static('container/img/teleport.ico')
@@ -101,7 +101,7 @@ def button_teleport(container=None, **kwargs):
 @register.simple_tag
 def button_seafile(container=None, **kwargs):
     return render_to_string("hub/buttons/toggle.html", {
-        "on": getattr(container, 'start_seafile', kwargs.get('value')), 
+        "on": getattr(container, 'start_seafile', kwargs.get('value', 'False')), 
         "pk": getattr(container, 'pk', None), "model": "container", "model": "container",
         "attr": "start_seafile",
         'icon': static('container/img/seafile.png')
@@ -110,12 +110,13 @@ def button_seafile(container=None, **kwargs):
 @register.simple_tag
 def button_mount_projects(container=None, **kwargs):
     ids=getattr(container, 'projects', kwargs.get('value', []))
+    logger.critical(ids)
     return render_to_string("container/button/resource_attribute.html", {
         "pk": getattr(container, 'pk', None),
         "attribute": "projects",
         "hidden": not ids,
         "icon": "ri-product-hunt-line",
-        "value": list(map(lambda x: x.pk, ids)),
+        "value": list(map(lambda x: getattr(x, 'pk', x), ids)),
         "caption": len(ids),
     })
 
@@ -127,7 +128,7 @@ def button_mount_courses(container=None, **kwargs):
         "attribute": "courses",
         "hidden": not ids,
         "icon": "ri-copyright-line",
-        "value": list(map(lambda x: x.pk, ids)),
+        "value": list(map(lambda x: getattr(x, 'pk', x), ids)),
         "caption": len(ids),
     })
 
@@ -139,7 +140,7 @@ def button_mount_volumes(container=None, **kwargs):
         "attribute": "volumes",
         "hidden": not ids,
         "icon": "ri-database-2-line",
-        "value": list(map(lambda x: x.pk, ids)),
+        "value": list(map(lambda x: getattr(x, 'pk', x), ids)),
         "caption": len(ids),
     })
 
