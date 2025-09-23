@@ -7,7 +7,7 @@ class VolumeHandler {
     this.modalSelector   = opts.modalSelector   || '.volumes-modal';
     this.confirmSelector = opts.confirmSelector || '#confirm-file-selection';
     this.toggleSelector  = opts.toggleSelector  || '.configtoggle[name=attach-volume]';
-    this.triggerSelector = opts.triggerSelector || '[data-name=volumes][data-pk][data-volumes][data-model]'
+    this.triggerSelector = opts.triggerSelector || '[data-name=volumes][data-pk][data-value][data-model]'
 
     this.selectedObjectId = null;
     this.originalVolumes  = []; // array of ints
@@ -43,7 +43,7 @@ class VolumeHandler {
     e.preventDefault();
     const $btn = $(e.currentTarget);
     const pk = $btn.data('pk');
-    const current = $btn.data('volumes')
+    const current = $btn.data('value')
     this._open(pk, current);
   }
 

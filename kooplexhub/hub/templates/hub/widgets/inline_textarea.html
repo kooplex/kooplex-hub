@@ -5,9 +5,10 @@
   {% endif %}
   data-type="textarea"
   data-name="description"
-  data-pk="{{ obj.pk }}"
+  data-pk="{{ pk }}"
   data-model="{{ model }}"
+  data-value="{{value}}"
 >
-  {{ obj.description|linebreaksbr }}
+  {{ value|linebreaksbr }}
 </div>
 

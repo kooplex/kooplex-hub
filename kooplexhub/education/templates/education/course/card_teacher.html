@@ -7,10 +7,10 @@
         {% render_name course %}
     </div>
     <div class="card-body">
-	{% if course.id %}
-        {% include 'education/multitabs.html' with pk=course.id description=course.description %}
+	{% if course %}
+        {% include 'education/multitabs.html' with pk=course.id %}
 	{% else %}
-        {% include 'education/multitabs.html' with pk=course.id new=True %}
+        {% include 'education/multitabs.html' with pk='None' new=True %}
 	{% endif%}
     </div>
 </div>

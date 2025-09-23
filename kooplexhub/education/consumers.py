@@ -399,6 +399,7 @@ class CourseConfigHandler:
 
     def handle_image_update(self, new_value):
         from container.templatetags.container_buttons import button_image
+        from container.models import Image
         old_value = self.instance.preferred_image.name
         image = Image.objects.get(id=new_value)
         self.instance.preferred_image = image
@@ -448,17 +449,15 @@ class CourseConfigConsumer(SyncSkeleton):
         import datetime
         parsed = json.loads(text_data)
         logger.debug(parsed)
-        failed={}
-        success=False
-        pk = parsed.get('pk')
-        changes = parsed.get('changes')
-        if pk=="None":
+        request = parsed.get('request')
+        user = User.objects.get(pk=self.userid)
+        if request == "create-course":
             if not Profile.objects.filter(user__id=self.get_userid(), can_createcourse=True).first():
                 return
-            canvas_id=changes.pop('canvasid', None)
-            _name=changes.pop('name')
+            canvas_id=parsed.pop('canvasid', None)
+            _name=parsed.get('name')
             _folder=f"{datetime.datetime.now().year}-{standardize_str(_name)}" #FIXME settings.py-ba át lehetne tenni, year 
-            course=Course.objects.create(name=_name, preferred_image_id=changes.pop('image'), description=changes.pop('description'), folder=_folder)
+            course=Course.objects.create(name=_name, preferred_image_id=parsed.get('preferred_image'), description=parsed.get('description'), folder=_folder)
             binding=UserCourseBinding.objects.create(user_id=self.get_userid(), course=course, is_teacher=True)
             if canvas_id:
                 # logger.debug(f"Course has canvasid {canvas_id}.")
@@ -470,13 +469,41 @@ class CourseConfigConsumer(SyncSkeleton):
                     UserCourseBinding.objects.create(course=course, user=cs)
                 for ct in canvascourse.get_course_teachers(canvas.token):
                     UserCourseBinding.objects.get_or_create(course=course, user=ct, is_teacher=True)
-            self._msg(course, f"New course {course.name} is created", reload=True)
-        else:
+            self.send(text_data=json.dumps({
+                'feedback': f"New course {course.name} is created",
+                'reload_page': True,
+            }))
+            configurator = CourseConfigHandler(course, user)
+            changes = { k: parsed[k] for k in configurator.attribute_handlers.keys() if k in parsed and not k in ["name", "description", "preferred_image"] }
+        elif request =='configure-course':
+            pk = parsed.get('pk')
+            changes = parsed.get('changes')
             cid = int(pk)
             course = self.get_course(cid)
+            configurator = CourseConfigHandler(course, user)
+        elif request =='update-widget':
+            field=parsed.get('field')
+            if field=='name':
+                from .templatetags.course_tags import render_name
+                self.send(text_data=json.dumps({'replace_widgets': {f"[data-name=name][data-pk=None][data-model=course]": render_name(value=parsed.get('value'))}}))
+            elif field=='description':
+                from .templatetags.course_tags import render_description
+                self.send(text_data=json.dumps({'replace_widgets': {f"[data-name=description][data-pk=None][data-model=course]": render_description(value=parsed.get('value'))}}))
+            elif field=='preferred_image':
+                image = Image.objects.get(id=parsed.get('value'))
+                self.send(text_data=json.dumps({'replace_widgets': {f"[data-name=preferred_image][data-pk=None][data-model=course]": button_image(model='course', attr='preferred_image', value=image)}}))
+            elif field=='volumes':
+                from .templatetags.course_tags import render_volumes
+                from volume.models import Volume
+                self.send(text_data=json.dumps({'replace_widgets': {f"[data-name=volumes][data-pk=None][data-model=course]": render_volumes(None, user, value=Volume.objects.filter(pk__in=parsed.get('value'))) }}))
+            else:
+                logger.critical(f"unknown {field}")
+            return
+        else:
+            logger.error(f"wrong request: {request}")
+            return
+        failed={}
         # Iterate over the changes and try to update the model instance
-        user = User.objects.get(pk=self.userid)
-        configurator = CourseConfigHandler(course, user)
         widgets={}
         messages=[]
         for field, new_value in changes.items():

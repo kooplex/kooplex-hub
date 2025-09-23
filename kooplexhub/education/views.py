@@ -20,8 +20,8 @@ from kooplexhub.lib import now
 
 from volume.tables import TableVolume
 from hub.templatetags.extras import render_user
-from container.models import Image, Container
-from education.models import UserCourseBinding, UserAssignmentBinding, Assignment, CourseContainerBinding, Course
+from container.models import Image
+from education.models import UserCourseBinding
 from education.forms import FormCourse
 from education.forms import FormAssignment, FormAssignmentList, FormAssignmentConfigure#, FormAssignmentHandle
 
@@ -115,7 +115,6 @@ class TeacherCourseBindingListView(LoginRequiredMixin, generic.ListView):
         context['t_volume'] = TableVolume.for_user(self.request.user)
         context['users'] = [ u.profile._repr for u in User.objects.all().exclude(id = self.request.user.id) ]
         context['t_users'] = TableUsers(User.objects.all().exclude(id = self.request.user.id), marker_column='Teacher')
-        context['empty_course'] = Course()
         context['modal_new'] = KOOPLEX.get('education', {}).get('new_course', 'education/templates/course/new.html')
         context['search_placeholder'] = 'Search course...'
         context['search_what'] = 'course'

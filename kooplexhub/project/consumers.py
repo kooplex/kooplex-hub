@@ -232,7 +232,7 @@ class ProjectGetContainersConsumer(SyncConsumer):
         message_back = {
             "feedback": f"Container list refreshed",
             "replace_widgets": {
-                f'[id=environmentControl-{courseid}]': render_to_string("container/table_control_shortcut.html", {"containers": list(map(lambda o: o.container, bindings)), "pk": upb.id, "objectId": projectid }),
+                f'[id=environmentControl-{projectid}]': render_to_string("container/table_control_shortcut.html", {"containers": list(map(lambda o: o.container, bindings)), "pk": upb.id, "objectId": projectid }),
             },
         }
         logger.debug(message_back)

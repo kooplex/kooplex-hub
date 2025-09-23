@@ -19,6 +19,6 @@ def get_uabind_value(UAbind_dict, user_id, assignment_id):
 
 
 @register.inclusion_tag("widgets/table_users.html")
-def render_attendees(course, user):
+def render_attendees(course=None, user=None):
     from ..tables import TableStudentsAndTeachers
-    return {"pk": course.id, "table": TableStudentsAndTeachers(course.userbindings.exclude(user=user))} if course.pk else {}
+    return {"pk": getattr(course, 'pk', None), "table": TableStudentsAndTeachers(course.userbindings.exclude(user=user))} if course else {}

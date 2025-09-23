@@ -9,12 +9,20 @@ def render_name(course=None, **kwargs):
     return render_to_string('hub/widgets/inline_textfield.html', {'model': 'course', 'attr': 'name', 'pk': getattr(course, 'pk', None), 'value': getattr(course, 'name', kwargs.get('value')), 'editable': True})
 
 @register.simple_tag
-def render_description(course):
-    return render_to_string('hub/widgets/inline_textarea.html', {'model': 'course', 'obj': course, 'editable': True})
+def render_description(course=None, **kwargs):
+    return render_to_string('hub/widgets/inline_textarea.html', {'model': 'course', 'pk': getattr(course, 'pk', None), 'editable': True, 'value': getattr(course, 'description', kwargs.get('value'))})
 
 @register.simple_tag
-def render_volumes(course, user):
-    return render_to_string("volume/tables/volumes.html", {'model': 'course', 'pk': course.id, 'volumes': course.volumes, 'user': user })
+def render_volumes(course, user, **kwargs):
+    from volume.models import Volume
+    volumes=getattr(course, 'volumes', Volume.objects.filter(pk__in=kwargs.get('value', [])))#FIXME authorize
+    return render_to_string("volume/tables/volumes.html", {
+        'model': 'course', 
+        'pk': getattr(course, 'pk', None), 
+        'volumes': volumes, 
+        'value': list(map(lambda v: v.id, volumes)),
+        'user': user, 
+    })
 
 @register.simple_tag
 def render_busy(tab):
