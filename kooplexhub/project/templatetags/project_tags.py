@@ -5,12 +5,12 @@ from django.template.loader import render_to_string
 register = template.Library()
 
 @register.simple_tag
-def render_name(project, user, **kwargs):
+def render_name(project=None, user=None, **kwargs):
     e = project.is_admin(user) if project else True
     return render_to_string('hub/widgets/inline_textfield.html', {'model': 'project', 'attr': 'name', 'pk': getattr(project, 'pk', None), 'value': getattr(project, 'name', kwargs.get('value')), 'editable': e})
 
 @register.simple_tag
-def render_description(project, user, **kwargs):
+def render_description(project=None, user=None, **kwargs):
     e = project.is_admin(user) if project else True
     return render_to_string('hub/widgets/inline_textarea.html', {'model': 'project', 'pk': getattr(project, 'pk', None), 'value': getattr(project, 'description', kwargs.get('value')), 'editable': e})
 

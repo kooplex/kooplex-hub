@@ -16,7 +16,7 @@ def project_creator(project = None, user = None):
 @register.simple_tag
 def project_scope(project = None, **kwargs):
     from ..models import Project
-    return render_to_string("project/button_scope.html", {'project':project, 'scope': Project.Scope, 'editable': kwargs.get('is_admin')})
+    return render_to_string("project/button_scope.html", {'project':project, 'scope': Project.Scope, 'value': getattr(project, 'scope', kwargs.get('value', Project.Scope.PRIVATE)), 'editable': kwargs.get('is_admin')})
 
 
 @register.inclusion_tag("widgets/table_users.html")

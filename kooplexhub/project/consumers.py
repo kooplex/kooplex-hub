@@ -151,7 +151,7 @@ class ProjectConfigHandler:
         old_value = self.instance.scope
         self.instance.scope = new_value
         self.instance.save()
-        return f"scope changed from {old_value} to {new_value}", {f"[data-name=scope][data-pk={self.instance.pk}][data-model=project]": project_scope(self.instance)}
+        return f"scope changed from {old_value} to {new_value}", {f"[data-name=scope][data-pk={self.instance.pk}][data-model=project]": project_scope(self.instance, is_admin=True)}
 
     def handle_mounts_update(self, attribute, new_value):
         from .templatetags.project_tags import render_volumes
@@ -182,26 +182,55 @@ class ProjectConfigConsumer(SyncConsumer):
         from kooplexhub.lib.libbase import standardize_str
         parsed = json.loads(text_data)
         logger.debug(parsed)
-        assert parsed.get('request')=='configure-project', "wrong request"
-        failed={}
-        pk = parsed.get('pk')
-        changes = parsed.get('changes')
-        if pk == "None":
-            name=changes['name']
+        request = parsed.get('request')
+        if request == "create-project":
+            name=parsed.get('name')
             subpath=standardize_str(name)
-            s={'scope': changes['scope']} if 'scope' in changes else {}
-            project=Project(name=name, subpath=subpath, preferred_image_id=changes['image'], description=changes['description'], **s)
+            scope=parsed.get('scope', Project.Scope.PRIVATE)
+            project=Project(name=name, subpath=subpath, preferred_image_id=parsed.get('preferred_image'), description=parsed.get('description'), scope=scope)
             #FIXME: validate
             project.save()
             user=UserProjectBinding.objects.create(user_id = self.userid, project = project, role = UserProjectBinding.Role.CREATOR).user
-            self._msg(project, f"New project {project.name} is created", reload=True)
-        else:
-            pid = int(pk)
-            b = UserProjectBinding.objects.get(user__id = self.userid, project__id = pid, role__in = [UserProjectBinding.Role.CREATOR, UserProjectBinding.Role.ADMIN])
+            self.send(text_data=json.dumps({
+                'feedback': f"New project {project.name} is created",
+                'reload_page': True,
+            }))
+            configurator = ProjectConfigHandler(project, user)
+            changes = { k: parsed[k] for k in configurator.attribute_handlers.keys() if k in parsed and not k in ["name", "description", "preferred_image", "scope"] }
+        elif request == "configure-project":
+            pk = parsed.get('pk')
+            changes = parsed.get('changes')
+            b = UserProjectBinding.objects.get(user__id = self.userid, project__id = pk, role__in = [UserProjectBinding.Role.CREATOR, UserProjectBinding.Role.ADMIN])
             project = b.project
             user = b.user
+            configurator = ProjectConfigHandler(project, user)
+        elif request == "update-widget":
+            field=parsed.get('field')
+            if field=='name':
+                from .templatetags.project_tags import render_name
+                self.send(text_data=json.dumps({'replace_widgets': {f"[data-name=name][data-pk=None][data-model=project]": render_name(value=parsed.get('value'))}}))
+            elif field=='description':
+                from .templatetags.project_tags import render_description
+                self.send(text_data=json.dumps({'replace_widgets': {f"[data-name=description][data-pk=None][data-model=project]": render_description(value=parsed.get('value'))}}))
+            elif field=='preferred_image':
+                from container.templatetags.container_buttons import button_image
+                image = Image.objects.get(id=parsed.get('value'))
+                self.send(text_data=json.dumps({'replace_widgets': {f"[data-name=preferred_image][data-pk=None][data-model=project]": button_image(model='project', attr='preferred_image', value=image)}}))
+            elif field=='volumes':
+                from .templatetags.course_tags import render_volumes
+                from volume.models import Volume
+                self.send(text_data=json.dumps({'replace_widgets': {f"[data-name=volumes][data-pk=None][data-model=project]": render_volumes(None, user, value=Volume.objects.filter(pk__in=parsed.get('value'))) }}))
+            elif field=='scope':
+                from .templatetags.project_buttons import project_scope
+                self.send(text_data=json.dumps({'replace_widgets': {f"[data-name=scope][data-pk=None][data-model=project]": project_scope(value=parsed.get('value'), is_admin=True)}}))
+            else:
+                logger.critical(f"unknown widget field {field}")
+            return
+        else:
+            logger.critical(f"Unknown request: {request}")
+            return
+        failed={}
         # Iterate over the changes and try to update the model instance
-        configurator = ProjectConfigHandler(project, user)
         widgets={}
         messages=[]
         for field, new_value in changes.items():

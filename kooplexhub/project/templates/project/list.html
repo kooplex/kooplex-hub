@@ -67,6 +67,8 @@ document.addEventListener('DOMContentLoaded', () => {
         endpoint: "{{ wss_project_config }}",
         userid: {{ user.id }},
         request: "configure-project",
+        model: "project",
+        required: [ "name", "description", "preferred_image" ],
     });
     window.inlineEditor = new InlineEditor(window.wss_conf_project);
     window.imageSelector = new ImageSelectionHandler(window.wss_conf_project);
