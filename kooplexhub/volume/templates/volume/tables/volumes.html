@@ -11,7 +11,7 @@
 	    <tbody>
               {% for volume in volumes %}
                 <tr>
-                    <td>{% render_scope volume user %}</td>
+                    <td>{% render_scope volume user td=True %}</td>
                     <td>{{ volume.folder }}</td>
                     <td>{% render_usercontainers volume user %}</td>
                 </tr>

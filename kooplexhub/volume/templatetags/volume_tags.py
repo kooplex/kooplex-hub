@@ -8,8 +8,9 @@ def render_volume(context, volume):
     return {"volume": volume, "user": context.get("request").user }
 
 @register.simple_tag
-def render_scope(volume, user):
-    return render_to_string("volume/scope.html", {"volume": volume, "editable": volume.is_admin(user)})
+def render_scope(volume, user, **kwargs):
+    is_cell=kwargs.get('td')
+    return render_to_string("volume/scope.html", {"volume": volume, "editable": False if is_cell else volume.is_admin(user)})
 
 @register.simple_tag
 def render_usercontainers(volume, user):
@@ -17,4 +18,4 @@ def render_usercontainers(volume, user):
 
 @register.simple_tag
 def render_description(volume, user):
-    return render_to_string("hub/widgets/inline_textarea.html", {'obj': volume, 'model': 'volume', "editable": volume.is_admin(user)})
+    return render_to_string("hub/widgets/inline_textarea.html", {'pk': volume.pk, 'value': volume.description, 'model': 'volume', "editable": volume.is_admin(user)})
