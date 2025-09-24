@@ -1,6 +1,7 @@
 {% load extras %}
 {% load volume_tags %}
-<div data-name="volumes" data-pk="{{pk}}" data-value="{{value}}" data-model="{{model}}">
+{% with e=editable|default:False %}
+<div data-name="volumes" data-pk="{{pk}}" data-value="{{value}}" data-model="{{model}}" data-editable="{{e}}">
     <div class="content">
       {% if volumes|length %}
         <table class="resourcetable">
@@ -18,8 +19,13 @@
 	    </tbody>
 	</table>
       {% else %}
-        <p>Click to add filesystem resources</p>
+        {% if editable %}
+        <p>Click to add filesystem resources...</p>
+	{% else %}
+        <p>No volumes are related to this project.</p>
+        {% endif %}
       {% endif %}
     </div>
 </div>
+{% endwith %}
 

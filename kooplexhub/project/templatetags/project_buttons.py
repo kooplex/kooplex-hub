@@ -14,12 +14,13 @@ def project_creator(project = None, user = None):
 
 
 @register.simple_tag
-def project_scope(project = None):
-    return render_to_string("project/button_scope.html", {'project':project})
+def project_scope(project = None, **kwargs):
+    from ..models import Project
+    return render_to_string("project/button_scope.html", {'project':project, 'scope': Project.Scope, 'editable': kwargs.get('is_admin')})
 
 
 @register.inclusion_tag("widgets/table_users.html")
-def render_collaborators(project, user):
+def render_collaborators(project, user, **kwargs):
     from ..tables import TableCollaborators
-    return {"pk": project.id, "table": TableCollaborators(project.collaborators_excluding(user))}
+    return {"pk": getattr(project, 'pk', None), "table": TableCollaborators(project.collaborators_excluding(user) if project else {}), 'editable': kwargs.get('is_admin')}
 

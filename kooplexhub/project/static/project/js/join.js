@@ -16,21 +16,18 @@ class FetchJoinableProjects {
           onMessage: this._callback,
         });
 
-        $(document).on('shown.bs.modal', 'button[data-bs-toggle="tab"]', this._fetch);
+        $(document).on('click', 'button[data-bs-toggle="tab"]', this._fetch);
     }
 
     destroy() {
-        $(document).off('shown.bs.modal', 'button[data-bs-toggle="tab"]', this._fetch);
+        $(document).off('click', 'button[data-bs-toggle="tab"]', this._fetch);
     }
 
     _fetch (e) {
         const btn = e.target;
         const group = btn.closest('.nav-tabs')?.id;
         const tabId = btn.id;
-
-        // If it's an Environments tab, fire the data fetch
-        if (tabId && tabId.startsWith('environments-tab-')) {
-          const objectId = $(btn).data('id');
+        if (tabId && tabId==='tab-join-project') {
           const payload = { request: 'get-joinable' };
           this.wss.send(JSON.stringify(payload));
         }
@@ -38,7 +35,7 @@ class FetchJoinableProjects {
 
     _callback(message) {
         if (message.response==='get-joinable') {
-            $("#joinProjectSelection").replaceWith(data.replace);
+            $("#joinProjectSelection").replaceWith(message.replace);
 	    $("table[name=join-project] tbody tr").on('click', function () {
                 const pk = $(this).data('id');
                 this.wss.send(JSON.stringify({

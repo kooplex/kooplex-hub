@@ -107,10 +107,10 @@
                 </div>
             </div>
             <div class="tab-pane fade" id="content-three-{{project.id}}" role="tabpanel" aria-labelledby="tab-three-{{project.id}}">
-		{% render_collaborators project user %}
+		{% render_collaborators project user is_admin=is_admin %}
             </div>
             <div class="tab-pane fade" id="content-four-{{project.id}}" role="tabpanel" aria-labelledby="tab-four-{{project.id}}">
-                {% render_volumes project user %}
+                {% render_volumes project user is_admin=is_admin %}
             </div>
             <div class="tab-pane fade" id="content-five-{{project.id}}" role="tabpanel" aria-labelledby="tab-five-{{project.id}}">
 		{% button_image project "project" "preferred_image" %}

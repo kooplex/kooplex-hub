@@ -12,7 +12,7 @@ class UserHandler {
         this.uploadInputSelector   = opts.uploadInputSelector   || '#user-upload';
         this.spinnerSelector       = opts.spinnerSelector       || '#user-upload-spinner';
         this.removeUserSelector    = opts.removeUserSelector    || '[name=remove][data-id][data-remove=user]';
-        this.triggerSelector       = opts.triggerSelector       || '[name=users]';
+        this.triggerSelector       = opts.triggerSelector       || '[name=users][data-editable=True]';
         this.wsEndpoint            = opts.wsEndpoint            || null;
         this.wss                   = null;    // ManagedWebSocket for parsing
         this.pendingRequests       = new Set(); // track request_ids while processing
@@ -47,7 +47,8 @@ class UserHandler {
 
     _triggerClick(event) {
         const $widget = $(event.currentTarget);
-        const objectId = $widget.data('id');
+        const objectId = $widget.data('id') || 'None';
+	    console.log(objectId)
         const kind = $widget.data('kind');
         this.openModal(objectId, kind);
     }
@@ -139,6 +140,11 @@ class UserHandler {
         this._toast('Save userlist channel is not available.');
         return;
       }
+	    if (this.pk === 'None') {
+
+console.error("NOT IMPLEMENTED")
+		    return
+	    }
       // Track request so we only react to our own response
       this.pendingRequests.add(request_id);
       // Send to server new userlist to save

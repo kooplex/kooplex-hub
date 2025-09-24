@@ -17,7 +17,6 @@ from volume.tables import TableVolume
 from hub.tables import TableUsers
 from .models import Project, UserProjectBinding, ProjectContainerBinding
 from container.models import Image, Container
-from volume.models import Volume, VolumeContainerBinding
 
 from kooplexhub.settings import KOOPLEX
 
@@ -105,7 +104,6 @@ class UserProjectBindingListView(LoginRequiredMixin, generic.ListView):
         context['users'] = [ u.profile._repr for u in User.objects.all().exclude(id = self.request.user.id) ]
         context['t_users'] = TableUsers(User.objects.all().exclude(id = self.request.user.id), marker_column='Admin')
         context['t_volume'] = TableVolume.for_user(self.request.user)
-        context['empty_project'] = Project()
         return context
 
     def get_queryset(self):

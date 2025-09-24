@@ -22,6 +22,7 @@ def render_volumes(course, user, **kwargs):
         'volumes': volumes, 
         'value': list(map(lambda v: v.id, volumes)),
         'user': user, 
+        'editable': True, 
     })
 
 @register.simple_tag

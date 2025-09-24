@@ -1,3 +1,5 @@
+{% with currentscope=project.scope|default:scope.PRIVATE %}
+{% if editable %}
 <div class="btn-group dropend d-inline-block">
   <button
     class="btn btn-outline-secondary rounded-circle d-inline-flex align-items-center justify-content-center scope-btn"
@@ -11,39 +13,48 @@
     data-pk="{{ project.id }}"
     data-value="{{ project.scope }}"
   >
-{% if project.scope == project.Scope.PRIVATE %}
+{% if currentscope == scope.PRIVATE %}
       <i class="oi oi-key h5 m-0"></i>
-{% elif project.scope == project.Scope.INTERNAL %}
+{% elif currentscope == scope.INTERNAL %}
       <i class="oi oi-lock-unlocked h5 m-0"></i>
-{% elif project.scope == project.Scope.PUBLIC %}
+{% elif currentscope == scope.PUBLIC %}
       <i class="oi oi-cloud h5 m-0"></i>
-{% else %}
 {% endif %}
   </button>
   <ul class="dropdown-menu dropdown-menu-end p-1 shadow">
     <li>
-      <button class="dropdown-item d-flex align-items-center gap-2 {% if project.scope == project.Scope.PRIVATE %}active{% endif %}"
+      <button class="dropdown-item d-flex align-items-center gap-2 {% if currentscope == scope.PRIVATE %}active{% endif %}"
               type="button"
-              data-value="{{ project.Scope.PRIVATE }}">
+              data-value="{{ scope.PRIVATE }}">
         <i class="oi oi-key" aria-hidden="true"></i>
         <span>Private</span>
       </button>
     </li>
     <li>
-      <button class="dropdown-item d-flex align-items-center gap-2 {% if project.scope == project.Scope.INTERNAL %}active{% endif %}"
+      <button class="dropdown-item d-flex align-items-center gap-2 {% if currentscope == scope.INTERNAL %}active{% endif %}"
               type="button"
-              data-value="{{ project.Scope.INTERNAL }}">
+              data-value="{{ scope.INTERNAL }}">
         <i class="oi oi-lock-unlocked" aria-hidden="true"></i>
         <span>Internal</span>
       </button>
     </li>
     <li>
-      <button class="dropdown-item d-flex align-items-center gap-2 {% if project.scope == project.Scope.PUBLIC %}active{% endif %}"
+      <button class="dropdown-item d-flex align-items-center gap-2 {% if currentscope == scope.PUBLIC %}active{% endif %}"
               type="button"
-              data-value="{{ project.Scope.PUBLIC }}">
+              data-value="{{ scope.PUBLIC }}">
         <i class="oi oi-cloud" aria-hidden="true"></i>
         <span>Public</span>
       </button>
     </li>
   </ul>
 </div>
+{% else %}
+{% if currentscope == scope.PRIVATE %}
+      <i class="oi oi-key h5 m-0"></i>
+{% elif currentscope == scope.INTERNAL %}
+      <i class="oi oi-lock-unlocked h5 m-0"></i>
+{% elif currentscope == scope.PUBLIC %}
+      <i class="oi oi-cloud h5 m-0"></i>
+{% endif %}
+{% endif %}
+{% endwith %}
