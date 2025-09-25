@@ -7,7 +7,7 @@ from ..models import Report, ReportType
 from container.models import Image
 from project.models import UserProjectBinding
 from django.contrib.auth.models import User
-from taggit.models import Tag
+#from taggit.models import Tag
 from hub.models import Thumbnail
 
 from ..filesystem import dir_reportcandidate
@@ -40,7 +40,7 @@ class FormReport(forms.ModelForm):
         })),
     )
     scope = forms.ChoiceField(
-        choices = Report.SCOPE_LOOKUP.items(), required = True,
+        choices = Report.Scope.choices, required = True,
         widget = forms.Select(attrs = tooltip_attrs({ 'title': _('Select the scope of the report.') }))
     )
     reporttype = forms.ModelChoiceField(

@@ -95,26 +95,25 @@ class ConfigureReportView(ReportView, generic.edit.UpdateView):
         
 
 class ReportListView(generic.ListView):
-    template_name = 'report_list.html'
+    template_name = 'report/list.html'
     context_object_name = 'reports'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['submenu'] = 'list'
         context['menu_report'] = True
-        context['extend'] = "report_layout.html" if self.request.user.is_authenticated else "index_unauthorized.html"
-        context['common_tags'] : Report.tags.most_common()
+        #context['common_tags'] : Report.tags.most_common()
         return context
 
     def get_queryset(self):
         user = self.request.user
-        public = Q(scope = Report.SC_PUBLIC)
         if not user.is_authenticated:
-            return Report.objects.filter(public)
-        collaborator = Q(project__in = Project.get_userprojects(user), scope = Report.SC_COLLABORATION)
-        creator = Q(creator = user, scope = Report.SC_PRIVATE)
-        internal = Q(scope = Report.SC_INTERNAL)
-        return Report.objects.filter(public | collaborator | internal | creator)
+            return Report.objects.filter(scope=Report.Scope.PUBLIC)
+        return Report.objects.filter(
+            Q(scope=Report.Scope.PUBLIC) |
+            Q(scope=Report.Scope.INTERNAL) |
+            Q(scope=Report.Scope.PRIVATE, creator=user) |
+            Q(scope=Report.Scope.COLLABORATION, project__userbindings__user=user)
+        ).distinct()
 
 
 def open(request, report_id):

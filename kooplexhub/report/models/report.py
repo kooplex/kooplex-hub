@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 
 from container.models import Image, Proxy 
 from project.models import Project
-from taggit.managers import TaggableManager
+#  from taggit.managers import TaggableManager
 
 from hub.models import Thumbnail
 
@@ -42,16 +42,12 @@ class ReportType(models.Model):
         return self.name
 
 class Report(models.Model):
-    SC_PRIVATE = 'private'
-    SC_COLLABORATION = 'collaboration'
-    SC_INTERNAL = 'internal'
-    SC_PUBLIC = 'public'
-    SCOPE_LOOKUP = {
-        SC_PRIVATE: 'private - Only the creator can view the report.',
-        SC_COLLABORATION: 'collaboration - The creator and collaborators can view the report.',
-        SC_INTERNAL: 'authenticated - An authenticated kooplex user can view the report.',
-        SC_PUBLIC: 'public - Anyone can view the report.',
-    }
+    class Scope(models.TextChoices):
+        PUBLIC = 'public', 'public - Anyone can view the report.'
+        INTERNAL = 'internal', 'authenticated - An authenticated kooplex user can view the report.'
+        PRIVATE = 'private', 'private - Only the creator can view the report.'
+        COLLABORATION = 'collaboration', 'collaboration - The creator and collaborators can view the report.'
+
 
     name = models.CharField(max_length = 200, null = False)
     reporttype = models.ForeignKey(ReportType, default=1, on_delete = models.CASCADE)
@@ -63,12 +59,9 @@ class Report(models.Model):
     folder = models.CharField(max_length = 200, null = False)
     indexfile = models.CharField(max_length = 128, blank=True, null = True)
     thumbnail = models.ForeignKey(Thumbnail, on_delete = models.CASCADE, default = None, null = True)
-
-
-    scope = models.CharField(max_length = 16, choices = SCOPE_LOOKUP.items(), default = SC_PRIVATE)
-
+    scope = models.CharField(max_length = 16, choices = Scope.choices, default = Scope.PRIVATE)
     image = models.ForeignKey(Image, null = True, blank=True, on_delete = models.CASCADE) # what else than CASCADE?
-    tags = TaggableManager(blank = True)
+#    tags = TaggableManager(blank = True)
 
     # To be able to sort (e.g. useful for courses)
     # tags = # useful if we wanna search according to keywords
