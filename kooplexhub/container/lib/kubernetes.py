@@ -239,21 +239,30 @@ def start(container):
         logger.debug('mount home')
         mCV.add(
                 mountPath=HUB_SETTINGS['mounts']['home']['mountpoint'].format(user = container.user),
-                subPath=HUB_SETTINGS['mounts']['home']['subpath'].format(user = container.user),
+                subPath=os.path.join(
+                    HUB_SETTINGS['mounts']['home']['subpath'],
+                    HUB_SETTINGS['mounts']['home']['folder'].format(user = container.user),
+                ),
                 claimName=HUB_SETTINGS['mounts']['home']['claim']
                 )
         mCV.add(
                 mountPath=HUB_SETTINGS['mounts']['garbage']['mountpoint'].format(user = container.user),
-                subPath=HUB_SETTINGS['mounts']['garbage']['subpath'].format(user = container.user),
+                subPath=os.path.join(
+                    HUB_SETTINGS['mounts']['garbage']['subpath'],
+                    HUB_SETTINGS['mounts']['garbage']['folder'].format(user = container.user),
+                ),
                 claimName=HUB_SETTINGS['mounts']['garbage']['claim']
                 )
 
 
     # user's scratch folder
-    if container.user.profile.has_scratch:
+    if container.user.profile.has_scratch and HUB_SETTINGS['mounts']['scratch']:
         mCV.add(
                 mountPath=HUB_SETTINGS['mounts']['scratch']['mountpoint'].format(user = container.user),
-                subPath=HUB_SETTINGS['mounts']['scratch']['subpath'].format(user = container.user),
+                subPath=os.path.join(
+                    HUB_SETTINGS['mounts']['scratch']['subpath'],
+                    HUB_SETTINGS['mounts']['scratch']['folder'].format(user = container.user),
+                ),
                 claimName=HUB_SETTINGS['mounts']['scratch']['claim']
                 )
 
@@ -262,39 +271,60 @@ def start(container):
         logger.debug(f'mount course folders {course.name}')
         mCV.add(
                 mountPath=EDUCATION_SETTINGS['mounts']['workdir']['mountpoint'].format(user = container.user, course = course),
-                subPath=EDUCATION_SETTINGS['mounts']['workdir']['subpath'].format(user = container.user, course = course),
+                subPath=os.path.join(
+                    EDUCATION_SETTINGS['mounts']['workdir']['subpath'],
+                    EDUCATION_SETTINGS['mounts']['workdir']['folder'].format(user = container.user, course = course),
+                ),
                 claimName=EDUCATION_SETTINGS['mounts']['workdir']['claim']
                 )
         mCV.add(
                 mountPath=EDUCATION_SETTINGS['mounts']['public']['mountpoint'].format(user = container.user, course = course),
-                subPath=EDUCATION_SETTINGS['mounts']['public']['subpath'].format(course = course),
+                subPath=os.path.join(
+                    EDUCATION_SETTINGS['mounts']['public']['subpath'],
+                    EDUCATION_SETTINGS['mounts']['public']['folder'].format(course = course),
+                ),
                 claimName=EDUCATION_SETTINGS['mounts']['public']['claim']
                 )
         if course.is_teacher(container.user):
             mCV.add(
                 mountPath=EDUCATION_SETTINGS['mounts']['assignment']['mountpoint'].format(user = container.user, course = course),
-                subPath=EDUCATION_SETTINGS['mounts']['assignment']['subpath_teacher'].format(course = course),
+                subPath=os.path.join(
+                    EDUCATION_SETTINGS['mounts']['assignment']['subpath'],
+                    EDUCATION_SETTINGS['mounts']['assignment']['folder_top'].format(course = course),
+                ),
                 claimName=EDUCATION_SETTINGS['mounts']['assignment']['claim']
                     )
             mCV.add(
                 mountPath=EDUCATION_SETTINGS['mounts']['assignment_prepare']['mountpoint'].format(user = container.user, course = course),
-                subPath=EDUCATION_SETTINGS['mounts']['assignment_prepare']['subpath'].format(course = course),
+                subPath=os.path.join(
+                    EDUCATION_SETTINGS['mounts']['assignment_prepare']['subpath'],
+                    EDUCATION_SETTINGS['mounts']['assignment_prepare']['folder'].format(course = course),
+                ),
                 claimName=EDUCATION_SETTINGS['mounts']['assignment_prepare']['claim']
                     )
             mCV.add(
                 mountPath=EDUCATION_SETTINGS['mounts']['assignment_correct']['mountpoint'].format(user = container.user, course = course),
-                subPath=EDUCATION_SETTINGS['mounts']['assignment_correct']['subpath_teacher'].format(course = course),
+                subPath=os.path.join(
+                    EDUCATION_SETTINGS['mounts']['assignment_correct']['subpath'],
+                    EDUCATION_SETTINGS['mounts']['assignment_correct']['folder_top'].format(course = course),
+                ),
                 claimName=EDUCATION_SETTINGS['mounts']['assignment_correct']['claim']
                     )
         else:
             mCV.add(
                 mountPath=EDUCATION_SETTINGS['mounts']['assignment']['mountpoint'].format(user = container.user, course = course),
-                subPath=EDUCATION_SETTINGS['mounts']['assignment']['subpath_student'].format(user = container.user, course = course),
+                subPath=os.path.join(
+                    EDUCATION_SETTINGS['mounts']['assignment']['subpath'],
+                    EDUCATION_SETTINGS['mounts']['assignment']['folder'].format(user = container.user, course = course),
+                ),
                 claimName=EDUCATION_SETTINGS['mounts']['assignment']['claim']
                     )
             mCV.add(
                 mountPath=EDUCATION_SETTINGS['mounts']['assignment_correct']['mountpoint'].format(user = container.user, course = course),
-                subPath=EDUCATION_SETTINGS['mounts']['assignment_correct']['subpath_student'].format(user = container.user, course = course),
+                subPath=os.path.join(
+                    EDUCATION_SETTINGS['mounts']['assignment_correct']['subpath'],
+                    EDUCATION_SETTINGS['mounts']['assignment_correct']['folder'].format(user = container.user, course = course),
+                ),
                 claimName=EDUCATION_SETTINGS['mounts']['assignment_correct']['claim']
                     )
 
@@ -303,12 +333,18 @@ def start(container):
         logger.debug(f'mount project folders {project.name}')
         mCV.add(
                 mountPath=PROJECT_SETTINGS['mounts']['project']['mountpoint'].format(user = container.user, project = project),
-                subPath=PROJECT_SETTINGS['mounts']['project']['subpath'].format(user = container.user, project = project),
+                subPath=os.path.join(
+                    PROJECT_SETTINGS['mounts']['project']['subpath'],
+                    PROJECT_SETTINGS['mounts']['project']['folder'].format(user = container.user, project = project),
+                ),
                 claimName=PROJECT_SETTINGS['mounts']['project']['claim']
                 )
         mCV.add(
                 mountPath=REPORT_SETTINGS['mounts']['prepare']['mountpoint'].format(user = container.user, project = project),
-                subPath=REPORT_SETTINGS['mounts']['prepare']['subpath'].format(user = container.user, project = project),
+                subPath=os.path.join(
+                    REPORT_SETTINGS['mounts']['prepare']['subpath'],
+                    REPORT_SETTINGS['mounts']['prepare']['folder'].format(user = container.user, project = project),
+                ),
                 claimName=REPORT_SETTINGS['mounts']['prepare']['claim']
                 )
       

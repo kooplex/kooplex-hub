@@ -9,7 +9,7 @@ from kooplexhub.lib.libbase import standardize_str
 #FIXMEfrom hub.models import FilesystemTask, Group, UserGroupBinding
 from hub.models import Group, UserGroupBinding
 from ..models import UserVolumeBinding, Volume
-from .. import filesystem as fs
+import volume.fs as fs
 from hub.lib.filesystem import _mkdir, _grantaccess
 
 logger = logging.getLogger(__name__)

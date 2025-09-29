@@ -1,7 +1,6 @@
 import os
 import time
 
-from hub.lib import dirname
 from hub.lib.filesystem import _mkdir, _grantaccess
 
 from .conf import VOLUME_SETTINGS

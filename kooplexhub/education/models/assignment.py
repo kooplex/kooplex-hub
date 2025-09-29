@@ -11,10 +11,9 @@ from django.utils import timezone
 
 from kooplexhub.lib.libbase import standardize_str
 
-from hub.lib import dirname
 from hub.models import Group
 from . import Course, UserCourseBinding
-from education.filesystem import *
+from education.fs import *
 
 logger = logging.getLogger(__name__)
 

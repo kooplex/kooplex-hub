@@ -10,9 +10,11 @@ DEFAULTS = {
     "mounts": {
         "project": {
                 "claim": 'project',
-                "subpath": 'projects/{project.subpath}',
+                "subpath": '',
+                "folder": '{project.subpath}',
                 "mountpoint": '/project/{project.subpath}',
                 "mountpoint_hub": '/mnt/projects',
+                "garbage": "{project.creator.username}/project-{project.subpath}.{time.time()}.tar.gz",
             },
         },
 }

@@ -7,7 +7,7 @@ from django.db.models.signals import pre_save, post_save, pre_delete, post_delet
 
 from hub.models import Group, UserGroupBinding
 from education.models import Course, UserCourseBinding, UserAssignmentBinding
-from education.filesystem import *
+from education.fs import *
 
 from hub.lib.filesystem import _mkdir
 from hub.lib import grantaccess_group

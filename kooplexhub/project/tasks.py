@@ -12,7 +12,6 @@ from hub.models import Group
 from hub.lib import archivedir, extracttarbal
 from hub.lib import grantaccess_user, revokeaccess_user
 from hub.lib import grantaccess_group, revokeaccess_group
-from hub.lib import filename, dirname
 from hub.lib import mkdir, archivedir, rmdir
 
 logger = logging.getLogger(__name__)

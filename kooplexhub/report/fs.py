@@ -1,14 +1,13 @@
 import os
 import time
 
-from hub.lib import dirname
 from hub.lib.filesystem import _copy_dir, _rmdir   #, _grantgroupaccess
 from kooplexhub.lib import bash
-from project.filesystem import path_report_prepare
+from project.fs import path_report_prepare
 
-#FIXME
-#mp_report = dirname.MP.get('report', '/mnt/report')
-mp_report = '/mnt/report'
+from .conf import REPORT_SETTINGS
+
+mp_report = REPORT_SETTINGS["mounts"]["report"]["mountpoint_hub"]#FIXME '/mnt/course'
 
 def subpath(report):
     return dirname.MP.get('subPath_report', '{report.id}').format(report = report)

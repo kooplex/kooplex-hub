@@ -11,7 +11,7 @@ from hub.models import Group, UserGroupBinding
 from hub.tasks import delete_folder
 from hub.lib.filesystem import _mkdir
 from ..models import Project
-from .. import filesystem as fs
+import project.fs as fs
 
 logger = logging.getLogger(__name__)
 

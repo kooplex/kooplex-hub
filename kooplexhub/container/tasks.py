@@ -57,7 +57,7 @@ def stop_container(user_id, container_id):
 @db_periodic_task(crontab(minute="55"), queue='container')  # Runs every hour at 55
 def kill_idle():
     url_api = CONTAINER_SETTINGS['proxy']['url']
-    url_path = CONTAINER_SETTINGS['proxy']['check_container'].format(container = container)
+    url_path = CONTAINER_SETTINGS['proxy']['check_container']
     url = os.path.join(url_api, url_path)
     for c in Container.objects.filter(state__in = [Container.State.RUNNING, Container.State.NEED_RESTART], image__imagetype = Image.TP_PROJECT):
         try:

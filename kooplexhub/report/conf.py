@@ -4,13 +4,16 @@ DEFAULTS = {
     "mounts": {
         "prepare": {
                 "claim": 'report',
-                "subpath": 'prepare/{project.subpath}',
+                "subpath": 'prepare',
+                "folder": '{project.subpath}',
                 "mountpoint": '/project/{project.subpath}/report_prepare',
                 "mountpoint_hub": '/mnt/report_prepare',
+                "garbage": "{project.creator.username}/projectreport-{project.subpath}.{time.time()}.tar.gz",
             },
         "report": {
                 "claim": 'report',
-                "subpath": 'report/{report.folder}',
+                "subpath": 'report',
+                "folder": '{report.folder}',
                 "mountpoint": '/report',
                 "mountpoint_hub": '/mnt/reports',
             },

@@ -9,7 +9,7 @@ from django.dispatch import receiver
 from kooplexhub.lib.libbase import standardize_str
 from hub.models import Group, UserGroupBinding
 from ..models import UserProjectBinding
-from .. import filesystem as fs
+import project.fs as fs
 
 logger = logging.getLogger(__name__)
 

@@ -26,19 +26,23 @@ DEFAULTS = {
     "mounts": {
         "home": {
                 "claim": 'userdata',
-                "subpath": 'home/{user.username}',
+                "subpath": 'home',
+                "folder": '{user.username}',
                 "mountpoint": '/home/{user.username}',
                 "mountpoint_hub": '/mnt/home',
+                "garbage": "user-{user.username}.{time.time()}.tar.gz",
             },
         "garbage": {
                 "claim": 'userdata',
-                "subpath": 'garbage/{user.username}',
+                "subpath": 'garbage',
+                "folder": '{user.username}',
                 "mountpoint": '/garbage/{user.username}',
                 "mountpoint_hub": '/mnt/garbage',
             },
         "scratch": {
                 "claim": 'userdata',
-                "subpath": 'scratch/{user.username}',
+                "subpath": 'scratch',
+                "folder": '{user.username}',
                 "mountpoint": '/scratch/{user.username}',
                 "mountpoint_hub": '/mnt/scratch',
             },

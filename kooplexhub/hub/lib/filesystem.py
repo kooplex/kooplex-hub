@@ -16,7 +16,6 @@ import tarfile
 
 from kooplexhub.settings import KOOPLEX
 from kooplexhub.lib import bash
-from ..lib import dirname, filename
 
 logger = logging.getLogger(__name__)
 
@@ -226,31 +225,5 @@ def _copy_dir(f_source, f_target, remove = False):
     logger.info("copied %s -> %s" % (f_source, f_target))
     if remove:
         _rmdir(f_source)
-
-
-###FIXME: #FIXME:
-###FIXME: #@sudo
-###FIXME: #def _createfile(fn, content, uid = 0, gid = 0, mode = 0b111101000):
-###FIXME: #    with open(fn, 'w') as f:
-###FIXME: #        f.write(content)
-###FIXME: #    os.chown(fn, uid, gid)
-###FIXME: #    os.chmod(fn, mode)
-###FIXME: #    logger.info("Created file: %s" % fn)
-###FIXME: 
-###FIXME: ########################################
-###FIXME: 
-###FIXME: 
-
-
-###FIXME: #@sudo
-###FIXME: #def _dir_walker(root):
-###FIXME: #    records = []
-###FIXME: #    for path, dirs, files in os.walk(root):
-###FIXME: #        for folder in dirs:
-###FIXME: #            d = os.path.join(path, folder)
-###FIXME: #            o = os.stat(d)
-###FIXME: #            records.append((d, o.st_uid, o.st_gid))
-###FIXME: #    logger.debug(f'treewalk: {records}')
-###FIXME: #    return records
 
 

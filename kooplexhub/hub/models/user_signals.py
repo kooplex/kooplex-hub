@@ -7,10 +7,10 @@ from django.dispatch import receiver
 from django.db.models.signals import post_save, pre_delete, post_delete
 
 from hub.models import *
-from hub.lib import filename, dirname
 from hub.lib import mkdir, grantaccess_user
+from hub.fs import userhome, usergarbage, userscratch
 
-from container.conf import CONTAINER_SETTINGS
+from ..conf import HUB_SETTINGS
 
 logger = logging.getLogger(__name__)
 
@@ -24,9 +24,9 @@ def user_creation(sender, instance, created, **kwargs):
         logger.info("New user %s" % instance)
         token = pwgen.pwgen(64)
         Profile.objects.create(user = instance, token = token)
-        userdirs = [ dirname.userhome, dirname.usergarbage ]
-        if CONTAINER_SETTINGS["mounts"]["scratch"]:
-            userdirs.append(dirname.userscratch)
+        userdirs = [ userhome, usergarbage ]
+        if HUB_SETTINGS["mounts"]["scratch"]:
+            userdirs.append(userscratch)
         for userdir in userdirs:
             folder = userdir(instance)
             mkdir(folder)

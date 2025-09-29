@@ -3,7 +3,7 @@ from django.db.models.signals import pre_save, post_save, pre_delete, post_delet
 from django.dispatch import receiver
 
 from education.models import Assignment, UserAssignmentBinding
-from education.filesystem import *
+from education.fs import *
 
 from hub.tasks import delete_folder
 

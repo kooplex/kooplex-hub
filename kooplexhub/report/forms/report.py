@@ -10,7 +10,7 @@ from django.contrib.auth.models import User
 #from taggit.models import Tag
 from hub.models import Thumbnail
 
-from ..filesystem import dir_reportcandidate
+from ..fs import dir_reportcandidate
 from kooplexhub.common import tooltip_attrs
 
 

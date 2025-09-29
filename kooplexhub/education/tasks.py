@@ -9,7 +9,7 @@ from django.contrib.auth.models import User
 
 from education.models import Course, UserCourseBinding
 from education.models import Assignment, UserAssignmentBinding
-from education.filesystem import *
+from education.fs import *
 from hub.models import Group
 
 from hub.lib import archivedir, extracttarbal

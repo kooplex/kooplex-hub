@@ -2,7 +2,7 @@ import logging
 
 from django.dispatch import receiver
 from django.db.models.signals import pre_save, post_save, post_delete, pre_delete
-from ..filesystem import publish, remove
+from report.fs import publish, remove
 from container.lib import stop_environment, start_environment
 from container.models import Container
 

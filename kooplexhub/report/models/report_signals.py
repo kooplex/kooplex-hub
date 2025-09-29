@@ -1,7 +1,7 @@
 from django.dispatch import receiver
 from django.db.models.signals import pre_save, post_save, post_delete, pre_delete
 from . import Report
-from ..filesystem import publish, remove
+from report.fs import publish, remove
 
 @receiver(post_save, sender = Report)
 def publish_report(sender, instance, **kwargs):

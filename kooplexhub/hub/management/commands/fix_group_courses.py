@@ -4,9 +4,9 @@ import logging
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
-from hub.lib import dirname
 from hub.models import Group, FilesystemTask
 from education.models import Course
+from education.fs import course_public
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ class Command(BaseCommand):
                 print (f'Course: {c} now maps to {g}')
                 if options.get('fix_fs'):
                     FilesystemTask.objects.create(
-                        folder = dirname.course_public(c),
+                        folder = course_public(c),
                         groups_ro = code([g]),
                         task = FilesystemTask.TSK_GRANT
                     )

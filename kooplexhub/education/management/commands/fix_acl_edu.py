@@ -6,10 +6,9 @@ import logging
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
-from hub.lib import dirname
-from hub.models import Group
-from education.models import Course, UserAssignmentBinding
-from education.filesystem import *
+
+from education.models import Course, UserAssignmentBinding #FIXME: use factory
+from education.fs import *
 from hub.lib import grantaccess_group, grantaccess_user
 
 logger = logging.getLogger(__name__)
@@ -56,7 +55,7 @@ class Command(BaseCommand):
                 grantaccess_group(group_teachers, f_correct, readonly = True, follow = True, recursive = True)
                 # Check assignment folders
                 for uab in UserAssignmentBinding.objects.filter(assignment__course = course):
-                    folder = dirname.assignment_workdir(uab),
+                    folder = assignment_workdir(uab),
                     grantaccess_group(group_teachers, folder, readonly = True, recursive = True)
                     grantaccess_group(group_teachers, folder, readonly = True, follow = True, recursive = True)
                     grantaccess_user(uab.user, folder, readonly = False, recursive = True)

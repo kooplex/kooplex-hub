@@ -6,8 +6,7 @@ import logging
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
-from hub.lib import dirname
-from project import filesystem as fs
+from project import fs
 from hub.models import FilesystemTask, Group, UserGroupBinding
 from project.models import Project, UserProjectBinding
 
