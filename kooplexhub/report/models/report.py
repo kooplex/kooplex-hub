@@ -11,10 +11,7 @@ from project.models import Project
 
 from hub.models import Thumbnail
 
-try:
-    from kooplexhub.settings import KOOPLEX
-except importerror:
-    KOOPLEX = {}
+from ..conf import REPORT_SETTINGS
 
 logger = logging.getLogger(__name__)
 
@@ -84,21 +81,8 @@ class Report(models.Model):
     @property
     def url(self):
         if self.reporttype.is_static:
-            return KOOPLEX['proxy'].get('static_report_path_open', 'http://localhost/report/{report.id}/').format(report = self)
+            return REPORT_SETTINGS['paths']['static'].format(report = self)
         else:
-            from . import ReportContainerBinding
-            rcb = ReportContainerBinding.objects.get(report=self)
-            #return Proxy.objects.get(image = self.image).path_open.format(container=rcb.container) #url_public(self)
-            #return KOOPLEX['environmental_variables']['REPORT_URL'].format(container=rcb.container) 
-            return os.path.join(KOOPLEX['proxy'].get('report_path_open', 'http://localhost/{proxy.report_path_open}').format(container = rcb.container, report = self))
+            return REPORT_SETTINGS['paths']['dynamic'].format(container=self.container.containerbindings.first())
 
-        #return KOOPLEX['proxy'].get('url_report', 'http://localhost/{report.id}').format(report = self, url_tag = url_tag)
-            
-        # if self.is_static:
-        #     return KOOPLEX['proxy'].get('url_report_static', 'http://localhost/{report.id}').format(report = self)
-        # else:
-        #     from . import ReportContainerBinding
-        #     rcb = ReportContainerBinding.objects.get(report=self)
-        #     return Proxy.objects.get(image = self.image).path.format(container=rcb.container) #url_public(self)
-        #     #return KOOPLEX['proxy'].get('url_report_dynamic', 'http://localhost/{report.id}').format(report = self)
 

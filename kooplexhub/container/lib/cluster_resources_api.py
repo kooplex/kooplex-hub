@@ -4,7 +4,6 @@ from kubernetes import config
 from kubernetes.client import CoreV1Api, CustomObjectsApi
 import pandas as pd
 
-from kooplexhub.settings import KOOPLEX
 
 logger = logging.getLogger(__name__)
 
@@ -84,9 +83,7 @@ class Cluster():
             cgpu = int(ncc.get('nvidia.com/gpu',0))
             self.node_df.loc[len(self.node_df)] = [node_name, UnitConverter(nac['cpu']), UnitConverter(nac['memory']), agpu, UnitConverter(ncc['cpu']), UnitConverter(ncc['memory']), cgpu]
 
-        # Add the default node settings when node == None
-        #FIXME: ez igy nem lesz jó, a listában kijön a None node... kubernetes_resources = KOOPLEX['kubernetes'].get('resources').get('maxrequests')
-        #FIXME: ez igy nem lesz jó, a listában kijön a None node... self.node_df.loc[len(self.node_df)] = ['None',kubernetes_resources['cpu'], kubernetes_resources['memory'], kubernetes_resources['nvidia.com/gpu']]
+        #FIXME Add the default node settings when node == None
         
     def query_pods_status(self, field=[], label=[] , reset=True):
         '''

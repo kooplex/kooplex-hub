@@ -7,10 +7,12 @@ from asgiref.sync import async_to_sync
 
 from django.contrib.auth.models import User
 
-from kooplexhub.settings import KOOPLEX
 from hub.lib import archivedir, extracttarbal, grantaccess_user
 from hub.lib import filename, dirname
 from hub.lib import mkdir, archivedir, rmdir
+
+from container.conf import CONTAINER_SETTINGS
+from .conf import HUB_SETTINGS
 
 logger = logging.getLogger(__name__)
 
@@ -24,9 +26,9 @@ def delete_folder(folder):
 def garbage_home(user_id):
     user = User.objects.get(id = user_id)
     rmdir( dirname.usergarbage(user) )
-    if KOOPLEX.get('mountpoint_hub', {}).get('scratch') is not None:
+    if CONTAINER_SETTINGS['mounts']['scratch'] is not None:
         rmdir( dirname.userscratch(user) )
-    if KOOPLEX.get('archive_home'):
+    if HUB_SETTINGS['archive_home']:
         archivedir( dirname.userhome(user), filename.userhome_garbage(user), remove = True)
     else:
         rmdir( dirname.userhome(user) )

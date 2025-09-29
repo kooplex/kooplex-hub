@@ -7,6 +7,7 @@ from django.utils.html import format_html
 from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
 
+from container.conf import CONTAINER_SETTINGS
 
 
 from hub.util import SyncSkeleton, AsyncSkeleton
@@ -70,13 +71,12 @@ class ResourceConsumer(SyncSkeleton):
             resp["feedback"] = f"Node resource information for {node} is updated"
         else:
             node = "default"
-            from kooplexhub.settings import KOOPLEX
-            kubernetes = KOOPLEX.get('kubernetes',{}).get('resources',{}).get('maxrequests',{})
+            r = CONTAINER_SETTINGS['kubernetes']['resources']
             resp.update({
              "feedback" : f"Node resource information for defaults is updated",
-             "avail_cpu": kubernetes.get('cpu',1),
-             "avail_memory": kubernetes.get('memory',2),
-             "avail_gpu": kubernetes.get('nvidia.com/gpu',0),
+             "avail_cpu": r['max_cpu'],
+             "avail_memory": r['max_memory'],
+             "avail_gpu": r['max_gpu'],
                 })
         logger.debug(f"fetch {node} -> {resp}")
         self.send(text_data = json.dumps(resp))

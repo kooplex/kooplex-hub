@@ -14,20 +14,23 @@ from ..models import Image, Container
 
 from kooplexhub.lib import now
 
-try:
-    from kooplexhub.settings import KOOPLEX
-    from kooplexhub.settings import SERVERNAME
-    from kooplexhub.settings import REDIS_PASSWORD
-except ImportError:
-    KOOPLEX = {}
+from kooplexhub.settings import SERVERNAME
+from kooplexhub.settings import REDIS_PASSWORD
 
-KOOPLEX['kubernetes'].update({})
-KOOPLEX['kubernetes']['userdata'].update({})
-KOOPLEX['kubernetes']['cache'].update({})
+from ..conf import CONTAINER_SETTINGS
+from hub.conf import HUB_SETTINGS
+from education.conf import EDUCATION_SETTINGS
+from project.conf import PROJECT_SETTINGS
+from report.conf import REPORT_SETTINGS
+from volume.conf import VOLUME_SETTINGS
+
+
+#FIXME get rid of it
+from kooplexhub.settings import KOOPLEX
 
 logger = logging.getLogger(__name__)
 
-namespace = KOOPLEX['kubernetes'].get('namespace', 'k8plex-hub')
+namespace = CONTAINER_SETTINGS['kubernetes']['namespace']
 
 
 
@@ -45,9 +48,9 @@ def storage_resources(volumes):
     mounts = []
     claims = set()
     for volume in volumes:
-        mountPath = KOOPLEX['kubernetes']['userdata'].get('mountPath_attachment', '/attachments/{volume.folder}') \
+        mountPath = VOLUME_SETTINGS['mounts']['attachment']['mountpoint'] \
                 if volume.scope == volume.Scope.ATTACHMENT else \
-                KOOPLEX['kubernetes']['userdata'].get('mountPath_volume', '/volume/{volume.folder}')
+                VOLUME_SETTINGS['mounts']['volume']['mountpoint']
         mounts.append({
             "name": volume.claim,
             "mountPath": mountPath.format(volume = volume),
@@ -74,7 +77,7 @@ def create_sidecar_davfs(container, service):
                     "name": "davfs-sidecar",
                     "image": "image-registry.vo.elte.hu/sidecar-davfs2", #FIXME
                     "volumeMounts": [secret_volume_mount, empty_volume_mount],                    
-                    "imagePullPolicy": KOOPLEX['kubernetes'].get('imagePullPolicy', 'IfNotPresent'),
+                    "imagePullPolicy": CONTAINER_CSETTINGS['kubernetes']['imagePullPolicy'],
                     "env": service.get_envs(container.user),
                     "securityContext": V1SecurityContext(
                         #run_as_user=1029, 
@@ -176,14 +179,14 @@ def start(container):
     logger.debug('mount nslcd')
     mCV.add_cm(
             claimName='nslcd',
-            mountPath=KOOPLEX['kubernetes']['nslcd'].get('mountPath_nslcd', '/etc/mnt'),
+            mountPath=CONTAINER_SETTINGS['kubernetes']['nslcd']['mountPath_nslcd'],
             configMap=V1ConfigMapVolumeSource(name="nslcd", default_mode=0o400, items=[V1KeyToPath(key="nslcd",path="nslcd.conf")])
             )
 
     logger.debug('mount jobpy')
     mCV.add_cm(
         claimName='jobtool',
-        mountPath=KOOPLEX['kubernetes']['jobs'].get("jobpy","jobtool"),
+        mountPath=CONTAINER_SETTINGS['kubernetes']['jobs']["jobpy"],
         configMap=V1ConfigMapVolumeSource(name="job.py", default_mode=0o777, items=[V1KeyToPath(key="job",path="job")] ),
         )
             
@@ -202,7 +205,7 @@ def start(container):
 
     mCV.add_cm(
         claimName='initscripts',
-        mountPath=KOOPLEX['kubernetes']['initscripts'].get("mountPath_initscripts","/.init_scripts"),
+        mountPath=CONTAINER_SETTINGS['kubernetes']['initscripts']["mountPath_initscripts"],
         configMap=V1ConfigMapVolumeSource(name="initscripts", default_mode=0o777, items=initscripts),
         )
 
@@ -235,85 +238,80 @@ def start(container):
     if container.image.require_home:
         logger.debug('mount home')
         mCV.add(
-                mountPath=KOOPLEX['kubernetes']['userdata'].get('mountPath_home', '/home/{user.username}').format(user = container.user),
-                subPath=KOOPLEX['kubernetes']['userdata'].get('subPath_home', 'home/{user.username}').format(user = container.user),
-                claimName=KOOPLEX['kubernetes']['userdata'].get('claim-home', 'home')
+                mountPath=HUB_SETTINGS['mounts']['home']['mountpoint'].format(user = container.user),
+                subPath=HUB_SETTINGS['mounts']['home']['subpath'].format(user = container.user),
+                claimName=HUB_SETTINGS['mounts']['home']['claim']
                 )
         mCV.add(
-                mountPath=KOOPLEX['kubernetes']['userdata'].get('mountPath_garbage', '/garbage/{user.username}').format(user = container.user),
-                subPath=KOOPLEX['kubernetes']['userdata'].get('subPath_garbage', 'garbage/{user.username}').format(user = container.user),
-                claimName=KOOPLEX['kubernetes']['userdata'].get('claim-garbage', 'garbage')
+                mountPath=HUB_SETTINGS['mounts']['garbage']['mountpoint'].format(user = container.user),
+                subPath=HUB_SETTINGS['mounts']['garbage']['subpath'].format(user = container.user),
+                claimName=HUB_SETTINGS['mounts']['garbage']['claim']
                 )
 
 
     # user's scratch folder
     if container.user.profile.has_scratch:
         mCV.add(
-                mountPath=KOOPLEX['kubernetes']['userdata'].get('mountPath_scratch', '/scratch/{user.username}').format(user = container.user),
-                subPath=KOOPLEX['kubernetes']['userdata'].get('subPath_garbage', 'scratch/{user.username}').format(user = container.user),
-                claimName=KOOPLEX['kubernetes']['userdata'].get('claim-scratch', 'scratch')
+                mountPath=HUB_SETTINGS['mounts']['scratch']['mountpoint'].format(user = container.user),
+                subPath=HUB_SETTINGS['mounts']['scratch']['subpath'].format(user = container.user),
+                claimName=HUB_SETTINGS['mounts']['scratch']['claim']
                 )
 
     # education
     for course in container.courses:
         logger.debug(f'mount course folders {course.name}')
         mCV.add(
-                mountPath=KOOPLEX['kubernetes']['userdata'].get('mountPath_course_workdir', '/course/{course.folder}').format(course = course),
-                subPath=KOOPLEX['kubernetes']['userdata'].get('subPath_course_workdir', '/course/{course.folder}/{user.username}').format(course = course, user = container.user),
-                claimName=KOOPLEX['kubernetes']['userdata'].get('claim-edu', 'edu')
+                mountPath=EDUCATION_SETTINGS['mounts']['workdir']['mountpoint'].format(user = container.user, course = course),
+                subPath=EDUCATION_SETTINGS['mounts']['workdir']['subpath'].format(user = container.user, course = course),
+                claimName=EDUCATION_SETTINGS['mounts']['workdir']['claim']
                 )
         mCV.add(
-                mountPath=KOOPLEX['kubernetes']['userdata'].get('mountPath_course_public', '/course/{course.folder}.public').format(course = course),
-                subPath=KOOPLEX['kubernetes']['userdata'].get('subPath_course_public', '/course/{course.folder}/public').format(course = course),
-                claimName=KOOPLEX['kubernetes']['userdata'].get('claim-edu', 'edu')
+                mountPath=EDUCATION_SETTINGS['mounts']['public']['mountpoint'].format(user = container.user, course = course),
+                subPath=EDUCATION_SETTINGS['mounts']['public']['subpath'].format(course = course),
+                claimName=EDUCATION_SETTINGS['mounts']['public']['claim']
                 )
         if course.is_teacher(container.user):
             mCV.add(
-                    mountPath=KOOPLEX['kubernetes']['userdata'].get('mountPath_course_assignment', '/course/{course.folder}.everyone').format(course = course),
-                    subPath=KOOPLEX['kubernetes']['userdata'].get('subPath_course_assignment_all', '/course/{course.folder}/assignment').format(course = course),
-                    claimName=KOOPLEX['kubernetes']['userdata'].get('claim-edu', 'edu')
+                mountPath=EDUCATION_SETTINGS['mounts']['assignment']['mountpoint'].format(user = container.user, course = course),
+                subPath=EDUCATION_SETTINGS['mounts']['assignment']['subpath_teacher'].format(course = course),
+                claimName=EDUCATION_SETTINGS['mounts']['assignment']['claim']
                     )
             mCV.add(
-                    mountPath=KOOPLEX['kubernetes']['userdata'].get('mountPath_course_assignment_prepare', '/course/{course.folder}.prepare').format(course = course),
-                    subPath=KOOPLEX['kubernetes']['userdata'].get('subPath_course_assignment_prepare', '/course/{course.folder}/assignment_prepare').format(course = course),
-                    claimName=KOOPLEX['kubernetes']['userdata'].get('claim-edu', 'edu')
+                mountPath=EDUCATION_SETTINGS['mounts']['assignment_prepare']['mountpoint'].format(user = container.user, course = course),
+                subPath=EDUCATION_SETTINGS['mounts']['assignment_prepare']['subpath'].format(course = course),
+                claimName=EDUCATION_SETTINGS['mounts']['assignment_prepare']['claim']
                     )
             mCV.add(
-                    mountPath=KOOPLEX['kubernetes']['userdata'].get('mountPath_course_assignment_correct', '/course/{course.folder}.correct').format(course = course),
-                    subPath=KOOPLEX['kubernetes']['userdata'].get('subPath_course_assignment_correct_all', '/course/{course.folder}/correct').format(course = course),
-                    claimName=KOOPLEX['kubernetes']['userdata'].get('claim-edu', 'edu')
+                mountPath=EDUCATION_SETTINGS['mounts']['assignment_correct']['mountpoint'].format(user = container.user, course = course),
+                subPath=EDUCATION_SETTINGS['mounts']['assignment_correct']['subpath_teacher'].format(course = course),
+                claimName=EDUCATION_SETTINGS['mounts']['assignment_correct']['claim']
                     )
         else:
             mCV.add(
-                    mountPath=KOOPLEX['kubernetes']['userdata'].get('mountPath_course_assignment', '/course/{course.folder}.everyone').format(course = course),
-                    subPath=KOOPLEX['kubernetes']['userdata'].get('subPath_course_assignment', '/course/{course.folder}/{user.username}').format(course = course, user = container.user),
-                    claimName=KOOPLEX['kubernetes']['userdata'].get('claim-edu', 'edu')
+                mountPath=EDUCATION_SETTINGS['mounts']['assignment']['mountpoint'].format(user = container.user, course = course),
+                subPath=EDUCATION_SETTINGS['mounts']['assignment']['subpath_student'].format(user = container.user, course = course),
+                claimName=EDUCATION_SETTINGS['mounts']['assignment']['claim']
                     )
             mCV.add(
-                    mountPath=KOOPLEX['kubernetes']['userdata'].get('mountPath_course_assignment_correct', '/course/{course.folder}.correct').format(course = course),
-                    subPath=KOOPLEX['kubernetes']['userdata'].get('subPath_course_assignment_correct', '/course/{course.folder}/correct/{user.username}').format(course = course, user = container.user),
-                    claimName=KOOPLEX['kubernetes']['userdata'].get('claim-edu', 'edu')
+                mountPath=EDUCATION_SETTINGS['mounts']['assignment_correct']['mountpoint'].format(user = container.user, course = course),
+                subPath=EDUCATION_SETTINGS['mounts']['assignment_correct']['subpath_student'].format(user = container.user, course = course),
+                claimName=EDUCATION_SETTINGS['mounts']['assignment_correct']['claim']
                     )
 
-######    # project
-######    claim_project = False
-######    for project in container.projects:
-######        volume_mounts.extend([{
-######             "name": "project",
-######             "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_project', '/project/{project.subpath}').format(project = project),
-######             "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_project', '{project.subpath}').format(project = project, user = container.user),
-######        }, {
-######             "name": "project",
-######             "mountPath": KOOPLEX['kubernetes']['userdata'].get('mountPath_report_prepare', '/report_prepare/{project.subpath}').format(project = project),
-######             "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_report_prepare', '{project.subpath}').format(project = project, user = container.user),
-######        }])
-######        claim_project = True
-######    if claim_project:
-######        volumes.append({
-######            "name": "project",
-######            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-project', 'project') }
-######        })
-
+    # project
+    for project in container.projects:
+        logger.debug(f'mount project folders {project.name}')
+        mCV.add(
+                mountPath=PROJECT_SETTINGS['mounts']['project']['mountpoint'].format(user = container.user, project = project),
+                subPath=PROJECT_SETTINGS['mounts']['project']['subpath'].format(user = container.user, project = project),
+                claimName=PROJECT_SETTINGS['mounts']['project']['claim']
+                )
+        mCV.add(
+                mountPath=REPORT_SETTINGS['mounts']['prepare']['mountpoint'].format(user = container.user, project = project),
+                subPath=REPORT_SETTINGS['mounts']['prepare']['subpath'].format(user = container.user, project = project),
+                claimName=REPORT_SETTINGS['mounts']['prepare']['claim']
+                )
+      
     # report
 #    claim_report = False
 #    for report in container.reports:
@@ -348,18 +346,16 @@ def start(container):
 #        })
 #        has_cache = True
 
-    resources = KOOPLEX['kubernetes'].get('resources', {}).copy()
+    #FIXME: now reqeusts=limits are hardcoded
+    r=CONTAINER_SETTINGS['kubernetes']['resources']
     pod_resources = {"requests":{}, "limits": {}}
-    pod_resources["requests"]["nvidia.com/gpu"] = f"{max(container.gpurequest, resources['requests']['nvidia.com/gpu'])}"
-    #pod_resources["requests"]["gpu"] = f"{container.gpurequest}"
-    pod_resources["limits"]["nvidia.com/gpu"] = f"{max(container.gpurequest, resources['limits']['nvidia.com/gpu'])}"
-    #pod_resources["limits"]["gpu"] = f"{container.gpurequest}"
-    pod_resources["requests"]["cpu"] = f"{1000*max(container.cpurequest, resources['requests']['cpu'])}m"
-    pod_resources["limits"]["cpu"] = f"{1000*max(container.cpurequest, resources['limits']['cpu'])}m"
-    pod_resources["requests"]["memory"] = f"{max(container.memoryrequest, resources['requests']['memory'])}Gi"
-    pod_resources["limits"]["memory"] = "1Gi"  #FIXME: f"{max(container.memoryrequest, resources['limits']['memory'])}Gi"
+    pod_resources["requests"]["nvidia.com/gpu"] = f"{max(container.gpurequest, r['limit_gpu'])}"
+    pod_resources["limits"]["nvidia.com/gpu"] = f"{max(container.gpurequest, r['limit_gpu'])}"
+    pod_resources["requests"]["cpu"] = f"{1000*max(container.cpurequest, r['limit_cpu'])}m"
+    pod_resources["limits"]["cpu"] = f"{1000*max(container.cpurequest, r['limit_cpu'])}m"
+    pod_resources["requests"]["memory"] = f"{max(container.memoryrequest, r['limit_memory'])}Gi"
+    pod_resources["limits"]["memory"] = f"{max(container.memoryrequest, r['limit_memory'])}Gi"
 
-#    logger.warning(f"{resources}")
     
     container_list = []
 
@@ -372,12 +368,12 @@ def start(container):
         volumes.extend(vs)
         volume_mounts.extend(vms)
 
-    secret_items = [V1KeyToPath(key=KOOPLEX['kubernetes']['jobs'].get("token_name","job-token"), path=KOOPLEX['kubernetes']['jobs'].get("token_name","job-token"))]
+    secret_items = [V1KeyToPath(key=CONTAINER_SETTINGS['kubernetes']['jobs']["token_name"], path=CONTAINER_SETTINGS['kubernetes']['jobs']["token_name"])]
     secret_volume = V1Volume(name="main-secrets", secret=V1SecretVolumeSource(secret_name=container.user.username, 
                                                             default_mode=0o444, 
                                                             items=secret_items
                                                             ))#items, change ownership, 0o400: https://stackoverflow.com/questions/49945437/changing-default-file-owner-and-group-owner-of-kubernetes-secrets-files-mounted
-    secret_volumemount = V1VolumeMount(name="main-secrets", mount_path=KOOPLEX['kubernetes']["secrets"].get("mount_dir", "/.secrets"), read_only=True)
+    secret_volumemount = V1VolumeMount(name=CONTAINER_SETTINGS['kubernetes']["secrets"]["name"], mount_path=CONTAINER_SETTINGS['kubernetes']["secrets"]["mount_dir"], read_only=True)
     volume_mounts.append(secret_volumemount)
 
     volumes.append(secret_volume)
@@ -388,7 +384,7 @@ def start(container):
                     "image": container.image.name,
                     "volumeMounts": volume_mounts,
                     "ports": pod_ports,
-                    "imagePullPolicy": KOOPLEX['kubernetes'].get('imagePullPolicy', 'IfNotPresent'),
+                    "imagePullPolicy": CONTAINER_SETTINGS['kubernetes']['imagePullPolicy'],
                     "env": env_variables,
                     "resources": pod_resources,
                     }

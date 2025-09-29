@@ -3,9 +3,13 @@ import time
 
 from hub.lib import dirname
 
-mp_course = dirname.MP.get('course', '/mnt/course')
-mp_course_workdir = dirname.MP.get('course_workdir', '/mnt/course_workdir')
-mp_course_assignment = dirname.MP.get('course_assignment', '/mnt/course_assignment')
+#FIXME
+#mp_course = dirname.MP.get('course', '/mnt/course')
+#mp_course_workdir = dirname.MP.get('course_workdir', '/mnt/course_workdir')
+#mp_course_assignment = dirname.MP.get('course_assignment', '/mnt/course_assignment')
+mp_course = '/mnt/course'
+mp_course_workdir = '/mnt/course_workdir'
+mp_course_assignment = '/mnt/course_assignment'
 
 def course_root(course):
     return os.path.join(mp_course, course.folder)

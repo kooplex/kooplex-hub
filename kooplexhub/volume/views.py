@@ -15,7 +15,7 @@ from .models import Volume, UserVolumeBinding
 ##from .forms import TableVolumeShare
 from .forms import FormAttachment, FormVolumeUpdate
 
-from kooplexhub.settings import KOOPLEX
+from .conf import VOLUME_SETTINGS
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ class VolumeListView(LoginRequiredMixin, generic.ListView):
         l = manual_link(item = "volume")
         context = super().get_context_data(**kwargs)
         context['menu_storage'] = True
-        context['wss_volume_config'] = KOOPLEX.get('hub', {}).get('wss_volume_config', 'wss://localhost/hub/ws/volume/config/{userid}/').format(userid = self.request.user.id)
+        context['wss_volume_config'] = VOLUME_SETTINGS['wss']['config'].format(user = self.request.user)
         context['empty_title'] = 'No volumes available'
         context['empty_body'] = format_html(f'You do no have access to the volumes yet. Ask volume owners or volume administrators for collaboration. {l}')
         return context

@@ -22,10 +22,7 @@ User = get_user_model()
 from kooplexhub.lib import  now
 from kooplexhub.lib import my_alphanumeric_validator
 
-try:
-    from kooplexhub.settings import KOOPLEX
-except ImportError:
-    KOOPLEX = {}
+from ..conf import CONTAINER_SETTINGS
 
 logger = logging.getLogger(__name__)
 
@@ -147,7 +144,7 @@ class Container(models.Model):
 
     @property
     def target_node(self):
-        return {'kubernetes.io/hostname': self.node} if self.node else KOOPLEX.get('kubernetes', {}).get('nodeSelector_k8s', {}) 
+        return {'kubernetes.io/hostname': self.node} if self.node else CONTAINER_SETTINGS['kubernetes']['nodeSelector_k8s']
 
 
     @property

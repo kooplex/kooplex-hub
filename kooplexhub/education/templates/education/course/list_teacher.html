@@ -29,15 +29,15 @@ Create a new course or import courses from Canvas using a canvas api token <a hr
 {% endif %}
 
 {# render the course cards #}
-{% if coursebindinglist %}
 <div id="listPane" class="d-flex flex-wrap justify-content-center gap-3">
   {% for ucb in coursebindinglist reversed %}
       <div class="card-container" id="card-container-{{ ucb.course.id }}">
       {% include 'education/course/card_teacher.html' with course=ucb.course %}
       </div>
+  {% empty %}
+      {% include 'empty.html' with empty_title="You have no courses yet." empty_p_before='Use the add (<i class="bi bi-plus border"></i>) button in the navbar to create your first course or synchronize to canvas.' %}
   {% endfor %}
 </div>
-{% endif %}
 
 {# a modal to configure a course image #}
 {% include 'container/image_selection.html' with instance="course" %}

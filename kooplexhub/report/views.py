@@ -19,14 +19,10 @@ from project.models import Project, UserProjectBinding
 
 logger = logging.getLogger(__name__)
 
-try:
-    from kooplexhub.settings import KOOPLEX
-except importerror:
-    KOOPLEX = {}
 
 class ReportView(LoginRequiredMixin):
     model = Report
-    template_name = 'report_configure.html'
+    template_name = 'report/configure.html'
     form_class = FormReport
     #context_object_name = 'reports'
     success_url = '/hub/report/list/' #FIXME: django.urls.reverse or shortcuts.reverse does not work reverse('project:list')
@@ -101,6 +97,7 @@ class ReportListView(generic.ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['menu_report'] = True
+        context['url_new_report'] = reverse('report:new')
         #context['common_tags'] : Report.tags.most_common()
         return context
 

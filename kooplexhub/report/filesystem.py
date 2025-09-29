@@ -1,14 +1,14 @@
 import os
 import time
 
-from kooplexhub.settings import KOOPLEX
-
 from hub.lib import dirname
 from hub.lib.filesystem import _copy_dir, _rmdir   #, _grantgroupaccess
 from kooplexhub.lib import bash
 from project.filesystem import path_report_prepare
 
-mp_report = dirname.MP.get('report', '/mnt/report')
+#FIXME
+#mp_report = dirname.MP.get('report', '/mnt/report')
+mp_report = '/mnt/report'
 
 def subpath(report):
     return dirname.MP.get('subPath_report', '{report.id}').format(report = report)

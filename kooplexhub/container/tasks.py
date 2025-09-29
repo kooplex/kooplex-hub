@@ -12,7 +12,8 @@ from huey import crontab, RetryTask
 from asgiref.sync import async_to_sync
 
 from container.models import Container, Image
-from kooplexhub.settings import KOOPLEX
+
+from .conf import CONTAINER_SETTINGS
 
 from .lib import start_environment, stop_environment
 
@@ -55,8 +56,8 @@ def stop_container(user_id, container_id):
 
 @db_periodic_task(crontab(minute="55"), queue='container')  # Runs every hour at 55
 def kill_idle():
-    url_api = KOOPLEX.get('proxy', {}).get('url_api', 'http://proxy:8001/api')
-    url_path = KOOPLEX.get('proxy', {}).get('check_container_path', 'routes/notebook/{container.label}')
+    url_api = CONTAINER_SETTINGS['proxy']['url']
+    url_path = CONTAINER_SETTINGS['proxy']['check_container'].format(container = container)
     url = os.path.join(url_api, url_path)
     for c in Container.objects.filter(state__in = [Container.State.RUNNING, Container.State.NEED_RESTART], image__imagetype = Image.TP_PROJECT):
         try:

@@ -1,7 +1,9 @@
 {% extends "layout.html" %}
+{% load static %}
 {% block title %}Kooplex Reports{% endblock %}
 
 {% block head_content %}
+<link href="{% static 'hub/css/cardlist.css' %}" rel="stylesheet">
 {% endblock %}
 
 {% block infoline %}
@@ -25,6 +27,13 @@ Publish a static html, an interactive plot or an application, which can be acces
 
 {% block scripts %}
 <script>
+$("[id=add]").click(function() {
+    location.replace("{{url_new_report}}");
+});
+
+
+
+
 {# show buttons on mouse enter the transparent card #}
 $("div[id^=hideable-report-]").mouseenter(function() {
   var reportid = $( this ).attr("id").split("-", 3)[2];

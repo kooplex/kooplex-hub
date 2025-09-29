@@ -14,12 +14,6 @@ from kooplexhub.common import tooltip_attrs
 from education.models import Assignment, UserCourseBinding, Course, UserAssignmentBinding#, UserCourseGroupBinding, CourseGroup
 from education.filesystem import *
 
-try:
-    from kooplexhub.settings import KOOPLEX
-except ImportError:
-    KOOPLEX = {}
-KOOPLEX['kubernetes'].update({})
-KOOPLEX['kubernetes']['userdata'].update({})
 
 class dateWidget(forms.DateTimeInput):
     template_name = 'datetime_pick.html'

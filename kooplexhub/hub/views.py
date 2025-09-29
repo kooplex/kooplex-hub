@@ -9,7 +9,8 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import plotly.express as px
 from container.lib.cluster_resources_api import *
-from kooplexhub.settings import KOOPLEX
+
+from .conf import HUB_SETTINGS
 
 class IndexView(AccessMixin, generic.TemplateView):
     template_name = 'index_unauthorized.html'
@@ -43,7 +44,7 @@ class UserTokenView(AccessMixin, generic.TemplateView):
         user_tokens=Token.objects.filter(user=self.request.user)
         context['tokens'] = user_tokens
         context['tokentypes']=TokenType.objects.all().exclude(id__in=[ t.type.id for t in user_tokens])
-        context['wss_token_config'] = KOOPLEX.get('hub', {}).get('wss_token_config', 'wss://localhost/hub/ws/tokens/{userid}/').format(userid = self.request.user.id)
-        context['wss_resources'] = KOOPLEX.get('hub', {}).get('wss_resources', 'wss://localhost/hub/ws/resources/')
+        context['wss_token_config'] = HUB_SETTINGS['wss']['token'].format(user = self.request.user)
+        context['wss_resources'] = HUB_SETTINGS['wss']['resources'].format(user = self.request.user)
         return context
 

@@ -25,7 +25,9 @@ from education.models import UserCourseBinding
 from education.forms import FormCourse
 from education.forms import FormAssignment, FormAssignmentList, FormAssignmentConfigure#, FormAssignmentHandle
 
-from kooplexhub.settings import KOOPLEX
+from .conf import EDUCATION_SETTINGS
+from container.conf import CONTAINER_SETTINGS
+from canvas.conf import CANVAS_SETTINGS
 
 logger = logging.getLogger(__name__)
 
@@ -85,9 +87,9 @@ class StudentCourseBindingListView(LoginRequiredMixin, generic.ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['wss_container_control'] = KOOPLEX.get('hub', {}).get('wss_container_control', 'wss://localhost/hub/ws/container_environment/{userid}/').format(userid = self.request.user.id)
-        context['wss_course_container'] = KOOPLEX.get('hub', {}).get('wss_course_container', 'wss://localhost/hub/ws/education/container/{userid}/').format(userid = self.request.user.id)
-        context['wss_handin'] = KOOPLEX.get('hub', {}).get('wss_course_handin', 'wss://localhost/hub/ws/education/handin/{userid}/').format(userid = self.request.user.id)
+        context['wss_container_control'] = CONTAINER_SETTINGS['wss']['control'].format(user = self.request.user)
+        context['wss_course_container'] = EDUCATION_SETTINGS['wss']['containers'].format(user = self.request.user)
+        context['wss_handin'] = EDUCATION_SETTINGS['wss']['handin'].format(user = self.request.user)
         context['search_placeholder'] = 'Search course...'
         context['search_what'] = 'course'
         return context
@@ -103,19 +105,19 @@ class TeacherCourseBindingListView(LoginRequiredMixin, generic.ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['wss_container_control'] = KOOPLEX.get('hub', {}).get('wss_container_control', 'wss://localhost/hub/ws/container_environment/{userid}/').format(userid = self.request.user.id)
-        context['wss_course_container'] = KOOPLEX.get('hub', {}).get('wss_course_container', 'wss://localhost/hub/ws/education/container/{userid}/').format(userid = self.request.user.id)
-        context['wss_course_config'] = KOOPLEX.get('hub', {}).get('wss_course_config', 'wss://localhost/hub/ws/course/config/{userid}/').format(userid = self.request.user.id)
-        context['wss_course_users'] = KOOPLEX.get('hub', {}).get('wss_course_users', 'wss://localhost/hub/ws/course/userhandler/{userid}/').format(userid = self.request.user.id)
-        context['wss_assignment_config'] = KOOPLEX.get('hub', {}).get('wss_assignment_config', 'wss://localhost/hub/ws/assignment/config/{userid}/').format(userid = self.request.user.id)
-        context['wss_assignment_score'] = KOOPLEX.get('hub', {}).get('wss_assignment_score', 'wss://localhost/hub/ws/assignment/score/{userid}/').format(userid = self.request.user.id)
-        context['wss_canvas'] = KOOPLEX.get('hub', {}).get('wss_canvas', 'wss://localhost/hub/ws/canvas/fetchcourses/{userid}/').format(userid = self.request.user.id)
-        context['wss_canvascourseassignments'] = KOOPLEX.get('hub', {}).get('wss_canvascourseassignments', 'wss://localhost/hub/ws/canvas/fetchcourseassignments/')
+        context['wss_container_control'] = CONTAINER_SETTINGS['wss']['control'].format(user = self.request.user)
+        context['wss_course_container'] = EDUCATION_SETTINGS['wss']['containers'].format(user = self.request.user)
+        context['wss_course_config'] = EDUCATION_SETTINGS['wss']['config'].format(user = self.request.user)
+        context['wss_course_users'] = EDUCATION_SETTINGS['wss']['users'].format(user = self.request.user)
+        context['wss_assignment_config'] = EDUCATION_SETTINGS['wss']['assignments'].format(user = self.request.user)
+        context['wss_assignment_score'] = EDUCATION_SETTINGS['wss']['score'].format(user = self.request.user)
+        context['wss_canvas'] = CANVAS_SETTINGS['wss']['courses'].format(user = self.request.user)
+        context['wss_canvascourseassignments'] = CANVAS_SETTINGS['wss']['assignments'].format(user = self.request.user)
         context['images'] = Image.objects.filter(imagetype = Image.TP_PROJECT, present = True)
         context['t_volume'] = TableVolume.for_user(self.request.user)
         context['users'] = [ u.profile._repr for u in User.objects.all().exclude(id = self.request.user.id) ]
         context['t_users'] = TableUsers(User.objects.all().exclude(id = self.request.user.id), marker_column='Teacher')
-        context['modal_new'] = KOOPLEX.get('education', {}).get('new_course', 'education/templates/course/new.html')
+        context['modal_new'] = 'widgets/fetch_canvascourses_modal.html' #FIXME 'education/templates/course/new.html')
         context['search_placeholder'] = 'Search course...'
         context['search_what'] = 'course'
         return context

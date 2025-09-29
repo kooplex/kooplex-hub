@@ -10,10 +10,7 @@ from hub.models import *
 from hub.lib import filename, dirname
 from hub.lib import mkdir, grantaccess_user
 
-try:
-    from kooplexhub.settings import KOOPLEX
-except ImportError:
-    KOOPLEX = {}
+from container.conf import CONTAINER_SETTINGS
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +25,7 @@ def user_creation(sender, instance, created, **kwargs):
         token = pwgen.pwgen(64)
         Profile.objects.create(user = instance, token = token)
         userdirs = [ dirname.userhome, dirname.usergarbage ]
-        if KOOPLEX.get('mountpoint_hub', {}).get('scratch') is not None:
+        if CONTAINER_SETTINGS["mounts"]["scratch"]:
             userdirs.append(dirname.userscratch)
         for userdir in userdirs:
             folder = userdir(instance)

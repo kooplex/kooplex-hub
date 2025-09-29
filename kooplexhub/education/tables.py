@@ -15,12 +15,6 @@ from hub.templatetags.extras import render_folder as rf
 
 from kooplexhub.common import table_attributes
 
-try:
-    from kooplexhub.settings import KOOPLEX
-except ImportError:
-    KOOPLEX = {}
-
-
 
 class TableCourse(tables.Table):
     button = tables.TemplateColumn(

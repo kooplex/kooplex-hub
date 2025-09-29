@@ -4,10 +4,7 @@ from django.db import models
 
 from .image import Image
 
-try:
-    from kooplexhub.settings import KOOPLEX
-except ImportError:
-    KOOPLEX = {}
+from ..conf import CONTAINER_SETTINGS
 
 try:
     from kooplexhub.settings import proto
@@ -29,7 +26,7 @@ class Proxy(models.Model):
 
     @property
     def proto(self):
-        return KOOPLEX.get('proxy', {}).get('proto', 'https')
+        return CONTAINER_SETTINGS['proxy']['proto']
 
     @property
     def fqdn(self):
@@ -38,7 +35,7 @@ class Proxy(models.Model):
 
     @property
     def svc_dn(self):
-        ns=KOOPLEX.get('kubernetes', {}).get('namespace', 'default')
+        ns=CONTAINER_SETTINGS['kubernetes']['namespace']
         return f"{self.svc_hostname}.{ns}"
 
     @property

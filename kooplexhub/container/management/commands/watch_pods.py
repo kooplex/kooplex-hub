@@ -9,7 +9,7 @@ from asgiref.sync import async_to_sync
 from container.models import Container
 
 from django.utils import timezone
-from kooplexhub.settings import KOOPLEX
+from ...conf import CONTAINER_SETTINGS
 
 from container.templatetags.container_buttons import (
         button_start, button_stop,
@@ -124,7 +124,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         print("Starting Kubernetes Pod Watcher...")
         v1 = client.CoreV1Api()
-        namespace = KOOPLEX.get('kubernetes', {}).get('namespace', 'default')
+        namespace = CONTAINER_SETTINGS['kubernetes']['namespace']
 
         # Load Kubernetes configuration
         try:

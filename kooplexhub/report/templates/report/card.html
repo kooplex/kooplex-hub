@@ -26,7 +26,9 @@
 {# FIXME: resize card #}
 <div class="card mb-3 mx-1 border-0 bg-transparent" style="max-width: 560px;">
   {# hidden fields are helpers to shide/show cards accordign to filtering criteria #}
+  {% comment %}
   <input type="hidden" id="report-search-{{report.id}}" value="{{ report.search }}"/>
+  {% endcomment %}
   <input type="hidden" id="report-match-{{ report.id }}" value="true">
   <input type="hidden" id="report-isshown-{{ report.id }}" value="true">
   {% if user == report.creator %}
@@ -90,7 +92,7 @@
 	<img class="mt-2 mb-1" src="/static/noimageavailable.png" alt="no thumbnail">
         {% endif %}
         {% if report.image %}
-        <span class="card-text mt-2 mb-2"><strong>Image:</strong>&nbsp;{% container_image report.image %}</span>
+        <span class="card-text mt-2 mb-2"><strong>Image:</strong>&nbsp;{#% container_image report.image %#}FIXME</span>
       {% else %}
         <span class="card-text mt-2 mb-2"><strong>Static html report</strong></span>
       {% endif %}

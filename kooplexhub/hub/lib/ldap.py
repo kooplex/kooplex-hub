@@ -1,7 +1,7 @@
 import ldap3
 import logging
 
-from kooplexhub.settings import KOOPLEX
+from ..conf import HUB_SETTINGS
 
 logger = logging.getLogger(__name__)
 
@@ -13,14 +13,14 @@ class Ldap:
 
     def __init__(self):
         logger.debug("init")
-        ldapconf = KOOPLEX.get('ldap', {})
-        self.host = ldapconf.get('host', 'localhost')
-        self.port = ldapconf.get('port', 389)
-        self.userdn = ldapconf.get('userdn', 'uid={user.username},ou=users,dn=localhost')
-        self.groupdn = ldapconf.get('groupdn', 'uid={group.name},ou=users,dn=localhost')
-        self.base_dn = ldapconf.get('base_dn', 'dn=localhost')
-        self.bind_dn = ldapconf.get('bind_dn', 'cn=admin,dn=localhost')
-        self.bind_pw = ldapconf.get('bind_password')
+        ldapconf = HUB_SETTINGS['ldap']
+        self.host = ldapconf['host']
+        self.port = ldapconf['port']
+        self.userdn = ldapconf['userdn']
+        self.groupdn = ldapconf['groupdn']
+        self.base_dn = ldapconf['base_dn']
+        self.bind_dn = ldapconf['bind_dn']
+        self.bind_pw = ldapconf['bind_password']
         server = ldap3.Server(host = self.host, port = self.port)
         self.connection = ldap3.Connection(server, self.bind_dn, self.bind_pw)
         success = self.connection.bind()
@@ -30,7 +30,7 @@ class Ldap:
 
     def get_user(self, user):
         filter_expression = '(&(objectClass=posixAccount)(uid={}))'.format(user.username)
-        search_base = KOOPLEX.get('ldap', {}).get('usersearch', 'ou=users,dn=localhost')
+        search_base = HUB_SETTINGS['ldap']['usersearch']
         self.connection.search(
             search_base = self.base_dn,
             search_filter = filter_expression,
@@ -57,7 +57,7 @@ class Ldap:
             'sn': user.username,
             'uidNumber': user.profile.userid,
             'gidNumber': user.profile.groupid,
-            'homeDirectory': KOOPLEX.get('userdata', {}).get('mountPath_home', '/home/{user.username}').format(user = user),
+            'homeDirectory': HUB_SETTINGS['mounts']['home']['mountpoint'].format(user = user),
             'loginShell': '/bin/bash',
         }
         success = self.connection.add(dn, object_class, attributes)
@@ -72,7 +72,7 @@ class Ldap:
 
     def get_group(self, group):
         filter_expression = '(&(objectClass=posixGroup)(cn={}))'.format(group.name)
-        search_base = KOOPLEX.get('ldap', {}).get('groupsearch', 'ou=groups,dn=localhost')
+        search_base = HUB_SETTINGS['ldap']['groupsearch']
         self.connection.search(
             search_base = self.base_dn,
             search_filter = filter_expression,

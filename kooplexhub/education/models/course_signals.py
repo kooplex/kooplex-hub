@@ -5,7 +5,6 @@ from django.dispatch import receiver
 from django.db import transaction
 from django.db.models.signals import pre_save, post_save, pre_delete, post_delete
 
-from kooplexhub.settings import KOOPLEX
 from hub.models import Group, UserGroupBinding
 from education.models import Course, UserCourseBinding, UserAssignmentBinding
 from education.filesystem import *

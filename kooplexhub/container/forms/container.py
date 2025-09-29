@@ -15,25 +15,24 @@ from service.models import SeafileService
 
 from kooplexhub.lib import my_alphanumeric_validator
 from kooplexhub.common import tooltip_attrs
-from kooplexhub.settings import KOOPLEX
 
 from kooplexhub.lib.libbase import standardize_str
 
 from container.lib import Cluster
 
+from ..conf import CONTAINER_SETTINGS
+
 def _range(attribute):
-    resources_min = KOOPLEX.get('kubernetes', {}).get('resources', {}).get('requests', {})
-    resources_max = KOOPLEX.get('kubernetes', {}).get('resources', {}).get('maxrequests', {})
-    mapping = {
-        'idletime': ('idletime', 1, 48),
-        'memoryrequest': ('memory', .1, 2),
-        'cpurequest': ('cpu', .1, 1),
-        'gpurequest': ('nvidia.com/gpu', 0, 0),
+    resources = CONTAINER_SETTINGS['kubernetes']['resources']
+    mapper = { 
+        'cpurequest': 'cpu',
+        'gpurequest': 'gpu',
+        'memoryrequest': 'memory',
     }
-    lookup, min_default, max_default = mapping[attribute]
+    a=mapper.get(attribute, attribute)
     return {
-       'min_value': round(Decimal(resources_min.get(lookup, min_default)), 1),
-       'max_value': round(Decimal(resources_max.get(lookup, max_default)), 1),
+       'min_value': round(Decimal(resources[f"min_{a}"]), 1),
+       'max_value': round(Decimal(resources[f"max_{a}"]), 1),
     }
 
 

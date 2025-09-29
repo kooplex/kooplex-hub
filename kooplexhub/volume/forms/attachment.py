@@ -4,12 +4,11 @@ from django.core import validators
 
 from ..models import Volume
 
-from kooplexhub.settings import KOOPLEX
 from kooplexhub.lib import my_slug_validator, my_end_validator, my_alphanumeric_validator
 from kooplexhub.common import tooltip_attrs
 
+from ..conf import VOLUME_SETTINGS
 
-claim_attachment = KOOPLEX.get('userdata', {}).get('claim-attachment', 'attachments')
 
 class FormAttachment(forms.ModelForm):
     class Meta:
@@ -44,7 +43,7 @@ class FormAttachment(forms.ModelForm):
             raise forms.ValidationError(ve)
         cleaned_data['subPath'] = folder
         cleaned_data['scope'] = Volume.SCP_ATTACHMENT
-        cleaned_data['claim'] = claim_attachment
+        cleaned_data['claim'] = VOLUME_SETTINGS["mounts"]["attachment"]["claim"]
         return cleaned_data
 
 

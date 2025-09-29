@@ -18,7 +18,8 @@ from hub.tables import TableUsers
 from .models import Project, UserProjectBinding, ProjectContainerBinding
 from container.models import Image, Container
 
-from kooplexhub.settings import KOOPLEX
+from .conf import PROJECT_SETTINGS
+from container.conf import CONTAINER_SETTINGS
 
 
 logger = logging.getLogger(__name__)
@@ -93,12 +94,11 @@ class UserProjectBindingListView(LoginRequiredMixin, generic.ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['menu_project'] = True
-        context['wss_container_control'] = KOOPLEX.get('hub', {}).get('wss_container_control', 'wss://localhost/hub/ws/container_environment/{userid}/').format(userid = self.request.user.id)
-        #context['wss_project'] = KOOPLEX.get('hub', {}).get('wss_project', 'wss://localhost/hub/ws/project/{userid}/').format(userid = self.request.user.id)
-        context['wss_project_join'] = KOOPLEX.get('hub', {}).get('wss_project_join', 'wss://localhost/hub/ws/project/join/{userid}/').format(userid = self.request.user.id)
-        context['wss_project_config'] = KOOPLEX.get('hub', {}).get('wss_project_config', 'wss://localhost/hub/ws/project/config/{userid}/').format(userid = self.request.user.id)
-        context['wss_project_users'] = KOOPLEX.get('hub', {}).get('wss_project_users', 'wss://localhost/hub/ws/project/userhandler/{userid}/').format(userid = self.request.user.id)
-        context['wss_project_container'] = KOOPLEX.get('hub', {}).get('wss_project_container', 'wss://localhost/hub/ws/project/container/{userid}/').format(userid = self.request.user.id)
+        context['wss_container_control'] = CONTAINER_SETTINGS['wss']['control'].format(user = self.request.user)
+        context['wss_project_join'] = PROJECT_SETTINGS['wss']['join'].format(user = self.request.user)
+        context['wss_project_config'] = PROJECT_SETTINGS['wss']['config'].format(user = self.request.user)
+        context['wss_project_users'] = PROJECT_SETTINGS['wss']['users'].format(user = self.request.user)
+        context['wss_project_container'] = PROJECT_SETTINGS['wss']['containers'].format(user = self.request.user)
         context['n_hidden'] = len(context['object_list'].filter(is_hidden = True))
         context['images'] = Image.objects.filter(imagetype = Image.TP_PROJECT, present = True)
         context['users'] = [ u.profile._repr for u in User.objects.all().exclude(id = self.request.user.id) ]

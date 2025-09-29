@@ -9,17 +9,15 @@ import base64
 
 logger = logging.getLogger(__name__)
 
-from kooplexhub.settings import KOOPLEX
+from container.conf import CONTAINER_SETTINGS
 
-kube = KOOPLEX.get('kubernetes', {})
-
-config.load_kube_config() #kube.get('kubeconfig_job', '/root/.kube/config'))
+config.load_kube_config()
 api_batch = BatchV1Api()
 api_core = CoreV1Api()
 
 def namespaces():
-    yield KOOPLEX.get('kubernetes', {}).get('namespace', 'default')
-    yield KOOPLEX.get('kubernetes', {}).get('jobs', {}).get('namespace', 'jobs')
+    yield CONTAINER_SETTINGS['kubernetes']['namespace']
+    yield CONTAINER_SETTINGS['kubernetes']['jobs']['namespace']
     
 
 def _job_pods(namespace, user, label):

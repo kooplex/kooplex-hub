@@ -10,10 +10,6 @@ from hub.models import *
 from hub.lib import filename, dirname
 from hub.lib import mkdir, grantaccess_user
 
-try:
-    from kooplexhub.settings import KOOPLEX
-except ImportError:
-    KOOPLEX = {}
 
 logger = logging.getLogger(__name__)
 

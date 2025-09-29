@@ -5,16 +5,15 @@ from django.db.models.signals import pre_save, pre_delete
 from django.dispatch import receiver
 
 from ..models import Group, UserGroupBinding
+from ..conf import HUB_SETTINGS
+from ..lib.ldap import Ldap, LdapException
 
-from kooplexhub.settings import KOOPLEX
 
 logger = logging.getLogger(__name__)
 
 @receiver(pre_save, sender = Group)
 def ldap_create_group(sender, instance, **kwargs):
-    from hub.lib.ldap import Ldap, LdapException
-    ldapconf = KOOPLEX.get('ldap', {})
-    if not ldapconf.get('managegroup', False):
+    if not HUB_SETTINGS['ldap']['managegroup']:
         logger.debug('skip ldap update')
         return
     try:
@@ -27,7 +26,7 @@ def ldap_create_group(sender, instance, **kwargs):
         pass
     try:
         gids = [ g.groupid for g in Group.objects.filter(grouptype = instance.grouptype) ]
-        gids.append( KOOPLEX.get('ldap', {}).get('offset', {}).get(instance.grouptype, 1000) )
+        gids.append( HUB_SETTINGS['ldap']['offset'][instance.grouptype] )
         instance.groupid = max(gids) if len(gids) == 1 else max(gids) + 1
         Ldap().addgroup(instance)
         logger.info("+ Group {} created in ldap".format(instance))
@@ -38,8 +37,7 @@ def ldap_create_group(sender, instance, **kwargs):
 
 @receiver(pre_delete, sender = Group)
 def ldap_remove_group(sender, instance, **kwargs):
-    from hub.lib.ldap import Ldap
-    if not KOOPLEX.get('ldap', {}).get('managegroup', False):
+    if not HUB_SETTINGS['ldap']['managegroup']:
         logger.debug('skip ldap update')
         return
     try:
@@ -52,8 +50,7 @@ def ldap_remove_group(sender, instance, **kwargs):
 
 @receiver(pre_save, sender = UserGroupBinding)
 def ldap_groupadd(sender, instance, **kwargs):
-    from hub.lib.ldap import Ldap
-    if not KOOPLEX.get('ldap', {}).get('managegroup', False):
+    if not HUB_SETTINGS['ldap']['managegroup']:
         logger.debug('skip ldap update')
         return
     try:
@@ -66,8 +63,7 @@ def ldap_groupadd(sender, instance, **kwargs):
 
 @receiver(pre_delete, sender = UserGroupBinding)
 def ldap_groupdel(sender, instance, **kwargs):
-    from hub.lib.ldap import Ldap
-    if not KOOPLEX.get('ldap', {}).get('managegroup', False):
+    if not HUB_SETTINGS['ldap']['managegroup']:
         logger.debug('skip ldap update')
         return
     try:

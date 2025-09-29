@@ -19,10 +19,9 @@ from volume.tables import TableVolume
 from .models import Image, Container
 
 
-from kooplexhub import settings
 from .lib import Cluster
 
-KOOPLEX = settings.KOOPLEX
+from .conf import CONTAINER_SETTINGS
 
 logger = logging.getLogger(__name__)
 
@@ -48,10 +47,10 @@ class ContainerListView(LoginRequiredMixin, generic.ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['menu_container'] = True
-        context['wss_container_fetchlog'] = KOOPLEX.get('hub', {}).get('wss_container_fetchlog', 'wss://localhost/hub/ws/container/fetchlog/{userid}/').format(userid = self.request.user.id)
-        context['wss_container_config'] = KOOPLEX.get('hub', {}).get('wss_container_config', 'wss://localhost/hub/ws/container/config/{userid}/').format(userid = self.request.user.id)
-        context['wss_container_control'] = KOOPLEX.get('hub', {}).get('wss_container_control', 'wss://localhost/hub/ws/container/control/{userid}/').format(userid = self.request.user.id)
-        context['wss_monitor_node'] = KOOPLEX.get('hub', {}).get('wss_monitor_node', 'wss://localhost/hub/ws/monitor/node/{userid}/').format(userid = self.request.user.id)
+        context['wss_container_fetchlog'] = CONTAINER_SETTINGS['wss']['fetchlog'].format(user = self.request.user)
+        context['wss_container_config'] = CONTAINER_SETTINGS['wss']['config'].format(user = self.request.user)
+        context['wss_container_control'] = CONTAINER_SETTINGS['wss']['control'].format(user = self.request.user)
+        context['wss_monitor_node'] = CONTAINER_SETTINGS['wss']['monitor_node'].format(user = self.request.user)
         context['t_project'] = TableProject.from_user(self.request.user)
         context['t_course'] = TableCourse.from_user(self.request.user)
         context['t_volume'] = TableVolume.for_user(self.request.user)

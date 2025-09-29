@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+
+{% load static %}
+{% load extras %}
+
+
+{% block head_content %}
+<link href="{% static 'hub/css/cardlist.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div id="listPane"></div>
+<div class="card bg-ligth shadow-2-strong border border-3 shadow-light bg-light rounded">
+  <form id="report-new" class="form-horizontal was-validated dropzone" action="{{ url_post }}" method="post" enctype="multipart/form-data">
+    <div class="card-header"><h6>{% if report %}Configure report{% else %}Create new report{% endif %}</h6></div>
+    <div class="card-body">
+      {% csrf_token %}
+      {{ form.as_table }}
+    </div>
+    <div class="card-footer">
+      {% if report %}
+        <input type="submit" name="request" value="configure-report">
+        <input type="submit" name="request" value="delete-report">
+      {% else %}
+        <input type="submit" name="request" value="create-report">
+      {% endif %}
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+    import Tags from "https://cdn.jsdelivr.net/gh/lekoala/bootstrap5-tags@master/tags.js";
+    Tags.init("select.mytag", {'baseClass': 'mytag'});
+</script>
+{% endblock %}

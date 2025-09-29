@@ -21,6 +21,8 @@ from .models import Image
 
 from hub.util import SyncSkeleton, AsyncSkeleton
 
+from .conf import CONTAINER_SETTINGS
+
 logger = logging.getLogger(__name__)
 
 
@@ -264,13 +266,11 @@ class MonitorConsumer(SyncSkeleton):
             resp["feedback"] = f"Node resource information for {node} is updated"
         else:
             node = "default"
-            from kooplexhub.settings import KOOPLEX
-            kubernetes = KOOPLEX.get('kubernetes',{}).get('resources',{}).get('maxrequests',{})
             resp.update({
              "feedback" : f"Node resource information for defaults is updated",
-             "avail_cpu": kubernetes.get('cpu',1),
-             "avail_memory": kubernetes.get('memory',2),
-             "avail_gpu": kubernetes.get('nvidia.com/gpu',0),
+             "avail_cpu": CONTAINER_SETTINGS['kubernetes']['resources']['max_cpu'],
+             "avail_memory": CONTAINER_SETTINGS['kubernetes']['resources']['max_memory'],
+             "avail_gpu": CONTAINER_SETTINGS['kubernetes']['resources']['max_gpu'],
                 })
         logger.debug(f"fetch {node} -> {resp}")
         self.send(text_data = json.dumps(resp))
