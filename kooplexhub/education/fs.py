@@ -65,21 +65,36 @@ def assignment_correct_dir(userassignmentbinding):
     ucb = UserCourseBinding.objects.filter(user = userassignmentbinding.user, course = userassignmentbinding.assignment.course).first()
     return os.path.join(assignment_correct_root(ucb.course), userassignmentbinding.assignment.folder, userassignmentbinding.user.username) if ucb else None
 
-#FIXME def course_garbage(course):
-#FIXME     return os.path.join(mp_garbage, "course-%s.%f.tar.gz" % (course.folder, time.time()))
+def course_public_garbage(course):
+    return os.path.join(
+        HUB_SETTINGS["mounts"]["garbage"]["mountpoint_hub"],
+        EDUCATION_SETTINGS["mounts"]["public"]["garbage"].format(course=course, time=time.time()),
+    )
 
-#FIXME def assignment_garbage(userassignmentbinding):
-#FIXME     a = userassignmentbinding.assignment
-#FIXME     return os.path.join(mp_garbage, userassignmentbinding.user.username, "assignment_%s-%s.%f.tar.gz" % (a.course.folder, a._safename, time.time()))
+def course_prepare_garbage(course):
+    return os.path.join(
+        HUB_SETTINGS["mounts"]["garbage"]["mountpoint_hub"],
+        EDUCATION_SETTINGS["mounts"]["assignment_prepare"]["garbage"].format(course=course, time=time.time()),
+    )
+
+def assignment_garbage(userassignmentbinding):
+    a = userassignmentbinding.assignment
+    return os.path.join(
+        HUB_SETTINGS["mounts"]["garbage"]["mountpoint_hub"],
+        EDUCATION_SETTINGS["mounts"]["assignment"]["garbage"].format(course=a.course, user=userassignmentbinding.user, assignment=a, time=time.time()),
+    )
 
 
-#FIXME def course_workdir_garbage(usercoursebinding):
-#FIXME     return os.path.join(mp_garbage, usercoursebinding.user.username, "course_workdir-%s.%f.tar.gz" % (usercoursebinding.course.folder, time.time()))
+def course_workdir_garbage(usercoursebinding):
+    return os.path.join(
+        HUB_SETTINGS["mounts"]["garbage"]["mountpoint_hub"],
+        EDUCATION_SETTINGS["mounts"]["workdir"]["garbage"].format(course=usercoursebinding.course, user=usercoursebinding.user, time=time.time()),
+    )
 
 def assignment_snapshot(assignment):
     return os.path.join(
         course_assignment_snapshot(assignment.course), 
-        f'assignment-snapshot-{assignment._safename}.{time.time()}.tar.gz',
+        EDUCATION_SETTINGS["mounts"]["assignment_snapshot"]["snapshot"].format(assignment=assignment, time=time.time()),
     )
 
 
@@ -87,7 +102,7 @@ def assignment_collection(userassignmentbinding):
     assignment = userassignmentbinding.assignment
     return os.path.join(
         course_assignment_snapshot(assignment.course), 
-        'collection-%s-%s.%d.tar.gz' % (assignment._safename, userassignmentbinding.user.username, userassignmentbinding.last_submitted_at.timestamp()),
+        EDUCATION_SETTINGS["mounts"]["assignment_snapshot"]["collection"].format(assignment=assignment, user=userassignmentbinding.user, time=userassignmentbinding.last_submitted_at.timestamp()),
     )
 
 
@@ -95,7 +110,7 @@ def assignment_feedback(userassignmentbinding):
     assignment = userassignmentbinding.assignment
     return os.path.join(
         course_assignment_snapshot(assignment.course), 
-        'feedback-%s-%s-%s.%d.tar.gz' % (assignment._safename, userassignmentbinding.user.username, userassignmentbinding.corrector.username, userassignmentbinding.corrected_at.timestamp())
+        EDUCATION_SETTINGS["mounts"]["assignment_snapshot"]["feedback"].format(assignment=assignment, user=userassignmentbinding.user, time=userassignmentbinding.corrected_at.timestamp()),
     )
 
 

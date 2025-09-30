@@ -16,6 +16,7 @@ DEFAULTS = {
                 "folder": '{course.folder}/public',
                 "mountpoint": '/course/{course.folder}.public',
                 "mountpoint_hub": '/mnt/course_public',
+                "garbage": "public-{course.folder}.{time}.tar.gz",
             },
         "assignment_prepare": {
                 "claim": 'education',
@@ -23,6 +24,7 @@ DEFAULTS = {
                 "folder": '{course.folder}',
                 "mountpoint": '/course/{course.folder}.assignment_prepare',
                 "mountpoint_hub": '/mnt/assignment_prepare',
+                "garbage": "prepare-{course.folder}.{time}.tar.gz",
             },
         "assignment_snapshot": {
                 "claim": 'education',
@@ -30,6 +32,9 @@ DEFAULTS = {
                 "folder": '{course.folder}',
                 "mountpoint": '/course/{course.folder}.assignment_snapshot',
                 "mountpoint_hub": '/mnt/assignment_snapshot',
+                "snapshot": "snapshot-{assignment._safename}.{time}.tar.gz",
+                "collection": "collection-{assignment._safename}-{user.username}.{time}.tar.gz",
+                "feedback": "feedback-{assignment._safename}-{user.username}.{time}.tar.gz",
             },
         "workdir": {
                 "claim": 'education',
@@ -38,6 +43,7 @@ DEFAULTS = {
                 "folder": '{course.folder}/{user.username}',
                 "mountpoint": '/course/{course.folder}',
                 "mountpoint_hub": '/mnt/course_workdir',
+                "garbage": "{user.username}/workdir-{course.folder}-{user.username}.{time}.tar.gz",
             },
         "assignment": {
                 "claim": 'education',
@@ -46,6 +52,7 @@ DEFAULTS = {
                 "folder": '{course.folder}/{user.username}',
                 "mountpoint": '/assignment/{course.folder}.assignment',
                 "mountpoint_hub": '/mnt/course_assignment',
+                "garbage": "{user.username}/assignment-{course.folder}-{assignment._safename}-{user.username}.{time}.tar.gz",
             },
         "assignment_correct": {
                 "claim": 'education',

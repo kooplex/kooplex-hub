@@ -24,6 +24,6 @@ def userscratch(user):
 def userhome_garbage(user):
     return os.path.join(
         HUB_SETTINGS["mounts"]["garbage"]["mountpoint_hub"],
-        HUB_SETTINGS["mounts"]["home"]["garbage"].format(user=user, time=time),
+        HUB_SETTINGS["mounts"]["home"]["garbage"].format(user=user, time=timei.time()),
     )
 

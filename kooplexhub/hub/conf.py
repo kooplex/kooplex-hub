@@ -30,7 +30,7 @@ DEFAULTS = {
                 "folder": '{user.username}',
                 "mountpoint": '/home/{user.username}',
                 "mountpoint_hub": '/mnt/home',
-                "garbage": "user-{user.username}.{time.time()}.tar.gz",
+                "garbage": "user-{user.username}.{time}.tar.gz",
             },
         "garbage": {
                 "claim": 'userdata',
