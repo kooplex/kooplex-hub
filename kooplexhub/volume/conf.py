@@ -6,13 +6,13 @@ DEFAULTS = {
         },
     "mounts": {
         "attachment": {
-                "claim": 'attachment',
-                "subpath": '{volume.folder}',
+                "claim": 'attachments',
+                "subpath": '',
+                "folder": '{volume.folder}',
                 "mountpoint": '/attachment/{volume.folder}',
                 "mountpoint_hub": '/mnt/attachments',
             },
         "volume": {
-                "claim": "{volume.claim}",
                 "mountpoint": '/volume/{volume.folder}',
             },
         },

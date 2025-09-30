@@ -4,7 +4,7 @@ from .models import *
 
 @admin.register(Volume)
 class VolumeAdmin(admin.ModelAdmin):
-    list_display = ('id', 'folder', 'claim', 'subPath', 'is_present', 'description')
+    list_display = ('id', 'claim', 'subpath', 'folder', 'is_present', 'description')
     search_fields = ('folder', 'claim', 'description')
 
 @admin.register(VolumeContainerBinding)
@@ -24,8 +24,3 @@ class ProjectVolumeBindingAdmin(admin.ModelAdmin):
     search_fields = ('project__name','volume__name')
 
 
-# Create volume in kubernetes
-# pv and pvc
-# 
-
-# run automatic test by launching a pod maybe

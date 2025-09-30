@@ -4,8 +4,11 @@ import os
 
 from django.db import models
 from django.template.loader import render_to_string
+from django.core.validators import MinLengthValidator
 
 from kooplexhub.lib import my_alphanumeric_validator
+
+from ..conf import VOLUME_SETTINGS
 
 logger = logging.getLogger(__name__)
 
@@ -17,22 +20,17 @@ class Volume(models.Model):
         ATTACHMENT= 'attachment', 'Users can create, list and may mount attachments.'
 
     folder = models.CharField(max_length = 64, validators = [ my_alphanumeric_validator('Enter a clean volume name containing only letters and numbers.') ])
-    description = models.TextField(null = True)
-    claim = models.CharField(max_length = 64)
-    subPath = models.CharField(max_length = 64, default = "", blank = True)
-    scope = models.CharField(max_length = 16, choices = Scope.choices, default = Scope.PRIVATE)
+    description = models.TextField(null = False, blank=False, validators=[ MinLengthValidator(5, message="Description must be at least 5 characters.") ])
+    claim = models.CharField(max_length = 64, blank=False, default = VOLUME_SETTINGS["mounts"]["attachment"]["claim"])
+    subpath = models.CharField(max_length = 64, default = VOLUME_SETTINGS["mounts"]["attachment"]["subpath"], blank=True)
+    scope = models.CharField(max_length = 16, choices = Scope.choices, default = Scope.ATTACHMENT)
     is_present = models.BooleanField(default = True)
 
     class Meta:
-        unique_together = [['claim', 'folder']]
+        unique_together = [['claim', 'subpath', 'folder']]
 
     def __str__(self):
-        return "Volume /{} ({}:{})".format(self.folder, self.claim, self.subPath)
-
-#    @property
-#    def name(self):
-#        return self.folder
-
+        return "Volume({}) /{} ({}:{})".format(self.scope, self.folder, self.claim, self.subpath)
 
     @property
     def owner(self):

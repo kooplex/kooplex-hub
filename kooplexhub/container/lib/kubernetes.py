@@ -48,13 +48,12 @@ def storage_resources(volumes):
     mounts = []
     claims = set()
     for volume in volumes:
-        mountPath = VOLUME_SETTINGS['mounts']['attachment']['mountpoint'] \
-                if volume.scope == volume.Scope.ATTACHMENT else \
-                VOLUME_SETTINGS['mounts']['volume']['mountpoint']
+        key='attachment' if volume.scope == volume.Scope.ATTACHMENT else 'volume'
+        mountPath = VOLUME_SETTINGS['mounts'][key]['mountpoint'].format(volume = volume)
         mounts.append({
             "name": volume.claim,
-            "mountPath": mountPath.format(volume = volume),
-            "subPath": volume.subPath,
+            "mountPath": mountPath,
+            "subPath": os.path.join(volume.subpath, volume.folder)
             })
         claims.add(volume.claim)
     claimdict = lambda c: { "name": c, "persistentVolumeClaim": { "claimName": c } }

@@ -41,9 +41,7 @@ class FormAttachment(forms.ModelForm):
             ve.append( forms.ValidationError(_(f'Attachment folder {folder} is not unique'), code = 'invalid folder') )
         if ve:
             raise forms.ValidationError(ve)
-        cleaned_data['subPath'] = folder
-        cleaned_data['scope'] = Volume.Scope.ATTACHMENT
-        cleaned_data['claim'] = VOLUME_SETTINGS["mounts"]["attachment"]["claim"]
+        cleaned_data['folder'] = folder
         return cleaned_data
 
 
