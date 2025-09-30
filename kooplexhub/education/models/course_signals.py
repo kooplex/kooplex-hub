@@ -51,13 +51,8 @@ def create_course(sender, instance, **kwargs):
 
 @receiver(pre_delete, sender = Course)
 def delete_course(sender, instance, **kwargs):
-    #FIXME recursion
-    #if instance.group_students:
-    #    instance.group_students.delete()
-    #if instance.group_teachers:
-    #    instance.group_teachers.delete()
     from hub.tasks import delete_folder
-    for f in [ course_workdir_root, course_assignment_root, assignment_correct_root, course_root ]:
+    for f in [ course_workdir_root, course_assignment_root, assignment_correct_root ]:
         delete_folder(f(instance))
 
 

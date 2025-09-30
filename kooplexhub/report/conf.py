@@ -8,7 +8,7 @@ DEFAULTS = {
                 "folder": '{project.subpath}',
                 "mountpoint": '/project/{project.subpath}/report_prepare',
                 "mountpoint_hub": '/mnt/report_prepare',
-                "garbage": "{project.creator.username}/projectreport-{project.subpath}.{time.time()}.tar.gz",
+                "garbage": "{project.creator.username}/projectreport-{project.subpath}.{time}.tar.gz",
             },
         "report": {
                 "claim": 'report',

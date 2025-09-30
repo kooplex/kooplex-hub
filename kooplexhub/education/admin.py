@@ -1,7 +1,7 @@
 from django.contrib import admin
 
-from education.models import Course, CourseCode
-from education.models import UserCourseBinding, UserCourseCodeBinding
+from education.models import Course
+from education.models import UserCourseBinding
 from education.models import CourseContainerBinding
 from education.models import Assignment, UserAssignmentBinding
 #from education.models import CourseGroup, UserCourseGroupBinding
@@ -16,12 +16,6 @@ class CourseAdmin(admin.ModelAdmin):
     search_fields = ('name', 'description')
 
 
-@admin.register(CourseCode)
-class UserProjectBindingAdmin(admin.ModelAdmin):
-    list_display = ('id', 'courseid', 'course')
-    search_fields = ('courseid', )
-
-
 @admin.register(UserCourseBinding)
 class UserCourseBindingAdmin(admin.ModelAdmin):
     def course_name(self, instance):
@@ -34,13 +28,6 @@ class UserCourseBindingAdmin(admin.ModelAdmin):
         return instance.user.username
     list_display = ('id', 'course_name', 'is_teacher', 'user_first_name', 'user_last_name', 'user_username')
     search_fields = ('user__username', 'user__first_name', 'user__last_name', 'course__name')
-
-
-@admin.register(UserCourseCodeBinding)
-class UserCourseCodeBindingAdmin(admin.ModelAdmin):
-    def coursecode_course_name(self, instance):
-        return instance.coursecode.course.name
-    list_display = ('id', 'user', 'coursecode', 'coursecode_course_name')
 
 
 @admin.register(CourseContainerBinding)

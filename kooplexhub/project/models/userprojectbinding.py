@@ -13,7 +13,7 @@ class UserProjectBinding(models.Model):
         ADMIN = 'administrator', 'Can modify project properties.'
         COLLABORATOR = 'member', 'Member of this project.'
 
-    user = models.ForeignKey(User, on_delete = models.CASCADE)
+    user = models.ForeignKey(User, on_delete = models.CASCADE, related_name = 'projectbindings')
     project = models.ForeignKey('project.Project', on_delete = models.CASCADE, related_name = 'userbindings')
     is_hidden = models.BooleanField(default = False)
     role = models.CharField(max_length = 16, choices = Role.choices)

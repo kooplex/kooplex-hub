@@ -8,7 +8,7 @@ from django.db import models
 import django_tables2 as tables
 from django.contrib.auth.models import User
 
-from education.models import UserCourseBinding, UserAssignmentBinding, Assignment, UserCourseCodeBinding#, CourseGroup, UserCourseGroupBinding
+from education.models import UserCourseBinding, UserAssignmentBinding, Assignment
 from hub.templatetags.extras import render_user as ru
 from hub.templatetags.extras import render_date as rd
 from hub.templatetags.extras import render_folder as rf

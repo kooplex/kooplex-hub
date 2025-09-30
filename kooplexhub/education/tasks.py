@@ -33,7 +33,7 @@ def check_handout_and_collect():
 
 @db_task(queue = 'course')
 def assignment_create(assignment):
-    assignment.filename = os.path.join(course_assignment_snapshot(assignment.course), f'assignment-snapshot-{assignment._safename}.{time.time()}.tar.gz')
+    assignment.filename = assignment_snapshot(assignment)
     folder=assignment_source(assignment)
     archivedir(folder, assignment.filename, remove=False)
     assignment.save()

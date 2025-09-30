@@ -143,7 +143,7 @@ class AssignmentConfigureHandler:
         attributes = { 'course': self.course, 'creator': self.user }
         attributes.update(data['attributes'])
         try:
-            Assignment.objects.create(**attributes)
+            Assignment.objects.create(**attributes).snapshot() #FIXME signal
         except Exception as e:
             logger.critical(e)
         return self.handle_tab_new({})

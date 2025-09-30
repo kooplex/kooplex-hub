@@ -1,4 +1,4 @@
-from education.models.course import Course, CourseCode, UserCourseBinding, UserCourseCodeBinding
+from education.models.course import Course, UserCourseBinding
 from education.models.coursecontainerbinding import CourseContainerBinding
 from education.models.assignment import Assignment, UserAssignmentBinding
 #from education.models.group import CourseGroup,  UserCourseGroupBinding

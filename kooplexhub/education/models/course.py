@@ -8,6 +8,8 @@ from container.models import Image
 from hub.models import Group
 from django.contrib.auth import get_user_model
 
+from education.fs import get_assignment_prepare_subfolders
+
 User = get_user_model()
 
 
@@ -48,10 +50,6 @@ class Course(models.Model):
         return groups
 
 
-    @property
-    def coursecodes(self):
-        return CourseCode.objects.filter(course = self)
-
 #################
 
     @property
@@ -74,12 +72,12 @@ class Course(models.Model):
 
     @property
     def assignments(self):
+        #FIXME relat
         from . import Assignment
         return Assignment.objects.filter(course = self)
 
 
     def dir_assignmentcandidate(self):
-        from education.filesystem import get_assignment_prepare_subfolders
         return get_assignment_prepare_subfolders(self)
 
     @property
@@ -125,23 +123,3 @@ class UserCourseBinding(models.Model):
         return TableAssignment(UserAssignmentBinding.objects.filter(user=self.user, assignment__course=self.course))
 
 
-class CourseCode(models.Model):
-    courseid = models.CharField(max_length = 30, null = False, unique = True)
-    course = models.ForeignKey(Course, null = True, default = None, on_delete = models.CASCADE)
-
-    class Meta:
-        ordering = [ 'courseid' ]
-
-    def __str__(self):
-        return f'{self.courseid}'
-
-
-class UserCourseCodeBinding(models.Model):
-    user = models.ForeignKey(User, null = False, on_delete = models.CASCADE)
-    coursecode = models.ForeignKey(CourseCode, null = False, on_delete = models.CASCADE)
-    is_teacher = models.BooleanField(default = False)
-
-
-    @property
-    def course(self):
-        return self.coursecode.course

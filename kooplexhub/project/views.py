@@ -63,16 +63,15 @@ def delete_or_leave(request, project_id, pk_user):
     logger.debug("method: %s, project id: %s, user: %s" % (request.method, project_id, user))
     try:
         project = Project.get_userproject(pk = project_id, user = user)
-        upb = UserProjectBinding.objects.get(user = user, project = project)
     except Project.DoesNotExist:
         messages.error(request, 'Project does not exist')
         return redirect('project:list')
+    upb = project.userbindings.filter(user = user).first()
     if upb.role == upb.Role.CREATOR:
         collab = []
-        for upb_i in UserProjectBinding.objects.filter(project = project):
-            if upb != upb_i:
-                collab.append(upb_i.user)
-                upb_i.delete()
+        for upb_i in project.userbindings.exclude(user = user):
+            collab.append(upb_i.user)
+            upb_i.delete()
         try:
             upb.delete()
             project.delete()

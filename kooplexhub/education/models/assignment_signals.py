@@ -9,7 +9,7 @@ from hub.tasks import delete_folder
 
 @receiver(pre_delete, sender = UserAssignmentBinding)
 def delete_userassignment(sender, instance, **kwargs):
-    for folder in [assignment_correct_dir(instance), userassignment_dir(instance)]:
+    for folder in [assignment_correct_dir(instance), assignment_workdir(instance)]:
         if folder:
             delete_folder( folder )
 
