@@ -2,7 +2,7 @@ import logging
 import json
 
 from django.shortcuts import redirect
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views import generic
@@ -28,6 +28,7 @@ class VolumeListView(LoginRequiredMixin, generic.ListView):
         context = super().get_context_data(**kwargs)
         context['menu_storage'] = True
         context['wss_volume_config'] = VOLUME_SETTINGS['wss']['config'].format(user = self.request.user)
+        context['url_new_attachment'] = reverse('volume:new_attachment')
         context['empty_title'] = 'No volumes available'
         context['empty_body'] = format_html(f'You do no have access to the volumes yet. Ask volume owners or volume administrators for collaboration. {l}')
         return context

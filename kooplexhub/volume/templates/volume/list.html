@@ -34,6 +34,10 @@ A storage is the place for large, read-only datasets and for tools or user's tes
 <script src="{% static 'hub/js/wss.js' %}"></script> {# FIXME: we could get rid of it if js export/import properly implemented #}
 <script src="{% static 'hub/js/config_register.js' %}"></script>
 <script>
+$("[id=add]").click(function() {
+    location.replace("{{url_new_attachment}}");
+});
+
 document.addEventListener('DOMContentLoaded', () => {
     window.wss_conf_volume = new ConfigHandler(opts = {
         endpoint: "{{ wss_volume_config }}",
