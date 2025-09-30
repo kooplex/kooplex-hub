@@ -42,34 +42,8 @@ class FormAttachment(forms.ModelForm):
         if ve:
             raise forms.ValidationError(ve)
         cleaned_data['subPath'] = folder
-        cleaned_data['scope'] = Volume.SCP_ATTACHMENT
+        cleaned_data['scope'] = Volume.Scope.ATTACHMENT
         cleaned_data['claim'] = VOLUME_SETTINGS["mounts"]["attachment"]["claim"]
         return cleaned_data
 
 
-class FormVolumeUpdate(FormAttachment):
-    class Meta:
-        model = Volume
-        fields = [ 'id', 'folder', 'description', 'scope' ]
-
-    id = forms.IntegerField(widget = forms.HiddenInput())
-    shared = forms.CharField(widget = forms.HiddenInput(), required = False)
-
-    def clean(self):
-        cleaned_data = forms.ModelForm.clean(self)
-        return cleaned_data
-
-    def __init__(self, *argv, **kwargs):
-        from ..forms import TableVolumeShare
-        user = kwargs.pop('user')
-        super().__init__(*argv, **kwargs)
-        self.fields['folder'].disabled = True
-        instance = kwargs.get('instance')
-        if instance.scope == instance.SCP_ATTACHMENT:
-            self.fields['scope'].widget = forms.HiddenInput()
-            self.fields['scope'].value = instance.SCP_ATTACHMENT,
-        else:
-            self.fields['scope'].widget = forms.Select(attrs = tooltip_attrs({ 'title': _('Change the scope of this volume.'), }))
-            self.fields['scope'].widget.choices = list(filter(lambda s: s[0] != instance.SCP_ATTACHMENT, instance.SCP_LOOKUP.items()))
-            self.t_users = TableVolumeShare(instance, user, collaborator_table = False)
-            self.t_collaborators = TableVolumeShare(instance, user, collaborator_table = True)

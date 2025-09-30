@@ -1,1 +1,1 @@
-from .attachment import FormAttachment, FormVolumeUpdate
+from .attachment import FormAttachment

@@ -1,19 +1,18 @@
 import logging
 import json
 
-from django.shortcuts import render, redirect, reverse
+from django.shortcuts import redirect
+from django.urls import reverse_lazy
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views import generic
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.models import User
 from django.utils.html import format_html
 
 from hub.templatetags.extras import manual_link
 
 from .models import Volume, UserVolumeBinding
-##from .forms import TableVolumeShare
-from .forms import FormAttachment, FormVolumeUpdate
+from .forms import FormAttachment
 
 from .conf import VOLUME_SETTINGS
 
@@ -41,7 +40,7 @@ class VolumeListView(LoginRequiredMixin, generic.ListView):
 class NewAttachmentView(LoginRequiredMixin, generic.FormView):
     template_name = 'volume/new.html'
     form_class = FormAttachment
-    success_url = '/hub/volume/list' #FIXME: reverse('volume:list')
+    success_url = reverse_lazy('volume:list')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -56,4 +55,14 @@ class NewAttachmentView(LoginRequiredMixin, generic.FormView):
         messages.info(self.request, f'Attachment {v.folder} is created')
         return super().form_valid(form)
 
+
+@login_required
+def destroy(request, pk):
+    """Deletes an attacment instance"""
+    user = request.user
+    if attachment := Volume.objects.filter(id = pk, scope=Volume.Scope.ATTACHMENT, userbindings__user = user).first():
+        logger.info(f'deleting {attachment}')
+        attachment.delete()
+        messages.info(request, f'Your attachment {attachment.folder} is deleted.')
+    return redirect('volume:list')
 

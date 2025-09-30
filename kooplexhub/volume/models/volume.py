@@ -60,3 +60,8 @@ class Volume(models.Model):
                 .distinct()
         )
 
+    @property 
+    def link_drop(self): 
+        from django.urls import reverse 
+        return reverse('volume:destroy', args = [self.id]) if self.id and self.scope==self.Scope.ATTACHMENT else "" 
+

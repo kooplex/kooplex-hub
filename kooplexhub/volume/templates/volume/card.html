@@ -10,9 +10,17 @@
     {% render_description volume user %}
   </div>
 
-  {% if volume.owner != user %}
+  {% if volume.owner == user and volume.scope == volume.Scope.ATTACHMENT %}
+    <div class="card-footer py-2">
+      {% include "widgets/widget_delete.html" with obj=volume link=volume.link_drop msg="Are you sure to remove attachment? There may be collaborators using it..." tooltip="Remove your attachment" %} 
+    </div>
+  {% elif volume.owner != user and volume.scope == volume.Scope.ATTACHMENT %}
     <div class="card-footer py-2" data-toggle="tooltip" title="{{volume.admins|join:', '}}">
       Created by {{ volume.owner }}
+    </div>
+  {% elif volume.owner != user %}
+    <div class="card-footer py-2" data-toggle="tooltip" title="{{volume.admins|join:', '}}">
+      Owned by {{ volume.owner }}
     </div>
   {% endif %}
 </div>

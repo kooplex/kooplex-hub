@@ -1,9 +1,9 @@
-{% extends 'volume_layout.html' %}
+{% extends 'layout.html' %}
 
 {% load static %}
 {% load extras %}
 
-{% block bodycontent %}
+{% block content %}
 <form id="attachment_new" class="was-validated bg-light border-secondary shadow p-3 container rounded" action="{% url 'volume:new_attachment' %}" method="post">
   {% csrf_token %}
   {% title "Create a new attachment" %}

@@ -19,3 +19,5 @@ def render_usercontainers(volume, user):
 @register.simple_tag
 def render_description(volume, user):
     return render_to_string("hub/widgets/inline_textarea.html", {'pk': volume.pk, 'value': volume.description, 'model': 'volume', "editable": volume.is_admin(user)})
+
+
