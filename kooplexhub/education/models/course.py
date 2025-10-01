@@ -3,7 +3,7 @@ import logging
 
 from django.db import models
 
-from kooplexhub.lib import my_alphanumeric_validator
+from django.core.validators import MinLengthValidator
 from container.models import Image
 from hub.models import Group
 from django.contrib.auth import get_user_model
@@ -20,9 +20,9 @@ class Course(models.Model):
     class Meta:
        app_label = 'education'
 
-    name = models.CharField(max_length = 64, null = False, unique = True)
+    name = models.CharField(max_length = 64, null = False, unique = True, validators=[ MinLengthValidator(3, message="Name must be at least 3 characters.") ])
     folder = models.CharField(max_length = 64, null = False, unique = True)
-    description = models.TextField(max_length = 512, blank = True)
+    description = models.TextField(max_length = 512, blank = True, validators=[ MinLengthValidator(5, message="Description must be at least 5 characters.") ])
     preferred_image = models.ForeignKey(Image, null = True, on_delete = models.CASCADE)
     teacher_can_delete_foreign_assignment = models.BooleanField(default = False)
     group_students = models.ForeignKey(Group, null = True, on_delete = models.CASCADE, default = None, related_name = 'students')
