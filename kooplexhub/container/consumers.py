@@ -44,7 +44,7 @@ class ContainerFetchlogConsumer(CSyncSkeleton):
 
 
 class ContainerControlConsumer(AsyncSkeleton):
-    identifier_='container'
+    identifier_='container-{user.id}'
     def get_container(self, container_id):
         return sync_to_async(Container.objects.get)(id = container_id, user__id = self.userid)
 

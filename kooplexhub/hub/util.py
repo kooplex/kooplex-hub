@@ -23,31 +23,26 @@ class SyncSkeleton(WebsocketConsumer):
         self.accept()
         self.userid = int(self.scope["url_route"]["kwargs"].get('userid'))
         assert self.scope['user'].id == self.userid, "not authorized"
-#
-#    def disconnect(self, close_code):
-#        self.killed.set()
-#
+
     def get_userid(self):
         return self.userid
 
 
-class  AsyncSkeleton(AsyncWebsocketConsumer):
+class AsyncSkeleton(AsyncWebsocketConsumer):
     async def connect(self):
-        if not self.scope['user'].is_authenticated:
+        user=self.scope['user']
+        if not user.is_authenticated:
             return
         self.userid = int(self.scope["url_route"]["kwargs"].get('userid'))
-        if self.scope['user'].id != self.userid: #not authorized
+        if user.id != self.userid:
             return
         assert hasattr(self, 'identifier_'), "Make sure child class implements self.identifier:str"
-        self.identifier=f"{self.identifier_}-{self.userid}"
+        self.identifier=self.identifier_.format(user=user)
         await self.channel_layer.group_add(self.identifier, self.channel_name)
         await self.accept()
 
     async def disconnect(self, close_code):
-        self.userid = int(self.scope["url_route"]["kwargs"].get('userid'))
-        self.identifier=f"{self.identifier_}-{self.userid}"
         await self.channel_layer.group_discard(self.identifier, self.channel_name)
 
-    async def feedback(self, event):
-        # Send message to WebSocket
-        await self.send(text_data=json.dumps(event))
+    async def feedback(self, data):
+        await self.send(text_data=json.dumps(data))
