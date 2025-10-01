@@ -1,6 +1,7 @@
 import logging
 
 from django.db import models
+from django.core.validators import MinLengthValidator
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -13,8 +14,8 @@ class Project(models.Model):
         INTERNAL = 'internal', 'Only users in specific groups can list and may join this project.'
         PRIVATE = 'private', 'Only the creator can invite collaborators to this project.'
 
-    name = models.TextField(max_length = 200)
-    description = models.TextField(null = True)
+    name = models.TextField(max_length = 200, validators=[ MinLengthValidator(3, message="Name must be at least 3 characters.") ])
+    description = models.TextField(null = True, validators=[ MinLengthValidator(5, message="Description must be at least 5 characters.") ])
     scope = models.CharField(max_length = 16, choices = Scope.choices, default = Scope.PRIVATE)
     subpath = models.CharField(max_length = 200, null = True, unique = True)
     preferred_image = models.ForeignKey('container.Image', on_delete = models.CASCADE, default = None, null = True)

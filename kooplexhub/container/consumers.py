@@ -6,7 +6,6 @@ from asgiref.sync import sync_to_async
 from django.utils.html import format_html
 from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
-from django.core.exceptions import ValidationError
 
 from django.db.models.query import QuerySet
 from container.models import Container
