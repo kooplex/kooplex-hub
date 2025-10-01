@@ -33,14 +33,15 @@ class FetchCanvasCourses {
 
     _callback(message) {
         if (message.response==='get-courses') {
+            const reg = this.register;
             $("table[name=canvas-course] tbody tr").on('click', function () {
                 const pk = $(this).data('id');
                 const canvas_name = $(this).data('tail');
-                $("[data-id=None][data-field=name][data-instance=course]").editable('setValue', canvas_name, true)
-                $("[data-id=None][data-field=description][data-instance=course]").editable('setValue', canvas_name + " imported from canvas", true)
-            	this.register.register_changes('None', 'name', canvas_name, '')
-            	this.register.register_changes('None', 'description', canvas_name + " imported from canvas", '')
-            	this.register.register_changes('None', 'canvasid', pk, '')
+                $("[data-pk=None][data-name=name][data-model=course]").text(canvas_name);
+                $("[data-pk=None][data-name=description][data-model=course]").text(canvas_name + " imported from canvas");
+            	reg.register_changes('None', 'name', canvas_name, '')
+            	reg.register_changes('None', 'description', canvas_name + " imported from canvas", '')
+            	reg.register_changes('None', 'canvasid', pk, '')
             });
         }
     }

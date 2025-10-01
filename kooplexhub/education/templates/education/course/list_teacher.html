@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.inlineEditor = new InlineEditor(window.wss_conf_course);
     window.imageSelector = new ImageSelectionHandler(window.wss_conf_course);
     window.mountHandler = new VolumeHandler(window.wss_conf_course);
-	window.fetchCanvasCourses = new FetchCanvasCourses(window.wss_conf_course, opts={   {# FIXME should be placed elsewhere #}
+    window.fetchCanvasCourses = new FetchCanvasCourses(window.wss_conf_course, opts={   {# FIXME should be placed elsewhere #}
         endpoint: "{{ wss_canvas }}",
         userid: {{ user.id }}
     });

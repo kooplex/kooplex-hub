@@ -35,14 +35,14 @@ class CanvasGetCoursesConsumer(SyncSkeleton):
             canvas = Canvas.objects.get(user__id = self.userid)
             created_ids=list(map(lambda o: o.canvas_course_id, CanvasCourse.objects.all()))
             canvas_courses = filter(lambda x: x['id'] not in created_ids, canvas.get_courses())
-            f=CANVAS_SETTINGS['filter']
-            if old_filter:
+            if f:=CANVAS_SETTINGS['filter']:
                 canvas_courses=list(filter(f, canvas_courses))
             response.update({
                 "feedback": "Your canvas course list is refreshed", 
                 "replace_widgets": { '[id=canvasSelection]': render_to_string("widgets/list_canvascourses.html", {"canvascourses":  canvas_courses }) },
             })
         except Exception as e:
+            logger.error(e)
             response.update({
                 "feedback": f"Failed to fetch canvas course list", 
                 "error": f"problem loading canvas resources -- {e}",
