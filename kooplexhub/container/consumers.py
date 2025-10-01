@@ -6,6 +6,7 @@ from asgiref.sync import sync_to_async
 from django.utils.html import format_html
 from django.core.exceptions import ValidationError
 from django.template.loader import render_to_string
+from django.core.exceptions import ValidationError
 
 from django.db.models.query import QuerySet
 from container.models import Container
@@ -99,8 +100,13 @@ class ContainerConfigHandler:
         from .templatetags.container_tags import render_name
         old_value = self.instance.name
         self.instance.name = new_value
-        self.instance.save()
-        return f"name changed from {old_value} to {new_value}", {f"[data-name=name][data-pk={self.instance.pk}][data-model=container]": render_name(self.instance)}
+        try:
+            self.instance.full_clean()
+            self.instance.save()
+            return f"name changed from {old_value} to {new_value}", {f"[data-name=name][data-pk={self.instance.pk}][data-model=container]": render_name(self.instance)}
+        except ValidationError as e:
+            self.instance.name = old_value
+            return str(e), {f"[data-name=name][data-pk={self.instance.pk}][data-model=container]": render_name(self.instance)}
 
     def handle_image_update(self, new_value):
         from .templatetags.container_buttons import button_image

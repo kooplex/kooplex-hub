@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.html import format_html
+from django.core.validators import MinLengthValidator
 
 #from .report import Report
 from hub.models import Profile
@@ -35,7 +36,7 @@ class Container(models.Model):
         ERROR = 'oops', 'Error occured'
         STOPPING = 'stopping', 'Stopping...'
 
-    name = models.CharField(max_length = 200, null = False)
+    name = models.CharField(max_length = 200, null = False, validators=[ MinLengthValidator(3, message="Name must be at least 3 characters.") ])
     label = models.CharField(max_length = 200, null = False, unique = True)
     user = models.ForeignKey(User, on_delete = models.CASCADE, null = False)
     image = models.ForeignKey(Image, on_delete = models.CASCADE, null = False)
