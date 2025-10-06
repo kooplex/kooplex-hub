@@ -7,12 +7,17 @@ register = template.Library()
 @register.simple_tag
 def render_name(project=None, user=None, **kwargs):
     e = project.is_admin(user) if project else True
-    return render_to_string('hub/widgets/inline_textfield.html', {'model': 'project', 'attr': 'name', 'pk': getattr(project, 'pk', None), 'value': getattr(project, 'name', kwargs.get('value')), 'editable': e})
+    return render_to_string('hub/widgets/inline_textfield.html', {
+        'model': 'project', 'attr': 'name', 'pk': getattr(project, 'pk', None), 'value': getattr(project, 'name', kwargs.get('value')), 'editable': e,
+        'error': kwargs.get('error', None), 'original_value': kwargs.get('original_value')
+    })
 
 @register.simple_tag
 def render_description(project=None, user=None, **kwargs):
     e = project.is_admin(user) if project else True
-    return render_to_string('hub/widgets/inline_textarea.html', {'model': 'project', 'pk': getattr(project, 'pk', None), 'value': getattr(project, 'description', kwargs.get('value')), 'editable': e})
+    return render_to_string('hub/widgets/inline_textarea.html', {'model': 'project', 'pk': getattr(project, 'pk', None), 'value': getattr(project, 'description', kwargs.get('value')), 'editable': e,
+        'error': kwargs.get('error', None), 'original_value': kwargs.get('original_value')
+    })
 
 @register.simple_tag
 def render_volumes(project, user, **kwargs):

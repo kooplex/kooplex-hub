@@ -392,8 +392,12 @@ class CourseConfigHandler:
             self.instance.save()
             return f"name changed from {old_value} to {new_value}", {f"[data-name=name][data-pk={self.instance.pk}][data-model=course]": render_name(self.instance)}
         except ValidationError as e:
-            self.instance.name = old_value
-            return str(e), {f"[data-name=name][data-pk={self.instance.pk}][data-model=course]": render_name(self.instance)}
+            return str(e), {
+                f"[data-name=name][data-pk={self.instance.pk}][data-model=course]": render_name(
+                    self.instance, 
+                    error=e.message_dict.get("name", ["Unknown error"])[0],
+                    original_value=old_value
+                )}
 
     def handle_description_update(self, new_value):
         from .templatetags.course_tags import render_description
@@ -404,8 +408,12 @@ class CourseConfigHandler:
             self.instance.save()
             return f"description changed from {old_value} to {new_value}", {f"[data-name=description][data-pk={self.instance.pk}][data-model=course]": render_description(self.instance)}
         except ValidationError as e:
-            self.instance.description = old_value
-            return str(e), {f"[data-name=description][data-pk={self.instance.pk}][data-model=course]": render_description(self.instance)}
+            return str(e), {
+                f"[data-name=description][data-pk={self.instance.pk}][data-model=course]": render_description(
+                    self.instance,
+                    error=e.message_dict.get("description", ["Unknown error"])[0],
+                    original_value=old_value
+                )}
 
     def handle_image_update(self, new_value):
         from container.templatetags.container_buttons import button_image

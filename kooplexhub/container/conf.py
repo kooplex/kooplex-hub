@@ -6,10 +6,14 @@ DEFAULTS = {
             "nodeSelector_k8s": {},
             'imagePullPolicy': 'IfNotPresent',
             "resources": {
+                "default_cpu": .2,
+                "default_gpu": 0,
+                "default_memory": 1,
+                "default_idletime": 28,
                 #FIXME
-                    "min_cpu": .1,
+                    "min_cpu": .2,
                     "min_gpu": 0,
-                    "min_memory": .1,
+                    "min_memory": .5,
                     "min_idletime": 1,
                     "max_cpu": 4,
                     "max_gpu": 0,

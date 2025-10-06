@@ -1,27 +1,15 @@
 import logging
-import os
-import datetime
-import requests
-import time
 
 from django.db import models
-from django.utils import timezone
-from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.html import format_html
 from django.core.validators import MinLengthValidator
+from model_utils import FieldTracker
 
-#from .report import Report
-from hub.models import Profile
 from .image import Image
 from .envvar import EnvVarMapping
-from .proxy import Proxy
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
-
-from kooplexhub.lib import  now
-from kooplexhub.lib import my_alphanumeric_validator
 
 from ..conf import CONTAINER_SETTINGS
 
@@ -42,7 +30,7 @@ class Container(models.Model):
     image = models.ForeignKey(Image, on_delete = models.CASCADE, null = False)
     launched_at = models.DateTimeField(null = True, blank = True)
     start_teleport = models.BooleanField(default = False)
-    start_ssh = models.BooleanField(default = False)
+    start_ssh = models.BooleanField(default = False)#FIXME: is it really used somewhere????
     start_seafile = models.BooleanField(default = False)
 
     require_running = models.BooleanField(default = False)
@@ -53,10 +41,11 @@ class Container(models.Model):
     restart_reasons = models.CharField(max_length = 500, null = True, blank = True)
 
     node = models.TextField(max_length = 64, null = True, blank = True)
-    cpurequest = models.DecimalField(null = True, blank = True, decimal_places=1, max_digits=4, default=0.2) # FIXME default from settings.pu!
-    gpurequest = models.IntegerField(null = True, blank = True, default=0) # FIXME default!
-    memoryrequest = models.DecimalField( null = True, blank = True, decimal_places=1, max_digits=5, default=1.0) # FIXME default!
-    idletime = models.IntegerField( null = True, blank = True, default=28) # FIXME default!
+    cpurequest = models.DecimalField(null = True, blank = True, decimal_places=1, max_digits=4, default=CONTAINER_SETTINGS["kubernetes"]["resources"]["default_cpu"])
+    gpurequest = models.IntegerField(null = True, blank = True, default=CONTAINER_SETTINGS["kubernetes"]["resources"]["default_gpu"])
+    memoryrequest = models.DecimalField( null = True, blank = True, decimal_places=1, max_digits=5, default=CONTAINER_SETTINGS["kubernetes"]["resources"]["default_memory"])
+    idletime = models.IntegerField( null = True, blank = True, default=CONTAINER_SETTINGS["kubernetes"]["resources"]["default_idletime"])
+    tracker = FieldTracker(fields=['name', 'image', 'start_teleport', 'start_seafile', 'restart_reasons', 'node', 'cpurequest', 'gpurequest', 'memoryrequest', 'idletime']) 
 
     class Meta:
         unique_together = [['user', 'name']]
@@ -73,7 +62,6 @@ class Container(models.Model):
 
     @property
     def link_drop(self):
-        from django.urls import reverse
         return reverse('container:destroy', args = [self.id]) if self.id else ""
 
     def redirect(self, serviceview_id):

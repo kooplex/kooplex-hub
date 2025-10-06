@@ -102,10 +102,14 @@ class ContainerConfigHandler:
         try:
             self.instance.full_clean()
             self.instance.save()
-            return f"name changed from {old_value} to {new_value}", {f"[data-name=name][data-pk={self.instance.pk}][data-model=container]": render_name(self.instance)}
+            return f"name changed from {old_value} to {new_value}", {}
         except ValidationError as e:
-            self.instance.name = old_value
-            return str(e), {f"[data-name=name][data-pk={self.instance.pk}][data-model=container]": render_name(self.instance)}
+            return str(e), {
+                f"[data-name=name][data-pk={self.instance.pk}][data-model=container]": render_name(
+                    self.instance, 
+                    error=e.message_dict.get("name", ["Unknown error"])[0],
+                    original_value=old_value
+                )}
 
     def handle_image_update(self, new_value):
         from .templatetags.container_buttons import button_image

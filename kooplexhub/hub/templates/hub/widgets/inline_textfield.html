@@ -1,13 +1,18 @@
-<!-- Text field -->
-<span
-  {% if editable %}
-  class="editable"
+<div class="editable-wrap"
+     data-type="text"
+     data-name="{{ attr }}"
+     data-pk="{{ pk }}"
+     data-model="{{ model }}">
+  <span class="editable-display">
+    {{ value }}
+  </span>
+
+  {% if error %}
+  <div class="widget-error bg-danger text-white p-1 rounded shadow">
+    {{ error }}
+    <button class="btn btn-sm btn-outline-secondary revert-btn"
+            data-original="{{ original_value }}">Revert</button>
+  </div>
   {% endif %}
-  data-type="text"
-  data-name="{{ attr }}"
-  data-pk="{{ pk }}"
-  data-model="{{ model }}"
->
-  {{ value }}
-</span>
+</div>
 

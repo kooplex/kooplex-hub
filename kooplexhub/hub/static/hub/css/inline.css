@@ -1,26 +1,33 @@
-/* ---------- TEXT (pill) ---------- */
-.editable[data-type="text"] {
+.tab-content, .tab-pane { position: relative; z-index: 3; }
+
+.editable-wrap { position: relative; }
+
+.editable-wrap[data-type="text"] {
+  display: block;
+  width: 100%;
+  padding-left: .5ex;
+  padding-right: .5ex;
+}
+
+.editable-display  {
   display: block;
   width: 100%;
   padding: .25rem .75rem;
-  border: 2px solid currentColor;   /* thicker base border */
-  border-radius: 9999px;            /* pill ends */
+  border: 2px solid currentColor;
+  border-radius: 9999px;
   background: transparent;
   cursor: pointer;
   line-height: 1.4;
 }
 
-/* no visual change on hover */
-.editable[data-type="text"]:hover { filter: none; }
-
-/* when editing: hide wrapper border entirely (no border on hover either) */
-.editable.editing[data-type="text"],
-.editable.editing[data-type="text"]:hover {
+.editable-wrap[data-type="text"]:hover { filter: none; }
+.editable-wrap.editing[data-type="text"],
+.editable-wrap.editing[data-type="text"]:hover {
   cursor: text;
   background: transparent;
 }
 
-.editable[data-type="text"] input {
+.editable-wrap[data-type="text"] input {
   width: 100%;
   box-sizing: border-box;
   font: inherit;
@@ -29,49 +36,53 @@
   border: 0 !important;
   outline: 0 !important;
   box-shadow: none !important;
-  padding: 0 !important;      /* <-- no extra padding */
-  margin: 0 !important;       /* <-- no extra margin */
+  padding: 0 !important;
+  margin: 0 !important;
   line-height: inherit;
   height: auto;
 }
 
-/* ---------- TEXTAREA (rectangular when editing only) ---------- */
-
-/* default: no border at all, no pill decoration */
-.editable[data-type="textarea"] {
+.editable-wrap[data-type="textarea"] {
   border: none;
-  padding: 0;              /* let the content align with surrounding layout */
+  padding: 0;
   background: transparent;
   cursor: pointer;
 }
 
-/* editing: wrapper still borderless; textarea gets a rectangular border */
-.editable.editing[data-type="textarea"] {
+.editable-wrap[data-type="textarea"] .editable-display {
+  border: none;
+  border-radius: .375rem;
+  padding: 0;
+}
+
+.editable-wrap.editing[data-type="textarea"] {
   border: none;
   background: transparent;
   cursor: text;
 }
 
-.editable[data-type="textarea"] textarea {
+.editable-wrap[data-type="textarea"] textarea {
   width: 100%;
   resize: vertical;
   font: inherit;
   color: inherit;
-  background: transparent !important;  /* keep non-white */
+  background: transparent !important;
   border: none !important;
   outline: none !important;
   box-shadow: none !important;
-  padding: 0 !important;               /* no size jump */
+  padding: 0 !important;
   margin: 0 !important;
   line-height: 1.4;
 }
 
-.editable.editing[data-type="textarea"] textarea {
+.editable-wrap.editing[data-type="textarea"] textarea {
   border: 1.5px solid var(--bs-border-color, #ced4da) !important;
-  border-radius: .375rem;              /* rectangular, not pill */
-  background: transparent !important;  /* keep background */
-  /* keep padding at 0 so height doesn’t change when entering edit */
+  border-radius: .375rem;
+  background: transparent !important;
 }
 
 .editable-toolbar { margin-top: .25rem; display: flex; gap: .5rem; }
+
+.widget-error {
+}
 

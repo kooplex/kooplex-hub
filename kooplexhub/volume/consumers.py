@@ -40,8 +40,12 @@ class VolumeConfigHandler:
             self.instance.save()
             return f"description changed from {old_value} to {new_value}", {f"[data-name=description][data-pk={self.instance.pk}][data-model=volume]": render_description(self.instance, self.user)}
         except ValidationError as e:
-            self.instance.description = old_value
-            return str(e), {f"[data-name=description][data-pk={self.instance.pk}][data-model=volume]": render_description(self.instance, self.user)}
+            return str(e), {
+                f"[data-name=description][data-pk={self.instance.pk}][data-model=volume]": render_description(
+                    self.instance, self.user,
+                    error=e.message_dict.get("description", ["Unknown error"])[0],
+                    original_value=old_value
+                )}
 
     def handle_scope_update(self, new_value):
         from .templatetags.volume_tags import render_scope

@@ -1,14 +1,19 @@
-<!-- Textarea field -->
-<div
-  {% if editable %}
-  class="editable"
+<div class="editable-wrap"
+     data-type="textarea"
+     data-name="description"
+     data-pk="{{ pk }}"
+     data-model="{{ model }}"
+     data-value="{{ value|escape }}">
+  <div class="editable-display">
+    {{ value|linebreaksbr }}
+  </div>
+
+  {% if error %}
+  <div class="widget-error bg-danger text-white p-1 rounded shadow">
+    {{ error }}
+    <button class="btn btn-sm btn-outline-secondary revert-btn"
+            data-original="{{ original_value }}">Revert</button>
+  </div>
   {% endif %}
-  data-type="textarea"
-  data-name="description"
-  data-pk="{{ pk }}"
-  data-model="{{ model }}"
-  data-value="{{value}}"
->
-  {{ value|linebreaksbr }}
 </div>
 
