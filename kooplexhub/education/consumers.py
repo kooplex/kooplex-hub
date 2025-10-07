@@ -503,10 +503,37 @@ class CourseConfigConsumer(SyncSkeleton):
             field=parsed.get('field')
             if field=='name':
                 from .templatetags.course_tags import render_name
-                self.send(text_data=json.dumps({'replace_widgets': {f"[data-name=name][data-pk=None][data-model=course]": render_name(value=parsed.get('value'))}}))
+                mfield = Course._meta.get_field('name')
+                try:
+                    value=parsed.get('value')
+                    mfield.clean(value, model_instance=None)
+                    self.send(text_data=json.dumps({'replace_widgets': {
+                        f"[data-name=name][data-pk=None][data-model=course]": render_name(value=parsed.get('value'),
+                        )}
+                    }))
+                except ValidationError as e:
+                    #FIXME check uniqueness!
+                    self.send(text_data=json.dumps({'replace_widgets': {
+                        f"[data-name=name][data-pk=None][data-model=course]": render_name(value=parsed.get('value'),
+                            error=', '.join(e.messages),
+                        )}
+                    }))
             elif field=='description':
                 from .templatetags.course_tags import render_description
-                self.send(text_data=json.dumps({'replace_widgets': {f"[data-name=description][data-pk=None][data-model=course]": render_description(value=parsed.get('value'))}}))
+                mfield = Course._meta.get_field('description')
+                try:
+                    value=parsed.get('value')
+                    mfield.clean(value, model_instance=None)
+                    self.send(text_data=json.dumps({'replace_widgets': {
+                        f"[data-name=description][data-pk=None][data-model=course]": render_description(value=parsed.get('value'),
+                        )}
+                    }))
+                except ValidationError as e:
+                    self.send(text_data=json.dumps({'replace_widgets': {
+                        f"[data-name=description][data-pk=None][data-model=course]": render_description(value=parsed.get('value'),
+                            error=', '.join(e.messages),
+                        )}
+                    }))
             elif field=='preferred_image':
                 image = Image.objects.get(id=parsed.get('value'))
                 self.send(text_data=json.dumps({'replace_widgets': {f"[data-name=preferred_image][data-pk=None][data-model=course]": button_image(model='course', attr='preferred_image', value=image)}}))

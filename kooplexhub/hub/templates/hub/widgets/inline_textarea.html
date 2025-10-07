@@ -5,14 +5,20 @@
      data-model="{{ model }}"
      data-value="{{ value|escape }}">
   <div class="editable-display">
+    {% if pk == None and value == None %}
+    <i>{{ placeholder|default:"Add a description" }}</i>
+    {% else %}
     {{ value|linebreaksbr }}
+    {% endif %}
   </div>
 
   {% if error %}
   <div class="widget-error bg-danger text-white p-1 rounded shadow">
     {{ error }}
+    {% if pk != None %}
     <button class="btn btn-sm btn-outline-secondary revert-btn"
             data-original="{{ original_value }}">Revert</button>
+    {% endif %}
   </div>
   {% endif %}
 </div>

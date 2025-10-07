@@ -227,10 +227,37 @@ class ProjectConfigConsumer(SyncConsumer):
             field=parsed.get('field')
             if field=='name':
                 from .templatetags.project_tags import render_name
-                self.send(text_data=json.dumps({'replace_widgets': {f"[data-name=name][data-pk=None][data-model=project]": render_name(value=parsed.get('value'))}}))
+                mfield = Project._meta.get_field('name')
+                try:
+                    value=parsed.get('value')
+                    mfield.clean(value, model_instance=None)
+                    self.send(text_data=json.dumps({'replace_widgets': {
+                        f"[data-name=name][data-pk=None][data-model=project]": render_name(value=parsed.get('value'),
+                        )}
+                    }))
+                except ValidationError as e:
+                    #FIXME check uniqueness!
+                    self.send(text_data=json.dumps({'replace_widgets': {
+                        f"[data-name=name][data-pk=None][data-model=project]": render_name(value=parsed.get('value'),
+                            error=', '.join(e.messages),
+                        )}
+                    }))
             elif field=='description':
                 from .templatetags.project_tags import render_description
-                self.send(text_data=json.dumps({'replace_widgets': {f"[data-name=description][data-pk=None][data-model=project]": render_description(value=parsed.get('value'))}}))
+                mfield = Project._meta.get_field('description')
+                try:
+                    value=parsed.get('value')
+                    mfield.clean(value, model_instance=None)
+                    self.send(text_data=json.dumps({'replace_widgets': {
+                        f"[data-name=description][data-pk=None][data-model=project]": render_description(value=parsed.get('value'),
+                        )}
+                    }))
+                except ValidationError as e:
+                    self.send(text_data=json.dumps({'replace_widgets': {
+                        f"[data-name=description][data-pk=None][data-model=project]": render_description(value=parsed.get('value'),
+                            error=', '.join(e.messages),
+                        )}
+                    }))
             elif field=='preferred_image':
                 from container.templatetags.container_buttons import button_image
                 image = Image.objects.get(id=parsed.get('value'))

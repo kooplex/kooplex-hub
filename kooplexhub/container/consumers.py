@@ -230,7 +230,23 @@ class ContainerConfigConsumer(CSyncSkeleton):
             elif field=='volumes':
                 from .templatetags.container_buttons import button_mount_volumes
                 self.send(text_data=json.dumps({'replace_widgets': {f"[data-name=volumes][data-pk=None][data-model=container]": button_mount_volumes(value=parsed.get('value'))}}))
-
+            elif field=='name':
+                from .templatetags.container_tags import render_name
+                mfield = Container._meta.get_field('name')
+                try:
+                    value=parsed.get('value')
+                    mfield.clean(value, model_instance=None)
+                    self.send(text_data=json.dumps({'replace_widgets': {
+                        f"[data-name=name][data-pk=None][data-model=container]": render_name(value=parsed.get('value'),
+                        )}
+                    }))
+                except ValidationError as e:
+                    #FIXME check uniqueness!
+                    self.send(text_data=json.dumps({'replace_widgets': {
+                        f"[data-name=name][data-pk=None][data-model=container]": render_name(value=parsed.get('value'),
+                            error=', '.join(e.messages),
+                        )}
+                    }))
 
             else:
                 logger.critical(f"unknown {field}")
