@@ -14,7 +14,6 @@ class InlineEditor {
   _bind() {
     $(document).on('click', this.displaySelector, (e) => {
       const $display = $(e.currentTarget);
-	    console.log($display);
       if ($display.closest(this.wrapSelector).hasClass('editing')) return;
       e.preventDefault();
       this.startEdit($display);
@@ -48,12 +47,11 @@ class InlineEditor {
   }
 
   startEdit($display) {
-	  console.log("KLIKK")
     if (this.$active) this.cancelEdit(this.$active);
-	  console.log("edit")
     const $wrap = $display.closest(this.wrapSelector);
+    const pk = $wrap.data('pk');
     const type  = ($wrap.data('type') || 'text').toLowerCase();
-    const value = this._getPlainText($display);
+    const value = pk === "None" ? "" : this._getPlainText($display);
     this.oldValue = value;
     $wrap.addClass('editing');
     this.$active = $display;
