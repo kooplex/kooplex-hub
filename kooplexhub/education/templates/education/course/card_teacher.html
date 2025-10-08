@@ -2,7 +2,7 @@
 {% load course_tags %}
 {% load container_buttons %}
 
-<div class="card rounded rounded-3 mb-3 border border-2 {% if course.id %}border-success{% else %}border-warning{% endif %} shadow-light bg-light" id="card-{{ course.id }}" data-widget="coursecard" data-id="{{course.id}}" data-search="{{course.search}}" data-search_what="course">
+<div class="card rounded rounded-3 mb-3 border border-2 {% if course.id %}border-success{% else %}border-warning{% endif %} shadow-light bg-light" id="card-{{ course.id }}" data-widget="coursecard" data-id="{{course.id}}">
     <div class="card-header">
         {% render_name course %}
     </div>

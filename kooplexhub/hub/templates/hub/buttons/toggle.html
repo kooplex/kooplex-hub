@@ -1,22 +1,22 @@
 {% if on %}
 <button 
     role="button"
-    class="badge rounded-pill border border-1 border-dark p-2 me-2 position-relative" 
+    class="badge rounded-pill border border-1 border-success p-2 me-3 position-relative" 
     data-toggle="tooltip" title="{{title_on}}"
-    data-model="{{model}}" data-pk="{{pk}}" data-name="{{attr}}" data-value="false"
+    data-model="{{model}}" data-pk="{{pk}}" data-name="{{attr}}" data-value="true"
     >
       <img src="{{icon}}" width="15px" alt="t">
-      <span class="position-absolute top-0 start-100 translate-middle badge bg-secondary small">{{ off|default:"off" }}</span>
+      <span class="position-absolute top-0 start-100 translate-middle badge bg-success small">{{ on_label|default:"on" }}</span>
 </button>
 {% else %}
 <button 
     role="button"
-    class="badge rounded-pill border border-1 border-success p-2 me-2 position-relative" 
+    class="badge rounded-pill border border-1 border-dark p-2 me-3 position-relative" 
     data-toggle="tooltip" title="{{title_off}}"
-    data-model="{{model}}" data-pk="{{pk}}" data-name="{{attr}}" data-value="true"
+    data-model="{{model}}" data-pk="{{pk}}" data-name="{{attr}}" data-value="false"
     >
       <img src="{{icon}}" width="15px" alt="t">
-      <span class="position-absolute top-0 start-100 translate-middle badge bg-success small">{{ on|default:"on" }}</span>
+      <span class="position-absolute top-0 start-100 translate-middle badge bg-secondary small">{{ off_label|default:"off" }}</span>
 </button>
 {% endif %}
 

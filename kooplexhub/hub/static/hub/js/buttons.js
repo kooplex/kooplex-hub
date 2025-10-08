@@ -23,7 +23,7 @@ class ToggleButton {
     const $button = $(event.currentTarget);
     const pk = $button.data('pk');
     const field = $button.data('name');
-    const newValue = $button.data('value');
+    const newValue = ! ($button.data('value') || false);
     this.register.register_changes(pk, field, newValue, ! newValue);
     this._setBusyState($button);
   }

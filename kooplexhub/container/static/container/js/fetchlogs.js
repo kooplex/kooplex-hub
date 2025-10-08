@@ -40,6 +40,7 @@ class FetchLogs {
 
   init() {
     $(document).on("click", '[data-bs-target="#fetchlogsModal"]', (e) => {
+      e.stopPropagation();
       const objectId = $(e.currentTarget).data("id");
       this.requestLogs(objectId);
     });

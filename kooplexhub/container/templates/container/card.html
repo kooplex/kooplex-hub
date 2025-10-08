@@ -5,7 +5,7 @@
 {% load check_show %}
 
 {# Render a card that represents a contaner #}
-<div class="card bg-ligth shadow-2-strong border border-3 shadow-light bg-light {% if container.id %}border-success{%else%}border-warning{%endif%} mb-3" data-widget="containercard" data-id="{{container.id}}" data-search="{{container.search}}" data-search_what="container">
+<div class="card bg-ligth shadow-2-strong border border-3 shadow-light bg-light {% if container.id %}border-success{%else%}border-warning{%endif%} mb-3" data-widget="containercard" data-id="{{container.id}}">
     <!-- Header -->
     <div class="card-header d-flex justify-content-start align-items-center {% if container.id %}border-success{%else%}border-warning{%endif%}">
 	{% button_open container %}
@@ -29,24 +29,27 @@
                     {% button_seafile container %}
                     {% button_mount container %}
                 </div>
+              {% if container %}
                 <!-- Row 3 -->
-                <div>
-                    {% button_resources container %}
-                </div>
+                <div>{% button_restart container %}</div>
+              {% else %}
+	        <div class="d-flex">
+                    <button class="badge rounded-pill border border-1 border-dark text-dark flex-grow-1 text-start p-2"
+                        data-bs-toggle="tooltip" data-placement="bottom"
+                        title="Requested compute resources. Click to tune."
+                        data-pk="None" data-name="resources" data-model="container"
+                    ><i class="bi bi-wrench me-2"></i>Resources</button>
+		</div>
+              {% endif %}
             </div>
             
             <!-- Right Column -->
             <div class="col-md-6 d-flex flex-column">
               {% if container %}
                 <!-- Row 1 -->
-                <div class="d-flex align-items-center mb-3">
-		    {% button_fetchlogs container %}
-		    {% indicator_state container %}
-                </div>
-                <!-- Row 2 -->
-                <div class="mb-3">{% button_restart container %}</div>
+                <div>{% include 'container/resources.html' %}</div>
               {% else %}
-                <div class="mb-3 alert alert-info" role="alert">
+                <div class="alert alert-info" role="alert">
                   <p>Requirements:</p>
 		  <ul>
                     <li>Name (at least 3 characters)</li>

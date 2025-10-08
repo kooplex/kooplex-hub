@@ -56,8 +56,6 @@ class ContainerListView(LoginRequiredMixin, generic.ListView):
         context['t_volume'] = TableVolume.for_user(self.request.user)
         context['resource_form']=FormContainer(initial={'user': self.request.user})
         context['images'] = Image.objects.filter(imagetype = Image.TP_PROJECT, present = True)
-        context['search_placeholder'] = 'Search container...'
-        context['search_what'] = 'container'
         return context
 
     def get_queryset(self):

@@ -92,7 +92,7 @@ def indicator_state(container):
 @register.simple_tag
 def button_teleport(container=None, **kwargs):
     return render_to_string("hub/buttons/toggle.html",  {
-        "on": getattr(container, 'start_teleport', kwargs.get('value', 'False')), 
+        "on": getattr(container, 'start_teleport', kwargs.get('value', False)), 
         "pk": getattr(container, 'pk', None), "model": "container",
         "attr": "start_teleport",
         'icon': static('container/img/teleport.ico')
@@ -101,7 +101,7 @@ def button_teleport(container=None, **kwargs):
 @register.simple_tag
 def button_seafile(container=None, **kwargs):
     return render_to_string("hub/buttons/toggle.html", {
-        "on": getattr(container, 'start_seafile', kwargs.get('value', 'False')), 
+        "on": getattr(container, 'start_seafile', kwargs.get('value', False)), 
         "pk": getattr(container, 'pk', None), "model": "container", "model": "container",
         "attr": "start_seafile",
         'icon': static('container/img/seafile.png')
@@ -147,18 +147,6 @@ def button_mount_volumes(container=None, **kwargs):
 @register.simple_tag
 def button_mount(container):
     return render_to_string("container/button/mount.html", {"container": container})
-
-@register.simple_tag
-def button_resources(container = None):
-    geta = lambda container, attr: getattr(container, attr, None) if container else None
-    return render_to_string("container/button/resources.html", {
-        "container": container,
-        "node": geta(container, 'node'),
-        "cpurequest": geta(container, 'cpurequest'),
-        "gpurequest": geta(container, 'gpurequest'),
-        "memoryrequest": geta(container, 'memoryrequest'),
-        "idletime": geta(container, 'idletime'),
-    })
 
 @register.simple_tag
 def button_resource_node(container=None, **kwargs):
@@ -224,17 +212,6 @@ def button_view(view, container, show_name=False):
     except:
         return "<i class='bi bi-eye-slash'></i>"
     return render_to_string("container/button/view.html", {"container": container, "view": view, "link": _link, "show_name": show_name})
-
-
-#FIXME: az aktuális fogyasztás mehet a loglekérésbe vagy háttészínbe
-#@register.simple_tag
-#def container_resources(container = None):
-#        # query actual resource usage of container
-#        usage = pandas.DataFrame(get_pod_usage(container_name=container.label))
-#        if usage.shape[0]==1:
-#            used_cpu = usage["used_cpu"][0]
-#            used_memory = usage["used_memory"][0]
-#            used_gpu = usage["used_gpu"][0]
 
 
 

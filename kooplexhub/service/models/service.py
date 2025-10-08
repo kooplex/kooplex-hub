@@ -9,7 +9,8 @@ from django.dispatch import receiver
 from django.contrib.auth.models import User
 
 #from hub.models.token import Token
-from kooplexhub.settings import KOOPLEX
+from kooplexhub.settings import KOOPLEX  #FIXME GET RID OF THIS
+from container.conf import CONTAINER_SETTINGS
 
 #from jsonfield import JSONField
 
@@ -47,7 +48,7 @@ class SeafileService(models.Model):
 
     @property
     def secret_mount_dir(self):
-        return KOOPLEX['kubernetes']['secrets'].get("mount_dir", "/.secrets")
+        return CONTAINER_SETTINGS['kubernetes']['secrets']["mount_dir"]
     
     @property
     def secret_file(self):

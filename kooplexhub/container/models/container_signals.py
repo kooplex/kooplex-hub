@@ -42,32 +42,3 @@ def container_needs_restart(sender, instance, **kwargs):
     if chg:
         instance.mark_restart("Attributes {} changed".format(", ".join(chg)), save = False)
 
-#################################################
-#
-from django.db.models.signals import pre_save
-from django.dispatch import receiver
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
-from django.template.loader import render_to_string
-
-@receiver(pre_save, sender=Container)
-def on_volume_pre_save(sender, instance, **kwargs):
-    if not instance.pk:
-        return
-    changed = instance.tracker.changed()
-    replace_widgets = {}
-    messages = [f"chg {changed}"]
-    if 'restart_reasons' in changed:
-        replace_widgets[f"[data-action=restart][data-pk={instance.pk}]"] = render_to_string("container/button/restart.html", {'container': instance})
-    if 'name' in changed:
-        from ..templatetags.container_tags import render_name
-        old = instance.tracker.previous('name')
-        new = instance.name
-        messages.append(f"container name changed from {old} to {new}")
-        replace_widgets[f"[data-name=name][data-pk={instance.pk}][data-model=container]"] = render_name(instance)
-    channel_layer=get_channel_layer()
-    async_to_sync(channel_layer.group_send)(f"container-{instance.user.pk}", {
-          "type": "feedback",
-          "feedback": ", ".join(messages),
-          "replace_widgets": replace_widgets,
-    })

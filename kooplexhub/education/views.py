@@ -90,8 +90,6 @@ class StudentCourseBindingListView(LoginRequiredMixin, generic.ListView):
         context['wss_container_control'] = CONTAINER_SETTINGS['wss']['control'].format(user = self.request.user)
         context['wss_course_container'] = EDUCATION_SETTINGS['wss']['containers'].format(user = self.request.user)
         context['wss_handin'] = EDUCATION_SETTINGS['wss']['handin'].format(user = self.request.user)
-        context['search_placeholder'] = 'Search course...'
-        context['search_what'] = 'course'
         return context
 
 
@@ -118,8 +116,6 @@ class TeacherCourseBindingListView(LoginRequiredMixin, generic.ListView):
         context['users'] = [ u.profile._repr for u in User.objects.all().exclude(id = self.request.user.id) ]
         context['t_users'] = TableUsers(User.objects.all().exclude(id = self.request.user.id), marker_column='Teacher')
         context['modal_new'] = 'widgets/fetch_canvascourses_modal.html' #FIXME 'education/templates/course/new.html')
-        context['search_placeholder'] = 'Search course...'
-        context['search_what'] = 'course'
         return context
 
 

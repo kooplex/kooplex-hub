@@ -74,27 +74,24 @@ class ComputeResourceHandler {
     e.preventDefault();
     const $root = $(e.currentTarget).closest('[data-id]');
     const containerId = $root.data('id') || 'None';
-    const node = String($root.data('node') || '');
-	  console.log(node)
-	  console.log(containerId)
-    this._open(containerId, node);
+    this._open(containerId);
   }
 
   _open(containerId) {
     this.selectedContainerId = (containerId === 'None') ? 'None' : parseInt(containerId, 10);
     const $button = $(`button[data-name=resources][data-pk="${containerId}"]`);
 
-    const currentNode = String($button.data('node') || '');
+    const $node_bar = $(`[data-pk=${containerId}][data-name="node"][data-value]`).first();
+    const currentNode = $node_bar.length ? $node_bar.data('value') : '';
     this.currentNode = currentNode;
-
     const normalized = this._mynone(currentNode);
     this.selectedNode = normalized;
 
     // preload values
-    $("input[name='cpurequest']").val(parseFloat($button.find("span[data-name='cpurequest']").data('value') || 0.1));
-    $("input[name='gpurequest']").val(parseInt($button.find("span[data-name='gpurequest']").data('value') || 0, 10));
-    $("input[name='memoryrequest']").val(parseFloat($button.find("span[data-name='memoryrequest']").data('value') || 0.1));
-    $("input[name='idletime']").val(parseInt($button.find("span[data-name='idletime']").data('value') || 1, 10));
+    $("input[name='cpurequest']").val(parseFloat($(`[data-pk=${containerId}][data-name=cpu][data-value]`).data('value') || 0.1));
+    $("input[name='gpurequest']").val(parseInt($(`[data-pk=${containerId}][data-name=gpu][data-value]`).data('value') || 0, 10));
+    $("input[name='memoryrequest']").val(parseFloat($(`[data-pk=${containerId}][data-name=memory][data-value]`).data('value') || 0.1));
+    $("input[name='idletime']").val(parseInt($(`[data-pk=${containerId}][data-name=idletime][data-value]`).data('value') || 1, 10));
     $("select[name='node']").val(currentNode).change();
 
     // show modal

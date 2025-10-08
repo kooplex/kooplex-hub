@@ -76,6 +76,11 @@ class ConfigHandler {
         if (this.isnew(pk)) {
             this.newObject[fieldName]=newValue;
             this.showSaveChanges();
+            this.wss.send(JSON.stringify({
+                request: 'update-widget',
+                field: fieldName,
+                value: newValue,
+	    }));
 	} else {
             const request_id = this._uuid();
             this.pendingRequests.add(request_id);

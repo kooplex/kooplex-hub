@@ -3,7 +3,6 @@ import logging
 from django.db import models
 from django.urls import reverse
 from django.core.validators import MinLengthValidator
-from model_utils import FieldTracker
 
 from .image import Image
 from .envvar import EnvVarMapping
@@ -42,10 +41,12 @@ class Container(models.Model):
 
     node = models.TextField(max_length = 64, null = True, blank = True)
     cpurequest = models.DecimalField(null = True, blank = True, decimal_places=1, max_digits=4, default=CONTAINER_SETTINGS["kubernetes"]["resources"]["default_cpu"])
+    cpuusage = models.DecimalField(null = True, blank = True, decimal_places=1, max_digits=4, default=None)
     gpurequest = models.IntegerField(null = True, blank = True, default=CONTAINER_SETTINGS["kubernetes"]["resources"]["default_gpu"])
     memoryrequest = models.DecimalField( null = True, blank = True, decimal_places=1, max_digits=5, default=CONTAINER_SETTINGS["kubernetes"]["resources"]["default_memory"])
+    memoryusage = models.DecimalField(null = True, blank = True, decimal_places=1, max_digits=5, default=None)
     idletime = models.IntegerField( null = True, blank = True, default=CONTAINER_SETTINGS["kubernetes"]["resources"]["default_idletime"])
-    tracker = FieldTracker(fields=['name', 'image', 'start_teleport', 'start_seafile', 'restart_reasons', 'node', 'cpurequest', 'gpurequest', 'memoryrequest', 'idletime']) 
+    idle = models.IntegerField( null = True, blank = True, default=None)
 
     class Meta:
         unique_together = [['user', 'name']]
@@ -55,10 +56,6 @@ class Container(models.Model):
 
     def __str__(self):
         return self.label
-
-    @property
-    def search(self):
-        return self.name.upper()
 
     @property
     def link_drop(self):
@@ -173,6 +170,10 @@ class Container(models.Model):
     def retrieve_log(self):
         from ..lib import fetch_containerlog
         return  fetch_containerlog(self)
+
+    @property
+    def is_running(self):
+        return self.state in [ self.State.RUNNING, self.State.NEED_RESTART ]
 
     def mark_restart(self, reason, save = True):
         if self.state not in [ self.State.RUNNING, self.State.NEED_RESTART ]:

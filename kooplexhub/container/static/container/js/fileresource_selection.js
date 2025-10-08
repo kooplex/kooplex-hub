@@ -81,15 +81,18 @@ class MountHandler {
     //$btn.html(this.busy).prop('disabled', true);
     $btn.prop('disabled', true);
     try {
-        $btn.find("span[data-name=projects]").html(this.busy);
-        $btn.find("span[data-name=projects]").removeClass('d-none');
-        this.register.register_changes(pk, 'projects', projects, projects_o);
-        $btn.find("span[data-name=courses]").html(this.busy);
-        $btn.find("span[data-name=courses]").removeClass('d-none');
-        this.register.register_changes(pk, 'courses',  courses,  courses_o);
-        $btn.find("span[data-name=volumes]").html(this.busy);
-        $btn.find("span[data-name=volumes]").removeClass('d-none');
-        this.register.register_changes(pk, 'volumes',  volumes,  volumes_o);
+        if (this.register.register_changes(pk, 'projects', projects, projects_o)) {
+            $btn.find("span[data-name=projects]").html(this.busy);
+            $btn.find("span[data-name=projects]").removeClass('d-none');
+	}
+        if (this.register.register_changes(pk, 'courses',  courses,  courses_o)) {
+            $btn.find("span[data-name=courses]").html(this.busy);
+            $btn.find("span[data-name=courses]").removeClass('d-none');
+	}
+        if (this.register.register_changes(pk, 'volumes',  volumes,  volumes_o)) {
+            $btn.find("span[data-name=volumes]").html(this.busy);
+            $btn.find("span[data-name=volumes]").removeClass('d-none');
+	}
     } catch (err) {
         console.error(err);
         // Basic error hint (replace with your toast)
