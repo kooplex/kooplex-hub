@@ -1,0 +1,20 @@
+{% load container_buttons %}
+
+<div class="container"
+    role="button"
+    data-bs-toggle="tooltip" data-placement="bottom"
+    title="Requested compute resources. Click to tune."
+    data-pk="{{container.id|default:'None'}}" data-name="resources" data-model="container"
+>
+  <div class="meter-row">
+      <span class="bi bi-heart-pulse meter-icon text-secondary"></span>
+		    {% button_fetchlogs container %}
+		    {% indicator_state container %}
+  </div>
+  {% include 'container/resources/node.html' %}
+  {% include 'container/resources/memory.html' %}
+  {% include 'container/resources/cpu.html' %}
+  {% include 'container/resources/gpu.html' %}
+  {% include 'container/resources/idle.html' %}
+</div>
+

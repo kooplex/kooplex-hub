@@ -129,8 +129,9 @@ class Container(models.Model):
         return { b.volume for b in self.volumebindings.all() } if self.pk else {}
 
     @property
-    def target_node(self):
-        return {'kubernetes.io/hostname': self.node} if self.node else CONTAINER_SETTINGS['kubernetes']['nodeSelector_k8s']
+    def nodeSelector(self):
+        selector={'kubernetes.io/hostname': self.node} if self.node else dict(CONTAINER_SETTINGS['kubernetes']['nodeSelector_k8s'])
+        return {"nodeSelector": selector} if selector else {}
 
 
     @property

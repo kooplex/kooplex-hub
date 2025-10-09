@@ -1,0 +1,31 @@
+<div class="meter-row" data-pk="{{container.pk}}" data-name="node" data-value="{{container.node}}"
+{% if container.node %}
+     data-toggle="tooltip" title="Selected node {{container.node}}" data-placement="bottom"
+{% endif %}
+>
+  <i class="bi bi-pc meter-icon text-secondary"></i>
+  {% if container.is_running %}
+  <div class="meter bidibar">
+    {% if mem_pct %}
+    <div class="side left  bg-warning" style="--p:{{mem_pct}}"></div>
+    <span class="tag left  text-dark fw-semibold">MEM {{mem_pct}}%</span>
+    {% else %}
+    <span class="tag left text-dark fw-semibold">No metric</span>
+    {% endif %}
+    {% if cpu_pct %}
+    <div class="side right bg-success" style="--p:{{cpu_pct}}"></div>
+    <span class="tag right text-dark fw-semibold">CPU {{cpu_pct}}%</span>
+    {% else %}
+    <span class="tag right text-dark fw-semibold">No metric</span>
+    {% endif %}
+    <div class="center-line"></div>
+  </div>
+  {% else %}
+  <div class="meter">
+    {% if container.node %}
+    <span class="label fw-semibold text-dark">{{container.node}}</span>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+

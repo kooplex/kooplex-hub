@@ -1,0 +1,20 @@
+{% with mem=container.memoryusage %}
+<div class="meter-row" data-pk="{{container.pk}}" data-name="memory" data-value="{{container.memoryrequest}}">
+  <i class="bi bi-memory meter-icon text-secondary"></i>
+  <div class="meter">
+    {% if mem != None %}
+    {% widthratio container.memoryusage container.memoryrequest 100 as mem_pct %}
+    {% if mem_pct|add:0 > 100 %}
+    <div class="fill bg-danger" style="--p:100"></div>
+    {% else %}
+    <div class="fill bg-warning" style="--p:{{mem_pct}}"></div>
+    {% endif %}
+    <span class="label fw-semibold text-dark">{{mem|floatformat:2}}G ({{mem_pct}}%)</span>
+    {% elif container.is_running %}
+    <span class="label fw-semibold text-dark">No metric available</span>
+    {% else %}
+    <span class="label fw-semibold text-dark">{{container.memoryrequest}}G</span>
+    {% endif %}
+  </div>
+</div>
+{% endwith %}

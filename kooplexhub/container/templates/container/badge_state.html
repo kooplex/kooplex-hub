@@ -1,3 +1,19 @@
+{% comment %}
 {% if container %}
 <span data-id="{{container.id}}" name="phase" class="badge rounded-pill bg-dark text-light p-2 flex-grow-1 text-start">{{container.state_backend}}</span>
+{% endif %}
+{% endcomment %}
+
+{% if container %}
+  {% if container.state == container.State.RUNNING or container.state == container.State.ERROR or container.state == container.State.NEED_RESTART %}
+  <button name="fetch" data-id="{{container.id}}" class="badge rounded-pill text-bg-info border p-2 flex-grow-1 text-start"
+      data-toggle="tooltip" title="Click to retrieve latest container logs" data-placement="bottom"
+      data-bs-toggle="modal" data-bs-target="#fetchlogsModal">
+{{container.state_backend}}
+  </button>
+  {% else %}
+  <button name="fetch" data-id="{{container.id}}" class="badge rounded-pill text-bg-secondary border p-2 flex-grow-1 text-start" disabled>
+{{container.state_backend}}
+  </button>
+  {% endif %}
 {% endif %}

@@ -1,0 +1,17 @@
+{% with idle=container.idle %}
+<div class="meter-row" data-pk="{{container.pk}}" data-name="idletime" data-value="{{container.idletime}}">
+  <i class="bi bi-moon meter-icon text-secondary"></i>
+  <div class="meter">
+    {% if idle %}
+    {% widthratio container.idle container.idletime 100 as idle_pct %}
+    <div class="fill bg-secondary" style="--p:{{idle_pct}}"></div>
+    <span class="label fw-semibold text-dark">Idle {{idle|floatformat:1}}h</span>
+    {% elif container.is_running %}
+    <span class="label fw-semibold text-dark">No metric available</span>
+    {% else %}
+    <span class="label fw-semibold text-dark">{{container.idletime}}h</span>
+    {% endif %}
+  </div>
+</div>
+{% endwith %}
+

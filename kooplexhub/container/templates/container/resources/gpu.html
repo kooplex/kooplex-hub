@@ -1,0 +1,17 @@
+{% if container.gpurequest > 0 %}
+<div class="meter-row" data-pk="{{container.pk}}" data-name="gpu" data-value="{{container.gpurequest}}">
+  <i class="bi bi-gpu-card meter-icon text-secondary"></i>
+  <div class="meter">
+    {% if container.is_running %}
+    {% widthratio container.gpurequest 3 100 as gpu_pct %}
+    <div class="fill bg-success" style="--p:{{gpu_pct}}"></div>
+    <span class="label fw-semibold text-body">{{container.gpurequest}}</span>
+    {% else %}
+    <span class="label fw-semibold text-dark">{{container.gpurequest}}</span>
+    {% endif %}
+  </div>
+</div>
+{% else %}
+<div class="meter-row d-none" data-pk="{{container.pk}}" data-name="gpu"></div>
+{% endif %}
+

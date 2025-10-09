@@ -24,8 +24,8 @@ def _replace_widgets(container):
         f'[data-action=start][data-pk={container.id}]': button_start.render(container),
         f'[data-action=stop][data-pk={container.id}]': button_stop.render(container),
         f'[name=opencontainer][data-id={container.id}]': button_open.render(container),
-        f'[name=fetch][data-id={container.id}]': button_fetchlogs.render(container),
-        f'[name=phase][data-id={container.id}]': indicator_state.render(container),
+#        f'[name=fetch][data-id={container.id}]': button_fetchlogs.render(container),
+        f'[name=fetch][data-id={container.id}]': indicator_state.render(container),
         f'[data-action=restart][data-pk={container.id}]': button_restart.render(container),
         }
 

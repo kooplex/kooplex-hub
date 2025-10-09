@@ -1,0 +1,21 @@
+{% with cpu=container.cpuusage %}
+<div class="meter-row" data-pk="{{container.pk}}" data-name="cpu" data-value="{{container.cpurequest}}">
+  <i class="bi bi-cpu meter-icon text-secondary"></i>
+  <div class="meter">
+    {% if cpu != None %}
+    {% widthratio container.cpuusage container.cpurequest 100 as cpu_pct %}
+    {% if cpu_pct|add:0 > 100 %}
+    <div class="fill bg-danger" style="--p:100"></div>
+    {% else %}
+    <div class="fill bg-success" style="--p:{{cpu_pct}}"></div>
+    {% endif %}
+    <span class="label fw-semibold text-dark">{{cpu|floatformat:2}} ({{cpu_pct}}%)</span>
+    {% elif container.is_running %}
+    <span class="label fw-semibold text-dark">No metric available</span>
+    {% else %}
+    <span class="label fw-semibold text-dark">{{container.cpurequest}}</span>
+    {% endif %}
+  </div>
+</div>
+{% endwith %}
+

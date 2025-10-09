@@ -4,6 +4,7 @@ import time
 
 import requests, os
 from django.utils import timezone
+from django.template.loader import render_to_string
 from datetime import datetime
 
 from channels.layers import get_channel_layer
@@ -40,7 +41,7 @@ def start_container(user_id, container_id):
         container=Container.objects.get(user_id=user_id, id=container_id)    
         start_environment(container)
         return "Completed"
-    except container.DoesNotExist:
+    except Container.DoesNotExist:
         return "Container not found"
 
 
@@ -52,6 +53,30 @@ def stop_container(user_id, container_id):
         return "Completed"
     except container.DoesNotExist:
         return "Container not found"
+
+
+def render_progressbar(container, metric):
+    if metric == 'idle':
+        html=render_to_string("container/resources/idle.html", {'container': container})
+        ref=f"[data-pk={container.pk}][data-name=idletime]"
+    elif metric == 'cpu':
+        html=render_to_string("container/resources/cpu.html", {'container': container})
+        ref=f"[data-pk={container.pk}][data-name=cpu]"
+    elif metric == 'mem':
+        html=render_to_string("container/resources/memory.html", {'container': container})
+        ref=f"[data-pk={container.pk}][data-name=memory]"
+    else:
+        logger.error(f'Unknown metric {metric}')
+        return
+    channel_layer=get_channel_layer()
+    async_to_sync(channel_layer.group_send)(f"container-{container.user.id}", {
+          "type": "feedback",
+          "container_id": container.id,
+          "replace_widgets": { ref: html },
+    })
+    logger.critical(ref)
+    logger.critical(html)
+
 
 
 @db_periodic_task(crontab(minute="55"), queue='container')  # Runs every hour at 55
@@ -66,8 +91,54 @@ def kill_idle():
             ts = datetime.strptime(last_activity, '%Y-%m-%dT%H:%M:%S.%fZ')
             elasped_time = timezone.now() - timezone.make_aware(ts)
             # FIXME added +1 because proxy's timezone is different
-            if elasped_time.days*24+ elasped_time.seconds / 3600 > c.idletime:          
+            idletime=elasped_time.days*24+ elasped_time.seconds / 3600
+            if idletime > c.idletime:
                 c.stop()
+            else:
+                c.idle=idletime
+                c.save()
+                render_progressbar(c, 'idle')
         except Exception as e:
             logger.error(f'Failed to check container {c.name} of {c.user.username} -- {e}')
+
+def prom_query(query):
+    import requests
+    BASE = "http://prometheus-k8s.monitoring:9090"  #FIXME put in conf
+    r = requests.get(f"{BASE}/api/v1/query", params={"query": query})
+    r.raise_for_status()
+    return r.json()["data"]["result"]
+
+@periodic_task(crontab(minute="*/1"), queue='container')
+def k8s_cpu_usage():
+    ns=CONTAINER_SETTINGS['kubernetes']['namespace']
+    q_cpu="""
+sum by (pod) (
+  rate(container_cpu_usage_seconds_total{namespace="%s", container!="", image!=""}[1m])
+)
+    """%ns
+    cpu = prom_query(q_cpu)
+    cpu_by_pod = {item["metric"]["pod"]: float(item["value"][1]) for item in cpu}
+    for k, v in cpu_by_pod.items():
+        c=Container.objects.filter(label=k).first()
+        if c:
+            c.cpuusage=v
+            c.save()
+            render_progressbar(c, 'cpu')
+
+@periodic_task(crontab(minute="*/1"), queue='container')
+def k8s_mem_usage():
+    ns=CONTAINER_SETTINGS['kubernetes']['namespace']
+    q_mem="""
+sum by (pod) (
+  container_memory_working_set_bytes{namespace="%s", container!="", image!=""}
+) / 1073741824
+"""%ns
+    mem = prom_query(q_mem)
+    mem_by_pod = {item["metric"]["pod"]: float(item["value"][1]) for item in mem}
+    for k, v in mem_by_pod.items():
+        c=Container.objects.filter(label=k).first()
+        if c:
+            c.memoryusage=v
+            c.save()
+            render_progressbar(c, 'mem')
 
