@@ -1,7 +1,7 @@
 <button 
    data-pk="{{pk}}" data-field="image" data-name="{{attr}}" data-orig="{{image.id}}" data-model="{{model}}"
    class="badge rounded-pill text-dark p-2 border border-1 border-dark flex-grow-1 text-start mb-2" 
-   role="button">
+   role="button" {{disabled|default:""}}>
   <i class="ri-image-2-line me-2"></i><span name="image" data-id="{{pk}}"
       data-bs-toggle="tooltip" data-placement="bottom"
       title="Iname: {{image.name}}">{% if image %}{{image.hr|truncatechars:20}}{% else %}Select image{% endif %}</span>

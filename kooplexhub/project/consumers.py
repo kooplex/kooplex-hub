@@ -365,7 +365,7 @@ class JoinProjectConsumer(SyncConsumer):
             projectid = parsed.get('pk')
             if filter(lambda p: p.id==projectid, joinable):
                 UserProjectBinding.objects.create(project_id=projectid, user_id=self.userid, role=UserProjectBinding.Role.COLLABORATOR)
-            response["reloadpage"]=True
+            response["reload_page"]=True
             logger.debug(response)
             self.send(text_data=json.dumps(response))
         else:

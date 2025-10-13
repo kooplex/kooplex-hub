@@ -1,68 +1,84 @@
 <div id="newProject" class="modal fade createproject-modal" tabindex="-1" aria-labelledby="projectModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="projectModalLabel">Create a new or join a project</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="container">
-                    <div class="tab-container">
-                        <!-- Tabs -->
-                	<ul class="nav nav-tabs" role="tablist">
-                            <li class="nav-item" role="presentation">
-                                <button
-                		  class="nav-link active" 
-                		  id="tab-new-project" 
-                		  data-bs-toggle="tab" 
-                		  data-bs-target="#content-new-project" 
-                		  type="button" 
-                		  role="tab" 
-                		  aria-controls="content-new-project" 
-                		  aria-selected="true" 
-                		  data-text="New" 
-                		  data-icon="bi bi-plus-circle">
-                                    New
-                                </button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <button
-                		  class="nav-link" 
-                		  id="tab-join-project" 
-                		  data-bs-toggle="tab" 
-                		  data-bs-target="#content-join-project" 
-                		  type="button" 
-                		  role="tab" 
-                		  aria-controls="content-join-project" 
-                		  aria-selected="false" 
-                		  data-text="Join" 
-                		  data-icon="bi bi-people">
-                                    <i class="bi bi-people" title="Join"></i>
-                                </button>
-                            </li>
-                        </ul>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="projectModalLabel">Create a new or join a project</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+       </div>
+       <div class="modal-body">
+         <div class="container">
+           <div class="row">
+             <div class="col-8">
+               <div class="tab-container">
+                 <!-- Tabs -->
+                 <ul class="nav nav-tabs" role="tablist">
+                   <li class="nav-item" role="presentation">
+                     <button
+            		  class="nav-link active" 
+            		  id="tab-new-project" 
+            		  data-bs-toggle="tab" 
+            		  data-bs-target="#content-new-project" 
+            		  type="button" 
+            		  role="tab" 
+            		  aria-controls="content-new-project" 
+            		  aria-selected="true" 
+            		  data-text="New" 
+            		  data-icon="bi bi-plus-circle">
+                                New
+                     </button>
+                   </li>
+                   <li class="nav-item" role="presentation">
+                     <button
+            		  class="nav-link" 
+            		  id="tab-join-project" 
+            		  data-bs-toggle="tab" 
+            		  data-bs-target="#content-join-project" 
+            		  type="button" 
+            		  role="tab" 
+            		  aria-controls="content-join-project" 
+            		  aria-selected="false" 
+            		  data-text="Join" 
+            		  data-icon="bi bi-people">
+                                <i class="bi bi-people" title="Join"></i>
+                     </button>
+                   </li>
+                 </ul>
                 
-                        <!-- Tab Content -->
-                        <div class="tab-content ">
-                            <div class="tab-pane fade show active" id="content-new-project" role="tabpanel" aria-labelledby="tab-new-project">
-                                <div class="content">
-                                    <div class="container-fluid p-0" id="card-container-new">
-                                       {% include 'project/card.html' with new=True is_admin=True %}
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="tab-pane fade" id="content-join-project" role="tabpanel" aria-labelledby="tab-join-project">
-                                <div class="content">
-                                  <div class="spinner-border" id="joinProjectSelection"role="status">
- 				      <span class="visually-hidden"></span>
-                                  </div>
-                              </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+                 <!-- Tab Content -->
+                 <div class="tab-content ">
+                   <div class="tab-pane fade show active" id="content-new-project" role="tabpanel" aria-labelledby="tab-new-project">
+                     <div class="content">
+                       <div class="container-fluid p-0" id="card-container-new">
+                         {% include 'project/card.html' with new=True is_admin=True %}
+                       </div>
+                     </div>
+                   </div>
+                   <div class="tab-pane fade" id="content-join-project" role="tabpanel" aria-labelledby="tab-join-project">
+                     <div class="content">
+                       <div class="spinner-border" id="joinProjectSelection"role="status">
+ 	                 <span class="visually-hidden"></span>
+                       </div>
+                     </div>
+                   </div>
+                 </div> <!-- /.tab-content -->
+               </div> <!-- /.tab-container -->
+             </div> <!-- /.col-8 -->
+             <div class="col-4">
+               <div class="p-3 border rounded bg-light alert alert-info">
+                 <h5>Instructions</h5>
+                 <p>When creating a new project, requirements are:</p>
+		 <ul>
+                   <li>Name (at least 3 characters)</li>
+                   <li>Description (at least 5 characters)</li>
+                   <li>Image (click Select image button)</li>
+                 </ul>
+                 <p>When joining a project, just click the table row.</p>
+               </div>
+             </div> <!-- /.col-4 -->
+           </div> <!-- /.row -->
+         </div> <!-- /.modal-body -->
+       </div> <!-- /.container -->
+     </div> <!-- /.modal-content -->
+  </div> <!-- /.modal-dialog -->
 </div>
 

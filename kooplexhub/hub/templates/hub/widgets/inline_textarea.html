@@ -4,7 +4,11 @@
      data-pk="{{ pk }}"
      data-model="{{ model }}"
      data-value="{{ value|escape }}">
-  <div class="editable-display">
+  <div 
+     {% if editable %}
+     class="editable-display"
+     {% endif %}
+  >
     {% if pk == None and value == None %}
     <i>{{ placeholder|default:"Add a description" }}</i>
     {% else %}

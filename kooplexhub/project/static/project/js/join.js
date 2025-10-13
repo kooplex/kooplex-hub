@@ -35,10 +35,11 @@ class FetchJoinableProjects {
 
     _callback(message) {
         if (message.response==='get-joinable') {
+	    const cls=this;
             $("#joinProjectSelection").replaceWith(message.replace);
 	    $("table[name=join-project] tbody tr").on('click', function () {
                 const pk = $(this).data('id');
-                this.wss.send(JSON.stringify({
+                cls.wss.send(JSON.stringify({
                     request: 'join',
                     pk
                 }));

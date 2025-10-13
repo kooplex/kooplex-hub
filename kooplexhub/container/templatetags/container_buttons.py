@@ -74,7 +74,8 @@ def button_fetchlogs(container):
 @register.simple_tag
 def button_image(obj=None, model=None, attr="image", **kwargs):
     return render_to_string("container/button/image.html", {
-        "pk": getattr(obj, 'pk', None), "image": getattr(obj, attr, kwargs.get('value')), "model": model, "attr": attr
+        "pk": getattr(obj, 'pk', None), "image": getattr(obj, attr, kwargs.get('value')), "model": model, "attr": attr,
+        "disabled": kwargs.get("disabled", "")
         })
 
 @inclusion_tag_ex("container/button/open.html")

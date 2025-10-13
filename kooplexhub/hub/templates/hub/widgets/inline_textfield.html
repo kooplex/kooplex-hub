@@ -3,7 +3,13 @@
      data-name="{{ attr }}"
      data-pk="{{ pk }}"
      data-model="{{ model }}">
-  <span class="editable-display">
+  <span 
+     {% if editable %}
+     class="editable-display"
+     {% else %}
+     class="disabled-display"
+     {% endif %}
+  >
     {% if pk == None and value == None %}
     <i>{{ placeholder|default:"Add a name" }}</i>
     {% else %}
