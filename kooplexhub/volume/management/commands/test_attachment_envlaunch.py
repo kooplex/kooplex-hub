@@ -8,7 +8,8 @@ import time
 import logging
 
 from volume.models import Volume, UserVolumeBinding
-from test.utils import launch_env, test_create_attachment
+from test.utils import launch_env, test_create_attachment, \
+        test_create_env
 
 logger = logging.getLogger("test")
 
@@ -17,7 +18,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
 
-        logger.debug(f"TEST: {__name__}")
+        logger.info(f"TEST: {__name__}")
         try:
             logger.debug("Creating test attachment")
             folder_name = "test_attachment_share"
@@ -47,6 +48,8 @@ class Command(BaseCommand):
                 logger.debug(f"Environment for attachment {attachment.folder} started successfully")
             else:
                 logger.error(f"Failed to start environment for attachment {attachment.folder}")
+
+            
             # Delete the attachment
             logger.debug(f"Deleting attachment {attachment.folder}")
             attachment.delete()
@@ -61,4 +64,6 @@ class Command(BaseCommand):
         except Exception as e:
             raise e
             print(e)
+
+        logger.info("TEST SUCCESSFULLY FINISHED: %s", __name__)
        

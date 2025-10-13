@@ -4,6 +4,7 @@ import logging
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User
+from django.apps import apps
 
 from container.models import Image, Proxy 
 from project.models import Project
@@ -55,7 +56,7 @@ class Report(models.Model):
     project = models.ForeignKey(Project, default=None, on_delete = models.CASCADE)
     folder = models.CharField(max_length = 200, null = False)
     indexfile = models.CharField(max_length = 128, blank=True, null = True)
-    thumbnail = models.ForeignKey(Thumbnail, on_delete = models.CASCADE, default = None, null = True)
+    thumbnail = models.ForeignKey(Thumbnail, on_delete=models.CASCADE, null=True, blank=True)
     scope = models.CharField(max_length = 16, choices = Scope.choices, default = Scope.PRIVATE)
     image = models.ForeignKey(Image, null = True, blank=True, on_delete = models.CASCADE) # what else than CASCADE?
 #    tags = TaggableManager(blank = True)
@@ -72,6 +73,12 @@ class Report(models.Model):
     class Meta:
         unique_together = [['project', 'folder']]
 
+    def save(self, *args, **kwargs):
+        if self.thumbnail is None:
+            first = Thumbnail.objects.order_by('pk').first()
+            if first:
+                self.thumbnail = first
+        super().save(*args, **kwargs)
 
     @property
     def search(self):
@@ -80,9 +87,19 @@ class Report(models.Model):
 
     @property
     def url(self):
-        if self.reporttype.is_static:
-            return REPORT_SETTINGS['paths']['static'].format(report = self)
+        if self.image:
+            # avoid circular import by loading the model lazily
+            # FIXME: ? rcb = self.projectbindings.filter(report=self)
+            try:
+                RCB = apps.get_model('report', 'ReportContainerBinding')
+                binding = RCB.objects.filter(report=self).select_related('container').first()
+                return REPORT_SETTINGS['paths']['proxied'].format(container=binding.container)
+            except LookupError:
+                logger.exception("ReportContainerBinding model not found")
+            except Exception:
+                logger.exception("Error resolving ReportContainerBinding for report %s", self.pk)
+
         else:
-            return REPORT_SETTINGS['paths']['dynamic'].format(container=self.container.containerbindings.first())
+            return REPORT_SETTINGS['paths']['static'].format(report = self)
 
 

@@ -6,7 +6,7 @@ from .models import *
 
 @admin.register(Image)
 class ImageAdmin(admin.ModelAdmin):
-    list_display = ('id', 'present', 'name', 'show_thumbnail', 'imagetype', 'description', 'require_home', 'mount_project', 'mount_report')
+    list_display = ('id', 'present', 'name', 'show_thumbnail', 'imagetype', 'description', 'require_home', 'mount_project', 'mount_report', 'liveness_probe')
     search_labels = ('name', 'imagetype')
     search_fields = ('name', 'imagetype', 'description' )
     def show_thumbnail(self, instance):
@@ -21,6 +21,11 @@ class ImageAdmin(admin.ModelAdmin):
             obj.save()
     actions = [enable_image, disable_image]
 
+@admin.register(Liveness_Probe)
+class Liveness_ProbeAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'method', 'path', 'port', 'initial_delay_seconds', 'period_seconds')
+    search_labels = ('method', 'path')
+    search_fields = ('method', 'path')
 
 @admin.register(ServiceView)
 class ServiceViewAdmin(admin.ModelAdmin):

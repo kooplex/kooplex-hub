@@ -27,5 +27,7 @@ class Command(BaseCommand):
             logger.debug(f"Create {c.name} deleted")
         except Exception as e:
             print(e)
+
+        logger.debug(f"TEST FINISHED: {__name__}")
         
             

@@ -6,7 +6,7 @@ from project.models import *
 import time
 import logging
 
-from test.utils import test_create_project, run_env_start_stop
+from test.utils import test_create_project, launch_env, test_get_test_user, test_create_env
 
 logger = logging.getLogger("test")
 
@@ -16,21 +16,18 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         logger.debug(f"TEST: {__name__}")
        
+        testuser = test_get_test_user(username="test1")
+
         try:
             logger.debug("Creating test project")
-            p, upb = test_create_project()            
+            p, upb = test_create_project(user=testuser)            
 
             # Mount project to environment
-            from container.models import Container
             from project.models import ProjectContainerBinding
-            from container.models import Image
-            # Get the first available image
-            image = Image.objects.filter(present=True).first()
-            if not image:
-                raise ValueError("No present images found") 
             # Create a test container for the project
-            container = Container(name=f'test-container-{p.name}', user=upb.user, image=image)
-            container.save()
+            #container = Container(name=f'test-container-{p.name}', user=upb.user, image=image)
+            #container.save()
+            container = test_create_env(user=testuser)
             logger.debug(f"Container {container.name} created for project {p.name}")
             # Bind the container to the project
             pcb = ProjectContainerBinding(project=p, container=container)
@@ -38,7 +35,7 @@ class Command(BaseCommand):
             logger.debug(f"ProjectContainerBinding created for project {p.name} and container {container.name}")
 
             # Launch the environment
-            if run_env_start_stop(container):
+            if launch_env(container):
                 logger.debug(f"Environment for project {p.name} started successfully")
             else:
                 logger.error(f"Failed to start environment for project {p.name}")

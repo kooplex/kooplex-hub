@@ -52,5 +52,6 @@ class Command(BaseCommand):
         except Exception as e:
             raise e
             print(e)
-        
-            
+
+
+        logger.debug(f"Test FINISHED: {__name__}")

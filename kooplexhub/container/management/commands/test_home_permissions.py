@@ -7,7 +7,8 @@ from project.models import *
 import time
 import logging
 
-from test.utils import launch_env, test_create_env, test_get_test_user
+from test.utils import launch_env, test_create_env, test_get_test_user, check_container_running, \
+                        get_container_state
 from kubernetes import client, config
 from kubernetes.stream import stream
 
@@ -21,8 +22,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
 
         testuser = test_get_test_user(username="test1")
-
-        logger.debug(f"TEST: {__name__}")
+        logger.info(f"TEST: {__name__}")
         try:
             # Create a test container for the user
             container = test_create_env(user=testuser)
@@ -33,21 +33,21 @@ class Command(BaseCommand):
                 logger.debug(f"Environment started successfully")
             else:
                 logger.error(f"Failed to start environment")
-            # Load kube config
-            config.load_kube_config()
+
+            while  not check_container_running(container):
+                time.sleep(2)
+
 
             # Find the pod name for the container's user (assuming pod name pattern)
-            pod_label_selector = f"user={testuser.username}"
-            v1 = client.CoreV1Api()
-            namespace=KOOPLEX.get('kubernetes',{}).get('namespace', "default")
-            pods = v1.list_namespaced_pod(namespace=namespace, 
-            label_selector=pod_label_selector)
-            if not pods.items:
+            pod, container_label, namespace = get_container_state(container)
+            if not pod:
                 logger.error(f"No pod found for user {testuser.username}")
                 return
 
-            pod_name = pods.items[0].metadata.name
-            container_name = pods.items[0].spec.containers[0].name
+            # # Load kube config
+            config.load_kube_config()
+            v1 = client.CoreV1Api()
+            namespace = KOOPLEX['environmental_variables']['POD_NAMESPACE']
 
             # Command to execute in the pod
             exec_command = [
@@ -56,16 +56,21 @@ class Command(BaseCommand):
                 f'echo "Permissions checked" > /v/{testuser.username}/permissions.txt;',
                 f'cat /v/{testuser.username}/permissions.txt;'
             ]
-
+            logger.debug(f"Executing command in pod {pod.metadata.name}: {' '.join(exec_command)}")
             resp = stream(v1.connect_get_namespaced_pod_exec,
-                pod_name,
+                pod.metadata.name,
                 namespace,
                 command=exec_command,
-                container=container_name,
+                container=container_label,
                 stderr=True, stdin=False,
-                stdout=True, tty=False)
-            
-            logger.debug(f"Command output: {resp}")
+                stdout=True, tty=False)            
+            logger.debug(f"""Stream: v1.connect_get_namespaced_pod_exec,
+                {pod.metadata.name},
+                {namespace},
+                command={exec_command},
+                container={container_label}""")
+
+            logger.debug(f"Command execution response: {resp}")
 
             # Delete container manually
             container.delete()
@@ -74,4 +79,7 @@ class Command(BaseCommand):
         except Exception as e:
             raise e
             print(e)
+
+       logger.info("TEST SUCCESSFULLY FINISHED: %s", __name__)
+        
        

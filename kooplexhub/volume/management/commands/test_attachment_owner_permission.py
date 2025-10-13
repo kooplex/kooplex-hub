@@ -6,6 +6,7 @@ from django.core.management.base import BaseCommand
 from project.models import *
 import time
 import logging
+from volume.conf import VOLUME_SETTINGS
 
 from volume.models import Volume, UserVolumeBinding
 from test.utils import *
@@ -20,8 +21,9 @@ class Command(BaseCommand):
         logger.info(f"TEST: {__name__}")
         try:
             logger.debug("Creating test attachment")
-            folder_name = "test_attachment_share"
+            folder_name = "test_attachment_ownerp"
             attachment, uab = test_create_attachment(folder_name=folder_name)
+            user = uab.user
             logger.debug(f"Created attachment {attachment.folder} with user {uab.user.username}")
             # Create a test environment
             # Mount attachment to environment
@@ -36,8 +38,8 @@ class Command(BaseCommand):
                 raise ValueError("No present images found") 
 
             # Create a test container for the user
-            container = test_create_env(user=uab.user, image=image)
-            logger.debug(f"Container {container.name} created for user {uab.user.username}")
+            container = test_create_env(user=user, image=image)
+            logger.debug(f"Container {container.name} created for user {user.username}")
 
             # Bind the attachment (volume) to the container
             vcb, exists = VolumeContainerBinding.objects.get_or_create(volume=attachment, container=container)
@@ -57,19 +59,22 @@ class Command(BaseCommand):
             # Checko pod state
             while not check_container_running(container):
                 logger.debug(f"Container {container.name} is RUNNING")
-                sleep(5)
+                time.sleep(5)
 
             # Execute command in the pod to check permissions
-            exec_command = f"ls -l /v/attachments/; echo 'Permissions checked' > /v/attachments/{attachment.folder}/permissions.txt; cat /v/attachments/{attachment.folder}/permissions.txt"
-            resp = exec_command_in_pod(container, exec_command)
+            folder = VOLUME_SETTINGS['mounts']['attachment']['mountpoint'].format(volume=attachment)
+            exec_command = f"whoami; ls -l /v/attachments/; echo $HOME Permissions checked > {folder}/permissions.txt; cat {folder}/permissions.txt"
+            resp = exec_command_in_pod(container, exec_command, user)
             logger.debug(f"Command output: {resp}")
-
-            # Delete container manually
-            container.delete()
-            logger.debug(f"Container {container.name} deleted")
 
         except Exception as e:
             raise e
             print(e)
-       
+        finally:
+            # Cleanup
+            container.delete()
+            logger.debug(f"Container {container.name} deleted in cleanup")
+            # attachment.delete()
+            logger.debug(f"Attachment {attachment.folder} deleted in cleanup")
+            
         logger.info("TEST SUCCESSFULLY FINISHED: %s", __name__)
