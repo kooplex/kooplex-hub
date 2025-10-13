@@ -18,9 +18,6 @@ logger = logging.getLogger(__name__)
 
 @task(queue = 'volume')
 def grant_access(user, folder, can_write=False):
-    logger.critical(folder)
-    logger.critical(user)
-    logger.critical(can_write)
     grantaccess_user(user, folder, readonly = not can_write, recursive = True)
 #    channel_layer=get_channel_layer()
 #    async_to_sync(channel_layer.group_send)("project", {
