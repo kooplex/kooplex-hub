@@ -18,21 +18,22 @@ def mkdir_attachment(sender, instance, **kwargs):
 
 @receiver(pre_delete, sender = Volume)
 def drop_attachment(sender, instance, **kwargs):
-    if instance.scope == Volume.Scope.ATTACHMENT:
+    if instance.scope == Volume.Scope.ATTACHMENT:#FIXME task
         _rmdir( folder_attachment(instance) )
 
 
 @receiver(pre_save, sender = UserVolumeBinding)
 def grantaccess_volume(sender, instance, **kwargs):
+    from ..tasks import grant_access
     if instance.id is None:
         if instance.role in [ instance.Role.OWNER, instance.Role.ADMIN ]:
-            if instance.volume == instance.volume.Scope.ATTACHMENT:
-                _grantaccess(instance.user, folder_attachment(instance.volume), recursive = True)
+            if instance.volume.scope == instance.volume.Scope.ATTACHMENT:
+                grant_access(instance.user, folder_attachment(instance.volume), can_write=True)
             else:
-                pass
+                grant_access(instance.user, folder_attachment(instance.volume))
         else:
-            if instance.volume == instance.volume.Scope.ATTACHMENT:
-                _grantaccess(instance.user, folder_attachment(instance.volume), readonly = True, recursive = True)
+            if instance.volume.scope == instance.volume.Scope.ATTACHMENT:
+                grant_access(instance.user, folder_attachment(instance.volume))
             else:
                 pass
 
