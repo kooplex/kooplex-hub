@@ -203,38 +203,40 @@ def install_image(request):
                 notmodified = False
 
             # Proxy settings
-            proxy_settings = image.get('proxy', [])
+            proxy_settings = image.get('proxy', {})
             logger.debug(f"Proxy settings for {image_name}: {proxy_settings}")
-            for psk in proxy_settings.keys():
-                ps = proxy_settings[psk]
-                try:
-                    po = Proxy.objects.get(name= psk, image= instance)
-                    if po.port != ps['port']:
-                        po.port = ps['port']
-                    if po.default != ps.get('default', True):
-                        po.default = ps.get('default', True)
-                    if po.token_as_argument != ps.get('token', False):
-                        po.token_as_argument = ps.get('token', False) 
-                    po.save()
-                except:
-                    po = Proxy.objects.create(name = psk, 
-                                            port = ps['port'], 
-                                            image = instance,
-                                            default = ps.get('default', True), 
-                                            token_as_argument = ps.get('token_as_argument', False))
+            if proxy_settings:
+              for psk in proxy_settings.keys():
+                  ps = proxy_settings[psk]
+                  try:
+                      po = Proxy.objects.get(name= psk, image= instance)
+                      if po.port != ps['port']:
+                          po.port = ps['port']
+                      if po.default != ps.get('default', True):
+                          po.default = ps.get('default', True)
+                      if po.token_as_argument != ps.get('token', False):
+                          po.token_as_argument = ps.get('token', False) 
+                      po.save()
+                  except:
+                      po = Proxy.objects.create(name = psk, 
+                                              port = ps['port'], 
+                                              image = instance,
+                                              default = ps.get('default', True), 
+                                              token_as_argument = ps.get('token_as_argument', False))
             
             # Envvar settings
             envs = image.get('envs')
-            logger.debug(f"Envvar settings for {image_name}: {envs}")
-            for envk in envs.keys():
-                value = envs[envk]
-                evm, modified = EnvVarMapping.objects.get_or_create(name=envk, image=instance,
+            if envs:
+              logger.debug(f"Envvar settings for {image_name}: {envs}")
+              for envk in envs.keys():
+                  value = envs[envk]
+                  evm, modified = EnvVarMapping.objects.get_or_create(name=envk, image=instance,
                                                                         valuemap = value)  
 
-            if modified:
-                return JsonResponse({"message": f"Image {image_name} is succesfully installed"})        
-            else:
-                return JsonResponse({"message": f"Image {image_name} is modified"}) 
+              if modified:
+                  return JsonResponse({"message": f"Image {image_name} is succesfully installed"})        
+              else:
+                  return JsonResponse({"message": f"Image {image_name} is modified"}) 
             
     except Exception as e:
         logger.error(str(e))

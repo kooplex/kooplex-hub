@@ -7,8 +7,8 @@ DEFAULTS = {
     "mounts": {
         "attachment": {
                 "claim": 'attachments',
-                "subpath": '',
-                "folder": '{volume.folder}',
+                "subpath": '{volume.folder}',
+                "folder": '{volume.folder}',  # Ez mire van?
                 "mountpoint": '/attachment/{volume.folder}',
                 "mountpoint_hub": '/mnt/attachments',
             },

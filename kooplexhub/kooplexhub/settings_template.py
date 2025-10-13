@@ -37,7 +37,7 @@ PREFIX = os.getenv('PREFIX', 'kooplex')
 DOMAIN = os.getenv('DOMAIN', 'localhost')
 
 CSRF_TRUSTED_ORIGINS = [
-        "https://localost",
+        "https://localhost",
         ]
 
 ALLOWED_HOSTS = [
@@ -48,7 +48,7 @@ SERVERNAME=""
 FQDN="https://"+SERVERNAME
 FQDN_AUTH=FQDN
 URL_AUTH=f'{FQDN_AUTH}/oauth'
-URL_MANUAL="https://xwiki.vo.elte.hu/en/kooplex-manual"
+URL_MANUAL="https://kooplex.github.io/Manual/"
 manual_mapping = {
     'volume': 'folderstructure#volume',
 }

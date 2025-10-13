@@ -7,10 +7,12 @@ from project.fs import path_report_prepare
 
 from .conf import REPORT_SETTINGS
 
-mp_report = REPORT_SETTINGS["mounts"]["report"]["mountpoint_hub"]#FIXME '/mnt/course'
+mp_report = REPORT_SETTINGS["mounts"]["report"]["mountpoint_hub"]
 
-def subpath(report):
-    return dirname.MP.get('subPath_report', '{report.id}').format(report = report)
+#FIXME: ennek a metódusnak ez ég egy alatt semmi értelme, ki kell vezetni
+def folder(report):
+    # return dirname.MP.get('subPath_report', '{report.id}').format(report = report)
+    return f"{report.id}" #-{REPORT_SETTINGS.get('mounts', '').get('report', '').get('folder', '').format(report = report)}"
 
 
 
@@ -53,7 +55,8 @@ def publish(report):
     #    _mkdir(project_report_root, other_rx = True)
     #    n = report.mark_projectservices_restart(f"Need to mount report folder for project {report.project}")
     #    logger.info(f'{n} services marked as need to restart, due to creation of folder {project_report_root}')
-    dir_target = os.path.join(mp_report, subpath(report))
+    # dir_target = os.path.join(mp_report, subpath(report))
+    dir_target = os.path.join(mp_report, folder(report))
     _copy_dir(dir_source, dir_target, remove = False)
     nginx_id=101
     acl = 'rXtcy' 
@@ -62,7 +65,7 @@ def publish(report):
     #_grantgroupaccess(1000, dir_target)
 
 def remove(report):
-    dir_target = os.path.join(mp_report, subpath(report))
+    dir_target = os.path.join(mp_report, folder(report))
     #garbage = Filename.report_garbage(report)
     #_archivedir(dir_source, garbage, remove = True)
     _rmdir(dir_target)

@@ -24,7 +24,6 @@ from project.conf import PROJECT_SETTINGS
 from report.conf import REPORT_SETTINGS
 from volume.conf import VOLUME_SETTINGS
 
-
 #FIXME get rid of it
 from kooplexhub.settings import KOOPLEX
 
@@ -53,7 +52,8 @@ def storage_resources(volumes):
         mounts.append({
             "name": volume.claim,
             "mountPath": mountPath,
-            "subPath": os.path.join(volume.subpath, volume.folder)
+            # "subPath": os.path.join(volume.subpath, volume.folder)
+            "subPath": volume.subpath
             })
         claims.add(volume.claim)
     claimdict = lambda c: { "name": c, "persistentVolumeClaim": { "claimName": c } }
@@ -76,7 +76,7 @@ def create_sidecar_davfs(container, service):
                     "name": "davfs-sidecar",
                     "image": "image-registry.vo.elte.hu/sidecar-davfs2", #FIXME
                     "volumeMounts": [secret_volume_mount, empty_volume_mount],                    
-                    "imagePullPolicy": CONTAINER_CSETTINGS['kubernetes']['imagePullPolicy'],
+                    "imagePullPolicy": CONTAINER_SETTINGS['kubernetes']['imagePullPolicy'],
                     "env": service.get_envs(container.user),
                     "securityContext": V1SecurityContext(
                         #run_as_user=1029, 
@@ -149,14 +149,6 @@ def start(container):
 #        { "name": "SERVERNAME", "value": SERVERNAME},
 #    ]
 
-    if container.image.imagetype == Image.TP_REPORT:
-        env_variables = [ {'name': k, "value": v.format(container = container)} for k,v in KOOPLEX['environmental_variables_report'].items()]
-    else:
-        env_variables = [ {'name': k, "value": v.format(container = container)} for k,v in KOOPLEX['environmental_variables'].items()]
-
-    env_variables.extend(container.env_variables)
-    logger.info(f" ENV {env_variables}")
-
     pod_ports = []
     svc_ports = []
     logger.info(f" PROXY {container.proxies}")
@@ -175,40 +167,42 @@ def start(container):
 
 
     mCV=MyClaimsAndVolumes()
-    logger.debug('mount nslcd')
-    mCV.add_cm(
+
+    if container.image.imagetype == Image.TP_PROJECT or container.image.imagetype == Image.TP_JOB:
+        env_variables = [ {'name': k, "value": v.format(container = container)} for k,v in KOOPLEX['environmental_variables'].items()]
+
+        logger.debug('mount nslcd')
+        mCV.add_cm(
             claimName='nslcd',
             mountPath=CONTAINER_SETTINGS['kubernetes']['nslcd']['mountPath_nslcd'],
             configMap=V1ConfigMapVolumeSource(name="nslcd", default_mode=0o400, items=[V1KeyToPath(key="nslcd",path="nslcd.conf")])
             )
 
-    logger.debug('mount jobpy')
-    mCV.add_cm(
-        claimName='jobtool',
-        mountPath=CONTAINER_SETTINGS['kubernetes']['jobs']["jobpy"],
-        configMap=V1ConfigMapVolumeSource(name="job.py", default_mode=0o777, items=[V1KeyToPath(key="job",path="job")] ),
-        )
-            
-            
-    logger.debug('mount initscripts')
-    initscripts = [
+        if container.user.profile.can_teleport and container.start_teleport:
+            initscripts.append(V1KeyToPath(key="teleport",path="06-teleport"))
+            env_variables.append({ "name": "REDIS_PASSWORD", "value": REDIS_PASSWORD })
+
+        logger.debug('mount initscripts')
+        initscripts = [
             V1KeyToPath(key="nsswitch",path="01-nsswitch"),
             V1KeyToPath(key="nslcd",path="02-nslcd"),
             V1KeyToPath(key="usermod",path="03-usermod"),
     #        V1KeyToPath(key="ssh",path="05-ssh"),
             ]
+        mCV.add_cm(
+            claimName='initscripts',
+            mountPath=CONTAINER_SETTINGS['kubernetes']['initscripts']["mountPath_initscripts"],
+            configMap=V1ConfigMapVolumeSource(name="initscripts", default_mode=0o777, items=initscripts),
+            )
+        
+        
 
-    if container.user.profile.can_teleport and container.start_teleport:
-        initscripts.append(V1KeyToPath(key="teleport",path="06-teleport"))
-        env_variables.append({ "name": "REDIS_PASSWORD", "value": REDIS_PASSWORD })
-
-    mCV.add_cm(
-        claimName='initscripts',
-        mountPath=CONTAINER_SETTINGS['kubernetes']['initscripts']["mountPath_initscripts"],
-        configMap=V1ConfigMapVolumeSource(name="initscripts", default_mode=0o777, items=initscripts),
-        )
-
-
+        logger.debug('mount jobpy')
+        mCV.add_cm(
+            claimName='jobtool',
+            mountPath=CONTAINER_SETTINGS['kubernetes']['jobs']["jobpy"],
+            configMap=V1ConfigMapVolumeSource(name="job.py", default_mode=0o777, items=[V1KeyToPath(key="job",path="job")] ),
+            )
 #    if container.start_ssh:
 #        initscripts.append(V1KeyToPath(key="sshstart",path="07-sshstart"))
 #        sshport = 2222
@@ -234,134 +228,137 @@ def start(container):
     #    volume_mounts.append(V1VolumeMount(name="slurmconf", mount_path="/etc/slurm-llnl", read_only=True))
     #    volumes.append(V1Volume(name="slurmconf", config_map=V1ConfigMapVolumeSource(name='slurmconf', items=[V1KeyToPath(key="slurmconf",path="slurm.conf")])))
     # user's home and garbage
-    if container.image.require_home:
-        logger.debug('mount home')
-        mCV.add(
-                mountPath=HUB_SETTINGS['mounts']['home']['mountpoint'].format(user = container.user),
-                subPath=os.path.join(
-                    HUB_SETTINGS['mounts']['home']['subpath'],
-                    HUB_SETTINGS['mounts']['home']['folder'].format(user = container.user),
-                ),
-                claimName=HUB_SETTINGS['mounts']['home']['claim']
-                )
-        mCV.add(
-                mountPath=HUB_SETTINGS['mounts']['garbage']['mountpoint'].format(user = container.user),
-                subPath=os.path.join(
-                    HUB_SETTINGS['mounts']['garbage']['subpath'],
-                    HUB_SETTINGS['mounts']['garbage']['folder'].format(user = container.user),
-                ),
-                claimName=HUB_SETTINGS['mounts']['garbage']['claim']
-                )
-
-
-    # user's scratch folder
-    if container.user.profile.has_scratch and HUB_SETTINGS['mounts']['scratch']:
-        mCV.add(
-                mountPath=HUB_SETTINGS['mounts']['scratch']['mountpoint'].format(user = container.user),
-                subPath=os.path.join(
-                    HUB_SETTINGS['mounts']['scratch']['subpath'],
-                    HUB_SETTINGS['mounts']['scratch']['folder'].format(user = container.user),
-                ),
-                claimName=HUB_SETTINGS['mounts']['scratch']['claim']
-                )
-
-    # education
-    for course in container.courses:
-        logger.debug(f'mount course folders {course.name}')
-        mCV.add(
-                mountPath=EDUCATION_SETTINGS['mounts']['workdir']['mountpoint'].format(user = container.user, course = course),
-                subPath=os.path.join(
-                    EDUCATION_SETTINGS['mounts']['workdir']['subpath'],
-                    EDUCATION_SETTINGS['mounts']['workdir']['folder'].format(user = container.user, course = course),
-                ),
-                claimName=EDUCATION_SETTINGS['mounts']['workdir']['claim']
-                )
-        mCV.add(
-                mountPath=EDUCATION_SETTINGS['mounts']['public']['mountpoint'].format(user = container.user, course = course),
-                subPath=os.path.join(
-                    EDUCATION_SETTINGS['mounts']['public']['subpath'],
-                    EDUCATION_SETTINGS['mounts']['public']['folder'].format(course = course),
-                ),
-                claimName=EDUCATION_SETTINGS['mounts']['public']['claim']
-                )
-        if course.is_teacher(container.user):
+        if container.image.require_home:
+            logger.debug('mount home')
             mCV.add(
-                mountPath=EDUCATION_SETTINGS['mounts']['assignment']['mountpoint'].format(user = container.user, course = course),
-                subPath=os.path.join(
-                    EDUCATION_SETTINGS['mounts']['assignment']['subpath'],
-                    EDUCATION_SETTINGS['mounts']['assignment']['folder_top'].format(course = course),
-                ),
-                claimName=EDUCATION_SETTINGS['mounts']['assignment']['claim']
+                    mountPath=HUB_SETTINGS['mounts']['home']['mountpoint'].format(user = container.user),
+                    subPath=os.path.join(
+                        HUB_SETTINGS['mounts']['home']['subpath'],
+                        HUB_SETTINGS['mounts']['home']['folder'].format(user = container.user),
+                    ),
+                    claimName=HUB_SETTINGS['mounts']['home']['claim']
                     )
             mCV.add(
-                mountPath=EDUCATION_SETTINGS['mounts']['assignment_prepare']['mountpoint'].format(user = container.user, course = course),
-                subPath=os.path.join(
-                    EDUCATION_SETTINGS['mounts']['assignment_prepare']['subpath'],
-                    EDUCATION_SETTINGS['mounts']['assignment_prepare']['folder'].format(course = course),
-                ),
-                claimName=EDUCATION_SETTINGS['mounts']['assignment_prepare']['claim']
-                    )
-            mCV.add(
-                mountPath=EDUCATION_SETTINGS['mounts']['assignment_correct']['mountpoint'].format(user = container.user, course = course),
-                subPath=os.path.join(
-                    EDUCATION_SETTINGS['mounts']['assignment_correct']['subpath'],
-                    EDUCATION_SETTINGS['mounts']['assignment_correct']['folder_top'].format(course = course),
-                ),
-                claimName=EDUCATION_SETTINGS['mounts']['assignment_correct']['claim']
-                    )
-        else:
-            mCV.add(
-                mountPath=EDUCATION_SETTINGS['mounts']['assignment']['mountpoint'].format(user = container.user, course = course),
-                subPath=os.path.join(
-                    EDUCATION_SETTINGS['mounts']['assignment']['subpath'],
-                    EDUCATION_SETTINGS['mounts']['assignment']['folder'].format(user = container.user, course = course),
-                ),
-                claimName=EDUCATION_SETTINGS['mounts']['assignment']['claim']
-                    )
-            mCV.add(
-                mountPath=EDUCATION_SETTINGS['mounts']['assignment_correct']['mountpoint'].format(user = container.user, course = course),
-                subPath=os.path.join(
-                    EDUCATION_SETTINGS['mounts']['assignment_correct']['subpath'],
-                    EDUCATION_SETTINGS['mounts']['assignment_correct']['folder'].format(user = container.user, course = course),
-                ),
-                claimName=EDUCATION_SETTINGS['mounts']['assignment_correct']['claim']
+                    mountPath=HUB_SETTINGS['mounts']['garbage']['mountpoint'].format(user = container.user),
+                    subPath=os.path.join(
+                        HUB_SETTINGS['mounts']['garbage']['subpath'],
+                        HUB_SETTINGS['mounts']['garbage']['folder'].format(user = container.user),
+                    ),
+                    claimName=HUB_SETTINGS['mounts']['garbage']['claim']
                     )
 
-    # project
-    for project in container.projects:
-        logger.debug(f'mount project folders {project.name}')
-        mCV.add(
-                mountPath=PROJECT_SETTINGS['mounts']['project']['mountpoint'].format(user = container.user, project = project),
-                subPath=os.path.join(
-                    PROJECT_SETTINGS['mounts']['project']['subpath'],
-                    PROJECT_SETTINGS['mounts']['project']['folder'].format(user = container.user, project = project),
-                ),
-                claimName=PROJECT_SETTINGS['mounts']['project']['claim']
-                )
-        mCV.add(
-                mountPath=REPORT_SETTINGS['mounts']['prepare']['mountpoint'].format(user = container.user, project = project),
-                subPath=os.path.join(
-                    REPORT_SETTINGS['mounts']['prepare']['subpath'],
-                    REPORT_SETTINGS['mounts']['prepare']['folder'].format(user = container.user, project = project),
-                ),
-                claimName=REPORT_SETTINGS['mounts']['prepare']['claim']
-                )
+
+        # user's scratch folder
+        if container.user.profile.has_scratch and HUB_SETTINGS['mounts']['scratch']:
+            mCV.add(
+                    mountPath=HUB_SETTINGS['mounts']['scratch']['mountpoint'].format(user = container.user),
+                    subPath=os.path.join(
+                        HUB_SETTINGS['mounts']['scratch']['subpath'],
+                        HUB_SETTINGS['mounts']['scratch']['folder'].format(user = container.user),
+                    ),
+                    claimName=HUB_SETTINGS['mounts']['scratch']['claim']
+                    )
+
+        # education
+        for course in container.courses:
+            logger.debug(f'mount course folders {course.name}')
+            mCV.add(
+                    mountPath=EDUCATION_SETTINGS['mounts']['workdir']['mountpoint'].format(user = container.user, course = course),
+                    subPath=os.path.join(
+                        EDUCATION_SETTINGS['mounts']['workdir']['subpath'],
+                        EDUCATION_SETTINGS['mounts']['workdir']['folder'].format(user = container.user, course = course),
+                    ),
+                    claimName=EDUCATION_SETTINGS['mounts']['workdir']['claim']
+                    )
+            mCV.add(
+                    mountPath=EDUCATION_SETTINGS['mounts']['public']['mountpoint'].format(user = container.user, course = course),
+                    subPath=os.path.join(
+                        EDUCATION_SETTINGS['mounts']['public']['subpath'],
+                        EDUCATION_SETTINGS['mounts']['public']['folder'].format(course = course),
+                    ),
+                    claimName=EDUCATION_SETTINGS['mounts']['public']['claim']
+                    )
+            if course.is_teacher(container.user):
+                mCV.add(
+                    mountPath=EDUCATION_SETTINGS['mounts']['assignment']['mountpoint'].format(user = container.user, course = course),
+                    subPath=os.path.join(
+                        EDUCATION_SETTINGS['mounts']['assignment']['subpath'],
+                        EDUCATION_SETTINGS['mounts']['assignment']['folder_top'].format(course = course),
+                    ),
+                    claimName=EDUCATION_SETTINGS['mounts']['assignment']['claim']
+                        )
+                mCV.add(
+                    mountPath=EDUCATION_SETTINGS['mounts']['assignment_prepare']['mountpoint'].format(user = container.user, course = course),
+                    subPath=os.path.join(
+                        EDUCATION_SETTINGS['mounts']['assignment_prepare']['subpath'],
+                        EDUCATION_SETTINGS['mounts']['assignment_prepare']['folder'].format(course = course),
+                    ),
+                    claimName=EDUCATION_SETTINGS['mounts']['assignment_prepare']['claim']
+                        )
+                mCV.add(
+                    mountPath=EDUCATION_SETTINGS['mounts']['assignment_correct']['mountpoint'].format(user = container.user, course = course),
+                    subPath=os.path.join(
+                        EDUCATION_SETTINGS['mounts']['assignment_correct']['subpath'],
+                        EDUCATION_SETTINGS['mounts']['assignment_correct']['folder_top'].format(course = course),
+                    ),
+                    claimName=EDUCATION_SETTINGS['mounts']['assignment_correct']['claim']
+                        )
+            else:
+                mCV.add(
+                    mountPath=EDUCATION_SETTINGS['mounts']['assignment']['mountpoint'].format(user = container.user, course = course),
+                    subPath=os.path.join(
+                        EDUCATION_SETTINGS['mounts']['assignment']['subpath'],
+                        EDUCATION_SETTINGS['mounts']['assignment']['folder'].format(user = container.user, course = course),
+                    ),
+                    claimName=EDUCATION_SETTINGS['mounts']['assignment']['claim']
+                        )
+                mCV.add(
+                    mountPath=EDUCATION_SETTINGS['mounts']['assignment_correct']['mountpoint'].format(user = container.user, course = course),
+                    subPath=os.path.join(
+                        EDUCATION_SETTINGS['mounts']['assignment_correct']['subpath'],
+                        EDUCATION_SETTINGS['mounts']['assignment_correct']['folder'].format(user = container.user, course = course),
+                    ),
+                    claimName=EDUCATION_SETTINGS['mounts']['assignment_correct']['claim']
+                        )
+
+        # project
+        for project in container.projects:
+            logger.debug(f'mount project folders {project.name}')
+            mCV.add(
+                    mountPath=PROJECT_SETTINGS['mounts']['project']['mountpoint'].format(user = container.user, project = project),
+                    subPath=os.path.join(
+                        PROJECT_SETTINGS['mounts']['project']['subpath'],
+                        PROJECT_SETTINGS['mounts']['project']['folder'].format(user = container.user, project = project),
+                    ),
+                    claimName=PROJECT_SETTINGS['mounts']['project']['claim']
+                    )
+            mCV.add(
+                    mountPath=REPORT_SETTINGS['mounts']['prepare']['mountpoint'].format(user = container.user, project = project),
+                    subPath=os.path.join(
+                        REPORT_SETTINGS['mounts']['prepare']['subpath'],
+                        REPORT_SETTINGS['mounts']['prepare']['folder'].format(user = container.user, project = project),
+                    ),
+                    claimName=REPORT_SETTINGS['mounts']['prepare']['claim']
+                    )
       
-    # report
-#    claim_report = False
-#    for report in container.reports:
-#        volume_mounts.extend([{
-#             "name": "report",
-#             "mountPath": '/srv/report', # KOOPLEX['kubernetes']['userdata'].get('mountPath_report', '/srv/report').format(report = report),
-#             "subPath": KOOPLEX['kubernetes']['userdata'].get('subPath_report', '{report.subpath}').format(report = report),
-#        }
-#        ])
-#        claim_report = True
-#    if claim_report:
-#        volumes.append({
-#            "name": "report",
-#            "persistentVolumeClaim": { "claimName": KOOPLEX['kubernetes']['userdata'].get('claim-report', 'report') }
-#        })
+    ## FOR THE REPORTS
+    elif container.image.imagetype == Image.TP_REPORT or container.image.imagetype == Image.TP_API or container.image.imagetype == Image.TP_APP:
+        env_variables = [ {'name': k, "value": v.format(container = container)} for k,v in KOOPLEX['environmental_variables_report'].items()]
+        env_variables.append({ "name": "REPORT_FOLDER" , "value": REPORT_SETTINGS['mounts']['report']['mountpoint']})
+        # report
+        rcb = container.reportbindings.get(container=container)
+
+        mCV.add(
+            mountPath=REPORT_SETTINGS['mounts']['report']['mountpoint'].format(user=container.user, report=rcb.report),
+            subPath=REPORT_SETTINGS['mounts']['report']['folder'].format(user=container.user, report=rcb.report),
+            claimName=REPORT_SETTINGS['mounts']['report']['claim']
+            )
+
+    else:
+        raise Exception(f"Unknown image type {container.image.imagetype}")
+
+    env_variables.extend(container.env_variables)
+    logger.info(f" ENV {env_variables}")
 
     # volumes
     storage = storage_resources(container.volumes)
@@ -386,9 +383,9 @@ def start(container):
     pod_resources = {"requests":{}, "limits": {}}
     pod_resources["requests"]["nvidia.com/gpu"] = f"{max(container.gpurequest, r['limit_gpu'])}"
     pod_resources["limits"]["nvidia.com/gpu"] = f"{max(container.gpurequest, r['limit_gpu'])}"
-    pod_resources["requests"]["cpu"] = f"{1000*max(container.cpurequest, r['limit_cpu'])}m"
+    pod_resources["requests"]["cpu"] = f"{1000*max(container.cpurequest, r['min_cpu'])}m"
     pod_resources["limits"]["cpu"] = f"{1000*max(container.cpurequest, r['limit_cpu'])}m"
-    pod_resources["requests"]["memory"] = f"{max(container.memoryrequest, r['limit_memory'])}Gi"
+    pod_resources["requests"]["memory"] = f"{max(container.memoryrequest, r['min_memory'])}Gi"
     pod_resources["limits"]["memory"] = f"{max(container.memoryrequest, r['limit_memory'])}Gi"
 
     
@@ -413,9 +410,17 @@ def start(container):
 
     volumes.append(secret_volume)
 
+    if container.image.liveness_probe:
+        liveness_probe_as_dict = container.image.liveness_probe.as_api_object()
+        liveness_probe_as_dict.http_get.path = liveness_probe_as_dict.http_get.path.format(container=container)
+    else:
+        liveness_probe_as_dict = None
+
     main_container = {
                     "name": container.label,
-                    "command": ["/bin/bash", "-c", f"chmod a+x {container.image.command}; {container.image.command}"],                   
+                    "command": ["/bin/bash", "-c", f"chmod a+x {container.image.command}; {container.image.command}"],     
+                    "livenessProbe": liveness_probe_as_dict,
+                    # livenessProbe: { httpGet: { path: '/', port: 8080 }, initialDelaySeconds: 15, periodSeconds: 20, failureThreshold: 6 },
                     "image": container.image.name,
                     "volumeMounts": volume_mounts,
                     "ports": pod_ports,
@@ -438,9 +443,9 @@ def start(container):
             "spec": {
                 "containers": container_list,
                 "volumes": volumes,
-#                "nodeSelector": container.target_node, 
             }
         }
+    pod_definition["spec"].update(container.nodeSelector)
 
     svc_definition = {
             "apiVersion": "v1",
@@ -485,3 +490,20 @@ def stop(container):
             logger.error(e)
 
 
+# FIXME: e.g. for starting teleport in the container
+# To start teleport we need:
+# teleport start -l $(hostname -i).${POD_NAMESPACE} --labels=teleport=${NB_USER} --roles=node    --token=$(printf "AUTH ${REDIS_PASSWORD}\\r\\nGET nodetoken\\r\\n" | nc -N redis.teleport 6379| tail -n1 | tr -dc \'[:alnum:]\') --ca-pin=sha256:7b2932827b1827cd309bb2b952a6062dd040341764a09f04c201afe9ee1e5f40     --auth-server=teleport.vo.elte.hu & unset REDIS_PASSWORD'
+def exec_command_in_pod(container, command):
+    pod, container_label, namespace = get_container_state(container)
+    k_api = kube_api()
+    from kubernetes.stream import stream
+    
+    exec_command = f"su {container.user.username} -c '{command}'"
+    resp = stream(k_api.connect_get_namespaced_pod_exec,
+                    pod.metadata.name,
+                    namespace,
+                    command=exec_command,
+                    container=container_label,
+                    stderr=True, stdin=False,
+                    stdout=True, tty=False)
+    return resp

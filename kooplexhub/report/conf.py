@@ -13,11 +13,12 @@ DEFAULTS = {
         "report": {
                 "claim": 'report',
                 "subpath": 'report',
-                "folder": '{report.folder}',
+                "folder": '{report.id}',
                 "mountpoint": '/report',
                 "mountpoint_hub": '/mnt/reports',
             },
         },
+        # EZEK hol vannak használva?
     "paths": {
         "static": 'http://localhost/report/{report.id}/',
         "proxied": 'http://localhost/report/{container.label}/', #FIXME

@@ -11,7 +11,7 @@ class Command(BaseCommand):
     help = "Test adding and removing proxy routes to a container"
 
     def handle(self, *args, **options):
-        logger.debug(f"TEST: {__name__}")
+        logger.info(f"TEST: {__name__}")
 
         u = test_get_test_user()
 
@@ -37,4 +37,6 @@ class Command(BaseCommand):
             logger.debug("ERROR occurred while adding/removing proxy route")
         finally:
             new_c.delete()
+
+       logger.info("TEST SUCCESSFULLY FINISHED: %s", __name__)
 
