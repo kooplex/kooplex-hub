@@ -55,7 +55,7 @@ def stop_container(user_id, container_id):
         return "Container not found"
 
 
-def render_progressbar(container, metric):
+def render_progressbar(container, metric, **kw):
     if metric == 'idle':
         html=render_to_string("container/resources/idle.html", {'container': container})
         ref=f"[data-pk={container.pk}][data-name=idletime]"
@@ -65,6 +65,9 @@ def render_progressbar(container, metric):
     elif metric == 'mem':
         html=render_to_string("container/resources/memory.html", {'container': container})
         ref=f"[data-pk={container.pk}][data-name=memory]"
+    elif metric == 'node':
+        html=render_to_string('container/resources/node.html', {'container': container, 'mem_pct': kw.get('memory'), 'cpu_pct': kw.get('cpu')})
+        ref=f"[data-pk={container.pk}][data-name=node]"
     else:
         logger.error(f'Unknown metric {metric}')
         return
@@ -74,9 +77,6 @@ def render_progressbar(container, metric):
           "container_id": container.id,
           "replace_widgets": { ref: html },
     })
-    logger.critical(ref)
-    logger.critical(html)
-
 
 
 @db_periodic_task(crontab(minute="55"), queue='container')  # Runs every hour at 55
@@ -120,7 +120,7 @@ sum by (pod) (
     cpu_by_pod = {item["metric"]["pod"]: float(item["value"][1]) for item in cpu}
     for k, v in cpu_by_pod.items():
         c=Container.objects.filter(label=k).first()
-        if c:
+        if c and c.is_running:
             c.cpuusage=v
             c.save()
             render_progressbar(c, 'cpu')
@@ -137,8 +137,31 @@ sum by (pod) (
     mem_by_pod = {item["metric"]["pod"]: float(item["value"][1]) for item in mem}
     for k, v in mem_by_pod.items():
         c=Container.objects.filter(label=k).first()
-        if c:
+        if c and c.is_running:
             c.memoryusage=v
             c.save()
             render_progressbar(c, 'mem')
+
+@periodic_task(crontab(minute="*/1"), queue='container')
+def k8s_nodes_usage():
+    node_cpu_q="""
+100 * (
+  sum by (instance) (rate(node_cpu_seconds_total{mode!="idle"}[5m]))
+/
+  sum by (instance) (rate(node_cpu_seconds_total[5m]))
+)
+    """
+
+    node_mem_q="""
+100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)
+    """
+    cpu=prom_query(node_cpu_q)
+    mem=prom_query(node_mem_q)
+    cpu_by_node = {item["metric"]["instance"]: float(item["value"][1]) for item in cpu}
+    mem_by_node = {item["metric"]["instance"]: float(item["value"][1]) for item in mem}
+    for node, _cpu in cpu_by_node.items():
+        _mem=mem_by_node.get(node)
+        logger.debug(f"node: {node} CPU: {_cpu}%, MEM: {_mem}%")
+        for container in Container.objects.filter(nodemanifest=node): #FIXME: narrow for running/restart?
+            render_progressbar(container, 'node', cpu=_cpu, memory=_mem)
 

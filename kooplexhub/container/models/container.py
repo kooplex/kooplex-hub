@@ -40,6 +40,7 @@ class Container(models.Model):
     restart_reasons = models.CharField(max_length = 500, null = True, blank = True)
 
     node = models.TextField(max_length = 64, null = True, blank = True)
+    nodemanifest = models.TextField(max_length = 64, null = True, blank = True)
     cpurequest = models.DecimalField(null = True, blank = True, decimal_places=1, max_digits=4, default=CONTAINER_SETTINGS["kubernetes"]["resources"]["default_cpu"])
     cpuusage = models.DecimalField(null = True, blank = True, decimal_places=1, max_digits=4, default=None)
     gpurequest = models.IntegerField(null = True, blank = True, default=CONTAINER_SETTINGS["kubernetes"]["resources"]["default_gpu"])
@@ -157,6 +158,9 @@ class Container(models.Model):
         from ..tasks import stop_container
         self.require_running=False
         self.restart_reasons=None
+        self.cpuusage=None
+        self.memoryusage=None
+        self.idle=None
         self.save()
         self.removeroutes()
         stop_container(self.user.id, self.id)
@@ -165,6 +169,9 @@ class Container(models.Model):
         from ..tasks import stop_container
         self.require_running=True
         self.restart_reasons=None
+        self.cpuusage=None
+        self.memoryusage=None
+        self.idle=None
         self.save()
         stop_container(self.user.id, self.id)
 

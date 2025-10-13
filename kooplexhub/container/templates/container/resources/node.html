@@ -1,6 +1,8 @@
 <div class="meter-row" data-pk="{{container.pk}}" data-name="node" data-value="{{container.node}}"
 {% if container.node %}
      data-toggle="tooltip" title="Selected node {{container.node}}" data-placement="bottom"
+{% elif container.nodemanifest %}
+     data-toggle="tooltip" title="Your container is running in node {{container.nodemanifest}}" data-placement="bottom"
 {% endif %}
 >
   <i class="bi bi-pc meter-icon text-secondary"></i>
@@ -8,13 +10,13 @@
   <div class="meter bidibar">
     {% if mem_pct %}
     <div class="side left  bg-warning" style="--p:{{mem_pct}}"></div>
-    <span class="tag left  text-dark fw-semibold">MEM {{mem_pct}}%</span>
+    <span class="tag left  text-dark fw-semibold">MEM {{mem_pct|floatformat:0}}%</span>
     {% else %}
     <span class="tag left text-dark fw-semibold">No metric</span>
     {% endif %}
     {% if cpu_pct %}
     <div class="side right bg-success" style="--p:{{cpu_pct}}"></div>
-    <span class="tag right text-dark fw-semibold">CPU {{cpu_pct}}%</span>
+    <span class="tag right text-dark fw-semibold">CPU {{cpu_pct|floatformat:0}}%</span>
     {% else %}
     <span class="tag right text-dark fw-semibold">No metric</span>
     {% endif %}

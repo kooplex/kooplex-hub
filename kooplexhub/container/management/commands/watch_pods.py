@@ -3,6 +3,7 @@ import time
 from kubernetes import client, config, watch
 from django.db import connection, connections, close_old_connections
 from django.core.management.base import BaseCommand
+from django.template.loader import render_to_string
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 
@@ -27,6 +28,10 @@ def _replace_widgets(container):
 #        f'[name=fetch][data-id={container.id}]': button_fetchlogs.render(container),
         f'[name=fetch][data-id={container.id}]': indicator_state.render(container),
         f'[data-action=restart][data-pk={container.id}]': button_restart.render(container),
+        f"[data-pk={container.pk}][data-name=idletime]": render_to_string("container/resources/idle.html", {'container': container}),
+        f"[data-pk={container.pk}][data-name=cpu]": render_to_string("container/resources/cpu.html", {'container': container}),
+        f"[data-pk={container.pk}][data-name=memory]": render_to_string("container/resources/memory.html", {'container': container}),
+        f"[data-pk={container.pk}][data-name=node]": render_to_string('container/resources/node.html', {'container': container}),
         }
 
 state_mapper = {
@@ -60,9 +65,10 @@ class Command(BaseCommand):
         pod = event["object"]
         event_type = event["type"]
         pod_name = pod.metadata.name
+        node_name = pod.spec.node_name
         phase = pod.status.phase
         reason = pod.status.reason
-        print(f"\n🔹 Event: {event_type} | Pod: {pod_name} | Phase: {phase} | Reason {reason}")
+        print(f"\n🔹 Event: {event_type} | Pod: {pod_name} @ {node_name} | Phase: {phase} | Reason {reason}")
 
         # Is the pod evicted?
         if reason == "Evicted":
@@ -87,13 +93,13 @@ class Command(BaseCommand):
                     print(f"    ❌ Terminated: {state.terminated.reason}, Exit Code: {state.terminated.exit_code}")
 
         if event_type == 'ADDED':
-            return phase
+            return phase, node_name
 
         if pod.metadata.deletion_timestamp:
             if event_type == 'MODIFIED':
-                return "Killing"
+                return "Killing", node_name
             elif event_type == 'DELETED':
-                return "Not Found"
+                return "Not Found", None
 
         last_condition=pod.status.conditions[0]
         if pod.status.container_statuses:
@@ -102,13 +108,13 @@ class Command(BaseCommand):
                     continue # skip sidecar checking
                 state = container_status.state
                 if state.waiting:
-                    return state.waiting.reason
+                    return state.waiting.reason, node_name
                 if state.running:
-                    return 'Running'
+                    return 'Running', node_name
                 if state.terminated:
-                    return state.terminated.reason
+                    return state.terminated.reason, node_name
         else:
-            return last_condition.type
+            return last_condition.type, node_name
 
 
     def feedback(self,container, message):
@@ -159,7 +165,7 @@ class Command(BaseCommand):
                 for event in w.stream(v1.list_namespaced_pod, namespace=namespace):
                     close_old_connections()  # Close any stale DB connections
                     connection.ensure_connection()
-                    backend_state=self.parse_pod_event(event)
+                    backend_state, node_manifest=self.parse_pod_event(event)
                     pod = event["object"]
                     pod_name = pod.metadata.name
                     if not pod_name in containers:
@@ -184,6 +190,7 @@ class Command(BaseCommand):
                                 logger.info(f"A container {pod_name} removed from cache")
                             continue
                         container.state_backend=backend_state
+                        container.nodemanifest=node_manifest
                         if state_new:
                             container.state=state_new
                         container.state_lastcheck_at = timezone.now()
