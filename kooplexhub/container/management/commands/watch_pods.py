@@ -24,7 +24,7 @@ def _replace_widgets(container):
     return {
         f'[data-action=start][data-pk={container.id}]': button_start.render(container),
         f'[data-action=stop][data-pk={container.id}]': button_stop.render(container),
-        f'[name=opencontainer][data-id={container.id}]': button_open.render(container),
+        f'[name=opencombo][data-id={container.id}]': button_open.render(container),
 #        f'[name=fetch][data-id={container.id}]': button_fetchlogs.render(container),
         f'[name=fetch][data-id={container.id}]': indicator_state.render(container),
         f'[data-action=restart][data-pk={container.id}]': button_restart.render(container),
@@ -195,12 +195,12 @@ class Command(BaseCommand):
                             container.state=state_new
                         container.state_lastcheck_at = timezone.now()
                         container.save()
-                        self.feedback(container, f'Container {container.name} changed its state: {backend_state}({state_new}).')
                         containers[pod_name]=(container.id, container.state, container.state_backend)
                         if state_new==container.State.NOTPRESENT and container.require_running:
                             container.start()
                         elif state_new==container.State.RUNNING:
                             container.addroutes()
+                        self.feedback(container, f'Container {container.name} changed its state: {backend_state}({state_new}).')
             except Exception as e:
                 print(f"⚠️ Error in watcher: {e}")
                 connections.close_all()

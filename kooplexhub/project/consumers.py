@@ -305,7 +305,7 @@ class ProjectGetContainersConsumer(SyncConsumer):
         bindings=ProjectContainerBinding.objects.filter(container__user__id=self.userid, project__id=projectid)
         upb=UserProjectBinding.objects.get(user__id=self.userid, project__id=projectid)
         message_back = {
-            "feedback": f"Container list refreshed",
+            "feedback": message or f"Container list refreshed",
             "replace_widgets": {
                 f'[id=environmentControl-{projectid}]': render_to_string("container/table_control_shortcut.html", {"containers": list(map(lambda o: o.container, bindings)), "pk": upb.id, "objectId": projectid }),
             },
