@@ -1,27 +1,21 @@
 import requests
 
-class CanvasAPI:
+from hub.api import ExternalAPI
+
+class CanvasAPI(ExternalAPI):
 
     paging = "?per_page=100"
 
-    def __init__(self, token):
-        self.base_url = token.type.base_url
-        if not token:
-            raise ValueError("Token is required")
-        self.headers = {
-            "Authorization": f"Bearer {token.value}"
+    @property
+    def headers(self):
+        return {
+            "Authorization": f"Bearer {self.token_value}"
         }
 
-    def check_connection(self):
-        """
-        Check if the connection to the Canvas API is working
-        """
-        url = f"{self.base_url}/users/self"
-        response = requests.get(url, headers=self.headers)
-        if response.status_code == 200:
-            return response.json()
-        else:
-            response.raise_for_status
+    @property
+    def url_check(self):
+        return f"{self.base_url}/users/self"
+
 
     def get_user_courses(self, course_id=None):
         """
@@ -36,7 +30,7 @@ class CanvasAPI:
         if response.status_code == 200:
             return response.json()
         else:
-            response.raise_for_status()       
+            response.raise_for_status()
     
     def get_course_students(self, course_id):
         """

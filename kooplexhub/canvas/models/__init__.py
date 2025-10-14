@@ -1,1 +1,1 @@
-from .canvas import Canvas, CanvasCourse
+from .canvas import CanvasCourse

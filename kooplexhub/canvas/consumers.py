@@ -14,9 +14,11 @@ from django.db.models.query import QuerySet
 from container.forms import FormContainer
 from django.template.loader import render_to_string
 
-from .models import Canvas, CanvasCourse
+from .models import CanvasCourse
+from .canvasapi import CanvasAPI
 
 from hub.util import SyncSkeleton
+from hub.models import Token
 
 from .conf import CANVAS_SETTINGS
 
@@ -32,9 +34,11 @@ class CanvasGetCoursesConsumer(SyncSkeleton):
             'response': request,
         }
         try:
-            canvas = Canvas.objects.get(user__id = self.userid)
+            token = Token.objects.filter(user__id = self.userid, type__name='Canvas').first()
             created_ids=list(map(lambda o: o.canvas_course_id, CanvasCourse.objects.all()))
-            canvas_courses = filter(lambda x: x['id'] not in created_ids, canvas.get_courses())
+            api=CanvasAPI(token)
+            r=api.get_user_courses()
+            canvas_courses = filter(lambda x: x['id'] not in created_ids, r)
             if f:=CANVAS_SETTINGS['filter']:
                 canvas_courses=list(filter(f, canvas_courses))
             response.update({

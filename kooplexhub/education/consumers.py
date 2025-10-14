@@ -478,15 +478,8 @@ class CourseConfigConsumer(SyncSkeleton):
             course=Course.objects.create(name=_name, preferred_image_id=parsed.get('preferred_image'), description=parsed.get('description'), folder=_folder)
             binding=UserCourseBinding.objects.create(user_id=self.get_userid(), course=course, is_teacher=True)
             if canvas_id:
-                # logger.debug(f"Course has canvasid {canvas_id}.")
-                from canvas.models import CanvasCourse, Canvas
-                canvas=Canvas.objects.get(user_id=self.get_userid())
-                #FIXME: keep canvasname
-                canvascourse=CanvasCourse.objects.create(name=course.name, canvas_course_id=canvas_id, course=course, canvas=canvas)
-                for cs in canvascourse.get_course_students(canvas.token):
-                    UserCourseBinding.objects.create(course=course, user=cs)
-                for ct in canvascourse.get_course_teachers(canvas.token):
-                    UserCourseBinding.objects.get_or_create(course=course, user=ct, is_teacher=True)
+                from canvas.models import CanvasCourse
+                CanvasCourse.create(binding.user.id, canvas_id, course)
             self.send(text_data=json.dumps({
                 'feedback': f"New course {course.name} is created",
                 'reload_page': True,

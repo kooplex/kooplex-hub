@@ -1,97 +1,57 @@
-from typing import Any
+import logging
 from django.db import models
 from education.models import Course, UserCourseBinding
-from canvas.canvasapi import CanvasAPI
+from ..canvasapi import CanvasAPI
 
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from hub.models import Token
 
-# Mechanism:
-# user contacts Canvas
-# get list of courses
-# choose one to create a local Course for it
-# After education/model/course is created 
-
-# Create your models here.
-class Canvas(models.Model):
-    '''
-    defines a connection to the Canvas API via the token
-    '''
-    user = models.ForeignKey(User, on_delete = models.CASCADE, null = False)
-    token = models.ForeignKey(Token, on_delete = models.CASCADE, null = False)
-
-    # def __init__(self, *args: Any, **kwargs: Any) -> None:
-    #     super().__init__(*args, **kwargs)
-    #     self.api = CanvasAPI(self.token)
-
-    @property
-    def api(self):
-        return CanvasAPI(self.token)
-
-    def check_connection(self):        
-        return self.api.check_connection()              
-
-    def get_courses(self):
-        '''
-        Retrieves user's own courses from Canvas vai the API using the user's canvas token
-        Compare already existing courses
-        '''
-        courses = self.api.get_user_courses()
-        return courses
-    
-    # def create_course(self, tmp_course):
-    #     '''
-    #     Creates a local course based on the course or course_id
-    #     '''
-    #     api = CanvasAPI(self.token)
-    #     if type(tmp_course) == int:
-    #         tmp_course = api.get_user_courses(tmp_course)
-
-    #     # Create a Course first
-    #     folder = f"canvas_{tmp_course['id']}"
-    #     course = Course.objects.create(name=tmp_course['name'], folder=folder, description=tmp_course['course_code'])
-
-
-    #     is_teacher = False
-    #     if tmp_course['enrollments'][0]['type'] == 'teacher':
-    #         is_teacher = True
-    #     canvas_course = CanvasCourse.objects.create(name=tmp_course['name'],                                                   
-    #                                                 course=course)
-    #     user_course = UserCourseBinding.objects.create(user=self.user, course=canvas_course.course, is_teacher=is_teacher)
-    #     return canvas_course
+logger = logging.getLogger(__name__)
+User = get_user_model()
 
 class CanvasCourse(models.Model):
     '''
     And extended class based on education/course
     '''
-    
     name = models.CharField(max_length = 200, null = False)
-    canvas_course_id = models.IntegerField(null = False)
-    canvas = models.ForeignKey(Canvas, on_delete = models.CASCADE, null = False)
+    canvas_course_id = models.IntegerField(null = False)  # The course id in Canvas
     course = models.ForeignKey(Course, on_delete = models.CASCADE, null = False)
-    #course = models.OneToOneField(Course, on_delete=models.CASCADE, null=True, blank=True)
-
-    # def __init__(self, *args, **kwargs):
-    #     super(CanvasCourse, self).__init__(*args, **kwargs)
-    #     if not self.course:
-    #         folder = f"canvas_{self.user.id}"
-    #         self.course = Course.objects.create(name=self.name, user=self.user, folder=folder)
-        
+    creator = models.ForeignKey(User, on_delete = models.CASCADE, null = False)
 
     def __str__(self):
         return self.name
+
+    # factory
+    @staticmethod
+    def create(user_id, canvas_id, course):
+        from hub.models import Token
+        token = Token.objects.filter(user__id = user_id, type__name='Canvas').first()
+        api=CanvasAPI(token)
+        r=api.get_user_courses()
+        canvas_courses = filter(lambda x: x['id']==canvas_id, r)
+        if not canvas_courses:
+            logger.error(f'user {token.user} has no access to canvas course ({canvas_id})')
+            return
+        cc=list(canvas_courses)[0]
+        logger.critical(list(canvas_courses))
+        canvascourse=CanvasCourse.objects.create(name=cc['name'], canvas_course_id=canvas_id, course=course, creator=token.user)
+        for cs in canvascourse.get_course_students(token):
+            UserCourseBinding.objects.create(course=course, user=cs)
+        for ct in canvascourse.get_course_teachers(token):
+            UserCourseBinding.objects.get_or_create(course=course, user=ct, is_teacher=True)
+        return canvascourse
 
     def get_course_students(self, token):
         '''
         Retrieves user ids from Canvas via the API using the user's canvas token
         '''
         import re
-        from django.contrib.auth.models import User
         neptun=lambda x: re.split(r'.*\((.{6})\)', x)[1].lower()
         
         #return api.get_course_students(self.canvas_course_id)
-        #[{'id': 173519, 'name': 'Berekméri Evelin (N6FGSV)', 'created_at': '2016-10-13T01:07:50+02:00', 'sortable_name': 'Berekméri Evelin (N6FGSV)', 'short_name': 'Berekméri Evelin (N6FGSV)'},  ...]
-        for record in self.canvas.api.get_course_students(self.canvas_course_id):
+        #[{'id': 173519, 'name': 'Minta Sandor (TRU73I)', 'created_at': '2016-10-13T01:07:50+02:00', 'sortable_name': 'Minta Sandor (TRU73I)', 'short_name': 'Minta Sandor (TRU73I)'},  ...]
+        api=CanvasAPI(token)
+        for record in api.get_course_students(self.canvas_course_id):
             user=User.objects.filter(username=neptun(record['name'])).first()
             if user:
                 yield user
@@ -101,12 +61,12 @@ class CanvasCourse(models.Model):
         Retrieves teachers ids from Canvas via the API using the user's canvas token
         '''
         import re
-        from django.contrib.auth.models import User
         neptun=lambda x: re.split(r'.*\((.{6})\)', x)[1].lower()
 
         #return api.get_course_students(self.canvas_course_id)
-        #[{'id': 173519, 'name': 'Berekméri Evelin (N6FGSV)', 'created_at': '2016-10-13T01:07:50+02:00', 'sortable_name': 'Berekméri Evelin (N6FGSV)', 'short_name': 'Berekméri Evelin (N6FGSV)'},  ...]
-        for record in self.canvas.api.get_course_teachers(self.canvas_course_id):
+        #[{'id': 173519, 'name': 'Minta Sandor (TRU73I)', 'created_at': '2016-10-13T01:07:50+02:00', 'sortable_name': 'Minta Sandor (TRU73I)', 'short_name': 'Minta Sandor (TRU73I)'},  ...]
+        api=CanvasAPI(token)
+        for record in api.get_course_teachers(self.canvas_course_id):
             user=User.objects.filter(username=neptun(record['name'])).first()
             if user:
                 yield user
@@ -116,8 +76,8 @@ class CanvasCourse(models.Model):
         Retrieves assignments (per user ids from Canvas via the API using the user's canvas token
         Creates an assignment and downloads/shows all related files into it
         '''
-    
-        return self.canvas.api.get_course_assignments(self.canvas_course_id)
+        api=CanvasAPI(token)
+        return api.get_course_assignments(self.canvas_course_id)
 
 # Peldanak beraktam ide egy assignment json-t
         """
@@ -185,7 +145,8 @@ class CanvasCourse(models.Model):
         '''
         Retrieves grades (per user ids from Canvas via the API using the user's canvas token
         '''
-        return self.canvas.api.get_course_grades(self.canvas_course_id)
+        api=CanvasAPI(token)
+        return api.get_course_grades(self.canvas_course_id)
 
     def upload_results(self):
         pass
