@@ -33,10 +33,9 @@ class CanvasCourse(models.Model):
             logger.error(f'user {token.user} has no access to canvas course ({canvas_id})')
             return
         cc=list(canvas_courses)[0]
-        logger.critical(list(canvas_courses))
         canvascourse=CanvasCourse.objects.create(name=cc['name'], canvas_course_id=canvas_id, course=course, creator=token.user)
         for cs in canvascourse.get_course_students(token):
-            UserCourseBinding.objects.create(course=course, user=cs)
+            UserCourseBinding.objects.get_or_create(course=course, user=cs)
         for ct in canvascourse.get_course_teachers(token):
             UserCourseBinding.objects.get_or_create(course=course, user=ct, is_teacher=True)
         return canvascourse

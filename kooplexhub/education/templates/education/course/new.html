@@ -7,9 +7,25 @@
             </div>
             <div class="modal-body vh-25">
               <div class="container">
-                {% block course_plugin %}
-                {% include 'education/course/card_teacher.html' %}
-		{% endblock %}
+                <div class="row">
+                  <div class="col-8">
+                     {% block course_plugin %}
+                     {% include 'education/course/card_teacher.html' %}
+	             {% endblock %}
+                  </div>
+                  <div class="col-4">
+                    <div class="p-3 border rounded bg-light alert alert-info">
+                      <h5>Instructions</h5>
+                      <p>When creating a new course, requirements are:</p>
+	              <ul>
+                        <li>Name (at least 3 characters)</li>
+                        <li>Description (at least 5 characters)</li>
+                        <li>Image (click Select image button)</li>
+                      </ul>
+                      <p>When selecting from canvas, just click the table row, to guess and reset the name and desctription.</p>
+                    </div>
+                  </div> <!-- /.col-4 -->
+                 </div> <!-- /.row -->
               </div>
             </div>
             <div class="modal-footer">

@@ -35,12 +35,7 @@ logger = logging.getLogger(__name__)
 @login_required
 def delete_or_leave(request, pk_course, pk_user):
     """Delete or leave a course."""
-    from canvas.models import CanvasCourse
-    #FIXME: decouple canvas as trigger?
     user = request.user
-    canvascourse=CanvasCourse.objects.filter(course_id=pk_course).first()
-    if canvascourse:
-        canvascourse.delete()
     teachers=UserCourseBinding.objects.filter(course_id=pk_course, is_teacher=True)
     if not teachers:
         return redirect('education:teaching')
