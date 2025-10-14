@@ -214,6 +214,27 @@ DJANGO_HUEY = {
                 'url': None,  # Allow Redis config via a DSN.
             },
         },
+        'volume': {
+            'huey_class': 'huey.RedisHuey',
+            'name': 'volume_tasks',
+            'consumer': {
+                'workers': 2,
+                'worker_type': 'thread',
+            },
+            'immediate': False, # ADDED coz error
+            'connection': {
+                'host': 'localhost',
+                'port': 6379,
+                'db': 0,
+                'password': REDIS_PASSWORD,
+                'connection_pool': None,  # Definitely you should use pooling!
+                # ... tons of other options, see redis-py for details.
+
+                # huey-specific connection parameters.
+                'read_timeout': 1,  # If not polling (blocking pop), use timeout.
+                'url': None,  # Allow Redis config via a DSN.
+            },
+        },
         'emails': {#this name will be used in decorators below
             'huey_class': 'huey.RedisHuey',
             'name': 'emails_tasks',
