@@ -13,7 +13,7 @@ except ImportError:
 
 
 class Proxy(models.Model):
-    name = models.CharField(max_length = 64, null = True)
+    name = models.CharField(max_length = 64, null = True, unique=True)
     basepath = models.CharField(max_length = 64, null = False, default='notebook/{container.label}')
     register = models.BooleanField(default = True)
     svc_proto = models.CharField(max_length = 8, choices = map(lambda x:(x,x), ['http', 'https']), default = 'http')
