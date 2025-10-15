@@ -7,8 +7,12 @@
 {% endblock %}
 
 {% block infoline %}
+{% if user.is_authenticated %}
 Publish a static html, an interactive plot or an application, which can be accessed publicly. 
 <a href="https://xwiki.vo.elte.hu/en/kooplex-manual/reports"><span class="ms-2 bi bi-book"></span></a>
+{% elif reports %}
+Study public reports
+{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -19,7 +23,11 @@ Publish a static html, an interactive plot or an application, which can be acces
         {% include 'report/card.html' %}
       </div>
     {% empty %}
-      {% include 'empty.html' %}
+      {% if user.is_authenticated %}
+        {% include 'empty.html' %}
+      {% else %}
+        {% include 'splash.html' %}
+      {% endif %}
     {% endfor %}
 </div>
 {% endblock %}
@@ -30,56 +38,6 @@ Publish a static html, an interactive plot or an application, which can be acces
 $("[id=add]").click(function() {
     location.replace("{{url_new_report}}");
 });
-
-
-
-
-{# show buttons on mouse enter the transparent card #}
-$("div[id^=hideable-report-]").mouseenter(function() {
-  var reportid = $( this ).attr("id").split("-", 3)[2];
-  // console.log( "card enter: " + reportid );
-  bar = $( "#buttonbar-" + reportid );
-  bar.removeClass("d-none");
-});
-
-{# hide buttons on mouse leaving the transparent card #}
-$("div[id^=hideable-report-]").mouseleave(function() {
-  var reportid = $( this ).attr("id").split("-", 3)[2];
-  // console.log( "card leave: " + reportid );
-  bar = $( "#buttonbar-" + reportid );
-  bar.addClass("d-none");
-});
-
-{# clickng the visible card opens the report #}
-$("div[id^=click-report-]").click(function() {
-  var reportid = $( this ).attr("id").split("-", 3)[2];
-  var url = $( "#url-reportopen-" + reportid).val();
-  console.log( "card clicked: " + url );
-  var win = window.open(url, '_blank');
-  if (win) {
-    win.focus();
-  }
-});
-
-{# when mouse enters the visible card change the cursor to pointer #}
-$("div[id^=click-report-]").mouseenter(function() {
-  $( this ).css("cursor", "pointer");
-});
-
-{# set visibility states for all cards #}
-function is_visible_callback(obj, obj_id, pattern_is_empty, match) {
-  narrow_creator = B($( "#toggler-user_creator" )[0].checked);
-  is_creator = B($( "#report-iscreator-" + obj_id).val());
-  return match && ((! narrow_creator) || is_creator);
-};
-
-{# narrow selection whether user is the creator of the report #}
-$("#toggler-user_creator").change(function() {
-  $("#search_report").keyup();
-  set_visibility("report");
-}).change();                    // invoked just in case the page was reloaded for some reasons and to hide the necessary cards 
-
 </script>
-
 {% endblock %}
 

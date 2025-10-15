@@ -1,0 +1,30 @@
+{% block head_content %}
+<style>
+.logos {
+  width: 60px;
+  height: 40px; 
+  padding-right: 10px; 
+  margin-top: 10px;
+}
+</style>
+{% endblock %}
+
+<div class="container">
+  <div class="card shadow p-2 mb-3 mt-5 bg-light rounded"> 
+    <h6 class="card-title">Powered by</h6>
+    <div class="card-body" style="flex-direction: row; flex-wrap: wrap; justify-content: space-between">
+      <img src="/static/dockerlogo.png" class="logos" alt="docker">
+      <img src="/static/kuberneteslogo.png" class="logos" alt="k8s">
+      <img src="/static/django.png" class="logos" alt="django">
+      <img src="/static/Nginx-Logo.png" class="logos" alt="nginx">
+      <img src="/static/jupyter.png" class="logos" alt="jupyter">
+      <img src="/static/rstudio.png" class="logos" alt="rstudio">
+      <img src="/static/gitea.png"  class="logos" alt="gitea">
+      <img src="/static/seafile.png"  class="logos" alt="seafile">
+      <img src="/static/slurm.png" class="logos" alt="slurm">
+      <!--img src="/static/singularity.png" class="logos" alt="singularity"-->
+    </div>
+    <img src="/static/Kooplex-frontpage.png">
+  </div>
+</div>
+

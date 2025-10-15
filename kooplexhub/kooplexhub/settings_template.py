@@ -63,8 +63,8 @@ SOCIAL_AUTH_USER_FIELDS = [ 'username', 'email' ]
 SOCIAL_AUTH_URL_NAMESPACE = 'social'
 KOOPLEX_OID_AUTHORIZATION_URL = f'{URL_AUTH}/o/authorize/' 
 KOOPLEX_OID_ACCESS_TOKEN_URL =  f'{URL_AUTH}/o/token/' 
-LOGIN_REDIRECT_URL = 'indexpage'
-LOGOUT_REDIRECT_URL = 'indexpage'
+LOGIN_REDIRECT_URL = 'container:list'
+LOGOUT_REDIRECT_URL = 'report:list'
 
 # Application definition
 
@@ -281,7 +281,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'hub.context_processors.menu',
-#                'hub.context_processors.next_page',
+                'hub.context_processors.url_login',
                 'hub.context_processors.user',
                 'hub.context_processors.notes',
 #                'hub.context_processors.installed_apps',

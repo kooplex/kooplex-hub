@@ -52,26 +52,6 @@ def delete_or_leave(request, pk_course, pk_user):
     return redirect('education:teaching')
 
 
-@require_http_methods(['GET'])
-@login_required
-def assignment_teacher(request):
-    """
-    @summary: handle the tabs in the teacher's assignment page
-    """
-    active = request.COOKIES.get('assignment_teacher_tab', 'conf')
-    if active == 'new':
-        return redirect('education:assignment_new')
-    elif active == 'conf':
-        return redirect('education:assignment_configure')
-    elif active == 'handle':
-        return redirect('education:assignment_handle')
-    elif active == 'summary':
-        return redirect('education:assignment_summary')
-    else:
-        logger.error(f'not implemented tab: {active} by {request.user}')
-        return redirect('indexpage')
-
-
 class StudentCourseBindingListView(LoginRequiredMixin, generic.ListView):
     template_name = 'education/course/list_student.html'
     context_object_name = 'coursebindinglist'
