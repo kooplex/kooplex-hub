@@ -177,11 +177,7 @@ def start(container):
             mountPath=CONTAINER_SETTINGS['kubernetes']['nslcd']['mountPath_nslcd'],
             configMap=V1ConfigMapVolumeSource(name="nslcd", default_mode=0o400, items=[V1KeyToPath(key="nslcd",path="nslcd.conf")])
             )
-
-        if container.user.profile.can_teleport and container.start_teleport:
-            initscripts.append(V1KeyToPath(key="teleport",path="06-teleport"))
-            env_variables.append({ "name": "REDIS_PASSWORD", "value": REDIS_PASSWORD })
-
+        
         logger.debug('mount initscripts')
         initscripts = [
             V1KeyToPath(key="nsswitch",path="01-nsswitch"),
@@ -195,6 +191,9 @@ def start(container):
             configMap=V1ConfigMapVolumeSource(name="initscripts", default_mode=0o777, items=initscripts),
             )
         
+        if container.user.profile.can_teleport and container.start_teleport:
+            initscripts.append(V1KeyToPath(key="teleport",path="06-teleport"))
+            env_variables.append({ "name": "REDIS_PASSWORD", "value": REDIS_PASSWORD })
         
 
         logger.debug('mount jobpy')
