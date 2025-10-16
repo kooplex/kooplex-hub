@@ -4,7 +4,7 @@ logger = logging.getLogger("test")
 from kooplexhub.settings import KOOPLEX
 
 
-def test_get_test_user(username=""):
+def test_get_test_user(username="wfct0p"):
     """Get a test user by username, defaulting to 'wfct0p'."""
     from hub.models import User
     # FIXME will need a testuser here
@@ -26,7 +26,7 @@ def test_create_env(user=None, image=None):
     if not image:
         from container.models import Image
         # Get all present/enabled images 
-        image = Image.objects.filter(present=True).first()
+        image = Image.objects.filter(present=True, imagetype=Image.TP_PROJECT).first()
         if not image:
             raise ValueError("No present images found")
     cname = "test-"+user.username+"-"+image.name.split("/")[1]
@@ -113,10 +113,10 @@ def check_container_running(container):
     if pod_state:
         # if pod_state.status.phase != "Running" or pod_state.status.container_statuses[0].last_state.terminated or pod_state.status.container_statuses[0].state.waiting:
         if pod_state.status.phase == "Running" and pod_state.status.container_statuses[0].state.running:
-            logger.debug(f"Container {container.name} is running")
+            logger.debug(f"Container {container.name} is {pod_state.status.phase}")
             return True
         else:        
-            logger.debug(f"Container {container.name} is not running")
+            logger.debug(f"Container {container.name} is not running ({pod_state.status.phase})")
             return False
     return False
 

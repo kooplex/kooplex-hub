@@ -32,13 +32,9 @@ class Command(BaseCommand):
             from container.models import Image
 
 
-            # Get the first available image
-            image = Image.objects.filter(present=True).first()
-            if not image:
-                raise ValueError("No present images found") 
 
             # Create a test container for the user
-            container = test_create_env(user=user, image=image)
+            container = test_create_env(user=user)
             logger.debug(f"Container {container.name} created for user {user.username}")
 
             # Bind the attachment (volume) to the container
@@ -58,7 +54,7 @@ class Command(BaseCommand):
 
             # Checko pod state
             while not check_container_running(container):
-                logger.debug(f"Container {container.name} is RUNNING")
+                logger.debug(f"Container {container.name} is NOT RUNNING")
                 time.sleep(5)
 
             # Execute command in the pod to check permissions
