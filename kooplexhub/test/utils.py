@@ -81,13 +81,12 @@ def test_create_attachment(folder_name=None, user=None, description=None):
         user = test_get_test_user()
     if not description:
         description = "This is a test attachment"
-    subpath = "test_attachment"
 
     # Create an attachment
     try:
         # a, created = Attachment.objects.get_or_create(name=folder_name, description=description, subpath=subpath)
         claim_attachment = KOOPLEX.get('userdata', {}).get('claim-attachment', 'attachments')
-        attachment, exists = Volume.objects.get_or_create(folder=folder_name, description=description, claim=claim_attachment, scope= Volume.Scope.ATTACHMENT, subpath=subpath)
+        attachment, exists = Volume.objects.get_or_create(folder=folder_name, description=description, claim=claim_attachment, scope= Volume.Scope.ATTACHMENT)
         if exists:
             logger.debug(f"Attachment {attachment.folder} already exists for user {user.username}")
         else:
@@ -216,7 +215,9 @@ def exec_command_in_pod(container, command, user=None):
                     container=container_label,
                     stderr=True, stdin=False,
                     stdout=True, tty=False)
-    return resp
+
+    decorated_resp = f"\n-----BEGIN COMMAND OUTPUT-----\n{resp}\n------END COMMAND OUTPUT------\n"
+    return decorated_resp
 
 def test_create_course(cname=None, user=None, description=None):
     """Create a test course with a name, and description."""
