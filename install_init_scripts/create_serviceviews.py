@@ -2,9 +2,11 @@ from container.models import *
 from hub.models import Thumbnail
 
 # Upload Thumbnails
-ths_list = [{'button_jupyter': 'images/t_jupyter.png'}, {'button_rstudio': 'images/t_rstudio.png'}, {'button_plotly': 'images/t_plotly.png'}, {'button_shiny': 'images/t_shiny.png'},
+ths_list = [{'button_jupyter': 'images/t_jupyter.png'}, {'button_rstudio': 'images/t_rstudio.png'}, 
+{'button_plotly': 'images/t_plotly.png'}, {'button_shiny': 'images/t_shiny.png'},
     {'button_test': 'images/t_test.png'}]
-    
+
+
 while ths_list:
     try:
         ths = ths_list.pop(0)
@@ -17,7 +19,7 @@ while ths_list:
 
 svs = [{'name': 'jupyter', 'proxy': 'jupyter', 'suffix': 'tree', 'openable': True, 'pass_token': True, 'icon': 'button_jupyter'},
     {'name': 'rstudio', 'proxy': 'rstudio', 'suffix': 'auth-sign-in', 'openable': True, 'pass_token': False, 'icon': 'button_rstudio'},
-    {'name': 'testurl', 'proxy': 'testurl', 'suffix': '', 'openable': False, 'pass_token': False, 'icon': 'button_plotly'},
+    {'name': 'testurl', 'proxy': 'testurl', 'suffix': '', 'openable': False, 'pass_token': False, 'icon': 'button_test'},
     {'name': 'shiny', 'proxy': 'shiny', 'suffix': '', 'openable': False, 'pass_token': False, 'icon': 'button_shiny'},
 ]
 

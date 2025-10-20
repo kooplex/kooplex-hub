@@ -1,4 +1,4 @@
-from .image import Image
+from .image import Image, Liveness_Probe
 from .serviceview import ServiceView
 from .container import Container
 from .proxy import Proxy, ProxyImageBinding

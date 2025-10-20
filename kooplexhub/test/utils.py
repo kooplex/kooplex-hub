@@ -4,7 +4,7 @@ logger = logging.getLogger("test")
 from kooplexhub.settings import KOOPLEX
 
 
-def test_get_test_user(username=""):
+def test_get_test_user(username="wfct0p"):
     """Get a test user by username, defaulting to 'wfct0p'."""
     from hub.models import User
     # FIXME will need a testuser here
@@ -26,7 +26,7 @@ def test_create_env(user=None, image=None):
     if not image:
         from container.models import Image
         # Get all present/enabled images 
-        image = Image.objects.filter(present=True).first()
+        image = Image.objects.filter(present=True, imagetype=Image.TP_PROJECT).first()
         if not image:
             raise ValueError("No present images found")
     cname = "test-"+user.username+"-"+image.name.split("/")[1]
@@ -81,13 +81,12 @@ def test_create_attachment(folder_name=None, user=None, description=None):
         user = test_get_test_user()
     if not description:
         description = "This is a test attachment"
-    subpath = "test_attachment"
 
     # Create an attachment
     try:
         # a, created = Attachment.objects.get_or_create(name=folder_name, description=description, subpath=subpath)
         claim_attachment = KOOPLEX.get('userdata', {}).get('claim-attachment', 'attachments')
-        attachment, exists = Volume.objects.get_or_create(folder=folder_name, description=description, claim=claim_attachment, scope= Volume.Scope.ATTACHMENT, subpath=subpath)
+        attachment, exists = Volume.objects.get_or_create(folder=folder_name, description=description, claim=claim_attachment, scope= Volume.Scope.ATTACHMENT)
         if exists:
             logger.debug(f"Attachment {attachment.folder} already exists for user {user.username}")
         else:
@@ -113,10 +112,10 @@ def check_container_running(container):
     if pod_state:
         # if pod_state.status.phase != "Running" or pod_state.status.container_statuses[0].last_state.terminated or pod_state.status.container_statuses[0].state.waiting:
         if pod_state.status.phase == "Running" and pod_state.status.container_statuses[0].state.running:
-            logger.debug(f"Container {container.name} is running")
+            logger.debug(f"Container {container.name} is {pod_state.status.phase}")
             return True
         else:        
-            logger.debug(f"Container {container.name} is not running")
+            logger.debug(f"Container {container.name} is not running ({pod_state.status.phase})")
             return False
     return False
 
@@ -216,7 +215,9 @@ def exec_command_in_pod(container, command, user=None):
                     container=container_label,
                     stderr=True, stdin=False,
                     stdout=True, tty=False)
-    return resp
+
+    decorated_resp = f"\n-----BEGIN COMMAND OUTPUT-----\n{resp}\n------END COMMAND OUTPUT------\n"
+    return decorated_resp
 
 def test_create_course(cname=None, user=None, description=None):
     """Create a test course with a name, and description."""
