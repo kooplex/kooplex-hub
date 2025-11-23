@@ -39,7 +39,7 @@ def revoke_access(user_id, folders):
     u = User.objects.get(id = user_id)
     for f in folders:
         revokeaccess_user(u, f)
-    async_to_sync(channel_layer.group_send)("project", {
+    async_to_sync(get_channel_layer.group_send)("project", {
             "type": "feedback",
             "feedback": f"{u}'s acls are removed from folders {folders}",
         })

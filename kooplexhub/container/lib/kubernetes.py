@@ -15,7 +15,7 @@ from ..models import Image, Container
 from kooplexhub.lib import now
 
 from kooplexhub.settings import SERVERNAME
-from kooplexhub.settings import REDIS_PASSWORD
+from kooplexhub.settings import REDIS_TELEPORT
 
 from ..conf import CONTAINER_SETTINGS
 from hub.conf import HUB_SETTINGS
@@ -193,7 +193,7 @@ def start(container):
         
         if container.user.profile.can_teleport and container.start_teleport:
             initscripts.append(V1KeyToPath(key="teleport",path="06-teleport"))
-            env_variables.append({ "name": "REDIS_PASSWORD", "value": REDIS_PASSWORD })
+            env_variables.append({ "name": "REDIS_TELEPORT", "value": REDIS_TELEPORT })
         
 
         logger.debug('mount jobpy')
@@ -344,14 +344,16 @@ def start(container):
     elif container.image.imagetype == Image.TP_REPORT or container.image.imagetype == Image.TP_API or container.image.imagetype == Image.TP_APP:
         env_variables = [ {'name': k, "value": v.format(container = container)} for k,v in KOOPLEX['environmental_variables_report'].items()]
         env_variables.append({ "name": "REPORT_FOLDER" , "value": REPORT_SETTINGS['mounts']['report']['mountpoint']})
-        # report
-        rcb = container.reportbindings.get(container=container)
 
-        mCV.add(
-            mountPath=REPORT_SETTINGS['mounts']['report']['mountpoint'].format(user=container.user, report=rcb.report),
-            subPath=REPORT_SETTINGS['mounts']['report']['folder'].format(user=container.user, report=rcb.report),
-            claimName=REPORT_SETTINGS['mounts']['report']['claim']
-            )
+        # report
+        if container.image.imagetype == Image.TP_REPORT:
+            rcb = container.reportbindings.get(container=container)
+
+            mCV.add(
+                mountPath=REPORT_SETTINGS['mounts']['report']['mountpoint'].format(user=container.user, report=rcb.report),
+                subPath=REPORT_SETTINGS['mounts']['report']['folder'].format(user=container.user, report=rcb.report),
+                claimName=REPORT_SETTINGS['mounts']['report']['claim']
+                )
 
     else:
         raise Exception(f"Unknown image type {container.image.imagetype}")

@@ -108,7 +108,7 @@ def prom_query(query):
     r.raise_for_status()
     return r.json()["data"]["result"]
 
-@periodic_task(crontab(minute="*/1"), queue='container')
+@periodic_task(crontab(minute="*/5"), queue='container')
 def k8s_cpu_usage():
     ns=CONTAINER_SETTINGS['kubernetes']['namespace']
     q_cpu="""
@@ -125,7 +125,7 @@ sum by (pod) (
             c.save()
             render_progressbar(c, 'cpu')
 
-@periodic_task(crontab(minute="*/1"), queue='container')
+@periodic_task(crontab(minute="*/4"), queue='container')
 def k8s_mem_usage():
     ns=CONTAINER_SETTINGS['kubernetes']['namespace']
     q_mem="""
@@ -142,7 +142,7 @@ sum by (pod) (
             c.save()
             render_progressbar(c, 'mem')
 
-@periodic_task(crontab(minute="*/1"), queue='container')
+@periodic_task(crontab(minute="*/3"), queue='container')
 def k8s_nodes_usage():
     node_cpu_q="""
 100 * (
@@ -161,7 +161,7 @@ def k8s_nodes_usage():
     mem_by_node = {item["metric"]["instance"]: float(item["value"][1]) for item in mem}
     for node, _cpu in cpu_by_node.items():
         _mem=mem_by_node.get(node)
-        logger.debug(f"node: {node} CPU: {_cpu}%, MEM: {_mem}%")
+        #logger.debug(f"node: {node} CPU: {_cpu}%, MEM: {_mem}%")
         for container in Container.objects.filter(nodemanifest=node): #FIXME: narrow for running/restart?
             render_progressbar(container, 'node', cpu=_cpu, memory=_mem)
 

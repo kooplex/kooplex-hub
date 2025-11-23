@@ -22,7 +22,7 @@ class Image(models.Model):
     imagetype = models.CharField(max_length = 32, choices = TP_LOOKUP.items(), default = TP_PROJECT)
     description = models.CharField(max_length = 250, default = "description missing")
     dockerfile = models.TextField(max_length = 4096)
-    command = models.CharField(max_length = 250, default = "/entrypoint.sh")
+    command = models.CharField(max_length = 512, default = "/entrypoint.sh")
     thumbnail = models.ForeignKey(Thumbnail, on_delete = models.CASCADE, default = None, null = True)
     liveness_probe = models.ForeignKey('Liveness_Probe', on_delete = models.SET_NULL, null = True, blank = True, default = None)
 
