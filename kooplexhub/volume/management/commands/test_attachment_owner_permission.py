@@ -56,12 +56,20 @@ class Command(BaseCommand):
             while not check_container_running(container):
                 logger.debug(f"Container {container.name} is NOT RUNNING")
                 time.sleep(5)
-
+            
+            time.sleep(3)
             # Execute command in the pod to check permissions
             folder = VOLUME_SETTINGS['mounts']['attachment']['mountpoint'].format(volume=attachment)
-            exec_command = f"whoami; ls -l /v/attachments/; echo $HOME Permissions checked > {folder}/permissions.txt; cat {folder}/permissions.txt"
+            exec_command = f"whoami; nfs4_getfacl {folder}"
             resp = exec_command_in_pod(container, exec_command, user)
             logger.debug(f"Command output: {resp}")
+            exec_command = f"echo $HOME Permissions checked > {folder}/permissions.txt; ls -alht {folder}; touch {folder}/testfile_ownerp.txt; ls -alht {folder}"
+            resp = exec_command_in_pod(container, exec_command, user)
+            logger.debug(f"Command output: {resp}")
+            exec_command = f"echo $HOME $(whoami);"
+            resp = exec_command_in_pod(container, exec_command, user)
+            logger.debug(f"Command output: {resp}")
+            
 
         except Exception as e:
             raise e

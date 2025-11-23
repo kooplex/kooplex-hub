@@ -127,9 +127,17 @@
             <div class="tab-pane fade" id="content-six-{{project.id}}" role="tabpanel" aria-labelledby="tab-six-{{project.id}}">
 		{% link_drop project user as drop_url %}
                 {% if project.creator == user %}
-		<p class="card-text">There are FIXME {# { project.collaborators_exclude:user|length} #} collaborators on this project and you are the owner. Are you sure you want to delete the project?
-		{% include 'widgets/widget_delete.html' with msg="Are you sure you want to delete project?" tooltip="Delete project" link=drop_url obj=project %}
-		</p>
+		{% with n_collab=project.n_collaborators %}
+		  {% if n_collab %}
+                    <p class="card-text">There are {{ n_collab }} collaborators on this project and you are the owner. Are you sure you want to delete the project?
+                    {% include 'widgets/widget_delete.html' with msg="Are you sure you want to delete project?" tooltip="Delete project" link=drop_url obj=project %}
+                    </p>
+		  {% else %}
+                    <p class="card-text">Are you sure you want to delete the project?
+                    {% include 'widgets/widget_delete.html' with msg="Are you sure you want to delete project?" tooltip="Delete project" link=drop_url obj=project %}
+                    </p>
+		  {% endif %}
+		{% endwith %}
 		{% else %}
 		<p class="card-text">You decide to leave the project?</p>
 		{% include 'widgets/widget_delete.html' with msg="Are you sure you want to leave project?" tooltip="Leave project" link=drop_url obj=project %}

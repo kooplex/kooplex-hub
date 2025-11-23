@@ -161,7 +161,7 @@ def k8s_nodes_usage():
     mem_by_node = {item["metric"]["instance"]: float(item["value"][1]) for item in mem}
     for node, _cpu in cpu_by_node.items():
         _mem=mem_by_node.get(node)
-        #logger.debug(f"node: {node} CPU: {_cpu}%, MEM: {_mem}%")
+#        logger.debug(f"node: {node} CPU: {_cpu}%, MEM: {_mem}%")
         for container in Container.objects.filter(nodemanifest=node): #FIXME: narrow for running/restart?
             render_progressbar(container, 'node', cpu=_cpu, memory=_mem)
 

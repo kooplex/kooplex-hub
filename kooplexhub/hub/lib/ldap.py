@@ -117,3 +117,12 @@ class Ldap:
         changes = { 'memberUid': (ldap3.MODIFY_DELETE, user.username) }
         if not self.connection.modify(dn, changes):
             raise LdapException(self.connection.result['description'])
+
+    def groups(self):
+        self.connection.search(
+            search_base=self.base_dn,
+            search_filter='(objectClass=posixGroup)',
+            attributes=['cn'],
+        )
+        for e in self.connection.entries:
+            yield e.cn.value

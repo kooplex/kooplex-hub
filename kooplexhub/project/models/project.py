@@ -45,8 +45,21 @@ class Project(models.Model):
     def is_admin(self, user):
         return user in self.admins
 
+    @property
+    def n_collaborators(self):
+        return self.collaborators_excluding(self.creator).count()
+
     def collaborators_excluding(self, user):
         return self.userbindings.exclude(user__pk=user.pk) if self.pk else {}
+
+    @property
+    def groupname(self):
+        return self.userbindings.first().groupname
+
+    @property
+    def group(self):
+        from hub.models import Group
+        return Group.objects.filter(name=self.groupname, grouptype=Group.TP_PROJECT).first()
 
     @property
     def volumes(self):

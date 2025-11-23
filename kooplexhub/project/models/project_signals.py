@@ -27,11 +27,24 @@ def mkdir_project(sender, instance, **kwargs):
        
 
 @receiver(pre_delete, sender = Project)
-def rmdir_project(sender, instance, **kwargs):
+def garbagedir_project(sender, instance, **kwargs):
+    from hub.tasks import archive
+    project=instance
     try:
-        #FIXME: Group.objects.get(name = instance.groupname, grouptype = Group.TP_PROJECT).delete()
-        pass
-    except Group.DoesNotExist:
-        pass
-    delete_folder(fs.path_project(instance))
-    delete_folder(fs.path_report_prepare(instance))
+        a1 = {
+            'folder': fs.path_project(project),
+            'tarbal': fs.garbage_project(project),
+            'remove': True,
+        }
+        transaction.on_commit(lambda: archive(**a1))
+    except Exception as e:
+        logger.critical(e)
+    try:
+        a2 = {
+            'folder': fs.path_report_prepare(project),
+            'tarbal': fs.garbage_report_prepare(project),
+            'remove': True,
+        }
+        transaction.on_commit(lambda: archive(**a2))
+    except Exception as e:
+        logger.critical(e)

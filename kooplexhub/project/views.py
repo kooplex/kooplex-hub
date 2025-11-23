@@ -67,19 +67,11 @@ def delete_or_leave(request, project_id, pk_user):
         messages.error(request, 'Project does not exist')
         return redirect('project:list')
     upb = project.userbindings.filter(user = user).first()
+    if not upb:
+        return redirect('project:list')
     if upb.role == upb.Role.CREATOR:
-        collab = []
-        for upb_i in project.userbindings.exclude(user = user):
-            collab.append(upb_i.user)
-            upb_i.delete()
-        try:
-            upb.delete()
-            project.delete()
-            if len(collab):
-                messages.info(request, 'Users removed from collaboration: {}'.format(', '.join([  f'{u.first_name} {u.last_name} ({u.username})' for u in collab ])))
-            messages.info(request, 'Project %s is deleted' % (project))
-        except Exception as e:
-            messages.error(request, f'Cannot delete project {project.name}. Ask the administrator to solve this error {e}')
+        project.delete()
+        messages.info(request, 'You deleted project %s' % (project))
     else:
         upb.delete()
         messages.info(request, 'You left project %s' % (project))
