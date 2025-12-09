@@ -168,7 +168,7 @@ def start(container):
 
     mCV=MyClaimsAndVolumes()
 
-    if container.image.imagetype == Image.TP_PROJECT or container.image.imagetype == Image.TP_JOB:
+    if container.image.imagetype == Image.ImageType.PROJECT or container.image.imagetype == Image.ImageType.JOB:
         env_variables = [ {'name': k, "value": v.format(container = container)} for k,v in KOOPLEX['environmental_variables'].items()]
 
         logger.debug('mount nslcd')
@@ -341,7 +341,7 @@ def start(container):
                     )
       
     ## FOR THE REPORTS
-    elif container.image.imagetype == Image.TP_REPORT or container.image.imagetype == Image.TP_API or container.image.imagetype == Image.TP_APP:
+    elif container.image.imagetype == Image.ImageType.REPORT or container.image.imagetype == Image.ImageType.API or container.image.imagetype == Image.ImageType.APP:
         env_variables = [ {'name': k, "value": v.format(container = container)} for k,v in KOOPLEX['environmental_variables_report'].items()]
         env_variables.append({ "name": "REPORT_FOLDER" , "value": REPORT_SETTINGS['mounts']['report']['mountpoint']})
         # report

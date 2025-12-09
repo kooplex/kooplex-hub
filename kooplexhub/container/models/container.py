@@ -51,6 +51,7 @@ class Container(models.Model):
 
     class Meta:
         unique_together = [['user', 'name']]
+        ordering = ['image', 'name']
 
     def __lt__(self, c):
         return self.launched_at < c.launched_at

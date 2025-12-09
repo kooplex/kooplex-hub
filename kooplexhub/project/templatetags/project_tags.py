@@ -4,6 +4,7 @@ from django.template.loader import render_to_string
 
 register = template.Library()
 
+
 @register.simple_tag
 def render_name(project=None, user=None, **kwargs):
     e = project.is_admin(user) if project else True

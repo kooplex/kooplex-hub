@@ -45,7 +45,7 @@ def grantaccess_project(sender, instance, **kwargs):
 @receiver(pre_delete, sender = UserProjectBinding)
 def revokeaccess_project(sender, instance, **kwargs):
     if instance.role != UserProjectBinding.Role.CREATOR:
-        UserGroupBinding.objects.get(user = instance.user, group_name = instance.groupname).delete()
+        UserGroupBinding.objects.get(user = instance.user, group__name = instance.groupname).delete()
 
 
 @receiver(pre_delete, sender = UserProjectBinding)

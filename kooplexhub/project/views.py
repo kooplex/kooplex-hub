@@ -91,7 +91,7 @@ class UserProjectBindingListView(LoginRequiredMixin, generic.ListView):
         context['wss_project_users'] = PROJECT_SETTINGS['wss']['users'].format(user = self.request.user)
         context['wss_project_container'] = PROJECT_SETTINGS['wss']['containers'].format(user = self.request.user)
         context['n_hidden'] = len(context['object_list'].filter(is_hidden = True))
-        context['images'] = Image.objects.filter(imagetype = Image.TP_PROJECT, present = True)
+        context['images'] = Image.objects.filter(imagetype = Image.ImageType.PROJECT, present = True)
         context['users'] = [ u.profile._repr for u in User.objects.all().exclude(id = self.request.user.id) ]
         context['t_users'] = TableUsers(User.objects.all().exclude(id = self.request.user.id), marker_column='Admin')
         context['t_volume'] = TableVolume.for_user(self.request.user)

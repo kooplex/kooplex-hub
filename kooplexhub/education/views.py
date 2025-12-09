@@ -86,7 +86,7 @@ class TeacherCourseBindingListView(LoginRequiredMixin, generic.ListView):
         context['wss_assignment_score'] = EDUCATION_SETTINGS['wss']['score'].format(user = self.request.user)
         context['wss_canvas'] = CANVAS_SETTINGS['wss']['courses'].format(user = self.request.user)
         context['wss_canvascourseassignments'] = CANVAS_SETTINGS['wss']['assignments'].format(user = self.request.user)
-        context['images'] = Image.objects.filter(imagetype = Image.TP_PROJECT, present = True)
+        context['images'] = Image.objects.filter(imagetype = Image.ImageType.PROJECT, present = True)
         context['t_volume'] = TableVolume.for_user(self.request.user)
         context['users'] = [ u.profile._repr for u in User.objects.all().exclude(id = self.request.user.id) ]
         context['t_users'] = TableUsers(User.objects.all().exclude(id = self.request.user.id), marker_column='Teacher')

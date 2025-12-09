@@ -84,7 +84,7 @@ def kill_idle():
     url_api = CONTAINER_SETTINGS['proxy']['url']
     url_path = CONTAINER_SETTINGS['proxy']['check_container']
     url = os.path.join(url_api, url_path)
-    for c in Container.objects.filter(state__in = [Container.State.RUNNING, Container.State.NEED_RESTART], image__imagetype = Image.TP_PROJECT):
+    for c in Container.objects.filter(state__in = [Container.State.RUNNING, Container.State.NEED_RESTART], image__imagetype = Image.ImageType.PROJECT):
         try:
             resp = requests.get(url = url.format(container = c))
             last_activity = resp.json()['last_activity']

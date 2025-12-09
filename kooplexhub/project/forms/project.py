@@ -45,7 +45,7 @@ class FormProject(forms.ModelForm):
     )
     preferred_image = forms.ModelChoiceField(
         label = _('Image'),
-        queryset = Image.objects.filter(imagetype = Image.TP_PROJECT, present = True), 
+        queryset = Image.objects.filter(imagetype = Image.ImageType.PROJECT, present = True), 
         required = False, empty_label = 'Select image...',
         widget = forms.Select(attrs = tooltip_attrs({ 'title': _('Select an image if you prefer an environment to be created.') })),
     )

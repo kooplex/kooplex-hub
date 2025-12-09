@@ -31,7 +31,7 @@ class FormCourse(forms.ModelForm):
     )
     image = forms.ModelChoiceField(
         label = _('Preferred image'),
-        queryset = Image.objects.filter(imagetype = Image.TP_PROJECT, present = True), 
+        queryset = Image.objects.filter(imagetype = Image.ImageType.PROJECT, present = True), 
         required = True, empty_label = 'Select image...',
         widget = forms.Select(attrs = tooltip_attrs({ 'title': _('Select an image you recommend your students the most to work with during the semester in the given course.') })),
     )

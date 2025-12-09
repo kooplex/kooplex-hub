@@ -49,7 +49,7 @@ class FormReport(forms.ModelForm):
     )
     image = forms.ModelChoiceField(
         label = _('Image'),
-        queryset = Image.objects.exclude(imagetype = Image.TP_PROJECT).filter(present = True),
+        queryset = Image.objects.exclude(imagetype = Image.ImageType.PROJECT).filter(present = True),
         required = False, empty_label = 'Select image...',
         widget = forms.Select(attrs = tooltip_attrs({ 'title': _('Select an image if you prefer an environment to be created.') })),
     )

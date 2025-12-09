@@ -33,7 +33,7 @@ def version(request):
 @require_http_methods(["GET"])
 def images(request):
     return JsonResponse({ 
-        'images': [ i.name for i in Image.objects.filter(imagetype = Image.TP_PROJECT, present = True) ],
+        'images': [ i.name for i in Image.objects.filter(imagetype = Image.ImageType.PROJECT, present = True) ],
     })
 
 @login_required
@@ -179,8 +179,8 @@ def install_image(request):
                 if modify:
                     instance.name = image_name
                     instance.description=image.get('description', '')
-                        # Make sure that imagetype is set to Image.TP_?
-                    instance.imagetype=image.get('imagetype', Image.TP_PROJECT),
+                        # Make sure that imagetype is set to Image.ImageType.?
+                    instance.imagetype=image.get('imagetype', Image.ImageType.PROJECT),
                     instance.present=image.get('present', True)
                     instance.dockerfile=image.get('dockerfile', '')
                     instance.command=image.get('command', '/entrypoint.sh')
@@ -193,8 +193,8 @@ def install_image(request):
                 instance = Image.objects.create(
                     name=image_name,
                     description=image.get('description', ''),
-                    # Make sure that imagetype is set to Image.TP_?
-                    imagetype=image.get('imagetype', Image.TP_PROJECT),
+                    # Make sure that imagetype is set to Image.ImageType.?
+                    imagetype=image.get('imagetype', Image.ImageType.PROJECT),
                     present=image.get('present', True),
                     dockerfile=image.get('dockerfile', ''),
                     command=image.get('command', '/entrypoint.sh'),

@@ -55,12 +55,12 @@ class ContainerListView(LoginRequiredMixin, generic.ListView):
         context['t_course'] = TableCourse.from_user(self.request.user)
         context['t_volume'] = TableVolume.for_user(self.request.user)
         context['resource_form']=FormContainer(initial={'user': self.request.user})
-        context['images'] = Image.objects.filter(imagetype = Image.TP_PROJECT, present = True)
+        context['images'] = Image.objects.filter(imagetype = Image.ImageType.PROJECT, present = True)
         return context
 
     def get_queryset(self):
         user = self.request.user
-        containers = Container.objects.filter(user = user).order_by('name')
+        containers = Container.objects.filter(user = user)
         return containers
 
 
