@@ -24,7 +24,7 @@ def dir_reportcandidate(project):
     # search_dirs = []
     # for rt in rts:
     #   list_of_extensions.extend(rts.list_of_extensions)
-    list_of_extensions = ["py", "ipynb", "R", "html"]   
+    list_of_extensions = ["py", "ipynb", "R", "html", "sh"]   
     #   search_dirs.extend(rts.search_dirs)
     search_dirs = ["","_build","_build/html/"] 
     dir_reportprepare = path_report_prepare(project)

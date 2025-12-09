@@ -18,7 +18,7 @@ Study public reports
 {% block content %}
 <div id="listPane" class="d-flex flex-wrap justify-content-center gap-3">
 {# render the report cards #}
-    {% for report in reports %}
+    {% for report in reports reversed %}
       <div class="card-container" id="card-container-{{ report.id }}">
         {% include 'report/card.html' %}
       </div>
