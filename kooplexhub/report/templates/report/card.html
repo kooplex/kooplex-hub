@@ -24,21 +24,9 @@
 </style>
 
 {# FIXME: resize card #}
-<div class="card mb-3 mx-1 border-0 bg-transparent" style="max-width: 560px;">
-  {# hidden fields are helpers to shide/show cards accordign to filtering criteria #}
-  {% comment %}
-  <input type="hidden" id="report-search-{{report.id}}" value="{{ report.search }}"/>
-  {% endcomment %}
-  <input type="hidden" id="report-match-{{ report.id }}" value="true">
-  <input type="hidden" id="report-isshown-{{ report.id }}" value="true">
-  {% if user == report.creator %}
-    <input type="hidden" id="report-iscreator-{{ report.id }}" value="true">
-  {% else %}
-    <input type="hidden" id="report-iscreator-{{ report.id }}" value="false">
-  {%endif %}
+<div class="card mb-3 mx-1 border-0 bg-transparent" style="max-width: 560px;" data-url="{% url 'report:open' report.id %}">
   <div class="row g-0">
-    <div class="col-md-11" id="click-report-{{ report.id }}">
-      <input type="hidden" id="url-reportopen-{{ report.id }}" value="{% url 'report:open' report.id %}">
+    <div class="col-md-11">
       <div class="card-body p-0 border-0">
         <div class="card text-dark bg-secondary m-0 border-2 everything border-warning">
           <div class="card-header text-light fw-bold">{{ report.name }}</div>
@@ -110,4 +98,3 @@
     </div>
   </div>
 </div>
-

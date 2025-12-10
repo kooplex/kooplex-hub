@@ -38,6 +38,15 @@ Study public reports
 $("[id=add]").click(function() {
     location.replace("{{url_new_report}}");
 });
+$("div[data-url]").on('click', function() {
+  const targetUrl = $(this).data('url');
+  var win = window.open(targetUrl, '_blank');
+  if (win) {
+    win.focus();
+  } else {
+    alert('Please allow popups for this website');
+  }
+});
 </script>
 {% endblock %}
 
