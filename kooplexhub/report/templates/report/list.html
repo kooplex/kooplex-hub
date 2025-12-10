@@ -47,6 +47,9 @@ $("div[data-url]").on('click', function() {
     alert('Please allow popups for this website');
   }
 });
+$(".btn-configure").on("click", function (e) {
+    e.stopPropagation();   // prevent card click
+});
 </script>
 {% endblock %}
 

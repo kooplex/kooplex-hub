@@ -1,6 +1,11 @@
 {% load report_buttons %}
 {% load container_buttons %}
 
+
+
+
+
+
 <style>
 @media all and (max-width: 728.01px) {
   .imagesize{
@@ -13,88 +18,69 @@
   display: flex;
 }
 
-.border-2 .border-warning{
-  display:none;
+.card:hover {
+  cursor: pointer;
 }
 
-.bg-transparent:hover .border-2 .border-warning {
-  opacity: 1;
+.btn-configure {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background-color: #f0ad4e;  /* Bootstrap warning yellow-ish */
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+}
+
+.btn-configure:hover {
+  background-color: #ec9a27;
+  color: #fff;
 }
 
 </style>
 
+
+
+
 {# FIXME: resize card #}
-<div class="card mb-3 mx-1 border-0 bg-transparent" style="max-width: 560px;" data-url="{% url 'report:open' report.id %}">
-  <div class="row g-0">
-    <div class="col-md-11">
-      <div class="card-body p-0 border-0">
-        <div class="card text-dark bg-secondary m-0 border-2 everything border-warning">
-          <div class="card-header text-light fw-bold">{{ report.name }}</div>
-          <div class="card-footer bg-light">
+<div class="card mb-3 mx-1" style="max-width: 560px;" data-url="{% url 'report:open' report.id %}">
+  <!-- Header -->
+  <div class="card-header bg-secondary d-flex align-items-center">
+    <span class="fw-semibold text-light">
+      {{ report.name }}
+    </span>
 
-            <div class="card w-100 border-0" style="height: 200px">
-              <div class="goflex">
-                <div class="col-md-5">
-                  {% if report.thumbnail %}
-                    <img src="{{report.thumbnail.img_src}}" class="img-fluid imagesize rounded" alt="{{report.thumbnail.name}}"> {# FIXME: truncate if too large an image #}
-		  {% else %}
-                    <img src="/static/noimageavailable.png" class="img-fluid rounded imagesize" alt="no thumbnail">
-		  {% endif %}
-                </div>
-                <div class="col-md-7">
-                  <div class="card-body">
-		    <p class="card-text">{{ report.description|truncatechars:45 }}</p>
-		    <p class="card-text"><small class="text-muted"><strong>Creator:</strong> {{ report.creator.profile.name }}</small></p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </div>
-    </div>
-    {# the sideways button bar is only visible if the mouse is over the card #}
-    <div class="col-md-1 ps-1 pt-1 d-none" id="buttonbar-{{ report.id }}">
-      {% button_side_modal_open report class_extra="mb-1" %}
-      <button data-bs-toggle="modal"  data-bs-target="#reportInfoModal-{{ report.id }}" role="button" class="btn btn-warning btn-sm mb-1" ><span class="bi bi-info-square" aria-hidden="true" data-toggle="tooltip" title="Click for more info" data-placement="top" ></span></button>
-      {% button_report_conf report user class_extra="mb-1" %}
-      {% button_report_delete report user %}
-    </div>
+    {# float-right configure button #}
+    <a href="{% url 'report:configure' report.id %}"
+       class="btn btn-configure ms-auto d-flex align-items-center justify-content-center">
+      <i class="bi bi-gear-fill"></i>
+    </a>
   </div>
-</div>
 
-
-<div class="modal fade" id="reportInfoModal-{{ report.id }}" tabindex="-1" aria-labelledby="reportInfoModal-{{ report.id }}" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">{{ report.name }}</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        {% if report.thumbnail %}
-        {% image_report_open report %}
-	<img src="{{report.thumbnail.img_src}}" alt="{{report.thumbnail.name}}" class="img-fluid mt-2 mb-1">
-        {% else %}
-	<img class="mt-2 mb-1" src="/static/noimageavailable.png" alt="no thumbnail">
-        {% endif %}
-        {% if report.image %}
-        <span class="card-text mt-2 mb-2"><strong>Image:</strong>&nbsp;{#% container_image report.image %#}FIXME</span>
+  <!-- Body -->
+  <div class="card-body d-flex">
+    <!-- Logo -->
+    <div class="me-3">
+      {% if report.thumbnail %}
+        <img src="{{report.thumbnail.img_src}}" class="img-fluid imagesize rounded" alt="{{report.thumbnail.name}}">
       {% else %}
-        <span class="card-text mt-2 mb-2"><strong>Static html report</strong></span>
+        <img src="/static/noimageavailable.png" class="img-fluid rounded imagesize" alt="no thumbnail">
       {% endif %}
-        <p class="card-text mt-1"><strong>Project:</strong>&nbsp;{{ report.project }}</p>
-        <p class="card-text"><strong>Description:</strong>&nbsp;{{ report.description }}</p>
-          {% if report.creator == user %}
-      <p class="card-text"><strong>Source folder:</strong> {{ report.project.subpath }}/{{ report.folder }}</p>
-    {% else %}
-      <p class="card-text"><strong>Creator:</strong> {{ report.creator.profile.name}}</p>
-    {% endif %}
-      </div>
-      <div class="modal-footer">
-        {% button_report_modal_open report %}
-      </div>
+    </div>
+
+    <!-- Text content -->
+    <div class="d-flex flex-column flex-grow-1">
+      <p class="card-text small text-muted">
+        {{ report.description|truncatechars:45 }}
+      </p>
+
+      <!-- Creator pinned to bottom -->
+      <p class="card-text mt-auto mb-0">
+        <small class="text-muted">
+          <strong>Creator:</strong> {{ report.creator.profile.name }}
+        </small>
+      </p>
     </div>
   </div>
 </div>
+
