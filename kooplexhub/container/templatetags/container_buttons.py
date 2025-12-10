@@ -92,6 +92,9 @@ def indicator_state(container):
 
 @register.simple_tag
 def button_teleport(container=None, **kwargs):
+    image = getattr(container, 'image', None)
+    if image and image.imagetype != image.ImageType.PROJECT:
+        return ""
     return render_to_string("hub/buttons/toggle.html",  {
         "on": getattr(container, 'start_teleport', kwargs.get('value', False)), 
         "pk": getattr(container, 'pk', None), "model": "container",
@@ -101,6 +104,9 @@ def button_teleport(container=None, **kwargs):
 
 @register.simple_tag
 def button_seafile(container=None, **kwargs):
+    image = getattr(container, 'image', None)
+    if image and image.imagetype != image.ImageType.PROJECT:
+        return ""
     return render_to_string("hub/buttons/toggle.html", {
         "on": getattr(container, 'start_seafile', kwargs.get('value', False)), 
         "pk": getattr(container, 'pk', None), "model": "container", "model": "container",

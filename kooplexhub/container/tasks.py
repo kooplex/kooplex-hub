@@ -101,6 +101,12 @@ def kill_idle():
         except Exception as e:
             logger.error(f'Failed to check container {c.name} of {c.user.username} -- {e}')
 
+@db_periodic_task(crontab(minute="*/5"), queue='container')
+def delete_usage_metrics():
+    n=Container.objects.filter(state=Container.State.NOTPRESENT).exclude(cpuusage__isnull=True, memoryusage__isnull=True).update(cpuusage=None, memoryusage=None)
+    if n:
+        logger.warn(f"{n} stopped container's metric attributes are cleared")
+
 def prom_query(query):
     import requests
     BASE = "http://prometheus-k8s.monitoring:9090"  #FIXME put in conf
