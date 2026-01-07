@@ -346,7 +346,7 @@ def start(container):
         env_variables.append({ "name": "REPORT_FOLDER" , "value": REPORT_SETTINGS['mounts']['report']['mountpoint']})
 
         # report
-        if container.image.imagetype == Image.TP_REPORT:
+        if container.image.imagetype == Image.ImageType.REPORT:
             rcb = container.reportbindings.get(container=container)
 
             mCV.add(
@@ -429,6 +429,9 @@ def start(container):
                     "env": env_variables,
                     "resources": pod_resources,
                     }
+
+    if container.image.command:
+        main_container['command'] = ["/bin/bash", "-c", container.image.command]
         
     container_list.append(main_container)
 

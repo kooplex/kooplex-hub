@@ -54,16 +54,17 @@ class ContainerAdmin(admin.ModelAdmin):
     def start_container(self, request, queryset):
         for obj in queryset:
             obj.start()
+    start_container.short_description = "Start container"
 
     def stop_container(self, request, queryset):
         for obj in queryset:
             obj.stop()
-    start_container.short_description = "Start container"
+    stop_container.short_description = "Stop container"
 
     def restart_container(self, request, queryset):
         for obj in queryset:
             obj.stop()
-    start_container.short_description = "Restart container"
+    restart_container.short_description = "Restart container"
 
     actions = [start_container, restart_container, stop_container]
 
