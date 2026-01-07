@@ -46,8 +46,8 @@ def assignment_handout(userassignmentbinding):
     gid=userassignmentbinding.assignment.course.group_teachers.groupid
     grantaccess_group(gid, folder, readonly=True, recursive=True, follow=True)
     gid=userassignmentbinding.assignment.course.group_students.groupid
-    grantaccess_user(userassignmentbinding.user, folder, readonly=False, follow=True)
-    grantaccess_user(userassignmentbinding.user, folder, readonly=False, follow=False)
+    grantaccess_user(userassignmentbinding.user, folder, readonly=False, recursive=True, follow=False)
+    grantaccess_user(userassignmentbinding.user, folder, readonly=False, recursive=True, follow=True)
     userassignmentbinding.state=userassignmentbinding.ST_WORKINPROGRESS
     userassignmentbinding.save()
 
