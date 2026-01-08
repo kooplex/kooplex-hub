@@ -500,57 +500,173 @@ LOGGING = {
 }
 
 KOOPLEX = {
-    'fs_backend': 'nfs4',
-    'uid_lookup': 'ldap',
-    'mountpoint_hub': {
-        'home': '/mnt/home',
-        'garbage': '/mnt/garbage',
-        'scratch': None,
-
-        'project': '/mnt/projects',
-        
-        'report': '/mnt/reports',
-        'report_prepare': '/mnt/report_prepare',
-
-        # claim edu
-        'course': '/mnt/course',
-        'course_workdir': '/mnt/course_workdir',
-        'course_assignment': '/mnt/course_assignment',
+    'container': {
+        'kubernetes': {
+            'nodeSelector_k8s': { "pods": "true" },
+            'namespace': 'k8plex-pods',
+            #'imagePullPolicy': 'Never',
+            'imagePullPolicy': 'Always',
+            'resources': {
+                "max_cpu": 4,
+                "max_gpu": 0,
+                "max_memory": 28.0,
+                "max_idletime": 48,
+                "limit_cpu": 5,
+                "limit_gpu": 0,
+                "limit_memory": 28.0,
+            },
+            'jobs': {
+                'namespace': 'k8plex-jobs', 
+            },
+        },
+        'wss': {
+            'fetchlog': 'wss://%s/hub/ws/container/fetchlog/{user.id}/'%SERVERNAME,
+            'control': 'wss://%s/hub/ws/container/control/{user.id}/'%SERVERNAME,
+            'config': 'wss://%s/hub/ws/container/config/{user.id}/'%SERVERNAME,
+            'monitor_node': 'wss://%s/hub/ws/monitor/node/{user.id}/'%SERVERNAME,
+        },
+        'proxy': {
+            'url': f"http://proxy.{KUBERNETES_SERVICE_NAMESPACE}:8001/api",
+            'auth_token': '', #FIXME: os.getenv('HUBPROXY_PW'),
+            'check_container': 'routes/notebook/{container.label}',
+        },
     },
+
+    'project' : {
+        "mounts": {
+            "project": {
+                "claim": 'project',
+                "subpath": 'projects',
+                "folder": '{project.subpath}',
+                "mountpoint": '/v/projects/{project.subpath}',
+                "mountpoint_hub": '/mnt/projects',
+            },
+        },
+        "wss": {
+            'join': 'wss://%s/hub/ws/project/join/{user.id}/'%SERVERNAME,
+            'config': 'wss://%s/hub/ws/project/config/{user.id}/'%SERVERNAME,
+            'containers': 'wss://%s/hub/ws/project/container/{user.id}/'%SERVERNAME,
+            'users': 'wss://%s/hub/ws/project/userhandler/{user.id}/'%SERVERNAME,
+        },
+
+    },
+
+    'report' : {
+        "mounts": {
+            "prepare": {
+                "claim": 'project',
+                "subpath": 'report_prepare',
+                "folder": '{project.subpath}',
+                "mountpoint": '/v/report_prepare/{project.subpath}',
+                "mountpoint_hub": '/mnt/report_prepare',
+            },
+        },
+        "paths": {
+            'static': '/report/{report.id}/{report.indexfile}',
+            'proxied': '/notebook/report/{container.label}/',
+        },
+    },
+
+    'education': {
+        "mounts": {
+            "public": {
+                "claim": 'edu',
+                "subpath": '',
+                "folder": 'course/{course.folder}/public',
+                "mountpoint": '/v/courses/{course.folder}.public',
+                "mountpoint_hub": '/mnt/courses',
+            },
+            "assignment_prepare": {
+                "claim": 'edu',
+                "subpath": '',
+                "folder": 'course/{course.folder}/assignment_prepare',
+                "mountpoint": '/v/courses/{course.folder}.assignment_prepare',
+                "mountpoint_hub": '/mnt/courses',
+            },
+            "assignment_snapshot": {
+                "claim": 'edu',
+                "subpath": '',
+                "folder": 'course/{course.folder}/assignment_snapshot',
+                "mountpoint": '/course/{course.folder}.assignment_snapshot',
+                "mountpoint_hub": '/mnt/courses',
+            },
+            "workdir": {
+                "claim": 'edu',
+                "subpath": '',
+                "folder_top": 'course_workdir/{course.folder}',
+                "folder": 'course_workdir/{course.folder}/{user.username}',
+                "mountpoint": '/v/courses/{course.folder}',
+                "mountpoint_hub": '/mnt/courses',
+            },
+            "assignment": {
+                "claim": 'edu',
+                "subpath": '',
+                "folder_top": 'course_assignment/{course.folder}/workdir',
+                "folder": 'course_assignment/{course.folder}/workdir/{user.username}',
+                "mountpoint": '/v/courses/{course.folder}.assignments',
+                "mountpoint_hub": '/mnt/courses',
+            },
+            "assignment_correct": {
+                "claim": 'edu',
+                "subpath": '',
+                "folder_top": 'course_assignment/{course.folder}/correctdir',
+                "folder": 'course_assignment/{course.folder}/correctdir/{user.username}',
+                "mountpoint": '/v/courses/{course.folder}.correct',
+                "mountpoint_hub": '/mnt/courses',
+            },
+        },
+        "wss": {
+            'containers': 'wss://%s/hub/ws/education/container/{user.id}/'%SERVERNAME,
+            'handin': 'wss://%s/hub/ws/education/handin/{user.id}/'%SERVERNAME,
+            'config': 'wss://%s/hub/ws/course/config/{user.id}/'%SERVERNAME,
+            'users': 'wss://%s/hub/ws/course/userhandler/{user.id}/'%SERVERNAME,
+            'assignments': 'wss://%s/hub/ws/assignment/{user.id}/'%SERVERNAME,
+            'score': 'wss://%s/hub/ws/score/{user.id}/'%SERVERNAME,
+        },
+    },
+
+    "volume": {
+        "wss": {
+            'config': 'wss://%s/hub/ws/volume/config/{user.id}/'%SERVERNAME,
+        },
+        "mounts": {
+            "attachment": {
+                    "claim": 'attachments',
+                    "subpath": '',
+                    "folder": '{volume.folder}',
+                    "mountpoint": '/v/attachments/{volume.folder}',
+                    "mountpoint_hub": '/mnt/attachments',
+                },
+            "volume": {
+                    "mountpoint": '/v/volumes/{volume.folder}',
+                },
+            },
+        },
+
+    'canvas': {
+        "wss": {
+            'courses': 'wss://%s/hub/ws/canvas/fetchcourses/{user.id}/'%SERVERNAME,
+            'assignments': 'wss://%s/hub/ws/canvas/fetchcourseassignments/'%SERVERNAME,
+        },
+        'filter': lambda x: '2024/25' in x['name'],
+    },
+
     'hub': {
-        'adminemail': 'kooplex@elte.hu',
-        'smtpserver': 'mail.elte.hu',
-        'wss_token_config': 'wss://%s/hub/ws/tokens/{userid}/'%SERVERNAME,
-        'wss_resources': 'wss://%s/hub/ws/resources/'%SERVERNAME,
-        'wss_container_fetchlog': 'wss://%s/hub/ws/container/fetchlog/{userid}/'%SERVERNAME,
-        'wss_container_control': 'wss://%s/hub/ws/container/control/{userid}/'%SERVERNAME,
-        'wss_container_config': 'wss://%s/hub/ws/container/config/{userid}/'%SERVERNAME,
-        'wss_monitor_node': 'wss://%s/hub/ws/monitor/node/{userid}/'%SERVERNAME,
-
-        'wss_project_config': 'wss://%s/hub/ws/project/config/{userid}/'%SERVERNAME,
-        'wss_project_joinable': 'wss://%s/hub/ws/project/fetchjoinable/{userid}/'%SERVERNAME,
-        'wss_project_join': 'wss://%s/hub/ws/project/join/{userid}/'%SERVERNAME,
-        'wss_project_container': 'wss://%s/hub/ws/project/container/{userid}/'%SERVERNAME,
-
-        'wss_course_container': 'wss://%s/hub/ws/education/container/{userid}/'%SERVERNAME,
-        'wss_course_handin': 'wss://%s/hub/ws/education/handin/{userid}/'%SERVERNAME,
-        'wss_course_config': 'wss://%s/hub/ws/course/config/{userid}/'%SERVERNAME,
-        'wss_assignment_config': 'wss://%s/hub/ws/assignment/{userid}/'%SERVERNAME,
-        'wss_assignment_score': 'wss://%s/hub/ws/score/{userid}/'%SERVERNAME,
-        #'wss_assignment_summary': 'wss://%s/hub/ws/assignment_summary/{userid}/'%SERVERNAME,
-
-        'wss_canvas': 'wss://%s/hub/ws/canvas/fetchcourses/{userid}/'%SERVERNAME,
-    },
-    'ldap': {
-        'host': '',
-        'base_dn': 'dc=',
-        'bind_dn': 'cn=admin,ou=',
-        'bind_password': '',
-        'userdn': 'uid={user.username},ou=users,dc=',
-        'usersearch': 'ou=users,dc=',
-        'manageuser': False,
-        'groupdn': 'cn={group.name},ou=groups,dc=',
-        'groupsearch': 'ou=groups,dc=',
+        'adminemail': '',
+        'smtpserver': '',
+        'wss_project': 'wss://%s/hub/ws/project/{userid}/'%SERVERNAME,
+        'wss_container': 'wss://%s/hub/ws/container_environment/{userid}/'%SERVERNAME,
+        'wss_monitor': 'wss://%s/hub/ws/node_monitor/'%SERVERNAME,
+        'ldap': {
+            'host': f"ldap.auth",
+            'base_dn': 'dc=',
+            'bind_dn': 'cn=admin',
+            'bind_password': '',
+            'userdn': 'uid={user.username},ou=users',
+            'usersearch': 'ou=users',
+            'managegroup': True,
+        'groupdn': 'cn={group.name},ou=groups',
+        'groupsearch': 'ou=groups',      
         'managegroup': True,
         'offset': {
             'project': 300000,
@@ -558,110 +674,43 @@ KOOPLEX = {
             'volume': 100000,
         },
     },
-    'proxy': {
-        'url_api': f"http://proxy.{KUBERNETES_SERVICE_NAMESPACE}:8001/api",
-        'auth_token': '',
-        'url_internal': 'http://{container.label}:{proxy.port}',
-        'notebook_path': 'notebook/{container.label}',
-        'url_notebook': os.path.join(FQDN,'notebook/{container.label}'),
-        'report_path': 'notebook/report/{container.label}',
-        'report_path_open': '/notebook/report/{container.label}/',
-        'static_report_path': '/report/{report.id}/{report.indexfile}',
-        'static_report_path_open': '/report/{report.id}/{report.indexfile}',
-        'check_container_path': 'routes/notebook/{container.label}',
+        'wss': {
+            'token': 'wss://%s/hub/ws/tokens/{user.id}/'%SERVERNAME,
+            'resources': 'wss://%s/hub/ws/resources/'%SERVERNAME,
+        },
+        "mounts": {
+            "home": {
+                "claim": 'home',
+                "subpath": '',
+                "folder": '{user.username}',
+                "mountpoint": '/v/{user.username}',
+                "mountpoint_hub": '/mnt/home',
+            },
+            "garbage": {
+                "claim": 'garbage',
+                "subpath": '',
+                "folder": '{user.username}',
+                "mountpoint": '/v/garbage',
+                "mountpoint_hub": '/mnt/garbage',
+            },
+            "scratch": {
+                "claim": 'scratch',
+                "subpath": '',
+                "folder": '{user.username}',
+                "mountpoint": '/v/scratch',
+                "mountpoint_hub": '/mnt/scratch',
+            },
+        },
     },
+
+    'fs_backend': 'nfs4',
+    'uid_lookup': 'ldap',
     'seafile': {
-        'url_api': "",
-        'admin' : '', #FIX_ME
+        'url_api': "https://seafile/api2",
+        'admin' : 'kooplex#example.com', #FIX_ME
         'admin_password' : '', #FIX_ME
         },
-    'kubernetes': {
-        'namespace': '',
-         'jobs': {'namespace': 'k8plex-test-jobs',
-                 'jobpy': '/etc/jobtool',
-                 'token_name': 'job_token' # This goes where the secrets go
-                 },
-                
-        # place passwords and secrets here
-        'secrets': {'mount_dir' :'/.secrets',
-                    'name' : 'secrets'},
-        
-        'nslcd': { 'mountPath_nslcd': '/etc/mnt' },
-        'initscripts': { 'mountPath_initscripts': '/.init_scripts' },
-        'kubeconfig_job': '/root/.kube/config', 
-        'imagePullPolicy': 'Always',
-        'resources': {
-            "requests": {
-              "cpu": 0.2,
-              "nvidia.com/gpu": 0,
-              "memory": 0.4
-            },
-            "limits": {
-              "cpu": 5,
-              "nvidia.com/gpu": 0,
-              "memory": 28
-            },
-            "maxrequests": {
-              "cpu": 4,
-              "nvidia.com/gpu": 0,
-              "memory": 28,
-              "idletime": 48,
-            },
-        },
-        'nodeSelector_k8s': { "kubernetes.io/hostname": "kubelet1-onco2" },
-        #'nodeSelector_k8s': { "kubernetes.io/hostname": "veo1" },
-        'userdata': {
-            'claim': 'userdata',
-            #USER
-            'claim-home': 'home',
-            'claim-garbage': 'garbage',
-            'subPath_home': '{user.username}',
-            'mountPath_home': '/v/{user.username}',
-            'subPath_garbage': '{user.username}',
-            'mountPath_garbage': '/v/garbage',
-            'claim-scratch': 'scratch',
-            'mountPath_scratch': '/v/scratch',
-            'subPath_scratch': '{user.username}',
-            #PROJECT
-            'claim-project': 'project',
-            'subPath_project': 'projects/{project.subpath}',
-            'mountPath_project': '/v/projects/{project.subpath}',
-            'subPath_report_prepare': 'report_prepare/{project.subpath}',
-            'mountPath_report_prepare': '/v/report_prepare/{project.subpath}',
-            #REPORT
-            'claim-report': 'report',
-            'subPath_report': '{report.id}',
-            'mountPath_report': '/v/reports/{report.project.subpath}-{report.folder}',
-            #ATTACHMENT
-            'claim-attachment': 'attachments',
-            'mountPath_attachment': '/v/attachments/{volume.folder}',
-            # VOLUME
-            'mountPath_volume': '/v/volumes/{volume.folder}',
-            # EDU
-            'claim-edu': 'edu',
-            'mountPath_course_workdir': '/v/courses/{course.folder}',
-            'subPath_course_workdir': 'course_workdir/{course.folder}/{user.username}',
-            'mountPath_course_public': '/v/courses/{course.folder}.public',
-            'subPath_course_public': 'course/{course.folder}/public',
-            'mountPath_course_assignment_prepare': '/v/courses/{course.folder}.assignment_prepare',
-            'subPath_course_assignment_prepare': 'course/{course.folder}/assignment_prepare',
-            'mountPath_course_assignment': '/v/courses/{course.folder}.assignments',
-            'subPath_course_assignment': 'course_assignment/{course.folder}/workdir/{user.username}',
-            'subPath_course_assignment_all': 'course_assignment/{course.folder}/workdir',
-            'mountPath_course_assignment_correct': '/v/courses/{course.folder}.correct',
-            'subPath_course_assignment_correct': 'course_assignment/{course.folder}/correctdir/{user.username}',
-            'subPath_course_assignment_correct_all': 'course_assignment/{course.folder}/correctdir',
-            # KUBE JOBS
-            'mountPath_kubejobsconfig': '/etc/kubejobsconfig',
-            'claim-jobtools': 'job-tools',
-            'jobtools_ro': False,
-        },
-        'cache': {
-            'claim': 'pvc-cache',
-            'subPath_reportprepare': 'report_prepare',
-            'mountPath_reportprepare': '/v/report_prepare',
-        },
-    },
+ 
     # Inside docker containers
     'environmental_variables': {
             'LANG' : 'en_US.UTF-8',
@@ -669,6 +718,9 @@ KOOPLEX = {
             'SERVERNAME': SERVERNAME,
             'NB_USER' : '{container.user.username}',
             'NB_TOKEN' : '{container.user.profile.token}',            
+            'REPORT_USER' : '{container.user.username}',
+            'REPORT_FOLDER' : '/srv/report',
+            'REPORT_FILE' : 'main.py',
             # FIXME could be cleaner
             # These needs to be the same as in proxy
             'NB_URL' : 'notebook/{container.label}', # same es KOOPLEX['proxy']['url_notebook']
@@ -676,7 +728,9 @@ KOOPLEX = {
             'REPORT_URL' : 'notebook/report/{container.label}/', # same es KOOPLEX['proxy']['report_path']
             'REPORT_PORT' : '9000', # same es proxy.port,
             'NS_JOBS': f'{KUBERNETES_SERVICE_NAMESPACE}-jobs', # same as kubernetes.jobsnamespace
-            'POD_NAMESPACE': KUBERNETES_SERVICE_NAMESPACE + 'pods', 
+            'POD_NAMESPACE': KUBERNETES_SERVICE_NAMESPACE + '-pods', 
+            'TOROL_URL' : 'notebook/toro/{container.label}',
+            'TOROL_PORT' : '8080',
             },
     'environmental_variables_report': {
             'LANG' : 'en_US.UTF-8',
@@ -684,18 +738,114 @@ KOOPLEX = {
             'SERVERNAME': SERVERNAME,
             'NB_USER' : '{container.user.username}',
             'REPORT_USER' : '{container.user.username}',
-            'REPORT_FOLDER' : '/srv/report',
+            #'REPORT_FOLDER' : '/srv/report',
             'REPORT_FILE' : 'main.py', # ? ho to do this ? '{report.indexfile}',
             # FIXME could be cleaner
             # These needs to be the same as in proxy
             'REPORT_URL' : 'notebook/report/{container.label}/', # same es KOOPLEX['proxy']['report_path']
             'REPORT_PORT' : '9000', # same es proxy.port
+            'NS_JOBS': 'k8plex-jobs', # same as kubernetes.jobsnamespace
             },
-    'education': {
-        'new_course': 'widgets/fetch_canvascourses_modal.html',
-    },
-    'canvas': {
-        'old_filter': lambda x: '2024/25' in x['name'],
-    },
 }
+
+
+#DJANGO_HUEY = {
+#    'default': 'container', #this name must match with any of the queues defined below.
+#    'queues': {
+#        'hub': {#this name will be used in decorators below
+#            'huey_class': 'huey.RedisHuey',
+#            'name': 'hub_tasks',
+#            'consumer': {
+#                'workers': 2,
+#                'worker_type': 'thread',
+#            },
+#            'immediate': False, # ADDED coz error
+#            'connection': {
+#                'host': 'localhost',
+#                'port': 6379,
+#                'db': 0,
+#                'password': REDIS_PASSWORD,
+#                'connection_pool': None,  # Definitely you should use pooling!
+#                # ... tons of other options, see redis-py for details.
+#
+#                # huey-specific connection parameters.
+#                'read_timeout': 1,  # If not polling (blocking pop), use timeout.
+#                'url': None,  # Allow Redis config via a DSN.
+#            },
+#        },
+#        'container': {#this name will be used in decorators below
+#            'huey_class': 'huey.RedisHuey',
+#            'name': 'container_tasks',
+#            'consumer': {
+#                #'workers': 32,
+#                'workers': 2,
+#                'worker_type': 'thread',
+#            },
+#            'immediate': False, # ADDED coz error
+#            'connection': {
+#                'host': 'localhost',
+#                'port': 6379,
+#                'db': 0,
+#                'password': 'kortefa321',
+#                'connection_pool': None,  # Definitely you should use pooling!
+#                # ... tons of other options, see redis-py for details.
+#
+#                # huey-specific connection parameters.
+#                'read_timeout': 1,  # If not polling (blocking pop), use timeout.
+#                'url': None,  # Allow Redis config via a DSN.
+#            },
+#        },
+#        'project': {#this name will be used in decorators below
+#            'huey_class': 'huey.RedisHuey',
+#            'name': 'project_tasks',
+#            'consumer': {
+#                'workers': 8,
+#                'worker_type': 'thread',
+#            },
+#            'immediate': False, # ADDED coz error
+#            'connection': {
+#                'host': 'localhost',
+#                'port': 6379,
+#                'db': 0,
+#                'password': REDIS_PASSWORD,
+#                'connection_pool': None,  # Definitely you should use pooling!
+#                # ... tons of other options, see redis-py for details.
+#
+#                # huey-specific connection parameters.
+#                'read_timeout': 1,  # If not polling (blocking pop), use timeout.
+#                'url': None,  # Allow Redis config via a DSN.
+#            },
+#        },
+#        'course': {#this name will be used in decorators below
+#            'huey_class': 'huey.RedisHuey',
+#            'name': 'course_tasks',
+#            'consumer': {
+#                'workers': 32,
+#                'worker_type': 'thread',
+#            },
+#            'immediate': False, # ADDED coz error
+#            'connection': {
+#                'host': 'localhost',
+#                'port': 6379,
+#                'db': 0,
+#                'password': REDIS_PASSWORD,
+#                'connection_pool': None,  # Definitely you should use pooling!
+#                # ... tons of other options, see redis-py for details.
+#
+#                # huey-specific connection parameters.
+#                'read_timeout': 1,  # If not polling (blocking pop), use timeout.
+#                'url': None,  # Allow Redis config via a DSN.
+#            },
+#        },
+#        'emails': {#this name will be used in decorators below
+#            'huey_class': 'huey.RedisHuey',
+#            'name': 'emails_tasks',
+#            'consumer': {
+#                'workers': 5,
+#                'worker_type': 'thread',
+#            },
+#        },
+#    }
+#}
+############## end of addded
 
