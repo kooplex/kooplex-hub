@@ -1,4 +1,4 @@
-import json
+import json, os
 import logging
 import yaml
 
@@ -10,7 +10,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 
-from container.models import Image, Proxy, EnvVarMapping
+from container.models import Image, Proxy, EnvVarMapping, ProxyImageBinding, ServiceView
 from project.models import UserProjectBinding
 from volume.models import UserVolumeBinding, Volume
 from container.lib import Cluster
@@ -149,11 +149,13 @@ def delete(request, job_name):
 @csrf_exempt
 @login_required
 @require_http_methods(["POST"])
-def install_image(request):
+def install_image(request, image_path):
     modify=True
     notmodified=True
     # Example: Read and process YAML file in the request
     uploaded_file = request.FILES.get("file")
+    logger.debug(dir(request))
+    logger.debug(image_path)
     if not uploaded_file:
         return JsonResponse({"error1": "No file uploaded"})
 
@@ -172,35 +174,40 @@ def install_image(request):
         from hub.models import Thumbnail
 
         for items in yaml_data:
-            image = items['image']
-            image_name = image['name']
-            instance = Image.objects.filter(name=image_name).first()
-            if instance:
-                if modify:
-                    instance.name = image_name
-                    instance.description=image.get('description', '')
-                        # Make sure that imagetype is set to Image.ImageType.?
-                    instance.imagetype=image.get('imagetype', Image.ImageType.PROJECT),
-                    instance.present=image.get('present', True)
-                    instance.dockerfile=image.get('dockerfile', '')
-                    instance.command=image.get('command', '/entrypoint.sh')
-                    instance.thumbnail=Thumbnail.objects.get(name=image.get('thumbnail', 'jupyter')) #FIXME let it be default not jupyter!
-
-                else:
-                    logger.info(f"Image {image_name} is already installed")
-                    return JsonResponse({"message": f"Image {image_name} is already installed"})        
-            else:
-                instance = Image.objects.create(
-                    name=image_name,
-                    description=image.get('description', ''),
-                    # Make sure that imagetype is set to Image.ImageType.?
-                    imagetype=image.get('imagetype', Image.ImageType.PROJECT),
-                    present=image.get('present', True),
-                    dockerfile=image.get('dockerfile', ''),
-                    command=image.get('command', '/entrypoint.sh'),
-                    thumbnail=Thumbnail.objects.get(name=image.get('thumbnail', 'jupyter')) #FIXME let it be default not jupyter!
-                )
-                notmodified = False
+            image = items.get('image', {})
+            if image:
+              image_registry = image.pop('registry')
+              image_name = os.path.join(image_registry, image_path)
+              instance = Image.objects.filter(name=image_name).first()
+              if instance:
+                  if modify:
+                      instance.name = image_name
+                      instance.description=image.get('description', '')
+                          # Make sure that imagetype is set to Image.ImageType.?
+                      instance.imagetype=image.pop('imagetype', Image.ImageType.PROJECT),
+                      instance.present=image.pop('present', True)
+                      instance.dockerfile=image.pop('dockerfile', '')
+                      instance.command=image.pop('command', '/entrypoint.sh')
+                      instance.thumbnail=Thumbnail.objects.get(name=image.pop('thumbnail', 'jupyter')) #FIXME let it be default not jupyter!
+                      instance.description = "\n".join([f"{key}: {image[key]}" for key in image.keys()])
+                  else:
+                      logger.info(f"Image {image_name} is already installed")
+                      return JsonResponse({"message": f"Image {image_name} is already installed"})        
+              else:
+                  instance = Image.objects.create(
+                      name=image_name,
+                      description="",
+                      # Make sure that imagetype is set to Image.ImageType.?
+                      imagetype=image.pop('imagetype', Image.ImageType.PROJECT),
+                      present=image.pop('present', True),
+                      dockerfile=image.pop('dockerfile', ''),
+                      command=image.pop('command', '/entrypoint.sh'),
+                      thumbnail=Thumbnail.objects.get(name=image.pop('thumbnail', 'jupyter')) #FIXME let it be default not jupyter!
+                  )
+                  instance.description = "\n".join([f"{key}: {image[key]}" for key in image.keys()])
+                  instance.save()
+                  logger.info(f"Image {image_name} is installed")
+                  notmodified = False
 
             # Proxy settings
             proxy_settings = image.get('proxy', {})
@@ -208,35 +215,32 @@ def install_image(request):
             if proxy_settings:
               for psk in proxy_settings.keys():
                   ps = proxy_settings[psk]
+                  ps['name']=psk
                   try:
-                      po = Proxy.objects.get(name= psk, image= instance)
-                      if po.port != ps['port']:
-                          po.port = ps['port']
-                      if po.default != ps.get('default', True):
-                          po.default = ps.get('default', True)
-                      if po.token_as_argument != ps.get('token', False):
-                          po.token_as_argument = ps.get('token', False) 
-                      po.save()
-                  except:
-                      po = Proxy.objects.create(name = psk, 
-                                              port = ps['port'], 
-                                              image = instance,
-                                              default = ps.get('default', True), 
-                                              token_as_argument = ps.get('token_as_argument', False))
-            
-            # Envvar settings
-            envs = image.get('envs')
-            if envs:
-              logger.debug(f"Envvar settings for {image_name}: {envs}")
-              for envk in envs.keys():
-                  value = envs[envk]
-                  evm, modified = EnvVarMapping.objects.get_or_create(name=envk, image=instance,
-                                                                        valuemap = value)  
+                    po, ex = Proxy.objects.get_or_create(**ps)
+                    pib = ProxyImageBinding.objects.get_or_create(proxy=po, image=instance)
+                  except Exception as e:
+                      logger.error(f"Proxy settings error: {e}")
+                      
+            sv_settings = image.get('service_view', {})
+            logger.debug(f"Servce view settings for {image_name}: {sv_settings}")
+            if sv_settings:
+              for svk in sv_settings.keys():
+                  sv = sv_settings[svk]
+                  sv['name']= svk
+                  try:
+                    po = Proxy.objects.get(name=sv['proxy'])
+                    sv['proxy']=po
+                    icon = Thumbnail.objects.get(name=sv['icon'])
+                    sv['icon']=icon
+                    svo, ex = ServiceView.objects.get_or_create(**sv)
+                  except Exception as e:
+                      logger.error(f"Service View settings error: {e}")
 
-              if modified:
-                  return JsonResponse({"message": f"Image {image_name} is succesfully installed"})        
-              else:
-                  return JsonResponse({"message": f"Image {image_name} is modified"}) 
+            if notmodified:
+                return JsonResponse({"message": f"Image {image_name} is succesfully installed"})        
+            else:
+                return JsonResponse({"message": f"Image {image_name} is modified"}) 
             
     except Exception as e:
         logger.error(str(e))

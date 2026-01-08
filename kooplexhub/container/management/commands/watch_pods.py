@@ -1,5 +1,6 @@
 import logging
 import time
+from tqdm import tqdm
 from kubernetes import client, config, watch
 from django.db import connection, connections, close_old_connections
 from django.core.management.base import BaseCommand
@@ -141,7 +142,7 @@ class Command(BaseCommand):
 
         containers = { c.label: (c.id, c.state, c.state_backend) for c in Container.objects.all() }
         # first test for missing containers:
-        for label, (container_id, _, _) in containers.items():
+        for label, (container_id, _, _) in tqdm(containers.items()):
             try:
                 v1.read_namespaced_pod_status(namespace = namespace, name = label)
             except client.rest.ApiException as e:
