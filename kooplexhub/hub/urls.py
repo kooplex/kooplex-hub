@@ -8,7 +8,7 @@ from kooplexhub import settings
 
 urlpatterns = [
     path('oauth/', include('social_django.urls', namespace = 'social')),
-    path('logout/', ca_views.LogoutView.as_view(), name = 'logout'),
+    path('logout/', views.OAuthLogoutView.as_view(), name = 'logout'),
     path('', RedirectView.as_view(pattern_name=settings.LOGOUT_REDIRECT_URL, permanent=False), name = 'indexpage'),
     path('monitoring/', views.MonitoringView.as_view(), name = 'monitoring'),
     path('usertokens/', views.UserTokenView.as_view(), name = 'usertokens'),
