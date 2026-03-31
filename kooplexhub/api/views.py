@@ -33,6 +33,7 @@ def version(request):
 @require_http_methods(["GET"])
 def images(request):
     return JsonResponse({ 
+        'message': 'This is a list of images available to be used for job submission. You can use these images by specifying their names in the job description.',
         'images': [ i.name for i in Image.objects.filter(imagetype = Image.ImageType.PROJECT, present = True) ],
     })
 
@@ -202,7 +203,7 @@ def install_image(request, image_path):
                       present=image.pop('present', True),
                       dockerfile=image.pop('dockerfile', ''),
                       command=image.pop('command', '/entrypoint.sh'),
-                      thumbnail=Thumbnail.objects.get(name=image.pop('thumbnail', 'jupyter')) #FIXME let it be default not jupyter!
+                      thumbnail=Thumbnail.objects.get(name=image.pop('thumbnail', 'button_jupyter')) #FIXME let it be default not jupyter!
                   )
                   instance.description = "\n".join([f"{key}: {image[key]}" for key in image.keys()])
                   instance.save()
