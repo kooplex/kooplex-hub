@@ -66,10 +66,11 @@ class Command(BaseCommand):
         pod = event["object"]
         event_type = event["type"]
         pod_name = pod.metadata.name
+        container_label = pod.metadata.labels.get("container_label")
         node_name = pod.spec.node_name
         phase = pod.status.phase
         reason = pod.status.reason
-        print(f"\n🔹 Event: {event_type} | Pod: {pod_name} @ {node_name} | Phase: {phase} | Reason {reason}")
+        print(f"\n🔹 Event: {event_type} | Pod: {pod_name}({container_label}) @ {node_name} | Phase: {phase} | Reason {reason}")
 
         # Is the pod evicted?
         if reason == "Evicted":
@@ -102,10 +103,29 @@ class Command(BaseCommand):
             elif event_type == 'DELETED':
                 return "Not Found", None
 
+
+        #alternative last_condition = pod.status.conditions[0] if pod.status.conditions else None
+        #alternative 
+        #alternative if pod.status.container_statuses:
+        #alternative     for cs in pod.status.container_statuses:
+        #alternative         if cs.name != MAIN_CONTAINER:
+        #alternative             continue  # skip sidecars
+        #alternative 
+        #alternative         state = cs.state
+        #alternative         if state.waiting:
+        #alternative             return state.waiting.reason, node_name
+        #alternative         if state.running:
+        #alternative             return "Running", node_name
+        #alternative         if state.terminated:
+        #alternative             return state.terminated.reason, node_name
+        #alternative else:
+        #alternative     ...
+
+
         last_condition=pod.status.conditions[0]
         if pod.status.container_statuses:
             for container_status in pod.status.container_statuses:
-                if pod_name != container_status.name:
+                if container_label != container_status.name:
                     continue # skip sidecar checking
                 state = container_status.state
                 if state.waiting:
@@ -144,7 +164,12 @@ class Command(BaseCommand):
         # first test for missing containers:
         for label, (container_id, _, _) in tqdm(containers.items()):
             try:
-                v1.read_namespaced_pod_status(namespace = namespace, name = label)
+                pods = v1.list_namespaced_pod(
+                    namespace=namespace,
+                    label_selector=f"container_label={label}",
+                )
+                if not pods.items:
+                    raise client.rest.ApiException(reason='Not Found')
             except client.rest.ApiException as e:
                 if e.reason == 'Not Found':
                     container=Container.objects.get(id=container_id)
@@ -169,26 +194,33 @@ class Command(BaseCommand):
                     backend_state, node_manifest=self.parse_pod_event(event)
                     pod = event["object"]
                     pod_name = pod.metadata.name
-                    if not pod_name in containers:
-                        c_new=Container.objects.filter(label=pod_name).first()
+                    container_label = pod.metadata.labels.get("container_label") if pod.metadata and pod.metadata.labels else None
+                    # run_id = pod.metadata.labels.get("run_id")
+
+                    if not container_label:
+                        logger.warning(f"Pod {pod_name} has no container_label, skipping")
+                        continue
+
+                    if not container_label in containers:
+                        c_new=Container.objects.filter(label=container_label).first()
                         if c_new:
-                            containers[pod_name]=(c_new.id, c_new.state, c_new.state_backend)
-                            logger.info(f"A new container cached {pod_name}")
+                            containers[container_label]=(c_new.id, c_new.state, c_new.state_backend)
+                            logger.info(f"A new container cached {container_label}")
                         else:
-                            logger.warning(f"Most probably {pod_name} is a dangling container. Consider removing")
+                            logger.warning(f"Most probably {pod_name} ({container_label}) is a dangling container. Consider removing")
                             continue
-                    container_id, state_old, state_backend_old = containers.get(pod_name)
+                    container_id, state_old, state_backend_old = containers.get(container_label)
                     state_new=state_mapper.get(backend_state)
                     changed=(state_backend_old != backend_state) or (state_new and (state_old != state_new))
                     _chg="state change" if changed else "state remains"
-                    logger.debug (f"{pod_name} {_chg}: backend {state_backend_old} -> {backend_state} | model {state_old} -> {state_new}")
+                    logger.debug (f"{container_label}/{pod_name} {_chg}: backend {state_backend_old} -> {backend_state} | model {state_old} -> {state_new}")
                     if changed:
                         container=Container.objects.filter(id=container_id).first()
                         if not container:
-                            print(f"⚠️  container {pod_name} disappeared")
-                            if pod_name in containers:
-                                containers.pop(pod_name)
-                                logger.info(f"A container {pod_name} removed from cache")
+                            print(f"⚠️  container {container_label} disappeared")
+                            if container_label in containers:
+                                containers.pop(container_label)
+                                logger.info(f"A container {container_label} removed from cache")
                             continue
                         container.state_backend=backend_state
                         container.nodemanifest=node_manifest
@@ -196,7 +228,7 @@ class Command(BaseCommand):
                             container.state=state_new
                         container.state_lastcheck_at = timezone.now()
                         container.save()
-                        containers[pod_name]=(container.id, container.state, container.state_backend)
+                        containers[container_label]=(container.id, container.state, container.state_backend)
                         if state_new==container.State.NOTPRESENT and container.require_running:
                             container.start()
                         elif state_new==container.State.RUNNING:

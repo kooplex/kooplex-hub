@@ -5,6 +5,16 @@ from container.lib.cluster_resources_api import *
 
 from .conf import HUB_SETTINGS
 
+from django.contrib.auth.views import LogoutView
+from django.shortcuts import redirect
+from kooplexhub.settings import URL_AUTH
+
+class OAuthLogoutView(LogoutView):
+    def get(self, request, *args, **kwargs):
+        super().get(request, *args, **kwargs)
+        return redirect(
+            f"{URL_AUTH}/accounts/logout/"
+        )
 
 class MonitoringView(AccessMixin, generic.TemplateView):
     template_name = 'monitoring.html'

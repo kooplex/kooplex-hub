@@ -36,7 +36,24 @@ namespace = CONTAINER_SETTINGS['kubernetes']['namespace']
 def fetch_containerlog(container):
     v1 = client.CoreV1Api()
     try:
-        podlog = v1.read_namespaced_pod_log(namespace = namespace, name = container.label, container = container.label)
+        pods = v1.list_namespaced_pod(
+            namespace=namespace,
+            label_selector=f"container_label={container.label}",
+        )
+        if not pods.items:
+            return "There are no environment log messages yet to retrieve"
+
+        pod_name = sorted(
+            pods.items,
+            key=lambda p: p.metadata.creation_timestamp,
+            reverse=True,
+        )[0].metadata.name
+
+        podlog = v1.read_namespaced_pod_log(
+            namespace=namespace,
+            name=pod_name,
+            container=container.label,
+        )
         return podlog[-10000:]
     except Exception as e:
         logger.warning(e)
@@ -139,31 +156,34 @@ class MyClaimsAndVolumes:
 
 def start(container):
     logger.info(f"+ starting {container.label}")
+    labels = { 
+        "container_label": container.label,
+        "user": container.user.username,
+    }
     config.load_kube_config()
-    v1 = client.CoreV1Api()
+    v1 = client.CoreV1Api() # deprecate
 
-# from settings.py
-#    env_variables = [
-#        { "name": "LANG", "value": "en_US.UTF-8" },
-#        { "name": "SSH_AUTH_SOCK", "value": f"/tmp/{container.user.username}" }, #FIXME: move to db
-#        { "name": "SERVERNAME", "value": SERVERNAME},
-#    ]
+    core = client.CoreV1Api()
+    apps = client.AppsV1Api()
 
     pod_ports = []
     svc_ports = []
-    logger.info(f" PROXY {container.proxies}")
     for proxy in container.proxies:
         logger.info(f" {proxy}, {proxy.svc_port}")
         pod_ports.append({
             "containerPort": proxy.svc_port,
             "name": proxy.name, 
         })
-        svc_ports.append({
-            "port": proxy.svc_port,
-            "targetPort": proxy.svc_port,
-            "protocol": "TCP",
-            "name": proxy.name, 
-        })
+        # #[client.V1ServicePort(port=80, target_port=8080)],
+        svc_ports.append(
+            client.V1ServicePort(port=proxy.svc_port, target_port=proxy.svc_port)
+        )
+#                {
+#            "port": proxy.svc_port,
+#            "targetPort": proxy.svc_port,
+#            "protocol": "TCP",
+#            "name": proxy.name, 
+#        })
 
 
     mCV=MyClaimsAndVolumes()
@@ -435,44 +455,55 @@ def start(container):
         
     container_list.append(main_container)
 
-    pod_definition = {
-            "apiVersion": "v1",
-            "kind": "Pod",
-            "metadata": {
-                "name": container.label,
-                "namespace": namespace,
-                "labels": { "lbl": f"lbl-{container.label}",
-                    "user": container.user.username}
-            },
-            "spec": {
-                "containers": container_list,
-                "volumes": volumes,
-            }
-        }
-    pod_definition["spec"].update(container.nodeSelector)
+    # Create the pod spec
+    pod_spec = client.V1PodSpec(
+        containers=container_list,
+        volumes=volumes,
+    )
+    # pod_spec.__dict__.update(container.nodeSelector)
 
-    svc_definition = {
-            "apiVersion": "v1",
-            "kind": "Service",
-            "metadata": {
-                "name": container.label,
-            },
-            "spec": {
-                "selector": {
-                    "lbl": f"lbl-{container.label}",
-                    },
-                "ports": svc_ports,
-#                "type": "LoadBalancer",
-            }
-        }
+    template_labels = {
+        **labels,
+        "lbl": f"lbl-{container.label}",
+    }
+
+    # Create the deployment
+    deployment = client.V1Deployment(
+        metadata=client.V1ObjectMeta(
+            name=container.label,
+            namespace=namespace,
+            labels=template_labels
+        ),
+        spec=client.V1DeploymentSpec(
+            replicas=1,
+            selector=client.V1LabelSelector(match_labels=labels),
+            template=client.V1PodTemplateSpec(
+                metadata=client.V1ObjectMeta(
+                    labels=template_labels
+                ),
+                spec=pod_spec,
+            ),
+        ),
+    )
+
+    # logger.debug(f"DEPLOYMENT: {deployment}")
 
     try:
-        v1.create_namespaced_service(namespace = namespace, body = svc_definition)
+        service = client.V1Service(
+            metadata=client.V1ObjectMeta(name=container.label),
+            spec=client.V1ServiceSpec(
+                selector=labels,
+                ports=svc_ports,
+            ),
+        )
+        core.create_namespaced_service(namespace = namespace, body = service)
+        logger.info(f"registered service for {container.label}")
     except client.rest.ApiException as e:
         if json.loads(e.body)['code'] != 409: # already exists
             logger.critical(e)
     try:
-        v1.create_namespaced_pod(namespace = namespace, body = pod_definition)
+        apps.create_namespaced_deployment(namespace = namespace, body = deployment)
+        logger.info(f"created deployment for {container.label}")
     except client.rest.ApiException as e:
         if json.loads(e.body)['code'] != 409: # already exists
             logger.critical(e)
@@ -481,9 +512,17 @@ def start(container):
 def stop(container):
     logger.info(f"- stopping {container.label}")
     config.load_kube_config()
+    apps = client.AppsV1Api()
     v1 = client.CoreV1Api()
     try:
-        msg = v1.delete_namespaced_pod(namespace = namespace, name = container.label)
+        apps.delete_namespaced_deployment(
+            name=container.label,
+            namespace=namespace,
+            body=client.V1DeleteOptions(
+                propagation_policy="Foreground"
+            ),
+        )
+        logger.info(f"deleted deployment for {container.label}")
     except client.rest.ApiException as e:
         if json.loads(e.body)['code'] != 404: # doesnt exists
             logger.error(e)

@@ -1,5 +1,9 @@
 from django.utils.deprecation import MiddlewareMixin
 from hub.models import Profile
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class TokenAuthenticationMiddleware(MiddlewareMixin):
     def process_request(self, request):
@@ -12,6 +16,7 @@ class TokenAuthenticationMiddleware(MiddlewareMixin):
         username = request.COOKIES.get('api_user', None)
         try:
             request.user = Profile.objects.get(user__username = username, token = token).user
+            logger.debug(f"TokenAuthenticationMiddleware: token={token[:10]}, username={username}")
         except:
             pass
 
