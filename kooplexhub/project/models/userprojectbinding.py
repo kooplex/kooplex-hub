@@ -13,20 +13,42 @@ class UserProjectBinding(models.Model):
         ADMIN = 'administrator', 'Can modify project properties.'
         COLLABORATOR = 'member', 'Member of this project.'
 
-    user = models.ForeignKey(User, on_delete = models.CASCADE, related_name = 'projectbindings')
-    project = models.ForeignKey('project.Project', on_delete = models.CASCADE, related_name = 'userbindings')
-    is_hidden = models.BooleanField(default = False)
-    role = models.CharField(max_length = 16, choices = Role.choices)
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="projectbindings",
+    )
+
+    project = models.ForeignKey(
+        "project.Project",
+        on_delete=models.CASCADE,
+        related_name="userbindings",
+    )
+
+    is_hidden = models.BooleanField(default=False)
+
+    role = models.CharField(
+        max_length=16,
+        choices=Role.choices,
+    )
 
     class Meta:
-        unique_together = [['user', 'project']]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "project"],
+                name="unique_user_project_binding",
+            ),
+        ]
+
+        indexes = [
+            models.Index(fields=["user", "is_hidden"]),
+            models.Index(fields=["project", "role"]),
+        ]
+
 
     def __str__(self):
        return "%s-%s" % (self.project.name, self.user.username)
 
-    @property
-    def uniquename(self):#FIXME: deprecate
-        return "%s-%s" % (self.project.uniquename, self.user.username)
 
     @property
     def groupname(self):
@@ -40,9 +62,5 @@ class UserProjectBinding(models.Model):
                 .filter(project = self.project, container__user = self.user)
                 .select_related('container')
                 }
-
-    @property
-    def is_admin(self):
-        return self.role in [ self.Role.ADMIN, self.Role.CREATOR ]
 
 
