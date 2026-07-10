@@ -1,60 +1,47 @@
 import logging
 import time
 from tqdm import tqdm
+
 from kubernetes import client, config, watch
+
 from django.db import connection, connections, close_old_connections
 from django.core.management.base import BaseCommand
-from django.template.loader import render_to_string
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
+from django.utils import timezone
 
 from container.models import Container
-
-from django.utils import timezone
+from container.services.live import broadcast_container_runtime_changed
 from ...conf import CONTAINER_SETTINGS
 
-from container.templatetags.container_buttons import (
-        button_start, button_stop,
-        button_open, button_restart,
-        button_fetchlogs, indicator_state
-    )
 
 logger = logging.getLogger(__name__)
 
-def _replace_widgets(container):
-    return {
-        f'[data-action=start][data-pk={container.id}]': button_start.render(container),
-        f'[data-action=stop][data-pk={container.id}]': button_stop.render(container),
-        f'[name=opencombo][data-id={container.id}]': button_open.render(container),
-#        f'[name=fetch][data-id={container.id}]': button_fetchlogs.render(container),
-        f'[name=fetch][data-id={container.id}]': indicator_state.render(container),
-        f'[data-action=restart][data-pk={container.id}]': button_restart.render(container),
-        f"[data-pk={container.pk}][data-name=idletime]": render_to_string("container/resources/idle.html", {'container': container}),
-        f"[data-pk={container.pk}][data-name=cpu]": render_to_string("container/resources/cpu.html", {'container': container}),
-        f"[data-pk={container.pk}][data-name=memory]": render_to_string("container/resources/memory.html", {'container': container}),
-        f"[data-pk={container.pk}][data-name=node]": render_to_string('container/resources/node.html', {'container': container}),
-        }
 
 state_mapper = {
-    'Running': Container.State.RUNNING,
-    'Not Found': Container.State.NOTPRESENT,
-    'Killing': Container.State.STOPPING,
-    'Pending': Container.State.STARTING,
-#    'Scheduled': Container.State.STARTING,
-#    'Pulling': Container.State.STARTING,
-#    'BackOff': Container.State.STARTING,
-#    'Pulled': Container.State.STARTING,
-#    'Created': Container.State.STARTING,
-#    'SandboxChanged': Container.State.STARTING,
-#    'Started': Container.State.RUNNING,
-#    'Not present': Container.State.NOTPRESENT,
-#    'FailedCreatePodSandBox': Container.State.ERROR,
-#    'FailedMount': Container.State.ERROR,
-#    'FailedKillPod': Container.State.STOPPING,
-#
-#
-#    'FailedToUpdateEndpoint': Container.State.NOTPRESENT, #FIXME: is it complete? possible keys: 'CreateContainerConfigError', 'ImagePullBackOff'
+    "Running": Container.State.RUNNING,
+    "Not Found": Container.State.NOTPRESENT,
+    "Killing": Container.State.STOPPING,
+    "Pending": Container.State.STARTING,
+
+    "ContainerCreating": Container.State.STARTING,
+    "PodInitializing": Container.State.STARTING,
+    "Scheduled": Container.State.STARTING,
+    "Pulling": Container.State.STARTING,
+    "Pulled": Container.State.STARTING,
+    "Created": Container.State.STARTING,
+    "Started": Container.State.RUNNING,
+
+    "ErrImagePull": Container.State.ERROR,
+    "ImagePullBackOff": Container.State.ERROR,
+    "CreateContainerConfigError": Container.State.ERROR,
+    "CrashLoopBackOff": Container.State.ERROR,
+    "Failed": Container.State.ERROR,
+    "FailedMount": Container.State.ERROR,
+    "FailedCreatePodSandBox": Container.State.ERROR,
+
+    "Completed": Container.State.NOTPRESENT,
+    "Succeeded": Container.State.NOTPRESENT,
 }
+
 
 
 class Command(BaseCommand):
@@ -66,11 +53,10 @@ class Command(BaseCommand):
         pod = event["object"]
         event_type = event["type"]
         pod_name = pod.metadata.name
-        container_label = pod.metadata.labels.get("container_label")
         node_name = pod.spec.node_name
         phase = pod.status.phase
         reason = pod.status.reason
-        print(f"\n🔹 Event: {event_type} | Pod: {pod_name}({container_label}) @ {node_name} | Phase: {phase} | Reason {reason}")
+        print(f"\n🔹 Event: {event_type} | Pod: {pod_name} @ {node_name} | Phase: {phase} | Reason {reason}")
 
         # Is the pod evicted?
         if reason == "Evicted":
@@ -94,38 +80,19 @@ class Command(BaseCommand):
                 if state.terminated:
                     print(f"    ❌ Terminated: {state.terminated.reason}, Exit Code: {state.terminated.exit_code}")
 
-        if event_type == 'ADDED':
-            return phase, node_name
-
         if pod.metadata.deletion_timestamp:
             if event_type == 'MODIFIED':
                 return "Killing", node_name
             elif event_type == 'DELETED':
                 return "Not Found", None
 
-
-        #alternative last_condition = pod.status.conditions[0] if pod.status.conditions else None
-        #alternative 
-        #alternative if pod.status.container_statuses:
-        #alternative     for cs in pod.status.container_statuses:
-        #alternative         if cs.name != MAIN_CONTAINER:
-        #alternative             continue  # skip sidecars
-        #alternative 
-        #alternative         state = cs.state
-        #alternative         if state.waiting:
-        #alternative             return state.waiting.reason, node_name
-        #alternative         if state.running:
-        #alternative             return "Running", node_name
-        #alternative         if state.terminated:
-        #alternative             return state.terminated.reason, node_name
-        #alternative else:
-        #alternative     ...
-
-
-        last_condition=pod.status.conditions[0]
+        if pod.status.conditions:
+            last_condition = pod.status.conditions[0]
+        else:
+            last_condition = None
         if pod.status.container_statuses:
             for container_status in pod.status.container_statuses:
-                if container_label != container_status.name:
+                if pod_name != container_status.name:
                     continue # skip sidecar checking
                 state = container_status.state
                 if state.waiting:
@@ -135,23 +102,27 @@ class Command(BaseCommand):
                 if state.terminated:
                     return state.terminated.reason, node_name
         else:
-            return last_condition.type, node_name
+            if last_condition:
+                return last_condition.type, node_name
+        
+        return phase, node_name
 
 
-    def feedback(self,container, message):
-        channel_layer=get_channel_layer()
-        async_to_sync(channel_layer.group_send)(f"container-{container.user.id}", {
-              "type": "feedback",
-              "feedback": message,
-              "container_id": container.id,
-              "replace_widgets": _replace_widgets(container),
-          })
+    def feedback(self, container, message, backend_state=None):
+        logger.info(message)
+    
+        broadcast_container_runtime_changed(
+            container=container,
+            reason=message,
+            backend_state=backend_state,
+        )
+
 
 
     def handle(self, *args, **options):
         print("Starting Kubernetes Pod Watcher...")
         v1 = client.CoreV1Api()
-        namespace = CONTAINER_SETTINGS['kubernetes']['namespace']
+        namespace = CONTAINER_SETTINGS.kubernetes.namespace
 
         # Load Kubernetes configuration
         try:
@@ -160,28 +131,66 @@ class Command(BaseCommand):
             self.stderr.write(f"Error loading K8s config: {e}")
             return
 
-        containers = { c.label: (c.id, c.state, c.state_backend) for c in Container.objects.all() }
-        # first test for missing containers:
+        containers = {
+            c.label: (c.id, c.state, c.state_backend)
+            for c in Container.objects.all()
+        }
+        
         for label, (container_id, _, _) in tqdm(containers.items()):
             try:
-                pods = v1.list_namespaced_pod(
+                v1.read_namespaced_pod_status(
                     namespace=namespace,
-                    label_selector=f"container_label={label}",
+                    name=label,
                 )
-                if not pods.items:
-                    raise client.rest.ApiException(reason='Not Found')
+        
             except client.rest.ApiException as e:
-                if e.reason == 'Not Found':
-                    container=Container.objects.get(id=container_id)
-                    feedback=container.state!=container.State.NOTPRESENT
-                    container.state=container.State.NOTPRESENT
-                    container.state_backend=e.reason
+                if e.reason == "Not Found":
+                    container = Container.objects.get(id=container_id)
+                    changed = container.state != container.State.NOTPRESENT
+        
+                    container.state = container.State.NOTPRESENT
+                    container.state_backend = e.reason
                     container.state_lastcheck_at = timezone.now()
-                    container.save()
-                    if feedback:
-                        self.feedback(container, f'Container {container.name} is not present any more')
+                    container.runtime_node = None
+                    container.cpuusage = None
+                    container.memoryusage = None
+                    container.idle = None
+        
+                    container.save(
+                        update_fields=[
+                            "state",
+                            "state_backend",
+                            "state_lastcheck_at",
+                            "runtime_node",
+                            "cpuusage",
+                            "memoryusage",
+                            "idle",
+                        ]
+                    )
+        
+                    containers[label] = (
+                        container.id,
+                        container.state,
+                        container.state_backend,
+                    )
+        
+                    if changed:
+                        self.feedback(
+                            container,
+                            f"Container {container.name} is not present any more.",
+                            backend_state=e.reason,
+                        )
+        
+                    if container.require_running:
+                        container.start()
+                        self.feedback(
+                            container,
+                            f"Container {container.name} was requested to restart because it is required to run.",
+                            backend_state=e.reason,
+                        )
+        
                 else:
-                    logger.error(f'Unhandled error pod label: {label} -- {e}')
+                    logger.error(f"Unhandled error pod label: {label} -- {e}")
 
         w = watch.Watch()
 
@@ -189,51 +198,123 @@ class Command(BaseCommand):
             try:
                 print("🔍 Watching for pod events...")
                 for event in w.stream(v1.list_namespaced_pod, namespace=namespace):
-                    close_old_connections()  # Close any stale DB connections
+                    close_old_connections()
                     connection.ensure_connection()
-                    backend_state, node_manifest=self.parse_pod_event(event)
+                
+                    backend_state, node_name = self.parse_pod_event(event)
+                
                     pod = event["object"]
                     pod_name = pod.metadata.name
-                    container_label = pod.metadata.labels.get("container_label") if pod.metadata and pod.metadata.labels else None
-                    # run_id = pod.metadata.labels.get("run_id")
-
-                    if not container_label:
-                        logger.warning(f"Pod {pod_name} has no container_label, skipping")
-                        continue
-
-                    if not container_label in containers:
-                        c_new=Container.objects.filter(label=container_label).first()
+                
+                    if pod_name not in containers:
+                        c_new = Container.objects.filter(label=pod_name).first()
+                
                         if c_new:
-                            containers[container_label]=(c_new.id, c_new.state, c_new.state_backend)
-                            logger.info(f"A new container cached {container_label}")
+                            containers[pod_name] = (
+                                c_new.id,
+                                c_new.state,
+                                c_new.state_backend,
+                            )
+                            logger.info(f"A new container cached {pod_name}")
                         else:
-                            logger.warning(f"Most probably {pod_name} ({container_label}) is a dangling container. Consider removing")
+                            logger.warning(
+                                f"Most probably {pod_name} is a dangling container. Consider removing"
+                            )
                             continue
-                    container_id, state_old, state_backend_old = containers.get(container_label)
-                    state_new=state_mapper.get(backend_state)
-                    changed=(state_backend_old != backend_state) or (state_new and (state_old != state_new))
-                    _chg="state change" if changed else "state remains"
-                    logger.debug (f"{container_label}/{pod_name} {_chg}: backend {state_backend_old} -> {backend_state} | model {state_old} -> {state_new}")
-                    if changed:
-                        container=Container.objects.filter(id=container_id).first()
-                        if not container:
-                            print(f"⚠️  container {container_label} disappeared")
-                            if container_label in containers:
-                                containers.pop(container_label)
-                                logger.info(f"A container {container_label} removed from cache")
-                            continue
-                        container.state_backend=backend_state
-                        container.nodemanifest=node_manifest
-                        if state_new:
-                            container.state=state_new
-                        container.state_lastcheck_at = timezone.now()
-                        container.save()
-                        containers[container_label]=(container.id, container.state, container.state_backend)
-                        if state_new==container.State.NOTPRESENT and container.require_running:
-                            container.start()
-                        elif state_new==container.State.RUNNING:
-                            container.addroutes()
-                        self.feedback(container, f'Container {container.name} changed its state: {backend_state}({state_new}).')
+                
+                    container_id, state_old, state_backend_old = containers.get(pod_name)
+                
+                    state_new = state_mapper.get(backend_state)
+                
+                    changed = (
+                        state_backend_old != backend_state
+                        or (
+                            state_new
+                            and state_old != state_new
+                        )
+                    )
+                
+                    change_label = "state change" if changed else "state remains"
+                
+                    logger.debug(
+                        f"{pod_name} {change_label}: "
+                        f"backend {state_backend_old} -> {backend_state} | "
+                        f"model {state_old} -> {state_new}"
+                    )
+                
+                    if not changed:
+                        continue
+                
+                    container = (
+                        Container.objects
+                        .filter(id=container_id)
+                        .select_related("user")
+                        .first()
+                    )
+                
+                    if not container:
+                        print(f"⚠️  container {pod_name} disappeared")
+                
+                        if pod_name in containers:
+                            containers.pop(pod_name)
+                            logger.info(f"A container {pod_name} removed from cache")
+                
+                        continue
+                
+                    container.state_backend = backend_state
+                    container.runtime_node = node_name
+                    container.state_lastcheck_at = timezone.now()
+                
+                    update_fields = [
+                        "state_backend",
+                        "runtime_node",
+                        "state_lastcheck_at",
+                    ]
+                
+                    if state_new:
+                        container.state = state_new
+                        update_fields.append("state")
+                
+                    if state_new == Container.State.RUNNING:
+                        if not container.launched_at:
+                            container.launched_at = timezone.now()
+                            update_fields.append("launched_at")
+                
+                    if state_new == Container.State.NOTPRESENT:
+                        container.cpuusage = None
+                        container.memoryusage = None
+                        container.idle = None
+                        container.runtime_node= None
+                
+                        update_fields.extend(
+                            [
+                                "cpuusage",
+                                "memoryusage",
+                                "idle",
+                                "runtime_node",
+                            ]
+                        )
+                
+                    container.save(update_fields=list(dict.fromkeys(update_fields)))
+                
+                    containers[pod_name] = (
+                        container.id,
+                        container.state,
+                        container.state_backend,
+                    )
+                
+                    if state_new == Container.State.NOTPRESENT and container.require_running:
+                        container.start()
+                
+                    elif state_new == Container.State.RUNNING:
+                        container.addroutes()
+                
+                    self.feedback(
+                        container,
+                        f"Container {container.name} changed its state: {backend_state} ({state_new}).",
+                        backend_state=backend_state,
+                    )
+
             except Exception as e:
                 print(f"⚠️ Error in watcher: {e}")
                 connections.close_all()

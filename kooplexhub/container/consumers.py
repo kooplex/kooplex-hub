@@ -13,7 +13,8 @@ from project.models import Project, ProjectContainerBinding
 from education.models import Course, CourseContainerBinding
 from volume.models import Volume, VolumeContainerBinding
 
-from container.forms import FormContainer
+from channels.generic.websocket import AsyncJsonWebsocketConsumer
+
 from .lib import Cluster
 
 from .tasks import *
@@ -71,16 +72,16 @@ def render_fragment(key, **kw):
             'value': kw.get('value'),
         }
     error=kw.get('errors')
-    if key == "name":
-        from .templatetags.container_tags import render_name
-        if error:
-            ctx.update({
-                'error': ', '.join(error['name']),
-                'original_value': kw.get('original_value'),
-            })
-        html=render_name(**ctx)
-        ref=f"[data-name=name][data-pk={pk}][data-model=container]"
-        return ref, html
+#DEPRECATED    if key == "name":
+#DEPRECATED        from .templatetags.container_tags import render_name
+#DEPRECATED        if error:
+#DEPRECATED            ctx.update({
+#DEPRECATED                'error': ', '.join(error['name']),
+#DEPRECATED                'original_value': kw.get('original_value'),
+#DEPRECATED            })
+#DEPRECATED        html=render_name(**ctx)
+#DEPRECATED        ref=f"[data-name=name][data-pk={pk}][data-model=container]"
+#DEPRECATED        return ref, html
     if key == "image":
         from .templatetags.container_buttons import button_image
         html=button_image(obj, 'container', 'image', **ctx)
@@ -234,86 +235,65 @@ class ContainerControlConsumer(AsyncSkeleton):
 
 
 
-class ContainerConfigConsumer(CSyncSkeleton):
-    def receive(self, text_data):
-        parsed = json.loads(text_data)
-        logger.debug(parsed)
-        request = parsed.get('request')
-        if request == "create-container":
-            container=Container(name=parsed['name'], user_id=self.get_userid(), image_id=parsed['image'])
-            container.save()
-            self.send(text_data=json.dumps({
-                'feedback': f"New environment {container.name} is created",
-                'reload_page': True,
-            }))
-            attlist = [
-                'projects', 'courses', 'volumes', 
-                'node', 'cpurequest', 'gpurequest', 'memoryrequest', 'idletime', 
-                'start_seafile', 'start_teleport',
-            ]
-            changes = { k: parsed[k] for k in attlist if k in parsed }
-            logger.critical(changes)#FIXME
-        elif request =='configure-container':
-            pk=parsed.get('pk')
-            changes=parsed.get('changes')
-            cid=int(pk)
-            container=self.get_container(cid)
-        elif request =='update-widget':
-            field=parsed.get('field')
-            value=parsed.get('value')
-            errors=None
-            if field in ['projects', 'courses', 'volumes']:
-                pass
-            else:
-                field_obj = Container._meta.get_field(field)
-                if isinstance(field_obj, models.ForeignKey):
-                    related_model = field_obj.remote_field.model
-                    typed_value = field_obj.target_field.to_python(value)
-                    lookup_field = field_obj.target_field.name
-                    try:
-                        instance = related_model._default_manager.get(**{lookup_field: typed_value})
-                    except ObjectDoesNotExist:
-                        instance = None
-                    value=instance
-                else:
-                    try:
-                        field_obj.clean(value, model_instance=None)
-                    except ValidationError as e:
-                        errors={ field: e.messages}
-            replacement = dict([
-                render_fragment(f, value=value, errors=errors)
-                for f in FRAG_BY_FIELD.get(field, {field})
-            ])
-            self.send(text_data=json.dumps({'replace_widgets': replacement}))
+class ContainerLiveConsumer(AsyncJsonWebsocketConsumer):
+    """
+    Live invalidation feed for container/environment pages.
+
+    This consumer does not perform mutations.
+    It only receives server-side live events and forwards them to browsers.
+    """
+
+    async def connect(self):
+        user = self.scope.get("user")
+
+        if user is None or not user.is_authenticated:
+            await self.close(code=4401)
             return
-        else:
-            logger.error(f"wrong request: {request}")
-            return
-        replacement=update_fragments(
-            Container, container.pk, changes,
-            fk_hooks = {
-                'projects': (lambda o: o.projectbindings.all(), pb_setter),
-                'courses': (lambda o: o.coursebindings.all(), cb_setter),
-                'volumes': (lambda o: o.volumebindings.all(), vb_setter),
-            }
+
+        self.user = user
+        self.user_group_name = self.group_name_for_user(user.pk)
+
+        await self.channel_layer.group_add(
+            self.user_group_name,
+            self.channel_name,
         )
-        if replacement:
-            self.send(text_data=json.dumps(replacement))
 
-def pb_setter(obj, p_pks):
-    for o in Project.objects.filter(pk__in = p_pks):
-        b, _=ProjectContainerBinding.objects.get_or_create(container=obj, project=o)
-    ProjectContainerBinding.objects.filter(container=obj).exclude(project__id__in = p_pks).delete()
+        await self.accept()
 
-def cb_setter(obj, c_pks):
-    for o in Course.objects.filter(pk__in = c_pks):
-        b, _=CourseContainerBinding.objects.get_or_create(container=obj, course=o)
-    CourseContainerBinding.objects.filter(container=obj).exclude(course__id__in = c_pks).delete()
+    async def disconnect(self, close_code):
+        if hasattr(self, "user_group_name"):
+            await self.channel_layer.group_discard(
+                self.user_group_name,
+                self.channel_name,
+            )
 
-def vb_setter(obj, v_pks):
-    for o in Volume.objects.filter(pk__in = v_pks):
-        b, _=VolumeContainerBinding.objects.get_or_create(container=obj, volume=o)
-    VolumeContainerBinding.objects.filter(container=obj).exclude(volume__id__in = v_pks).delete()
+    @staticmethod
+    def group_name_for_user(user_id):
+        return f"container-live-user-{user_id}"
+
+    async def receive_json(self, content, **kwargs):
+        """
+        Browser-to-server messages are intentionally ignored for now.
+
+        Later this could accept pings, client_id registration, etc.
+        """
+        return
+
+    async def container_live_event(self, event):
+        """
+        Handler for channel layer events.
+
+        group_send must use:
+            {"type": "container.live_event", "payload": {...}}
+
+        Channels maps "container.live_event" -> container_live_event().
+        """
+        await self.send_json(event["payload"])
+
+    @staticmethod
+    def group_name_for_user(user_id):
+        return f"container-live-user-{user_id}"
+
 
 
 

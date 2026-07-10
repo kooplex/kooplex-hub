@@ -8,9 +8,12 @@ from .image import Image
 from .envvar import EnvVarMapping
 from django.contrib.auth import get_user_model
 
+from container.services.mounts import get_container_mount_items
+
 User = get_user_model()
 
 from ..conf import CONTAINER_SETTINGS
+from project.models import ProjectContainerBinding
 
 logger = logging.getLogger(__name__)
 
@@ -39,25 +42,140 @@ class Container(models.Model):
 
     restart_reasons = models.CharField(max_length = 500, null = True, blank = True)
 
-    node = models.TextField(max_length = 64, null = True, blank = True)
-    nodemanifest = models.TextField(max_length = 64, null = True, blank = True)
-    cpurequest = models.DecimalField(null = True, blank = True, decimal_places=1, max_digits=4, default=CONTAINER_SETTINGS["kubernetes"]["resources"]["default_cpu"])
-    cpuusage = models.DecimalField(null = True, blank = True, decimal_places=1, max_digits=4, default=None)
-    gpurequest = models.IntegerField(null = True, blank = True, default=CONTAINER_SETTINGS["kubernetes"]["resources"]["default_gpu"])
-    memoryrequest = models.DecimalField( null = True, blank = True, decimal_places=1, max_digits=5, default=CONTAINER_SETTINGS["kubernetes"]["resources"]["default_memory"])
-    memoryusage = models.DecimalField(null = True, blank = True, decimal_places=1, max_digits=5, default=None)
-    idletime = models.IntegerField( null = True, blank = True, default=CONTAINER_SETTINGS["kubernetes"]["resources"]["default_idletime"])
+    requested_node = models.CharField(
+        max_length=64,
+        null=True,
+        blank=True,
+        help_text="Requested Kubernetes node or placement preference. Configuration field.",
+    )
+    
+    runtime_node = models.CharField(
+        max_length=64,
+        null=True,
+        blank=True,
+        help_text="Observed Kubernetes node where the pod is currently running. Updated by watcher.",
+    )
+    requested_cpu_m = models.DecimalField(null = True, blank = True, decimal_places=1, max_digits=7, default=CONTAINER_SETTINGS.kubernetes.resources.default_cpu)
+    cpuusage = models.DecimalField(null = True, blank = True, decimal_places=1, max_digits=7, default=None)
+    requested_gpu = models.IntegerField(null = True, blank = True, default=CONTAINER_SETTINGS.kubernetes.resources.default_gpu)
+    requested_memory_mib = models.DecimalField( null = True, blank = True, decimal_places=1, max_digits=8, default=CONTAINER_SETTINGS.kubernetes.resources.default_memory)
+    memoryusage = models.DecimalField(null = True, blank = True, decimal_places=1, max_digits=8, default=None)
+    requested_uptime_hours = models.IntegerField( null = True, blank = True, default=CONTAINER_SETTINGS.kubernetes.resources.default_idletime)
     idle = models.IntegerField( null = True, blank = True, default=None)
 
     class Meta:
-        unique_together = [['user', 'name']]
-        ordering = ['image', 'name']
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "name"],
+                name="unique_container_name_per_user",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["user", "state"]),
+            models.Index(fields=["user", "require_running"]),
+            models.Index(fields=["state", "require_running"]),
+            models.Index(fields=["label"]),
+        ]
+        ordering = ["image", "name"]
 
     def __lt__(self, c):
         return self.launched_at < c.launched_at
 
     def __str__(self):
         return self.label
+
+    @property
+    def image_modal_url(self):
+        if not self.pk:
+            return None
+
+        return reverse(
+            "container:image_modal",
+            args=[self.pk],
+        )
+
+    @property
+    def mounts_modal_url(self):
+        if not self.pk:
+            return None
+
+        return reverse(
+            "container:mounts_modal",
+            args=[self.pk],
+        )
+
+    @property
+    def mount_summary(self):
+        mounts = get_container_mount_items(self)
+
+        projects = mounts["projects"]
+        courses = mounts["courses"]
+        volumes = mounts["volumes"]
+
+        return {
+            "project_count": len(projects),
+            "course_count": len(courses),
+            "volume_count": len(volumes),
+            "projects": projects,
+            "courses": courses,
+            "volumes": volumes,
+            "tooltip": self._mount_summary_tooltip(
+                projects=projects,
+                courses=courses,
+                volumes=volumes,
+            ),
+        }
+
+    def _mount_summary_tooltip(self, projects, courses, volumes):
+        lines = []
+
+        if projects:
+            lines.append("Projects: " + ", ".join(project.name for project in projects))
+
+        if courses:
+            lines.append("Courses: " + ", ".join(course.name for course in courses))
+
+        if volumes:
+            lines.append("Storage: " + ", ".join(volume.folder for volume in volumes))
+
+        return "\n".join(lines) or "No custom mounts."
+
+
+    #TODO: put these in a mixin
+    @property
+    def name_dom_id(self):
+        return f"container-{self.pk}-name"
+
+    @property
+    def name_edit_url(self):
+        return reverse("container:name_edit", args=[self.pk])
+
+    @property
+    def name_display_url(self):
+        return reverse("container:name_display", args=[self.pk])
+
+    @property
+    def name_update_url(self):
+        return reverse("container:name_update", args=[self.pk])
+
+
+    @property
+    def uptime_dom_id(self):
+        return f"container-{self.pk}-uptime"
+    
+    @property
+    def uptime_display_url(self):
+        return reverse("container:uptime_display", args=[self.pk])
+    
+    @property
+    def uptime_edit_url(self):
+        return reverse("container:uptime_edit", args=[self.pk])
+    
+    @property
+    def uptime_update_url(self):
+        return reverse("container:uptime_update", args=[self.pk])
+
+
 
     @property
     def link_drop(self):
@@ -132,7 +250,7 @@ class Container(models.Model):
 
     @property
     def nodeSelector(self):
-        selector={'kubernetes.io/hostname': self.node} if self.node else dict(CONTAINER_SETTINGS['kubernetes']['nodeSelector_k8s'])
+        selector={'kubernetes.io/hostname': self.requested_node} if self.requested_node else dict(CONTAINER_SETTINGS.kubernetes.node_selector)
         return {"nodeSelector": selector} if selector else {}
 
 
@@ -150,49 +268,128 @@ class Container(models.Model):
             ]
         return None
 
+
     def start(self):
         from ..tasks import start_container
-        self.require_running=True
+
+        self.require_running = True
+        self.restart_reasons = None
+
+        if self.state in [
+            self.State.NOTPRESENT,
+            self.State.ERROR,
+        ]:
+            self.state = self.State.STARTING
+
+        self.save(
+            update_fields=[
+                "require_running",
+                "restart_reasons",
+                "state",
+            ]
+        )
+
         start_container(self.user.id, self.id)
 
     def stop(self):
         from ..tasks import stop_container
-        self.require_running=False
-        self.restart_reasons=None
-        self.cpuusage=None
-        self.memoryusage=None
-        self.idle=None
-        self.save()
+
+        self.require_running = False
+        self.restart_reasons = None
+        self.cpuusage = None
+        self.memoryusage = None
+        self.idle = None
+
+        if self.state != self.State.NOTPRESENT:
+            self.state = self.State.STOPPING
+
+        self.save(
+            update_fields=[
+                "require_running",
+                "restart_reasons",
+                "cpuusage",
+                "memoryusage",
+                "idle",
+                "state",
+            ]
+        )
+
         self.removeroutes()
         stop_container(self.user.id, self.id)
 
     def restart(self):
         from ..tasks import stop_container
-        self.require_running=True
-        self.restart_reasons=None
-        self.cpuusage=None
-        self.memoryusage=None
-        self.idle=None
-        self.save()
+
+        self.require_running = True
+        self.restart_reasons = None
+        self.cpuusage = None
+        self.memoryusage = None
+        self.idle = None
+
+        if self.state in [
+            self.State.RUNNING,
+            self.State.NEED_RESTART,
+            self.State.ERROR,
+        ]:
+            self.state = self.State.STOPPING
+
+        self.save(
+            update_fields=[
+                "require_running",
+                "restart_reasons",
+                "cpuusage",
+                "memoryusage",
+                "idle",
+                "state",
+            ]
+        )
+
         stop_container(self.user.id, self.id)
 
     def retrieve_log(self):
         from ..lib import fetch_containerlog
-        return  fetch_containerlog(self)
+        return fetch_containerlog(self)
 
     @property
     def is_running(self):
-        return self.state in [ self.State.RUNNING, self.State.NEED_RESTART ]
+        return self.state in [
+            self.State.RUNNING,
+            self.State.NEED_RESTART,
+        ]
 
-    def mark_restart(self, reason, save = True):
-        if self.state not in [ self.State.RUNNING, self.State.NEED_RESTART ]:
+    @property
+    def is_transitioning(self):
+        return self.state in [
+            self.State.STARTING,
+            self.State.STOPPING,
+        ]
+
+    @property
+    def needs_restart(self):
+        return self.state == self.State.NEED_RESTART
+
+    def mark_restart(self, reason, save=True):
+        if self.state not in [
+            self.State.RUNNING,
+            self.State.NEED_RESTART,
+        ]:
             return False
+
         if self.restart_reasons:
-            self.restart_reasons += '; ' + reason
+            self.restart_reasons += "; " + reason
         else:
             self.restart_reasons = reason
+
         self.state = self.State.NEED_RESTART
+
         if save:
-            self.save()
+            self.save(
+                update_fields=[
+                    "restart_reasons",
+                    "state",
+                ]
+            )
+
         return True
+
 

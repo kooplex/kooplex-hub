@@ -50,6 +50,14 @@ class ContainerAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'user', 'label', 'image', 'state', 'launched_at', 'restart_reasons')
     search_labels = ('name', 'user__username')
     search_fields = ('name', 'user__username', 'label', 'image__name')
+    readonly_fields = [
+        "runtime_node",
+        "state_backend",
+        "state_lastcheck_at",
+        "cpuusage",
+        "memoryusage",
+        "idle",
+    ]
 
     def start_container(self, request, queryset):
         for obj in queryset:

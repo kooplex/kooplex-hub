@@ -62,26 +62,27 @@ class Cluster():
         if reset:
             self.node_df = pd.DataFrame(columns=['node','total_cpu','total_memory', 'total_gpu', 'capacity_cpu', 'capacity_memory', 'capacity_gpu']) #,'requestedcpu','requestedmemory'] )
             
-        if label:
-            ls = f"{label[0]} in  ({','.join(label[1])})"
-            nodes = self.v1.list_node(label_selector=ls)
-        elif node_list and node_list[0]:
-            ls = f"kubernetes.io/hostname in  ({','.join(node_list)})"
-            nodes = self.v1.list_node(label_selector=ls)
-        else:
-            nodes = self.v1.list_node()
+        #if label:
+        #    ls = f"{label[0]} in  ({','.join(label[1])})"
+        #    nodes = self.v1.list_node(label_selector=ls)
+        #elif node_list and node_list[0]:
+        #    ls = f"kubernetes.io/hostname in  ({','.join(node_list)})"
+        #    nodes = self.v1.list_node(label_selector=ls)
+        #else:
+        #    nodes = self.v1.list_node()
+        nodes = {'items':[]}
             
-        for node in nodes.items:
-            node_name = node.metadata.name
-            # FIXME hardcoded filtering
-            if "controlplane" in node_name:
-                continue
-            nac = node.status.allocatable
-            ncc = node.status.capacity
-            #logger.info(node.status)
-            agpu = int(nac.get('nvidia.com/gpu',0))
-            cgpu = int(ncc.get('nvidia.com/gpu',0))
-            self.node_df.loc[len(self.node_df)] = [node_name, UnitConverter(nac['cpu']), UnitConverter(nac['memory']), agpu, UnitConverter(ncc['cpu']), UnitConverter(ncc['memory']), cgpu]
+#        for node in nodes.items:
+#            node_name = node.metadata.name
+#            # FIXME hardcoded filtering
+#            if "controlplane" in node_name:
+#                continue
+#            nac = node.status.allocatable
+#            ncc = node.status.capacity
+#            #logger.info(node.status)
+#            agpu = int(nac.get('nvidia.com/gpu',0))
+#            cgpu = int(ncc.get('nvidia.com/gpu',0))
+#            self.node_df.loc[len(self.node_df)] = [node_name, UnitConverter(nac['cpu']), UnitConverter(nac['memory']), agpu, UnitConverter(ncc['cpu']), UnitConverter(ncc['memory']), cgpu]
 
         #FIXME Add the default node settings when node == None
         

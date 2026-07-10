@@ -1,0 +1,25 @@
+<span
+    id="{{ dom_id }}"
+    class="kooplex-uptime-widget {{ widget_class }}"
+    hx-get="{{ edit_url }}"
+    hx-target="this"
+    hx-swap="outerHTML"
+    hx-trigger="click"
+    role="button"
+    tabindex="0"
+    data-bs-toggle="tooltip"
+    data-bs-title="{{ tooltip }}">
+
+    <i class="bi {{ icon_class }} kooplex-uptime-icon"></i>
+
+    <span class="kooplex-uptime-bar">
+        <span
+            class="kooplex-uptime-fill {{ fill_class }}"
+            style="width: {{ percent }}%;">
+        </span>
+
+        <span class="kooplex-uptime-label">
+            {{ label }}
+        </span>
+    </span>
+</span>

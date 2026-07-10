@@ -8,18 +8,63 @@ from django.template.loader import render_to_string
 from datetime import datetime
 
 from channels.layers import get_channel_layer
-from django_huey import db_task, db_periodic_task, periodic_task, get_queue
+from django_huey import (
+    db_task, 
+    db_periodic_task, 
+    periodic_task, 
+    get_queue,
+)
 from huey import crontab, RetryTask
 from asgiref.sync import async_to_sync
 
-from container.models import Container, Image
+from container.models import (
+    Container, 
+    Image,
+)
 
 from .conf import CONTAINER_SETTINGS
 
-from .lib import start_environment, stop_environment
+from .lib import (
+    start_environment, 
+    stop_environment,
+)
 
+from container.services.resources.snapshot_cache import (
+    refresh_cluster_resource_snapshot,
+    snapshot_age_seconds,
+)
 
 logger = logging.getLogger(__name__)
+
+
+####@db_periodic_task(crontab(minute="*"), queue='container')
+####def refresh_cluster_resource_snapshot_task():
+####    """
+####    Periodically refresh the cached cluster resource snapshot.
+####
+####    This should be cheap for the UI:
+####      Kubernetes / Kooplex state -> cache
+####
+####    HTMX views should only read the cached snapshot.
+####    """
+####    try:
+####        snapshot = refresh_cluster_resource_snapshot()
+####    except Exception:
+####        logger.exception("Failed to refresh cluster resource snapshot")
+####        return
+####
+####    if snapshot is None:
+####        logger.warning("Cluster resource snapshot refresh returned None")
+####        return
+####
+####    logger.info(
+####        "Refreshed cluster resource snapshot: source=%s confidence=%s age=%ss nodes=%s",
+####        snapshot.source,
+####        snapshot.confidence,
+####        snapshot_age_seconds(snapshot),
+####        len(snapshot.nodes),
+####    )
+####
 
 
 @periodic_task(crontab(minute="*/5"), queue='container')  # Runs every 5 minutes
@@ -31,15 +76,18 @@ def ensure_k8s_watcher_running():
     except subprocess.CalledProcessError:
         # Watcher is not running, so restart it
         logger.warning("Kubernetes watcher is not running. Restarting it...")
-        subprocess.Popen(["python", "manage.py", "watch_pods"], 
+        subprocess.Popen(["python3", "manage.py", "watch_pods"], 
                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
 @db_task(queue='container', retries=3, retry_delay=10)
 def start_container(user_id, container_id):
     try:
+        logger.debug(f"start {container_id}")
         container=Container.objects.get(user_id=user_id, id=container_id)    
+        logger.debug(f"start 2 {container.label}")
         start_environment(container)
+        logger.debug(f"start 3333333333333333333")
         return "Completed"
     except Container.DoesNotExist:
         return "Container not found"
@@ -81,8 +129,8 @@ def render_progressbar(container, metric, **kw):
 
 @db_periodic_task(crontab(minute="55"), queue='container')  # Runs every hour at 55
 def kill_idle():
-    url_api = CONTAINER_SETTINGS['proxy']['url']
-    url_path = CONTAINER_SETTINGS['proxy']['check_container']
+    url_api = CONTAINER_SETTINGS.proxy.url
+    url_path = CONTAINER_SETTINGS.proxy.check_container
     url = os.path.join(url_api, url_path)
     for c in Container.objects.filter(state__in = [Container.State.RUNNING, Container.State.NEED_RESTART], image__imagetype = Image.ImageType.PROJECT):
         try:
@@ -114,60 +162,60 @@ def prom_query(query):
     r.raise_for_status()
     return r.json()["data"]["result"]
 
-@periodic_task(crontab(minute="*/5"), queue='container')
-def k8s_cpu_usage():
-    ns=CONTAINER_SETTINGS['kubernetes']['namespace']
-    q_cpu="""
-sum by (pod) (
-  rate(container_cpu_usage_seconds_total{namespace="%s", container!="", image!=""}[1m])
-)
-    """%ns
-    cpu = prom_query(q_cpu)
-    cpu_by_pod = {item["metric"]["pod"]: float(item["value"][1]) for item in cpu}
-    for k, v in cpu_by_pod.items():
-        c=Container.objects.filter(label=k).first()
-        if c and c.is_running:
-            c.cpuusage=v
-            c.save()
-            render_progressbar(c, 'cpu')
+# @periodic_task(crontab(minute="*/5"), queue='container')
+# def k8s_cpu_usage():
+#     ns=CONTAINER_SETTINGS['kubernetes']['namespace']
+#     q_cpu="""
+# sum by (pod) (
+#   rate(container_cpu_usage_seconds_total{namespace="%s", container!="", image!=""}[1m])
+# )
+#     """%ns
+#     cpu = prom_query(q_cpu)
+#     cpu_by_pod = {item["metric"]["pod"]: float(item["value"][1]) for item in cpu}
+#     for k, v in cpu_by_pod.items():
+#         c=Container.objects.filter(label=k).first()
+#         if c and c.is_running:
+#             c.cpuusage=v
+#             c.save()
+#             render_progressbar(c, 'cpu')
 
-@periodic_task(crontab(minute="*/4"), queue='container')
-def k8s_mem_usage():
-    ns=CONTAINER_SETTINGS['kubernetes']['namespace']
-    q_mem="""
-sum by (pod) (
-  container_memory_working_set_bytes{namespace="%s", container!="", image!=""}
-) / 1073741824
-"""%ns
-    mem = prom_query(q_mem)
-    mem_by_pod = {item["metric"]["pod"]: float(item["value"][1]) for item in mem}
-    for k, v in mem_by_pod.items():
-        c=Container.objects.filter(label=k).first()
-        if c and c.is_running:
-            c.memoryusage=v
-            c.save()
-            render_progressbar(c, 'mem')
+# @periodic_task(crontab(minute="*/4"), queue='container')
+# def k8s_mem_usage():
+#     ns=CONTAINER_SETTINGS['kubernetes']['namespace']
+#     q_mem="""
+# sum by (pod) (
+#   container_memory_working_set_bytes{namespace="%s", container!="", image!=""}
+# ) / 1073741824
+# """%ns
+#     mem = prom_query(q_mem)
+#     mem_by_pod = {item["metric"]["pod"]: float(item["value"][1]) for item in mem}
+#     for k, v in mem_by_pod.items():
+#         c=Container.objects.filter(label=k).first()
+#         if c and c.is_running:
+#             c.memoryusage=v
+#             c.save()
+#             render_progressbar(c, 'mem')
 
-@periodic_task(crontab(minute="*/3"), queue='container')
-def k8s_nodes_usage():
-    node_cpu_q="""
-100 * (
-  sum by (instance) (rate(node_cpu_seconds_total{mode!="idle"}[5m]))
-/
-  sum by (instance) (rate(node_cpu_seconds_total[5m]))
-)
-    """
+# @periodic_task(crontab(minute="*/3"), queue='container')
+# def k8s_nodes_usage():
+#     node_cpu_q="""
+# 100 * (
+#   sum by (instance) (rate(node_cpu_seconds_total{mode!="idle"}[5m]))
+# /
+#   sum by (instance) (rate(node_cpu_seconds_total[5m]))
+# )
+#     """
 
-    node_mem_q="""
-100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)
-    """
-    cpu=prom_query(node_cpu_q)
-    mem=prom_query(node_mem_q)
-    cpu_by_node = {item["metric"]["instance"]: float(item["value"][1]) for item in cpu}
-    mem_by_node = {item["metric"]["instance"]: float(item["value"][1]) for item in mem}
-    for node, _cpu in cpu_by_node.items():
-        _mem=mem_by_node.get(node)
-#        logger.debug(f"node: {node} CPU: {_cpu}%, MEM: {_mem}%")
-        for container in Container.objects.filter(nodemanifest=node): #FIXME: narrow for running/restart?
-            render_progressbar(container, 'node', cpu=_cpu, memory=_mem)
+#     node_mem_q="""
+# 100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)
+#     """
+#     cpu=prom_query(node_cpu_q)
+#     mem=prom_query(node_mem_q)
+#     cpu_by_node = {item["metric"]["instance"]: float(item["value"][1]) for item in cpu}
+#     mem_by_node = {item["metric"]["instance"]: float(item["value"][1]) for item in mem}
+#     for node, _cpu in cpu_by_node.items():
+#         _mem=mem_by_node.get(node)
+# #        logger.debug(f"node: {node} CPU: {_cpu}%, MEM: {_mem}%")
+#         for container in Container.objects.filter(nodemanifest=node): #FIXME: narrow for running/restart?
+#             render_progressbar(container, 'node', cpu=_cpu, memory=_mem)
 

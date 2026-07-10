@@ -82,7 +82,7 @@ class Image(models.Model):
         return self.name
 
     @property
-    def hr(self):
+    def short_name(self):
         return self.name.split('/')[-1]
 
     @property

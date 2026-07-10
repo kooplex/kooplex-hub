@@ -26,7 +26,7 @@ class Proxy(models.Model):
 
     @property
     def proto(self):
-        return CONTAINER_SETTINGS['proxy']['proto']
+        return CONTAINER_SETTINGS.proxy.proto
 
     @property
     def fqdn(self):
@@ -35,7 +35,7 @@ class Proxy(models.Model):
 
     @property
     def svc_dn(self):
-        ns=CONTAINER_SETTINGS['kubernetes']['namespace']
+        ns=CONTAINER_SETTINGS.kubernetes.namespace
         return f"{self.svc_hostname}.{ns}"
 
     @property

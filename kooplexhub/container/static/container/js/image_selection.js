@@ -1,7 +1,7 @@
 // image_selection.js
 
 // Image Selection Modal Logic
-class ImageSelectionHandler {
+export class ImageSelectionHandler {
   constructor(register, opts = {}) {
     this.register = register;
     this.modalSelector = opts.modalSelector || '.image-modal';

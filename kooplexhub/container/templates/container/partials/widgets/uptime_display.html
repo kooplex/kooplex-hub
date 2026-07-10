@@ -1,0 +1,111 @@
+<div
+  id="container-uptime-{{ container.pk }}"
+  class="uptime-widget"
+  data-live-key="container-runtime:{{ container.pk }}"
+  data-live-url="{% url 'container:uptime_display' container.pk %}"
+  data-live-swap="outerHTML"
+>
+  {% if runtime.show_uptime_progress %}
+
+    <button
+      type="button"
+      class="uptime-widget-control uptime-progress-control"
+      title="Idle time: {{ runtime.idle_elapsed_label }} of {{ runtime.uptime_limit_label }}"
+      aria-label="Idle time: {{ runtime.idle_elapsed_label }} of {{ runtime.uptime_limit_label }}"
+      {% if runtime.uptime_is_editable %}
+        hx-get="{% url 'container:uptime_edit' container.pk %}"
+        hx-target="#container-uptime-{{ container.pk }}"
+        hx-swap="outerHTML"
+      {% else %}
+        disabled
+      {% endif %}
+    >
+      <span class="uptime-widget-icon" aria-hidden="true">
+        <i class="bi bi-moon"></i>
+      </span>
+
+      <span class="uptime-progress-content">
+        <span class="uptime-progress-labels">
+          <span>{{ runtime.idle_elapsed_label }}</span>
+          <span>{{ runtime.uptime_limit_label }}</span>
+        </span>
+
+        <span
+          class="progress uptime-progress"
+          role="progressbar"
+          aria-valuenow="{{ runtime.idle_progress_percent }}"
+          aria-valuemin="0"
+          aria-valuemax="100"
+        >
+          <span
+            class="progress-bar"
+            style="width: {{ runtime.idle_progress_percent }}%;"
+          ></span>
+        </span>
+      </span>
+    </button>
+
+  {% else %}
+
+    <button
+      type="button"
+      class="uptime-widget-control uptime-static-slider"
+      title="Idle time limit: {{ runtime.uptime_limit_label }}"
+      aria-label="Idle time limit: {{ runtime.uptime_limit_label }}"
+      {% if runtime.uptime_is_editable %}
+        hx-get="{% url 'container:uptime_edit' container.pk %}"
+        hx-target="#container-uptime-{{ container.pk }}"
+        hx-swap="outerHTML"
+      {% else %}
+        disabled
+      {% endif %}
+    >
+      <span class="uptime-widget-icon" aria-hidden="true">
+        <i class="bi bi-moon"></i>
+      </span>
+
+      <span class="uptime-slider-display">
+        <span class="uptime-slider-track">
+          <span
+            class="uptime-slider-fill"
+            style="
+              width:
+                calc(
+                  (
+                    {{ runtime.requested_uptime }} -
+                    {{ runtime.uptime_min }}
+                  ) /
+                  (
+                    {{ runtime.uptime_max }} -
+                    {{ runtime.uptime_min }}
+                  ) * 100%
+                );
+            "
+          ></span>
+
+          <span
+            class="uptime-slider-thumb"
+            style="
+              left:
+                calc(
+                  (
+                    {{ runtime.requested_uptime }} -
+                    {{ runtime.uptime_min }}
+                  ) /
+                  (
+                    {{ runtime.uptime_max }} -
+                    {{ runtime.uptime_min }}
+                  ) * 100%
+                );
+            "
+          ></span>
+        </span>
+
+        <span class="uptime-slider-value">
+          {{ runtime.uptime_limit_label }}
+        </span>
+      </span>
+    </button>
+
+  {% endif %}
+</div>

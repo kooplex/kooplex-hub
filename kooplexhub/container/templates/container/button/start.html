@@ -1,11 +1,11 @@
 {% if container.state == container.State.NOTPRESENT %}
 <button data-action="start" data-pk="{{container.id}}" class="badge rounded-pill text-bg-success border p-2"
         data-toggle="tooltip" title="Start environment {{container.name}}">
-  <span class="bi bi-lightning" aria-hidden="true" role="status"></span>
+  <span class="bi bi-play" aria-hidden="true" role="status"></span>
 </button>
 {% elif container.state == container.State.RUNNING or container.state == container.State.NEED_RESTART %}
 <button data-action="start" data-pk="{{container.id}}" class="badge rounded-pill text-bg-secondary border p-2" disabled>
-  <span class="bi bi-lightning" aria-hidden="true"></span>
+  <span class="bi bi-play" aria-hidden="true"></span>
 </button>
 {% elif container.state == container.State.ERROR %}
 <button data-action="start" data-pk="{{container.id}}" class="badge rounded-pill text-bg-danger border p-2" disabled>

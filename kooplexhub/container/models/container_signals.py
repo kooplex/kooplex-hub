@@ -10,6 +10,19 @@ from kooplexhub.lib.libbase import standardize_str
 
 logger = logging.getLogger(__name__)
 
+
+CONFIG_RESTART_FIELDS = [
+    "requested_node",
+    "requested_cpu_m",
+    "requested_gpu",
+    "requested_memory_mib",
+    "requested_uptime_hours",
+    "image_id",
+    "start_teleport",
+    "start_seafile",
+]
+
+
 @receiver(pre_save, sender = Container)
 def create_container_label(sender, instance, **kwargs):
     if instance.label:
@@ -30,15 +43,38 @@ def remove_container(sender, instance, **kwargs):
         logger.warning(f'! check pod/container {instance.label}, during removal exception raised: -- {e}')
 
 
-@receiver(pre_save, sender = Container)
+@receiver(pre_save, sender=Container)
 def container_needs_restart(sender, instance, **kwargs):
-    if not instance.id:
+    if not instance.pk:
         return
-    old = Container.objects.get(id = instance.id)
-    chg = []
-    for a in [ 'node', 'cpurequest', 'gpurequest', 'memoryrequest', 'idletime', 'image', 'start_teleport', 'start_seafile' ]:
-        if getattr(old, a) != getattr(instance, a):
-            chg.append(a)
-    if chg:
-        instance.mark_restart("Attributes {} changed".format(", ".join(chg)), save = False)
+
+    update_fields = kwargs.get("update_fields")
+
+    if update_fields is not None:
+        update_fields = set(update_fields)
+
+        if not update_fields.intersection(CONFIG_RESTART_FIELDS):
+            return
+
+    old = (
+        Container.objects
+        .filter(pk=instance.pk)
+        .only(*CONFIG_RESTART_FIELDS, "state", "restart_reasons")
+        .first()
+    )
+
+    if old is None:
+        return
+
+    changed = [
+        field
+        for field in CONFIG_RESTART_FIELDS
+        if getattr(old, field) != getattr(instance, field)
+    ]
+
+    if changed:
+        instance.mark_restart(
+            "Attributes {} changed".format(", ".join(changed)),
+            save=False,
+        )
 

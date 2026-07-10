@@ -1,0 +1,252 @@
+.mount-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: 100%;
+}
+
+.mount-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.mount-button i {
+  line-height: 1;
+}
+
+.container-control-button {
+  --control-bg: #6f7a83;
+  --control-fg: #ffffff;
+  --control-border: rgb(255 255 255 / 0.85);
+
+  width: 2rem;
+  height: 2rem;
+  min-width: 2rem;
+
+  display: inline-grid;
+  place-items: center;
+
+  border-radius: 999px;
+  border: 1px solid var(--control-border);
+
+  background: var(--control-bg);
+  color: var(--control-fg);
+
+  line-height: 1;
+  padding: 0;
+
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.18),
+    inset 0 1px 0 rgb(255 255 255 / 0.16);
+
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease,
+    background-color 120ms ease,
+    opacity 120ms ease;
+}
+
+.container-control-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow:
+    0 3px 8px rgb(0 0 0 / 0.2),
+    inset 0 1px 0 rgb(255 255 255 / 0.18);
+}
+
+.container-control-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.container-control-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.container-control-button i {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.container-control-button.is-start {
+  --control-bg: #0f8f61;
+}
+
+.container-control-button.is-stop {
+  --control-bg: #dc3545;
+}
+
+.container-control-button.is-neutral {
+  --control-bg: #6f7a83;
+}
+
+.container-control-button.is-pending {
+  --control-bg: #f0ad4e;
+  animation: kooplex-control-pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes kooplex-control-pulse {
+  0% {
+    box-shadow:
+      0 0 0 0 rgb(240 173 78 / 0.55),
+      inset 0 1px 0 rgb(255 255 255 / 0.16);
+  }
+
+  70% {
+    box-shadow:
+      0 0 0 0.55rem rgb(240 173 78 / 0),
+      inset 0 1px 0 rgb(255 255 255 / 0.16);
+  }
+
+  100% {
+    box-shadow:
+      0 0 0 0 rgb(240 173 78 / 0),
+      inset 0 1px 0 rgb(255 255 255 / 0.16);
+  }
+}
+
+.container-control-button.is-restart {
+  --control-bg: #ffc107;
+  --control-fg: #111820;
+}
+
+.container-control-button.is-pending {
+  --control-bg: #f0ad4e;
+  animation: kooplex-control-pulse 1.1s ease-in-out infinite;
+}
+
+
+
+
+.uptime-widget {
+  width: 100%;
+  min-width: 0;
+}
+
+.uptime-widget-control {
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+
+  display: grid;
+  grid-template-columns: 1.3rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.5rem;
+
+  text-align: left;
+}
+
+.uptime-widget-control:not(:disabled) {
+  cursor: pointer;
+}
+
+.uptime-widget-control:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.uptime-widget-icon {
+  display: inline-grid;
+  place-items: center;
+}
+
+.uptime-progress-content,
+.uptime-slider-display {
+  min-width: 0;
+}
+
+.uptime-progress-labels,
+.uptime-range-labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+
+  font-size: 0.72rem;
+  color: #667085;
+}
+
+.uptime-progress {
+  height: 0.65rem;
+  margin-top: 0.25rem;
+  border: 1px solid #cfd8e3;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #edf1f5;
+}
+
+.uptime-progress .progress-bar {
+  background: #334155;
+}
+
+.uptime-static-slider {
+  min-height: 1.75rem;
+}
+
+.uptime-slider-display {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.uptime-slider-track {
+  position: relative;
+  display: block;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: #dfe5eb;
+}
+
+.uptime-slider-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: #77838d;
+}
+
+.uptime-slider-thumb {
+  position: absolute;
+  top: 50%;
+  width: 0.9rem;
+  height: 0.9rem;
+  border: 2px solid white;
+  border-radius: 50%;
+  background: #65717c;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.25);
+  transform: translate(-50%, -50%);
+}
+
+.uptime-slider-value {
+  min-width: 2.75rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-align: right;
+}
+
+.uptime-widget-editing {
+  padding: 0.75rem;
+  border: 1px solid var(--line, #d9e0e7);
+  border-radius: 0.75rem;
+  background: white;
+}
+
+.uptime-edit-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.uptime-edit-value {
+  font-weight: 700;
+}
+
+.uptime-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}

@@ -1,17 +1,47 @@
-{% load extras %}
-{% load container_buttons %}
-<button 
-    class="badge rounded-pill p-2 border border-1 border-dark text-dark flex-grow-1 text-start" 
-    role="button"
-    data-bs-toggle="tooltip" data-placement="bottom"
-    title="Requested filesystem resources. Click to change mounts."
-    data-name="mount" data-pk="{{container.id|default:'None'}}" data-model="container"
-    >
-    {% button_mount_projects container %}
-    {% button_mount_courses container %}
-    {% button_mount_volumes container %}
-    {% if container.projects|length == 0 and container.courses|length == 0 and container.volumes|length == 0 %}
-      <span><i class="bi bi-folder me-2"></i>default mounts</span>
-    {% endif %}
-</button>
+<button
+  type="button"
+  class="mount-button badge rounded-pill border border-1 border-dark text-dark text-start p-2"
+  aria-label="{{ mount_summary.tooltip }}"
+  title="{{ mount_summary.tooltip }}"
+  {% if disabled or not mounts_modal_url %}
+    disabled
+  {% else %}
+    hx-get="{{ mounts_modal_url }}"
+    hx-target="#modal-root"
+    hx-swap="innerHTML"
+  {% endif %}
+>
+  <i class="bi bi-folder me-2" aria-hidden="true"></i>
 
+  {% if mount_summary.volume_count %}
+    <span class="mount-count">
+      <i class="bi bi-hdd" aria-hidden="true"></i>
+      {{ mount_summary.volume_count }}
+    </span>
+  {% endif %}
+
+  {% if mount_summary.project_count %}
+    <span class="mount-count">
+      <i class="bi bi-kanban" aria-hidden="true"></i>
+      {{ mount_summary.project_count }}
+    </span>
+  {% endif %}
+
+  {% if mount_summary.course_count %}
+    <span class="mount-count">
+      <i class="bi bi-journal-bookmark" aria-hidden="true"></i>
+      {{ mount_summary.course_count }}
+    </span>
+  {% endif %}
+
+  {% if mount_summary.volume_count %}
+    <span class="mount-count">
+      <i class="bi bi-hdd" aria-hidden="true"></i>
+      {{ mount_summary.volume_count }}
+    </span>
+  {% endif %}
+
+  {% if not mount_summary.project_count and not mount_summary.course_count and not mount_summary.volume_count %}
+    <span class="text-muted">Default mounts</span>
+  {% endif %}
+</button>

@@ -1,7 +1,7 @@
 // fileresource_selection.js
 
 // FileSystem Resource Selection Modal Logic
-class MountHandler {
+export class MountHandler {
   constructor(register, opts = {}) {
     this.register = register;
     this.modalSelector     = opts.modalSelector     || '.fileresource-modal';

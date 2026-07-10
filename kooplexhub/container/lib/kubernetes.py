@@ -29,31 +29,14 @@ from kooplexhub.settings import KOOPLEX
 
 logger = logging.getLogger(__name__)
 
-namespace = CONTAINER_SETTINGS['kubernetes']['namespace']
+namespace = CONTAINER_SETTINGS.kubernetes.namespace
 
 
 
 def fetch_containerlog(container):
     v1 = client.CoreV1Api()
     try:
-        pods = v1.list_namespaced_pod(
-            namespace=namespace,
-            label_selector=f"container_label={container.label}",
-        )
-        if not pods.items:
-            return "There are no environment log messages yet to retrieve"
-
-        pod_name = sorted(
-            pods.items,
-            key=lambda p: p.metadata.creation_timestamp,
-            reverse=True,
-        )[0].metadata.name
-
-        podlog = v1.read_namespaced_pod_log(
-            namespace=namespace,
-            name=pod_name,
-            container=container.label,
-        )
+        podlog = v1.read_namespaced_pod_log(namespace = namespace, name = container.label, container = container.label)
         return podlog[-10000:]
     except Exception as e:
         logger.warning(e)
@@ -93,7 +76,7 @@ def create_sidecar_davfs(container, service):
                     "name": "davfs-sidecar",
                     "image": "image-registry.vo.elte.hu/sidecar-davfs2", #FIXME
                     "volumeMounts": [secret_volume_mount, empty_volume_mount],                    
-                    "imagePullPolicy": CONTAINER_SETTINGS['kubernetes']['imagePullPolicy'],
+                    "imagePullPolicy": CONTAINER_SETTINGS.kubernetes.image_pull_policy,
                     "env": service.get_envs(container.user),
                     "securityContext": V1SecurityContext(
                         #run_as_user=1029, 
@@ -156,34 +139,31 @@ class MyClaimsAndVolumes:
 
 def start(container):
     logger.info(f"+ starting {container.label}")
-    labels = { 
-        "container_label": container.label,
-        "user": container.user.username,
-    }
     config.load_kube_config()
-    v1 = client.CoreV1Api() # deprecate
+    v1 = client.CoreV1Api()
 
-    core = client.CoreV1Api()
-    apps = client.AppsV1Api()
+# from settings.py
+#    env_variables = [
+#        { "name": "LANG", "value": "en_US.UTF-8" },
+#        { "name": "SSH_AUTH_SOCK", "value": f"/tmp/{container.user.username}" }, #FIXME: move to db
+#        { "name": "SERVERNAME", "value": SERVERNAME},
+#    ]
 
     pod_ports = []
     svc_ports = []
+    logger.info(f" PROXY {container.proxies}")
     for proxy in container.proxies:
         logger.info(f" {proxy}, {proxy.svc_port}")
         pod_ports.append({
             "containerPort": proxy.svc_port,
             "name": proxy.name, 
         })
-        # #[client.V1ServicePort(port=80, target_port=8080)],
-        svc_ports.append(
-            client.V1ServicePort(port=proxy.svc_port, target_port=proxy.svc_port)
-        )
-#                {
-#            "port": proxy.svc_port,
-#            "targetPort": proxy.svc_port,
-#            "protocol": "TCP",
-#            "name": proxy.name, 
-#        })
+        svc_ports.append({
+            "port": proxy.svc_port,
+            "targetPort": proxy.svc_port,
+            "protocol": "TCP",
+            "name": proxy.name, 
+        })
 
 
     mCV=MyClaimsAndVolumes()
@@ -194,7 +174,7 @@ def start(container):
         logger.debug('mount nslcd')
         mCV.add_cm(
             claimName='nslcd',
-            mountPath=CONTAINER_SETTINGS['kubernetes']['nslcd']['mountPath_nslcd'],
+            mountPath=CONTAINER_SETTINGS.kubernetes.nslcd.mount_path,
             configMap=V1ConfigMapVolumeSource(name="nslcd", default_mode=0o400, items=[V1KeyToPath(key="nslcd",path="nslcd.conf")])
             )
         
@@ -207,7 +187,7 @@ def start(container):
             ]
         mCV.add_cm(
             claimName='initscripts',
-            mountPath=CONTAINER_SETTINGS['kubernetes']['initscripts']["mountPath_initscripts"],
+            mountPath=CONTAINER_SETTINGS.kubernetes.initscripts.mount_path,
             configMap=V1ConfigMapVolumeSource(name="initscripts", default_mode=0o777, items=initscripts),
             )
         
@@ -219,7 +199,7 @@ def start(container):
         logger.debug('mount jobpy')
         mCV.add_cm(
             claimName='jobtool',
-            mountPath=CONTAINER_SETTINGS['kubernetes']['jobs']["jobpy"],
+            mountPath=CONTAINER_SETTINGS.kubernetes.jobs.jobpy,
             configMap=V1ConfigMapVolumeSource(name="job.py", default_mode=0o777, items=[V1KeyToPath(key="job",path="job")] ),
             )
 #    if container.start_ssh:
@@ -297,48 +277,48 @@ def start(container):
                     ),
                     claimName=EDUCATION_SETTINGS['mounts']['public']['claim']
                     )
-            if course.is_teacher(container.user):
-                mCV.add(
-                    mountPath=EDUCATION_SETTINGS['mounts']['assignment']['mountpoint'].format(user = container.user, course = course),
-                    subPath=os.path.join(
-                        EDUCATION_SETTINGS['mounts']['assignment']['subpath'],
-                        EDUCATION_SETTINGS['mounts']['assignment']['folder_top'].format(course = course),
-                    ),
-                    claimName=EDUCATION_SETTINGS['mounts']['assignment']['claim']
-                        )
-                mCV.add(
-                    mountPath=EDUCATION_SETTINGS['mounts']['assignment_prepare']['mountpoint'].format(user = container.user, course = course),
-                    subPath=os.path.join(
-                        EDUCATION_SETTINGS['mounts']['assignment_prepare']['subpath'],
-                        EDUCATION_SETTINGS['mounts']['assignment_prepare']['folder'].format(course = course),
-                    ),
-                    claimName=EDUCATION_SETTINGS['mounts']['assignment_prepare']['claim']
-                        )
-                mCV.add(
-                    mountPath=EDUCATION_SETTINGS['mounts']['assignment_correct']['mountpoint'].format(user = container.user, course = course),
-                    subPath=os.path.join(
-                        EDUCATION_SETTINGS['mounts']['assignment_correct']['subpath'],
-                        EDUCATION_SETTINGS['mounts']['assignment_correct']['folder_top'].format(course = course),
-                    ),
-                    claimName=EDUCATION_SETTINGS['mounts']['assignment_correct']['claim']
-                        )
-            else:
-                mCV.add(
-                    mountPath=EDUCATION_SETTINGS['mounts']['assignment']['mountpoint'].format(user = container.user, course = course),
-                    subPath=os.path.join(
-                        EDUCATION_SETTINGS['mounts']['assignment']['subpath'],
-                        EDUCATION_SETTINGS['mounts']['assignment']['folder'].format(user = container.user, course = course),
-                    ),
-                    claimName=EDUCATION_SETTINGS['mounts']['assignment']['claim']
-                        )
-                mCV.add(
-                    mountPath=EDUCATION_SETTINGS['mounts']['assignment_correct']['mountpoint'].format(user = container.user, course = course),
-                    subPath=os.path.join(
-                        EDUCATION_SETTINGS['mounts']['assignment_correct']['subpath'],
-                        EDUCATION_SETTINGS['mounts']['assignment_correct']['folder'].format(user = container.user, course = course),
-                    ),
-                    claimName=EDUCATION_SETTINGS['mounts']['assignment_correct']['claim']
-                        )
+            #if course.is_teacher(container.user):
+            #    mCV.add(
+            #        mountPath=EDUCATION_SETTINGS['mounts']['assignment']['mountpoint'].format(user = container.user, course = course),
+            #        subPath=os.path.join(
+            #            EDUCATION_SETTINGS['mounts']['assignment']['subpath'],
+            #            EDUCATION_SETTINGS['mounts']['assignment']['folder_top'].format(course = course),
+            #        ),
+            #        claimName=EDUCATION_SETTINGS['mounts']['assignment']['claim']
+            #            )
+            #    mCV.add(
+            #        mountPath=EDUCATION_SETTINGS['mounts']['assignment_prepare']['mountpoint'].format(user = container.user, course = course),
+            #        subPath=os.path.join(
+            #            EDUCATION_SETTINGS['mounts']['assignment_prepare']['subpath'],
+            #            EDUCATION_SETTINGS['mounts']['assignment_prepare']['folder'].format(course = course),
+            #        ),
+            #        claimName=EDUCATION_SETTINGS['mounts']['assignment_prepare']['claim']
+            #            )
+            #    mCV.add(
+            #        mountPath=EDUCATION_SETTINGS['mounts']['assignment_correct']['mountpoint'].format(user = container.user, course = course),
+            #        subPath=os.path.join(
+            #            EDUCATION_SETTINGS['mounts']['assignment_correct']['subpath'],
+            #            EDUCATION_SETTINGS['mounts']['assignment_correct']['folder_top'].format(course = course),
+            #        ),
+            #        claimName=EDUCATION_SETTINGS['mounts']['assignment_correct']['claim']
+            #            )
+            #else:
+            #    mCV.add(
+            #        mountPath=EDUCATION_SETTINGS['mounts']['assignment']['mountpoint'].format(user = container.user, course = course),
+            #        subPath=os.path.join(
+            #            EDUCATION_SETTINGS['mounts']['assignment']['subpath'],
+            #            EDUCATION_SETTINGS['mounts']['assignment']['folder'].format(user = container.user, course = course),
+            #        ),
+            #        claimName=EDUCATION_SETTINGS['mounts']['assignment']['claim']
+            #            )
+            #    mCV.add(
+            #        mountPath=EDUCATION_SETTINGS['mounts']['assignment_correct']['mountpoint'].format(user = container.user, course = course),
+            #        subPath=os.path.join(
+            #            EDUCATION_SETTINGS['mounts']['assignment_correct']['subpath'],
+            #            EDUCATION_SETTINGS['mounts']['assignment_correct']['folder'].format(user = container.user, course = course),
+            #        ),
+            #        claimName=EDUCATION_SETTINGS['mounts']['assignment_correct']['claim']
+            #            )
 
         # project
         for project in container.projects:
@@ -400,14 +380,14 @@ def start(container):
 #        has_cache = True
 
     #FIXME: now reqeusts=limits are hardcoded
-    r=CONTAINER_SETTINGS['kubernetes']['resources']
+    r=CONTAINER_SETTINGS.kubernetes.resources
     pod_resources = {"requests":{}, "limits": {}}
-    pod_resources["requests"]["nvidia.com/gpu"] = f"{max(container.gpurequest, r['limit_gpu'])}"
-    pod_resources["limits"]["nvidia.com/gpu"] = f"{max(container.gpurequest, r['limit_gpu'])}"
-    pod_resources["requests"]["cpu"] = f"{1000*max(container.cpurequest, r['min_cpu'])}m"
-    pod_resources["limits"]["cpu"] = f"{1000*max(container.cpurequest, r['limit_cpu'])}m"
-    pod_resources["requests"]["memory"] = f"{max(container.memoryrequest, r['min_memory'])}Gi"
-    pod_resources["limits"]["memory"] = f"{max(container.memoryrequest, r['limit_memory'])}Gi"
+    pod_resources["requests"]["nvidia.com/gpu"] = f"{max(container.requested_gpu, r.limit_gpu)}"
+    pod_resources["limits"]["nvidia.com/gpu"] = f"{max(container.requested_gpu, r.limit_gpu)}"
+    pod_resources["requests"]["cpu"] = f"{1000*max(container.requested_cpu_m, r.min_cpu)}m"
+    pod_resources["limits"]["cpu"] = f"{1000*max(container.requested_cpu_m, r.limit_cpu)}m"
+    pod_resources["requests"]["memory"] = f"{max(container.requested_memory_mib, r.min_memory)}Gi"
+    pod_resources["limits"]["memory"] = f"{max(container.requested_memory_mib, r.limit_memory)}Gi"
 
     
     container_list = []
@@ -421,12 +401,12 @@ def start(container):
         volumes.extend(vs)
         volume_mounts.extend(vms)
 
-    secret_items = [V1KeyToPath(key=CONTAINER_SETTINGS['kubernetes']['jobs']["token_name"], path=CONTAINER_SETTINGS['kubernetes']['jobs']["token_name"])]
+    secret_items = [V1KeyToPath(key=CONTAINER_SETTINGS.kubernetes.jobs.token_name, path=CONTAINER_SETTINGS.kubernetes.jobs.token_name)]
     secret_volume = V1Volume(name="main-secrets", secret=V1SecretVolumeSource(secret_name=container.user.username, 
                                                             default_mode=0o444, 
                                                             items=secret_items
                                                             ))#items, change ownership, 0o400: https://stackoverflow.com/questions/49945437/changing-default-file-owner-and-group-owner-of-kubernetes-secrets-files-mounted
-    secret_volumemount = V1VolumeMount(name=CONTAINER_SETTINGS['kubernetes']["secrets"]["name"], mount_path=CONTAINER_SETTINGS['kubernetes']["secrets"]["mount_dir"], read_only=True)
+    secret_volumemount = V1VolumeMount(name=CONTAINER_SETTINGS.kubernetes.secrets.name, mount_path=CONTAINER_SETTINGS.kubernetes.secrets.mount_dir, read_only=True)
     volume_mounts.append(secret_volumemount)
 
     volumes.append(secret_volume)
@@ -445,7 +425,7 @@ def start(container):
                     "image": container.image.name,
                     "volumeMounts": volume_mounts,
                     "ports": pod_ports,
-                    "imagePullPolicy": CONTAINER_SETTINGS['kubernetes']['imagePullPolicy'],
+                    "imagePullPolicy": CONTAINER_SETTINGS.kubernetes.image_pull_policy,
                     "env": env_variables,
                     "resources": pod_resources,
                     }
@@ -455,55 +435,44 @@ def start(container):
         
     container_list.append(main_container)
 
-    # Create the pod spec
-    pod_spec = client.V1PodSpec(
-        containers=container_list,
-        volumes=volumes,
-    )
-    # pod_spec.__dict__.update(container.nodeSelector)
+    pod_definition = {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+                "name": container.label,
+                "namespace": namespace,
+                "labels": { "lbl": f"lbl-{container.label}",
+                    "user": container.user.username}
+            },
+            "spec": {
+                "containers": container_list,
+                "volumes": volumes,
+            }
+        }
+    pod_definition["spec"].update(container.nodeSelector)
 
-    template_labels = {
-        **labels,
-        "lbl": f"lbl-{container.label}",
-    }
-
-    # Create the deployment
-    deployment = client.V1Deployment(
-        metadata=client.V1ObjectMeta(
-            name=container.label,
-            namespace=namespace,
-            labels=template_labels
-        ),
-        spec=client.V1DeploymentSpec(
-            replicas=1,
-            selector=client.V1LabelSelector(match_labels=labels),
-            template=client.V1PodTemplateSpec(
-                metadata=client.V1ObjectMeta(
-                    labels=template_labels
-                ),
-                spec=pod_spec,
-            ),
-        ),
-    )
-
-    # logger.debug(f"DEPLOYMENT: {deployment}")
+    svc_definition = {
+            "apiVersion": "v1",
+            "kind": "Service",
+            "metadata": {
+                "name": container.label,
+            },
+            "spec": {
+                "selector": {
+                    "lbl": f"lbl-{container.label}",
+                    },
+                "ports": svc_ports,
+#                "type": "LoadBalancer",
+            }
+        }
 
     try:
-        service = client.V1Service(
-            metadata=client.V1ObjectMeta(name=container.label),
-            spec=client.V1ServiceSpec(
-                selector=labels,
-                ports=svc_ports,
-            ),
-        )
-        core.create_namespaced_service(namespace = namespace, body = service)
-        logger.info(f"registered service for {container.label}")
+        v1.create_namespaced_service(namespace = namespace, body = svc_definition)
     except client.rest.ApiException as e:
         if json.loads(e.body)['code'] != 409: # already exists
             logger.critical(e)
     try:
-        apps.create_namespaced_deployment(namespace = namespace, body = deployment)
-        logger.info(f"created deployment for {container.label}")
+        v1.create_namespaced_pod(namespace = namespace, body = pod_definition)
     except client.rest.ApiException as e:
         if json.loads(e.body)['code'] != 409: # already exists
             logger.critical(e)
@@ -512,17 +481,9 @@ def start(container):
 def stop(container):
     logger.info(f"- stopping {container.label}")
     config.load_kube_config()
-    apps = client.AppsV1Api()
     v1 = client.CoreV1Api()
     try:
-        apps.delete_namespaced_deployment(
-            name=container.label,
-            namespace=namespace,
-            body=client.V1DeleteOptions(
-                propagation_policy="Foreground"
-            ),
-        )
-        logger.info(f"deleted deployment for {container.label}")
+        msg = v1.delete_namespaced_pod(namespace = namespace, name = container.label)
     except client.rest.ApiException as e:
         if json.loads(e.body)['code'] != 404: # doesnt exists
             logger.error(e)

@@ -1,0 +1,75 @@
+<div
+  id="container-uptime-{{ container.pk }}"
+  class="uptime-widget uptime-widget-editing"
+>
+  <form
+    hx-post="{% url 'container:uptime_update' container.pk %}"
+    hx-target="#container-uptime-{{ container.pk }}"
+    hx-swap="outerHTML"
+  >
+    {% csrf_token %}
+
+    <div class="uptime-edit-header">
+      <label
+        for="container-uptime-input-{{ container.pk }}"
+        class="form-label mb-0"
+      >
+        Idle time limit
+      </label>
+
+      <output
+        id="container-uptime-output-{{ container.pk }}"
+        for="container-uptime-input-{{ container.pk }}"
+        class="uptime-edit-value"
+      >
+        {{ runtime.requested_uptime }} h
+      </output>
+    </div>
+
+    <input
+      id="container-uptime-input-{{ container.pk }}"
+      class="form-range"
+      type="range"
+      name="requested_uptime_hours"
+      min="{{ runtime.uptime_min }}"
+      max="{{ runtime.uptime_max }}"
+      step="1"
+      value="{{ runtime.requested_uptime }}"
+      oninput="
+        document.getElementById(
+          'container-uptime-output-{{ container.pk }}'
+        ).value = this.value + ' h';
+      "
+    >
+
+    <div class="uptime-range-labels">
+      <span>{{ runtime.uptime_min }} h</span>
+      <span>{{ runtime.uptime_max }} h</span>
+    </div>
+
+    {% if error %}
+      <div class="text-danger small mt-2">
+        {{ error }}
+      </div>
+    {% endif %}
+
+    <div class="uptime-edit-actions">
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-secondary"
+        hx-get="{% url 'container:uptime_display' container.pk %}"
+        hx-target="#container-uptime-{{ container.pk }}"
+        hx-swap="outerHTML"
+      >
+        Cancel
+      </button>
+
+      <button
+        type="submit"
+        class="btn btn-sm btn-primary"
+      >
+        Save
+      </button>
+    </div>
+  </form>
+</div>
