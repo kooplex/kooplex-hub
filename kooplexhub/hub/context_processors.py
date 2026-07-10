@@ -3,43 +3,33 @@ from .models import Note
 from django.urls import reverse
 from django.utils.html import format_html
 from django.templatetags.static import static
-import re
 
-__r_ref = re.compile(r'^(\w+):\w+$')
-__r_static = re.compile(r'^static:(.+)$')
-__r_ext = re.compile(r'^https?://[\w-]+\.[\w-]+')
-__r_ico = re.compile(r'^\w+\s+[\w-]*$')
+def navigation_context(request):
+    if not request.user.is_authenticated:
+        return {
+            "page_title": "Kooplex - Reports",
+            "nav_items": [],
+            "active": None,
+            "current_nav_label": "Reports",
+        }
+    NAV_ITEMS = getattr(settings, 'MENU', [])
+    active = None
+    current_nav_label = None
 
-def menu(request):
-    #TODO: const -> memcache?
-    url = request.get_full_path()
-    menu = []
-    for item in getattr(settings, 'MENU', []):
-        icon = item.get('icon')
-        target = item.get('target')
-        if re.match(__r_ext, icon):
-            item['ico'] = format_html(f'<img src="{icon}" alt="[]" class="pe-1">')
-        elif re.match(__r_ico, icon):
-            item['ico'] = format_html(f'<i class="{icon} pe-1"></i>')
-        elif re.match(__r_static, icon):
-            ptr = re.split(__r_static, icon)[1]
-            src=static(ptr)
-            item['ico'] = format_html(f'<img src="{src}" alt="[]" pe-1">')
-        else:
-            item['ico'] = ''
-        if re.match(__r_ext, target):
-            item['tgt']=target
-            menu.append(item)
-        elif re.match(__r_ref, target):
-            app = re.split(__r_ref, target)[1]
-            if app in settings.INSTALLED_APPS:
-                tgt=reverse(item['target'])
-                item['active']= 'active border-1 border-start' if tgt == url else ''
-                item['tgt']=tgt
-                menu.append(item)
-        #TODO: add separator filter here
-    #raise Exception(str( menu ))
-    return { 'menu': menu }
+    view_name = getattr(request.resolver_match, "view_name", "")
+
+    for item in NAV_ITEMS:
+        if view_name == item["url_name"] or view_name.startswith(item["url_name"].split(":")[0] + ":"):
+            active = item["key"]
+            current_nav_label = item["label"]
+            break
+
+    return {
+        "page_title": "Kooplex - " + item["label"],
+        "nav_items": NAV_ITEMS,
+        "active": active,
+        "current_nav_label": current_nav_label,
+    }
 
 
 def user(request):
