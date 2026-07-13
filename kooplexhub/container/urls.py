@@ -159,15 +159,27 @@ urlpatterns = [
         name="control",
     ),
     path(
-        "partials/<int:pk>/runtime-status/",
-        views.ContainerRuntimeStatusPartialView.as_view(),
-        name="runtime_status_partial",
+        "partials/<int:pk>/open-button/",
+        views.ContainerOpenButtonPartialView.as_view(),
+        name="open_button_partial",
     ),
     path(
         "open/<int:pk>/<int:pk_view>/",
         views.ContainerOpenServiceView.as_view(),
         name="open_serviceview",
     ),
+    path(
+        "partials/<int:pk>/fetchlog-modal/",
+        views.ContainerFetchLogModalView.as_view(),
+        name="fetchlog_modal",
+    ),
+    
+    path(
+        "partials/<int:pk>/fetchlog/",
+        views.ContainerFetchLogView.as_view(),
+        name="fetchlog",
+    ),
+
  
     # delete container
     path(

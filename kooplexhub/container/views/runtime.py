@@ -2,7 +2,10 @@ import logging
 import json
 
 from django.http import HttpResponse
-from django.views import View
+from django.views.generic import (
+    View,
+    TemplateView,
+)
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import (
     get_object_or_404, 
@@ -103,22 +106,27 @@ class ContainerOpenServiceView(
     def get(self, request, pk, pk_view):
         container = self.get_container()
 
-#        if container.state in {
-#            Container.State.RUNNING,
-#            Container.State.NEED_RESTART,
-#        }:
-        if container.is_running:
-            return container.redirect(pk_view)
-
-        messages.error(
-            request,
-            (
+        if not container.is_running:
+            messages.error(
+                request,
                 f"Cannot open {container.name}: "
-                f"{container.get_state_display()}"
-            ),
-        )
+                f"{container.get_state_display()}",
+            )
+            return redirect("container:list")
 
-        return redirect("container:list")
+        available_views = {
+            view.pk: view
+            for view in container.views
+        }
+
+        if pk_view not in available_views:
+            messages.error(
+                request,
+                "The requested environment view is not available.",
+            )
+            return redirect("container:list")
+
+        return container.redirect(pk_view)
 
 
 class ContainerDeleteView(
@@ -160,3 +168,86 @@ class ContainerDeleteView(
             return response
 
         return redirect("container:list")
+
+
+class ContainerFetchlogButtonPartialView(
+    LoginRequiredMixin,
+    ContainerRuntimePartialMixin,
+    TemplateView,
+):
+    template_name = "container/partials/widgets/fetchlog_button.html"
+
+    def get_context_data(self, **kwargs):
+        return self.get_runtime_context()
+
+
+class ContainerFetchLogModalView(
+    LoginRequiredMixin,
+    ContainerAccessMixin,
+    View,
+):
+    template_name = "container/partials/fetchlog_modal.html"
+
+    def get(self, request, pk):
+        container = self.get_container()
+
+        return render(
+            request,
+            self.template_name,
+            {
+                "container": container,
+            },
+        )
+
+
+class ContainerFetchLogView(
+    LoginRequiredMixin,
+    ContainerAccessMixin,
+    View,
+):
+    template_name = "container/partials/fetchlog_content.html"
+
+    def get(self, request, pk):
+        container = self.get_container()
+
+        if not container.is_running:
+            return render(
+                request,
+                self.template_name,
+                {
+                    "container": container,
+                    "error": (
+                        f"Logs cannot be retrieved while the environment is "
+                        f"{container.get_state_display().lower()}"
+                    ),
+                },
+                status=409,
+            )
+
+        try:
+            log_content = container.retrieve_log()
+
+        except Exception:
+            logger.exception(
+                "Failed to retrieve log for container %s",
+                container.pk,
+            )
+
+            return render(
+                request,
+                self.template_name,
+                {
+                    "container": container,
+                    "error": "The environment log could not be retrieved.",
+                },
+                status=502,
+            )
+
+        return render(
+            request,
+            self.template_name,
+            {
+                "container": container,
+                "log_content": log_content,
+            },
+        )

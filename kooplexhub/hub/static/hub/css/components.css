@@ -250,3 +250,347 @@
   gap: 0.5rem;
   margin-top: 0.75rem;
 }
+
+
+
+
+
+
+
+.fetchlog-loading {
+  min-height: 8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  color: #64748b;
+}
+
+.fetchlog-output {
+  min-height: 12rem;
+  max-height: 65dvh;
+  margin: 0;
+  padding: 1rem;
+
+  overflow: auto;
+  border: 1px solid var(--line, #d9e0e7);
+  border-radius: 0.75rem;
+
+  background: #111820;
+  color: #e5edf5;
+
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", monospace;
+  font-size: 0.8rem;
+  line-height: 1.45;
+
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+
+
+
+
+
+
+
+
+
+.container-log-status {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.container-log-button {
+  width: 2rem;
+  height: 2rem;
+  min-width: 2rem;
+  padding: 0;
+
+  display: inline-grid;
+  place-items: center;
+
+  border: 1px solid #28323c;
+  border-radius: 999px;
+  background: white;
+  color: #334155;
+
+  line-height: 1;
+
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease,
+    background-color 120ms ease,
+    opacity 120ms ease;
+}
+
+.container-log-button.is-enabled {
+  cursor: pointer;
+}
+
+.container-log-button.is-enabled:hover {
+  transform: translateY(-1px);
+  background: #f8fafc;
+  box-shadow: 0 3px 8px rgb(0 0 0 / 0.16);
+}
+
+.container-log-button.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.container-state-pill {
+  min-width: 0;
+  min-height: 1.85rem;
+  padding: 0.2rem 0.7rem;
+
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+
+  border: 1px solid transparent;
+  border-radius: 999px;
+
+  color: #1f2937;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.container-state-pill > i {
+  flex: 0 0 auto;
+}
+
+.container-state-label {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.container-state-running {
+  background: #cff4fc;
+  border-color: #9eeaf9;
+  color: #055160;
+}
+
+.container-state-starting,
+.container-state-stopping {
+  background: #fff3cd;
+  border-color: #ffecb5;
+  color: #664d03;
+}
+
+.container-state-restart {
+  background: #fff3cd;
+  border-color: #ffc107;
+  color: #664d03;
+}
+
+.container-state-error {
+  background: #f8d7da;
+  border-color: #f1aeb5;
+  color: #842029;
+}
+
+.container-state-stopped {
+  background: #e9ecef;
+  border-color: #d3d9df;
+  color: #495057;
+}
+
+
+
+
+
+.container-open-widget {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.service-view-dropdown {
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+}
+
+.service-view-primary,
+.service-view-menu-trigger,
+.container-open-disabled {
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0;
+
+  display: inline-grid;
+  place-items: center;
+
+  border: 1px solid #28323c;
+  background: white;
+  color: #334155;
+
+  line-height: 1;
+  text-decoration: none;
+}
+
+.service-view-primary {
+  width: 2rem;
+  border-radius: 999px;
+}
+
+.service-view-dropdown:has(.service-view-menu-trigger)
+.service-view-primary {
+  border-radius: 999px 0 0 999px;
+}
+
+.service-view-menu-trigger {
+  width: 1.35rem;
+  min-width: 1.35rem;
+
+  margin-left: -1px;
+  border-radius: 0 999px 999px 0;
+
+  cursor: pointer;
+  font-size: 0.65rem;
+}
+
+.service-view-primary:hover,
+.service-view-primary:focus-visible,
+.service-view-menu-trigger:hover,
+.service-view-menu-trigger:focus-visible {
+  position: relative;
+  z-index: 2;
+  background: #f8fafc;
+  color: #0f8f61;
+  box-shadow: 0 3px 8px rgb(0 0 0 / 0.16);
+}
+
+.container-open-disabled {
+  width: 2rem;
+  border-radius: 999px;
+  background: #e9ecef;
+  color: #6c757d;
+  opacity: 0.72;
+}
+
+.service-view-icon,
+.service-view-menu-icon {
+  width: 1rem;
+  height: 1rem;
+  object-fit: contain;
+}
+
+/* Dropdown */
+
+.service-view-menu {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  z-index: 2000;
+
+  width: max-content;
+  min-width: 12rem;
+  max-width: 20rem;
+  padding: 0.35rem;
+
+  border: 1px solid var(--line, #d9e0e7);
+  border-radius: 0.8rem;
+  background: white;
+  box-shadow: 0 12px 30px rgb(0 0 0 / 0.18);
+
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(-0.25rem);
+  pointer-events: none;
+
+  transition:
+    opacity 120ms ease 260ms,
+    transform 120ms ease 260ms,
+    visibility 0s linear 380ms;
+}
+
+/*
+Reveal after a short hover delay.
+focus-within makes it accessible from keyboard and by clicking the trigger.
+*/
+.service-view-dropdown:hover .service-view-menu,
+.service-view-dropdown:focus-within .service-view-menu {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+
+  transition-delay: 260ms;
+}
+
+.service-view-menu-item {
+  width: 100%;
+  min-width: 0;
+  padding: 0.55rem 0.7rem;
+
+  display: grid;
+  grid-template-columns: 1.2rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.55rem;
+
+  border-radius: 0.55rem;
+  color: #1f2937;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.service-view-menu-item:hover,
+.service-view-menu-item:focus-visible {
+  background: #edf7f3;
+  color: #08724d;
+}
+
+
+
+
+.service-view-primary,
+.service-view-menu-trigger,
+.container-open-disabled {
+  box-sizing: border-box;
+}
+
+.service-view-primary > i,
+.service-view-menu-trigger > i,
+.container-open-disabled > i {
+  width: 1rem;
+  height: 1rem;
+  display: inline-grid;
+  place-items: center;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.service-view-icon,
+.service-view-menu-icon {
+  width: 1rem;
+  height: 1rem;
+  max-width: 1rem;
+  max-height: 1rem;
+  display: block;
+  object-fit: contain;
+  object-position: center;
+  flex: 0 0 1rem;
+}
+
+.service-view-icon-frame {
+  width: 1rem;
+  height: 1rem;
+  display: inline-grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.service-view-icon-frame .service-view-icon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}

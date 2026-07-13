@@ -1,18 +1,39 @@
 <div
   id="container-fetchlog-{{ container.pk }}"
+  class="container-log-status"
   data-live-key="container-runtime:{{ container.pk }}"
   data-live-url="{% url 'container:fetchlog_button_partial' container.pk %}"
   data-live-swap="outerHTML"
 >
   <button
     type="button"
-    class="badge rounded-pill border border-1 border-dark text-dark p-2"
-    {% if not runtime.can_fetchlog %}disabled{% endif %}
-    hx-get="{% url 'container:fetchlog_modal' container.pk %}"
-    hx-target="#modal-root"
-    hx-swap="innerHTML"
+    class="
+      container-log-button
+      {% if runtime.can_fetchlog %}is-enabled{% else %}is-disabled{% endif %}
+    "
+    title="{% if runtime.can_fetchlog %}Retrieve latest container log{% else %}Logs are not currently available{% endif %}"
+    aria-label="{% if runtime.can_fetchlog %}Retrieve latest container log{% else %}Logs are not currently available{% endif %}"
+    {% if runtime.can_fetchlog %}
+      hx-get="{% url 'container:fetchlog_modal' container.pk %}"
+      hx-target="#modal-root"
+      hx-swap="innerHTML"
+    {% else %}
+      disabled
+    {% endif %}
   >
-    <i class="bi bi-file-text me-1" aria-hidden="true"></i>
-    Logs
+    <i class="bi bi-file-text" aria-hidden="true"></i>
   </button>
+
+  <div
+    class="container-state-pill container-state-{{ runtime.state_css_class }}"
+    title="{{ runtime.state_title }}"
+    role="status"
+    aria-label="{{ runtime.state_title }}"
+  >
+    <i class="bi bi-heart-pulse" aria-hidden="true"></i>
+
+    <span class="container-state-label">
+      {{ runtime.backend_state_label }}
+    </span>
+  </div>
 </div>

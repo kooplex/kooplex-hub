@@ -23,6 +23,8 @@ from .runtime import (
     ContainerControlView,
     ContainerOpenServiceView,
     ContainerDeleteView,
+    ContainerFetchLogModalView,
+    ContainerFetchLogView,
 )
 from .widget import (
     ContainerNameDisplayView,
@@ -33,12 +35,12 @@ from .widget import (
     ContainerUptimeUpdateView,
     ContainerFetchlogButtonPartialView,
     ContainerRestartButtonPartialView,
-    ContainerRuntimeStatusPartialView,
     ContainerComputeDisplayView,
     ContainerComputeEditView,
     ContainerComputeUpdateView,
     ContainerStartButtonPartialView,
     ContainerStopButtonPartialView,
+    ContainerOpenButtonPartialView,
 )
 
 __all__ = [
@@ -71,7 +73,9 @@ __all__ = [
     "ContainerStartButtonPartialView",
     "ContainerStopButtonPartialView",
     "ContainerRestartButtonPartialView",
-    "ContainerRuntimeStatusPartialView",
     "ContainerFetchlogButtonPartialView",
     "ContainerDeleteView",
+    "ContainerFetchLogModalView",
+    "ContainerFetchLogView",
+    "ContainerOpenButtonPartialView",
 ]

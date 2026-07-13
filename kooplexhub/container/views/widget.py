@@ -76,18 +76,6 @@ class ContainerRestartButtonPartialView(
         }
 
 
-class ContainerRuntimeStatusPartialView(
-    LoginRequiredMixin,
-    ContainerRuntimePartialMixin,
-    TemplateView,
-):
-    template_name = "container/partials/widgets/runtime_status.html"
-
-    def get_context_data(self, **kwargs):
-        container = self.get_container()
-        return self.get_context_data_for_container(container)
-
-
 class ContainerFetchlogButtonPartialView(
     LoginRequiredMixin,
     ContainerRuntimePartialMixin,
@@ -579,3 +567,19 @@ class ContainerComputeUpdateView(
             errors.append(f"{label} must be a whole number.")
             return None
 
+
+class ContainerOpenButtonPartialView(
+    LoginRequiredMixin,
+    ContainerAccessMixin,
+    TemplateView,
+):
+    template_name = "container/partials/widgets/open_service_button.html"
+
+    def get_context_data(self, **kwargs):
+        container = self.get_container()
+
+        return {
+            "container": container,
+            "runtime": ContainerRuntimePresenter(container),
+            "service_views": list(container.views),
+        }

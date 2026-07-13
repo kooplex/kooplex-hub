@@ -85,7 +85,6 @@ class ProxySettings:
 @dataclass(frozen=True)
 class ContainerWssSettings:
     live: str = "wss://localhost/hub/ws/container/live/"
-    fetchlog: str = "wss://localhost/hub/ws/container/fetchlog/{user.id}/"
     monitor_node: str = "wss://localhost/hub/ws/monitor/node/{user.id}/"
 
 

@@ -87,6 +87,11 @@ class ContainerRuntimePresenter:
         ]
 
     @property
+    def can_open(self):
+        return self.container.is_running
+
+
+    @property
     def start_button_class(self):
         if self.is_starting:
             return "is-pending"
@@ -141,29 +146,34 @@ class ContainerRuntimePresenter:
         return "Restart not required."
 
     @property
-    def phase_class(self):
-        if self.is_restarting:
-            return "restarting"
+    def state_css_class(self):
+        if self.is_running:
+            return "running"
         if self.is_starting:
             return "starting"
         if self.is_stopping:
             return "stopping"
         if self.needs_restart:
             return "restart"
-        if self.is_running:
-            return "running"
         if self.is_error:
             return "error"
         return "stopped"
 
-    @property
-    def phase_label(self):
-        if self.is_restarting:
-            return "Restarting..."
-        return self.container.get_state_display()
 
     @property
-    def backend_label(self):
+    def state_title(self):
+        parts = [self.container.get_state_display()]
+    
+        if self.container.state_backend:
+            parts.append(f"Backend: {self.container.state_backend}")
+    
+        if self.container.restart_reasons:
+            parts.append(f"Restart reason: {self.container.restart_reasons}")
+    
+        return " — ".join(parts)
+
+    @property
+    def backend_state_label(self):
         return self.container.state_backend or "None"
 
     @property
@@ -242,3 +252,15 @@ class ContainerRuntimePresenter:
     @property
     def uptime_limit_label(self):
         return f"{self.requested_uptime} h"
+
+
+    @property
+    def open_title(self):
+        if self.can_open:
+            return f"Open environment {self.container.name}"
+
+        return (
+            f"Cannot open environment {self.container.name}: "
+            f"{self.container.get_state_display()}"
+        )
+

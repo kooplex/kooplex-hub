@@ -7,7 +7,7 @@ from container.models import Container
 
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
-from .lib import Cluster
+#from .lib import Cluster
 
 from .tasks import *
 
@@ -124,34 +124,34 @@ class ContainerLiveConsumer(AsyncJsonWebsocketConsumer):
 
 
 
-class MonitorConsumer(SyncSkeleton):
-    def receive(self, text_data):
-        parsed = json.loads(text_data)
-        logger.debug(parsed)
-        request = parsed.get('request')
-        assert request == 'monitor-node', "wrong request"
-        node = parsed.get('node')
-        resp = {
-            'request': request,
-            'node': node,
-        }
-        if node:
-            api = Cluster()
-            api.query_nodes_status(node_list=[node], reset=True)
-            api.query_pods_status(field=["spec.nodeName=",node], reset=True)
-            api.resources_summary()
-            resp.update( api.get_data() )
-            resp["feedback"] = f"Node resource information for {node} is updated"
-        else:
-            node = "default"
-            resp.update({
-             "feedback" : f"Node resource information for defaults is updated",
-             "avail_cpu": CONTAINER_SETTINGS['kubernetes']['resources']['max_cpu'],
-             "avail_memory": CONTAINER_SETTINGS['kubernetes']['resources']['max_memory'],
-             "avail_gpu": CONTAINER_SETTINGS['kubernetes']['resources']['max_gpu'],
-                })
-        logger.debug(f"fetch {node} -> {resp}")
-        self.send(text_data = json.dumps(resp))
+#class MonitorConsumer(SyncSkeleton):
+#    def receive(self, text_data):
+#        parsed = json.loads(text_data)
+#        logger.debug(parsed)
+#        request = parsed.get('request')
+#        assert request == 'monitor-node', "wrong request"
+#        node = parsed.get('node')
+#        resp = {
+#            'request': request,
+#            'node': node,
+#        }
+#        if node:
+#            api = Cluster()
+#            api.query_nodes_status(node_list=[node], reset=True)
+#            api.query_pods_status(field=["spec.nodeName=",node], reset=True)
+#            api.resources_summary()
+#            resp.update( api.get_data() )
+#            resp["feedback"] = f"Node resource information for {node} is updated"
+#        else:
+#            node = "default"
+#            resp.update({
+#             "feedback" : f"Node resource information for defaults is updated",
+#             "avail_cpu": CONTAINER_SETTINGS['kubernetes']['resources']['max_cpu'],
+#             "avail_memory": CONTAINER_SETTINGS['kubernetes']['resources']['max_memory'],
+#             "avail_gpu": CONTAINER_SETTINGS['kubernetes']['resources']['max_gpu'],
+#                })
+#        logger.debug(f"fetch {node} -> {resp}")
+#        self.send(text_data = json.dumps(resp))
 
 
 

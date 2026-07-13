@@ -1,9 +1,9 @@
 {% load container_runtime %}
 {% runtime_for container as runtime %}
 {% compute_for container as compute %}
+{% load container_buttons %}
 
 {# these may not be needed #}
-{% load container_buttons %}
 {% load check_show %}
 
 <div
@@ -12,7 +12,7 @@
   data-id="{{ container.id }}"
 >
   <div class="card-header d-flex justify-content-start align-items-center border-success">
-    {% button_open container %}
+    {% include "container/partials/widgets/open_service_button.html" with container=container runtime=runtime service_views=container.views only %}
 
     {% include "ui/widgets/editable_text/display.html" with dom_id=container.name_dom_id value=container.name edit_url=container.name_edit_url %}
 
@@ -40,7 +40,7 @@
       </div>
 
       <div class="col-md-6 d-flex flex-column">
-        {% include "container/partials/widgets/log_display.html" with container=container only %}
+        {% include "container/partials/widgets/fetchlog_button.html" with container=container runtime=runtime only %}
         {% include "container/partials/widgets/compute_display.html" with container=container compute=compute only %}
         {% include "container/partials/widgets/uptime_display.html" with container=container runtime=runtime only %}
       </div>

@@ -34,7 +34,6 @@ class ContainerListView(
             "container_page_config": {
                 "userid": self.request.user.id,
                 "wss": {
-                    "fetchlog": CONTAINER_SETTINGS.wss.fetchlog.format(user=self.request.user),
                     "monitor_node": CONTAINER_SETTINGS.wss.monitor_node.format(user=self.request.user),
                 },
                 "configure_request": "configure-container",
