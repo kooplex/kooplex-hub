@@ -1,5 +1,6 @@
 {% load container_runtime %}
 {% runtime_for container as runtime %}
+{% compute_for container as compute %}
 
 {# these may not be needed #}
 {% load container_buttons %}
@@ -39,11 +40,9 @@
       </div>
 
       <div class="col-md-6 d-flex flex-column">
-        <div>
-		{% include "container/resources.html" %} {# FIXME #}
-        </div>
-
-	{% include "container/partials/widgets/uptime_display.html" with container=container runtime=runtime only %}
+        {% include "container/partials/widgets/log_display.html" with container=container only %}
+        {% include "container/partials/widgets/compute_display.html" with container=container compute=compute only %}
+        {% include "container/partials/widgets/uptime_display.html" with container=container runtime=runtime only %}
       </div>
     </div>
   </div>

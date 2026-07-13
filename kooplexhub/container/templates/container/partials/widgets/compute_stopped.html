@@ -1,0 +1,74 @@
+<div class="compute-metric-row">
+  <span class="compute-metric-icon" aria-hidden="true">
+    <i class="bi bi-cpu"></i>
+  </span>
+
+  <span class="compute-metric-body">
+    <span class="compute-metric-heading">
+      <span>CPU</span>
+      <strong>{{ compute.requested_cpu|floatformat:"-1" }}</strong>
+    </span>
+
+    <span class="compute-static-track">
+      <span
+        class="compute-static-fill"
+        style="width: {{ compute.cpu_setting_percent }}%;"
+      ></span>
+
+      <span
+        class="compute-static-thumb"
+        style="left: {{ compute.cpu_setting_percent }}%;"
+      ></span>
+    </span>
+  </span>
+</div>
+
+<div class="compute-metric-row">
+  <span class="compute-metric-icon" aria-hidden="true">
+    <i class="bi bi-memory"></i>
+  </span>
+
+  <span class="compute-metric-body">
+    <span class="compute-metric-heading">
+      <span>Memory</span>
+      <strong>{{ compute.requested_memory|floatformat:"-1" }} GiB</strong>
+    </span>
+
+    <span class="compute-static-track">
+      <span
+        class="compute-static-fill"
+        style="width: {{ compute.memory_setting_percent }}%;"
+      ></span>
+
+      <span
+        class="compute-static-thumb"
+        style="left: {{ compute.memory_setting_percent }}%;"
+      ></span>
+    </span>
+  </span>
+</div>
+
+<div class="compute-metric-row">
+  <span class="compute-metric-icon" aria-hidden="true">
+    <i class="bi bi-gpu-card"></i>
+  </span>
+
+  <span class="compute-metric-body">
+    <span class="compute-metric-heading">
+      <span>GPU</span>
+      <strong>{{ compute.requested_gpu }}</strong>
+    </span>
+
+    <span class="compute-static-track">
+      <span
+        class="compute-static-fill"
+        style="width: {{ compute.gpu_setting_percent }}%;"
+      ></span>
+
+      <span
+        class="compute-static-thumb"
+        style="left: {{ compute.gpu_setting_percent }}%;"
+      ></span>
+    </span>
+  </span>
+</div>

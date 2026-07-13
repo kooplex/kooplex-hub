@@ -1,0 +1,135 @@
+<div
+  id="container-compute-{{ container.pk }}"
+  class="compute-widget compute-widget-editing"
+>
+  <form
+    hx-post="{% url 'container:compute_update' container.pk %}"
+    hx-target="#container-compute-{{ container.pk }}"
+    hx-swap="outerHTML"
+  >
+    {% csrf_token %}
+
+    <div class="compute-edit-row">
+      <div class="compute-edit-heading">
+        <label for="compute-cpu-{{ container.pk }}">
+          CPU
+        </label>
+
+        <output id="compute-cpu-output-{{ container.pk }}">
+          {{ compute.requested_cpu|floatformat:"-1" }}
+        </output>
+      </div>
+
+      <input
+        id="compute-cpu-{{ container.pk }}"
+        class="form-range"
+        type="range"
+        name="requested_cpu_m"
+        min="{{ compute.limits.cpu_min }}"
+        max="{{ compute.limits.cpu_max }}"
+        step="{{ compute.limits.cpu_step }}"
+        value="{{ compute.requested_cpu }}"
+        oninput="
+          document.getElementById(
+            'compute-cpu-output-{{ container.pk }}'
+          ).value = this.value;
+        "
+      >
+
+      <div class="compute-range-labels">
+        <span>{{ compute.limits.cpu_min }}</span>
+        <span>{{ compute.limits.cpu_max }}</span>
+      </div>
+    </div>
+
+    <div class="compute-edit-row">
+      <div class="compute-edit-heading">
+        <label for="compute-memory-{{ container.pk }}">
+          Memory
+        </label>
+
+        <output id="compute-memory-output-{{ container.pk }}">
+          {{ compute.requested_memory|floatformat:"-1" }} GiB
+        </output>
+      </div>
+
+      <input
+        id="compute-memory-{{ container.pk }}"
+        class="form-range"
+        type="range"
+        name="requested_memory_mib"
+        min="{{ compute.limits.memory_min }}"
+        max="{{ compute.limits.memory_max }}"
+        step="{{ compute.limits.memory_step }}"
+        value="{{ compute.requested_memory }}"
+        oninput="
+          document.getElementById(
+            'compute-memory-output-{{ container.pk }}'
+          ).value = this.value + ' GiB';
+        "
+      >
+
+      <div class="compute-range-labels">
+        <span>{{ compute.limits.memory_min }} GiB</span>
+        <span>{{ compute.limits.memory_max }} GiB</span>
+      </div>
+    </div>
+
+    <div class="compute-edit-row">
+      <div class="compute-edit-heading">
+        <label for="compute-gpu-{{ container.pk }}">
+          GPU
+        </label>
+
+        <output id="compute-gpu-output-{{ container.pk }}">
+          {{ compute.requested_gpu }}
+        </output>
+      </div>
+
+      <input
+        id="compute-gpu-{{ container.pk }}"
+        class="form-range"
+        type="range"
+        name="requested_gpu"
+        min="{{ compute.limits.gpu_min }}"
+        max="{{ compute.limits.gpu_max }}"
+        step="{{ compute.limits.gpu_step }}"
+        value="{{ compute.requested_gpu }}"
+        oninput="
+          document.getElementById(
+            'compute-gpu-output-{{ container.pk }}'
+          ).value = this.value;
+        "
+      >
+
+      <div class="compute-range-labels">
+        <span>{{ compute.limits.gpu_min }}</span>
+        <span>{{ compute.limits.gpu_max }}</span>
+      </div>
+    </div>
+
+    {% if errors %}
+      <div class="alert alert-danger py-2 mt-2 mb-0">
+        {% for error in errors %}
+          <div>{{ error }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <div class="compute-edit-actions">
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-secondary"
+        hx-get="{% url 'container:compute_display' container.pk %}"
+        hx-target="#container-compute-{{ container.pk }}"
+        hx-swap="outerHTML"
+      >
+        Cancel
+      </button>
+
+      <button type="submit" class="btn btn-sm btn-primary">
+        Save
+      </button>
+    </div>
+  </form>
+</div>

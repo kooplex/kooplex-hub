@@ -1,24 +1,15 @@
 import logging
 import json
-import threading
 
 from asgiref.sync import sync_to_async
-from django.utils.html import format_html
-from django.core.exceptions import ValidationError
-from django.template.loader import render_to_string
 
-from django.db.models.query import QuerySet
 from container.models import Container
-from project.models import Project, ProjectContainerBinding
-from education.models import Course, CourseContainerBinding
-from volume.models import Volume, VolumeContainerBinding
 
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
 from .lib import Cluster
 
 from .tasks import *
-from .models import Image
 
 from hub.util import SyncSkeleton, AsyncSkeleton
 
@@ -26,171 +17,6 @@ from .conf import CONTAINER_SETTINGS
 
 logger = logging.getLogger(__name__)
 
-##############################################
-from django.db import transaction
-from django.db import models
-
-# which fields touch which fragments
-FRAG_BY_FIELD = {
-    "name": {"name"},
-    "image": {"image", "restarter"},
-    "start_teleport": {"teleport", "restarter"},
-    "start_seafile": {"seafile", "restarter"},
-    "state": {"stateindicator", "logfetcher"},
-    "state_backend": {"stateindicator", "logfetcher"},
-    "restart_reasons": {"restarter"},
-    "node": {"node", "restarter"},
-    "cpurequest": {"cpu", "restarter"},
-    "cpuusage": {"cpu"},
-    "gpurequest": {"gpu", "restarter"},
-    "memoryrequest": {"mem", "restarter"},
-    "memoryusage": {"mem"},
-    "idletime": {"idle", "restarter"},
-    "idle": {"idle"},
-    "projects": {"projects", "restarter"},
-    "courses": {"courses", "restarter"},
-    "volumes": {"volumes", "restarter"},
-}
-
-def fragments_for(changes):
-    targets = set()
-    for fld in changes.keys():
-        targets |= FRAG_BY_FIELD.get(fld, set())
-    return targets
-
-def render_fragment(key, **kw):
-    if obj:=kw.get('obj'):
-        pk=obj.pk
-        ctx={
-            'pk': pk,
-            'container': obj,
-        }
-    else:
-        pk=None
-        ctx={
-            'pk': pk,
-            'value': kw.get('value'),
-        }
-    error=kw.get('errors')
-#DEPRECATED    if key == "name":
-#DEPRECATED        from .templatetags.container_tags import render_name
-#DEPRECATED        if error:
-#DEPRECATED            ctx.update({
-#DEPRECATED                'error': ', '.join(error['name']),
-#DEPRECATED                'original_value': kw.get('original_value'),
-#DEPRECATED            })
-#DEPRECATED        html=render_name(**ctx)
-#DEPRECATED        ref=f"[data-name=name][data-pk={pk}][data-model=container]"
-#DEPRECATED        return ref, html
-    if key == "image":
-        from .templatetags.container_buttons import button_image
-        html=button_image(obj, 'container', 'image', **ctx)
-        ref=f"[data-name=image][data-pk={pk}][data-model=container]"
-        return ref, html
-    if key == "seafile":
-        from .templatetags.container_buttons import button_seafile
-        html=button_seafile(**ctx)
-        ref=f"[data-name=start_seafile][data-pk={pk}][data-model=container]"
-        return ref, html
-    if key == "teleport":
-        from .templatetags.container_buttons import button_teleport
-        html=button_teleport(**ctx)
-        ref=f"[data-name=start_teleport][data-pk={pk}][data-model=container]"
-        return ref, html
-    if key == "node":
-        html=render_to_string("container/resources/node.html", {'container': obj})
-        ref=f"[data-pk={pk}][data-name=node]"
-        return ref, html
-    if key == "cpu":
-        html=render_to_string("container/resources/cpu.html", {'container': obj})
-        ref=f"[data-pk={pk}][data-name=cpu]"
-        return ref, html
-    if key == "gpu":
-        html=render_to_string("container/resources/gpu.html", {'container': obj})
-        ref=f"[data-pk={pk}][data-name=gpu]"
-        return ref, html
-    if key == "mem":
-        html=render_to_string("container/resources/memory.html", {'container': obj})
-        ref=f"[data-pk={pk}][data-name=memory]"
-        return ref, html
-    if key == "idle":
-        html=render_to_string("container/resources/idle.html", {'container': obj})
-        ref=f"[data-pk={pk}][data-name=idletime]"
-        return ref, html
-    if key == "projects":
-        from .templatetags.container_buttons import button_mount_projects
-        html=button_mount_projects(**ctx)
-        ref=f"[data-name=projects][data-pk={pk}][data-model=container]"
-        return ref, html
-    if key == "courses":
-        from .templatetags.container_buttons import button_mount_courses
-        html=button_mount_courses(**ctx)
-        ref=f"[data-name=courses][data-pk={pk}][data-model=container]"
-        return ref, html
-    if key == "volumes":
-        from .templatetags.container_buttons import button_mount_volumes
-        html=button_mount_volumes(**ctx)
-        ref=f"[data-name=volumes][data-pk={pk}][data-model=container]"
-        return ref, html
-
-    if key == "restarter":
-        html=render_to_string("container/button/restart.html", {'container': obj})
-        ref=f"[data-action=restart][data-pk={pk}]"
-        return ref, html
-
-    raise KeyError(key)
-
-@transaction.atomic
-def update_fragments(model_cls, pk, changes, field_map=None, fk_hooks=None):
-    obj = model_cls.objects.select_for_update().get(pk=pk)
-    originals={}
-    field_map = field_map or {}
-    fk_hooks = fk_hooks or {}
-    for key, val in changes.items():
-        fld = field_map.get(key, key)
-        if not hasattr(obj, fld):
-            continue
-        if fld in fk_hooks:
-            getter, setter = fk_hooks[fld]
-            originals[fld] = getter(obj)
-            setter(obj, val)
-            continue
-        field_obj = model_cls._meta.get_field(fld)
-        if isinstance(field_obj, models.ForeignKey):
-            originals[fld] = getattr(obj, fld + "_id")
-            setattr(obj, fld + "_id", val)
-        else:
-            originals[fld]=getattr(obj, fld)
-            setattr(obj, fld, val)
-
-    try:
-        obj.full_clean()
-    except ValidationError as e:
-        keys = fragments_for(changes)
-        replace = dict([
-            render_fragment(
-                k, 
-                obj=obj, 
-                original_value=originals[field_map.get(k, k)], 
-                errors=e.message_dict,
-            )
-            for k in keys 
-        ])
-        return {"replace_widgets": replace}
-
-    obj.save()
-
-    keys = fragments_for(changes)
-    replace = dict([
-        render_fragment(
-            k,
-            obj=obj,
-            original_value=originals.get(field_map.get(k, k))
-        )
-        for k in keys
-    ])
-    return {"replace_widgets": replace}
-##############################################
 
 
 class CSyncSkeleton(SyncSkeleton):

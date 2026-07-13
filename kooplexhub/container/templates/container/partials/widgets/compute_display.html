@@ -1,0 +1,29 @@
+<div
+  id="container-compute-{{ container.pk }}"
+  class="compute-widget"
+  data-live-key="container-runtime:{{ container.pk }}"
+  data-live-url="{% url 'container:compute_display' container.pk %}"
+  data-live-swap="outerHTML"
+>
+  <div
+    class="
+      compute-display
+      {% if compute.is_editable %}is-editable{% endif %}
+    "
+    {% if compute.is_editable %}
+      role="button"
+      tabindex="0"
+      aria-label="Configure compute resources"
+      hx-get="{% url 'container:compute_edit' container.pk %}"
+      hx-target="#container-compute-{{ container.pk }}"
+      hx-swap="outerHTML"
+      hx-trigger="click, keyup[key=='Enter'], keyup[key==' ']"
+    {% endif %}
+  >
+    {% if compute.is_running %}
+      {% include "container/partials/widgets/compute_running.html" %}
+    {% else %}
+      {% include "container/partials/widgets/compute_stopped.html" %}
+    {% endif %}
+  </div>
+</div>

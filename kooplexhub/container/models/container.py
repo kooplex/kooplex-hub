@@ -2,7 +2,10 @@ import logging
 
 from django.db import models
 from django.urls import reverse
-from django.core.validators import MinLengthValidator
+from django.core.validators import (
+    MinLengthValidator,
+    MinValueValidator,
+)
 
 from .image import Image
 from .envvar import EnvVarMapping
@@ -26,10 +29,63 @@ class Container(models.Model):
         ERROR = 'oops', 'Error occured'
         STOPPING = 'stopping', 'Stopping...'
 
-    name = models.CharField(max_length = 200, null = False, validators=[ MinLengthValidator(3, message="Name must be at least 3 characters.") ])
+    name = models.CharField(
+        max_length = 200, 
+        null = False, 
+        validators=[ 
+            MinLengthValidator(3, message="Name must be at least 3 characters."), 
+        ],
+    )
     label = models.CharField(max_length = 200, null = False, unique = True)
     user = models.ForeignKey(User, on_delete = models.CASCADE, null = False)
     image = models.ForeignKey(Image, on_delete = models.CASCADE, null = False)
+
+    requested_cpu_m = models.DecimalField(
+        null=True,
+        blank=True,
+        decimal_places=1,
+        max_digits=7,
+        default=CONTAINER_SETTINGS.kubernetes.resources.default_cpu,
+        validators=[MinValueValidator(0)],
+    )
+    
+    cpu_usage_m = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        default=None,
+    )
+    
+    requested_gpu = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        default=CONTAINER_SETTINGS.kubernetes.resources.default_gpu,
+    )
+    
+    requested_memory_mib = models.DecimalField(
+        null=True,
+        blank=True,
+        decimal_places=1,
+        max_digits=8,
+        default=CONTAINER_SETTINGS.kubernetes.resources.default_memory,
+        validators=[MinValueValidator(0)],
+    )
+    
+    memory_usage_mib = models.DecimalField(
+        null=True,
+        blank=True,
+        decimal_places=1,
+        max_digits=10,
+        default=None,
+        validators=[MinValueValidator(0)],
+    )
+    
+    resource_usage_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        default=None,
+    )
+
+
     launched_at = models.DateTimeField(null = True, blank = True)
     start_teleport = models.BooleanField(default = False)
     start_ssh = models.BooleanField(default = False)#FIXME: is it really used somewhere????
@@ -55,11 +111,7 @@ class Container(models.Model):
         blank=True,
         help_text="Observed Kubernetes node where the pod is currently running. Updated by watcher.",
     )
-    requested_cpu_m = models.DecimalField(null = True, blank = True, decimal_places=1, max_digits=7, default=CONTAINER_SETTINGS.kubernetes.resources.default_cpu)
-    cpuusage = models.DecimalField(null = True, blank = True, decimal_places=1, max_digits=7, default=None)
-    requested_gpu = models.IntegerField(null = True, blank = True, default=CONTAINER_SETTINGS.kubernetes.resources.default_gpu)
-    requested_memory_mib = models.DecimalField( null = True, blank = True, decimal_places=1, max_digits=8, default=CONTAINER_SETTINGS.kubernetes.resources.default_memory)
-    memoryusage = models.DecimalField(null = True, blank = True, decimal_places=1, max_digits=8, default=None)
+
     requested_uptime_hours = models.IntegerField( null = True, blank = True, default=CONTAINER_SETTINGS.kubernetes.resources.default_idletime)
     idle = models.IntegerField( null = True, blank = True, default=None)
 
@@ -269,86 +321,66 @@ class Container(models.Model):
         return None
 
 
+    def clear_runtime_measurements(self) -> None:
+        """Clear ephemeral measurements when no running Pod is being measured."""
+        self.cpu_usage_m = None
+        self.memory_usage_mib = None
+        self.resource_usage_at = None
+        self.idle = None
+
+
     def start(self):
-        from ..tasks import start_container
-
+        from container.tasks import start_container
+    
         self.require_running = True
-        self.restart_reasons = None
-
-        if self.state in [
-            self.State.NOTPRESENT,
-            self.State.ERROR,
-        ]:
-            self.state = self.State.STARTING
-
-        self.save(
-            update_fields=[
-                "require_running",
-                "restart_reasons",
-                "state",
-            ]
-        )
-
-        start_container(self.user.id, self.id)
-
+        self.restart_reasons = []
+        self.save(update_fields=["require_running", "restart_reasons"])
+        return start_container(self.user_id, self.pk)
+    
+    
     def stop(self):
-        from ..tasks import stop_container
-
+        from container.tasks import stop_container
+    
         self.require_running = False
-        self.restart_reasons = None
-        self.cpuusage = None
-        self.memoryusage = None
-        self.idle = None
-
-        if self.state != self.State.NOTPRESENT:
-            self.state = self.State.STOPPING
-
+        self.restart_reasons = []
+        self.clear_runtime_measurements()
         self.save(
             update_fields=[
                 "require_running",
                 "restart_reasons",
-                "cpuusage",
-                "memoryusage",
+                "cpu_usage_m",
+                "memory_usage_mib",
+                "resource_usage_at",
                 "idle",
-                "state",
             ]
         )
-
-        self.removeroutes()
-        stop_container(self.user.id, self.id)
-
+        return stop_container(self.user_id, self.pk)
+    
+    
     def restart(self):
-        from ..tasks import stop_container
-
+        from container.tasks import restart_container
+    
         self.require_running = True
-        self.restart_reasons = None
-        self.cpuusage = None
-        self.memoryusage = None
-        self.idle = None
-
-        if self.state in [
-            self.State.RUNNING,
-            self.State.NEED_RESTART,
-            self.State.ERROR,
-        ]:
-            self.state = self.State.STOPPING
-
+        self.restart_reasons = []
+        self.clear_runtime_measurements()
         self.save(
             update_fields=[
                 "require_running",
                 "restart_reasons",
-                "cpuusage",
-                "memoryusage",
+                "cpu_usage_m",
+                "memory_usage_mib",
+                "resource_usage_at",
                 "idle",
-                "state",
             ]
         )
-
-        stop_container(self.user.id, self.id)
-
+        return restart_container(self.user_id, self.pk)
+    
+    
     def retrieve_log(self):
-        from ..lib import fetch_containerlog
-        return fetch_containerlog(self)
+        from container.services.kubernetes.wiring import build_pod_operations
+    
+        return build_pod_operations().logs_for_container(self)
+
 
     @property
     def is_running(self):

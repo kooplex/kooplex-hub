@@ -1,0 +1,84 @@
+{% with metric=compute.cpu %}
+  <div class="compute-metric-row">
+    <span class="compute-metric-icon" aria-hidden="true">
+      <i class="bi bi-cpu"></i>
+    </span>
+
+    <span class="compute-metric-body">
+      <span class="compute-metric-heading">
+        <span>CPU</span>
+        <strong>{{ metric.usage_label }}</strong>
+      </span>
+
+      <span
+        class="compute-runtime-progress compute-runtime-progress-{{ metric.level }}"
+        role="progressbar"
+        aria-valuenow="{{ metric.width_percentage }}"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        title="{{ metric.usage_label }}"
+      >
+        <span
+          class="compute-runtime-fill"
+          style="width: {{ metric.width_percentage }}%;"
+        ></span>
+      </span>
+    </span>
+  </div>
+{% endwith %}
+
+{% with metric=compute.memory %}
+  <div class="compute-metric-row">
+    <span class="compute-metric-icon" aria-hidden="true">
+      <i class="bi bi-memory"></i>
+    </span>
+
+    <span class="compute-metric-body">
+      <span class="compute-metric-heading">
+        <span>Memory</span>
+        <strong>{{ metric.usage_label }}</strong>
+      </span>
+
+      <span
+        class="compute-runtime-progress compute-runtime-progress-{{ metric.level }}"
+        role="progressbar"
+        aria-valuenow="{{ metric.width_percentage }}"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        title="{{ metric.usage_label }}"
+      >
+        <span
+          class="compute-runtime-fill"
+          style="width: {{ metric.width_percentage }}%;"
+        ></span>
+      </span>
+    </span>
+  </div>
+{% endwith %}
+
+<div class="compute-metric-row">
+  <span class="compute-metric-icon" aria-hidden="true">
+    <i class="bi bi-gpu-card"></i>
+  </span>
+
+  <span class="compute-metric-body">
+    <span class="compute-metric-heading">
+      <span>GPU</span>
+      <strong>{{ compute.requested_gpu }}</strong>
+    </span>
+
+    <span
+      class="compute-runtime-progress compute-runtime-progress-normal"
+      role="progressbar"
+      aria-valuenow="{{ compute.gpu_setting_percent }}"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      title="{{ compute.requested_gpu }} GPU requested"
+    >
+      <span
+        class="compute-runtime-fill"
+        style="width: {{ compute.gpu_setting_percent }}%;"
+      ></span>
+    </span>
+  </span>
+</div>

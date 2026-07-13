@@ -1,7 +1,7 @@
 from .create import (
     ContainerCreateForm,
 )
-from .widget import (
+from .widgets import (
     ContainerNameForm,
     ContainerUptimeForm,
 )

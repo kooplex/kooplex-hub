@@ -116,6 +116,21 @@ urlpatterns = [
         views.ContainerMountsSaveView.as_view(), 
         name="mounts_save",
     ),
+    path(
+        "<int:pk>/compute/display/",
+        views.ContainerComputeDisplayView.as_view(),
+        name="compute_display",
+    ),
+    path(
+        "<int:pk>/compute/edit/",
+        views.ContainerComputeEditView.as_view(),
+        name="compute_edit",
+    ),
+    path(
+        "<int:pk>/compute/update/",
+        views.ContainerComputeUpdateView.as_view(),
+        name="compute_update",
+    ),
 
     # container live widgets and action (htmx endpoints)s
     path(

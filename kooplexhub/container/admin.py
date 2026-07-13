@@ -54,8 +54,8 @@ class ContainerAdmin(admin.ModelAdmin):
         "runtime_node",
         "state_backend",
         "state_lastcheck_at",
-        "cpuusage",
-        "memoryusage",
+        "cpu_usage_m",
+        "memory_usage_mib",
         "idle",
     ]
 

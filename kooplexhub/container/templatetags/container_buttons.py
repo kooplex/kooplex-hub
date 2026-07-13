@@ -13,6 +13,7 @@ from django.templatetags.static import static
 
 register = template.Library()
 
+
 def inclusion_tag_ex(template_name, **tag_kwargs):
     """
     Extended inclusion_tag that:
@@ -71,12 +72,42 @@ def button_stop(container):
 def button_fetchlogs(container):
     return {"container": container}
 
-@register.simple_tag
-def button_image(obj=None, model=None, attr="image", **kwargs):
-    return render_to_string("container/button/image.html", {
-        "pk": getattr(obj, 'pk', None), "image": getattr(obj, attr, kwargs.get('value')), "model": model, "attr": attr,
-        "disabled": kwargs.get("disabled", "")
-        })
+@register.simple_tag(takes_context=True)
+def button_image(
+    context,
+    obj=None,
+    model=None,
+    attr="image",
+    value=None,
+    disabled="",
+    **kwargs,
+):
+    pk = getattr(obj, "pk", None)
+
+    if obj is not None:
+        image = getattr(obj, attr, value)
+    else:
+        image = value
+
+
+    image_modal_url = (
+        getattr(obj, "image_modal_url", None)
+        if pk and not disabled
+        else None
+    )
+
+    return render_to_string(
+        "container/button/image.html",
+        {
+            "pk": pk,
+            "image": image,
+            "model": model,
+            "attr": attr,
+            "disabled": disabled,
+            "image_modal_url": image_modal_url,
+        },
+        request=context.get("request"),
+    )
 
 @inclusion_tag_ex("container/button/open.html")
 def button_open(container):
@@ -114,46 +145,40 @@ def button_seafile(container=None, **kwargs):
         'icon': static('container/img/seafile.png')
     })
 
-@register.simple_tag
-def button_mount_projects(container=None, **kwargs):
-    ids=getattr(container, 'projects', kwargs.get('value', []))
-    logger.critical(ids)
-    return render_to_string("container/button/resource_attribute.html", {
-        "pk": getattr(container, 'pk', None),
-        "attribute": "projects",
-        "hidden": not ids,
-        "icon": "ri-product-hunt-line",
-        "value": list(map(lambda x: getattr(x, 'pk', x), ids)),
-        "caption": len(ids),
-    })
 
-@register.simple_tag
-def button_mount_courses(container=None, **kwargs):
-    ids=getattr(container, 'courses', kwargs.get('value', []))
-    return render_to_string("container/button/resource_attribute.html", {
-        "pk": getattr(container, 'pk', None),
-        "attribute": "courses",
-        "hidden": not ids,
-        "icon": "ri-copyright-line",
-        "value": list(map(lambda x: getattr(x, 'pk', x), ids)),
-        "caption": len(ids),
-    })
+@register.simple_tag(takes_context=True)
+def button_mount(context, obj=None, disabled="", **kwargs):
+    pk = getattr(obj, "pk", None)
 
-@register.simple_tag
-def button_mount_volumes(container=None, **kwargs):
-    ids=getattr(container, 'volumes', kwargs.get('value', []))
-    return render_to_string("container/button/resource_attribute.html", {
-        "pk": getattr(container, 'pk', None),
-        "attribute": "volumes",
-        "hidden": not ids,
-        "icon": "ri-database-2-line",
-        "value": list(map(lambda x: getattr(x, 'pk', x), ids)),
-        "caption": len(ids),
-    })
+    mounts_modal_url = (
+        getattr(obj, "mounts_modal_url", None)
+        if pk and not disabled
+        else None
+    )
 
-@register.simple_tag
-def button_mount(container):
-    return render_to_string("container/button/mount.html", {"container": container})
+    mount_summary = getattr(obj, "mount_summary", None)
+    if callable(mount_summary):
+        mount_summary = mount_summary()
+
+    if mount_summary is None:
+        mount_summary = {
+            "project_count": 0,
+            "course_count": 0,
+            "volume_count": 0,
+            "tooltip": "No custom mounts.",
+        }
+
+    return render_to_string(
+        "container/button/mount.html",
+        {
+            "obj": obj,
+            "disabled": disabled,
+            "mounts_modal_url": mounts_modal_url,
+            "mount_summary": mount_summary,
+        },
+        request=context.get("request"),
+    )
+
 
 @register.simple_tag
 def button_resource_node(container=None, **kwargs):
@@ -200,17 +225,17 @@ def button_resource_memoryrequest(container=None, **kwargs):
         "unit": "GB",
     })
 
-@register.simple_tag
-def button_resource_idletime(container=None, **kwargs):
-    idletime = getattr(container, 'idletime', kwargs.get('value'))
-    return render_to_string("container/button/resource_attribute.html", {
-        "pk": getattr(container, 'pk', None),
-        "attribute": "idletime",
-        "hidden": not idletime,
-        "icon": "bi bi-clock-history",
-        "value": idletime,
-        "unit": "h",
-    })
+#@register.simple_tag
+#def button_resource_idletime(container=None, **kwargs):
+#    idletime = getattr(container, 'idletime', kwargs.get('value'))
+#    return render_to_string("container/button/resource_attribute.html", {
+#        "pk": getattr(container, 'pk', None),
+#        "attribute": "idletime",
+#        "hidden": not idletime,
+#        "icon": "bi bi-clock-history",
+#        "value": idletime,
+#        "unit": "h",
+#    })
 
 @register.simple_tag
 def button_view(view, container, show_name=False):
