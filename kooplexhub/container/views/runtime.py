@@ -170,17 +170,6 @@ class ContainerDeleteView(
         return redirect("container:list")
 
 
-class ContainerFetchlogButtonPartialView(
-    LoginRequiredMixin,
-    ContainerRuntimePartialMixin,
-    TemplateView,
-):
-    template_name = "container/partials/widgets/fetchlog_button.html"
-
-    def get_context_data(self, **kwargs):
-        return self.get_runtime_context()
-
-
 class ContainerFetchLogModalView(
     LoginRequiredMixin,
     ContainerAccessMixin,

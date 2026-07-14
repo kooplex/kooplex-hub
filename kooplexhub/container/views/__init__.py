@@ -26,7 +26,7 @@ from .runtime import (
     ContainerFetchLogModalView,
     ContainerFetchLogView,
 )
-from .widget import (
+from .widgets import (
     ContainerNameDisplayView,
     ContainerNameEditView,
     ContainerNameUpdateView,
