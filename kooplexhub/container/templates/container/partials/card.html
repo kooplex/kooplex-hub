@@ -1,41 +1,28 @@
 {% load container_runtime %}
 {% runtime_for container as runtime %}
 {% compute_for container as compute %}
-{% load container_buttons %}
 
-{# these may not be needed #}
-{% load check_show %}
-
-<div
-  class="card bg-light shadow-2-strong border border-3 shadow-light border-success mb-3"
-  data-widget="containercard"
-  data-id="{{ container.id }}"
->
+<div class="card bg-light shadow-2-strong border border-3 shadow-light border-success mb-3">
   <div class="card-header d-flex justify-content-start align-items-center border-success">
     {% include "container/partials/widgets/open_service_button.html" with container=container runtime=runtime service_views=container.views only %}
-
-    {% include "ui/widgets/editable_text/display.html" with dom_id=container.name_dom_id value=container.name edit_url=container.name_edit_url %}
-
+    {% include "ui/widgets/editable_text/display.html" with dom_id=container.name_dom_id value=container.name edit_url=container.name_edit_url only %}
     <div class="flex-grow-1"></div>
-
-    {% include "container/partials/widgets/stop_button.html" %}
+    {% include "container/partials/widgets/stop_button.html" with container=container runtime=runtime only %}
   </div>
 
   <div class="card-body">
     <div class="row">
       <div class="col-md-6">
         <div class="d-flex align-items-center mb-3">
-          {#% button_teleport container %#}
-          {% button_image container "container" "image" %}
+          {% include "container/partials/widgets/image_button.html" with container=container only %}
         </div>
 
         <div class="d-flex mb-3">
-          {#% button_seafile container %#}
-          {% button_mount container %}
+	  {% include "container/partials/widgets/mount_button.html" with container=container mount_summary=container.mount_summary only %}
         </div>
 
         <div>
-          {% include "container/partials/widgets/restart_button.html" %}
+          {% include "container/partials/widgets/restart_button.html" with container=container runtime=runtime only %}
         </div>
       </div>
 
@@ -48,7 +35,7 @@
   </div>
 
   <div class="card-footer d-flex justify-content-between border-success">
-    {% include "container/partials/widgets/start_button.html" %}
-    {% include "container/button/delete.html" %}
+    {% include "container/partials/widgets/start_button.html" with container=container runtime=runtime only %}
+    {% include "container/partials/delete_button.html" with container=container only %}
   </div>
 </div>

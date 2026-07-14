@@ -1,0 +1,14 @@
+<button
+  type="button"
+  class="badge rounded-pill border border-dark text-dark p-2"
+  {% if container.image_modal_url %}
+    hx-get="{{ container.image_modal_url }}"
+    hx-target="#modal-root"
+    hx-swap="innerHTML"
+  {% else %}
+    disabled
+  {% endif %}
+>
+  <i class="bi bi-box me-1" aria-hidden="true"></i>
+  {{ container.image.short_name|default:"Select image" }}
+</button>

@@ -1,0 +1,35 @@
+<button
+  type="button"
+  class="mount-button badge rounded-pill border border-dark text-dark p-2"
+  title="{{ mount_summary.tooltip }}"
+  {% if container.mounts_modal_url %}
+    hx-get="{{ container.mounts_modal_url }}"
+    hx-target="#modal-root"
+    hx-swap="innerHTML"
+  {% else %}
+    disabled
+  {% endif %}
+>
+  <i class="bi bi-folder me-1" aria-hidden="true"></i>
+
+  {% if mount_summary.project_count %}
+    <span class="mount-count">
+      <i class="bi bi-kanban"></i>
+      {{ mount_summary.project_count }}
+    </span>
+  {% endif %}
+
+  {% if mount_summary.course_count %}
+    <span class="mount-count">
+      <i class="bi bi-journal-bookmark"></i>
+      {{ mount_summary.course_count }}
+    </span>
+  {% endif %}
+
+  {% if mount_summary.volume_count %}
+    <span class="mount-count">
+      <i class="bi bi-hdd"></i>
+      {{ mount_summary.volume_count }}
+    </span>
+  {% endif %}
+</button>

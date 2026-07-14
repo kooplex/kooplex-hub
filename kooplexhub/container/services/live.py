@@ -74,12 +74,11 @@ def broadcast_container_runtime_changed(
     if actor is not None and getattr(actor, "is_authenticated", False):
         payload["actor_id"] = actor.pk
 
+    users = audience or get_container_runtime_audience(container)
+
     keys = [
         f"container-runtime:{container.pk}",
-        f"container:{container.pk}",
     ]
-
-    users = audience or get_container_runtime_audience(container)
 
     for user in users:
         broadcast_container_live_event(

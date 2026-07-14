@@ -53,7 +53,7 @@ def kill_idle() -> None:
                 (observed_at - last_activity).total_seconds() / 3600.0,
             )
 
-            idle_limit = container.idletime
+            idle_limit = container.requested_uptime_hours
 
             if idle_limit is not None and idle_hours > idle_limit:
                 logger.info(

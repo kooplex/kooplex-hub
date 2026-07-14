@@ -1,0 +1,73 @@
+<div
+  id="containerFetchLogModal"
+  class="modal fade"
+  tabindex="-1"
+  aria-labelledby="containerFetchLogModalTitle"
+  aria-hidden="true"
+  data-auto-show-modal
+>
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h5
+            id="containerFetchLogModalTitle"
+            class="modal-title"
+          >
+            Environment log
+          </h5>
+
+          <div class="text-muted small">
+            {{ container.name }}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+
+      <div
+        id="container-fetchlog-content-{{ container.pk }}"
+        class="modal-body"
+        hx-get="{% url 'container:fetchlog' container.pk %}"
+        hx-trigger="load"
+        hx-swap="innerHTML"
+      >
+        <div class="fetchlog-loading">
+          <div
+            class="spinner-border spinner-border-sm"
+            role="status"
+            aria-hidden="true"
+          ></div>
+
+          <span>Retrieving log…</span>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-outline-secondary"
+          hx-get="{% url 'container:fetchlog' container.pk %}"
+          hx-target="#container-fetchlog-content-{{ container.pk }}"
+          hx-swap="innerHTML"
+        >
+          <i class="bi bi-arrow-clockwise me-1"></i>
+          Refresh
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-secondary"
+          data-bs-dismiss="modal"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
