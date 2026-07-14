@@ -30,11 +30,11 @@
       id="container-uptime-input-{{ container.pk }}"
       class="form-range"
       type="range"
-      name="requested_uptime_hours"
-      min="{{ runtime.uptime_min }}"
-      max="{{ runtime.uptime_max }}"
-      step="1"
-      value="{{ runtime.requested_uptime }}"
+      name="{{ form.requested_uptime_hours.html_name }}"
+      min="{{ form.requested_uptime_hours.field.widget.attrs.min }}"
+      max="{{ form.requested_uptime_hours.field.widget.attrs.max }}"
+      step="{{ form.requested_uptime_hours.field.widget.attrs.step }}"
+      value="{{ form.requested_uptime_hours.value }}"
       oninput="
         document.getElementById(
           'container-uptime-output-{{ container.pk }}'

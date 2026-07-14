@@ -1,0 +1,43 @@
+<form
+  id="{{ dom_id }}"
+  class="kooplex-editable-form position-relative"
+  hx-post="{{ update_url }}"
+  hx-target="this"
+  hx-swap="outerHTML">
+
+  <input
+    type="text"
+    name="{{ field_name }}"
+    value="{{ value }}"
+    class="form-control form-control-sm kooplex-editable-input {% if error_text %}is-invalid{% endif %}"
+    autocomplete="off"
+    autofocus>
+
+  <button
+    type="submit" 
+    class="btn btn-sm btn-success kooplex-circle-btn"
+    data-bs-toggle="tooltip"
+    data-bs-title="Save">
+    <i class="bi bi-check-lg"></i>
+  </button>
+
+  <button
+    type="button"
+    class="btn btn-sm btn-danger kooplex-circle-btn"
+    hx-get="{{ cancel_url }}"
+    hx-target="#{{ dom_id }}"
+    hx-swap="outerHTML"
+    data-kooplex-cancel
+    data-bs-toggle="tooltip"
+    data-bs-title="Cancel">
+    <i class="bi bi-x-lg"></i>
+  </button>
+
+  {% if field_errors %}
+    <div class="invalid-feedback d-block kooplex-editable-error">
+      {% for error in field_errors %}
+        <div>{{ error }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+</form>

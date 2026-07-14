@@ -1,0 +1,13 @@
+<span
+  id="{{ dom_id }}"
+  class="kooplex-editable-text"
+  hx-get="{{ edit_url }}"
+  hx-target="this"
+  hx-swap="outerHTML"
+  hx-trigger="click"
+  role="button"
+  tabindex="0"
+  data-bs-toggle="tooltip"
+  data-bs-title="Click to edit">
+  {{ value }}
+</span>

@@ -1,94 +1,95 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import render
-from django.views import View
+import json
 
 from ...forms.widgets import ContainerNameForm
-from ..mixins import ContainerAccessMixin
+from ...services.live import broadcast_container_live_event
+from .base import (
+    ContainerWidgetDisplayView,
+    ContainerWidgetEditView,
+    ContainerWidgetUpdateView,
+)
 
 
-class ContainerNameDisplayView(
-    LoginRequiredMixin,
-    ContainerAccessMixin,
-    View,
-):
-    template_name = "ui/widgets/editable_text/display.html"
+class ContainerNameWidgetMixin:
+    form_class = ContainerNameForm
 
-    def get(self, request, pk):
-        container = self.get_container()
+    display_template_name = "ui/widgets/editable_text/display.html"
+    edit_template_name = "ui/widgets/editable_text/form.html"
 
-        return render(
-            request,
-            self.template_name,
+    def get_display_context(self, container):
+        context = super().get_display_context(container)
+
+        context.update(
             {
                 "dom_id": container.name_dom_id,
                 "value": container.name,
                 "edit_url": container.name_edit_url,
-            },
+            }
         )
 
+        return context
 
-class ContainerNameEditView(
-    LoginRequiredMixin,
-    ContainerAccessMixin,
-    View,
-):
-    template_name = "ui/widgets/editable_text/form.html"
+    def get_edit_context(self, container, form):
+        context = super().get_edit_context(container, form)
 
-    def get(self, request, pk):
-        container = self.get_container()
-
-        return render(
-            request,
-            self.template_name,
+        context.update(
             {
                 "dom_id": container.name_dom_id,
                 "field_name": "name",
-                "value": container.name,
+                "value": form["name"].value(),
                 "update_url": container.name_update_url,
                 "cancel_url": container.name_display_url,
-            },
+                "field_errors": form["name"].errors,
+            }
         )
+
+        return context
+
+
+class ContainerNameDisplayView(
+    ContainerNameWidgetMixin,
+    ContainerWidgetDisplayView,
+):
+    pass
+
+
+class ContainerNameEditView(
+    ContainerNameWidgetMixin,
+    ContainerWidgetEditView,
+):
+    pass
 
 
 class ContainerNameUpdateView(
-    LoginRequiredMixin,
-    ContainerAccessMixin,
-    View,
+    ContainerNameWidgetMixin,
+    ContainerWidgetUpdateView,
 ):
-    display_template_name = "ui/widgets/editable_text/display.html"
-    form_template_name = "ui/widgets/editable_text/form.html"
-
-    def post(self, request, pk):
-        container = self.get_container()
-
-        form = ContainerNameForm(
-            request.POST,
-            instance=container,
-        )
-
-        if not form.is_valid():
-            return render(
-                request,
-                self.form_template_name,
-                {
-                    "dom_id": container.name_dom_id,
-                    "field_name": "name",
-                    "value": request.POST.get("name", container.name),
-                    "update_url": container.name_update_url,
-                    "cancel_url": container.name_display_url,
-                    "errors": form.errors.get("name"),
-                },
-                status=422,
-            )
-
-        container = form.save()
-
-        return render(
-            request,
-            self.display_template_name,
-            {
-                "dom_id": container.name_dom_id,
-                "value": container.name,
-                "edit_url": container.name_edit_url,
+    def after_save(self, container, form):
+        broadcast_container_live_event(
+            user=self.request.user,
+            keys=[
+                f"container:{container.pk}",
+            ],
+            payload={
+                "event": "container.config.changed",
+                "model": "container",
+                "id": container.pk,
+                "changed": ["name"],
             },
         )
+
+    def add_success_headers(
+        self,
+        response,
+        container,
+        form,
+    ):
+        response["HX-Trigger"] = json.dumps(
+            {
+                "kooplex-toast": {
+                    "message": "Environment name updated.",
+                    "level": "success",
+                }
+            }
+        )
+
+        return response
