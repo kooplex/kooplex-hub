@@ -1,0 +1,98 @@
+<div
+  id="container-open-{{ container.pk }}"
+  class="container-open-widget"
+  data-live-key="container-runtime:{{ container.pk }}"
+  data-live-url="{% url 'container:open_button_partial' container.pk %}"
+  data-live-swap="outerHTML"
+>
+  {% if runtime.can_open and service_views %}
+    {% with default_view=service_views.0 %}
+      <div class="service-view-dropdown">
+        <a
+          class="service-view-primary"
+          href="{% url 'container:open_serviceview' container.pk default_view.pk %}"
+	  target="_blank"
+	  rel="noopener noreferrer"
+          title="Open {{ default_view.name }} in {{ container.name }}"
+          aria-label="Open {{ default_view.name }} in {{ container.name }}"
+        >
+          {% if default_view.icon %}
+            <span class="service-view-icon-frame" aria-hidden="true">
+              <img
+                class="service-view-icon"
+                src="{{ default_view.icon.img_src }}"
+                alt=""
+              >
+            </span>
+          {% else %}
+            <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
+          {% endif %}
+
+          <span class="visually-hidden">
+            Open {{ default_view.name }}
+          </span>
+        </a>
+
+        {% if service_views|length > 1 %}
+          <button
+            type="button"
+            class="service-view-menu-trigger"
+            aria-label="Show available environment views"
+            aria-haspopup="menu"
+          >
+            <i class="bi bi-chevron-down" aria-hidden="true"></i>
+          </button>
+
+          <div
+            class="service-view-menu"
+            role="menu"
+            aria-label="Available views for {{ container.name }}"
+          >
+            {% for view in service_views %}
+              <a
+                class="service-view-menu-item"
+                href="{% url 'container:open_serviceview' container.pk view.pk %}"
+	        target="_blank"
+	        rel="noopener noreferrer"
+                role="menuitem"
+                title="Open {{ view.name }} in {{ container.name }}"
+              >
+                {% if view.icon %}
+                  <span class="service-view-icon-frame" aria-hidden="true">
+                    <img
+                      class="service-view-icon"
+                      src="{{ default_view.icon.img_src }}"
+                      alt=""
+                    >
+                  </span>
+                {% else %}
+                  <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
+                {% endif %}
+
+                <span>{{ view.name }}</span>
+              </a>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+    {% endwith %}
+
+  {% elif runtime.can_open %}
+    <span
+      class="container-open-disabled"
+      title="No service views are available"
+      aria-label="No service views are available"
+    >
+      <i class="bi bi-eye-slash" aria-hidden="true"></i>
+    </span>
+
+  {% else %}
+    <span
+      class="container-open-disabled"
+      title="{{ runtime.open_title }}"
+      aria-label="{{ runtime.open_title }}"
+    >
+      <i class="bi bi-door-closed" aria-hidden="true"></i>
+    </span>
+  {% endif %}
+</div>

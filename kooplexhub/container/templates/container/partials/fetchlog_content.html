@@ -1,0 +1,8 @@
+{% if error %}
+  <div class="alert alert-danger mb-0" role="alert">
+    <i class="bi bi-exclamation-triangle me-2"></i>
+    {{ error }}
+  </div>
+{% else %}
+  <pre class="fetchlog-output"><code>{{ log_content }}</code></pre>
+{% endif %}
