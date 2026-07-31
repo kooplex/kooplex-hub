@@ -27,7 +27,7 @@ from education.forms import FormAssignment, FormAssignmentList, FormAssignmentCo
 
 from .conf import EDUCATION_SETTINGS
 from container.conf import CONTAINER_SETTINGS
-from canvas.conf import CANVAS_SETTINGS
+#from canvas.conf import CANVAS_SETTINGS
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +84,7 @@ class TeacherCourseBindingListView(LoginRequiredMixin, generic.ListView):
         context['wss_course_users'] = EDUCATION_SETTINGS['wss']['users'].format(user = self.request.user)
         context['wss_assignment_config'] = EDUCATION_SETTINGS['wss']['assignments'].format(user = self.request.user)
         context['wss_assignment_score'] = EDUCATION_SETTINGS['wss']['score'].format(user = self.request.user)
-        context['wss_canvas'] = CANVAS_SETTINGS['wss']['courses'].format(user = self.request.user)
+#        context['wss_canvas'] = CANVAS_SETTINGS['wss']['courses'].format(user = self.request.user)
         context['wss_canvascourseassignments'] = CANVAS_SETTINGS['wss']['assignments'].format(user = self.request.user)
         context['images'] = Image.objects.filter(imagetype = Image.ImageType.PROJECT, present = True)
         context['t_volume'] = TableVolume.for_user(self.request.user)

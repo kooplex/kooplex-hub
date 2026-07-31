@@ -1,56 +1,69 @@
 (function () {
-  function showInsertedBootstrapModals(root) {
+  const MODAL_ROOT_ID = "modal-root";
+
+  function showInsertedBootstrapModal(modalRoot) {
     if (!window.bootstrap) {
       console.error("Bootstrap JS is not loaded.");
       return;
     }
 
-    const modals = root.matches?.("[data-auto-show-modal]")
-      ? [root]
-      : root.querySelectorAll("[data-auto-show-modal]");
+    const modalEl = modalRoot.querySelector("[data-auto-show-modal]");
 
-    modals.forEach((modalEl) => {
-      const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    if (!modalEl) {
+      return;
+    }
+
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+
+    // Do not show an already-open modal again.
+    if (!modalEl.classList.contains("show")) {
       modal.show();
+    }
 
-      modalEl.addEventListener(
-        "hidden.bs.modal",
-        () => {
-          modal.dispose();
-          modalEl.remove();
-
-          const modalRoot = document.getElementById("modal-root");
-          if (modalRoot && !modalRoot.querySelector(".modal")) {
-            modalRoot.innerHTML = "";
-          }
-        },
-        { once: true }
-      );
-    });
+    modalEl.addEventListener(
+      "hidden.bs.modal",
+      () => {
+        modal.dispose();
+        modalRoot.innerHTML = "";
+      },
+      { once: true }
+    );
   }
 
   function closeOpenModals() {
-    if (!window.bootstrap) return;
+    if (!window.bootstrap) {
+      return;
+    }
 
     document.querySelectorAll(".modal.show").forEach((modalEl) => {
-      const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-      modal.hide();
+      bootstrap.Modal.getOrCreateInstance(modalEl).hide();
     });
 
-    // Fallback cleanup if the modal was already replaced/removed oddly.
+    // Defensive recovery from stale Bootstrap state.
     setTimeout(() => {
-      document.body.classList.remove("modal-open");
-      document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
-    }, 300);
+      if (!document.querySelector(".modal.show")) {
+        document.body.classList.remove("modal-open");
+        document.body.style.removeProperty("overflow");
+        document.body.style.removeProperty("padding-right");
+
+        document
+          .querySelectorAll(".modal-backdrop")
+          .forEach((backdrop) => backdrop.remove());
+      }
+    }, 350);
   }
 
   document.body.addEventListener("htmx:afterSwap", (event) => {
-    showInsertedBootstrapModals(event.detail.target);
+    const target = event.detail.target;
+
+    if (target.id !== MODAL_ROOT_ID) {
+      return;
+    }
+
+    showInsertedBootstrapModal(target);
   });
 
-  document.body.addEventListener("modal-close", () => {
-    closeOpenModals();
-  });
+  document.body.addEventListener("modal-close", closeOpenModals);
 })();
 
 (function () {
@@ -173,3 +186,125 @@
     }
   });
 })();
+
+
+
+
+
+
+document.body.addEventListener("htmx:afterSwap", (event) => {
+  const target = event.detail.target;
+
+  if (!target.matches?.(".membership-member-list")) {
+    return;
+  }
+
+  // Remove the empty-state placeholder after the first member is added.
+  target
+    .querySelectorAll("[data-membership-empty]")
+    .forEach((element) => element.remove());
+
+  const rows = target.querySelectorAll("[data-membership-member]");
+  const newestRow = rows[rows.length - 1];
+
+  if (!newestRow) {
+    return;
+  }
+
+  newestRow.scrollIntoView({
+    behavior: "smooth",
+    block: "nearest",
+  });
+
+  newestRow.classList.add("membership-member-row-added");
+
+  window.setTimeout(() => {
+    newestRow.classList.remove("membership-member-row-added");
+  }, 1200);
+});
+
+document.body.addEventListener("htmx:afterRequest", (event) => {
+  const trigger = event.detail.elt;
+
+  if (
+    !event.detail.successful ||
+    !trigger.matches?.("[data-membership-search-result]")
+  ) {
+    return;
+  }
+
+  const listGroup = trigger.closest(".list-group");
+  trigger.remove();
+  if (listGroup && !listGroup.children.length) {
+    listGroup.outerHTML = `
+      <div class="text-muted small p-2">
+        No additional matching users.
+      </div>
+    `;
+  }
+});
+
+document.addEventListener("click", (event) => {
+  const removeButton = event.target.closest("[data-membership-remove]");
+
+  if (!removeButton) {
+    return;
+  }
+
+  const memberRow = removeButton.closest("[data-membership-member]");
+
+  if (!memberRow) {
+    return;
+  }
+
+  const memberList = memberRow.closest(".membership-member-list");
+
+  memberRow.remove();
+
+  if (
+    memberList &&
+    !memberList.querySelector("[data-membership-member]")
+  ) {
+    const emptyState = document.createElement("div");
+
+    emptyState.className =
+      "membership-empty text-muted small text-center py-4";
+
+    emptyState.dataset.membershipEmpty = "";
+    emptyState.textContent = "No additional members selected.";
+
+    memberList.appendChild(emptyState);
+  }
+});
+
+document.body.addEventListener("closeModal", (event) => {
+    const modalId = event.detail?.modalId;
+
+    if (!modalId || typeof bootstrap === "undefined") {
+        return;
+    }
+
+    const element = document.getElementById(modalId);
+
+    if (!element) {
+        return;
+    }
+
+    const modal = bootstrap.Modal.getInstance(element);
+
+    if (modal) {
+        modal.hide();
+    }
+
+    element.addEventListener(
+        "hidden.bs.modal",
+        () => {
+            const modalRoot = document.getElementById("modal-root");
+
+            if (modalRoot) {
+                modalRoot.innerHTML = "";
+            }
+        },
+        { once: true }
+    );
+});

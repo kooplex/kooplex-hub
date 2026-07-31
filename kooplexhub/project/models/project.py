@@ -1,17 +1,14 @@
 import logging
 
 from django.db import models
+from django.urls import reverse
 from django.db.models import Q
 from django.core.validators import MinLengthValidator
 from django.contrib.auth import get_user_model
 
+
 User = get_user_model()
-
 logger = logging.getLogger(__name__)
-
-
-from django.db import models
-from django.db.models import Q
 
 
 class ProjectQuerySet(models.QuerySet):
@@ -67,6 +64,7 @@ class ProjectQuerySet(models.QuerySet):
         """
         Projects where the user may modify project properties.
         """
+        from . import UserProjectBinding
         if not user.is_authenticated:
             return self.none()
 
@@ -79,6 +77,7 @@ class ProjectQuerySet(models.QuerySet):
         ).distinct()
 
     def created_by(self, user):
+        from . import UserProjectBinding
         if not user.is_authenticated:
             return self.none()
 
@@ -139,32 +138,30 @@ class Project(models.Model):
     objects = ProjectQuerySet.as_manager()
 
 
-    def __str__(self):
-        return self.name 
+#FIXME    def __str__(self):
+#FIXME        return self.name 
+#FIXME
+#FIXME    def __lt__(self, p):
+#FIXME        return self.name < p.name
+#FIXME
+#FIXME        
+#FIXME
+#FIXME
+#FIXME    @property
+#FIXME    def groupname(self):
+#FIXME        return self.userbindings.first().groupname
+#FIXME
+#FIXME    @property
+#FIXME    def group(self):
+#FIXME        from hub.models import Group
+#FIXME        return Group.objects.filter(name=self.groupname, grouptype=Group.TP_PROJECT).first()
+#FIXME
+#FIXME    @property
+#FIXME    def volumes(self):
+#FIXME        return {
+#FIXME            b.volume
+#FIXME            for b in self.volumebindings
+#FIXME                     .select_related('volume')
+#FIXME        } if self.pk else {}
 
-    def __lt__(self, p):
-        return self.name < p.name
 
-
-    @property
-    def groupname(self):
-        return self.userbindings.first().groupname
-
-    @property
-    def group(self):
-        from hub.models import Group
-        return Group.objects.filter(name=self.groupname, grouptype=Group.TP_PROJECT).first()
-
-    @property
-    def volumes(self):
-        return {
-            b.volume
-            for b in self.volumebindings
-                     .select_related('volume')
-        } if self.pk else {}
-
-
-    # factory functions
-    @classmethod
-    def get_userproject(cls, pk, user):
-        return cls.objects.filter(pk=pk).filter(userbindings__user=user).first()

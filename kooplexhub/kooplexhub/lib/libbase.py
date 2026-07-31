@@ -11,7 +11,7 @@ import multiprocessing
 import subprocess
 import shlex
 import datetime
-import pytz
+#import pytz
 import unidecode
 
 from django.conf import settings
@@ -19,11 +19,11 @@ from django.http import HttpResponseRedirect
 
 logger = logging.getLogger(__name__)
 
-try:
-    from kooplexhub.settings import TIME_ZONE
-    local_timezone = pytz.timezone(TIME_ZONE)
-except ImportError:
-    local_timezone = pytz.timezone('UTC')
+#try:
+#    from kooplexhub.settings import TIME_ZONE
+#    local_timezone = pytz.timezone(TIME_ZONE)
+#except ImportError:
+#    local_timezone = pytz.timezone('UTC')
 
 def now():
     """

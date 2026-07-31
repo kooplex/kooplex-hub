@@ -1,7 +1,7 @@
 from django.views import generic
 from django.contrib.auth.mixins import AccessMixin
 from .models.token import Token
-from container.lib.cluster_resources_api import *
+#from container.lib.cluster_resources_api import *
 
 from .conf import HUB_SETTINGS
 

@@ -13,14 +13,14 @@ from django.views.decorators.csrf import csrf_exempt
 from container.models import Image, Proxy, EnvVarMapping, ProxyImageBinding, ServiceView
 from project.models import UserProjectBinding
 from volume.models import UserVolumeBinding, Volume
-from container.lib import Cluster
+#from container.lib import Cluster
 
 from api.kube import submit_job, delete_job, info_job, get_jobs, log_job
 
 logger = logging.getLogger(__name__)
 
 from container.conf import CONTAINER_SETTINGS
-NS_JOBS = CONTAINER_SETTINGS['kubernetes']['jobs']['namespace']
+NS_JOBS = "" #CONTAINER_SETTINGS['kubernetes']['jobs']['namespace']
 
 @require_http_methods(["GET"])
 def version(request):

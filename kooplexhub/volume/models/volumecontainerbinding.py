@@ -1,16 +1,24 @@
-import logging
-
-from django.contrib.auth.models import User
 from django.db import models
 
-from volume.models import Volume
-
-logger = logging.getLogger(__name__)
+from . import Volume
 
 
 class VolumeContainerBinding(models.Model):
-    volume = models.ForeignKey(Volume, on_delete = models.CASCADE, related_name = 'containerbindings')
-    container = models.ForeignKey('container.Container', on_delete = models.CASCADE, related_name = 'volumebindings')
+    volume = models.ForeignKey(
+        Volume, 
+        on_delete=models.CASCADE, 
+        related_name="containerbindings",
+    )
+    container = models.ForeignKey(
+        "container.Container", 
+        on_delete=models.CASCADE, 
+        related_name="volumebindings",
+    )
 
     class Meta:
-        unique_together = [['volume', 'container']]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["volume", "container"],
+                name="unique_volume_container_binding",
+            ),
+        ]
