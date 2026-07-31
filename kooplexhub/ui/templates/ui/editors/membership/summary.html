@@ -1,0 +1,49 @@
+<div
+    id="{{ editor.dom_id }}"
+    class="project-membership-summary"
+    hx-get="{{ editor.display_url }}"
+    hx-trigger="project-members-updated from:body"
+    hx-target="this"
+    hx-swap="outerHTML"
+>
+    <div class="project-membership-summary__members">
+        {% for member in editor.selected_members %}
+            <span
+                class="project-member-badge"
+                title="{{ member.role_label }}"
+            >
+                <span class="project-member-badge__user">
+                    {{ member.user.username }}
+                </span>
+
+                <span
+                    class="project-member-badge__role"
+                    aria-label="{{ member.role_label }}"
+                >
+                    {% if member.role == "administrator" %}
+                        <i class="bi bi-shield-lock"></i>
+                    {% else %}
+                        <i class="bi bi-person"></i>
+                    {% endif %}
+                </span>
+            </span>
+        {% empty %}
+            <span class="text-muted">
+                No collaborators
+            </span>
+        {% endfor %}
+    </div>
+
+    {% if editor.can_edit %}
+        <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary"
+            hx-get="{{ editor.modal_url }}"
+            hx-target="#modal-root"
+            hx-swap="innerHTML"
+        >
+            <i class="bi bi-people"></i>
+            Manage
+        </button>
+    {% endif %}
+</div>

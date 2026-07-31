@@ -1,0 +1,31 @@
+<div id="{{ editor.dom_id }}" class="ui-image-editor">
+  <div class="project-setting-row">
+    <div class="project-setting-main">
+      <div class="project-setting-title">
+        Preferred image
+      </div>
+
+      <div class="project-setting-description">
+        {% if editor.selected_image %}
+          {{ editor.selected_image.name }}
+        {% else %}
+          No preferred image selected.
+        {% endif %}
+      </div>
+    </div>
+
+    {% if editor.can_edit %}
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-dark rounded-pill"
+        hx-get="{{ editor.edit_url }}"
+        hx-target="#modal-root"
+        hx-swap="innerHTML"
+        aria-label="{{ editor.aria_label }}"
+      >
+        <i class="bi bi-card-image me-1" aria-hidden="true"></i>
+        Change
+      </button>
+    {% endif %}
+  </div>
+</div>

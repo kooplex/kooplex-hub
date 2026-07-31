@@ -1,0 +1,35 @@
+{% if editor.can_edit %}
+<button
+    id="{{ editor.dom_id }}"
+    type="button"
+    class="ui-description-editor btn border-0 bg-transparent p-0 text-start w-100"
+    hx-get="{{ editor.edit_url }}"
+    hx-target="this"
+    hx-swap="outerHTML"
+    aria-label="{{ editor.aria_label|default:'Edit description' }}"
+>
+    <span class="d-block text-body text-break">
+        {% if editor.value %}
+            {{ editor.value|linebreaksbr }}
+        {% else %}
+            <span class="text-body-secondary fst-italic">
+                {{ editor.empty_text }}
+            </span>
+        {% endif %}
+    </span>
+
+    <span class="d-block small text-body-secondary mt-1">
+        {{ editor.edit_hint }}
+    </span>
+</button>
+{% else %}
+<div id="{{ editor.dom_id }}" class="ui-description-editor text-break">
+    {% if editor.value %}
+        {{ editor.value|linebreaksbr }}
+    {% else %}
+        <span class="text-body-secondary fst-italic">
+            No description provided.
+        </span>
+    {% endif %}
+</div>
+{% endif %}

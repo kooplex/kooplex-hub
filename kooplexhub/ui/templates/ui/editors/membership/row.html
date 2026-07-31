@@ -1,0 +1,57 @@
+<div
+    id="{{ membership_ui.dom_id }}-member-{{ member.user.pk }}"
+    class="d-flex align-items-center gap-2 py-2 border-bottom"
+    data-membership-row
+    data-user-id="{{ member.user.pk }}"
+>
+    <input
+        type="hidden"
+        name="member_users"
+        value="{{ member.user.pk }}"
+    >
+
+    <div class="flex-grow-1 text-truncate">
+        <div class="fw-semibold text-truncate">
+            {{ member.user.get_full_name|default:member.user.username }}
+        </div>
+
+        {% if member.user.email %}
+            <div class="small text-muted text-truncate">
+                {{ member.user.email }}
+            </div>
+        {% endif %}
+    </div>
+
+    <label
+        for="{{ membership_ui.dom_id }}-member-role-{{ member.user.pk }}"
+        class="visually-hidden"
+    >
+        Role for {{ member.user.username }}
+    </label>
+
+    <select
+        id="{{ membership_ui.dom_id }}-member-role-{{ member.user.pk }}"
+        name="member_role_{{ member.user.pk }}"
+        class="form-select form-select-sm membership-role-select"
+        data-membership-role
+    >
+        {% for role in membership_ui.role_choices %}
+            <option
+                value="{{ role.value }}"
+                {% if role.value == member.role %}selected{% endif %}
+            >
+                {{ role.label }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <button
+        type="button"
+        class="btn btn-sm btn-outline-danger"
+        data-membership-remove
+        aria-label="Remove {{ member.user.username }}"
+        title="Remove member"
+    >
+        <i class="bi bi-trash" aria-hidden="true"></i>
+    </button>
+</div>

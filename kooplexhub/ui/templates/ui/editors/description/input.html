@@ -1,0 +1,27 @@
+<div class="ui-description-editor mb-3">
+  <label
+    for="{{ input_id }}"
+    class="form-label fw-semibold"
+  >
+    {{ label|default:"Description" }}
+  </label>
+
+  <textarea
+    id="{{ input_id }}"
+    class="form-control {% if field.errors %}is-invalid{% endif %}"
+    name="{{ field.html_name }}"
+    rows="{{ rows|default:3 }}"
+    {% if required %}
+      required
+      data-editor-required
+    {% endif %}
+  >{{ field.value|default_if_none:'' }}</textarea>
+
+  {% if field.errors %}
+    <div class="invalid-feedback">
+      {{ field.errors|striptags }}
+    </div>
+  {% elif help_text %}
+    <div class="form-text">{{ help_text }}</div>
+  {% endif %}
+</div>

@@ -1,0 +1,355 @@
+from django.urls import reverse
+
+from ..models import UserProjectBinding
+from .members import (
+    MemberSelection,
+    get_assignable_member_role_choices,
+)
+
+def make_name_editor_context(
+    *,
+    project,
+    presenter,
+    form=None,
+):
+    return {
+        "dom_id": f"project-{project.pk}-name",
+        "value": project.name,
+        "field": (
+            form["name"] 
+            if form is not None 
+            else None
+        ),
+        "form": form,
+        "can_edit": presenter.can_edit_name,
+        "aria_label": "Change project name",
+        "edit_url": reverse(
+            "project:name-edit",
+            kwargs={"project_id": project.pk},
+        ),
+        "display_url": reverse(
+            "project:name-display",
+            kwargs={"project_id": project.pk},
+        ),
+        "update_url": reverse(
+            "project:name-update",
+            kwargs={"project_id": project.pk},
+        ),
+    }
+
+
+def make_description_editor_context(
+    *,
+    project,
+    presenter,
+    form=None,
+):
+    return {
+        "dom_id": f"project-{project.pk}-description",
+        "value": project.description,
+        "field": (
+            form["description"]
+            if form is not None
+            else None
+        ),
+        "form": form,
+        "can_edit": presenter.can_edit_description,
+        "aria_label": "Change project description",
+        "edit_url": reverse(
+            "project:description-edit",
+            kwargs={"project_id": project.pk},
+        ),
+        "display_url": reverse(
+            "project:description-display",
+            kwargs={"project_id": project.pk},
+        ),
+        "update_url": reverse(
+            "project:description-update",
+            kwargs={"project_id": project.pk},
+        ),
+    }
+
+
+def make_image_editor_context(
+    *,
+    project,
+    presenter,
+    form=None,
+):
+    return {
+        "dom_id": f"project-{project.pk}-image",
+        "selected_image": project.preferred_image,
+        "field": (
+            form["preferred_image"]
+            if form is not None
+            else None
+        ),
+        "form": form,
+        "can_edit": presenter.can_change_image,
+        "aria_label": "Change project's preferred image",
+        "edit_url": reverse(
+            "project:image-edit",
+            kwargs={"project_id": project.pk},
+        ),
+        "display_url": reverse(
+            "project:image-display",
+            kwargs={"project_id": project.pk},
+        ),
+        "update_url": reverse(
+            "project:image-update",
+            kwargs={"project_id": project.pk},
+        ),
+    }
+
+
+def make_create_image_editor_context(*, form):
+    field = form["preferred_image"]
+
+    return {
+        "dom_id": "project-create-preferred-image",
+        "field": field,
+        "selected_value": str(field.value() or ""),
+    }
+
+
+def member_selection_to_context(selection):
+    return {
+        "user": selection.user,
+        "role": selection.role,
+    }
+
+
+def member_binding_to_selection(binding):
+    return MemberSelection(
+        user=binding.user,
+        role=binding.role,
+    )
+
+def get_form_member_selections(form):
+    if (
+        hasattr(form, "cleaned_data")
+        and "members" in form.cleaned_data
+    ):
+        return tuple(
+            form.cleaned_data["members"]
+        )
+
+    if hasattr(
+        form,
+        "get_staged_member_selections",
+    ):
+        return (
+            form.get_staged_member_selections()
+        )
+
+    return ()
+
+
+def make_member_summary_context(
+    *,
+    project,
+    presenter,
+):
+    role_labels = dict(
+        UserProjectBinding.Role.assignable_choices()
+    )
+
+    selected_members = tuple(
+        {
+            "user": binding.user,
+            "role": binding.role,
+            "role_label": role_labels.get(   #FIXME::::???
+                binding.role,
+                binding.role,
+            ),
+        }
+        for binding in (
+            project.userbindings
+            .exclude(
+                role=UserProjectBinding.Role.CREATOR
+            )
+            .select_related("user")
+        )
+    )
+
+    return {
+        "dom_id": f"project-{project.pk}-members",
+        "selected_members": selected_members,
+        "extra_member_count": max(
+            len(selected_members) - 3,
+            0,
+        ),
+        "can_edit": presenter.can_manage_members,
+        "modal_url": reverse(
+            "project:members-modal",
+            kwargs={
+                "project_id": project.pk,
+            },
+        ),
+        "display_url": reverse(
+            "project:members-display",
+            kwargs={
+                "project_id": project.pk,
+            },
+        ),
+    }
+
+
+def make_member_editor_context(
+    *,
+    project,
+    presenter,
+):
+    kwargs = {
+        "project_id": project.pk,
+    }
+
+    selections = [
+        member_binding_to_selection(binding)
+        for binding in (
+            project.userbindings
+            .exclude(
+                role=(
+                    UserProjectBinding
+                    .Role
+                    .CREATOR
+                )
+            )
+            .select_related("user")
+        )
+    ]
+
+    return {
+        "dom_id": f"project-{project.pk}-members",
+        "selected_members": [
+            member_selection_to_context(
+                selection
+            )
+            for selection in selections
+        ],
+        "role_choices": (
+            get_assignable_member_role_choices()
+        ),
+        "can_edit": presenter.can_manage_members,
+        "staged": False,
+        "display_url": reverse(
+            "project:members-display",
+            kwargs=kwargs,
+        ),
+        "edit_url": reverse(
+            "project:members-edit",
+            kwargs=kwargs,
+        ),
+        "update_url": reverse(
+            "project:members-update",
+            kwargs=kwargs,
+        ),
+        "search_url": reverse(
+            "project:members-search",
+            kwargs=kwargs,
+        ),
+    }
+
+def make_create_member_editor_context(
+    *,
+    form,
+):
+    selections = get_form_member_selections(
+        form
+    )
+    return {
+        "dom_id": "project-create-members",
+        "selected_members": [
+            member_selection_to_context(
+                selection
+            )
+            for selection in selections
+        ],
+        "role_choices": (
+            get_assignable_member_role_choices()
+        ),
+        "can_edit": True,
+        "staged": True,
+        "search_url": reverse(
+            "project:create-members-search",
+        ),
+    }
+
+
+def make_mounts_editor_context(
+    *,
+    project,
+    presenter,
+):
+    kwargs = {
+        "project_id": project.pk,
+    }
+
+    selections = [
+       # mounts_binding_to_selection(binding)
+       # for binding in (
+       #     project.userbindings
+       #     .exclude(
+       #         role=(
+       #             UserProjectBinding
+       #             .Role
+       #             .CREATOR
+       #         )
+       #     )
+       #     .select_related("user")
+       # )
+    ]
+    return {
+        "dom_id": f"project-{project.pk}-mounts",
+        "selected_mounts": [
+            mounts_selection_to_context(
+                selection
+            )
+            for selection in selections
+        ],
+        "can_edit": presenter.can_change_image,
+        "aria_label": "Change project's preferred volumes",
+        "edit_url": reverse(
+            "project:mounts-edit",
+            kwargs={"project_id": project.pk},
+        ),
+        "display_url": reverse(
+            "project:mounts-display",
+            kwargs={"project_id": project.pk},
+        ),
+        "update_url": reverse(
+            "project:mounts-update",
+            kwargs={"project_id": project.pk},
+        ),
+    }
+
+
+def make_create_mounts_editor_context(*, form):
+    selections = get_form_mounts_selections(
+        form
+    )
+    return {
+        "dom_id": "project-create-mounts",
+        "selected_mounts": [
+            mounts_selection_to_context(
+                selection
+            )
+            for selection in selections
+        ],
+        "can_edit": True,
+        "staged": True,
+    }
+
+
+def make_membership_ui(*, dom_id):
+    return {
+        "dom_id": dom_id,
+        "members_target": f"#{dom_id}-members",
+        "search_results_target": (
+            f"#{dom_id}-search-results"
+        ),
+        "role_choices": (
+            get_assignable_member_role_choices()
+        ),
+    }
+

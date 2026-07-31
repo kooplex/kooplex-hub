@@ -1,0 +1,17 @@
+{% if query_too_short %}
+    <p class="small text-muted">
+        Type at least {{ minimum_query_length }} characters.
+    </p>
+
+{% elif search_results %}
+    <div class="list-group">
+        {% for item in search_results %}
+            {% include "ui/editors/membership/search_result.html" with user=item.user row_url=item.row_url membership_ui=membership_ui only %}
+        {% endfor %}
+    </div>
+
+{% else %}
+    <p class="small text-muted">
+        No matching users found.
+    </p>
+{% endif %}

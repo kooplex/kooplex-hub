@@ -1,0 +1,33 @@
+<div class="ui-name-editor mb-3">
+  <label
+    for="{{ input_id }}"
+    class="form-label fw-semibold"
+  >
+    {{ label|default:"Name" }}
+  </label>
+
+  <input
+    id="{{ input_id }}"
+    class="form-control {% if field.errors %}is-invalid{% endif %}"
+    type="text"
+    name="{{ field.html_name }}"
+    value="{{ field.value|default_if_none:'' }}"
+    minlength="{{ min_length|default:3 }}"
+    placeholder="{{ placeholder|default:'e.g. Test project' }}"
+    autocomplete="off"
+    {% if required %}
+      required
+      data-editor-required
+    {% endif %}
+  >
+
+  {% if field.errors %}
+    <div class="invalid-feedback">
+      {{ field.errors|striptags }}
+    </div>
+  {% elif help_text %}
+    <div class="form-text">{{ help_text }}</div>
+  {% elif not validated %}
+    <div class="form-text">At least 3 characters.</div>
+  {% endif %}
+</div>

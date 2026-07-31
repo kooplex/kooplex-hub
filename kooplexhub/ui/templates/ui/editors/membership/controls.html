@@ -1,0 +1,51 @@
+<div
+  class="project-membership-controls"
+  data-membership-controls
+>
+    <div class="mb-3">
+        <label
+            for="{{ editor.dom_id }}-search"
+            class="form-label"
+        >
+            Add member
+        </label>
+    
+        <input
+            id="{{ editor.dom_id }}-search"
+            type="search"
+            name="q"
+            class="form-control"
+            placeholder="Search users, type at least two characters"
+            autocomplete="off"
+            hx-get="{{ editor.search_url }}"
+            hx-trigger="input changed delay:300ms"
+            hx-target="#{{ editor.dom_id }}-search-results"
+            hx-swap="innerHTML"
+            hx-include="closest form"
+        >
+    </div>
+    
+    <div
+        id="{{ editor.dom_id }}-search-results"
+        class="membership-search-results"
+    ></div>
+    
+    <div
+        id="{{ membership_ui.dom_id }}-members"
+        class="membership-selected-members"
+        data-membership-selected-members
+    >
+        {% for member in editor.selected_members %}
+            {% include "ui/editors/membership/row.html" with member=member membership_ui=membership_ui only %}
+        {% empty %}
+            {% if not editor.staged %}
+              <p
+                class="text-muted mb-0"
+                data-membership-empty
+              >
+                No members selected.
+              </p>
+            {% endif %} 
+        {% endfor %}
+    </div>
+</div>

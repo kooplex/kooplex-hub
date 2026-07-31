@@ -1,0 +1,11 @@
+<div class="ui-image-picker__card">
+  <div class="fw-semibold">
+    {{ image.short_name }}
+  </div>
+
+  {% if image.description %}
+    <div class="small text-muted">
+      {{ image.description|linebreaksbr }}
+    </div>
+  {% endif %}
+</div>

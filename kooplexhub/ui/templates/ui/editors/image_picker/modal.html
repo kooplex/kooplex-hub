@@ -1,0 +1,44 @@
+<div
+  class="modal fade"
+  id="{{ editor.dom_id }}-modal"
+  tabindex="-1"
+  aria-labelledby="{{ editor.dom_id }}-modal-title"
+  aria-hidden="true"
+  data-image-picker-modal
+>
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2
+          class="modal-title fs-5"
+          id="{{ editor.dom_id }}-modal-title"
+        >
+          Select preferred image
+        </h2>
+
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+
+      {% include "ui/editors/image_picker/edit.html" with editor=editor only %}
+    </div>
+  </div>
+</div>
+
+<script>
+  (() => {
+    const element = document.getElementById(
+      "{{ editor.dom_id|escapejs }}-modal"
+    );
+
+    if (!element || typeof bootstrap === "undefined") {
+      return;
+    }
+
+    bootstrap.Modal.getOrCreateInstance(element).show();
+  })();
+</script>

@@ -1,0 +1,45 @@
+.project-environment-shortcuts {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.project-environment-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--line, #d9e0e7);
+  border-radius: 0.8rem;
+  background: white;
+}
+
+.project-environment-name {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.project-environment-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+@media (max-width: 430px) {
+  .project-environment-row {
+    grid-template-columns: 1fr;
+  }
+
+  .project-environment-actions {
+    justify-content: flex-start;
+  }
+
+  .project-tab-empty {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

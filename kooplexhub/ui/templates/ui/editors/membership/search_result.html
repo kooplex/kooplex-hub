@@ -1,0 +1,18 @@
+<button
+    type="button"
+    class="list-group-item list-group-item-action"
+    hx-get="{{ row_url }}"
+    hx-target="{{ membership_ui.members_target }}"
+    hx-swap="beforeend"
+    data-membership-search-result
+>
+    <strong>
+        {{ user.get_full_name|default:user.username }}
+    </strong>
+
+    {% if user.email %}
+        <span class="text-muted">
+            {{ user.email }}
+        </span>
+    {% endif %}
+</button>
