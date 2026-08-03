@@ -1,0 +1,39 @@
+<section class="project-tab-section">
+  <p class="project-tab-section-subtitle">
+    General information about this project.
+  </p>
+
+  <div class="project-description">
+    {% include "ui/editors/description/editor.html" with editor=presentation.description_editor only %}
+  </div>
+
+  {% if presentation.membership_action_label %}
+    <div class="project-tab-danger-zone">
+      <div>
+        <div class="fw-semibold">
+          Project membership
+        </div>
+
+        <div class="text-muted small">
+          {% if presentation.can_delete %}
+            Deleting removes the project for every member.
+          {% else %}
+            Leaving removes your access to this project.
+          {% endif %}
+        </div>
+      </div>
+
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-danger"
+        disabled
+      >
+        <i
+          class="{{ presentation.membership_action_icon }} me-1"
+          aria-hidden="true"
+        ></i>
+        {{ presentation.membership_action_label }}
+      </button>
+    </div>
+  {% endif %}
+</section>

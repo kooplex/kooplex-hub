@@ -1,0 +1,62 @@
+<ul
+  class="nav nav-tabs create-tabs"
+  role="tablist"
+>
+  <li class="nav-item" role="presentation">
+    <button
+      class="nav-link active"
+      id="project-create-tab"
+      data-bs-toggle="tab"
+      data-bs-target="#project-create-pane"
+      type="button"
+      role="tab"
+      aria-controls="project-create-pane"
+      aria-selected="true"
+    >
+      <i class="bi bi-plus" aria-hidden="true"></i>
+      <span class="project-tab-label">Create project</span>
+    </button>
+  </li>
+
+  <li class="nav-item" role="presentation">
+    <button
+      class="nav-link"
+      id="project-join-tab"
+      data-bs-toggle="tab"
+      data-bs-target="#project-join-pane"
+      type="button"
+      role="tab"
+      aria-controls="project-join-pane"
+      aria-selected="false"
+    >
+      <i class="bi bi-people" aria-hidden="true"></i>
+      <span class="project-tab-label">Join project</span>
+    </button>
+  </li>
+</ul>
+
+<div
+  class="tab-content create-tab-content"
+>
+  <div
+    class="tab-pane fade show active"
+    id="project-create-pane"
+    role="tabpanel"
+    aria-labelledby="project-create-tab"
+    tabindex="0"
+  >
+    {% include "project/partials/create/create.html" %}
+  </div>
+
+  <div
+    class="tab-pane fade"
+    id="project-join-pane"
+    role="tabpanel"
+    aria-labelledby="project-join-tab"
+    tabindex="0"
+  >
+    {#% include "project/partials/create/join.html" %#}
+    join
+  </div>
+</div>
+

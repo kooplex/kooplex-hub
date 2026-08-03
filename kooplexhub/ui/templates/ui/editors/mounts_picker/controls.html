@@ -1,0 +1,80 @@
+
+<div
+  id="{{ editor.dom_id }}"
+  class="ui-mounts-picker"
+  data-mounts-picker
+>
+  {% if editor.items %}
+    <div class="table-responsive">
+      <table class="table table-sm align-middle mb-0">
+        <thead>
+          <tr>
+            <th
+              scope="col"
+              class="ui-mounts-picker__selection"
+            >
+              <span class="visually-hidden">
+                Selected
+              </span>
+            </th>
+
+            <th scope="col">
+              Volume
+            </th>
+
+            <th scope="col">
+              Description
+            </th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for item in editor.items %}
+            <tr>
+              <td class="ui-mounts-picker__selection">
+                <input
+                  id="{{ editor.dom_id }}-volume-{{ item.volume.pk }}"
+                  class="form-check-input"
+                  type="checkbox"
+                  name="mounts"
+                  value="{{ item.volume.pk }}"
+                  {% if item.selected %}checked{% endif %}
+                  {% if not editor.can_edit %}disabled{% endif %}
+		  data-mounts-choice
+                >
+              </td>
+
+              <td>
+                <label
+                  for="{{ editor.dom_id }}-volume-{{ item.volume.pk }}"
+                  class="fw-semibold mb-0"
+                >
+                  {{ item.volume.folder }}
+                </label>
+              </td>
+
+              <td class="ui-mounts-picker__description-cell">
+                {% if item.volume.description %}
+                  <span
+                    class="ui-mounts-picker__description"
+                    title="{{ item.volume.description }}"
+                  >
+                    {{ item.volume.description }}
+                  </span>
+                {% else %}
+                  <span class="text-muted">
+                    No description
+                  </span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="small text-muted mb-0">
+      No volumes are available.
+    </p>
+  {% endif %}
+</div>

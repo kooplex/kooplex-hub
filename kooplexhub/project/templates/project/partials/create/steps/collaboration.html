@@ -1,0 +1,17 @@
+{% load project_editors %}
+
+<section
+    class="project-create-step-content"
+>
+  <h2
+    class="h5"
+  >
+    Collaboration
+  </h2>
+
+  <p class="text-muted">
+    Optionally add users who should have access and work on this project.
+  </p>
+
+  {% include "ui/editors/membership/controls.html" with editor=membership_editor membership_ui=membership_ui only %}
+</section>

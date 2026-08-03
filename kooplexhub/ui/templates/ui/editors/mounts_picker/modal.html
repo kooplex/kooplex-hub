@@ -1,0 +1,24 @@
+<div
+  class="modal fade"
+  id="{{ editor.dom_id }}-modal"
+  tabindex="-1"
+  aria-labelledby="{{ editor.dom_id }}-modal-title"
+  aria-hidden="true"
+  data-auto-show-modal
+>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form
+        id="{{ editor.dom_id }}-form"
+        hx-post="{{ editor.update_url }}"
+        hx-target="#{{ editor.dom_id }}-modal-content"
+        hx-swap="innerHTML"
+        data-mounts-form
+      >
+        {% csrf_token %}
+
+        {% include "ui/editors/mounts_picker/modal_content.html" with editor=editor only %}
+      </form>
+    </div>
+  </div>
+</div>

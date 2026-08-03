@@ -4,9 +4,10 @@ from ..models import UserProjectBinding
 from ..services.editor_context import (
     make_name_editor_context,
     make_description_editor_context,
+    make_scope_editor_context,
     make_image_editor_context,
     make_member_summary_context,
-    make_mounts_editor_context,
+    make_mounts_summary_context,
 )
 
 register = template.Library()
@@ -61,11 +62,23 @@ def project_members_editor(project, presentation):
 
 
 @register.inclusion_tag(
-    "ui/editors/mounts_picker/display.html"
+    "ui/editors/mounts_picker/summary.html"
 )
 def project_mounts_editor(project, presentation):
     return {
-        "editor": make_mounts_editor_context(
+        "editor": make_mounts_summary_context(
+            project=project,
+            presenter=presentation,
+        )
+    }
+
+
+@register.inclusion_tag(
+    "ui/editors/scope/display.html"
+)
+def project_scope_editor(project, presentation):
+    return {
+        "editor": make_scope_editor_context(
             project=project,
             presenter=presentation,
         )

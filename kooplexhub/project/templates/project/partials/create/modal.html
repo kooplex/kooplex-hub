@@ -1,0 +1,38 @@
+<div
+  class="modal fade project-create-modal"
+  id="project-create-modal"
+  tabindex="-1"
+  aria-labelledby="project-create-modal-title"
+  aria-hidden="true"
+  data-auto-show-modal
+>
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h5
+            class="modal-title"
+            id="project-create-modal-title"
+          >
+            Create a project
+          </h5>
+
+          <div class="text-muted small">
+            Configure the project, environment and collaborators.
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+
+      <div class="modal-body">
+        {% include "project/partials/create/wizard.html" %}
+      </div>
+    </div>
+  </div>
+</div>

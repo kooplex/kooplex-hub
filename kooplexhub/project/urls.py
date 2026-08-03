@@ -22,6 +22,13 @@ urlpatterns = [
         name="card_partial",
     ),
 
+    # leave or delete project
+    path(
+        "partials/<int:project_id>/membership-action/",
+        views.ProjectMembershipActionView.as_view(),
+        name="membership-action",
+    ),
+
     # create new project
     path(
         "partials/create/modal/", 
@@ -83,6 +90,22 @@ urlpatterns = [
     ),
 
     path(
+        "partials/<int:project_id>/scope/",
+        views.ProjectScopeDisplayView.as_view(),
+        name="scope-display",
+    ),
+    path(
+        "partials/<int:project_id>/scope/edit/",
+        views.ProjectScopeEditView.as_view(),
+        name="scope-edit",
+    ),
+    path(
+        "partials/<int:project_id>/scope/update/",
+        views.ProjectScopeUpdateView.as_view(),
+        name="scope-update",
+    ),
+
+    path(
         "partials/<int:project_id>/image/", 
         views.ProjectPreferredImageDisplayView.as_view(), 
         name="image-display",
@@ -140,14 +163,14 @@ urlpatterns = [
     ),
 
     path(
+        "partials/<int:project_id>/mounts/modal",
+        views.ProjectMountsModalView.as_view(),
+        name="mounts-edit",
+    ),
+    path(
         "partials/<int:project_id>/mounts/",
         views.ProjectMountsDisplayView.as_view(),
         name="mounts-display",
-    ),
-    path(
-        "partials/<int:project_id>/mounts/edit/",
-        views.ProjectMountsChangeView.as_view(),
-        name="mounts-edit",
     ),
     path(
         "partials/<int:project_id>/mounts/update/",

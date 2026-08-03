@@ -1,0 +1,25 @@
+<div id="project-image-picker" class="image-picker-grid">
+  <input
+    type="hidden"
+    name="image"
+    value="{{ selected_image.pk }}"
+  >
+
+  <div class="list-group create-image-list">
+    {% for image in images %}
+      <button
+        type="button"
+        class="list-group-item list-group-item-action {% if image.pk == selected_image.pk %}active{% endif %}"
+        hx-get="{% url 'project:image_picker' project.pk %}?image={{ image.pk }}"
+        hx-target="#project-image-picker"
+        hx-swap="outerHTML"
+      >
+        {{ image.short_name|default:image.name }}
+      </button>
+    {% endfor %}
+  </div>
+
+  <div class="image-preview">
+    {% include "project/partials/image/preview_card.html" with image=selected_image %}
+  </div>
+</div>

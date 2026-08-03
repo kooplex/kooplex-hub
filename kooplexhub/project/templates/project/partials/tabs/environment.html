@@ -1,0 +1,83 @@
+{% load container_runtime %}
+{% load project_editors %}
+
+<section
+  id="project-environment-content-{{ project.pk }}"
+  class="project-tab-section"
+  data-live-key="project-environments:{{ project.pk }}"
+  data-live-url="{% url 'project:environment_tab' project.pk %}"
+  data-live-swap="outerHTML"
+>
+  {% if error %}
+    <div class="alert alert-danger py-2 mb-0">
+      {{ error }}
+    </div>
+  {% endif %}
+
+  {% project_image_editor project presentation %}
+
+  {% project_mounts_editor project presentation %}
+
+  <div class="project-environment-list-section">
+    <div class="project-environment-list-header">
+      <div>
+        <div class="fw-semibold">Environments</div>
+        <div class="text-muted small">
+          Your environments currently mounting this project.
+        </div>
+      </div>
+    </div>
+
+    {% if presentation.environment_containers %}
+      <div class="project-environment-shortcuts">
+        {% for container in presentation.environment_containers %}
+          {% runtime_for container as runtime %}
+
+          <div class="project-environment-row">
+            <div class="project-environment-name">
+              {{ container.name }}
+            </div>
+
+            <div class="project-environment-actions">
+              {% include "container/partials/widgets/open_service_button.html" with container=container runtime=runtime service_views=container.views only %}
+
+              {% include "container/partials/widgets/start_button.html" with container=container runtime=runtime only %}
+
+              {% include "container/partials/widgets/restart_button.html" with container=container runtime=runtime only %}
+
+              {% include "container/partials/widgets/stop_button.html" with container=container runtime=runtime only %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+    {% else %}
+      <div class="project-tab-empty">
+        <i class="bi bi-boxes" aria-hidden="true"></i>
+
+        <div class="flex-grow-1">
+          <div class="fw-semibold">No environment yet</div>
+
+          <div class="text-muted small">
+            Create one using the project’s preferred image and volumes.
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="btn btn-sm btn-primary"
+          hx-post="{% url 'project:create_default_environment' project.pk %}"
+          hx-target="#project-environment-content-{{ project.pk }}"
+          hx-swap="outerHTML"
+          {% if not presentation.can_generate_default_environment %}
+            disabled
+            title="{{ presentation.default_environment_disabled_reason }}"
+          {% endif %}
+        >
+          <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>
+          Create environment
+        </button>
+      </div>
+    {% endif %}
+  </div>
+</section>

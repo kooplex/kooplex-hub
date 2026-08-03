@@ -3,18 +3,24 @@ from dataclasses import dataclass
 
 from django.db import transaction
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
-
-from .members import (
-    create_project_members,
-    MembershipChanges,
+from django.core.exceptions import (
+    ValidationError,
+    PermissionDenied,
 )
+
 from ..models import (
     Project,
     UserProjectBinding,
 )
+from .members import (
+    create_project_members,
+    MembershipChanges,
+)
 from .names import (
     validate_project_name_for_creator,
+)
+from .mounts import (
+    update_project_mounts
 )
 
 logger = logging.getLogger(__name__)
@@ -27,6 +33,13 @@ class ProjectCreationResult:
     environment: object | None
     membership_changes: MembershipChanges
     mount_changes: object | None
+
+
+@dataclass(frozen=True)
+class ProjectMembershipActionResult:
+    project_id: int
+    action: str
+
 
 class ProjectCreationService:
     @classmethod
@@ -75,7 +88,11 @@ class ProjectCreationService:
             members=members,
         )
 
-        mount_changes = None #TODO
+        mount_changes = update_project_mounts(
+            project=project,
+            actor=owner,
+            mounts=mounts,
+        )
 
         environment = None
 
@@ -104,3 +121,69 @@ class ProjectCreationService:
         mounts,
     ):
         raise NotImplementedError
+
+
+@transaction.atomic
+def delete_project(
+    *,
+    project,
+    actor,
+):
+    creator_binding = (
+        UserProjectBinding.objects
+        .select_for_update()
+        .filter(
+            project=project,
+            user=actor,
+            role=UserProjectBinding.Role.CREATOR,
+        )
+        .first()
+    )
+
+    if creator_binding is None:
+        raise PermissionDenied(
+            "Only the project creator may delete the project."
+        )
+
+    project_id = project.pk
+    project.delete()
+
+    return ProjectMembershipActionResult(
+        project_id=project_id,
+        action="deleted",
+    )
+
+
+@transaction.atomic
+def leave_project(
+    *,
+    project,
+    actor,
+):
+    binding = (
+        UserProjectBinding.objects
+        .select_for_update()
+        .filter(
+            project=project,
+            user=actor,
+        )
+        .first()
+    )
+
+    if binding is None:
+        raise PermissionDenied(
+            "You are not a member of this project."
+        )
+
+    if binding.role == UserProjectBinding.Role.CREATOR:
+        raise PermissionDenied(
+            "The project creator cannot leave the project."
+        )
+
+    project_id = project.pk
+    binding.delete()
+
+    return ProjectMembershipActionResult(
+        project_id=project_id,
+        action="left",
+    )

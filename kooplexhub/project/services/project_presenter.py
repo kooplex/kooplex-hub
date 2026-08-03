@@ -99,6 +99,10 @@ class ProjectPresenter:
         return self.can_edit
 
     @property
+    def can_change_scope(self):
+        return self.can_edit
+
+    @property
     def can_manage_members(self):
         return self.can_edit
 
@@ -144,6 +148,13 @@ class ProjectPresenter:
             return "bi bi-box-arrow-right"
 
         return None
+
+    @property
+    def membership_action_url(self):
+        return reverse(
+            "project:membership-action",
+            kwargs={"project_id": self.project.pk},
+        )
 
 
     @cached_property

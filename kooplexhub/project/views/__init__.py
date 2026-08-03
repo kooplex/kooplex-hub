@@ -1,11 +1,3 @@
-from .configure import (
-#    ProjectImageModalView,
-#    ProjectImagePickerView,
-#    ProjectImageSaveView,
-#    ProjectMountsModalView,
-#    ProjectMountsSaveView,
-    ProjectDeleteView,
-)
 from .create import (
     ProjectCreateModalView,
     ProjectCreateView,
@@ -14,6 +6,9 @@ from .create import (
 #    ProjectCreateMountsPickerView,
 #    ProjectCreateMountsSelectedView,
 #    ProjectCreatePickerEmptyView,
+)
+from .membership_action import (
+    ProjectMembershipActionView,
 )
 from .list import (
     ProjectCardPartialView,
@@ -31,13 +26,17 @@ from .widgets import (
     ProjectDescriptionUpdateView,
     ProjectCreateDescriptionValidateView,
 
+    ProjectScopeDisplayView,
+    ProjectScopeEditView,
+    ProjectScopeUpdateView,
+
     ProjectPreferredImageDisplayView,
     ProjectPreferredImageChangeView,
     ProjectPreferredImageUpdateView,
     ProjectCreatePreferredImageValidateView,
     
     ProjectMountsDisplayView,
-    ProjectMountsChangeView,
+    ProjectMountsModalView,
     ProjectMountsUpdateView,
     
     ProjectMembersSummaryView,
@@ -78,13 +77,17 @@ __all__ = [
     "ProjectDescriptionUpdateView",
     "ProjectCreateDescriptionValidateView",
     
+    "ProjectScopeDisplayView",
+    "ProjectScopeEditView",
+    "ProjectScopeUpdateView",
+
     "ProjectPreferredImageDisplayView",
     "ProjectPreferredImageChangeView",
     "ProjectPreferredImageUpdateView",
     "ProjectCreatePreferredImageValidateView",
 
     "ProjectMountsDisplayView",
-    "ProjectMountsChangeView",
+    "ProjectMountsModalView",
     "ProjectMountsUpdateView",
     
     "ProjectEnvironmentTabView",

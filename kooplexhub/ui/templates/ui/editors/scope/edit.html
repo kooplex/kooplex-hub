@@ -1,0 +1,54 @@
+<form
+  id="{{ editor.dom_id }}"
+  class="ui-scope-editor"
+  hx-post="{{ editor.update_url }}"
+  hx-target="#{{ editor.dom_id }}"
+  hx-swap="outerHTML"
+  data-scope-editor
+  data-cancel-url="{{ editor.display_url }}"
+>
+  {% csrf_token %}
+
+  <div
+    class="btn-group ui-scope-editor__choices"
+    role="group"
+    aria-label="Project scope"
+  >
+    {% for choice in editor.choices %}
+      <input
+        type="radio"
+        class="btn-check"
+        name="scope"
+        id="{{ editor.dom_id }}-choice-{{ choice.value }}"
+        value="{{ choice.value }}"
+        autocomplete="off"
+        {% if editor.field.value|stringformat:"s" == choice.value|stringformat:"s" %}
+          checked
+	  autofocus
+        {% endif %}
+        data-scope-choice
+      >
+
+      <label
+        class="btn btn-sm btn-outline-secondary"
+        for="{{ editor.dom_id }}-choice-{{ choice.value }}"
+        title="{{ choice.label }} — {{ choice.description }}"
+      >
+        <i
+          class="bi {{ choice.icon }}"
+          aria-hidden="true"
+        ></i>
+
+        <span class="visually-hidden">
+          {{ choice.label }}
+        </span>
+      </label>
+    {% endfor %}
+  </div>
+
+  {% if editor.field.errors %}
+    <div class="invalid-feedback d-block">
+      {{ editor.field.errors|striptags }}
+    </div>
+  {% endif %}
+</form>

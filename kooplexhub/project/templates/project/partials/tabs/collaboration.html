@@ -1,0 +1,18 @@
+{% load project_editors %}
+
+<section
+  id="project-collaboration-content-{{ project.pk }}"
+  class="project-tab-section"
+>
+  <div class="project-tab-section-header">
+    <div>
+      <p class="project-tab-section-subtitle">
+        Members who can access and work on this project.
+      </p>
+    </div>
+  </div>
+
+  <div class="project-collaborator-list">
+    {% project_members_editor project presentation %}
+  </div>
+</section>

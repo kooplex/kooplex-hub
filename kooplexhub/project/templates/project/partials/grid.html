@@ -1,0 +1,16 @@
+<section 
+  id="listPane" 
+  class="card-grid"
+  hx-get="{% url 'project:grid' %}"
+  hx-trigger="project-list-refresh from:body"
+  hx-swap="outerHTML"
+  data-live-key="project-list:user:{{ request.user.pk }}"
+  data-live-url="{% url 'project:grid' %}"
+  data-live-swap="outerHTML"
+>
+  {% for project in projects %}
+    {% include "project/partials/card_wrapper.html" with project=project %}
+  {% empty %}
+    {% include "empty.html" with empty_title="You have no projects yet." empty_p_before='Use the add button to create your first project.' %}
+  {% endfor %}
+</section>

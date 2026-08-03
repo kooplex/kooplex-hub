@@ -1,0 +1,46 @@
+<div id="{{ editor.dom_id }}-modal-content">
+  <div class="modal-header">
+    <h2
+      class="modal-title fs-5"
+      id="{{ editor.dom_id }}-modal-title"
+    >
+      Select preferred mounts
+    </h2>
+
+    <button
+      type="button"
+      class="btn-close"
+      data-bs-dismiss="modal"
+      aria-label="Close"
+    ></button>
+  </div>
+
+  <div class="modal-body">
+    {% if editor.form.non_field_errors %}
+      <div class="alert alert-danger">
+        {{ editor.form.non_field_errors }}
+      </div>
+    {% endif %}
+
+    {% include "ui/editors/mounts_picker/controls.html" with editor=editor only %}
+  </div>
+
+  <div class="modal-footer">
+    <button
+      type="button"
+      class="btn btn-outline-secondary"
+      data-bs-dismiss="modal"
+    >
+      Cancel
+    </button>
+
+    <button
+      type="submit"
+      class="btn btn-primary"
+      data-mounts-save
+      disabled
+    >
+      Save changes
+    </button>
+  </div>
+</div>

@@ -1,0 +1,130 @@
+{% load project_presenter %}
+{% load project_editors %}
+{% present_project project as presentation %}
+
+
+<div
+  class="card project-card bg-light border border-3 border-success shadow-light mb-3"
+  data-project-card="{{ project.pk }}"
+>
+  <div class="card-header d-flex align-items-center gap-2">
+    <span class="project-card-title text-truncate">
+      {% project_name_editor project presentation %}
+    </span>
+
+    <div class="flex-grow-1"></div>
+    {% project_scope_editor project presentation %}
+
+    {% if presentation.can_delete or presentation.can_leave %}
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-danger ms-2"
+        hx-get="{{ presentation.membership_action_url }}"
+        hx-target="#modal-root"
+        hx-swap="innerHTML"
+        aria-label="{{ presentation.membership_action_label }}"
+        title="{{ presentation.membership_action_label }}"
+      >
+        <i
+          class="bi {{ presentation.membership_action_icon }}"
+          aria-hidden="true"
+        ></i>
+      </button>
+    {% endif %}
+
+  </div>
+
+  <div class="card-body p-0">
+    <ul
+      class="nav nav-tabs project-card-tabs px-3 pt-3"
+      id="project-tabs-{{ project.pk }}"
+      role="tablist"
+    >
+      <li class="nav-item" role="presentation">
+        <button
+          class="nav-link active"
+          id="project-description-tab-{{ project.pk }}"
+          data-bs-toggle="tab"
+          data-bs-target="#project-description-pane-{{ project.pk }}"
+          data-project-tab
+          type="button"
+          role="tab"
+          aria-controls="project-description-pane-{{ project.pk }}"
+          aria-selected="true"
+        >
+          <i class="bi bi-chat-left-text" aria-hidden="true"></i>
+          <span class="project-tab-label">Description</span>
+        </button>
+      </li>
+
+      <li class="nav-item" role="presentation">
+        <button
+          class="nav-link"
+          id="project-collaboration-tab-{{ project.pk }}"
+          data-bs-toggle="tab"
+          data-bs-target="#project-collaboration-pane-{{ project.pk }}"
+          data-project-tab
+          type="button"
+          role="tab"
+          aria-controls="project-collaboration-pane-{{ project.pk }}"
+          aria-selected="false"
+        >
+          <i class="bi bi-people" aria-hidden="true"></i>
+          <span class="project-tab-label">Collaboration</span>
+        </button>
+      </li>
+
+      <li class="nav-item" role="presentation">
+        <button
+          class="nav-link"
+          id="project-environment-tab-{{ project.pk }}"
+          data-bs-toggle="tab"
+          data-bs-target="#project-environment-pane-{{ project.pk }}"
+          data-project-tab
+          type="button"
+          role="tab"
+          aria-controls="project-environment-pane-{{ project.pk }}"
+          aria-selected="false"
+        >
+          <i class="bi bi-boxes" aria-hidden="true"></i>
+          <span class="project-tab-label">Environment</span>
+        </button>
+      </li>
+    </ul>
+
+    <div
+      class="tab-content project-card-tab-content"
+      id="project-tab-content-{{ project.pk }}"
+    >
+      <div
+        class="tab-pane fade show active"
+        id="project-description-pane-{{ project.pk }}"
+        role="tabpanel"
+        aria-labelledby="project-description-tab-{{ project.pk }}"
+        tabindex="0"
+      >
+        {% project_description_editor project presentation %}
+      </div>
+
+      <div
+        class="tab-pane fade"
+        id="project-collaboration-pane-{{ project.pk }}"
+        role="tabpanel"
+        aria-labelledby="project-collaboration-tab-{{ project.pk }}"
+        tabindex="0"
+      >
+        {% include "project/partials/tabs/collaboration.html" with project=project presentation=presentation only %}
+      </div>
+
+      <div
+        class="tab-pane fade"
+        id="project-environment-pane-{{ project.pk }}"
+        role="tabpanel"
+        aria-labelledby="project-environment-tab-{{ project.pk }}"
+        tabindex="0"
+      >
+        {% include "project/partials/tabs/environment.html" with project=project presentation=presentation only %}
+      </div>
+    </div>
+  </div>
+</div>

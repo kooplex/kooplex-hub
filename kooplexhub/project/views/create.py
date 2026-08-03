@@ -18,8 +18,10 @@ from ..services.editor_context import (
     make_membership_ui,
     make_create_image_editor_context,
     make_create_member_editor_context,
+    make_create_mounts_editor_context,
 )
-from ..services.creation import ProjectCreationService
+from ..services.lifecycle import ProjectCreationService
+from volume.models import Volume
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -73,6 +75,11 @@ class ProjectCreateContextMixin:
             "username",
         )
 
+    def get_available_volumes(self):
+        return Volume.objects.visible_to(
+            self.request.user
+        )
+
 
     def get_form(self, *, data=None):
         return ProjectCreateForm(
@@ -80,6 +87,7 @@ class ProjectCreateContextMixin:
             actor=self.request.user,
             available_images=self.get_available_images(),
             available_users=self.get_available_member_users(),
+            available_volumes=self.get_available_volumes(),
             auto_id="project-create-%s",
         )
 
@@ -101,7 +109,11 @@ class ProjectCreateContextMixin:
                     form=form,
                 )
             ),
-            "selected_mounts": [],
+            "mounts_editor": (
+                make_create_mounts_editor_context(
+                    form=form,
+                )
+            ),
         }
 
 
@@ -125,6 +137,11 @@ class ProjectCreateModalView(
                 form=form,
             ),
             "membership_ui": make_membership_ui(dom_id="project-create-members"),
+            "mounts_editor": (
+                make_create_mounts_editor_context(
+                    form=form,
+                )
+            ),
         })
     
         return context
@@ -159,7 +176,7 @@ class ProjectCreateView(
                 description=form.cleaned_data["description"],
                 preferred_image=form.cleaned_data["preferred_image"],
                 members=form.cleaned_data["members"],
-                mounts=[], #form.cleaned_data["mounts"],
+                mounts=form.cleaned_data["mounts"],
                 create_environment=(
                     form.cleaned_data["creation_mode"]
                     == "project_and_environment"
@@ -170,10 +187,6 @@ class ProjectCreateView(
         response["HX-Trigger"] = json.dumps(
             {
                 "modal-close": True,
-            }
-        )
-        response["HX-Trigger-After-Settle"] = json.dumps(
-            {
                 "project-list-refresh": {
                     "projectId": result.project.pk,
                     "environmentId": (

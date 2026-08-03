@@ -1,0 +1,9 @@
+<div
+  id="card-project-{{ project.pk }}"
+  class="card-project"
+  data-live-key="project:{{ project.pk }}"
+  data-live-url="{% url 'project:card_partial' project.pk %}"
+  data-live-swap="outerHTML"
+>
+  {% include "project/partials/card.html" with project=project %}
+</div>

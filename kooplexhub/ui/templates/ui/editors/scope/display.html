@@ -1,0 +1,36 @@
+<div
+  id="{{ editor.dom_id }}"
+  class="ui-scope-editor"
+>
+  {% if editor.can_edit %}
+    <button
+      type="button"
+      class="btn btn-sm btn-outline-secondary rounded-circle ui-scope-editor__display"
+      hx-get="{{ editor.edit_url }}"
+      hx-target="#{{ editor.dom_id }}"
+      hx-swap="outerHTML"
+      aria-label="{{ editor.aria_label }}"
+      title="{{ editor.display_value }} — {{ editor.description }}"
+    >
+      <i
+        class="bi {{ editor.icon }}"
+        aria-hidden="true"
+      ></i>
+
+      <span class="visually-hidden">
+        {{ editor.display_value }}
+      </span>
+    </button>
+  {% else %}
+    <span
+      class="btn btn-sm btn-outline-secondary rounded-circle ui-scope-editor__display disabled"
+      title="{{ editor.display_value }} — {{ editor.description }}"
+      aria-label="{{ editor.display_value }}"
+    >
+      <i
+        class="bi {{ editor.icon }}"
+        aria-hidden="true"
+      ></i>
+    </span>
+  {% endif %}
+</div>

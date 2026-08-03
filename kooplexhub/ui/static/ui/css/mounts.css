@@ -1,0 +1,15 @@
+.ui-mounts-picker__selection {
+    width: 2.5rem;
+    text-align: center;
+}
+
+.ui-mounts-picker__description-cell {
+    max-width: 24rem;
+}
+
+.ui-mounts-picker__description {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

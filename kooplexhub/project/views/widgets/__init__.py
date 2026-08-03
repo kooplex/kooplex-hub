@@ -10,6 +10,11 @@ from .description import (
     ProjectDescriptionUpdateView,
     ProjectCreateDescriptionValidateView,
 )
+from .scope import (
+    ProjectScopeDisplayView,
+    ProjectScopeEditView,
+    ProjectScopeUpdateView,
+)
 from .preferred_image import (
     ProjectPreferredImageDisplayView,
     ProjectPreferredImageChangeView,
@@ -18,7 +23,7 @@ from .preferred_image import (
 )
 from .mounts import (
     ProjectMountsDisplayView,
-    ProjectMountsChangeView,
+    ProjectMountsModalView,
     ProjectMountsUpdateView,
 )
 from .members import (
@@ -47,6 +52,10 @@ __all__ = [
     "ProjectDescriptionEditView",
     "ProjectDescriptionUpdateView",
     "ProjectCreateDescriptionValidateView",
+
+    "ProjectScopeDisplayView",
+    "ProjectScopeEditView",
+    "ProjectScopeUpdateView",
     
     "ProjectPreferredImageDisplayView",
     "ProjectPreferredImageEditView",
@@ -54,7 +63,7 @@ __all__ = [
     "ProjectCreatePreferredImageValidateView",
     
     "ProjectMountsDisplayView",
-    "ProjectMountsChangeView",
+    "ProjectMountsModalView",
     "ProjectMountsUpdateView",
 
     "ProjectMembersSummaryView",

@@ -1,0 +1,104 @@
+<div
+  class="modal fade"
+  id="project-{{ project.pk }}-membership-action-modal"
+  tabindex="-1"
+  aria-labelledby="project-{{ project.pk }}-membership-action-title"
+  aria-hidden="true"
+  data-auto-show-modal
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form
+        method="post"
+        action="{{ presentation.membership_action_url }}"
+        hx-post="{{ presentation.membership_action_url }}"
+        hx-target="#modal-root"
+        hx-swap="innerHTML"
+      >
+        {% csrf_token %}
+
+        <div class="modal-header">
+          <h2
+            class="modal-title fs-5"
+            id="project-{{ project.pk }}-membership-action-title"
+          >
+            {{ presentation.membership_action_label }}
+          </h2>
+
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+          ></button>
+        </div>
+
+        <div class="modal-body">
+          {% if presentation.can_delete %}
+            <p>
+              Are you sure you want to delete
+              <strong>{{ project.name }}</strong>?
+            </p>
+
+            <div class="alert alert-danger mb-0">
+              <i
+                class="bi bi-exclamation-triangle me-1"
+                aria-hidden="true"
+              ></i>
+
+              The project and its project-level bindings
+              will be deleted permanently. This action
+              cannot be undone.
+            </div>
+
+          {% elif presentation.can_leave %}
+            <p>
+              Are you sure you want to leave
+              <strong>{{ project.name }}</strong>?
+            </p>
+
+            <p class="text-muted mb-0">
+              You will lose access to this project unless
+              another administrator adds you again.
+            </p>
+          {% endif %}
+        </div>
+
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            data-bs-dismiss="modal"
+          >
+            Cancel
+          </button>
+
+          {% if presentation.can_delete %}
+            <button
+              type="submit"
+              class="btn btn-danger"
+            >
+              <i
+                class="bi bi-trash me-1"
+                aria-hidden="true"
+              ></i>
+              Delete project
+            </button>
+
+          {% elif presentation.can_leave %}
+            <button
+              type="submit"
+              class="btn btn-warning"
+            >
+              <i
+                class="bi bi-box-arrow-right me-1"
+                aria-hidden="true"
+              ></i>
+              Leave project
+            </button>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

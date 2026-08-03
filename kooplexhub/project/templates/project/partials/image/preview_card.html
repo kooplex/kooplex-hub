@@ -1,0 +1,13 @@
+<div class="image-preview-card">
+  <div class="image-preview-title">
+    {{ image.short_name|default:image.name }}
+  </div>
+
+  <div class="image-preview-description">
+    {% if image.description %}
+      {{ image.description|linebreaksbr }}
+    {% else %}
+      <span class="text-muted">No description available.</span>
+    {% endif %}
+  </div>
+</div>

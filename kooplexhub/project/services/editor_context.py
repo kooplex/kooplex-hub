@@ -1,10 +1,42 @@
 from django.urls import reverse
 
-from ..models import UserProjectBinding
+from ..models import (
+    Project,
+    UserProjectBinding,
+)
 from .members import (
     MemberSelection,
     get_assignable_member_role_choices,
 )
+
+
+PROJECT_SCOPE_ICONS = {
+    Project.Scope.PUBLIC: "bi-globe",
+    Project.Scope.INTERNAL: "bi-people",
+    Project.Scope.PRIVATE:  "bi-lock",
+}
+
+
+def get_project_scope_choices():
+    return tuple(
+        {
+            "value": value,
+            "icon": PROJECT_SCOPE_ICONS[value],
+            "label": value.replace("_", " ").title(),
+            "description": description,
+        }
+        for value, description in Project.Scope.choices
+    )
+
+
+def get_project_scope_presentation(scope):
+    choice = next(
+        choice
+        for choice in get_project_scope_choices()
+        if choice["value"] == scope
+    )
+    return choice
+
 
 def make_name_editor_context(
     *,
@@ -276,71 +308,6 @@ def make_create_member_editor_context(
     }
 
 
-def make_mounts_editor_context(
-    *,
-    project,
-    presenter,
-):
-    kwargs = {
-        "project_id": project.pk,
-    }
-
-    selections = [
-       # mounts_binding_to_selection(binding)
-       # for binding in (
-       #     project.userbindings
-       #     .exclude(
-       #         role=(
-       #             UserProjectBinding
-       #             .Role
-       #             .CREATOR
-       #         )
-       #     )
-       #     .select_related("user")
-       # )
-    ]
-    return {
-        "dom_id": f"project-{project.pk}-mounts",
-        "selected_mounts": [
-            mounts_selection_to_context(
-                selection
-            )
-            for selection in selections
-        ],
-        "can_edit": presenter.can_change_image,
-        "aria_label": "Change project's preferred volumes",
-        "edit_url": reverse(
-            "project:mounts-edit",
-            kwargs={"project_id": project.pk},
-        ),
-        "display_url": reverse(
-            "project:mounts-display",
-            kwargs={"project_id": project.pk},
-        ),
-        "update_url": reverse(
-            "project:mounts-update",
-            kwargs={"project_id": project.pk},
-        ),
-    }
-
-
-def make_create_mounts_editor_context(*, form):
-    selections = get_form_mounts_selections(
-        form
-    )
-    return {
-        "dom_id": "project-create-mounts",
-        "selected_mounts": [
-            mounts_selection_to_context(
-                selection
-            )
-            for selection in selections
-        ],
-        "can_edit": True,
-        "staged": True,
-    }
-
-
 def make_membership_ui(*, dom_id):
     return {
         "dom_id": dom_id,
@@ -352,4 +319,119 @@ def make_membership_ui(*, dom_id):
             get_assignable_member_role_choices()
         ),
     }
+
+
+def make_mounts_summary_context(
+    *,
+    project,
+    presenter,
+):
+    kwargs = {
+        "project_id": project.pk,
+    }
+
+    selected_mounts = tuple(
+        binding.volume
+        for binding in (
+            project.volumebindings
+            .select_related("volume")
+        )
+    )
+
+    return {
+        "dom_id": f"project-{project.pk}-volumes",
+        "selected_mounts": selected_mounts,
+        "can_edit": presenter.can_change_mounts,
+        "modal_url": reverse(
+            "project:mounts-edit",
+            kwargs=kwargs,
+        ),
+        "display_url": reverse(
+            "project:mounts-display",
+            kwargs=kwargs,
+        ),
+        "update_url": reverse(
+            "project:mounts-update",
+            kwargs=kwargs,
+        ),
+    }
+
+
+def make_create_mounts_editor_context(
+    *,
+    form,
+):
+    selected_mounts = (
+        form.get_selected_mounts()
+    )
+
+    selected_ids = {
+        volume.pk
+        for volume in selected_mounts
+    }
+
+    available_mounts = tuple(
+        form.fields["mounts"].queryset
+    )
+
+    return {
+        "dom_id": "project-create-mounts",
+        "selected_mounts": selected_mounts,
+        "available_mounts": available_mounts,
+        "items": tuple(
+            {
+                "volume": volume,
+                "selected": volume.pk in selected_ids,
+            }
+            for volume in available_mounts
+        ),
+        "field": form["mounts"],
+        "form": form,
+        "can_edit": True,
+        "staged": True,
+    }
+
+
+def make_scope_editor_context(
+    *,
+    project,
+    presenter,
+    form=None,
+):
+    kwargs = {
+        "project_id": project.pk,
+    }
+
+    presentation = get_project_scope_presentation(project.scope)
+
+    return {
+        "dom_id": f"project-{project.pk}-scope",
+        "value": project.scope,
+        "field": (
+            form["scope"] 
+            if form is not None 
+            else None
+        ),
+        "form": form,
+        "can_edit": presenter.can_change_scope,
+        "aria_label": "Change project scope",
+        "display_value": presentation["label"],
+        "icon": presentation["icon"],
+        "description": presentation["description"],
+        "choices": get_project_scope_choices(),
+        "edit_url": reverse(
+            "project:scope-edit",
+            kwargs=kwargs,
+        ),
+        "display_url": reverse(
+            "project:scope-display",
+            kwargs=kwargs,
+        ),
+        "update_url": reverse(
+            "project:scope-update",
+            kwargs=kwargs,
+        ),
+    }
+
+
 

@@ -1,0 +1,28 @@
+.ui-scope-editor {
+    display: inline-flex;
+    align-items: center;
+}
+
+.ui-scope-editor__display {
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ui-scope-editor__choices .btn {
+    width: 2.25rem;
+    height: 2rem;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ui-scope-editor__choices .btn-check:focus + .btn {
+    box-shadow:
+        0 0 0 0.2rem
+        rgba(var(--bs-primary-rgb), 0.25);
+}

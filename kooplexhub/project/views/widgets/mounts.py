@@ -1,67 +1,46 @@
 import json
 import logging
 
-#from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth import get_user_model
-#from django.db.models import Q
-#from django.core.exceptions import PermissionDenied
-#from django.template.response import TemplateResponse
-#from django.shortcuts import (
-#    render,
-#    get_object_or_404,
-#)
-#from django.urls import reverse
-#from django.views import View
-#from django.views.generic import ListView
-#
+from django.template.response import TemplateResponse
+from django.http import HttpResponse
+
 from .base import ProjectEditorBaseView
-#from ..mixins import ProjectMemberAccessMixin
-#from ...services.members import update_project_members
-#from ...services.editor_context import make_member_editor_context
-#from ...conf import PROJECT_SETTINGS
-#from ...forms import ProjectMembersForm
-#from ...models import UserProjectBinding
-#
+from ...forms import ProjectMountsForm
+from ...models import UserProjectBinding
+from ...services.mounts import update_project_mounts
+
+
 User = get_user_model()
 logger = logging.getLogger(__name__)
 
-MOUNTS_DISPLAY_TEMPLATE = "ui/editors/mounts_picker/display.html"
-#MEMBERSHIP_SEARCH_TEMPLATE = "ui/editors/membership/search_results.html"
-#MEMBERSHIP_MEMBER_ROW_TEMPLATE = "ui/editors/membership/row.html"
-MOUNTS_EDIT_TEMPLATE = "ui/editors/mounts_picker/edit.html"
-#
-#COLLABORATION_TEMPLATE = "project/partials/tabs/collaboration.html"
-#
-#def get_assignable_member_role_choices():
-#    return [
-#        {
-#            "value": value,
-#            "label": label,
-#        }
-#        for value, label in (
-#            UserProjectBinding
-#            .Role
-#            .assignable_choices()
-#        )
-#    ]
+MOUNTS_DISPLAY_TEMPLATE = "ui/editors/mounts_picker/summary.html"
+MOUNTS_MODAL_TEMPLATE = "ui/editors/mounts_picker/modal.html"
+MOUNTS_MODAL_CONTENT_TEMPLATE = "ui/editors/mounts_picker/modal_content.html"
 
 
 class ProjectMountsBaseView(ProjectEditorBaseView):
     field_name = None
-    permission_name = "can_manage_mounts"
+    permission_name = "can_change_mounts"
     editor_slug = "mounts"
     aria_label = "Manage project mounts"
 
     def get_form(self, *, data=None):
         project = self.get_project()
 
+        initial_mount_ids = (
+            project.volumebindings
+            .values_list("volume_id", flat=True)
+        )
+
         return ProjectMountsForm(
             data=data,
-#            project=self.get_project(),
             actor=self.request.user,
+            initial={
+                "mounts": initial_mount_ids,
+            },
             auto_id=(
-                f"project-{project.pk}"
-                "-mounts-%s"
+                f"project-{project.pk}-mounts-%s"
             ),
         )
 
@@ -74,21 +53,11 @@ class ProjectMountsBaseView(ProjectEditorBaseView):
             return form.get_selected_mounts()
 
         return [
-            {
-                "user": binding.user,
-                "role": binding.role,
-            }
+            binding.volume
             for binding in (
                 self.get_project()
-                .userbindings
-                .select_related("user")
-                .exclude(
-                    role=(
-                        UserProjectBinding
-                        .Role
-                        .CREATOR
-                    )
-                )
+                .volumebindings
+                .select_related("volume")
             )
         ]
 
@@ -98,11 +67,54 @@ class ProjectMountsBaseView(ProjectEditorBaseView):
         *,
         form=None,
     ):
-        context.update({
-            "selected_mounts": (
-                self.get_selected_mounts(
-                    form=form,
+        project = self.get_project()
+
+        if form is None:
+            selected_mounts = tuple(
+                binding.volume
+                for binding in (
+                    project.volumebindings
+                    .select_related("volume")
                 )
+            )
+
+            available_mounts = ()
+        else:
+            available_mounts = tuple(
+                form.fields["mounts"].queryset
+            )
+
+            if form.is_bound:
+                selected_mounts = (
+                    form.get_selected_mounts()
+                )
+            else:
+                selected_mounts = tuple(
+                    binding.volume
+                    for binding in (
+                        project.volumebindings
+                        .select_related("volume")
+                    )
+                )
+
+        selected_ids = {
+            volume.pk
+            for volume in selected_mounts
+        }
+
+        context.update({
+            "selected_mounts": selected_mounts,
+            "available_mounts": (
+                available_mounts
+            ),
+            "items": tuple(
+                {
+                    "volume": volume,
+                    "selected": (
+                        volume.pk in selected_ids
+                    ),
+                }
+                for volume in available_mounts
             ),
             "staged": False,
         })
@@ -124,15 +136,12 @@ class ProjectMountsDisplayView(
         }
 
 
-class ProjectMountsChangeView(
-    ProjectMountsBaseView
+class ProjectMountsModalView(
+    ProjectMountsBaseView,
 ):
-    template_name = MOUNTS_EDIT_TEMPLATE
+    template_name = MOUNTS_MODAL_TEMPLATE
 
-    def get_context_data(
-        self,
-        **kwargs,
-    ):
+    def get_context_data(self, **kwargs):
         self.require_edit_permission()
 
         form = (
@@ -141,10 +150,9 @@ class ProjectMountsChangeView(
         )
 
         return {
-            "editor": self.make_editor_context(
-                form=form,
-            ),
+            "editor": self.make_editor_context(form=form),
         }
+
 
 class ProjectMountsUpdateView(
     ProjectMountsBaseView
@@ -166,7 +174,7 @@ class ProjectMountsUpdateView(
         if not form.is_valid():
             return TemplateResponse(
                 request,
-                MOUNTS_EDIT_TEMPLATE,
+                MOUNTS_MODAL_CONTENT_TEMPLATE,
                 {
                     "editor": (
                         self.make_editor_context(
@@ -174,53 +182,32 @@ class ProjectMountsUpdateView(
                         )
                     ),
                 },
-                status=422,
             )
 
-        changes = update_project_members(
-            project=self.get_project(),
+        project = self.get_project()
+
+        changes = update_project_mounts(
+            project=project,
             actor=request.user,
-            members=form.cleaned_data[
-                "members"
-            ],
+            mounts=form.cleaned_data["mounts"],
         )
 
         if changes.changed:
             logger.info(
-                "Project %s memberships changed by %s: "
-                "%d added, %d updated, %d removed",
-                self.get_project().pk,
+                "Project %s mounts changed by %s: "
+                "%d added, %d removed",
+                project.pk,
                 request.user.pk,
                 len(changes.added),
-                len(changes.updated),
                 len(changes.removed),
             )
 
-        self.project = None
-        self.presenter = None
-
-        editor = self.make_editor_context()
-
-        response = TemplateResponse(
-            request,
-            MOUNTS_DISPLAY_TEMPLATE,
-            {
-                "editor": editor,
-            },
-        )
-
-        response["HX-Retarget"] = (
-            f"#{editor['dom_id']}"
-        )
-        response["HX-Reswap"] = "outerHTML"
+        response = HttpResponse(status=204)
         response["HX-Trigger"] = json.dumps({
-            "closeModal": {
-                "modalId": (
-                    f"{editor['dom_id']}-modal"
-                ),
+            "modal-close": True,
+            "project-mounts-updated": {
+                "project_id": project.pk,
             },
         })
 
         return response
-
-

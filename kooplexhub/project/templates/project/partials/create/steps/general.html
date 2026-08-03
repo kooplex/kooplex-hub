@@ -1,0 +1,46 @@
+<div class="project-create-step">
+  <div class="project-create-step__header">
+    <h6 class="mb-1">General information</h6>
+    <p class="text-muted mb-0">
+      These fields define the project and are required.
+    </p>
+  </div>
+
+  <div class="project-create-step__body">
+    {% include "project/partials/create/name_field.html" with field=form.name only %}
+
+    <div class="mb-3">
+      <label
+        class="form-label fw-semibold"
+        for="project-create-scope"
+      >
+        Scope
+      </label>
+
+      <select
+        id="project-create-scope"
+        name="{{ form.scope.html_name }}"
+        class="form-select {% if form.scope.errors %}is-invalid{% endif %}"
+        required
+        data-project-required
+      >
+        {% for value, label in form.scope.field.choices %}
+          <option
+            value="{{ value }}"
+            {% if form.scope.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}
+          >
+            {{ label }}
+          </option>
+        {% endfor %}
+      </select>
+
+      {% if form.scope.errors %}
+        <div class="invalid-feedback">
+          {{ form.scope.errors|striptags }}
+        </div>
+      {% endif %}
+    </div>
+
+    {% include "project/partials/create/description_field.html" with field=form.description only %}
+  </div>
+</div>

@@ -1,0 +1,74 @@
+<form
+  method="post"
+  action="{% url 'project:create' %}"
+  hx-post="{% url 'project:create' %}"
+  hx-target="#modal-root"
+  hx-swap="innerHTML"
+  id="project-create-form"
+  data-project-create-wizard
+  novalidate
+  data-name-validation-url="{% url 'project:create-validate-name' %}"
+  data-description-validation-url="{% url 'project:create-validate-description' %}"
+  data-preferred-image-validation-url="{% url 'project:create-validate-preferred-image' %}"
+>
+  {% csrf_token %}
+
+  <div class="project-create-wizard">
+    <nav
+      class="project-create-wizard__navigation"
+      aria-label="Project creation steps"
+    >
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-secondary active"
+        data-wizard-go="0"
+        aria-current="step"
+      >
+        1 General
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-secondary"
+        data-wizard-go="1"
+      >
+        2 Environment
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-secondary"
+        data-wizard-go="2"
+      >
+        3 Collaboration
+      </button>
+    </nav>
+
+    <div class="project-create-wizard__body">
+      <section
+        data-wizard-step="0"
+        aria-labelledby="project-create-general-title"
+      >
+        {% include "project/partials/create/steps/general.html" %}
+      </section>
+
+      <section
+        data-wizard-step="1"
+        aria-labelledby="project-create-environment-title"
+        hidden
+      >
+        {% include "project/partials/create/steps/environment.html" %}
+      </section>
+
+      <section
+        data-wizard-step="2"
+        aria-labelledby="project-create-collaboration-title"
+        hidden
+      >
+        {% include "project/partials/create/steps/collaboration.html" %}
+      </section>
+    </div>
+
+    {% include "project/partials/create/actions.html" %}
+  </div>
+</form>

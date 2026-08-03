@@ -1,0 +1,47 @@
+<div
+    id="{{ editor.dom_id }}"
+    class="ui-mounts-editor"
+    hx-get="{{ editor.display_url }}"
+    hx-trigger="project-mounts-updated from:body"
+    hx-target="this"
+    hx-swap="outerHTML"
+>
+  <div class="project-setting-row">
+    <div class="project-setting-main">
+      <div class="project-setting-title">
+        Preferred mounts
+      </div>
+
+      <div class="project-setting-description">
+        {% if editor.selected_mounts %}
+          {% for volume in editor.selected_mounts %}
+            <span
+                class="project-volume-badge"
+                title="{{ volume.folder }}"
+            >
+                <span class="project-volume-badge__volume">
+                    {{ volume.folder }}
+                </span>
+	    </span>
+	  {% endfor %}
+        {% else %}
+          Default mounts.
+        {% endif %}
+      </div>
+    </div>
+
+    {% if editor.can_edit %}
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-dark rounded-pill"
+        hx-get="{{ editor.modal_url }}"
+        hx-target="#modal-root"
+        hx-swap="innerHTML"
+        aria-label="{{ editor.aria_label }}"
+      >
+        <i class="bi bi-folder me-1" aria-hidden="true"></i>
+        Change
+      </button>
+    {% endif %}
+  </div>
+</div>

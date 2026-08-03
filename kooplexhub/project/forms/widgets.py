@@ -54,3 +54,7 @@ class ProjectDescriptionForm(ProjectWidgetForm):
 
 
 
+class ProjectScopeForm(ProjectWidgetForm):
+    class Meta(ProjectWidgetForm.Meta):
+        fields = ["scope"]
+
