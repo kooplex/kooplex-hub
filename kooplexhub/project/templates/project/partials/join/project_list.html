@@ -1,0 +1,14 @@
+{% if project_items %}
+  <div
+    class="vstack gap-2"
+    data-project-join-options
+  >
+    {% for item in project_items %}
+      {% include "project/partials/join/project_option.html" with item=item only %}
+    {% endfor %}
+  </div>
+{% else %}
+  <p class="small text-muted mb-0">
+    No matching projects are available.
+  </p>
+{% endif %}

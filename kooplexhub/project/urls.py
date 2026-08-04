@@ -22,18 +22,18 @@ urlpatterns = [
         name="card_partial",
     ),
 
-    # leave or delete project
+    # create or join a project workflow chooser
     path(
-        "partials/<int:project_id>/membership-action/",
-        views.ProjectMembershipActionView.as_view(),
-        name="membership-action",
+        "partials/start/",
+        views.ProjectStartView.as_view(),
+        name="start",
     ),
 
     # create new project
     path(
         "partials/create/modal/", 
         views.ProjectCreateModalView.as_view(), 
-        name="create_modal",
+        name="create-modal",
     ),
     path(
         "create/", 
@@ -54,6 +54,30 @@ urlpatterns = [
         "partials/create/preferred_image/validate/",
         views.ProjectCreatePreferredImageValidateView.as_view(),
         name="create-validate-preferred-image",
+    ),
+
+    # join a project
+    path(
+        "partials/join/",
+        views.ProjectJoinModalView.as_view(),
+        name="join-modal",
+    ),
+    path(
+        "partials/join/search/",
+        views.ProjectJoinSearchView.as_view(),
+        name="join-search",
+    ),
+    path(
+        "partials/join/submit/",
+        views.ProjectJoinView.as_view(),
+        name="join",
+    ),
+
+    # leave or delete project
+    path(
+        "partials/<int:project_id>/membership-action/",
+        views.ProjectMembershipActionView.as_view(),
+        name="membership-action",
     ),
 
     # configure project

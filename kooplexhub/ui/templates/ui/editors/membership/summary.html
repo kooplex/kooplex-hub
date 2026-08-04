@@ -7,30 +7,27 @@
     hx-swap="outerHTML"
 >
     <div class="project-membership-summary__members">
-        {% for member in editor.selected_members %}
-            <span
-                class="project-member-badge"
-                title="{{ member.role_label }}"
-            >
-                <span class="project-member-badge__user">
-                    {{ member.user.username }}
-                </span>
+        {% for member in editor.members %}
+	  <div class="project-member-badge">
+            <span class="project-member-badge__name">
+              {{ member.user.get_full_name|default:member.user.username }}
+            </span>
 
-                <span
-                    class="project-member-badge__role"
-                    aria-label="{{ member.role_label }}"
-                >
-                    {% if member.role == "administrator" %}
-                        <i class="bi bi-shield-lock"></i>
-                    {% else %}
-                        <i class="bi bi-person"></i>
-                    {% endif %}
-                </span>
+            <span
+              class="project-member-badge__role"
+              aria-label="{{ member.role_label }}"
+              title="{{ member.role_label }}"
+            >
+              <i
+                class="bi {{ member.role_icon }}"
+                aria-hidden="true"
+              ></i>
             </span>
+          </div>
         {% empty %}
-            <span class="text-muted">
-                No collaborators
-            </span>
+          <span class="text-muted small">
+              No collaborators
+          </span>
         {% endfor %}
     </div>
 

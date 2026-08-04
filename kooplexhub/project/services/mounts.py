@@ -67,7 +67,7 @@ def update_project_mounts(
     )
 
 
-#FIXME: this below is to dperecate
+
 def get_current_mount_ids(project):
     return set(
         project.volumebindings

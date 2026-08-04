@@ -1,0 +1,118 @@
+<div
+  class="modal fade"
+  id="project-join-modal"
+  tabindex="-1"
+  aria-labelledby="project-join-modal-title"
+  aria-hidden="true"
+  data-auto-show-modal
+>
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <form
+        method="post"
+        action="{{ join_url }}"
+        hx-post="{{ join_url }}"
+        hx-target="#modal-root"
+        hx-swap="innerHTML"
+      >
+        {% csrf_token %}
+
+        <div class="modal-header">
+          <div>
+            <h2
+              class="modal-title fs-5"
+              id="project-join-modal-title"
+            >
+              Join a project
+            </h2>
+
+            <p class="small text-muted mb-0">
+              Select a project currently open to you.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+          ></button>
+        </div>
+
+        <div class="modal-body">
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+              {{ form.non_field_errors }}
+            </div>
+          {% endif %}
+
+          {% if form.project.errors %}
+            <div class="alert alert-danger">
+              {{ form.project.errors }}
+            </div>
+          {% endif %}
+
+          <div class="mb-3">
+            <label
+              for="project-join-search"
+              class="form-label fw-semibold"
+            >
+              Search projects
+            </label>
+
+            <input
+              id="project-join-search"
+              type="search"
+              name="q"
+              class="form-control"
+              value="{{ query }}"
+              placeholder="Search by project, creator or collaborator"
+              autocomplete="off"
+              hx-get="{{ search_url }}"
+              hx-trigger="input changed delay:300ms"
+              hx-target="#project-join-list"
+              hx-swap="innerHTML"
+            >
+          </div>
+
+          <div id="project-join-list">
+            {% include "project/partials/join/project_list.html" with project_items=project_items only %}
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-outline-secondary me-auto"
+            hx-get="{{ start_url }}"
+            hx-target="#modal-root"
+            hx-swap="innerHTML"
+          >
+            <i
+              class="bi bi-arrow-left me-1"
+              aria-hidden="true"
+            ></i>
+            Back
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            data-bs-dismiss="modal"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            class="btn btn-primary"
+            data-project-join-submit
+            disabled
+          >
+            Join project
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

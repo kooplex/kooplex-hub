@@ -1,0 +1,116 @@
+<div
+  class="modal fade"
+  id="project-start-modal"
+  tabindex="-1"
+  aria-labelledby="project-start-modal-title"
+  aria-hidden="true"
+  data-auto-show-modal
+>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h2
+            class="modal-title fs-5"
+            id="project-start-modal-title"
+          >
+            Start a project
+          </h2>
+
+          <p class="text-muted small mb-0">
+            Join an existing project or create your own.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <button
+              type="button"
+              class="card h-100 w-100 text-start project-workflow-card"
+              {% if has_joinable_projects %}
+                hx-get="{% url 'project:join-modal' %}"
+                hx-target="#modal-root"
+                hx-swap="innerHTML"
+              {% else %}
+                disabled
+              {% endif %}
+            >
+              <div class="card-body">
+                <div class="d-flex align-items-start gap-3">
+                  <div class="project-workflow-card__icon">
+                    <i
+                      class="bi bi-people"
+                      aria-hidden="true"
+                    ></i>
+                  </div>
+
+                  <div>
+                    <h3 class="h5">
+                      Join a project
+                    </h3>
+
+                    <p class="text-muted mb-2">
+                      Find a project that is open to you.
+                    </p>
+
+                    {% if has_joinable_projects %}
+                      <span class="badge text-bg-primary">
+                        {{ joinable_project_count }}
+                        available
+                      </span>
+                    {% else %}
+                      <span class="small text-muted">
+                        No projects are currently available.
+                      </span>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </button>
+          </div>
+
+          <div class="col-md-6">
+            <button
+              type="button"
+              class="card h-100 w-100 text-start project-workflow-card"
+              hx-get="{% url 'project:create-modal' %}"
+              hx-target="#modal-root"
+              hx-swap="innerHTML"
+            >
+              <div class="card-body">
+                <div class="d-flex align-items-start gap-3">
+                  <div class="project-workflow-card__icon">
+                    <i
+                      class="bi bi-plus-lg"
+                      aria-hidden="true"
+                    ></i>
+                  </div>
+
+                  <div>
+                    <h3 class="h5">
+                      Create a project
+                    </h3>
+
+                    <p class="text-muted mb-0">
+                      Configure a new project, environment,
+                      collaborators and volumes.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

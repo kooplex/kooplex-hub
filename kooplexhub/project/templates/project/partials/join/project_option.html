@@ -1,0 +1,55 @@
+<label
+  class="card project-join-option"
+  for="project-join-option-{{ item.project.pk }}"
+>
+  <div class="card-body">
+    <div class="d-flex align-items-start gap-3">
+      <input
+        id="project-join-option-{{ item.project.pk }}"
+        type="radio"
+        class="form-check-input mt-1"
+        name="project"
+        value="{{ item.project.pk }}"
+        data-project-join-choice
+      >
+
+      <div class="flex-grow-1 min-width-0">
+        <div
+          class="d-flex justify-content-between align-items-start gap-2"
+        >
+          <h3 class="h6 mb-1">
+            {{ item.project.name }}
+          </h3>
+
+          <span
+            class="badge text-bg-light"
+            title="{{ item.project.get_scope_display }}"
+          >
+            {{ item.project.scope|title }}
+          </span>
+        </div>
+
+        {% if item.creator %}
+          <p class="small text-muted mb-1">
+            Created by
+            {{ item.creator.get_full_name|default:item.creator.username }}
+          </p>
+        {% endif %}
+
+        {% if item.project.description %}
+          <p
+            class="project-join-option__description mb-2"
+            title="{{ item.project.description }}"
+          >
+            {{ item.project.description }}
+          </p>
+        {% endif %}
+
+        <p class="small text-muted mb-0">
+          {{ item.collaborator_count }}
+          collaborator{{ item.collaborator_count|pluralize }}
+        </p>
+      </div>
+    </div>
+  </div>
+</label>

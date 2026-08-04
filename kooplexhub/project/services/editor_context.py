@@ -1,5 +1,6 @@
 from django.urls import reverse
 
+from ..conf import PROJECT_SETTINGS
 from ..models import (
     Project,
     UserProjectBinding,
@@ -10,18 +11,13 @@ from .members import (
 )
 
 
-PROJECT_SCOPE_ICONS = {
-    Project.Scope.PUBLIC: "bi-globe",
-    Project.Scope.INTERNAL: "bi-people",
-    Project.Scope.PRIVATE:  "bi-lock",
-}
-
-
 def get_project_scope_choices():
+    icons = PROJECT_SETTINGS.presentation.scope_icons
+
     return tuple(
         {
             "value": value,
-            "icon": PROJECT_SCOPE_ICONS[value],
+            "icon": icons[value],
             "label": value.replace("_", " ").title(),
             "description": description,
         }
@@ -177,6 +173,38 @@ def get_form_member_selections(form):
     return ()
 
 
+def make_project_member_presentation(
+    *,
+    binding,
+):
+    role_labels = {
+        UserProjectBinding.Role.CREATOR: "Creator",
+        UserProjectBinding.Role.ADMIN: "Administrator",
+        UserProjectBinding.Role.COLLABORATOR: "Member",
+    }
+    role_icons = (
+        PROJECT_SETTINGS
+        .presentation
+        .member_role_icons
+    )
+
+    return {
+        "user": binding.user,
+        "role": binding.role,
+        "role_label": role_labels[
+            binding.role
+        ],
+        "role_icon": role_icons.get(
+            binding.role,
+            "bi-person",
+        ),
+        "is_creator": (
+            binding.role
+            == UserProjectBinding.Role.CREATOR
+        )
+    }
+
+
 def make_member_summary_context(
     *,
     project,
@@ -186,29 +214,30 @@ def make_member_summary_context(
         UserProjectBinding.Role.assignable_choices()
     )
 
-    selected_members = tuple(
-        {
-            "user": binding.user,
-            "role": binding.role,
-            "role_label": role_labels.get(   #FIXME::::???
-                binding.role,
-                binding.role,
-            ),
-        }
-        for binding in (
-            project.userbindings
-            .exclude(
-                role=UserProjectBinding.Role.CREATOR
-            )
-            .select_related("user")
-        )
+    bindings = (
+        project.userbindings
+        .select_related("user")
+        .all()
     )
+
+    actor = presenter.user
+    members = []
+
+    for binding in bindings:
+        if binding.user_id ==actor.pk:
+            continue
+
+        members.append(
+            make_project_member_presentation(
+                binding=binding,
+            )
+        )
 
     return {
         "dom_id": f"project-{project.pk}-members",
-        "selected_members": selected_members,
+        "members": tuple(members),
         "extra_member_count": max(
-            len(selected_members) - 3,
+            len(members) - 3,
             0,
         ),
         "can_edit": presenter.can_manage_members,

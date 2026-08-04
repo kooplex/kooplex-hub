@@ -124,34 +124,39 @@ class ProjectCreationService:
 
 
 @transaction.atomic
-def delete_project(
+def join_project(
     *,
     project,
     actor,
 ):
-    creator_binding = (
+    if not Project.objects.joinable_by(
+        actor
+    ).filter(pk=project.pk).exists():
+        raise ValidationError(
+            "This project is not available to join."
+        )
+
+    binding, created = (
         UserProjectBinding.objects
-        .select_for_update()
-        .filter(
+        .get_or_create(
             project=project,
             user=actor,
-            role=UserProjectBinding.Role.CREATOR,
+            defaults={
+                "role": (
+                    UserProjectBinding
+                    .Role
+                    .COLLABORATOR
+                ),
+            },
         )
-        .first()
     )
 
-    if creator_binding is None:
-        raise PermissionDenied(
-            "Only the project creator may delete the project."
+    if not created:
+        raise ValidationError(
+            "You are already a member of this project."
         )
 
-    project_id = project.pk
-    project.delete()
-
-    return ProjectMembershipActionResult(
-        project_id=project_id,
-        action="deleted",
-    )
+    return binding
 
 
 @transaction.atomic
@@ -187,3 +192,36 @@ def leave_project(
         project_id=project_id,
         action="left",
     )
+
+
+@transaction.atomic
+def delete_project(
+    *,
+    project,
+    actor,
+):
+    creator_binding = (
+        UserProjectBinding.objects
+        .select_for_update()
+        .filter(
+            project=project,
+            user=actor,
+            role=UserProjectBinding.Role.CREATOR,
+        )
+        .first()
+    )
+
+    if creator_binding is None:
+        raise PermissionDenied(
+            "Only the project creator may delete the project."
+        )
+
+    project_id = project.pk
+    project.delete()
+
+    return ProjectMembershipActionResult(
+        project_id=project_id,
+        action="deleted",
+    )
+
+

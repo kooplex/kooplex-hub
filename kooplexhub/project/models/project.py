@@ -54,6 +54,34 @@ class ProjectQuerySet(models.QuerySet):
 
         return qs.distinct()
 
+
+    def joinable_by(self, user):
+        if not user or not user.is_authenticated:
+            return self.none()
+
+        already_joined = Q(
+            userbindings__user=user,
+        )
+
+        joinable_scope = Q(
+            scope=Project.Scope.PUBLIC,
+        )
+
+        # Extend this when INTERNAL membership rules are known:
+        #
+        # joinable_scope |= Q(
+        #     scope=Project.Scope.INTERNAL,
+        #     ...
+        # )
+
+        return (
+            self
+            .filter(joinable_scope)
+            .exclude(already_joined)
+            .distinct()
+        )
+
+
     def attachable_by(self, user):
         """
         Projects the user may mount into an environment.
@@ -136,32 +164,5 @@ class Project(models.Model):
     )
 
     objects = ProjectQuerySet.as_manager()
-
-
-#FIXME    def __str__(self):
-#FIXME        return self.name 
-#FIXME
-#FIXME    def __lt__(self, p):
-#FIXME        return self.name < p.name
-#FIXME
-#FIXME        
-#FIXME
-#FIXME
-#FIXME    @property
-#FIXME    def groupname(self):
-#FIXME        return self.userbindings.first().groupname
-#FIXME
-#FIXME    @property
-#FIXME    def group(self):
-#FIXME        from hub.models import Group
-#FIXME        return Group.objects.filter(name=self.groupname, grouptype=Group.TP_PROJECT).first()
-#FIXME
-#FIXME    @property
-#FIXME    def volumes(self):
-#FIXME        return {
-#FIXME            b.volume
-#FIXME            for b in self.volumebindings
-#FIXME                     .select_related('volume')
-#FIXME        } if self.pk else {}
 
 

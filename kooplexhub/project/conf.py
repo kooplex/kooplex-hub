@@ -5,6 +5,11 @@ from typing import Any
 
 from django.conf import settings
 
+from .models import (
+    Project, 
+    UserProjectBinding,
+)
+
 
 @dataclass(frozen=True)
 class MembershipEditorSettings:
@@ -13,10 +18,39 @@ class MembershipEditorSettings:
 
 
 @dataclass(frozen=True)
+class ProjectPresentationSettings:
+    scope_icons: dict = field(
+        default_factory=lambda: {
+            Project.Scope.PUBLIC: "bi-globe",
+            Project.Scope.INTERNAL: "bi-people",
+            Project.Scope.PRIVATE: "bi-lock",
+        }
+    )
+
+    member_role_icons: dict = field(
+        default_factory=lambda: {
+            UserProjectBinding.Role.CREATOR: (
+                "bi-person-badge"
+            ),
+            UserProjectBinding.Role.ADMIN: (
+                "bi-shield-lock"
+            ),
+            UserProjectBinding.Role.COLLABORATOR: (
+                "bi-person"
+            ),
+        }
+    )
+
+
+@dataclass(frozen=True)
 class ProjectSettings:
     membership_editor: MembershipEditorSettings = field(
         default_factory=MembershipEditorSettings
     )
+    presentation: ProjectPresentationSettings = field(
+        default_factory=ProjectPresentationSettings
+    )
+    skip_workflow_chooser_when_no_joinable_project: bool = True
 
 
 

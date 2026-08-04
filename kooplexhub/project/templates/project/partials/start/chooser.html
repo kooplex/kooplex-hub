@@ -1,0 +1,109 @@
+<form
+  hx-post="{% url 'project:join' %}"
+  hx-target="#modal-root"
+  hx-swap="innerHTML"
+>
+  {% csrf_token %}
+
+  <div class="modal-header">
+    <div>
+      <h2 class="modal-title fs-5">
+        Join a project
+      </h2>
+      <p class="small text-muted mb-0">
+        Select a project available to you.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="btn-close"
+      data-bs-dismiss="modal"
+      aria-label="Close"
+    ></button>
+  </div>
+
+  <div class="modal-body">
+    <input
+      type="search"
+      class="form-control mb-3"
+      placeholder="Filter projects"
+      data-project-join-filter
+    >
+
+    <div data-project-join-list>
+      {% for project in joinable_projects %}
+        <label
+          class="card mb-2 project-join-option"
+          data-project-join-option
+          data-filter-text="
+            {{ project.name }}
+            {{ project.description }}
+            {{ project.creator_name }}
+            {{ project.collaborator_names }}
+          "
+        >
+          <div class="card-body d-flex gap-3">
+            <input
+              type="radio"
+              class="form-check-input mt-1"
+              name="project"
+              value="{{ project.pk }}"
+              required
+            >
+
+            <div>
+              <h3 class="h6 mb-1">
+                {{ project.name }}
+              </h3>
+
+              <p class="small text-muted mb-1">
+                Created by {{ project.creator_name }}
+              </p>
+
+              <p class="mb-1">
+                {{ project.description|truncatechars:180 }}
+              </p>
+
+              <p class="small text-muted mb-0">
+                {{ project.collaborator_count }}
+                collaborator{{ project.collaborator_count|pluralize }}
+              </p>
+            </div>
+          </div>
+        </label>
+      {% empty %}
+        <p class="text-muted mb-0">
+          No projects are currently available.
+        </p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <button
+      type="button"
+      class="btn btn-outline-secondary me-auto"
+      hx-get="{% url 'project:start' %}"
+      hx-target="#modal-root"
+      hx-swap="innerHTML"
+    >
+      Back
+    </button>
+
+    <button
+      type="button"
+      class="btn btn-outline-secondary"
+      data-bs-dismiss="modal"
+    >
+      Cancel
+    </button>
+
+    <button
+      type="submit"
+      class="btn btn-primary"
+    >
+      Join project
+    </button>
+  </div>
+</form>
