@@ -16,7 +16,7 @@ from ..services.project import (
     get_joinable_projects_for_user,
 )
 from ..models import UserProjectBinding
-from ..forms.join import ProjectJoinForm
+from ..forms import ProjectJoinForm
 from ..services.lifecycle import join_project
 
 

@@ -1,3 +1,9 @@
+from .create import (
+    ProjectCreateForm,
+)
+from .join import (
+    ProjectJoinForm,
+)
 from .widgets import (
     ProjectNameForm,
     ProjectDescriptionForm,
@@ -12,11 +18,9 @@ from .mounts import (
 from .members import (
     ProjectMembersForm,
 )
-from .create import (
-    ProjectCreateForm,
-)
 __all__ = [
     "ProjectCreateForm",
+    "ProjectJoinForm",
     "ProjectNameForm",
     "ProjectDescriptionForm",
     "ProjectScopeForm",
