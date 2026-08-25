@@ -13,7 +13,10 @@ from django.core.exceptions import PermissionDenied
 from kooplexhub.lib.libbase import standardize_str
 from ..models import UserCourseBinding
 from ..forms import CourseCreateForm
-from ..services.course_presenter import CoursePresenter
+from .mixins import (
+    CourseBindingMixin,
+    CourseListQuerysetMixin,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -54,26 +57,6 @@ class CourseLeaveView(
         #FIXME
 
 
-#TODO: place in mixins.py
-class CourseBindingMixin:
-    def get_course_binding_queryset(self):
-        return (
-            UserCourseBinding.objects
-            .for_user(self.request.user)
-            .with_course()
-        )
-
-
-class CourseListQuerysetMixin(CourseBindingMixin):
-    context_object_name = "coursebindings"
-
-    def get_queryset(self):
-        return (
-            self.get_course_binding_queryset()
-            .ordered_for_dashboard()
-        )
-
-
 
 class CourseListView(
     LoginRequiredMixin, 
@@ -81,19 +64,6 @@ class CourseListView(
     generic.ListView,
 ):
     template_name = "education/course/list.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        context["courses"] = [
-            CoursePresenter(
-                binding=binding,
-                user=self.request.user,
-            )
-            for binding in context["coursebindings"]
-        ]
-
-        return context
 
 
 class CourseGridView(
@@ -113,10 +83,9 @@ class CourseCardView(
         "education/course/partials/card_wrapper.html"
     )
 
-    def get_binding(self):
-        return get_object_or_404(
-            self.get_course_binding_queryset(),
-            course_id=self.kwargs["course_id"],
-        )
+    def get_context_data(self, **kwargs):
+        return {
+            "binding": self.get_binding(),
+        }
 
 

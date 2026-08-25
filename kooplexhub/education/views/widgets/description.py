@@ -75,7 +75,7 @@ class CourseDescriptionUpdateView(
         if not form.is_valid():
             return TemplateResponse(
                 request,
-                DESCRIPTION_DISPLAY_TEMPLATE,
+                DESCRIPTION_EDIT_TEMPLATE,
                 {
                     "editor": self.make_editor_context(form=form),
                 },

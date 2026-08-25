@@ -197,9 +197,15 @@ class UserCourseBindingQuerySet(models.QuerySet):
         return self.filter(user=user)
 
     def with_course(self):
-        return self.select_related(
-            "course",
-            "course__preferred_image",
+        return (
+            self.select_related(
+                "user",
+                "course",
+                "course__preferred_image",
+            )
+            .prefetch_related(
+                "course__containerbindings__container__image",
+            )
         )
 
     def teaching(self):

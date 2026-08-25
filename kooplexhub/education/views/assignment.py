@@ -27,7 +27,6 @@ class CourseAssignmentsView(
 
         course_ui = CoursePresenter(
             binding=binding,
-            user=self.request.user,
         )
 
         return {

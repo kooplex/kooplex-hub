@@ -8,12 +8,12 @@ from .widgets import (
 from .preferred_image import (
     CoursePreferredImageForm,
 )
-#from .mounts import (
-#    CourseMountsForm,
-#)
-#from .members import (
-#    CourseMembersForm,
-#)
+from .mounts import (
+    CourseMountsForm,
+)
+from .members import (
+    CourseMembersForm,
+)
 #FIXME:
 from .assignment import FormAssignment, FormAssignmentList, FormAssignmentConfigure
 __all__ = [
@@ -22,6 +22,6 @@ __all__ = [
     "CourseNameForm",
     "CourseDescriptionForm",
     "CoursePreferredImageForm",
-#    "CourseMountsForm",
-#    "CourseMembersForm",
+    "CourseMountsForm",
+    "CourseMembersForm",
 ]

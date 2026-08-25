@@ -16,21 +16,18 @@ from django.views import View
 from django.views.generic import ListView
 
 from .base import CourseEditorBaseView
-from ..mixins import CourseMemberAccessMixin
-#FIXME from ...services.members import update_course_members
 from ...services.members import (
-    create_course_members as update_course_members,
     ROLE_STUDENT,
+    update_course_members,
 )
 from ...services.editor_context import (
+    COURSE_MEMBERS_UPDATED_EVENT,
+    make_member_editor_urls,
     make_membership_ui,
-    #FIXME make_member_editor_context,
-    make_create_member_editor_context as make_member_editor_context ,
     make_member_summary_context,
 )
 from ...conf import EDUCATION_SETTINGS
-#FIXME from ...forms import CourseMembersForm
-from ...forms import CourseCreateForm as CourseMembersForm
+from ...forms import CourseMembersForm
 from ...models import UserCourseBinding
 
 
@@ -52,9 +49,7 @@ class CourseMembersBaseView(CourseEditorBaseView):
     aria_label = "Manage course members"
 
     def get_membership_dom_id(self):
-        return self.make_editor_context()[
-            "dom_id"
-        ]
+        return f"course-{self.get_course().pk}-members"
 
     def make_membership_ui(self):
         return make_membership_ui(
@@ -66,11 +61,9 @@ class CourseMembersBaseView(CourseEditorBaseView):
 
         return CourseMembersForm(
             data=data,
-#            course=self.get_course(),
             actor=self.request.user,
             auto_id=(
-                f"course-{course.pk}"
-                "-collaborators-%s"
+                f"course-{course.pk}-members-%s"
             ),
         )
 
@@ -80,43 +73,38 @@ class CourseMembersBaseView(CourseEditorBaseView):
         form=None,
     ):
         if form is not None and form.is_bound:
-            return form.get_selected_members()
+            return tuple(
+                member_selection_to_context(selection)
+                for selection in (
+                    form.cleaned_data.get(
+                        "members",
+                        (),
+                    )
+                    if form.is_valid()
+                    else ()
+                )
+            )
 
-        return [
-            {
-                "user": binding.user,
-                "role": binding.role,
-            }
+        return tuple(
+            make_course_member_presentation(
+                binding=binding,
+            )
             for binding in (
                 self.get_course()
                 .userbindings
                 .select_related("user")
-                .exclude(
-                    role=(
-                        UserCourseBinding
-                        .Role
-                        .CREATOR
-                    )
+                .exclude(user=self.request.user)
+                .order_by(
+                    "-is_teacher",
+                    "user__username",
                 )
             )
-        ]
+        )
 
     def get_editor_urls(self):
-        urls = super().get_editor_urls()
-
-        course = self.get_course()
-        kwargs = {
-            "course_id": course.pk,
-        }
-
-        urls.update({
-            "search_url": reverse(
-                "education:members-search",
-                kwargs=kwargs,
-            ),
-        })
-
-        return urls
+        return make_member_editor_urls(
+            self.get_course()
+        )
 
     def extend_editor_context(
         self,
@@ -131,6 +119,10 @@ class CourseMembersBaseView(CourseEditorBaseView):
                 )
             ),
             "staged": False,
+            "refresh_event": (
+                COURSE_MEMBERS_UPDATED_EVENT
+            ),
+            "title": "Manage course members",
         })
 
         return context
@@ -252,7 +244,7 @@ class CourseMembersUpdateView(
         response["HX-Trigger"] = json.dumps(
             {
                 "modal-close": True,
-                "course-members-updated": {
+                COURSE_MEMBERS_UPDATED_EVENT: {
                     "course_id": course.pk,
                 },
             }
@@ -385,7 +377,7 @@ class CourseMemberSearchView(
             {
                 "user": user,
                 "row_url": reverse(
-                    "edication:member-row",
+                    "education:member-row",
                     kwargs={
                         "course_id": course.pk,
                         "user_id": user.pk,
@@ -468,14 +460,14 @@ class CourseMemberRowView(
                 course=course,
                 user=user,
             )
-            .only("role")
+            .only("is_teacher")
             .first()
         )
         
         role = (
             binding.role
             if binding is not None
-            else UserCourseBinding.Role.COLLABORATOR
+            else ROLE_STUDENT
         )
 
         editor = self.make_editor_context()

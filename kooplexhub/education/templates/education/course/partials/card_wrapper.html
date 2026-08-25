@@ -1,0 +1,6 @@
+<div
+    id="course-card-wrapper-{{ binding.course_id }}"
+    data-live-key="education:{{ binding.course_id }}"
+>
+    {% include "education/course/card.html" with binding=binding only %}
+</div>

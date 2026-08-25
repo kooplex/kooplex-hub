@@ -16,26 +16,24 @@ from .preferred_image import (
     CoursePreferredImageUpdateView,
     CourseCreatePreferredImageValidateView,
 )
-#from .mounts import (
-#    CourseMountsDisplayView,
-#    CourseMountsModalView,
-#    CourseMountsUpdateView,
-#)
-from .members import (
-#    CourseMembersSummaryView,
-#    CourseMembersModalView,
-#    CourseMembersChangeView,
-#    CourseMemberSearchView,
-#    CourseMemberRowView,
-    CourseCreateMemberSearchView,
-    CourseCreateMemberSearchView as CourseMemberSearchView, #FIXME
-    CourseCreateMemberRowView,
-#    CourseMembersUpdateView,
+from .mounts import (
+    CourseMountsDisplayView,
+    CourseMountsModalView,
+    CourseMountsUpdateView,
 )
-#from .environment import (
-#    CourseEnvironmentTabView,
-#    CourseDefaultEnvironmentCreateView,
-#)
+from .members import (
+    CourseMembersSummaryView,
+    CourseMembersModalView,
+    CourseMemberRowView,
+    CourseCreateMemberSearchView,
+    CourseMemberSearchView,
+    CourseCreateMemberRowView,
+    CourseMembersUpdateView,
+)
+from .environment import (
+    CourseEnvironmentTabView,
+    CourseDefaultEnvironmentCreateView,
+)
 
 
 __all__ = [
@@ -54,20 +52,19 @@ __all__ = [
     "CoursePreferredImageChangeView",
     "CourseCreatePreferredImageValidateView",
     
-#    "CourseMountsDisplayView",
-#    "CourseMountsModalView",
-#    "CourseMountsUpdateView",
-#
-#    "CourseMembersSummaryView",
-#    "CourseMembersModalView",
-#    "CourseMembersChangeView",
+    "CourseMountsDisplayView",
+    "CourseMountsModalView",
+    "CourseMountsUpdateView",
+
+    "CourseMembersSummaryView",
+    "CourseMembersModalView",
     "CourseMemberSearchView",
-#    "CourseMemberRowView",
-#    "CourseMembersUpdateView",
+    "CourseMemberRowView",
+    "CourseMembersUpdateView",
     "CourseCreateMemberSearchView",
     "CourseCreateMemberRowView",
-#
-#    "CourseEnvironmentTabView",
-#    "CourseDefaultEnvironmentCreateView",
+
+    "CourseEnvironmentTabView",
+    "CourseDefaultEnvironmentCreateView",
 ]
 

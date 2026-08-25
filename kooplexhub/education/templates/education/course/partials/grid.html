@@ -5,8 +5,8 @@
   hx-trigger="course-list-refresh from:body"
   hx-swap="outerHTML"
 >
-    {% for course_ui in courses %}
-        {% include "education/course/card.html" with course_ui=course_ui only %}
+    {% for binding in coursebindings %}
+        {% include "education/course/partials/card_wrapper.html" with binding=binding only %}
     {% empty %}
         {% include "empty.html" with empty_title="You have no courses yet." %}
     {% endfor %}

@@ -1,41 +1,172 @@
+{% load course_presenter %}
+{% load course_editors %}
+
+{% present_course binding as presentation %}
+
 <div
-    id="{{ course_ui.card_dom_id }}"
-    class="card rounded rounded-3 mb-3 border border-2 shadow-light {{ course_ui.role_css_class }}"
+    id="{{ presentation.card_dom_id }}"
+    class="card rounded rounded-3 mb-3 border border-2 shadow-light {{ presentation.role_css_class }}"
     data-widget="coursecard"
-    data-id="{{ course_ui.course.pk }}"
+    data-id="{{ binding.course_id }}"
 >
+    <div class="card-header d-flex align-items-center gap-2">
 
-    <div class="card-header">
+        <span class="course-card-title text-truncate">
+            {% course_name_editor binding.course presentation %}
+        </span>
 
-        <div class="d-flex justify-content-between align-items-center gap-2">
+        <div class="flex-grow-1"></div>
 
-            {% include "ui/editors//name/editor.html" with editor=course_ui.name_editor only %}
-
-            <span class="badge text-bg-secondary">
-                {{ course_ui.role_label }}
-            </span>
-
-        </div>
+        <span class="badge text-bg-secondary">
+            {{ presentation.role_label }}
+        </span>
 
     </div>
 
-    <div class="card-body">
+    <ul class="nav nav-tabs px-2 pt-2" role="tablist">
+    
+        <li class="nav-item" role="presentation">
+            <button
+                class="nav-link active"
+                data-bs-toggle="tab"
+                data-bs-target="#{{ presentation.description_pane_id }}"
+                type="button"
+                role="tab"
+            >
+                <i class="bi bi-card-text"></i>
+                Description
+            </button>
+        </li>
+    
+        <li class="nav-item" role="presentation">
+            <button
+                class="nav-link"
+                data-bs-toggle="tab"
+                data-bs-target="#{{ presentation.assignments_pane_id }}"
+                type="button"
+                role="tab"
+            >
+                <i class="bi bi-journal-check"></i>
+                Assignments
+    
+                {% if presentation.has_assignment_attention %}
+                    <span class="badge rounded-pill text-bg-warning ms-1">
+                        {{ presentation.assignment_attention_count }}
+                    </span>
+                {% endif %}
+            </button>
+        </li>
+    
+        {% if presentation.can_manage_members %}
+            <li class="nav-item" role="presentation">
+                <button
+                    class="nav-link"
+                    data-bs-toggle="tab"
+                    data-bs-target="#{{ presentation.people_pane_id }}"
+                    type="button"
+                    role="tab"
+                >
+                    <i class="bi bi-people"></i>
+                    People
+                </button>
+            </li>
+        {% endif %}
+    
+        {% if presentation.can_manage_environment %}
+            <li class="nav-item" role="presentation">
+                <button
+                    class="nav-link"
+                    data-bs-toggle="tab"
+                    data-bs-target="#{{ presentation.environment_pane_id }}"
+                    type="button"
+                    role="tab"
+                >
+                    <i class="bi bi-box"></i>
+                    Environment
+                </button>
+            </li>
+        {% endif %}
 
-        {% include "ui/editors/description/editor.html" with editor=course_ui.description_editor only %}
+        <li class="nav-item" role="presentation">
+            <button
+                class="nav-link"
+                data-bs-toggle="tab"
+                data-bs-target="#{{ presentation.environment_pane_id }}"
+                type="button"
+                role="tab"
+                aria-controls="{{ presentation.environment_pane_id }}"
+                aria-selected="false"
+            >
+                <i class="bi bi-boxes" aria-hidden="true"></i>
+                <span class="course-tab-label">Environment</span>
+            </button>
+        </li>
+    
+    </ul>
 
-        <hr>
-
+    <div class="card-body tab-content">
+    
         <div
-            id="{{ course_ui.assignments_dom_id }}"
-            hx-get="{{ course_ui.assignments_url }}"
-            hx-trigger="load"
-            hx-swap="innerHTML"
+            class="tab-pane fade show active"
+            id="{{ presentation.description_pane_id }}"
+            role="tabpanel"
         >
-            <div class="text-center p-3">
-                <div class="spinner-border spinner-border-sm" role="status"></div>
+            {% course_description_editor binding.course presentation %}
+        </div>
+    
+    
+        <div
+            class="tab-pane fade"
+            id="{{ presentation.assignments_pane_id }}"
+            role="tabpanel"
+        >
+            <div
+                id="{{ presentation.assignments_list_dom_id }}"
+                hx-get="{{ presentation.assignments_url }}"
+                hx-trigger="load"
+                hx-swap="innerHTML"
+            >
+                <div class="text-center p-3">
+                    <div
+                        class="spinner-border spinner-border-sm"
+                        role="status"
+                    ></div>
+                </div>
             </div>
         </div>
-
+    
+    
+        {% if presentation.can_manage_members %}
+            <div
+                class="tab-pane fade"
+                id="{{ presentation.people_pane_id }}"
+                role="tabpanel"
+            >
+	        {% include "education/course/partials/tabs/people.html" with course=binding.course presentation=presentation only %}
+            </div>
+        {% endif %}
+    
+    
+        {% if presentation.can_manage_environment %}
+            <div
+                class="tab-pane fade"
+                id="{{ presentation.environment_pane_id }}"
+                role="tabpanel"
+            >
+                <div class="text-muted small py-3">
+                    Course image, mounts and environments will go here.
+                </div>
+            </div>
+        {% endif %}
+    
+        <div
+            class="tab-pane fade"
+            id="{{ presentation.environment_pane_id }}"
+            role="tabpanel"
+            tabindex="0"
+        >
+            {% include "education/course/partials/tabs/environment.html" with course=binding.course presentation=presentation only %}
+        </div>
+    
     </div>
-
 </div>

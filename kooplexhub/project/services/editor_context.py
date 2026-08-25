@@ -10,6 +10,8 @@ from .members import (
     get_assignable_member_role_choices,
 )
 
+PROJECT_MOUNTS_UPDATED_EVENT = "project-mounts-updated"
+PROJECT_MEMBERS_UPDATED_EVENT = "project-members-updated"
 
 def get_project_scope_choices():
     icons = PROJECT_SETTINGS.presentation.scope_icons
@@ -236,6 +238,7 @@ def make_member_summary_context(
     return {
         "dom_id": f"project-{project.pk}-members",
         "members": tuple(members),
+        "refresh_event": PROJECT_MEMBERS_UPDATED_EVENT,
         "extra_member_count": max(
             len(members) - 3,
             0,
@@ -371,6 +374,7 @@ def make_mounts_summary_context(
         "dom_id": f"project-{project.pk}-volumes",
         "selected_mounts": selected_mounts,
         "can_edit": presenter.can_change_mounts,
+        "refresh_event": PROJECT_MOUNTS_UPDATED_EVENT,
         "modal_url": reverse(
             "project:mounts-edit",
             kwargs=kwargs,

@@ -31,12 +31,11 @@ urlpatterns = [
         views.CourseGridView.as_view(), 
         name="course-grid",
     ),
-#    path(
-#        "partials/<int:pk>/card/", 
-#        views.ProjectCardPartialView.as_view(), 
-#        name="card_partial",
-#    ),
-
+    path(
+        "partials/course/<int:course_id>/card/",
+        views.CourseCardView.as_view(),
+        name="course-card",
+    ),
 
     path(
         "course/<int:course_id>/assignments/",
@@ -80,6 +79,107 @@ urlpatterns = [
         "create/members/row/<int:user_id>/",
         views.CourseCreateMemberRowView.as_view(),
         name="create-member-row",
+    ),
+
+    path(
+        "course/<int:course_id>/name/",
+        views.CourseNameDisplayView.as_view(),
+        name="name-display",
+    ),
+    path(
+        "course/<int:course_id>/name/edit/",
+        views.CourseNameEditView.as_view(),
+        name="name-edit",
+    ),
+    path(
+        "course/<int:course_id>/name/update/",
+        views.CourseNameUpdateView.as_view(),
+        name="name-update",
+    ),
+    
+    path(
+        "course/<int:course_id>/description/",
+        views.CourseDescriptionDisplayView.as_view(),
+        name="description-display",
+    ),
+    path(
+        "course/<int:course_id>/description/edit/",
+        views.CourseDescriptionEditView.as_view(),
+        name="description-edit",
+    ),
+    path(
+        "course/<int:course_id>/description/update/",
+        views.CourseDescriptionUpdateView.as_view(),
+        name="description-update",
+    ),
+
+    path(
+        "partials/<int:course_id>/image/",
+        views.CoursePreferredImageDisplayView.as_view(),
+        name="image-display",
+    ),
+    path(
+        "partials/<int:course_id>/image/change/",
+        views.CoursePreferredImageChangeView.as_view(),
+        name="image-edit",
+    ),
+    path(
+        "partials/<int:course_id>/image/update/",
+        views.CoursePreferredImageUpdateView.as_view(),
+        name="image-update",
+    ),
+    
+    path(
+        "partials/<int:course_id>/mounts/modal/",
+        views.CourseMountsModalView.as_view(),
+        name="mounts-edit",
+    ),
+    path(
+        "partials/<int:course_id>/mounts/",
+        views.CourseMountsDisplayView.as_view(),
+        name="mounts-display",
+    ),
+    path(
+        "partials/<int:course_id>/mounts/update/",
+        views.CourseMountsUpdateView.as_view(),
+        name="mounts-update",
+    ),
+    
+    path(
+        "partials/<int:course_id>/environment/",
+        views.CourseEnvironmentTabView.as_view(),
+        name="environment-tab",
+    ),
+    path(
+        "course/<int:course_id>/environment/create-default/",
+        views.CourseDefaultEnvironmentCreateView.as_view(),
+        name="create-default-environment",
+    ),
+
+    path(
+        "partials/<int:course_id>/members/",
+        views.CourseMembersSummaryView.as_view(),
+        name="members-display",
+    ),
+    path(
+        "partials/<int:course_id>/members/modal/",
+        views.CourseMembersModalView.as_view(),
+        name="members-modal",
+    ),
+    path(
+        "partials/<int:course_id>/members/update/",
+        views.CourseMembersUpdateView.as_view(),
+        name="members-update",
+    ),
+    path(
+        "partials/<int:course_id>/members/search/",
+        views.CourseMemberSearchView.as_view(),
+        name="members-search",
+    ),
+    path(
+        "partials/<int:course_id>/members/row/<int:user_id>/",
+        views.CourseMemberRowView.as_view(),
+        name="member-row",
     ),
 
 #FIXME    path('course/delete/<int:pk_course>/<int:pk_user>/', views.delete_or_leave, name = 'delete_or_leave'),

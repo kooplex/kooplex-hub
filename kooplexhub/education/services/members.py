@@ -92,7 +92,7 @@ def create_course_members(
     created = []
 
     for selection in selections:
-        binding = UserCourseBinding.objects.create(
+        binding = add_course_member(
             course=course,
             user=selection.user,
             is_teacher=selection.is_teacher,
@@ -204,6 +204,95 @@ def remove_course_member(*, binding):
     )
 
     binding.delete()
+
+
+@dataclass(frozen=True)
+class CourseMemberChanges:
+    added: tuple
+    updated: tuple
+    removed: tuple
+
+    @property
+    def changed(self):
+        return bool(
+            self.added
+            or self.updated
+            or self.removed
+        )
+
+
+@transaction.atomic
+def update_course_members(
+    *,
+    course,
+    actor,
+    members,
+):
+    selections = validate_course_member_selections(
+        selections=members,
+        excluded_user_ids={actor.pk},
+    )
+
+    selected_by_user_id = {
+        selection.user_id: selection
+        for selection in selections
+    }
+
+    current_bindings = {
+        binding.user_id: binding
+        for binding in (
+            UserCourseBinding.objects
+            .select_for_update()
+            .filter(course=course)
+            .select_related("user")
+            .exclude(user=actor)
+        )
+    }
+
+    added = []
+    updated = []
+    removed = []
+
+    #
+    # Add new members / change existing roles.
+    #
+    for user_id, selection in selected_by_user_id.items():
+        binding = current_bindings.get(user_id)
+
+        if binding is None:
+            binding = add_course_member(
+                course=course,
+                user=selection.user,
+                is_teacher=selection.is_teacher,
+            )
+            added.append(binding)
+            continue
+
+        if binding.is_teacher != selection.is_teacher:
+            binding = change_course_member_role(
+                binding=binding,
+                is_teacher=selection.is_teacher,
+            )
+            updated.append(binding)
+
+    #
+    # Remove members no longer present.
+    #
+    for user_id, binding in current_bindings.items():
+        if user_id in selected_by_user_id:
+            continue
+
+        removed.append(binding.user)
+
+        remove_course_member(
+            binding=binding,
+        )
+
+    return CourseMemberChanges(
+        added=tuple(added),
+        updated=tuple(updated),
+        removed=tuple(removed),
+    )
 
 
 

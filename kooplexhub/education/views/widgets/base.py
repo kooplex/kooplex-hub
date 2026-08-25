@@ -1,50 +1,24 @@
 import logging
 
-from django.urls import reverse
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
-from django.shortcuts import get_object_or_404
+from django.urls import reverse
 from django.views.generic import TemplateView
 
-from ...services.course_presenter import CoursePresenter
-from ...models import Course
+from ..mixins import CourseBindingMixin
 
 logger = logging.getLogger(__name__)
 
 
 class CourseEditorBaseView(
     LoginRequiredMixin,
+    CourseBindingMixin,
     TemplateView,
 ):
-    pk_url_kwarg = "course_id"
-
-    course = None
-    presenter = None
-
     field_name = None
     permission_name = None
     editor_slug = None
     aria_label = None
-
-    def get_course(self):
-        if self.course is None:
-            self.course = get_object_or_404(
-                Course.objects
-                .visible_to(self.request.user)
-                .prefetch_related("userbindings__user"),
-                pk=self.kwargs[self.pk_url_kwarg],
-            )
-
-        return self.course
-
-    def get_presenter(self):
-        if self.presenter is None:
-            self.presenter = CoursePresenter(
-                course=self.get_course(),
-                user=self.request.user,
-            )
-
-        return self.presenter
 
     def require_edit_permission(self):
         presenter = self.get_presenter()
@@ -60,15 +34,15 @@ class CourseEditorBaseView(
 
         return {
             "edit_url": reverse(
-                f"course:{self.editor_slug}-edit",
+                f"education:{self.editor_slug}-edit",
                 kwargs=kwargs,
             ),
             "display_url": reverse(
-                f"course:{self.editor_slug}-display",
+                f"education:{self.editor_slug}-display",
                 kwargs=kwargs,
             ),
             "update_url": reverse(
-                f"course:{self.editor_slug}-update",
+                f"education:{self.editor_slug}-update",
                 kwargs=kwargs,
             ),
         }

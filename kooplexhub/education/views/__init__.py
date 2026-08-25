@@ -26,10 +26,20 @@ from .widgets import (
     CoursePreferredImageUpdateView,
     CourseCreatePreferredImageValidateView,
     
+    CourseMountsDisplayView,
+    CourseMountsModalView,
+    CourseMountsUpdateView,
 
     CourseCreateMemberSearchView,
     CourseCreateMemberRowView,
     CourseMemberSearchView,
+    CourseMembersSummaryView,
+    CourseMemberRowView,
+    CourseMembersUpdateView,
+    CourseMembersModalView,
+
+    CourseEnvironmentTabView,
+    CourseDefaultEnvironmentCreateView,
 )
 __all__ = [
     "CourseListView",
@@ -51,13 +61,23 @@ __all__ = [
     "CoursePreferredImageUpdateView",
     "CourseCreatePreferredImageValidateView",
     
+    "CourseMountsDisplayView",
+    "CourseMountsModalView",
+    "CourseMemberRowView",
+    "CourseMountsUpdateView",
+
+    "CourseEnvironmentTabView",
+    "CourseDefaultEnvironmentCreateView",
 
     "CourseCreateModalView",
     "CourseCreateView",
     "CourseCreateMemberSearchView",
 
     "CourseMemberSearchView",
+    "CourseMembersSummaryView",
+    "CourseMembersModalView",
     "CourseCreateMemberRowView",
+    "CourseMembersUpdateView",
 
     "CourseAssignmentsView",
 ]

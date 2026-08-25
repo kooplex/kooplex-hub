@@ -1,67 +1,64 @@
 import json
 import logging
 
-from django.contrib.auth import get_user_model
-from django.template.response import TemplateResponse
 from django.http import HttpResponse
+from django.template.response import TemplateResponse
 
-from .base import ProjectEditorBaseView
-from ...forms import ProjectMountsForm
-from ...models import UserProjectBinding
-from ...services.mounts import update_project_mounts
-from ...services.editor_context import PROJECT_MOUNTS_UPDATED_EVENT
+from .base import CourseEditorBaseView
+
+from ...forms import CourseMountsForm
+from ...models import VolumeCourseBinding
+from ...services.mounts import update_course_mounts
+from ...services.editor_context import COURSE_MOUNTS_UPDATED_EVENT
 
 
-User = get_user_model()
 logger = logging.getLogger(__name__)
 
-MOUNTS_DISPLAY_TEMPLATE = "ui/editors/mounts_picker/summary.html"
-MOUNTS_MODAL_TEMPLATE = "ui/editors/mounts_picker/modal.html"
-MOUNTS_MODAL_CONTENT_TEMPLATE = "ui/editors/mounts_picker/modal_content.html"
+
+MOUNTS_DISPLAY_TEMPLATE = (
+    "ui/editors/mounts_picker/summary.html"
+)
+
+MOUNTS_MODAL_TEMPLATE = (
+    "ui/editors/mounts_picker/modal.html"
+)
+
+MOUNTS_MODAL_CONTENT_TEMPLATE = (
+    "ui/editors/mounts_picker/modal_content.html"
+)
 
 
-class ProjectMountsBaseView(ProjectEditorBaseView):
+class CourseMountsBaseView(
+    CourseEditorBaseView
+):
     field_name = None
     permission_name = "can_change_mounts"
     editor_slug = "mounts"
-    aria_label = "Manage project mounts"
-    refresh_event = PROJECT_MOUNTS_UPDATED_EVENT
+    aria_label = "Manage course mounts"
+    refresh_event = COURSE_MOUNTS_UPDATED_EVENT
 
     def get_form(self, *, data=None):
-        project = self.get_project()
+        course = self.get_course()
 
         initial_mount_ids = (
-            project.volumebindings
-            .values_list("volume_id", flat=True)
+            VolumeCourseBinding.objects
+            .filter(course=course)
+            .values_list(
+                "volume_id",
+                flat=True,
+            )
         )
 
-        return ProjectMountsForm(
+        return CourseMountsForm(
             data=data,
             actor=self.request.user,
             initial={
                 "mounts": initial_mount_ids,
             },
             auto_id=(
-                f"project-{project.pk}-mounts-%s"
+                f"course-{course.pk}-mounts-%s"
             ),
         )
-
-    def get_selected_mounts(
-        self,
-        *,
-        form=None,
-    ):
-        if form is not None and form.is_bound:
-            return form.get_selected_mounts()
-
-        return [
-            binding.volume
-            for binding in (
-                self.get_project()
-                .volumebindings
-                .select_related("volume")
-            )
-        ]
 
     def extend_editor_context(
         self,
@@ -69,18 +66,19 @@ class ProjectMountsBaseView(ProjectEditorBaseView):
         *,
         form=None,
     ):
-        project = self.get_project()
+        course = self.get_course()
 
         if form is None:
             selected_mounts = tuple(
                 binding.volume
                 for binding in (
-                    project.volumebindings
+                    VolumeCourseBinding.objects
+                    .filter(course=course)
                     .select_related("volume")
                 )
             )
-
             available_mounts = ()
+
         else:
             available_mounts = tuple(
                 form.fields["mounts"].queryset
@@ -94,7 +92,8 @@ class ProjectMountsBaseView(ProjectEditorBaseView):
                 selected_mounts = tuple(
                     binding.volume
                     for binding in (
-                        project.volumebindings
+                        VolumeCourseBinding.objects
+                        .filter(course=course)
                         .select_related("volume")
                     )
                 )
@@ -106,9 +105,7 @@ class ProjectMountsBaseView(ProjectEditorBaseView):
 
         context.update({
             "selected_mounts": selected_mounts,
-            "available_mounts": (
-                available_mounts
-            ),
+            "available_mounts": available_mounts,
             "items": tuple(
                 {
                     "volume": volume,
@@ -125,22 +122,19 @@ class ProjectMountsBaseView(ProjectEditorBaseView):
         return context
 
 
-class ProjectMountsDisplayView(
-    ProjectMountsBaseView
+class CourseMountsDisplayView(
+    CourseMountsBaseView
 ):
     template_name = MOUNTS_DISPLAY_TEMPLATE
 
-    def get_context_data(
-        self,
-        **kwargs,
-    ):
+    def get_context_data(self, **kwargs):
         return {
             "editor": self.make_editor_context(),
         }
 
 
-class ProjectMountsModalView(
-    ProjectMountsBaseView,
+class CourseMountsModalView(
+    CourseMountsBaseView
 ):
     template_name = MOUNTS_MODAL_TEMPLATE
 
@@ -153,12 +147,14 @@ class ProjectMountsModalView(
         )
 
         return {
-            "editor": self.make_editor_context(form=form),
+            "editor": self.make_editor_context(
+                form=form
+            ),
         }
 
 
-class ProjectMountsUpdateView(
-    ProjectMountsBaseView
+class CourseMountsUpdateView(
+    CourseMountsBaseView
 ):
     http_method_names = ["post"]
 
@@ -181,36 +177,39 @@ class ProjectMountsUpdateView(
                 {
                     "editor": (
                         self.make_editor_context(
-                            form=form,
+                            form=form
                         )
                     ),
                 },
+                status=422,
             )
 
-        project = self.get_project()
+        course = self.get_course()
 
-        changes = update_project_mounts(
-            project=project,
-            actor=request.user,
+        changes = update_course_mounts(
+            course=course,
             mounts=form.cleaned_data["mounts"],
         )
 
         if changes.changed:
             logger.info(
-                "Project %s mounts changed by %s: "
+                "Course %s mounts changed by %s: "
                 "%d added, %d removed",
-                project.pk,
+                course.pk,
                 request.user.pk,
                 len(changes.added),
                 len(changes.removed),
             )
 
         response = HttpResponse(status=204)
+
         response["HX-Trigger"] = json.dumps({
             "modal-close": True,
-            "project-mounts-updated": {
-                "project_id": project.pk,
+            "course-mounts-updated": {
+                "course_id": course.pk,
             },
         })
 
         return response
+
+

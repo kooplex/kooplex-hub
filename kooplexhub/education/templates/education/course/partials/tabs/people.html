@@ -1,0 +1,14 @@
+{% load course_editors %}
+
+<section class="course-tab-section">
+    <div class="mb-2">
+        <div class="fw-semibold">
+            Course members
+        </div>
+        <div class="text-muted small">
+            Teachers and students with access to this course.
+        </div>
+    </div>
+
+    {% course_members_editor course presentation %}
+</section>

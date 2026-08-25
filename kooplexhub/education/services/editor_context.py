@@ -1,8 +1,75 @@
 from django.urls import reverse
 
 from .members import (
+    ROLE_STUDENT,
+    ROLE_TEACHER,
     get_assignable_member_role_choices,
 )
+from ..models import VolumeCourseBinding
+
+COURSE_MOUNTS_UPDATED_EVENT = "course-mounts-updated"
+COURSE_MEMBERS_UPDATED_EVENT = "course-members-updated"
+
+
+def make_course_member_presentation(*, binding):
+    role = binding.role
+
+    return {
+        "user": binding.user,
+        "role": role,
+        "role_label": (
+            "Teacher"
+            if role == ROLE_TEACHER
+            else "Student"
+        ),
+        "role_icon": (
+            "bi-person-workspace"
+            if role == ROLE_TEACHER
+            else "bi-mortarboard"
+        ),
+    }
+
+
+def make_member_editor_urls(course):
+    kwargs = {
+        "course_id": course.pk,
+    }
+
+    return {
+        "display_url": reverse(
+            "education:members-display",
+            kwargs=kwargs,
+        ),
+        "modal_url": reverse(
+            "education:members-modal",
+            kwargs=kwargs,
+        ),
+        "update_url": reverse(
+            "education:members-update",
+            kwargs=kwargs,
+        ),
+        "search_url": reverse(
+            "education:members-search",
+            kwargs=kwargs,
+        ),
+    }
+
+
+def member_selection_to_context(selection):
+    return {
+        "user": selection.user,
+        "role": selection.role,
+        "role_label": (
+            "Teacher"
+            if selection.role == ROLE_TEACHER
+            else "Student"
+        ),
+        "role_icon": (
+            "bi-person-workspace"
+            if selection.role == ROLE_TEACHER
+            else "bi-mortarboard"
+        ),
+    }
 
 
 def make_name_editor_context(
@@ -23,15 +90,15 @@ def make_name_editor_context(
         "can_edit": presenter.can_edit_name,
         "aria_label": "Change course name",
         "edit_url": reverse(
-            "course:name-edit",
+            "education:name-edit",
             kwargs={"course_id": course.pk},
         ),
         "display_url": reverse(
-            "course:name-display",
+            "education:name-display",
             kwargs={"course_id": course.pk},
         ),
         "update_url": reverse(
-            "course:name-update",
+            "education:name-update",
             kwargs={"course_id": course.pk},
         ),
     }
@@ -55,15 +122,15 @@ def make_description_editor_context(
         "can_edit": presenter.can_edit_description,
         "aria_label": "Change course description",
         "edit_url": reverse(
-            "course:description-edit",
+            "education:description-edit",
             kwargs={"course_id": course.pk},
         ),
         "display_url": reverse(
-            "course:description-display",
+            "education:description-display",
             kwargs={"course_id": course.pk},
         ),
         "update_url": reverse(
-            "course:description-update",
+            "education:description-update",
             kwargs={"course_id": course.pk},
         ),
     }
@@ -104,49 +171,35 @@ def make_member_summary_context(
     course,
     presenter,
 ):
-    role_labels = dict(
-        UserCourseBinding.Role.assignable_choices()
-    )
-
     bindings = (
         course.userbindings
         .select_related("user")
-        .all()
+        .order_by(
+            "-is_teacher",
+            "user__last_name",
+            "user__first_name",
+            "user__username",
+        )
     )
 
-    actor = presenter.user
-    members = []
-
-    for binding in bindings:
-        if binding.user_id ==actor.pk:
-            continue
-
-        members.append(
-            make_course_member_presentation(
-                binding=binding,
-            )
+    members = tuple(
+        make_course_member_presentation(
+            binding=binding,
         )
+        for binding in bindings
+    )
+
+    kwargs = {
+        "course_id": course.pk,
+    }
 
     return {
         "dom_id": f"course-{course.pk}-members",
-        "members": tuple(members),
-        "extra_member_count": max(
-            len(members) - 3,
-            0,
-        ),
+        "members": members,
         "can_edit": presenter.can_manage_members,
-        "modal_url": reverse(
-            "course:members-modal",
-            kwargs={
-                "course_id": course.pk,
-            },
-        ),
-        "display_url": reverse(
-            "course:members-display",
-            kwargs={
-                "course_id": course.pk,
-            },
-        ),
+        "title": "Manage course members",
+        "refresh_event": COURSE_MEMBERS_UPDATED_EVENT,
+        **make_member_editor_urls(course),
     }
 
 
@@ -224,4 +277,71 @@ def make_create_mounts_editor_context(
     }
 
 
+def make_image_editor_context(
+    *,
+    course,
+    presenter,
+):
+    kwargs = {
+        "course_id": course.pk,
+    }
+
+    return {
+        "dom_id": f"course-{course.pk}-image",
+        "selected_image": course.preferred_image,
+        "field": None,
+        "form": None,
+        "can_edit": presenter.can_change_image,
+        "aria_label": "Change course's preferred image",
+        "edit_url": reverse(
+            "education:image-edit",
+            kwargs=kwargs,
+        ),
+        "display_url": reverse(
+            "education:image-display",
+            kwargs=kwargs,
+        ),
+        "update_url": reverse(
+            "education:image-update",
+            kwargs=kwargs,
+        ),
+    }
+
+
+def make_mounts_summary_context(
+    *,
+    course,
+    presenter,
+):
+    kwargs = {
+        "course_id": course.pk,
+    }
+
+    selected_mounts = tuple(
+        binding.volume
+        for binding in (
+            VolumeCourseBinding.objects
+            .filter(course=course)
+            .select_related("volume")
+        )
+    )
+
+    return {
+        "dom_id": f"course-{course.pk}-volumes",
+        "selected_mounts": selected_mounts,
+        "can_edit": presenter.can_change_mounts,
+        "refresh_event": COURSE_MOUNTS_UPDATED_EVENT,
+        "modal_url": reverse(
+            "education:mounts-edit",
+            kwargs=kwargs,
+        ),
+        "display_url": reverse(
+            "education:mounts-display",
+            kwargs=kwargs,
+        ),
+        "update_url": reverse(
+            "education:mounts-update",
+            kwargs=kwargs,
+        ),
+    }
 

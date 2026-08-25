@@ -2,7 +2,7 @@
     id="{{ editor.dom_id }}"
     class="project-membership-summary"
     hx-get="{{ editor.display_url }}"
-    hx-trigger="project-members-updated from:body"
+    hx-trigger="{{ editor.refresh_event }} from:body"
     hx-target="this"
     hx-swap="outerHTML"
 >

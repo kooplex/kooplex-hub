@@ -1,0 +1,104 @@
+{% load container_runtime %}
+{% load course_editors %}
+
+<section
+    id="{{ presentation.environment_content_dom_id }}"
+    class="course-tab-section"
+>
+    {% if error %}
+        <div class="alert alert-danger py-2 mb-2">
+            {{ error }}
+        </div>
+    {% endif %}
+
+    {% course_image_editor course presentation %}
+
+    {% course_mounts_editor course presentation %}
+
+    <div class="course-environment-list-section mt-3">
+
+        <div class="mb-2">
+            <div class="fw-semibold">
+                Environments
+            </div>
+            <div class="text-muted small">
+                Your environments currently attached to this course.
+            </div>
+        </div>
+
+        {% if presentation.environment_containers %}
+
+            <div class="course-environment-shortcuts">
+
+                {% for container in presentation.environment_containers %}
+
+                    {% runtime_for container as runtime %}
+
+                    <div class="d-flex align-items-center gap-2 mb-2">
+
+                        <div class="flex-grow-1 text-truncate">
+                            {{ container.name }}
+                        </div>
+
+                        <div class="d-flex gap-1">
+
+                            {% include "container/partials/widgets/open_service_button.html" with container=container runtime=runtime service_views=container.views only %}
+
+                            {% include "container/partials/widgets/start_button.html" with container=container runtime=runtime only %}
+
+                            {% include "container/partials/widgets/restart_button.html" with container=container runtime=runtime only %}
+
+                            {% include "container/partials/widgets/stop_button.html" with container=container runtime=runtime only %}
+
+                        </div>
+
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+        {% else %}
+
+            <div class="d-flex align-items-center gap-3 py-2">
+
+                <i
+                    class="bi bi-boxes fs-4"
+                    aria-hidden="true"
+                ></i>
+
+                <div class="flex-grow-1">
+                    <div class="fw-semibold">
+                        No environment yet
+                    </div>
+
+                    <div class="text-muted small">
+                        Create one using the course's preferred image and volumes.
+                    </div>
+                </div>
+
+                <button
+                    type="button"
+                    class="btn btn-sm btn-primary"
+                    hx-post="{% url 'education:create-default-environment' course.pk %}"
+                    hx-target="#{{ presentation.environment_content_dom_id }}"
+                    hx-swap="outerHTML"
+                    {% if not presentation.can_generate_default_environment %}
+                        disabled
+                        title="{{ presentation.default_environment_disabled_reason }}"
+                    {% endif %}
+                >
+                    <i
+                        class="bi bi-plus-lg me-1"
+                        aria-hidden="true"
+                    ></i>
+                    Create environment
+                </button>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</section>
