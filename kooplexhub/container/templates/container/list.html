@@ -6,6 +6,7 @@
 {% endblock %}
 
 {% block fab_attrs %}
+  aria-label="Create new environment" 
   hx-get="{% url 'container:create_modal' %}"
   hx-target="#modal-root"
   hx-swap="innerHTML"

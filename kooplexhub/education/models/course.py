@@ -3,6 +3,7 @@ import logging
 
 from django.db import models
 from django.db.models import Q
+from django.db.models.functions import Lower
 from django.core.validators import MinLengthValidator
 from container.models import Image
 from hub.models import Group
@@ -164,52 +165,55 @@ class Course(models.Model):
 
 
     @property
-    def search(self):
-        return f"{self.name} {self.description}".upper()
-
-#FIXME
-    @property
-    def groups(self):
-        from education.models import CourseGroup
-        students = set([ b.user for b in self.studentbindings ])
-        groups = dict([ (g, g.students()) for g in CourseGroup.objects.filter(course = self) ])
-        for g in groups.values():
-            students.difference_update(g)
-        if len(students):
-            groups[None] = students
-        return groups
-
-
-#################
-
+    def studentbindings(self):
+        return self.userbindings.filter(is_teacher=False)
 
     @property
-    def assignments(self):
-        #FIXME relat
-        from . import Assignment
-        return Assignment.objects.filter(course = self)
-
-
-    def dir_assignmentcandidate(self):
-        return get_assignment_prepare_subfolders(self)
+    def teacherbindings(self):
+        return self.userbindings.filter(is_teacher=True)
 
     @property
-    def volumes(self):
-        from . import VolumeCourseBinding
-        return list(map(lambda o: o.volume, VolumeCourseBinding.objects.filter(course=self)))
+    def students(self):
+        return User.objects.filter(
+            coursebindings__course=self,
+            coursebindings__is_teacher=False,
+        )
+
+    @property
+    def teachers(self):
+        return User.objects.filter(
+            coursebindings__course=self,
+            coursebindings__is_teacher=True,
+        )
 
 
-    @staticmethod
-    def get_usercourse(course_id, user):
-        return UserCourseBinding.objects.get(user = user, course_id = course_id).course
 
-    def is_user_authorized(self, user):
-        try:
-            UserCourseBinding.objects.get(user = user, course = self)
-            return True
-        except UserCourseBinding.DoesNotExist:
-            return False
+class UserCourseBindingQuerySet(models.QuerySet):
 
+    def for_user(self, user):
+        if not user.is_authenticated:
+            return self.none()
+
+        return self.filter(user=user)
+
+    def with_course(self):
+        return self.select_related(
+            "course",
+            "course__preferred_image",
+        )
+
+    def teaching(self):
+        return self.filter(is_teacher=True)
+
+    def attending(self):
+        return self.filter(is_teacher=False)
+
+    def ordered_for_dashboard(self):
+        return self.order_by(
+            "-is_teacher",
+            Lower("course__name"),
+            "course_id",
+        )
 
 
 class UserCourseBinding(models.Model):
@@ -226,6 +230,8 @@ class UserCourseBinding(models.Model):
     )
 
     is_teacher = models.BooleanField(default=False)
+
+    objects = UserCourseBindingQuerySet.as_manager()
 
     class Meta:
         constraints = [
@@ -246,13 +252,12 @@ class UserCourseBinding(models.Model):
         else:
             return "student {} in course {}".format(self.user, self.course)
 
-    def coursecontainerbindings(self):
-        from . import CourseContainerBinding
-        return CourseContainerBinding.objects.filter(course = self.course, container__user = self.user)
+    @property
+    def is_student(self):
+        return not self.is_teacher
 
-    def assignments_table(self):
-        from ..tables import TableAssignment
-        from . import UserAssignmentBinding
-        return TableAssignment(UserAssignmentBinding.objects.filter(user=self.user, assignment__course=self.course))
+    @property
+    def role(self):
+        return "teacher" if self.is_teacher else "student"
 
 

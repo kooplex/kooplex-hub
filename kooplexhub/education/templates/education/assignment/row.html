@@ -1,0 +1,76 @@
+<tr id="{{ assignment_ui.dom_id }}">
+
+    <td>
+        <strong>
+            {{ assignment_ui.assignment.name }}
+        </strong>
+
+        {% if assignment_ui.assignment.description %}
+            <div class="small text-body-secondary">
+                {{ assignment_ui.assignment.description }}
+            </div>
+        {% endif %}
+    </td>
+
+    <td>
+        {{ assignment_ui.assignment.valid_from|date:"Y-m-d H:i"|default:"—" }}
+    </td>
+
+    <td>
+        {{ assignment_ui.assignment.expires_at|date:"Y-m-d H:i"|default:"—" }}
+    </td>
+
+    {% if course_ui.is_teacher %}
+
+        <td>
+            {{ assignment_ui.progress_label }}
+        </td>
+
+    {% else %}
+
+        <td>
+            {{ assignment_ui.state_label }}
+        </td>
+
+        <td>
+            {% if assignment_ui.score is not None %}
+                {{ assignment_ui.score }}
+            {% else %}
+                —
+            {% endif %}
+        </td>
+
+    {% endif %}
+
+    <td class="text-end">
+
+        {% if assignment_ui.can_edit %}
+            <button
+                type="button"
+                class="btn btn-sm btn-outline-secondary"
+            >
+                Edit
+            </button>
+        {% endif %}
+
+        {% if assignment_ui.can_submit %}
+            <button
+                type="button"
+                class="btn btn-sm btn-primary"
+            >
+                Hand in
+            </button>
+        {% endif %}
+
+        {% if assignment_ui.can_score %}
+            <button
+                type="button"
+                class="btn btn-sm btn-outline-primary"
+            >
+                Grade
+            </button>
+        {% endif %}
+
+    </td>
+
+</tr>

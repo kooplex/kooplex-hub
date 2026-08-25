@@ -1,0 +1,38 @@
+<div
+  class="modal fade course-create-modal"
+  id="course-create-modal"
+  tabindex="-1"
+  aria-labelledby="course-create-modal-title"
+  aria-hidden="true"
+  data-auto-show-modal
+>
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h5
+            class="modal-title"
+            id="course-create-modal-title"
+          >
+            Create a course
+          </h5>
+
+          <div class="text-muted small">
+            Configure the course, environment, students and teachers.
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+
+      <div class="modal-body">
+        {% include "education/course/partials/create/wizard.html" %}
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,41 @@
+<div
+    id="{{ course_ui.card_dom_id }}"
+    class="card rounded rounded-3 mb-3 border border-2 shadow-light {{ course_ui.role_css_class }}"
+    data-widget="coursecard"
+    data-id="{{ course_ui.course.pk }}"
+>
+
+    <div class="card-header">
+
+        <div class="d-flex justify-content-between align-items-center gap-2">
+
+            {% include "ui/editors//name/editor.html" with editor=course_ui.name_editor only %}
+
+            <span class="badge text-bg-secondary">
+                {{ course_ui.role_label }}
+            </span>
+
+        </div>
+
+    </div>
+
+    <div class="card-body">
+
+        {% include "ui/editors/description/editor.html" with editor=course_ui.description_editor only %}
+
+        <hr>
+
+        <div
+            id="{{ course_ui.assignments_dom_id }}"
+            hx-get="{{ course_ui.assignments_url }}"
+            hx-trigger="load"
+            hx-swap="innerHTML"
+        >
+            <div class="text-center p-3">
+                <div class="spinner-border spinner-border-sm" role="status"></div>
+            </div>
+        </div>
+
+    </div>
+
+</div>

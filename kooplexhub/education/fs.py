@@ -5,47 +5,47 @@ from .conf import EDUCATION_SETTINGS
 
 def course_public(course):
     return os.path.join(
-        EDUCATION_SETTINGS["mounts"]["public"]["mountpoint_hub"],
-        EDUCATION_SETTINGS["mounts"]["public"]["folder"].format(course=course),
+        EDUCATION_SETTINGS.mounts.public.mountpoint_hub,
+        EDUCATION_SETTINGS.mounts.public.folder.format(course=course),
     )
 
 def course_assignment_prepare_root(course):
     return os.path.join(
-        EDUCATION_SETTINGS["mounts"]["assignment_prepare"]["mountpoint_hub"],
-        EDUCATION_SETTINGS["mounts"]["assignment_prepare"]["folder"].format(course=course),
+        EDUCATION_SETTINGS.mounts.prepare.mountpoint_hub,
+        EDUCATION_SETTINGS.mounts.prepare.folder.format(course=course),
     )
 
 def course_assignment_snapshot(course): #FIXME: find a better name
     return os.path.join(
-        EDUCATION_SETTINGS["mounts"]["assignment_snapshot"]["mountpoint_hub"],
-        EDUCATION_SETTINGS["mounts"]["assignment_snapshot"]["folder"].format(course=course),
+        EDUCATION_SETTINGS.mounts.snapshot.mountpoint_hub,
+        EDUCATION_SETTINGS.mounts.snapshot.folder.format(course=course),
     )
 
 def assignment_source(assignment):
-    return os.path.join(course_assignment_prepare_root(assignment.course), assignment.folder)
+    return os.path.join(course_prepare_root(assignment.course), assignment.folder)
 
 def course_workdir_root(course):
     return os.path.join(
-        EDUCATION_SETTINGS["mounts"]["workdir"]["mountpoint_hub"],
-        EDUCATION_SETTINGS["mounts"]["workdir"]["folder_top"].format(course=course),
+        EDUCATION_SETTINGS.mounts.workdir.mountpoint_hub,
+        EDUCATION_SETTINGS.mounts.workdir.folder_top.format(course=course),
     )
 
 def course_workdir(usercoursebinding):
     return os.path.join(
-        EDUCATION_SETTINGS["mounts"]["workdir"]["mountpoint_hub"],
-        EDUCATION_SETTINGS["mounts"]["workdir"]["folder"].format(course=course, user=usercoursebinding.user),
+        EDUCATION_SETTINGS.mounts.workdir.mountpoint_hub,
+        EDUCATION_SETTINGS.mounts.workdir.folder.format(course=course, user=usercoursebinding.user),
     )
 
 def course_assignment_root(course):
     return os.path.join(
-        EDUCATION_SETTINGS["mounts"]["assignment"]["mountpoint_hub"],
-        EDUCATION_SETTINGS["mounts"]["assignment"]["folder_top"].format(course=course),
+        EDUCATION_SETTINGS.mounts.assignment.mountpoint_hub,
+        EDUCATION_SETTINGS.mounts.assignment.folder_top.format(course=course),
     )
 
 def assignment_workdir_root(usercoursebinding):
     return os.path.join(
-        EDUCATION_SETTINGS["mounts"]["assignment"]["mountpoint_hub"],
-        EDUCATION_SETTINGS["mounts"]["assignment"]["folder"].format(course=usercoursebinding.course, user=usercoursebinding.user),
+        EDUCATION_SETTINGS.mounts.assignment.mountpoint_hub,
+        EDUCATION_SETTINGS.mounts.assignment.folder.format(course=usercoursebinding.course, user=usercoursebinding.user),
     )
 
 def assignment_workdir(userassignmentbinding):
@@ -67,50 +67,50 @@ def assignment_correct_dir(userassignmentbinding):
 
 def course_public_garbage(course):
     return os.path.join(
-        HUB_SETTINGS["mounts"]["garbage"]["mountpoint_hub"],
-        EDUCATION_SETTINGS["mounts"]["public"]["garbage"].format(course=course, time=time.time()),
+        HUB_SETTINGS.mounts.garbage.mountpoint_hub,
+        EDUCATION_SETTINGS.mounts.public.garbage.format(course=course, time=time.time()),
     )
 
-def course_prepare_garbage(course):
+def course_assignment_prepare_garbage(course):
     return os.path.join(
-        HUB_SETTINGS["mounts"]["garbage"]["mountpoint_hub"],
-        EDUCATION_SETTINGS["mounts"]["assignment_prepare"]["garbage"].format(course=course, time=time.time()),
+        HUB_SETTINGS.mounts.garbage.mountpoint_hub,
+        EDUCATION_SETTINGS.mounts.prepare.garbage.format(course=course, time=time.time()),
     )
 
 def assignment_garbage(userassignmentbinding):
     a = userassignmentbinding.assignment
     return os.path.join(
-        HUB_SETTINGS["mounts"]["garbage"]["mountpoint_hub"],
-        EDUCATION_SETTINGS["mounts"]["assignment"]["garbage"].format(course=a.course, user=userassignmentbinding.user, assignment=a, time=time.time()),
+        HUB_SETTINGS.mounts.garbage.mountpoint_hub,
+        EDUCATION_SETTINGS.mounts.assignment.garbage.format(course=a.course, user=userassignmentbinding.user, assignment=a, time=time.time()),
     )
 
 
 def course_workdir_garbage(usercoursebinding):
     return os.path.join(
-        HUB_SETTINGS["mounts"]["garbage"]["mountpoint_hub"],
-        EDUCATION_SETTINGS["mounts"]["workdir"]["garbage"].format(course=usercoursebinding.course, user=usercoursebinding.user, time=time.time()),
+        HUB_SETTINGS.mounts.garbage.mountpoint_hub,
+        EDUCATION_SETTINGS.mounts.workdir.garbage.format(course=usercoursebinding.course, user=usercoursebinding.user, time=time.time()),
     )
 
-def assignment_snapshot(assignment):
+def snapshot(assignment):
     return os.path.join(
-        course_assignment_snapshot(assignment.course), 
-        EDUCATION_SETTINGS["mounts"]["assignment_snapshot"]["snapshot"].format(assignment=assignment, time=time.time()),
+        course_snapshot(assignment.course), 
+        EDUCATION_SETTINGS.mounts.snapshot.snapshot.format(assignment=assignment, time=time.time()),
     )
 
 
 def assignment_collection(userassignmentbinding):
     assignment = userassignmentbinding.assignment
     return os.path.join(
-        course_assignment_snapshot(assignment.course), 
-        EDUCATION_SETTINGS["mounts"]["assignment_snapshot"]["collection"].format(assignment=assignment, user=userassignmentbinding.user, time=userassignmentbinding.last_submitted_at.timestamp()),
+        course_snapshot(assignment.course), 
+        EDUCATION_SETTINGS.mounts.snapshot.collection.format(assignment=assignment, user=userassignmentbinding.user, time=userassignmentbinding.last_submitted_at.timestamp()),
     )
 
 
 def assignment_feedback(userassignmentbinding):
     assignment = userassignmentbinding.assignment
     return os.path.join(
-        course_assignment_snapshot(assignment.course), 
-        EDUCATION_SETTINGS["mounts"]["assignment_snapshot"]["feedback"].format(assignment=assignment, user=userassignmentbinding.user, time=userassignmentbinding.corrected_at.timestamp()),
+        course_snapshot(assignment.course), 
+        EDUCATION_SETTINGS.mounts.snapshot.feedback.format(assignment=assignment, user=userassignmentbinding.user, time=userassignmentbinding.corrected_at.timestamp()),
     )
 
 
@@ -120,7 +120,7 @@ def assignment_feedback(userassignmentbinding):
 
 def get_assignment_prepare_subfolders(course):
     from education.models import Assignment
-    dir_assignmentprepare = course_assignment_prepare_root(course)
+    dir_assignmentprepare = course_prepare_root(course)
     dir_used = [ a.folder for a in Assignment.objects.filter(course = course) ]
     abs_path = lambda x: os.path.join(dir_assignmentprepare, x)
     not_empty_folder = lambda x: os.path.isdir(abs_path(x)) and len(os.listdir(abs_path(x))) > 0 and not x in dir_used

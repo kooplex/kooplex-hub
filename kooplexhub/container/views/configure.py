@@ -12,11 +12,9 @@ from django.shortcuts import (
 )
 
 from .mixins import MountSelectionMixin
-from ..models import (
-    Container,
-    Image,
-)
+from ..models import Container
 from ..services.live import broadcast_container_live_event
+from ..services.image_catalog import ImageCatalogService
 from ..services.mounts import (
     apply_container_mounts, 
     mount_change_message,
@@ -26,12 +24,17 @@ from ..services.mounts import (
 
 logger = logging.getLogger(__name__)
 
+IMAGE_PICKER_EDITOR_TEMPLATE = "ui/editors/image_picker/editor.html"
+
+IMAGE_MODAL_TEMPLATE = "container/partials/image_modal.html"
+MOUNTS_MODAL_TEMPLATE = "container/partials/mounts_modal.html"
+CARD_WRAPPER_TEMPLATE = "container/partials/card_wrapper.html"
 
 class ContainerImageModalView(
     LoginRequiredMixin, 
     TemplateView,
 ):
-    template_name = "container/partials/image_modal.html"
+    template_name = IMAGE_MODAL_TEMPLATE
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -41,7 +44,7 @@ class ContainerImageModalView(
             pk=self.kwargs["pk"],
         )
 
-        images = self.get_images()
+        images = ImageCatalogService.available_for_user(user=self.request.user)
         selected_image = container.image or images.first()
 
         context.update(
@@ -54,22 +57,12 @@ class ContainerImageModalView(
 
         return context
 
-    def get_images(self):
-        return (
-            Image.objects
-            .filter(
-                imagetype=Image.ImageType.PROJECT,
-                present=True,
-            )
-            .order_by("name")
-        )
-
 
 class ContainerImagePickerView(
     LoginRequiredMixin, 
     TemplateView,
 ):
-    template_name = "container/partials/image_picker.html"
+    template_name = IMAGE_PICKER_EDITOR_TEMPLATE
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -79,7 +72,7 @@ class ContainerImagePickerView(
             pk=self.kwargs["pk"],
         )
 
-        images = self.get_images()
+        images = ImageCatalogService.available_for_user(user=self.request.user)
 
         selected_image = None
         image_id = self.request.GET.get("image")
@@ -100,16 +93,6 @@ class ContainerImagePickerView(
 
         return context
 
-    def get_images(self):
-        return (
-            Image.objects
-            .filter(
-                imagetype=Image.ImageType.PROJECT,
-                present=True,
-            )
-            .order_by("name")
-        )
-
 
 class ContainerImageSaveView(
     LoginRequiredMixin, 
@@ -122,10 +105,7 @@ class ContainerImageSaveView(
         )
 
         image = get_object_or_404(
-            Image.objects.filter(
-                imagetype=Image.ImageType.PROJECT,
-                present=True,
-            ),
+            ImageCatalogService.available_for_user(user=request.user),
             pk=request.POST.get("image"),
         )
 
@@ -134,7 +114,7 @@ class ContainerImageSaveView(
 
         response = render(
             request,
-            "container/partials/card_wrapper.html",
+            CARD_WRAPPER_TEMPLATE,
             {"container": container},
         )
         response["HX-Trigger"] = json.dumps(
@@ -166,7 +146,7 @@ class ContainerMountsModalView(
     MountSelectionMixin,
     TemplateView,
 ):
-    template_name = "container/partials/mounts_modal.html"
+    template_name = MOUNTS_MODAL_TEMPLATE
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -233,7 +213,7 @@ class ContainerMountsSaveView(
 
         response = render(
             request,
-            "container/partials/card_wrapper.html",
+            CARD_WRAPPER_TEMPLATE,
             {"container": container},
         )
 

@@ -1,0 +1,32 @@
+<div class="course-assignments">
+
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="mb-0">Assignments</h6>
+
+        {% if course_ui.can_create_assignment %}
+            <button
+                type="button"
+                class="btn btn-sm btn-outline-primary"
+                hx-get="{{ course_ui.assignment_create_url }}"
+                hx-target="#{{ course_ui.assignments_dom_id }}"
+                hx-swap="innerHTML"
+            >
+                <i class="bi bi-plus-lg"></i>
+                New
+            </button>
+        {% endif %}
+    </div>
+
+    {% if assignments %}
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                ...
+            </table>
+        </div>
+    {% else %}
+        <div class="text-body-secondary small py-2">
+            No assignments.
+        </div>
+    {% endif %}
+
+</div>

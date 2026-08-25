@@ -29,13 +29,10 @@ class ContainerListView(
             "page_description": "Create and manage your notebook environments.",
             "documentation_url": "https://xwiki.vo.elte.hu/en/kooplex-manual/environmentpanel",
             "live_config": {
-                "endpoint": CONTAINER_SETTINGS.wss.live.format(user=self.request.user),
+                "endpoint": CONTAINER_SETTINGS.wss.live,
             },
             "container_page_config": {
                 "userid": self.request.user.id,
-                "wss": {
-                    "monitor_node": CONTAINER_SETTINGS.wss.monitor_node.format(user=self.request.user),
-                },
                 "configure_request": "configure-container",
                 "model": "container",
                 "required": ["name", "image"],

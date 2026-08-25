@@ -1,0 +1,6 @@
+<div
+    class="card-container"
+    id="card-container-{{ course_ui.course.pk }}"
+>
+    {% include "education/course/card.html" with course_ui=course_ui only %}
+</div>

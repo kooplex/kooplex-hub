@@ -1,0 +1,33 @@
+<form 
+  method="post" 
+  action="{% url 'education:create' %}" 
+  hx-post="{% url 'education:create' %}" 
+  hx-target="#modal-root" 
+  hx-swap="innerHTML" 
+  id="course-create-form" 
+  data-course-create-wizard 
+  novalidate
+  data-name-validation-url="{% url 'education:create-validate-name' %}"
+  data-description-validation-url="{% url 'education:create-validate-description' %}"
+  data-preferred-image-validation-url="{% url 'education:create-validate-preferred-image' %}"
+>
+    {% csrf_token %}
+
+    {{ form.creation_mode }}
+    {{ form.member_users }}
+    {{ form.mounts }}
+
+    <div data-wizard-step="0">
+        {% include "education/course/partials/create/steps/general.html" %}
+    </div>
+
+    <div data-wizard-step="1" hidden>
+        {% include "education/course/partials/create/steps/environment.html" %}
+    </div>
+
+    <div data-wizard-step="2" hidden>
+        {% include "education/course/partials/create/steps/participants.html" %}
+    </div>
+
+    {% include "education/course/partials/create/actions.html" %}
+</form>

@@ -14,6 +14,7 @@ from django.shortcuts import (
 
 from ..models import Image
 from ..forms import  ContainerCreateForm
+from ..services.image_catalog import ImageCatalogService
 from ..services.mounts import (
     apply_container_mounts, 
     mount_change_message,
@@ -118,12 +119,8 @@ class ContainerCreateView(
             return None
 
         return (
-            Image.objects
-            .filter(
-                pk=image_id,
-                imagetype=Image.ImageType.PROJECT,
-                present=True,
-            )
+            ImageCatalogService.available_for_user(user=self.request.user)
+            .filter(pk=image_id)
             .first()
         )
 
@@ -182,10 +179,7 @@ class ContainerCreateImagePickerView(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        images = Image.objects.filter(
-            imagetype=Image.ImageType.PROJECT,
-            present=True,
-        )
+        images = ImageCatalogService.available_for_user(user=self.request.user)
 
         selected_id = self.request.GET.get("image")
         selected_image = None
@@ -210,10 +204,7 @@ class ContainerCreateImageSelectedView(
     context_object_name = "image"
 
     def get_queryset(self):
-        return Image.objects.filter(
-            imagetype=Image.ImageType.PROJECT,
-            present=True,
-        )
+        return ImageCatalogService.available_for_user(user=self.request.user)
 
 
 class ContainerCreateMountsPickerView(

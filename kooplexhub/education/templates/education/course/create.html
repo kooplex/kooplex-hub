@@ -1,0 +1,71 @@
+<div
+    class="modal fade"
+    id="newCourseModal"
+    tabindex="-1"
+    aria-hidden="true"
+>
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <form
+                hx-post="{% url 'education:course-create' %}"
+                hx-target="#listPane"
+                hx-swap="afterbegin"
+            >
+                {% csrf_token %}
+
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        Create course
+                    </h5>
+
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                    ></button>
+                </div>
+
+                <div class="modal-body">
+
+                    {{ form.non_field_errors }}
+
+                    {% for field in form %}
+                        <div class="mb-3">
+                            {{ field.label_tag }}
+                            {{ field }}
+
+                            {% for error in field.errors %}
+                                <div class="text-danger small">
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button
+                        type="button"
+                        class="btn btn-outline-secondary"
+                        data-bs-dismiss="modal"
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                    >
+                        Create
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>

@@ -1,0 +1,57 @@
+{% extends "layout.html" %}
+{% load static %}
+{% load course_presenter %}
+
+{% block styles %}
+{# <link rel="stylesheet" href="{% static 'project/css/card.css' %}"> #}
+{# <link rel="stylesheet" href="{% static 'project/css/environment.css' %}"> #}
+<link rel="stylesheet" href="{% static 'ui/css/membership.css' %}">
+<link rel="stylesheet" href="{% static 'ui/css/mounts.css' %}">
+<link rel="stylesheet" href="{% static 'ui/css/scope-editor.css' %}">
+{% endblock %}
+
+{% block fab_attrs %}
+  aria-label="Create new course"
+  hx-get="{% url 'education:create-modal' %}"
+  hx-target="#modal-root"
+  hx-swap="innerHTML"
+{% endblock %}
+
+{% block page_heading %}
+<div class="d-flex justify-content-between align-items-center">
+  <div>
+    <p class="eyebrow">Education</p>
+    <p>Everything related to courses and assignments.</p>
+  </div>
+
+  {% if user.profile.can_createcourse %}
+    <div class="page-actions">
+      <button 
+        type="button"
+        class="primary-button"
+        hx-get="{% url 'education:create-modal' %}"
+        hx-target="#modal-root"
+        hx-swap="innerHTML"
+      >
+        New
+      </button>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+
+{% block content %}
+{% include "education/course/partials/grid.html" %}
+<div id="modal-root"></div>
+{% endblock %}
+
+{% block scripts %}
+{#  <script src="{% static 'project/js/preserve_tab.js' %}"></script> #}
+  <script src="{% static 'ui/js/image-picker.js' %}"></script>
+  <script src="{% static 'ui/js/members-picker.js' %}"></script>
+  <script src="{% static 'ui/js/mounts-picker.js' %}"></script>
+  <script src="{% static 'ui/js/scope-editor.js' %}"></script>
+  <script src="{% static 'education/js/wizard.js' %}"></script>
+{% endblock %}
+

@@ -1,30 +1,49 @@
-from copy import deepcopy
-from types import MappingProxyType
-from django.conf import settings
-from django.utils.functional import SimpleLazyObject
+from dataclasses import fields, is_dataclass
 
-def deep_merge(a: dict, b: dict | None) -> dict:
-    out = deepcopy(a)
-    for k, v in (b or {}).items():
-        if isinstance(v, dict) and isinstance(out.get(k), dict):
-            out[k] = deep_merge(out[k], v)
+
+def merge_dataclass(default_obj, override: dict | None):
+    if not override:
+        return default_obj
+
+    if not isinstance(override, dict):
+        raise TypeError(
+            f"Settings override for {type(default_obj).__name__} "
+            "must be a dictionary."
+        )
+
+    field_names = {
+        field_info.name
+        for field_info in fields(default_obj)
+    }
+
+    unknown_keys = set(override) - field_names
+
+    if unknown_keys:
+        raise ValueError(
+            f"Unknown setting keys for "
+            f"{type(default_obj).__name__}: "
+            f"{', '.join(sorted(unknown_keys))}"
+        )
+
+    values = {}
+
+    for field_info in fields(default_obj):
+        name = field_info.name
+        default_value = getattr(default_obj, name)
+
+        if name not in override:
+            values[name] = default_value
+            continue
+
+        override_value = override[name]
+
+        if is_dataclass(default_value):
+            values[name] = merge_dataclass(
+                default_value,
+                override_value,
+            )
         else:
-            out[k] = v
-    return out
+            values[name] = override_value
 
-def _freeze(d: dict) -> MappingProxyType:
-    # shallow read-only wrapper; avoid mutating at runtime
-    return MappingProxyType({k: _freeze(v) if isinstance(v, dict) else v for k, v in d.items()})
-
-def make_app_settings(*, defaults: dict, section: str, root: str = "KOOPLEX"):
-    """Return a lazily-resolved, read-only mapping for an app's settings."""
-    def _load():
-        overrides = getattr(settings, root, {}).get(section, {})
-        return _freeze(deep_merge(defaults, overrides))
-    return SimpleLazyObject(_load)
-
-def get_app_settings(*, defaults: dict, section: str, root: str = "KOOPLEX") -> dict:
-    """Non-lazy version (recompute every call). Handy in tests."""
-    overrides = getattr(settings, root, {}).get(section, {})
-    return deep_merge(defaults, overrides)
+    return type(default_obj)(**values)
 

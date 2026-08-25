@@ -1,5 +1,6 @@
 from django import forms
 
+from ..services.image_catalog import ImageCatalogService
 from ..models import (
     Container, 
     Image,
@@ -20,10 +21,7 @@ class ContainerCreateForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.user = user
 
-        self.fields["image"].queryset = Image.objects.filter(
-            imagetype=Image.ImageType.PROJECT,
-            present=True,
-        )
+        self.fields["image"].queryset = ImageCatalogService.available_for_user(user=user)
 
     def clean_name(self):
         name = self.cleaned_data["name"].strip()

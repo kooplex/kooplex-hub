@@ -1,0 +1,15 @@
+<div 
+  id="listPane" 
+  class="d-flex flex-wrap justify-content-center gap-3 card-grid"
+  hx-get="{% url 'education:course-grid' %}"
+  hx-trigger="course-list-refresh from:body"
+  hx-swap="outerHTML"
+>
+    {% for course_ui in courses %}
+        {% include "education/course/card.html" with course_ui=course_ui only %}
+    {% empty %}
+        {% include "empty.html" with empty_title="You have no courses yet." %}
+    {% endfor %}
+</div>
+
+

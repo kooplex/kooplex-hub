@@ -5,6 +5,8 @@ from typing import Any
 
 from django.conf import settings
 
+from hub.confutils import merge_dataclass
+
 
 @dataclass(frozen=True)
 class KubernetesResourcesSettings:
@@ -85,7 +87,6 @@ class ProxySettings:
 @dataclass(frozen=True)
 class ContainerWssSettings:
     live: str = "wss://localhost/hub/ws/container/live/"
-    monitor_node: str = "wss://localhost/hub/ws/monitor/node/{user.id}/"
 
 
 @dataclass(frozen=True)
@@ -102,55 +103,7 @@ class ContainerSettings:
     compute_widget: ComputeWidgetSettings = field(default_factory=ComputeWidgetSettings)
 
 
-
-def _merge_dataclass(default_obj, override: dict | None):
-    """
-    Recursive dataclass override helper.
-
-    Example:
-        default = KubernetesSettings()
-        override = {"namespace": "kooplex", "resources": {"max_cpu": 8}}
-
-    Result:
-        KubernetesSettings(namespace="kooplex",
-                           resources=KubernetesResourcesSettings(max_cpu=8, ...))
-    """
-
-    if not override:
-        return default_obj
-
-    values = {}
-
-    for field_info in default_obj.__dataclass_fields__.values():
-        name = field_info.name
-        default_value = getattr(default_obj, name)
-
-        if name not in override:
-            values[name] = default_value
-            continue
-
-        override_value = override[name]
-
-        if hasattr(default_value, "__dataclass_fields__"):
-            values[name] = _merge_dataclass(
-                default_value,
-                override_value,
-            )
-        else:
-            values[name] = override_value
-
-    unknown_keys = set(override) - set(default_obj.__dataclass_fields__)
-
-    if unknown_keys:
-        raise ValueError(
-            f"Unknown container setting keys for {type(default_obj).__name__}: "
-            f"{', '.join(sorted(unknown_keys))}"
-        )
-
-    return type(default_obj)(**values)
-
-
-CONTAINER_SETTINGS = _merge_dataclass(
+CONTAINER_SETTINGS = merge_dataclass(
     ContainerSettings(),
     getattr(settings, "CONTAINER", {}),
 )

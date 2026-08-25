@@ -18,10 +18,43 @@ from education.fs import *
 logger = logging.getLogger(__name__)
 
 
+class AssignmentQuerySet(models.QuerySet):
+
+    def for_course(self, course):
+        return self.filter(course=course)
+
+    def visible_to(self, user):
+        if not user.is_authenticated:
+            return self.none()
+
+        return self.filter(
+            course__userbindings__user=user,
+        ).distinct()
+
+    def manageable_by(self, user):
+        if not user.is_authenticated:
+            return self.none()
+
+        return self.filter(
+            course__userbindings__user=user,
+            course__userbindings__is_teacher=True,
+        ).distinct()
+
+
 class Assignment(models.Model):
     name = models.CharField(max_length = 32, null = False)
-    course = models.ForeignKey(Course, null = False, on_delete = models.CASCADE)
-    creator = models.ForeignKey(User, null = False, on_delete = models.CASCADE)
+    course = models.ForeignKey(
+        Course, 
+        null=False, 
+        on_delete=models.CASCADE,
+        related_name="assignments",
+    )
+    creator = models.ForeignKey(
+        User, 
+        null=False, 
+        on_delete=models.CASCADE,
+        related_name="created_assignments",
+    )
     description = models.TextField(max_length = 500)
     folder = models.CharField(max_length = 32, null = False)
     created_at = models.DateTimeField(editable=False,null=True,auto_now_add=True)
@@ -31,8 +64,34 @@ class Assignment(models.Model):
     max_size = models.IntegerField(default = None, null = True, blank = True) 
     filename = models.CharField(max_length = 256, null = False, unique = True)
 
+    objects = AssignmentQuerySet.as_manager()
+
     class Meta:
-        unique_together = [['course', 'folder']]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["course", "folder"],
+                name="unique_assignment_folder_per_course",
+            ),
+            models.UniqueConstraint(
+                fields=["course", "name"],
+                name="unique_assignment_name_per_course",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(valid_from__isnull=True)
+                    | models.Q(expires_at__isnull=True)
+                    | models.Q(valid_from__lt=models.F("expires_at"))
+                ),
+                name="assignment_valid_time_window",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(max_size__isnull=True)
+                    | models.Q(max_size__gt=0)
+                ),
+                name="assignment_positive_max_size",
+            ),
+        ]
 
     def __str__(self):
         return f"Assignment {self.name} (course {self.course.name}@{self.creator.username})"
@@ -106,10 +165,26 @@ class UserAssignmentBinding(models.Model):
         ST_READY: 'Assignment is corrected',
     }
 
-    user = models.ForeignKey(User, null = False, on_delete = models.CASCADE)
-    assignment = models.ForeignKey(Assignment, null = False, on_delete = models.CASCADE)
+    user = models.ForeignKey(
+        User, 
+        null=False, 
+        on_delete=models.CASCADE,
+        related_name="assignmentbindings",
+    )
+    assignment = models.ForeignKey(
+        Assignment, 
+        null=False, 
+        on_delete=models.CASCADE,
+        related_name="userbindings",
+    )
     state = models.CharField(max_length = 16, choices = ST_LOOKUP.items(), default = ST_QUEUED)
-    corrector = models.ForeignKey(User, null = True, related_name = 'corrector', on_delete = models.CASCADE, blank = True)
+    corrector = models.ForeignKey(
+        User, 
+        null=True, 
+        blank=True,
+        related_name="corrected_assignmentbindings", 
+        on_delete=models.SET_NULL, 
+    )
     last_received_at = models.DateTimeField(editable=False,null=True)
     last_submitted_at = models.DateTimeField(editable=False,null=True)
     last_corrected_at = models.DateTimeField(editable=False,null=True)
@@ -119,8 +194,23 @@ class UserAssignmentBinding(models.Model):
     correction_count = models.IntegerField(default = 0, null = False)
 
     class Meta:
-        unique_together = [['user', 'assignment']]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "assignment"],
+                name="unique_user_assignment_binding",
+            ),
+        ]
         ordering = [ 'assignment__name' ]
+        indexes = [
+            models.Index(
+                fields=["assignment", "state"],
+                name="uab_assignment_state_idx",
+            ),
+            models.Index(
+                fields=["user", "state"],
+                name="uab_user_state_idx",
+            ),
+        ]
 
 
     def __str__(self):
@@ -151,15 +241,26 @@ class UserAssignmentBinding(models.Model):
 
 
     def finalize(self, user, score, message):
-        assert self.state == UserAssignmentBinding.ST_CORRECTED, "State mismatch"
-        now = timezone.now()
-        self.corrected_at = now
+        if self.state != self.ST_COLLECTED:
+            raise ValueError(
+                f"Cannot finalize assignment in state {self.state}"
+            )
+        self.last_corrected_at = timezone.now()
         self.correction_count += 1
         self.corrector = user
         self.feedback_text = message
         self.score = score
         self.state = self.ST_READY
-        self.save()
+        self.save(
+            update_fields=[
+                "last_corrected_at",
+                "correction_count",
+                "corrector",
+                "feedback_text",
+                "score",
+                "state",
+            ]
+        )
 
     def reassign(self):
         #FIXME: Ha le van törölve, mert ZH típusu, akkor ennek nincs értelme

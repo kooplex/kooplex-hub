@@ -1,53 +1,122 @@
-from hub.confutils import make_app_settings  # or get_app_settings
+from __future__ import annotations
 
-DEFAULTS = {
-    'ldap': {
-        'host': 'localhost',
-        'port': 389,
-        'base_dn': 'dn=localhost',
-        'bind_dn': 'cn=admin,dn=localhost',
-        'bind_password': False,
-        'userdn': 'uid={user.username},ou=users,dn=localhost',
-        'groupdn': 'uid={group.name},ou=users,dn=localhost',
-        'usersearch': 'ou=users,dn=localhost',
-        'groupsearch': 'ou=groups,dn=localhost',
-        'managegroup': False,
-        'offset': {
-            'project': 10000, 
-            'course': 20000, 
-            'volume': 30000, 
-            },
-        },
-    'archive_home': False,
-    'wss': {
-        'token': 'wss://localhost/hub/ws/tokens/{user.id}/',
-        'resources': 'wss://localhost/hub/ws/resources/', #FIXME: authorize?
-        },
-    "mounts": {
-        "home": {
-                "claim": 'userdata',
-                "subpath": 'home',
-                "folder": '{user.username}',
-                "mountpoint": '/home/{user.username}',
-                "mountpoint_hub": '/mnt/home',
-                "garbage": "user-{user.username}.{time}.tar.gz",
-            },
-        "garbage": {
-                "claim": 'userdata',
-                "subpath": 'garbage',
-                "folder": '{user.username}',
-                "mountpoint": '/garbage/{user.username}',
-                "mountpoint_hub": '/mnt/garbage',
-            },
-        "scratch": {
-                "claim": 'userdata',
-                "subpath": 'scratch',
-                "folder": '{user.username}',
-                "mountpoint": '/scratch/{user.username}',
-                "mountpoint_hub": '/mnt/scratch',
-            },
-        },
-}
+from dataclasses import dataclass, field
 
-HUB_SETTINGS = make_app_settings(defaults=DEFAULTS, section="hub")
+from django.conf import settings
+
+from hub.confutils import merge_dataclass
+from hub.conf_types import (
+    MountSettings,
+    ArchivableMountSettings,
+)
+
+
+@dataclass(frozen=True)
+class LdapSettings:
+    host: str = "localhost"
+    port: int = 389
+
+    base_dn: str = "dn=localhost"
+    bind_dn: str = "cn=admin,dn=localhost"
+    bind_password: str | bool = False
+
+    user_dn: str = "uid={username},ou=users,dn=localhost"
+    group_dn: str = "uid={groupname},ou=groups,dn=localhost"
+
+    user_search: str = "ou=users,dn=localhost"
+    group_search: str = "ou=groups,dn=localhost"
+
+    manage_group: bool = False
+
+    offsets: dict[str, int] = field(
+        default_factory=lambda: {
+            "project": 10000,
+            "course": 20000,
+            "volume": 30000,
+        }
+    )
+
+
+@dataclass(frozen=True)
+class WssSettings:
+    token: str = "wss://localhost/hub/ws/tokens/{user.id}/"
+    resources: str = "wss://localhost/hub/ws/resources/"
+
+
+def _default_home_mount():
+    return ArchivableMountSettings(
+        claim="userdata",
+        subpath="home",
+        folder="{user.username}",
+        mountpoint="/home/{user.username}",
+        mountpoint_hub="/mnt/home",
+        archive_name="user-{user.username}.{time}.tar.gz",
+    )
+
+
+def _default_garbage_mount():
+    return MountSettings(
+        claim="userdata",
+        subpath="garbage",
+        folder="{user.username}",
+        mountpoint="/garbage/{user.username}",
+        mountpoint_hub="/mnt/garbage",
+    )
+
+
+def _default_scratch_mount():
+    return MountSettings(
+        claim="userdata",
+        subpath="scratch",
+        folder="{user.username}",
+        mountpoint="/scratch/{user.username}",
+        mountpoint_hub="/mnt/scratch",
+    )
+
+
+@dataclass(frozen=True)
+class MountsSettings:
+    home: GarbagedMountSettings = field(
+        default_factory=_default_home_mount
+    )
+    garbage: MountSettings = field(
+        default_factory=_default_garbage_mount
+    )
+    scratch: MountSettings = field(
+        default_factory=_default_scratch_mount
+    )
+
+
+@dataclass(frozen=True)
+class MailSettings:
+    smtp_server: str = 'localhost'
+    email_sender: str = 'admin@localhost'
+
+
+@dataclass(frozen=True, slots=True)
+class HubSettings:
+    ldap: LdapSettings = field(
+        default_factory=LdapSettings
+    )
+
+    mail: MailSettings = field(
+        default_factory=MailSettings
+    )
+
+    archive_home: bool = False
+
+    wss: WssSettings = field(
+        default_factory=WssSettings
+    )
+
+    mounts: MountsSettings = field(
+        default_factory=MountsSettings
+    )
+
+
+
+HUB_SETTINGS = merge_dataclass(
+    HubSettings(),
+    getattr(settings, "KOOPLEX", {}).get("hub", {}),
+)
 

@@ -148,12 +148,12 @@ class Volume(models.Model):
     claim = models.CharField(
         max_length=64,
         blank=False,
-        default=VOLUME_SETTINGS["mounts"]["attachment"]["claim"],
+#FIXME        default=VOLUME_SETTINGS["mounts"]["attachment"]["claim"],
     )
 
     subpath = models.CharField(
         max_length=64,
-        default=VOLUME_SETTINGS["mounts"]["attachment"]["subpath"],
+#FIXME        default=VOLUME_SETTINGS["mounts"]["attachment"]["subpath"],
         blank=True,
     )
 

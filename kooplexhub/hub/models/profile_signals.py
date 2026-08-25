@@ -21,9 +21,12 @@ def kube_create_token(sender, instance, created, **kwargs):
     except:
         pass
 
-    get_or_create_empty_user_secret(user=instance.user)
+    try:
+        get_or_create_empty_user_secret(user=instance.user)
     # FIXME
     # job token to access jobs api
-    token = {'job_token': instance.token}
-    update_user_secret(user=instance.user, token=token)
+        token = {'job_token': instance.token}
+        update_user_secret(user=instance.user, token=token)
+    except Exception as e:
+        logger.critical(e)
 

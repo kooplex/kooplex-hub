@@ -6,5 +6,4 @@ from .token import Token, TokenType
 
 from .user_signals import *
 from .profile_signals import *
-from .group_signals import *
 

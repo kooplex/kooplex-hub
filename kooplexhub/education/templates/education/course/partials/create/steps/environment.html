@@ -1,0 +1,26 @@
+<section class="course-create-environment">
+  <h2
+    class="h5"
+    id="course-create-environment-title"
+  >
+    Environment
+  </h2>
+
+  <p class="text-muted">
+    Choose the preferred image and volumes available to the
+    course.
+  </p>
+
+  <div class="mb-4">
+    <h3 class="h6">Preferred image</h3>
+
+    {% include "education/course/partials/create/preferred_image_field.html" with field=form.preferred_image only %}
+  </div>
+
+  <div>
+    <h3 class="h6">Mounted volumes</h3>
+
+    {% include "education/course/partials/create/mounts_field.html" with editor=mounts_editor only %}
+  </div>
+</section>
+
