@@ -15,10 +15,10 @@ from hub.conf_types import (
 
 
 @dataclass(frozen=True)
-class AssignmentMountSettings(MountSettings):
-    snapshot: str
-    collection: str
-    feedback: str
+class AssignmentSnapshotMountSettings(MountSettings):
+    snapshot_name: str
+    collection_name: str
+    feedback_name: str
 
 
 
@@ -54,16 +54,16 @@ def _default_workdir_mount():
     )
 
 def _default_snapshot_mount():
-    return MountSettings(
+    return AssignmentSnapshotMountSettings(
         claim="education",
         subpath="assignment_snapshot",
         folder="{course.folder}",
         mountpoint="/course/{course.folder}.assignment_snapshot",
         mountpoint_hub="/mnt/assignment_snapshot",
+        snapshot_name="snapshot-{assignment._safename}.{time}.tar.gz",
+        collection_name="collection-{assignment._safename}-{user.username}.{time}.tar.gz",
+        feedback_name="feedback-{assignment._safename}-{user.username}.{time}.tar.gz",
     )
-#    snapshot: str = "snapshot-{assignment._safename}.{time}.tar.gz"
-#    collection: str = "collection-{assignment._safename}-{user.username}.{time}.tar.gz"
-#    feedback: str = "feedback-{assignment._safename}-{user.username}.{time}.tar.gz"
 
 def _default_assignment_mount():
     return ArchivableTreeMountSettings(
@@ -97,7 +97,7 @@ class MountsSettings:
     workdir: ArchivableTreeMountSettings = field(
         default_factory=_default_workdir_mount
     )
-    snapshot: MountSettings = field(
+    snapshot: AssignmentSnapshotMountSettings = field(
         default_factory=_default_snapshot_mount
     )
     assignment: ArchivableTreeMountSettings = field(

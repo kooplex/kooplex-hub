@@ -14,8 +14,9 @@ from .mounts import (
 from .members import (
     CourseMembersForm,
 )
-#FIXME:
-from .assignment import FormAssignment, FormAssignmentList, FormAssignmentConfigure
+from .assignment import (
+    AssignmentScheduleForm,
+)
 __all__ = [
     "CourseCreateForm",
 
@@ -24,4 +25,6 @@ __all__ = [
     "CoursePreferredImageForm",
     "CourseMountsForm",
     "CourseMembersForm",
+
+    "AssignmentScheduleForm",
 ]

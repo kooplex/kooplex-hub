@@ -1,0 +1,52 @@
+<tr>
+    <td class="fw-semibold">
+        {{ assignment_ui.assignment.name }}
+    </td>
+
+    <td
+        class="text-truncate"
+        style="max-width: 14rem;"
+        title="{{ assignment_ui.assignment.description }}"
+    >
+        {{ assignment_ui.assignment.description }}
+    </td>
+
+    <td>
+        {% if assignment_ui.can_submit %}
+            <button
+                type="button"
+                class="btn btn-sm btn-primary"
+                hx-post="{{ assignment_ui.submit_url }}"
+                hx-target="#{{ course_ui.assignments_list_dom_id }}"
+                hx-swap="outerHTML"
+            >
+                Submit
+            </button>
+        {% else %}
+            <span class="text-muted small">
+                {{ assignment_ui.state_label }}
+            </span>
+        {% endif %}
+    </td>
+
+    <td>
+        {{ assignment_ui.score|default_if_none:"—" }}
+    </td>
+
+    <td>
+        {{ assignment_ui.feedback|default:"—" }}
+    </td>
+
+    <td>
+        <i
+            class="bi bi-clock-history"
+            role="button"
+            data-bs-toggle="tooltip"
+            title="
+Received: {{ assignment_ui.received_at|default:'—' }}
+Submitted: {{ assignment_ui.submitted_at|default:'—' }}
+Corrected: {{ assignment_ui.corrected_at|default:'—' }}
+"
+        ></i>
+    </td>
+</tr>

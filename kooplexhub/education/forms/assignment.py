@@ -1,383 +1,409 @@
-import os
-import json
-import datetime
-import re
 from django import forms
-from django.utils.translation import gettext_lazy as _
-from django.utils import timezone
-from django.contrib.auth.models import User
-import pandas
-from django_pandas.io import read_frame
-
-from kooplexhub.common import tooltip_attrs
-
-from education.models import Assignment, UserCourseBinding, Course, UserAssignmentBinding#, UserCourseGroupBinding, CourseGroup
-from education.fs import *
 
 
-class dateWidget(forms.DateTimeInput):
-    template_name = 'datetime_pick.html'
-
-class FormAssignment(forms.ModelForm):
-    class Meta:
-        model = Assignment
-        fields = [ 'name', 'description', 'remove_collected', 'max_size' ]
-        sequence = [ 'folder_assignment', 'name', 'description', 'remove_collected', 'valid_from_widget', 'expires_at_widget', 'max_size' ]
-        labels = {
-            'name': _('The name of the assignment'),
-            'description': _('A short description of the excercises'),
-        }
-
-    user = forms.CharField(widget = forms.HiddenInput(), required = True)
-    folder_assignment = forms.ChoiceField(
-        label = 'Select folder', required = True,
-        widget = forms.Select(attrs = tooltip_attrs({
-            'title': _('A snapshot will be created of all files in the selected folder, and students will receive a copy of this snapshot.'), 
-        }))
-    )
-    name = forms.CharField(
-        label = _("Assignment name"),
-        max_length = 200, required = True, 
-        widget = forms.TextInput(attrs = tooltip_attrs({ 'title': _('Name your assignment. No worries later you can rename it, just make sure your students do not get confused.') })),
-    )
-    description = forms.CharField(
-        max_length = 100, required = True,
-        widget = forms.Textarea(attrs = tooltip_attrs({
-            'rows': 3, 
-            'title': _('It is always a good idea to have a short but straight to the point abstract of your assignment.'), 
-        })),
-    )
-    # FIXME: add tooltip
-    valid_from_widget = forms.DateTimeField(
-            label = 'Valid from',
-            input_formats = ["%m/%d/%Y, %H:%M"], 
-            widget = dateWidget(attrs = { 'icon': 'bi bi-clock', 'name': 'valid_from_widget' }), 
-            required = False, 
+class AssignmentScheduleForm(forms.Form):
+    field = forms.ChoiceField(
+        choices=(
+            ("valid_from", "Valid from"),
+            ("expires_at", "Expires at"),
         )
-    # FIXME: add tooltip
-    expires_at_widget = forms.DateTimeField(
-            label = 'Expires at',
-            input_formats = ["%m/%d/%Y, %H:%M"], 
-            widget = dateWidget(attrs = { 'icon': 'bi bi-bell', 'name': 'expires_at_widget' }), 
-            required = False,
-        )
-    # FIXME: add tooltip
-    remove_collected = forms.BooleanField(
-            widget = forms.CheckboxInput(attrs = { 'data-size': 'small', 'data-toggle': 'toggle', 
-                'data-on': "<span class='oi oi-trash'></span>", 'data-off': "<span class='bi bi-check-lg'></span>",
-                'data-onstyle': "danger", 'data-offstyle': "secondary" }), 
-            required = False,
-        )
-    max_size = forms.IntegerField(
-        label = _('Quota [MB]'), required = False,
-        widget = forms.NumberInput(attrs = tooltip_attrs({
-            'title': _('Total file size quota applied to the assignment.'),
-        }))
     )
 
-    def clean(self):
-        cleaned_data = super().clean()
-        course_id, folder = cleaned_data.pop('folder_assignment').split('---', 1)
-        username = cleaned_data.pop('user')
-        user = User.objects.get(username = username)
-        course = Course.objects.get(id = course_id)
-        #authorize
-        UserCourseBinding.objects.get(user = user, course = course, is_teacher = True)
-        cleaned_data['course'] = course
-        cleaned_data['creator'] = user
-        cleaned_data['folder'] = folder
-        assignmentname = cleaned_data.get('name')
-        ve = []
-        if not assignmentname:
-            ve.append( forms.ValidationError(_(f'Assignment name cannot be empty'), code = 'invalid name') )
-        if Assignment.objects.filter(course = course, name = assignmentname):
-            ve.append( forms.ValidationError(_(f'Assignment name must be unique'), code = 'invalid name') )
-        key = f'{course.name}-{assignmentname}'
-        timestamp1 = cleaned_data.pop('valid_from_widget')
-        timestamp2 = cleaned_data.pop('expires_at_widget')
-        assignment_dummy = Assignment(**cleaned_data)
-        # Note, here order matters
-        cleaned_data['task_snapshot'] = assignment_dummy._task_snapshot
-        cleaned_data['filename'] = assignment_dummy.filename
-        if timestamp1:
-            cleaned_data['task_handout'] = assignment_dummy._task_handout(timestamp1)
-        if timestamp2:
-            cleaned_data['task_collect'] = assignment_dummy._task_collect(timestamp2)
-        #FIXME: if insane timespan raise an error, < 5 minutes, configurable?
-        if timestamp1 and timestamp2 and timestamp1 >= timestamp2:
-            ve.append( forms.ValidationError(_(f'Timestamp relation is wrong'), code = 'invalid timestamps') )
-        if ve:
-            raise forms.ValidationError(ve)
-        return cleaned_data
+    valid_from = forms.DateTimeField(
+        required=False,
+        input_formats=[
+            "%Y-%m-%dT%H:%M",
+        ],
+    )
+
+    expires_at = forms.DateTimeField(
+        required=False,
+        input_formats=[
+            "%Y-%m-%dT%H:%M",
+        ],
+    )
 
 
-    def __init__(self, *args, **kwargs):
-        user = kwargs['initial'].get('user')
-        self.pk = kwargs.pop('pk', None)
-        super().__init__(*args, **kwargs)
-        #self.fields["creator_id"].value = user.id
-        assignment = kwargs.get('instance', Assignment())
-        folders = []
-        q=UserCourseBinding.objects.filter(user=user, course_id=self.pk, is_teacher=True) if self.pk else UserCourseBinding.objects.filter(user=user, is_teacher=True)
-        for ucb in q:
-            try:
-                folders.extend([ (f'{ucb.course.id}---{folder}', f'{ucb.course.name}: {folder}') for folder in ucb.course.dir_assignmentcandidate() ])
-            except:
-                pass
-        if folders:
-            self.okay = True
-            self.fields["folder_assignment"].choices = folders
-        else:
-            self.okay = False
-
-
-class FormAssignmentConfigure(forms.Form):
-    change_log = forms.CharField(widget = forms.HiddenInput(), required = True)
-
-    @staticmethod
-    def _parse_timestamp(s):
-        p = r'(\d{2})/(\d{2})/(\d{4}), (\d{2}):(\d{2})'
-        _, month, day, year, hour, minute, _ = re.split(p, s)
-        return timezone.datetime(int(year), int(month), int(day), int(hour), int(minute))
-
-    def __init__(self, *args, **kwargs):
-        from . import TableAssignmentConf
-        user = kwargs['initial'].get('user')
-        assignments = kwargs['initial'].get('assignments')
-        super().__init__(*args, **kwargs)
-        if assignments:
-            self.okay = True
-            self.t_assignments = TableAssignmentConf(assignments)
-        else:
-            self.okay = False
-
-    def clean(self):
-        cleaned_data = super().clean()
-        ve = []
-        details = json.loads(cleaned_data.pop("change_log"))
-        userid = details["user_id"]
-        delete_ids = details["delete_ids"]
-        delete_assignments = list(Assignment.objects.filter(id__in = delete_ids))
-        del_timestamps = []
-        # authorize, and cleanup tasks
-        for assignment in delete_assignments:
-            UserCourseBinding.objects.get(user__id = userid, course = assignment.course, is_teacher = True)
-            for attr in ["task_snapshot", "task_handout", "task_collect"]:
-                tsk = getattr(assignment, attr)
-                if tsk:
-                    del_timestamps.append(tsk.clocked)
-        cleaned_data["delete_assignments"] = delete_assignments
-        assignments = []
-        timestamps = []
-        tasks = []
-        for r in details["changes"]:
-            assignment_id = r["assignment_id"]
-            if assignment_id in delete_ids:
-                continue
-            assignment = Assignment.objects.get(id = assignment_id)
-            # authorize
-            UserCourseBinding.objects.get(user__id = userid, course = assignment.course, is_teacher = True)
-            # handle trivial attributes
-            changed = False
-            changes = { i["attribute"]: i["value"] for i in r["changes"] }
-            max_size = changes.pop('max_size', None)
-            if max_size:
-                try:
-                    max_size = int(max_size)
-                    assert max_size > 0
-                except:
-                    ve.append( forms.ValidationError(_(f'Wrong value in max_size field'), code = 'invalid quota') )
-            for attr in ["name", "description", "max_size", "remove_collected"]:
-                value = changes.get(attr, None)
-                if value is not None and getattr(assignment, attr) != value:
-                    setattr(assignment, attr, value)
-                    changed = True
-            # handle dates
-            valid_from = changes.get('valid_from', None)
-            if valid_from == "" and assignment.task_handout:
-                del_timestamps.append(assignment.task_handout.clocked)
-                assignment.task_handout = None
-                changed = True
-            elif valid_from:
-                try:
-                    valid_from = self._parse_timestamp(valid_from)
-                    if assignment.task_handout and assignment.task_handout.clocked.clocked_time != valid_from:
-                        assignment.task_handout.clocked.clocked_time = valid_from
-                        timestamps.append(assignment.task_handout.clocked)
-                    else:
-                        task = assignment._task_handout(valid_from)
-                        assignment.task_handout = task
-                        tasks.append(task)
-                        changed = True
-                except:
-                    ve.append( forms.ValidationError(_(f'Wrong value in handout field'), code = 'invalid date') )
-            expires_at = changes.get('expires_at', None)
-            if expires_at == "" and assignment.task_collect:
-                del_timestamps.append(assignment.task_collect.clocked)
-                assignment.task_collect = None
-                changed = True
-            elif expires_at:
-                try:
-                    expires_at = self._parse_timestamp(expires_at)
-                    if assignment.task_collect and assignment.task_collect.clocked.clocked_time != expires_at:
-                        assignment.task_collect.clocked.clocked_time = expires_at
-                        timestamps.append(assignment.task_collect.clocked)
-                    else:
-                        task = assignment._task_collect(expires_at)
-                        assignment.task_collect = task
-                        tasks.append(task)
-                        changed = True
-                except:
-                    ve.append( forms.ValidationError(_(f'Wrong value in collect field'), code = 'invalid date') )
-            if changed:
-                assignments.append(assignment)
-        if ve:
-            raise forms.ValidationError(ve)
-        if tasks:
-            cleaned_data["tasks"] = tasks
-        if del_timestamps:
-            cleaned_data["delete_timestamps"] = del_timestamps
-        if timestamps:
-            cleaned_data["timestamps"] = timestamps
-        if assignments:
-            cleaned_data["assignments"] = assignments
-        return cleaned_data
-
-
-#DEPRECATE
-#class FormAssignmentHandle(forms.Form):
-#    change_log = forms.CharField(widget = forms.HiddenInput(), required = True)
-#
-#    @staticmethod
-#    def _auth(course, userid):
-#        return len(UserCourseBinding.objects.filter(course = course, user__id = userid, is_teacher = True)) == 1
-#
-#    @staticmethod
-#    def _helper_handout(userid, seq):
-#        A = lambda aid: Assignment.objects.get(id = aid)
-#        S = lambda c, gid: { 'n' if g is None else str(g.id): s for g, s in c.groups.items() }[gid]
-#        many = []
-#        for code in seq:
-#            assignment_id, group_id = code.split('-', 1)
-#            assignment = A(assignment_id)
-#            FormAssignmentHandle._auth(assignment.course, userid)
-#            for student in S(assignment.course, group_id):
-#                created = False
-#                try:
-#                    x = UserAssignmentBinding.objects.get(user = student, assignment = assignment)
-#                except UserAssignmentBinding.DoesNotExist:
-#                    x = UserAssignmentBinding(user = student, assignment = assignment)
-#                    created = True
-#                many.append((created, x))
-#        return many
-#
-#    @staticmethod
-#    def _helper_many(userid, seq, state):
-#        A = lambda aid: Assignment.objects.get(id = aid)
-#        S = lambda c, gid: { 'n' if g is None else str(g.id): s for g, s in c.groups.items() }[gid]
-#        many = []
-#        for code in seq:
-#            assignment_id, group_id = code.split('-', 1)
-#            assignment = A(assignment_id)
-#            FormAssignmentHandle._auth(assignment.course, userid)
-#            for student in S(assignment.course, group_id):
-#                x = UserAssignmentBinding.objects.get(user = student, assignment = assignment, state = state)
-#                many.append(x)
-#        return many
-#
-#    def clean(self):
-#        cleaned_data = super().clean()
-#        #raise Exception(str(cleaned_data))
-#        details = json.loads(cleaned_data.pop("change_log"))
-#        userid = details['user_id']
-#        cleaned_data['handout'] = self._helper_handout(userid, details['handoutmany_ids'])
-#        cleaned_data['collect'] = self._helper_many(userid, details['collectmany_ids'], UserAssignmentBinding.ST_WORKINPROGRESS)
-#        cleaned_data['reassign'] = self._helper_many(userid, details['reassignmany_ids'], UserAssignmentBinding.ST_READY)
-#
-#        # authorize
-#        A = lambda uab: self._auth(uab.assignment.course, userid)
-#        cleaned_data['handout'].extend([ (False, uab) for uab in filter(A, UserAssignmentBinding.objects.filter(id__in = details['handout_ids'])) ])
-#        cleaned_data['collect'].extend(filter(A, UserAssignmentBinding.objects.filter(id__in = details['collect_ids'], state = UserAssignmentBinding.ST_WORKINPROGRESS)))
-#        cleaned_data['reassign'].extend(filter(A, UserAssignmentBinding.objects.filter(id__in = details['reassign_ids'], state = UserAssignmentBinding.ST_READY)))
-#        fin_map = {}
-#        for uab in filter(A, UserAssignmentBinding.objects.filter(id__in = details['finalize_ids'], state__in = [UserAssignmentBinding.ST_SUBMITTED, UserAssignmentBinding.ST_COLLECTED, UserAssignmentBinding.ST_READY])):
-#            uab.state = UserAssignmentBinding.ST_READY
-#            fin_map[uab.id] = uab
-#        cleaned_data['finalize'] = list(fin_map.values())
-#
-#        A = lambda aid: Assignment.objects.get(id = aid)
-#        for code in details['create_handout_ids']:
-#            assignment_id, student_id = code.split('-', 1)
-#            assignment = A(assignment_id)
-#            self._auth(assignment.course, userid)
-#            UserCourseBinding.objects.get(course = assignment.course, user__id = student_id, is_teacher = False)
-#            cleaned_data['handout'].append((True, UserAssignmentBinding(user = User.objects.get(id = student_id), assignment = assignment)))
-#
-#        #FIXME: validation error on typerror
-#        rep = lambda d: (int(d['userassignmentbinding_id']), (float(d['score']), d['feedback']))
-#        for k, (score, feedback) in map(rep, details['meta']):
-#            uab = fin_map.get(k, None)
-#            if uab is None:
-#                uab = UserAssignmentBinding.objects.get(id=k)
-#                self._auth(uab.assignment.course, userid)
-#                cleaned_data['finalize'].append(uab)
-#            uab.score = score
-#            uab.feedback_text = feedback
-#
-#        return cleaned_data
-#
-#    def __init__(self, *args, **kwargs):
-#        def A(x):
-#            r = 'qed'
-#            for i in x:
-#                if i != 'dummy':
-#                    r = i
-#            return r
-#        from . import TableAssignmentMass
-##FIXME: save some here to help authorize later
-#        user = kwargs['initial'].get('user')
-#        super().__init__(*args, **kwargs)
-#        courses = [ b.course for b in UserCourseBinding.objects.filter(user = user, is_teacher = True) ]
-#        assignments = Assignment.objects.filter(course__in = courses)
-#        df_assignment = read_frame(assignments, verbose = False)[['id', 'course']].rename(columns = {'id': 'assignment_id'})
-#        df_ucbs = read_frame(UserCourseBinding.objects.filter(course__in = courses, is_teacher = False), verbose = False)[['id', 'user', 'course']].rename(columns = {'id': 'ucb_id'})
-#        DF_ = pandas.merge(left=df_assignment, right=df_ucbs, left_on='course', right_on='course')[['user', 'assignment_id']].rename(columns={'assignment_id':'assignment'})
-#        DF_['state'] = 'dummy'
-#        df_uabs = read_frame(UserAssignmentBinding.objects.filter(assignment__course__in = courses), verbose = False)[['user', 'assignment', 'state']]
-#        DF_ = pandas.concat([DF_, df_uabs]).groupby(by = ['user', 'assignment']).agg(A).reset_index()
-#        DF = pandas.merge(left = DF_, right = df_assignment, left_on = 'assignment', right_on = 'assignment_id', how = 'inner')
-#        DF = pandas.merge(left = DF, right = df_ucbs, left_on = ['user', 'course'], right_on = ['user', 'course'], how = 'left')
-#        df_ucgbs = read_frame(UserCourseGroupBinding.objects.filter(usercoursebinding__course__in = courses), verbose = False)[['usercoursebinding', 'group']]
-#        DF = pandas.merge(left = DF, right = df_ucgbs, left_on = 'ucb_id', right_on = 'usercoursebinding', how = 'left')[['assignment_id', 'group', 'state', 'user']].fillna(-1)
-#        count = DF.astype({'group': int}).groupby(by = ['assignment_id', 'group', 'state']).agg('count')['user'].to_dict()
-#        groups = CourseGroup.objects.filter(course__in = courses)
-#        if count:
-#            self.okay = True
-#            self.t_mass = TableAssignmentMass( assignments, groups, count )
-#        else:
-#            self.okay = False
-
-
-class FormAssignmentList(forms.Form):
-    submit = forms.CharField(widget = forms.HiddenInput(), required = True)
-    def clean(self):
-        cleaned_data = super().clean()
-        details = json.loads(cleaned_data.pop("submit"))
-        userid = details['user_id']
-        submit_ids = details['submit_ids']
-        cleaned_data['submit'] = UserAssignmentBinding.objects.filter(user__id = userid, id__in = submit_ids, state = UserAssignmentBinding.ST_WORKINPROGRESS)
-        return cleaned_data
-
-
-    def __init__(self, *args, **kwargs):
-        from . import TableAssignment
-        user = kwargs['initial'].get('user')
-        super().__init__(*args, **kwargs)
-        courses = [ ucb.course for ucb in UserCourseBinding.objects.filter(user = user, is_teacher = False) ]
-        bindings = UserAssignmentBinding.objects.filter(user = user, assignment__course__in = courses)
-        if bindings:
-            self.okay = True
-            self.t_assignment = TableAssignment(bindings)
-        else:
-            self.okay = False
-
+#FIXME:  import os
+#FIXME:  import json
+#FIXME:  import datetime
+#FIXME:  import re
+#FIXME:  from django import forms
+#FIXME:  from django.utils.translation import gettext_lazy as _
+#FIXME:  from django.utils import timezone
+#FIXME:  from django.contrib.auth.models import User
+#FIXME:  import pandas
+#FIXME:  from django_pandas.io import read_frame
+#FIXME:  
+#FIXME:  from kooplexhub.common import tooltip_attrs
+#FIXME:  
+#FIXME:  from education.models import Assignment, UserCourseBinding, Course, UserAssignmentBinding#, UserCourseGroupBinding, CourseGroup
+#FIXME:  from education.fs import *
+#FIXME:  
+#FIXME:  
+#FIXME:  class dateWidget(forms.DateTimeInput):
+#FIXME:      template_name = 'datetime_pick.html'
+#FIXME:  
+#FIXME:  class FormAssignment(forms.ModelForm):
+#FIXME:      class Meta:
+#FIXME:          model = Assignment
+#FIXME:          fields = [ 'name', 'description', 'remove_collected', 'max_size' ]
+#FIXME:          sequence = [ 'folder_assignment', 'name', 'description', 'remove_collected', 'valid_from_widget', 'expires_at_widget', 'max_size' ]
+#FIXME:          labels = {
+#FIXME:              'name': _('The name of the assignment'),
+#FIXME:              'description': _('A short description of the excercises'),
+#FIXME:          }
+#FIXME:  
+#FIXME:      user = forms.CharField(widget = forms.HiddenInput(), required = True)
+#FIXME:      folder_assignment = forms.ChoiceField(
+#FIXME:          label = 'Select folder', required = True,
+#FIXME:          widget = forms.Select(attrs = tooltip_attrs({
+#FIXME:              'title': _('A snapshot will be created of all files in the selected folder, and students will receive a copy of this snapshot.'), 
+#FIXME:          }))
+#FIXME:      )
+#FIXME:      name = forms.CharField(
+#FIXME:          label = _("Assignment name"),
+#FIXME:          max_length = 200, required = True, 
+#FIXME:          widget = forms.TextInput(attrs = tooltip_attrs({ 'title': _('Name your assignment. No worries later you can rename it, just make sure your students do not get confused.') })),
+#FIXME:      )
+#FIXME:      description = forms.CharField(
+#FIXME:          max_length = 100, required = True,
+#FIXME:          widget = forms.Textarea(attrs = tooltip_attrs({
+#FIXME:              'rows': 3, 
+#FIXME:              'title': _('It is always a good idea to have a short but straight to the point abstract of your assignment.'), 
+#FIXME:          })),
+#FIXME:      )
+#FIXME:      # FIXME: add tooltip
+#FIXME:      valid_from_widget = forms.DateTimeField(
+#FIXME:              label = 'Valid from',
+#FIXME:              input_formats = ["%m/%d/%Y, %H:%M"], 
+#FIXME:              widget = dateWidget(attrs = { 'icon': 'bi bi-clock', 'name': 'valid_from_widget' }), 
+#FIXME:              required = False, 
+#FIXME:          )
+#FIXME:      # FIXME: add tooltip
+#FIXME:      expires_at_widget = forms.DateTimeField(
+#FIXME:              label = 'Expires at',
+#FIXME:              input_formats = ["%m/%d/%Y, %H:%M"], 
+#FIXME:              widget = dateWidget(attrs = { 'icon': 'bi bi-bell', 'name': 'expires_at_widget' }), 
+#FIXME:              required = False,
+#FIXME:          )
+#FIXME:      # FIXME: add tooltip
+#FIXME:      remove_collected = forms.BooleanField(
+#FIXME:              widget = forms.CheckboxInput(attrs = { 'data-size': 'small', 'data-toggle': 'toggle', 
+#FIXME:                  'data-on': "<span class='oi oi-trash'></span>", 'data-off': "<span class='bi bi-check-lg'></span>",
+#FIXME:                  'data-onstyle': "danger", 'data-offstyle': "secondary" }), 
+#FIXME:              required = False,
+#FIXME:          )
+#FIXME:      max_size = forms.IntegerField(
+#FIXME:          label = _('Quota [MB]'), required = False,
+#FIXME:          widget = forms.NumberInput(attrs = tooltip_attrs({
+#FIXME:              'title': _('Total file size quota applied to the assignment.'),
+#FIXME:          }))
+#FIXME:      )
+#FIXME:  
+#FIXME:      def clean(self):
+#FIXME:          cleaned_data = super().clean()
+#FIXME:          course_id, folder = cleaned_data.pop('folder_assignment').split('---', 1)
+#FIXME:          username = cleaned_data.pop('user')
+#FIXME:          user = User.objects.get(username = username)
+#FIXME:          course = Course.objects.get(id = course_id)
+#FIXME:          #authorize
+#FIXME:          UserCourseBinding.objects.get(user = user, course = course, is_teacher = True)
+#FIXME:          cleaned_data['course'] = course
+#FIXME:          cleaned_data['creator'] = user
+#FIXME:          cleaned_data['folder'] = folder
+#FIXME:          assignmentname = cleaned_data.get('name')
+#FIXME:          ve = []
+#FIXME:          if not assignmentname:
+#FIXME:              ve.append( forms.ValidationError(_(f'Assignment name cannot be empty'), code = 'invalid name') )
+#FIXME:          if Assignment.objects.filter(course = course, name = assignmentname):
+#FIXME:              ve.append( forms.ValidationError(_(f'Assignment name must be unique'), code = 'invalid name') )
+#FIXME:          key = f'{course.name}-{assignmentname}'
+#FIXME:          timestamp1 = cleaned_data.pop('valid_from_widget')
+#FIXME:          timestamp2 = cleaned_data.pop('expires_at_widget')
+#FIXME:          assignment_dummy = Assignment(**cleaned_data)
+#FIXME:          # Note, here order matters
+#FIXME:          cleaned_data['task_snapshot'] = assignment_dummy._task_snapshot
+#FIXME:          cleaned_data['filename'] = assignment_dummy.filename
+#FIXME:          if timestamp1:
+#FIXME:              cleaned_data['task_handout'] = assignment_dummy._task_handout(timestamp1)
+#FIXME:          if timestamp2:
+#FIXME:              cleaned_data['task_collect'] = assignment_dummy._task_collect(timestamp2)
+#FIXME:          #FIXME: if insane timespan raise an error, < 5 minutes, configurable?
+#FIXME:          if timestamp1 and timestamp2 and timestamp1 >= timestamp2:
+#FIXME:              ve.append( forms.ValidationError(_(f'Timestamp relation is wrong'), code = 'invalid timestamps') )
+#FIXME:          if ve:
+#FIXME:              raise forms.ValidationError(ve)
+#FIXME:          return cleaned_data
+#FIXME:  
+#FIXME:  
+#FIXME:      def __init__(self, *args, **kwargs):
+#FIXME:          user = kwargs['initial'].get('user')
+#FIXME:          self.pk = kwargs.pop('pk', None)
+#FIXME:          super().__init__(*args, **kwargs)
+#FIXME:          #self.fields["creator_id"].value = user.id
+#FIXME:          assignment = kwargs.get('instance', Assignment())
+#FIXME:          folders = []
+#FIXME:          q=UserCourseBinding.objects.filter(user=user, course_id=self.pk, is_teacher=True) if self.pk else UserCourseBinding.objects.filter(user=user, is_teacher=True)
+#FIXME:          for ucb in q:
+#FIXME:              try:
+#FIXME:                  folders.extend([ (f'{ucb.course.id}---{folder}', f'{ucb.course.name}: {folder}') for folder in ucb.course.dir_assignmentcandidate() ])
+#FIXME:              except:
+#FIXME:                  pass
+#FIXME:          if folders:
+#FIXME:              self.okay = True
+#FIXME:              self.fields["folder_assignment"].choices = folders
+#FIXME:          else:
+#FIXME:              self.okay = False
+#FIXME:  
+#FIXME:  
+#FIXME:  class FormAssignmentConfigure(forms.Form):
+#FIXME:      change_log = forms.CharField(widget = forms.HiddenInput(), required = True)
+#FIXME:  
+#FIXME:      @staticmethod
+#FIXME:      def _parse_timestamp(s):
+#FIXME:          p = r'(\d{2})/(\d{2})/(\d{4}), (\d{2}):(\d{2})'
+#FIXME:          _, month, day, year, hour, minute, _ = re.split(p, s)
+#FIXME:          return timezone.datetime(int(year), int(month), int(day), int(hour), int(minute))
+#FIXME:  
+#FIXME:      def __init__(self, *args, **kwargs):
+#FIXME:          from . import TableAssignmentConf
+#FIXME:          user = kwargs['initial'].get('user')
+#FIXME:          assignments = kwargs['initial'].get('assignments')
+#FIXME:          super().__init__(*args, **kwargs)
+#FIXME:          if assignments:
+#FIXME:              self.okay = True
+#FIXME:              self.t_assignments = TableAssignmentConf(assignments)
+#FIXME:          else:
+#FIXME:              self.okay = False
+#FIXME:  
+#FIXME:      def clean(self):
+#FIXME:          cleaned_data = super().clean()
+#FIXME:          ve = []
+#FIXME:          details = json.loads(cleaned_data.pop("change_log"))
+#FIXME:          userid = details["user_id"]
+#FIXME:          delete_ids = details["delete_ids"]
+#FIXME:          delete_assignments = list(Assignment.objects.filter(id__in = delete_ids))
+#FIXME:          del_timestamps = []
+#FIXME:          # authorize, and cleanup tasks
+#FIXME:          for assignment in delete_assignments:
+#FIXME:              UserCourseBinding.objects.get(user__id = userid, course = assignment.course, is_teacher = True)
+#FIXME:              for attr in ["task_snapshot", "task_handout", "task_collect"]:
+#FIXME:                  tsk = getattr(assignment, attr)
+#FIXME:                  if tsk:
+#FIXME:                      del_timestamps.append(tsk.clocked)
+#FIXME:          cleaned_data["delete_assignments"] = delete_assignments
+#FIXME:          assignments = []
+#FIXME:          timestamps = []
+#FIXME:          tasks = []
+#FIXME:          for r in details["changes"]:
+#FIXME:              assignment_id = r["assignment_id"]
+#FIXME:              if assignment_id in delete_ids:
+#FIXME:                  continue
+#FIXME:              assignment = Assignment.objects.get(id = assignment_id)
+#FIXME:              # authorize
+#FIXME:              UserCourseBinding.objects.get(user__id = userid, course = assignment.course, is_teacher = True)
+#FIXME:              # handle trivial attributes
+#FIXME:              changed = False
+#FIXME:              changes = { i["attribute"]: i["value"] for i in r["changes"] }
+#FIXME:              max_size = changes.pop('max_size', None)
+#FIXME:              if max_size:
+#FIXME:                  try:
+#FIXME:                      max_size = int(max_size)
+#FIXME:                      assert max_size > 0
+#FIXME:                  except:
+#FIXME:                      ve.append( forms.ValidationError(_(f'Wrong value in max_size field'), code = 'invalid quota') )
+#FIXME:              for attr in ["name", "description", "max_size", "remove_collected"]:
+#FIXME:                  value = changes.get(attr, None)
+#FIXME:                  if value is not None and getattr(assignment, attr) != value:
+#FIXME:                      setattr(assignment, attr, value)
+#FIXME:                      changed = True
+#FIXME:              # handle dates
+#FIXME:              valid_from = changes.get('valid_from', None)
+#FIXME:              if valid_from == "" and assignment.task_handout:
+#FIXME:                  del_timestamps.append(assignment.task_handout.clocked)
+#FIXME:                  assignment.task_handout = None
+#FIXME:                  changed = True
+#FIXME:              elif valid_from:
+#FIXME:                  try:
+#FIXME:                      valid_from = self._parse_timestamp(valid_from)
+#FIXME:                      if assignment.task_handout and assignment.task_handout.clocked.clocked_time != valid_from:
+#FIXME:                          assignment.task_handout.clocked.clocked_time = valid_from
+#FIXME:                          timestamps.append(assignment.task_handout.clocked)
+#FIXME:                      else:
+#FIXME:                          task = assignment._task_handout(valid_from)
+#FIXME:                          assignment.task_handout = task
+#FIXME:                          tasks.append(task)
+#FIXME:                          changed = True
+#FIXME:                  except:
+#FIXME:                      ve.append( forms.ValidationError(_(f'Wrong value in handout field'), code = 'invalid date') )
+#FIXME:              expires_at = changes.get('expires_at', None)
+#FIXME:              if expires_at == "" and assignment.task_collect:
+#FIXME:                  del_timestamps.append(assignment.task_collect.clocked)
+#FIXME:                  assignment.task_collect = None
+#FIXME:                  changed = True
+#FIXME:              elif expires_at:
+#FIXME:                  try:
+#FIXME:                      expires_at = self._parse_timestamp(expires_at)
+#FIXME:                      if assignment.task_collect and assignment.task_collect.clocked.clocked_time != expires_at:
+#FIXME:                          assignment.task_collect.clocked.clocked_time = expires_at
+#FIXME:                          timestamps.append(assignment.task_collect.clocked)
+#FIXME:                      else:
+#FIXME:                          task = assignment._task_collect(expires_at)
+#FIXME:                          assignment.task_collect = task
+#FIXME:                          tasks.append(task)
+#FIXME:                          changed = True
+#FIXME:                  except:
+#FIXME:                      ve.append( forms.ValidationError(_(f'Wrong value in collect field'), code = 'invalid date') )
+#FIXME:              if changed:
+#FIXME:                  assignments.append(assignment)
+#FIXME:          if ve:
+#FIXME:              raise forms.ValidationError(ve)
+#FIXME:          if tasks:
+#FIXME:              cleaned_data["tasks"] = tasks
+#FIXME:          if del_timestamps:
+#FIXME:              cleaned_data["delete_timestamps"] = del_timestamps
+#FIXME:          if timestamps:
+#FIXME:              cleaned_data["timestamps"] = timestamps
+#FIXME:          if assignments:
+#FIXME:              cleaned_data["assignments"] = assignments
+#FIXME:          return cleaned_data
+#FIXME:  
+#FIXME:  
+#FIXME:  #DEPRECATE
+#FIXME:  #class FormAssignmentHandle(forms.Form):
+#FIXME:  #    change_log = forms.CharField(widget = forms.HiddenInput(), required = True)
+#FIXME:  #
+#FIXME:  #    @staticmethod
+#FIXME:  #    def _auth(course, userid):
+#FIXME:  #        return len(UserCourseBinding.objects.filter(course = course, user__id = userid, is_teacher = True)) == 1
+#FIXME:  #
+#FIXME:  #    @staticmethod
+#FIXME:  #    def _helper_handout(userid, seq):
+#FIXME:  #        A = lambda aid: Assignment.objects.get(id = aid)
+#FIXME:  #        S = lambda c, gid: { 'n' if g is None else str(g.id): s for g, s in c.groups.items() }[gid]
+#FIXME:  #        many = []
+#FIXME:  #        for code in seq:
+#FIXME:  #            assignment_id, group_id = code.split('-', 1)
+#FIXME:  #            assignment = A(assignment_id)
+#FIXME:  #            FormAssignmentHandle._auth(assignment.course, userid)
+#FIXME:  #            for student in S(assignment.course, group_id):
+#FIXME:  #                created = False
+#FIXME:  #                try:
+#FIXME:  #                    x = UserAssignmentBinding.objects.get(user = student, assignment = assignment)
+#FIXME:  #                except UserAssignmentBinding.DoesNotExist:
+#FIXME:  #                    x = UserAssignmentBinding(user = student, assignment = assignment)
+#FIXME:  #                    created = True
+#FIXME:  #                many.append((created, x))
+#FIXME:  #        return many
+#FIXME:  #
+#FIXME:  #    @staticmethod
+#FIXME:  #    def _helper_many(userid, seq, state):
+#FIXME:  #        A = lambda aid: Assignment.objects.get(id = aid)
+#FIXME:  #        S = lambda c, gid: { 'n' if g is None else str(g.id): s for g, s in c.groups.items() }[gid]
+#FIXME:  #        many = []
+#FIXME:  #        for code in seq:
+#FIXME:  #            assignment_id, group_id = code.split('-', 1)
+#FIXME:  #            assignment = A(assignment_id)
+#FIXME:  #            FormAssignmentHandle._auth(assignment.course, userid)
+#FIXME:  #            for student in S(assignment.course, group_id):
+#FIXME:  #                x = UserAssignmentBinding.objects.get(user = student, assignment = assignment, state = state)
+#FIXME:  #                many.append(x)
+#FIXME:  #        return many
+#FIXME:  #
+#FIXME:  #    def clean(self):
+#FIXME:  #        cleaned_data = super().clean()
+#FIXME:  #        #raise Exception(str(cleaned_data))
+#FIXME:  #        details = json.loads(cleaned_data.pop("change_log"))
+#FIXME:  #        userid = details['user_id']
+#FIXME:  #        cleaned_data['handout'] = self._helper_handout(userid, details['handoutmany_ids'])
+#FIXME:  #        cleaned_data['collect'] = self._helper_many(userid, details['collectmany_ids'], UserAssignmentBinding.ST_WORKINPROGRESS)
+#FIXME:  #        cleaned_data['reassign'] = self._helper_many(userid, details['reassignmany_ids'], UserAssignmentBinding.ST_READY)
+#FIXME:  #
+#FIXME:  #        # authorize
+#FIXME:  #        A = lambda uab: self._auth(uab.assignment.course, userid)
+#FIXME:  #        cleaned_data['handout'].extend([ (False, uab) for uab in filter(A, UserAssignmentBinding.objects.filter(id__in = details['handout_ids'])) ])
+#FIXME:  #        cleaned_data['collect'].extend(filter(A, UserAssignmentBinding.objects.filter(id__in = details['collect_ids'], state = UserAssignmentBinding.ST_WORKINPROGRESS)))
+#FIXME:  #        cleaned_data['reassign'].extend(filter(A, UserAssignmentBinding.objects.filter(id__in = details['reassign_ids'], state = UserAssignmentBinding.ST_READY)))
+#FIXME:  #        fin_map = {}
+#FIXME:  #        for uab in filter(A, UserAssignmentBinding.objects.filter(id__in = details['finalize_ids'], state__in = [UserAssignmentBinding.ST_SUBMITTED, UserAssignmentBinding.ST_COLLECTED, UserAssignmentBinding.ST_READY])):
+#FIXME:  #            uab.state = UserAssignmentBinding.ST_READY
+#FIXME:  #            fin_map[uab.id] = uab
+#FIXME:  #        cleaned_data['finalize'] = list(fin_map.values())
+#FIXME:  #
+#FIXME:  #        A = lambda aid: Assignment.objects.get(id = aid)
+#FIXME:  #        for code in details['create_handout_ids']:
+#FIXME:  #            assignment_id, student_id = code.split('-', 1)
+#FIXME:  #            assignment = A(assignment_id)
+#FIXME:  #            self._auth(assignment.course, userid)
+#FIXME:  #            UserCourseBinding.objects.get(course = assignment.course, user__id = student_id, is_teacher = False)
+#FIXME:  #            cleaned_data['handout'].append((True, UserAssignmentBinding(user = User.objects.get(id = student_id), assignment = assignment)))
+#FIXME:  #
+#FIXME:  #        #FIXME: validation error on typerror
+#FIXME:  #        rep = lambda d: (int(d['userassignmentbinding_id']), (float(d['score']), d['feedback']))
+#FIXME:  #        for k, (score, feedback) in map(rep, details['meta']):
+#FIXME:  #            uab = fin_map.get(k, None)
+#FIXME:  #            if uab is None:
+#FIXME:  #                uab = UserAssignmentBinding.objects.get(id=k)
+#FIXME:  #                self._auth(uab.assignment.course, userid)
+#FIXME:  #                cleaned_data['finalize'].append(uab)
+#FIXME:  #            uab.score = score
+#FIXME:  #            uab.feedback_text = feedback
+#FIXME:  #
+#FIXME:  #        return cleaned_data
+#FIXME:  #
+#FIXME:  #    def __init__(self, *args, **kwargs):
+#FIXME:  #        def A(x):
+#FIXME:  #            r = 'qed'
+#FIXME:  #            for i in x:
+#FIXME:  #                if i != 'dummy':
+#FIXME:  #                    r = i
+#FIXME:  #            return r
+#FIXME:  #        from . import TableAssignmentMass
+#FIXME:  ##FIXME: save some here to help authorize later
+#FIXME:  #        user = kwargs['initial'].get('user')
+#FIXME:  #        super().__init__(*args, **kwargs)
+#FIXME:  #        courses = [ b.course for b in UserCourseBinding.objects.filter(user = user, is_teacher = True) ]
+#FIXME:  #        assignments = Assignment.objects.filter(course__in = courses)
+#FIXME:  #        df_assignment = read_frame(assignments, verbose = False)[['id', 'course']].rename(columns = {'id': 'assignment_id'})
+#FIXME:  #        df_ucbs = read_frame(UserCourseBinding.objects.filter(course__in = courses, is_teacher = False), verbose = False)[['id', 'user', 'course']].rename(columns = {'id': 'ucb_id'})
+#FIXME:  #        DF_ = pandas.merge(left=df_assignment, right=df_ucbs, left_on='course', right_on='course')[['user', 'assignment_id']].rename(columns={'assignment_id':'assignment'})
+#FIXME:  #        DF_['state'] = 'dummy'
+#FIXME:  #        df_uabs = read_frame(UserAssignmentBinding.objects.filter(assignment__course__in = courses), verbose = False)[['user', 'assignment', 'state']]
+#FIXME:  #        DF_ = pandas.concat([DF_, df_uabs]).groupby(by = ['user', 'assignment']).agg(A).reset_index()
+#FIXME:  #        DF = pandas.merge(left = DF_, right = df_assignment, left_on = 'assignment', right_on = 'assignment_id', how = 'inner')
+#FIXME:  #        DF = pandas.merge(left = DF, right = df_ucbs, left_on = ['user', 'course'], right_on = ['user', 'course'], how = 'left')
+#FIXME:  #        df_ucgbs = read_frame(UserCourseGroupBinding.objects.filter(usercoursebinding__course__in = courses), verbose = False)[['usercoursebinding', 'group']]
+#FIXME:  #        DF = pandas.merge(left = DF, right = df_ucgbs, left_on = 'ucb_id', right_on = 'usercoursebinding', how = 'left')[['assignment_id', 'group', 'state', 'user']].fillna(-1)
+#FIXME:  #        count = DF.astype({'group': int}).groupby(by = ['assignment_id', 'group', 'state']).agg('count')['user'].to_dict()
+#FIXME:  #        groups = CourseGroup.objects.filter(course__in = courses)
+#FIXME:  #        if count:
+#FIXME:  #            self.okay = True
+#FIXME:  #            self.t_mass = TableAssignmentMass( assignments, groups, count )
+#FIXME:  #        else:
+#FIXME:  #            self.okay = False
+#FIXME:  
+#FIXME:  
+#FIXME:  class FormAssignmentList(forms.Form):
+#FIXME:      submit = forms.CharField(widget = forms.HiddenInput(), required = True)
+#FIXME:      def clean(self):
+#FIXME:          cleaned_data = super().clean()
+#FIXME:          details = json.loads(cleaned_data.pop("submit"))
+#FIXME:          userid = details['user_id']
+#FIXME:          submit_ids = details['submit_ids']
+#FIXME:          cleaned_data['submit'] = UserAssignmentBinding.objects.filter(user__id = userid, id__in = submit_ids, state = UserAssignmentBinding.ST_WORKINPROGRESS)
+#FIXME:          return cleaned_data
+#FIXME:  
+#FIXME:  
+#FIXME:      def __init__(self, *args, **kwargs):
+#FIXME:          from . import TableAssignment
+#FIXME:          user = kwargs['initial'].get('user')
+#FIXME:          super().__init__(*args, **kwargs)
+#FIXME:          courses = [ ucb.course for ucb in UserCourseBinding.objects.filter(user = user, is_teacher = False) ]
+#FIXME:          bindings = UserAssignmentBinding.objects.filter(user = user, assignment__course__in = courses)
+#FIXME:          if bindings:
+#FIXME:              self.okay = True
+#FIXME:              self.t_assignment = TableAssignment(bindings)
+#FIXME:          else:
+#FIXME:              self.okay = False
+#FIXME:  

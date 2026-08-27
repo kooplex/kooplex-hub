@@ -4,7 +4,7 @@ from education.models import UserAssignmentBinding, UserCourseBinding
 def assignment_warnings(request):
     user = request.user
     return { 
-        'due_assignments': UserAssignmentBinding.objects.filter(user = user, state = UserAssignmentBinding.ST_WORKINPROGRESS)
+        'due_assignments': UserAssignmentBinding.objects.filter(user = user, state = UserAssignmentBinding.State.WORKINPROGRESS)
     } if user.is_authenticated else {}
 
 

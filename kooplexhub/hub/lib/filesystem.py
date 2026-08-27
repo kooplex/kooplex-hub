@@ -19,6 +19,103 @@ from kooplexhub.lib import bash
 
 logger = logging.getLogger(__name__)
 
+
+class FilesystemOperationError(RuntimeError):
+    pass
+
+
+def archive_directory(
+    folder,
+    target,
+    *,
+    remove=True,
+    fakeroot=True,
+):
+    if not os.path.isdir(folder):
+        raise FileNotFoundError(
+            f"Archive source directory does not exist: {folder}"
+        )
+
+    if not os.listdir(folder):
+        raise FilesystemOperationError(
+            f"Archive source directory is empty: {folder}"
+        )
+
+    os.makedirs(
+        os.path.dirname(target),
+        exist_ok=True,
+    )
+
+    try:
+        with tarfile.open(
+            target,
+            mode="w:gz",
+        ) as archive:
+            archive.add(
+                folder,
+                arcname=".",
+                recursive=True,
+                filter=(
+                    _makeroot
+                    if fakeroot
+                    else None
+                ),
+            )
+
+    except Exception:
+        # Do NOT remove the source on failure.
+        raise
+
+    if remove:
+        _rmdir(folder)
+
+    logger.info(
+        "Archived %s -> %s",
+        folder,
+        target,
+    )
+
+    return target
+
+
+def extract_tarball(
+    tarball,
+    target,
+):
+    if not os.path.isfile(tarball):
+        raise FileNotFoundError(
+            f"Archive does not exist: {tarball}"
+        )
+
+    os.makedirs(
+        target,
+        exist_ok=True,
+    )
+
+    with tarfile.open(
+        tarball,
+        mode="r:*",
+    ) as archive:
+        safe_extract(
+            archive,
+            path=target,
+        )
+
+    logger.info(
+        "Extracted %s -> %s",
+        tarball,
+        target,
+    )
+
+    return target
+
+
+
+##############################
+
+
+
+
 acl_backend = KOOPLEX.get('fs_backend', 'nfs4')
 
 try:

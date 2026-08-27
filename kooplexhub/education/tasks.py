@@ -1,66 +1,81 @@
-import logging
-
-from channels.layers import get_channel_layer
-from django_huey import task, db_task, periodic_task, db_periodic_task
-from huey import crontab
-from asgiref.sync import async_to_sync
-
-from django.contrib.auth.models import User
-
-from education.models import Course, UserCourseBinding
-from education.models import Assignment, UserAssignmentBinding
-from education.fs import *
-from hub.models import Group
-
-from hub.lib import archivedir, extracttarbal
-from hub.lib import grantaccess_user
-from hub.lib import grantaccess_group
 from django.utils import timezone
-import time
+from django.db.models import Q
+from django_huey import db_task, db_periodic_task
+from huey import crontab
+
+from education.models import Assignment
 
 
-logger = logging.getLogger(__name__)
-
-
-@db_periodic_task(crontab(minute='*'), queue='course')
+@db_periodic_task(
+    crontab(minute="*"), 
+    queue="course",
+)
 def check_handout_and_collect():
+    from education.services.assignments import (
+        handout_assignment_automatically,
+        collect_assignment_automatically,
+    )
+
     now=timezone.now()
-    for a in Assignment.objects.filter(valid_from__lt=now).exclude(expires_at__lt=now):
-        a.handout()
-    for a in Assignment.objects.filter(expires_at__lt=now):
-        a.collect()
+
+    handout_candidates = (
+        Assignment.objects
+        .filter(
+            valid_from__isnull=False,
+            valid_from__lte=now,
+        )
+        .filter(
+            Q(expires_at__isnull=True)
+            | Q(expires_at__gt=now)
+        )
+    )
+
+    for assignment in handout_candidates:
+        handout_assignment_automatically(
+            assignment=assignment
+        )
+
+    for assignment in (
+        Assignment.objects
+        .filter(
+            expires_at__isnull=False,
+            expires_at__lte=now,
+        )
+    ):
+        collect_assignment_automatically(
+            assignment=assignment
+        )
 
 
-@db_task(queue = 'course')
-def assignment_create(assignment):
-    assignment.filename = assignment_snapshot(assignment)
-    folder=assignment_source(assignment)
-    archivedir(folder, assignment.filename, remove=False)
-    assignment.save()
+@db_task(queue="course")
+def assignment_prepare(assignment_id):
+    from .services.assignment_filesystem import (
+        perform_assignment_snapshot,
+    )
+
+    perform_assignment_snapshot(
+        assignment_id=assignment_id,
+    )
 
 
-@db_task(queue = 'course')
-def assignment_handout(userassignmentbinding):
-    folder=assignment_workdir(userassignmentbinding)
-    extracttarbal(userassignmentbinding.assignment.filename, folder)
-    gid=userassignmentbinding.assignment.course.group_teachers.groupid
-    grantaccess_group(gid, folder, readonly=True, recursive=True, follow=True)
-    gid=userassignmentbinding.assignment.course.group_students.groupid
-    grantaccess_user(userassignmentbinding.user, folder, readonly=False, recursive=True, follow=False)
-    grantaccess_user(userassignmentbinding.user, folder, readonly=False, recursive=True, follow=True)
-    userassignmentbinding.state=userassignmentbinding.ST_WORKINPROGRESS
-    userassignmentbinding.save()
+@db_task(queue="course")
+def assignment_handout(binding_id):
+    from education.services.assignment_filesystem import (
+        perform_assignment_handout,
+    )
+
+    perform_assignment_handout(
+        binding_id=binding_id,
+    )
 
 
-@db_task(queue = 'course')
-def assignment_collect(userassignmentbinding):
-    folder=assignment_workdir(userassignmentbinding)
-    tarbal=assignment_collection(userassignmentbinding)
-    gid=userassignmentbinding.assignment.course.group_teachers.groupid
-    correct_folder=assignment_correct_dir(userassignmentbinding)
-    archivedir(folder, tarbal, remove=userassignmentbinding.assignment.remove_collected)
-    extracttarbal(tarbal, correct_folder)
-    grantaccess_group(gid, correct_folder, readonly=False)
-    userassignmentbinding.state=userassignmentbinding.ST_COLLECTED
-    userassignmentbinding.save()
+@db_task(queue="course")
+def assignment_collect(binding_id):
+    from education.services.assignment_filesystem import (
+        perform_assignment_collection,
+    )
+
+    perform_assignment_collection(
+        binding_id=binding_id,
+    )
 

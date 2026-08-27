@@ -182,5 +182,38 @@ urlpatterns = [
         name="member-row",
     ),
 
+    path(
+        "course/<int:course_id>/assignments/",
+        views.CourseAssignmentsView.as_view(),
+        name="course-assignments",
+    ),
+    
+    path(
+        "course/<int:course_id>/assignment/"
+        "<int:assignment_id>/schedule/",
+        views.AssignmentScheduleUpdateView.as_view(),
+        name="assignment-schedule",
+    ),
+    
+    path(
+        "course/<int:course_id>/assignment/"
+        "<int:assignment_id>/handout-now/",
+        views.AssignmentHandoutNowView.as_view(),
+        name="assignment-handout-now",
+    ),
+    
+    path(
+        "course/<int:course_id>/assignment/"
+        "<int:assignment_id>/collect-now/",
+        views.AssignmentCollectNowView.as_view(),
+        name="assignment-collect-now",
+    ),
+    
+    path(
+        "course/<int:course_id>/assignment/"
+        "<int:assignment_id>/submit/",
+        views.AssignmentSubmitView.as_view(),
+        name="assignment-submit",
+    ),
 #FIXME    path('course/delete/<int:pk_course>/<int:pk_user>/', views.delete_or_leave, name = 'delete_or_leave'),
 ]

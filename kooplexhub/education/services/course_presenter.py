@@ -213,9 +213,13 @@ class CoursePresenter:
 
     @property
     def assignment_attention_count(self):
+        if not self.is_student:
+            return 0
+
         return sum(
-            ...
-            for assignment in self.get_assignments()
+            1
+            for assignment_ui in self.get_assignments()
+            if assignment_ui.can_submit
         )
     
     @property

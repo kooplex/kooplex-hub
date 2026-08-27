@@ -1,0 +1,132 @@
+{% if assignments %}
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+            <thead>
+                <tr>
+                    <th scope="col">Assignment</th>
+                    <th scope="col">Hand out</th>
+                    <th scope="col">Collect</th>
+                    <th scope="col" class="text-end">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for assignment_ui in assignments %}
+                    <tr>
+                        <td>
+                            <div class="fw-semibold">
+                                {{ assignment_ui.assignment.name }}
+                            </div>
+
+                            {% if assignment_ui.assignment.description %}
+                                <div
+                                    class="small text-body-secondary text-truncate"
+                                    style="max-width: 18rem;"
+                                    title="{{ assignment_ui.assignment.description }}"
+                                >
+                                    {{ assignment_ui.assignment.description }}
+                                </div>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <input
+                                    type="datetime-local"
+                                    class="form-control form-control-sm"
+                                    style="width: auto;"
+                                    name="valid_from"
+                                    value="{{ assignment_ui.assignment.valid_from|date:'Y-m-d\\TH:i' }}"
+                                    aria-label="Automatic handout time for {{ assignment_ui.assignment.name }}"
+                                    hx-post="{{ assignment_ui.schedule_url }}"
+                                    hx-trigger="change"
+                                    hx-vals='{"field": "valid_from"}'
+                                >
+
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-outline-primary text-nowrap"
+                                    hx-post="{{ assignment_ui.handout_now_url }}"
+                                    hx-target="#{{ course_ui.assignments_list_dom_id }}"
+                                    hx-swap="innerHTML"
+                                    {% if not assignment_ui.handout_candidate_count %}disabled{% endif %}
+                                >
+                                    Hand out now
+
+                                    <span class="badge text-bg-primary ms-1">
+                                        {{ assignment_ui.handout_candidate_count }}
+                                    </span>
+                                </button>
+                            </div>
+                        </td>
+
+                        <td>
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <input
+                                    type="datetime-local"
+                                    class="form-control form-control-sm"
+                                    style="width: auto;"
+                                    name="expires_at"
+                                    value="{{ assignment_ui.assignment.expires_at|date:'Y-m-d\\TH:i' }}"
+                                    aria-label="Automatic collection time for {{ assignment_ui.assignment.name }}"
+                                    hx-post="{{ assignment_ui.schedule_url }}"
+                                    hx-trigger="change"
+                                    hx-vals='{"field": "expires_at"}'
+                                >
+
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-outline-secondary text-nowrap"
+                                    hx-post="{{ assignment_ui.collect_now_url }}"
+                                    hx-target="#{{ course_ui.assignments_list_dom_id }}"
+                                    hx-swap="innerHTML"
+                                    {% if not assignment_ui.collect_candidate_count %}disabled{% endif %}
+                                >
+                                    Collect now
+
+                                    <span class="badge text-bg-secondary ms-1">
+                                        {{ assignment_ui.collect_candidate_count }}
+                                    </span>
+                                </button>
+                            </div>
+                        </td>
+
+                        <td class="text-end text-nowrap">
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-outline-secondary"
+                                hx-get="{{ assignment_ui.individual_url }}"
+                                hx-target="#modal-root"
+                                hx-swap="innerHTML"
+                                title="Handle students individually"
+                            >
+                                <i class="bi bi-people" aria-hidden="true"></i>
+                                <span class="visually-hidden">
+                                    Handle individually
+                                </span>
+                            </button>
+
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-outline-secondary"
+                                hx-get="{{ assignment_ui.score_url }}"
+                                hx-target="#modal-root"
+                                hx-swap="innerHTML"
+                                title="Score and feedback"
+                            >
+                                <i class="bi bi-check2-square" aria-hidden="true"></i>
+                                <span class="visually-hidden">
+                                    Score
+                                </span>
+                            </button>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="text-body-secondary small py-2">
+        No assignments have been created yet.
+    </div>
+{% endif %}

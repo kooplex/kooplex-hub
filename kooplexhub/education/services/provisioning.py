@@ -4,7 +4,7 @@ from hub.lib import grantaccess_group
 from hub.lib.filesystem import _mkdir
 from hub.models import Group
 
-from education.fs import (
+from ..filesystem import (
     course_public,
     course_assignment_prepare_root,
     course_assignment_snapshot,

@@ -2,6 +2,7 @@ import os
 import time
 
 from .conf import EDUCATION_SETTINGS
+from .models import Assignment
 
 def course_public(course):
     return os.path.join(
@@ -22,7 +23,14 @@ def course_assignment_snapshot(course): #FIXME: find a better name
     )
 
 def assignment_source(assignment):
-    return os.path.join(course_prepare_root(assignment.course), assignment.folder)
+    return os.path.join(
+        course_assignment_prepare_root(
+            assignment.course
+        ),
+        assignment.folder,
+    )
+
+
 
 def course_workdir_root(course):
     return os.path.join(
@@ -62,8 +70,19 @@ def assignment_correct_root(course):
 
 def assignment_correct_dir(userassignmentbinding):
     from education.models import UserCourseBinding
-    ucb = UserCourseBinding.objects.filter(user = userassignmentbinding.user, course = userassignmentbinding.assignment.course).first()
-    return os.path.join(assignment_correct_root(ucb.course), userassignmentbinding.assignment.folder, userassignmentbinding.user.username) if ucb else None
+    ucb = (
+        UserCourseBinding.objects
+        .filter(
+            user=userassignmentbinding.user, 
+            course=userassignmentbinding.assignment.course
+        )
+        .first()
+    )
+    return os.path.join(
+        assignment_correct_root(ucb.course), 
+        userassignmentbinding.assignment.folder, 
+        userassignmentbinding.user.username
+    ) if ucb else None
 
 def course_public_garbage(course):
     return os.path.join(
@@ -91,26 +110,37 @@ def course_workdir_garbage(usercoursebinding):
         EDUCATION_SETTINGS.mounts.workdir.garbage.format(course=usercoursebinding.course, user=usercoursebinding.user, time=time.time()),
     )
 
-def snapshot(assignment):
+def assignment_snapshot_archive(assignment):
     return os.path.join(
-        course_snapshot(assignment.course), 
-        EDUCATION_SETTINGS.mounts.snapshot.snapshot.format(assignment=assignment, time=time.time()),
+        course_assignment_snapshot(assignment.course), 
+        EDUCATION_SETTINGS.mounts.snapshot.snapshot_name.format(
+            assignment=assignment, 
+            time=time.time()
+        ),
     )
 
 
-def assignment_collection(userassignmentbinding):
+def assignment_collection_archive(userassignmentbinding):
     assignment = userassignmentbinding.assignment
     return os.path.join(
-        course_snapshot(assignment.course), 
-        EDUCATION_SETTINGS.mounts.snapshot.collection.format(assignment=assignment, user=userassignmentbinding.user, time=userassignmentbinding.last_submitted_at.timestamp()),
+        course_assignment_snapshot(assignment.course), 
+        EDUCATION_SETTINGS.mounts.snapshot.collection_name.format(
+            assignment=assignment, 
+            user=userassignmentbinding.user, 
+            time=userassignmentbinding.last_submitted_at.timestamp()
+        ),
     )
 
 
 def assignment_feedback(userassignmentbinding):
     assignment = userassignmentbinding.assignment
     return os.path.join(
-        course_snapshot(assignment.course), 
-        EDUCATION_SETTINGS.mounts.snapshot.feedback.format(assignment=assignment, user=userassignmentbinding.user, time=userassignmentbinding.corrected_at.timestamp()),
+        course_assignment_snapshot(assignment.course), 
+        EDUCATION_SETTINGS.mounts.snapshot.feedback_name.format(
+            assignment=assignment, 
+            user=userassignmentbinding.user, 
+            time=userassignmentbinding.corrected_at.timestamp()
+        ),
     )
 
 
@@ -118,10 +148,47 @@ def assignment_feedback(userassignmentbinding):
 #          return os.path.join(Dirname.mountpoint['garbage'], 'assignmentsnapshot-%s-%s-%s-%f.tar.gz' % (assignment.coursecode.course.folder, assignment.safename, assignment.created_at.timestamp(), time.time()))
   
 
-def get_assignment_prepare_subfolders(course):
-    from education.models import Assignment
-    dir_assignmentprepare = course_prepare_root(course)
-    dir_used = [ a.folder for a in Assignment.objects.filter(course = course) ]
-    abs_path = lambda x: os.path.join(dir_assignmentprepare, x)
-    not_empty_folder = lambda x: os.path.isdir(abs_path(x)) and len(os.listdir(abs_path(x))) > 0 and not x in dir_used
-    return list(filter(not_empty_folder, os.listdir(dir_assignmentprepare)))
+def get_assignment_prepare_subfolders(
+    course,
+):
+    root = course_assignment_prepare_root(
+        course
+    )
+
+    if not os.path.isdir(root):
+        return []
+
+    used = set(
+        Assignment.objects
+        .filter(course=course)
+        .values_list(
+            "folder",
+            flat=True,
+        )
+    )
+
+    result = []
+
+    for name in os.listdir(root):
+        path = os.path.join(
+            root,
+            name,
+        )
+
+        if name in used:
+            continue
+
+        if not os.path.isdir(path):
+            continue
+
+        if not os.listdir(path):
+            continue
+
+        result.append(name)
+
+    return sorted(
+        result,
+        key=str.lower,
+    )
+
+

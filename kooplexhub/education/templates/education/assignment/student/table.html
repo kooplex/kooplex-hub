@@ -1,0 +1,96 @@
+{% if assignments %}
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+            <thead>
+                <tr>
+                    <th scope="col">Assignment</th>
+                    <th scope="col">Description</th>
+                    <th scope="col" class="text-nowrap">Status / action</th>
+                    <th scope="col">Score</th>
+                    <th scope="col">Feedback</th>
+                    <th scope="col" class="text-center">
+                        <span class="visually-hidden">History</span>
+                    </th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for assignment_ui in assignments %}
+                    <tr>
+                        <td class="fw-semibold text-nowrap">
+                            {{ assignment_ui.assignment.name }}
+                        </td>
+
+                        <td>
+                            <div
+                                class="text-truncate"
+                                style="max-width: 18rem;"
+                                title="{{ assignment_ui.assignment.description }}"
+                            >
+                                {{ assignment_ui.assignment.description|default:"—" }}
+                            </div>
+                        </td>
+
+                        <td class="text-nowrap">
+                            {% if assignment_ui.can_submit %}
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-primary"
+                                    hx-post="{{ assignment_ui.submit_url }}"
+                                    hx-target="#{{ course_ui.assignments_list_dom_id }}"
+                                    hx-swap="innerHTML"
+                                >
+                                    <i class="bi bi-upload me-1" aria-hidden="true"></i>
+                                    Submit
+                                </button>
+                            {% else %}
+                                <span class="text-body-secondary small">
+                                    {{ assignment_ui.state_label }}
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <td class="text-nowrap">
+                            {% if assignment_ui.score is not None %}
+                                {{ assignment_ui.score }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if assignment_ui.feedback %}
+                                <div
+                                    class="text-truncate"
+                                    style="max-width: 18rem;"
+                                    title="{{ assignment_ui.feedback }}"
+                                >
+                                    {{ assignment_ui.feedback }}
+                                </div>
+                            {% else %}
+                                <span class="text-body-secondary">—</span>
+                            {% endif %}
+                        </td>
+
+                        <td class="text-center">
+                            <span
+                                class="d-inline-block"
+                                tabindex="0"
+                                title="Handed out: {{ assignment_ui.handout_at|date:'Y-m-d H:i'|default:'—' }}&#10;Collected: {{ assignment_ui.collected_at|date:'Y-m-d H:i'|default:'—' }}&#10;Corrected: {{ assignment_ui.corrected_at|date:'Y-m-d H:i'|default:'—' }}"
+                            >
+                                <i
+                                    class="bi bi-clock-history"
+                                    aria-hidden="true"
+                                ></i>
+                            </span>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="text-body-secondary small py-2">
+        No assignments have been handed out yet.
+    </div>
+{% endif %}

@@ -1,6 +1,3 @@
-import os
-import logging
-
 from django.db import models
 from django.db.models import Q
 from django.db.models.functions import Lower
@@ -9,12 +6,7 @@ from container.models import Image
 from hub.models import Group
 from django.contrib.auth import get_user_model
 
-from education.fs import get_assignment_prepare_subfolders
-
 User = get_user_model()
-
-
-logger = logging.getLogger(__name__)
 
 
 class CourseQuerySet(models.QuerySet):
@@ -162,30 +154,6 @@ class Course(models.Model):
 
     def __str__(self):
         return f'{self.name} ({self.folder})'
-
-
-    @property
-    def studentbindings(self):
-        return self.userbindings.filter(is_teacher=False)
-
-    @property
-    def teacherbindings(self):
-        return self.userbindings.filter(is_teacher=True)
-
-    @property
-    def students(self):
-        return User.objects.filter(
-            coursebindings__course=self,
-            coursebindings__is_teacher=False,
-        )
-
-    @property
-    def teachers(self):
-        return User.objects.filter(
-            coursebindings__course=self,
-            coursebindings__is_teacher=True,
-        )
-
 
 
 class UserCourseBindingQuerySet(models.QuerySet):

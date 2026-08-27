@@ -9,6 +9,10 @@ from .create import (
 )
 from .assignment import (
     CourseAssignmentsView,
+    AssignmentHandoutNowView,
+    AssignmentCollectNowView,
+    AssignmentSubmitView,
+    AssignmentScheduleUpdateView,
 )
 from .widgets import (
     CourseNameDisplayView,
@@ -80,4 +84,8 @@ __all__ = [
     "CourseMembersUpdateView",
 
     "CourseAssignmentsView",
+    "AssignmentHandoutNowView",
+    "AssignmentCollectNowView",
+    "AssignmentSubmitView",
+    "AssignmentScheduleUpdateView",
 ]
