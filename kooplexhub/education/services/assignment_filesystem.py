@@ -2,10 +2,12 @@ import logging
 import os
 
 from ..models import (
+    Assignment,
     UserAssignmentBinding,
 )
 from ..filesystem import (
     assignment_workdir,
+    assignment_source,
     assignment_collection_archive,
     assignment_correct_dir,
 )
@@ -188,10 +190,10 @@ def _perform_assignment_collection_filesystem(
         correction_dir,
     )
 
-    if not os.path.isdir(correct_dir):
+    if not os.path.isdir(correction_dir):
         raise RuntimeError(
             "Assignment correction directory "
-            f"was not created: {correct_dir}"
+            f"was not created: {correction_dir}"
         )
 
     grantaccess_group(

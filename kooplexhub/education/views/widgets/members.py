@@ -24,6 +24,7 @@ from ...services.editor_context import (
     COURSE_MEMBERS_UPDATED_EVENT,
     make_member_editor_urls,
     make_membership_ui,
+    make_course_member_presentation,
     make_member_summary_context,
 )
 from ...conf import EDUCATION_SETTINGS

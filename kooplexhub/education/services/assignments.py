@@ -1,3 +1,4 @@
+import os
 import logging
 from dataclasses import dataclass
 
@@ -13,6 +14,7 @@ from ..models import (
 )
 from ..filesystem import (
     assignment_snapshot_archive,
+    course_assignment_prepare_root,
     get_assignment_prepare_subfolders,
 )
 

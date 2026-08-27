@@ -1,10 +1,13 @@
 import os
 from dataclasses import dataclass
+import logging
+
+from django.utils import timezone
 
 from hub.lib import grantaccess_group
 from hub.lib.filesystem import _mkdir
 from hub.models import Group
-
+from ..models import Course
 from ..filesystem import (
     course_public,
     course_assignment_prepare_root,
@@ -12,8 +15,21 @@ from ..filesystem import (
     course_assignment_root,
     assignment_correct_root,
 )
-
 from hub.services.groups import ensure_group
+
+logger = logging.getLogger(__name__)
+
+MAX_PROVISIONING_ERROR_LENGTH = 4000
+
+
+class CourseProvisioningError(RuntimeError):
+    pass
+
+
+def _format_provisioning_error(error):
+    return (
+        f"{error.__class__.__name__}: {error}"
+    )[:MAX_PROVISIONING_ERROR_LENGTH]
 
 
 @dataclass(frozen=True)
@@ -56,6 +72,56 @@ class CourseFilesystemStatus:
             result.append("corrections")
 
         return tuple(result)
+
+
+def mark_course_provisioning_complete(
+    *,
+    course_id,
+):
+    return (
+        Course.objects
+        .filter(
+            pk=course_id,
+            provisioning_state=(
+                Course.ProvisioningState.PREPARING
+            ),
+        )
+        .update(
+            provisioning_state=(
+                Course.ProvisioningState.READY
+            ),
+            last_operation_error="",
+            last_operation_failed_at=None,
+            provisioned_at=timezone.now(),
+        )
+        == 1
+    )
+
+
+def mark_course_provisioning_failed(
+    *,
+    course_id,
+    error,
+):
+    return (
+        Course.objects
+        .filter(
+            pk=course_id,
+            provisioning_state=(
+                Course.ProvisioningState.PREPARING
+            ),
+        )
+        .update(
+            provisioning_state=(
+                Course.ProvisioningState.FAILED
+            ),
+            last_operation_error=(
+                _format_provisioning_error(error)
+            ),
+            last_operation_failed_at=timezone.now(),
+        )
+        == 1
+    )
 
 
 def inspect_course_filesystem(
