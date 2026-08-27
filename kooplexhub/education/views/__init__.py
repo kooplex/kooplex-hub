@@ -7,6 +7,10 @@ from .create import (
     CourseCreateView,
     CourseCreateModalView,
 )
+from .assignment_create import (
+    AssignmentCreateModalView,
+    AssignmentCreateView,
+)
 from .assignment import (
     CourseAssignmentsView,
     AssignmentHandoutNowView,
@@ -88,4 +92,7 @@ __all__ = [
     "AssignmentCollectNowView",
     "AssignmentSubmitView",
     "AssignmentScheduleUpdateView",
+
+    "AssignmentCreateModalView",
+    "AssignmentCreateView",
 ]

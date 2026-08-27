@@ -1,9 +1,28 @@
 <div
     id="{{ course_ui.assignments_list_dom_id }}"
     class="course-assignments"
+    hx-get="{{ course_ui.assignments_url }}"
+    hx-trigger="course-assignments-updated from:body"
+    hx-swap="innerHTML"
 >
     {% if course_ui.is_teacher %}
         {% include "education/assignment/teacher/table.html" with course_ui=course_ui assignments=assignments only %}
+        <div class="d-flex justify-content-end mt-3">
+            <button
+                type="button"
+                class="btn btn-sm btn-primary"
+                hx-get="{{ course_ui.assignment_create_url }}"
+                hx-target="#modal-root"
+                hx-swap="innerHTML"
+                {% if not course_ui.can_create_assignment %}
+                    disabled
+                    title="{{ course_ui.assignment_create_disabled_reason }}"
+                {% endif %}
+            >
+                <i class="bi bi-plus-lg me-1"></i>
+                Create assignment
+            </button>
+        </div>
     {% else %}
         {% include "education/assignment/student/table.html" with course_ui=course_ui assignments=assignments only %}
     {% endif %}

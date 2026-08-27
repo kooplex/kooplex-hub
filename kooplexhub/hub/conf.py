@@ -37,10 +37,15 @@ class LdapSettings:
     )
 
 
-@dataclass(frozen=True)
-class WssSettings:
-    token: str = "wss://localhost/hub/ws/tokens/{user.id}/"
-    resources: str = "wss://localhost/hub/ws/resources/"
+@dataclass(
+    frozen=True,
+    slots=True,
+)
+class LiveSettings:
+    public_path: str = "/hub/ws/live/"
+    refresh_debounce_ms: int = 300
+    reconnect_initial_ms: int = 500
+    reconnect_max_ms: int = 10_000
 
 
 def _default_home_mount():
@@ -95,6 +100,10 @@ class MailSettings:
 
 @dataclass(frozen=True, slots=True)
 class HubSettings:
+    live: LiveSettings = field(
+        default_factory=LiveSettings
+    )
+
     ldap: LdapSettings = field(
         default_factory=LdapSettings
     )
@@ -104,10 +113,6 @@ class HubSettings:
     )
 
     archive_home: bool = False
-
-    wss: WssSettings = field(
-        default_factory=WssSettings
-    )
 
     mounts: MountsSettings = field(
         default_factory=MountsSettings

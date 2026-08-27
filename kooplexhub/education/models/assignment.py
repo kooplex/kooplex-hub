@@ -58,6 +58,9 @@ class Assignment(models.Model):
     remove_collected = models.BooleanField(default = False,null=True)
     max_size = models.IntegerField(default = None, null = True, blank = True) 
     filename = models.CharField(max_length = 256, null = False, unique = True)
+    handout_when_ready = models.BooleanField(
+        default=False,
+    )
     state = models.CharField(
         max_length=16,
         choices=State.choices,

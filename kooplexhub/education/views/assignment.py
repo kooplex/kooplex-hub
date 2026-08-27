@@ -6,6 +6,9 @@ from django.views import View
 from django.views.generic import TemplateView
 
 from .mixins import CourseBindingMixin
+from ..forms import (
+    AssignmentScheduleForm,
+)
 from ..models import (
     UserCourseBinding,
     Assignment,

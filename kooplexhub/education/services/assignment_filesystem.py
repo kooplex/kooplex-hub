@@ -96,9 +96,21 @@ def perform_assignment_snapshot(
 
         raise
 
-    mark_assignment_preparation_complete(
+    completed = mark_assignment_preparation_complete(
         assignment_id=assignment.pk,
     )
+
+    if (
+        completed
+        and assignment.handout_when_ready
+    ):
+        from .assignments import (
+            handout_assignment_automatically,
+        )
+    
+        handout_assignment_automatically(
+            assignment=assignment,
+        )
 
 
 def _perform_assignment_handout_filesystem(

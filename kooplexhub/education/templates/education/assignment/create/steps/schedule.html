@@ -1,0 +1,45 @@
+<div class="row g-3">
+    <div class="col-md-6">
+        <label
+            for="{{ form.valid_from.id_for_label }}"
+            class="form-label"
+        >
+            Valid from
+        </label>
+
+        {{ form.valid_from }}
+
+        <div class="form-text">
+            Leave empty for no automatic
+            handout time.
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <label
+            for="{{ form.expires_at.id_for_label }}"
+            class="form-label"
+        >
+            Expires at
+        </label>
+
+        {{ form.expires_at }}
+
+        <div class="form-text">
+            Leave empty for no automatic
+            collection time.
+        </div>
+    </div>
+</div>
+
+<div class="form-check mt-4">
+    {{ form.remove_collected }}
+
+    <label
+        class="form-check-label"
+        for="{{ form.remove_collected.id_for_label }}"
+    >
+        Remove the student's working copy
+        after collection
+    </label>
+</div>

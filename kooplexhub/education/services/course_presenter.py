@@ -8,6 +8,7 @@ from ..models import (
     UserAssignmentBinding,
 )
 from ..services.assignment_presenter import AssignmentPresenter
+from ..filesystem import get_assignment_prepare_subfolders
 
 
 class CoursePresenter:
@@ -56,9 +57,13 @@ class CoursePresenter:
     def can_create_environment(self):
         return True
 
+
     @property
-    def can_create_assignments(self):
-        return self.is_teacher
+    def can_create_assignment(self):
+        return (
+            self.is_teacher
+            and bool(self.available_assignment_sources)
+        )
 
     @property
     def can_manage_assignments(self):
@@ -120,6 +125,46 @@ class CoursePresenter:
     
         return "No preferred image"
 
+
+    @cached_property
+    def available_assignment_sources(self):
+        if not self.is_teacher:
+            return ()
+    
+        return tuple(
+            get_assignment_prepare_subfolders(
+                self.course
+            )
+        )
+    
+    @property
+    def can_create_assignment(self):
+        return (
+            self.is_teacher
+            and bool(self.available_assignment_sources)
+        )
+    
+    @property
+    def assignment_create_disabled_reason(self):
+        if not self.is_teacher:
+            return "Only teachers can create assignments."
+    
+        if not self.available_assignment_sources:
+            return (
+                "Put assignment material into a new "
+                "folder in the preparation directory first."
+            )
+    
+        return None
+    
+    @property
+    def assignment_create_url(self):
+        return reverse(
+            "education:assignment-create-modal",
+            kwargs={
+                "course_id": self.course.pk,
+            },
+        )
 
     @property
     def card_dom_id(self):

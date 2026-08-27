@@ -215,5 +215,17 @@ urlpatterns = [
         views.AssignmentSubmitView.as_view(),
         name="assignment-submit",
     ),
+
+    path(
+        "course/<int:course_id>/assignment/create/modal/",
+        views.AssignmentCreateModalView.as_view(),
+        name="assignment-create-modal",
+    ),
+    
+    path(
+        "course/<int:course_id>/assignment/create/",
+        views.AssignmentCreateView.as_view(),
+        name="assignment-create",
+    ),
 #FIXME    path('course/delete/<int:pk_course>/<int:pk_user>/', views.delete_or_leave, name = 'delete_or_leave'),
 ]

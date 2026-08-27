@@ -85,11 +85,6 @@ class ProxySettings:
 
 
 @dataclass(frozen=True)
-class ContainerWssSettings:
-    live: str = "wss://localhost/hub/ws/container/live/"
-
-
-@dataclass(frozen=True)
 class ComputeWidgetSettings:
     warning_ratio: float = 0.90
     critical_ratio: float = 1.00
@@ -99,7 +94,6 @@ class ComputeWidgetSettings:
 class ContainerSettings:
     kubernetes: KubernetesSettings = field(default_factory=KubernetesSettings)
     proxy: ProxySettings = field(default_factory=ProxySettings)
-    wss: ContainerWssSettings = field(default_factory=ContainerWssSettings)
     compute_widget: ComputeWidgetSettings = field(default_factory=ComputeWidgetSettings)
 
 

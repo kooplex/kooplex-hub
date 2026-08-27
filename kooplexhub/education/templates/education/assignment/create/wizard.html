@@ -1,0 +1,31 @@
+<form
+    method="post"
+    hx-post="{% url 'education:assignment-create' course.pk %}"
+    hx-target="#modal-root"
+    hx-swap="innerHTML"
+    data-assignment-create-wizard
+    novalidate
+>
+    {% csrf_token %}
+
+    {{ form.creation_mode }}
+
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+            {{ form.non_field_errors }}
+        </div>
+    {% endif %}
+
+    <div data-assignment-wizard-step="0">
+        {% include "education/assignment/create/steps/general.html" %}
+    </div>
+
+    <div
+        data-assignment-wizard-step="1"
+        hidden
+    >
+        {% include "education/assignment/create/steps/schedule.html" %}
+    </div>
+
+    {% include "education/assignment/create/actions.html" %}
+</form>

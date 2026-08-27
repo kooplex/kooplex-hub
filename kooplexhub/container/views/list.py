@@ -28,9 +28,6 @@ class ContainerListView(
             "page_eyebrow": "Workspace management",
             "page_description": "Create and manage your notebook environments.",
             "documentation_url": "https://xwiki.vo.elte.hu/en/kooplex-manual/environmentpanel",
-            "live_config": {
-                "endpoint": CONTAINER_SETTINGS.wss.live,
-            },
             "container_page_config": {
                 "userid": self.request.user.id,
                 "configure_request": "configure-container",

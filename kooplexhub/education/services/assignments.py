@@ -137,6 +137,7 @@ def create_assignment(
     expires_at=None,
     remove_collected=False,
     max_size=None,
+    handout_when_ready=False,
 ):
     course = (
         Course.objects
@@ -172,6 +173,7 @@ def create_assignment(
         expires_at=expires_at,
         remove_collected=remove_collected,
         max_size=max_size,
+        handout_when_ready=handout_when_ready,
         state=Assignment.State.PREPARING,
     )
 

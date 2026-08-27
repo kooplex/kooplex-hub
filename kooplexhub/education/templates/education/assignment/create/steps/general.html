@@ -1,0 +1,55 @@
+<div class="mb-3">
+    <label
+        for="{{ form.folder.id_for_label }}"
+        class="form-label"
+    >
+        Source folder
+    </label>
+
+    {{ form.folder }}
+
+    {% for error in form.folder.errors %}
+        <div class="invalid-feedback d-block">
+            {{ error }}
+        </div>
+    {% endfor %}
+
+    <div class="form-text">
+        A snapshot of this folder will be used
+        as the assignment distributed to students.
+    </div>
+</div>
+
+<div class="mb-3">
+    <label
+        for="{{ form.name.id_for_label }}"
+        class="form-label"
+    >
+        Assignment name
+    </label>
+
+    {{ form.name }}
+
+    {% for error in form.name.errors %}
+        <div class="invalid-feedback d-block">
+            {{ error }}
+        </div>
+    {% endfor %}
+</div>
+
+<div class="mb-3">
+    <label
+        for="{{ form.description.id_for_label }}"
+        class="form-label"
+    >
+        Description
+    </label>
+
+    {{ form.description }}
+
+    {% for error in form.description.errors %}
+        <div class="invalid-feedback d-block">
+            {{ error }}
+        </div>
+    {% endfor %}
+</div>

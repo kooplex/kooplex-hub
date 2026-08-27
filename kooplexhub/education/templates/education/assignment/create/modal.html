@@ -1,0 +1,35 @@
+<div
+    class="modal fade"
+    id="assignment-create-modal"
+    tabindex="-1"
+    aria-hidden="true"
+    data-auto-show-modal
+>
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title">
+                        Create assignment
+                    </h5>
+
+                    <div class="text-muted small">
+                        {{ course.name }}
+                    </div>
+                </div>
+
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                ></button>
+            </div>
+
+            <div class="modal-body">
+                {% include "education/assignment/create/wizard.html" %}
+            </div>
+
+        </div>
+    </div>
+</div>
