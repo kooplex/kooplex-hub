@@ -1,3 +1,4 @@
+import os
 from dataclasses import dataclass
 
 from hub.lib import grantaccess_group
@@ -19,6 +20,65 @@ from hub.services.groups import ensure_group
 class CourseInfrastructure:
     student_group: object
     teacher_group: object
+
+
+@dataclass(frozen=True, slots=True)
+class CourseFilesystemStatus:
+    public: bool
+    prepare: bool
+    snapshot: bool
+    assignments: bool
+    corrections: bool
+
+    @property
+    def ready(self):
+        return all((
+            self.public,
+            self.prepare,
+            self.snapshot,
+            self.assignments,
+            self.corrections,
+        ))
+
+    @property
+    def missing(self):
+        result = []
+
+        if not self.public:
+            result.append("public")
+        if not self.prepare:
+            result.append("prepare")
+        if not self.snapshot:
+            result.append("snapshot")
+        if not self.assignments:
+            result.append("assignments")
+        if not self.corrections:
+            result.append("corrections")
+
+        return tuple(result)
+
+
+def inspect_course_filesystem(
+    *,
+    course,
+):
+    return CourseFilesystemStatus(
+        public=os.path.isdir(
+            course_public(course)
+        ),
+        prepare=os.path.isdir(
+            course_assignment_prepare_root(course)
+        ),
+        snapshot=os.path.isdir(
+            course_assignment_snapshot(course)
+        ),
+        assignments=os.path.isdir(
+            course_assignment_root(course)
+        ),
+        corrections=os.path.isdir(
+            assignment_correct_root(course)
+        ),
+    )
 
 
 def provision_course_infrastructure(*, folder):

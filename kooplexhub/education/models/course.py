@@ -92,6 +92,12 @@ class Course(models.Model):
     class Meta:
        app_label = 'education'
 
+    class ProvisioningState(models.TextChoices):
+        PREPARING = "prp", "Preparing"
+        READY = "rdy", "Ready"
+        FAILED = "fld", "Provisioning failed"
+
+
     name = models.CharField(
         max_length=64,
         unique=True,
@@ -148,6 +154,27 @@ class Course(models.Model):
         default=None,
         related_name="teachers",
         help_text="Filesystem/LDAP group used for teacher course storage access.",
+    )
+
+    provisioning_state = models.CharField(
+        max_length=16,
+        choices=ProvisioningState.choices,
+        default=ProvisioningState.PREPARING,
+    )
+    
+    last_operation_error = models.TextField(
+        blank=True,
+        default="",
+    )
+    
+    last_operation_failed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+    
+    provisioned_at = models.DateTimeField(
+        null=True,
+        blank=True,
     )
 
     objects = CourseQuerySet.as_manager()
