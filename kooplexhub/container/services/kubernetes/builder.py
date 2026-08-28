@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-import os
+import posixpath
 from copy import deepcopy
 from typing import Any, Iterable
 
@@ -25,6 +25,11 @@ from .labels import dns_label, workload_labels, workload_name
 from .resources import ResourcePolicy, build_resources
 from .types import BuiltWorkload
 from .volumes import VolumeBundle
+from hub.conf_types import MountSettings
+from container.models import (
+    EnvVarMapping,
+    Image,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -117,12 +122,32 @@ class ContainerWorkloadBuilder:
         )
         pod_ports, service_ports = self._build_ports(container)
         volumes = VolumeBundle()
-        env = self._build_environment_and_domain_mounts(container, volumes)
-        self._build_user_volumes(
-            container, 
-            volumes,
-            mount_items["volumes"],
+        env = self._build_environment(
+            container
         )
+
+        if (
+            container.image.imagetype
+            in {
+                Image.ImageType.PROJECT,
+                Image.ImageType.JOB,
+            }
+        ):
+            self._add_identity_mounts(
+                container,
+                volumes,
+                env,
+            )
+        self._add_domain_mounts(
+            container,
+            volumes,
+            mount_items,
+        )
+        #self._build_user_volumes(
+        #    container, 
+        #    volumes,
+        #    mount_items["volumes"],
+        #)
 
         pod_containers: list[dict[str, Any]] = []
         sidecar = self._build_davfs_sidecar(container, volumes)
@@ -189,53 +214,43 @@ class ContainerWorkloadBuilder:
             )
         return pod_ports, service_ports
 
-    def _build_environment_and_domain_mounts(
-        self, 
-        container: Any, 
-        volumes: VolumeBundle,
-        mount_items: Any,
-    ) -> list[dict[str, Any]]:
+
+    def _build_environment(
+        self,
+        container,
+    ) -> list[dict[str, str]]:
         image_type = container.image.imagetype
-        interactive_types = {Image.ImageType.PROJECT, Image.ImageType.JOB}
+    
+        interactive_types = {
+            Image.ImageType.PROJECT,
+            Image.ImageType.JOB,
+        }
+    
         published_types = {
             Image.ImageType.REPORT,
             Image.ImageType.API,
             Image.ImageType.APP,
         }
-
+    
         if image_type in interactive_types:
-            env = self._format_environment(KOOPLEX["environmental_variables"], container)
-            self._add_identity_mounts(container, volumes, env)
-            self._add_home_scratch_course_project_mounts(
-                container, 
-                volumes, 
-                mount_items,
+            env = self._format_environment(
+                KOOPLEX["environmental_variables"],
+                container,
             )
+    
         elif image_type in published_types:
             env = self._format_environment(
-                KOOPLEX["environmental_variables_report"], container
+                KOOPLEX[
+                    "environmental_variables_report"
+                ],
+                container,
             )
-            env.append(
-                {
-                    "name": "REPORT_FOLDER",
-                    "value": REPORT_SETTINGS["mounts"]["report"]["mountpoint"],
-                }
-            )
-            if image_type == Image.ImageType.REPORT:
-                binding = container.reportbindings.get(container=container)
-                report_cfg = REPORT_SETTINGS["mounts"]["report"]
-                volumes.add_pvc(
-                    claim_name=report_cfg["claim"],
-                    mount_path=report_cfg["mountpoint"].format(
-                        user=container.user, report=binding.report
-                    ),
-                    sub_path=report_cfg["folder"].format(
-                        user=container.user, report=binding.report
-                    ),
-                )
+    
         else:
-            raise ValueError(f"Unknown image type {image_type}")
-
+            raise ValueError(
+                f"Unknown image type {image_type}"
+            )
+    
         env.extend(
             {
                 "name": mapping.name,
@@ -248,7 +263,77 @@ class ContainerWorkloadBuilder:
                 )
             )
         )
+    
         return env
+
+
+
+    def _add_domain_mounts(
+        self, 
+        container: Any, 
+        volumes: VolumeBundle,
+        mount_items: Any,
+    ) -> list[dict[str, Any]]:
+        if container.image.require_home:
+            self._add_configured_pvc(
+                volumes,
+                HUB_SETTINGS.mounts.home,
+                user=container.user,
+            )
+
+            self._add_configured_pvc(
+                volumes,
+                HUB_SETTINGS.mounts.garbage,
+                user=container.user,
+            )
+
+        scratch = HUB_SETTINGS.mounts.scratch
+        if container.user.profile.has_scratch and scratch:
+            self._add_configured_pvc(
+                volumes, 
+                HUB_SETTINGS.mounts.scratch, 
+                user=container.user,
+            )
+
+        for course in mount_items["courses"]:
+            self._add_configured_pvc(
+                volumes,
+                EDUCATION_SETTINGS.mounts.workdir,
+                user=container.user,
+                course=course,
+            )
+            self._add_configured_pvc(
+                volumes,
+                EDUCATION_SETTINGS.mounts.public,
+                user=container.user,
+                course=course,
+            )
+
+        for project in mount_items["projects"]:
+            self._add_configured_pvc(
+                volumes,
+                PROJECT_SETTINGS.mounts.project,
+                user=container.user,
+                project=project,
+            )
+            self._add_configured_pvc(
+                volumes,
+                REPORT_SETTINGS.mounts.prepare,
+                user=container.user,
+                project=project,
+            )
+
+        # Restore this only after report/conf.py
+        # has completed the dataclass migration.
+        #
+        # self._add_configured_pvc(
+        #     volumes,
+        #     REPORT_SETTINGS.mounts.prepare,
+        #     user=container.user,
+        #     project=project,
+        # )
+
+
 
     @staticmethod
     def _format_environment(mapping: dict[str, Any], container: Any) -> list[dict[str, str]]:
@@ -295,62 +380,20 @@ class ContainerWorkloadBuilder:
             items=[{"key": "job", "path": "job"}],
         )
 
-    def _add_home_scratch_course_project_mounts(
-        self, 
-        container: Any, 
-        volumes: VolumeBundle,
-        mount_items: Any,
-    ) -> None:
-        if container.image.require_home:
-            self._add_configured_pvc(
-                volumes, HUB_SETTINGS["mounts"]["home"], user=container.user
-            )
-            self._add_configured_pvc(
-                volumes, HUB_SETTINGS["mounts"]["garbage"], user=container.user
-            )
-
-        scratch = HUB_SETTINGS["mounts"].get("scratch")
-        if container.user.profile.has_scratch and scratch:
-            self._add_configured_pvc(volumes, scratch, user=container.user)
-
-        for course in mount_items["courses"]:
-            self._add_configured_pvc(
-                volumes,
-                EDUCATION_SETTINGS["mounts"]["workdir"],
-                user=container.user,
-                course=course,
-            )
-            self._add_configured_pvc(
-                volumes,
-                EDUCATION_SETTINGS["mounts"]["public"],
-                user=container.user,
-                course=course,
-            )
-
-        for project in mount_items["projects"]:
-            self._add_configured_pvc(
-                volumes,
-                PROJECT_SETTINGS["mounts"]["project"],
-                user=container.user,
-                project=project,
-            )
-            self._add_configured_pvc(
-                volumes,
-                REPORT_SETTINGS["mounts"]["prepare"],
-                user=container.user,
-                project=project,
-            )
 
     @staticmethod
     def _add_configured_pvc(
-        volumes: VolumeBundle, config: dict[str, Any], **format_values: Any
+        volumes: VolumeBundle, 
+        config: MountSettings, 
+        **format_values: Any,
     ) -> None:
-        sub_path = os.path.join(
-            config.get("subpath", ""), config["folder"].format(**format_values)
+        sub_path = posixpath.join(
+            config.subpath,
+            config.folder.format(**format_values)
         )
         volumes.add_pvc(
-            claim_name=config["claim"],
-            mount_path=config["mountpoint"].format(**format_values),
+            claim_name=config.claim,
+            mount_path=config.mountpoint.format(**format_values),
             sub_path=sub_path,
         )
 
@@ -366,7 +409,7 @@ class ContainerWorkloadBuilder:
                 if volume.scope == volume.Scope.ATTACHMENT
                 else "volume"
             )
-            mount_cfg = VOLUME_SETTINGS["mounts"][key]
+            mount_cfg = VOLUME_SETTINGS.mounts[key]
             volumes.add_pvc(
                 claim_name=volume.claim,
                 mount_path=mount_cfg["mountpoint"].format(volume=volume),

@@ -6,7 +6,7 @@ from django_huey import db_task
     retries=3, 
     retry_delay=10,
 )
-def start_container(user_id, container_id):
+def start_container(container_id):
     from ..models import Container
     from ..services.kubernetes.wiring import (
         build_runtime_service,
@@ -28,7 +28,7 @@ def start_container(user_id, container_id):
     retries=3, 
     retry_delay=10,
 )
-def stop_container(user_id, container_id):
+def stop_container(container_id):
     from ..models import Container
     from ..services.kubernetes.wiring import (
         build_runtime_service,
@@ -49,7 +49,7 @@ def stop_container(user_id, container_id):
     retries=3, 
     retry_delay=10,
 )
-def restart_container(user_id, container_id):
+def restart_container(container_id):
     from ..models import Container
     from ..services.kubernetes.wiring import (
         build_runtime_service,

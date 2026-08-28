@@ -1,27 +1,13 @@
 from hub.services.live import (
-    broadcast_live_event_to_users,
+    broadcast_live_event,
 )
-
-
-def get_container_runtime_audience(
-    container,
-):
-    if (
-        container.user_id
-        and container.user.is_active
-    ):
-        return [container.user]
-
-    return []
-
 
 def broadcast_container_runtime_changed(
     container,
     *,
-    actor=None,
     reason=None,
     backend_state=None,
-    audience=None,
+    notification=None,
 ):
     payload = {
         "model": "container",
@@ -36,19 +22,13 @@ def broadcast_container_runtime_changed(
             backend_state
         )
 
-    users = (
-        audience
-        or get_container_runtime_audience(
-            container
-        )
-    )
-
-    broadcast_live_event_to_users(
-        users_id=users.pk,
+    broadcast_live_event(
+        user_id=container.user_id,
         keys=[
             f"container-runtime:{container.pk}",
         ],
         payload=payload,
+        notification=notification,
     )
 
 

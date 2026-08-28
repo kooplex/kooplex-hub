@@ -112,10 +112,10 @@ def kill_idle() -> None:
         except Container.DoesNotExist:
             continue
 
-    except Exception:
-        logger.exception(
-            "Failed idle check for "
-            "container %s",
-            container_id,
-        )
+        except Exception:
+            logger.exception(
+                "Failed idle check for "
+                "container %s",
+                container_id,
+            )
 

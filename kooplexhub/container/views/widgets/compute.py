@@ -113,7 +113,6 @@ class ContainerComputeUpdateView(
 
         broadcast_container_runtime_changed(
             container=container,
-            actor=self.request.user,
             reason="container.compute.updated",
         )
 

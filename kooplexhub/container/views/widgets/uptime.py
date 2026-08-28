@@ -69,7 +69,6 @@ class ContainerUptimeUpdateView(
     def after_save(self, container, form):
         broadcast_container_runtime_changed(
             container=container,
-            actor=self.request.user,
             reason="container.idletime.updated",
         )
 

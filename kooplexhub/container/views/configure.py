@@ -130,6 +130,9 @@ class ContainerImageSaveView(
         )
         broadcast_container_runtime_changed(
             container,
+            reason=(
+                f"container.image.updated"
+            ),
         )
         return response
 
@@ -223,6 +226,9 @@ class ContainerMountsSaveView(
         logger.debug(message)
         broadcast_container_runtime_changed(
             container,
+            reason=(
+                f"container.mounts.changed"
+            ),
         )
 
         return response

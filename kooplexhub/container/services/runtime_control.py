@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from django.db import transaction
 
 from container.models import Container
+from container.services.live import broadcast_container_runtime_changed
 
 
 class ContainerActionError(RuntimeError):
@@ -23,14 +24,14 @@ def request_container_action(
 ):
     if action == "start":
         return request_start(
-            container, 
-            actor,
+            container=container, 
+            actor=actor,
         )
 
     if action == "stop":
         return request_stop(
-            container, 
-            actor,
+            container=container, 
+            actor=actor,
         )
 
     if action == "restart":
@@ -99,7 +100,7 @@ def request_start(
 
 def _request_container_stop(
     *,
-    container,
+    container_id,
 ):
     from container.tasks import stop_container
 
@@ -107,7 +108,7 @@ def _request_container_stop(
         container = (
             Container.objects
             .select_for_update()
-            .get(pk=container.pk)
+            .get(pk=container_id)
         )
 
         if container.state not in {
@@ -141,8 +142,6 @@ def _request_container_stop(
                 "idle",
             ]
         )
-
-        container_id = container.pk
 
         transaction.on_commit(
             lambda: stop_container(container.pk)

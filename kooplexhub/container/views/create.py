@@ -103,6 +103,9 @@ class ContainerCreateView(
         )
         broadcast_container_runtime_changed(
             container,
+            reason=(
+                f"container.created"
+            ),
         )
         return response
 

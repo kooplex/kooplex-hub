@@ -13,8 +13,3 @@ class ContainerOpenButtonPartialView(
         "open_service_button.html"
     )
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        container = context["container"]
-        context["service_views"] = list(container.views)
-        return context

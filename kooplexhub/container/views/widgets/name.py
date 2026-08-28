@@ -68,6 +68,9 @@ class ContainerNameUpdateView(
     def after_save(self, container, form):
         broadcast_container_runtime_changed(
             container,
+            reason=(
+                f"container.name.updated"
+            ),
         )
 
     def add_success_headers(

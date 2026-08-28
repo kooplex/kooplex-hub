@@ -102,7 +102,6 @@ class ContainerControlView(
 
         broadcast_container_runtime_changed(
             container=container,
-            actor=request.user,
             reason=(
                 f"container.{action}.requested"
             ),
@@ -213,6 +212,9 @@ class ContainerDeleteView(
 
         broadcast_container_runtime_changed(
             container,
+            reason=(
+                f"container.deleted"
+            ),
         )
 
         if request.headers.get("HX-Request") == "true":
