@@ -13,7 +13,6 @@ from ...services.compute_presenter import (
     ContainerComputePresenter,
 )
 from ...services.live import (
-    broadcast_container_live_event,
     broadcast_container_runtime_changed,
 )
 
@@ -113,20 +112,6 @@ class ContainerComputeUpdateView(
             container=container,
             actor=self.request.user,
             reason="container.compute.updated",
-        )
-
-        broadcast_container_live_event(
-            user=self.request.user,
-            keys=[
-                f"container:{container.pk}",
-            ],
-            payload={
-                "event": (
-                    "container.config.changed"
-                ),
-                "model": "container",
-                "id": container.pk,
-            },
         )
 
     def add_success_headers(

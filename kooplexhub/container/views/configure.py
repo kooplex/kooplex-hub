@@ -13,7 +13,9 @@ from django.shortcuts import (
 
 from .mixins import MountSelectionMixin
 from ..models import Container
-from ..services.live import broadcast_container_live_event
+from ..services.live import (
+    broadcast_container_runtime_changed,
+)
 from ..services.image_catalog import ImageCatalogService
 from ..services.mounts import (
     apply_container_mounts, 
@@ -126,17 +128,8 @@ class ContainerImageSaveView(
                 },
             }
         )
-        broadcast_container_live_event(
-            user=request.user,
-            keys=[
-                f"container:{container.pk}",
-                f"container-list:user:{request.user.pk}",
-            ],
-            payload={
-                "event": "object.changed",
-                "model": "container",
-                "id": container.pk,
-            },
+        broadcast_container_runtime_changed(
+            container,
         )
         return response
 
@@ -228,17 +221,8 @@ class ContainerMountsSaveView(
             }
         )
         logger.debug(message)
-        broadcast_container_live_event(
-            user=request.user,
-            keys=[
-                f"container:{container.pk}",
-                f"container-list:user:{request.user.pk}",
-            ],
-            payload={
-                "event": "object.changed",
-                "model": "container",
-                "id": container.pk,
-            },
+        broadcast_container_runtime_changed(
+            container,
         )
 
         return response

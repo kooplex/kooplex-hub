@@ -19,7 +19,9 @@ from ..services.mounts import (
     apply_container_mounts, 
     mount_change_message,
 )
-from ..services.live import broadcast_container_live_event
+from ..services.live import (
+    broadcast_container_runtime_changed,
+)
 from project.models import Project
 from education.models import Course
 from volume.models import Volume
@@ -99,16 +101,8 @@ class ContainerCreateView(
                 },
             }
         )
-        broadcast_container_live_event(
-            user=request.user,
-            keys=[
-                f"container-list:user:{request.user.pk}",
-            ],
-            payload={
-                "event": "object.created",
-                "model": "container",
-                "id": container.pk,
-            },
+        broadcast_container_runtime_changed(
+            container,
         )
         return response
 

@@ -1,42 +1,147 @@
 (function () {
   class KooplexLiveUpdates {
-    constructor(endpoint) {
-      this.endpoint = endpoint;
-      this.socket = null;
+    constructor(config) {
+      this.config = config || {};
 
-      this.reconnectDelay = 1500;
-      this.refreshDelay = 100;
+      this.socket = null;
+      this.reconnectTimer = null;
+
+      this.reconnectDelay =
+        this.config.reconnectInitialMs || 500;
+
+      this.reconnectInitial =
+        this.config.reconnectInitialMs || 500;
+
+      this.reconnectMax =
+        this.config.reconnectMaxMs || 10000;
+
+      this.refreshDelay =
+        this.config.refreshDebounceMs || 300;
 
       this.refreshTimers = new Map();
       this.refreshInProgress = new Set();
       this.refreshQueued = new Set();
     }
 
+    get endpoint() {
+      const path = this.config.path;
+
+      if (!path) {
+        return null;
+      }
+
+      /*
+       * Allow a complete ws:// or wss:// URL,
+       * but normally config only contains a path.
+       */
+      if (
+        path.startsWith("ws://") ||
+        path.startsWith("wss://")
+      ) {
+        return path;
+      }
+
+      const protocol =
+        window.location.protocol === "https:"
+          ? "wss:"
+          : "ws:";
+
+      return (
+        `${protocol}//${window.location.host}` +
+        path
+      );
+    }
+
     connect() {
-      if (!this.endpoint) return;
+      const endpoint = this.endpoint;
 
-      this.socket = new WebSocket(this.endpoint);
+      if (!endpoint) {
+        return;
+      }
 
-      this.socket.addEventListener("open", () => {
-        console.debug("Kooplex live connection opened");
-      });
+      /*
+       * Avoid creating a second connection while
+       * one is already open or connecting.
+       */
+      if (
+        this.socket &&
+        (
+          this.socket.readyState === WebSocket.OPEN ||
+          this.socket.readyState === WebSocket.CONNECTING
+        )
+      ) {
+        return;
+      }
 
-      this.socket.addEventListener("message", (event) => {
-        this.handleMessage(event);
-      });
+      console.debug(
+        "Opening Kooplex live connection",
+        endpoint
+      );
 
-      this.socket.addEventListener("close", () => {
-        console.debug("Kooplex live connection closed; reconnecting");
+      this.socket = new WebSocket(endpoint);
 
+      this.socket.addEventListener(
+        "open",
+        () => {
+          console.debug(
+            "Kooplex live connection opened"
+          );
+
+          this.reconnectDelay =
+            this.reconnectInitial;
+        }
+      );
+
+      this.socket.addEventListener(
+        "message",
+        (event) => {
+          this.handleMessage(event);
+        }
+      );
+
+      this.socket.addEventListener(
+        "close",
+        () => {
+          console.debug(
+            "Kooplex live connection closed"
+          );
+
+          this.socket = null;
+          this.scheduleReconnect();
+        }
+      );
+
+      this.socket.addEventListener(
+        "error",
+        (event) => {
+          console.error(
+            "Kooplex live WebSocket error",
+            event
+          );
+        }
+      );
+    }
+
+    scheduleReconnect() {
+      if (this.reconnectTimer) {
+        return;
+      }
+
+      const delay = this.reconnectDelay;
+
+      this.reconnectTimer =
         window.setTimeout(
-          () => this.connect(),
-          this.reconnectDelay
+          () => {
+            this.reconnectTimer = null;
+            this.connect();
+          },
+          delay
         );
-      });
 
-      this.socket.addEventListener("error", (event) => {
-        console.error("Kooplex live WebSocket error", event);
-      });
+      this.reconnectDelay = Math.min(
+        this.reconnectDelay * 2,
+        this.reconnectMax
+      );
     }
 
     handleMessage(event) {
@@ -53,6 +158,26 @@
         return;
       }
 
+      console.debug(
+        "Kooplex live event",
+        payload
+      );
+
+      /*
+       * Messages/toasts are handled by
+       * kooplex_ui.js.
+       */
+      if (payload.notification) {
+        document.body.dispatchEvent(
+          new CustomEvent(
+            "kooplex-toast",
+            {
+              detail: payload.notification,
+            }
+          )
+        );
+      }
+
       const keys = Array.isArray(payload.keys)
         ? payload.keys
         : [];
@@ -63,26 +188,29 @@
     }
 
     scheduleRefresh(key) {
-      const existingTimer = this.refreshTimers.get(key);
+      const existingTimer =
+        this.refreshTimers.get(key);
 
       if (existingTimer) {
         window.clearTimeout(existingTimer);
       }
 
-      const timer = window.setTimeout(() => {
-        this.refreshTimers.delete(key);
-        this.refreshKey(key);
-      }, this.refreshDelay);
+      const timer =
+        window.setTimeout(
+          () => {
+            this.refreshTimers.delete(key);
+            this.refreshKey(key);
+          },
+          this.refreshDelay
+        );
 
       this.refreshTimers.set(key, timer);
     }
 
     async refreshKey(key) {
-      /*
-       * If another refresh of the same logical key is running, remember
-       * that one more refresh is needed when it finishes.
-       */
-      if (this.refreshInProgress.has(key)) {
+      if (
+        this.refreshInProgress.has(key)
+      ) {
         this.refreshQueued.add(key);
         return;
       }
@@ -93,13 +221,18 @@
         const selector =
           `[data-live-key="${CSS.escape(key)}"]`;
 
-        /*
-         * Make a stable snapshot. HTMX outerHTML swaps will replace the
-         * original DOM elements while these requests are running.
-         */
         const elements = Array.from(
           document.querySelectorAll(selector)
         );
+
+        /*
+         * This is the important page scoping:
+         * if the current page does not contain a
+         * matching component, there is no request.
+         */
+        if (!elements.length) {
+          return;
+        }
 
         console.debug(
           `Refreshing live key ${key}:`,
@@ -107,93 +240,114 @@
           "elements"
         );
 
-        const requests = elements.map((element) => {
-          /*
-           * A previous swap may already have detached this element.
-           */
-          if (!element.isConnected) {
-            return Promise.resolve();
-          }
+        const requests = elements.map(
+          (element) => {
+            if (!element.isConnected) {
+              return Promise.resolve();
+            }
 
-          const url = element.dataset.liveUrl;
-          const swap =
-            element.dataset.liveSwap || "outerHTML";
+            const url =
+              element.dataset.liveUrl;
 
-          if (!url) {
-            console.warn(
-              "Live element is missing data-live-url",
-              element
+            const swap =
+              element.dataset.liveSwap ||
+              "outerHTML";
+
+            if (!url) {
+              console.warn(
+                "Live element is missing data-live-url",
+                element
+              );
+
+              return Promise.resolve();
+            }
+
+            /*
+             * Do not destroy active editing.
+             */
+            if (
+              element.matches(":focus-within") ||
+              element.dataset.liveDirty ===
+                "true"
+            ) {
+              element.dataset.liveStale =
+                "true";
+
+              return Promise.resolve();
+            }
+
+            return Promise.resolve(
+              htmx.ajax(
+                "GET",
+                url,
+                {
+                  source: element,
+                  target: element,
+                  swap: swap,
+                }
+              )
+            ).catch(
+              (error) => {
+                console.error(
+                  `Failed to refresh ${url}`,
+                  error
+                );
+              }
             );
-            return Promise.resolve();
           }
+        );
 
-          /*
-           * Do not destroy an active inline edit.
-           */
-          if (
-            element.matches(":focus-within") ||
-            element.dataset.liveDirty === "true"
-          ) {
-            element.dataset.liveStale = "true";
-            return Promise.resolve();
-          }
-
-          return Promise.resolve(
-            htmx.ajax("GET", url, {
-              source: element,
-              target: element,
-              swap: swap,
-            })
-          ).catch((error) => {
-            console.error(
-              `Failed to refresh ${url}`,
-              error
-            );
-          });
-        });
-
-        await Promise.allSettled(requests);
+        await Promise.allSettled(
+          requests
+        );
       } finally {
         this.refreshInProgress.delete(key);
 
-        /*
-         * A newer Kubernetes observation arrived while requests were
-         * running. Refresh once more to obtain the latest state.
-         */
-        if (this.refreshQueued.delete(key)) {
+        if (
+          this.refreshQueued.delete(key)
+        ) {
           this.scheduleRefresh(key);
         }
       }
     }
   }
 
-  window.KooplexLiveUpdates = KooplexLiveUpdates;
+  window.KooplexLiveUpdates =
+    KooplexLiveUpdates;
 
-  document.addEventListener("DOMContentLoaded", () => {
-    const configElement = document.getElementById(
-      "kooplex-live-config"
-    );
+  document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+      const configElement =
+        document.getElementById(
+          "kooplex-live-config"
+        );
 
-    if (!configElement) return;
+      if (!configElement) {
+        return;
+      }
 
-    let config;
+      let config;
 
-    try {
-      config = JSON.parse(configElement.textContent);
-    } catch (error) {
-      console.error(
-        "Invalid Kooplex live configuration",
-        error
-      );
-      return;
+      try {
+        config = JSON.parse(
+          configElement.textContent
+        );
+      } catch (error) {
+        console.error(
+          "Invalid Kooplex live configuration",
+          error
+        );
+
+        return;
+      }
+
+      window.kooplexLive =
+        new KooplexLiveUpdates(config);
+
+      window.kooplexLive.connect();
     }
-
-    if (!config.endpoint) return;
-
-    window.kooplexLive = new KooplexLiveUpdates(
-      config.endpoint
-    );
-
-    window.kooplexLive.connect();
-  });
+  );
 })();
+
+

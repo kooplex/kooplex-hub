@@ -42,10 +42,14 @@ class LdapSettings:
     slots=True,
 )
 class LiveSettings:
-    public_path: str = "/hub/ws/live/"
+    path: str = "hub/ws/live/"
     refresh_debounce_ms: int = 300
     reconnect_initial_ms: int = 500
     reconnect_max_ms: int = 10_000
+
+    @property
+    def public_path(self) -> str:
+        return f"/{self.path.lstrip('/')}"
 
 
 def _default_home_mount():

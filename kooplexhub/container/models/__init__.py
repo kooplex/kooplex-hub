@@ -4,5 +4,3 @@ from .container import Container
 from .proxy import Proxy, ProxyImageBinding
 from .envvar import EnvVarMapping
 
-from .container_signals import *
-

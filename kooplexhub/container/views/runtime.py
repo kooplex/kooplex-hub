@@ -16,9 +16,11 @@ from django.shortcuts import (
 from ..models import Container
 from ..services.live import (
     broadcast_container_runtime_changed,
-    broadcast_container_live_event,
 )
 from ..services.runtime_presenter import ContainerRuntimePresenter
+from ..services.runtime_control import (
+    request_container_action,
+)
 from .mixins import (
     ContainerAccessMixin,
     ContainerRuntimePartialMixin,
@@ -54,19 +56,28 @@ class ContainerControlView(
         )
 
         if action == "start":
-            container.start()
+            request_container_action(
+                container,
+                action=action,
+                actor=request.user,
+            )
             message = f"Starting environment '{container.name}'."
             level = "success"
             template_name = "container/partials/widgets/start_button.html"
 
         elif action == "stop":
-            container.stop()
+            request_container_action(
+                container,
+                action=action,
+                actor=request.user,
+            )
             message = f"Stopping environment '{container.name}'."
             level = "warning"
             template_name = "container/partials/widgets/stop_button.html"
 
         else:
-            container.restart()
+            #container.restart()
+            raise NotImplementedError("restart")
             message = f"Restarting environment '{container.name}'."
             level = "warning"
             template_name = "container/partials/widgets/restart_button.html"
@@ -145,16 +156,8 @@ class ContainerDeleteView(
 
         container.delete()
 
-        broadcast_container_live_event(
-            user=request.user,
-            keys=[
-                f"container-list:user:{user_id}",
-            ],
-            payload={
-                "event": "object.deleted",
-                "model": "container",
-                "id": container_id,
-            },
+        broadcast_container_runtime_changed(
+            container,
         )
 
         if request.headers.get("HX-Request") == "true":

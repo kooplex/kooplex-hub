@@ -4,6 +4,30 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.templatetags.static import static
 
+from .conf import HUB_SETTINGS
+
+def live(request):
+    if not request.user.is_authenticated:
+        return {}
+
+    settings = HUB_SETTINGS.live
+
+    return {
+        "live_config": {
+            "path": settings.public_path,
+            "refreshDebounceMs": (
+                settings.refresh_debounce_ms
+            ),
+            "reconnectInitialMs": (
+                settings.reconnect_initial_ms
+            ),
+            "reconnectMaxMs": (
+                settings.reconnect_max_ms
+            ),
+        }
+    }
+
+
 def navigation_context(request):
     if not request.user.is_authenticated:
         return {

@@ -1,7 +1,9 @@
 import json
 
 from ...forms.widgets import ContainerNameForm
-from ...services.live import broadcast_container_live_event
+from ...services.live import (
+    broadcast_container_runtime_changed,
+)
 from .base import (
     ContainerWidgetDisplayView,
     ContainerWidgetEditView,
@@ -64,17 +66,8 @@ class ContainerNameUpdateView(
     ContainerWidgetUpdateView,
 ):
     def after_save(self, container, form):
-        broadcast_container_live_event(
-            user=self.request.user,
-            keys=[
-                f"container:{container.pk}",
-            ],
-            payload={
-                "event": "container.config.changed",
-                "model": "container",
-                "id": container.pk,
-                "changed": ["name"],
-            },
+        broadcast_container_runtime_changed(
+            container,
         )
 
     def add_success_headers(

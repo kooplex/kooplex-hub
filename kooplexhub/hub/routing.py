@@ -1,11 +1,12 @@
-from django.urls import re_path
+from django.urls import path
 
+from .conf import HUB_SETTINGS
 from .consumers import LiveConsumer
 
 
 websocket_urlpatterns = [
-    re_path(
-        r"^ws/live/$",
+    path(
+        HUB_SETTINGS.live.path,
         LiveConsumer.as_asgi(),
     ),
 ]
