@@ -122,13 +122,12 @@
     <div id="toast-region" class="toast-region" aria-live="polite"></div>
     <div id="side-panel"></div>
   </div>
-  {# FIXME: consider removing jquery #}
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="{% static 'hub/js/kooplex_ui.js' %}"></script>
-  <script src="{% static 'hub/js/kooplex_live.js' %}"></script>
-  {% block scripts %}{% endblock %}
   {% if live_config %}
     {{ live_config|json_script:"kooplex-live-config" }}
   {% endif %}
+  <script src="{% static 'hub/js/kooplex_ui.js' %}"></script>
+  <script src="{% static 'hub/js/kooplex_live.js' %}"></script>
+  {% block scripts %}{% endblock %}
 </body>
 </html>
