@@ -18,7 +18,7 @@ from hub.lib import mkdir, archivedir, rmdir
 from hub.lib.ldap import Ldap
 from kooplexhub.lib import bash
 from .models import Project
-from project import fs
+#FIXME from project import fs
 
 logger = logging.getLogger(__name__)
 

@@ -17,10 +17,21 @@ from .members import (
     MembershipChanges,
 )
 from .names import (
+    make_project_subpath,
     validate_project_name_for_creator,
 )
 from .mounts import (
     update_project_mounts
+)
+from .live import (
+    broadcast_project_changed,
+    broadcast_project_list_changed,
+    project_member_user_ids,
+)
+from .provisioning import (
+    mark_project_provisioning_complete,
+    mark_project_provisioning_failed,
+    provision_project_infrastructure,
 )
 
 logger = logging.getLogger(__name__)
@@ -42,19 +53,15 @@ class ProjectMembershipActionResult:
 
 
 class ProjectCreationService:
-    @classmethod
+    @staticmethod
     @transaction.atomic
-    def create(
-        cls,
+    def _create_definition(
         *,
         owner,
         name,
         scope,
         description,
         preferred_image,
-        members,
-        mounts,
-        create_environment,
     ):
         locked_owner = (
             User.objects
@@ -69,48 +76,171 @@ class ProjectCreationService:
             )
         )
 
+        subpath = make_project_subpath(
+            creator=locked_owner,
+            normalized_name=normalized_name,
+        )
+
         project = Project.objects.create(
+            name=normalized_name,
+            scope=scope,
+            description=description,
+            preferred_image=preferred_image,
+            subpath=subpath,
+            provisioning_state=(
+                Project.ProvisioningState.PREPARING
+            ),
+        )
+
+        UserProjectBinding.objects.create(
+            project=project,
+            user=locked_owner,
+            role=(
+                UserProjectBinding.Role.CREATOR
+            ),
+        )
+
+        project_id = project.pk
+        owner_id = locked_owner.pk
+
+        transaction.on_commit(
+            lambda: (
+                broadcast_project_list_changed(
+                    user_ids=(owner_id,),
+                    reason="project.created",
+                )
+            )
+        )
+
+        return project
+
+    @classmethod
+    def create(
+        cls,
+        *,
+        owner,
+        name,
+        scope,
+        description,
+        preferred_image,
+        members,
+        mounts,
+        create_environment,
+    ):
+        project = cls._create_definition(
+            owner=owner,
             name=name,
             scope=scope,
             description=description,
             preferred_image=preferred_image,
         )
 
-        UserProjectBinding.objects.create(
-            project=project,
-            user=locked_owner,
-            role=UserProjectBinding.Role.CREATOR,
+        try:
+            provision_project_infrastructure(
+                project=project,
+                owner=owner,
+            )
+
+            project.refresh_from_db()
+
+            membership_changes = (
+                create_project_members(
+                    project=project,
+                    owner=owner,
+                    members=members,
+                )
+            )
+
+            mount_changes = (
+                update_project_mounts(
+                    project=project,
+                    actor=owner,
+                    mounts=mounts,
+                )
+            )
+
+            completed = (
+                mark_project_provisioning_complete(
+                    project_id=project.pk,
+                )
+            )
+
+            if not completed:
+                raise RuntimeError(
+                    "Project provisioning state "
+                    "changed unexpectedly."
+                )
+
+        except Exception as error:
+            mark_project_provisioning_failed(
+                project_id=project.pk,
+                error=error,
+            )
+
+            user_ids = (
+                project_member_user_ids(
+                    project
+                )
+            )
+
+            broadcast_project_changed(
+                project_id=project.pk,
+                user_ids=user_ids,
+                reason=(
+                    "project.provisioning.failed"
+                ),
+            )
+
+            broadcast_project_list_changed(
+                user_ids=user_ids,
+                reason=(
+                    "project.provisioning.failed"
+                ),
+            )
+
+            raise
+
+        project.refresh_from_db()
+
+        user_ids = project_member_user_ids(
+            project
         )
 
-        membership_changes = create_project_members(
-            project=project,
-            owner=locked_owner,
-            members=members,
+        broadcast_project_changed(
+            project_id=project.pk,
+            user_ids=user_ids,
+            reason=(
+                "project.provisioning.completed"
+            ),
         )
 
-        mount_changes = update_project_mounts(
-            project=project,
-            actor=owner,
-            mounts=mounts,
+        # Newly-added collaborators did not have
+        # this Project in their grid before.
+        broadcast_project_list_changed(
+            user_ids=user_ids,
+            reason="project.ready",
         )
 
         environment = None
 
         if create_environment:
-            environment = cls._create_environment(
-                project=project,
-                owner=locked_owner,
-                image=preferred_image,
-                mounts=mounts,
+            environment = (
+                cls._create_environment(
+                    project=project,
+                    owner=owner,
+                    image=preferred_image,
+                    mounts=mounts,
+                )
             )
 
         return ProjectCreationResult(
             project=project,
             environment=environment,
-            membership_changes=membership_changes,
+            membership_changes=(
+                membership_changes
+            ),
             mount_changes=mount_changes,
         )
-
 
     @staticmethod
     def _create_environment(
@@ -120,6 +250,9 @@ class ProjectCreationService:
         image,
         mounts,
     ):
+        # I would leave this separate for this
+        # pass. The smoke test below creates its
+        # own Container explicitly.
         raise NotImplementedError
 
 
@@ -194,34 +327,81 @@ def leave_project(
     )
 
 
-@transaction.atomic
 def delete_project(
     *,
     project,
     actor,
+    archive=True,
 ):
     creator_binding = (
         UserProjectBinding.objects
-        .select_for_update()
         .filter(
             project=project,
             user=actor,
-            role=UserProjectBinding.Role.CREATOR,
+            role=(
+                UserProjectBinding.Role.CREATOR
+            ),
         )
         .first()
     )
 
     if creator_binding is None:
         raise PermissionDenied(
-            "Only the project creator may delete the project."
+            "Only the project creator may "
+            "delete the project."
+        )
+
+    if project.containerbindings.exists():
+        raise ValidationError(
+            "The project is still mounted in "
+            "one or more environments."
         )
 
     project_id = project.pk
-    project.delete()
+
+    user_ids = tuple(
+        project.userbindings.values_list(
+            "user_id",
+            flat=True,
+        )
+    )
+
+    # External filesystem operation OUTSIDE
+    # the database transaction.
+    remove_project_workdir(
+        project,
+        archive=archive,
+    )
+
+    with transaction.atomic():
+        locked = (
+            Project.objects
+            .select_for_update()
+            .get(pk=project_id)
+        )
+
+        if locked.containerbindings.exists():
+            raise ValidationError(
+                "The project became attached "
+                "to an environment while it "
+                "was being removed."
+            )
+
+        locked.delete()
+
+        transaction.on_commit(
+            lambda: (
+                broadcast_project_list_changed(
+                    user_ids=user_ids,
+                    reason="project.deleted",
+                )
+            )
+        )
 
     return ProjectMembershipActionResult(
         project_id=project_id,
         action="deleted",
     )
+
 
 

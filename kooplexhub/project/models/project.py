@@ -1,14 +1,13 @@
-import logging
-
 from django.db import models
 from django.urls import reverse
 from django.db.models import Q
 from django.core.validators import MinLengthValidator
 from django.contrib.auth import get_user_model
 
+from hub.models import Group
+
 
 User = get_user_model()
-logger = logging.getLogger(__name__)
 
 
 class ProjectQuerySet(models.QuerySet):
@@ -26,6 +25,7 @@ class ProjectQuerySet(models.QuerySet):
             qs = qs.filter(userbindings__is_hidden=False)
 
         return qs.distinct()
+
 
     def visible_to(self, user):
         """
@@ -85,8 +85,20 @@ class ProjectQuerySet(models.QuerySet):
     def attachable_by(self, user):
         """
         Projects the user may mount into an environment.
+        Only fully provisioned projects are mountable.
         """
-        return self.joined_by(user, include_hidden=False)
+        return (
+            self.joined_by(
+                user,
+                include_hidden=False,
+            )
+            .filter(
+                provisioning_state=(
+                    Project.ProvisioningState.READY
+                )
+            )
+        )        
+
 
     def manageable_by(self, user):
         """
@@ -104,6 +116,7 @@ class ProjectQuerySet(models.QuerySet):
             ],
         ).distinct()
 
+
     def created_by(self, user):
         from . import UserProjectBinding
         if not user.is_authenticated:
@@ -120,6 +133,11 @@ class Project(models.Model):
         PUBLIC = 'public', 'Any authenticated user can list and may join this project.'
         INTERNAL = 'internal', 'Only users in specific groups can list and may join this project.'
         PRIVATE = 'private', 'Only the creator can invite collaborators to this project.'
+
+    class ProvisioningState(models.TextChoices):
+        PREPARING = "prp", "Preparing"
+        READY = "rdy", "Ready"
+        FAILED = "fld", "Provisioning failed"
 
     name = models.CharField(
         max_length=200,
@@ -161,6 +179,40 @@ class Project(models.Model):
         User,
         through="project.UserProjectBinding",
         related_name="projects",
+    )
+
+    group = models.ForeignKey(
+        Group,
+        null=True,
+        blank=True,
+        default=None,
+        on_delete=models.SET_NULL,
+        related_name="projects",
+        help_text=(
+            "Filesystem/LDAP group controlling "
+            "shared project access."
+        ),
+    )
+
+    provisioning_state = models.CharField(
+        max_length=16,
+        choices=ProvisioningState.choices,
+        default=ProvisioningState.PREPARING,
+    )
+
+    last_operation_error = models.TextField(
+        blank=True,
+        default="",
+    )
+
+    last_operation_failed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    provisioned_at = models.DateTimeField(
+        null=True,
+        blank=True,
     )
 
     objects = ProjectQuerySet.as_manager()

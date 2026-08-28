@@ -148,25 +148,58 @@ class PodOperations:
             command=command,
         )
 
-    def exec_as_user(
+    def exec_for_container_root(
         self,
-        pod_labels: dict[str, str],
+        container,
+        command,
+    ):
+        return self.exec_command(
+            workload_labels(container),
+            container_name=(
+                workload_name(container)
+            ),
+            argv=[
+                "/bin/bash",
+                "-lc",
+                command,
+            ],
+        )
+    
+    
+    def exec_command(
+        self,
+        pod_labels,
         *,
-        container_name: str,
-        username: str,
-        command: str,
-    ) -> str:
-        pod = self.current_pod(pod_labels)
+        container_name,
+        argv,
+    ):
+        pod = self.current_pod(
+            pod_labels
+        )
+    
         if pod is None:
-            raise RuntimeError("Kooplex pod is not present")
-        resolved_name = self._resolve_container_name(pod, container_name)
+            raise RuntimeError(
+                "Kooplex pod is not present"
+            )
+    
+        resolved_name = (
+            self._resolve_container_name(
+                pod,
+                container_name,
+            )
+        )
+    
         if resolved_name is None:
             raise RuntimeError(
-                f"Main container {container_name!r} is not present in pod {pod.metadata.name}"
+                f"Main container "
+                f"{container_name!r} is not "
+                f"present in pod "
+                f"{pod.metadata.name}"
             )
-        argv = ["su", "-s", "/bin/bash", username, "-c", command]
+    
         return stream(
-            self.clients.core.connect_get_namespaced_pod_exec,
+            self.clients.core
+            .connect_get_namespaced_pod_exec,
             pod.metadata.name,
             self.clients.namespace,
             command=argv,
@@ -176,6 +209,28 @@ class PodOperations:
             stdout=True,
             tty=False,
         )
+
+    def exec_as_user(
+        self,
+        pod_labels: dict[str, str],
+        *,
+        container_name: str,
+        username: str,
+        command: str,
+    ) -> str:
+        return self.exec_command(
+            pod_labels,
+            container_name=container_name,
+            argv=[
+                "su",
+                "-s",
+                "/bin/bash",
+                username,
+                "-c",
+                command,
+            ],
+        )
+
 
     @staticmethod
     def _resolve_container_name(

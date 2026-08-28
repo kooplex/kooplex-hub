@@ -1,12 +1,13 @@
-import logging
 from dataclasses import dataclass
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
 from ..models import UserProjectBinding
-
-logger = logging.getLogger(__name__)
+from hub.services.groups import (
+    add_user_to_group,
+    remove_user_from_group,
+)
 
 
 @dataclass(frozen=True)
@@ -180,6 +181,17 @@ def apply_project_members(
                 user=selection.user,
                 role=selection.role,
             )
+
+            if project.group_id is None:
+                raise ValidationError(
+                    "Project access group is missing."
+                )
+        
+            add_user_to_group(
+                user=selection.user,
+                group=project.group,
+            )
+
             added.append(binding)
             continue
 
@@ -189,9 +201,21 @@ def apply_project_members(
             updated.append(binding)
 
     for user_id, binding in existing.items():
-        if user_id not in desired:
-            removed.append(binding)
-            binding.delete()
+        if user_id in desired:
+            continue
+    
+        if project.group_id is None:
+            raise ValidationError(
+                "Project access group is missing."
+            )
+    
+        remove_user_from_group(
+            user=binding.user,
+            group=project.group,
+        )
+    
+        removed.append(binding)
+        binding.delete()
 
     return MembershipChanges(
         added=tuple(added),
@@ -226,9 +250,47 @@ def update_project_members(
         ),
     )
 
-    return apply_project_members(
+    changes = apply_project_members(
         project=project,
         selections=selections,
     )
+    
+    affected_user_ids = {
+        binding.user_id
+        for binding in (
+            changes.added
+            + changes.updated
+            + changes.removed
+        )
+    }
+    
+    current_user_ids = set(
+        project.userbindings.values_list(
+            "user_id",
+            flat=True,
+        )
+    )
+    
+    all_user_ids = (
+        current_user_ids
+        | affected_user_ids
+    )
+    
+    transaction.on_commit(
+        lambda: broadcast_project_changed(
+            project_id=project.pk,
+            user_ids=all_user_ids,
+            reason="project.members.changed",
+        )
+    )
+    
+    transaction.on_commit(
+        lambda: broadcast_project_list_changed(
+            user_ids=affected_user_ids,
+            reason="project.members.changed",
+        )
+    )
+    
+    return changes
 
 

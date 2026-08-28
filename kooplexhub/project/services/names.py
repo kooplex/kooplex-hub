@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError
+from django.utils.text import slugify
 
 from ..models import (
     Project,
@@ -6,6 +7,21 @@ from ..models import (
 )
 
 MIN_NAME_LENGTH = 3
+
+def make_project_subpath(
+    *,
+    creator,
+    normalized_name,
+):
+    slug = slugify(
+        normalized_name,
+        allow_unicode=False,
+    ) or "project"
+
+    return (
+        f"{slug[:150]}-"
+        f"{creator.username}"
+    )
 
 
 def validate_project_name_for_creator(

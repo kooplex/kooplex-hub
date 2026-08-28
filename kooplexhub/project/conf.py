@@ -6,6 +6,9 @@ from typing import Any
 from django.conf import settings
 
 from hub.confutils import merge_dataclass
+from hub.conf_types import (
+    ArchivableMountSettings,
+)
 from .models import (
     Project, 
     UserProjectBinding,
@@ -43,6 +46,23 @@ class ProjectPresentationSettings:
     )
 
 
+def _default_project_mount():
+    return ArchivableMountSettings(
+        claim="big-storage",
+        subpath="project/projects",
+        folder="{project.subpath}",
+        mountpoint="/project/{project.subpath}",
+        mountpoint_hub="/mnt/projects",
+        archive_name="project-{project.subpath}.{time}.tar.gz",
+    )
+
+@dataclass(frozen=True)
+class ProjectMountsSettings:
+    project: ArchivableMountSettings = field(
+        default_factory=_default_project_mount
+    )
+
+
 @dataclass(frozen=True)
 class ProjectSettings:
     membership_editor: MembershipEditorSettings = field(
@@ -50,6 +70,9 @@ class ProjectSettings:
     )
     presentation: ProjectPresentationSettings = field(
         default_factory=ProjectPresentationSettings
+    )
+    mounts: ProjectMountsSettings = field(
+        default_factory=ProjectMountsSettings
     )
     skip_workflow_chooser_when_no_joinable_project: bool = True
 

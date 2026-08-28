@@ -8,7 +8,6 @@ from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.views.generic import TemplateView
 from django.views import View
-from django.db import transaction
 
 from project.forms.create import ProjectCreateForm
 from project.models import UserProjectBinding
@@ -168,20 +167,19 @@ class ProjectCreateView(
                 status=422,
             )
 
-        with transaction.atomic():
-            result = ProjectCreationService.create(
-                owner=request.user,
-                name=form.cleaned_data["name"],
-                scope=form.cleaned_data["scope"],
-                description=form.cleaned_data["description"],
-                preferred_image=form.cleaned_data["preferred_image"],
-                members=form.cleaned_data["members"],
-                mounts=form.cleaned_data["mounts"],
-                create_environment=(
-                    form.cleaned_data["creation_mode"]
-                    == "project_and_environment"
-                ),
-            )
+        result = ProjectCreationService.create(
+            owner=request.user,
+            name=form.cleaned_data["name"],
+            scope=form.cleaned_data["scope"],
+            description=form.cleaned_data["description"],
+            preferred_image=form.cleaned_data["preferred_image"],
+            members=form.cleaned_data["members"],
+            mounts=form.cleaned_data["mounts"],
+            create_environment=(
+                form.cleaned_data["creation_mode"]
+                == "project_and_environment"
+            ),
+        )
 
         response = HttpResponse(status=204)
         response["HX-Trigger"] = json.dumps(
