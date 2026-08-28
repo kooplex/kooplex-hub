@@ -5,6 +5,9 @@ from typing import Any, Iterable
 
 from .labels import dns_label
 from .types import BuiltWorkload, RouteSpec
+from container.services.service_catalog import (
+    get_container_proxies,
+)
 
 
 class RouteConfigurationError(ValueError):
@@ -19,8 +22,6 @@ class RouteBuilderSettings:
 
     ``container``
         The Kooplex ``Container`` model instance.
-    ``proxy``
-        One item from ``container.proxies``.
     ``workload``
         The built Kubernetes workload.
     ``service`` / ``namespace`` / ``port`` / ``proxy_name``
@@ -32,7 +33,7 @@ class RouteBuilderSettings:
 
 
 class KooplexRouteBuilder:
-    """Build Configurable HTTP Proxy routes from ``container.proxies``.
+    """Build Configurable HTTP Proxy routes.
 
     The public path is deliberately read from the proxy/domain model instead of
     being derived from the Kubernetes service name. Supported attribute names
@@ -82,11 +83,11 @@ class KooplexRouteBuilder:
 
     @staticmethod
     def _iter_proxies(container: Any) -> list[Any]:
-        proxies = getattr(container, "proxies", [])
-        all_method = getattr(proxies, "all", None)
-        if callable(all_method):
-            proxies = all_method()
-        return list(proxies or [])
+        return list(
+            get_container_proxies(
+                container
+            )
+        )
 
     def _base_path(self, proxy: Any, context: dict[str, Any]) -> str:
         value = self._first_value(proxy, self._BASE_PATH_ATTRIBUTES)

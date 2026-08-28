@@ -10,16 +10,13 @@ def live_group_for_user(user_id):
 
 def broadcast_live_event(
     *,
-    user,
+    user_id,
     keys=(),
     event="object.changed",
     payload=None,
     notification=None,
 ):
-    if (
-        user is None
-        or not user.is_authenticated
-    ):
+    if not user_id:
         return
 
     channel_layer = get_channel_layer()
@@ -40,7 +37,7 @@ def broadcast_live_event(
     async_to_sync(
         channel_layer.group_send
     )(
-        live_group_for_user(user.pk),
+        live_group_for_user(user_id),
         {
             "type": "live.event",
             "payload": message,
@@ -62,14 +59,14 @@ def broadcast_live_event_to_users(
         seen.add(user.pk)
 
         broadcast_live_event(
-            user=user,
+            user_id=user.pk,
             **kwargs,
         )
 
 
 def push_live_message(
     *,
-    user,
+    user_id,
     message,
     level="info",
     title=None,
@@ -83,7 +80,7 @@ def push_live_message(
         notification["title"] = title
 
     broadcast_live_event(
-        user=user,
+        user_id=user_id,
         event="notification",
         notification=notification,
     )

@@ -44,7 +44,7 @@ def broadcast_container_runtime_changed(
     )
 
     broadcast_live_event_to_users(
-        users=users,
+        users_id=users.pk,
         keys=[
             f"container-runtime:{container.pk}",
         ],

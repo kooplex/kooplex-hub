@@ -318,10 +318,6 @@ class ManagedPodWatcher:
         if self.feedback is not None:
             self.feedback(container, message, observation.backend_state)
 
-        # Deliberately no container.start() and no container.addroutes() here:
-        # Deployments self-heal Pods, ensure_watcher enforces desired state, and
-        # ContainerRuntimeService owns proxy route reconciliation.
-
     def _pods_for_container(self, container_id: int) -> list[Any]:
         return [
             pod

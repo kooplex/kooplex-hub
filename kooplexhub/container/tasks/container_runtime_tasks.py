@@ -8,13 +8,19 @@ from django_huey import db_task
 )
 def start_container(user_id, container_id):
     from ..models import Container
-    from ..services.kubernetes.wiring import build_runtime_service
-
-    container = Container.objects.select_related("user", "image").get(
-        user_id=user_id,
-        pk=container_id,
+    from ..services.kubernetes.wiring import (
+        build_runtime_service,
     )
-    return build_runtime_service().start(container, remove_legacy_pod=True)
+
+    container = (
+        Container.objects
+        .select_related("user", "image")
+        .get(pk=container_id)
+    )
+    return build_runtime_service().start(
+        container, 
+        remove_legacy_pod=True,
+    )
 
 
 @db_task(
@@ -24,13 +30,18 @@ def start_container(user_id, container_id):
 )
 def stop_container(user_id, container_id):
     from ..models import Container
-    from ..services.kubernetes.wiring import build_runtime_service
-
-    container = Container.objects.select_related("user", "image").get(
-        user_id=user_id,
-        pk=container_id,
+    from ..services.kubernetes.wiring import (
+        build_runtime_service,
     )
-    return build_runtime_service().stop(container)
+
+    container = (
+        Container.objects
+        .select_related("user", "image")
+        .get(pk=container_id)
+    )
+    return build_runtime_service().stop(
+        container
+    )
 
 
 @db_task(
@@ -40,10 +51,17 @@ def stop_container(user_id, container_id):
 )
 def restart_container(user_id, container_id):
     from ..models import Container
-    from ..services.kubernetes.wiring import build_runtime_service
-
-    container = Container.objects.select_related("user", "image").get(
-        user_id=user_id,
-        pk=container_id,
+    from ..services.kubernetes.wiring import (
+        build_runtime_service,
     )
-    return build_runtime_service().restart(container)
+
+    container = (
+        Container.objects
+        .select_related("user", "image")
+        .get(pk=container_id)
+    )
+    return build_runtime_service().restart(
+        container
+    )
+
+

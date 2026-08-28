@@ -7,7 +7,13 @@ from typing import Any, Iterable
 
 from kubernetes import client as kubernetes_client
 
+from container.services.service_catalog import (
+    get_container_proxies,
+)
 from container.models import Image
+from container.services.mounts import (
+    get_container_mount_items,
+)
 from education.conf import EDUCATION_SETTINGS
 from hub.conf import HUB_SETTINGS
 from kooplexhub.settings import KOOPLEX, REDIS_TELEPORT
@@ -106,10 +112,17 @@ class ContainerWorkloadBuilder:
 
     def build(self, container: Any) -> BuiltWorkload:
         labels = workload_labels(container)
+        mount_items = get_container_mount_items(
+            container
+        )
         pod_ports, service_ports = self._build_ports(container)
         volumes = VolumeBundle()
         env = self._build_environment_and_domain_mounts(container, volumes)
-        self._build_user_volumes(container, volumes)
+        self._build_user_volumes(
+            container, 
+            volumes,
+            mount_items["volumes"],
+        )
 
         pod_containers: list[dict[str, Any]] = []
         sidecar = self._build_davfs_sidecar(container, volumes)
@@ -125,10 +138,26 @@ class ContainerWorkloadBuilder:
             "containers": pod_containers,
             "volumes": volumes.volumes,
         }
-        scheduling = deepcopy(getattr(container, "nodeSelector", {}) or {})
-        if not isinstance(scheduling, dict):
-            raise TypeError("container.nodeSelector must be a dictionary")
-        pod_spec.update(scheduling)
+        selector = (
+            {
+                "kubernetes.io/hostname":
+                container.requested_node
+            }
+            if container.requested_node
+            else deepcopy(
+                _get_setting(
+                    self.settings,
+                    "node_selector",
+                    {},
+                )
+                or {}
+            )
+        )
+        
+        if selector:
+            pod_spec["nodeSelector"] = (
+                selector
+            )
 
         return BuiltWorkload(
             name=workload_name(container),
@@ -144,7 +173,9 @@ class ContainerWorkloadBuilder:
     ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
         pod_ports: list[dict[str, Any]] = []
         service_ports: list[dict[str, Any]] = []
-        for proxy in _iter(getattr(container, "proxies", [])):
+        for proxy in get_container_proxies(
+            container
+        ):
             port = int(proxy.svc_port)
             name = dns_label(str(proxy.name), max_length=15)
             pod_ports.append({"containerPort": port, "name": name})
@@ -159,7 +190,10 @@ class ContainerWorkloadBuilder:
         return pod_ports, service_ports
 
     def _build_environment_and_domain_mounts(
-        self, container: Any, volumes: VolumeBundle
+        self, 
+        container: Any, 
+        volumes: VolumeBundle,
+        mount_items: Any,
     ) -> list[dict[str, Any]]:
         image_type = container.image.imagetype
         interactive_types = {Image.ImageType.PROJECT, Image.ImageType.JOB}
@@ -172,7 +206,11 @@ class ContainerWorkloadBuilder:
         if image_type in interactive_types:
             env = self._format_environment(KOOPLEX["environmental_variables"], container)
             self._add_identity_mounts(container, volumes, env)
-            self._add_home_scratch_course_project_mounts(container, volumes)
+            self._add_home_scratch_course_project_mounts(
+                container, 
+                volumes, 
+                mount_items,
+            )
         elif image_type in published_types:
             env = self._format_environment(
                 KOOPLEX["environmental_variables_report"], container
@@ -198,7 +236,18 @@ class ContainerWorkloadBuilder:
         else:
             raise ValueError(f"Unknown image type {image_type}")
 
-        env.extend(_sanitize(_iter(getattr(container, "env_variables", []))))
+        env.extend(
+            {
+                "name": mapping.name,
+                "value": mapping.valuemap,
+            }
+            for mapping in (
+                EnvVarMapping.objects
+                .filter(
+                    image_id=container.image_id
+                )
+            )
+        )
         return env
 
     @staticmethod
@@ -247,7 +296,10 @@ class ContainerWorkloadBuilder:
         )
 
     def _add_home_scratch_course_project_mounts(
-        self, container: Any, volumes: VolumeBundle
+        self, 
+        container: Any, 
+        volumes: VolumeBundle,
+        mount_items: Any,
     ) -> None:
         if container.image.require_home:
             self._add_configured_pvc(
@@ -261,7 +313,7 @@ class ContainerWorkloadBuilder:
         if container.user.profile.has_scratch and scratch:
             self._add_configured_pvc(volumes, scratch, user=container.user)
 
-        for course in _iter(getattr(container, "courses", [])):
+        for course in mount_items["courses"]:
             self._add_configured_pvc(
                 volumes,
                 EDUCATION_SETTINGS["mounts"]["workdir"],
@@ -275,7 +327,7 @@ class ContainerWorkloadBuilder:
                 course=course,
             )
 
-        for project in _iter(getattr(container, "projects", [])):
+        for project in mount_items["projects"]:
             self._add_configured_pvc(
                 volumes,
                 PROJECT_SETTINGS["mounts"]["project"],
@@ -302,8 +354,13 @@ class ContainerWorkloadBuilder:
             sub_path=sub_path,
         )
 
-    def _build_user_volumes(self, container: Any, volumes: VolumeBundle) -> None:
-        for volume in _iter(getattr(container, "volumes", [])):
+    def _build_user_volumes(
+        self, 
+        container: Any, 
+        volumes: VolumeBundle,
+        user_volumse: Any,
+    ) -> None:
+        for volume in user_volumes:
             key = (
                 "attachment"
                 if volume.scope == volume.Scope.ATTACHMENT

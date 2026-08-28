@@ -28,9 +28,6 @@ class ProjectListView(
             "page_eyebrow": "Workspace management",
             "page_description": "Create and manage your notebook environments.",
             "documentation_url": "https://xwiki.vo.elte.hu/en/kooplex-manual/projects",
-            "live_config": {
-                "endpoint": CONTAINER_SETTINGS.wss.live.format(user=self.request.user),
-            },
             "project_page_config": {
                 "userid": self.request.user.id,
                 "configure_request": "configure-project",

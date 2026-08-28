@@ -15,6 +15,9 @@ from ...services.compute_presenter import (
 from ...services.live import (
     broadcast_container_runtime_changed,
 )
+from ...services.runtime_control import (
+    mark_container_restart_required,
+)
 
 
 class ContainerComputeWidgetMixin:
@@ -100,13 +103,13 @@ class ContainerComputeUpdateView(
     ContainerWidgetUpdateView,
 ):
     def after_save(self, container, form):
-        restart_marked = container.mark_restart(
-            "Compute resources changed: "
-            + ", ".join(form.changed_data),
-            save=True,
+        mark_container_restart_required(
+            container_id=container.pk,
+            reason=(
+                "Compute resources changed: "
+                + ", ".join(form.changed_data),
+            )
         )
-
-        self.restart_marked = restart_marked
 
         broadcast_container_runtime_changed(
             container=container,

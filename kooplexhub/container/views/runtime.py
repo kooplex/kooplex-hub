@@ -13,13 +13,28 @@ from django.shortcuts import (
     redirect,
 )
 
+
+from kooplexhub.lib import custom_redirect
+from hub.services.live import (
+    push_live_message,
+)
+from hub.services.http import (
+    toast_response,
+)
 from ..models import Container
 from ..services.live import (
     broadcast_container_runtime_changed,
 )
 from ..services.runtime_presenter import ContainerRuntimePresenter
 from ..services.runtime_control import (
+    ContainerActionError,
     request_container_action,
+)
+from ..services.runtime_query import (
+    get_container_log,
+)
+from ..services.service_catalog import (
+    get_container_service_view,
 )
 from .mixins import (
     ContainerAccessMixin,
@@ -41,70 +56,77 @@ class ContainerControlView(
         "restart",
     }
 
+    template_names = {
+        "start": (
+            "container/partials/widgets/"
+            "start_button.html"
+        ),
+        "stop": (
+            "container/partials/widgets/"
+            "stop_button.html"
+        ),
+        "restart": (
+            "container/partials/widgets/"
+            "restart_button.html"
+        ),
+    }
+
     def post(self, request, pk, action):
         if action not in self.allowed_actions:
-            return render(
-                request,
-                "error.html",
-                {"message": "Unknown container action."},
-                status=400,
+            return toast_response(
+                "Unknown environment action."
             )
 
         container = get_object_or_404(
-            Container.objects.filter(user=request.user),
+            Container.objects.filter(
+                user=request.user
+            ),
             pk=pk,
         )
 
-        if action == "start":
-            request_container_action(
-                container,
+        try:
+            result = request_container_action(
+                container=container,
                 action=action,
                 actor=request.user,
             )
-            message = f"Starting environment '{container.name}'."
-            level = "success"
-            template_name = "container/partials/widgets/start_button.html"
-
-        elif action == "stop":
-            request_container_action(
-                container,
-                action=action,
-                actor=request.user,
+        except ContainerActionError as error:
+            return toast_response(
+                str(error),
+                level="error",
             )
-            message = f"Stopping environment '{container.name}'."
-            level = "warning"
-            template_name = "container/partials/widgets/stop_button.html"
 
-        else:
-            #container.restart()
-            raise NotImplementedError("restart")
-            message = f"Restarting environment '{container.name}'."
-            level = "warning"
-            template_name = "container/partials/widgets/restart_button.html"
+        # runtime_control locked/refetched another
+        # model instance.
+        container.refresh_from_db()
 
         broadcast_container_runtime_changed(
             container=container,
             actor=request.user,
-            reason=f"container.{action}.requested",
+            reason=(
+                f"container.{action}.requested"
+            ),
         )
 
         response = render(
             request,
-            template_name,
+            self.template_names[action],
             {
                 "container": container,
-                "runtime": ContainerRuntimePresenter(container),
+                "runtime": (
+                    ContainerRuntimePresenter(
+                        container
+                    )
+                ),
             },
         )
 
-        response["HX-Trigger"] = json.dumps(
-            {
-                "kooplex-toast": {
-                    "message": message,
-                    "level": level,
-                },
-            }
-        )
+        response["HX-Trigger"] = json.dumps({
+            "kooplex-toast": {
+                "message": result.message,
+                "level": result.level,
+            },
+        })
 
         return response
 
@@ -114,30 +136,63 @@ class ContainerOpenServiceView(
     ContainerAccessMixin,
     View,
 ):
-    def get(self, request, pk, pk_view):
+    def get(
+        self, 
+        request, 
+        pk, 
+        pk_view
+    ):
         container = self.get_container()
 
         if not container.is_running:
-            messages.error(
-                request,
-                f"Cannot open {container.name}: "
-                f"{container.get_state_display()}",
+            push_live_message(
+                user=request.user,
+                message=(
+                    f"Cannot open {container.name}: "
+                    f"{container.get_state_display()}"
+                ),
+                level="error",
             )
-            return redirect("container:list")
-
-        available_views = {
-            view.pk: view
-            for view in container.views
-        }
-
-        if pk_view not in available_views:
-            messages.error(
-                request,
-                "The requested environment view is not available.",
+            return HttpResponse(
+                "Environment is no longer running.",
+                status=409,
             )
-            return redirect("container:list")
 
-        return container.redirect(pk_view)
+        service_view = (
+            get_container_service_view(
+                container,
+                pk_view,
+            )
+        )
+
+        if service_view is None:
+            push_live_message(
+                user=request.user,
+                message=(
+                    "The requested environment "
+                    "view is no longer available."
+                ),
+                level="error",
+            )
+            return HttpResponse(
+                "Service view is unavailable.",
+                status=404,
+            )
+
+        url = service_view.url_substitute(
+            container
+        )
+
+        if service_view.pass_token:
+            return custom_redirect(
+                url,
+                token=(
+                    container.user
+                    .profile.token
+                ),
+            )
+
+        return custom_redirect(url)
 
 
 class ContainerDeleteView(
@@ -217,7 +272,7 @@ class ContainerFetchLogView(
             )
 
         try:
-            log_content = container.retrieve_log()
+            log_content = get_container_log(container)
 
         except Exception:
             logger.exception(

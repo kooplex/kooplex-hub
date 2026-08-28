@@ -5,8 +5,8 @@
   data-live-url="{% url 'container:open_button_partial' container.pk %}"
   data-live-swap="outerHTML"
 >
-  {% if runtime.can_open and service_views %}
-    {% with default_view=service_views.0 %}
+  {% if runtime.can_open and runtime.service_views %}
+    {% with default_view=runtime.service_views.0 %}
       <div class="service-view-dropdown">
         <a
           class="service-view-primary"
@@ -33,7 +33,7 @@
           </span>
         </a>
 
-        {% if service_views|length > 1 %}
+        {% if runtime.service_views|length > 1 %}
           <button
             type="button"
             class="service-view-menu-trigger"
@@ -48,7 +48,7 @@
             role="menu"
             aria-label="Available views for {{ container.name }}"
           >
-            {% for view in service_views %}
+            {% for view in runtime.service_views %}
               <a
                 class="service-view-menu-item"
                 href="{% url 'container:open_serviceview' container.pk view.pk %}"

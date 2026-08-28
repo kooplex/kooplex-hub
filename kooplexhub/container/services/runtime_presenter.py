@@ -1,9 +1,13 @@
+from functools import cached_property
 from dataclasses import dataclass
 
 from django.utils import timezone
 
 from ..conf import CONTAINER_SETTINGS
 from ..models import Container
+from .service_catalog import (
+    get_container_service_views,
+)
 
 
 @dataclass
@@ -264,3 +268,11 @@ class ContainerRuntimePresenter:
             f"{self.container.get_state_display()}"
         )
 
+
+    @cached_property
+    def service_views(self):
+        return tuple(
+            get_container_service_views(
+                self.container
+            )
+        )
