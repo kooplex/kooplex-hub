@@ -11,6 +11,10 @@ from container.models import (
     Container,
     Image,
 )
+from container.services.lifecycle import (
+    create_container,
+    delete_container,
+)
 from container.services.image_catalog import (
     ImageCatalogService,
 )
@@ -153,24 +157,14 @@ class Command(BaseCommand):
         )
 
         token = uuid.uuid4().hex[:8]
-
         name = f"smoke-{token}"
-
-        # Globally unique, stable Kubernetes-
-        # friendly identity.
-        label = (
-            f"{user.username}-{name}"
-        )
-
-        container = None
 
         self.step("Creating environment")
 
-        container = Container.objects.create(
+        container = create_container(
             user=user,
             image=image,
             name=name,
-            label=label,
         )
 
         self.stdout.write(
@@ -401,8 +395,9 @@ class Command(BaseCommand):
             "Removing smoke environment"
         )
 
-        container_id = container.pk
-        container.delete()
+        container_id = delete_container(
+            container=container,
+        )
 
         self.stdout.write(
             self.style.SUCCESS(

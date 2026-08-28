@@ -2,6 +2,7 @@ from hub.services.live import (
     broadcast_live_event,
 )
 
+
 def broadcast_container_runtime_changed(
     container,
     *,
@@ -30,5 +31,30 @@ def broadcast_container_runtime_changed(
         payload=payload,
         notification=notification,
     )
+
+
+def broadcast_container_list_changed(
+    *,
+    user_id,
+    reason=None,
+    notification=None,
+):
+    payload = {
+        "model": "container-list",
+        "user_id": user_id,
+    }
+
+    if reason:
+        payload["reason"] = reason
+
+    broadcast_live_event(
+        user_id=user_id,
+        keys=[
+            f"container-list:user:{user_id}",
+        ],
+        payload=payload,
+        notification=notification,
+    )
+
 
 

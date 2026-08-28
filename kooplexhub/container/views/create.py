@@ -22,6 +22,10 @@ from ..services.mounts import (
 from ..services.live import (
     broadcast_container_runtime_changed,
 )
+from ..services.lifecycle import (
+    ContainerLifecycleError,
+    create_container,
+)
 from project.models import Project
 from education.models import Course
 from volume.models import Volume
@@ -47,7 +51,9 @@ class ContainerCreateView(
     LoginRequiredMixin, 
     View,
 ):
-    template_name = "container/partials/create_modal.html"
+    template_name = (
+        "container/partials/create_modal.html"
+    )
 
     def post(self, request):
         form = ContainerCreateForm(
@@ -55,101 +61,71 @@ class ContainerCreateView(
             user=request.user,
         )
 
-        selected_image = self.get_selected_image()
-        selected_projects = self.get_selected_projects()
-        selected_courses = self.get_selected_courses()
-        selected_volumes = self.get_selected_volumes()
-
-        if not form.is_valid():
-            return render(
-                request,
-                self.template_name,
-                {
-                    "form": form,
-                    "selected_image": selected_image,
-                    "selected_projects": selected_projects,
-                    "selected_courses": selected_courses,
-                    "selected_volumes": selected_volumes,
-                },
-            )
-
-        container = form.save(commit=False)
-        container.user = request.user
-
-        if selected_image is not None:
-            container.image = selected_image
-
-        container.save()
-
-        changes = self.apply_mounts(
-            container=container,
-            projects=selected_projects,
-            courses=selected_courses,
-            volumes=selected_volumes,
+        project_ids = self._ids_from_post(
+            "project_ids"
+        )
+        course_ids = self._ids_from_post(
+            "course_ids"
+        )
+        volume_ids = self._ids_from_post(
+            "volume_ids"
         )
 
-        response = HttpResponse(status=204)
-        mount_message = mount_change_message(changes)
-        logger.debug(mount_message)
-        response["HX-Trigger"] = json.dumps(
-            {
+        if not form.is_valid():
+            return self.render_invalid(
+                form=form,
+                project_ids=project_ids,
+                course_ids=course_ids,
+                volume_ids=volume_ids,
+            )
+
+        try:
+            container = create_container(
+                user=request.user,
+                name=form.cleaned_data[
+                    "name"
+                ],
+                image=form.cleaned_data[
+                    "image"
+                ],
+                project_ids=project_ids,
+                course_ids=course_ids,
+                volume_ids=volume_ids,
+            )
+
+        except ContainerLifecycleError as error:
+            form.add_error(
+                None,
+                str(error),
+            )
+
+            return self.render_invalid(
+                form=form,
+                project_ids=project_ids,
+                course_ids=course_ids,
+                volume_ids=volume_ids,
+            )
+
+        response = HttpResponse(
+            status=204
+        )
+
+        response["HX-Trigger"] = (
+            json.dumps({
                 "container-list-refresh": True,
                 "modal-close": True,
                 "kooplex-toast": {
-                    "message": f"Environment '{container.name}' was created.",
+                    "message": (
+                        f"Environment "
+                        f"'{container.name}' "
+                        "was created."
+                    ),
                     "level": "success",
                 },
-            }
+            })
         )
-        broadcast_container_runtime_changed(
-            container,
-            reason=(
-                f"container.created"
-            ),
-        )
+
         return response
-
-    def get_selected_image(self):
-        image_id = self.request.POST.get("image")
-
-        if not image_id:
-            return None
-
-        return (
-            ImageCatalogService.available_for_user(user=self.request.user)
-            .filter(pk=image_id)
-            .first()
-        )
-
-    def get_selected_projects(self):
-        ids = self._ids_from_post("project_ids")
-
-        return (
-            Project.objects
-            .attachable_by(self.request.user)
-            .filter(pk__in=ids)
-            .order_by("name")
-        )
-
-    def get_selected_courses(self):
-        ids = self._ids_from_post("course_ids")
-
-        return (
-            Course.objects
-            .attachable_by(self.request.user)
-            .filter(pk__in=ids)
-            .order_by("name")
-        )
-
-    def get_selected_volumes(self):
-        ids = self._ids_from_post("volume_ids")
-
-        return (
-            Volume.objects
-            .attachable_by(self.request.user)
-            .filter(pk__in=ids)
-            .order_by("folder")
-        )
 
     def _ids_from_post(self, name):
         return [
@@ -158,12 +134,46 @@ class ContainerCreateView(
             if str(value).isdigit()
         ]
 
-    def apply_mounts(self, container, projects, courses, volumes):
-        return apply_container_mounts(
-            container=container,
-            projects=projects,
-            courses=courses,
-            volumes=volumes,
+    def render_invalid(
+        self,
+        *,
+        form,
+        project_ids,
+        course_ids,
+        volume_ids,
+    ):
+        return render(
+            self.request,
+            self.template_name,
+            {
+                "form": form,
+                "selected_image": (
+                    form.cleaned_data.get(
+                        "image"
+                    )
+                    if hasattr(
+                        form,
+                        "cleaned_data",
+                    )
+                    else None
+                ),
+                "selected_projects": (
+                    self.get_projects(
+                        project_ids
+                    )
+                ),
+                "selected_courses": (
+                    self.get_courses(
+                        course_ids
+                    )
+                ),
+                "selected_volumes": (
+                    self.get_volumes(
+                        volume_ids
+                    )
+                ),
+            },
+            status=422,
         )
 
 

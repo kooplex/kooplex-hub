@@ -207,6 +207,28 @@
       this.refreshTimers.set(key, timer);
     }
 
+    cancelDescendantRefreshes(element) {
+      element
+        .querySelectorAll("[data-live-key]")
+        .forEach((child) => {
+          const childKey = child.dataset.liveKey;
+    
+          if (!childKey) {
+            return;
+          }
+    
+          const timer =
+            this.refreshTimers.get(childKey);
+    
+          if (timer) {
+            window.clearTimeout(timer);
+            this.refreshTimers.delete(childKey);
+          }
+    
+          this.refreshQueued.delete(childKey);
+        });
+    }
+
     async refreshKey(key) {
       if (
         this.refreshInProgress.has(key)
@@ -261,6 +283,10 @@
 
               return Promise.resolve();
             }
+
+            this.cancelDescendantRefreshes(
+              element
+            );
 
             /*
              * Do not destroy active editing.

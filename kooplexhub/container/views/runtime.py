@@ -22,6 +22,9 @@ from hub.services.http import (
     toast_response,
 )
 from ..models import Container
+from ..services.lifecycle import (
+    delete_container,
+)
 from ..services.live import (
     broadcast_container_runtime_changed,
 )
@@ -208,13 +211,8 @@ class ContainerDeleteView(
 
         logger.debug("Deleting container %s", container)
 
-        container.delete()
-
-        broadcast_container_runtime_changed(
-            container,
-            reason=(
-                f"container.deleted"
-            ),
+        container_id = delete_container(
+            container=container,
         )
 
         if request.headers.get("HX-Request") == "true":
