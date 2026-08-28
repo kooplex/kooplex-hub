@@ -187,14 +187,85 @@
       });
     }
 
+    elementsForKey(key) {
+      return Array.from(
+        document.querySelectorAll(
+          `[data-live-key="${CSS.escape(key)}"]`
+        )
+      );
+    }
+    
+    hasPendingLiveAncestor(element) {
+      let ancestor = element.parentElement
+        ?.closest("[data-live-key]");
+    
+      while (ancestor) {
+        const key = ancestor.dataset.liveKey;
+    
+        if (
+          key &&
+          (
+            this.refreshTimers.has(key) ||
+            this.refreshInProgress.has(key)
+          )
+        ) {
+          return true;
+        }
+    
+        ancestor = ancestor.parentElement
+          ?.closest("[data-live-key]");
+      }
+    
+      return false;
+    }
+
     scheduleRefresh(key) {
+      const elements =
+        this.elementsForKey(key);
+    
+      /*
+       * If the object/widget has already disappeared
+       * from this page, there is nothing to refresh.
+       */
+      if (!elements.length) {
+        return;
+      }
+    
+      /*
+       * If a parent component is already scheduled
+       * for replacement, refreshing this child would
+       * only be wasted work.
+       */
+      if (
+        elements.every(
+          (element) =>
+            this.hasPendingLiveAncestor(element)
+        )
+      ) {
+        return;
+      }
+    
+      /*
+       * A refresh of a larger component supersedes
+       * pending refreshes of everything inside it.
+       *
+       * Do this NOW, not 300 ms later.
+       */
+      elements.forEach(
+        (element) => {
+          this.cancelDescendantRefreshes(
+            element
+          );
+        }
+      );
+    
       const existingTimer =
         this.refreshTimers.get(key);
-
+    
       if (existingTimer) {
         window.clearTimeout(existingTimer);
       }
-
+    
       const timer =
         window.setTimeout(
           () => {
@@ -203,8 +274,11 @@
           },
           this.refreshDelay
         );
-
-      this.refreshTimers.set(key, timer);
+    
+      this.refreshTimers.set(
+        key,
+        timer
+      );
     }
 
     cancelDescendantRefreshes(element) {
@@ -226,6 +300,19 @@
           }
     
           this.refreshQueued.delete(childKey);
+    
+          /*
+           * A timer may already have fired and HTMX
+           * may currently be doing the request.
+           */
+          if (
+            this.refreshInProgress.has(childKey)
+          ) {
+            htmx.trigger(
+              child,
+              "htmx:abort"
+            );
+          }
         });
     }
 

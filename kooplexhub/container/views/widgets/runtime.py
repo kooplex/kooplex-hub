@@ -11,15 +11,45 @@ class ContainerRuntimePartialView(
     ContainerAccessMixin,
     TemplateView,
 ):
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        container = self.get_container()
-        context.update(
-            {
-                "container": container,
-                "runtime": ContainerRuntimePresenter(container),
-            }
+    def get(
+        self,
+        request,
+        *args,
+        **kwargs,
+    ):
+        self.container = (
+            self.get_container_queryset()
+            .filter(pk=kwargs["pk"])
+            .first()
         )
+
+        if self.container is None:
+            return HttpResponse(status=204)
+
+        return super().get(
+            request,
+            *args,
+            **kwargs,
+        )
+
+    def get_context_data(
+        self,
+        **kwargs,
+    ):
+        context = super().get_context_data(
+            **kwargs
+        )
+
+        container = self.container
+
+        context.update({
+            "container": container,
+            "runtime":
+                ContainerRuntimePresenter(
+                    container
+                ),
+        })
+
         return context
 
 
