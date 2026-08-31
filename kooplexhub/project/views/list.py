@@ -40,7 +40,9 @@ class ProjectListView(
     def get_queryset(self):
         return (
             Project.objects
-            .visible_to(user=self.request.user)
+            .for_dashboard(
+                self.request.user,
+            )
             .select_related("preferred_image")
             .prefetch_related(
                 "userbindings__user",
@@ -62,7 +64,9 @@ class ProjectGridView(
     def get_queryset(self):
         return (
             Project.objects
-            .visible_to(user=self.request.user)
+            .for_dashboard(
+                self.request.user,
+            )
             .select_related("preferred_image")
             .prefetch_related(
                 "userbindings__user",
@@ -84,7 +88,9 @@ class ProjectCardPartialView(
     def get_queryset(self):
         return (
             Project.objects
-            .visible_to(user=self.request.user)
+            .for_dashboard(
+                self.request.user,
+            )
             .select_related("preferred_image")
             .prefetch_related(
                 "userbindings__user",

@@ -155,7 +155,7 @@ def mark_project_provisioning_failed(
             state=Project.State.PREPARING,
         )
         .update(
-            state=Project.State.FAILED,
+            state=Project.State.PROVISION_FAILED,
             last_operation_error=(
                 _format_provisioning_error(
                     error

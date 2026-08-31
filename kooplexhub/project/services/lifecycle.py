@@ -16,6 +16,7 @@ from ..models import (
 from .members import (
     create_project_members,
     remove_project_member,
+    add_project_member,
     MembershipChanges,
 )
 from .names import (

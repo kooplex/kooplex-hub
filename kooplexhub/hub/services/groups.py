@@ -38,6 +38,43 @@ def _next_group_id(grouptype):
     return max(latest + 1, offset)
 
 
+def ensure_user_in_group_directory(
+    *,
+    user,
+    group,
+):
+    if not _ldap_enabled():
+        return False
+
+    ldap = Ldap()
+
+    entry = ldap.get_group(group)
+
+    try:
+        member_uids = {
+            str(value)
+            for value in entry.memberUid.values
+        }
+    except (AttributeError, KeyError):
+        member_uids = set()
+
+    if user.username in member_uids:
+        return False
+
+    try:
+        ldap.add_user_to_group(
+            user,
+            group,
+        )
+    except Exception as exc:
+        raise GroupProvisioningError(
+            f"Could not add {user.username} "
+            f"to LDAP group {group.name}"
+        ) from exc
+
+    return True
+
+
 def ensure_group_in_directory(group):
     """
     Ensure the LDAP posixGroup corresponding to an existing
@@ -106,15 +143,10 @@ def add_user_to_group(*, user, group):
         )
     )
 
-    if created and _ldap_enabled():
-        try:
-            Ldap().add_user_to_group(user, group)
-        except Exception as exc:
-            # Raising here rolls back the DB binding.
-            raise GroupProvisioningError(
-                f"Could not add {user.username} "
-                f"to LDAP group {group.name}"
-            ) from exc
+    ensure_user_in_group_directory(
+        user=user,
+        group=group,
+    )
 
     return binding
 

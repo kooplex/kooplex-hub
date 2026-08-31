@@ -11,20 +11,86 @@ User = get_user_model()
 
 
 class ProjectQuerySet(models.QuerySet):
-    def joined_by(self, user, include_hidden=False):
+    def member_of(
+        self,
+        user,
+        *,
+        include_hidden=False,
+    ):
         """
-        Projects where the user has an explicit binding.
-        Good for dashboards and mount picker.
+        Projects where the user has an explicit
+        Project membership binding, regardless
+        of role.
+
+        Includes:
+        - CREATOR
+        - ADMIN
+        - COLLABORATOR
         """
+        if not user or not user.is_authenticated:
+            return self.none()
+
+        qs = self.filter(
+            userbindings__user=user,
+        )
+
+        if not include_hidden:
+            qs = qs.filter(
+                userbindings__is_hidden=False,
+            )
+
+        return qs.distinct()
+
+
+    def created_by(self, user):
+        from . import UserProjectBinding
         if not user.is_authenticated:
             return self.none()
 
-        qs = self.filter(userbindings__user=user)
+        return self.filter(
+            userbindings__user=user,
+            userbindings__role=UserProjectBinding.Role.CREATOR,
+        ).distinct()
 
-        if not include_hidden:
-            qs = qs.filter(userbindings__is_hidden=False)
 
-        return qs.distinct()
+    def for_dashboard(self, user):
+        """
+        Projects the user actively participates in.
+    
+        Includes projects created by the user and
+        projects joined as another role.
+        Does not include merely discoverable PUBLIC
+        projects.
+        """
+        return self.member_of(
+            user,
+            include_hidden=False,
+        )
+
+
+    def joined_by(
+        self,
+        user,
+        *,
+        include_hidden=False,
+    ):
+        """
+        Projects the user joined rather than created.
+        """
+        from . import UserProjectBinding
+    
+        qs = self.member_of(
+            user,
+            include_hidden=include_hidden,
+        )
+    
+        return qs.exclude(
+            userbindings__user=user,
+            userbindings__role=(
+                UserProjectBinding.Role.CREATOR
+            ),
+        ).distinct()
+
 
 
     def visible_to(self, user):
@@ -58,27 +124,23 @@ class ProjectQuerySet(models.QuerySet):
     def joinable_by(self, user):
         if not user or not user.is_authenticated:
             return self.none()
-
-        already_joined = Q(
-            userbindings__user=user,
+    
+        member_ids = (
+            self.member_of(
+                user,
+                include_hidden=True,
+            )
+            .values("pk")
         )
-
-        joinable_scope = Q(
-            scope=Project.Scope.PUBLIC,
-            state=Project.State.READY,
-        )
-
-        # Extend this when INTERNAL membership rules are known:
-        #
-        # joinable_scope |= Q(
-        #     scope=Project.Scope.INTERNAL,
-        #     ...
-        # )
-
+    
         return (
-            self
-            .filter(joinable_scope)
-            .exclude(already_joined)
+            self.filter(
+                scope=Project.Scope.PUBLIC,
+                state=Project.State.READY,
+            )
+            .exclude(
+                pk__in=member_ids,
+            )
             .distinct()
         )
 
@@ -89,7 +151,7 @@ class ProjectQuerySet(models.QuerySet):
         Only fully provisioned projects are mountable.
         """
         return (
-            self.joined_by(
+            self.member_of(
                 user,
                 include_hidden=False,
             )
@@ -113,17 +175,6 @@ class ProjectQuerySet(models.QuerySet):
                 UserProjectBinding.Role.CREATOR,
                 UserProjectBinding.Role.ADMIN,
             ],
-        ).distinct()
-
-
-    def created_by(self, user):
-        from . import UserProjectBinding
-        if not user.is_authenticated:
-            return self.none()
-
-        return self.filter(
-            userbindings__user=user,
-            userbindings__role=UserProjectBinding.Role.CREATOR,
         ).distinct()
         
 
