@@ -5,21 +5,20 @@ from dataclasses import dataclass
 
 from django.utils import timezone
 
-from hub.lib import grantaccess_group
-from hub.lib.filesystem import (
-    _mkdir,
-    archive_directory,
-)
 from hub.models import Group
 from hub.services.groups import (
     add_user_to_group,
     ensure_group,
 )
 
-from project.filesystem import (
+from ..filesystem import (
     project_workdir,
+    project_report_prepare_dir,
 )
-from project.models import Project
+from ..models import Project
+from .storage import (
+    ensure_project_storage,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -40,14 +39,27 @@ def _format_provisioning_error(error):
 @dataclass(frozen=True, slots=True)
 class ProjectFilesystemStatus:
     workdir: bool
+    report_prepare: bool
 
     @property
     def ready(self):
-        return self.workdir
+        return (
+            self.workdir
+            and self.report_prepare
+        )
 
     @property
     def missing(self):
-        return () if self.workdir else ("workdir",)
+        missing = []
+
+        if not self.workdir:
+            missing.append("workdir")
+
+        if not self.report_prepare:
+            missing.append("report_prepare")
+
+        return tuple(missing)
+
 
 
 def inspect_project_filesystem(
@@ -57,6 +69,11 @@ def inspect_project_filesystem(
     return ProjectFilesystemStatus(
         workdir=os.path.isdir(
             project_workdir(project)
+        ),
+        report_prepare=os.path.isdir(
+            project_report_prepare_dir(
+                project
+            )
         ),
     )
 
@@ -88,15 +105,9 @@ def provision_project_infrastructure(
         group=group,
     )
 
-    workdir = project_workdir(project)
-
-    _mkdir(workdir)
-
-    grantaccess_group(
-        group,
-        workdir,
-        readonly=False,
-        recursive=True,
+    ensure_project_storage(
+        project=project,
+        group=group,
     )
 
     status = inspect_project_filesystem(
@@ -105,7 +116,7 @@ def provision_project_infrastructure(
 
     if not status.ready:
         raise ProjectProvisioningError(
-            "Project filesystem is incomplete: "
+            "Project filesystem incomplete: "
             + ", ".join(status.missing)
         )
 
@@ -165,32 +176,5 @@ def mark_project_provisioning_failed(
         == 1
     )
 
-
-
-def remove_project_workdir(
-    project,
-    *,
-    archive,
-):
-    source = project_workdir(project)
-
-    if not os.path.exists(source):
-        return None
-
-    if not os.path.isdir(source):
-        raise RuntimeError(
-            f"Project workdir is not a "
-            f"directory: {source}"
-        )
-
-    if archive and os.listdir(source):
-        return archive_directory(
-            source,
-            project_archive(project),
-            remove=True,
-        )
-
-    shutil.rmtree(source)
-    return None
 
 

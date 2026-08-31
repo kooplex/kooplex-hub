@@ -56,10 +56,23 @@ def _default_project_mount():
         archive_name="project-{project.subpath}.{time}.tar.gz",
     )
 
+def _default_report_prepare_mount():
+    return ArchivableMountSettings(
+        claim="big-storage",
+        subpath="project/report_prepare",
+        folder="{project.subpath}",
+        mountpoint="/project/{project.subpath}/report_prepare",
+        mountpoint_hub="/mnt/report_prepare",
+        archive_name="project-report-prepare-{project.subpath}.{time}.tar.gz",
+    )
+
 @dataclass(frozen=True)
 class ProjectMountsSettings:
     project: ArchivableMountSettings = field(
         default_factory=_default_project_mount
+    )
+    report_prepare: ArchivableMountSettings = field(
+        default_factory=_default_report_prepare_mount
     )
 
 

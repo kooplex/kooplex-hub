@@ -262,32 +262,57 @@ def join_project(
     project,
     actor,
 ):
-    if not Project.objects.joinable_by(
-        actor
-    ).filter(pk=project.pk).exists():
+    project = (
+        Project.objects
+        .select_for_update()
+        .get(pk=project.pk)
+    )
+
+    if not (
+        Project.objects
+        .joinable_by(actor)
+        .filter(pk=project.pk)
+        .exists()
+    ):
         raise ValidationError(
-            "This project is not available to join."
+            "This project is not available "
+            "to join."
         )
 
-    binding, created = (
-        UserProjectBinding.objects
-        .get_or_create(
-            project=project,
-            user=actor,
-            defaults={
-                "role": (
-                    UserProjectBinding
-                    .Role
-                    .COLLABORATOR
-                ),
-            },
+    binding = add_project_member(
+        project=project,
+        user=actor,
+        role=(
+            UserProjectBinding
+            .Role
+            .COLLABORATOR
+        ),
+    )
+
+    project_id = project.pk
+    actor_id = actor.pk
+
+    member_user_ids = tuple(
+        project.userbindings.values_list(
+            "user_id",
+            flat=True,
         )
     )
 
-    if not created:
-        raise ValidationError(
-            "You are already a member of this project."
+    transaction.on_commit(
+        lambda: broadcast_project_changed(
+            project_id=project_id,
+            user_ids=member_user_ids,
+            reason="project.member.joined",
         )
+    )
+
+    transaction.on_commit(
+        lambda: broadcast_project_list_changed(
+            user_ids=(actor_id,),
+            reason="project.joined",
+        )
+    )
 
     return binding
 
@@ -301,6 +326,10 @@ def leave_project(
     binding = (
         UserProjectBinding.objects
         .select_for_update()
+        .select_related(
+            "project__group",
+            "user",
+        )
         .filter(
             project=project,
             user=actor,
@@ -310,16 +339,53 @@ def leave_project(
 
     if binding is None:
         raise PermissionDenied(
-            "You are not a member of this project."
+            "You are not a member "
+            "of this project."
         )
 
-    if binding.role == UserProjectBinding.Role.CREATOR:
+    if (
+        binding.role
+        == UserProjectBinding.Role.CREATOR
+    ):
         raise PermissionDenied(
-            "The project creator cannot leave the project."
+            "The project creator cannot "
+            "leave the project."
         )
 
     project_id = project.pk
-    binding.delete()
+    actor_id = actor.pk
+
+    member_user_ids = tuple(
+        project.userbindings.values_list(
+            "user_id",
+            flat=True,
+        )
+    )
+
+    remove_project_member(
+        binding=binding,
+    )
+
+    remaining_user_ids = tuple(
+        user_id
+        for user_id in member_user_ids
+        if user_id != actor_id
+    )
+
+    transaction.on_commit(
+        lambda: broadcast_project_changed(
+            project_id=project_id,
+            user_ids=remaining_user_ids,
+            reason="project.member.left",
+        )
+    )
+
+    transaction.on_commit(
+        lambda: broadcast_project_list_changed(
+            user_ids=(actor_id,),
+            reason="project.left",
+        )
+    )
 
     return ProjectMembershipActionResult(
         project_id=project_id,

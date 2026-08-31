@@ -8,6 +8,10 @@ from hub.services.groups import (
     add_user_to_group,
     remove_user_from_group,
 )
+from .live import (
+    broadcast_project_changed,
+    broadcast_project_list_changed,
+)
 
 
 @dataclass(frozen=True)
@@ -144,21 +148,92 @@ def create_project_members(
 
 
 @transaction.atomic
+def add_project_member(
+    *,
+    project,
+    user,
+    role,
+):
+    if project.group_id is None:
+        raise ValidationError(
+            "Project access group is missing."
+        )
+
+    if UserProjectBinding.objects.filter(
+        project=project,
+        user=user,
+    ).exists():
+        raise ValidationError(
+            f"{user.username} is already "
+            "a project member."
+        )
+
+    binding = (
+        UserProjectBinding.objects.create(
+            project=project,
+            user=user,
+            role=role,
+        )
+    )
+
+    add_user_to_group(
+        user=user,
+        group=project.group,
+    )
+
+    return binding
+
+
+@transaction.atomic
+def remove_project_member(
+    *,
+    binding,
+):
+    if binding.project.group_id is None:
+        raise ValidationError(
+            "Project access group is missing."
+        )
+
+    remove_user_from_group(
+        user=binding.user,
+        group=binding.project.group,
+    )
+
+    binding.delete()
+
+
+@transaction.atomic
 def apply_project_members(
     *,
     project,
     selections,
+    protected_user_ids=(),
 ):
+    protected_user_ids = set(
+        protected_user_ids
+    )
+
+    if project.group_id is None:
+        raise ValidationError(
+            "Project access group is missing."
+        )
+
     desired = {
-        selection.user.pk: selection
+        selection.user_id: selection
         for selection in selections
     }
 
     editable_bindings = list(
         UserProjectBinding.objects
+        .select_for_update()
         .filter(project=project)
         .exclude(
-            role=UserProjectBinding.Role.CREATOR
+            role=(
+                UserProjectBinding.Role.CREATOR
+            )
+        )
+        .exclude(
+            user_id__in=protected_user_ids
         )
         .select_related("user")
     )
@@ -173,23 +248,16 @@ def apply_project_members(
     removed = []
 
     for user_id, selection in desired.items():
+        if user_id in protected_user_ids:
+            continue
+
         binding = existing.get(user_id)
 
         if binding is None:
-            binding = UserProjectBinding.objects.create(
+            binding = add_project_member(
                 project=project,
                 user=selection.user,
                 role=selection.role,
-            )
-
-            if project.group_id is None:
-                raise ValidationError(
-                    "Project access group is missing."
-                )
-        
-            add_user_to_group(
-                user=selection.user,
-                group=project.group,
             )
 
             added.append(binding)
@@ -197,25 +265,21 @@ def apply_project_members(
 
         if binding.role != selection.role:
             binding.role = selection.role
-            binding.save(update_fields=["role"])
+            binding.save(
+                update_fields=["role"]
+            )
+
             updated.append(binding)
 
     for user_id, binding in existing.items():
         if user_id in desired:
             continue
-    
-        if project.group_id is None:
-            raise ValidationError(
-                "Project access group is missing."
-            )
-    
-        remove_user_from_group(
-            user=binding.user,
-            group=project.group,
+
+        removed.append(binding.user)
+
+        remove_project_member(
+            binding=binding
         )
-    
-        removed.append(binding)
-        binding.delete()
 
     return MembershipChanges(
         added=tuple(added),
@@ -253,6 +317,10 @@ def update_project_members(
     changes = apply_project_members(
         project=project,
         selections=selections,
+        protected_user_ids=(
+            creator_user_ids
+            | {actor.pk}
+        ),
     )
     
     affected_user_ids = {
@@ -260,9 +328,12 @@ def update_project_members(
         for binding in (
             changes.added
             + changes.updated
-            + changes.removed
         )
     }
+    affected_user_ids.update(
+        user.pk
+        for user in changes.removed
+    )
     
     current_user_ids = set(
         project.userbindings.values_list(

@@ -18,7 +18,6 @@ from education.conf import EDUCATION_SETTINGS
 from hub.conf import HUB_SETTINGS
 from kooplexhub.settings import KOOPLEX, REDIS_TELEPORT
 from project.conf import PROJECT_SETTINGS
-from report.conf import REPORT_SETTINGS
 from volume.conf import VOLUME_SETTINGS
 
 from .labels import dns_label, workload_labels, workload_name
@@ -318,22 +317,10 @@ class ContainerWorkloadBuilder:
             )
             self._add_configured_pvc(
                 volumes,
-                REPORT_SETTINGS.mounts.prepare,
+                PROJECT_SETTINGS.mounts.report_prepare,
                 user=container.user,
                 project=project,
             )
-
-        # Restore this only after report/conf.py
-        # has completed the dataclass migration.
-        #
-        # self._add_configured_pvc(
-        #     volumes,
-        #     REPORT_SETTINGS.mounts.prepare,
-        #     user=container.user,
-        #     project=project,
-        # )
-
-
 
     @staticmethod
     def _format_environment(mapping: dict[str, Any], container: Any) -> list[dict[str, str]]:

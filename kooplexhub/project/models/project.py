@@ -65,6 +65,9 @@ class ProjectQuerySet(models.QuerySet):
 
         joinable_scope = Q(
             scope=Project.Scope.PUBLIC,
+            provisioning_state=(
+                Project.ProvisioningState.READY
+            ),
         )
 
         # Extend this when INTERNAL membership rules are known:
