@@ -14,6 +14,7 @@ from ..models import (
 )
 from .members import (
     create_project_members,
+    remove_project_member,
     MembershipChanges,
 )
 from .names import (
@@ -32,6 +33,9 @@ from .provisioning import (
     mark_project_provisioning_complete,
     mark_project_provisioning_failed,
     provision_project_infrastructure,
+)
+from .storage import (
+    remove_project_storage,
 )
 
 logger = logging.getLogger(__name__)
@@ -434,8 +438,8 @@ def delete_project(
 
     # External filesystem operation OUTSIDE
     # the database transaction.
-    remove_project_workdir(
-        project,
+    remove_project_storage(
+        project=project,
         archive=archive,
     )
 
