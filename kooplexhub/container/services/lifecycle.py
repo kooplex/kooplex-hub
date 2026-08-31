@@ -2,7 +2,6 @@ import uuid
 
 from django.db import transaction
 from django.utils.text import slugify
-from django.utils import timezone
 
 from ..models import Container
 from .image_catalog import (
