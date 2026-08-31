@@ -41,6 +41,15 @@ from .storage import (
 logger = logging.getLogger(__name__)
 User = get_user_model()
 
+MAX_OPERATION_ERROR_LENGTH = 4000
+
+
+def _format_operation_error(error):
+    return (
+        f"{error.__class__.__name__}: {error}"
+    )[:MAX_OPERATION_ERROR_LENGTH]
+
+
 
 @dataclass(frozen=True)
 class ProjectCreationResult:
@@ -91,9 +100,7 @@ class ProjectCreationService:
             description=description,
             preferred_image=preferred_image,
             subpath=subpath,
-            provisioning_state=(
-                Project.ProvisioningState.PREPARING
-            ),
+            state=Project.State.PREPARING,
         )
 
         UserProjectBinding.objects.create(
@@ -397,28 +404,49 @@ def leave_project(
     )
 
 
-def delete_project(
+def _require_project_creator(
     *,
     project,
     actor,
-    archive=True,
 ):
-    creator_binding = (
+    binding = (
         UserProjectBinding.objects
         .filter(
             project=project,
             user=actor,
             role=(
-                UserProjectBinding.Role.CREATOR
+                UserProjectBinding
+                .Role
+                .CREATOR
             ),
         )
         .first()
     )
 
-    if creator_binding is None:
+    if binding is None:
         raise PermissionDenied(
             "Only the project creator may "
             "delete the project."
+        )
+
+    return binding
+
+
+def _delete_unmounted_project(
+    *,
+    project_id,
+    archive,
+):
+    project = (
+        Project.objects
+        .filter(pk=project_id)
+        .first()
+    )
+
+    if project is None:
+        return ProjectMembershipActionResult(
+            project_id=project_id,
+            action="deleted",
         )
 
     if project.containerbindings.exists():
@@ -427,8 +455,6 @@ def delete_project(
             "one or more environments."
         )
 
-    project_id = project.pk
-
     user_ids = tuple(
         project.userbindings.values_list(
             "user_id",
@@ -436,8 +462,10 @@ def delete_project(
         )
     )
 
-    # External filesystem operation OUTSIDE
-    # the database transaction.
+    #
+    # External filesystem operation:
+    # deliberately outside a DB transaction.
+    #
     remove_project_storage(
         project=project,
         archive=archive,
@@ -472,6 +500,362 @@ def delete_project(
         project_id=project_id,
         action="deleted",
     )
+
+
+def delete_project(
+    *,
+    project,
+    actor,
+    archive=True,
+):
+    _require_project_creator(
+        project=project,
+        actor=actor,
+    )
+
+    return _delete_unmounted_project(
+        project_id=project.pk,
+        archive=archive,
+    )
+
+
+def request_forced_project_delete(
+    *,
+    project,
+    actor,
+    archive=True,
+):
+    from project.tasks import (
+        continue_project_delete,
+    )
+
+    _require_project_creator(
+        project=project,
+        actor=actor,
+    )
+
+    with transaction.atomic():
+        project = (
+            Project.objects
+            .select_for_update()
+            .get(pk=project.pk)
+        )
+
+        if project.state == Project.State.DELETING:
+            raise ValidationError(
+                "Project deletion is already "
+                "in progress."
+            )
+
+        if project.state not in {
+            Project.State.READY,
+            Project.State.PROVISION_FAILED,
+            Project.State.DELETE_FAILED,
+        }:
+            raise ValidationError(
+                "Project cannot be deleted "
+                "from its current state."
+            )
+
+        project.state = (
+            Project.State.DELETING
+        )
+        project.deletion_requested_at = (
+            timezone.now()
+        )
+        project.last_operation_error = ""
+        project.last_operation_failed_at = None
+
+        project.save(
+            update_fields=[
+                "state",
+                "deletion_requested_at",
+                "last_operation_error",
+                "last_operation_failed_at",
+            ]
+        )
+
+        project_id = project.pk
+
+        user_ids = tuple(
+            project.userbindings.values_list(
+                "user_id",
+                flat=True,
+            )
+        )
+
+        transaction.on_commit(
+            lambda: continue_project_delete(
+                project_id,
+                archive,
+            )
+        )
+
+        transaction.on_commit(
+            lambda: broadcast_project_changed(
+                project_id=project_id,
+                user_ids=user_ids,
+                reason=(
+                    "project.deletion.started"
+                ),
+            )
+        )
+
+    return ProjectMembershipActionResult(
+        project_id=project_id,
+        action="deleting",
+    )
+
+
+def mark_project_delete_failed(
+    *,
+    project_id,
+    error,
+):
+    updated = (
+        Project.objects
+        .filter(
+            pk=project_id,
+            state=Project.State.DELETING,
+        )
+        .update(
+            state=(
+                Project.State.DELETE_FAILED
+            ),
+            last_operation_error=(
+                _format_operation_error(
+                    error
+                )
+            ),
+            last_operation_failed_at=(
+                timezone.now()
+            ),
+        )
+    )
+
+    return updated == 1
+
+
+def progress_project_delete(
+    *,
+    project_id,
+    archive,
+):
+    project = (
+        Project.objects
+        .filter(pk=project_id)
+        .first()
+    )
+
+    #
+    # Already deleted = idempotent success.
+    #
+    if project is None:
+        return True
+
+    if project.state != Project.State.DELETING:
+        return True
+
+    bindings = list(
+        project.containerbindings
+        .select_related(
+            "container__user",
+        )
+    )
+
+    pending = False
+
+    for binding in bindings:
+        container = binding.container
+
+        if (
+            container.state
+            == Container.State.NOTPRESENT
+        ):
+            continue
+
+        if (
+            container.state
+            == Container.State.STOPPING
+        ):
+            pending = True
+            continue
+
+        notification = {
+            "level": "warning",
+            "message": (
+                f"Environment "
+                f"'{container.name}' "
+                "is being stopped because "
+                f"project '{project.name}' "
+                "is being deleted."
+            ),
+        }
+
+        request_stop_automatically(
+            container_id=container.pk,
+            reason=(
+                "project.deletion"
+            ),
+            notification=notification,
+        )
+
+        pending = True
+
+    if pending:
+        return False
+
+    #
+    # Every attached environment currently
+    # reports NOTPRESENT.
+    #
+    return finalize_project_delete(
+        project_id=project_id,
+        archive=archive,
+    )
+
+
+def finalize_project_delete(
+    *,
+    project_id,
+    archive,
+):
+    project = (
+        Project.objects
+        .filter(
+            pk=project_id,
+            state=Project.State.DELETING,
+        )
+        .first()
+    )
+
+    if project is None:
+        return True
+
+    #
+    # Final cheap check before touching
+    # external storage.
+    #
+    attached_container_ids = tuple(
+        project.containerbindings
+        .values_list(
+            "container_id",
+            flat=True,
+        )
+    )
+
+    if (
+        Container.objects
+        .filter(
+            pk__in=attached_container_ids,
+        )
+        .exclude(
+            state=Container.State.NOTPRESENT
+        )
+        .exists()
+    ):
+        return False
+
+    #
+    # No attached workload can now be newly
+    # started because Project.state == DELETING.
+    #
+    remove_project_storage(
+        project=project,
+        archive=archive,
+    )
+
+    with transaction.atomic():
+        project = (
+            Project.objects
+            .select_for_update()
+            .get(pk=project_id)
+        )
+
+        if project.state != Project.State.DELETING:
+            return True
+
+        bindings = list(
+            project.containerbindings
+            .select_for_update()
+            .select_related(
+                "container",
+            )
+        )
+
+        container_ids = [
+            binding.container_id
+            for binding in bindings
+        ]
+
+        #
+        # Lock the Container rows too.
+        # request_start()/request_restart()
+        # use the same row locks.
+        #
+        containers = list(
+            Container.objects
+            .select_for_update()
+            .filter(
+                pk__in=container_ids
+            )
+        )
+
+        if any(
+            container.state
+            != Container.State.NOTPRESENT
+            for container in containers
+        ):
+            return False
+
+        user_ids = tuple(
+            project.userbindings.values_list(
+                "user_id",
+                flat=True,
+            )
+        )
+
+        affected_containers = tuple(
+            (
+                container.pk,
+                container.user_id,
+            )
+            for container in containers
+        )
+
+        #
+        # Explicit, although Project.delete()
+        # would cascade these too.
+        #
+        project.containerbindings.all().delete()
+
+        project.delete()
+
+        def notify_after_delete():
+            broadcast_project_list_changed(
+                user_ids=user_ids,
+                reason="project.deleted",
+            )
+
+            for (
+                container_id,
+                user_id,
+            ) in affected_containers:
+                broadcast_container_changed(
+                    container_id=container_id,
+                    user_id=user_id,
+                    reason=(
+                        "project.mount.removed"
+                    ),
+                )
+
+        transaction.on_commit(
+            notify_after_delete
+        )
+
+    return True
+
+
 
 
 

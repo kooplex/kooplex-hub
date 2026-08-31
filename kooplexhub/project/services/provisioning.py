@@ -131,14 +131,10 @@ def mark_project_provisioning_complete(
         Project.objects
         .filter(
             pk=project_id,
-            provisioning_state=(
-                Project.ProvisioningState.PREPARING
-            ),
+            state=Project.State.PREPARING,
         )
         .update(
-            provisioning_state=(
-                Project.ProvisioningState.READY
-            ),
+            state=Project.State.READY,
             last_operation_error="",
             last_operation_failed_at=None,
             provisioned_at=timezone.now(),
@@ -156,14 +152,10 @@ def mark_project_provisioning_failed(
         Project.objects
         .filter(
             pk=project_id,
-            provisioning_state=(
-                Project.ProvisioningState.PREPARING
-            ),
+            state=Project.State.PREPARING,
         )
         .update(
-            provisioning_state=(
-                Project.ProvisioningState.FAILED
-            ),
+            state=Project.State.FAILED,
             last_operation_error=(
                 _format_provisioning_error(
                     error

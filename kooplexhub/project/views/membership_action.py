@@ -1,7 +1,10 @@
 import json
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import (
+    PermissionDenied,
+    ValidationError,
+)
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.views.generic import TemplateView
@@ -10,8 +13,10 @@ from ..models import Project
 from ..services.lifecycle import (
     delete_project,
     leave_project,
+    request_forced_project_delete,
 )
 from ..services.project_presenter import ProjectPresenter
+from hub.services.http import toast_response
 
 
 PROJECT_MEMBERSHIP_ACTION_MODAL_TEMPLATE = (
@@ -38,6 +43,7 @@ class ProjectMembershipActionView(
                 .visible_to(self.request.user)
                 .prefetch_related(
                     "userbindings__user",
+                    "containerbindings__container__user",
                 ),
                 pk=self.kwargs[
                     self.pk_url_kwarg
@@ -92,18 +98,55 @@ class ProjectMembershipActionView(
         presenter = self.require_available_action()
         project = self.get_project()
 
-        if presenter.can_delete:
-            result = delete_project(
-                project=project,
-                actor=request.user,
+        action = request.POST.get(
+            "action",
+            "delete",
+        )
+
+        try:
+            if presenter.can_delete:
+                
+                if action == "force-delete":
+                    result = (
+                        request_forced_project_delete(
+                            project=project,
+                            actor=request.user,
+                        )
+                    )
+
+                elif action == "delete":
+                    result = delete_project(
+                        project=project,
+                        actor=request.user,
+                    )
+
+                else:
+                    raise ValidationError(
+                        "Unknown project action."
+                    )
+
+            elif presenter.can_leave:
+                result = leave_project(
+                    project=project,
+                    actor=request.user,
+                )
+            else:
+                raise PermissionDenied
+        except ValidationError as error:
+            message = " ".join(
+                error.messages
             )
-        elif presenter.can_leave:
-            result = leave_project(
-                project=project,
-                actor=request.user,
+    
+            return toast_response(
+                message,
+                level="error",
             )
-        else:
-            raise PermissionDenied
+    
+        except PermissionDenied as error:
+            return toast_response(
+                str(error),
+                level="error",
+            )
 
         response = HttpResponse(status=204)
         response["HX-Trigger"] = json.dumps({

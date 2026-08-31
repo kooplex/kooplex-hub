@@ -2,6 +2,7 @@ import uuid
 
 from django.db import transaction
 from django.utils.text import slugify
+from django.utils import timezone
 
 from ..models import Container
 from .image_catalog import (
@@ -9,6 +10,11 @@ from .image_catalog import (
 )
 from .live import (
     broadcast_container_list_changed,
+    broadcast_container_changed,
+)
+from .runtime_control import (
+    ContainerActionError,
+    request_stop_automatically,
 )
 from .mounts import (
     apply_container_mounts,
@@ -206,6 +212,5 @@ def delete_container(
         )
 
     return container_id
-
 
 

@@ -206,4 +206,43 @@ class ProjectPresenter:
             return self.project.preferred_image.short_name
         return "No preferred image"
 
-
+    @cached_property
+    def attached_containers(self):
+        return tuple(
+            sorted(
+                (
+                    binding.container
+                    for binding
+                    in self.project
+                    .containerbindings
+                    .all()
+                ),
+                key=lambda container: (
+                    container.user.username.lower(),
+                    container.name.lower(),
+                ),
+            )
+        )
+    
+    
+    @property
+    def has_attached_containers(self):
+        return bool(
+            self.attached_containers
+        )
+    
+    
+    @property
+    def is_deleting(self):
+        return (
+            self.project.state
+            == Project.State.DELETING
+        )
+    
+    
+    @property
+    def delete_failed(self):
+        return (
+            self.project.state
+            == Project.State.DELETE_FAILED
+        )

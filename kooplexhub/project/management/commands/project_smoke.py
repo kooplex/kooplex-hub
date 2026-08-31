@@ -292,9 +292,9 @@ class Command(BaseCommand):
             project.refresh_from_db()
 
             if (
-                project.provisioning_state
+                project.state
                 !=
-                Project.ProvisioningState.READY
+                Project.State.READY
             ):
                 raise CommandError(
                     "Project was created but "

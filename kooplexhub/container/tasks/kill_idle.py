@@ -96,6 +96,14 @@ def kill_idle() -> None:
                 request_stop_automatically(
                     container_id=container.pk,
                     reason="container.idle_timeout",
+                    notification={
+                        "level": "warning",
+                        "message": (
+                            f"Environment '{container.name}' "
+                            "was stopped because it exceeded "
+                            "its idle-time limit."
+                        ),
+                    },
                 )
                 continue
     

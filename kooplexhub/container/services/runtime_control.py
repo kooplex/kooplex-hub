@@ -16,6 +16,31 @@ class RuntimeActionResult:
     level: str = "info"
 
 
+def _require_mounted_projects_ready(
+    container,
+):
+    from project.models import Project
+
+    blocking_binding = (
+        container.projectbindings
+        .exclude(
+            project__state=(
+                Project.State.READY
+            )
+        )
+        .select_related("project")
+        .first()
+    )
+
+    if blocking_binding is not None:
+        raise ContainerActionError(
+            "Environment cannot be started "
+            "because mounted project "
+            f"'{blocking_binding.project.name}' "
+            "is not available."
+        )
+
+
 def request_container_action(
     *,
     container, 
@@ -183,6 +208,7 @@ def request_stop_automatically(
     *,
     container_id,
     reason,
+    notification=None,
 ):
     stopped_id = _request_container_stop(
         container_id=container_id
@@ -204,14 +230,7 @@ def request_stop_automatically(
     broadcast_container_runtime_changed(
         container=container,
         reason=reason,
-        notification={
-            "level": "warning",
-            "message": (
-                f"Environment '{container.name}' "
-                "was stopped because it exceeded "
-                "its idle-time limit."
-            ),
-        },
+        notification=notification,
     )
 
     return True    
@@ -242,6 +261,9 @@ def request_restart(
                 "Environment cannot be restarted "
                 "from its current state."
             )
+        _require_mounted_projects_ready(
+            container
+        )
 
         container.require_running = True
         container.restart_reasons = ""

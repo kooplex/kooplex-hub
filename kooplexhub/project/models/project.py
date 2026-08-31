@@ -65,9 +65,7 @@ class ProjectQuerySet(models.QuerySet):
 
         joinable_scope = Q(
             scope=Project.Scope.PUBLIC,
-            provisioning_state=(
-                Project.ProvisioningState.READY
-            ),
+            state=Project.State.READY,
         )
 
         # Extend this when INTERNAL membership rules are known:
@@ -96,9 +94,7 @@ class ProjectQuerySet(models.QuerySet):
                 include_hidden=False,
             )
             .filter(
-                provisioning_state=(
-                    Project.ProvisioningState.READY
-                )
+                state=Project.State.READY
             )
         )        
 
@@ -137,10 +133,18 @@ class Project(models.Model):
         INTERNAL = 'internal', 'Only users in specific groups can list and may join this project.'
         PRIVATE = 'private', 'Only the creator can invite collaborators to this project.'
 
-    class ProvisioningState(models.TextChoices):
+    class State(models.TextChoices):
         PREPARING = "prp", "Preparing"
         READY = "rdy", "Ready"
-        FAILED = "fld", "Provisioning failed"
+        PROVISION_FAILED = (
+            "fld",
+            "Provisioning failed",
+        )
+        DELETING = "del", "Deleting"
+        DELETE_FAILED = (
+            "dfl",
+            "Deletion failed",
+        )
 
     name = models.CharField(
         max_length=200,
@@ -197,10 +201,10 @@ class Project(models.Model):
         ),
     )
 
-    provisioning_state = models.CharField(
+    state = models.CharField(
         max_length=16,
-        choices=ProvisioningState.choices,
-        default=ProvisioningState.PREPARING,
+        choices=State.choices,
+        default=State.PREPARING,
     )
 
     last_operation_error = models.TextField(
@@ -214,6 +218,11 @@ class Project(models.Model):
     )
 
     provisioned_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    deletion_requested_at = models.DateTimeField(
         null=True,
         blank=True,
     )
