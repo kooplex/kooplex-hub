@@ -10,24 +10,27 @@ from hub.confutils import merge_dataclass
 
 @dataclass(frozen=True)
 class KubernetesResourcesSettings:
-    default_cpu: float = 0.2
+    # Canonical units:
+    # CPU: millicores
+    # memory: MiB
+    default_cpu_m: int = 200
     default_gpu: int = 0
-    default_memory: float = 1
+    default_memory_mib: float = 1
     default_idletime: int = 28
 
-    min_cpu: float = 0.2
+    min_cpu_m: int = 200
     min_gpu: int = 0
-    min_memory: float = 0.5
+    min_memory_mib: float = 0.5
     min_idletime: int = 1
 
-    max_cpu: float = 4
+    max_cpu_m: int = 4000
     max_gpu: int = 0
-    max_memory: float = 2
+    max_memory_mib: float = 2
     max_idletime: int = 24
 
-    limit_cpu: float = 5
+    limit_cpu_m: float = 5000
     limit_gpu: int = 0
-    limit_memory: float = 28
+    limit_memory_mib: float = 28
 
 
 @dataclass(frozen=True)

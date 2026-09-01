@@ -30,12 +30,12 @@ class ComputeLimitsProvider:
         resources = CONTAINER_SETTINGS.kubernetes.resources
 
         return ComputeLimits(
-            cpu_min=resources.min_cpu,
-            cpu_max=resources.max_cpu,
+            cpu_min=resources.min_cpu_m,
+            cpu_max=resources.max_cpu_m,
             cpu_step=0.1,
 
-            memory_min=resources.min_memory,
-            memory_max=resources.max_memory,
+            memory_min=resources.min_memory_mib,
+            memory_max=resources.max_memory_mib,
             memory_step=0.5,
 
             gpu_min=resources.min_gpu,

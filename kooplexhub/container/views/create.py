@@ -12,6 +12,7 @@ from django.shortcuts import (
     HttpResponse,
 )
 
+from .mixins import MountSelectionMixin
 from ..models import Image
 from ..forms import  ContainerCreateForm
 from ..services.image_catalog import ImageCatalogService
@@ -34,11 +35,16 @@ from volume.models import Volume
 logger = logging.getLogger(__name__)
 
 
+CONTAINER_CREATE_MODAL_TEMPLATE = (
+    "container/create/modal.html"
+)
+
+
 class ContainerCreateModalView(
     LoginRequiredMixin, 
     TemplateView,
 ):
-    template_name = "container/partials/create_modal.html"
+    template_name = CONTAINER_CREATE_MODAL_TEMPLATE
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -49,11 +55,10 @@ class ContainerCreateModalView(
 
 class ContainerCreateView(
     LoginRequiredMixin, 
+    MountSelectionMixin,
     View,
 ):
-    template_name = (
-        "container/partials/create_modal.html"
-    )
+    template_name = CONTAINER_CREATE_MODAL_TEMPLATE
 
     def post(self, request):
         form = ContainerCreateForm(
@@ -72,11 +77,13 @@ class ContainerCreateView(
         )
 
         if not form.is_valid():
+            logger.warning(
+                "Container create form invalid: %s",
+                form.errors.as_json(),
+            )
+
             return self.render_invalid(
                 form=form,
-                project_ids=project_ids,
-                course_ids=course_ids,
-                volume_ids=volume_ids,
             )
 
         try:
@@ -91,9 +98,28 @@ class ContainerCreateView(
                 project_ids=project_ids,
                 course_ids=course_ids,
                 volume_ids=volume_ids,
+                requested_cpu_m=(
+                    form.cleaned_data[
+                        "requested_cpu_m"
+                    ]
+                ),
+                requested_memory_mib=(
+                    form.cleaned_data[
+                        "requested_memory_mib"
+                    ]
+                ),
+                requested_gpu=(
+                    form.cleaned_data[
+                        "requested_gpu"
+                    ]
+                ),
             )
 
         except ContainerLifecycleError as error:
+            logger.warning(
+                "Container create lifecycle rejected: %s",
+                error,
+            )
             form.add_error(
                 None,
                 str(error),
@@ -101,9 +127,6 @@ class ContainerCreateView(
 
             return self.render_invalid(
                 form=form,
-                project_ids=project_ids,
-                course_ids=course_ids,
-                volume_ids=volume_ids,
             )
 
         response = HttpResponse(
@@ -138,9 +161,6 @@ class ContainerCreateView(
         self,
         *,
         form,
-        project_ids,
-        course_ids,
-        volume_ids,
     ):
         return render(
             self.request,
@@ -158,19 +178,13 @@ class ContainerCreateView(
                     else None
                 ),
                 "selected_projects": (
-                    self.get_projects(
-                        project_ids
-                    )
+                    self.get_selected_projects()
                 ),
                 "selected_courses": (
-                    self.get_courses(
-                        course_ids
-                    )
+                    self.get_selected_courses()
                 ),
                 "selected_volumes": (
-                    self.get_volumes(
-                        volume_ids
-                    )
+                    self.get_selected_volumes()
                 ),
             },
             status=422,

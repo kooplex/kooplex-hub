@@ -20,13 +20,21 @@ class LdapSettings:
     bind_dn: str = "cn=admin,dn=localhost"
     bind_password: str | bool = False
 
-    user_dn: str = "uid={username},ou=users,dn=localhost"
-    group_dn: str = "uid={groupname},ou=groups,dn=localhost"
+    user_dn: str = (
+        "uid={username},ou=users,dn=localhost"
+    )
+    group_dn: str = (
+        "uid={groupname},ou=groups,dn=localhost"
+    )
 
     user_search: str = "ou=users,dn=localhost"
     group_search: str = "ou=groups,dn=localhost"
 
+    manage_users: bool = False
     manage_group: bool = False
+
+    user_uid_offset: int = 100_000
+    user_gid_number: int = 1000
 
     offsets: dict[str, int] = field(
         default_factory=lambda: {
@@ -85,13 +93,13 @@ def _default_scratch_mount():
 
 @dataclass(frozen=True)
 class MountsSettings:
-    home: GarbagedMountSettings = field(
+    home: ArchivableMountSettings = field(
         default_factory=_default_home_mount
     )
-    garbage: MountSettings = field(
+    garbage: MountSettings | None = field(
         default_factory=_default_garbage_mount
     )
-    scratch: MountSettings = field(
+    scratch: MountSettings | None = field(
         default_factory=_default_scratch_mount
     )
 
@@ -100,6 +108,15 @@ class MountsSettings:
 class MailSettings:
     smtp_server: str = 'localhost'
     email_sender: str = 'admin@localhost'
+
+
+@dataclass(frozen=True)
+class KubernetesIdentitySettings:
+    enabled: bool = True
+
+    secret_namespaces: tuple[str, ...] = ()
+
+    job_token_key: str = "job_token"
 
 
 @dataclass(frozen=True, slots=True)
@@ -120,6 +137,10 @@ class HubSettings:
 
     mounts: MountsSettings = field(
         default_factory=MountsSettings
+    )
+
+    kubernetes_identity: KubernetesIdentitySettings = field(
+        default_factory=KubernetesIdentitySettings
     )
 
 

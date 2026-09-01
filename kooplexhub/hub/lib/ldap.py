@@ -153,8 +153,16 @@ class Ldap:
         return entries[0]
 
 
-    def add_user(self, user):
-        dn = self.user_dn(user)
+    def add_user(
+        self, 
+        *,
+        user,
+        uid_number,
+        gid_number,
+    ):
+        dn = HUB_SETTINGS.ldap.user_dn.format(
+            username=user.username
+        )
 
         logger.info(
             "Creating LDAP user %s",
@@ -171,12 +179,14 @@ class Ldap:
             "cn": user.username,
             "uid": user.username,
             "sn": user.username,
-            "uidNumber": user.profile.userid,
-            "gidNumber": user.profile.groupid,
+            "uidNumber": uid_number,
+            "gidNumber": gid_number,
             "homeDirectory": (
-                HUB_SETTINGS.mounts.home.mountpoint.format(
-                    user=user,
-                )
+                HUB_SETTINGS
+                .mounts
+                .home
+                .mountpoint
+                .format(user=user)
             ),
             "loginShell": "/bin/bash",
         }

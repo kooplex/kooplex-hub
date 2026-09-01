@@ -102,6 +102,16 @@
     <main id="content" class="content">
       {% block page_heading %}{% endblock %}
       {% block content %}{% endblock %}
+
+      <div
+        id="global-notes-footer"
+        data-live-key="hub-notes"
+        data-live-url="{% url 'notes-footer' %}"
+        hx-get="{% url 'notes-footer' %}"
+        hx-trigger="load"
+        hx-swap="outerHTML"
+      ></div>
+
     </main>
 
     <nav class="bottom-nav" aria-label="Mobile main">

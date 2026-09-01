@@ -12,4 +12,10 @@ urlpatterns = [
     path('', RedirectView.as_view(pattern_name=settings.LOGOUT_REDIRECT_URL, permanent=False), name = 'indexpage'),
     path('monitoring/', views.MonitoringView.as_view(), name = 'monitoring'),
     path('usertokens/', views.UserTokenView.as_view(), name = 'usertokens'),
+
+    path(
+        "notes/footer/",
+        views.NotesFooterView.as_view(),
+        name="notes-footer",
+    ),
 ]

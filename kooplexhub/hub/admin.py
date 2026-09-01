@@ -1,20 +1,85 @@
 from django.contrib import admin
+from django.db import transaction
 
 from .models import Profile, Note
 from .models import Group, UserGroupBinding
 from .models import Thumbnail, Token, TokenType
 
+from .services.live import (
+    broadcast_global_live_event,
+)
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ('id', 'username', 'user', 'userid', 'is_teacher', 'is_student', 'can_createproject', 'can_createimage', 'can_createattachment', 'can_runjob', 'has_scratch')
+    list_display = ('id', 'user', 'uid_number', 'can_createproject', 'can_createimage', 'can_createattachment', 'can_runjob', 'has_scratch')
     search_fields = ('user__username', )
 
 
+def broadcast_notes_changed():
+    broadcast_global_live_event(
+        keys=["hub-notes"],
+        payload={
+            "model": "note-list",
+            "reason": "notes.changed",
+        },
+    )
+
 @admin.register(Note)
 class NoteAdmin(admin.ModelAdmin):
-    list_display = ('id', 'created_at', 'expired', 'is_public', 'message')
+    list_display = (
+        "id",
+        "created_at",
+        "expired",
+        "is_public",
+        "message",
+    )
 
+    def save_model(
+        self,
+        request,
+        obj,
+        form,
+        change,
+    ):
+        super().save_model(
+            request,
+            obj,
+            form,
+            change,
+        )
+
+        transaction.on_commit(
+            broadcast_notes_changed
+        )
+
+    def delete_model(
+        self,
+        request,
+        obj,
+    ):
+        super().delete_model(
+            request,
+            obj,
+        )
+
+        transaction.on_commit(
+            broadcast_notes_changed
+        )
+
+    def delete_queryset(
+        self,
+        request,
+        queryset,
+    ):
+        super().delete_queryset(
+            request,
+            queryset,
+        )
+
+        transaction.on_commit(
+            broadcast_notes_changed
+        )
+        
 
 @admin.register(Group)
 class GroupAdmin(admin.ModelAdmin):

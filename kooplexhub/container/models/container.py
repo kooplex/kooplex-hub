@@ -45,7 +45,7 @@ class Container(models.Model):
         blank=True,
         decimal_places=1,
         max_digits=7,
-        default=CONTAINER_SETTINGS.kubernetes.resources.default_cpu,
+        default=CONTAINER_SETTINGS.kubernetes.resources.default_cpu_m,
         validators=[MinValueValidator(0)],
     )
     
@@ -66,7 +66,7 @@ class Container(models.Model):
         blank=True,
         decimal_places=1,
         max_digits=8,
-        default=CONTAINER_SETTINGS.kubernetes.resources.default_memory,
+        default=CONTAINER_SETTINGS.kubernetes.resources.default_memory_mib,
         validators=[MinValueValidator(0)],
     )
     

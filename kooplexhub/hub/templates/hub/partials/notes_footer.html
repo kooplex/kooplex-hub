@@ -1,0 +1,18 @@
+<footer
+  id="global-notes-footer"
+  class="global-notes-footer"
+  data-live-key="hub-notes"
+  data-live-url="{% url 'notes-footer' %}"
+  {% if not notes %}hidden{% endif %}
+>
+  {% for note in notes %}
+    <div class="global-note">
+      <i
+        class="bi bi-info-circle me-2"
+        aria-hidden="true"
+      ></i>
+
+      {{ note.message }}
+    </div>
+  {% endfor %}
+</footer>

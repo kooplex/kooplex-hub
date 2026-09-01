@@ -1,12 +1,16 @@
 from django.views import generic
 from django.contrib.auth.mixins import AccessMixin
-from .models.token import Token
+from django.contrib.auth.views import LogoutView
+from django.shortcuts import redirect
+
+from .models import (
+    Note,
+)
+
+from .models.token import Token #???
 #from container.lib.cluster_resources_api import *
 
 from .conf import HUB_SETTINGS
-
-from django.contrib.auth.views import LogoutView
-from django.shortcuts import redirect
 from kooplexhub.settings import URL_AUTH
 
 class OAuthLogoutView(LogoutView):
@@ -37,4 +41,29 @@ class UserTokenView(AccessMixin, generic.TemplateView):
         context['wss_token_config'] = HUB_SETTINGS['wss']['token'].format(user = self.request.user)
         context['wss_resources'] = HUB_SETTINGS['wss']['resources'].format(user = self.request.user)
         return context
+
+
+class NotesFooterView(
+    generic.TemplateView,
+):
+    template_name = (
+        "hub/partials/notes_footer.html"
+    )
+
+    def get_context_data(
+        self,
+        **kwargs,
+    ):
+        context = (
+            super().get_context_data(**kwargs)
+        )
+
+        context["notes"] = (
+            Note.objects.visible_to(
+                self.request.user
+            )
+        )
+
+        return context
+
 

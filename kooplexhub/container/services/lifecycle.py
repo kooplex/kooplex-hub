@@ -109,6 +109,9 @@ def create_container(
     project_ids=(),
     course_ids=(),
     volume_ids=(),
+    requested_cpu_m=None,
+    requested_memory_mib=None,
+    requested_gpu=None,
 ):
     image = (
         ImageCatalogService

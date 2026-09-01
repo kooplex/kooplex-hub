@@ -16,22 +16,32 @@ from .conf import HUB_SETTINGS
 
 logger = logging.getLogger(__name__)
 
+
+@db_task(queue="hub")
+def continue_user_delete(
+    user_id,
+):
+    try:
+        complete = progress_user_delete(
+            user_id=user_id
+        )
+
+    except Exception as error:
+        mark_user_delete_failed(
+            user_id=user_id,
+            error=error,
+        )
+        raise
+
+    if not complete:
+        raise RetryTask(delay=2)
+
+
+
 @task(queue = 'hub')
 def delete_folder(folder):
     logging.warning(f'Deleting folder {folder}')
     rmdir( folder )
-
-
-@task(queue = 'hub')
-def garbage_home(user_id):
-    user = User.objects.get(id = user_id)
-    rmdir( usergarbage(user) )
-    if CONTAINER_SETTINGS['mounts']['scratch'] is not None:
-        rmdir( userscratch(user) )
-    if HUB_SETTINGS['archive_home']:
-        archivedir( userhome(user), userhome_garbage(user), remove = True)
-    else:
-        rmdir( userhome(user) )
 
 
 @task(queue = 'hub')

@@ -1,0 +1,59 @@
+<form
+  id="container-create-form"
+  method="post"
+  hx-post="{% url 'container:create' %}"
+  hx-target="#modal-root"
+  hx-swap="innerHTML"
+  data-container-create-wizard
+  data-initial-step="{{ wizard_step|default:0 }}"
+  novalidate
+>
+  {% csrf_token %}
+
+  {% if form.non_field_errors %}
+    <div class="alert alert-danger mb-3">
+      {{ form.non_field_errors }}
+    </div>
+  {% endif %}
+
+  <div class="d-flex align-items-center mb-4">
+    <div class="wizard-progress-step" data-wizard-indicator="0">
+      <span>1</span>
+      General
+    </div>
+
+    <div class="flex-grow-1 border-top mx-2"></div>
+
+    <div class="wizard-progress-step" data-wizard-indicator="1">
+      <span>2</span>
+      Mounts
+    </div>
+
+    <div class="flex-grow-1 border-top mx-2"></div>
+
+    <div class="wizard-progress-step" data-wizard-indicator="2">
+      <span>3</span>
+      Compute
+    </div>
+  </div>
+
+  <div data-container-wizard-step="0">
+    {% include "container/create/steps/general.html" %}
+  </div>
+
+  <div
+    data-container-wizard-step="1"
+    hidden
+  >
+    {% include "container/create/steps/mounts.html" %}
+  </div>
+
+  <div
+    data-container-wizard-step="2"
+    hidden
+  >
+    {% include "container/create/steps/compute.html" %}
+  </div>
+
+  {% include "container/create/actions.html" %}
+</form>

@@ -1,0 +1,113 @@
+<div class="mb-4">
+  <div class="d-flex justify-content-between">
+    <div>
+      <h6 class="mb-1">
+        Compute resources
+      </h6>
+
+      <p class="text-muted small mb-3">
+        The defaults are suitable for most
+        environments. Adjust them only when
+        needed.
+      </p>
+    </div>
+
+    <span class="badge text-bg-light align-self-start">
+      Optional
+    </span>
+  </div>
+
+  <div class="row g-3">
+
+    <div class="col-md-4">
+      <label
+        for="{{ form.cpu_cores.id_for_label }}"
+        class="form-label fw-semibold"
+      >
+        CPU
+      </label>
+
+      <div class="input-group">
+        <input
+          type="number"
+          class="form-control{% if form.cpu_cores.errors %} is-invalid{% endif %}"
+          id="{{ form.cpu_cores.id_for_label }}"
+          name="{{ form.cpu_cores.html_name }}"
+          value="{{ form.cpu_cores.value|default_if_none:'' }}"
+          min="0"
+          step="0.1"
+        >
+        <span class="input-group-text">
+          cores
+        </span>
+      </div>
+
+      {% if form.cpu_cores.errors %}
+        <div class="text-danger small mt-1">
+          {{ form.cpu_cores.errors|striptags }}
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="col-md-4">
+      <label
+        for="{{ form.memory_gib.id_for_label }}"
+        class="form-label fw-semibold"
+      >
+        Memory
+      </label>
+
+      <div class="input-group">
+        <input
+          type="number"
+          class="form-control{% if form.memory_gib.errors %} is-invalid{% endif %}"
+          id="{{ form.memory_gib.id_for_label }}"
+          name="{{ form.memory_gib.html_name }}"
+          value="{{ form.memory_gib.value|default_if_none:'' }}"
+          min="0"
+          step="0.25"
+        >
+        <span class="input-group-text">
+          GiB
+        </span>
+      </div>
+
+      {% if form.memory_gib.errors %}
+        <div class="text-danger small mt-1">
+          {{ form.memory_gib.errors|striptags }}
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="col-md-4">
+      <label
+        for="{{ form.gpu_count.id_for_label }}"
+        class="form-label fw-semibold"
+      >
+        GPU
+      </label>
+
+      <div class="input-group">
+        <input
+          type="number"
+          class="form-control{% if form.gpu_count.errors %} is-invalid{% endif %}"
+          id="{{ form.gpu_count.id_for_label }}"
+          name="{{ form.gpu_count.html_name }}"
+          value="{{ form.gpu_count.value|default_if_none:'' }}"
+          min="0"
+          step="1"
+        >
+        <span class="input-group-text">
+          GPU
+        </span>
+      </div>
+
+      {% if form.gpu_count.errors %}
+        <div class="text-danger small mt-1">
+          {{ form.gpu_count.errors|striptags }}
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>

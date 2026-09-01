@@ -3,9 +3,17 @@ import uuid
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
+GLOBAL_LIVE_GROUP = (
+    "live-global-authenticated"
+)
+
 
 def live_group_for_user(user_id):
     return f"live-user-{user_id}"
+
+
+def live_global_group():
+    return GLOBAL_LIVE_GROUP
 
 
 def broadcast_live_event(
@@ -84,5 +92,35 @@ def push_live_message(
         event="notification",
         notification=notification,
     )
+
+
+def broadcast_global_live_event(
+    *,
+    keys=(),
+    event="object.changed",
+    payload=None,
+):
+    channel_layer = get_channel_layer()
+
+    if channel_layer is None:
+        return
+
+    message = {
+        "event": event,
+        "event_id": uuid.uuid4().hex,
+        "keys": list(keys),
+        **(payload or {}),
+    }
+
+    async_to_sync(
+        channel_layer.group_send
+    )(
+        live_global_group(),
+        {
+            "type": "live.event",
+            "payload": message,
+        },
+    )
+
 
 
