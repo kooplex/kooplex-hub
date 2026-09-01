@@ -126,6 +126,31 @@ def create_container(
             "available."
         )
 
+    create_kwargs = {
+        "user": user,
+        "image": image,
+        "name": name,
+        "label": _container_label(
+            user=user,
+            name=name,
+        ),
+    }
+
+    if requested_cpu_m is not None:
+        create_kwargs[
+            "requested_cpu_m"
+        ] = requested_cpu_m
+    
+    if requested_memory_mib is not None:
+        create_kwargs[
+            "requested_memory_mib"
+        ] = requested_memory_mib
+    
+    if requested_gpu is not None:
+        create_kwargs[
+            "requested_gpu"
+        ] = requested_gpu
+
     projects, courses, volumes = (
         _resolve_selected_items(
             user=user,
@@ -137,13 +162,7 @@ def create_container(
 
     with transaction.atomic():
         container = Container.objects.create(
-            user=user,
-            image=image,
-            name=name,
-            label=_container_label(
-                user=user,
-                name=name,
-            ),
+            **create_kwargs,
         )
 
         apply_container_mounts(

@@ -293,11 +293,16 @@ class Command(BaseCommand):
             # Very useful invariant: exec_for_container
             # explicitly uses `su username`, so make sure
             # we really executed as the requested user.
+            uid = user.profile.uid_number
+            if uid is None:
+                raise RuntimeError(
+                    f"User {user.username!r} has no provisioned UID."
+                )
             if (
                 f"({user.username})"
                 not in output
                 and
-                f"uid={user.profile.userid}"
+                f"uid={uid}"
                 not in output
                 if hasattr(
                     user,

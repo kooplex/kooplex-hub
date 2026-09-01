@@ -24,13 +24,22 @@ def ensure_user_directory_identity(
         entry = None
 
     if entry is not None:
-        uid = int(
-            entry["attributes"]["uidNumber"]
-        )
-
-        gid = int(
-            entry["attributes"]["gidNumber"]
-        )
+        try:
+            uid = int(
+                entry.uidNumber.value
+            )
+            gid = int(
+                entry.gidNumber.value
+            )
+        except (
+            AttributeError,
+            TypeError,
+            ValueError,
+        ) as error:
+            raise UserDirectoryError(
+                f"LDAP user {user.username!r} "
+                "has invalid uidNumber/gidNumber."
+            ) from error
 
         profile.uid_number = uid
         profile.gid_number = gid

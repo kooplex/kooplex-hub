@@ -6,7 +6,10 @@ from channels.generic.websocket import (
     AsyncJsonWebsocketConsumer,
 )
 
-from .services.live import live_group_for_user
+from .services.live import (
+    live_group_for_user,
+    live_global_group,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -38,8 +41,17 @@ class LiveConsumer(
             live_group_for_user(user.pk)
         )
 
+        self.global_group_name = (
+            live_global_group()
+        )        
+
         await self.channel_layer.group_add(
             self.user_group_name,
+            self.channel_name,
+        )
+
+        await self.channel_layer.group_add(
+            self.global_group_name,
             self.channel_name,
         )
 
@@ -58,6 +70,15 @@ class LiveConsumer(
         ):
             await self.channel_layer.group_discard(
                 self.user_group_name,
+                self.channel_name,
+            )
+
+        if hasattr(
+            self,
+            "global_group_name",
+        ):
+            await self.channel_layer.group_discard(
+                self.global_group_name,
                 self.channel_name,
             )
 

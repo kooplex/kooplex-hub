@@ -41,7 +41,10 @@ class Ldap:
         )
 
         if not self.connection.bind():
-            self._raise(f"Cannot bind to ldap server: {ldapconf.host}:{ldapconf.port}")
+            self._raise(
+                "Cannot bind to ldap server: "
+                f"{self.host}:{self.port}"
+            )
 
     def _raise(self, message):
         result = self.connection.result or {}

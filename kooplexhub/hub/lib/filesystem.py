@@ -199,7 +199,11 @@ def _rmdir(path):
 
 def _grantaccess(user, folder, readonly = False, recursive = False, follow = False):
     R = '-R' if recursive else ''
-    uid = user.profile.userid
+    uid = user.profile.uid_number
+    if uid is None:
+        raise RuntimeError(
+            f"User {user.username!r} has no provisioned UID."
+        )
     if acl_backend == 'nfs4':
         acl = 'rXtcy' if readonly else 'rwaDxtcy'
         flags = 'fdi' if follow else ''
@@ -213,11 +217,16 @@ def _grantaccess(user, folder, readonly = False, recursive = False, follow = Fal
 
 
 def _revokeaccess(user, folder):
+    uid = user.profile.uid_number
+    if uid is None:
+        raise RuntimeError(
+            f"User {user.username!r} has no provisioned UID."
+        )
     if acl_backend == 'nfs4':
-        bash(f'nfs4_setfacl -R -x A:fdi:{user.profile.userid}:$(nfs4_getfacl {folder} | grep :fdi:{user.profile.userid}: | sed s,.*:,,) {folder}')
-        bash(f'nfs4_setfacl -R -x A::{user.profile.userid}:$(nfs4_getfacl {folder} | grep ::{user.profile.userid}: | sed s,.*:,,) {folder}')
+        bash(f'nfs4_setfacl -R -x A:fdi:{uid}:$(nfs4_getfacl {folder} | grep :fdi:{uid}: | sed s,.*:,,) {folder}')
+        bash(f'nfs4_setfacl -R -x A::{uid}:$(nfs4_getfacl {folder} | grep ::{uid}: | sed s,.*:,,) {folder}')
     elif acl_backend == 'posix':
-        bash("setfacl -R -x u:%d %s" % (user.profile.userid, folder))
+        bash("setfacl -R -x u:%d %s" % (uid, folder))
     else:
         NotImplementedError(f'_grantaccess acl_backend {acl_backend}')
     logger.info(f"- access revoked on dir {folder} from user {user}")

@@ -24,7 +24,7 @@ class LdapSettings:
         "uid={username},ou=users,dn=localhost"
     )
     group_dn: str = (
-        "uid={groupname},ou=groups,dn=localhost"
+        "cn={groupname},ou=groups,dn=localhost"
     )
 
     user_search: str = "ou=users,dn=localhost"
