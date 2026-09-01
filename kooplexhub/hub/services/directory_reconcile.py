@@ -1,11 +1,18 @@
+import logging
 from dataclasses import dataclass, field
 
 from django.contrib.auth import get_user_model
+from django.db import IntegrityError
 
 from ..lib.ldap import Ldap
-from ..models import Group, UserGroupBinding
+from ..models import (
+    Group,
+    Profile,
+    UserGroupBinding,
+)
 from .groups import ensure_group_in_directory
 
+logger = logging.getLogger(__name__)
 User = get_user_model()
 
 @dataclass(frozen=True, slots=True)
@@ -22,30 +29,40 @@ class LdapGroupInfo:
     members: frozenset[str]
 
 
-@dataclass(frozen=True, slots=True)
-class DirectoryDiff:
-    missing_users: tuple[str, ...] = ()
-    ldap_only_users: tuple[str, ...] = ()
+@dataclass(
+    frozen=True,
+    slots=True,
+)
+class ProfileIdentityMissing:
+    username: str
 
-    missing_groups: tuple[str, ...] = ()
-    ldap_only_groups: tuple[str, ...] = ()
+    database_uid: int | None
+    database_gid: int | None
 
-    gid_mismatches: tuple = ()
+    ldap_uid: int | None
+    ldap_gid: int | None
 
-    missing_memberships: tuple = ()
-    ldap_only_memberships: tuple = ()
 
-    @property
-    def consistent(self):
-        return not any((
-            self.missing_users,
-            self.ldap_only_users,
-            self.missing_groups,
-            self.ldap_only_groups,
-            self.gid_mismatches,
-            self.missing_memberships,
-            self.ldap_only_memberships,
-        ))
+@dataclass(
+    frozen=True,
+    slots=True,
+)
+class ProfileIdentityMismatch:
+    username: str
+
+    database_uid: int | None
+    ldap_uid: int | None
+
+    database_gid: int | None
+    ldap_gid: int | None
+
+
+@dataclass(
+    frozen=True,
+    slots=True,
+)
+class MissingProfile:
+    username: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -62,6 +79,51 @@ class MembershipDifference:
 
 
 @dataclass(frozen=True, slots=True)
+class DirectoryDiff:
+    missing_users: tuple[str, ...] = ()
+    ldap_only_users: tuple[str, ...] = ()
+
+    missing_groups: tuple[str, ...] = ()
+    ldap_only_groups: tuple[str, ...] = ()
+
+    gid_mismatches: tuple = ()
+
+    missing_memberships: tuple = ()
+    ldap_only_memberships: tuple = ()
+
+    missing_profiles: tuple[
+        MissingProfile,
+        ...,
+    ] = ()
+
+    profile_identity_missing: tuple[
+        ProfileIdentityMissing,
+        ...,
+    ] = ()
+
+    profile_identity_mismatches: tuple[
+        ProfileIdentityMismatch,
+        ...,
+    ] = ()
+    
+
+    @property
+    def consistent(self):
+        return not any((
+            self.missing_users,
+            self.ldap_only_users,
+            self.missing_groups,
+            self.ldap_only_groups,
+            self.gid_mismatches,
+            self.missing_memberships,
+            self.ldap_only_memberships,
+            self.missing_profiles,
+            self.profile_identity_missing,
+            self.profile_identity_mismatches,
+        ))
+
+
+@dataclass(frozen=True, slots=True)
 class RepairResult:
     groups_created: tuple[str, ...] = ()
     memberships_created: tuple[
@@ -72,6 +134,16 @@ class RepairResult:
 
     groups_deleted: tuple[str, ...] = ()
     users_deleted: tuple[str, ...] = ()
+
+    profile_identities_repaired: tuple[
+        str,
+        ...,
+    ] = ()
+
+    profile_identities_skipped: tuple[
+        str,
+        ...,
+    ] = ()
 
 
 
@@ -174,6 +246,147 @@ class DirectoryReconciler:
             )
         }
 
+        profiles_by_user_id = {
+            profile.user_id: profile
+            for profile in (
+                Profile.objects
+                .filter(
+                    user_id__in=[
+                        user.pk
+                        for user in db_users.values()
+                    ]
+                )
+            )
+        }
+
+        missing_profiles = []
+        profile_identity_missing = []
+        profile_identity_mismatches = []
+        
+        for username in sorted(
+            set(db_users) & set(ldap_users)
+        ):
+            user = db_users[username]
+            ldap_user = ldap_users[username]
+        
+            profile = profiles_by_user_id.get(
+                user.pk
+            )
+        
+            if profile is None:
+                missing_profiles.append(
+                    MissingProfile(
+                        username=username,
+                    )
+                )
+                continue
+        
+            ldap_uid = ldap_user.uid_number
+            ldap_gid = ldap_user.gid_number
+        
+            #
+            # LDAP identity itself is incomplete.
+            # Do not manufacture values from DB/config
+            # during reconciliation.
+            #
+            if (
+                ldap_uid is None
+                or ldap_gid is None
+            ):
+                profile_identity_mismatches.append(
+                    ProfileIdentityMismatch(
+                        username=username,
+                        database_uid=(
+                            profile.uid_number
+                        ),
+                        ldap_uid=ldap_uid,
+                        database_gid=(
+                            profile.gid_number
+                        ),
+                        ldap_gid=ldap_gid,
+                    )
+                )
+                continue
+        
+            missing_uid = (
+                profile.uid_number is None
+            )
+        
+            missing_gid = (
+                profile.gid_number is None
+            )
+        
+            if missing_uid or missing_gid:
+                #
+                # A non-null side may still already
+                # conflict with LDAP. That is NOT a
+                # safe fill.
+                #
+                conflicting_uid = (
+                    profile.uid_number is not None
+                    and profile.uid_number
+                    != ldap_uid
+                )
+        
+                conflicting_gid = (
+                    profile.gid_number is not None
+                    and profile.gid_number
+                    != ldap_gid
+                )
+        
+                if (
+                    conflicting_uid
+                    or conflicting_gid
+                ):
+                    profile_identity_mismatches.append(
+                        ProfileIdentityMismatch(
+                            username=username,
+                            database_uid=(
+                                profile.uid_number
+                            ),
+                            ldap_uid=ldap_uid,
+                            database_gid=(
+                                profile.gid_number
+                            ),
+                            ldap_gid=ldap_gid,
+                        )
+                    )
+        
+                else:
+                    profile_identity_missing.append(
+                        ProfileIdentityMissing(
+                            username=username,
+                            database_uid=(
+                                profile.uid_number
+                            ),
+                            database_gid=(
+                                profile.gid_number
+                            ),
+                            ldap_uid=ldap_uid,
+                            ldap_gid=ldap_gid,
+                        )
+                    )
+        
+                continue
+        
+            if (
+                profile.uid_number != ldap_uid
+                or profile.gid_number != ldap_gid
+            ):
+                profile_identity_mismatches.append(
+                    ProfileIdentityMismatch(
+                        username=username,
+                        database_uid=(
+                            profile.uid_number
+                        ),
+                        ldap_uid=ldap_uid,
+                        database_gid=(
+                            profile.gid_number
+                        ),
+                        ldap_gid=ldap_gid,
+                    )
+                )
+
         db_groups = {
             group.name: group
             for group in Group.objects.all()
@@ -270,6 +483,15 @@ class DirectoryReconciler:
             ldap_only_memberships=tuple(
                 ldap_only_memberships
             ),
+            missing_profiles=tuple(
+                missing_profiles
+            ),
+            profile_identity_missing=tuple(
+                profile_identity_missing
+            ),
+            profile_identity_mismatches=tuple(
+                profile_identity_mismatches
+            ),
         )
 
 
@@ -347,6 +569,121 @@ class DirectoryReconciler:
                 )
                 deleted_users.append(username)
 
+        profile_identities_repaired = []
+        profile_identities_skipped = []
+
+        for item in diff.profile_identity_missing:
+            user = (
+                User.objects
+                .filter(
+                    username=item.username
+                )
+                .first()
+            )
+        
+            if user is None:
+                profile_identities_skipped.append(
+                    item.username
+                )
+                continue
+        
+            profile = (
+                Profile.objects
+                .filter(user=user)
+                .first()
+            )
+        
+            if profile is None:
+                profile_identities_skipped.append(
+                    item.username
+                )
+                continue
+        
+            #
+            # Re-read LDAP rather than blindly trusting
+            # the earlier inspection snapshot.
+            #
+            ldap_info = (
+                self.ldap_users()
+                .get(item.username)
+            )
+        
+            if (
+                ldap_info is None
+                or ldap_info.uid_number is None
+                or ldap_info.gid_number is None
+            ):
+                profile_identities_skipped.append(
+                    item.username
+                )
+                continue
+        
+            #
+            # Only fill missing fields.
+            # Never overwrite a populated identity.
+            #
+            update_fields = []
+        
+            if profile.uid_number is None:
+                profile.uid_number = (
+                    ldap_info.uid_number
+                )
+                update_fields.append(
+                    "uid_number"
+                )
+        
+            elif (
+                profile.uid_number
+                != ldap_info.uid_number
+            ):
+                profile_identities_skipped.append(
+                    item.username
+                )
+                continue
+        
+            if profile.gid_number is None:
+                profile.gid_number = (
+                    ldap_info.gid_number
+                )
+                update_fields.append(
+                    "gid_number"
+                )
+        
+            elif (
+                profile.gid_number
+                != ldap_info.gid_number
+            ):
+                profile_identities_skipped.append(
+                    item.username
+                )
+                continue
+        
+            if not update_fields:
+                continue
+        
+            try:
+                profile.save(
+                    update_fields=update_fields
+                )
+            except IntegrityError as error:
+                profile_identities_skipped.append(
+                    item.username
+                )
+            
+                logger.warning(
+                    "Could not reconcile POSIX identity "
+                    "for user=%s uid=%s gid=%s: %s",
+                    item.username,
+                    ldap_info.uid_number,
+                    ldap_info.gid_number,
+                    error,
+                )
+            
+                continue
+        
+            profile_identities_repaired.append(
+                item.username
+            )
 
         return RepairResult(
             groups_created=tuple(
@@ -363,6 +700,12 @@ class DirectoryReconciler:
             ),
             users_deleted=tuple(
                 deleted_users
+            ),
+            profile_identities_repaired=tuple(
+                profile_identities_repaired
+            ),
+            profile_identities_skipped=tuple(
+                profile_identities_skipped
             ),
         )
 

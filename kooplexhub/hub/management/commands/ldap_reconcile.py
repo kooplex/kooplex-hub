@@ -138,6 +138,33 @@ class Command(BaseCommand):
                     f"  ! {username}"
                 )
 
+        if result.profile_identities_repaired:
+            self.stdout.write(
+                "Profile identities repaired:"
+            )
+        
+            for username in (
+                result.profile_identities_repaired
+            ):
+                self.stdout.write(
+                    f"  + {username}"
+                )
+        
+        if result.profile_identities_skipped:
+            self.stdout.write(
+                self.style.WARNING(
+                    "Profile identities skipped:"
+                )
+            )
+        
+            for username in (
+                result.profile_identities_skipped
+            ):
+                self.stdout.write(
+                    f"  ! {username}"
+                )
+
+
     def _print_diff(self, diff):
         self.stdout.write(
             self.style.MIGRATE_HEADING(
@@ -205,6 +232,53 @@ class Command(BaseCommand):
                     f"  ? {item.username}"
                     f" -> {item.group_name}"
                 )
+
+        if diff.missing_profiles:
+            self.stdout.write(
+                "\nUsers without Profile:"
+            )
+        
+            for item in diff.missing_profiles:
+                self.stdout.write(
+                    f"  ! {item.username}"
+                )
+        
+        if diff.profile_identity_missing:
+            self.stdout.write(
+                "\nProfile identities missing:"
+            )
+        
+            for item in (
+                diff.profile_identity_missing
+            ):
+                self.stdout.write(
+                    "  + "
+                    f"{item.username}: "
+                    f"DB uid={item.database_uid}, "
+                    f"gid={item.database_gid}; "
+                    f"LDAP uid={item.ldap_uid}, "
+                    f"gid={item.ldap_gid}"
+                )
+        
+        if diff.profile_identity_mismatches:
+            self.stdout.write(
+                self.style.WARNING(
+                    "\nProfile/LDAP identity mismatches:"
+                )
+            )
+        
+            for item in (
+                diff.profile_identity_mismatches
+            ):
+                self.stdout.write(
+                    "  ! "
+                    f"{item.username}: "
+                    f"DB uid={item.database_uid}, "
+                    f"gid={item.database_gid}; "
+                    f"LDAP uid={item.ldap_uid}, "
+                    f"gid={item.ldap_gid}"
+                )
+
 
     def _section(
         self,
