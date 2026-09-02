@@ -13,6 +13,7 @@ from grp import getgrnam
 from distutils import dir_util
 from distutils import file_util
 import tarfile
+import subprocess
 
 from kooplexhub.settings import KOOPLEX
 from kooplexhub.lib import bash
@@ -22,6 +23,172 @@ logger = logging.getLogger(__name__)
 
 class FilesystemOperationError(RuntimeError):
     pass
+
+
+def _command_output(argv):
+    completed = subprocess.run(
+        argv,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        check=False,
+    )
+
+    if completed.returncode != 0:
+        raise FilesystemOperationError(
+            f"{' '.join(argv)} failed: "
+            f"{completed.stderr.strip()}"
+        )
+
+    return completed.stdout
+
+
+def _require_success(
+    completed,
+    *,
+    operation,
+):
+    if completed.returncode == 0:
+        return completed
+
+    stderr = (
+        completed.stderr.decode(
+            "utf-8",
+            errors="replace",
+        )
+        if completed.stderr
+        else ""
+    )
+
+    raise FilesystemOperationError(
+        f"{operation} failed: "
+        f"{stderr.strip()}"
+    )
+
+
+def user_has_folder_access(
+    user,
+    folder,
+    *,
+    writable=True,
+):
+    uid = user.profile.uid_number
+
+    if uid is None:
+        return False
+
+    if not os.path.isdir(folder):
+        return False
+
+    if acl_backend == "nfs4":
+        output = _command_output(
+            [
+                "nfs4_getfacl",
+                folder,
+            ]
+        )
+
+        required = set(
+            "rwaDxtcy"
+            if writable
+            else "rXtcy"
+        )
+
+        permissions = set()
+
+        for raw_line in output.splitlines():
+            line = raw_line.strip()
+
+            parts = line.split(":")
+
+            if len(parts) < 4:
+                continue
+
+            if parts[0] != "A":
+                continue
+
+            principal = parts[2]
+
+            principal_matches = (
+                principal == str(uid)
+                or principal == user.username
+                or (
+                    principal.split(
+                        "@",
+                        1,
+                    )[0]
+                    == user.username
+                )
+            )
+
+            if not principal_matches:
+                continue
+
+            permissions.update(
+                parts[3]
+            )
+
+        return required.issubset(
+            permissions
+        )
+
+    if acl_backend == "posix":
+        output = _command_output(
+            [
+                "getfacl",
+                "-cpn",
+                folder,
+            ]
+        )
+
+        user_permissions = None
+        mask_permissions = set("rwx")
+
+        for raw_line in output.splitlines():
+            line = raw_line.strip()
+
+            if line.startswith(
+                f"user:{uid}:"
+            ):
+                user_permissions = set(
+                    line.rsplit(
+                        ":",
+                        1,
+                    )[1]
+                )
+
+            elif line.startswith(
+                "mask::"
+            ):
+                mask_permissions = set(
+                    line.rsplit(
+                        ":",
+                        1,
+                    )[1]
+                )
+
+        if user_permissions is None:
+            return False
+
+        effective = (
+            user_permissions
+            & mask_permissions
+        )
+
+        required = (
+            set("rwx")
+            if writable
+            else set("rx")
+        )
+
+        return required.issubset(
+            effective
+        )
+
+    raise NotImplementedError(
+        f"Unsupported ACL backend "
+        f"{acl_backend!r}"
+    )
 
 
 def archive_directory(
@@ -197,22 +364,73 @@ def _rmdir(path):
     logger.info(f"- removed dir: {path}")
 
 
-def _grantaccess(user, folder, readonly = False, recursive = False, follow = False):
-    R = '-R' if recursive else ''
+def _grantaccess(
+    user,
+    folder,
+    readonly=False,
+    recursive=False,
+    follow=False,
+):
+    R = "-R" if recursive else ""
+
     uid = user.profile.uid_number
+
     if uid is None:
         raise RuntimeError(
-            f"User {user.username!r} has no provisioned UID."
+            f"User {user.username!r} "
+            "has no provisioned UID."
         )
-    if acl_backend == 'nfs4':
-        acl = 'rXtcy' if readonly else 'rwaDxtcy'
-        flags = 'fdi' if follow else ''
-        bash(f'nfs4_setfacl {R} -a A:{flags}:{uid}:{acl} {folder}')
-    elif acl_backend == 'posix':
-        acl = 'rX' if readonly else 'rwx'
-        bash(f'setfacl {R} -m u:{uid}:{acl} {folder}')
+
+    if acl_backend == "nfs4":
+        acl = (
+            "rXtcy"
+            if readonly
+            else "rwaDxtcy"
+        )
+
+        flags = "fdi" if follow else ""
+
+        command = (
+            f"nfs4_setfacl {R} "
+            f"-a A:{flags}:{uid}:{acl} "
+            f"{folder}"
+        )
+
+        _require_success(
+            bash(command),
+            operation=(
+                f"Granting access to "
+                f"{folder}"
+            ),
+        )
+
+    elif acl_backend == "posix":
+        acl = (
+            "rX"
+            if readonly
+            else "rwx"
+        )
+
+        command = (
+            f"setfacl {R} "
+            f"-m u:{uid}:{acl} "
+            f"{folder}"
+        )
+
+        _require_success(
+            bash(command),
+            operation=(
+                f"Granting access to "
+                f"{folder}"
+            ),
+        )
+
     else:
-        NotImplementedError(f'_grantaccess acl_backend {acl_backend}')
+        raise NotImplementedError(
+            f"_grantaccess acl_backend "
+            f"{acl_backend}"
+        )
+
     logger.info(f"+ access granted on dir {folder} to user {user}")
 
 

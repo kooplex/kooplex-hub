@@ -24,33 +24,54 @@ def ensure_user_directory_identity(
         entry = None
 
     if entry is not None:
-        try:
-            uid = int(
-                entry.uidNumber.value
-            )
-            gid = int(
-                entry.gidNumber.value
-            )
-        except (
-            AttributeError,
-            TypeError,
-            ValueError,
-        ) as error:
-            raise UserDirectoryError(
-                f"LDAP user {user.username!r} "
-                "has invalid uidNumber/gidNumber."
-            ) from error
-
-        profile.uid_number = uid
-        profile.gid_number = gid
-
-        profile.save(
-            update_fields=[
-                "uid_number",
-                "gid_number",
-            ]
+        uid = int(
+            entry.uidNumber.value
+        )
+        gid = int(
+            entry.gidNumber.value
         )
 
+        if (
+            profile.uid_number is not None
+            and profile.uid_number != uid
+        ):
+            raise UserDirectoryError(
+                f"Profile UID "
+                f"{profile.uid_number} does not "
+                f"match LDAP UID {uid} for "
+                f"{user.username!r}."
+            )
+    
+        if (
+            profile.gid_number is not None
+            and profile.gid_number != gid
+        ):
+            raise UserDirectoryError(
+                f"Profile GID "
+                f"{profile.gid_number} does not "
+                f"match LDAP GID {gid} for "
+                f"{user.username!r}."
+            )
+    
+        update_fields = []
+    
+        if profile.uid_number is None:
+            profile.uid_number = uid
+            update_fields.append(
+                "uid_number"
+            )
+    
+        if profile.gid_number is None:
+            profile.gid_number = gid
+            update_fields.append(
+                "gid_number"
+            )
+    
+        if update_fields:
+            profile.save(
+                update_fields=update_fields
+            )
+    
         return profile
 
     if not HUB_SETTINGS.ldap.manage_users:
@@ -60,14 +81,23 @@ def ensure_user_directory_identity(
             "provisioning is disabled."
         )
 
-    profile.uid_number = (
-        HUB_SETTINGS.ldap.user_uid_offset
-        + user.pk
-    )
-
-    profile.gid_number = (
-        HUB_SETTINGS.ldap.user_gid_number
-    )
+    uid = profile.uid_number
+    
+    if uid is None:
+        uid = (
+            HUB_SETTINGS.ldap.user_uid_offset
+            + user.pk
+        )
+    
+    gid = profile.gid_number
+    
+    if gid is None:
+        gid = (
+            HUB_SETTINGS.ldap.user_gid_number
+        )
+    
+    profile.uid_number = uid
+    profile.gid_number = gid
 
     profile.save(
         update_fields=[
@@ -78,8 +108,8 @@ def ensure_user_directory_identity(
 
     ldap.add_user(
         user=user,
-        uid_number=profile.uid_number,
-        gid_number=profile.gid_number,
+        uid_number=uid,
+        gid_number=gid,
     )
 
     return profile
