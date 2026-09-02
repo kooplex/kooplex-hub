@@ -1,3 +1,5 @@
+import logging
+
 import pwgen
 from django.utils import timezone
 
@@ -7,6 +9,9 @@ from django.contrib.auth import (
 )
 
 from ..models import Profile
+
+
+logger = logging.getLogger(__name__)
 
 
 @transaction.atomic
@@ -37,12 +42,20 @@ def register_user(
 
     profile_id = profile.pk
 
-    transaction.on_commit(
-        lambda: provision_user_task(
+    def enqueue():
+        logger.debug(
+            "Enqueueing user provisioning "
+            "profile=%s user=%s",
+            profile_id,
+            user.username,
+        )
+
+        provision_user_task(
             profile_id
         )
-    )
 
+    transaction.on_commit(enqueue)
+    
     return profile
 
 

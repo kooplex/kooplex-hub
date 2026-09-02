@@ -56,19 +56,28 @@ def provision_user(
         )
 
     except Exception as error:
-        Profile.objects.filter(
-            pk=profile_id,
-            state=Profile.State.PREPARING,
-        ).update(
-            state=(
-                Profile.State.PROVISION_FAILED
-            ),
-            last_operation_error=(
-                _operation_error(error)
-            ),
-            last_operation_failed_at=(
-                timezone.now()
-            ),
+        updated = (
+            Profile.objects.filter(
+                pk=profile_id,
+                state=Profile.State.PREPARING,
+            ).update(
+                state=(
+                    Profile.State.PROVISION_FAILED
+                ),
+                last_operation_error=(
+                    _operation_error(error)
+                ),
+                last_operation_failed_at=(
+                    timezone.now()
+                ),
+            )
+        )
+    
+        logger.exception(
+            "User provisioning failed "
+            "profile=%s state_updated=%s",
+            profile_id,
+            updated == 1,
         )
 
         raise
