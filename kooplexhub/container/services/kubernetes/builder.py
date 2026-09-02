@@ -21,7 +21,11 @@ from project.conf import PROJECT_SETTINGS
 from volume.conf import VOLUME_SETTINGS
 
 from .labels import dns_label, workload_labels, workload_name
-from .resources import ResourcePolicy, build_resources
+from ..compute_resolver import (
+    resolve_container_resources,
+    ResolvedContainerResources,
+)
+from .resources import build_resources
 from .types import BuiltWorkload
 from .volumes import VolumeBundle
 from hub.conf_types import MountSettings
@@ -53,47 +57,6 @@ def _sanitize(value: Any) -> Any:
     return kubernetes_client.ApiClient().sanitize_for_serialization(value)
 
 
-def resource_policy_from_settings(kubernetes_settings: Any) -> ResourcePolicy:
-    """Build an explicit policy from either new or legacy setting names.
-
-    Canonical units are millicores and MiB. Legacy aliases are accepted so the
-    refactor can be wired before settings are renamed, but their values must be
-    audited in the Kooplex configuration.
-    """
-
-    settings = _get_setting(kubernetes_settings, "resources", {})
-
-    def first(*names: str, default: Any = None) -> Any:
-        for name in names:
-            value = _get_setting(settings, name, None)
-            if value is not None:
-                return value
-        return default
-
-    return ResourcePolicy(
-        min_cpu_m=int(first("min_cpu_m", "min_cpu", default=0)),
-        min_memory_mib=int(first("min_memory_mib", "min_memory", default=0)),
-        max_cpu_m=_optional_int(first("max_cpu_m", default=None)),
-        max_memory_mib=_optional_int(first("max_memory_mib", default=None)),
-        max_gpu=_optional_int(first("max_gpu", default=None)),
-        cpu_limit_m=_optional_int(
-            first("cpu_limit_m", "limit_cpu_m", "limit_cpu", default=None)
-        ),
-        memory_limit_mib=_optional_int(
-            first(
-                "memory_limit_mib",
-                "limit_memory_mib",
-                "limit_memory",
-                default=None,
-            )
-        ),
-    )
-
-
-def _optional_int(value: Any) -> int | None:
-    return None if value is None else int(value)
-
-
 class ContainerWorkloadBuilder:
     """Translate a Kooplex Container model into a Deployment workload spec.
 
@@ -105,16 +68,17 @@ class ContainerWorkloadBuilder:
     def __init__(
         self,
         kubernetes_settings: Any,
-        *,
-        resource_policy: ResourcePolicy | None = None,
     ):
         self.settings = kubernetes_settings
         self.namespace = _get_setting(kubernetes_settings, "namespace")
-        self.resource_policy = resource_policy or resource_policy_from_settings(
-            kubernetes_settings
-        )
+
 
     def build(self, container: Any) -> BuiltWorkload:
+        resolved_resources = resolve_container_resources(
+            container,
+            self.settings.resources,
+        )
+
         labels = workload_labels(container)
         mount_items = get_container_mount_items(
             container
@@ -155,7 +119,13 @@ class ContainerWorkloadBuilder:
 
         self._build_main_secret(container, volumes)
         pod_containers.append(
-            self._build_main_container(container, pod_ports, volumes.mounts, env)
+            self._build_main_container(
+                container,
+                pod_ports,
+                volumes.mounts,
+                env,
+                resolved_resources,
+            )
         )
 
         pod_spec: dict[str, Any] = {
@@ -478,6 +448,7 @@ class ContainerWorkloadBuilder:
         pod_ports: list[dict[str, Any]],
         volume_mounts: list[dict[str, Any]],
         env: list[dict[str, Any]],
+        resolved_resources: ResolvedContainerResources,
     ) -> dict[str, Any]:
         result: dict[str, Any] = {
             "name": workload_name(container),
@@ -486,7 +457,7 @@ class ContainerWorkloadBuilder:
             "ports": pod_ports,
             "imagePullPolicy": _get_setting(self.settings, "image_pull_policy"),
             "env": env,
-            "resources": build_resources(container, self.resource_policy),
+            "resources": build_resources(resolved_resources),
         }
         if container.image.command:
             result["command"] = ["/bin/bash", "-c", container.image.command]
@@ -499,3 +470,4 @@ class ContainerWorkloadBuilder:
                 http_get["path"] = http_get["path"].format(container=container)
             result["livenessProbe"] = probe
         return result
+
