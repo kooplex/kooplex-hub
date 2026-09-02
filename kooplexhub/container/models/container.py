@@ -1,24 +1,15 @@
-import logging
-
 from django.db import models
-from django.urls import reverse
+from django.contrib.auth import get_user_model
 from django.core.validators import (
     MinLengthValidator,
-    MinValueValidator,
 )
+from django.core.exceptions import ValidationError
 
 from .image import Image
-from .envvar import EnvVarMapping
-from django.contrib.auth import get_user_model
 
-from container.services.mounts import get_container_mount_items
 
 User = get_user_model()
 
-from ..conf import CONTAINER_SETTINGS
-from project.models import ProjectContainerBinding
-
-logger = logging.getLogger(__name__)
 
 class Container(models.Model):
     class State(models.TextChoices):
@@ -29,9 +20,29 @@ class Container(models.Model):
         ERROR = 'oops', 'Error occured'
         STOPPING = 'stopping', 'Stopping...'
 
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(requested_cpu_m__isnull=True)
+                    | models.Q(limit_cpu_m__isnull=True)
+                    | models.Q(limit_cpu_m__gte=models.F("requested_cpu_m"))
+                ),
+                name="container_cpu_limit_gte_request",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(requested_memory_mib__isnull=True)
+                    | models.Q(limit_memory_mib__isnull=True)
+                    | models.Q(limit_memory_mib__gte=models.F("requested_memory_mib"))
+                ),
+                name="container_memory_limit_gte_request",
+            ),
+        ]
+
     name = models.CharField(
-        max_length = 200, 
-        null = False, 
+        max_length=200, 
+        null=False, 
         validators=[ 
             MinLengthValidator(3, message="Name must be at least 3 characters."), 
         ],
@@ -40,43 +51,46 @@ class Container(models.Model):
     user = models.ForeignKey(User, on_delete = models.CASCADE, null = False)
     image = models.ForeignKey(Image, on_delete = models.CASCADE, null = False)
 
-    requested_cpu_m = models.DecimalField(
+    requested_cpu_m = models.PositiveIntegerField(
         null=True,
         blank=True,
-        decimal_places=1,
-        max_digits=7,
-        default=CONTAINER_SETTINGS.kubernetes.resources.default_cpu_m,
-        validators=[MinValueValidator(0)],
+        default=None,
     )
-    
+
+    limit_cpu_m = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        default=None,
+    )
+
     cpu_usage_m = models.PositiveIntegerField(
         null=True,
         blank=True,
         default=None,
     )
-    
+
     requested_gpu = models.PositiveIntegerField(
         null=True,
         blank=True,
-        default=CONTAINER_SETTINGS.kubernetes.resources.default_gpu,
-    )
-    
-    requested_memory_mib = models.DecimalField(
-        null=True,
-        blank=True,
-        decimal_places=1,
-        max_digits=8,
-        default=CONTAINER_SETTINGS.kubernetes.resources.default_memory_mib,
-        validators=[MinValueValidator(0)],
-    )
-    
-    memory_usage_mib = models.DecimalField(
-        null=True,
-        blank=True,
-        decimal_places=1,
-        max_digits=10,
         default=None,
-        validators=[MinValueValidator(0)],
+    )
+
+    requested_memory_mib = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        default=None,
+    )
+
+    limit_memory_mib = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        default=None,
+    )
+
+    memory_usage_mib = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        default=None,
     )
     
     resource_usage_at = models.DateTimeField(
@@ -112,7 +126,11 @@ class Container(models.Model):
         help_text="Observed Kubernetes node where the pod is currently running. Updated by watcher.",
     )
 
-    requested_uptime_hours = models.IntegerField( null = True, blank = True, default=CONTAINER_SETTINGS.kubernetes.resources.default_idletime)
+    requested_uptime_hours = models.IntegerField(
+        null=True, 
+        blank=True, 
+        default=None,
+    )
     idle = models.IntegerField( null = True, blank = True, default=None)
 
     class Meta:
@@ -151,5 +169,31 @@ class Container(models.Model):
     def needs_restart(self):
         return bool(self.restart_reasons)
 
+
+    def clean(self):
+        super().clean()
+
+        errors = {}
+
+        if (
+            self.requested_cpu_m is not None
+            and self.limit_cpu_m is not None
+            and self.requested_cpu_m > self.limit_cpu_m
+        ):
+            errors["limit_cpu_m"] = (
+                "CPU limit must be greater than or equal to CPU request."
+            )
+
+        if (
+            self.requested_memory_mib is not None
+            and self.limit_memory_mib is not None
+            and self.requested_memory_mib > self.limit_memory_mib
+        ):
+            errors["limit_memory_mib"] = (
+                "Memory limit must be greater than or equal to memory request."
+            )
+
+        if errors:
+            raise ValidationError(errors)
 
 

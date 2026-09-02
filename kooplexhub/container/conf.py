@@ -13,24 +13,24 @@ class KubernetesResourcesSettings:
     # Canonical units:
     # CPU: millicores
     # memory: MiB
-    default_cpu_m: int = 200
-    default_gpu: int = 0
-    default_memory_mib: float = 1
-    default_idletime: int = 28
-
+    # idletime hours
     min_cpu_m: int = 200
-    min_gpu: int = 0
-    min_memory_mib: float = 0.5
-    min_idletime: int = 1
-
+    default_cpu_m: int = 200
     max_cpu_m: int = 4000
-    max_gpu: int = 0
-    max_memory_mib: float = 2
-    max_idletime: int = 24
+    limit_scale_cpu: float = 1.1
 
-    limit_cpu_m: float = 5000
-    limit_gpu: int = 0
-    limit_memory_mib: float = 28
+    min_memory_mib: int = 256
+    default_memory_mib: int = 512
+    max_memory_mib: int = 16384
+    limit_scale_memory: float = 1.1
+
+    min_gpu: int = 0
+    default_gpu: int = 0
+    max_gpu: int = 0
+
+    min_idletime: int = 1
+    default_idletime: int = 28
+    max_idletime: int = 168
 
 
 @dataclass(frozen=True)

@@ -3,6 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from ..compute_resolver import (
+    resolve_container_resources,
+)
 from .quantities import cpu_quantity, memory_quantity
 
 
