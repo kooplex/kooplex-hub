@@ -79,6 +79,22 @@ class ContainerComputePresenter:
         return self.limits.gpu_max > 0
 
     @property
+    def cpu_request_is_default(self):
+        return self.container.requested_cpu_m is None
+    
+    @property
+    def cpu_limit_is_default(self):
+        return self.container.limit_cpu_m is None
+    
+    @property
+    def memory_request_is_default(self):
+        return self.container.requested_memory_mib is None
+    
+    @property
+    def memory_limit_is_default(self):
+        return self.container.limit_memory_mib is None
+
+    @property
     def requested_cpu_m(self):
         return self.container.requested_cpu_m
 

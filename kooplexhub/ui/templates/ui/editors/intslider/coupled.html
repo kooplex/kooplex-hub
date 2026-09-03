@@ -8,7 +8,7 @@
     </div>
   {% endif %}
 
-  {% include "ui/editors/intslider/slider.html" with input_id=request_input_id output_id=request_output_id name=request_name label=request_label|default:"Request" value=request_value min=min max=max step=step unit=unit allow_default=allow_default default_label=default_label_request role="request" only %}
+  {% include "ui/editors/intslider/slider.html" with input_id=request_input_id output_id=request_output_id name=request_name label=request_label|default:"Request" value=request_value min=min max=max step=step unit=unit allow_default=allow_default default_label=default_label_request role="request" is_default=request_is_default only %}
 
-  {% include "ui/editors/intslider/slider.html" with input_id=limit_input_id output_id=limit_output_id name=limit_name label=limit_label|default:"Limit" value=limit_value min=min max=max step=step unit=unit allow_default=allow_default default_label=default_label_limit role="limit" only %}
+  {% include "ui/editors/intslider/slider.html" with input_id=limit_input_id output_id=limit_output_id name=limit_name label=limit_label|default:"Limit" value=limit_value min=min max=max step=step unit=unit allow_default=allow_default default_label=default_label_limit role="limit" is_default=limitt_is_default only %}
 </div>

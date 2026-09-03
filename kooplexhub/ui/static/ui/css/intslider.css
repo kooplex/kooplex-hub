@@ -1,0 +1,7 @@
+.ui-intslider--default .ui-intslider__input {
+    opacity: .45;
+}
+
+.ui-intslider--default .ui-intslider__value::before {
+    content: "Default · ";
+}

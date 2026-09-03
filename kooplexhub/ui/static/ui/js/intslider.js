@@ -38,11 +38,13 @@
 
     if (input === request && requestValue > limitValue) {
       limit.value = request.value;
+      clearDefault(limit);
       updateOutput(limit);
     }
 
     if (input === limit && limitValue < requestValue) {
       request.value = limit.value;
+      clearDefault(request);
       updateOutput(request);
     }
   }
@@ -63,11 +65,8 @@
     const flag = slider.querySelector(
       "[data-ui-intslider-default-flag]"
     );
-    const input = slider.querySelector(
-      "[data-ui-intslider-input]"
-    );
   
-    if (!flag || !input) {
+    if (!flag) {
       return;
     }
   
@@ -119,23 +118,24 @@
     }
   
     const slider = button.closest("[data-ui-intslider]");
-    const coupled = button.closest("[data-ui-coupled-intslider]");
-
-    if (slider) {
-      setDefault(slider);
+    if (!slider) {
+      return;
     }
-
-    const role = slider.querySelector(
+  
+    const coupled = slider.closest("[data-ui-coupled-intslider]");
+    const input = slider.querySelector(
       "[data-ui-intslider-input]"
-    )?.dataset.sliderRole;
-
+    );
+    const role = input?.dataset.sliderRole;
+  
     setDefault(slider);
-
+  
     if (coupled && role === "request") {
       const limitInput = coupled.querySelector(
         '[data-slider-role="limit"]'
       );
       const limitSlider = limitInput?.closest("[data-ui-intslider]");
+  
       if (limitSlider) {
         setDefault(limitSlider);
       }
