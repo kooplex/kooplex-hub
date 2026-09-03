@@ -91,6 +91,12 @@ class ContainerComputePresenter:
         return self.container.requested_memory_mib
 
     @property
+    def requested_memory_gib(self):
+        return self.memory_gib(
+            self.container.requested_memory_mib
+        )
+
+    @property
     def limit_memory_mib(self):
         return self.container.limit_memory_mib
 

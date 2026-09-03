@@ -14,7 +14,7 @@
     </div>
 
     <div class="compute-edit-row">
-      {% include "ui/editors/intslider/coupled.html" with label="Memory" request_input_id=compute.memory_request_input_id request_output_id=compute.memory_request_output_id request_name=form.requested_memory_m.html_name request_value=form.requested_memory_m.value request_label="Request" limit_input_id=compute.memory_limit_input_id limit_output_id=compute.memory_limit_output_id limit_name=form.limit_memory_m.html_name limit_value=form.limit_memory_m.value limit_label="Limit" min=compute.limits.memory_min max=compute.limits.memory_max step=compute.limits.memory_step unit="mCPU" only %}
+      {% include "ui/editors/intslider/coupled.html" with label="Memory" request_input_id=compute.memory_request_input_id request_output_id=compute.memory_request_output_id request_name=form.requested_memory_m.html_name request_value=form.requested_memory_m.value request_label="Request" limit_input_id=compute.memory_limit_input_id limit_output_id=compute.memory_limit_output_id limit_name=form.limit_memory_m.html_name limit_value=form.limit_memory_m.value limit_label="Limit" min=compute.limits.memory_min max=compute.limits.memory_max step=compute.limits.memory_step unit="MiB" only %}
     </div>
 
     <div class="compute-edit-row">
