@@ -2,8 +2,11 @@ from dataclasses import dataclass
 from decimal import Decimal
 
 from ..conf import CONTAINER_SETTINGS
-from .compute_limits import ComputeLimits, compute_limits_provider
-
+from .compute_limits import (
+    ComputeLimits, 
+    compute_limits_provider,
+)
+from .compute_resolver import resolve_container_resources
 
 @dataclass
 class ResourceMetric:
@@ -15,6 +18,10 @@ class ResourceMetric:
     level: str
     usage_label: str
 
+    @property
+    def available(self):
+        return self.used is not None
+
 
 @dataclass
 class ContainerComputePresenter:
@@ -24,6 +31,11 @@ class ContainerComputePresenter:
     def __post_init__(self):
         if self.limits is None:
             self.limits = compute_limits_provider.for_container(self.container)
+
+        self.resolved = resolve_container_resources(
+            self.container,
+            CONTAINER_SETTINGS.kubernetes.resources,
+        )
 
     @property
     def is_running(self):
@@ -41,21 +53,93 @@ class ContainerComputePresenter:
         return not self.is_transitioning
 
     @property
-    def requested_cpu(self):
-        return self._number(self.container.requested_cpu_m)
+    def has_cpu_request(self):
+        return self.container.requested_cpu_m is not None
+    
+    @property
+    def has_memory_request(self):
+        return self.container.requested_memory_mib is not None
+    
+    @property
+    def has_gpu_request(self):
+        return self.container.requested_gpu is not None
+    
+    @property
+    def has_explicit_resources(self):
+        return (
+            self.has_cpu_request
+            or self.has_memory_request
+            or self.has_gpu_request
+            or self.container.limit_cpu_m is not None
+            or self.container.limit_memory_mib is not None
+        )
+    
+    @property
+    def gpu_enabled(self):
+        return self.limits.gpu_max > 0
 
     @property
-    def requested_memory(self):
-        return self._number(self.container.requested_memory_mib)
+    def requested_cpu_m(self):
+        return self.container.requested_cpu_m
+
+    @property
+    def limit_cpu_m(self):
+        return self.container.limit_cpu_m
+
+    @property
+    def requested_memory_mib(self):
+        return self.container.requested_memory_mib
+
+    @property
+    def limit_memory_mib(self):
+        return self.container.limit_memory_mib
 
     @property
     def requested_gpu(self):
-        return int(self.container.requested_gpu or 0)
+        return self.container.requested_gpu
+
+    @property
+    def effective_cpu_request_m(self):
+        return self.resolved.cpu_request_m
+    
+    @property
+    def effective_cpu_limit_m(self):
+        return self.resolved.cpu_limit_m
+    
+    @property
+    def effective_memory_request_mib(self):
+        return self.resolved.memory_request_mib
+    
+    @property
+    def effective_memory_limit_mib(self):
+        return self.resolved.memory_limit_mib
+    
+    @property
+    def effective_gpu(self):
+        return self.resolved.gpu
+
+    @staticmethod
+    def memory_gib(memory_mib):
+        if memory_mib is None:
+            return None
+        return memory_mib / 1024
+
+    @property
+    def effective_memory_request_gib(self):
+        return self.memory_gib(
+            self.effective_memory_request_mib
+        )
+    
+    @property
+    def effective_memory_limit_gib(self):
+        return self.memory_gib(
+            self.effective_memory_limit_mib
+        )
 
     @property
     def cpu_setting_percent(self):
         return self._setting_percentage(
-            self.requested_cpu,
+            self.requested_cpu_m,
             self.limits.cpu_min,
             self.limits.cpu_max,
         )
@@ -63,7 +147,7 @@ class ContainerComputePresenter:
     @property
     def memory_setting_percent(self):
         return self._setting_percentage(
-            self.requested_memory,
+            self.requested_memory_mib,
             self.limits.memory_min,
             self.limits.memory_max,
         )
@@ -79,7 +163,7 @@ class ContainerComputePresenter:
     @property
     def cpu(self):
         return self._metric(
-            requested=self.requested_cpu,
+            requested=self.requested_cpu_m,
             used=self._optional_number(self.container.cpu_usage_m),
             unit="CPU",
         )
@@ -87,7 +171,7 @@ class ContainerComputePresenter:
     @property
     def memory(self):
         return self._metric(
-            requested=self.requested_memory,
+            requested=self.requested_memory_mib,
             used=self._optional_number(self.container.memory_usage_mib),
             unit="GiB",
         )
@@ -95,6 +179,12 @@ class ContainerComputePresenter:
     @property
     def gpu_label(self):
         return str(self.requested_gpu)
+
+    @staticmethod
+    def _number(value):
+        if value is None:
+            return 0.0
+        return float(value)
 
     def _metric(self, requested, used, unit):
         if used is None or requested <= 0:
@@ -143,12 +233,6 @@ class ContainerComputePresenter:
 
         percentage = (value - minimum) / (maximum - minimum) * 100
         return min(100, max(0, percentage))
-
-    @staticmethod
-    def _number(value):
-        if value is None:
-            return 0.0
-        return float(value)
 
     @classmethod
     def _optional_number(cls, value):

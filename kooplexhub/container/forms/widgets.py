@@ -3,6 +3,7 @@ from django import forms
 from ..conf import CONTAINER_SETTINGS
 from ..models import Container
 from ..services.compute_limits import compute_limits_provider
+from ..services.compute_resolver import resolve_container_resources
 
 
 class ContainerWidgetForm(forms.ModelForm):
@@ -74,7 +75,9 @@ class ContainerComputeForm(ContainerWidgetForm):
     class Meta(ContainerWidgetForm.Meta):
         fields = [
             "requested_cpu_m",
+            "limit_cpu_m",
             "requested_memory_mib",
+            "limit_memory_mib",
             "requested_gpu",
         ]
 
@@ -88,29 +91,33 @@ class ContainerComputeForm(ContainerWidgetForm):
 
         self.limits = limits
 
-        self.fields[
-            "requested_cpu_m"
-        ].widget = forms.NumberInput(
-            attrs={
-                "type": "range",
-                "min": limits.cpu_min,
-                "max": limits.cpu_max,
-                "step": limits.cpu_step,
-                "class": "form-range",
-            }
-        )
+        for name in (
+            "requested_cpu_m",
+            "limit_cpu_m",
+        ):
+            self.fields[name].widget = forms.NumberInput(
+                attrs={
+                    "type": "range",
+                    "min": limits.cpu_min,
+                    "max": limits.cpu_max,
+                    "step": limits.cpu_step,
+                    "class": "form-range",
+                }
+            )
 
-        self.fields[
-            "requested_memory_mib"
-        ].widget = forms.NumberInput(
-            attrs={
-                "type": "range",
-                "min": limits.memory_min,
-                "max": limits.memory_max,
-                "step": limits.memory_step,
-                "class": "form-range",
-            }
-        )
+        for name in (
+            "requested_memory_mib",
+            "limit_memory_mib",
+        ):
+            self.fields[name].widget = forms.NumberInput(
+                attrs={
+                    "type": "range",
+                    "min": limits.memory_min,
+                    "max": limits.memory_max,
+                    "step": limits.memory_step,
+                    "class": "form-range",
+                }
+            )
 
         self.fields[
             "requested_gpu"
@@ -124,54 +131,61 @@ class ContainerComputeForm(ContainerWidgetForm):
             }
         )
 
-    def clean_requested_cpu_m(self):
-        value = self.cleaned_data["requested_cpu_m"]
+        resources = CONTAINER_SETTINGS.kubernetes.resources
+        
+        resolved = resolve_container_resources(
+            self.instance,
+            resources,
+        )
+        
+        if self.instance.requested_cpu_m is None:
+            self.initial["requested_cpu_m"] = resolved.cpu_request_m
+        
+        if self.instance.limit_cpu_m is None:
+            self.initial["limit_cpu_m"] = resolved.cpu_limit_m
+        
+        if self.instance.requested_memory_mib is None:
+            self.initial["requested_memory_mib"] = resolved.memory_request_mib
+        
+        if self.instance.limit_memory_mib is None:
+            self.initial["limit_memory_mib"] = resolved.memory_limit_mib
+        
+        if self.instance.requested_gpu is None:
+            self.initial["requested_gpu"] = resolved.gpu
 
-        if not (
-            self.limits.cpu_min
-            <= value
-            <= self.limits.cpu_max
+        if limits.gpu_max <= 0:
+            self.fields.pop("requested_gpu", None)
+
+
+    def clean(self):
+        cleaned = super().clean()
+    
+        cpu_request = cleaned.get("requested_cpu_m")
+        cpu_limit = cleaned.get("limit_cpu_m")
+    
+        if (
+            cpu_request is not None
+            and cpu_limit is not None
+            and cpu_request > cpu_limit
         ):
-            raise forms.ValidationError(
-                f"CPU must be between "
-                f"{self.limits.cpu_min} and "
-                f"{self.limits.cpu_max}."
+            self.add_error(
+                "limit_cpu_m",
+                "CPU limit must be greater than or equal to request.",
             )
-
-        return value
-
-    def clean_requested_memory_mib(self):
-        value = self.cleaned_data[
-            "requested_memory_mib"
-        ]
-
-        if not (
-            self.limits.memory_min
-            <= value
-            <= self.limits.memory_max
+    
+        memory_request = cleaned.get("requested_memory_mib")
+        memory_limit = cleaned.get("limit_memory_mib")
+    
+        if (
+            memory_request is not None
+            and memory_limit is not None
+            and memory_request > memory_limit
         ):
-            raise forms.ValidationError(
-                f"Memory must be between "
-                f"{self.limits.memory_min} and "
-                f"{self.limits.memory_max}."
+            self.add_error(
+                "limit_memory_mib",
+                "Memory limit must be greater than or equal to request.",
             )
-
-        return value
-
-    def clean_requested_gpu(self):
-        value = self.cleaned_data["requested_gpu"]
-
-        if not (
-            self.limits.gpu_min
-            <= value
-            <= self.limits.gpu_max
-        ):
-            raise forms.ValidationError(
-                f"GPU must be between "
-                f"{self.limits.gpu_min} and "
-                f"{self.limits.gpu_max}."
-            )
-
-        return value
+    
+        return cleaned
 
 

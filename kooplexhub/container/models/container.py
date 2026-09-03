@@ -22,6 +22,10 @@ class Container(models.Model):
 
     class Meta:
         constraints = [
+            models.UniqueConstraint(
+                fields=["user", "name"],
+                name="unique_container_name_per_user",
+            ),
             models.CheckConstraint(
                 condition=(
                     models.Q(requested_cpu_m__isnull=True)
@@ -39,6 +43,15 @@ class Container(models.Model):
                 name="container_memory_limit_gte_request",
             ),
         ]
+        
+        indexes = [
+            models.Index(fields=["user", "state"]),
+            models.Index(fields=["user", "require_running"]),
+            models.Index(fields=["state", "require_running"]),
+            models.Index(fields=["label"]),
+        ]
+
+        ordering = ["image", "name"]
 
     name = models.CharField(
         max_length=200, 
@@ -133,20 +146,6 @@ class Container(models.Model):
     )
     idle = models.IntegerField( null = True, blank = True, default=None)
 
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["user", "name"],
-                name="unique_container_name_per_user",
-            ),
-        ]
-        indexes = [
-            models.Index(fields=["user", "state"]),
-            models.Index(fields=["user", "require_running"]),
-            models.Index(fields=["state", "require_running"]),
-            models.Index(fields=["label"]),
-        ]
-        ordering = ["image", "name"]
 
     def __str__(self):
         return self.label

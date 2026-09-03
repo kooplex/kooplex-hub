@@ -1,74 +1,96 @@
-<div class="compute-metric-row">
-  <span class="compute-metric-icon" aria-hidden="true">
-    <i class="bi bi-cpu"></i>
-  </span>
-
-  <span class="compute-metric-body">
-    <span class="compute-metric-heading">
-      <span>CPU</span>
-      <strong>{{ compute.requested_cpu|floatformat:"-1" }}</strong>
+{% if not compute.has_explicit_resources %}
+  <div class="compute-default-resources">
+    <i class="bi bi-server"></i>
+    <span>
+      Default resources:
+      {{ compute.effective_cpu_request_m }} mCPU,
+      {{ compute.effective_memory_request_gib|floatformat:"-2" }} GiB
+      {% if compute.gpu_enabled %}
+        , {{ compute.effective_gpu }} GPU
+      {% endif %}
     </span>
+  </div>
+{% else %}
 
-    <span class="compute-static-track">
-      <span
-        class="compute-static-fill"
-        style="width: {{ compute.cpu_setting_percent }}%;"
-      ></span>
+  {% if compute.has_cpu_request %}
+    <div class="compute-metric-row">
+      <span class="compute-metric-icon" aria-hidden="true">
+        <i class="bi bi-cpu"></i>
+      </span>
+    
+      <span class="compute-metric-body">
+        <span class="compute-metric-heading">
+          <span>CPU</span>
+          <strong>{{ compute.requested_cpu_m|floatformat:"-1" }} mCPU</strong>
+        </span>
+    
+        <span class="compute-static-track">
+          <span
+            class="compute-static-fill"
+            style="width: {{ compute.cpu_setting_percent }}%;"
+          ></span>
+    
+          <span
+            class="compute-static-thumb"
+            style="left: {{ compute.cpu_setting_percent }}%;"
+          ></span>
+        </span>
+      </span>
+    </div>
+  {% endif %}
 
-      <span
-        class="compute-static-thumb"
-        style="left: {{ compute.cpu_setting_percent }}%;"
-      ></span>
-    </span>
-  </span>
-</div>
+  {% if compute.has_memory_request %}
+    <div class="compute-metric-row">
+      <span class="compute-metric-icon" aria-hidden="true">
+        <i class="bi bi-memory"></i>
+      </span>
+    
+      <span class="compute-metric-body">
+        <span class="compute-metric-heading">
+          <span>Memory</span>
+          <strong>{{ compute.requested_memory_gib|floatformat:"-2" }} GiB</strong>
+        </span>
+    
+        <span class="compute-static-track">
+          <span
+            class="compute-static-fill"
+            style="width: {{ compute.memory_setting_percent }}%;"
+          ></span>
+    
+          <span
+            class="compute-static-thumb"
+            style="left: {{ compute.memory_setting_percent }}%;"
+          ></span>
+        </span>
+      </span>
+    </div>
+  {% endif %}
 
-<div class="compute-metric-row">
-  <span class="compute-metric-icon" aria-hidden="true">
-    <i class="bi bi-memory"></i>
-  </span>
+  {% if compute.gpu_enabled and compute.has_gpu_request %}
+    <div class="compute-metric-row">
+      <span class="compute-metric-icon" aria-hidden="true">
+        <i class="bi bi-gpu-card"></i>
+      </span>
+    
+      <span class="compute-metric-body">
+        <span class="compute-metric-heading">
+          <span>GPU</span>
+          <strong>{{ compute.requested_gpu }}</strong>
+        </span>
+    
+        <span class="compute-static-track">
+          <span
+            class="compute-static-fill"
+            style="width: {{ compute.gpu_setting_percent }}%;"
+          ></span>
+    
+          <span
+            class="compute-static-thumb"
+            style="left: {{ compute.gpu_setting_percent }}%;"
+          ></span>
+        </span>
+      </span>
+    </div>
+  {% endif %}
 
-  <span class="compute-metric-body">
-    <span class="compute-metric-heading">
-      <span>Memory</span>
-      <strong>{{ compute.requested_memory|floatformat:"-1" }} GiB</strong>
-    </span>
-
-    <span class="compute-static-track">
-      <span
-        class="compute-static-fill"
-        style="width: {{ compute.memory_setting_percent }}%;"
-      ></span>
-
-      <span
-        class="compute-static-thumb"
-        style="left: {{ compute.memory_setting_percent }}%;"
-      ></span>
-    </span>
-  </span>
-</div>
-
-<div class="compute-metric-row">
-  <span class="compute-metric-icon" aria-hidden="true">
-    <i class="bi bi-gpu-card"></i>
-  </span>
-
-  <span class="compute-metric-body">
-    <span class="compute-metric-heading">
-      <span>GPU</span>
-      <strong>{{ compute.requested_gpu }}</strong>
-    </span>
-
-    <span class="compute-static-track">
-      <span
-        class="compute-static-fill"
-        style="width: {{ compute.gpu_setting_percent }}%;"
-      ></span>
-
-      <span
-        class="compute-static-thumb"
-        style="left: {{ compute.gpu_setting_percent }}%;"
-      ></span>
-    </span>
-  </span>
-</div>
+{% endif %}

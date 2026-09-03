@@ -5,13 +5,13 @@ from ..conf import CONTAINER_SETTINGS
 
 @dataclass(frozen=True)
 class ComputeLimits:
-    cpu_min: float
-    cpu_max: float
-    cpu_step: float
+    cpu_min: int
+    cpu_max: int
+    cpu_step: int
 
-    memory_min: float
-    memory_max: float
-    memory_step: float
+    memory_min: int
+    memory_max: int
+    memory_step: int
 
     gpu_min: int
     gpu_max: int
@@ -32,11 +32,11 @@ class ComputeLimitsProvider:
         return ComputeLimits(
             cpu_min=resources.min_cpu_m,
             cpu_max=resources.max_cpu_m,
-            cpu_step=0.1,
+            cpu_step=100,
 
             memory_min=resources.min_memory_mib,
             memory_max=resources.max_memory_mib,
-            memory_step=0.5,
+            memory_step=256,
 
             gpu_min=resources.min_gpu,
             gpu_max=resources.max_gpu,

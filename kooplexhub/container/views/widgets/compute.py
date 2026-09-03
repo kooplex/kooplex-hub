@@ -103,7 +103,7 @@ class ContainerComputeUpdateView(
     ContainerWidgetUpdateView,
 ):
     def after_save(self, container, form):
-        mark_container_restart_required(
+        self.restart_marked = mark_container_restart_required(
             container_id=container.pk,
             reason=(
                 "Compute resources changed: "
