@@ -9,7 +9,7 @@ from container.services.proxy import (
     ProxyActivityClient,
 )
 
-from .builder import ContainerWorkloadBuilder, resource_policy_from_settings
+from .builder import ContainerWorkloadBuilder
 from .client import KubernetesClients, get_kubernetes_clients
 from .metrics import (
     ClusterResourceCollector,
@@ -81,10 +81,7 @@ def build_runtime_service(
     settings = CONTAINER_SETTINGS.kubernetes
     clients = build_clients()
     repository = KubernetesWorkloadRepository(clients)
-    workload_builder = ContainerWorkloadBuilder(
-        settings,
-        resource_policy=resource_policy_from_settings(settings),
-    )
+    workload_builder = ContainerWorkloadBuilder(settings)
 
     route_client = None
     if enable_proxy_routes:
