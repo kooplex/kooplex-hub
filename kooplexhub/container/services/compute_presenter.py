@@ -230,6 +230,14 @@ class ContainerComputePresenter:
     def gpu_output_id(self):
         return self._editor_dom_id("gpu", "output")
 
+    @property
+    def uptime_input_id(self):
+        return self._editor_dom_id("uptime")
+    
+    @property
+    def uptime_output_id(self):
+        return self._editor_dom_id("uptime", "output")
+
     @staticmethod
     def _number(value):
         if value is None:

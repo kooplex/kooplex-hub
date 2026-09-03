@@ -107,7 +107,7 @@ class ContainerComputeUpdateView(
             container_id=container.pk,
             reason=(
                 "Compute resources changed: "
-                + ", ".join(form.changed_data),
+                + ", ".join(form.changed_data)
             )
         )
 
@@ -123,7 +123,7 @@ class ContainerComputeUpdateView(
         form,
     ):
         message = (
-            "Compute resource request updated."
+            "Compute resources updated."
         )
 
         if getattr(
