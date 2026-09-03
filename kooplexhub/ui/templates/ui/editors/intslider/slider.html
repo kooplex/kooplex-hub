@@ -1,0 +1,46 @@
+<div class="ui-intslider" data-ui-intslider>
+  <div class="ui-intslider__heading">
+    {% if label %}
+      <label
+        for="{{ input_id }}"
+        class="ui-intslider__label"
+      >
+        {{ label }}
+      </label>
+    {% endif %}
+
+    <output
+      id="{{ output_id }}"
+      class="ui-intslider__value"
+      for="{{ input_id }}"
+    >
+      {{ value }}{% if unit %} {{ unit }}{% endif %}
+    </output>
+  </div>
+
+  <input
+    id="{{ input_id }}"
+    class="form-range ui-intslider__input"
+    type="range"
+    name="{{ name }}"
+    min="{{ min }}"
+    max="{{ max }}"
+    step="{{ step }}"
+    value="{{ value }}"
+    data-ui-intslider-input
+    data-output-id="{{ output_id }}"
+    data-unit="{{ unit|default:'' }}"
+    {% if role %}
+      data-slider-role="{{ role }}"
+    {% endif %}
+  >
+
+  <div class="ui-intslider__bounds">
+    <span>
+      {{ min }}{% if unit %} {{ unit }}{% endif %}
+    </span>
+    <span>
+      {{ max }}{% if unit %} {{ unit }}{% endif %}
+    </span>
+  </div>
+</div>

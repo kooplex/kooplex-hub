@@ -1,0 +1,14 @@
+<div
+  class="ui-coupled-intslider"
+  data-ui-coupled-intslider
+>
+  {% if label %}
+    <div class="ui-coupled-intslider__title">
+      {{ label }}
+    </div>
+  {% endif %}
+
+  {% include "ui/editors/intslider/slider.html" with input_id=request_input_id output_id=request_output_id name=request_name label=request_label|default:"Request" value=request_value min=min max=max step=step unit=unit role="request" only %}
+
+  {% include "ui/editors/intslider/slider.html" with input_id=limit_input_id output_id=limit_output_id name=limit_name label=limit_label|default:"Limit" value=limit_value min=min max=max step=step unit=unit role="limit" only %}
+</div>

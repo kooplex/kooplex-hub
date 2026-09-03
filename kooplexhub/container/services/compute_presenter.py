@@ -180,6 +180,50 @@ class ContainerComputePresenter:
     def gpu_label(self):
         return str(self.requested_gpu)
 
+    def _editor_dom_id(self, *parts):
+        suffix = "-".join(parts)
+        return f"container-{self.container.pk}-{suffix}"
+
+    @property
+    def cpu_request_input_id(self):
+        return self._editor_dom_id("cpu", "request")
+    
+    @property
+    def cpu_request_output_id(self):
+        return self._editor_dom_id("cpu", "request", "output")
+    
+    @property
+    def cpu_limit_input_id(self):
+        return self._editor_dom_id("cpu", "limit")
+    
+    @property
+    def cpu_limit_output_id(self):
+        return self._editor_dom_id("cpu", "limit", "output")
+    
+    @property
+    def memory_request_input_id(self):
+        return self._editor_dom_id("memory", "request")
+    
+    @property
+    def memory_request_output_id(self):
+        return self._editor_dom_id("memory", "request", "output")
+    
+    @property
+    def memory_limit_input_id(self):
+        return self._editor_dom_id("memory", "limit")
+    
+    @property
+    def memory_limit_output_id(self):
+        return self._editor_dom_id("memory", "limit", "output")
+    
+    @property
+    def gpu_input_id(self):
+        return self._editor_dom_id("gpu")
+    
+    @property
+    def gpu_output_id(self):
+        return self._editor_dom_id("gpu", "output")
+
     @staticmethod
     def _number(value):
         if value is None:

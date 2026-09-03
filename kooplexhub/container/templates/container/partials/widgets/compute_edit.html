@@ -10,102 +10,15 @@
     {% csrf_token %}
 
     <div class="compute-edit-row">
-      <div class="compute-edit-heading">
-        <label for="compute-cpu-{{ container.pk }}">
-          CPU
-        </label>
-
-        <output id="compute-cpu-output-{{ container.pk }}">
-          {{ compute.requested_cpu|floatformat:"-1" }}
-        </output>
-      </div>
-
-      <input
-        id="compute-cpu-{{ container.pk }}"
-        class="form-range"
-        type="range"
-        name="{{ form.requested_cpu_m.html_name }}"
-        min="{{ form.requested_cpu_m.field.widget.attrs.min }}"
-        max="{{ form.requested_cpu_m.field.widget.attrs.max }}"
-        step="{{ form.requested_cpu_m.field.widget.attrs.step }}"
-        value="{{ form.requested_cpu_m.value }}"
-        oninput="
-          document.getElementById(
-            'compute-cpu-output-{{ container.pk }}'
-          ).value = this.value;
-        "
-      >
-
-      <div class="compute-range-labels">
-        <span>{{ compute.limits.cpu_min }}</span>
-        <span>{{ compute.limits.cpu_max }}</span>
-      </div>
+      {% include "ui/editors/intslider/coupled.html" with label="CPU" request_input_id=compute.cpu_request_input_id request_output_id=compute.cpu_request_output_id request_name=form.requested_cpu_m.html_name request_value=form.requested_cpu_m.value request_label="Request" limit_input_id=compute.cpu_limit_input_id limit_output_id=compute.cpu_limit_output_id limit_name=form.limit_cpu_m.html_name limit_value=form.limit_cpu_m.value limit_label="Limit" min=compute.limits.cpu_min max=compute.limits.cpu_max step=compute.limits.cpu_step unit="mCPU" only %}
     </div>
 
     <div class="compute-edit-row">
-      <div class="compute-edit-heading">
-        <label for="compute-memory-{{ container.pk }}">
-          Memory
-        </label>
-
-        <output id="compute-memory-output-{{ container.pk }}">
-          {{ compute.requested_memory|floatformat:"-1" }} GiB
-        </output>
-      </div>
-
-      <input
-        id="compute-memory-{{ container.pk }}"
-        class="form-range"
-        type="range"
-        name="{{ form.requested_memory_mib.html_name }}"
-        min="{{ form.requested_memory_mib.field.widget.attrs.min }}"
-        max="{{ form.requested_memory_mib.field.widget.attrs.max }}"
-        step="{{ form.requested_memory_mib.field.widget.attrs.step }}"
-        value="{{ form.requested_memory_mib.value }}"
-        oninput="
-          document.getElementById(
-            'compute-memory-output-{{ container.pk }}'
-          ).value = this.value + ' GiB';
-        "
-      >
-
-      <div class="compute-range-labels">
-        <span>{{ compute.limits.memory_min }} GiB</span>
-        <span>{{ compute.limits.memory_max }} GiB</span>
-      </div>
+      {% include "ui/editors/intslider/coupled.html" with label="Memory" request_input_id=compute.memory_request_input_id request_output_id=compute.memory_request_output_id request_name=form.requested_memory_m.html_name request_value=form.requested_memory_m.value request_label="Request" limit_input_id=compute.memory_limit_input_id limit_output_id=compute.memory_limit_output_id limit_name=form.limit_memory_m.html_name limit_value=form.limit_memory_m.value limit_label="Limit" min=compute.limits.memory_min max=compute.limits.memory_max step=compute.limits.memory_step unit="mCPU" only %}
     </div>
 
     <div class="compute-edit-row">
-      <div class="compute-edit-heading">
-        <label for="compute-gpu-{{ container.pk }}">
-          GPU
-        </label>
-
-        <output id="compute-gpu-output-{{ container.pk }}">
-          {{ compute.requested_gpu }}
-        </output>
-      </div>
-
-      <input
-        id="compute-gpu-{{ container.pk }}"
-        class="form-range"
-        type="range"
-        name="{{ form.requested_gpu.html_name }}"
-        min="{{ form.requested_gpu.field.widget.attrs.min }}"
-        max="{{ form.requested_gpu.field.widget.attrs.max }}"
-        step="{{ form.requested_gpu.field.widget.attrs.step }}"
-        value="{{ form.requested_gpu.value }}"
-        oninput="
-          document.getElementById(
-            'compute-gpu-output-{{ container.pk }}'
-          ).value = this.value;
-        "
-      >
-
-      <div class="compute-range-labels">
-        <span>{{ compute.limits.gpu_min }}</span>
-        <span>{{ compute.limits.gpu_max }}</span>
-      </div>
+      {% include "ui/editors/intslider/slider.html" with input_id=compute.gpu_input_id output_id=compute.gpu_output_id name=form.requested_gpu.html_name label="GPU" value=form.requested_gpu.value min=compute.limits.gpu_min max=compute.limits.gpu_max step=compute.limits.gpu_step only %}
     </div>
 
     {% if errors %}
