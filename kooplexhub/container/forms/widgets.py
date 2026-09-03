@@ -51,6 +51,9 @@ class ContainerUptimeForm(ContainerWidgetForm):
         )
 
     def clean_requested_uptime_hours(self):
+        if self.data.get("requested_uptime_hours_use_default") == "1":
+            return None
+
         value = self.cleaned_data[
             "requested_uptime_hours"
         ]
@@ -156,10 +159,36 @@ class ContainerComputeForm(ContainerWidgetForm):
         if limits.gpu_max <= 0:
             self.fields.pop("requested_gpu", None)
 
+    def _apply_default_flag(self, cleaned, field_name):
+        flag_name = f"{field_name}_use_default"
+    
+        if self.data.get(flag_name) == "1":
+            cleaned[field_name] = None
 
     def clean(self):
         cleaned = super().clean()
+
+        for field_name in (
+            "requested_cpu_m",
+            "limit_cpu_m",
+            "requested_memory_mib",
+            "limit_memory_mib",
+            "requested_gpu",
+        ):
+            self._apply_default_flag(cleaned, field_name)
     
+        if (
+            cleaned.get("requested_cpu_m") is None
+            and cleaned.get("limit_cpu_m") is not None
+        ):
+            cleaned["limit_cpu_m"] = None
+    
+        if (
+            cleaned.get("requested_memory_mib") is None
+            and cleaned.get("limit_memory_mib") is not None
+        ):
+            cleaned["limit_memory_mib"] = None
+
         cpu_request = cleaned.get("requested_cpu_m")
         cpu_limit = cleaned.get("limit_cpu_m")
     

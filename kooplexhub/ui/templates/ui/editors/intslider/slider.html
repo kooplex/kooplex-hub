@@ -16,6 +16,25 @@
     >
       {{ value }}{% if unit %} {{ unit }}{% endif %}
     </output>
+
+    {% if allow_default %}
+      <button
+        type="button"
+        class="btn btn-sm btn-link ui-intslider__default"
+        data-ui-intslider-default
+        title="{{ default_label|default:'Use default' }}"
+        aria-label="{{ default_label|default:'Use default' }}"
+      >
+        <i class="bi bi-arrow-counterclockwise"></i>
+      </button>
+
+      <input
+        type="hidden"
+	name="{{ name }}_use_default"
+        value="0"
+        data-ui-intslider-default-flag
+      >
+    {% endif %}
   </div>
 
   <input
