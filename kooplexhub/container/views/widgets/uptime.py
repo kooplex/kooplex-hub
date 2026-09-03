@@ -12,6 +12,9 @@ from ...services.live import (
 from ...services.runtime_presenter import (
     ContainerRuntimePresenter,
 )
+from ...services.compute_presenter import (
+    ContainerComputePresenter,
+)
 
 class ContainerUptimeWidgetMixin:
     form_class = ContainerUptimeForm
@@ -27,6 +30,10 @@ class ContainerUptimeWidgetMixin:
             ContainerRuntimePresenter(container)
         )
 
+        context["compute"] = (
+            ContainerComputePresenter(container)
+        )
+
         return context
 
     def get_edit_context(self, container, form):
@@ -37,6 +44,10 @@ class ContainerUptimeWidgetMixin:
 
         context["runtime"] = (
             ContainerRuntimePresenter(container)
+        )
+
+        context["compute"] = (
+            ContainerComputePresenter(container)
         )
 
         return context

@@ -95,6 +95,10 @@ class ContainerComputePresenter:
         return self.container.limit_memory_mib is None
 
     @property
+    def uptime_is_default(self):
+        return self.container.requested_uptime_hours is None
+
+    @property
     def requested_cpu_m(self):
         return self.container.requested_cpu_m
 

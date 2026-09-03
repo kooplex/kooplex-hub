@@ -30,7 +30,7 @@
       <div class="col-md-6 d-flex flex-column">
         {% include "container/partials/widgets/fetchlog_button.html" with container=container runtime=runtime only %}
         {% include "container/partials/widgets/compute_display.html" with container=container compute=compute only %}
-        {% include "container/partials/widgets/uptime_display.html" with container=container runtime=runtime only %}
+        {% include "container/partials/widgets/uptime_display.html" with container=container runtime=runtime compute=compute only %}
       </div>
     </div>
   </div>

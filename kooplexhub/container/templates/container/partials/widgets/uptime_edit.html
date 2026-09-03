@@ -9,7 +9,7 @@
   >
     {% csrf_token %}
 
-    {% include "ui/editors/intslider/slider.html" with input_id=runtime.uptime_input_id output_id=runtime.uptime_output_id name=form.requested_uptime_hours.html_name label="Idle time limit" value=form.requested_uptime_hours.value min=runtime.uptime_min max=runtime.uptime_max step=1 unit="h" only %}
+    {% include "ui/editors/intslider/slider.html" with input_id=compute.uptime_input_id output_id=compute.uptime_output_id name=form.requested_uptime_hours.html_name label="Idle time limit" value=form.requested_uptime_hours.value min=runtime.uptime_min max=runtime.uptime_max step=1 unit="h" allow_default=1 default_label="Clear idletime to fall back to defaults" is_default=compute.uptime_is_default only %}
 
     {% if error %}
       <div class="text-danger small mt-2">
