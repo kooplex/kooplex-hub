@@ -19,10 +19,7 @@ class ContainerEditorBaseView(
     container = None
     presenter = None
 
-    field_name = None
     permission_name = None
-    editor_slug = None
-    aria_label = None
 
     def get_container(self, pk=None):
         if self.container is None:
@@ -43,74 +40,6 @@ class ContainerEditorBaseView(
             raise PermissionDenied
 
         return presenter
-
-    def get_editor_urls(self):
-        container = self.get_container()
-        kwargs = {"pk": container.pk}
-
-        return {
-            "edit_url": reverse(
-                f"container:{self.editor_slug}_edit",
-                kwargs=kwargs,
-            ),
-            "display_url": reverse(
-                f"container:{self.editor_slug}_display",
-                kwargs=kwargs,
-            ),
-            "update_url": reverse(
-                f"container:{self.editor_slug}_update",
-                kwargs=kwargs,
-            ),
-        }
-
-    def get_editor_value(self):
-        if self.field_name is None:
-            return None
-
-        return getattr(
-            self.get_container(),
-            self.field_name,
-        )
-
-    def get_editor_field(self, *, form=None):
-        if form is None or self.field_name is None:
-            return None
-
-        return form[self.field_name]
-
-    def extend_editor_context(
-        self,
-        context,
-        *,
-        form=None,
-    ):
-        return context
-
-    def make_editor_context(self, *, form=None):
-        container = self.get_container()
-
-        context = {
-            "dom_id": (
-                f"container-{container.pk}-"
-                f"{self.editor_slug}"
-            ),
-            "value": self.get_editor_value(),
-            "field": self.get_editor_field(
-                form=form,
-            ),
-            "form": form,
-            "can_edit": getattr(
-                self.get_presenter(),
-                self.permission_name,
-            ),
-            "aria_label": self.aria_label,
-            **self.get_editor_urls(),
-        }
-
-        return self.extend_editor_context(
-            context,
-            form=form,
-        )
 
     def refresh_editor_state(self, container):
         self.container = container

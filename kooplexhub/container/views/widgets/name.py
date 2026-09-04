@@ -14,10 +14,7 @@ NAME_EDIT_TEMPLATE = "ui/editors/name/edit.html"
 CONTAINER_CREATE_NAME_FIELD_TEMPLATE = "container/partials/create/name_field.html"
 
 class ContainerNameBaseView(ContainerEditorBaseView):
-    field_name = "name"
     permission_name = "can_edit_name"
-    editor_slug = "name"
-    aria_label = "Change environment name"
 
     def get_form(self, *, data=None):
         container = self.get_container()

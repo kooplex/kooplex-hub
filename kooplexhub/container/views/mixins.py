@@ -8,11 +8,13 @@ from volume.models import Volume
 
 
 class ContainerAccessMixin:
+    pk_url_kwarg = "pk"
+
     def get_container_queryset(self):
         return Container.objects.filter(user=self.request.user)
 
     def get_container(self, pk=None):
-        pk = pk or self.kwargs.get("pk")
+        pk = pk or self.kwargs.get(self.pk_url_kwarg)
 
         return get_object_or_404(
             self.get_container_queryset(),
