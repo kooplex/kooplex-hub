@@ -7,6 +7,7 @@ from .name import (
     ContainerNameDisplayView,
     ContainerNameEditView,
     ContainerNameUpdateView,
+    ContainerCreateNameValidateView,
 )
 from .open_service import ContainerOpenButtonPartialView
 from .runtime import (
@@ -29,6 +30,7 @@ __all__ = [
     "ContainerNameDisplayView",
     "ContainerNameEditView",
     "ContainerNameUpdateView",
+    "ContainerCreateNameValidateView",
     "ContainerUptimeDisplayView",
     "ContainerUptimeEditView",
     "ContainerUptimeUpdateView",

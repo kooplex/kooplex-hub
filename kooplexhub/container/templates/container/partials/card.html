@@ -1,12 +1,16 @@
 {% load container_runtime %}
+{% load container_editors %}
 {% runtime_for container as runtime %}
 {% compute_for container as compute %}
 
 <div class="card bg-light shadow-2-strong border border-3 shadow-light border-success mb-3">
   <div class="card-header d-flex justify-content-start align-items-center border-success">
     {% include "container/partials/widgets/open_service_button.html" with container=container runtime=runtime only %}
-    {% include "ui/widgets/editable_text/display.html" with dom_id=container.name_dom_id value=container.name edit_url=container.name_edit_url only %}
-    {# % include "ui/editors/name/editor.html" with editor=presentation.name_editor only %  ##}
+
+    <span class="container-card-title text-truncate">
+        {% container_name_editor container runtime %}
+    </span>
+
     <div class="flex-grow-1"></div>
     {% include "container/partials/widgets/stop_button.html" with container=container runtime=runtime only %}
   </div>

@@ -61,19 +61,24 @@ urlpatterns = [
 
     # configure container
     path(
-        "<int:pk>/name/display/",
+        "<int:container_id>/name/display/",
         views.ContainerNameDisplayView.as_view(),
-        name="name_display",
+        name="name-display",
     ),
     path(
-        "<int:pk>/name/edit/",
+        "<int:container_id>/name/edit/",
         views.ContainerNameEditView.as_view(),
-        name="name_edit",
+        name="name-edit",
     ),
     path(
-        "<int:pk>/name/update/",
+        "<int:container_id>/name/update/",
         views.ContainerNameUpdateView.as_view(),
-        name="name_update",
+        name="name-update",
+    ),
+    path(
+        "create/name/validate/",
+        views.ContainerCreateNameValidateView.as_view(),
+        name="create-validate-name",
     ),
     
     path(

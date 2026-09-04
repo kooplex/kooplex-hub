@@ -94,6 +94,10 @@ class ContainerRuntimePresenter:
     def can_open(self):
         return self.container.is_running
 
+    @property
+    def can_edit_name(self):
+        return True
+
 
     @property
     def start_button_class(self):

@@ -13,7 +13,7 @@
     name="{{ field.html_name }}"
     value="{{ field.value|default_if_none:'' }}"
     minlength="{{ min_length|default:3 }}"
-    placeholder="{{ placeholder|default:'e.g. Test project' }}"
+    placeholder="{{ placeholder|default:'e.g. A nice name to remember' }}"
     autocomplete="off"
     {% if required %}
       required

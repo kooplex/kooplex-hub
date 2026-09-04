@@ -1,84 +1,101 @@
 import json
 
-from ...forms.widgets import ContainerNameForm
-from ...services.live import (
-    broadcast_container_runtime_changed,
-)
-from .base import (
-    ContainerWidgetDisplayView,
-    ContainerWidgetEditView,
-    ContainerWidgetUpdateView,
-)
+from django.template.response import TemplateResponse
+
+from .base import ContainerEditorBaseView
+from ...models import Container
+from ...forms import ContainerNameForm
+from ...services.editor_context import make_name_editor_context
+from ...services.live import broadcast_container_runtime_changed
 
 
-class ContainerNameWidgetMixin:
-    form_class = ContainerNameForm
+NAME_DISPLAY_TEMPLATE = "ui/editors/name/display.html"
+NAME_EDIT_TEMPLATE = "ui/editors/name/edit.html"
+CONTAINER_CREATE_NAME_FIELD_TEMPLATE = "container/partials/create/name_field.html"
 
-    display_template_name = "ui/widgets/editable_text/display.html"
-    edit_template_name = "ui/widgets/editable_text/form.html"
+class ContainerNameBaseView(ContainerEditorBaseView):
+    field_name = "name"
+    permission_name = "can_edit_name"
+    editor_slug = "name"
+    aria_label = "Change environment name"
 
-    def get_display_context(self, container):
-        context = super().get_display_context(container)
+    def get_form(self, *, data=None):
+        container = self.get_container()
 
-        context.update(
-            {
-                "dom_id": container.name_dom_id,
-                "value": container.name,
-                "edit_url": container.name_edit_url,
-            }
+        return ContainerNameForm(
+            data=data,
+            instance=container,
+            auto_id=f"container-{container.pk}-name-%s",
         )
 
-        return context
-
-    def get_edit_context(self, container, form):
-        context = super().get_edit_context(container, form)
-
-        context.update(
-            {
-                "dom_id": container.name_dom_id,
-                "field_name": "name",
-                "value": form["name"].value(),
-                "update_url": container.name_update_url,
-                "cancel_url": container.name_display_url,
-                "field_errors": form["name"].errors,
-            }
+    def make_editor_context(self, *, form=None):
+        return make_name_editor_context(
+            container=self.get_container(),
+            presenter=self.get_presenter(),
+            form=form,
         )
 
-        return context
+
+class ContainerNameDisplayView(ContainerNameBaseView):
+    template_name = NAME_DISPLAY_TEMPLATE
+
+    def get_context_data(self, **kwargs):
+        return {
+            "editor": self.make_editor_context(),
+        }
 
 
-class ContainerNameDisplayView(
-    ContainerNameWidgetMixin,
-    ContainerWidgetDisplayView,
-):
-    pass
+class ContainerNameEditView(ContainerNameBaseView):
+    template_name = NAME_EDIT_TEMPLATE
+
+    def get_context_data(self, **kwargs):
+        self.require_edit_permission()
+
+        form = kwargs.get("form") or self.get_form()
+
+        return {
+            "editor": self.make_editor_context(
+                form=form,
+            ),
+        }
 
 
-class ContainerNameEditView(
-    ContainerNameWidgetMixin,
-    ContainerWidgetEditView,
-):
-    pass
+class ContainerNameUpdateView(ContainerNameBaseView):
+    http_method_names = ["post"]
 
+    def post(self, request, *args, **kwargs):
+        self.require_edit_permission()
 
-class ContainerNameUpdateView(
-    ContainerNameWidgetMixin,
-    ContainerWidgetUpdateView,
-):
-    def after_save(self, container, form):
+        form = self.get_form(data=request.POST)
+
+        if not form.is_valid():
+            return TemplateResponse(
+                request,
+                NAME_EDIT_TEMPLATE,
+                {
+                    "editor": self.make_editor_context(
+                        form=form,
+                    ),
+                },
+            )
+
+        container = form.save()
+
+        self.refresh_editor_state(container)
+
         broadcast_container_runtime_changed(
             container,
-            reason=(
-                f"container.name.updated"
-            ),
+            reason="container.name.updated",
         )
 
-    def add_success_headers(
-        self,
-        response,
-        container,
-        form,
-    ):
+        response = TemplateResponse(
+            request,
+            NAME_DISPLAY_TEMPLATE,
+            {
+                "editor": self.make_editor_context(),
+            },
+        )
+
         response["HX-Trigger"] = json.dumps(
             {
                 "kooplex-toast": {
@@ -89,3 +106,35 @@ class ContainerNameUpdateView(
         )
 
         return response
+
+
+class ContainerCreateNameValidateView(ContainerNameBaseView):
+    http_method_names = ["post"]
+
+    def post(self, request):
+        form = ContainerNameForm(
+            data=request.POST,
+            instance=Container(user=request.user),
+            auto_id="container-create-name-%s",
+        )
+
+        form_is_valid = form.is_valid()
+
+        response = TemplateResponse(
+            request,
+            CONTAINER_CREATE_NAME_FIELD_TEMPLATE,
+            {
+                "field": form["name"],
+                "validated": form_is_valid,
+            },
+        )
+
+        if form_is_valid:
+            response["HX-Trigger-After-Swap"] = json.dumps(
+                {
+                    "container-create-name-valid": True,
+                }
+            )
+
+        return response
+

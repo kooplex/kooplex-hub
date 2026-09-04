@@ -50,6 +50,11 @@ class ContainerUptimeForm(ContainerWidgetForm):
             }
         )
 
+        if self.instance.requested_uptime_hours is None:
+            self.initial["requested_uptime_hours"] = (
+                limits.default_idletime
+            )
+
     def clean_requested_uptime_hours(self):
         if self.data.get("requested_uptime_hours_use_default") == "1":
             return None
