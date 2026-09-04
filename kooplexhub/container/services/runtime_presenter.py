@@ -234,8 +234,28 @@ class ContainerRuntimePresenter:
     
     @property
     def requested_uptime(self):
-        return self.container.requested_uptime_hours or self.uptime_min
+        if self.container.requested_uptime_hours is not None:
+            return self.container.requested_uptime_hours
+
+        return CONTAINER_SETTINGS.kubernetes.resources.default_idletime
     
+
+    @property
+    def uptime_display_position(self):
+        if self.uptime_max <= self.uptime_min:
+            return 0
+    
+        return max(
+            0,
+            min(
+                100,
+                round(
+                    100
+                    * (self.requested_uptime - self.uptime_min)
+                    / (self.uptime_max - self.uptime_min)
+                ),
+            ),
+        )
     
     @property
     def uptime_is_editable(self):

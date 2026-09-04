@@ -1,83 +1,19 @@
-{% if not compute.has_explicit_resources %}
+<div class="container-resource-summary">
   <div class="container-resource-summary__heading">
-    <i class="bi bi-server"></i>
-    Default resources
-  </div>
-{% else %}
+    <i class="bi bi-server" aria-hidden="true"></i>
 
-  <div class="compute-metric-row">
-    <span class="compute-metric-icon" aria-hidden="true">
-      <i class="bi bi-cpu"></i>
-    </span>
-  
-    <span class="compute-metric-body">
-      <span class="compute-metric-heading">
-        <span>CPU</span>
-        <strong>{{ compute.requested_cpu_m|floatformat:"-1" }} mCPU</strong>
-      </span>
-  
-      <span class="compute-static-track">
-        <span
-          class="compute-static-fill"
-          style="width: {{ compute.cpu_setting_percent }}%;"
-        ></span>
-  
-        <span
-          class="compute-static-thumb"
-          style="left: {{ compute.cpu_setting_percent }}%;"
-        ></span>
-      </span>
-    </span>
+    {% if compute.has_explicit_resources %}
+      <span>Resources</span>
+    {% else %}
+      <span>Default resources</span>
+    {% endif %}
   </div>
 
-  <div class="compute-metric-row">
-    <span class="compute-metric-icon" aria-hidden="true">
-      <i class="bi bi-memory"></i>
-    </span>
-  
-    <span class="compute-metric-body">
-      <span class="compute-metric-heading">
-        <span>Memory</span>
-        <strong>{{ compute.requested_memory_gib|floatformat:"-2" }} GiB</strong>
-      </span>
-  
-      <span class="compute-static-track">
-        <span
-          class="compute-static-fill"
-          style="width: {{ compute.memory_setting_percent }}%;"
-        ></span>
-  
-        <span
-          class="compute-static-thumb"
-          style="left: {{ compute.memory_setting_percent }}%;"
-        ></span>
-      </span>
-    </span>
-  </div>
+  {% include "ui/editors/intslider/display.html" with icon="bi bi-cpu" label="CPU" value=compute.effective_cpu_request_m unit="mCPU" position=compute.cpu_display_position is_default=compute.cpu_request_is_default only %}
 
-  <div class="compute-metric-row">
-    <span class="compute-metric-icon" aria-hidden="true">
-      <i class="bi bi-gpu-card"></i>
-    </span>
-  
-    <span class="compute-metric-body">
-      <span class="compute-metric-heading">
-        <span>GPU</span>
-        <strong>{{ compute.requested_gpu }}</strong>
-      </span>
-  
-      <span class="compute-static-track">
-        <span
-          class="compute-static-fill"
-          style="width: {{ compute.gpu_setting_percent }}%;"
-        ></span>
-  
-        <span
-          class="compute-static-thumb"
-          style="left: {{ compute.gpu_setting_percent }}%;"
-        ></span>
-      </span>
-    </span>
-  </div>
+  {% include "ui/editors/intslider/display.html" with icon="bi bi-memory" label="Memory" value=compute.effective_memory_request_gib|floatformat:"-2" unit="GiB" position=compute.memory_display_position is_default=compute.memory_request_is_default only %}
 
-{% endif %}
+  {% if compute.gpu_enabled %}
+    <div>TODO add GPU slider display here<div>
+  {% endif %}
+</div>

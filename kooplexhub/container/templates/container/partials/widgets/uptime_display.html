@@ -49,7 +49,7 @@
 
     <button
       type="button"
-      class="uptime-widget-control uptime-static-slider"
+      class="uptime-widget-control"
       title="Idle time limit: {{ runtime.uptime_limit_label }}"
       aria-label="Idle time limit: {{ runtime.uptime_limit_label }}"
       {% if runtime.uptime_is_editable %}
@@ -60,51 +60,7 @@
         disabled
       {% endif %}
     >
-      <span class="uptime-widget-icon" aria-hidden="true">
-        <i class="bi bi-moon"></i>
-      </span>
-
-      <span class="uptime-slider-display">
-        <span class="uptime-slider-track">
-          <span
-            class="uptime-slider-fill"
-            style="
-              width:
-                calc(
-                  (
-                    {{ runtime.requested_uptime }} -
-                    {{ runtime.uptime_min }}
-                  ) /
-                  (
-                    {{ runtime.uptime_max }} -
-                    {{ runtime.uptime_min }}
-                  ) * 100%
-                );
-            "
-          ></span>
-
-          <span
-            class="uptime-slider-thumb"
-            style="
-              left:
-                calc(
-                  (
-                    {{ runtime.requested_uptime }} -
-                    {{ runtime.uptime_min }}
-                  ) /
-                  (
-                    {{ runtime.uptime_max }} -
-                    {{ runtime.uptime_min }}
-                  ) * 100%
-                );
-            "
-          ></span>
-        </span>
-
-        <span class="uptime-slider-value">
-          {{ runtime.uptime_limit_label }}
-        </span>
-      </span>
+      {% include "ui/editors/intslider/display.html" with icon="bi bi-moon" label="Idle time" value=runtime.requested_uptime unit="h" position=runtime.uptime_display_position is_default=compute.uptime_is_default only %}
     </button>
 
   {% endif %}

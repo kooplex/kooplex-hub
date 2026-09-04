@@ -179,12 +179,24 @@ class ContainerComputePresenter:
         )
 
     @property
+    def memory_display_position(self):
+        return self._setting_percentage(
+            self.effective_memory_request_mib,
+            self.limits.memory_min,
+            self.limits.memory_max,
+        )        
+
+    @property
     def memory_setting_percent(self):
         return self._setting_percentage(
             self.requested_memory_mib,
             self.limits.memory_min,
             self.limits.memory_max,
         )
+
+    @property
+    def gpu_display_position(self):
+        return self.gpu_setting_percent()
 
     @property
     def gpu_setting_percent(self):
