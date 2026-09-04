@@ -1,6 +1,6 @@
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import get_object_or_404
+from django.http import HttpResponse
 
 from ..mixins import ContainerAccessMixin
 from ...services.runtime_presenter import ContainerRuntimePresenter
@@ -68,4 +68,6 @@ class ContainerRestartButtonPartialView(ContainerRuntimePartialView):
 class ContainerFetchlogButtonPartialView(ContainerRuntimePartialView):
     template_name = "container/partials/widgets/fetchlog_button.html"
 
+class ContainerBackendStatusPartialView(ContainerRuntimePartialView):
+    template_name = "container/partials/widgets/backend_status.html"
 

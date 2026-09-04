@@ -22,19 +22,19 @@
   <div class="card-body container-card__body">
     <div class="row">
       <div class="col-md-6">
-        <div class="d-flex align-items-center mb-3">
-          {% include "container/partials/widgets/image_button.html" with container=container runtime=runtime only %}
+        <div class="container-card__configuration">
+          <div class="container-card__config-actions">
+            {% include "container/partials/widgets/image_button.html" with container=container runtime=runtime only %}
+    	{% include "container/partials/widgets/mount_button.html" with container=container runtime=runtime mount_summary=mount_summary only %}
+          </div>
         </div>
-
-        <div class="d-flex mb-3">
-	  {% include "container/partials/widgets/mount_button.html" with container=container runtime=runtime mount_summary=mount_summary only %}
-        </div>
-
       </div>
 
       <div class="col-md-6 d-flex flex-column">
-        {% include "container/partials/widgets/compute_display.html" with container=container compute=compute only %}
-        {% include "container/partials/widgets/uptime_display.html" with container=container runtime=runtime compute=compute only %}
+        <div class="container-card__settings">
+          {% include "container/partials/widgets/compute_display.html" with container=container compute=compute only %}
+          {% include "container/partials/widgets/uptime_display.html" with container=container runtime=runtime compute=compute only %}
+        </div>
       </div>
     </div>
   </div>
@@ -45,7 +45,7 @@
       {% include "container/partials/widgets/restart_button.html" with container=container runtime=runtime only %}
     </div>
     <div class="container-card__footer-state">
-      {% include "container/partials/widgets/backend_status.html" with container=container runtime=runtime only %} {# FIXME #}
+      {% include "container/partials/widgets/backend_status.html" with container=container runtime=runtime only %}
     </div>
     <div class="container-card__footer-end">
       {% include "container/partials/delete_button.html" with container=container only %}

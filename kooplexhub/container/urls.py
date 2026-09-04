@@ -144,6 +144,11 @@ urlpatterns = [
         name="fetchlog_button_partial",
     ),
     path(
+        "partials/<int:pk>/backend-status/",
+        views.ContainerBackendStatusPartialView.as_view(),
+        name="backend_status_partial",
+    ),
+    path(
         "<int:pk>/control/<str:action>/",
         views.ContainerControlView.as_view(),
         name="control",

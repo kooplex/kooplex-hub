@@ -15,6 +15,7 @@ from .runtime import (
     ContainerRestartButtonPartialView,
     ContainerStartButtonPartialView,
     ContainerStopButtonPartialView,
+    ContainerBackendStatusPartialView,
 )
 from .uptime import (
     ContainerUptimeDisplayView,
@@ -27,6 +28,7 @@ __all__ = [
     "ContainerStopButtonPartialView",
     "ContainerRestartButtonPartialView",
     "ContainerFetchlogButtonPartialView",
+    "ContainerBackendStatusPartialView",
     "ContainerNameDisplayView",
     "ContainerNameEditView",
     "ContainerNameUpdateView",
