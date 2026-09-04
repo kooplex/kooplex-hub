@@ -1,8 +1,8 @@
 <button
   type="button"
   class="badge rounded-pill border border-dark text-dark p-2"
-  {% if container.image_modal_url %}
-    hx-get="{{ container.image_modal_url }}"
+  {% if runtime.can_change_image %}
+    hx-get="{{ runtime.image_modal_url }}"
     hx-target="#modal-root"
     hx-swap="innerHTML"
   {% else %}

@@ -18,6 +18,9 @@ from ..services.live import (
     broadcast_container_runtime_changed,
 )
 from ..services.image_catalog import ImageCatalogService
+from ..services.runtime_control import (
+    mark_container_restart_required,
+)
 from ..services.mounts import (
     apply_container_mounts, 
     mount_change_message,
@@ -88,6 +91,11 @@ class ContainerImageSaveView(
             )
 
         container = form.save()
+
+        restart_marked = mark_container_restart_required(
+            container_id=container.pk,
+            reason="Container image changed",
+        )
 
         response = render(
             request,

@@ -2,6 +2,7 @@ from functools import cached_property
 from dataclasses import dataclass
 
 from django.utils import timezone
+from django.urls import reverse
 
 from ..conf import CONTAINER_SETTINGS
 from ..models import Container
@@ -98,6 +99,19 @@ class ContainerRuntimePresenter:
     def can_edit_name(self):
         return True
 
+    @property
+    def can_change_image(self):
+        return not self.is_transitioning
+    
+    @property
+    def image_modal_url(self):
+        if not self.can_change_image:
+            return None
+    
+        return reverse(
+            "container:image_modal",
+            kwargs={"pk": self.container.pk},
+        )
 
     @property
     def start_button_class(self):
