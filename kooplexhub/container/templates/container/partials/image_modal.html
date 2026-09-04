@@ -26,7 +26,7 @@
       </div>
 
       <div class="modal-body">
-	{% include "ui/editors/image_picker/editor.html" %}
+	{% include "ui/editors/image_picker/editor.html" with field=form.image only %}
       </div>
 
       <div class="modal-footer">

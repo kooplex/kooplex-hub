@@ -39,24 +39,8 @@
     {% endif %}
   </div>
 
-  <div id="container-create-image-slot">
-    {% if selected_image %}
-      {% include "container/partials/create_image_selected.html" with image=selected_image %}
-    {% else %}
-      {% include "container/partials/create_image_empty.html" %}
-    {% endif %}
-
-    {% if form.image.errors %}
-      <div class="text-danger small mt-1">
-        {{ form.image.errors|striptags }}
-      </div>
-    {% endif %}
+  <div class="mb-3">
+    {% include "ui/editors/image_picker/editor.html" with field=form.image only %}
   </div>
 
-  <div
-    id="container-create-picker"
-    class="mt-3"
-  >
-    {% include "container/partials/create_picker_empty.html" %}
-  </div>
 </div>

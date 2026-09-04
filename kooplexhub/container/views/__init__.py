@@ -1,6 +1,5 @@
 from .configure import (
     ContainerImageModalView,
-    ContainerImagePickerView,
     ContainerImageSaveView,
     ContainerMountsModalView,
     ContainerMountsSaveView,
@@ -8,8 +7,6 @@ from .configure import (
 from .create import (
     ContainerCreateModalView,
     ContainerCreateView,
-    ContainerCreateImagePickerView,
-    ContainerCreateImageSelectedView,
     ContainerCreateMountsPickerView,
     ContainerCreateMountsSelectedView,
     ContainerCreatePickerEmptyView,
@@ -50,8 +47,6 @@ __all__ = [
     "ContainerCardPartialView",
     "ContainerCreateModalView",
     "ContainerCreateView",
-    "ContainerCreateImagePickerView",
-    "ContainerCreateImageSelectedView",
     "ContainerCreateMountsPickerView",
     "ContainerCreateMountsSelectedView",
     "ContainerCreatePickerEmptyView",
@@ -63,7 +58,7 @@ __all__ = [
     "ContainerUptimeEditView",
     "ContainerUptimeUpdateView",
     "ContainerImageModalView",
-    "ContainerImagePickerView",
+#    "ContainerImagePickerView",
     "ContainerImageSaveView",
     "ContainerMountsModalView",
     "ContainerMountsSaveView",

@@ -2,6 +2,7 @@ from django import forms
 
 from ..conf import CONTAINER_SETTINGS
 from ..models import Container
+from ..services.image_catalog import ImageCatalogService
 from ..services.compute_limits import compute_limits_provider
 from ..services.compute_resolver import resolve_container_resources
 
@@ -25,6 +26,20 @@ class ContainerNameForm(ContainerWidgetForm):
             )
 
         return name
+
+
+class ContainerImageForm(ContainerWidgetForm):
+    class Meta(ContainerWidgetForm.Meta):
+        fields = ["image"]
+
+    def __init__(self, *args, user, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["image"].queryset = (
+            ImageCatalogService.available_for_user(
+                user=user,
+            )
+        )
 
 
 class ContainerUptimeForm(ContainerWidgetForm):

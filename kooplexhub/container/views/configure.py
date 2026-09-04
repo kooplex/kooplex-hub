@@ -13,6 +13,7 @@ from django.shortcuts import (
 
 from .mixins import MountSelectionMixin
 from ..models import Container
+from ..forms import ContainerImageForm
 from ..services.live import (
     broadcast_container_runtime_changed,
 )
@@ -46,50 +47,13 @@ class ContainerImageModalView(
             pk=self.kwargs["pk"],
         )
 
-        images = ImageCatalogService.available_for_user(user=self.request.user)
-        selected_image = container.image or images.first()
-
         context.update(
             {
                 "container": container,
-                "images": images,
-                "selected_image": selected_image,
-            }
-        )
-
-        return context
-
-
-class ContainerImagePickerView(
-    LoginRequiredMixin, 
-    TemplateView,
-):
-    template_name = IMAGE_PICKER_EDITOR_TEMPLATE
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        container = get_object_or_404(
-            Container.objects.filter(user=self.request.user),
-            pk=self.kwargs["pk"],
-        )
-
-        images = ImageCatalogService.available_for_user(user=self.request.user)
-
-        selected_image = None
-        image_id = self.request.GET.get("image")
-
-        if image_id:
-            selected_image = images.filter(pk=image_id).first()
-
-        if selected_image is None:
-            selected_image = container.image or images.first()
-
-        context.update(
-            {
-                "container": container,
-                "images": images,
-                "selected_image": selected_image,
+                "form": ContainerImageForm(
+                    instance=container,
+                    user=self.request.user,
+                ),
             }
         )
 
@@ -106,19 +70,31 @@ class ContainerImageSaveView(
             pk=pk,
         )
 
-        image = get_object_or_404(
-            ImageCatalogService.available_for_user(user=request.user),
-            pk=request.POST.get("image"),
+        form = ContainerImageForm(
+            request.POST,
+            instance=container,
+            user=request.user,
         )
 
-        container.image = image
-        container.save(update_fields=["image"])
+        if not form.is_valid():
+            return render(
+                request,
+                IMAGE_MODAL_TEMPLATE,
+                {
+                    "container": container,
+                    "form": form,
+                },
+                status=422,
+            )
+
+        container = form.save()
 
         response = render(
             request,
             CARD_WRAPPER_TEMPLATE,
             {"container": container},
         )
+
         response["HX-Trigger"] = json.dumps(
             {
                 "modal-close": True,
@@ -128,12 +104,12 @@ class ContainerImageSaveView(
                 },
             }
         )
+
         broadcast_container_runtime_changed(
             container,
-            reason=(
-                f"container.image.updated"
-            ),
+            reason="container.image.updated",
         )
+
         return response
 
 

@@ -39,16 +39,6 @@ urlpatterns = [
         name="create_modal",
     ),
     path(
-        "partials/create-image-picker/", 
-        views.ContainerCreateImagePickerView.as_view(), 
-        name="create_image_picker",
-    ),
-    path(
-        "partials/create-image-selected/<int:pk>/",
-        views.ContainerCreateImageSelectedView.as_view(),
-        name="create_image_selected",
-    ),
-    path(
         "partials/create-mounts-picker/", 
         views.ContainerCreateMountsPickerView.as_view(), 
         name="create_mounts_picker",
@@ -100,11 +90,6 @@ urlpatterns = [
         "partials/<int:pk>/image-modal/", 
         views.ContainerImageModalView.as_view(), 
         name="image_modal",
-    ),
-    path(
-        "partials/<int:pk>/image-picker/", 
-        views.ContainerImagePickerView.as_view(), 
-        name="image_picker",
     ),
     path(
         "partials/<int:pk>/image-save/", 

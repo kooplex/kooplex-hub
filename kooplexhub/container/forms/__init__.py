@@ -3,10 +3,12 @@ from .create import (
 )
 from .widgets import (
     ContainerNameForm,
+    ContainerImageForm,
     ContainerUptimeForm,
 )
 __all__ = [
     "ContainerCreateForm",
     "ContainerNameForm",
+    "ContainerImageForm",
     "ContainerUptimeForm",
 ]

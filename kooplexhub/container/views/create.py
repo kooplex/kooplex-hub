@@ -191,43 +191,6 @@ class ContainerCreateView(
         )
 
 
-class ContainerCreateImagePickerView(
-    LoginRequiredMixin, 
-    TemplateView,
-):
-    template_name = "container/partials/create_image_picker.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        images = ImageCatalogService.available_for_user(user=self.request.user)
-
-        selected_id = self.request.GET.get("image")
-        selected_image = None
-
-        if selected_id:
-            selected_image = images.filter(id=selected_id).first()
-
-        if selected_image is None:
-            selected_image = images.first()
-
-        context["images"] = images
-        context["selected_image"] = selected_image
-        return context
-
-
-class ContainerCreateImageSelectedView(
-    LoginRequiredMixin, 
-    DetailView,
-):
-    model = Image
-    template_name = "container/partials/create_image_selected.html"
-    context_object_name = "image"
-
-    def get_queryset(self):
-        return ImageCatalogService.available_for_user(user=self.request.user)
-
-
 class ContainerCreateMountsPickerView(
     LoginRequiredMixin, 
     TemplateView
