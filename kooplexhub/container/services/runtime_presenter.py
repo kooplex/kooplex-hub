@@ -114,6 +114,21 @@ class ContainerRuntimePresenter:
         )
 
     @property
+    def can_change_mounts(self):
+        return not self.is_transitioning
+    
+    
+    @property
+    def mounts_modal_url(self):
+        if not self.can_change_mounts:
+            return None
+    
+        return reverse(
+            "container:mounts_modal",
+            kwargs={"pk": self.container.pk},
+        )
+
+    @property
     def start_button_class(self):
         if self.is_starting:
             return "is-pending"

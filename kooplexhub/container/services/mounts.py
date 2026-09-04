@@ -7,6 +7,7 @@ from project.models import ProjectContainerBinding
 from education.models import CourseContainerBinding
 from volume.models import VolumeContainerBinding
 
+
 @dataclass(frozen=True)
 class MountBindingSpec:
     name: str
@@ -30,6 +31,58 @@ class MountSyncResult:
     @property
     def changed(self):
         return bool(self.added or self.removed)
+
+
+@dataclass(frozen=True)
+class ContainerMountSummary:
+    project_count: int
+    course_count: int
+    volume_count: int
+
+    @property
+    def total_count(self):
+        return (
+            self.project_count
+            + self.course_count
+            + self.volume_count
+        )
+
+    @property
+    def tooltip(self):
+        if not self.total_count:
+            return "No mounts configured."
+
+        parts = []
+
+        if self.project_count:
+            parts.append(
+                f"{self.project_count} project"
+                + ("" if self.project_count == 1 else "s")
+            )
+
+        if self.course_count:
+            parts.append(
+                f"{self.course_count} course"
+                + ("" if self.course_count == 1 else "s")
+            )
+
+        if self.volume_count:
+            parts.append(
+                f"{self.volume_count} volume"
+                + ("" if self.volume_count == 1 else "s")
+            )
+
+        return ", ".join(parts)
+
+
+def get_container_mount_summary(container):
+    ids = get_current_container_mount_ids(container)
+
+    return ContainerMountSummary(
+        project_count=len(ids["project_ids"]),
+        course_count=len(ids["course_ids"]),
+        volume_count=len(ids["volume_ids"]),
+    )
 
 
 def sync_container_mounts(container, desired_items: Iterable, spec: MountBindingSpec):

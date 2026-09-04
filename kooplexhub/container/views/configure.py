@@ -152,22 +152,6 @@ class ContainerMountsModalView(
 
         return context
 
-    #FIXME
-    def get_current_project_ids(self, container):
-        return set(
-            ProjectContainerBinding.objects
-            .filter(container=container)
-            .values_list("project_id", flat=True)
-        )
-
-    def get_current_course_ids(self, container):
-        # Replace with your real binding model.
-        return set()
-
-    def get_current_volume_ids(self, container):
-        # Replace with your real binding model.
-        return set()
-
 
 class ContainerMountsSaveView(
     LoginRequiredMixin, 
@@ -190,6 +174,17 @@ class ContainerMountsSaveView(
             courses=courses,
             volumes=volumes,
         )
+
+        changed = any(
+            result.changed
+            for result in changes.values()
+        )
+
+        if changed:
+            mark_container_restart_required(
+                container_id=container.pk,
+                reason="Container mounts changed",
+            )
 
         response = render(
             request,

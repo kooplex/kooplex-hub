@@ -2,8 +2,8 @@
   type="button"
   class="mount-button badge rounded-pill border border-dark text-dark p-2"
   title="{{ mount_summary.tooltip }}"
-  {% if container.mounts_modal_url %}
-    hx-get="{{ container.mounts_modal_url }}"
+  {% if runtime.can_change_mounts %}
+    hx-get="{{ runtime.mounts_modal_url }}"
     hx-target="#modal-root"
     hx-swap="innerHTML"
   {% else %}
