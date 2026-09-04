@@ -72,3 +72,7 @@
 .ui-intslider--default .ui-intslider__value::before {
     content: "Default · ";
 }
+
+.ui-intslider-display__heading > span:first-child {
+    white-space: nowrap;
+}

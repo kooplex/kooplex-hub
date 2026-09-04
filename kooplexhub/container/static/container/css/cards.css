@@ -103,3 +103,24 @@
     font-weight: 500;
 }
 
+.uptime-widget {
+    width: 100%;
+}
+
+.uptime-widget-control {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    text-align: inherit;
+}
+
+.uptime-widget-control:disabled {
+    opacity: 1;
+}
+
+.uptime-widget-control:not(:disabled) {
+    cursor: pointer;
+}
