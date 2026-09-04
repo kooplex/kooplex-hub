@@ -13,7 +13,10 @@
     </span>
 
     <div class="flex-grow-1"></div>
-    {% include "container/partials/widgets/stop_button.html" with container=container runtime=runtime only %}
+    <div class="container-card__header-actions">
+      {% include "container/partials/widgets/fetchlog_button.html" with container=container runtime=runtime only %}
+      {% include "container/partials/widgets/stop_button.html" with container=container runtime=runtime only %}
+    </div>
   </div>
 
   <div class="card-body container-card__body">
@@ -27,13 +30,9 @@
 	  {% include "container/partials/widgets/mount_button.html" with container=container runtime=runtime mount_summary=mount_summary only %}
         </div>
 
-        <div>
-          {% include "container/partials/widgets/restart_button.html" with container=container runtime=runtime only %}
-        </div>
       </div>
 
       <div class="col-md-6 d-flex flex-column">
-        {% include "container/partials/widgets/fetchlog_button.html" with container=container runtime=runtime only %}
         {% include "container/partials/widgets/compute_display.html" with container=container compute=compute only %}
         {% include "container/partials/widgets/uptime_display.html" with container=container runtime=runtime compute=compute only %}
       </div>
@@ -41,7 +40,15 @@
   </div>
 
   <div class="card-footer container-card__footer">
-    {% include "container/partials/widgets/start_button.html" with container=container runtime=runtime only %}
-    {% include "container/partials/delete_button.html" with container=container only %}
+    <div class="container-card__footer-start">
+      {% include "container/partials/widgets/start_button.html" with container=container runtime=runtime only %}
+      {% include "container/partials/widgets/restart_button.html" with container=container runtime=runtime only %}
+    </div>
+    <div class="container-card__footer-state">
+      {% include "container/partials/widgets/backend_status.html" with container=container runtime=runtime only %} {# FIXME #}
+    </div>
+    <div class="container-card__footer-end">
+      {% include "container/partials/delete_button.html" with container=container only %}
+    </div>
   </div>
 </div>

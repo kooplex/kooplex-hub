@@ -1,0 +1,22 @@
+<div
+  id="container-status-{{ container.pk }}"
+  class="container-log-status"
+  data-live-key="container-runtime:{{ container.pk }}"
+  data-live-url="{% url 'container:fetchlog_button_partial' container.pk %}"
+  data-live-swap="outerHTML"
+>
+
+  <div
+    class="container-state-pill container-state-{{ runtime.state_css_class }}"
+    title="{{ runtime.state_title }}"
+    role="status"
+    aria-label="{{ runtime.state_title }}"
+  >
+    <i class="bi bi-heart-pulse" aria-hidden="true"></i>
+
+    <span class="container-state-label">
+      {{ runtime.backend_state_label }}
+    </span>
+  </div>
+</div>
+

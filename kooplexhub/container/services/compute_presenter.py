@@ -163,6 +163,14 @@ class ContainerComputePresenter:
         )
 
     @property
+    def cpu_display_position(self):
+        return self._setting_percentage(
+            self.effective_cpu_request_m,
+            self.limits.cpu_min,
+            self.limits.cpu_max,
+        )
+
+    @property
     def cpu_setting_percent(self):
         return self._setting_percentage(
             self.requested_cpu_m,

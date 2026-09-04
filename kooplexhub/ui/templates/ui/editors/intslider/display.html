@@ -1,0 +1,19 @@
+<div class="ui-intslider-display{% if is_default %} ui-intslider-display--default{% endif %}">
+  <div class="ui-intslider-display__icon">
+    <i class="{{ icon }}"></i>
+  </div>
+
+  <div class="ui-intslider-display__body">
+    <div class="ui-intslider-display__heading">
+      <span>{{ label }}</span>
+      <strong>{{ value }} {{ unit }}</strong>
+    </div>
+
+    <div
+      class="ui-intslider-display__track"
+      style="--slider-position: {{ position }}%;"
+    >
+      <span class="ui-intslider-display__thumb"></span>
+    </div>
+  </div>
+</div>
