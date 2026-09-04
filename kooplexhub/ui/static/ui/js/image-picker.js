@@ -1,52 +1,67 @@
-(() => {
-    "use strict";
+(function () {
+  function updatePicker(picker, value) {
+    const select = picker.querySelector(
+      "[data-image-picker-select]"
+    );
 
-    function updatePreview(select) {
-        const picker = select.closest("[data-image-picker]");
-
-        if (!picker) {
-            return;
-        }
-
-        const value = select.value;
-
-        picker
-            .querySelectorAll("[data-image-preview-value]")
-            .forEach((preview) => {
-                preview.hidden =
-                    preview.dataset.imagePreviewValue !== value;
-            });
-
-        const empty = picker.querySelector(
-            "[data-image-picker-empty]"
-        );
-
-        if (empty) {
-            empty.hidden = Boolean(value);
-        }
+    if (!select) {
+      return;
     }
 
-    document.addEventListener("change", (event) => {
-        const select = event.target.closest(
-            "[data-image-picker-select]"
+    select.value = value;
+
+    picker
+      .querySelectorAll("[data-image-picker-item]")
+      .forEach((item) => {
+        const selected = item.dataset.value === value;
+
+        item.classList.toggle("is-selected", selected);
+        item.setAttribute(
+          "aria-selected",
+          selected ? "true" : "false"
         );
+      });
 
-        if (select) {
-            updatePreview(select);
-        }
-    });
+    picker
+      .querySelectorAll("[data-image-preview-value]")
+      .forEach((preview) => {
+        preview.hidden =
+          preview.dataset.imagePreviewValue !== value;
+      });
 
-    function initialize(root = document) {
-        root
-            .querySelectorAll("[data-image-picker-select]")
-            .forEach(updatePreview);
+    const empty = picker.querySelector(
+      "[data-image-picker-empty]"
+    );
+
+    if (empty) {
+      empty.hidden = Boolean(value);
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
-        initialize();
-    });
+    select.dispatchEvent(
+      new Event("change", { bubbles: true })
+    );
+  }
 
-    document.body.addEventListener("htmx:afterSwap", (event) => {
-        initialize(event.detail.target);
-    });
+  document.addEventListener("click", (event) => {
+    const item = event.target.closest(
+      "[data-image-picker-item]"
+    );
+
+    if (!item) {
+      return;
+    }
+
+    const picker = item.closest(
+      "[data-image-picker]"
+    );
+
+    if (!picker) {
+      return;
+    }
+
+    updatePicker(
+      picker,
+      item.dataset.value
+    );
+  });
 })();

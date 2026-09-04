@@ -26,8 +26,7 @@
       </div>
 
       <div class="modal-body">
-	{% include "project/partials/image/picker.html" %}
-	{#  FIXME % include "ui/editors/image_picker/editor.html" %#}
+	{% include "ui/editors/image_picker/editor.html" with field=form.preferred_image only %}
       </div>
 
       <div class="modal-footer">

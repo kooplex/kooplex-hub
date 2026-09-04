@@ -1,8 +1,4 @@
 <div
-		{% comment %}
-		FIXME
-  id="{{ dom_id }}"
-  {% endcomment %}
   class="ui-image-picker"
   data-image-picker
 >
@@ -16,75 +12,92 @@
 
   {% with images=field.field.queryset %}
     {% if images %}
-      <div class="row g-3">
-        <div class="col-md-5">
-          <label
-            class="form-label"
-            for="{{ field.id_for_label }}"
-          >
-            Image
-          </label>
 
-          <select
-            name="{{ field.html_name }}"
-            id="{{ field.id_for_label }}"
-            class="form-select"
-            data-image-picker-select
-            {% if field.field.required %}required{% endif %}
-          >
-            <option value="">Select an image</option>
+      {# Real form control; visually hidden but still submitted #}
+      <select
+        name="{{ field.html_name }}"
+        id="{{ field.id_for_label }}"
+        class="visually-hidden"
+        data-image-picker-select
+        {% if field.field.required %}required{% endif %}
+      >
+        <option value=""></option>
 
-            {% for image in images %}
-              {% with image_id=image.pk|stringformat:"s" selected_id=field.value|stringformat:"s" %}
-                <option
-                  value="{{ image.pk }}"
-                  {% if image_id == selected_id %}selected{% endif %}
-                >
-                  {{ image.name }}
-                </option>
-              {% endwith %}
-            {% endfor %}
-          </select>
+        {% for image in images %}
+          {% with image_id=image.pk|stringformat:"s" selected_id=field.value|stringformat:"s" %}
+            <option
+              value="{{ image.pk }}"
+              {% if image_id == selected_id %}selected{% endif %}
+            >
+              {{ image.name }}
+            </option>
+          {% endwith %}
+        {% endfor %}
+      </select>
+
+      <div class="ui-image-picker__layout">
+
+        <div
+          class="ui-image-picker__list"
+          role="listbox"
+          aria-label="Available images"
+          data-image-picker-list
+        >
+          {% for image in images %}
+            {% with image_id=image.pk|stringformat:"s" selected_id=field.value|stringformat:"s" %}
+              <button
+                type="button"
+                class="ui-image-picker__item{% if image_id == selected_id %} is-selected{% endif %}"
+                role="option"
+                aria-selected="{% if image_id == selected_id %}true{% else %}false{% endif %}"
+                data-image-picker-item
+                data-value="{{ image.pk }}"
+              >
+                {{ image.short_name|default:image.name }}
+              </button>
+            {% endwith %}
+          {% endfor %}
         </div>
 
-        <div class="col-md-7">
-          <div
-            class="border rounded p-3 h-100"
-            data-image-picker-preview
-          >
-            {% for image in images %}
-              {% with image_id=image.pk|stringformat:"s" selected_id=field.value|stringformat:"s" %}
-                <article
-                  data-image-preview-value="{{ image.pk }}"
-                  {% if image_id != selected_id %}hidden{% endif %}
-                >
-                  <div class="fw-semibold">
-                    {{ image.name }}
+        <div
+          class="ui-image-picker__preview"
+          data-image-picker-preview
+        >
+          {% for image in images %}
+            {% with image_id=image.pk|stringformat:"s" selected_id=field.value|stringformat:"s" %}
+              <article
+                class="ui-image-picker__preview-card"
+                data-image-preview-value="{{ image.pk }}"
+                {% if image_id != selected_id %}hidden{% endif %}
+              >
+                <div class="ui-image-picker__preview-title">
+                  {{ image.short_name|default:image.name }}
+                </div>
+
+                {% if image.description %}
+                  <div class="ui-image-picker__preview-description">
+                    {{ image.description|linebreaksbr }}
                   </div>
+                {% else %}
+                  <div class="ui-image-picker__preview-description text-muted">
+                    No description is available.
+                  </div>
+                {% endif %}
+              </article>
+            {% endwith %}
+          {% endfor %}
 
-                  {% if image.description %}
-                    <div class="text-muted mt-1">
-                      {{ image.description }}
-                    </div>
-                  {% else %}
-                    <div class="text-muted mt-1">
-                      No description is available.
-                    </div>
-                  {% endif %}
-                </article>
-              {% endwith %}
-            {% endfor %}
-
-            <div
-              class="text-muted"
-              data-image-picker-empty
-              {% if field.value %}hidden{% endif %}
-            >
-              Select an image to see its description.
-            </div>
+          <div
+            class="ui-image-picker__empty"
+            data-image-picker-empty
+            {% if field.value %}hidden{% endif %}
+          >
+            Select an image to see its description.
           </div>
         </div>
+
       </div>
+
     {% else %}
       <div class="alert alert-light border mb-0">
         No images are available.

@@ -265,7 +265,7 @@ class ContainerComputePresenter:
         return float(value)
 
     def _metric(self, requested, used, unit):
-        if used is None or requested <= 0:
+        if used is None or requested is None:#FIXME <= 0:
             return ResourceMetric(
                 requested=requested,
                 used=used,
