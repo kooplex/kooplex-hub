@@ -24,19 +24,20 @@
         </span>
     </div>
 
-    <ul class="nav nav-tabs px-2 pt-2" role="tablist">
+    <ul class="nav nav-tabs course-card-tabs" role="tablist">
     
         <li class="nav-item" role="presentation">
             <button
-                class="nav-link"
+                class="nav-link active"
                 data-bs-toggle="tab"
                 data-bs-target="#{{ presentation.description_pane_id }}"
                 type="button"
                 role="tab"
+		aria-selected="true"
 		title="Description"
             >
-                <i class="bi bi-card-text"></i>
-                Description
+                <i class="bi bi-card-text" aria-hidden="true"></i>
+                <span class="course-tab-label">Description</span>
             </button>
         </li>
     
@@ -47,10 +48,11 @@
                 data-bs-target="#{{ presentation.assignments_pane_id }}"
                 type="button"
                 role="tab"
+		aria-selected="false"
 		title="Assignments"
             >
-                <i class="bi bi-journal-check"></i>
-                Assignments
+                <i class="bi bi-journal-check" aria-hidden="true"></i>
+                <span class="course-tab-label">Assignments</span>
     
                 {% if presentation.has_assignment_attention %}
                     <span class="badge rounded-pill text-bg-warning ms-1">
@@ -68,10 +70,11 @@
                     data-bs-target="#{{ presentation.people_pane_id }}"
                     type="button"
                     role="tab"
+		    aria-selected="false"
 		    title="People"
                 >
-                    <i class="bi bi-people"></i>
-                    People
+                    <i class="bi bi-people" aria-hidden="true"></i>
+                    <span class="course-tab-label">People</span>
                 </button>
             </li>
         {% endif %}
@@ -83,10 +86,11 @@
                 data-bs-target="#{{ presentation.environment_pane_id }}"
                 type="button"
                 role="tab"
+		aria-selected="false"
 	        title="Environment"
             >
-                <i class="bi bi-box"></i>
-                Environment
+                <i class="bi bi-box" aria-hidden="true"></i>
+		<span class="course-tab-label">Environment</span>
             </button>
         </li>
 
