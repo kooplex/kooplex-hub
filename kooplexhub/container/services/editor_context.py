@@ -18,6 +18,7 @@ def make_name_editor_context(
         "form": form,
         "can_edit": presenter.can_edit_name,
         "aria_label": "Change environment name",
+        "live_key": f"container:{container.pk}",
         "edit_url": reverse(
             "container:name-edit",
             kwargs={"container_id": container.pk},

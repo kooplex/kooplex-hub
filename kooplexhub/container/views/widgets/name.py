@@ -7,7 +7,7 @@ from .base import ContainerEditorBaseView
 from ...models import Container
 from ...forms import ContainerNameForm
 from ...services.editor_context import make_name_editor_context
-from ...services.live import broadcast_container_runtime_changed
+from ...services.live import broadcast_container_changed
 
 
 NAME_DISPLAY_TEMPLATE = "ui/editors/name/display.html"
@@ -98,8 +98,9 @@ class ContainerNameUpdateView(ContainerNameBaseView):
 
         self.refresh_editor_state(container)
 
-        broadcast_container_runtime_changed(
-            container,
+        broadcast_container_changed(
+            container_id=container.pk,
+            user_id=container.user_id,
             reason="container.name.updated",
         )
 

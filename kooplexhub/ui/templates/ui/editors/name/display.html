@@ -7,6 +7,9 @@
             hx-target="#{{ editor.dom_id }}"
             hx-swap="outerHTML"
 	    aria-label="{{ editor.aria_label|default:'Edit name' }}"
+            data-live-key="{{ editor.live_key }}"
+            data-live-url="{{ editor.display_url }}"
+            data-live-swap="outerHTML"
         >
             {{ editor.value }}
         </button>
