@@ -4,15 +4,14 @@
 
 
 <div
-  class="card project-card bg-light border border-3 border-success shadow-light mb-3"
+  class="card project-card mb-3"
   data-project-card="{{ project.pk }}"
 >
   <div class="card-header d-flex align-items-center gap-2">
-    <span class="project-card-title text-truncate">
+    <span class="project-card-title">
       {% project_name_editor project presentation %}
     </span>
 
-    <div class="flex-grow-1"></div>
     {% project_scope_editor project presentation %}
 
     {% if presentation.can_delete or presentation.can_leave %}
@@ -36,7 +35,7 @@
 
   <div class="card-body p-0">
     <ul
-      class="nav nav-tabs project-card-tabs px-3 pt-3"
+      class="nav nav-tabs project-card-tabs"
       id="project-tabs-{{ project.pk }}"
       role="tablist"
     >
@@ -51,6 +50,7 @@
           role="tab"
           aria-controls="project-description-pane-{{ project.pk }}"
           aria-selected="true"
+	  title="Description"
         >
           <i class="bi bi-chat-left-text" aria-hidden="true"></i>
           <span class="project-tab-label">Description</span>
@@ -68,6 +68,7 @@
           role="tab"
           aria-controls="project-collaboration-pane-{{ project.pk }}"
           aria-selected="false"
+	  title="Collaboration"
         >
           <i class="bi bi-people" aria-hidden="true"></i>
           <span class="project-tab-label">Collaboration</span>
@@ -85,6 +86,7 @@
           role="tab"
           aria-controls="project-environment-pane-{{ project.pk }}"
           aria-selected="false"
+	  title="Environment"
         >
           <i class="bi bi-boxes" aria-hidden="true"></i>
           <span class="project-tab-label">Environment</span>

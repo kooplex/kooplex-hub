@@ -42,6 +42,14 @@ class ProjectDescriptionForm(ProjectWidgetForm):
     class Meta(ProjectWidgetForm.Meta):
         fields = ["description"]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["description"].widget.attrs.update({
+            "rows": 6,
+            "class": "form-control",
+        })
+
     def clean_description(self) -> str:
         description = self.cleaned_data.get("description") or ""
         description = description.strip()
