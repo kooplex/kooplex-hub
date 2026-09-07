@@ -63,6 +63,7 @@ input {
   grid-area: side;
   position: sticky;
   top: 0;
+  z-index: 100;
   width: var(--side-nav-width);
   height: 100dvh;
   background: #20282f;
@@ -796,7 +797,7 @@ h1 {
   .page-actions .primary-button {
     display: none;
   }
-                                                                                                                                                                            398,1         80%
+
   .bottom-nav {
     position: fixed;
     z-index: 5000;
@@ -804,12 +805,14 @@ h1 {
     right: 0.65rem;
     bottom: 0.65rem;
 
-    display: grid !important;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 0.25rem;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
 
-    padding: 0.35rem;
-    background: rgb(255 255 255 / 0.96);
+    gap: .25rem;
+    padding: .35rem;
+
+    background: rgb(255 255 255 / .96);
     border: 1px solid var(--line);
     border-radius: 1.35rem;
     box-shadow: var(--shadow);

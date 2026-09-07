@@ -115,13 +115,14 @@
     </main>
 
     <nav class="bottom-nav" aria-label="Mobile main">
-      {% for item in nav_items|slice:":5" %}
+      {% for item in nav_items %}
       <a
         class="bottom-item {% if active == item.key %}is-active{% endif %}"
         href="{% url item.url_name %}"
+	{% if active == item.key %}aria-current="page"{% endif %}
       >
         <span class="bottom-icon" aria-hidden="true">
-          <i class="{{ item.icon }}"></i>
+          <i class="bi bi-{{ item.icon }}"></i>
         </span>
         <small>{{ item.label }}</small>
       </a>
