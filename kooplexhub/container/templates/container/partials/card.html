@@ -8,11 +8,10 @@
   <div class="card-header container-card__header">
     {% include "container/partials/widgets/open_service_button.html" with container=container runtime=runtime only %}
 
-    <span class="container-card-title text-truncate">
+    <span class="container-card-title">
         {% container_name_editor container runtime %}
     </span>
 
-    <div class="flex-grow-1"></div>
     <div class="container-card__header-actions">
       {% include "container/partials/widgets/fetchlog_button.html" with container=container runtime=runtime only %}
       {% include "container/partials/widgets/stop_button.html" with container=container runtime=runtime only %}

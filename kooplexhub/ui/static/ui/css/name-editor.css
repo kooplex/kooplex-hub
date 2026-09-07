@@ -1,6 +1,15 @@
 .ui-name-editor {
     position: relative;
     min-width: 0;
+    max-width: 100%;
+}
+
+.ui-name-editor__display {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .ui-name-editor__row {
@@ -8,6 +17,7 @@
     align-items: center;
     gap: .45rem;
     min-width: 0;
+    overflow: visible;
 }
 
 .ui-name-editor__field {
