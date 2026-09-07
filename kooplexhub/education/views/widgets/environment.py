@@ -91,6 +91,9 @@ class CourseDefaultEnvironmentCreateView(
 
         # Clear/reload because the presenter may have
         # cached environment_containers.
+        course.refresh_from_db()
+
+        self._course = course
         self._course_presenter = None
         presentation = self.get_presenter()
 

@@ -1,3 +1,32 @@
+.course-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    align-items: start;
+}
+
+.course-grid > * {
+    min-width: 0;
+}
+
+.course-card {
+    width: 100%;
+    min-width: 0;
+}
+
+@media (max-width: 1250px) {
+    .course-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 760px) {
+    .course-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+
 .course-card {
     height: 22rem;
     min-height: 22rem;
@@ -182,4 +211,26 @@
     display: flex;
     align-items: center;
     gap: .25rem;
+}
+
+.course-environment-settings {
+    display: grid;
+    gap: .25rem;
+}
+
+.course-environment-setting {
+    min-width: 0;
+}
+
+.course-environment-setting .project-setting-row,
+.course-environment-setting .course-setting-row {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+}
+
+.course-environment-setting .project-setting-row > :last-child,
+.course-environment-setting .course-setting-row > :last-child {
+    margin-left: auto;
+    flex: 0 0 auto;
 }

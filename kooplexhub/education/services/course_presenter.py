@@ -76,18 +76,17 @@ class CoursePresenter:
 
     @cached_property
     def environment_containers(self):
-        bindings = self.course.containerbindings.all()
-    
-        containers = [
+        bindings = (
+           self.course.containerbindings
+           .filter(container__user=self.user)
+           .select_related("container")
+           .order_by(Lower("container__name"))
+        )
+   
+        return [
             binding.container
             for binding in bindings
-            if binding.container.user_id == self.user.id
         ]
-    
-        return sorted(
-            containers,
-            key=lambda container: container.name.lower(),
-        )
     
     
     @property

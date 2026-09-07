@@ -11,9 +11,14 @@
         </div>
     {% endif %}
 
-    {% course_image_editor course presentation %}
-
-    {% course_mounts_editor course presentation %}
+    <div class="course-environment-settings">
+        <div class="course-environment-setting">
+            {% course_image_editor course presentation %}
+        </div>
+        <div class="course-environment-setting">
+            {% course_mounts_editor course presentation %}
+        </div>
+    </div>
 
     <div class="course-environment-list-section">
 
