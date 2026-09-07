@@ -14,33 +14,39 @@
         {{ editor.field.label }}
     </label>
 
-    {{ editor.field }}
+    <div class="ui-name-editor__row">
+        <div class="ui-name-editor__field">
+            {{ editor.field }}
 
-    {% for error in editor.field.errors %}
-        <div class="invalid-feedback d-block">
-            {{ error }}
+            {% if editor.field.errors or editor.form.non_field_errors %}
+                <div class="ui-name-editor__feedback" role="alert">
+                    {% for error in editor.field.errors %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+                    {% for error in editor.form.non_field_errors %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
         </div>
-    {% endfor %}
 
-    {% for error in editor.form.non_field_errors %}
-        <div class="invalid-feedback d-block">
-            {{ error }}
+        <div class="ui-name-editor__actions">
+            <button
+                type="button"
+                class="btn btn-outline-secondary btn-sm"
+                hx-get="{{ editor.display_url }}"
+                hx-target="#{{ editor.dom_id }}"
+                hx-swap="outerHTML"
+            >
+                Cancel
+            </button>
+
+            <button
+                type="submit"
+                class="btn btn-primary btn-sm"
+            >
+                Save
+            </button>
         </div>
-    {% endfor %}
-
-    <div class="d-flex justify-content-end gap-2 mt-2">
-        <button
-            type="button"
-            class="btn btn-outline-secondary btn-sm"
-            hx-get="{{ editor.display_url }}"
-            hx-target="#{{ editor.dom_id }}"
-            hx-swap="outerHTML"
-        >
-            Cancel
-        </button>
-
-        <button type="submit" class="btn btn-primary btn-sm">
-            Save
-        </button>
     </div>
 </form>
