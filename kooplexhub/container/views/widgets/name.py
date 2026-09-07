@@ -1,6 +1,7 @@
 import json
 
 from django.template.response import TemplateResponse
+from django.db import IntegrityError, transaction
 
 from .base import ContainerEditorBaseView
 from ...models import Container
@@ -76,7 +77,24 @@ class ContainerNameUpdateView(ContainerNameBaseView):
                 },
             )
 
-        container = form.save()
+        try:
+            with transaction.atomic():
+                container = form.save()
+        except IntegrityError:
+            form.add_error(
+                "name",
+                "You already have an environment with this name.",
+            )
+        
+            return TemplateResponse(
+                request,
+                NAME_EDIT_TEMPLATE,
+                {
+                    "editor": self.make_editor_context(
+                        form=form,
+                    ),
+                },
+            )
 
         self.refresh_editor_state(container)
 

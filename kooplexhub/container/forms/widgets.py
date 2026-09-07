@@ -25,6 +25,19 @@ class ContainerNameForm(ContainerWidgetForm):
                 "Name must be at least 3 characters."
             )
 
+        if (
+            self.instance.user_id is not None
+            and Container.objects.filter(
+                user_id=self.instance.user_id,
+                name=name,
+            )
+            .exclude(pk=self.instance.pk)
+            .exists()
+        ):
+            raise forms.ValidationError(
+                "You already have an environment with this name."
+            )
+
         return name
 
 
