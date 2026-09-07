@@ -94,7 +94,7 @@ input {
   object-fit: contain;
 }
 
-.nav-item {
+.side-nav .nav-item {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -115,19 +115,19 @@ input {
     transform 140ms ease;
 }
 
-.nav-item:hover,
-.nav-item:focus-visible {
+.side-nav .nav-item:hover,
+.side-nav .nav-item:focus-visible {
   background: rgb(255 255 255 / 0.12);
   color: #ffffff;
   outline: none;
 }
 
-.nav-item.is-active {
+.side-nav .nav-item.is-active {
   background: rgb(255 255 255 / 0.16);
   color: #ffffff;
 }
 
-.nav-item.is-active::before {
+.side-nav .nav-item.is-active::before {
   content: "";
   position: absolute;
   left: -0.35rem;
@@ -139,7 +139,7 @@ input {
   transform: translateY(-50%);
 }
 
-.nav-item::after {
+.side-nav .nav-item::after {
   content: attr(data-tooltip);
   position: absolute;
   left: calc(100% + 0.65rem);
@@ -161,8 +161,8 @@ input {
   z-index: 1000;
 }
 
-.nav-item:hover::after,
-.nav-item:focus-visible::after {
+.side-nav .nav-item:hover::after,
+.side-nav .nav-item:focus-visible::after {
   opacity: 1;
   transform: translateY(-50%) scale(1);
 }
@@ -288,29 +288,17 @@ input {
   padding: 0 1rem;
 }
 
-.nav-item:hover,
-.nav-item:focus-visible {
+.side-nav .nav-item:hover,
+.side-nav .nav-item:focus-visible {
   background: rgb(255 255 255 / 0.12);
   color: #ffffff;
   outline: none;
 }
 
-.nav-item.is-active {
+.side-nav .nav-item.is-active {
   background: rgb(255 255 255 / 0.16);
   color: #ffffff;
 }
-
-.nav-item.is-active::before {
-  content: "";
-  position: absolute;
-  left: -0.35rem;
-  top: 50%;
-  width: 0.22rem;
-  height: 1.8rem;
-  border-radius: 999px;
-  background: #35d399;
-  transform: translateY(-50%);
-} 
 
 .top-actions,
 .page-actions,
