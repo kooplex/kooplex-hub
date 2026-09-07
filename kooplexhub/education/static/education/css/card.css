@@ -1,0 +1,185 @@
+.course-card {
+    height: 22rem;
+    min-height: 22rem;
+    max-height: 22rem;
+
+    display: flex;
+    flex-direction: column;
+
+    position: relative;
+    overflow: visible;
+
+    border: 1px solid var(--bs-border-color);
+    border-radius: .75rem;
+
+    background: #f5f8fc;
+    box-shadow: 0 .125rem .4rem rgb(0 0 0 / .08);
+}
+
+.course-card > .card-header {
+    position: relative;
+    z-index: 2;
+
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+
+    min-height: 3rem;
+    padding: .6rem .8rem;
+
+    border-bottom: 1px solid var(--bs-border-color);
+    border-radius: .75rem .75rem 0 0;
+
+    background: #edf4fb;
+}
+
+.course-card--teacher > .card-header {
+    background: #e3eef9;
+}
+
+.course-card--student > .card-header {
+    background: #f0f5fb;
+}
+
+.course-card-title {
+    min-width: 0;
+    flex: 1 1 auto;
+    overflow: visible;
+    font-weight: 600;
+}
+
+.course-role-indicator {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 2rem;
+    height: 2rem;
+
+    border: 1px solid var(--bs-border-color);
+    border-radius: 50%;
+
+    color: #49657f;
+    background: rgb(255 255 255 / .55);
+}
+
+.course-card-tabs {
+    flex: 0 0 auto;
+    gap: .25rem;
+
+    margin: 0;
+    padding: .2rem .65rem 0;
+
+    border-bottom: 1px solid var(--bs-border-color);
+}
+
+.course-card-tabs .nav-link {
+    min-height: 2.5rem;
+    padding: .45rem .7rem;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+
+    color: #55718e;
+    border: 1px solid transparent;
+    border-bottom: 0;
+    border-radius: .65rem .65rem 0 0;
+}
+
+.course-card-tabs .nav-link:not(.active) {
+    border-color: #d7e2ee;
+    background: rgb(255 255 255 / .35);
+}
+
+.course-card-tabs .nav-link.active {
+    background: #fff;
+    color: #20354b;
+    font-weight: 700;
+    border-color: var(--bs-border-color);
+    border-bottom-color: #fff;
+}
+
+.course-card-tabs .course-tab-label {
+    display: none;
+}
+
+.course-card-tabs .nav-link.active .course-tab-label {
+    display: inline;
+}
+
+.course-card > .card-body {
+    flex: 1 1 auto;
+    min-height: 0;
+
+    padding: 0;
+
+    background: #f8fbfe;
+    border-radius: 0 0 .75rem .75rem;
+
+    overflow: hidden;
+}
+
+.course-card .tab-content {
+    height: 100%;
+    min-height: 0;
+    display: block;
+}
+
+.course-card .tab-pane {
+    height: 100%;
+    min-height: 0;
+
+    padding: .45rem .65rem .65rem;
+    overflow-y: auto;
+}
+
+.course-tab-section {
+    display: grid;
+    gap: .45rem;
+}
+
+.course-environment-list-section {
+    display: grid;
+    gap: .35rem;
+}
+
+.course-environment-shortcuts {
+    display: grid;
+    gap: 0;
+
+    border: 1px solid var(--bs-border-color);
+    border-radius: .8rem;
+    background: rgb(255 255 255 / .65);
+
+    overflow: hidden;
+}
+
+.course-environment-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: .5rem;
+
+    padding: .45rem .65rem;
+
+    border-bottom: 1px solid var(--bs-border-color);
+}
+
+.course-environment-row:last-child {
+    border-bottom: 0;
+}
+
+.course-environment-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.course-environment-actions {
+    display: flex;
+    align-items: center;
+    gap: .25rem;
+}

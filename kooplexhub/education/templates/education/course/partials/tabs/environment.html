@@ -15,16 +15,7 @@
 
     {% course_mounts_editor course presentation %}
 
-    <div class="course-environment-list-section mt-3">
-
-        <div class="mb-2">
-            <div class="fw-semibold">
-                Environments
-            </div>
-            <div class="text-muted small">
-                Your environments currently attached to this course.
-            </div>
-        </div>
+    <div class="course-environment-list-section">
 
         {% if presentation.environment_containers %}
 
@@ -34,13 +25,13 @@
 
                     {% runtime_for container as runtime %}
 
-                    <div class="d-flex align-items-center gap-2 mb-2">
+                    <div class="course-environment-row">
 
-                        <div class="flex-grow-1 text-truncate">
+                        <div class="course-environment-name">
                             {{ container.name }}
                         </div>
 
-                        <div class="d-flex gap-1">
+                        <div class="course-environment-actions">
 
                             {% include "container/partials/widgets/open_service_button.html" with container=container runtime=runtime only %}
 

@@ -5,33 +5,35 @@
 
 <div
     id="{{ presentation.card_dom_id }}"
-    class="card rounded rounded-3 mb-3 border border-2 shadow-light {{ presentation.role_css_class }}"
+    class="card course-card mb-3 {{ presentation.role_css_class }}"
     data-widget="coursecard"
     data-id="{{ binding.course_id }}"
 >
     <div class="card-header d-flex align-items-center gap-2">
 
-        <span class="course-card-title text-truncate">
+        <span class="course-card-title">
             {% course_name_editor binding.course presentation %}
         </span>
 
-        <div class="flex-grow-1"></div>
-
-        <span class="badge text-bg-secondary">
-            {{ presentation.role_label }}
+        <span
+            class="course-role-indicator"
+            title="{{ presentation.role_label }}"
+            aria-label="{{ presentation.role_label }}"
+        >
+            <i class="bi {{ presentation.role_icon }}" aria-hidden="true"></i>
         </span>
-
     </div>
 
     <ul class="nav nav-tabs px-2 pt-2" role="tablist">
     
         <li class="nav-item" role="presentation">
             <button
-                class="nav-link active"
+                class="nav-link"
                 data-bs-toggle="tab"
                 data-bs-target="#{{ presentation.description_pane_id }}"
                 type="button"
                 role="tab"
+		title="Description"
             >
                 <i class="bi bi-card-text"></i>
                 Description
@@ -45,6 +47,7 @@
                 data-bs-target="#{{ presentation.assignments_pane_id }}"
                 type="button"
                 role="tab"
+		title="Assignments"
             >
                 <i class="bi bi-journal-check"></i>
                 Assignments
@@ -65,6 +68,7 @@
                     data-bs-target="#{{ presentation.people_pane_id }}"
                     type="button"
                     role="tab"
+		    title="People"
                 >
                     <i class="bi bi-people"></i>
                     People
@@ -72,21 +76,6 @@
             </li>
         {% endif %}
     
-        {% if presentation.can_manage_environment %}
-            <li class="nav-item" role="presentation">
-                <button
-                    class="nav-link"
-                    data-bs-toggle="tab"
-                    data-bs-target="#{{ presentation.environment_pane_id }}"
-                    type="button"
-                    role="tab"
-                >
-                    <i class="bi bi-box"></i>
-                    Environment
-                </button>
-            </li>
-        {% endif %}
-
         <li class="nav-item" role="presentation">
             <button
                 class="nav-link"
@@ -94,14 +83,13 @@
                 data-bs-target="#{{ presentation.environment_pane_id }}"
                 type="button"
                 role="tab"
-                aria-controls="{{ presentation.environment_pane_id }}"
-                aria-selected="false"
+	        title="Environment"
             >
-                <i class="bi bi-boxes" aria-hidden="true"></i>
-                <span class="course-tab-label">Environment</span>
+                <i class="bi bi-box"></i>
+                Environment
             </button>
         </li>
-    
+
     </ul>
 
     <div class="card-body tab-content">
@@ -146,18 +134,6 @@
             </div>
         {% endif %}
     
-    
-        {% if presentation.can_manage_environment %}
-            <div
-                class="tab-pane fade"
-                id="{{ presentation.environment_pane_id }}"
-                role="tabpanel"
-            >
-                <div class="text-muted small py-3">
-                    Course image, mounts and environments will go here.
-                </div>
-            </div>
-        {% endif %}
     
         <div
             class="tab-pane fade"

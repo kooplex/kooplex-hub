@@ -3,8 +3,9 @@
 {% load course_presenter %}
 
 {% block styles %}
-{# <link rel="stylesheet" href="{% static 'project/css/card.css' %}"> #}
+<link rel="stylesheet" href="{% static 'education/css/card.css' %}">
 {# <link rel="stylesheet" href="{% static 'project/css/environment.css' %}"> #}
+<link rel="stylesheet" href="{% static 'ui/css/name-editor.css' %}">
 <link rel="stylesheet" href="{% static 'ui/css/image-picker.css' %}">
 <link rel="stylesheet" href="{% static 'ui/css/membership.css' %}">
 <link rel="stylesheet" href="{% static 'ui/css/mounts.css' %}">
@@ -48,7 +49,7 @@
 {% endblock %}
 
 {% block scripts %}
-{#  <script src="{% static 'project/js/preserve_tab.js' %}"></script> #}
+  <script src="{% static 'project/js/course_tabs.js' %}"></script>
   <script src="{% static 'ui/js/image-picker.js' %}"></script>
   <script src="{% static 'ui/js/members-picker.js' %}"></script>
   <script src="{% static 'ui/js/mounts-picker.js' %}"></script>

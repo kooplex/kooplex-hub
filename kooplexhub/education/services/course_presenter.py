@@ -138,13 +138,6 @@ class CoursePresenter:
         )
     
     @property
-    def can_create_assignment(self):
-        return (
-            self.is_teacher
-            and bool(self.available_assignment_sources)
-        )
-    
-    @property
     def assignment_create_disabled_reason(self):
         if not self.is_teacher:
             return "Only teachers can create assignments."
@@ -206,6 +199,10 @@ class CoursePresenter:
     @property
     def role_label(self):
         return "Teacher" if self.is_teacher else "Student"
+
+    @property
+    def role_icon(self):
+        return "bi-mortarboard-fill" if self.is_teacher else "bi-person-fill"
 
     @property
     def assignments_url(self):
