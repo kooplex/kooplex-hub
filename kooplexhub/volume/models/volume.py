@@ -1,20 +1,12 @@
-import logging
-import re
-import os
-
 from django.db import models
 from django.db.models import Q
-from django.template.loader import render_to_string
 from django.core.validators import MinLengthValidator
 from django.contrib.auth import get_user_model
 
-
 from kooplexhub.lib import my_alphanumeric_validator
 
-from ..conf import VOLUME_SETTINGS
 
 User = get_user_model()
-logger = logging.getLogger(__name__)
 
 
 class VolumeQuerySet(models.QuerySet):
@@ -145,15 +137,21 @@ class Volume(models.Model):
         ],
     )
 
+    allow_shared_write = models.BooleanField(
+        default=False,
+        help_text=(
+            "Allow non-owner users who have access to this volume "
+            "to mount it read-write."
+        ),
+    )    
+
     claim = models.CharField(
         max_length=64,
         blank=False,
-#FIXME        default=VOLUME_SETTINGS["mounts"]["attachment"]["claim"],
     )
 
     subpath = models.CharField(
         max_length=64,
-#FIXME        default=VOLUME_SETTINGS["mounts"]["attachment"]["subpath"],
         blank=True,
     )
 
@@ -164,15 +162,6 @@ class Volume(models.Model):
     )
 
     is_present = models.BooleanField(default=True)
-
-    #allowed_groups = models.ManyToManyField(
-    #    Group,
-    #    blank=True,
-    #    related_name="volumes_allowed_by_group",
-    #    help_text=(
-    #        "LDAP/Django groups whose members may use the mount"
-    #    ),
-    #)
 
     users = models.ManyToManyField(
         User,
@@ -198,17 +187,4 @@ class Volume(models.Model):
 
     def __str__(self):
         return "Volume({}) /{} ({}:{})".format(self.scope, self.folder, self.claim, self.subpath)
-
-    def usercontainer_names(self, user):
-        return list(
-            self.containerbindings
-                .filter(container__user=user)
-                .values_list('container__name', flat=True)
-                .distinct()
-        )
-
-    @property 
-    def link_drop(self): 
-        from django.urls import reverse 
-        return reverse('volume:destroy', args = [self.id]) if self.id and self.scope==self.Scope.ATTACHMENT else "" 
 

@@ -1,11 +1,8 @@
-import logging
-
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 
 User = get_user_model()
-
-logger = logging.getLogger(__name__)
 
 class UserVolumeBinding(models.Model):
     class Role(models.TextChoices):
@@ -19,7 +16,7 @@ class UserVolumeBinding(models.Model):
         )
         COLLABORATOR = (
             "member",
-            "User can mount this volume read-only.",
+            "User may access and mount this volume.",
         )
 
     user = models.ForeignKey(
@@ -45,6 +42,11 @@ class UserVolumeBinding(models.Model):
                 fields=["user", "volume"],
                 name="unique_user_volume_binding",
             ),
+            models.UniqueConstraint(
+                fields=["volume"],
+                condition=models.Q(role=Role.OWNER),
+                name="unique_volume_owner",
+            ),
         ]
 
         indexes = [
@@ -54,12 +56,5 @@ class UserVolumeBinding(models.Model):
 
     def __str__(self):
         return f"{self.user} → {self.volume} ({self.role})"
-
-
-
-
-    def volumecontainerbindings(self):
-        from ..models import VolumeContainerBinding
-        return VolumeContainerBinding.objects.filter(volume = self.volume, container__user = self.user)
 
 
