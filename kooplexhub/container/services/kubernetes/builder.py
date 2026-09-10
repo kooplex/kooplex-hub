@@ -19,6 +19,7 @@ from hub.conf import HUB_SETTINGS
 from kooplexhub.settings import KOOPLEX, REDIS_TELEPORT
 from project.conf import PROJECT_SETTINGS
 from volume.conf import VOLUME_SETTINGS
+from volume.services.access import resolve_volume_mount
 
 from .labels import dns_label, workload_labels, workload_name
 from ..compute_resolver import (
@@ -106,11 +107,11 @@ class ContainerWorkloadBuilder:
             volumes,
             mount_items,
         )
-        #self._build_user_volumes(
-        #    container, 
-        #    volumes,
-        #    mount_items["volumes"],
-        #)
+        self._build_user_volumes(
+            container, 
+            volumes,
+            mount_items["volumes"],
+        )
 
         pod_containers: list[dict[str, Any]] = []
         sidecar = self._build_davfs_sidecar(container, volumes)
@@ -358,19 +359,19 @@ class ContainerWorkloadBuilder:
         self, 
         container: Any, 
         volumes: VolumeBundle,
-        user_volumse: Any,
+        user_volumes: Any,
     ) -> None:
         for volume in user_volumes:
-            key = (
-                "attachment"
-                if volume.scope == volume.Scope.ATTACHMENT
-                else "volume"
+            resolved = resolve_volume_mount(
+                volume=volume,
+                user=container.user,
             )
-            mount_cfg = VOLUME_SETTINGS.mounts[key]
+
             volumes.add_pvc(
                 claim_name=volume.claim,
-                mount_path=mount_cfg["mountpoint"].format(volume=volume),
+                mount_path=VOLUME_SETTINGS.mountpoint.format(volume=volume),
                 sub_path=volume.subpath,
+                read_only=resolved.read_only,
             )
 
     def _build_main_secret(self, container: Any, volumes: VolumeBundle) -> None:
