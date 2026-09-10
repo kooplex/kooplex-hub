@@ -28,6 +28,8 @@ class VolumeQuerySet(models.QuerySet):
         ).distinct()
 
     def owned_by(self, user):
+        from . import UserVolumeBinding
+
         if not user.is_authenticated:
             return self.none()
 
@@ -40,6 +42,7 @@ class VolumeQuerySet(models.QuerySet):
         ).distinct()
 
     def manageable_by(self, user):
+        from . import UserVolumeBinding
         """
         Volumes where the user may modify properties.
         """

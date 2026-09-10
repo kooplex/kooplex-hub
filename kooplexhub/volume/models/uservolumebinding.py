@@ -44,7 +44,7 @@ class UserVolumeBinding(models.Model):
             ),
             models.UniqueConstraint(
                 fields=["volume"],
-                condition=models.Q(role=Role.OWNER),
+                condition=models.Q(role="owner"),
                 name="unique_volume_owner",
             ),
         ]
