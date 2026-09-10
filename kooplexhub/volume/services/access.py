@@ -1,9 +1,13 @@
 from dataclasses import dataclass
 
+from django.db.models import Q
+
 from ..models import (
     Volume,
     UserVolumeBinding,
 )
+
+from ..conf import VOLUME_SETTINGS
 
 # Volume access policy
 ###########################
@@ -65,16 +69,6 @@ def _is_owner(binding) -> bool:
     )
 
 
-def _is_manager(binding) -> bool:
-    return (
-        binding is not None
-        and binding.role in {
-            UserVolumeBinding.Role.OWNER,
-            UserVolumeBinding.Role.ADMIN,
-        }
-    )
-
-
 def _has_internal_project_access(volume, user, owner) -> bool:
     return volume.projectbindings.filter(
         project__userbindings__user=owner,
@@ -85,10 +79,7 @@ def _has_internal_project_access(volume, user, owner) -> bool:
 
 
 def _has_internal_course_access(volume, user, owner) -> bool:
-    from education.models import VolumeCourseBinding  #FIXME: add related_name
-
-    return VolumeCourseBinding.objects.filter(
-        volume=volume,
+    return volume.coursebindings.filter(
         course__userbindings__user=owner,
         course__userbindings__is_teacher=True,
     ).filter(
@@ -142,7 +133,11 @@ def resolve_volume_access(*, volume, user) -> VolumeAccess:
             visible=True,
             mountable=volume.is_present,
             manageable=True,
-            writable=volume.allow_shared_write,   #FIXME: TODO if stated in conf and RW access to grant let it be True
+            writable=(
+                True
+                if VOLUME_SETTINGS.admin_mounts_read_write
+                else volume.allow_shared_write
+            ),
             reason="Volume administrator.",
         )
 
@@ -237,5 +232,33 @@ def volume_mount_read_only(*, volume, user) -> bool:
 
     return access.read_only
 
+
+def owned_volume_q(user):
+    if not user or not user.is_authenticated:
+        return Q(pk__in=[])
+
+    if user.is_superuser:
+        return Q()
+
+    return Q(
+        userbindings__user=user,
+        userbindings__role=UserVolumeBinding.Role.OWNER,
+    )
+
+
+def manageable_volume_q(user):
+    if not user or not user.is_authenticated:
+        return Q(pk__in=[])
+
+    if user.is_superuser:
+        return Q()
+
+    return Q(
+        userbindings__user=user,
+        userbindings__role__in=[
+            UserVolumeBinding.Role.OWNER,
+            UserVolumeBinding.Role.ADMIN,
+        ],
+    )
 
 

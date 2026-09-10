@@ -28,36 +28,23 @@ class VolumeQuerySet(models.QuerySet):
         ).distinct()
 
     def owned_by(self, user):
-        from . import UserVolumeBinding
-
+        from ..services.access import owned_volume_q
+    
         if not user.is_authenticated:
             return self.none()
-
-        if user.is_superuser:
-            return self
-
+    
         return self.filter(
-            userbindings__user=user,
-            userbindings__role=UserVolumeBinding.Role.OWNER,
+            owned_volume_q(user)
         ).distinct()
 
     def manageable_by(self, user):
-        from . import UserVolumeBinding
-        """
-        Volumes where the user may modify properties.
-        """
+        from ..services.access import manageable_volume_q
+
         if not user.is_authenticated:
             return self.none()
 
-        if user.is_superuser:
-            return self
-
         return self.filter(
-            userbindings__user=user,
-            userbindings__role__in=[
-                UserVolumeBinding.Role.OWNER,
-                UserVolumeBinding.Role.ADMIN,
-            ],
+            manageable_volume_q(user)
         ).distinct()
 
     def visible_to(self, user):

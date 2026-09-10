@@ -1,18 +1,26 @@
-import logging
-
-from django.contrib.auth.models import User
 from django.db import models
 
 from . import Course
 from volume.models import Volume
 
-logger = logging.getLogger(__name__)
-
 
 class VolumeCourseBinding(models.Model):
-    volume = models.ForeignKey(Volume, on_delete = models.CASCADE, null = False)
-    course = models.ForeignKey(Course, on_delete = models.CASCADE, null = False)
+    volume = models.ForeignKey(
+        Volume,
+        on_delete=models.CASCADE,
+        related_name="coursebindings",
+    )
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name="volumebindings",
+    )
 
     class Meta:
-        unique_together = [['volume', 'course']]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["volume", "course"],
+                name="unique_course_volume_binding",
+            ),
+        ]
 
