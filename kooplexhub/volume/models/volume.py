@@ -48,35 +48,28 @@ class VolumeQuerySet(models.QuerySet):
         ).distinct()
 
     def visible_to(self, user):
-        """
-        Volumes the user may list/see.
-        """
+        from ..services.access import visible_volume_q
+    
         if not user.is_authenticated:
             return self.none()
-
-        if user.is_superuser:
-            return self
-
-        group_ids = user.groups.values_list("id", flat=True)
-
+    
         return self.filter(
-            Q(scope=Volume.Scope.PUBLIC)
-            | Q(scope=Volume.Scope.ATTACHMENT)
-            | Q(userbindings__user=user)
-#            | Q(
-#                scope=Volume.Scope.INTERNAL,
-#                allowed_groups__id__in=group_ids,
-#            )
+            visible_volume_q(user)
         ).distinct()
 
     def attachable_by(self, user):
-        """
-        Volumes the user may mount into an environment.
-
-        For now, same as visible_to(), but keeping it separate is useful.
-        Later you may decide that visible != mountable.
-        """
-        return self.visible_to(user).present()
+        from ..services.access import mountable_volume_q
+    
+        if not user.is_authenticated:
+            return self.none()
+    
+        return (
+            self.filter(
+                mountable_volume_q(user),
+                is_present=True,
+            )
+            .distinct()
+        )
 
     def for_user(self, user):
         """

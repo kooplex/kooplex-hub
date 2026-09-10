@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from django.db.models import Q
+from django.db.models import Q, Exists, OuterRef
 
 from ..models import (
     Volume,
@@ -260,5 +260,65 @@ def manageable_volume_q(user):
             UserVolumeBinding.Role.ADMIN,
         ],
     )
+
+
+def internal_project_volume_ids_for(user):
+    from project.models import UserProjectBinding
+
+    return (
+        UserVolumeBinding.objects
+        .filter(
+            role=UserVolumeBinding.Role.OWNER,
+            user__projectbindings__role=UserProjectBinding.Role.CREATOR,
+            user__projectbindings__project__userbindings__user=user,
+            user__projectbindings__project__volumebindings__volume__scope=Volume.Scope.INTERNAL,
+        )
+        .values_list(
+            "user__projectbindings__project__volumebindings__volume_id",
+            flat=True,
+        )
+    )
+
+
+def internal_course_volume_ids_for(user):
+    return (
+        UserVolumeBinding.objects
+        .filter(
+            role=UserVolumeBinding.Role.OWNER,
+            user__coursebindings__is_teacher=True,
+            user__coursebindings__course__userbindings__user=user,
+            user__coursebindings__course__volumebindings__volume__scope=Volume.Scope.INTERNAL,
+        )
+        .values_list(
+            "user__coursebindings__course__volumebindings__volume_id",
+            flat=True,
+        )
+    )
+
+
+def visible_volume_q(user):
+    if not user or not user.is_authenticated:
+        return Q(pk__in=[])
+
+    if user.is_superuser:
+        return Q()
+
+    return (
+        Q(scope=Volume.Scope.PUBLIC)
+        | Q(scope=Volume.Scope.ATTACHMENT)
+        | Q(userbindings__user=user)
+        | Q(
+            scope=Volume.Scope.INTERNAL,
+            pk__in=internal_project_volume_ids_for(user),
+        )
+        | Q(
+            scope=Volume.Scope.INTERNAL,
+            pk__in=internal_course_volume_ids_for(user),
+        )
+    )
+
+
+def mountable_volume_q(user):
+    return visible_volume_q(user)
 
 
