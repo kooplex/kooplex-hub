@@ -11,7 +11,7 @@ User = get_user_model()
 
 class VolumeQuerySet(models.QuerySet):
     def present(self):
-        return self.filter(is_present=True)
+        return self.filter(state=Volume.ProvisioningState.READY)
 
     def bound_to(self, user):
         """
@@ -66,7 +66,7 @@ class VolumeQuerySet(models.QuerySet):
         return (
             self.filter(
                 mountable_volume_q(user),
-                is_present=True,
+                state=Volume.ProvisioningState.READY,
             )
             .distinct()
         )
@@ -83,6 +83,12 @@ class VolumeQuerySet(models.QuerySet):
 
 
 class Volume(models.Model):
+    class ProvisioningState(models.TextChoices):
+        PREPARING = "prp", "Preparing"
+        READY = "rdy", "Ready"
+        FAILED = "err", "Failed"
+        DELETING = "del", "Deleting"
+
     class Scope(models.TextChoices):
         PRIVATE = (
             "private",
@@ -144,7 +150,26 @@ class Volume(models.Model):
         default=Scope.ATTACHMENT,
     )
 
-    is_present = models.BooleanField(default=True)
+    provisioning_state = models.CharField(
+        max_length=16,
+        choices=ProvisioningState.choices,
+        default=ProvisioningState.PREPARING,
+    )
+    
+    last_operation_error = models.TextField(
+        blank=True,
+        default="",
+    )
+    
+    last_operation_failed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+    
+    provisioned_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
 
     users = models.ManyToManyField(
         User,
@@ -163,11 +188,15 @@ class Volume(models.Model):
         ]
 
         indexes = [
-            models.Index(fields=["scope", "is_present"]),
+            models.Index(fields=["scope", "provisioning_state"]),
             models.Index(fields=["claim", "folder"]),
         ]
         
 
     def __str__(self):
         return "Volume({}) /{} ({}:{})".format(self.scope, self.folder, self.claim, self.subpath)
+
+    @property
+    def is_present(self):
+        return self.provisioning_state == ProvisioningState.READY
 

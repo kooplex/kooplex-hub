@@ -16,27 +16,45 @@ from hub.lib import mkdir, archivedir, rmdir
 
 logger = logging.getLogger(__name__)
 
-@task(queue = 'volume')
-def grant_access(user, folder, can_write=False):
-    grantaccess_user(user, folder, readonly = not can_write, recursive = True)
-#    channel_layer=get_channel_layer()
-#    async_to_sync(channel_layer.group_send)("project", {
-#            "type": "feedback",
-#            "feedback": f"Access granted on {folder}",
-#        })
-#    return "Completed"
+@db_task()
+def prepare_attachment_task(volume_id: int):
+    volume = Volume.objects.get(pk=volume_id)
 
-#@task(queue = 'project')
-#def revoke_access(user_id, folders):
-#    u = User.objects.get(id = user_id)
-#    for f in folders:
-#        revokeaccess_user(u, f)
-#    async_to_sync(channel_layer.group_send)("project", {
-#            "type": "feedback",
-#            "feedback": f"{u}'s acls are removed from folders {folders}",
-#        })
-#    return "Completed"
+    if volume.scope != Volume.Scope.ATTACHMENT:
+        return
+
+    if volume.state == Volume.State.READY:
+        return
+
+    try:
+        ensure_attachment_storage(volume)
+
+        Volume.objects.filter(pk=volume.pk).update(
+            state=Volume.State.READY,
+            state_error="",
+        )
+
+    except Exception as exc:
+        Volume.objects.filter(pk=volume.pk).update(
+            state=Volume.State.FAILED,
+            state_error=str(exc),
+        )
+        raise
 
 
+@db_task()
+def delete_attachment_task(volume_id: int):
+    volume = Volume.objects.get(pk=volume_id)
+
+    try:
+        delete_attachment_storage(volume)
+        volume.delete()
+
+    except Exception as exc:
+        Volume.objects.filter(pk=volume.pk).update(
+            state=Volume.State.FAILED,
+            state_error=str(exc),
+        )
+        raise
 
 
