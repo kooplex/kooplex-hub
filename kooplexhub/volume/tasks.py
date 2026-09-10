@@ -1,20 +1,15 @@
 import logging
-import time
 
-from channels.layers import get_channel_layer
-from django_huey import db_task, task
-from asgiref.sync import async_to_sync
+from django_huey import db_task
 
-from django.contrib.auth.models import User
-from django.db import transaction
-
-from hub.models import Group
-from hub.lib import archivedir, extracttarbal
-from hub.lib import grantaccess_user, revokeaccess_user
-from hub.lib import grantaccess_group, revokeaccess_group
-from hub.lib import mkdir, archivedir, rmdir
+from .models import Volume
+from .services.provisioning import (
+    ensure_attachment_storage,
+    delete_attachment_storage,
+)
 
 logger = logging.getLogger(__name__)
+
 
 @db_task()
 def prepare_attachment_task(volume_id: int):
@@ -23,20 +18,20 @@ def prepare_attachment_task(volume_id: int):
     if volume.scope != Volume.Scope.ATTACHMENT:
         return
 
-    if volume.state == Volume.State.READY:
+    if volume.provisioning_state == Volume.ProvisioningState.READY:
         return
 
     try:
         ensure_attachment_storage(volume)
 
         Volume.objects.filter(pk=volume.pk).update(
-            state=Volume.State.READY,
+            provisioning_state=Volume.ProvisioningState.READY,
             state_error="",
         )
 
     except Exception as exc:
         Volume.objects.filter(pk=volume.pk).update(
-            state=Volume.State.FAILED,
+            provisioning_state=Volume.ProvisioningState.FAILED,
             state_error=str(exc),
         )
         raise
@@ -52,7 +47,7 @@ def delete_attachment_task(volume_id: int):
 
     except Exception as exc:
         Volume.objects.filter(pk=volume.pk).update(
-            state=Volume.State.FAILED,
+            provisioning_state=Volume.ProvisioningState.FAILED,
             state_error=str(exc),
         )
         raise

@@ -6,6 +6,10 @@ from django.db import transaction
 
 from ..conf import VOLUME_SETTINGS
 from ..models import Volume, UserVolumeBinding
+from ..tasks import (
+    prepare_attachment_task,
+    delete_attachment_task,
+)
 
 
 class VolumeLifecycleError(RuntimeError):
@@ -13,10 +17,9 @@ class VolumeLifecycleError(RuntimeError):
 
 
 def attachment_subpath(*, user, folder: str) -> str:
-    return posixpath.join(
-        VOLUME_SETTINGS.attachment_subpath,
-        str(user.username),
-        folder,
+    return VOLUME_SETTINGS.attachment_subpath.format(
+        user=user,
+        folder=folder,
     )
 
 
@@ -26,9 +29,12 @@ def create_attachment(*, user, folder, description) -> Volume:
             folder=folder,
             description=description,
             claim=VOLUME_SETTINGS.attachment_claim,
-            subpath=...,
+            subpath=attachment_subpath(
+                user=user,
+                folder=folder,
+            ),
             scope=Volume.Scope.ATTACHMENT,
-            state=Volume.State.PREPARING,
+            state=Volume.ProvisioningState.PREPARING,
             allow_shared_write=False,
         )
 
@@ -77,8 +83,29 @@ def delete_attachment(
                 "You cannot delete this attachment."
             )
 
+        if attachment.containerbindings.exists():
+            raise VolumeLifecycleError(
+                "Attachment is still bound to one or more environments."
+            )
+
+        attachment.provisioning_state = (
+            Volume.ProvisioningState.DELETING
+        )
+        attachment.last_operation_error = ""
+        attachment.last_operation_failed_at = None
+        attachment.save(
+            update_fields=[
+                "provisioning_state",
+                "last_operation_error",
+                "last_operation_failed_at",
+            ]
+        )
+
         attachment_id = attachment.pk
-        attachment.delete()
+
+        transaction.on_commit(
+            lambda: delete_attachment_task(attachment_id)
+        )
 
     return attachment_id
 

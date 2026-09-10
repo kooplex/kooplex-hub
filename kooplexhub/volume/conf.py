@@ -8,7 +8,7 @@ class VolumeSettings:
     mountpoint: str = "/volume/{volume.folder}"
 
     attachment_claim: str = "attachments"
-    attachment_subpath: str = ""
+    attachment_subpath: str = "{volume.folder}.{user.username}"
     attachment_hub_root: str = "/mnt/attachments"
 
 

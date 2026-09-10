@@ -11,7 +11,7 @@ User = get_user_model()
 
 class VolumeQuerySet(models.QuerySet):
     def present(self):
-        return self.filter(state=Volume.ProvisioningState.READY)
+        return self.filter(provisioning_state=Volume.ProvisioningState.READY)
 
     def bound_to(self, user):
         """
@@ -66,7 +66,7 @@ class VolumeQuerySet(models.QuerySet):
         return (
             self.filter(
                 mountable_volume_q(user),
-                state=Volume.ProvisioningState.READY,
+                provisioning_state=Volume.ProvisioningState.READY,
             )
             .distinct()
         )
@@ -182,8 +182,8 @@ class Volume(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["claim", "folder"],
-                name="unique_volume_claim_folder",
+                fields=["claim", "subpath"],
+                name="unique_volume_claim_subpath",
             ),
         ]
 
@@ -198,5 +198,22 @@ class Volume(models.Model):
 
     @property
     def is_present(self):
-        return self.provisioning_state == ProvisioningState.READY
+        return (
+            self.provisioning_state 
+            == self.ProvisioningState.READY
+        )
+
+    @property
+    def is_preparing(self):
+        return (
+            self.provisioning_state
+            == self.ProvisioningState.PREPARING
+        )
+    
+    @property
+    def is_deleting(self):
+        return (
+            self.provisioning_state
+            == self.ProvisioningState.DELETING
+        )
 
