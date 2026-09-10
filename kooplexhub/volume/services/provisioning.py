@@ -1,7 +1,7 @@
 from pathlib import Path
 import shutil
 
-from .conf import VOLUME_SETTINGS
+from ..conf import VOLUME_SETTINGS
 
 
 def attachment_host_path(volume) -> Path:

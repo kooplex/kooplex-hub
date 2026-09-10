@@ -1,5 +1,6 @@
 import logging
 
+from django.utils import timezone
 from django_huey import db_task
 
 from .models import Volume
@@ -26,13 +27,16 @@ def prepare_attachment_task(volume_id: int):
 
         Volume.objects.filter(pk=volume.pk).update(
             provisioning_state=Volume.ProvisioningState.READY,
-            state_error="",
+            last_operation_error="",
+            last_operation_failed_at=None,
+            provisioned_at=timezone.now(),
         )
 
     except Exception as exc:
         Volume.objects.filter(pk=volume.pk).update(
             provisioning_state=Volume.ProvisioningState.FAILED,
-            state_error=str(exc),
+            last_operation_error=str(exc),
+            last_operation_failed_at=timezone.now(),
         )
         raise
 
@@ -48,7 +52,8 @@ def delete_attachment_task(volume_id: int):
     except Exception as exc:
         Volume.objects.filter(pk=volume.pk).update(
             provisioning_state=Volume.ProvisioningState.FAILED,
-            state_error=str(exc),
+            last_operation_error=str(exc),
+            last_operation_failed_at=timezone.now(),
         )
         raise
 

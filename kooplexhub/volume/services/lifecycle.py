@@ -34,7 +34,7 @@ def create_attachment(*, user, folder, description) -> Volume:
                 folder=folder,
             ),
             scope=Volume.Scope.ATTACHMENT,
-            state=Volume.ProvisioningState.PREPARING,
+            provisioning_state=Volume.ProvisioningState.PREPARING,
             allow_shared_write=False,
         )
 
