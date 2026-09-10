@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from django.db.models import Q, Exists, OuterRef
+from django.db.models import Q
 
 from ..models import (
     Volume,
@@ -51,6 +51,12 @@ class VolumeAccess:
     @property
     def read_only(self) -> bool:
         return self.mountable and not self.writable
+
+
+@dataclass(frozen=True)
+class ResolvedVolumeMount:
+    volume: Volume
+    read_only: bool
 
 
 def _explicit_binding(volume, user):
@@ -219,20 +225,6 @@ def can_mount_volume(*, volume, user) -> bool:
     ).mountable
 
 
-def volume_mount_read_only(*, volume, user) -> bool:
-    access = resolve_volume_access(
-        volume=volume,
-        user=user,
-    )
-
-    if not access.mountable:
-        raise PermissionError(
-            f"User may not mount volume {volume.pk}."
-        )
-
-    return access.read_only
-
-
 def owned_volume_q(user):
     if not user or not user.is_authenticated:
         return Q(pk__in=[])
@@ -320,5 +312,23 @@ def visible_volume_q(user):
 
 def mountable_volume_q(user):
     return visible_volume_q(user)
+
+
+
+def resolve_volume_mount(*, volume, user) -> ResolvedVolumeMount:
+    access = resolve_volume_access(
+        volume=volume,
+        user=user,
+    )
+
+    if not access.mountable:
+        raise PermissionError(
+            f"User may not mount volume {volume.pk}."
+        )
+
+    return ResolvedVolumeMount(
+        volume=volume,
+        read_only=not access.writable,
+    )
 
 
