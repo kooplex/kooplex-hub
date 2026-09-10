@@ -19,7 +19,7 @@ def prepare_attachment_task(volume_id: int):
     if volume.scope != Volume.Scope.ATTACHMENT:
         return
 
-    if volume.provisioning_state == Volume.ProvisioningState.READY:
+    if volume.provisioning_state != Volume.ProvisioningState.PREPARING:
         return
 
     try:
@@ -44,6 +44,12 @@ def prepare_attachment_task(volume_id: int):
 @db_task()
 def delete_attachment_task(volume_id: int):
     volume = Volume.objects.get(pk=volume_id)
+
+    if volume.scope != Volume.Scope.ATTACHMENT:
+        return
+
+    if volume.provisioning_state != Volume.ProvisioningState.DELETING:
+        return
 
     try:
         delete_attachment_storage(volume)
