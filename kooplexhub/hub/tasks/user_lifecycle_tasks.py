@@ -2,7 +2,7 @@ import logging
 
 from django_huey import db_task
 
-from .services.provisioning import (
+from ..services.provisioning import (
     provision_user,
 )
 
