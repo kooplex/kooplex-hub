@@ -4,7 +4,6 @@ from django.core.management import call_command
 from django.db import close_old_connections
 from django_huey import get_queue
 from huey import crontab
-from huey.exceptions import TaskLockedException
 
 logger = logging.getLogger("kooplex.huey.diagnostics")
 

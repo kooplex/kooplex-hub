@@ -9,7 +9,10 @@ from ..services.provisioning import (
 logger = logging.getLogger(__name__)
 
 
-@db_task(queue="hub")
+@db_task(
+    queue="hub",
+    name="hub.tasks.provision_user_task",
+)
 def provision_user_task(
     profile_id,
 ):
@@ -23,13 +26,16 @@ def provision_user_task(
     )
 
 
-@db_task(queue="hub")
+@db_task(
+    queue="hub",
+    name="hub.tasks.continue_user_delete",
+)
 def continue_user_delete(
     user_id,
 ):
     logger.info(
-        "Deleting user profile=%s",
-        profile_id,
+        "Deleting user id=%s",
+        user_id,
     )
 
     try:
