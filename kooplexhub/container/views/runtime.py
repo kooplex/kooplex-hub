@@ -24,6 +24,8 @@ from hub.services.http import (
 from ..models import Container
 from ..services.lifecycle import (
     delete_container,
+    request_container_deletion,
+    ContainerLifecycleError,
 )
 from ..services.live import (
     broadcast_container_runtime_changed,
@@ -202,29 +204,36 @@ class ContainerDeleteView(
     ContainerAccessMixin,
     View,
 ):
+    template_name = "container/partials/delete_modal.html"
+
+    def get(self, request, pk):
+        container = self.get_container()
+        return render(request, self.template_name, {"container": container})
+
     def post(self, request, pk):
         container = self.get_container()
+        if request.POST.get("confirm") != "yes":
+            return toast_response("Deletion was not confirmed.", level="error")
 
-        container_id = container.pk
-        container_name = container.name
-        user_id = request.user.pk
-
-        logger.debug("Deleting container %s", container)
-
-        container_id = delete_container(
-            container=container,
-        )
+        name = container.name
+        if container.state == Container.State.NOTPRESENT:
+            try:
+                delete_container(container=container, actor=request.user)
+            except ContainerLifecycleError as error:
+                return toast_response(str(error), level="error")
+            message = f"Environment '{name}' was deleted."
+        else:
+            request_container_deletion(container=container, actor=request.user)
+            message = f"Stopping environment '{name}' before deletion."
 
         if request.headers.get("HX-Request") == "true":
             response = HttpResponse(status=204)
-            response["HX-Trigger"] = (
-                '{"container-list-refresh": true, '
-                '"kooplex-toast": {'
-                f'"message": "Environment \\"{container_name}\\" was deleted.", '
-                '"level": "success"}}'
-            )
+            response["HX-Trigger"] = json.dumps({
+                "modal-close": True,
+                "container-list-refresh": True,
+                "kooplex-toast": {"message": message, "level": "success"},
+            })
             return response
-
         return redirect("container:list")
 
 

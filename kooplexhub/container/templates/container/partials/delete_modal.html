@@ -1,0 +1,30 @@
+<div class="modal fade" tabindex="-1" aria-hidden="true" data-auto-show-modal>
+  <div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header">
+      <h5 class="modal-title">Delete environment {{ container.name }}</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+    <div class="modal-body">
+      {% if container.delete_requested %}
+        <p>Deletion has already been requested. Kooplex is stopping the environment and will delete it when safe.</p>
+      {% elif container.state == container.State.NOTPRESENT %}
+        <p>Delete this stopped environment? This action cannot be undone.</p>
+      {% else %}
+        <p><strong>{{ container.name }}</strong> is {{ container.get_state_display }} and cannot be deleted immediately.</p>
+        <p>Kooplex will stop the environment first, terminating running processes, then delete it once stopped.</p>
+      {% endif %}
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel deletion</button>
+      {% if not container.delete_requested %}
+      <form hx-post="{% url 'container:destroy' container.pk %}" hx-swap="none" method="post">
+        {% csrf_token %}
+        <input type="hidden" name="confirm" value="yes">
+        <button type="submit" class="btn btn-danger">
+          {% if container.state == container.State.NOTPRESENT %}Delete environment{% else %}Stop container and delete{% endif %}
+        </button>
+      </form>
+      {% endif %}
+    </div>
+  </div></div>
+</div>

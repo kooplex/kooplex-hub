@@ -29,7 +29,7 @@
           </td>
 
           <td>
-            {% for collaborator in project.collaborators.all %}
+            {% for collaborator in project.collaborators %}
               <span class="badge text-bg-light">
                 {{ collaborator.get_full_name|default:collaborator.username }}
               </span>

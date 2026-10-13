@@ -1,5 +1,8 @@
 from dataclasses import dataclass
 
+from django.conf import settings
+
+from hub.confutils import merge_dataclass
 
 @dataclass(frozen=True)
 class VolumeSettings:
@@ -12,5 +15,8 @@ class VolumeSettings:
     attachment_hub_root: str = "/mnt/attachments"
 
 
-VOLUME_SETTINGS = VolumeSettings()
+VOLUME_SETTINGS = merge_dataclass(
+    VolumeSettings(),
+    getattr(settings, "VOLUME", {}),
+)
 

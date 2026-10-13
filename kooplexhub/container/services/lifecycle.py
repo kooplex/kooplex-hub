@@ -187,6 +187,50 @@ def create_container(
     return container
 
 
+def request_container_deletion(*, container, actor):
+    """Persist deletion intent; a periodic reconciler completes it safely."""
+    with transaction.atomic():
+        current = Container.objects.select_for_update().get(
+            pk=container.pk, user=actor,
+        )
+        if current.delete_requested:
+            return False
+        current.delete_requested = True
+        current.require_running = False
+        current.save(update_fields=["delete_requested", "require_running"])
+        # Reconciler requests stop after this transaction commits.  It also
+        # handles STARTING/STOPPING states and worker restarts.
+    return True
+
+
+def reconcile_pending_deletions():
+    """Advance pending deletions; never bypass delete_container's guard."""
+    from .runtime_control import _request_container_stop, ContainerActionError
+
+    ids = list(Container.objects.filter(delete_requested=True)
+               .values_list("pk", flat=True))
+    for container_id in ids:
+        try:
+            container = Container.objects.get(pk=container_id)
+            if not container.delete_requested:
+                continue
+            if container.state == Container.State.NOTPRESENT:
+                delete_container(container=container)
+            elif container.state in {
+                Container.State.STARTING,
+                Container.State.RUNNING,
+                Container.State.NEED_RESTART,
+                Container.State.ERROR,
+            }:
+                _request_container_stop(container_id=container_id)
+            # STOPPING is already being handled by the runtime watcher.
+        except Container.DoesNotExist:
+            continue
+        except (ContainerActionError, ContainerLifecycleError):
+            # Another task may have advanced the state in the meantime.
+            continue
+
+
 def delete_container(
     *,
     container,

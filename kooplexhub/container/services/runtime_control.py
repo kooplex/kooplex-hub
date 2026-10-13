@@ -87,6 +87,9 @@ def request_start(
             )
         )
 
+        if container.delete_requested:
+            raise ContainerActionError("Environment is pending deletion.")
+
         if container.state not in {
             Container.State.NOTPRESENT,
             Container.State.ERROR,
@@ -252,6 +255,9 @@ def request_restart(
                 user=actor,
             )
         )
+
+        if container.delete_requested:
+            raise ContainerActionError("Environment is pending deletion.")
 
         if container.state not in {
             Container.State.RUNNING,

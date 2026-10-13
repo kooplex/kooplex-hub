@@ -12,7 +12,9 @@ from .services.provisioning import (
 logger = logging.getLogger(__name__)
 
 
-@db_task()
+@db_task(
+    queue='volume',
+)
 def prepare_attachment_task(volume_id: int):
     volume = Volume.objects.get(pk=volume_id)
 
@@ -41,7 +43,9 @@ def prepare_attachment_task(volume_id: int):
         raise
 
 
-@db_task()
+@db_task(
+    queue='volume',
+)
 def delete_attachment_task(volume_id: int):
     volume = Volume.objects.get(pk=volume_id)
 

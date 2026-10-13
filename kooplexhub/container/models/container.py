@@ -119,6 +119,7 @@ class Container(models.Model):
     start_seafile = models.BooleanField(default = False)
 
     require_running = models.BooleanField(default = False)
+    delete_requested = models.BooleanField(default=False)
     state = models.CharField(max_length = 16, choices = State.choices, default = State.NOTPRESENT)
     state_backend = models.CharField(max_length = 32, null = True, blank = True, default = None)
     state_lastcheck_at = models.DateTimeField(default = None, null = True, blank = True)

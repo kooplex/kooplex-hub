@@ -1,17 +1,11 @@
-<form
-  method="post"
-  action="{% url 'container:destroy' container.pk %}"
-  hx-post="{% url 'container:destroy' container.pk %}"
-  hx-swap="none"
+<button
+  type="button"
+  class="badge rounded-pill text-bg-danger border p-2"
+  data-bs-toggle="tooltip"
+  title="Remove environment {{ container.name }}"
+  hx-get="{% url 'container:destroy' container.pk %}"
+  hx-target="#modal-root"
+  hx-swap="innerHTML"
 >
-  {% csrf_token %}
-
-  <button
-    type="submit"
-    class="badge rounded-pill text-bg-danger border p-2"
-    data-toggle="tooltip" title="Remove environment {{container.name}}"
-    onclick="return confirm('Delete this environment?');"
-  >
-    <i class="bi bi-trash" aria-hidden="true"></i>
-  </button>
-</form>
+  <i class="bi bi-trash" aria-hidden="true"></i>
+</button>

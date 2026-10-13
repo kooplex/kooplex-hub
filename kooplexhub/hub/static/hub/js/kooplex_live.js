@@ -182,6 +182,22 @@
         ? payload.keys
         : [];
 
+      // Deletion is finalized by the Huey reconciler, long after the
+      // original HTTP request. Refresh the grid via its existing HTMX
+      // event once the database transaction has committed.
+      if (
+        payload.model === "container-list" &&
+        payload.reason === "container.deleted"
+      ) {
+        htmx.trigger(
+          document.body,
+          "container-list-refresh"
+        );
+        // The grid handles this event directly; avoid a duplicate GET
+        // through the generic live-key refresh mechanism.
+        return;
+      }
+
       keys.forEach((key) => {
         this.scheduleRefresh(key);
       });

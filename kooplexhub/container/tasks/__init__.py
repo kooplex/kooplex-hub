@@ -7,6 +7,7 @@ from .container_runtime_tasks import (
 # Import periodic-task modules for their registration side effects.
 from . import ensure_watcher as _ensure_watcher
 from . import kill_idle as _kill_idle
+from . import pending_deletions as _pending_deletions
 from .kubernetes_resources import refresh_cluster_resource_snapshot
 
 
