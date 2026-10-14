@@ -145,7 +145,16 @@ class MembershipEditorSettings:
 
 
 @dataclass(frozen=True)
+class CoursePresentationSettings:
+    role_icons: dict = field(default_factory=lambda: {
+        "teacher": "bi-mortarboard-fill",
+        "student": "bi-person-fill",
+    })
+
+
+@dataclass(frozen=True)
 class EducationSettings:
+    presentation: CoursePresentationSettings = field(default_factory=CoursePresentationSettings)
     membership_editor: MembershipEditorSettings = field(
         default_factory=MembershipEditorSettings
     )

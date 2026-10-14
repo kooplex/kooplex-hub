@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from django.urls import reverse
 
 from ..models import UserProjectBinding
+from ..conf import PROJECT_SETTINGS
 
 
 @dataclass
@@ -142,10 +143,10 @@ class ProjectPresenter:
     @property
     def membership_action_icon(self):
         if self.can_delete:
-            return "bi bi-trash"
+            return PROJECT_SETTINGS.presentation.membership_action_icons["delete"]
 
         if self.can_leave:
-            return "bi bi-box-arrow-right"
+            return PROJECT_SETTINGS.presentation.membership_action_icons["leave"]
 
         return None
 

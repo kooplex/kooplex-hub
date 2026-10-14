@@ -31,6 +31,11 @@ class ProjectPresentationSettings:
         }
     )
 
+    membership_action_icons: dict = field(default_factory=lambda: {
+        "delete": "bi bi-trash",
+        "leave": "bi bi-box-arrow-right",
+    })
+
     member_role_icons: dict = field(
         default_factory=lambda: {
             UserProjectBinding.Role.CREATOR: (

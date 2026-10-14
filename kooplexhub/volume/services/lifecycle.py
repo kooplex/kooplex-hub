@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import posixpath
 
+from .provisioning import validate_relative_subpath
+
 from django.db import transaction
 
 from .live import broadcast_volume_list_changed
@@ -19,10 +21,13 @@ class VolumeLifecycleError(RuntimeError):
 
 
 def attachment_subpath(*, user, folder: str) -> str:
-    return VOLUME_SETTINGS.attachment_subpath.format(
-        user=user,
-        folder=folder,
+    root = validate_relative_subpath(
+        VOLUME_SETTINGS.attachment_claim_subpath, allow_empty=True
     )
+    leaf = validate_relative_subpath(
+        VOLUME_SETTINGS.attachment_subpath.format(user=user, folder=folder)
+    )
+    return posixpath.join(root, leaf) if root else leaf
 
 
 def create_attachment(*, user, folder, description) -> Volume:

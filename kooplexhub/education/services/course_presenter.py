@@ -9,6 +9,7 @@ from ..models import (
 )
 from ..services.assignment_presenter import AssignmentPresenter
 from ..filesystem import get_assignment_prepare_subfolders
+from ..conf import EDUCATION_SETTINGS
 
 
 class CoursePresenter:
@@ -201,7 +202,7 @@ class CoursePresenter:
 
     @property
     def role_icon(self):
-        return "bi-mortarboard-fill" if self.is_teacher else "bi-person-fill"
+        return EDUCATION_SETTINGS.presentation.role_icons["teacher" if self.is_teacher else "student"]
 
     @property
     def assignments_url(self):

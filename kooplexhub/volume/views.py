@@ -15,6 +15,7 @@ from django.utils.html import format_html
 from hub.templatetags.extras import manual_link
 
 from .models import Volume, UserVolumeBinding
+from .conf import VOLUME_SETTINGS
 from .forms import FormAttachment
 from .forms.edit import VolumeDescriptionForm, VolumeScopeForm
 from .services.access import resolve_volume_access
@@ -84,22 +85,8 @@ class NewAttachmentView(LoginRequiredMixin, generic.FormView):
         return redirect(self.success_url)
 
 
-# Volume card presentation, with permissions computed on the server.
-SCOPE_ICONS = {
-    Volume.Scope.PRIVATE: "bi-lock",
-    Volume.Scope.INTERNAL: "bi-people",
-    Volume.Scope.PUBLIC: "bi-globe",
-    Volume.Scope.ATTACHMENT: "bi-paperclip",
-}
-STATE_ICONS = {
-    Volume.ProvisioningState.READY: "bi-check-circle text-success",
-    Volume.ProvisioningState.PREPARING: "bi-hourglass-split text-warning",
-    Volume.ProvisioningState.DELETING: "bi-trash text-secondary",
-    Volume.ProvisioningState.FAILED: "bi-exclamation-circle text-danger",
-}
-
-
 def volume_card_context(volume, user):
+    icons = VOLUME_SETTINGS.presentation
     access = resolve_volume_access(volume=volume, user=user)
     can_manage = access.manageable
     can_delete = (volume.scope == Volume.Scope.ATTACHMENT
@@ -127,11 +114,11 @@ def volume_card_context(volume, user):
             result["edit_hint"] = "Click to edit"
         else:
             result.update({
-                "icon": SCOPE_ICONS[volume.scope],
+                "icon": icons.scope_icons[volume.scope],
                 "display_value": volume.scope.title(),
                 "description": volume.get_scope_display(),
                 "choices": [{"value": val, "label": val.title(), "description": label,
-                             "icon": SCOPE_ICONS[val]}
+                             "icon": icons.scope_icons[val]}
                             for val, label in Volume.Scope.choices if val != Volume.Scope.ATTACHMENT],
             })
         return result
@@ -140,7 +127,7 @@ def volume_card_context(volume, user):
         "volume": volume,
         "description_editor": editor("description"),
         "scope_editor": editor("scope"),
-        "state_icon": STATE_ICONS.get(volume.provisioning_state, "bi-question-circle"),
+        "state_icon": icons.provisioning_state_icons.get(volume.provisioning_state, icons.unknown_state_icon),
         "can_delete": can_delete,
         "referencing_containers": referencing_containers,
         "delete_url": reverse("volume:destroy", kwargs=base),
