@@ -13,21 +13,14 @@
     <p>Browse datasets and attachments available to you.</p>
   </div>
   <div class="page-actions">
-    <a class="primary-button" href="{% url 'volume:new_attachment' %}">New</a>
+    <button type="button" class="primary-button" hx-get="{% url 'volume:new_attachment' %}" hx-target="#modal-root" hx-swap="innerHTML">New attachment</button>
   </div>
 </section>
 {% endblock %}
 
 {% block content %}
-<section id="listPane" class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 g-3">
-  {% for card in cards %}
-    <div class="col" id="card-container-{{ card.volume.pk }}">
-      {% include "volume/card.html" with card=card csrf_token=csrf_token only %}
-    </div>
-  {% empty %}
-    {% include 'empty.html' %}
-  {% endfor %}
-</section>
+  {% include "volume/partials/grid.html" %}
+  <div id="modal-root"></div>
 {% endblock %}
 
 {% block scripts %}<script src="{% static 'ui/js/scope-editor.js' %}"></script>{% endblock %}

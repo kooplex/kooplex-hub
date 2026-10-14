@@ -6,6 +6,7 @@ app_name = 'volume'
 
 urlpatterns = [
     path('list/', views.VolumeListView.as_view(), name = 'list'),
+    path('partials/grid/', views.VolumeGridView.as_view(), name='grid'),
     path('attachment_new/', views.NewAttachmentView.as_view(), name = 'new_attachment'),
     path('attachment_delete/<int:pk>/', views.destroy, name='destroy'),
     path('partials/<int:pk>/card/', views.VolumeCardView.as_view(), name='card'),

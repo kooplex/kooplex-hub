@@ -18,7 +18,7 @@ from .models import Volume, UserVolumeBinding
 from .forms import FormAttachment
 from .forms.edit import VolumeDescriptionForm, VolumeScopeForm
 from .services.access import resolve_volume_access
-from .services.lifecycle import delete_attachment, VolumeLifecycleError
+from .services.lifecycle import create_attachment, delete_attachment, VolumeLifecycleError
 
 
 logger = logging.getLogger(__name__)
@@ -47,23 +47,41 @@ class VolumeListView(LoginRequiredMixin, generic.ListView):
 
 
 
+class VolumeGridView(VolumeListView):
+    template_name = 'volume/partials/grid.html'
+
+
 class NewAttachmentView(LoginRequiredMixin, generic.FormView):
-    template_name = 'volume/new.html'
+    """Attachment-only creation; storage is provisioned by the lifecycle task."""
+    template_name = 'volume/partials/new_attachment_modal.html'
     form_class = FormAttachment
     success_url = reverse_lazy('volume:list')
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['menu_storage'] = True
-        return context
+    def form_invalid(self, form):
+        if self.request.headers.get('HX-Request') == 'true':
+            response = TemplateResponse(
+                self.request, 'volume/partials/new_attachment_form.html',
+                {'form': form}, status=422,
+            )
+            response['HX-Retarget'] = '#new-attachment-modal .modal-content'
+            return response
+        return self.render_to_response(self.get_context_data(form=form))
 
     def form_valid(self, form):
-        logger.info(form.cleaned_data)
-        user = self.request.user
-        v = Volume.objects.create(**form.cleaned_data)
-        UserVolumeBinding.objects.create(volume = v, user = user, role = UserVolumeBinding.Role.OWNER) 
-        messages.info(self.request, f'Attachment {v.folder} is created')
-        return super().form_valid(form)
+        volume = create_attachment(
+            user=self.request.user,
+            folder=form.cleaned_data['folder'],
+            description=form.cleaned_data['description'],
+        )
+        if self.request.headers.get('HX-Request') == 'true':
+            response = HttpResponse(status=204)
+            response['HX-Trigger'] = json.dumps({
+                'modal-close': {},
+                'volume-list-refresh': {},
+            })
+            return response
+        messages.info(self.request, f'Attachment {volume.folder} is being prepared.')
+        return redirect(self.success_url)
 
 
 # Volume card presentation, with permissions computed on the server.

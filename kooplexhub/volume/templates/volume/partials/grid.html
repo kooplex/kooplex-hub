@@ -1,0 +1,10 @@
+<section id="listPane" class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 g-3"
+         hx-get="{% url 'volume:grid' %}" hx-trigger="volume-list-refresh from:body" hx-swap="outerHTML">
+  {% for card in cards %}
+    <div class="col" id="card-container-{{ card.volume.pk }}">
+      {% include "volume/card.html" with card=card csrf_token=csrf_token only %}
+    </div>
+  {% empty %}
+    {% include 'empty.html' %}
+  {% endfor %}
+</section>
