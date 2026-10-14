@@ -41,7 +41,8 @@ CONTAINER_CREATE_MODAL_TEMPLATE = (
 
 
 class ContainerCreateModalView(
-    LoginRequiredMixin, 
+    LoginRequiredMixin,
+    MountSelectionMixin,
     TemplateView,
 ):
     template_name = CONTAINER_CREATE_MODAL_TEMPLATE
@@ -50,6 +51,14 @@ class ContainerCreateModalView(
         context = super().get_context_data(**kwargs)
         context["form"] = ContainerCreateForm(user=self.request.user)
         context["selected_image"] = None
+        context.update({
+            "projects": self.get_projects(),
+            "courses": self.get_courses(),
+            "volumes": self.get_volumes(),
+            "selected_project_ids": set(),
+            "selected_course_ids": set(),
+            "selected_volume_ids": set(),
+        })
         return context
 
 
@@ -186,6 +195,12 @@ class ContainerCreateView(
                 "selected_volumes": (
                     self.get_selected_volumes()
                 ),
+                "projects": self.get_projects(),
+                "courses": self.get_courses(),
+                "volumes": self.get_volumes(),
+                "selected_project_ids": set(self._ids_from_post("project_ids")),
+                "selected_course_ids": set(self._ids_from_post("course_ids")),
+                "selected_volume_ids": set(self._ids_from_post("volume_ids")),
             },
             status=422,
         )

@@ -16,16 +16,5 @@
     </span>
   </div>
 
-  <div id="container-create-mounts-slot">
-    {% if selected_projects or selected_courses or selected_volumes %}
-      {% include "container/partials/create_mounts_selected.html" %}
-    {% else %}
-      {% include "container/partials/create_mounts_empty.html" %}
-    {% endif %}
-  </div>
-
-  <div
-    id="container-create-mount-picker"
-    class="mt-3"
-  ></div>
+  {% include "container/partials/create_mounts_picker.html" with embedded=True %}
 </div>

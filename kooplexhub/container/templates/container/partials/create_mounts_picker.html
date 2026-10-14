@@ -7,6 +7,7 @@
       </p>
     </div>
 
+    {% if not embedded %}
     <button
       type="button"
       class="btn btn-sm btn-outline-secondary"
@@ -16,6 +17,7 @@
     >
       Close
     </button>
+    {% endif %}
   </div>
 
   <ul class="nav nav-tabs mb-3" role="tablist">
@@ -52,6 +54,7 @@
     </div>
   </div>
 
+  {% if not embedded %}
   <div class="create-picker-actions">
     <button
       type="button"
@@ -64,4 +67,5 @@
       Use selected mounts
     </button>
   </div>
+  {% endif %}
 </div>

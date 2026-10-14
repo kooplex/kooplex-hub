@@ -47,7 +47,7 @@
     type="button"
     class="btn btn-outline-dark rounded-pill"
     hx-get="{% url 'container:create_mounts_picker' %}"
-    hx-target="#container-create-picker"
+    hx-target="#container-create-mount-picker"
     hx-swap="innerHTML"
     hx-include="#container-create-mounts-slot input"
   >
@@ -56,6 +56,6 @@
   </button>
 </div>
 
-<div id="container-create-picker" hx-swap-oob="innerHTML">
+<div id="container-create-mount-picker" hx-swap-oob="innerHTML">
   {% include "container/partials/create_picker_empty.html" %}
 </div>

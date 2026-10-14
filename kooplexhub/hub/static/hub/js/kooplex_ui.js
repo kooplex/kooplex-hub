@@ -1,85 +1,64 @@
 (function () {
   const MODAL_ROOT_ID = "modal-root";
 
-  function showInsertedBootstrapModal(modalRoot) {
-    if (!window.bootstrap) {
-      console.error("Bootstrap JS is not loaded.");
-      return;
-    }
+  // These modals are routinely replaced by HTMX. Bootstrap's asynchronous
+  // fade callbacks must not outlive the elements they refer to.
+  function showInsertedBootstrapModal(root) {
+    if (!window.bootstrap) return;
 
-    const modalEl = modalRoot.querySelector("[data-auto-show-modal]");
+    const el = root.querySelector("[data-auto-show-modal]");
+    if (!el) return;
 
-    if (!modalEl) {
-      return;
-    }
-
-    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-
-    // Do not show an already-open modal again.
-    if (!modalEl.classList.contains("show")) {
-      modal.show();
-    }
-
-    modalEl.addEventListener(
-      "hidden.bs.modal",
-      () => {
-        modal.dispose();
-        modalRoot.innerHTML = "";
-      },
-      { once: true }
-    );
+    // Without .fade Bootstrap show/hide completes synchronously. This is
+    // intentional for modals that HTMX may replace while displayed.
+    el.classList.remove("fade");
+    const modal = bootstrap.Modal.getOrCreateInstance(el);
+    el.addEventListener("hidden.bs.modal", () => {
+      modal.dispose();
+      if (root.contains(el)) root.replaceChildren();
+    }, { once: true });
+    modal.show();
   }
 
-  function closeOpenModals() {
-    if (!window.bootstrap) {
-      return;
-    }
-
-    document.querySelectorAll(".modal.show").forEach((modalEl) => {
-      bootstrap.Modal.getOrCreateInstance(modalEl).hide();
-    });
-
-    // Defensive recovery from stale Bootstrap state.
-    setTimeout(() => {
-      if (!document.querySelector(".modal.show")) {
-        document.body.classList.remove("modal-open");
-        document.body.style.removeProperty("overflow");
-        document.body.style.removeProperty("padding-right");
-
-        document
-          .querySelectorAll(".modal-backdrop")
-          .forEach((backdrop) => backdrop.remove());
-      }
-    }, 350);
-  }
-
-  // Wizard transitions replace the modal root while a Bootstrap modal
-  // is still open. Dispose the previous instance *before* HTMX swaps
-  // the DOM; otherwise Bootstrap leaves an orphan backdrop behind.
-  document.body.addEventListener("htmx:beforeSwap", (event) => {
-    if (event.detail.target?.id !== MODAL_ROOT_ID) return;
-    const root = event.detail.target;
-    root.querySelectorAll(".modal").forEach((el) => {
-      const instance = bootstrap.Modal.getInstance(el);
-      if (instance) {
-        instance.hide();
-        instance.dispose();
-      }
-    });
+  function clearOrphanedBackdrop() {
+    if (document.querySelector(".modal.show")) return;
     document.querySelectorAll(".modal-backdrop").forEach(el => el.remove());
     document.body.classList.remove("modal-open");
     document.body.style.removeProperty("overflow");
     document.body.style.removeProperty("padding-right");
+  }
+
+  function closeOpenModals() {
+    if (!window.bootstrap) return;
+    document.querySelectorAll(".modal.show").forEach(el => {
+      bootstrap.Modal.getInstance(el)?.hide();
+    });
+    // Avoid setTimeout/dispose races with Bootstrap transition callbacks.
+    clearOrphanedBackdrop();
+  }
+
+  // A Project Start -> Join -> Back navigation may replace an open modal.
+  // Since dynamically inserted modals have no fade, there are no pending
+  // modal transition callbacks when we tear down the previous instance.
+  document.body.addEventListener("htmx:beforeSwap", event => {
+    if (event.detail.target?.id !== MODAL_ROOT_ID) return;
+    const root = event.detail.target;
+    root.querySelectorAll(".modal").forEach(el => {
+      const instance = bootstrap.Modal.getInstance(el);
+      if (instance) {
+        // Do NOT call hide() followed by dispose() in the same turn on a
+        // fading modal. It leaves Bootstrap callbacks holding a null element.
+        instance.dispose();
+      }
+    });
+    clearOrphanedBackdrop();
   });
 
-  document.body.addEventListener("htmx:afterSwap", (event) => {
-    const target = event.detail.target;
-
-    if (target.id !== MODAL_ROOT_ID) {
-      return;
+  document.body.addEventListener("htmx:afterSwap", event => {
+    if (event.detail.target?.id === MODAL_ROOT_ID) {
+      showInsertedBootstrapModal(event.detail.target);
     }
 
-    showInsertedBootstrapModal(target);
   });
 
   document.body.addEventListener("modal-close", closeOpenModals);
