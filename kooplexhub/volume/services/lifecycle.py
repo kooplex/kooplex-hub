@@ -4,6 +4,8 @@ import posixpath
 
 from django.db import transaction
 
+from .live import broadcast_volume_list_changed
+
 from ..conf import VOLUME_SETTINGS
 from ..models import Volume, UserVolumeBinding
 from ..tasks import (
@@ -45,7 +47,8 @@ def create_attachment(*, user, folder, description) -> Volume:
         )
 
         transaction.on_commit(
-            lambda: prepare_attachment_task(volume.pk)
+            lambda: (broadcast_volume_list_changed(reason="attachment.created"),
+                     prepare_attachment_task(volume.pk))
         )
 
     return volume
@@ -104,7 +107,8 @@ def delete_attachment(
         attachment_id = attachment.pk
 
         transaction.on_commit(
-            lambda: delete_attachment_task(attachment_id)
+            lambda: (broadcast_volume_list_changed(reason="attachment.deleting"),
+                     delete_attachment_task(attachment_id))
         )
 
     return attachment_id

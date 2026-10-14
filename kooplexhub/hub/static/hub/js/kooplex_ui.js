@@ -53,6 +53,25 @@
     }, 350);
   }
 
+  // Wizard transitions replace the modal root while a Bootstrap modal
+  // is still open. Dispose the previous instance *before* HTMX swaps
+  // the DOM; otherwise Bootstrap leaves an orphan backdrop behind.
+  document.body.addEventListener("htmx:beforeSwap", (event) => {
+    if (event.detail.target?.id !== MODAL_ROOT_ID) return;
+    const root = event.detail.target;
+    root.querySelectorAll(".modal").forEach((el) => {
+      const instance = bootstrap.Modal.getInstance(el);
+      if (instance) {
+        instance.hide();
+        instance.dispose();
+      }
+    });
+    document.querySelectorAll(".modal-backdrop").forEach(el => el.remove());
+    document.body.classList.remove("modal-open");
+    document.body.style.removeProperty("overflow");
+    document.body.style.removeProperty("padding-right");
+  });
+
   document.body.addEventListener("htmx:afterSwap", (event) => {
     const target = event.detail.target;
 

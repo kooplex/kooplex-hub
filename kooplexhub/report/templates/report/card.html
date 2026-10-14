@@ -1,86 +1,24 @@
-{% load report_buttons %}
-{% load container_buttons %}
-
-
-
-
-
-
-<style>
-@media all and (max-width: 728.01px) {
-  .imagesize{
-    width: 200px;
-    height: 200px;
-  }
-}
-
-.goflex{
-  display: flex;
-}
-
-.card:hover {
-  cursor: pointer;
-}
-
-.btn-configure {
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  background-color: #f0ad4e;  /* Bootstrap warning yellow-ish */
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-}
-
-.btn-configure:hover {
-  background-color: #ec9a27;
-  color: #fff;
-}
-
-</style>
-
-
-
-
-{# FIXME: resize card #}
-<div class="card mb-3 mx-1" style="max-width: 560px;" data-url="{% url 'report:open' report.id %}">
-  <!-- Header -->
-  <div class="card-header bg-secondary d-flex align-items-center">
-    <span class="fw-semibold text-light">
-      {{ report.name }}
-    </span>
-
-    {# float-right configure button #}
-    <a href="{% url 'report:configure' report.id %}"
-       class="btn btn-configure ms-auto d-flex align-items-center justify-content-center">
-      <i class="bi bi-gear-fill"></i>
-    </a>
+<article class="card h-100 shadow-sm">
+  <div class="card-header d-flex justify-content-between align-items-center gap-2">
+    <span class="fw-semibold text-truncate" title="{{ report.name }}">{{ report.name }}</span>
+    <span class="badge text-bg-light" title="{{ report.get_scope_display }}">{{ report.get_scope_display|truncatewords:1 }}</span>
   </div>
-
-  <!-- Body -->
-  <div class="card-body d-flex">
-    <!-- Logo -->
-    <div class="me-3">
-      {% if report.thumbnail %}
-        <img src="{{report.thumbnail.img_src}}" class="img-fluid imagesize rounded" alt="{{report.thumbnail.name}}">
-      {% else %}
-        <img src="/static/noimageavailable.png" class="img-fluid rounded imagesize" alt="no thumbnail">
+  <div class="card-body">
+    {% if report.thumbnail %}
+      <img src="{{ report.thumbnail.img_src }}" class="img-fluid rounded mb-3 w-100"
+           style="height: 160px; object-fit: cover" alt="Report thumbnail">
+    {% endif %}
+    <p class="card-text">{{ report.description|default:"No description"|truncatechars:170 }}</p>
+  </div>
+  <div class="card-footer d-flex align-items-center justify-content-between gap-2">
+    <small class="text-muted text-truncate">{{ report.creator.get_full_name|default:report.creator.username }}</small>
+    <div class="d-flex gap-2">
+      <a class="btn btn-sm btn-outline-primary" href="{% url 'report:open' report.pk %}"
+         target="_blank" rel="noopener noreferrer">Open</a>
+      {% if report.creator_id == request.user.pk %}
+        <a class="btn btn-sm btn-outline-secondary" href="{% url 'report:configure' report.pk %}"
+           aria-label="Configure {{ report.name }}" title="Configure"><i class="bi bi-gear"></i></a>
       {% endif %}
     </div>
-
-    <!-- Text content -->
-    <div class="d-flex flex-column flex-grow-1">
-      <p class="card-text small text-muted">
-        {{ report.description|truncatechars:45 }}
-      </p>
-
-      <!-- Creator pinned to bottom -->
-      <p class="card-text mt-auto mb-0">
-        <small class="text-muted">
-          <strong>Creator:</strong> {{ report.creator.profile.name }}
-        </small>
-      </p>
-    </div>
   </div>
-</div>
-
+</article>

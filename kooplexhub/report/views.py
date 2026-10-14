@@ -98,6 +98,10 @@ class ReportListView(generic.ListView):
         context = super().get_context_data(**kwargs)
         context['menu_report'] = True
         context['url_new_report'] = reverse('report:new')
+        context['page_title'] = 'Reports'
+        context['documentation_url'] = 'https://xwiki.vo.elte.hu/en/kooplex-manual/reports'
+        context['empty_title'] = 'No reports available'
+        context['empty_body'] = 'Create a report to publish your results.'
         #context['common_tags'] : Report.tags.most_common()
         return context
 
@@ -105,7 +109,7 @@ class ReportListView(generic.ListView):
         user = self.request.user
         if not user.is_authenticated:
             return Report.objects.filter(scope=Report.Scope.PUBLIC)
-        return Report.objects.filter(
+        return Report.objects.select_related("creator", "thumbnail", "reporttype").filter(
             Q(scope=Report.Scope.PUBLIC) |
             Q(scope=Report.Scope.INTERNAL) |
             Q(scope=Report.Scope.PRIVATE, creator=user) |

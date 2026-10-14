@@ -4,6 +4,7 @@ from django.utils import timezone
 from django_huey import db_task
 
 from .models import Volume
+from .services.live import broadcast_volume_list_changed
 from .services.provisioning import (
     ensure_attachment_storage,
     delete_attachment_storage,
@@ -33,6 +34,7 @@ def prepare_attachment_task(volume_id: int):
             last_operation_failed_at=None,
             provisioned_at=timezone.now(),
         )
+        broadcast_volume_list_changed(reason="attachment.ready")
 
     except Exception as exc:
         Volume.objects.filter(pk=volume.pk).update(
@@ -40,6 +42,7 @@ def prepare_attachment_task(volume_id: int):
             last_operation_error=str(exc),
             last_operation_failed_at=timezone.now(),
         )
+        broadcast_volume_list_changed(reason="attachment.failed")
         raise
 
 
@@ -58,6 +61,7 @@ def delete_attachment_task(volume_id: int):
     try:
         delete_attachment_storage(volume)
         volume.delete()
+        broadcast_volume_list_changed(reason="attachment.deleted")
 
     except Exception as exc:
         Volume.objects.filter(pk=volume.pk).update(
@@ -65,6 +69,7 @@ def delete_attachment_task(volume_id: int):
             last_operation_error=str(exc),
             last_operation_failed_at=timezone.now(),
         )
+        broadcast_volume_list_changed(reason="attachment.failed")
         raise
 
 

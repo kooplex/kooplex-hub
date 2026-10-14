@@ -338,6 +338,11 @@ h1 {
   line-height: 1.05;
 }
 
+.page-heading .eyebrow {
+  color: var(--brand);
+  margin: 0 0 .2rem;
+}
+
 .page-heading p {
   margin: .45rem 0 0;
   color: var(--muted);
