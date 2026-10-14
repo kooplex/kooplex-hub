@@ -1,52 +1,33 @@
 {% extends "layout.html" %}
-{% load render_volume from volume_tags %}
 {% load static %}
 
-{% block title %}Kooplex Volumes{% endblock %}
-
-{% block infoline %}
-A storage is the place for large, read-only datasets and for tools or user's test datasets. <a href="https://xwiki.vo.elte.hu/en/kooplex-manual/storages"><span class="ms-2 bi bi-book"></span></a>
+{% block styles %}
+<link rel="stylesheet" href="{% static 'volume/css/card.css' %}">
+<link rel="stylesheet" href="{% static 'ui/css/scope-editor.css' %}">
 {% endblock %}
 
-{% block head_content %}
-<link href="{% static 'volume/css/card.css' %}" rel="stylesheet"></link>
-<link href="{% static 'hub/css/inline.css' %}" rel="stylesheet"></link>
+{% block page_heading %}
+<section class="page-heading">
+  <div>
+    <p class="eyebrow">Storage management</p>
+    <p>Browse datasets and attachments available to you.</p>
+  </div>
+  <div class="page-actions">
+    <a class="primary-button" href="{% url 'volume:new_attachment' %}">New</a>
+  </div>
+</section>
 {% endblock %}
-
 
 {% block content %}
-{# render the volume cards #}
-<div id="listPane" class="d-flex flex-wrap justify-content-center gap-3">
-    {% for volume in volumes %}
-      <div class="card-container" id="card-container-{{ volume.id }}">
-        {% render_volume volume %}
-      </div>
-    {% empty %}
-      {% include 'empty.html' %}
-    {% endfor %}
-</div>
+<section id="listPane" class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 g-3">
+  {% for card in cards %}
+    <div class="col" id="card-container-{{ card.volume.pk }}">
+      {% include "volume/card.html" with card=card csrf_token=csrf_token only %}
+    </div>
+  {% empty %}
+    {% include 'empty.html' %}
+  {% endfor %}
+</section>
 {% endblock %}
 
-
-{% block scripts %}
-<script src="{% static 'hub/js/inline.js' %}"></script>
-<script src="{% static 'volume/js/button_scope.js' %}"></script>
-<script src="{% static 'hub/js/wss.js' %}"></script> {# FIXME: we could get rid of it if js export/import properly implemented #}
-<script src="{% static 'hub/js/config_register.js' %}"></script>
-<script>
-$("[id=add]").click(function() {
-    location.replace("{{url_new_attachment}}");
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-    window.wss_conf_volume = new ConfigHandler(opts = {
-        endpoint: "{{ wss_volume_config }}",
-        userid: {{ user.id }},
-        request: "configure-volume",
-    });
-    window.inlineEditor = new InlineEditor(window.wss_conf_volume);
-    window.scopeButton = new ScopeButton(window.wss_conf_volume);
-});
-</script>
-{% endblock %}
-
+{% block scripts %}<script src="{% static 'ui/js/scope-editor.js' %}"></script>{% endblock %}

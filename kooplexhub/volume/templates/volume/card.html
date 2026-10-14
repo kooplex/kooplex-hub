@@ -1,28 +1,55 @@
-{% load volume_tags %}
-{% load extras %}
-
-<div class="card bg-light rounded rounded-3 mb-3 shadow-light card-fixed d-flex flex-column" id="card-{{ volume.id }}">
-  <div class="card-header py-2">
-    {% render_scope volume user %}
-    {{ volume.folder }}
+<article class="card bg-light shadow-sm h-100 volume-card" id="card-{{ card.volume.pk }}">
+  <div class="card-header d-flex justify-content-between align-items-center gap-2">
+    <strong class="text-truncate" title="{{ card.volume.folder }}">{{ card.volume.folder }}</strong>
+    <div class="d-flex align-items-center gap-1">
+      {% include "ui/editors/scope/display.html" with editor=card.scope_editor only %}
+      <span class="volume-state-icon" title="{{ card.volume.get_provisioning_state_display }}{% if card.volume.last_operation_error %}: {{ card.volume.last_operation_error }}{% endif %}" aria-label="{{ card.volume.get_provisioning_state_display }}">
+        <i class="bi {{ card.state_icon }}" aria-hidden="true"></i>
+      </span>
+    </div>
   </div>
   <div class="card-body">
-    {% render_description volume user %}
+    {% include "ui/editors/description/display.html" with editor=card.description_editor only %}
   </div>
-
-  {% if volume.owner == user and volume.scope == volume.Scope.ATTACHMENT %}
-    <div class="card-footer py-2">
-      {% include "widgets/widget_delete.html" with obj=volume link=volume.link_drop msg="Are you sure to remove attachment? There may be collaborators using it..." tooltip="Remove your attachment" %} 
-    </div>
-  {% elif volume.owner != user and volume.scope == volume.Scope.ATTACHMENT %}
-    <div class="card-footer py-2" data-toggle="tooltip" title="{{volume.admins|join:', '}}">
-      Created by {{ volume.owner }}
-    </div>
-  {% elif volume.owner != user %}
-    <div class="card-footer py-2" data-toggle="tooltip" title="{{volume.admins|join:', '}}">
-      Owned by {{ volume.owner }}
-    </div>
-  {% endif %}
+  <div class="card-footer d-flex justify-content-between align-items-center gap-2">
+    <small class="text-muted text-truncate" title="{{ card.volume.claim }}:{{ card.volume.subpath }}">{{ card.volume.claim }}:{{ card.volume.subpath }}</small>
+    {% if card.can_delete %}
+      <button type="button" class="btn btn-sm btn-outline-danger" title="Delete attachment" aria-label="Delete {{ card.volume.folder }}"
+              data-bs-toggle="modal" data-bs-target="#delete-volume-{{ card.volume.pk }}">
+        <i class="bi bi-trash" aria-hidden="true"></i>
+      </button>
+    {% endif %}
+  </div>
+</article>
+{% if card.can_delete %}
+<div class="modal fade" id="delete-volume-{{ card.volume.pk }}" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog"><div class="modal-content">
+    <form method="post" action="{{ card.delete_url }}">
+      {% csrf_token %}
+      <div class="modal-header"><h2 class="modal-title fs-5">Delete attachment?</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+      <div class="modal-body">
+        <p>Delete attachment <strong>{{ card.volume.folder }}</strong>?</p>
+        {% if card.referencing_containers %}
+          <p class="text-danger mb-2">This attachment is referenced by the following environments and cannot be deleted until their volume bindings are removed:</p>
+          <ul class="list-group mb-2">
+            {% for container in card.referencing_containers %}
+              <li class="list-group-item d-flex justify-content-between align-items-center gap-2">
+                <span><strong>{{ container.name }}</strong> <small class="text-muted">({{ container.user.username }})</small></span>
+                <span class="badge bg-secondary">{{ container.get_state_display }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p>Deletion is asynchronous and cannot be undone. Kooplex will remove the attachment storage.</p>
+        {% endif %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        {% if not card.referencing_containers %}
+          <button class="btn btn-danger" type="submit">Delete attachment</button>
+        {% endif %}
+      </div>
+    </form>
+  </div></div>
 </div>
-
-
+{% endif %}
