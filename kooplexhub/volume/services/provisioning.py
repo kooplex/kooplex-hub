@@ -2,6 +2,8 @@ from pathlib import Path
 import shutil
 
 from ..conf import VOLUME_SETTINGS
+from ..models import UserVolumeBinding
+from hub.lib.filesystem import _grantaccess, user_has_folder_access
 
 
 def validate_relative_subpath(value: str, *, allow_empty: bool = False) -> str:
@@ -47,6 +49,29 @@ def ensure_attachment_storage(volume) -> Path:
         parents=True,
         exist_ok=True,
     )
+    owner_binding = (
+        UserVolumeBinding.objects
+        .select_related("user__profile")
+        .get(volume=volume, role=UserVolumeBinding.Role.OWNER)
+    )
+    owner = owner_binding.user
+    # This path is already rooted at the Hub's PVC subPath.
+    # Fail provisioning (and keep the volume non-READY) if ACLs fail.
+    # Effective permissions on the directory and any existing children.
+    _grantaccess(
+        owner, str(path), readonly=False, recursive=True, follow=False
+    )
+
+    # NFSv4 inherit-only ACE on the attachment root: new files/directories
+    # written by the Hub (or another privileged process) inherit owner
+    # permissions. Do not recursively set fdi on regular files.
+    from hub.lib.filesystem import acl_backend
+    if acl_backend == "nfs4":
+        _grantaccess(
+            owner, str(path), readonly=False, recursive=False, follow=True
+        )
+    if not user_has_folder_access(owner, str(path), writable=True):
+        raise RuntimeError(f"Attachment owner ACL verification failed: {path}")
     return path
 
 

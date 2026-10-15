@@ -325,6 +325,27 @@ class Command(BaseCommand):
                     "but Kubernetes pod is missing."
                 )
 
+            self.step("Waiting for owner identity in pod")
+            expected_uid = user.profile.uid_number
+            if expected_uid is None:
+                raise CommandError("Owner has no provisioned UID")
+            deadline = time.monotonic() + timeout
+            while True:
+                try:
+                    resolved_uid = pod_operations.exec_for_container(
+                        container1, "id -u"
+                    ).strip()
+                    if resolved_uid == str(expected_uid):
+                        break
+                except Exception:
+                    resolved_uid = "<not resolved>"
+                if time.monotonic() >= deadline:
+                    raise CommandError(
+                        f"Owner pod identity not ready: expected UID "
+                        f"{expected_uid}, observed {resolved_uid!r}"
+                    )
+                time.sleep(1)
+
             self.step("Checking owner read access")
 
             output = pod_operations.exec_for_container(
