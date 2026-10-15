@@ -207,8 +207,9 @@ class ContainerCreateView(
 
 
 class ContainerCreateMountsPickerView(
-    LoginRequiredMixin, 
-    TemplateView
+    LoginRequiredMixin,
+    MountSelectionMixin,
+    TemplateView,
 ):
     template_name = "container/partials/create_mounts_picker.html"
 
@@ -235,29 +236,14 @@ class ContainerCreateMountsPickerView(
         return {int(v) for v in values if str(v).isdigit()}
 
     def get_projects(self):
-        return (
-            Project.objects
-            .attachable_by(self.request.user)
-            .prefetch_related("userbindings__user")
-            .order_by("name")
-        )
+        return super().get_projects()
 
     def get_courses(self):
-        return (
-            Course.objects
-            .attachable_by(self.request.user)
-            .prefetch_related("userbindings__user")
-            .order_by("name")
-        )
+        return super().get_courses()
 
 
     def get_volumes(self):
-        return (
-            Volume.objects
-            .attachable_by(self.request.user)
-            .prefetch_related("userbindings__user")
-            .order_by("folder")
-        )
+        return super().get_volumes()
 
 
 class ContainerCreateMountsSelectedView(

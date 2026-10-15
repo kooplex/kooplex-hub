@@ -174,3 +174,68 @@
   }
 }
 
+
+/* Compact, consistent mount pickers (creation wizard and configure modal). */
+.create-volume-table-wrap td,
+.create-volume-table-wrap th {
+  vertical-align: middle;
+}
+.create-volume-table-wrap td {
+  white-space: nowrap;
+}
+.create-volume-table-wrap .mount-toggle {
+  -webkit-appearance: none;
+  appearance: none;
+  display: inline-block;
+  vertical-align: middle;
+  width: 2.15rem;
+  height: 1.2rem;
+  border: 1px solid #adb5bd;
+  border-radius: 999px;
+  background: #ced4da;
+  cursor: pointer;
+  position: relative;
+  transition: background-color .15s ease, border-color .15s ease;
+}
+.create-volume-table-wrap .mount-toggle::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: calc(1.2rem - 6px);
+  height: calc(1.2rem - 6px);
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px #0003;
+  transition: transform .15s ease;
+}
+.create-volume-table-wrap .mount-toggle:checked {
+  background: var(--brand, #198754);
+  border-color: var(--brand, #198754);
+}
+.create-volume-table-wrap .mount-toggle:checked::before {
+  transform: translateX(.95rem);
+}
+.create-volume-table-wrap .mount-toggle:focus-visible,
+.mount-path-info:focus-visible {
+  outline: 2px solid var(--brand, #198754);
+  outline-offset: 2px;
+}
+.create-volume-table-wrap .mount-toggle:disabled { opacity: .55; cursor: not-allowed; }
+.mount-path-info {
+  display: inline-flex;
+  align-items: center;
+  margin-left: .35rem;
+  color: #b23b75;
+  cursor: help;
+}
+/* Scoped to mount selectors; leave other Bootstrap tabs alone. */
+.create-picker .nav-tabs .nav-link,
+.mounts-picker-nav .nav-link {
+  color: #343a40;
+}
+.create-picker .nav-tabs .nav-link.active,
+.mounts-picker-nav .nav-link.active {
+  color: #212529;
+  font-weight: 650;
+}

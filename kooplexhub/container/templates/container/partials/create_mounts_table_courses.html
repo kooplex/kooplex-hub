@@ -13,7 +13,7 @@
         <tr>
           <td>
             <input
-              class="form-check-input"
+              class="mount-toggle"
               type="checkbox"
               name="course_ids"
               value="{{ course.id }}"
@@ -23,13 +23,16 @@
           </td>
 
           <td>
+            <span class="mount-path-info" tabindex="0" title="{{ course.mount_tooltip }}" aria-label="Mount details: {{ course.mount_tooltip }}">
+              <i class="bi bi-info-circle" aria-hidden="true"></i>
+            </span>
             <label for="mount-course-{{ course.id }}" class="mb-0">
               {{ course.name }}
             </label>
           </td>
 
           <td>
-            {{ course.role|default:"Course" }}
+            {{ course.mount_role }}
           </td>
         </tr>
       {% empty %}

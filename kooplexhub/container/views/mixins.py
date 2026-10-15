@@ -5,6 +5,10 @@ from ..models import Container
 from project.models import Project
 from education.models import Course
 from volume.models import Volume
+from volume.conf import VOLUME_SETTINGS
+from project.services.project_presenter import ProjectPresenter
+from project.conf import PROJECT_SETTINGS
+from education.conf import EDUCATION_SETTINGS
 
 
 class ContainerAccessMixin:
@@ -23,6 +27,61 @@ class ContainerAccessMixin:
 
 
 class MountSelectionMixin:
+    def present_projects(self, queryset):
+        projects = list(queryset)
+        for project in projects:
+            project.mount_presenter = ProjectPresenter(
+                project=project, user=self.request.user,
+            )
+            mounts = PROJECT_SETTINGS.mounts
+            project.mount_targets = (
+                ("Project", mounts.project.mountpoint.format(project=project)),
+                ("Report preparation", mounts.report_prepare.mountpoint.format(project=project)),
+            )
+            project.mount_tooltip = "Pod mount points:\n" + "\n".join(
+                f"{label}: {target}" for label, target in project.mount_targets
+            )
+        return projects
+
+    def present_courses(self, queryset):
+        courses = list(queryset)
+        mounts = EDUCATION_SETTINGS.mounts
+        for course in courses:
+            membership = next(
+                (binding for binding in course.userbindings.all()
+                 if binding.user_id == self.request.user.pk),
+                None,
+            )
+            course.mount_role = (
+                "Teacher" if membership.is_teacher else "Student"
+            ) if membership is not None else "—"
+            course.mount_targets = (
+                ("Workdir", mounts.workdir.mountpoint.format(course=course)),
+                ("Public", mounts.public.mountpoint.format(course=course)),
+            )
+            # These paths are configured but are not currently included by
+            # the container Kubernetes volume builder.
+            course.other_mount_targets = (
+                ("Assignment preparation", mounts.prepare.mountpoint.format(course=course)),
+                ("Assignment workdir", mounts.assignment.mountpoint.format(course=course)),
+            )
+            course.mount_tooltip = (
+                "Pod mount points:\n"
+                + "\n".join(f"{label}: {target}" for label, target in course.mount_targets)
+                + "\n\nConfigured, not automatically mounted:\n"
+                + "\n".join(f"{label}: {target}" for label, target in course.other_mount_targets)
+            )
+        return courses
+
+    def present_volumes(self, queryset):
+        volumes = list(queryset)
+        for volume in volumes:
+            volume.mount_target = VOLUME_SETTINGS.mountpoint.format(volume=volume)
+            volume.mount_tooltip = (
+                f"Pod mount point: {volume.mount_target}"
+            )
+        return volumes
+
     def _ids_from_request(self, name):
         return {
             int(value)
@@ -38,7 +97,7 @@ class MountSelectionMixin:
         }
 
     def get_projects(self):
-        return (
+        return self.present_projects(
             Project.objects
             .attachable_by(self.request.user)
             .prefetch_related("userbindings__user")
@@ -46,7 +105,7 @@ class MountSelectionMixin:
         )
 
     def get_courses(self):
-        return (
+        return self.present_courses(
             Course.objects
             .attachable_by(self.request.user)
             .prefetch_related("userbindings__user")
@@ -54,7 +113,7 @@ class MountSelectionMixin:
         )
 
     def get_volumes(self):
-        return (
+        return self.present_volumes(
             Volume.objects
             .attachable_by(self.request.user)
             .prefetch_related("userbindings__user")

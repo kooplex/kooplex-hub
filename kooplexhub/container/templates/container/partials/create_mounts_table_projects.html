@@ -13,7 +13,7 @@
         <tr>
           <td>
             <input
-              class="form-check-input"
+              class="mount-toggle"
               type="checkbox"
               name="project_ids"
               value="{{ project.id }}"
@@ -23,15 +23,21 @@
           </td>
 
           <td>
+            <span class="mount-path-info" tabindex="0" title="{{ project.mount_tooltip }}" aria-label="Mount details: {{ project.mount_tooltip }}">
+              <i class="bi bi-info-circle" aria-hidden="true"></i>
+            </span>
             <label for="mount-project-{{ project.id }}" class="mb-0">
               {{ project.name }}
             </label>
           </td>
 
           <td>
-            {% for collaborator in project.collaborators %}
-              <span class="badge text-bg-light">
-                {{ collaborator.get_full_name|default:collaborator.username }}
+            {% for member in project.mount_presenter.mount_members %}
+              <span class="badge text-bg-light me-1">
+                <span class="">{{ member.user.get_full_name|default:member.user.username }}</span>
+                <span class="ms-1" title="{{ member.role_label }}" aria-label="{{ member.role_label }}">
+                  <i class="bi {{ member.role_icon }}" aria-hidden="true"></i>
+                </span>
               </span>
             {% empty %}
               <span class="text-muted small">No collaborators</span>

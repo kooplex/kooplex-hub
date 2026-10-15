@@ -208,6 +208,26 @@ class ProjectPresenter:
         return "No preferred image"
 
     @cached_property
+    def mount_members(self):
+        """Other project members for mount selection, creator first."""
+        from .editor_context import make_project_member_presentation
+
+        bindings = [
+            binding
+            for binding in self.project.userbindings.all()
+            if binding.user_id != self.user.pk
+        ]
+        bindings.sort(key=lambda binding: (
+            binding.role != UserProjectBinding.Role.CREATOR,
+            binding.user.get_full_name().casefold() or binding.user.username.casefold(),
+            binding.user.username.casefold(),
+        ))
+        return tuple(
+            make_project_member_presentation(binding=binding)
+            for binding in bindings
+        )
+
+    @cached_property
     def attached_containers(self):
         return tuple(
             sorted(
