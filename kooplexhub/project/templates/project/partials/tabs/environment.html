@@ -56,7 +56,7 @@
 
         <button
           type="button"
-          class="btn btn-sm btn-primary"
+          class="btn btn-sm btn-outline-dark rounded-pill"
           hx-post="{% url 'project:create_default_environment' project.pk %}"
           hx-target="#project-environment-content-{{ project.pk }}"
           hx-swap="outerHTML"
@@ -65,8 +65,8 @@
             title="{{ presentation.default_environment_disabled_reason }}"
           {% endif %}
         >
-          <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>
-          Create environment
+          <i class="bi bi-boxes me-1" aria-hidden="true"></i>
+          Create
         </button>
       </div>
     {% endif %}

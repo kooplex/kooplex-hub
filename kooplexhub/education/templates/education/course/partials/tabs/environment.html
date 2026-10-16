@@ -75,7 +75,7 @@
 
                 <button
                     type="button"
-                    class="btn btn-sm btn-primary"
+                    class="btn btn-sm btn-outline-dark rounded-pill"
                     hx-post="{% url 'education:create-default-environment' course.pk %}"
                     hx-target="#{{ presentation.environment_content_dom_id }}"
                     hx-swap="outerHTML"
@@ -85,10 +85,10 @@
                     {% endif %}
                 >
                     <i
-                        class="bi bi-plus-lg me-1"
+                        class="bi bi-boxes me-1"
                         aria-hidden="true"
                     ></i>
-                    Create environment
+                    Create
                 </button>
 
             </div>

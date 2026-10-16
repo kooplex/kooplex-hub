@@ -295,6 +295,7 @@ def make_member_editor_context(
             get_assignable_member_role_choices()
         ),
         "can_edit": presenter.can_manage_members,
+        "title": "Manage project members",
         "staged": False,
         "display_url": reverse(
             "project:members-display",

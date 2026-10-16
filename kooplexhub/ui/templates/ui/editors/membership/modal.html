@@ -28,7 +28,7 @@
                         class="modal-title fs-5"
                         id="{{ editor.dom_id }}-modal-title"
                     >
-                        Manage project members
+                        {{ editor.title|default:"Manage members" }}
                     </h2>
 
                     <button

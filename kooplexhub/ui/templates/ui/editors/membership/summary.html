@@ -9,10 +9,6 @@
     <div class="project-membership-summary__members">
         {% for member in editor.members %}
 	  <div class="project-member-badge">
-            <span class="project-member-badge__name">
-              {{ member.user.get_full_name|default:member.user.username }}
-            </span>
-
             <span
               class="project-member-badge__role"
               aria-label="{{ member.role_label }}"
@@ -22,6 +18,10 @@
                 class="bi {{ member.role_icon }}"
                 aria-hidden="true"
               ></i>
+            </span>
+
+            <span class="project-member-badge__name">
+              {{ member.user.get_full_name|default:member.user.username }}
             </span>
           </div>
         {% empty %}
