@@ -1,15 +1,19 @@
-.kooplex-mount-tabs .nav-link {
-    color: var(--bs-body-color);
-    font-weight: 400;
+.create-volume-table-wrap {
+  max-height: 18rem;
+  overflow: auto;
+  border: 1px solid var(--line, #d9e0e7);
+  border-radius: 0.75rem;
 }
 
-.kooplex-mount-tabs .nav-link:hover {
-    color: var(--bs-body-color);
+.create-volume-table-wrap table {
+  margin-bottom: 0;
 }
 
-.kooplex-mount-tabs .nav-link.active {
-    color: var(--bs-body-color);
-    font-weight: 600;
+.create-volume-table-wrap thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #eef1f4;
 }
 
 /* Compact, consistent mount pickers (creation wizard and configure modal). */
@@ -66,13 +70,66 @@
   color: #b23b75;
   cursor: help;
 }
-/* Scoped to mount selectors; leave other Bootstrap tabs alone. */
-.create-picker .nav-tabs .nav-link,
-.mounts-picker-nav .nav-link {
-  color: #343a40;
+/* One tab treatment in the creation wizard and configuration modal. */
+.kooplex-mount-tabs .nav-link,
+.kooplex-mount-tabs .nav-link:hover {
+  color: var(--bs-body-color, #343a40);
 }
-.create-picker .nav-tabs .nav-link.active,
-.mounts-picker-nav .nav-link.active {
-  color: #212529;
-  font-weight: 650;
+.kooplex-mount-tabs .nav-link.active {
+  color: var(--bs-body-color, #212529);
+  font-weight: 600;
+}
+.kooplex-mount-tab-content {
+  min-height: 0;
+}
+.kooplex-mount-tab-content > .tab-pane {
+  padding-top: .5rem;
+}
+/* Compact table rows without affecting unrelated tables. */
+.create-volume-table-wrap .table > :not(caption) > * > * {
+  padding-top: .3rem;
+  padding-bottom: .3rem;
+}
+.create-volume-table-wrap .mount-path-info {
+  margin-left: 0;
+  margin-right: .25rem;
+}
+
+/* Shared compact collaborator and course-role presentation. */
+.create-volume-table-wrap .mount-team-cell {
+  max-width: 18rem;
+  width: 40%;
+  min-width: 0;
+}
+.create-volume-table-wrap .mount-team-list {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: help;
+}
+.create-volume-table-wrap .mount-team-member {
+  display: inline-flex;
+  align-items: center;
+  gap: .2rem;
+  flex: 0 0 auto;
+  min-width: 0;
+  font-size: .875rem;
+}
+.create-volume-table-wrap .mount-team-role,
+.create-volume-table-wrap .mount-course-role {
+  color: var(--bs-secondary-color, #6c757d);
+}
+.create-volume-table-wrap .mount-course-role {
+  display: inline-flex;
+  align-items: center;
+  cursor: help;
+}
+.create-volume-table-wrap .mount-team-list:focus-visible,
+.create-volume-table-wrap .mount-course-role:focus-visible {
+  outline: 2px solid var(--brand, #198754);
+  outline-offset: 2px;
 }

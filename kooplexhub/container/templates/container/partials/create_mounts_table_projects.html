@@ -31,17 +31,21 @@
             </label>
           </td>
 
-          <td>
-            {% for member in project.mount_presenter.mount_members %}
-              <span class="badge text-bg-light me-1">
-                <span class="">{{ member.user.get_full_name|default:member.user.username }}</span>
-                <span class="ms-1" title="{{ member.role_label }}" aria-label="{{ member.role_label }}">
-                  <i class="bi {{ member.role_icon }}" aria-hidden="true"></i>
-                </span>
-              </span>
-            {% empty %}
+          <td class="mount-team-cell">
+            {% if project.mount_members %}
+              <div class="mount-team-list" title="{{ project.mount_team_tooltip }}" tabindex="0" aria-label="Collaborators: {{ project.mount_team_tooltip }}">
+                {% for member in project.mount_members %}
+                  <span class="mount-team-member">
+                    <span class="mount-team-name">{{ member.user.get_full_name|default:member.user.username }}</span>
+                    <span class="mount-team-role" title="{{ member.role_label }}" aria-label="{{ member.role_label }}">
+                      <i class="bi {{ member.role_icon }}" aria-hidden="true"></i>
+                    </span>
+                  </span>
+                {% endfor %}
+              </div>
+            {% else %}
               <span class="text-muted small">No collaborators</span>
-            {% endfor %}
+            {% endif %}
           </td>
         </tr>
       {% empty %}

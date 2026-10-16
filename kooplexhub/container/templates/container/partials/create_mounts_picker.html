@@ -20,39 +20,7 @@
     {% endif %}
   </div>
 
-  <ul class="nav nav-tabs kooplex-mount-tabs" role="tablist">
-    <li class="nav-item" role="presentation">
-      <button class="nav-link active" type="button" data-bs-toggle="tab" data-bs-target="#mount-projects-pane">
-        Projects
-      </button>
-    </li>
-
-    <li class="nav-item" role="presentation">
-      <button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#mount-courses-pane">
-        Courses
-      </button>
-    </li>
-
-    <li class="nav-item" role="presentation">
-      <button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#mount-storage-pane">
-        Storage
-      </button>
-    </li>
-  </ul>
-
-  <div class="tab-content create-volume-tab-content">
-    <div id="mount-projects-pane" class="tab-pane fade show active">
-      {% include "container/partials/create_mounts_table_projects.html" %}
-    </div>
-
-    <div id="mount-courses-pane" class="tab-pane fade">
-      {% include "container/partials/create_mounts_table_courses.html" %}
-    </div>
-
-    <div id="mount-storage-pane" class="tab-pane fade">
-      {% include "container/partials/create_mounts_table_storage.html" %}
-    </div>
-  </div>
+  {% include "container/partials/mounts_picker_tabs.html" %}
 
   {% if not embedded %}
   <div class="create-picker-actions">

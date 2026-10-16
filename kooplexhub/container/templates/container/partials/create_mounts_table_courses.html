@@ -32,7 +32,13 @@
           </td>
 
           <td>
-            {{ course.mount_role }}
+            {% if course.mount_role_icon %}
+              <span class="mount-course-role" title="{{ course.mount_role }}" aria-label="{{ course.mount_role }}" tabindex="0">
+                <i class="bi {{ course.mount_role_icon }}" aria-hidden="true"></i>
+              </span>
+            {% else %}
+              <span class="text-muted" aria-label="No course role">—</span>
+            {% endif %}
           </td>
         </tr>
       {% empty %}

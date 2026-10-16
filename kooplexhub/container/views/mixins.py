@@ -33,12 +33,18 @@ class MountSelectionMixin:
             project.mount_presenter = ProjectPresenter(
                 project=project, user=self.request.user,
             )
+            members = project.mount_presenter.mount_members
+            project.mount_members = members
+            project.mount_team_tooltip = "\n".join(
+                f"{member['user'].get_full_name() or member['user'].username} ({member['role_label']})"
+                for member in members
+            )
             mounts = PROJECT_SETTINGS.mounts
             project.mount_targets = (
                 ("Project", mounts.project.mountpoint.format(project=project)),
                 ("Report preparation", mounts.report_prepare.mountpoint.format(project=project)),
             )
-            project.mount_tooltip = "Pod mount points:\n" + "\n".join(
+            project.mount_tooltip = "Configured mount points:\n" + "\n".join(
                 f"{label}: {target}" for label, target in project.mount_targets
             )
         return projects
@@ -55,21 +61,20 @@ class MountSelectionMixin:
             course.mount_role = (
                 "Teacher" if membership.is_teacher else "Student"
             ) if membership is not None else "—"
+            course.mount_role_icon = (
+                EDUCATION_SETTINGS.presentation.role_icons[
+                    "teacher" if membership.is_teacher else "student"
+                ]
+                if membership is not None else None
+            )
             course.mount_targets = (
                 ("Workdir", mounts.workdir.mountpoint.format(course=course)),
                 ("Public", mounts.public.mountpoint.format(course=course)),
-            )
-            # These paths are configured but are not currently included by
-            # the container Kubernetes volume builder.
-            course.other_mount_targets = (
                 ("Assignment preparation", mounts.prepare.mountpoint.format(course=course)),
                 ("Assignment workdir", mounts.assignment.mountpoint.format(course=course)),
             )
-            course.mount_tooltip = (
-                "Pod mount points:\n"
-                + "\n".join(f"{label}: {target}" for label, target in course.mount_targets)
-                + "\n\nConfigured, not automatically mounted:\n"
-                + "\n".join(f"{label}: {target}" for label, target in course.other_mount_targets)
+            course.mount_tooltip = "Configured mount points:\n" + "\n".join(
+                f"{label}: {target}" for label, target in course.mount_targets
             )
         return courses
 
@@ -78,7 +83,8 @@ class MountSelectionMixin:
         for volume in volumes:
             volume.mount_target = VOLUME_SETTINGS.mountpoint.format(volume=volume)
             volume.mount_tooltip = (
-                f"Pod mount point: {volume.mount_target}"
+                "Configured mount point:\n"
+                f"{volume.mount_target}"
             )
         return volumes
 
