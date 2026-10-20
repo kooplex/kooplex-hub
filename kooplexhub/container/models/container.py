@@ -22,6 +22,10 @@ class Container(models.Model):
 
     class Meta:
         constraints = [
+            models.CheckConstraint(
+                condition=~models.Q(label=""),
+                name="container_label_not_empty",
+            ),
             models.UniqueConstraint(
                 fields=["user", "name"],
                 name="unique_container_name_per_user",
@@ -60,7 +64,7 @@ class Container(models.Model):
             MinLengthValidator(3, message="Name must be at least 3 characters."), 
         ],
     )
-    label = models.CharField(max_length = 200, null = False, unique = True)
+    label = models.CharField(max_length=200, null=False, blank=False, unique=True)
     user = models.ForeignKey(User, on_delete = models.CASCADE, null = False)
     image = models.ForeignKey(Image, on_delete = models.CASCADE, null = False)
 
@@ -122,6 +126,7 @@ class Container(models.Model):
     delete_requested = models.BooleanField(default=False)
     state = models.CharField(max_length = 16, choices = State.choices, default = State.NOTPRESENT)
     state_backend = models.CharField(max_length = 32, null = True, blank = True, default = None)
+    state_detail = models.TextField(null=True, blank=True, default=None)
     state_lastcheck_at = models.DateTimeField(default = None, null = True, blank = True)
 
     restart_reasons = models.CharField(max_length = 500, null = True, blank = True)
@@ -174,6 +179,9 @@ class Container(models.Model):
         super().clean()
 
         errors = {}
+
+        if not self.label or not self.label.strip():
+            errors["label"] = "Container label must not be empty."
 
         if (
             self.requested_cpu_m is not None

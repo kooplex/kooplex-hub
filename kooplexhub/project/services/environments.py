@@ -4,6 +4,7 @@ from ..models import (
     ProjectContainerBinding,
 )
 from container.models import Container
+from container.services.labels import generate_container_label
 from volume.models import (
     VolumeContainerBinding,
     ProjectVolumeBinding,
@@ -40,12 +41,11 @@ def create_default_project_environment(
             "Select a preferred image before creating an environment."
         )
 
+    name = unique_generated_container_name(project=project, user=user)
     container = Container.objects.create(
         user=user,
-        name=unique_generated_container_name(
-            project=project,
-            user=user,
-        ),
+        name=name,
+        label=generate_container_label(user=user, name=name),
         image=project.preferred_image,
     )
 

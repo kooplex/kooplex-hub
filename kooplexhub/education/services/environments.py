@@ -1,6 +1,7 @@
 from django.db import transaction
 
 from container.models import Container
+from container.services.labels import generate_container_label
 from volume.models import VolumeContainerBinding
 
 from ..models import (
@@ -39,12 +40,11 @@ def create_default_course_environment(
             "Select a preferred image before creating an environment."
         )
 
+    name = unique_generated_container_name(course=course, user=user)
     container = Container.objects.create(
         user=user,
-        name=unique_generated_container_name(
-            course=course,
-            user=user,
-        ),
+        name=name,
+        label=generate_container_label(user=user, name=name),
         image=course.preferred_image,
     )
 

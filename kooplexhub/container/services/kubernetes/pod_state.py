@@ -24,6 +24,7 @@ class RuntimeState(str, Enum):
 class RuntimeObservation:
     state: RuntimeState
     backend_state: str
+    detail: str | None = None
     node_name: str | None = None
     pod_name: str | None = None
     pod_uid: str | None = None
@@ -118,10 +119,11 @@ def observe_pod(pod: Any) -> RuntimeObservation:
     phase = getattr(status, "phase", None)
     pod_reason = getattr(status, "reason", None)
 
-    def result(state: RuntimeState, backend_state: str) -> RuntimeObservation:
+    def result(state: RuntimeState, backend_state: str, detail: str | None = None) -> RuntimeObservation:
         return RuntimeObservation(
             state=state,
             backend_state=backend_state,
+            detail=" ".join(str(detail).split())[:1000] if detail else None,
             node_name=node_name,
             pod_name=pod_name,
             pod_uid=str(pod_uid) if pod_uid is not None else None,
@@ -151,7 +153,7 @@ def observe_pod(pod: Any) -> RuntimeObservation:
                 if reason in _ERROR_REASONS
                 else RuntimeState.STARTING
             )
-            return result(mapped, reason)
+            return result(mapped, reason, getattr(waiting, "message", None))
 
         if running is not None:
             return result(RuntimeState.RUNNING, "Running")
@@ -166,14 +168,15 @@ def observe_pod(pod: Any) -> RuntimeObservation:
                 if exit_code == 0 and reason in {"Completed", "Succeeded"}
                 else RuntimeState.ERROR
             )
-            return result(mapped, reason)
+            return result(mapped, reason, getattr(terminated, "message", None))
 
     scheduled_problem = _pod_scheduling_problem(status)
     if scheduled_problem is not None:
-        reason, is_error = scheduled_problem
+        reason, is_error, message = scheduled_problem
         return result(
             RuntimeState.ERROR if is_error else RuntimeState.STARTING,
             reason,
+            message,
         )
 
     if phase == "Running":
@@ -220,6 +223,7 @@ def observe_deployment(deployment: Any | None) -> RuntimeObservation:
             return RuntimeObservation(
                 RuntimeState.ERROR,
                 reason or "ReplicaFailure",
+                detail=getattr(condition, "message", None),
             )
         if (
             condition_type == "Progressing"
@@ -228,6 +232,7 @@ def observe_deployment(deployment: Any | None) -> RuntimeObservation:
             return RuntimeObservation(
                 RuntimeState.ERROR,
                 reason or "ProgressDeadlineExceeded",
+                detail=getattr(condition, "message", None),
             )
 
     replicas = int(getattr(spec, "replicas", 1) or 0)
@@ -299,12 +304,12 @@ def _main_container_status(pod: Any) -> Any | None:
     return None
 
 
-def _pod_scheduling_problem(pod_status: Any) -> tuple[str, bool] | None:
+def _pod_scheduling_problem(pod_status: Any) -> tuple[str, bool, str | None] | None:
     for condition in getattr(pod_status, "conditions", None) or []:
         if getattr(condition, "type", None) != "PodScheduled":
             continue
         if str(getattr(condition, "status", "")) != "False":
             continue
         reason = getattr(condition, "reason", None) or "Pending"
-        return reason, reason in _ERROR_REASONS
+        return reason, reason in _ERROR_REASONS, getattr(condition, "message", None)
     return None

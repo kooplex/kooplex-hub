@@ -193,6 +193,12 @@
           document.body,
           "container-list-refresh"
         );
+        // Course and project cards display environment shortcuts too.
+        // Refresh only their environment sections, preserving active tabs.
+        htmx.trigger(
+          document.body,
+          "container-deleted"
+        );
         // The grid handles this event directly; avoid a duplicate GET
         // through the generic live-key refresh mechanism.
         return;

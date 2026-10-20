@@ -1,9 +1,7 @@
-import uuid
-
 from django.db import transaction
-from django.utils.text import slugify
 
 from ..models import Container
+from .labels import generate_container_label
 from .image_catalog import (
     ImageCatalogService,
 )
@@ -26,17 +24,6 @@ from volume.models import Volume
 
 class ContainerLifecycleError(RuntimeError):
     pass
-
-
-def _container_label(*, user, name):
-    base = slugify(
-        f"{user.username}-{name}"
-    ) or "container"
-
-    return (
-        f"{base[:180]}-"
-        f"{uuid.uuid4().hex[:8]}"
-    )
 
 
 def _resolve_selected_items(
@@ -130,7 +117,7 @@ def create_container(
         "user": user,
         "image": image,
         "name": name,
-        "label": _container_label(
+        "label": generate_container_label(
             user=user,
             name=name,
         ),

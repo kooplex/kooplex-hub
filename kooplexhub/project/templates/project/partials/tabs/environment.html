@@ -4,6 +4,9 @@
 <section
   id="project-environment-content-{{ project.pk }}"
   class="project-tab-section"
+  hx-get="{% url 'project:environment_tab' project.pk %}"
+  hx-trigger="container-deleted from:body"
+  hx-swap="outerHTML"
   data-live-key="project-environments:{{ project.pk }}"
   data-live-url="{% url 'project:environment_tab' project.pk %}"
   data-live-swap="outerHTML"

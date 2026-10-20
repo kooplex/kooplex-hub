@@ -264,6 +264,7 @@ class ManagedPodWatcher:
         persisted_changed = (
             container.state != state_new
             or container.state_backend != observation.backend_state
+            or container.state_detail != observation.detail
             or container.runtime_node != node_name
         )
         pod_changed = (
@@ -273,12 +274,14 @@ class ManagedPodWatcher:
 
         container.state = state_new
         container.state_backend = observation.backend_state
+        container.state_detail = observation.detail
         container.runtime_node = node_name
         container.state_lastcheck_at = timezone.now()
 
         update_fields = [
             "state",
             "state_backend",
+            "state_detail",
             "runtime_node",
             "state_lastcheck_at",
         ]

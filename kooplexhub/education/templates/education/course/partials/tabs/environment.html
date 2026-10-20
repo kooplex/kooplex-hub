@@ -4,6 +4,9 @@
 <section
     id="{{ presentation.environment_content_dom_id }}"
     class="course-tab-section"
+    hx-get="{% url 'education:environment-tab' course.pk %}"
+    hx-trigger="container-deleted from:body"
+    hx-swap="outerHTML"
 >
     {% if error %}
         <div class="alert alert-danger py-2 mb-2">

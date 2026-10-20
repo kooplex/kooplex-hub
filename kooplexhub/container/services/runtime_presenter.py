@@ -203,6 +203,9 @@ class ContainerRuntimePresenter:
     
         if self.container.state_backend:
             parts.append(f"Backend: {self.container.state_backend}")
+
+        if self.container.state_detail:
+            parts.append(f"Details: {self.container.state_detail}")
     
         if self.container.restart_reasons:
             parts.append(f"Restart reason: {self.container.restart_reasons}")
