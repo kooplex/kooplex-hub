@@ -1,3 +1,5 @@
+from container.services.environment_compatibility import check_environments
+
 from functools import cached_property
 from dataclasses import dataclass
 
@@ -174,6 +176,18 @@ class ProjectPresenter:
         )
     
     
+    @cached_property
+    def environment_compatibilities(self):
+        return check_environments(
+            self.environment_containers,
+            preferred_image_id=self.project.preferred_image_id,
+            preferred_volumes=(
+                binding.volume
+                for binding in self.project.volumebindings.select_related("volume")
+            ),
+        )
+
+
     @property
     def has_environment_containers(self):
         return bool(self.environment_containers)

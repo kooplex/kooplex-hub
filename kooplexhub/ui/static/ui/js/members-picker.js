@@ -51,6 +51,11 @@ document.body.addEventListener("htmx:afterSwap", (event) => {
     return;
   }
 
+  // An import with no new members must not mark the editor as changed.
+  if (!event.detail.xhr?.responseText?.includes("data-membership-row")) {
+    return;
+  }
+
   const form = target.closest("[data-membership-form]");
 
   if (!form) {
@@ -70,6 +75,11 @@ document.body.addEventListener("htmx:beforeSwap", (event) => {
   const target = event.detail.target;
 
   if (!target.matches("[data-membership-selected-members]")) {
+    return;
+  }
+
+  // An import with no new members must not mark the editor as changed.
+  if (!event.detail.xhr?.responseText?.includes("data-membership-row")) {
     return;
   }
 

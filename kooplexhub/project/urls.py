@@ -5,6 +5,8 @@ from . import views
 app_name = 'project'
 
 urlpatterns = [
+    path("partials/<int:project_id>/members/import/", views.ProjectMemberImportView.as_view(), name="members-import"),
+    path("create/members/import/", views.ProjectCreateMemberImportView.as_view(), name="create-members-import"),
     # render projects
     path(
         "list/", 

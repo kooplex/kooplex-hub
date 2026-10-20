@@ -102,3 +102,5 @@ __all__ = [
     "ProjectCreateMemberSearchView",
     "ProjectCreateMemberRowView",
 ]
+
+from .widgets.members import ProjectMemberImportView, ProjectCreateMemberImportView

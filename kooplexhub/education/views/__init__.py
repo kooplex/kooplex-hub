@@ -96,3 +96,5 @@ __all__ = [
     "AssignmentCreateModalView",
     "AssignmentCreateView",
 ]
+
+from .widgets.members import CourseMemberImportView, CourseCreateMemberImportView

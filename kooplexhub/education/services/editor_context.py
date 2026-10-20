@@ -1,3 +1,4 @@
+from volume.conf import VOLUME_SETTINGS
 from django.urls import reverse
 
 from .members import (
@@ -47,6 +48,9 @@ def make_member_editor_urls(course):
         "update_url": reverse(
             "education:members-update",
             kwargs=kwargs,
+        ),
+        "import_url": reverse(
+            "education:members-import", kwargs=kwargs,
         ),
         "search_url": reverse(
             "education:members-search",
@@ -223,6 +227,7 @@ def make_create_member_editor_context(
         ),
         "can_edit": True,
         "staged": True,
+        "import_url": reverse("education:create-members-import"),
         "search_url": reverse(
             "education:create-members-search",
         ),
@@ -325,6 +330,9 @@ def make_mounts_summary_context(
             .select_related("volume")
         )
     )
+
+    for volume in selected_mounts:
+        volume.mount_target = VOLUME_SETTINGS.mountpoint.format(volume=volume)
 
     return {
         "dom_id": f"course-{course.pk}-volumes",

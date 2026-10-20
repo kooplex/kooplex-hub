@@ -21,11 +21,13 @@
   <div class="project-environment-list-section">
     {% if presentation.environment_containers %}
       <div class="project-environment-shortcuts">
-        {% for container in presentation.environment_containers %}
+        {% for compatibility in presentation.environment_compatibilities %}
+                {% with container=compatibility.container %}
           {% runtime_for container as runtime %}
 
           <div class="project-environment-row">
             <div class="project-environment-name">
+              {% include "container/partials/widgets/environment_compatibility_icon.html" with compatibility=compatibility only %}
               {{ container.name }}
             </div>
 
@@ -39,6 +41,7 @@
               {% include "container/partials/widgets/stop_button.html" with container=container runtime=runtime only %}
             </div>
           </div>
+          {% endwith %}
         {% endfor %}
       </div>
 

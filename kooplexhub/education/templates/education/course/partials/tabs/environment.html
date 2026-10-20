@@ -26,14 +26,16 @@
 
             <div class="course-environment-shortcuts">
 
-                {% for container in presentation.environment_containers %}
+                {% for compatibility in presentation.environment_compatibilities %}
+                {% with container=compatibility.container %}
 
                     {% runtime_for container as runtime %}
 
                     <div class="course-environment-row">
 
                         <div class="course-environment-name">
-                            {{ container.name }}
+                            {% include "container/partials/widgets/environment_compatibility_icon.html" with compatibility=compatibility only %}
+              {{ container.name }}
                         </div>
 
                         <div class="course-environment-actions">
@@ -50,6 +52,7 @@
 
                     </div>
 
+                {% endwith %}
                 {% endfor %}
 
             </div>

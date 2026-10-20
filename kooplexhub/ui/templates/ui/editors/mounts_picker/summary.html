@@ -17,7 +17,7 @@
           {% for volume in editor.selected_mounts %}
             <span
                 class="project-volume-badge"
-                title="{{ volume.folder }}"
+                title="Configured mount point:&#10;{{ volume.mount_target }}"
             >
                 <span class="project-volume-badge__volume">
                     {{ volume.folder }}

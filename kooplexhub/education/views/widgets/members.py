@@ -519,3 +519,30 @@ class CourseCreateMemberRowView(
         })
 
         return context
+
+
+class CourseMemberImportView(CourseMembersBaseView):
+    http_method_names = ["post"]
+
+    def post(self, request, *args, **kwargs):
+        self.require_edit_permission()
+        from ui.services.member_import import render_import_response
+        return render_import_response(
+            request, membership_ui=self.make_membership_ui(),
+            default_role=ROLE_STUDENT,
+        )
+
+
+class CourseCreateMemberImportView(CourseMembersBaseView):
+    http_method_names = ["post"]
+    membership_dom_id = "course-create-members"
+
+    def get_membership_dom_id(self):
+        return self.membership_dom_id
+
+    def post(self, request, *args, **kwargs):
+        from ui.services.member_import import render_import_response
+        return render_import_response(
+            request, membership_ui=self.make_membership_ui(),
+            default_role=ROLE_STUDENT,
+        )

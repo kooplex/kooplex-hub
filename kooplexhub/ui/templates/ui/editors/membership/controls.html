@@ -25,6 +25,19 @@
         >
     </div>
     
+    {% if editor.import_url %}
+    <div class="mb-2">
+        <label for="{{ editor.dom_id }}-import" class="form-label small mb-1">
+            Add members from text file (one username or email per line)
+        </label>
+        <input type="file" id="{{ editor.dom_id }}-import" name="members_file"
+            class="form-control form-control-sm" accept=".txt,text/plain"
+            hx-post="{{ editor.import_url }}" hx-trigger="change"
+            hx-encoding="multipart/form-data" hx-include="closest form"
+            hx-target="{{ membership_ui.members_target }}" hx-swap="beforeend">
+        <div id="{{ membership_ui.dom_id }}-import-status" class="small mt-1" role="status"></div>
+    </div>
+    {% endif %}
     <div
         id="{{ editor.dom_id }}-search-results"
         class="membership-search-results"

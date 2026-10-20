@@ -1,3 +1,5 @@
+from container.services.environment_compatibility import check_environments
+
 from functools import cached_property
 
 from django.db.models.functions import Lower
@@ -90,6 +92,18 @@ class CoursePresenter:
         ]
     
     
+    @cached_property
+    def environment_compatibilities(self):
+        return check_environments(
+            self.environment_containers,
+            preferred_image_id=self.course.preferred_image_id,
+            preferred_volumes=(
+                binding.volume
+                for binding in self.course.volumebindings.select_related("volume")
+            ),
+        )
+
+
     @property
     def has_environment_containers(self):
         return bool(self.environment_containers)

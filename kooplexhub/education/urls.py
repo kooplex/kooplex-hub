@@ -6,6 +6,8 @@ from education import views
 app_name = 'education'
 
 urlpatterns = [
+    path("partials/<int:course_id>/members/import/", views.CourseMemberImportView.as_view(), name="members-import"),
+    path("create/members/import/", views.CourseCreateMemberImportView.as_view(), name="create-members-import"),
     # Listing courses
     path(
         "course/", 

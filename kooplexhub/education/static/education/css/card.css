@@ -234,3 +234,10 @@
     margin-left: auto;
     flex: 0 0 auto;
 }
+
+/* Keep the environment action aligned with the other Change buttons. */
+.course-environment-setting .project-setting-row > button,
+.course-environment-setting .course-setting-row > button,
+.course-environment-list-section button.rounded-pill {
+    min-width: 5.75rem;
+}

@@ -1,3 +1,4 @@
+from volume.conf import VOLUME_SETTINGS
 from django.urls import reverse
 
 from ..conf import PROJECT_SETTINGS
@@ -309,6 +310,9 @@ def make_member_editor_context(
             "project:members-update",
             kwargs=kwargs,
         ),
+        "import_url": reverse(
+            "project:members-import", kwargs=kwargs,
+        ),
         "search_url": reverse(
             "project:members-search",
             kwargs=kwargs,
@@ -335,6 +339,7 @@ def make_create_member_editor_context(
         ),
         "can_edit": True,
         "staged": True,
+        "import_url": reverse("project:create-members-import"),
         "search_url": reverse(
             "project:create-members-search",
         ),
@@ -370,6 +375,9 @@ def make_mounts_summary_context(
             .select_related("volume")
         )
     )
+
+    for volume in selected_mounts:
+        volume.mount_target = VOLUME_SETTINGS.mountpoint.format(volume=volume)
 
     return {
         "dom_id": f"project-{project.pk}-volumes",
