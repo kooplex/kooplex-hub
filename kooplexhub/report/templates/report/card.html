@@ -1,7 +1,11 @@
 <article class="card h-100 shadow-sm">
   <div class="card-header d-flex justify-content-between align-items-center gap-2">
     <span class="fw-semibold text-truncate" title="{{ report.name }}">{{ report.name }}</span>
-    <span class="badge text-bg-light" title="{{ report.get_scope_display }}">{{ report.get_scope_display|truncatewords:1 }}</span>
+    <div class="d-flex align-items-center gap-1">
+      <span class="badge {% if report.state == report.State.READY %}text-bg-success{% elif report.state == report.State.PROVISION_FAILED or report.state == report.State.UPDATE_FAILED or report.state == report.State.DELETE_FAILED %}text-bg-danger{% else %}text-bg-warning{% endif %}"
+            title="{{ report.get_state_display }}{% if report.state_error %}: {{ report.state_error }}{% endif %}">{{ report.get_state_display }}</span>
+      <span class="badge text-bg-light" title="{{ report.get_scope_display }}">{{ report.get_scope_display|truncatewords:1 }}</span>
+    </div>
   </div>
   <div class="card-body">
     {% if report.thumbnail %}

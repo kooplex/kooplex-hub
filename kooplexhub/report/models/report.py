@@ -40,12 +40,28 @@ class ReportType(models.Model):
         return self.name
 
 class Report(models.Model):
+    class State(models.TextChoices):
+        # Lifecycle status describes publication, not whether a viewer opened the report.
+        PREPARING = "prp", "Preparing"
+        READY = "rdy", "Ready"
+        PROVISION_FAILED = "fld", "Provisioning failed"
+        UPDATING = "upd", "Updating"
+        UPDATE_FAILED = "ufl", "Update failed"
+        DELETING = "del", "Deleting"
+        DELETE_FAILED = "dfl", "Deletion failed"
+
     class Scope(models.TextChoices):
         PUBLIC = 'public', 'public - Anyone can view the report.'
         INTERNAL = 'internal', 'authenticated - An authenticated kooplex user can view the report.'
         PRIVATE = 'private', 'private - Only the creator can view the report.'
         COLLABORATION = 'collaboration', 'collaboration - The creator and collaborators can view the report.'
 
+
+    # Existing reports predate the state machine; keep them READY on migration.
+    # The new creation flow must explicitly set PREPARING before provisioning.
+    state = models.CharField(max_length=3, choices=State.choices, default=State.READY)
+    state_error = models.TextField(blank=True, default="")
+    state_changed_at = models.DateTimeField(default=timezone.now)
 
     name = models.CharField(max_length = 200, null = False)
     reporttype = models.ForeignKey(ReportType, default=1, on_delete = models.CASCADE)
